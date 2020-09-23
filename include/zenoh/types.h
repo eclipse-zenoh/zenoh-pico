@@ -52,10 +52,18 @@ Z_RESULT_DECLARE(char *, string)
 
 Z_RESULT_DECLARE(z_vec_t, locators)
 
+// -- Timestamp is optionally included in the DataInfo Field
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+---------+
+// ~     Time      ~  Encoded as z_zint_t
+// +---------------+
+// ~      ID       ~
+// +---------------+
 typedef struct
 {
-    uint8_t clock_id[16];
-    z_zint_t time;
+    u_int64_t time;
+    z_uint8_array_t id;
 } z_timestamp_t;
 
 #endif /* ZENOH_C_TYPES_H_ */

@@ -116,7 +116,7 @@
 #define _ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
 #define _ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
 #define _ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
-#define _ZN_DATA_INFO_TS 0x10     // 1 << 4
+#define _ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
 #define _ZN_DATA_INFO_KIND 0x20   // 1 << 5
 #define _ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
@@ -576,7 +576,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 // ~    Suffix     ~ if K==1
 // +---------------+
 //
-// typdef struct { ... } zn_res_key_t; is defined in types.h
+// typdef struct { ... } zn_res_key_t; is defined in net/types.h
 _ZN_RESULT_DECLARE(zn_res_key_t, res_key);
 
 /*------------------  Resource Declaration ------------------*/
@@ -589,7 +589,7 @@ _ZN_RESULT_DECLARE(zn_res_key_t, res_key);
 // ~    ResKey     ~ if  K==1 then only numerical id
 // +---------------+
 //
-// typdef struct { ... } _zn_res_decl_t; is defined in internal.h
+// typdef struct { ... } _zn_res_decl_t; is defined in net/private/internal.h
 _ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl);
 
 /*------------------ Publisher Declaration ------------------*/
@@ -614,7 +614,7 @@ _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl);
 // ~    Period     ~ if P==1. Otherwise: None
 // +---------------+
 //
-// typdef struct { ... } zn_sub_mode_t; is defined in types.h
+// typdef struct { ... } zn_sub_mode_t; is defined in net/types.h
 _ZN_RESULT_DECLARE(zn_sub_mode_t, sub_mode)
 
 /*------------------ Declare Subscriber Message ------------------*/
@@ -710,6 +710,8 @@ _ZN_RESULT_DECLARE(_zn_forget_qle_decl_t, forget_qle_decl);
 // +-+-+-+-+-+-+-+-+
 // |X|X|X| DECLARE |
 // +-+-+-+---------+
+// ~  Num of Decl  ~
+// +---------------+
 // ~ [Declaration] ~
 // +---------------+
 //
@@ -737,7 +739,18 @@ typedef struct
 } _zn_declare_t;
 _ZN_RESULT_DECLARE(_zn_declare_t, declare)
 
-/*------------------ Data Info ------------------*/
+/*------------------ Timestamp Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+---------+
+// ~     Time      ~  Encoded as z_zint_t
+// +---------------+
+// ~      ID       ~
+// +---------------+
+//
+// typdef struct { ... } z_timestamp_t; is defined in types.h
+_ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
+
+/*------------------ Data Info Field ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+---------+
 // ~X|G|F|E|D|C|B|A~ -- encoded as z_zint_t
@@ -757,7 +770,8 @@ _ZN_RESULT_DECLARE(_zn_declare_t, declare)
 // ~   encoding    ~ if G==1
 // +---------------+
 //
-// typdef struct { ... } _zn_res_decl_t; is defined in types.h
+// typdef struct { ... } zn_data_info_t; is defined in net/types.h
+_ZN_RESULT_DECLARE(zn_data_info_t, data_info)
 
 /*------------------ Data Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -778,6 +792,7 @@ typedef struct
     zn_res_key_t key;
     zn_data_info_t *info;
     z_iobuf_t payload;
+    int is_droppable;
 } _zn_data_t;
 _ZN_RESULT_DECLARE(_zn_data_t, data)
 
@@ -791,6 +806,7 @@ _ZN_RESULT_DECLARE(_zn_data_t, data)
 //
 typedef struct
 {
+    int is_droppable;
 } _zn_unit_t;
 _ZN_RESULT_DECLARE(_zn_unit_t, unit)
 

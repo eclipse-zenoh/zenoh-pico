@@ -100,14 +100,13 @@ typedef struct
 //
 typedef struct
 {
-    z_zint_t flags;
     z_uint8_array_t *source_id;
     z_zint_t *source_sn;
     z_uint8_array_t *first_router_id;
     z_zint_t *first_router_sn;
     z_timestamp_t *tstamp;
     z_zint_t *kind;
-    uint8_t *encoding;
+    z_zint_t *encoding;
 } zn_data_info_t;
 
 typedef struct
