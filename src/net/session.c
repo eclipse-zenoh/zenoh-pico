@@ -535,7 +535,7 @@ int zn_undeclare_publisher(zn_pub_t *pub)
 int zn_stream_compact_data(zn_pub_t *pub, const unsigned char *data, size_t length)
 {
     const char *rname = _zn_get_resource_name(pub->z, pub->rid);
-    zn_resource_key_t rkey;
+    zn_res_key_t rkey;
     _zn_sub_t *sub;
     _zn_sto_t *sto;
     z_list_t *subs = z_list_empty;
@@ -607,7 +607,7 @@ int zn_stream_compact_data(zn_pub_t *pub, const unsigned char *data, size_t leng
 int zn_stream_data_wo(zn_pub_t *pub, const unsigned char *data, size_t length, uint8_t encoding, uint8_t kind)
 {
     const char *rname = _zn_get_resource_name(pub->z, pub->rid);
-    zn_resource_key_t rkey;
+    zn_res_key_t rkey;
     _zn_sub_t *sub;
     _zn_sto_t *sto;
     z_list_t *subs = z_list_empty;
@@ -708,7 +708,7 @@ int zn_write_data_wo(zn_session_t *z, const char *resource, const unsigned char 
     z_list_t *stos = _zn_get_storages_by_rname(z, resource);
     _zn_sub_t *sub;
     _zn_sto_t *sto;
-    zn_resource_key_t rkey;
+    zn_res_key_t rkey;
     rkey.kind = ZN_STR_RES_KEY;
     rkey.key.rname = (char *)resource;
     zn_data_info_t info;

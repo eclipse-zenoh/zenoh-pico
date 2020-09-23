@@ -17,7 +17,8 @@
 #include "zenoh/collection.h"
 #include "zenoh/types.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     Z_UNUSED_ARG_2(argc, argv);
     z_list_t *xs = z_list_of("one");
     z_i_map_t *map = z_i_map_make(5);
@@ -42,22 +43,22 @@ int main(int argc, char** argv) {
     z_i_map_set(map, 10, "10");
 
     printf("Map size: %d\n", z_i_map_size(map));
-    printf("get(0) = %s\n", (char*)z_i_map_get(map, 0));
-    printf("get(1) = %s\n", (char*)z_i_map_get(map, 1));
-    printf("get(2) = %s\n", (char*)z_i_map_get(map, 2));
-    printf("get(3) = %s\n", (char*)z_i_map_get(map, 3));
-    printf("get(4) = %s\n", (char*)z_i_map_get(map, 4));
-    printf("get(5) = %s\n", (char*)z_i_map_get(map, 5));
-    printf("get(6) = %s\n", (char*)z_i_map_get(map, 6));
-    printf("get(7) = %s\n", (char*)z_i_map_get(map, 7));
-    printf("get(8) = %s\n", (char*)z_i_map_get(map, 8));
-    printf("get(9) = %s\n", (char*)z_i_map_get(map, 9));
-    printf("get(10) = %s\n", (char*)z_i_map_get(map, 10));
+    printf("get(0) = %s\n", (char *)z_i_map_get(map, 0));
+    printf("get(1) = %s\n", (char *)z_i_map_get(map, 1));
+    printf("get(2) = %s\n", (char *)z_i_map_get(map, 2));
+    printf("get(3) = %s\n", (char *)z_i_map_get(map, 3));
+    printf("get(4) = %s\n", (char *)z_i_map_get(map, 4));
+    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
+    printf("get(6) = %s\n", (char *)z_i_map_get(map, 6));
+    printf("get(7) = %s\n", (char *)z_i_map_get(map, 7));
+    printf("get(8) = %s\n", (char *)z_i_map_get(map, 8));
+    printf("get(9) = %s\n", (char *)z_i_map_get(map, 9));
+    printf("get(10) = %s\n", (char *)z_i_map_get(map, 10));
 
     z_i_map_remove(map, 7);
     assert(0 == z_i_map_get(map, 7));
     z_i_map_remove(map, 0);
     assert(0 == z_i_map_get(map, 0));
-    printf("get(5) = %s\n", (char*)z_i_map_get(map, 5));
+    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
     return 0;
 }

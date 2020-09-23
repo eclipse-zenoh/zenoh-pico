@@ -49,7 +49,7 @@ int _zn_register_res_decl(zn_session_t *z, z_zint_t rid, const char *rname)
     {
         _zn_res_decl_t *rdecl = (_zn_res_decl_t *)malloc(sizeof(_zn_res_decl_t));
         rdecl->rid = rid;
-        rdecl->r_name = strdup(rname);
+        rdecl->key.rname = strdup(rname);
         z->declarations = z_list_cons(z->declarations, rdecl);
         return 0;
     }
@@ -92,12 +92,12 @@ _zn_res_decl_t *_zn_get_res_decl_by_rname(zn_session_t *z, const char *rname)
         _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(z->declarations);
         z_list_t *decls = z_list_tail(z->declarations);
 
-        while (decls != 0 && strcmp(decl->r_name, rname) != 0)
+        while (decls != 0 && strcmp(decl->key.rname, rname) != 0)
         {
             decl = z_list_head(decls);
             decls = z_list_tail(decls);
         }
-        if (strcmp(decl->r_name, rname) == 0)
+        if (strcmp(decl->key.rname, rname) == 0)
             return decl;
         else
             return 0;
@@ -111,7 +111,7 @@ void _zn_register_subscription(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_da
     sub->id = id;
     _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
     assert(decl != 0);
-    sub->rname = strdup(decl->r_name);
+    sub->rname = strdup(decl->key.rname);
     sub->data_handler = data_handler;
     sub->arg = arg;
     z->subscriptions = z_list_cons(z->subscriptions, sub);
@@ -145,7 +145,7 @@ const char *_zn_get_resource_name(zn_session_t *z, z_zint_t rid)
         d = z_list_head(ds);
         if (d->rid == rid)
         {
-            return d->r_name;
+            return d->key.rname;
         }
         ds = z_list_tail(ds);
     }
@@ -211,7 +211,7 @@ void _zn_register_storage(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_data_ha
     sto->id = id;
     _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
     assert(decl != 0);
-    sto->rname = strdup(decl->r_name);
+    sto->rname = strdup(decl->key.rname);
     sto->data_handler = data_handler;
     sto->query_handler = query_handler;
     sto->arg = arg;
@@ -296,7 +296,7 @@ void _zn_register_eval(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_hand
     eval->id = id;
     _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
     assert(decl != 0);
-    eval->rname = strdup(decl->r_name);
+    eval->rname = strdup(decl->key.rname);
     eval->query_handler = query_handler;
     eval->arg = arg;
     z->evals = z_list_cons(z->evals, eval);

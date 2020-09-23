@@ -117,7 +117,7 @@ void handle_msg(zn_session_t *z, _zn_message_p_result_t r)
     _zn_payload_header_result_t r_ph;
     zn_data_info_t info;
     _zn_declaration_t *decls;
-    zn_resource_key_t rkey;
+    zn_res_key_t rkey;
     const char *rname;
     uint8_t mid;
     z_list_t *subs;

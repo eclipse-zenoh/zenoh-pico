@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_RESULT_H
 #define ZENOH_C_NET_RESULT_H
 
+/*------------------ Parse Errors ------------------*/
 #define ZN_PROPERTY_PARSE_ERROR 0x81
 #define ZN_PROPERTIES_PARSE_ERROR 0x82
 #define ZN_SESSION_MESSAGE_PARSE_ERROR 0x83

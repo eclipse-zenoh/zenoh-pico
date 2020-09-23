@@ -209,10 +209,10 @@ typedef struct
 } zn_eva_t;
 
 ZN_P_RESULT_DECLARE(zn_session_t, session)
-// ZN_P_RESULT_DECLARE(zn_sub_t, sub)
-// ZN_P_RESULT_DECLARE(zn_sto_t, sto)
-// ZN_P_RESULT_DECLARE(zn_pub_t, pub)
-// ZN_P_RESULT_DECLARE(zn_eva_t, eval)
+ZN_P_RESULT_DECLARE(zn_sub_t, sub)
+ZN_P_RESULT_DECLARE(zn_sto_t, sto)
+ZN_P_RESULT_DECLARE(zn_pub_t, pub)
+ZN_P_RESULT_DECLARE(zn_eva_t, eval)
 
 typedef struct
 {
