@@ -111,7 +111,7 @@ void z_locators_decode_na(z_iobuf_t *buf, z_locators_result_t *r)
     r->value.locators.elem_ = 0;
     z_zint_result_t r_n = z_zint_decode(buf);
     ASSURE_P_RESULT(r_n, r, Z_ZINT_PARSE_ERROR)
-    int len = r_n.value.zint;
+    unsigned int len = r_n.value.zint;
     // Decode the locators
     r->value.locators = z_vec_make(len);
     for (unsigned int i = 0; i < len; ++i)

@@ -12,6 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+void z_do_nothing_a() {}
+
 // #include <sys/socket.h>
 // #include <sys/types.h>
 // #include <netinet/in.h>

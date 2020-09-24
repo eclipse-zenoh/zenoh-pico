@@ -200,4 +200,5 @@ int main(int argc, char **argv)
 
     //     zn_stop_recv_loop(z1);
     //     zn_stop_recv_loop(z2);
+    return 0;
 }

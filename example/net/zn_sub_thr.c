@@ -56,23 +56,23 @@
 
 int main(int argc, char **argv)
 {
-    // char *path = "/zenoh/examples/throughput/data";
-    // char *locator = 0;
-    // if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    // {
-    //     printf("USAGE:\n\tzn_stream [<path>=%s] [<locator>=auto]\n\n", path);
-    //     return 0;
-    // }
+    char *path = "/zenoh/examples/throughput/data";
+    char *locator = 0;
+    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
+    {
+        printf("USAGE:\n\tzn_stream [<path>=%s] [<locator>=auto]\n\n", path);
+        return 0;
+    }
 
-    // if (argc > 1)
-    // {
-    //     path = argv[1];
-    // }
+    if (argc > 1)
+    {
+        path = argv[1];
+    }
 
-    // if (argc > 2)
-    // {
-    //     locator = argv[2];
-    // }
+    if (argc > 2)
+    {
+        locator = argv[2];
+    }
 
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     // ASSERT_RESULT(r_z, "Unable to open session.\n")

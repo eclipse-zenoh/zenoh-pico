@@ -12,6 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+void z_do_nothing_b() {}
+
 // #include <pthread.h>
 // #include "zenoh/net/recv_loop.h"
 

@@ -17,7 +17,7 @@
 # Accepted values: Release, Debug, GCov
 BUILD_TYPE?=Release
 
-# zenoh-c/ directory
+# zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 # Build directory
 BUILD_DIR=build
@@ -38,7 +38,7 @@ endif
 
 CMAKE_OPT=$(ZENOH_DEBUG_OPT) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -H.
 
-# ZENOH_JAVA: when building zenoh-c for zenoh-java:
+# ZENOH_JAVA: when building zenoh-pico for zenoh-java:
 ifneq ($(ZENOH_JAVA),)
 	CMAKE_OPT += -DSWIG_JAVA=ON -DTESTS=OFF -DEXAMPLES=OFF
 endif

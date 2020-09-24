@@ -50,7 +50,7 @@
     inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
         free(r->value.name);                                                            \
-        r->value.name = 0;                                                              \
+        r->value.name = NULL;                                                           \
     }
 #define Z_P_RESULT_DECLARE(type, name) P_RESULT_DECLARE(type, name, z)
 #define _Z_P_RESULT_DECLARE(type, name) P_RESULT_DECLARE(type, name, _z)

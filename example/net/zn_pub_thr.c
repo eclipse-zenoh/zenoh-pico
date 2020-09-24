@@ -17,28 +17,33 @@
 
 int main(int argc, char **argv)
 {
-    // size_t len = 256;
-    // char *path = "/zenoh/examples/throughput/data";
-    // char *locator = 0;
-    // if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))) {
-    //     printf("USAGE:\n\tzn_pub_thr [<payload-size>=%zu] [<path>=%s] [<locator>=auto]\n\n", len, path);
-    //     return 0;
-    // }
+    size_t len = 256;
+    char *path = "/zenoh/examples/throughput/data";
+    char *locator = 0;
+    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
+    {
+        printf("USAGE:\n\tzn_pub_thr [<payload-size>=%zu] [<path>=%s] [<locator>=auto]\n\n", len, path);
+        return 0;
+    }
 
-    // if (argc > 1) {
-    //     len = atoi(argv[1]);
-    // }
-    // if (argc > 2) {
-    //     path = argv[2];
-    // }
-    // if (argc > 3) {
-    //     locator = argv[3];
-    // }
+    if (argc > 1)
+    {
+        len = atoi(argv[1]);
+    }
+    if (argc > 2)
+    {
+        path = argv[2];
+    }
+    if (argc > 3)
+    {
+        locator = argv[3];
+    }
 
-    // printf("Running throughput test for payload of %zu bytes.\n", len);
-    // if (argc > 2) {
-    //     locator = argv[2];
-    // }
+    printf("Running throughput test for payload of %zu bytes.\n", len);
+    if (argc > 2)
+    {
+        locator = argv[2];
+    }
 
     // z_iobuf_t data = z_iobuf_make(len);
     // for (unsigned int i = 0; i < len; ++i)

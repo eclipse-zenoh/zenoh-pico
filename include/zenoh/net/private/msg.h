@@ -174,7 +174,6 @@ _ZN_RESULT_DECLARE(_zn_attachment_t, attachment)
 //
 typedef struct
 {
-    int is_final;
     z_zint_t qid;
     z_zint_t source_kind;
     z_uint8_array_t *replier_id;
@@ -577,7 +576,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 // +---------------+
 //
 // typdef struct { ... } zn_res_key_t; is defined in net/types.h
-_ZN_RESULT_DECLARE(zn_res_key_t, res_key);
+_ZN_RESULT_DECLARE(zn_res_key_t, res_key)
 
 /*------------------  Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -590,7 +589,7 @@ _ZN_RESULT_DECLARE(zn_res_key_t, res_key);
 // +---------------+
 //
 // typdef struct { ... } _zn_res_decl_t; is defined in net/private/internal.h
-_ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl);
+_ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
 
 /*------------------ Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -604,7 +603,7 @@ typedef struct
 {
     zn_res_key_t key;
 } _zn_pub_decl_t;
-_ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl);
+_ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 
 /*------------------ SubMode Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -633,7 +632,7 @@ typedef struct
     zn_sub_mode_t *sub_mode;
     int is_reliable;
 } _zn_sub_decl_t;
-_ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl);
+_ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
 
 /*------------------ Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -647,7 +646,7 @@ typedef struct
 {
     zn_res_key_t key;
 } _zn_qle_decl_t;
-_ZN_RESULT_DECLARE(_zn_qle_decl_t, qle_decl);
+_ZN_RESULT_DECLARE(_zn_qle_decl_t, qle_decl)
 
 /*------------------ Forget Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -661,7 +660,7 @@ typedef struct
 {
     z_zint_t rid;
 } _zn_forget_res_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_res_decl_t, forget_res_decl);
+_ZN_RESULT_DECLARE(_zn_forget_res_decl_t, forget_res_decl)
 
 /*------------------ Forget Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -675,7 +674,7 @@ typedef struct
 {
     zn_res_key_t key;
 } _zn_forget_pub_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_pub_decl_t, forget_pub_decl);
+_ZN_RESULT_DECLARE(_zn_forget_pub_decl_t, forget_pub_decl)
 
 /*------------------ Forget Subscriber Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -689,7 +688,7 @@ typedef struct
 {
     zn_res_key_t key;
 } _zn_forget_sub_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_sub_decl_t, forget_sub_decl);
+_ZN_RESULT_DECLARE(_zn_forget_sub_decl_t, forget_sub_decl)
 
 /*------------------ Forget Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -703,7 +702,7 @@ typedef struct
 {
     zn_res_key_t key;
 } _zn_forget_qle_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_qle_decl_t, forget_qle_decl);
+_ZN_RESULT_DECLARE(_zn_forget_qle_decl_t, forget_qle_decl)
 
 /*------------------ Declaration  Message ------------------*/
 //  7 6 5 4 3 2 1 0

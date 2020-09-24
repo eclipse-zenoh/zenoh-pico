@@ -62,7 +62,7 @@ Z_RESULT_DECLARE(z_vec_t, locators)
 // +---------------+
 typedef struct
 {
-    u_int64_t time;
+    uint64_t time;
     z_uint8_array_t id;
 } z_timestamp_t;
 

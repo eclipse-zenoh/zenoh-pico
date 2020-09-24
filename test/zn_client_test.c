@@ -328,7 +328,7 @@ int main(int argc, char **argv)
     // z_mvar_get(eval_replies_mvar);
     // // assert(0 == z_list_len(eval_replies));
     // // This may not be true for now as :
-    // //  - zenoh-c does not check received query properties
+    // //  - zenoh-pico does not check received query properties
     // //  - zenohd does not filter out replies
     // z_list_free(&eval_replies);
 
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
     // z_mvar_get(storage_replies_mvar);
     // // assert(0 == z_list_len(storage_replies));
     // // This may not be true for now as :
-    // //  - zenoh-c does not check received query properties
+    // //  - zenoh-pico does not check received query properties
     // //  - zenohd does not filter out replies
     // z_list_free(&storage_replies);
     // z_mvar_get(eval_replies_mvar);
@@ -364,7 +364,7 @@ int main(int argc, char **argv)
     // z_mvar_get(eval_replies_mvar);
     // // assert(0 == z_list_len(eval_replies));
     // // This may not be true for now as :
-    // //  - zenoh-c does not check received query properties
+    // //  - zenoh-pico does not check received query properties
     // //  - zenohd does not filter out replies
     // z_list_free(&eval_replies);
 
@@ -372,7 +372,7 @@ int main(int argc, char **argv)
     // z_mvar_get(storage_replies_mvar);
     // // assert(0 == z_list_len(storage_replies));
     // // This may not be true for now as :
-    // //  - zenoh-c does not check received query properties
+    // //  - zenoh-pico does not check received query properties
     // //  - zenohd does not filter out replies
     // z_list_free(&storage_replies);
     // z_mvar_get(eval_replies_mvar);
@@ -531,4 +531,5 @@ int main(int argc, char **argv)
     // assert(0 == zn_running(z1));
     // assert(0 == zn_running(z2));
     // assert(0 == zn_running(z3));
+    return 0;
 }

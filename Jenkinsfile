@@ -16,7 +16,7 @@ pipeline {
                   extensions: [],
                   gitTool: 'Default',
                   submoduleCfg: [],
-                  userRemoteConfigs: [[url: 'https://github.com/eclipse-zenoh/zenoh-c.git']]
+                  userRemoteConfigs: [[url: 'https://github.com/eclipse-zenoh/zenoh-pico.git']]
                 ])
       }
     }
@@ -49,7 +49,7 @@ pipeline {
           sh '''
           . ~/.zshrc
           HOST="genie.zenoh@projects-storage.eclipse.org"
-          DOWNLOAD_DIR="/home/data/httpd/download.eclipse.org/zenoh/zenoh-c/${TAG}"
+          DOWNLOAD_DIR="/home/data/httpd/download.eclipse.org/zenoh/zenoh-pico/${TAG}"
           ssh ${HOST} rm -fr ${DOWNLOAD_DIR}
           ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}
 
@@ -64,8 +64,8 @@ pipeline {
           scp  build/libzenohc*.* build/z_* build/zn_* ${HOST}:${DOWNLOAD_DIR}/OSX/
 
           echo "Deploy include files"
-          tar czvf zenoh-c-includes.tgz include/
-          scp  zenoh-c-includes.tgz ${HOST}:${DOWNLOAD_DIR}/
+          tar czvf zenoh-pico-includes.tgz include/
+          scp  zenoh-pico-includes.tgz ${HOST}:${DOWNLOAD_DIR}/
           '''
         }
       }

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *
  * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
+ *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
 #include <unistd.h>
@@ -28,18 +28,18 @@
 
 int main(int argc, char **argv)
 {
-    //     char *locator = 0;
+    char *locator = 0;
 
-    //     if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    //     {
-    //         printf("USAGE:\n\tzn_info [<locator>=auto]\n\n");
-    //         return 0;
-    //     }
+    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
+    {
+        printf("USAGE:\n\tzn_info [<locator>=auto]\n\n");
+        return 0;
+    }
 
-    //     if (argc > 1)
-    //     {
-    //         locator = argv[1];
-    //     }
+    if (argc > 1)
+    {
+        locator = argv[1];
+    }
 
     //     z_vec_t ps = z_vec_make(2);
     //     z_vec_append(&ps, zn_property_make_from_str(ZN_USER_KEY, "user"));

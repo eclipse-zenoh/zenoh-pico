@@ -12,6 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+void z_do_nothing_c() {}
+
 // #include <stdio.h>
 // #include <stdatomic.h>
 // #include "zenoh/private/logging.h"
@@ -19,8 +21,6 @@
 // #include "zenoh/net/types.h"
 // #include "zenoh/net/private/net.h"
 // #include "zenoh/net/private/msgcodec.h"
-
-// void z_do_nothing() {}
 
 // typedef struct
 // {

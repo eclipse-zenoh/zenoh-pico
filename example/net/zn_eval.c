@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *
  * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
+ *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
 #include <unistd.h>
@@ -33,19 +33,22 @@
 
 int main(int argc, char **argv)
 {
-    // char *selector = "/zenoh/examples/c/eval";
-    // char *locator = 0;
+    char *selector = "/zenoh/examples/c/eval";
+    char *locator = 0;
 
-    // if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))) {
-    //     printf("USAGE:\n\tzn_eval [<path>=%s] [<locator>=auto]\n\n", selector);
-    //     return 0;
-    // }
-    // if (argc > 1) {
-    //     selector = argv[1];
-    // }
-    // if (argc > 2) {
-    //     locator = argv[2];
-    // }
+    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
+    {
+        printf("USAGE:\n\tzn_eval [<path>=%s] [<locator>=auto]\n\n", selector);
+        return 0;
+    }
+    if (argc > 1)
+    {
+        selector = argv[1];
+    }
+    if (argc > 2)
+    {
+        locator = argv[2];
+    }
 
     // printf("Openning session...\n");
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);

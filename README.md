@@ -1,8 +1,8 @@
 ![zenoh banner](./zenoh-dragon.png)
 
-![Build (simple)](https://github.com/eclipse-zenoh/zenoh-c/workflows/Build%20(simple)/badge.svg)
-![Build cross-platforms](https://github.com/eclipse-zenoh/zenoh-c/workflows/Build%20cross-platforms/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/zenoh-c/badge/?version=latest)](https://zenoh-c.readthedocs.io/en/latest/?badge=latest)
+![Build (simple)](https://github.com/eclipse-zenoh/zenoh-pico/workflows/Build%20(simple)/badge.svg)
+![Build cross-platforms](https://github.com/eclipse-zenoh/zenoh-pico/workflows/Build%20cross-platforms/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/zenoh-pico/badge/?version=latest)](https://zenoh-pico.readthedocs.io/en/latest/?badge=latest)
 [![Gitter](https://badges.gitter.im/atolab/zenoh.svg)](https://gitter.im/atolab/zenoh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -22,34 +22,34 @@ The C API is for pure clients, in other terms does not support peer-to-peer comm
 -------------------------------
 ## How to install it
 
-The Eclipse zenoh-c library is available as **Debian** or **RPM** packages in the [Eclipse zenoh download area](https://download.eclipse.org/zenoh/zenoh-c/).
+The Eclipse zenoh-pico library is available as **Debian** or **RPM** packages in the [Eclipse zenoh download area](https://download.eclipse.org/zenoh/zenoh-pico/).
 Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
 There are 2 kind of packages:
 
  - **libzenohc**: only contains the library file (.so)
- - **libzenohc-dev**: contains the zenoh-c header files for development. Depends on *libzenohc* package
+ - **libzenohc-dev**: contains the zenoh-pico header files for development. Depends on *libzenohc* package
 
 For other platforms, you will need to clone and build the sources.
 
-WARNING: Note that zenoh-c has not been ported on Windows yet!
+WARNING: Note that zenoh-pico has not been ported on Windows yet!
 
 -------------------------------
 ## How to build it 
-To build the **zenoh-c** client API you need to ensure that [cmake](https://cmake.org) is available on your platform -- if not please install it. 
+To build the **zenoh-pico** client API you need to ensure that [cmake](https://cmake.org) is available on your platform -- if not please install it. 
 
 Once the [cmake](https://cmake.org) dependency is satisfied, just do the following for **CMake** version 3 and higher:
 
   -- CMake version 3 and higher -- 
 
   ```bash
-  $ cd /path/to/zenoh-c
+  $ cd /path/to/zenoh-pico
   $ make
   $ make install # on linux use **sudo**
   ```
 
 If you want to build with debug symbols set the `BUILD_TYPE=Debug`environment variable before to run make:
   ```bash
-  $ cd /path/to/zenoh-c
+  $ cd /path/to/zenoh-pico
   $ BUILD_TYPE=Debug make
   $ make install # on linux use **sudo**
   ```
@@ -57,7 +57,7 @@ If you want to build with debug symbols set the `BUILD_TYPE=Debug`environment va
 For those that still have **CMake** version 2.8, do the following commands:
 
   ```bash
-  $ cd /path/to/zenoh-c
+  $ cd /path/to/zenoh-pico
   $ mkdir build
   $ cd build
   $ cmake -DCMAKE_BUILD_TYPE=Release ../cmake-2.8

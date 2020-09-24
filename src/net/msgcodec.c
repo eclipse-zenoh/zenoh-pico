@@ -99,7 +99,13 @@ void _zn_sub_mode_decode_na(z_iobuf_t *buf, _zn_sub_mode_result_t *r)
     {
         zn_temporal_property_result_t r_tp = zn_temporal_property_decode(buf);
         ASSURE_P_RESULT(r_tp, r, ZN_SUB_MODE_PARSE_ERROR)
-        r->value.sub_mode.period = &r_tp.value.temporal_property;
+        zn_temporal_property_t *p_tp = (zn_temporal_property_t *)malloc(sizeof(zn_temporal_property_t));
+        memcpy(p_tp, &r_tp.value.temporal_property, sizeof(zn_temporal_property_t));
+        r->value.sub_mode.period = p_tp;
+    }
+    else
+    {
+        r->value.sub_mode.period = NULL;
     }
 }
 
@@ -136,6 +142,10 @@ void _zn_res_key_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_res_key_result_t *
         z_string_result_t r_str = z_string_decode(buf);
         ASSURE_P_RESULT(r_str, r, Z_STRING_PARSE_ERROR)
         r->value.res_key.rname = r_str.value.string;
+    }
+    else
+    {
+        r->value.res_key.rname = NULL;
     }
 }
 
@@ -192,7 +202,7 @@ void _zn_reply_context_encode(z_iobuf_t *buf, const _zn_reply_context_t *msg)
 
     // Encode the header
     uint8_t header = _ZN_MID_REPLY_CONTEXT;
-    if (msg->is_final)
+    if (!msg->replier_id)
         header |= _ZN_FLAG_Z_F;
 
     // Write the header
@@ -201,7 +211,7 @@ void _zn_reply_context_encode(z_iobuf_t *buf, const _zn_reply_context_t *msg)
     // Encode the body
     z_zint_encode(buf, msg->qid);
     z_zint_encode(buf, msg->source_kind);
-    if (!msg->is_final)
+    if (msg->replier_id)
         z_uint8_array_encode(buf, msg->replier_id);
 }
 
@@ -219,11 +229,15 @@ void _zn_reply_context_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_reply_contex
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
     r->value.reply_context.source_kind = r_zint.value.zint;
 
-    if _ZN_HAS_FLAG (flags, _ZN_FLAG_Z_F)
+    if (!_ZN_HAS_FLAG(flags, _ZN_FLAG_Z_F))
     {
         z_uint8_array_result_t r_arr = z_uint8_array_decode(buf);
         ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
         r->value.reply_context.replier_id = &r_arr.value.uint8_array;
+    }
+    else
+    {
+        r->value.reply_context.replier_id = NULL;
     }
 }
 
@@ -357,6 +371,10 @@ void _zn_sub_decl_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_sub_decl_result_t
         ASSURE_P_RESULT(r_smd, r, ZN_SUB_MODE_PARSE_ERROR)
         r->value.sub_decl.sub_mode = &r_smd.value.sub_mode;
     }
+    else
+    {
+        r->value.sub_decl.sub_mode = NULL;
+    }
 }
 
 _zn_sub_decl_result_t
@@ -416,7 +434,7 @@ void _zn_forget_res_decl_encode(z_iobuf_t *buf, const _zn_forget_res_decl_t *dcl
     z_zint_encode(buf, dcl->rid);
 }
 
-void _zn_forget_res_decl_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_forget_res_decl_result_t *r)
+void _zn_forget_res_decl_decode_na(z_iobuf_t *buf, _zn_forget_res_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_FORGET_RESOURCE\n");
     r->tag = Z_OK_TAG;
@@ -428,10 +446,10 @@ void _zn_forget_res_decl_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_forget_res
 }
 
 _zn_forget_res_decl_result_t
-_zn_forget_res_decl_decode(uint8_t flags, z_iobuf_t *buf)
+_zn_forget_res_decl_decode(z_iobuf_t *buf)
 {
     _zn_forget_res_decl_result_t r;
-    _zn_forget_res_decl_decode_na(flags, buf, &r);
+    _zn_forget_res_decl_decode_na(buf, &r);
     return r;
 }
 
@@ -620,7 +638,7 @@ void _zn_declaration_decode_na(z_iobuf_t *buf, _zn_declaration_result_t *r)
         r->value.declaration.body.qle = r_qdcl.value.qle_decl;
         break;
     case _ZN_DECL_FORGET_RESOURCE:
-        r_frdcl = _zn_forget_res_decl_decode(flags, buf);
+        r_frdcl = _zn_forget_res_decl_decode(buf);
         ASSURE_P_RESULT(r_frdcl, r, ZN_DECLARATION_PARSE_ERROR)
         r->value.declaration.body.forget_res = r_frdcl.value.forget_res_decl;
         break;
@@ -671,7 +689,7 @@ void _zn_declare_encode(z_iobuf_t *buf, const _zn_declare_t *msg)
         _zn_declaration_encode(buf, &msg->declarations.elem[i]);
 }
 
-void _zn_declare_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_declare_result_t *r)
+void _zn_declare_decode_na(z_iobuf_t *buf, _zn_declare_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_DECLARE\n");
     r->tag = Z_OK_TAG;
@@ -705,10 +723,10 @@ void _zn_declare_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_declare_result_t *
 }
 
 _zn_declare_result_t
-_zn_declare_decode(uint8_t flags, z_iobuf_t *buf)
+_zn_declare_decode(z_iobuf_t *buf)
 {
     _zn_declare_result_t r;
-    _zn_declare_decode_na(flags, buf, &r);
+    _zn_declare_decode_na(buf, &r);
     return r;
 }
 
@@ -770,41 +788,75 @@ void _zn_data_info_decode_na(z_iobuf_t *buf, _zn_data_info_result_t *r)
         ASSURE_P_RESULT(r_sid, r, Z_ARRAY_PARSE_ERROR)
         r->value.data_info.source_id = &r_sid.value.uint8_array;
     }
+    else
+    {
+        r->value.data_info.source_id = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_SRC_SN)
     {
         z_zint_result_t r_ssn = z_zint_decode(buf);
         ASSURE_P_RESULT(r_ssn, r, Z_ZINT_PARSE_ERROR)
         r->value.data_info.source_sn = &r_ssn.value.zint;
     }
+    else
+    {
+        r->value.data_info.source_sn = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_RTR_ID)
     {
         z_uint8_array_result_t r_rid = z_uint8_array_decode(buf);
         ASSURE_P_RESULT(r_rid, r, Z_ARRAY_PARSE_ERROR)
         r->value.data_info.first_router_id = &r_rid.value.uint8_array;
     }
+    else
+    {
+        r->value.data_info.first_router_id = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_RTR_SN)
     {
         z_zint_result_t r_rsn = z_zint_decode(buf);
         ASSURE_P_RESULT(r_rsn, r, Z_ZINT_PARSE_ERROR)
         r->value.data_info.first_router_sn = &r_rsn.value.zint;
     }
+    else
+    {
+        r->value.data_info.first_router_sn = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_TSTAMP)
     {
         _zn_timestamp_result_t r_tsp = _zn_timestamp_decode(buf);
         ASSURE_P_RESULT(r_tsp, r, ZN_TIMESTAMP_PARSE_ERROR)
         r->value.data_info.tstamp = &r_tsp.value.timestamp;
     }
+    else
+    {
+        r->value.data_info.tstamp = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_KIND)
     {
         z_zint_result_t r_knd = z_zint_decode(buf);
         ASSURE_P_RESULT(r_knd, r, Z_ZINT_PARSE_ERROR)
         r->value.data_info.kind = &r_knd.value.zint;
     }
+    else
+    {
+        r->value.data_info.kind = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_DATA_INFO_ENC)
     {
         z_zint_result_t r_enc = z_zint_decode(buf);
         ASSURE_P_RESULT(r_enc, r, Z_ZINT_PARSE_ERROR)
         r->value.data_info.encoding = &r_enc.value.zint;
+    }
+    else
+    {
+        r->value.data_info.encoding = NULL;
     }
 }
 
@@ -859,6 +911,10 @@ void _zn_data_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_data_result_t *r)
         ASSURE_P_RESULT(r_dti, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
         r->value.data.info = &r_dti.value.data_info;
     }
+    else
+    {
+        r->value.data.info = NULL;
+    }
 
     r->value.data.payload = _zn_payload_decode(buf);
 }
@@ -885,7 +941,7 @@ void _zn_unit_encode(z_iobuf_t *buf, const _zn_unit_t *msg)
     z_iobuf_write(buf, hdr);
 }
 
-void _zn_unit_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_unit_result_t *r)
+void _zn_unit_decode_na(uint8_t flags, _zn_unit_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_UNIT\n");
     r->tag = Z_OK_TAG;
@@ -895,10 +951,10 @@ void _zn_unit_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_unit_result_t *r)
 }
 
 _zn_unit_result_t
-_zn_unit_decode(uint8_t flags, z_iobuf_t *buf)
+_zn_unit_decode(uint8_t flags)
 {
     _zn_unit_result_t r;
-    _zn_unit_decode_na(flags, buf, &r);
+    _zn_unit_decode_na(flags, &r);
     return r;
 }
 
@@ -948,6 +1004,10 @@ void _zn_pull_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_pull_result_t *r)
         z_zint_result_t r_zint = z_zint_decode(buf);
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.pull.max_samples = &r_zint.value.zint;
+    }
+    else
+    {
+        r->value.pull.max_samples = NULL;
     }
 }
 
@@ -1005,6 +1065,10 @@ void _zn_query_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_query_result_t *r)
         z_zint_result_t r_zint = z_zint_decode(buf);
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.query.target = &r_zint.value.zint;
+    }
+    else
+    {
+        r->value.query.target = NULL;
     }
 
     z_zint_result_t r_con = z_zint_decode(buf);
@@ -1090,7 +1154,7 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
             r->value.zenoh_message->reply_context = &r_rc.value.reply_context;
             break;
         case _ZN_MID_DECLARE:
-            r_de = _zn_declare_decode(flags, buf);
+            r_de = _zn_declare_decode(buf);
             ASSURE_P_RESULT(r_de, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.declare = r_de.value.declare;
             return;
@@ -1110,7 +1174,7 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
             r->value.zenoh_message->body.pull = r_pu.value.pull;
             return;
         case _ZN_MID_UNIT:
-            r_un = _zn_unit_decode(flags, buf);
+            r_un = _zn_unit_decode(flags);
             ASSURE_P_RESULT(r_un, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.unit = r_un.value.unit;
             return;
@@ -1170,6 +1234,10 @@ void z_scout_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_scout_result_t *r)
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.scout.what = &r_zint.value.zint;
     }
+    else
+    {
+        r->value.scout.what = NULL;
+    }
 }
 
 _zn_scout_result_t
@@ -1218,17 +1286,31 @@ void _zn_hello_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_hello_result_t *r)
         ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
         r->value.hello.pid = &r_arr.value.uint8_array;
     }
+    else
+    {
+        r->value.hello.pid = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_FLAG_S_W)
     {
         z_zint_result_t r_zint = z_zint_decode(buf);
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.hello.whatami = &r_zint.value.zint;
     }
+    else
+    {
+        r->value.hello.whatami = NULL;
+    }
+
     if _ZN_HAS_FLAG (flags, _ZN_FLAG_S_L)
     {
         z_locators_result_t r_locs = z_locators_decode(buf);
         ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
         r->value.hello.locators = &r_locs.value.locators;
+    }
+    else
+    {
+        r->value.hello.locators = NULL;
     }
 }
 
@@ -1314,12 +1396,26 @@ void _zn_open_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_open_result_t *r)
             ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
             r->value.open.sn_resolution = &r_zint.value.zint;
         }
+        else
+        {
+            r->value.open.sn_resolution = NULL;
+        }
+
         if _ZN_HAS_FLAG (options, _ZN_FLAG_S_L)
         {
             z_locators_result_t r_locs = z_locators_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
             r->value.open.locators = &r_locs.value.locators;
         }
+        else
+        {
+            r->value.open.locators = NULL;
+        }
+    }
+    else
+    {
+        r->value.open.sn_resolution = NULL;
+        r->value.open.locators = NULL;
     }
 }
 
@@ -1404,18 +1500,38 @@ void _zn_accept_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_accept_result_t *r)
             ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
             r->value.accept.sn_resolution = &r_zint.value.zint;
         }
+        else
+        {
+            r->value.accept.sn_resolution = NULL;
+        }
+
         if _ZN_HAS_FLAG (options, _ZN_FLAG_S_D)
         {
             z_zint_result_t r_zint = z_zint_decode(buf);
             ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
             r->value.accept.lease = &r_zint.value.zint;
         }
+        else
+        {
+            r->value.accept.lease = NULL;
+        }
+
         if _ZN_HAS_FLAG (options, _ZN_FLAG_S_L)
         {
             z_locators_result_t r_locs = z_locators_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
             r->value.accept.locators = &r_locs.value.locators;
         }
+        else
+        {
+            r->value.accept.locators = NULL;
+        }
+    }
+    else
+    {
+        r->value.accept.sn_resolution = NULL;
+        r->value.accept.lease = NULL;
+        r->value.accept.locators = NULL;
     }
 }
 
@@ -1463,6 +1579,11 @@ void _zn_close_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_close_result_t *r)
         ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
         r->value.close.pid = &r_arr.value.uint8_array;
     }
+    else
+    {
+        r->value.close.pid = NULL;
+    }
+
     r->value.close.reason = z_iobuf_read(buf);
 }
 
@@ -1514,6 +1635,10 @@ void _zn_sync_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_sync_result_t *r)
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.sync.count = &r_zint.value.zint;
     }
+    else
+    {
+        r->value.sync.count = NULL;
+    }
 }
 
 _zn_sync_result_t
@@ -1559,6 +1684,10 @@ void _zn_ack_nack_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_ack_nack_result_t
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
         r->value.ack_nack.mask = &r_zint.value.zint;
     }
+    else
+    {
+        r->value.ack_nack.mask = NULL;
+    }
 }
 
 _zn_ack_nack_result_t
@@ -1598,6 +1727,10 @@ void _zn_keep_alive_decode_na(uint8_t flags, z_iobuf_t *buf, _zn_keep_alive_resu
         z_uint8_array_result_t r_arr = z_uint8_array_decode(buf);
         ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
         r->value.keep_alive.pid = &r_arr.value.uint8_array;
+    }
+    else
+    {
+        r->value.keep_alive.pid = NULL;
     }
 }
 

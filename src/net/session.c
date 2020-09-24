@@ -12,6 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+void z_do_nothing_d() {}
+
 // #include <stdlib.h>
 // #include <stdio.h>
 // #include <assert.h>
