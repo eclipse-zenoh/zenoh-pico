@@ -35,8 +35,6 @@
 
 #define ZN_PUSH_MODE 0x01
 #define ZN_PULL_MODE 0x02
-#define ZN_PERIODIC_PUSH_MODE 0x03
-#define ZN_PERIODIC_PULL_MODE 0x04
 
 #define ZN_INT_RES_KEY 0
 #define ZN_STR_RES_KEY 1
@@ -59,9 +57,20 @@
 #define ZN_QTGT_ALL 2
 #define ZN_QTGT_NONE 3
 
-#define ZN_QCON_NOPE 0
+#define ZN_QCON_NONE 0
 #define ZN_QCON_LAST_HOP 1
 #define ZN_QCON_INCREMENTAL 2
+
+/*=============================*/
+/*       DataInfo flags        */
+/*=============================*/
+#define ZN_DATA_INFO_SRC_ID 0x01 // 1 << 0
+#define ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
+#define ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
+#define ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
+#define ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
+#define ZN_DATA_INFO_KIND 0x20   // 1 << 5
+#define ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
 // -- SubMode is optionally included in Subscriber Declarations
 //
@@ -73,53 +82,44 @@
 // +---------------+
 typedef struct
 {
-    uint8_t kind;
-    zn_temporal_property_t *period;
+    uint8_t header;
+    zn_temporal_property_t period;
 } zn_sub_mode_t;
+ZN_RESULT_DECLARE(zn_sub_mode_t, sub_mode)
 
 // -- DataInfo is optionally included in Data Messages
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+---------+
-// ~X|G|F|E|D|C|B|A~ -- encoded as z_zint_t
+// ~     flags     ~ -- encoded as z_zint_t
 // +---------------+
-// ~   source_id   ~ if A==1
+// ~   source_id   ~ if ZN_DATA_INFO_SRC_ID==1
 // +---------------+
-// ~   source_sn   ~ if B==1
+// ~   source_sn   ~ if ZN_DATA_INFO_SRC_SN==1
 // +---------------+
-// ~first_router_id~ if C==1
+// ~first_router_id~ if ZN_DATA_INFO_RTR_ID==1
 // +---------------+
-// ~first_router_sn~ if D==1
+// ~first_router_sn~ if ZN_DATA_INFO_RTR_SN==1
 // +---------------+
-// ~   timestamp   ~ if E==1
+// ~   timestamp   ~ if ZN_DATA_INFO_TSTAMP==1
 // +---------------+
-// ~      kind     ~ if F==1
+// ~      kind     ~ if ZN_DATA_INFO_KIND==1
 // +---------------+
-// ~   encoding    ~ if G==1
+// ~   encoding    ~ if ZN_DATA_INFO_ENC==1
 // +---------------+
 //
 typedef struct
 {
-    z_uint8_array_t *source_id;
-    z_zint_t *source_sn;
-    z_uint8_array_t *first_router_id;
-    z_zint_t *first_router_sn;
-    z_timestamp_t *tstamp;
-    z_zint_t *kind;
-    z_zint_t *encoding;
+    z_zint_t flags;
+    z_uint8_array_t source_id;
+    z_zint_t source_sn;
+    z_uint8_array_t first_router_id;
+    z_zint_t first_router_sn;
+    z_timestamp_t tstamp;
+    z_zint_t kind;
+    z_zint_t encoding;
 } zn_data_info_t;
-
-typedef struct
-{
-    char kind;
-    const unsigned char *srcid;
-    size_t srcid_length;
-    z_zint_t rsn;
-    const char *rname;
-    const unsigned char *data;
-    size_t data_length;
-    zn_data_info_t info;
-} zn_reply_value_t;
+ZN_RESULT_DECLARE(zn_data_info_t, data_info)
 
 // -- ResKey is a field used in Declarations
 //
@@ -134,6 +134,19 @@ typedef struct
     z_zint_t rid;
     char *rname;
 } zn_res_key_t;
+ZN_RESULT_DECLARE(zn_res_key_t, res_key)
+
+typedef struct
+{
+    char kind;
+    const unsigned char *srcid;
+    size_t srcid_length;
+    z_zint_t rsn;
+    const char *rname;
+    const unsigned char *data;
+    size_t data_length;
+    zn_data_info_t info;
+} zn_reply_value_t;
 
 typedef void (*zn_reply_handler_t)(const zn_reply_value_t *reply, void *arg);
 

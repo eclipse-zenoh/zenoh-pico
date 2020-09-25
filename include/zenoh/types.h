@@ -65,5 +65,6 @@ typedef struct
     uint64_t time;
     z_uint8_array_t id;
 } z_timestamp_t;
+Z_RESULT_DECLARE(z_timestamp_t, timestamp)
 
 #endif /* ZENOH_C_TYPES_H_ */

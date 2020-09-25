@@ -35,101 +35,110 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
 
 // NOTE: the following headers are for unit tests only
 #ifdef ZENOH_C_NET_MSGCODEC_T
+#define _ZN_DECLARE_ENCODE(name) \
+    void _zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const _zn_##name##_t *m)
+
+#define _ZN_DECLARE_ENCODE_NOH(name) \
+    void _zn_##name##_encode(z_iobuf_t *buf, const _zn_##name##_t *m)
+
+#define _ZN_DECLARE_DECODE(name)                                               \
+    _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, _zn_##name##_result_t *r)
+
+#define _ZN_DECLARE_DECODE_NOH(name)                           \
+    _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_result_t *r)
+
 /*------------------ Message Fields ------------------*/
 void _zn_payload_encode(z_iobuf_t *buf, const z_iobuf_t *bs);
 z_iobuf_t _zn_payload_decode(z_iobuf_t *buf);
 
 void _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts);
+void _zn_timestamp_decode_na(z_iobuf_t *buf, _zn_timestamp_result_t *r);
 _zn_timestamp_result_t _zn_timestamp_decode(z_iobuf_t *buf);
 
-void _zn_sub_mode_encode(z_iobuf_t *buf, const zn_sub_mode_t *fld);
-_zn_sub_mode_result_t _zn_sub_mode_decode(z_iobuf_t *buf);
-
-void _zn_res_key_encode(z_iobuf_t *buf, const zn_res_key_t *fld);
-_zn_res_key_result_t _zn_res_key_decode(uint8_t flags, z_iobuf_t *buf);
+ZN_DECLARE_ENCODE(res_key);
+ZN_DECLARE_DECODE(res_key);
 
 /*------------------ Message Decorators ------------------*/
-void _zn_attachment_encode(z_iobuf_t *buf, const _zn_attachment_t *msg);
-_zn_attachment_result_t _zn_attachment_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(attachment);
+_ZN_DECLARE_DECODE(attachment);
 
-void _zn_reply_context_encode(z_iobuf_t *buf, const _zn_reply_context_t *msg);
-_zn_reply_context_result_t _zn_reply_context_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(reply_context);
+_ZN_DECLARE_DECODE(reply_context);
 
 /*------------------ Zenoh Message ------------------*/
-void _zn_res_decl_encode(z_iobuf_t *buf, const _zn_res_decl_t *dcl);
-_zn_res_decl_result_t _zn_res_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(res_decl);
+_ZN_DECLARE_DECODE(res_decl);
 
-void _zn_pub_decl_encode(z_iobuf_t *buf, const _zn_pub_decl_t *dcl);
-_zn_pub_decl_result_t _zn_pub_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(pub_decl);
+_ZN_DECLARE_DECODE(pub_decl);
 
-void _zn_sub_decl_encode(z_iobuf_t *buf, const _zn_sub_decl_t *dcl);
-_zn_sub_decl_result_t _zn_sub_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(sub_decl);
+_ZN_DECLARE_DECODE(sub_decl);
 
-void _zn_qle_decl_encode(z_iobuf_t *buf, const _zn_qle_decl_t *dcl);
-_zn_qle_decl_result_t _zn_qle_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(qle_decl);
+_ZN_DECLARE_DECODE(qle_decl);
 
-void _zn_forget_res_decl_encode(z_iobuf_t *buf, const _zn_forget_res_decl_t *dcl);
-_zn_forget_res_decl_result_t _zn_forget_res_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(forget_res_decl);
+_ZN_DECLARE_DECODE_NOH(forget_res_decl);
 
-void _zn_forget_pub_decl_encode(z_iobuf_t *buf, const _zn_forget_pub_decl_t *dcl);
-_zn_forget_pub_decl_result_t _zn_forget_pub_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(forget_pub_decl);
+_ZN_DECLARE_DECODE(forget_pub_decl);
 
-void _zn_forget_sub_decl_encode(z_iobuf_t *buf, const _zn_forget_sub_decl_t *dcl);
-_zn_forget_sub_decl_result_t _zn_forget_sub_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(forget_sub_decl);
+_ZN_DECLARE_DECODE(forget_sub_decl);
 
-void _zn_forget_qle_decl_encode(z_iobuf_t *buf, const _zn_forget_qle_decl_t *dcl);
-_zn_forget_qle_decl_result_t _zn_forget_qle_decl_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(forget_qle_decl);
+_ZN_DECLARE_DECODE(forget_qle_decl);
 
-void _zn_declaration_encode(z_iobuf_t *buf, _zn_declaration_t *dcl);
-_zn_declaration_result_t _zn_declaration_decode(z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(declaration);
+_ZN_DECLARE_DECODE_NOH(declaration);
 
-void _zn_declare_encode(z_iobuf_t *buf, const _zn_declare_t *msg);
-_zn_declare_result_t _zn_declare_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(declare);
+_ZN_DECLARE_DECODE_NOH(declare);
 
-void _zn_data_info_encode(z_iobuf_t *buf, const zn_data_info_t *fld);
-_zn_data_info_result_t _zn_data_info_decode(z_iobuf_t *buf);
+ZN_DECLARE_ENCODE_NOH(data_info);
+ZN_DECLARE_DECODE_NOH(data_info);
 
-void _zn_data_encode(z_iobuf_t *buf, const _zn_data_t *msg);
-_zn_data_result_t _zn_data_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(data);
+_ZN_DECLARE_DECODE(data);
 
-void _zn_unit_encode(z_iobuf_t *buf, const _zn_unit_t *msg);
-_zn_unit_result_t _zn_unit_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(pull);
+_ZN_DECLARE_DECODE(pull);
 
-void _zn_pull_encode(z_iobuf_t *buf, const _zn_pull_t *msg);
-_zn_pull_result_t _zn_pull_decode(uint8_t flags, z_iobuf_t *buf);
-
-void _zn_query_encode(z_iobuf_t *buf, const _zn_query_t *msg);
-_zn_query_result_t _zn_query_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(query);
+_ZN_DECLARE_DECODE(query);
 
 /*------------------ Session Message ------------------*/
-void _zn_scout_encode(z_iobuf_t *buf, const _zn_scout_t *msg);
-_zn_scout_result_t z_scout_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(scout);
+_ZN_DECLARE_DECODE(scout);
 
-void _zn_hello_encode(z_iobuf_t *buf, const _zn_hello_t *msg);
-_zn_hello_result_t z_hello_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(hello);
+_ZN_DECLARE_DECODE(hello);
 
-void _zn_open_encode(z_iobuf_t *buf, const _zn_open_t *msg);
-_zn_open_result_t z_open_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(open);
+_ZN_DECLARE_DECODE(open);
 
-void _zn_accept_encode(z_iobuf_t *buf, const _zn_accept_t *msg);
-_zn_accept_result_t _zn_accept_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(accept);
+_ZN_DECLARE_DECODE(accept);
 
-void _zn_close_encode(z_iobuf_t *buf, const _zn_close_t *msg);
-_zn_close_result_t _zn_close_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(close);
+_ZN_DECLARE_DECODE(close);
 
-void _zn_sync_encode(z_iobuf_t *buf, const _zn_sync_t *msg);
-_zn_sync_result_t _zn_sync_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(sync);
+_ZN_DECLARE_DECODE(sync);
 
-void _zn_ack_nack_encode(z_iobuf_t *buf, const _zn_ack_nack_t *msg);
-_zn_ack_nack_result_t _zn_ack_nack_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(ack_nack);
+_ZN_DECLARE_DECODE(ack_nack);
 
-void _zn_keep_alive_encode(z_iobuf_t *buf, const _zn_keep_alive_t *msg);
-_zn_keep_alive_result_t _zn_keep_alive_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(keep_alive);
+_ZN_DECLARE_DECODE(keep_alive);
 
-void _zn_ping_pong_encode(z_iobuf_t *buf, const _zn_ping_pong_t *msg);
-_zn_ping_pong_result_t _zn_ping_pong_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(ping_pong);
+_ZN_DECLARE_DECODE_NOH(ping_pong);
 
-void _zn_frame_encode(z_iobuf_t *buf, const _zn_frame_t *msg);
-_zn_frame_result_t _zn_frame_decode(uint8_t flags, z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE(frame);
+_ZN_DECLARE_DECODE(frame);
 
 #endif /* ZENOH_C_NET_MSGCODEC_T */
