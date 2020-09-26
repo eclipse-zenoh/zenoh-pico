@@ -174,6 +174,16 @@ _ZN_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 /*=============================*/
 /*      Session Messages       */
 /*=============================*/
+/*------------------ Locators Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// ~  Num of Locs  ~
+// +---------------+
+// ~   [Locator]   ~
+// +---------------+
+//
+// NOTE: Locators are strings and are encoded as such
+
 /*------------------ Scout Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
 //       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
@@ -195,8 +205,8 @@ _ZN_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 typedef struct
 {
     z_zint_t what;
-} _zn_scout_t;
-_ZN_RESULT_DECLARE(_zn_scout_t, scout)
+} zn_scout_t;
+ZN_RESULT_DECLARE(zn_scout_t, scout)
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -232,9 +242,9 @@ typedef struct
 {
     z_zint_t whatami;
     z_uint8_array_t pid;
-    z_vec_t locators;
-} _zn_hello_t;
-_ZN_RESULT_DECLARE(_zn_hello_t, hello)
+    z_string_array_t locators;
+} zn_hello_t;
+ZN_RESULT_DECLARE(zn_hello_t, hello)
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -281,7 +291,7 @@ typedef struct
     z_zint_t lease;
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
-    z_vec_t locators;
+    z_string_array_t locators;
     uint8_t version;
     uint8_t options;
 } _zn_open_t;
@@ -343,7 +353,7 @@ typedef struct
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
     z_zint_t lease;
-    z_vec_t locators;
+    z_string_array_t locators;
     uint8_t options;
 } _zn_accept_t;
 _ZN_RESULT_DECLARE(_zn_accept_t, accept)
@@ -531,8 +541,8 @@ typedef struct
     _zn_attachment_t *attachement;
     union
     {
-        _zn_scout_t scout;
-        _zn_hello_t hello;
+        zn_scout_t scout;
+        zn_hello_t hello;
         _zn_open_t open;
         _zn_accept_t accept;
         _zn_close_t close;

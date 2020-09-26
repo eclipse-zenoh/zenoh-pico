@@ -971,7 +971,7 @@ zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf)
 /*     Scout/Hello Messages    */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-void _zn_scout_encode(z_iobuf_t *buf, uint8_t header, const _zn_scout_t *msg)
+void zn_scout_encode(z_iobuf_t *buf, uint8_t header, const zn_scout_t *msg)
 {
     _Z_DEBUG("Encoding _ZN_MID_SCOUT\n");
 
@@ -980,7 +980,7 @@ void _zn_scout_encode(z_iobuf_t *buf, uint8_t header, const _zn_scout_t *msg)
         z_zint_encode(buf, msg->what);
 }
 
-void z_scout_decode_na(z_iobuf_t *buf, uint8_t header, _zn_scout_result_t *r)
+void zn_scout_decode_na(z_iobuf_t *buf, uint8_t header, zn_scout_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_SCOUT\n");
     r->tag = Z_OK_TAG;
@@ -994,15 +994,15 @@ void z_scout_decode_na(z_iobuf_t *buf, uint8_t header, _zn_scout_result_t *r)
     }
 }
 
-_zn_scout_result_t z_scout_decode(z_iobuf_t *buf, uint8_t header)
+zn_scout_result_t zn_scout_decode(z_iobuf_t *buf, uint8_t header)
 {
-    _zn_scout_result_t r;
-    z_scout_decode_na(buf, header, &r);
+    zn_scout_result_t r;
+    zn_scout_decode_na(buf, header, &r);
     return r;
 }
 
 /*------------------ Hello Message ------------------*/
-void _zn_hello_encode(z_iobuf_t *buf, uint8_t header, const _zn_hello_t *msg)
+void zn_hello_encode(z_iobuf_t *buf, uint8_t header, const zn_hello_t *msg)
 {
     _Z_DEBUG("Encoding _ZN_MID_HELLO\n");
 
@@ -1014,10 +1014,10 @@ void _zn_hello_encode(z_iobuf_t *buf, uint8_t header, const _zn_hello_t *msg)
         z_zint_encode(buf, msg->whatami);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        z_locators_encode(buf, &msg->locators);
+        z_string_array_encode(buf, &msg->locators);
 }
 
-void _zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, _zn_hello_result_t *r)
+void zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, zn_hello_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_HELLO\n");
     r->tag = Z_OK_TAG;
@@ -1039,16 +1039,16 @@ void _zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, _zn_hello_result_t *r)
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
-        z_locators_result_t r_locs = z_locators_decode(buf);
+        z_string_array_result_t r_locs = z_string_array_decode(buf);
         ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
-        r->value.hello.locators = r_locs.value.locators;
+        r->value.hello.locators = r_locs.value.string_array;
     }
 }
 
-_zn_hello_result_t z_hello_decode(z_iobuf_t *buf, uint8_t header)
+zn_hello_result_t zn_hello_decode(z_iobuf_t *buf, uint8_t header)
 {
-    _zn_hello_result_t r;
-    _zn_hello_decode_na(buf, header, &r);
+    zn_hello_result_t r;
+    zn_hello_decode_na(buf, header, &r);
     return r;
 }
 
@@ -1062,6 +1062,8 @@ void _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
 
     // Encode the body
     z_iobuf_write(buf, msg->version);
+
+    z_zint_encode(buf, msg->whatami);
 
     z_uint8_array_encode(buf, &msg->opid);
 
@@ -1078,7 +1080,7 @@ void _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
             z_zint_encode(buf, msg->sn_resolution);
 
         if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            z_locators_encode(buf, &msg->locators);
+            z_string_array_encode(buf, &msg->locators);
     }
 }
 
@@ -1119,14 +1121,14 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
 
         if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_L)
         {
-            z_locators_result_t r_locs = z_locators_decode(buf);
+            z_string_array_result_t r_locs = z_string_array_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
-            r->value.open.locators = r_locs.value.locators;
+            r->value.open.locators = r_locs.value.string_array;
         }
     }
 }
 
-_zn_open_result_t z_open_decode(z_iobuf_t *buf, uint8_t header)
+_zn_open_result_t _zn_open_decode(z_iobuf_t *buf, uint8_t header)
 {
     _zn_open_result_t r;
     _zn_open_decode_na(buf, header, &r);
@@ -1159,7 +1161,7 @@ void _zn_accept_encode(z_iobuf_t *buf, uint8_t header, const _zn_accept_t *msg)
             z_zint_encode(buf, msg->lease);
 
         if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            z_locators_encode(buf, &msg->locators);
+            z_string_array_encode(buf, &msg->locators);
     }
 }
 
@@ -1205,9 +1207,9 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
 
         if _ZN_HAS_FLAG (options, _ZN_FLAG_S_L)
         {
-            z_locators_result_t r_locs = z_locators_decode(buf);
+            z_string_array_result_t r_locs = z_string_array_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
-            r->value.accept.locators = r_locs.value.locators;
+            r->value.accept.locators = r_locs.value.string_array;
         }
     }
 }
@@ -1451,10 +1453,10 @@ void _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *msg
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_SCOUT:
-        _zn_scout_encode(buf, msg->header, &msg->body.scout);
+        zn_scout_encode(buf, msg->header, &msg->body.scout);
         break;
     case _ZN_MID_HELLO:
-        _zn_hello_encode(buf, msg->header, &msg->body.hello);
+        zn_hello_encode(buf, msg->header, &msg->body.hello);
         break;
     case _ZN_MID_OPEN:
         _zn_open_encode(buf, msg->header, &msg->body.open);
@@ -1491,8 +1493,8 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
     r->tag = Z_OK_TAG;
 
     _zn_attachment_result_t r_at;
-    _zn_scout_result_t r_sc;
-    _zn_hello_result_t r_he;
+    zn_scout_result_t r_sc;
+    zn_hello_result_t r_he;
     _zn_open_result_t r_op;
     _zn_accept_result_t r_ac;
     _zn_close_result_t r_cl;
@@ -1516,17 +1518,17 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
             r->value.session_message->attachement = &r_at.value.attachment;
             break;
         case _ZN_MID_SCOUT:
-            r_sc = z_scout_decode(buf, r->value.session_message->header);
+            r_sc = zn_scout_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_sc, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.scout = r_sc.value.scout;
             return;
         case _ZN_MID_HELLO:
-            r_he = z_hello_decode(buf, r->value.session_message->header);
+            r_he = zn_hello_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_he, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.hello = r_he.value.hello;
             return;
         case _ZN_MID_OPEN:
-            r_op = z_open_decode(buf, r->value.session_message->header);
+            r_op = _zn_open_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_op, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.open = r_op.value.open;
             return;

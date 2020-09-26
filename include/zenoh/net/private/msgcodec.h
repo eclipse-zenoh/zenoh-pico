@@ -111,11 +111,11 @@ _ZN_DECLARE_ENCODE(query);
 _ZN_DECLARE_DECODE(query);
 
 /*------------------ Session Message ------------------*/
-_ZN_DECLARE_ENCODE(scout);
-_ZN_DECLARE_DECODE(scout);
+ZN_DECLARE_ENCODE(scout);
+ZN_DECLARE_DECODE(scout);
 
-_ZN_DECLARE_ENCODE(hello);
-_ZN_DECLARE_DECODE(hello);
+ZN_DECLARE_ENCODE(hello);
+ZN_DECLARE_DECODE(hello);
 
 _ZN_DECLARE_ENCODE(open);
 _ZN_DECLARE_DECODE(open);

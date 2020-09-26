@@ -29,7 +29,7 @@ z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *buf);
 void z_string_encode(z_iobuf_t *buf, const char *s);
 z_string_result_t z_string_decode(z_iobuf_t *buf);
 
-void z_locators_encode(z_iobuf_t *buf, const z_vec_t *locators);
-z_locators_result_t z_locators_decode(z_iobuf_t *buf);
+void z_string_array_encode(z_iobuf_t *buf, const z_string_array_t *sa);
+z_string_array_result_t z_string_array_decode(z_iobuf_t *buf);
 
 #endif /* ZENOH_C_CODEC_H */
