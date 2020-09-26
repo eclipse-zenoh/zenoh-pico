@@ -47,9 +47,9 @@ int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf);
 int _zn_recv_n(_zn_socket_t sock, uint8_t *buf, size_t len);
 
 size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *m);
-size_t _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m);
+size_t _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m);
 
-size_t _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m, unsigned int max_len);
+size_t _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m, unsigned int max_len);
 
 z_zint_result_t _zn_recv_zint(_zn_socket_t sock);
 

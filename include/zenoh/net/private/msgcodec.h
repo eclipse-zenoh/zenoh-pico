@@ -27,9 +27,9 @@ _zn_session_message_p_result_t z_session_message_decode(z_iobuf_t *buf);
 void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_t *r);
 
 /*------------------ Zenoh Message ------------------*/
-void _zn_zenoh_message_encode(z_iobuf_t *buf, const _zn_zenoh_message_t *m);
-_zn_zenoh_message_p_result_t z_zenoh_message_decode(z_iobuf_t *buf);
-void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r);
+void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *m);
+zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf);
+void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r);
 
 #endif /* ZENOH_C_NET_MSGCODEC_H */
 

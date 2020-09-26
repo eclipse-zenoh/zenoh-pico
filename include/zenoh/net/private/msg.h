@@ -841,7 +841,7 @@ typedef struct
         _zn_pull_t pull;
     } body;
     uint8_t header;
-} _zn_zenoh_message_t;
-_ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
+} zn_zenoh_message_t;
+ZN_P_RESULT_DECLARE(zn_zenoh_message_t, zenoh_message)
 
 #endif /* ZENOH_C_NET_MSG_H */

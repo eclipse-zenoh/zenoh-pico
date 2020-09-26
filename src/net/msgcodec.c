@@ -864,7 +864,7 @@ _zn_query_result_t _zn_query_decode(z_iobuf_t *buf, uint8_t header)
 }
 
 /*------------------ Zenoh Message ------------------*/
-void _zn_zenoh_message_encode(z_iobuf_t *buf, const _zn_zenoh_message_t *msg)
+void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *msg)
 {
     // Encode the decorators if present
     if (msg->attachment)
@@ -899,7 +899,7 @@ void _zn_zenoh_message_encode(z_iobuf_t *buf, const _zn_zenoh_message_t *msg)
     }
 }
 
-void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
+void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
 {
     r->tag = Z_OK_TAG;
 
@@ -917,11 +917,13 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
         switch (_ZN_MID(r->value.zenoh_message->header))
         {
         case _ZN_MID_ATTACHMENT:
+            // @TODO: fix attachment decoding
             r_at = _zn_attachment_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_at, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->attachment = &r_at.value.attachment;
             break;
         case _ZN_MID_REPLY_CONTEXT:
+            // @TODO: fix reply_context decoding
             r_rc = _zn_reply_context_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_rc, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->reply_context = &r_rc.value.reply_context;
@@ -957,11 +959,11 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
     } while (1);
 }
 
-_zn_zenoh_message_p_result_t _zn_zenoh_message_decode(z_iobuf_t *buf)
+zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf)
 {
-    _zn_zenoh_message_p_result_t r;
-    _zn_zenoh_message_p_result_init(&r);
-    _zn_zenoh_message_decode_na(buf, &r);
+    zn_zenoh_message_p_result_t r;
+    zn_zenoh_message_p_result_init(&r);
+    zn_zenoh_message_decode_na(buf, &r);
     return r;
 }
 
@@ -1245,8 +1247,7 @@ void _zn_close_decode_na(z_iobuf_t *buf, uint8_t header, _zn_close_result_t *r)
     r->value.close.reason = z_iobuf_read(buf);
 }
 
-_zn_close_result_t
-_zn_close_decode(z_iobuf_t *buf, uint8_t header)
+_zn_close_result_t _zn_close_decode(z_iobuf_t *buf, uint8_t header)
 {
     _zn_close_result_t r;
     _zn_close_decode_na(buf, header, &r);
@@ -1401,7 +1402,7 @@ void _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     {
         unsigned int len = z_vec_length(&msg->payload.messages);
         for (unsigned int i = 0; i < len; ++i)
-            _zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
+            zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
     }
 }
 
@@ -1425,7 +1426,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
         r->value.frame.payload.messages = z_vec_make(1);
         do
         {
-            _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(buf);
+            zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
                 z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
             else

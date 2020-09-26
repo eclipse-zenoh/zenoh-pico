@@ -401,7 +401,7 @@ void z_do_nothing_a() {}
 // }
 
 // size_t
-// _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m)
+// _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m)
 // {
 //     _Z_DEBUG(">> send_msg\n");
 //     z_iobuf_clear(buf);
@@ -421,7 +421,7 @@ void z_do_nothing_a() {}
 // }
 
 // size_t
-// _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m, unsigned int max_len)
+// _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m, unsigned int max_len)
 // {
 //     if (max_len > buf->capacity)
 //     {
@@ -514,7 +514,7 @@ void z_do_nothing_a() {}
 //     // return z_message_decode(buf);
 // }
 
-// void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
+// void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_p_result_t *r)
 // {
 //     z_iobuf_clear(buf);
 //     _Z_DEBUG(">> recv_msg\n");
@@ -536,11 +536,11 @@ void z_do_nothing_a() {}
 //     _zn_zenoh_message_decode_na(buf, r);
 // }
 
-// _zn_zenoh_message_p_result_t
+// z_zenoh_message_p_result_t
 // _zn_recv_z_msg(_zn_socket_t sock, z_iobuf_t *buf)
 // {
-//     _zn_zenoh_message_p_result_t r;
-//     _zn_zenoh_message_p_result_init(&r);
+//     z_zenoh_message_p_result_t r;
+//     _z_zenoh_message_p_result_init(&r);
 //     _zn_recv_z_msg_na(sock, buf, &r);
 //     return r;
 //     // z_iobuf_clear(buf);

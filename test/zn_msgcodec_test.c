@@ -80,15 +80,6 @@ uint64_t gen_time()
     return (uint64_t)time(NULL);
 }
 
-z_timestamp_t gen_timestamp()
-{
-    z_timestamp_t ts;
-    ts.time = (u_int64_t)time(NULL);
-    ts.id = gen_uint8_array(16);
-
-    return ts;
-}
-
 char *gen_string(unsigned int size)
 {
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
@@ -100,144 +91,6 @@ char *gen_string(unsigned int size)
     }
     str[size] = '\0';
     return str;
-}
-
-zn_res_key_t gen_res_key()
-{
-    zn_res_key_t key;
-    key.rid = gen_zint();
-    int is_numerical = gen_bool();
-    if (is_numerical)
-        key.rname = NULL;
-    else
-        key.rname = gen_string((rand() % 16) + 1);
-
-    return key;
-}
-
-zn_sub_mode_t gen_sub_mode()
-{
-    uint8_t kind[2] = {ZN_PUSH_MODE, ZN_PULL_MODE};
-
-    zn_sub_mode_t sm;
-    sm.header = kind[rand() % 4];
-
-    if (gen_bool())
-    {
-        _ZN_SET_FLAG(sm.header, _ZN_FLAG_Z_P);
-        zn_temporal_property_t t_p;
-        t_p.origin = gen_zint();
-        t_p.period = gen_zint();
-        t_p.duration = gen_zint();
-        sm.period = t_p;
-    }
-
-    return sm;
-}
-
-zn_data_info_t gen_data_info()
-{
-    zn_data_info_t di;
-
-    di.flags = 0;
-
-    if (gen_bool())
-    {
-        di.source_id = gen_uint8_array(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_ID);
-    }
-    if (gen_bool())
-    {
-        di.source_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_SN);
-    }
-    if (gen_bool())
-    {
-        di.first_router_id = gen_uint8_array(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_ID);
-    }
-    if (gen_bool())
-    {
-        di.first_router_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_SN);
-    }
-    if (gen_bool())
-    {
-        di.tstamp = gen_timestamp();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_TSTAMP);
-    }
-    if (gen_bool())
-    {
-        di.kind = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_KIND);
-    }
-    if (gen_bool())
-    {
-        di.encoding = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_ENC);
-    }
-
-    return di;
-}
-
-_zn_declaration_t gen_declaration()
-{
-    uint8_t decl[] = {
-        _ZN_DECL_RESOURCE,
-        _ZN_DECL_PUBLISHER,
-        _ZN_DECL_SUBSCRIBER,
-        _ZN_DECL_QUERYABLE,
-        _ZN_DECL_FORGET_RESOURCE,
-        _ZN_DECL_FORGET_PUBLISHER,
-        _ZN_DECL_FORGET_SUBSCRIBER,
-        _ZN_DECL_FORGET_QUERYABLE};
-
-    _zn_declaration_t d;
-    d.header = decl[gen_uint8() % 8];
-
-    switch (d.header)
-    {
-    case _ZN_DECL_RESOURCE:
-        d.body.res.rid = gen_zint();
-        d.body.res.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.res.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    case _ZN_DECL_PUBLISHER:
-        d.body.pub.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.pub.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    case _ZN_DECL_SUBSCRIBER:
-        d.body.sub.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.sub.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        if (gen_bool())
-        {
-            d.body.sub.sub_mode = gen_sub_mode();
-            _ZN_SET_FLAG(d.header, _ZN_FLAG_Z_S);
-        }
-        _ZN_SET_FLAG(d.header, (gen_bool()) ? _ZN_FLAG_Z_R : 0);
-        break;
-    case _ZN_DECL_QUERYABLE:
-        d.body.qle.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.qle.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    case _ZN_DECL_FORGET_RESOURCE:
-        d.body.forget_res.rid = gen_zint();
-        break;
-    case _ZN_DECL_FORGET_PUBLISHER:
-        d.body.forget_pub.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.forget_pub.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    case _ZN_DECL_FORGET_SUBSCRIBER:
-        d.body.forget_sub.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.forget_sub.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    case _ZN_DECL_FORGET_QUERYABLE:
-        d.body.forget_qle.key = gen_res_key();
-        _ZN_SET_FLAG(d.header, (d.body.forget_qle.key.rname) ? 0 : _ZN_FLAG_Z_K);
-        break;
-    }
-
-    return d;
 }
 
 /*=============================*/
@@ -285,6 +138,43 @@ void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *r
     printf(")");
 }
 
+/*=============================*/
+/*       Message Fields        */
+/*=============================*/
+/*------------------ Payload field ------------------*/
+void payload_field()
+{
+    printf("\n>> Payload field\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t len = 64;
+    z_iobuf_t e_pld = gen_iobuf(len);
+
+    // Encode
+    _zn_payload_encode(&buf, &e_pld);
+
+    // Decode
+    z_iobuf_t d_pld = _zn_payload_decode(&buf);
+    printf("   ");
+    assert_eq_iobuf(&e_pld, &d_pld);
+    printf("\n");
+
+    z_iobuf_free(&buf);
+    z_iobuf_free(&e_pld);
+    z_iobuf_free(&d_pld);
+}
+
+/*------------------ Timestamp field ------------------*/
+z_timestamp_t gen_timestamp()
+{
+    z_timestamp_t ts;
+    ts.time = (u_int64_t)time(NULL);
+    ts.id = gen_uint8_array(16);
+
+    return ts;
+}
+
 void assert_eq_timestamp(const z_timestamp_t *left, const z_timestamp_t *right)
 {
     printf("Timestamp -> ");
@@ -296,23 +186,48 @@ void assert_eq_timestamp(const z_timestamp_t *left, const z_timestamp_t *right)
     printf(")");
 }
 
-void assert_eq_res_key(const zn_res_key_t *left, const zn_res_key_t *right, uint8_t header)
+void timestamp_field()
 {
-    printf("ResKey -> ");
-    printf("ID (%zu:%zu), ", left->rid, right->rid);
-    assert(left->rid == right->rid);
+    printf("\n>> Timestamp field\n");
+    z_iobuf_t buf = z_iobuf_make(128);
 
-    printf("Name (");
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    // Initialize
+    z_timestamp_t e_ts = gen_timestamp();
+
+    // Encode
+    _zn_timestamp_encode(&buf, &e_ts);
+
+    // Decode
+    _zn_timestamp_result_t r_ts = _zn_timestamp_decode(&buf);
+    assert(r_ts.tag == Z_OK_TAG);
+
+    z_timestamp_t d_ts = r_ts.value.timestamp;
+    printf("   ");
+    assert_eq_timestamp(&e_ts, &d_ts);
+    printf("\n");
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ SubMode field ------------------*/
+zn_sub_mode_t gen_sub_mode()
+{
+    uint8_t kind[2] = {ZN_PUSH_MODE, ZN_PULL_MODE};
+
+    zn_sub_mode_t sm;
+    sm.header = kind[rand() % 4];
+
+    if (gen_bool())
     {
-        printf("%s:%s", left->rname, right->rname);
-        assert(!strcmp(left->rname, right->rname));
+        _ZN_SET_FLAG(sm.header, _ZN_FLAG_Z_P);
+        zn_temporal_property_t t_p;
+        t_p.origin = gen_zint();
+        t_p.period = gen_zint();
+        t_p.duration = gen_zint();
+        sm.period = t_p;
     }
-    else
-    {
-        printf("NULL:NULL");
-    }
-    printf(")");
+
+    return sm;
 }
 
 void assert_eq_sub_mode(const zn_sub_mode_t *left, const zn_sub_mode_t *right)
@@ -338,6 +253,132 @@ void assert_eq_sub_mode(const zn_sub_mode_t *left, const zn_sub_mode_t *right)
         assert(left->period.period == right->period.period);
         assert(left->period.duration == right->period.duration);
     }
+}
+
+void sub_mode_field()
+{
+    printf("\n>> SubMode field\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    zn_sub_mode_t e_sm = gen_sub_mode();
+
+    // Encode
+    zn_sub_mode_encode(&buf, &e_sm);
+
+    // Decode
+    zn_sub_mode_result_t r_sm = zn_sub_mode_decode(&buf);
+    assert(r_sm.tag == Z_OK_TAG);
+
+    zn_sub_mode_t d_sm = r_sm.value.sub_mode;
+    printf("   ");
+    assert_eq_sub_mode(&e_sm, &d_sm);
+    printf("\n");
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ ResKey field ------------------*/
+zn_res_key_t gen_res_key()
+{
+    zn_res_key_t key;
+    key.rid = gen_zint();
+    int is_numerical = gen_bool();
+    if (is_numerical)
+        key.rname = NULL;
+    else
+        key.rname = gen_string((rand() % 16) + 1);
+
+    return key;
+}
+
+void assert_eq_res_key(const zn_res_key_t *left, const zn_res_key_t *right, uint8_t header)
+{
+    printf("ResKey -> ");
+    printf("ID (%zu:%zu), ", left->rid, right->rid);
+    assert(left->rid == right->rid);
+
+    printf("Name (");
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    {
+        printf("%s:%s", left->rname, right->rname);
+        assert(!strcmp(left->rname, right->rname));
+    }
+    else
+    {
+        printf("NULL:NULL");
+    }
+    printf(")");
+}
+
+void res_key_field()
+{
+    printf("\n>> ResKey field\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    zn_res_key_t e_rk = gen_res_key();
+
+    // Encode
+    uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
+    zn_res_key_encode(&buf, header, &e_rk);
+
+    // Decode
+    zn_res_key_result_t r_rk = zn_res_key_decode(&buf, header);
+    assert(r_rk.tag == Z_OK_TAG);
+
+    zn_res_key_t d_rk = r_rk.value.res_key;
+    printf("   ");
+    assert_eq_res_key(&e_rk, &d_rk, header);
+    printf("\n");
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ DataInfo field ------------------*/
+zn_data_info_t gen_data_info()
+{
+    zn_data_info_t di;
+
+    di.flags = 0;
+
+    if (gen_bool())
+    {
+        di.source_id = gen_uint8_array(16);
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_ID);
+    }
+    if (gen_bool())
+    {
+        di.source_sn = gen_zint();
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_SN);
+    }
+    if (gen_bool())
+    {
+        di.first_router_id = gen_uint8_array(16);
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_ID);
+    }
+    if (gen_bool())
+    {
+        di.first_router_sn = gen_zint();
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_SN);
+    }
+    if (gen_bool())
+    {
+        di.tstamp = gen_timestamp();
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_TSTAMP);
+    }
+    if (gen_bool())
+    {
+        di.kind = gen_zint();
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_KIND);
+    }
+    if (gen_bool())
+    {
+        di.encoding = gen_zint();
+        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_ENC);
+    }
+
+    return di;
 }
 
 void assert_eq_data_info(const zn_data_info_t *left, const zn_data_info_t *right)
@@ -386,141 +427,6 @@ void assert_eq_data_info(const zn_data_info_t *left, const zn_data_info_t *right
     }
 }
 
-void assert_eq_declaration(const _zn_declaration_t *left, const _zn_declaration_t *right)
-{
-    printf("Declaration -> ");
-    printf("Header (%u:%u), ", left->header, right->header);
-    assert(left->header == right->header);
-
-    switch (left->header)
-    {
-    case _ZN_DECL_RESOURCE:
-        printf("RID (%zu%zu), ", left->body.res.rid, right->body.res.rid);
-        assert(left->body.res.rid == right->body.res.rid);
-        assert_eq_res_key(&left->body.res.key, &right->body.res.key, left->header);
-        break;
-    case _ZN_DECL_PUBLISHER:
-        assert_eq_res_key(&left->body.pub.key, &right->body.pub.key, left->header);
-        break;
-    case _ZN_DECL_SUBSCRIBER:
-        assert_eq_res_key(&left->body.sub.key, &right->body.sub.key, left->header);
-        if _ZN_HAS_FLAG (left->header, _ZN_FLAG_Z_S)
-            assert_eq_sub_mode(&left->body.sub.sub_mode, &right->body.sub.sub_mode);
-        break;
-    case _ZN_DECL_QUERYABLE:
-        assert_eq_res_key(&left->body.qle.key, &right->body.qle.key, left->header);
-        break;
-    case _ZN_DECL_FORGET_RESOURCE:
-        printf("RID (%zu%zu), ", left->body.forget_res.rid, right->body.forget_res.rid);
-        break;
-    case _ZN_DECL_FORGET_PUBLISHER:
-        assert_eq_res_key(&left->body.forget_pub.key, &right->body.forget_pub.key, left->header);
-        break;
-    case _ZN_DECL_FORGET_SUBSCRIBER:
-        assert_eq_res_key(&left->body.forget_sub.key, &right->body.forget_sub.key, left->header);
-        break;
-    case _ZN_DECL_FORGET_QUERYABLE:
-        assert_eq_res_key(&left->body.forget_qle.key, &right->body.forget_qle.key, left->header);
-        break;
-    }
-}
-
-/*=============================*/
-/*       Message Fields        */
-/*=============================*/
-void payload_field()
-{
-    printf("\n>> Payload field\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
-    uint8_t len = 64;
-    z_iobuf_t e_pld = gen_iobuf(len);
-
-    // Encode
-    _zn_payload_encode(&buf, &e_pld);
-
-    // Decode
-    z_iobuf_t d_pld = _zn_payload_decode(&buf);
-    printf("   ");
-    assert_eq_iobuf(&e_pld, &d_pld);
-    printf("\n");
-
-    z_iobuf_free(&buf);
-    z_iobuf_free(&e_pld);
-    z_iobuf_free(&d_pld);
-}
-
-void timestamp_field()
-{
-    printf("\n>> Timestamp field\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
-    z_timestamp_t e_ts = gen_timestamp();
-
-    // Encode
-    _zn_timestamp_encode(&buf, &e_ts);
-
-    // Decode
-    _zn_timestamp_result_t r_ts = _zn_timestamp_decode(&buf);
-    assert(r_ts.tag == Z_OK_TAG);
-
-    z_timestamp_t d_ts = r_ts.value.timestamp;
-    printf("   ");
-    assert_eq_timestamp(&e_ts, &d_ts);
-    printf("\n");
-
-    z_iobuf_free(&buf);
-}
-
-void sub_mode_field()
-{
-    printf("\n>> SubMode field\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
-    zn_sub_mode_t e_sm = gen_sub_mode();
-
-    // Encode
-    zn_sub_mode_encode(&buf, &e_sm);
-
-    // Decode
-    zn_sub_mode_result_t r_sm = zn_sub_mode_decode(&buf);
-    assert(r_sm.tag == Z_OK_TAG);
-
-    zn_sub_mode_t d_sm = r_sm.value.sub_mode;
-    printf("   ");
-    assert_eq_sub_mode(&e_sm, &d_sm);
-    printf("\n");
-
-    z_iobuf_free(&buf);
-}
-
-void res_key_field()
-{
-    printf("\n>> ResKey field\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
-    zn_res_key_t e_rk = gen_res_key();
-
-    // Encode
-    uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
-    zn_res_key_encode(&buf, header, &e_rk);
-
-    // Decode
-    zn_res_key_result_t r_rk = zn_res_key_decode(&buf, header);
-    assert(r_rk.tag == Z_OK_TAG);
-
-    zn_res_key_t d_rk = r_rk.value.res_key;
-    printf("   ");
-    assert_eq_res_key(&e_rk, &d_rk, header);
-    printf("\n");
-
-    z_iobuf_free(&buf);
-}
-
 void data_info_field()
 {
     printf("\n>> DataInfo field\n");
@@ -547,16 +453,32 @@ void data_info_field()
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
+/*------------------ Attachment decorator ------------------*/
+_zn_attachment_t gen_attachment()
+{
+    _zn_attachment_t e_at;
+
+    e_at.header = _ZN_MID_ATTACHMENT;
+    _ZN_SET_FLAG(e_at.header, _ZN_FLAGS(gen_uint8()));
+    e_at.buffer = gen_iobuf(64);
+
+    return e_at;
+}
+
+void assert_eq_attachement(const _zn_attachment_t *left, const _zn_attachment_t *right)
+{
+    printf("Header (%x:%x), ", left->header, right->header);
+    assert(left->header == right->header);
+    assert_eq_iobuf(&left->buffer, &right->buffer);
+}
+
 void attachement_decorator()
 {
     printf("\n>> Attachment decorator\n");
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_attachment_t e_at;
-    e_at.header = _ZN_MID_ATTACHMENT;
-    _ZN_SET_FLAG(e_at.header, _ZN_FLAGS(gen_uint8()));
-    e_at.buffer = gen_iobuf(64);
+    _zn_attachment_t e_at = gen_attachment();
 
     // Encode
     _zn_attachment_encode(&buf, &e_at);
@@ -567,22 +489,18 @@ void attachement_decorator()
     assert(r_at.tag == Z_OK_TAG);
 
     _zn_attachment_t d_at = r_at.value.attachment;
-    printf("   Header (%x:%x), ", e_at.header, d_at.header);
-    assert(e_at.header == d_at.header);
-
-    assert_eq_iobuf(&e_at.buffer, &d_at.buffer);
+    printf("   ");
+    assert_eq_attachement(&e_at, &d_at);
     printf("\n");
 
     z_iobuf_free(&buf);
 }
 
-void reply_contex_decorator()
+/*------------------ ReplyContext decorator ------------------*/
+_zn_reply_context_t gen_reply_context()
 {
-    printf("\n>> ReplyContext decorator\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
     _zn_reply_context_t e_rc;
+
     e_rc.header = _ZN_MID_REPLY_CONTEXT;
     e_rc.qid = gen_zint();
     e_rc.source_kind = gen_zint();
@@ -596,6 +514,36 @@ void reply_contex_decorator()
         _ZN_SET_FLAG(e_rc.header, _ZN_FLAG_Z_F);
     }
 
+    return e_rc;
+}
+
+void assert_eq_reply_context(const _zn_reply_context_t *left, const _zn_reply_context_t *right)
+{
+    printf("Header (%x:%x), ", left->header, right->header);
+    assert(left->header == right->header);
+
+    printf("QID (%zu:%zu), ", left->qid, right->qid);
+    assert(left->qid == right->qid);
+
+    printf("Source Kind (%zu:%zu), ", left->source_kind, right->source_kind);
+    assert(left->source_kind == right->source_kind);
+
+    printf("Replier ID (");
+    if (!_ZN_HAS_FLAG(left->header, _ZN_FLAG_Z_F))
+        assert_eq_uint8_array(&left->replier_id, &right->replier_id);
+    else
+        printf("NULL:NULL");
+    printf(")");
+}
+
+void reply_contex_decorator()
+{
+    printf("\n>> ReplyContext decorator\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    _zn_reply_context_t e_rc = gen_reply_context();
+
     // Encode
     _zn_reply_context_encode(&buf, &e_rc);
 
@@ -605,40 +553,45 @@ void reply_contex_decorator()
     assert(r_rc.tag == Z_OK_TAG);
 
     _zn_reply_context_t d_rc = r_rc.value.reply_context;
-    printf("   Header (%x:%x), ", e_rc.header, d_rc.header);
-    assert(e_rc.header == d_rc.header);
-
-    printf("QID (%zu:%zu), ", e_rc.qid, d_rc.qid);
-    assert(e_rc.qid == d_rc.qid);
-
-    printf("Source Kind (%zu:%zu), ", e_rc.source_kind, d_rc.source_kind);
-    assert(e_rc.source_kind == d_rc.source_kind);
-
-    printf("Replier ID (");
-    if (!_ZN_HAS_FLAG(e_rc.header, _ZN_FLAG_Z_F))
-        assert_eq_uint8_array(&e_rc.replier_id, &d_rc.replier_id);
-    else
-        printf("NULL:NULL");
-    printf(")\n");
+    printf("   ");
+    assert_eq_reply_context(&e_rc, &d_rc);
+    printf("\n");
 
     z_iobuf_free(&buf);
 }
 
 /*=============================*/
-/*        Zenoh Messages       */
+/*      Declaration Fields     */
 /*=============================*/
+/*------------------ Resource declaration ------------------*/
+_zn_res_decl_t gen_resource_declaration(uint8_t *header)
+{
+    _zn_res_decl_t e_rd;
+
+    e_rd.rid = gen_zint();
+    e_rd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_rd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_rd;
+}
+
+void assert_eq_resource_declaration(const _zn_res_decl_t *left, const _zn_res_decl_t *right, uint8_t header)
+{
+    printf("RID (%zu:%zu), ", left->rid, right->rid);
+    assert(left->rid == right->rid);
+    assert_eq_res_key(&left->key, &right->key, header);
+}
+
 void resource_declaration()
 {
     printf("\n>> Resource declaration\n");
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_res_decl_t e_rd;
-    e_rd.rid = gen_zint();
-    e_rd.key = gen_res_key();
+    uint8_t e_hdr = 0;
+    _zn_res_decl_t e_rd = gen_resource_declaration(&e_hdr);
 
     // Encode
-    uint8_t e_hdr = (e_rd.key.rname) ? 0 : _ZN_FLAG_Z_K;
     _zn_res_decl_encode(&buf, e_hdr, &e_rd);
 
     // Decode
@@ -646,13 +599,27 @@ void resource_declaration()
     assert(r_rd.tag == Z_OK_TAG);
 
     _zn_res_decl_t d_rd = r_rd.value.res_decl;
-    printf("   RID (%zu:%zu), ", e_rd.rid, d_rd.rid);
-    assert(e_rd.rid == d_rd.rid);
-
-    assert_eq_res_key(&e_rd.key, &d_rd.key, e_hdr);
+    printf("   ");
+    assert_eq_resource_declaration(&e_rd, &d_rd, e_hdr);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Publisher declaration ------------------*/
+_zn_pub_decl_t gen_publisher_declaration(uint8_t *header)
+{
+    _zn_pub_decl_t e_pd;
+
+    e_pd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_pd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_pd;
+}
+
+void assert_eq_publisher_declaration(const _zn_pub_decl_t *left, const _zn_pub_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
 }
 
 void publisher_declaration()
@@ -661,11 +628,10 @@ void publisher_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_pub_decl_t e_pd;
-    e_pd.key = gen_res_key();
+    uint8_t e_hdr = 0;
+    _zn_pub_decl_t e_pd = gen_publisher_declaration(&e_hdr);
 
     // Encode
-    uint8_t e_hdr = (e_pd.key.rname) ? 0 : _ZN_FLAG_Z_K;
     _zn_pub_decl_encode(&buf, e_hdr, &e_pd);
 
     // Decode
@@ -674,10 +640,37 @@ void publisher_declaration()
 
     _zn_pub_decl_t d_pd = r_pd.value.pub_decl;
     printf("   ");
-    assert_eq_res_key(&e_pd.key, &d_pd.key, e_hdr);
+    assert_eq_publisher_declaration(&e_pd, &d_pd, e_hdr);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Subscriber declaration ------------------*/
+_zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
+{
+    _zn_sub_decl_t e_sd;
+
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_R : 0);
+    if (gen_bool())
+    {
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_S);
+        e_sd.sub_mode = gen_sub_mode();
+    }
+    e_sd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_sd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_sd;
+}
+
+void assert_eq_subscriber_declaration(const _zn_sub_decl_t *left, const _zn_sub_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
+    {
+        printf(", ");
+        assert_eq_sub_mode(&left->sub_mode, &right->sub_mode);
+    }
 }
 
 void subscriber_declaration()
@@ -686,16 +679,8 @@ void subscriber_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_sub_decl_t e_sd;
     uint8_t e_hdr = 0;
-    _ZN_SET_FLAG(e_hdr, (gen_bool()) ? _ZN_FLAG_Z_R : 0);
-    if (gen_bool())
-    {
-        _ZN_SET_FLAG(e_hdr, _ZN_FLAG_Z_S);
-        e_sd.sub_mode = gen_sub_mode();
-    }
-    e_sd.key = gen_res_key();
-    _ZN_SET_FLAG(e_hdr, (e_sd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _zn_sub_decl_t e_sd = gen_subscriber_declaration(&e_hdr);
 
     // Encode
     _zn_sub_decl_encode(&buf, e_hdr, &e_sd);
@@ -706,16 +691,26 @@ void subscriber_declaration()
 
     _zn_sub_decl_t d_sd = r_pd.value.sub_decl;
     printf("   ");
-    assert_eq_res_key(&e_sd.key, &d_sd.key, e_hdr);
+    assert_eq_subscriber_declaration(&e_sd, &d_sd, e_hdr);
     printf("\n");
-    if _ZN_HAS_FLAG (e_hdr, _ZN_FLAG_Z_S)
-    {
-        printf("   ");
-        assert_eq_sub_mode(&e_sd.sub_mode, &d_sd.sub_mode);
-        printf("\n");
-    }
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Queryable declaration ------------------*/
+_zn_qle_decl_t gen_queryable_declaration(uint8_t *header)
+{
+    _zn_qle_decl_t e_qd;
+
+    e_qd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_qd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_qd;
+}
+
+void assert_eq_queryable_declaration(const _zn_qle_decl_t *left, const _zn_qle_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
 }
 
 void queryable_declaration()
@@ -724,23 +719,38 @@ void queryable_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_pub_decl_t e_qd;
-    e_qd.key = gen_res_key();
+    uint8_t e_hdr = 0;
+    _zn_qle_decl_t e_qd = gen_queryable_declaration(&e_hdr);
 
     // Encode
-    uint8_t e_hdr = (e_qd.key.rname) ? 0 : _ZN_FLAG_Z_K;
-    _zn_pub_decl_encode(&buf, e_hdr, &e_qd);
+    _zn_qle_decl_encode(&buf, e_hdr, &e_qd);
 
     // Decode
-    _zn_pub_decl_result_t r_qd = _zn_pub_decl_decode(&buf, e_hdr);
+    _zn_qle_decl_result_t r_qd = _zn_qle_decl_decode(&buf, e_hdr);
     assert(r_qd.tag == Z_OK_TAG);
 
-    _zn_pub_decl_t d_qd = r_qd.value.pub_decl;
+    _zn_qle_decl_t d_qd = r_qd.value.qle_decl;
     printf("   ");
-    assert_eq_res_key(&e_qd.key, &d_qd.key, e_hdr);
+    assert_eq_queryable_declaration(&e_qd, &d_qd, e_hdr);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Forget Resource declaration ------------------*/
+_zn_forget_res_decl_t gen_forget_resource_declaration()
+{
+    _zn_forget_res_decl_t e_frd;
+
+    e_frd.rid = gen_zint();
+
+    return e_frd;
+}
+
+void assert_eq_forget_resource_declaration(const _zn_forget_res_decl_t *left, const _zn_forget_res_decl_t *right)
+{
+    printf("RID (%zu:%zu)", left->rid, right->rid);
+    assert(left->rid == right->rid);
 }
 
 void forget_resource_declaration()
@@ -749,8 +759,7 @@ void forget_resource_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_forget_res_decl_t e_frd;
-    e_frd.rid = gen_zint();
+    _zn_forget_res_decl_t e_frd = gen_forget_resource_declaration();
 
     // Encode
     _zn_forget_res_decl_encode(&buf, &e_frd);
@@ -760,11 +769,27 @@ void forget_resource_declaration()
     assert(r_frd.tag == Z_OK_TAG);
 
     _zn_forget_res_decl_t d_frd = r_frd.value.forget_res_decl;
-    printf("   RID (%zu:%zu)", e_frd.rid, d_frd.rid);
-    assert(e_frd.rid == d_frd.rid);
+    printf("   ");
+    assert_eq_forget_resource_declaration(&e_frd, &d_frd);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Forget Publisher declaration ------------------*/
+_zn_forget_pub_decl_t gen_forget_publisher_declaration(uint8_t *header)
+{
+    _zn_forget_pub_decl_t e_fpd;
+
+    e_fpd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_fpd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_fpd;
+}
+
+void assert_eq_forget_publisher_declaration(const _zn_forget_pub_decl_t *left, const _zn_forget_pub_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
 }
 
 void forget_publisher_declaration()
@@ -773,11 +798,10 @@ void forget_publisher_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_forget_pub_decl_t e_fpd;
-    e_fpd.key = gen_res_key();
+    uint8_t e_hdr = 0;
+    _zn_forget_pub_decl_t e_fpd = gen_forget_publisher_declaration(&e_hdr);
 
     // Encode
-    uint8_t e_hdr = (e_fpd.key.rname) ? 0 : _ZN_FLAG_Z_K;
     _zn_forget_pub_decl_encode(&buf, e_hdr, &e_fpd);
 
     // Decode
@@ -786,10 +810,26 @@ void forget_publisher_declaration()
 
     _zn_forget_pub_decl_t d_fpd = r_fpd.value.forget_pub_decl;
     printf("   ");
-    assert_eq_res_key(&e_fpd.key, &d_fpd.key, e_hdr);
+    assert_eq_forget_publisher_declaration(&e_fpd, &d_fpd, e_hdr);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Forget Subscriber declaration ------------------*/
+_zn_forget_sub_decl_t gen_forget_subscriber_declaration(uint8_t *header)
+{
+    _zn_forget_sub_decl_t e_fsd;
+
+    e_fsd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_fsd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_fsd;
+}
+
+void assert_eq_forget_subscriber_declaration(const _zn_forget_sub_decl_t *left, const _zn_forget_sub_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
 }
 
 void forget_subscriber_declaration()
@@ -798,11 +838,10 @@ void forget_subscriber_declaration()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_forget_sub_decl_t e_fsd;
-    e_fsd.key = gen_res_key();
+    uint8_t e_hdr = 0;
+    _zn_forget_sub_decl_t e_fsd = gen_forget_subscriber_declaration(&e_hdr);
 
     // Encode
-    uint8_t e_hdr = (e_fsd.key.rname) ? 0 : _ZN_FLAG_Z_K;
     _zn_forget_sub_decl_encode(&buf, e_hdr, &e_fsd);
 
     // Decode
@@ -811,10 +850,160 @@ void forget_subscriber_declaration()
 
     _zn_forget_sub_decl_t d_fsd = r_fsd.value.forget_sub_decl;
     printf("   ");
-    assert_eq_res_key(&e_fsd.key, &d_fsd.key, e_hdr);
+    assert_eq_forget_subscriber_declaration(&e_fsd, &d_fsd, e_hdr);
     printf("\n");
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Forget Queryable declaration ------------------*/
+_zn_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
+{
+    _zn_forget_qle_decl_t e_fqd;
+
+    e_fqd.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_fqd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+
+    return e_fqd;
+}
+
+void assert_eq_forget_queryable_declaration(const _zn_forget_qle_decl_t *left, const _zn_forget_qle_decl_t *right, uint8_t header)
+{
+    assert_eq_res_key(&left->key, &right->key, header);
+}
+
+void forget_queryable_declaration()
+{
+    printf("\n>> Forget queryable declaration\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_forget_qle_decl_t e_fqd = gen_forget_queryable_declaration(&e_hdr);
+
+    // Encode
+    _zn_forget_qle_decl_encode(&buf, e_hdr, &e_fqd);
+
+    // Decode
+    _zn_forget_qle_decl_result_t r_fqd = _zn_forget_qle_decl_decode(&buf, e_hdr);
+    assert(r_fqd.tag == Z_OK_TAG);
+
+    _zn_forget_qle_decl_t d_fqd = r_fqd.value.forget_qle_decl;
+    printf("   ");
+    assert_eq_forget_queryable_declaration(&e_fqd, &d_fqd, e_hdr);
+    printf("\n");
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Declaration ------------------*/
+_zn_declaration_t gen_declaration()
+{
+    uint8_t decl[] = {
+        _ZN_DECL_RESOURCE,
+        _ZN_DECL_PUBLISHER,
+        _ZN_DECL_SUBSCRIBER,
+        _ZN_DECL_QUERYABLE,
+        _ZN_DECL_FORGET_RESOURCE,
+        _ZN_DECL_FORGET_PUBLISHER,
+        _ZN_DECL_FORGET_SUBSCRIBER,
+        _ZN_DECL_FORGET_QUERYABLE};
+
+    _zn_declaration_t d;
+    d.header = decl[gen_uint8() % 8];
+
+    switch (d.header)
+    {
+    case _ZN_DECL_RESOURCE:
+        d.body.res = gen_resource_declaration(&d.header);
+        break;
+    case _ZN_DECL_PUBLISHER:
+        d.body.pub = gen_publisher_declaration(&d.header);
+        break;
+    case _ZN_DECL_SUBSCRIBER:
+        d.body.sub = gen_subscriber_declaration(&d.header);
+        break;
+    case _ZN_DECL_QUERYABLE:
+        d.body.qle = gen_queryable_declaration(&d.header);
+        break;
+    case _ZN_DECL_FORGET_RESOURCE:
+        d.body.forget_res = gen_forget_resource_declaration();
+        break;
+    case _ZN_DECL_FORGET_PUBLISHER:
+        d.body.forget_pub = gen_forget_publisher_declaration(&d.header);
+        break;
+    case _ZN_DECL_FORGET_SUBSCRIBER:
+        d.body.forget_sub = gen_forget_subscriber_declaration(&d.header);
+        break;
+    case _ZN_DECL_FORGET_QUERYABLE:
+        d.body.forget_qle = gen_forget_queryable_declaration(&d.header);
+        break;
+    }
+
+    return d;
+}
+
+void assert_eq_declaration(const _zn_declaration_t *left, const _zn_declaration_t *right)
+{
+    printf("Declaration -> ");
+    printf("Header (%x:%x), ", left->header, right->header);
+    assert(left->header == right->header);
+
+    switch (left->header)
+    {
+    case _ZN_DECL_RESOURCE:
+        assert_eq_resource_declaration(&left->body.res, &right->body.res, left->header);
+        break;
+    case _ZN_DECL_PUBLISHER:
+        assert_eq_publisher_declaration(&left->body.pub, &right->body.pub, left->header);
+        break;
+    case _ZN_DECL_SUBSCRIBER:
+        assert_eq_subscriber_declaration(&left->body.sub, &right->body.sub, left->header);
+        break;
+    case _ZN_DECL_QUERYABLE:
+        assert_eq_queryable_declaration(&left->body.qle, &right->body.qle, left->header);
+        break;
+    case _ZN_DECL_FORGET_RESOURCE:
+        assert_eq_forget_resource_declaration(&left->body.forget_res, &right->body.forget_res);
+        break;
+    case _ZN_DECL_FORGET_PUBLISHER:
+        assert_eq_forget_publisher_declaration(&left->body.forget_pub, &right->body.forget_pub, left->header);
+        break;
+    case _ZN_DECL_FORGET_SUBSCRIBER:
+        assert_eq_forget_subscriber_declaration(&left->body.forget_sub, &right->body.forget_sub, left->header);
+        break;
+    case _ZN_DECL_FORGET_QUERYABLE:
+        assert_eq_forget_queryable_declaration(&left->body.forget_qle, &right->body.forget_qle, left->header);
+        break;
+    }
+}
+
+/*=============================*/
+/*        Zenoh Messages       */
+/*=============================*/
+/*------------------ Declare message ------------------*/
+_zn_declare_t gen_declare_message()
+{
+    _zn_declare_t e_dcl;
+    e_dcl.declarations.length = gen_zint() % 16;
+    e_dcl.declarations.elem = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.length);
+
+    for (z_zint_t i = 0; i < e_dcl.declarations.length; ++i)
+        e_dcl.declarations.elem[i] = gen_declaration();
+
+    return e_dcl;
+}
+
+void assert_eq_declare_message(const _zn_declare_t *left, const _zn_declare_t *right)
+{
+    assert(left->declarations.length == right->declarations.length);
+
+    for (z_zint_t i = 0; i < left->declarations.length; ++i)
+    {
+        printf("   ");
+        assert_eq_declaration(&left->declarations.elem[i], &right->declarations.elem[i]);
+        printf("\n");
+    }
 }
 
 void declare_message()
@@ -823,12 +1012,7 @@ void declare_message()
     z_iobuf_t buf = z_iobuf_make(512);
 
     // Initialize
-    _zn_declare_t e_dcl;
-    e_dcl.declarations.length = gen_zint() % 16;
-    e_dcl.declarations.elem = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.length);
-
-    for (z_zint_t i = 0; i < e_dcl.declarations.length; ++i)
-        e_dcl.declarations.elem[i] = gen_declaration();
+    _zn_declare_t e_dcl = gen_declare_message();
 
     // Encode
     _zn_declare_encode(&buf, &e_dcl);
@@ -838,16 +1022,43 @@ void declare_message()
     assert(r_dcl.tag == Z_OK_TAG);
 
     _zn_declare_t d_dcl = r_dcl.value.declare;
-    assert(e_dcl.declarations.length == d_dcl.declarations.length);
-
-    for (z_zint_t i = 0; i < e_dcl.declarations.length; ++i)
-    {
-        printf("   ");
-        assert_eq_declaration(&e_dcl.declarations.elem[i], &d_dcl.declarations.elem[i]);
-        printf("\n");
-    }
+    assert_eq_declare_message(&e_dcl, &d_dcl);
 
     z_iobuf_free(&buf);
+}
+
+/*------------------ Data message ------------------*/
+_zn_data_t gen_data_message(uint8_t *header)
+{
+    _zn_data_t e_da;
+
+    e_da.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_da.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    if (gen_bool())
+    {
+        e_da.info = gen_data_info();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_I);
+    }
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
+    e_da.payload = gen_iobuf(gen_uint8() % 64);
+
+    return e_da;
+}
+
+void assert_eq_data_message(const _zn_data_t *left, const _zn_data_t *right, uint8_t header)
+{
+    printf("   ");
+    assert_eq_res_key(&left->key, &right->key, header);
+    printf("\n");
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
+    {
+        printf("   ");
+        assert_eq_data_info(&left->info, &right->info);
+        printf("\n");
+    }
+    printf("   ");
+    assert_eq_iobuf(&left->payload, &right->payload);
+    printf("\n");
 }
 
 void data_message()
@@ -856,18 +1067,8 @@ void data_message()
     z_iobuf_t buf = z_iobuf_make(256);
 
     // Initialize
-    _zn_data_t e_da;
     uint8_t e_hdr = 0;
-
-    e_da.key = gen_res_key();
-    _ZN_SET_FLAG(e_hdr, (e_da.key.rname) ? 0 : _ZN_FLAG_Z_K);
-    if (gen_bool())
-    {
-        e_da.info = gen_data_info();
-        _ZN_SET_FLAG(e_hdr, _ZN_FLAG_Z_I);
-    }
-    _ZN_SET_FLAG(e_hdr, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-    e_da.payload = gen_iobuf(gen_uint8() % 64);
+    _zn_data_t e_da = gen_data_message(&e_hdr);
 
     // Encode
     _zn_data_encode(&buf, e_hdr, &e_da);
@@ -877,18 +1078,45 @@ void data_message()
     assert(r_da.tag == Z_OK_TAG);
 
     _zn_data_t d_da = r_da.value.data;
-    printf("   ");
-    assert_eq_res_key(&e_da.key, &d_da.key, e_hdr);
-    printf("\n");
-    if _ZN_HAS_FLAG (e_hdr, _ZN_FLAG_Z_I)
+    assert_eq_data_message(&e_da, &d_da, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Pull message ------------------*/
+_zn_pull_t gen_pull_message(uint8_t *header)
+{
+    _zn_pull_t e_pu;
+
+    e_pu.key = gen_res_key();
+    _ZN_SET_FLAG(*header, (e_pu.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    e_pu.pull_id = gen_zint();
+    if (gen_bool())
     {
-        printf("   ");
-        assert_eq_data_info(&e_da.info, &d_da.info);
+        e_pu.max_samples = gen_zint();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_N);
+    }
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_F : 0);
+
+    return e_pu;
+}
+
+void assert_eq_pull_message(const _zn_pull_t *left, const _zn_pull_t *right, uint8_t header)
+{
+    printf("   ");
+    assert_eq_res_key(&left->key, &right->key, header);
+    printf("\n");
+
+    printf("   Pull ID (%zu:%zu)", left->pull_id, right->pull_id);
+    assert(left->pull_id == right->pull_id);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_N)
+    {
+        printf("   Max samples (%zu:%zu)", left->max_samples, right->max_samples);
+        assert(left->max_samples == right->max_samples);
         printf("\n");
     }
-    printf("   ");
-    assert_eq_iobuf(&e_da.payload, &d_da.payload);
-    printf("\n");
 }
 
 void pull_message()
@@ -897,18 +1125,8 @@ void pull_message()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_pull_t e_pu;
     uint8_t e_hdr = 0;
-
-    e_pu.key = gen_res_key();
-    _ZN_SET_FLAG(e_hdr, (e_pu.key.rname) ? 0 : _ZN_FLAG_Z_K);
-    e_pu.pull_id = gen_zint();
-    if (gen_bool())
-    {
-        e_pu.max_samples = gen_zint();
-        _ZN_SET_FLAG(e_hdr, _ZN_FLAG_Z_N);
-    }
-    _ZN_SET_FLAG(e_hdr, (gen_bool()) ? _ZN_FLAG_Z_F : 0);
+    _zn_pull_t e_pu = gen_pull_message(&e_hdr);
 
     // Encode
     _zn_pull_encode(&buf, e_hdr, &e_pu);
@@ -918,40 +1136,20 @@ void pull_message()
     assert(r_pu.tag == Z_OK_TAG);
 
     _zn_pull_t d_pu = r_pu.value.pull;
-    printf("   ");
-    assert_eq_res_key(&e_pu.key, &d_pu.key, e_hdr);
-    printf("\n");
-
-    printf("   Pull ID (%zu:%zu)", e_pu.pull_id, d_pu.pull_id);
-    assert(e_pu.pull_id == d_pu.pull_id);
-    printf("\n");
-
-    if _ZN_HAS_FLAG (e_hdr, _ZN_FLAG_Z_N)
-    {
-        printf("   Max samples (%zu:%zu)", e_pu.max_samples, d_pu.max_samples);
-        assert(e_pu.max_samples == d_pu.max_samples);
-        printf("\n");
-    }
+    assert_eq_pull_message(&e_pu, &d_pu, e_hdr);
 
     z_iobuf_free(&buf);
 }
 
-void query_message()
+/*------------------ Query message ------------------*/
+_zn_query_t gen_query_message(uint8_t *header)
 {
-    printf("\n>> Query message\n");
-    z_iobuf_t buf = z_iobuf_make(128);
-
-    // Initialize
     _zn_query_t e_qy;
-    uint8_t e_hdr = 0;
 
     e_qy.key = gen_res_key();
-    _ZN_SET_FLAG(e_hdr, (e_qy.key.rname) ? 0 : _ZN_FLAG_Z_K);
-
+    _ZN_SET_FLAG(*header, (e_qy.key.rname) ? 0 : _ZN_FLAG_Z_K);
     e_qy.predicate = gen_string(gen_uint8() % 16);
-
     e_qy.qid = gen_zint();
-
     if (gen_bool())
     {
         uint8_t tgt[] = {
@@ -960,14 +1158,51 @@ void query_message()
             ZN_QTGT_ALL,
             ZN_QTGT_NONE};
         e_qy.target = tgt[gen_uint8() % 4];
-        _ZN_SET_FLAG(e_hdr, _ZN_FLAG_Z_T);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_T);
     }
-
     uint8_t con[] = {
         ZN_QCON_NONE,
         ZN_QCON_LAST_HOP,
         ZN_QCON_INCREMENTAL};
     e_qy.consolidation = con[gen_uint8() % 3];
+
+    return e_qy;
+}
+
+void assert_eq_query_message(const _zn_query_t *left, const _zn_query_t *right, uint8_t header)
+{
+    printf("   ");
+    assert_eq_res_key(&left->key, &right->key, header);
+    printf("\n");
+
+    printf("   Predicate (%s:%s)", left->predicate, right->predicate);
+    assert(!strcmp(left->predicate, right->predicate));
+    printf("\n");
+
+    printf("   Query ID (%zu:%zu)", left->qid, right->qid);
+    assert(left->qid == right->qid);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
+    {
+        printf("   Target (%zu:%zu)", left->target, right->target);
+        assert(left->target == right->target);
+        printf("\n");
+    }
+
+    printf("   Consolidation (%zu:%zu)", left->consolidation, right->consolidation);
+    assert(left->consolidation == right->consolidation);
+    printf("\n");
+}
+
+void query_message()
+{
+    printf("\n>> Query message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_query_t e_qy = gen_query_message(&e_hdr);
 
     // Encode
     _zn_query_encode(&buf, e_hdr, &e_qy);
@@ -977,32 +1212,108 @@ void query_message()
     assert(r_qy.tag == Z_OK_TAG);
 
     _zn_query_t d_qy = r_qy.value.query;
-    printf("   ");
-    assert_eq_res_key(&e_qy.key, &d_qy.key, e_hdr);
-    printf("\n");
-
-    printf("   Predicate (%s:%s)", e_qy.predicate, d_qy.predicate);
-    assert(!strcmp(e_qy.predicate, d_qy.predicate));
-    printf("\n");
-
-    printf("   Query ID (%zu:%zu)", e_qy.qid, d_qy.qid);
-    assert(e_qy.qid == d_qy.qid);
-    printf("\n");
-
-    if _ZN_HAS_FLAG (e_hdr, _ZN_FLAG_Z_T)
-    {
-        printf("   Target (%zu:%zu)", e_qy.target, d_qy.target);
-        assert(e_qy.target == d_qy.target);
-        printf("\n");
-    }
-
-    printf("   Consolidation (%zu:%zu)", e_qy.consolidation, d_qy.consolidation);
-    assert(e_qy.consolidation == d_qy.consolidation);
-    printf("\n");
+    assert_eq_query_message(&e_qy, &d_qy, e_hdr);
 
     z_iobuf_free(&buf);
 }
 
+/*------------------ Zenoh message ------------------*/
+void zenoh_message()
+{
+    printf("\n>> Zenoh message\n");
+    z_iobuf_t buf = z_iobuf_make(1024);
+
+    // Initialize
+    zn_zenoh_message_t e_zm;
+    // @TODO: test non-null attachment and reply_context
+    // if (gen_bool())
+    // {
+    //     _zn_attachment_t e_at = gen_attachment();
+    //     e_zm.attachment = &e_at;
+    // }
+    // else
+    // {
+    e_zm.attachment = NULL;
+    // }
+    // if (gen_bool())
+    // {
+    //     _zn_reply_context_t e_rc = gen_reply_context();
+    //     e_zm.reply_context = &e_rc;
+    // }
+    // else
+    // {
+    e_zm.reply_context = NULL;
+    // }
+
+    uint8_t mids[] = {_ZN_MID_DECLARE, _ZN_MID_DATA, _ZN_MID_PULL, _ZN_MID_QUERY, _ZN_MID_UNIT};
+    uint8_t i = gen_uint8() % 5;
+    switch (mids[i])
+    {
+    case _ZN_MID_DECLARE:
+        e_zm.header = _ZN_MID_DECLARE;
+        e_zm.body.declare = gen_declare_message();
+        break;
+    case _ZN_MID_DATA:
+        e_zm.header = _ZN_MID_DATA;
+        e_zm.body.data = gen_data_message(&e_zm.header);
+        break;
+    case _ZN_MID_PULL:
+        e_zm.header = _ZN_MID_PULL;
+        e_zm.body.pull = gen_pull_message(&e_zm.header);
+        break;
+    case _ZN_MID_QUERY:
+        e_zm.header = _ZN_MID_QUERY;
+        e_zm.body.query = gen_query_message(&e_zm.header);
+        break;
+    case _ZN_MID_UNIT:
+        e_zm.header = _ZN_MID_UNIT;
+        _ZN_SET_FLAG(e_zm.header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
+        // Unit messages have no body
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    // Encode
+    zn_zenoh_message_encode(&buf, &e_zm);
+
+    // Decode
+    zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(&buf);
+    assert(r_zm.tag == Z_OK_TAG);
+
+    zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
+    printf("   Header (%x:%x)", e_zm.header, d_zm->header);
+    assert(e_zm.header == d_zm->header);
+
+    switch (_ZN_MID(e_zm.header))
+    {
+    case _ZN_MID_DECLARE:
+        assert_eq_declare_message(&e_zm.body.declare, &d_zm->body.declare);
+        break;
+    case _ZN_MID_DATA:
+        assert_eq_data_message(&e_zm.body.data, &d_zm->body.data, e_zm.header);
+        break;
+    case _ZN_MID_PULL:
+        assert_eq_pull_message(&e_zm.body.pull, &d_zm->body.pull, e_zm.header);
+        break;
+    case _ZN_MID_QUERY:
+        assert_eq_query_message(&e_zm.body.query, &d_zm->body.query, e_zm.header);
+        break;
+    case _ZN_MID_UNIT:
+        // Do nothin. Unit messages have no body
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    z_iobuf_free(&buf);
+}
+
+/*=============================*/
+/*       Session Messages      */
+/*=============================*/
 int main()
 {
     for (unsigned int i = 0; i < RUNS; ++i)
@@ -1025,11 +1336,13 @@ int main()
         forget_resource_declaration();
         forget_publisher_declaration();
         forget_subscriber_declaration();
+        forget_queryable_declaration();
         // Zenoh messages
         declare_message();
         data_message();
         pull_message();
         query_message();
+        zenoh_message();
     }
 
     return 0;
