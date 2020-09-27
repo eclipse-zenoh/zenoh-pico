@@ -1251,12 +1251,8 @@ void query_message()
 }
 
 /*------------------ Zenoh message ------------------*/
-void zenoh_message()
+zn_zenoh_message_t gen_zenoh_message()
 {
-    printf("\n>> Zenoh message\n");
-    z_iobuf_t buf = z_iobuf_make(1024);
-
-    // Initialize
     zn_zenoh_message_t e_zm;
     // @TODO: test non-null attachment and reply_context
     // if (gen_bool())
@@ -1308,6 +1304,46 @@ void zenoh_message()
         break;
     }
 
+    return e_zm;
+}
+
+void assert_eq_zenoh_message(const zn_zenoh_message_t *left, const zn_zenoh_message_t *right)
+{
+    printf("   Header (%x:%x)", left->header, right->header);
+    assert(left->header == right->header);
+    printf("\n");
+
+    switch (_ZN_MID(left->header))
+    {
+    case _ZN_MID_DECLARE:
+        assert_eq_declare_message(&left->body.declare, &right->body.declare);
+        break;
+    case _ZN_MID_DATA:
+        assert_eq_data_message(&left->body.data, &right->body.data, left->header);
+        break;
+    case _ZN_MID_PULL:
+        assert_eq_pull_message(&left->body.pull, &right->body.pull, left->header);
+        break;
+    case _ZN_MID_QUERY:
+        assert_eq_query_message(&left->body.query, &right->body.query, left->header);
+        break;
+    case _ZN_MID_UNIT:
+        // Do nothing. Unit messages have no body
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void zenoh_message()
+{
+    printf("\n>> Zenoh message\n");
+    z_iobuf_t buf = z_iobuf_make(1024);
+
+    // Initialize
+    zn_zenoh_message_t e_zm = gen_zenoh_message();
+
     // Encode
     zn_zenoh_message_encode(&buf, &e_zm);
 
@@ -1316,37 +1352,14 @@ void zenoh_message()
     assert(r_zm.tag == Z_OK_TAG);
 
     zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
-    printf("   Header (%x:%x)", e_zm.header, d_zm->header);
-    assert(e_zm.header == d_zm->header);
-
-    switch (_ZN_MID(e_zm.header))
-    {
-    case _ZN_MID_DECLARE:
-        assert_eq_declare_message(&e_zm.body.declare, &d_zm->body.declare);
-        break;
-    case _ZN_MID_DATA:
-        assert_eq_data_message(&e_zm.body.data, &d_zm->body.data, e_zm.header);
-        break;
-    case _ZN_MID_PULL:
-        assert_eq_pull_message(&e_zm.body.pull, &d_zm->body.pull, e_zm.header);
-        break;
-    case _ZN_MID_QUERY:
-        assert_eq_query_message(&e_zm.body.query, &d_zm->body.query, e_zm.header);
-        break;
-    case _ZN_MID_UNIT:
-        // Do nothin. Unit messages have no body
-        break;
-    default:
-        assert(0);
-        break;
-    }
+    assert_eq_zenoh_message(&e_zm, d_zm);
 
     zn_zenoh_message_p_result_free(&r_zm);
     z_iobuf_free(&buf);
 }
 
 /*=============================*/
-/*     Scout/Hello Messages    */
+/*       Session Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 zn_scout_t gen_scout_message(uint8_t *header)
@@ -1520,7 +1533,7 @@ void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uin
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
     {
-        printf("   Options (%x:%xu)", left->options, right->options);
+        printf("   Options (%x:%x)", left->options, right->options);
         assert(left->options == right->options);
         printf("\n");
 
@@ -1542,7 +1555,7 @@ void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uin
 void open_message()
 {
     printf("\n>> Open message\n");
-    z_iobuf_t buf = z_iobuf_make(1024);
+    z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1552,17 +1565,440 @@ void open_message()
     _zn_open_encode(&buf, e_hdr, &e_op);
 
     // Decode
-    _zn_open_result_t r_sc = _zn_open_decode(&buf, e_hdr);
-    assert(r_sc.tag == Z_OK_TAG);
+    _zn_open_result_t r_op = _zn_open_decode(&buf, e_hdr);
+    assert(r_op.tag == Z_OK_TAG);
 
-    _zn_open_t d_op = r_sc.value.open;
+    _zn_open_t d_op = r_op.value.open;
     assert_eq_open_message(&e_op, &d_op, e_hdr);
 
     z_iobuf_free(&buf);
 }
 
+/*------------------ Accept Message ------------------*/
+_zn_accept_t gen_accept_message(uint8_t *header)
+{
+    _zn_accept_t e_ac;
+
+    e_ac.whatami = gen_zint();
+    e_ac.opid = gen_uint8_array(16);
+    e_ac.apid = gen_uint8_array(16);
+    e_ac.initial_sn = gen_zint();
+    e_ac.options = 0;
+    if (gen_bool())
+    {
+        e_ac.sn_resolution = gen_zint();
+        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_S);
+    }
+    if (gen_bool())
+    {
+        e_ac.lease = gen_zint();
+        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_D);
+    }
+    if (gen_bool())
+    {
+        e_ac.locators = gen_string_array((gen_uint8() % 4) + 1);
+        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_L);
+    }
+    if (e_ac.options)
+    {
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_O);
+    }
+
+    return e_ac;
+}
+
+void assert_eq_accept_message(const _zn_accept_t *left, const _zn_accept_t *right, uint8_t header)
+{
+    printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
+    assert(left->whatami == right->whatami);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_uint8_array(&left->opid, &right->opid);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_uint8_array(&left->apid, &right->apid);
+    printf("\n");
+
+    printf("   Initial SN (%zu:%zu)", left->initial_sn, right->initial_sn);
+    assert(left->initial_sn == right->initial_sn);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
+    {
+        printf("   Options (%x:%x)", left->options, right->options);
+        assert(left->options == right->options);
+        printf("\n");
+
+        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_S)
+        {
+            printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
+            assert(left->sn_resolution == right->sn_resolution);
+            printf("\n");
+        }
+        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_D)
+        {
+            printf("   Lease (%zu:%zu)", left->lease, right->lease);
+            assert(left->lease == right->lease);
+            printf("\n");
+        }
+        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_L)
+        {
+            printf("   ");
+            assert_eq_string_array(&left->locators, &right->locators);
+            printf("\n");
+        }
+    }
+}
+
+void accept_message()
+{
+    printf("\n>> Accept message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_accept_t e_ac = gen_accept_message(&e_hdr);
+
+    // Encode
+    _zn_accept_encode(&buf, e_hdr, &e_ac);
+
+    // Decode
+    _zn_accept_result_t r_ac = _zn_accept_decode(&buf, e_hdr);
+    assert(r_ac.tag == Z_OK_TAG);
+
+    _zn_accept_t d_ac = r_ac.value.accept;
+    assert_eq_accept_message(&e_ac, &d_ac, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Close Message ------------------*/
+_zn_close_t gen_close_message(uint8_t *header)
+{
+    _zn_close_t e_cl;
+
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_K : 0);
+    if (gen_bool())
+    {
+        e_cl.pid = gen_uint8_array(16);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
+    }
+    e_cl.reason = gen_uint8();
+
+    return e_cl;
+}
+
+void assert_eq_close_message(const _zn_close_t *left, const _zn_close_t *right, uint8_t header)
+{
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    {
+        printf("   ");
+        assert_eq_uint8_array(&left->pid, &right->pid);
+        printf("\n");
+    }
+
+    printf("   Reason (%u:%u)", left->reason, right->reason);
+    assert(left->reason == right->reason);
+    printf("\n");
+}
+
+void close_message()
+{
+    printf("\n>> Close message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_close_t e_cl = gen_close_message(&e_hdr);
+
+    // Encode
+    _zn_close_encode(&buf, e_hdr, &e_cl);
+
+    // Decode
+    _zn_close_result_t r_cl = _zn_close_decode(&buf, e_hdr);
+    assert(r_cl.tag == Z_OK_TAG);
+
+    _zn_close_t d_cl = r_cl.value.close;
+    assert_eq_close_message(&e_cl, &d_cl, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Sync Message ------------------*/
+_zn_sync_t gen_sync_message(uint8_t *header)
+{
+    _zn_sync_t e_sy;
+
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_R : 0);
+    e_sy.sn = gen_zint();
+    if _ZN_HAS_FLAG (*header, _ZN_FLAG_S_R)
+    {
+        if (gen_bool())
+        {
+            e_sy.count = gen_zint();
+            _ZN_SET_FLAG(*header, _ZN_FLAG_S_C);
+        }
+    }
+
+    return e_sy;
+}
+
+void assert_eq_sync_message(const _zn_sync_t *left, const _zn_sync_t *right, uint8_t header)
+{
+    printf("   SN (%zu:%zu)", left->sn, right->sn);
+    assert(left->sn == right->sn);
+    printf("\n");
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_R) && _ZN_HAS_FLAG(header, _ZN_FLAG_S_C))
+    {
+        printf("   Count (%zu:%zu)", left->count, right->count);
+        assert(left->count == right->count);
+        printf("\n");
+    }
+}
+
+void sync_message()
+{
+    printf("\n>> Sync message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_sync_t e_sy = gen_sync_message(&e_hdr);
+
+    // Encode
+    _zn_sync_encode(&buf, e_hdr, &e_sy);
+
+    // Decode
+    _zn_sync_result_t r_sy = _zn_sync_decode(&buf, e_hdr);
+    assert(r_sy.tag == Z_OK_TAG);
+
+    _zn_sync_t d_sy = r_sy.value.sync;
+    assert_eq_sync_message(&e_sy, &d_sy, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ AckNack Message ------------------*/
+_zn_ack_nack_t gen_ack_nack_message(uint8_t *header)
+{
+    _zn_ack_nack_t e_an;
+
+    e_an.sn = gen_zint();
+    if (gen_bool())
+    {
+        e_an.mask = gen_zint();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_M);
+    }
+
+    return e_an;
+}
+
+void assert_eq_ack_nack_message(const _zn_ack_nack_t *left, const _zn_ack_nack_t *right, uint8_t header)
+{
+    printf("   SN (%zu:%zu)", left->sn, right->sn);
+    assert(left->sn == right->sn);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_M)
+    {
+        printf("   Mask (%zu:%zu)", left->mask, right->mask);
+        assert(left->mask == right->mask);
+        printf("\n");
+    }
+}
+
+void ack_nack_message()
+{
+    printf("\n>> AckNack message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_ack_nack_t e_an = gen_ack_nack_message(&e_hdr);
+
+    // Encode
+    _zn_ack_nack_encode(&buf, e_hdr, &e_an);
+
+    // Decode
+    _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(&buf, e_hdr);
+    assert(r_an.tag == Z_OK_TAG);
+
+    _zn_ack_nack_t d_an = r_an.value.ack_nack;
+    assert_eq_ack_nack_message(&e_an, &d_an, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ KeepAlive Message ------------------*/
+_zn_keep_alive_t gen_keep_alive_message(uint8_t *header)
+{
+    _zn_keep_alive_t e_ka;
+
+    if (gen_bool())
+    {
+        e_ka.pid = gen_uint8_array(16);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
+    }
+    else
+    {
+        // NOTE: this should not be needed. However, the compiler complains
+        // that the variable might be used initialized. Initialize it to 0.
+        e_ka.pid = gen_uint8_array(0);
+    }
+
+    return e_ka;
+}
+
+void assert_eq_keep_alive_message(const _zn_keep_alive_t *left, const _zn_keep_alive_t *right, uint8_t header)
+{
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    {
+        printf("   ");
+        assert_eq_uint8_array(&left->pid, &right->pid);
+        printf("\n");
+    }
+}
+
+void keep_alive_message()
+{
+    printf("\n>> KeepAlive message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_keep_alive_t e_ka = gen_keep_alive_message(&e_hdr);
+
+    // Encode
+    _zn_keep_alive_encode(&buf, e_hdr, &e_ka);
+
+    // Decode
+    _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(&buf, e_hdr);
+    assert(r_ka.tag == Z_OK_TAG);
+
+    _zn_keep_alive_t d_ka = r_ka.value.keep_alive;
+    assert_eq_keep_alive_message(&e_ka, &d_ka, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ PingPong Message ------------------*/
+_zn_ping_pong_t gen_ping_pong_message(uint8_t *header)
+{
+    _zn_ping_pong_t e_pp;
+
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_P : 0);
+    e_pp.hash = gen_zint();
+
+    return e_pp;
+}
+
+void assert_eq_ping_pong_message(const _zn_ping_pong_t *left, const _zn_ping_pong_t *right)
+{
+    printf("   Hash (%zu:%zu)", left->hash, right->hash);
+    assert(left->hash == right->hash);
+    printf("\n");
+}
+
+void ping_pong_message()
+{
+    printf("\n>> PingPong message\n");
+    z_iobuf_t buf = z_iobuf_make(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_ping_pong_t e_pp = gen_ping_pong_message(&e_hdr);
+
+    // Encode
+    _zn_ping_pong_encode(&buf, &e_pp);
+
+    // Decode
+    _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(&buf);
+    assert(r_pp.tag == Z_OK_TAG);
+
+    _zn_ping_pong_t d_pp = r_pp.value.ping_pong;
+    assert_eq_ping_pong_message(&e_pp, &d_pp);
+
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Frame Message ------------------*/
+_zn_frame_t gen_frame_message(uint8_t *header)
+{
+    _zn_frame_t e_fr;
+
+    e_fr.sn = gen_zint();
+
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_F : 0);
+    if _ZN_HAS_FLAG (*header, _ZN_FLAG_S_F)
+    {
+        _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_E : 0);
+        e_fr.payload.fragment = gen_iobuf(64);
+    }
+    else
+    {
+        z_zint_t num = gen_zint() % 4;
+        e_fr.payload.messages = z_vec_make(4);
+        for (z_zint_t i = 0; i < num; ++i)
+        {
+            zn_zenoh_message_t zm = gen_zenoh_message();
+            // @TODO: fix the append. Properly manage stack and heap.
+            z_vec_append(&e_fr.payload.messages, &zm);
+        }
+    }
+
+    return e_fr;
+}
+
+void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, uint8_t header)
+{
+    printf("   SN (%zu:%zu)", left->sn, right->sn);
+    assert(left->sn == right->sn);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
+    {
+        assert_eq_iobuf(&left->payload.fragment, &right->payload.fragment);
+    }
+    else
+    {
+        z_zint_t llen = z_vec_length(&left->payload.messages);
+        z_zint_t rlen = z_vec_length(&right->payload.messages);
+        printf("   Messages Number (%zu:%zu)", llen, rlen);
+        assert(llen == rlen);
+        printf("\n");
+
+        for (z_zint_t i = 0; i < llen; ++i)
+            assert_eq_zenoh_message(z_vec_get(&left->payload.messages, i), z_vec_get(&right->payload.messages, i));
+    }
+}
+
+void frame_message()
+{
+    printf("\n>> Frame message\n");
+    z_iobuf_t buf = z_iobuf_make(1024);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_frame_t e_fr = gen_frame_message(&e_hdr);
+
+    // Encode
+    _zn_frame_encode(&buf, e_hdr, &e_fr);
+
+    // Decode
+    _zn_frame_result_t r_pp = _zn_frame_decode(&buf, e_hdr);
+    assert(r_pp.tag == Z_OK_TAG);
+
+    _zn_frame_t d_pp = r_pp.value.frame;
+    assert_eq_frame_message(&e_fr, &d_pp, e_hdr);
+
+    z_iobuf_free(&buf);
+}
+
 /*=============================*/
-/*       Session Messages      */
+/*            Main             */
 /*=============================*/
 int main()
 {
@@ -1597,6 +2033,13 @@ int main()
         scout_message();
         hello_message();
         open_message();
+        accept_message();
+        close_message();
+        sync_message();
+        ack_nack_message();
+        keep_alive_message();
+        ping_pong_message();
+        // frame_message();
     }
 
     return 0;

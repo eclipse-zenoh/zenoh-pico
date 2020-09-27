@@ -99,7 +99,7 @@ void z_string_array_encode(z_iobuf_t *buf, const z_string_array_t *sa)
 {
     z_zint_encode(buf, sa->length);
     // Encode the locators
-    for (unsigned int i = 0; i < sa->length; ++i)
+    for (z_zint_t i = 0; i < sa->length; ++i)
         z_string_encode(buf, sa->elem[i]);
 }
 
@@ -110,12 +110,12 @@ void z_string_array_decode_na(z_iobuf_t *buf, z_string_array_result_t *r)
     // Decode the number of elements
     z_zint_result_t r_n = z_zint_decode(buf);
     ASSURE_P_RESULT(r_n, r, Z_ZINT_PARSE_ERROR)
-    unsigned int len = r_n.value.zint;
+    z_zint_t len = r_n.value.zint;
     r->value.string_array.length = len;
 
     r->value.string_array.elem = (z_string_t *)malloc(sizeof(z_string_t) * len);
     // Decode the elements
-    for (unsigned int i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; ++i)
     {
         z_string_result_t r_s = z_string_decode(buf);
         ASSURE_P_RESULT(r_s, r, Z_STRING_PARSE_ERROR)

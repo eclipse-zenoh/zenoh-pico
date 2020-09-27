@@ -580,9 +580,9 @@ void _zn_declare_encode(z_iobuf_t *buf, const _zn_declare_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_DECLARE\n");
 
     // Encode the body
-    unsigned int len = msg->declarations.length;
+    z_zint_t len = msg->declarations.length;
     z_zint_encode(buf, len);
-    for (unsigned int i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; ++i)
         _zn_declaration_encode(buf, &msg->declarations.elem[i]);
 }
 
@@ -1190,22 +1190,22 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
     // Decode the options
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
     {
-        uint8_t options = z_iobuf_read(buf);
-        if _ZN_HAS_FLAG (options, _ZN_FLAG_S_S)
+        r->value.accept.options = z_iobuf_read(buf);
+        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_S)
         {
             z_zint_result_t r_zint = z_zint_decode(buf);
             ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
             r->value.accept.sn_resolution = r_zint.value.zint;
         }
 
-        if _ZN_HAS_FLAG (options, _ZN_FLAG_S_D)
+        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_D)
         {
             z_zint_result_t r_zint = z_zint_decode(buf);
             ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
             r->value.accept.lease = r_zint.value.zint;
         }
 
-        if _ZN_HAS_FLAG (options, _ZN_FLAG_S_L)
+        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_L)
         {
             z_string_array_result_t r_locs = z_string_array_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
@@ -1278,7 +1278,7 @@ void _zn_sync_decode_na(z_iobuf_t *buf, uint8_t header, _zn_sync_result_t *r)
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
     r->value.sync.sn = r_zint.value.zint;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_C)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_R) && _ZN_HAS_FLAG(header, _ZN_FLAG_S_C))
     {
         z_zint_result_t r_zint = z_zint_decode(buf);
         ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
@@ -1402,8 +1402,8 @@ void _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        unsigned int len = z_vec_length(&msg->payload.messages);
-        for (unsigned int i = 0; i < len; ++i)
+        z_zint_t len = z_vec_length(&msg->payload.messages);
+        for (z_zint_t i = 0; i < len; ++i)
             zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
     }
 }

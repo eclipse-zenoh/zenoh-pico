@@ -528,8 +528,6 @@ typedef union
 } _zn_payload_t;
 typedef struct
 {
-    int is_reliable;
-    int is_fragment;
     z_zint_t sn;
     _zn_payload_t payload;
 } _zn_frame_t;
