@@ -1304,13 +1304,25 @@ void assert_eq_zenoh_message(const zn_zenoh_message_t *left, const zn_zenoh_mess
 {
     // Test message decorators
     if (left->attachment && right->attachment)
+    {
+        printf("   ");
         assert_eq_attachment(left->attachment, right->attachment);
+        printf("\n");
+    }
     else
+    {
         assert(left->attachment == right->attachment);
+    }
     if (left->reply_context && right->reply_context)
+    {
+        printf("   ");
         assert_eq_reply_context(left->reply_context, right->reply_context);
+        printf("\n");
+    }
     else
+    {
         assert(left->reply_context == right->reply_context);
+    }
 
     // Test message
     printf("   Header (%x:%x)", left->header, right->header);
@@ -1481,6 +1493,7 @@ void assert_eq_hello_message(const zn_hello_t *left, const zn_hello_t *right, ui
     }
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
+        printf("   ");
         assert_eq_string_array(&left->locators, &right->locators);
         printf("\n");
     }
@@ -1489,7 +1502,7 @@ void assert_eq_hello_message(const zn_hello_t *left, const zn_hello_t *right, ui
 void hello_message()
 {
     printf("\n>> Hello message\n");
-    z_iobuf_t buf = z_iobuf_make(1024);
+    z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2025,6 +2038,194 @@ void frame_message()
     z_iobuf_free(&buf);
 }
 
+/*------------------ Session Message ------------------*/
+zn_session_message_t gen_session_message()
+{
+    zn_session_message_t e_sm;
+    if (gen_bool())
+        e_sm.attachment = gen_attachment();
+    else
+        e_sm.attachment = NULL;
+
+    uint8_t mids[] = {
+        _ZN_MID_SCOUT,
+        _ZN_MID_HELLO,
+        _ZN_MID_OPEN,
+        _ZN_MID_ACCEPT,
+        _ZN_MID_CLOSE,
+        _ZN_MID_SYNC,
+        _ZN_MID_ACK_NACK,
+        _ZN_MID_KEEP_ALIVE,
+        _ZN_MID_PING_PONG,
+        // _ZN_MID_FRAME,
+    };
+    uint8_t i = gen_uint8() % 9; // @TODO: module 10 when frame
+    switch (mids[i])
+    {
+    case _ZN_MID_SCOUT:
+        e_sm.header = _ZN_MID_SCOUT;
+        e_sm.body.scout = gen_scout_message(&e_sm.header);
+        break;
+    case _ZN_MID_HELLO:
+        e_sm.header = _ZN_MID_HELLO;
+        e_sm.body.hello = gen_hello_message(&e_sm.header);
+        break;
+    case _ZN_MID_OPEN:
+        e_sm.header = _ZN_MID_OPEN;
+        e_sm.body.open = gen_open_message(&e_sm.header);
+        break;
+    case _ZN_MID_ACCEPT:
+        e_sm.header = _ZN_MID_ACCEPT;
+        e_sm.body.accept = gen_accept_message(&e_sm.header);
+        break;
+    case _ZN_MID_CLOSE:
+        e_sm.header = _ZN_MID_CLOSE;
+        e_sm.body.close = gen_close_message(&e_sm.header);
+        break;
+    case _ZN_MID_SYNC:
+        e_sm.header = _ZN_MID_SYNC;
+        e_sm.body.sync = gen_sync_message(&e_sm.header);
+        break;
+    case _ZN_MID_ACK_NACK:
+        e_sm.header = _ZN_MID_ACK_NACK;
+        e_sm.body.ack_nack = gen_ack_nack_message(&e_sm.header);
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        e_sm.header = _ZN_MID_KEEP_ALIVE;
+        e_sm.body.keep_alive = gen_keep_alive_message(&e_sm.header);
+        break;
+    case _ZN_MID_PING_PONG:
+        e_sm.header = _ZN_MID_PING_PONG;
+        e_sm.body.ping_pong = gen_ping_pong_message(&e_sm.header);
+        break;
+    case _ZN_MID_FRAME:
+        e_sm.header = _ZN_MID_FRAME;
+        e_sm.body.frame = gen_frame_message(&e_sm.header);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    return e_sm;
+}
+
+void assert_eq_session_message(const zn_session_message_t *left, const zn_session_message_t *right)
+{
+    // Test message decorators
+    if (left->attachment && right->attachment)
+    {
+        printf("   ");
+        assert_eq_attachment(left->attachment, right->attachment);
+        printf("\n");
+    }
+    else
+        assert(left->attachment == right->attachment);
+
+    // Test message
+    printf("   Header (%x:%x)", left->header, right->header);
+    assert(left->header == right->header);
+    printf("\n");
+
+    switch (_ZN_MID(left->header))
+    {
+    case _ZN_MID_SCOUT:
+        assert_eq_scout_message(&left->body.scout, &right->body.scout, left->header);
+        break;
+    case _ZN_MID_HELLO:
+        assert_eq_hello_message(&left->body.hello, &right->body.hello, left->header);
+        break;
+    case _ZN_MID_OPEN:
+        assert_eq_open_message(&left->body.open, &right->body.open, left->header);
+        break;
+    case _ZN_MID_ACCEPT:
+        assert_eq_accept_message(&left->body.accept, &right->body.accept, left->header);
+        break;
+    case _ZN_MID_CLOSE:
+        assert_eq_close_message(&left->body.close, &right->body.close, left->header);
+        break;
+    case _ZN_MID_SYNC:
+        assert_eq_sync_message(&left->body.sync, &right->body.sync, left->header);
+        break;
+    case _ZN_MID_ACK_NACK:
+        assert_eq_ack_nack_message(&left->body.ack_nack, &right->body.ack_nack, left->header);
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        assert_eq_keep_alive_message(&left->body.keep_alive, &right->body.keep_alive, left->header);
+        break;
+    case _ZN_MID_PING_PONG:
+        assert_eq_ping_pong_message(&left->body.ping_pong, &right->body.ping_pong);
+        break;
+    case _ZN_MID_FRAME:
+        assert_eq_frame_message(&left->body.frame, &right->body.frame, left->header);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void session_message()
+{
+    printf("\n>> Zenoh message\n");
+    z_iobuf_t buf = z_iobuf_make(1024);
+
+    // Initialize
+    zn_session_message_t e_sm = gen_session_message();
+
+    printf(" - ");
+    switch (_ZN_MID(e_sm.header))
+    {
+    case _ZN_MID_SCOUT:
+        printf("Scout message");
+        break;
+    case _ZN_MID_HELLO:
+        printf("Hello message");
+        break;
+    case _ZN_MID_OPEN:
+        printf("Open message");
+        break;
+    case _ZN_MID_ACCEPT:
+        printf("Accept message");
+        break;
+    case _ZN_MID_CLOSE:
+        printf("Close message");
+        break;
+    case _ZN_MID_SYNC:
+        printf("Sync message");
+        break;
+    case _ZN_MID_ACK_NACK:
+        printf("AckNack message");
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        printf("KeepAlive message");
+        break;
+    case _ZN_MID_PING_PONG:
+        printf("PingPong message");
+        break;
+    case _ZN_MID_FRAME:
+        printf("Frame message");
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    printf("\n");
+
+    // Encode
+    zn_session_message_encode(&buf, &e_sm);
+
+    // Decode
+    zn_session_message_p_result_t r_zm = zn_session_message_decode(&buf);
+    assert(r_zm.tag == Z_OK_TAG);
+
+    zn_session_message_t *d_zm = r_zm.value.session_message;
+    assert_eq_session_message(&e_sm, d_zm);
+
+    zn_session_message_p_result_free(&r_zm);
+    z_iobuf_free(&buf);
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -2068,6 +2269,7 @@ int main()
         keep_alive_message();
         ping_pong_message();
         // frame_message();
+        session_message();
     }
 
     return 0;

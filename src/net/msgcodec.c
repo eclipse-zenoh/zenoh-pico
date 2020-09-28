@@ -921,10 +921,12 @@ void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *msg)
     }
 }
 
-#define _ZN_INIT_DECORATORS(r, f)                  \
-    if (!_ZN_HAS_FLAG(f, 0x01))                    \
-        r->value.zenoh_message->attachment = NULL; \
-    if (!_ZN_HAS_FLAG(f, 0x02))                    \
+#define _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT 0x1
+#define _ZN_SESSION_MESSAGE_DECORATOR_REPLY_CONTEXT 0x2
+#define _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, f)                        \
+    if (!_ZN_HAS_FLAG(f, _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT))    \
+        r->value.zenoh_message->attachment = NULL;                     \
+    if (!_ZN_HAS_FLAG(f, _ZN_SESSION_MESSAGE_DECORATOR_REPLY_CONTEXT)) \
         r->value.zenoh_message->reply_context = NULL;
 
 void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
@@ -946,49 +948,49 @@ void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
         switch (_ZN_MID(r->value.zenoh_message->header))
         {
         case _ZN_MID_ATTACHMENT:
-            _ZN_SET_FLAG(has_decorator, 0x01);
+            _ZN_SET_FLAG(has_decorator, _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT);
 
             r_at = _zn_attachment_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_at, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->attachment = r_at.value.attachment;
             break;
         case _ZN_MID_REPLY_CONTEXT:
-            _ZN_SET_FLAG(has_decorator, 0x02);
+            _ZN_SET_FLAG(has_decorator, _ZN_SESSION_MESSAGE_DECORATOR_REPLY_CONTEXT);
 
             r_rc = _zn_reply_context_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_rc, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->reply_context = r_rc.value.reply_context;
             break;
         case _ZN_MID_DECLARE:
-            _ZN_INIT_DECORATORS(r, has_decorator)
+            _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, has_decorator)
 
             r_de = _zn_declare_decode(buf);
             ASSURE_P_RESULT(r_de, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.declare = r_de.value.declare;
             return;
         case _ZN_MID_DATA:
-            _ZN_INIT_DECORATORS(r, has_decorator)
+            _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, has_decorator)
 
             r_da = _zn_data_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_da, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.data = r_da.value.data;
             return;
         case _ZN_MID_QUERY:
-            _ZN_INIT_DECORATORS(r, has_decorator)
+            _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, has_decorator)
 
             r_qu = _zn_query_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_qu, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.query = r_qu.value.query;
             return;
         case _ZN_MID_PULL:
-            _ZN_INIT_DECORATORS(r, has_decorator)
+            _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, has_decorator)
 
             r_pu = _zn_pull_decode(buf, r->value.zenoh_message->header);
             ASSURE_P_RESULT(r_pu, r, ZN_ZENOH_MESSAGE_PARSE_ERROR)
             r->value.zenoh_message->body.pull = r_pu.value.pull;
             return;
         case _ZN_MID_UNIT:
-            _ZN_INIT_DECORATORS(r, has_decorator)
+            _ZN_INIT_ZENOH_MESSAGE_DECORATORS(r, has_decorator)
 
             return;
         default:
@@ -1009,7 +1011,7 @@ zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf)
 }
 
 /*=============================*/
-/*     Scout/Hello Messages    */
+/*       Session Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 void zn_scout_encode(z_iobuf_t *buf, uint8_t header, const zn_scout_t *msg)
@@ -1093,9 +1095,6 @@ zn_hello_result_t zn_hello_decode(z_iobuf_t *buf, uint8_t header)
     return r;
 }
 
-/*=============================*/
-/*       Session Messages      */
-/*=============================*/
 /*------------------ Open Message ------------------*/
 void _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
 {
@@ -1153,6 +1152,7 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
     {
         r->value.open.options = z_iobuf_read(buf);
+
         if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_S)
         {
             z_zint_result_t r_zint = z_zint_decode(buf);
@@ -1166,6 +1166,10 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
             r->value.open.locators = r_locs.value.string_array;
         }
+    }
+    else
+    {
+        r->value.open.options = 0;
     }
 }
 
@@ -1232,6 +1236,7 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
     {
         r->value.accept.options = z_iobuf_read(buf);
+
         if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_S)
         {
             z_zint_result_t r_zint = z_zint_decode(buf);
@@ -1252,6 +1257,10 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
             ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
             r->value.accept.locators = r_locs.value.string_array;
         }
+    }
+    else
+    {
+        r->value.accept.options = 0;
     }
 }
 
@@ -1488,11 +1497,16 @@ _zn_frame_result_t _zn_frame_decode(z_iobuf_t *buf, uint8_t header)
 }
 
 /*------------------ Session Message ------------------*/
-void _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *msg)
+void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *msg)
 {
+    // Encode the decorators if present
     if (msg->attachment)
         _zn_attachment_encode(buf, msg->attachment);
 
+    // Encode the header
+    z_iobuf_write(buf, msg->header);
+
+    // Encode the body
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_SCOUT:
@@ -1531,7 +1545,12 @@ void _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *msg
     }
 }
 
-void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_t *r)
+#define _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT 0x1
+#define _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, f)                   \
+    if (!_ZN_HAS_FLAG(f, _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT)) \
+        r->value.session_message->attachment = NULL;
+
+void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t *r)
 {
     r->tag = Z_OK_TAG;
 
@@ -1547,6 +1566,7 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
     _zn_ping_pong_result_t r_pp;
     _zn_frame_result_t r_fr;
 
+    uint8_t has_decorator = 0;
     do
     {
         // Decode the header
@@ -1556,56 +1576,78 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
         switch (_ZN_MID(r->value.session_message->header))
         {
         case _ZN_MID_ATTACHMENT:
+            _ZN_SET_FLAG(has_decorator, _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT);
+
             r_at = _zn_attachment_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_at, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->attachment = r_at.value.attachment;
             break;
         case _ZN_MID_SCOUT:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_sc = zn_scout_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_sc, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.scout = r_sc.value.scout;
             return;
         case _ZN_MID_HELLO:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_he = zn_hello_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_he, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.hello = r_he.value.hello;
             return;
         case _ZN_MID_OPEN:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_op = _zn_open_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_op, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.open = r_op.value.open;
             return;
         case _ZN_MID_ACCEPT:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_ac = _zn_accept_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_ac, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.accept = r_ac.value.accept;
             return;
         case _ZN_MID_CLOSE:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_cl = _zn_close_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_cl, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.close = r_cl.value.close;
             return;
         case _ZN_MID_SYNC:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_sy = _zn_sync_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_sy, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.sync = r_sy.value.sync;
             return;
         case _ZN_MID_ACK_NACK:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_an = _zn_ack_nack_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_an, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.ack_nack = r_an.value.ack_nack;
             return;
         case _ZN_MID_KEEP_ALIVE:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_ka = _zn_keep_alive_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_ka, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.keep_alive = r_ka.value.keep_alive;
             return;
         case _ZN_MID_PING_PONG:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_pp = _zn_ping_pong_decode(buf);
             ASSURE_P_RESULT(r_pp, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.ping_pong = r_pp.value.ping_pong;
             return;
         case _ZN_MID_FRAME:
+            _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
+
             r_fr = _zn_frame_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_fr, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.frame = r_fr.value.frame;
@@ -1619,10 +1661,10 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
     } while (1);
 }
 
-_zn_session_message_p_result_t _zn_session_message_decode(z_iobuf_t *buf)
+zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf)
 {
-    _zn_session_message_p_result_t r;
-    _zn_session_message_p_result_init(&r);
-    _zn_session_message_decode_na(buf, &r);
+    zn_session_message_p_result_t r;
+    zn_session_message_p_result_init(&r);
+    zn_session_message_decode_na(buf, &r);
     return r;
 }

@@ -22,9 +22,9 @@
 #include "zenoh/net/private/msg.h"
 
 /*------------------ Session Message ------------------*/
-void _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *m);
-_zn_session_message_p_result_t z_session_message_decode(z_iobuf_t *buf);
-void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_t *r);
+void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *m);
+zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf);
+void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t *r);
 
 /*------------------ Zenoh Message ------------------*/
 void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *m);

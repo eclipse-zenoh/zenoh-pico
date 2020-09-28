@@ -563,8 +563,8 @@ typedef struct
         _zn_frame_t frame;
     } body;
     uint8_t header;
-} _zn_session_message_t;
-_ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
+} zn_session_message_t;
+ZN_P_RESULT_DECLARE(zn_session_message_t, session_message)
 
 /*=============================*/
 /*       Zenoh Messages        */
