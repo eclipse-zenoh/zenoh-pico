@@ -16,7 +16,7 @@
 #include <assert.h>
 #include "zenoh/iobuf.h"
 
-z_iobuf_t z_iobuf_wrap_wo(unsigned char *buf, unsigned int capacity, unsigned int rpos, unsigned int wpos)
+z_iobuf_t z_iobuf_wrap_wo(uint8_t *buf, unsigned int capacity, unsigned int rpos, unsigned int wpos)
 {
     assert(rpos <= capacity && wpos <= capacity);
     z_iobuf_t iobuf;
@@ -27,8 +27,7 @@ z_iobuf_t z_iobuf_wrap_wo(unsigned char *buf, unsigned int capacity, unsigned in
     return iobuf;
 }
 
-z_iobuf_t
-z_iobuf_wrap(uint8_t *buf, unsigned int capacity)
+z_iobuf_t z_iobuf_wrap(uint8_t *buf, unsigned int capacity)
 {
     return z_iobuf_wrap_wo(buf, capacity, 0, 0);
 }

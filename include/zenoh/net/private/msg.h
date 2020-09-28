@@ -110,6 +110,19 @@
 #define _ZN_CLOSE_MAX_LINKS 0x04
 #define _ZN_CLOSE_EXPIRED 0x05
 
+/*------------------ Payload field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// ~    Length     ~
+// +---------------+
+// ~    Buffer     ~
+// +---------------+
+typedef struct
+{
+    z_iobuf_t iob;
+} _zn_payload_t;
+_ZN_RESULT_DECLARE(_zn_payload_t, payload)
+
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
@@ -129,7 +142,7 @@
 // +-+-+-+-+-+-+-+-+
 // | ENC |  ATTCH  |
 // +-+-+-+---------+
-// ~   Attachment  ~
+// ~    Buffer     ~
 // +---------------+
 //
 // ENC values:
@@ -137,10 +150,10 @@
 //
 typedef struct
 {
-    z_iobuf_t buffer;
+    _zn_payload_t payload;
     uint8_t header;
 } _zn_attachment_t;
-_ZN_RESULT_DECLARE(_zn_attachment_t, attachment)
+_ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 
 /*------------------ ReplyContext Decorator ------------------*/
 // The ReplyContext is a message decorator for either:
@@ -169,7 +182,7 @@ typedef struct
     z_uint8_array_t replier_id;
     uint8_t header;
 } _zn_reply_context_t;
-_ZN_RESULT_DECLARE(_zn_reply_context_t, reply_context)
+_ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 
 /*=============================*/
 /*      Session Messages       */
@@ -521,22 +534,21 @@ _ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 //       de-serialize the payload in one single pass when F==0 since no re-ordering needs to take
 //       place at this stage. Then, the F bit is used to detect the last fragment during re-ordering.
 //
-typedef union
-{
-    z_iobuf_t fragment;
-    z_vec_t messages;
-} _zn_payload_t;
 typedef struct
 {
     z_zint_t sn;
-    _zn_payload_t payload;
+    union
+    {
+        _zn_payload_t fragment;
+        z_vec_t messages;
+    } payload;
 } _zn_frame_t;
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
 
 /*------------------  Session Message ------------------*/
 typedef struct
 {
-    _zn_attachment_t *attachement;
+    _zn_attachment_t *attachment;
     union
     {
         zn_scout_t scout;
@@ -776,7 +788,7 @@ typedef struct
 {
     zn_res_key_t key;
     zn_data_info_t info;
-    z_iobuf_t payload;
+    _zn_payload_t payload;
 } _zn_data_t;
 _ZN_RESULT_DECLARE(_zn_data_t, data)
 

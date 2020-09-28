@@ -49,9 +49,13 @@ void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r);
     _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf); \
     void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_result_t *r)
 
+#define _ZN_DECLARE_P_DECODE(name)                                               \
+    _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, _zn_##name##_p_result_t *r)
+
 /*------------------ Message Fields ------------------*/
-void _zn_payload_encode(z_iobuf_t *buf, const z_iobuf_t *bs);
-z_iobuf_t _zn_payload_decode(z_iobuf_t *buf);
+_ZN_DECLARE_ENCODE_NOH(payload);
+_ZN_DECLARE_DECODE_NOH(payload);
 
 void _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts);
 void _zn_timestamp_decode_na(z_iobuf_t *buf, _zn_timestamp_result_t *r);
@@ -62,10 +66,10 @@ ZN_DECLARE_DECODE(res_key);
 
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);
-_ZN_DECLARE_DECODE(attachment);
+_ZN_DECLARE_P_DECODE(attachment);
 
 _ZN_DECLARE_ENCODE_NOH(reply_context);
-_ZN_DECLARE_DECODE(reply_context);
+_ZN_DECLARE_P_DECODE(reply_context);
 
 /*------------------ Zenoh Message ------------------*/
 _ZN_DECLARE_ENCODE(res_decl);

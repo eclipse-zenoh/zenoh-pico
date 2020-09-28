@@ -55,13 +55,14 @@ z_zint_t gen_zint()
     return (z_zint_t)rand();
 }
 
-z_iobuf_t gen_iobuf(unsigned int len)
+_zn_payload_t gen_payload(unsigned int len)
 {
-    z_iobuf_t buf = z_iobuf_make(len);
-    for (unsigned int i = 0; i < len; ++i)
-        z_iobuf_write(&buf, gen_uint8());
+    _zn_payload_t pld;
+    pld.iob = z_iobuf_make(len);
+    for (z_zint_t i = 0; i < len; ++i)
+        z_iobuf_write(&pld.iob, gen_uint8());
 
-    return buf;
+    return pld;
 }
 
 z_uint8_array_t gen_uint8_array(unsigned int len)
@@ -69,7 +70,7 @@ z_uint8_array_t gen_uint8_array(unsigned int len)
     z_uint8_array_t arr;
     arr.length = len;
     arr.elem = (uint8_t *)malloc(sizeof(uint8_t) * len);
-    for (unsigned int i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; ++i)
         arr.elem[i] = gen_uint8();
 
     return arr;
@@ -84,9 +85,9 @@ z_string_t gen_string(unsigned int size)
 {
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
     z_string_t str = (char *)malloc((sizeof(char) * size) + 1);
-    for (unsigned int i = 0; i < size; ++i)
+    for (z_zint_t i = 0; i < size; ++i)
     {
-        int key = rand() % (unsigned int)(sizeof(charset) - 1);
+        int key = rand() % (int)(sizeof(charset) - 1);
         str[i] = charset[key];
     }
     str[size] = '\0';
@@ -108,20 +109,20 @@ z_string_array_t gen_string_array(unsigned int size)
 /*=============================*/
 /*     Asserting functions     */
 /*=============================*/
-void assert_eq_iobuf(const z_iobuf_t *left, const z_iobuf_t *right)
+void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
 {
-    printf("IOBuf -> ");
-    printf("Capacity (%u:%u), ", left->capacity, right->capacity);
+    printf("Payload -> ");
+    printf("Capacity (%u:%u), ", left->iob.capacity, right->iob.capacity);
 
-    assert(left->capacity == right->capacity);
+    assert(left->iob.capacity == right->iob.capacity);
     printf("Content (");
-    for (unsigned int i = 0; i < left->capacity; ++i)
+    for (z_zint_t i = 0; i < left->iob.capacity; ++i)
     {
-        uint8_t l = left->buf[i];
-        uint8_t r = right->buf[i];
+        uint8_t l = left->iob.buf[i];
+        uint8_t r = right->iob.buf[i];
 
-        printf("%u:%u", l, r);
-        if (i < left->capacity - 1)
+        printf("%02x:%02x", l, r);
+        if (i < left->iob.capacity - 1)
             printf(" ");
 
         assert(l == r);
@@ -181,21 +182,20 @@ void payload_field()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    uint8_t len = 64;
-    z_iobuf_t e_pld = gen_iobuf(len);
+    _zn_payload_t e_pld = gen_payload(64);
 
     // Encode
     _zn_payload_encode(&buf, &e_pld);
 
     // Decode
-    z_iobuf_t d_pld = _zn_payload_decode(&buf);
+    _zn_payload_result_t r_pld = _zn_payload_decode(&buf);
+    assert(r_pld.tag == Z_OK_TAG);
+    _zn_payload_t d_pld = r_pld.value.payload;
     printf("   ");
-    assert_eq_iobuf(&e_pld, &d_pld);
+    assert_eq_payload(&e_pld, &d_pld);
     printf("\n");
 
     z_iobuf_free(&buf);
-    z_iobuf_free(&e_pld);
-    z_iobuf_free(&d_pld);
 }
 
 /*------------------ Timestamp field ------------------*/
@@ -487,67 +487,69 @@ void data_info_field()
 /*     Message decorators      */
 /*=============================*/
 /*------------------ Attachment decorator ------------------*/
-_zn_attachment_t gen_attachment()
+_zn_attachment_t *gen_attachment()
 {
-    _zn_attachment_t e_at;
+    _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
 
-    e_at.header = _ZN_MID_ATTACHMENT;
-    _ZN_SET_FLAG(e_at.header, _ZN_FLAGS(gen_uint8()));
-    e_at.buffer = gen_iobuf(64);
+    p_at->header = _ZN_MID_ATTACHMENT;
+    _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
+    p_at->payload = gen_payload(64);
 
-    return e_at;
+    return p_at;
 }
 
-void assert_eq_attachement(const _zn_attachment_t *left, const _zn_attachment_t *right)
+void assert_eq_attachment(const _zn_attachment_t *left, const _zn_attachment_t *right)
 {
     printf("Header (%x:%x), ", left->header, right->header);
     assert(left->header == right->header);
-    assert_eq_iobuf(&left->buffer, &right->buffer);
+    assert_eq_payload(&left->payload, &right->payload);
 }
 
-void attachement_decorator()
+void attachment_decorator()
 {
     printf("\n>> Attachment decorator\n");
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_attachment_t e_at = gen_attachment();
+    _zn_attachment_t *e_at = gen_attachment();
 
     // Encode
-    _zn_attachment_encode(&buf, &e_at);
+    _zn_attachment_encode(&buf, e_at);
 
     // Decode
     uint8_t header = z_iobuf_read(&buf);
-    _zn_attachment_result_t r_at = _zn_attachment_decode(&buf, header);
+    _zn_attachment_p_result_t r_at = _zn_attachment_decode(&buf, header);
     assert(r_at.tag == Z_OK_TAG);
 
-    _zn_attachment_t d_at = r_at.value.attachment;
+    _zn_attachment_t *d_at = r_at.value.attachment;
     printf("   ");
-    assert_eq_attachement(&e_at, &d_at);
+    assert_eq_attachment(e_at, d_at);
     printf("\n");
 
+    free(e_at);
+    _zn_attachment_p_result_free(&r_at);
     z_iobuf_free(&buf);
 }
 
 /*------------------ ReplyContext decorator ------------------*/
-_zn_reply_context_t gen_reply_context()
+_zn_reply_context_t *gen_reply_context()
 {
-    _zn_reply_context_t e_rc;
+    _zn_reply_context_t *p_rc = (_zn_reply_context_t *)malloc(sizeof(_zn_reply_context_t));
 
-    e_rc.header = _ZN_MID_REPLY_CONTEXT;
-    e_rc.qid = gen_zint();
-    e_rc.source_kind = gen_zint();
+    p_rc->header = _ZN_MID_REPLY_CONTEXT;
+    p_rc->qid = gen_zint();
+    p_rc->source_kind = gen_zint();
     if (gen_bool())
     {
         z_uint8_array_t id = gen_uint8_array(16);
-        e_rc.replier_id = id;
+        p_rc->replier_id = id;
     }
     else
     {
-        _ZN_SET_FLAG(e_rc.header, _ZN_FLAG_Z_F);
+        _ZN_SET_FLAG(p_rc->header, _ZN_FLAG_Z_F);
     }
 
-    return e_rc;
+    return p_rc;
 }
 
 void assert_eq_reply_context(const _zn_reply_context_t *left, const _zn_reply_context_t *right)
@@ -575,21 +577,23 @@ void reply_contex_decorator()
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    _zn_reply_context_t e_rc = gen_reply_context();
+    _zn_reply_context_t *e_rc = gen_reply_context();
 
     // Encode
-    _zn_reply_context_encode(&buf, &e_rc);
+    _zn_reply_context_encode(&buf, e_rc);
 
     // Decode
     uint8_t header = z_iobuf_read(&buf);
-    _zn_reply_context_result_t r_rc = _zn_reply_context_decode(&buf, header);
+    _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(&buf, header);
     assert(r_rc.tag == Z_OK_TAG);
 
-    _zn_reply_context_t d_rc = r_rc.value.reply_context;
+    _zn_reply_context_t *d_rc = r_rc.value.reply_context;
     printf("   ");
-    assert_eq_reply_context(&e_rc, &d_rc);
+    assert_eq_reply_context(e_rc, d_rc);
     printf("\n");
 
+    free(e_rc);
+    _zn_reply_context_p_result_free(&r_rc);
     z_iobuf_free(&buf);
 }
 
@@ -1073,7 +1077,7 @@ _zn_data_t gen_data_message(uint8_t *header)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_I);
     }
     _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-    e_da.payload = gen_iobuf(gen_uint8() % 64);
+    e_da.payload = gen_payload(gen_uint8() % 64);
 
     return e_da;
 }
@@ -1090,7 +1094,7 @@ void assert_eq_data_message(const _zn_data_t *left, const _zn_data_t *right, uin
         printf("\n");
     }
     printf("   ");
-    assert_eq_iobuf(&left->payload, &right->payload);
+    assert_eq_payload(&left->payload, &right->payload);
     printf("\n");
 }
 
@@ -1254,25 +1258,14 @@ void query_message()
 zn_zenoh_message_t gen_zenoh_message()
 {
     zn_zenoh_message_t e_zm;
-    // @TODO: test non-null attachment and reply_context
-    // if (gen_bool())
-    // {
-    //     _zn_attachment_t e_at = gen_attachment();
-    //     e_zm.attachment = &e_at;
-    // }
-    // else
-    // {
-    e_zm.attachment = NULL;
-    // }
-    // if (gen_bool())
-    // {
-    //     _zn_reply_context_t e_rc = gen_reply_context();
-    //     e_zm.reply_context = &e_rc;
-    // }
-    // else
-    // {
-    e_zm.reply_context = NULL;
-    // }
+    if (gen_bool())
+        e_zm.attachment = gen_attachment();
+    else
+        e_zm.attachment = NULL;
+    if (gen_bool())
+        e_zm.reply_context = gen_reply_context();
+    else
+        e_zm.reply_context = NULL;
 
     uint8_t mids[] = {_ZN_MID_DECLARE, _ZN_MID_DATA, _ZN_MID_PULL, _ZN_MID_QUERY, _ZN_MID_UNIT};
     uint8_t i = gen_uint8() % 5;
@@ -1309,6 +1302,17 @@ zn_zenoh_message_t gen_zenoh_message()
 
 void assert_eq_zenoh_message(const zn_zenoh_message_t *left, const zn_zenoh_message_t *right)
 {
+    // Test message decorators
+    if (left->attachment && right->attachment)
+        assert_eq_attachment(left->attachment, right->attachment);
+    else
+        assert(left->attachment == right->attachment);
+    if (left->reply_context && right->reply_context)
+        assert_eq_reply_context(left->reply_context, right->reply_context);
+    else
+        assert(left->reply_context == right->reply_context);
+
+    // Test message
     printf("   Header (%x:%x)", left->header, right->header);
     assert(left->header == right->header);
     printf("\n");
@@ -1343,6 +1347,30 @@ void zenoh_message()
 
     // Initialize
     zn_zenoh_message_t e_zm = gen_zenoh_message();
+
+    printf(" - ");
+    switch (_ZN_MID(e_zm.header))
+    {
+    case _ZN_MID_DECLARE:
+        printf("Declare message");
+        break;
+    case _ZN_MID_DATA:
+        printf("Data message");
+        break;
+    case _ZN_MID_PULL:
+        printf("Pull message");
+        break;
+    case _ZN_MID_QUERY:
+        printf("Query message");
+        break;
+    case _ZN_MID_UNIT:
+        printf("Unit message");
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    printf("\n");
 
     // Encode
     zn_zenoh_message_encode(&buf, &e_zm);
@@ -1935,7 +1963,7 @@ _zn_frame_t gen_frame_message(uint8_t *header)
     if _ZN_HAS_FLAG (*header, _ZN_FLAG_S_F)
     {
         _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_E : 0);
-        e_fr.payload.fragment = gen_iobuf(64);
+        e_fr.payload.fragment = gen_payload(64);
     }
     else
     {
@@ -1960,7 +1988,7 @@ void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, 
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
     {
-        assert_eq_iobuf(&left->payload.fragment, &right->payload.fragment);
+        assert_eq_payload(&left->payload.fragment, &right->payload.fragment);
     }
     else
     {
@@ -2012,7 +2040,7 @@ int main()
         res_key_field();
         data_info_field();
         // Message decorators
-        attachement_decorator();
+        attachment_decorator();
         reply_contex_decorator();
         // Zenoh declarations
         resource_declaration();

@@ -44,6 +44,7 @@ z_zint_result_t z_zint_decode(z_iobuf_t *buf)
         _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
         i += 7;
     } while (c > 0x7f);
+
     return r;
 }
 
