@@ -147,6 +147,10 @@ void zn_res_key_decode_na(z_iobuf_t *buf, uint8_t header, zn_res_key_result_t *r
         ASSURE_P_RESULT(r_str, r, Z_STRING_PARSE_ERROR)
         r->value.res_key.rname = r_str.value.string;
     }
+    else
+    {
+        r->value.res_key.rname = NULL;
+    }
 }
 
 zn_res_key_result_t zn_res_key_decode(z_iobuf_t *buf, uint8_t header)
@@ -269,8 +273,7 @@ void _zn_res_decl_decode_na(z_iobuf_t *buf, uint8_t header, _zn_res_decl_result_
     r->value.res_decl.key = r_res.value.res_key;
 }
 
-_zn_res_decl_result_t
-_zn_res_decl_decode(z_iobuf_t *buf, uint8_t header)
+_zn_res_decl_result_t _zn_res_decl_decode(z_iobuf_t *buf, uint8_t header)
 {
     _zn_res_decl_result_t r;
     _zn_res_decl_decode_na(buf, header, &r);
@@ -1452,8 +1455,8 @@ void _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        z_zint_t len = z_vec_length(&msg->payload.messages);
-        for (z_zint_t i = 0; i < len; ++i)
+        unsigned int len = z_vec_length(&msg->payload.messages);
+        for (unsigned int i = 0; i < len; ++i)
             zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
     }
 }
@@ -1472,20 +1475,20 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
     {
         _zn_payload_result_t r_pld = _zn_payload_decode(buf);
-        ASSURE_P_RESULT(r_pld, r, Z_ZINT_PARSE_ERROR);
+        ASSURE_P_RESULT(r_pld, r, ZN_PAYLOAD_PARSE_ERROR);
         r->value.frame.payload.fragment = r_pld.value.payload;
     }
     else
     {
-        r->value.frame.payload.messages = z_vec_make(1);
-        do
+        r->value.frame.payload.messages = z_vec_make(_FRAME_MESSAGES_VEC_SIZE);
+        while (z_iobuf_readable(buf))
         {
             zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
                 z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
             else
                 return;
-        } while (1);
+        }
     }
 }
 

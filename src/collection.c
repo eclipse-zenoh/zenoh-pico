@@ -17,6 +17,7 @@
 #include <string.h>
 #include <assert.h>
 
+/*-------- Linked List --------*/
 z_list_t *z_list_empty = 0;
 
 inline z_vec_t z_vec_make(unsigned int capacity)
@@ -182,6 +183,7 @@ void z_list_free(z_list_t **xs)
     *xs = 0;
 }
 
+/*-------- Int Map --------*/
 z_i_map_t *z_i_map_empty = 0;
 
 z_i_map_t *z_i_map_make(unsigned int capacity)

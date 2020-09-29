@@ -21,6 +21,7 @@
 #include "zenoh/net/property.h"
 #include "zenoh/net/private/msg.h"
 
+#define _FRAME_MESSAGES_VEC_SIZE 32
 /*------------------ Session Message ------------------*/
 void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *m);
 zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf);

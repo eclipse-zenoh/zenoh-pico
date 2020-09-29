@@ -34,7 +34,7 @@
 /* Zenoh Messages */
 #define _ZN_MID_DECLARE 0x0b
 #define _ZN_MID_DATA 0x0c
-#define _ZN_MID_QUERY 0x1d
+#define _ZN_MID_QUERY 0x0d
 #define _ZN_MID_PULL 0x0e
 #define _ZN_MID_UNIT 0x0f
 /* Message decorators */
@@ -616,7 +616,7 @@ _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 //
 // typdef struct { ... } zn_sub_mode_t; is defined in net/types.h
 
-/*------------------ Declare Subscriber Message ------------------*/
+/*------------------ Subscriber Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
 // |K|S|R|   SUB   |  R for Reliable
