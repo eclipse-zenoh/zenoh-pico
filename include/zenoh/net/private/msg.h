@@ -17,6 +17,13 @@
 
 #include "zenoh/net/private/internal.h"
 
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+//       the boundary of the serialized messages. The length is encoded as little-endian.
+//       In any case, the length of a message must not exceed 65_535 bytes.
+#define _ZN_MSG_LEN_ENC_SIZE 2
+
 /*=============================*/
 /*         Message IDs         */
 /*=============================*/
@@ -86,6 +93,11 @@
 #define _ZN_SET_FLAG(h, f) (h |= f)
 
 /*=============================*/
+/*     Attachment encodings    */
+/*=============================*/
+#define _ZN_ATT_ENC_PROPERTIES 0x00
+
+/*=============================*/
 /*       Declaration IDs       */
 /*=============================*/
 #define _ZN_DECL_RESOURCE 0x01
@@ -119,7 +131,7 @@
 // +---------------+
 typedef struct
 {
-    z_iobuf_t iob;
+    z_iobuf_t iobuf;
 } _zn_payload_t;
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 
@@ -127,11 +139,11 @@ _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 /*     Message decorators      */
 /*=============================*/
 /*------------------ Attachment Decorator ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The Attachment can decorate any message (i.e., SessionMessage and ZenohMessage) and it allows to
 // append to the message any additional information. Since the information contained in the
@@ -198,11 +210,11 @@ _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 // NOTE: Locators are strings and are encoded as such
 
 /*------------------ Scout Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The SCOUT message can be sent at any point in time to solicit HELLO messages from matching parties.
 //
@@ -222,11 +234,11 @@ typedef struct
 ZN_RESULT_DECLARE(zn_scout_t, scout)
 
 /*------------------ Hello Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The HELLO message is sent in any of the following three cases:
 //     1) in response to a SCOUT message;
@@ -260,11 +272,11 @@ typedef struct
 ZN_RESULT_DECLARE(zn_hello_t, hello)
 
 /*------------------ Open Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The OPEN message is sent on a specific Locator to initiate a session with the peer associated
 // with that Locator.
@@ -290,7 +302,7 @@ ZN_RESULT_DECLARE(zn_hello_t, hello)
 // ~    Locators   ~ if L==1 -- List of locators the sender of the OPEN is reachable at
 // +---------------+
 //
-// (*)  The Initial SN must be bound to the proposed SN Resolution. Otherwise the OPEN message is consmsg::idered
+// (*)  The Initial SN must be bound to the proposed SN Resolution. Otherwise the OPEN message is considered
 //      invalid and it should be discarded by the recipient of the OPEN message.
 // (**) In case of the Accepter Peer negotiates a smaller SN Resolution (see ACCEPT message) and the proposed
 //      Initial SN results to be out-of-bound, the new Agreed Initial SN is calculated according to the
@@ -311,11 +323,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_open_t, open)
 
 /*------------------ Accept Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The ACCEPT message is sent in response of an OPEN message in case of accepting the new incoming session.
 //
@@ -343,13 +355,13 @@ _ZN_RESULT_DECLARE(_zn_open_t, open)
 // - if S==0 then the agreed sequence number resolution is the one indicated in the OPEN message.
 // - if S==1 then the agreed sequence number resolution is the one indicated in this ACCEPT message.
 //           The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
-//           otherwise the ACCEPT message is consmsg::idered invalid and it should be treated as a
+//           otherwise the ACCEPT message is considered invalid and it should be treated as a
 //           CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
 //
 // - if D==0 then the agreed lease period is the one indicated in the OPEN message.
 // - if D==1 then the agreed lease period is the one indicated in this ACCEPT message.
 //           The lease period in the ACCEPT must be less or equal than the lease period in the OPEN,
-//           otherwise the ACCEPT message is consmsg::idered invalid and it should be treated as a
+//           otherwise the ACCEPT message is considered invalid and it should be treated as a
 //           CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
 //
 // (*)  The Initial SN is bound to the proposed SN Resolution.
@@ -372,11 +384,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_accept_t, accept)
 
 /*------------------  Close Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The CLOSE message is sent in any of the following two cases:
 //     1) in response to an OPEN message which is not accepted;
@@ -403,11 +415,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_close_t, close)
 
 /*------------------  Sync Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The SYNC message allows to signal the corresponding peer the sequence number of the next message
 // to be transmitted on the reliable or best-effort channel. In the case of reliable channel, the
@@ -433,11 +445,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_sync_t, sync)
 
 /*------------------  AckNack Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The ACKNACK messages is used on the reliable channel to signal the corresponding peer the last
 // sequence number received and optionally a bitmask of the non-received messages.
@@ -459,11 +471,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 
 /*------------------  Keep Alive Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The KEEP_ALIVE message can be sent periodically to avoid the expiration of the session lease
 // period in case there are no messages to be sent.
@@ -482,11 +494,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 
 /*------------------  PingPong Messages ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
@@ -504,11 +516,11 @@ typedef struct
 _ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 
 /*------------------  Frame Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_536 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+

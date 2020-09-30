@@ -152,8 +152,7 @@ const char *_zn_get_resource_name(zn_session_t *z, z_zint_t rid)
     return 0;
 }
 
-z_list_t *
-_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
+z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
 {
     z_list_t *subs = z_list_empty;
     if (z->subscriptions == 0)
@@ -178,8 +177,7 @@ _zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
     }
 }
 
-z_list_t *
-_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname)
+z_list_t *_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname)
 {
     z_list_t *subs = z_list_empty;
     if (z->subscriptions == 0)
@@ -204,25 +202,24 @@ _zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname)
     }
 }
 
-void _zn_register_storage(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_data_handler_t data_handler, zn_query_handler_t query_handler, void *arg)
+void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
 {
-    _zn_sto_t *sto = (_zn_sto_t *)malloc(sizeof(_zn_sto_t));
-    sto->rid = rid;
-    sto->id = id;
+    _zn_qle_t *qle = (_zn_qle_t *)malloc(sizeof(_zn_qle_t));
+    qle->rid = rid;
+    qle->id = id;
     _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
     assert(decl != 0);
-    sto->rname = strdup(decl->key.rname);
-    sto->data_handler = data_handler;
-    sto->query_handler = query_handler;
-    sto->arg = arg;
-    z->storages = z_list_cons(z->storages, sto);
+    qle->rname = strdup(decl->key.rname);
+    qle->query_handler = query_handler;
+    qle->arg = arg;
+    z->queryables = z_list_cons(z->queryables, qle);
 }
 
-int sto_predicate(void *elem, void *arg)
+int qle_predicate(void *elem, void *arg)
 {
-    zn_sto_t *s = (zn_sto_t *)arg;
-    _zn_sto_t *sto = (_zn_sto_t *)elem;
-    if (sto->id == s->id)
+    zn_qle_t *q = (zn_qle_t *)arg;
+    _zn_qle_t *queryable = (_zn_qle_t *)elem;
+    if (queryable->id == q->id)
     {
         return 1;
     }
@@ -232,143 +229,57 @@ int sto_predicate(void *elem, void *arg)
     }
 }
 
-void _zn_unregister_storage(zn_sto_t *s)
+void _zn_unregister_queryable(zn_qle_t *e)
 {
-    s->z->storages = z_list_remove(s->z->storages, sto_predicate, s);
+    e->z->queryables = z_list_remove(e->z->queryables, qle_predicate, e);
 }
 
-z_list_t *
-_zn_get_storages_by_rid(zn_session_t *z, z_zint_t rid)
+z_list_t *_zn_get_queryables_by_rid(zn_session_t *z, z_zint_t rid)
 {
-    z_list_t *stos = z_list_empty;
-    if (z->storages == 0)
+    z_list_t *queryables = z_list_empty;
+    if (z->queryables == 0)
     {
-        return stos;
+        return queryables;
     }
     else
     {
-        _zn_sto_t *sto = 0;
-        z_list_t *stos = z->storages;
+        _zn_qle_t *queryable = 0;
+        z_list_t *queryables = z->queryables;
         z_list_t *xs = z_list_empty;
         do
         {
-            sto = (_zn_sto_t *)z_list_head(stos);
-            stos = z_list_tail(stos);
-            if (sto->rid == rid)
+            queryable = (_zn_qle_t *)z_list_head(queryables);
+            queryables = z_list_tail(queryables);
+            if (queryable->rid == rid)
             {
-                xs = z_list_cons(xs, sto);
+                xs = z_list_cons(xs, queryable);
             }
-        } while (stos != 0);
+        } while (queryables != 0);
         return xs;
     }
 }
 
-z_list_t *
-_zn_get_storages_by_rname(zn_session_t *z, const char *rname)
+z_list_t *_zn_get_queryables_by_rname(zn_session_t *z, const char *rname)
 {
-    z_list_t *stos = z_list_empty;
-    if (z->storages == 0)
+    z_list_t *queryables = z_list_empty;
+    if (z->queryables == 0)
     {
-        return stos;
+        return queryables;
     }
     else
     {
-        _zn_sto_t *sto = 0;
-        z_list_t *stos = z->storages;
+        _zn_qle_t *queryable = 0;
+        z_list_t *queryables = z->queryables;
         z_list_t *xs = z_list_empty;
         do
         {
-            sto = (_zn_sto_t *)z_list_head(stos);
-            stos = z_list_tail(stos);
-            if (zn_rname_intersect(sto->rname, (char *)rname))
+            queryable = (_zn_qle_t *)z_list_head(queryables);
+            queryables = z_list_tail(queryables);
+            if (zn_rname_intersect(queryable->rname, (char *)rname))
             {
-                xs = z_list_cons(xs, sto);
+                xs = z_list_cons(xs, queryable);
             }
-        } while (stos != 0);
-        return xs;
-    }
-}
-
-void _zn_register_eval(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
-{
-    _zn_eva_t *eval = (_zn_eva_t *)malloc(sizeof(_zn_eva_t));
-    eval->rid = rid;
-    eval->id = id;
-    _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
-    assert(decl != 0);
-    eval->rname = strdup(decl->key.rname);
-    eval->query_handler = query_handler;
-    eval->arg = arg;
-    z->evals = z_list_cons(z->evals, eval);
-}
-
-int eva_predicate(void *elem, void *arg)
-{
-    zn_eva_t *e = (zn_eva_t *)arg;
-    _zn_eva_t *eval = (_zn_eva_t *)elem;
-    if (eval->id == e->id)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-void _zn_unregister_eval(zn_eva_t *e)
-{
-    e->z->evals = z_list_remove(e->z->evals, sto_predicate, e);
-}
-
-z_list_t *
-_zn_get_evals_by_rid(zn_session_t *z, z_zint_t rid)
-{
-    z_list_t *evals = z_list_empty;
-    if (z->evals == 0)
-    {
-        return evals;
-    }
-    else
-    {
-        _zn_eva_t *eval = 0;
-        z_list_t *evals = z->evals;
-        z_list_t *xs = z_list_empty;
-        do
-        {
-            eval = (_zn_eva_t *)z_list_head(evals);
-            evals = z_list_tail(evals);
-            if (eval->rid == rid)
-            {
-                xs = z_list_cons(xs, eval);
-            }
-        } while (evals != 0);
-        return xs;
-    }
-}
-
-z_list_t *
-_zn_get_evals_by_rname(zn_session_t *z, const char *rname)
-{
-    z_list_t *evals = z_list_empty;
-    if (z->evals == 0)
-    {
-        return evals;
-    }
-    else
-    {
-        _zn_eva_t *eval = 0;
-        z_list_t *evals = z->evals;
-        z_list_t *xs = z_list_empty;
-        do
-        {
-            eval = (_zn_eva_t *)z_list_head(evals);
-            evals = z_list_tail(evals);
-            if (zn_rname_intersect(eval->rname, (char *)rname))
-            {
-                xs = z_list_cons(xs, eval);
-            }
-        } while (evals != 0);
+        } while (queryables != 0);
         return xs;
     }
 }

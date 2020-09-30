@@ -29,9 +29,9 @@
 #include "zenoh/net/private/contiki/types.h"
 #endif
 
-#define ZN_WHATAMI_ROUTER 0x01
-#define ZN_WHATAMI_PEER 0x02
-#define ZN_WHATAMI_CLIENT 0x04
+#define ZN_WHATAMI_ROUTER 0x01 // 1 << 0
+#define ZN_WHATAMI_PEER 0x02   // 1 << 1
+#define ZN_WHATAMI_CLIENT 0x04 // 1 << 2
 
 #define ZN_PUSH_MODE 0x01
 #define ZN_PULL_MODE 0x02
@@ -171,24 +171,37 @@ typedef void (*zn_on_disconnect_t)(void *z);
 typedef struct
 {
     _zn_socket_t sock;
-    z_zint_t sn;
-    z_zint_t cid;
-    z_zint_t rid;
-    z_zint_t eid;
+
     z_iobuf_t wbuf;
     z_iobuf_t rbuf;
+
     z_uint8_array_t pid;
     z_uint8_array_t peer_pid;
-    z_zint_t qid;
+
+    z_zint_t lease;
+    z_zint_t sn_resolution;
+
+    // SN numbers
+    z_zint_t sn_tx_reliable;
+    z_zint_t sn_tx_best_effort;
+    z_zint_t sn_rx_reliable;
+    z_zint_t sn_rx_best_effort;
+
+    z_zint_t rid; // Counter for Resource ID
+    z_zint_t eid; // Counter for Entities
+    z_zint_t qid; // Counter for Query ID
+
     char *locator;
+
     zn_on_disconnect_t on_disconnect;
+
     z_list_t *declarations;
     z_list_t *subscriptions;
-    z_list_t *storages;
-    z_list_t *evals;
+    z_list_t *queryables;
     z_list_t *replywaiters;
-    z_i_map_t *remote_subs;
-    z_mvar_t *reply_msg_mvar;
+
+    z_i_map_t *remote_subs; // List of remote subscriptions
+
     volatile int running;
     void *thread;
 } zn_session_t;
@@ -205,13 +218,6 @@ typedef struct
     zn_session_t *z;
     z_zint_t rid;
     z_zint_t id;
-} zn_sto_t;
-
-typedef struct
-{
-    zn_session_t *z;
-    z_zint_t rid;
-    z_zint_t id;
 } zn_pub_t;
 
 typedef struct
@@ -219,13 +225,12 @@ typedef struct
     zn_session_t *z;
     z_zint_t rid;
     z_zint_t id;
-} zn_eva_t;
+} zn_qle_t;
 
 ZN_P_RESULT_DECLARE(zn_session_t, session)
 ZN_P_RESULT_DECLARE(zn_sub_t, sub)
-ZN_P_RESULT_DECLARE(zn_sto_t, sto)
 ZN_P_RESULT_DECLARE(zn_pub_t, pub)
-ZN_P_RESULT_DECLARE(zn_eva_t, eval)
+ZN_P_RESULT_DECLARE(zn_qle_t, qle)
 
 typedef struct
 {

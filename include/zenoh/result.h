@@ -18,7 +18,6 @@
 #define Z_ZINT_PARSE_ERROR 0x01
 #define Z_ARRAY_PARSE_ERROR 0x02
 #define Z_STRING_PARSE_ERROR 0x03
-#define Z_LOCATORS_PARSE_ERROR 0x04
 
 #define RESULT_DECLARE(type, name, prefix) \
     typedef struct                         \

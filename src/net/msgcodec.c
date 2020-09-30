@@ -25,9 +25,9 @@ void _zn_payload_encode(z_iobuf_t *buf, const _zn_payload_t *pld)
     _Z_DEBUG("Encoding _PAYLOAD\n");
 
     // Encode the body
-    z_zint_t len = pld->iob.w_pos - pld->iob.r_pos;
+    z_zint_t len = pld->iobuf.w_pos - pld->iobuf.r_pos;
     z_zint_encode(buf, len);
-    z_iobuf_write_slice(buf, pld->iob.buf, pld->iob.r_pos, pld->iob.w_pos);
+    z_iobuf_write_slice(buf, pld->iobuf.buf, pld->iobuf.r_pos, pld->iobuf.w_pos);
 }
 
 void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)
@@ -41,7 +41,7 @@ void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)
     z_zint_t len = r_zint.value.zint;
 
     uint8_t *bs = z_iobuf_read_n(buf, len);
-    r->value.payload.iob = z_iobuf_wrap_wo(bs, len, 0, len);
+    r->value.payload.iobuf = z_iobuf_wrap_wo(bs, len, 0, len);
 }
 
 _zn_payload_result_t _zn_payload_decode(z_iobuf_t *buf)
@@ -1086,7 +1086,7 @@ void zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, zn_hello_result_t *r)
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         z_string_array_result_t r_locs = z_string_array_decode(buf);
-        ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
+        ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
         r->value.hello.locators = r_locs.value.string_array;
     }
 }
@@ -1166,7 +1166,7 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
         if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_L)
         {
             z_string_array_result_t r_locs = z_string_array_decode(buf);
-            ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
+            ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
             r->value.open.locators = r_locs.value.string_array;
         }
     }
@@ -1257,7 +1257,7 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
         if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_L)
         {
             z_string_array_result_t r_locs = z_string_array_decode(buf);
-            ASSURE_P_RESULT(r_locs, r, Z_LOCATORS_PARSE_ERROR)
+            ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
             r->value.accept.locators = r_locs.value.string_array;
         }
     }
@@ -1480,7 +1480,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
     }
     else
     {
-        r->value.frame.payload.messages = z_vec_make(_FRAME_MESSAGES_VEC_SIZE);
+        r->value.frame.payload.messages = z_vec_make(_ZENOH_C_FRAME_MESSAGES_VEC_SIZE);
         while (z_iobuf_readable(buf))
         {
             zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(buf);

@@ -14,196 +14,334 @@
 
 void z_do_nothing_d() {}
 
-// #include <stdlib.h>
-// #include <stdio.h>
-// #include <assert.h>
-// #include <unistd.h>
-// #include <time.h>
-// #include <stdatomic.h>
-// #include <sys/socket.h>
-// #include "zenoh/private/logging.h"
-// #include "zenoh/net/session.h"
-// #include "zenoh/net/property.h"
-// #include "zenoh/net/recv_loop.h"
-// #include "zenoh/net/private/net.h"
-// #include "zenoh/net/private/msgcodec.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdatomic.h>
+#include <sys/socket.h>
+#include "zenoh/private/logging.h"
+#include "zenoh/net/session.h"
+#include "zenoh/net/property.h"
+#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/private/net.h"
+#include "zenoh/net/private/msgcodec.h"
 
-// // -- Some refactoring will be done to support multiple platforms / transports
+// -- Some refactoring will be done to support multiple platforms / transports
 
-// void default_on_disconnect(void *vz)
-// {
-//     zn_session_t *z = (zn_session_t *)vz;
-//     for (int i = 0; i < 3; ++i)
-//     {
-//         sleep(3);
-//         // Try to reconnect -- eventually we should scout here.
-//         // We should also re-do declarations.
-//         _Z_DEBUG("Tring to reconnect...\n");
-//         _zn_socket_result_t r_sock = _zn_open_tx_session(strdup(z->locator));
-//         if (r_sock.tag == Z_OK_TAG)
-//         {
-//             z->sock = r_sock.value.socket;
-//             return;
-//         }
-//     }
-// }
+void default_on_disconnect(void *vz)
+{
+    zn_session_t *z = (zn_session_t *)vz;
+    for (int i = 0; i < 3; ++i)
+    {
+        sleep(3);
+        // Try to reconnect -- eventually we should scout here.
+        // We should also re-do declarations.
+        _Z_DEBUG("Tring to reconnect...\n");
+        _zn_socket_result_t r_sock = _zn_open_tx_session(strdup(z->locator));
+        if (r_sock.tag == Z_OK_TAG)
+        {
+            z->sock = r_sock.value.socket;
+            return;
+        }
+    }
+}
 
-// z_vec_t
-// _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
-// {
-//     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
-//     socklen_t flen = 0;
-//     z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-//     z_vec_t ls;
-//     ls.capacity_ = 0;
-//     ls.elem_ = 0;
-//     ls.length_ = 0;
-//     while (tries != 0)
-//     {
-//         tries -= 1;
-//         _zn_send_dgram_to(socket, sbuf, dest, salen);
-//         int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
-//         if (len > 0)
-//         {
-//             int header = z_iobuf_read(&hbuf);
-//             if (_ZN_MID(header) == _ZN_HELLO)
-//             {
-//                 _zn_hello_result_t r_h = z_hello_decode(&hbuf);
-//                 if (r_h.tag == Z_OK_TAG)
-//                 {
-//                     ls = r_h.value.hello.locators;
-//                 }
-//             }
-//             else
-//             {
-//                 perror("Scouting loop received unexpected message\n");
-//             }
-//             z_iobuf_free(&hbuf);
-//             return ls;
-//         }
-//     }
-//     z_iobuf_free(&hbuf);
-//     return ls;
-// }
+z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+{
+    struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
+    socklen_t flen = 0;
+    z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
+    z_string_array_t ls;
+    ls.length = 0;
+    while (tries != 0)
+    {
+        tries -= 1;
+        _zn_send_dgram_to(socket, sbuf, dest, salen);
+        int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
+        if (len > 0)
+        {
+            int header = z_iobuf_read(&hbuf);
+            switch (_ZN_MID(header))
+            {
+            case _ZN_MID_HELLO:
+            {
+                zn_hello_result_t r_h = zn_hello_decode(&hbuf, header);
+                if (r_h.tag == Z_OK_TAG)
+                {
+                    ls = r_h.value.hello.locators;
+                }
+            }
+            default:
+                perror("Scouting loop received unexpected message\n");
+            }
+            z_iobuf_free(&hbuf);
+            return ls;
+        }
+    }
+    z_iobuf_free(&hbuf);
 
-// z_vec_t
-// zn_scout(char *iface, size_t tries, size_t period)
-// {
-//     char *addr = iface;
-//     if ((iface == 0) || (strcmp(iface, "auto") == 0))
-//     {
-//         addr = _zn_select_scout_iface();
-//     }
+    return ls;
+}
 
-//     z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-//     _zn_scout_t scout;
-//     scout.mask = _ZN_SCOUT_BROKER;
-//     _zn_scout_encode(&sbuf, &scout);
-//     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
-//     ASSERT_RESULT(r, "Unable to create scouting socket\n");
-//     // Scout first on local node.
-//     struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
-//     struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
-//     socklen_t salen = sizeof(struct sockaddr_in);
-//     // Scout on Localhost
-//     z_vec_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
+z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
+{
+    char *addr = iface;
+    if ((iface == 0) || (strcmp(iface, "auto") == 0))
+    {
+        addr = _zn_select_scout_iface();
+    }
 
-//     if (z_vec_length(&locs) == 0)
-//     {
-//         // We did not find broker on the local host, thus Scout in the LAN
-//         locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
-//     }
-//     z_iobuf_free(&sbuf);
-//     return locs;
-// }
+    z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
+    zn_scout_t scout;
+    // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
+    //       and the what value is not sent on the wire. Here we scout for Routers
+    uint8_t header = _ZN_MID_SCOUT;
+    zn_scout_encode(&sbuf, header, &scout);
 
-// zn_session_p_result_t
-// zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
-// {
-//     zn_session_p_result_t r;
-//     if (locator == 0)
-//     {
-//         z_vec_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
-//         if (z_vec_length(&locs) > 0)
-//         {
-//             locator = strdup((const char *)z_vec_get(&locs, 0));
-//         }
-//         else
-//         {
-//             perror("Unable do scout a zenoh router ");
-//             _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
-//             r.tag = Z_ERROR_TAG;
-//             r.value.error = ZN_TX_CONNECTION_ERROR;
-//             return r;
-//         }
-//     }
-//     r.value.session = 0;
-//     srand(clock());
+    _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
+    ASSERT_RESULT(r, "Unable to create scouting socket\n");
 
-//     _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
-//     if (r_sock.tag == Z_ERROR_TAG)
-//     {
-//         r.tag = Z_ERROR_TAG;
-//         r.value.error = ZN_IO_ERROR;
-//         return r;
-//     }
+    // Scout first on local node.
+    struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
+    struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
+    socklen_t salen = sizeof(struct sockaddr_in);
+    // Scout on Localhost
+    z_string_array_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
 
-//     r.tag = Z_OK_TAG;
+    if (locs.length == 0)
+    {
+        // We did not find broker on the local host, thus Scout in the LAN
+        locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
+    }
+    z_iobuf_free(&sbuf);
 
-//     ARRAY_S_DEFINE(uint8_t, uint8, z_, pid, ZENOH_NET_PID_LENGTH);
-//     for (int i = 0; i < ZENOH_NET_PID_LENGTH; ++i)
-//         pid.elem[i] = rand() % 255;
+    return locs;
+}
 
-//     _zn_message_t msg;
+zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
+{
+    zn_session_p_result_t r;
+    if (locator == 0)
+    {
+        z_string_array_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
+        if (locs.length > 0)
+        {
+            locator = strdup((const char *)locs.elem[0]);
+        }
+        else
+        {
+            perror("Unable do scout a zenoh router ");
+            _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
+            r.tag = Z_ERROR_TAG;
+            r.value.error = ZN_TX_CONNECTION_ERROR;
+            return r;
+        }
+    }
+    r.value.session = 0;
+    srand(clock());
 
-//     msg.header = ps == 0 ? _ZN_OPEN : _ZN_OPEN | _ZN_P_FLAG;
-//     msg.payload.open.version = ZENOH_NET_PROTO_VERSION;
-//     msg.payload.open.pid = pid;
-//     msg.payload.open.lease = ZENOH_NET_DEFAULT_LEASE;
-//     msg.properties = ps;
+    _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
+    if (r_sock.tag == Z_ERROR_TAG)
+    {
+        r.tag = Z_ERROR_TAG;
+        r.value.error = ZN_IO_ERROR;
+        return r;
+    }
 
-//     _Z_DEBUG("Sending Open\n");
-//     z_iobuf_t wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
-//     z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
-//     _zn_send_msg(r_sock.value.socket, &wbuf, &msg);
-//     z_iobuf_clear(&rbuf);
-//     _zn_message_p_result_t r_msg = _zn_recv_msg(r_sock.value.socket, &rbuf);
+    r.tag = Z_OK_TAG;
 
-//     if (r_msg.tag == Z_ERROR_TAG)
-//     {
-//         r.tag = Z_ERROR_TAG;
-//         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
-//         z_iobuf_free(&wbuf);
-//         z_iobuf_free(&rbuf);
-//         return r;
-//     }
+    ARRAY_S_DEFINE(uint8_t, uint8, z_, pid, ZENOH_NET_PID_LENGTH);
+    for (int i = 0; i < ZENOH_NET_PID_LENGTH; ++i)
+        pid.elem[i] = rand() % 255;
 
-//     r.value.session = (zn_session_t *)malloc(sizeof(zn_session_t));
-//     r.value.session->sock = r_sock.value.socket;
-//     r.value.session->sn = 0;
-//     r.value.session->cid = 0;
-//     r.value.session->rid = 0;
-//     r.value.session->eid = 0;
-//     r.value.session->rbuf = rbuf;
-//     r.value.session->wbuf = wbuf;
-//     r.value.session->pid = pid;
-//     ARRAY_S_COPY(uint8_t, r.value.session->peer_pid, r_msg.value.message->payload.accept.broker_pid);
-//     r.value.session->qid = 0;
-//     r.value.session->locator = strdup(locator);
-//     r.value.session->on_disconnect = on_disconnect != 0 ? on_disconnect : &default_on_disconnect;
-//     r.value.session->declarations = z_list_empty;
-//     r.value.session->subscriptions = z_list_empty;
-//     r.value.session->storages = z_list_empty;
-//     r.value.session->evals = z_list_empty;
-//     r.value.session->replywaiters = z_list_empty;
-//     r.value.session->reply_msg_mvar = z_mvar_empty();
-//     r.value.session->remote_subs = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
-//     r.value.session->running = 0;
-//     r.value.session->thread = 0;
-//     _zn_message_p_result_free(&r_msg);
+    zn_session_message_t om;
 
-//     return r;
-// }
+    // Add an attachement if properties have been provided
+    if (ps)
+    {
+        om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
+        om.attachment->header = _ZN_MID_ACCEPT | _ZN_ATT_ENC_PROPERTIES;
+        om.attachment->payload.iobuf = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
+        zn_properties_encode(&om.attachment->payload.iobuf, ps);
+    }
+    else
+    {
+        om.attachment = NULL;
+    }
+
+    om.header = _ZN_MID_OPEN;
+    om.body.open.version = ZENOH_NET_PROTO_VERSION;
+    om.body.open.whatami = ZN_WHATAMI_CLIENT;
+    om.body.open.opid = pid;
+    om.body.open.lease = ZENOH_NET_DEFAULT_LEASE;
+    om.body.open.initial_sn = (z_zint_t)rand() % ZENOH_NET_SN_RESOLUTION;
+    om.body.open.sn_resolution = ZENOH_NET_SN_RESOLUTION;
+    om.body.open.options = 0;
+
+    if (ZENOH_NET_SN_RESOLUTION != ZENOH_NET_SN_RESOLUTION_DEFAULT)
+        _ZN_SET_FLAG(om.body.open.options, _ZN_FLAG_S_S);
+    // NOTE: optionally the open can include a list of locators the opener
+    //       is reachable at. Since zenoh-pico acts as a client, this is not
+    //       needed because a client is not expected to receive opens.
+    _ZN_SET_FLAG(om.header, om.body.open.options ? 0 : _ZN_FLAG_S_O);
+
+    _Z_DEBUG("Sending Open\n");
+    z_iobuf_t wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
+    z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
+    _zn_send_s_msg(r_sock.value.socket, &wbuf, &om);
+
+    // Free attachment buffer if allocated
+    if (om.attachment)
+    {
+        z_iobuf_free(&om.attachment->payload.iobuf);
+        free(om.attachment);
+    }
+
+    // Read response message
+    z_iobuf_clear(&rbuf);
+    zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r_sock.value.socket, &rbuf);
+    if (r_msg.tag == Z_ERROR_TAG)
+    {
+        r.tag = Z_ERROR_TAG;
+        r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+
+        // Free read and write buffers
+        z_iobuf_free(&wbuf);
+        z_iobuf_free(&rbuf);
+        // Free the result
+        zn_session_message_p_result_free(&r_msg);
+
+        return r;
+    }
+
+    zn_session_message_t *p_am = r_msg.value.session_message;
+    switch (_ZN_MID(p_am->header))
+    {
+    case _ZN_MID_ACCEPT:
+        r.tag = Z_OK_TAG;
+
+        r.value.session = (zn_session_t *)malloc(sizeof(zn_session_t));
+        r.value.session->sock = r_sock.value.socket;
+
+        // Set the default values sent in the open for: Lease, SN resolution, Initial SN
+        r.value.session->lease = om.body.open.lease;
+        r.value.session->sn_resolution = om.body.open.sn_resolution;
+        r.value.session->sn_tx_reliable = om.body.open.initial_sn;
+        r.value.session->sn_tx_best_effort = om.body.open.initial_sn;
+
+        // If options are present, the above values may be overridden
+        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_O)
+        {
+            // Handle SN resolution option
+            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_S)
+            {
+                // The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
+                // otherwise the ACCEPT message is considered invalid and it should be treated as a
+                // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
+                if (p_am->body.accept.sn_resolution <= om.body.open.sn_resolution)
+                {
+                    // In case of the SN Resolution proposed in this ACCEPT message is smaller than the SN Resolution
+                    // proposed in the OPEN message AND the Initial SN contained in the OPEN messages results to be
+                    // out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
+                    // following modulo operation:
+                    //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
+                    if (om.body.open.initial_sn >= r.value.session->sn_resolution)
+                    {
+                        r.value.session->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                        r.value.session->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                    }
+                    r.value.session->sn_resolution = p_am->body.accept.sn_resolution;
+                }
+                else
+                {
+                    r.tag = Z_ERROR_TAG;
+                    r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+
+                    // Free read and write buffers
+                    z_iobuf_free(&wbuf);
+                    z_iobuf_free(&rbuf);
+                    // Free the result
+                    zn_session_message_p_result_free(&r_msg);
+
+                    return r;
+                }
+            }
+            // Handle Lease option
+            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_D)
+            {
+                // The lease period in the ACCEPT must be less or equal than the lease period in the OPEN,
+                // otherwise the ACCEPT message is considered invalid and it should be treated as a
+                // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
+                if (p_am->body.accept.lease <= om.body.open.lease)
+                {
+                    r.value.session->lease = p_am->body.accept.lease;
+                }
+                else
+                {
+                    r.tag = Z_ERROR_TAG;
+                    r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+
+                    // Free read and write buffers
+                    z_iobuf_free(&wbuf);
+                    z_iobuf_free(&rbuf);
+                    // Free the result
+                    zn_session_message_p_result_free(&r_msg);
+
+                    return r;
+                }
+            }
+            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_L)
+            {
+                // @TODO: we might want to connect or store the locators
+            }
+        }
+
+        // The initial SN at RX side
+        r.value.session->sn_rx_reliable = p_am->body.accept.initial_sn;
+        r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn;
+
+        // Initialize the counter
+        r.value.session->eid = 0;
+        r.value.session->rid = 0;
+        r.value.session->qid = 0;
+
+        // Initialize the buffers
+        r.value.session->rbuf = rbuf;
+        r.value.session->wbuf = wbuf;
+
+        // Initialize the Peer IDs
+        r.value.session->pid = pid;
+        ARRAY_S_COPY(uint8_t, r.value.session->peer_pid, r_msg.value.session_message->body.accept.apid);
+
+        r.value.session->locator = strdup(locator);
+        r.value.session->on_disconnect = on_disconnect != 0 ? on_disconnect : &default_on_disconnect;
+        r.value.session->declarations = z_list_empty;
+        r.value.session->subscriptions = z_list_empty;
+        r.value.session->queryables = z_list_empty;
+        r.value.session->replywaiters = z_list_empty;
+        r.value.session->remote_subs = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+        r.value.session->running = 0;
+        r.value.session->thread = 0;
+
+        break;
+    default:
+        r.tag = Z_ERROR_TAG;
+        r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+
+        // Free read and write buffers
+        z_iobuf_free(&wbuf);
+        z_iobuf_free(&rbuf);
+
+        break;
+    }
+
+    // Free the result
+    zn_session_message_p_result_free(&r_msg);
+
+    return r;
+}
 
 // z_vec_t zn_info(zn_session_t *z)
 // {

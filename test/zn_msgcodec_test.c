@@ -70,9 +70,9 @@ z_zint_t gen_zint()
 _zn_payload_t gen_payload(unsigned int len)
 {
     _zn_payload_t pld;
-    pld.iob = z_iobuf_make(len);
+    pld.iobuf = z_iobuf_make(len);
     for (z_zint_t i = 0; i < len; ++i)
-        z_iobuf_write(&pld.iob, gen_uint8());
+        z_iobuf_write(&pld.iobuf, gen_uint8());
 
     return pld;
 }
@@ -124,17 +124,17 @@ z_string_array_t gen_string_array(unsigned int size)
 void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
 {
     printf("Payload -> ");
-    printf("Capacity (%u:%u), ", left->iob.capacity, right->iob.capacity);
+    printf("Capacity (%u:%u), ", left->iobuf.capacity, right->iobuf.capacity);
 
-    assert(left->iob.capacity == right->iob.capacity);
+    assert(left->iobuf.capacity == right->iobuf.capacity);
     printf("Content (");
-    for (z_zint_t i = 0; i < left->iob.capacity; ++i)
+    for (z_zint_t i = 0; i < left->iobuf.capacity; ++i)
     {
-        uint8_t l = left->iob.buf[i];
-        uint8_t r = right->iob.buf[i];
+        uint8_t l = left->iobuf.buf[i];
+        uint8_t r = right->iobuf.buf[i];
 
         printf("%02x:%02x", l, r);
-        if (i < left->iob.capacity - 1)
+        if (i < left->iobuf.capacity - 1)
             printf(" ");
 
         assert(l == r);
@@ -503,7 +503,7 @@ void print_attachment(const _zn_attachment_t *att)
 {
     printf("      Header: %x\n", att->header);
     printf("      Payload: ");
-    print_iobuf((z_iobuf_t *)&att->payload.iob);
+    print_iobuf((z_iobuf_t *)&att->payload.iobuf);
     printf("\n");
 }
 

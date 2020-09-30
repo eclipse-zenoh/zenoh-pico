@@ -21,11 +21,18 @@
 #include "zenoh/net/property.h"
 #include "zenoh/net/private/msg.h"
 
-#define _FRAME_MESSAGES_VEC_SIZE 32
+#define _ZENOH_C_FRAME_MESSAGES_VEC_SIZE 32
+
 /*------------------ Session Message ------------------*/
 void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *m);
 zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf);
 void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t *r);
+
+ZN_DECLARE_ENCODE(scout);
+ZN_DECLARE_DECODE(scout);
+
+ZN_DECLARE_ENCODE(hello);
+ZN_DECLARE_DECODE(hello);
 
 /*------------------ Zenoh Message ------------------*/
 void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *m);
@@ -116,12 +123,6 @@ _ZN_DECLARE_ENCODE(query);
 _ZN_DECLARE_DECODE(query);
 
 /*------------------ Session Message ------------------*/
-ZN_DECLARE_ENCODE(scout);
-ZN_DECLARE_DECODE(scout);
-
-ZN_DECLARE_ENCODE(hello);
-ZN_DECLARE_DECODE(hello);
-
 _ZN_DECLARE_ENCODE(open);
 _ZN_DECLARE_DECODE(open);
 

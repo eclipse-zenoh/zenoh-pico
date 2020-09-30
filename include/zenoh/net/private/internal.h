@@ -43,15 +43,10 @@ z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid);
 z_list_t *_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname);
 void _zn_unregister_subscription(zn_sub_t *s);
 
-void _zn_register_storage(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_data_handler_t data_handler, zn_query_handler_t query_handler, void *arg);
-z_list_t *_zn_get_storages_by_rid(zn_session_t *z, z_zint_t rid);
-z_list_t *_zn_get_storages_by_rname(zn_session_t *z, const char *rname);
-void _zn_unregister_storage(zn_sto_t *s);
-
-void _zn_register_eval(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
-z_list_t *_zn_get_evals_by_rid(zn_session_t *z, z_zint_t rid);
-z_list_t *_zn_get_evals_by_rname(zn_session_t *z, const char *rname);
-void _zn_unregister_eval(zn_eva_t *s);
+void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
+z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
+z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
+void _zn_unregister_queryable(zn_qle_t *s);
 
 int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid);
 
@@ -79,18 +74,8 @@ typedef struct
     char *rname;
     z_zint_t rid;
     z_zint_t id;
-    zn_data_handler_t data_handler;
     zn_query_handler_t query_handler;
     void *arg;
-} _zn_sto_t;
-
-typedef struct
-{
-    char *rname;
-    z_zint_t rid;
-    z_zint_t id;
-    zn_query_handler_t query_handler;
-    void *arg;
-} _zn_eva_t;
+} _zn_qle_t;
 
 #endif /* ZENOH_C_NET_INTERNAL_H */

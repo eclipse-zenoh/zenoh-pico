@@ -12,24 +12,22 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-void z_do_nothing_c() {}
+#include <stdio.h>
+#include <stdatomic.h>
+#include "zenoh/private/logging.h"
+#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/types.h"
+#include "zenoh/net/private/net.h"
+#include "zenoh/net/private/msgcodec.h"
 
-// #include <stdio.h>
-// #include <stdatomic.h>
-// #include "zenoh/private/logging.h"
-// #include "zenoh/net/recv_loop.h"
-// #include "zenoh/net/types.h"
-// #include "zenoh/net/private/net.h"
-// #include "zenoh/net/private/msgcodec.h"
-
-// typedef struct
-// {
-//     zn_session_t *z;
-//     z_zint_t qid;
-//     z_uint8_array_t qpid;
-//     atomic_int nb_qhandlers;
-//     atomic_flag sent_final;
-// } query_handle_t;
+typedef struct
+{
+    zn_session_t *z;
+    z_zint_t qid;
+    z_uint8_array_t qpid;
+    atomic_int nb_qhandlers;
+    atomic_flag sent_final;
+} query_handle_t;
 
 // void send_replies(void *query_handle, zn_resource_p_array_t replies, uint8_t eval_flag)
 // {
@@ -480,80 +478,112 @@ void z_do_nothing_c() {}
 //     }
 // }
 
-// void *zn_recv_loop(zn_session_t *z)
+// void handle_z_msg(zn_session_t *z, zn_zenoh_message_p_result_t r)
 // {
-//     _zn_message_p_result_t r;
-//     z_zint_result_t r_zint;
-//     z_iobuf_t bigbuf;
-//     z_iobuf_t *buf;
-//     _zn_message_p_result_init(&r);
-//     int jump_to;
-//     z_iobuf_clear(&z->rbuf);
-//     bigbuf.capacity = 0;
-//     z->running = 1;
-//     while (z->running)
-//     {
 
-//         // READ SIZE
-//         if (z_iobuf_readable(&z->rbuf) < 4)
-//         {
-//             z_iobuf_compact(&z->rbuf);
-//             if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
-//                 return 0;
-//         }
-//         r_zint = z_zint_decode(&z->rbuf);
-
-//         // ALLOCATE BIG BUFFER IF NEEDED
-//         if (r_zint.value.zint > ZENOH_NET_READ_BUF_LEN - 10)
-//         {
-//             bigbuf = z_iobuf_make(r_zint.value.zint);
-//             int length = z_iobuf_readable(&z->rbuf);
-//             z_iobuf_write_bytes(&bigbuf, z_iobuf_read_n(&z->rbuf, length), length);
-//             buf = &bigbuf;
-//         }
-//         else
-//         {
-//             buf = &z->rbuf;
-//         }
-
-//         // READ MESSAGE
-//         if (r_zint.value.zint > z_iobuf_readable(buf))
-//         {
-//             z_iobuf_compact(&z->rbuf);
-//             do
-//             {
-//                 if (_zn_recv_buf(z->sock, buf) <= 0)
-//                     return 0;
-//             } while (r_zint.value.zint > z_iobuf_readable(buf));
-//         }
-//         jump_to = buf->r_pos + r_zint.value.zint;
-
-//         // DECODE MESSAGE
-//         _zn_message_decode_na(buf, &r);
-//         if (r.tag == Z_OK_TAG)
-//         {
-//             handle_msg(z, r);
-//         }
-//         else
-//         {
-//             _Z_DEBUG("Connection closed due to receive error");
-//             return 0;
-//         }
-
-//         if (bigbuf.capacity > 0)
-//         {
-//             z_iobuf_free(&bigbuf);
-//         }
-//         else
-//         {
-//             // Ensure we jump to the next message if if we did not parse the message.
-//             z->rbuf.r_pos = jump_to;
-//         }
-//     }
-//     return 0;
 // }
 
-// int zn_running(zn_session_t *z)
-// {
-//     return z->running;
-// }
+int handle_session_msg(zn_session_t *z, zn_session_message_t *msg)
+{
+    printf("%d", z->running);
+
+    switch (_ZN_MID(msg->header))
+    {
+    case _ZN_MID_SCOUT:
+        // @TODO
+        break;
+    case _ZN_MID_HELLO:
+        // @TODO
+        break;
+    case _ZN_MID_OPEN:
+        // @TODO
+        break;
+    case _ZN_MID_ACCEPT:
+        // @TODO
+        break;
+    case _ZN_MID_CLOSE:
+        // @TODO
+        break;
+    case _ZN_MID_SYNC:
+        _Z_DEBUG("Handling of Sync messages not implemented");
+        break;
+    case _ZN_MID_ACK_NACK:
+        _Z_DEBUG("Handling of AckNack messages not implemented");
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        // @TODO
+        break;
+    case _ZN_MID_PING_PONG:
+        _Z_DEBUG("Handling of PingPong messages not implemented");
+        break;
+    case _ZN_MID_FRAME:
+        // @TODO
+        break;
+    default:
+        _Z_DEBUG("Unknown session message ID");
+        return -1;
+    }
+
+    return 0;
+}
+
+void *zn_recv_loop(zn_session_t *z)
+{
+    zn_session_message_p_result_t r;
+    zn_session_message_p_result_init(&r);
+    z_iobuf_clear(&z->rbuf);
+    z->running = 1;
+
+    while (z->running)
+    {
+        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+        //       the boundary of the serialized messages. The length is encoded as little-endian.
+        //       In any case, the length of a message must not exceed 65_535 bytes.
+        if (ZENOH_NET_TRANSPORT_TCP_IP)
+        {
+            z_iobuf_compact(&z->rbuf);
+            // Read number of bytes to read.
+            // The message length size is encoded as 16 bits little endian.
+            while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+            {
+                z_iobuf_compact(&z->rbuf);
+                if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+                    return 0;
+            }
+            // Decode the message length
+            uint16_t to_read = (z_iobuf_read(&z->rbuf) << 8) | z_iobuf_read(&z->rbuf);
+
+            // Read the rest of bytes to decode one or more session messages.
+            while (z_iobuf_readable(&z->rbuf) < to_read)
+            {
+                z_iobuf_compact(&z->rbuf);
+                if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+                    return 0;
+            }
+        }
+
+        while (z_iobuf_readable(&z->rbuf))
+        {
+            // Descode session messages
+            zn_session_message_decode_na(&z->rbuf, &r);
+            if (r.tag == Z_OK_TAG)
+            {
+                handle_session_msg(z, r.value.session_message);
+            }
+            else
+            {
+                _Z_DEBUG("Connection closed due to receive error");
+                return 0;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int zn_running(zn_session_t *z)
+{
+    return z->running;
+}
