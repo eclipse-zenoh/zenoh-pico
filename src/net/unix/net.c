@@ -381,9 +381,20 @@ size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_t *m
     _Z_DEBUG(">> send_msg\n");
     z_iobuf_clear(buf);
     zn_session_message_encode(buf, m);
-    z_iobuf_t l_buf = z_iobuf_make(10);
-    z_zint_t len = z_iobuf_readable(buf);
-    z_zint_encode(&l_buf, len);
+
+#ifdef ZENOH_NET_TRANSPORT_TCP_IP
+    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+    //       the boundary of the serialized messages. The length is encoded as little-endian.
+    //       In any case, the length of a message must not exceed 65_535 bytes.
+    unsigned int len = z_iobuf_readable(buf);
+    assert(len < (1 << 16));
+
+    z_iobuf_t l_buf = z_iobuf_make(_ZN_MSG_LEN_ENC_SIZE);
+    z_iobuf_write(&l_buf, (uint8_t)(len & 0x00FF));
+    z_iobuf_write(&l_buf, (uint8_t)((len & 0xFF00) >> 8));
+
     struct iovec iov[2];
     iov[0].iov_len = z_iobuf_readable(&l_buf);
     iov[0].iov_base = l_buf.buf;
@@ -393,6 +404,14 @@ size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_t *m
     int rv = _zn_send_iovec(sock, iov, 2);
     z_iobuf_free(&l_buf);
     return rv;
+#else
+    struct iovec iov[1];
+    iov[0].iov_len = z_iobuf_readable(buf);
+    iov[0].iov_base = buf->buf;
+
+    int rv = _zn_send_iovec(sock, iov, 1);
+    return rv;
+#endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
 // size_t
@@ -463,9 +482,24 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_p_re
     z_iobuf_clear(buf);
     _Z_DEBUG(">> recv_msg\n");
     r->tag = Z_OK_TAG;
-    z_zint_result_t r_zint = _zn_recv_zint(sock);
-    ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    size_t len = r_zint.value.zint;
+
+#ifdef ZENOH_NET_TRANSPORT_TCP_IP
+    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+    //       the boundary of the serialized messages. The length is encoded as little-endian.
+    //       In any case, the length of a message must not exceed 65_535 bytes.
+
+    // Read the message length
+    if (_zn_recv_n(sock, buf->buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
+    {
+        r->tag = Z_ERROR_TAG;
+        r->value.error = ZN_IO_ERROR;
+        return;
+    }
+    buf->w_pos = _ZN_MSG_LEN_ENC_SIZE;
+
+    uint16_t len = z_iobuf_read(buf) | (z_iobuf_read(buf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
     if (z_iobuf_writable(buf) < len)
     {
@@ -473,10 +507,27 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_p_re
         r->value.error = ZN_INSUFFICIENT_IOBUF_SIZE;
         return;
     }
-    _zn_recv_n(sock, buf->buf, len);
+
+    // Read enough bytes to decode the message
+    if (_zn_recv_n(sock, buf->buf, len) < 0)
+    {
+        r->tag = Z_ERROR_TAG;
+        r->value.error = ZN_IO_ERROR;
+        return;
+    }
+
     buf->r_pos = 0;
     buf->w_pos = len;
-    _Z_DEBUG(">> \t z_message_decode\n");
+#else
+    if (_zn_recv_buf(sock, buf) < 0)
+    {
+        r->tag = Z_ERROR_TAG;
+        r->value.error = ZN_IO_ERROR;
+        return;
+    }
+#endif /* ZENOH_NET_TRANSPORT_TCP_IP */
+
+    _Z_DEBUG(">> \t session_message_decode\n");
     zn_session_message_decode_na(buf, r);
 }
 

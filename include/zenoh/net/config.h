@@ -19,7 +19,7 @@
 #define ZENOH_NET_READ_BUF_LEN 65563
 #define ZENOH_NET_WRITE_BUF_LEN 65563
 #define ZENOH_NET_PID_LENGTH 8
-#define ZENOH_NET_PROTO_VERSION 0x01
+#define ZENOH_NET_PROTO_VERSION 0x00
 #define ZENOH_NET_DEFAULT_LEASE 10000
 
 // The default sequence number resolution takes 4 bytes on the wire.

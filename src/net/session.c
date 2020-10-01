@@ -11,9 +11,6 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-
-void z_do_nothing_d() {}
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -57,7 +54,7 @@ z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, cons
     ls.length = 0;
     while (tries != 0)
     {
-        tries -= 1;
+        tries--;
         _zn_send_dgram_to(socket, sbuf, dest, salen);
         int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
         if (len > 0)
@@ -94,11 +91,11 @@ z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
     }
 
     z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-    zn_scout_t scout;
+    zn_session_message_t scout;
+    scout.header = _ZN_MID_SCOUT;
     // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
     //       and the what value is not sent on the wire. Here we scout for Routers
-    uint8_t header = _ZN_MID_SCOUT;
-    zn_scout_encode(&sbuf, header, &scout);
+    zn_session_message_encode(&sbuf, &scout);
 
     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
     ASSERT_RESULT(r, "Unable to create scouting socket\n");
@@ -123,7 +120,7 @@ z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
 zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
 {
     zn_session_p_result_t r;
-    if (locator == 0)
+    if (!locator)
     {
         z_string_array_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
         if (locs.length > 0)
@@ -132,7 +129,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         }
         else
         {
-            perror("Unable do scout a zenoh router ");
+            perror("Unable to scout a zenoh router ");
             _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
             r.tag = Z_ERROR_TAG;
             r.value.error = ZN_TX_CONNECTION_ERROR;
@@ -185,13 +182,13 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     // NOTE: optionally the open can include a list of locators the opener
     //       is reachable at. Since zenoh-pico acts as a client, this is not
     //       needed because a client is not expected to receive opens.
-    _ZN_SET_FLAG(om.header, om.body.open.options ? 0 : _ZN_FLAG_S_O);
+    _ZN_SET_FLAG(om.header, om.body.open.options ? _ZN_FLAG_S_O : 0);
 
     _Z_DEBUG("Sending Open\n");
+    // Create write buffer
     z_iobuf_t wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
-    z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
+    // Encode and send the message
     _zn_send_s_msg(r_sock.value.socket, &wbuf, &om);
-
     // Free attachment buffer if allocated
     if (om.attachment)
     {
@@ -199,9 +196,14 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         free(om.attachment);
     }
 
+    // Create read buffer
+    z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
+
     // Read response message
     z_iobuf_clear(&rbuf);
+
     zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r_sock.value.socket, &rbuf);
+
     if (r_msg.tag == Z_ERROR_TAG)
     {
         r.tag = Z_ERROR_TAG;
