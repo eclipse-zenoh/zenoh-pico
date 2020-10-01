@@ -55,24 +55,33 @@ z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, cons
     while (tries != 0)
     {
         tries--;
+        // Send the scout message
         _zn_send_dgram_to(socket, sbuf, dest, salen);
+        // Eventually read hello messages
+        z_iobuf_clear(&hbuf);
         int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
+
         if (len > 0)
         {
-            int header = z_iobuf_read(&hbuf);
-            switch (_ZN_MID(header))
+            zn_session_message_p_result_t r_hm = zn_session_message_decode(&hbuf);
+            if (r_hm.tag == Z_ERROR_TAG)
+            {
+                perror("Scouting loop received unexpected message\n");
+                continue;
+            }
+
+            switch (_ZN_MID(r_hm.value.session_message->header))
             {
             case _ZN_MID_HELLO:
             {
-                zn_hello_result_t r_h = zn_hello_decode(&hbuf, header);
-                if (r_h.tag == Z_OK_TAG)
-                {
-                    ls = r_h.value.hello.locators;
-                }
+                ls = r_hm.value.session_message->body.hello.locators;
+                break;
             }
             default:
                 perror("Scouting loop received unexpected message\n");
+                continue;
             }
+
             z_iobuf_free(&hbuf);
             return ls;
         }

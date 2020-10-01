@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         locator = argv[2];
     }
 
-    zn_session_p_result_t r_z = zn_open("tcp/127.0.0.1:7447", 0, 0);
+    zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     if (r_z.tag == Z_ERROR_TAG)
         return -1;
 
