@@ -35,13 +35,6 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char *resource, c
 zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const char *resource);
 zn_qle_p_result_t zn_declare_queryable(zn_session_t *z, const char *resource, zn_query_handler_t query_handler, void *arg);
 
-// int zn_stream_compact_data(zn_pub_t *pub, const unsigned char *payload, size_t len);
-// int zn_stream_data(zn_pub_t *pub, const unsigned char *payload, size_t len);
-// int zn_write_data(zn_session_t *z, const char *resource, const unsigned char *payload, size_t len);
-
-// int zn_stream_data_wo(zn_pub_t *pub, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind);
-// int zn_write_data_wo(zn_session_t *z, const char *resource, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind);
-
 int zn_write_data(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len);
 int zn_write_data_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind);
 

@@ -36,8 +36,7 @@
 #define ZN_PUSH_MODE 0x01
 #define ZN_PULL_MODE 0x02
 
-#define ZN_INT_RES_KEY 0
-#define ZN_STR_RES_KEY 1
+#define ZN_NO_RESOURCE_ID 0
 
 #define ZN_DEST_STORAGES_KEY 0x10
 #define ZN_DEST_EVALS_KEY 0x11
@@ -216,7 +215,7 @@ typedef struct
 typedef struct
 {
     zn_session_t *z;
-    z_zint_t rid;
+    zn_res_key_t key;
     z_zint_t id;
 } zn_pub_t;
 

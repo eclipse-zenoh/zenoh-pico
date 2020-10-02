@@ -594,7 +594,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 /*------------------  Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|X|X| RESOURCE|
+// |K|X|X|   RES   |
 // +---------------+
 // ~      RID      ~
 // +---------------+

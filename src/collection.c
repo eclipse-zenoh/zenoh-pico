@@ -75,7 +75,7 @@ void z_vec_set(z_vec_t *v, unsigned int i, void *e)
 z_list_t *z_list_of(void *x)
 {
     z_list_t *xs = (z_list_t *)malloc(sizeof(z_list_t));
-    bzero(xs, sizeof(z_list_t));
+    memset(xs, 0, sizeof(z_list_t));
     xs->elem = x;
     return xs;
 }

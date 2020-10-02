@@ -90,7 +90,7 @@ char *_zn_select_scout_iface()
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port)
 {
     struct sockaddr_in *saddr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-    bzero(saddr, sizeof(struct sockaddr_in));
+    memset(saddr, 0, sizeof(struct sockaddr_in));
     saddr->sin_family = AF_INET;
     saddr->sin_port = htons(port);
 
@@ -120,7 +120,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         return r;
     }
 
-    bzero(&saddr, sizeof(saddr));
+    memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
     saddr.sin_port = htons(port);
 
@@ -378,7 +378,7 @@ int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf)
 
 size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *m)
 {
-    _Z_DEBUG(">> send_msg\n");
+    _Z_DEBUG(">> send session message\n");
     z_iobuf_clear(buf);
     _zn_session_message_encode(buf, m);
 
@@ -414,39 +414,32 @@ size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
-// size_t _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m)
-// {
-//     _Z_DEBUG(">> send_msg\n");
-//     z_iobuf_clear(buf);
-//     _zn_zenoh_message_encode(buf, m);
-//     z_iobuf_t l_buf = z_iobuf_make(10);
-//     z_zint_t len = z_iobuf_readable(buf);
-//     z_zint_encode(&l_buf, len);
-//     struct iovec iov[2];
-//     iov[0].iov_len = z_iobuf_readable(&l_buf);
-//     iov[0].iov_base = l_buf.buf;
-//     iov[1].iov_len = len;
-//     iov[1].iov_base = buf->buf;
+size_t _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable)
+{
+    // @TODO: implmenet fragmentation
+    _Z_DEBUG(">> send zenoh message\n");
+    z_iobuf_clear(&z->wbuf);
 
-//     int rv = _zn_send_iovec(sock, iov, 2);
-//     z_iobuf_free(&l_buf);
-//     return rv;
-// }
+    // Create the frame session message that carries the zenoh message
+    _zn_session_message_t s_msg;
+    s_msg.attachment = NULL;
+    s_msg.header = _ZN_MID_FRAME;
+    if (reliable)
+    {
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
+        s_msg.body.frame.sn = z->sn_tx_reliable++;
+    }
+    else
+    {
+        s_msg.body.frame.sn = z->sn_tx_best_effort++;
+    }
+    // Do not allocate a z_vec_t for the encoding
+    s_msg.body.frame.payload.messages = z_vec_make(1);
+    z_vec_append(&s_msg.body.frame.payload.messages, m);
 
-// size_t _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m, unsigned int max_len)
-// {
-//     if (max_len > buf->capacity)
-//     {
-//         z_iobuf_t bigbuf = z_iobuf_make(max_len);
-//         int rv = _zn_send_z_msg(sock, &bigbuf, m);
-//         z_iobuf_free(&bigbuf);
-//         return rv;
-//     }
-//     else
-//     {
-//         return _zn_send_z_msg(sock, buf, m);
-//     }
-// }
+    // Send the frame session message
+    return _zn_send_s_msg(z->sock, &z->wbuf, &s_msg);
+}
 
 z_zint_result_t _zn_recv_zint(_zn_socket_t sock)
 {
@@ -537,32 +530,32 @@ _zn_session_message_p_result_t _zn_recv_s_msg(_zn_socket_t sock, z_iobuf_t *buf)
     return r;
 }
 
-void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
-{
-    z_iobuf_clear(buf);
-    _Z_DEBUG(">> recv_msg\n");
-    r->tag = Z_OK_TAG;
-    z_zint_result_t r_zint = _zn_recv_zint(sock);
-    ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    size_t len = r_zint.value.zint;
-    _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
-    if (z_iobuf_writable(buf) < len)
-    {
-        r->tag = Z_ERROR_TAG;
-        r->value.error = ZN_INSUFFICIENT_IOBUF_SIZE;
-        return;
-    }
-    _zn_recv_n(sock, buf->buf, len);
-    buf->r_pos = 0;
-    buf->w_pos = len;
-    _Z_DEBUG(">> \t z_message_decode\n");
-    _zn_zenoh_message_decode_na(buf, r);
-}
+// void _zn_recv_z_msg_na(zn_session_t *z, z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
+// {
+//     z_iobuf_clear(buf);
+//     _Z_DEBUG(">> recv_msg\n");
+//     r->tag = Z_OK_TAG;
+//     z_zint_result_t r_zint = _zn_recv_zint(sock);
+//     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
+//     size_t len = r_zint.value.zint;
+//     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
+//     if (z_iobuf_writable(buf) < len)
+//     {
+//         r->tag = Z_ERROR_TAG;
+//         r->value.error = ZN_INSUFFICIENT_IOBUF_SIZE;
+//         return;
+//     }
+//     _zn_recv_n(sock, buf->buf, len);
+//     buf->r_pos = 0;
+//     buf->w_pos = len;
+//     _Z_DEBUG(">> \t z_message_decode\n");
+//     _zn_zenoh_message_decode_na(buf, r);
+// }
 
-_zn_zenoh_message_p_result_t _zn_recv_z_msg(_zn_socket_t sock, z_iobuf_t *buf)
-{
-    _zn_zenoh_message_p_result_t r;
-    _zn_zenoh_message_p_result_init(&r);
-    _zn_recv_z_msg_na(sock, buf, &r);
-    return r;
-}
+// _zn_zenoh_message_p_result_t _zn_recv_z_msg(zn_session_t *z, z_iobuf_t *buf)
+// {
+//     _zn_zenoh_message_p_result_t r;
+//     _zn_zenoh_message_p_result_init(&r);
+//     _zn_recv_z_msg_na(sock, buf, &r);
+//     return r;
+// }

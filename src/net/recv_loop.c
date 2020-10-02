@@ -478,10 +478,28 @@ typedef struct
 //     }
 // }
 
-// void handle_z_msg(zn_session_t *z, _zn_zenoh_message_p_result_t r)
-// {
+void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
+{
+    printf("%d", z->running);
 
-// }
+    switch (_ZN_MID(msg->header))
+    {
+    case _ZN_MID_DECLARE:
+        break;
+    case _ZN_MID_DATA:
+        break;
+    case _ZN_MID_PULL:
+        break;
+    case _ZN_MID_QUERY:
+        break;
+    case _ZN_MID_UNIT:
+        // Do nothing. Unit messages have no body
+        break;
+    default:
+        _Z_DEBUG("Unknown zenoh message ID");
+        break;
+    }
+}
 
 int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
 {
@@ -491,33 +509,43 @@ int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
     {
     case _ZN_MID_SCOUT:
         // @TODO
+        printf("SCOUT\n");
         break;
     case _ZN_MID_HELLO:
         // @TODO
+        printf("HELLO\n");
         break;
     case _ZN_MID_OPEN:
         // @TODO
+        printf("OPEN\n");
         break;
     case _ZN_MID_ACCEPT:
         // @TODO
+        printf("ACCEPT\n");
         break;
     case _ZN_MID_CLOSE:
         // @TODO
+        printf("CLOSE\n");
         break;
     case _ZN_MID_SYNC:
         _Z_DEBUG("Handling of Sync messages not implemented");
+        printf("SYNC\n");
         break;
     case _ZN_MID_ACK_NACK:
         _Z_DEBUG("Handling of AckNack messages not implemented");
+        printf("ACK_NACK\n");
         break;
     case _ZN_MID_KEEP_ALIVE:
         // @TODO
+        printf("KEEP_ALIVE\n");
         break;
     case _ZN_MID_PING_PONG:
         _Z_DEBUG("Handling of PingPong messages not implemented");
+        printf("PING_PONG\n");
         break;
     case _ZN_MID_FRAME:
         // @TODO
+        printf("FRAME\n");
         break;
     default:
         _Z_DEBUG("Unknown session message ID");
@@ -536,33 +564,40 @@ void *zn_recv_loop(zn_session_t *z)
 
     while (z->running)
     {
+        z_iobuf_compact(&z->rbuf);
+
+#ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
         //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
         //       the boundary of the serialized messages. The length is encoded as little-endian.
         //       In any case, the length of a message must not exceed 65_535 bytes.
-        if (ZENOH_NET_TRANSPORT_TCP_IP)
+        //
+        // Read number of bytes to read.
+        while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
             z_iobuf_compact(&z->rbuf);
-            // Read number of bytes to read.
-            // The message length size is encoded as 16 bits little endian.
-            while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
-            {
-                z_iobuf_compact(&z->rbuf);
-                if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
-                    return 0;
-            }
-            // Decode the message length
-            uint16_t to_read = (z_iobuf_read(&z->rbuf) << 8) | z_iobuf_read(&z->rbuf);
-
-            // Read the rest of bytes to decode one or more session messages.
-            while (z_iobuf_readable(&z->rbuf) < to_read)
-            {
-                z_iobuf_compact(&z->rbuf);
-                if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
-                    return 0;
-            }
+            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+                return 0;
         }
+        // Decode the message length
+        uint16_t to_read = (z_iobuf_read(&z->rbuf) << 8) | z_iobuf_read(&z->rbuf);
+        // Read the rest of bytes to decode one or more session messages.
+        while (z_iobuf_readable(&z->rbuf) < to_read)
+        {
+            z_iobuf_compact(&z->rbuf);
+            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+                return 0;
+        }
+#else
+        // Read bytes from the socket.
+        while (z_iobuf_readable(&z->rbuf) == 0)
+        {
+            z_iobuf_compact(&z->rbuf);
+            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+                return 0;
+        }
+#endif
 
         while (z_iobuf_readable(&z->rbuf))
         {

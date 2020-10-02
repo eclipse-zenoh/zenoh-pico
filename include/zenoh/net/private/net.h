@@ -30,26 +30,20 @@ char *_zn_select_scout_iface();
 
 _zn_socket_result_t _zn_open_tx_session(const char *locator);
 
-struct sockaddr_in *
-_zn_make_socket_address(const char *addr, int port);
+struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
 
-_zn_socket_result_t
-_zn_create_udp_socket(const char *addr, int port, int recv_timeout);
+_zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
 
 int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *buf, struct sockaddr *from, socklen_t *salen);
-
 int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *buf, const struct sockaddr *dest, socklen_t salen);
 
 int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *buf);
-
 int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf);
 
 int _zn_recv_n(_zn_socket_t sock, uint8_t *buf, size_t len);
 
 size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *m);
-size_t _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m);
-
-size_t _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_t *m, unsigned int max_len);
+size_t _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);
 
 z_zint_result_t _zn_recv_zint(_zn_socket_t sock);
 

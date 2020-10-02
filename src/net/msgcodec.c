@@ -1483,11 +1483,17 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
         r->value.frame.payload.messages = z_vec_make(_ZENOH_C_FRAME_MESSAGES_VEC_SIZE);
         while (z_iobuf_readable(buf))
         {
+            unsigned int mark = buf->r_pos;
             _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
+            {
                 z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
+            }
             else
+            {
+                buf->r_pos = mark;
                 return;
+            }
         }
     }
 }
