@@ -1288,9 +1288,9 @@ void query_message()
 }
 
 /*------------------ Zenoh message ------------------*/
-zn_zenoh_message_t *gen_zenoh_message()
+_zn_zenoh_message_t *gen_zenoh_message()
 {
-    zn_zenoh_message_t *p_zm = (zn_zenoh_message_t *)malloc(sizeof(zn_zenoh_message_t));
+    _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
     if (gen_bool())
         p_zm->attachment = gen_attachment();
     else
@@ -1338,7 +1338,7 @@ zn_zenoh_message_t *gen_zenoh_message()
     return p_zm;
 }
 
-void assert_eq_zenoh_message(const zn_zenoh_message_t *left, const zn_zenoh_message_t *right)
+void assert_eq_zenoh_message(const _zn_zenoh_message_t *left, const _zn_zenoh_message_t *right)
 {
     // Test message decorators
     if (left->attachment && right->attachment)
@@ -1396,7 +1396,7 @@ void zenoh_message()
     z_iobuf_t buf = z_iobuf_make(1024);
 
     // Initialize
-    zn_zenoh_message_t *e_zm = gen_zenoh_message();
+    _zn_zenoh_message_t *e_zm = gen_zenoh_message();
 
     printf(" - ");
     switch (_ZN_MID(e_zm->header))
@@ -1435,17 +1435,17 @@ void zenoh_message()
     printf("\n");
 
     // Encode
-    zn_zenoh_message_encode(&buf, e_zm);
+    _zn_zenoh_message_encode(&buf, e_zm);
 
     // Decode
-    zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(&buf);
+    _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&buf);
     assert(r_zm.tag == Z_OK_TAG);
 
-    zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
+    _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
     assert_eq_zenoh_message(e_zm, d_zm);
 
     free(e_zm);
-    zn_zenoh_message_p_result_free(&r_zm);
+    _zn_zenoh_message_p_result_free(&r_zm);
     z_iobuf_free(&buf);
 }
 
@@ -1453,9 +1453,9 @@ void zenoh_message()
 /*       Session Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-zn_scout_t gen_scout_message(uint8_t *header)
+_zn_scout_t gen_scout_message(uint8_t *header)
 {
-    zn_scout_t e_sc;
+    _zn_scout_t e_sc;
 
     _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_I : 0);
     if (gen_bool())
@@ -1471,7 +1471,7 @@ zn_scout_t gen_scout_message(uint8_t *header)
     return e_sc;
 }
 
-void assert_eq_scout_message(const zn_scout_t *left, const zn_scout_t *right, uint8_t header)
+void assert_eq_scout_message(const _zn_scout_t *left, const _zn_scout_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
     {
@@ -1487,16 +1487,16 @@ void scout_message()
 
     // Initialize
     uint8_t e_hdr = 0;
-    zn_scout_t e_sc = gen_scout_message(&e_hdr);
+    _zn_scout_t e_sc = gen_scout_message(&e_hdr);
 
     // Encode
-    zn_scout_encode(&buf, e_hdr, &e_sc);
+    _zn_scout_encode(&buf, e_hdr, &e_sc);
 
     // Decode
-    zn_scout_result_t r_sc = zn_scout_decode(&buf, e_hdr);
+    _zn_scout_result_t r_sc = _zn_scout_decode(&buf, e_hdr);
     assert(r_sc.tag == Z_OK_TAG);
 
-    zn_scout_t d_sc = r_sc.value.scout;
+    _zn_scout_t d_sc = r_sc.value.scout;
     printf("   ");
     assert_eq_scout_message(&e_sc, &d_sc, e_hdr);
     printf("\n");
@@ -1505,9 +1505,9 @@ void scout_message()
 }
 
 /*------------------ Hello Message ------------------*/
-zn_hello_t gen_hello_message(uint8_t *header)
+_zn_hello_t gen_hello_message(uint8_t *header)
 {
-    zn_hello_t e_he;
+    _zn_hello_t e_he;
 
     if (gen_bool())
     {
@@ -1528,7 +1528,7 @@ zn_hello_t gen_hello_message(uint8_t *header)
     return e_he;
 }
 
-void assert_eq_hello_message(const zn_hello_t *left, const zn_hello_t *right, uint8_t header)
+void assert_eq_hello_message(const _zn_hello_t *left, const _zn_hello_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
     {
@@ -1557,16 +1557,16 @@ void hello_message()
 
     // Initialize
     uint8_t e_hdr = 0;
-    zn_hello_t e_sc = gen_hello_message(&e_hdr);
+    _zn_hello_t e_sc = gen_hello_message(&e_hdr);
 
     // Encode
-    zn_hello_encode(&buf, e_hdr, &e_sc);
+    _zn_hello_encode(&buf, e_hdr, &e_sc);
 
     // Decode
-    zn_hello_result_t r_sc = zn_hello_decode(&buf, e_hdr);
+    _zn_hello_result_t r_sc = _zn_hello_decode(&buf, e_hdr);
     assert(r_sc.tag == Z_OK_TAG);
 
-    zn_hello_t d_sc = r_sc.value.hello;
+    _zn_hello_t d_sc = r_sc.value.hello;
     assert_eq_hello_message(&e_sc, &d_sc, e_hdr);
 
     z_iobuf_free(&buf);
@@ -2035,7 +2035,7 @@ _zn_frame_t gen_frame_message(uint8_t *header)
         e_fr.payload.messages = z_vec_make(num);
         for (z_zint_t i = 0; i < num; ++i)
         {
-            zn_zenoh_message_t *p_zm = gen_zenoh_message();
+            _zn_zenoh_message_t *p_zm = gen_zenoh_message();
             z_vec_append(&e_fr.payload.messages, p_zm);
         }
     }
@@ -2092,9 +2092,9 @@ void frame_message()
 }
 
 /*------------------ Session Message ------------------*/
-zn_session_message_t *gen_session_message()
+_zn_session_message_t *gen_session_message()
 {
-    zn_session_message_t *p_sm = (zn_session_message_t *)malloc(sizeof(zn_session_message_t));
+    _zn_session_message_t *p_sm = (_zn_session_message_t *)malloc(sizeof(_zn_session_message_t));
 
     if (gen_bool())
         p_sm->attachment = gen_attachment();
@@ -2164,7 +2164,7 @@ zn_session_message_t *gen_session_message()
     return p_sm;
 }
 
-void assert_eq_session_message(const zn_session_message_t *left, const zn_session_message_t *right)
+void assert_eq_session_message(const _zn_session_message_t *left, const _zn_session_message_t *right)
 {
     // Test message decorators
     if (left->attachment && right->attachment)
@@ -2225,7 +2225,7 @@ void session_message()
     z_iobuf_t buf = z_iobuf_make(1024);
 
     // Initialize
-    zn_session_message_t *e_sm = gen_session_message();
+    _zn_session_message_t *e_sm = gen_session_message();
 
     printf(" - ");
     switch (_ZN_MID(e_sm->header))
@@ -2267,17 +2267,17 @@ void session_message()
     printf("\n");
 
     // Encode
-    zn_session_message_encode(&buf, e_sm);
+    _zn_session_message_encode(&buf, e_sm);
 
     // Decode
-    zn_session_message_p_result_t r_zm = zn_session_message_decode(&buf);
+    _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&buf);
     assert(r_zm.tag == Z_OK_TAG);
 
-    zn_session_message_t *d_zm = r_zm.value.session_message;
+    _zn_session_message_t *d_zm = r_zm.value.session_message;
     assert_eq_session_message(e_sm, d_zm);
 
     free(e_sm);
-    zn_session_message_p_result_free(&r_zm);
+    _zn_session_message_p_result_free(&r_zm);
     z_iobuf_free(&buf);
 }
 

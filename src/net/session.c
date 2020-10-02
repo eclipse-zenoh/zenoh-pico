@@ -63,7 +63,7 @@ z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, cons
 
         if (len > 0)
         {
-            zn_session_message_p_result_t r_hm = zn_session_message_decode(&hbuf);
+            _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&hbuf);
             if (r_hm.tag == Z_ERROR_TAG)
             {
                 perror("Scouting loop received unexpected message\n");
@@ -100,11 +100,11 @@ z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
     }
 
     z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-    zn_session_message_t scout;
+    _zn_session_message_t scout;
     scout.header = _ZN_MID_SCOUT;
     // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
     //       and the what value is not sent on the wire. Here we scout for Routers
-    zn_session_message_encode(&sbuf, &scout);
+    _zn_session_message_encode(&sbuf, &scout);
 
     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
     ASSERT_RESULT(r, "Unable to create scouting socket\n");
@@ -118,7 +118,7 @@ z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
 
     if (locs.length == 0)
     {
-        // We did not find broker on the local host, thus Scout in the LAN
+        // We did not find an router on localhost, hence Scout on the LAN
         locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
     }
     z_iobuf_free(&sbuf);
@@ -162,7 +162,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     for (int i = 0; i < ZENOH_NET_PID_LENGTH; ++i)
         pid.elem[i] = rand() % 255;
 
-    zn_session_message_t om;
+    _zn_session_message_t om;
 
     // Add an attachement if properties have been provided
     if (ps)
@@ -211,7 +211,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     // Read response message
     z_iobuf_clear(&rbuf);
 
-    zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r_sock.value.socket, &rbuf);
+    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r_sock.value.socket, &rbuf);
 
     if (r_msg.tag == Z_ERROR_TAG)
     {
@@ -222,12 +222,12 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         z_iobuf_free(&wbuf);
         z_iobuf_free(&rbuf);
         // Free the result
-        zn_session_message_p_result_free(&r_msg);
+        _zn_session_message_p_result_free(&r_msg);
 
         return r;
     }
 
-    zn_session_message_t *p_am = r_msg.value.session_message;
+    _zn_session_message_t *p_am = r_msg.value.session_message;
     switch (_ZN_MID(p_am->header))
     {
     case _ZN_MID_ACCEPT:
@@ -274,7 +274,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                     z_iobuf_free(&wbuf);
                     z_iobuf_free(&rbuf);
                     // Free the result
-                    zn_session_message_p_result_free(&r_msg);
+                    _zn_session_message_p_result_free(&r_msg);
 
                     return r;
                 }
@@ -298,7 +298,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                     z_iobuf_free(&wbuf);
                     z_iobuf_free(&rbuf);
                     // Free the result
-                    zn_session_message_p_result_free(&r_msg);
+                    _zn_session_message_p_result_free(&r_msg);
 
                     return r;
                 }
@@ -349,7 +349,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     }
 
     // Free the result
-    zn_session_message_p_result_free(&r_msg);
+    _zn_session_message_p_result_free(&r_msg);
 
     return r;
 }
@@ -372,19 +372,23 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 //     return res;
 // }
 
-// int zn_close(zn_session_t *z)
-// {
-//     _zn_message_t c;
-//     c.header = _ZN_CLOSE;
-//     c.payload.close.pid = z->pid;
-//     c.payload.close.reason = _ZN_PEER_CLOSE;
-//     int rv = _zn_send_msg(z->sock, &z->wbuf, &c);
-//     close(z->sock);
-//     return rv;
-// }
+int zn_close(zn_session_t *z)
+{
+    _zn_session_message_t c;
+    c.attachment = NULL;
+    c.header = _ZN_MID_CLOSE;
+    c.body.close.pid = z->pid;
+    c.body.close.reason = _ZN_CLOSE_GENERIC;
+    _ZN_SET_FLAG(c.header, _ZN_FLAG_S_I);
+    // NOTE: we are closing the whole zenoh session.
+    //       So, the K flag in the close message is set to 0
+    int rv = _zn_send_s_msg(z->sock, &z->wbuf, &c);
+    close(z->sock);
 
-// zn_sub_p_result_t
-// zn_declare_subscriber(zn_session_t *z, const char *resource, const zn_sub_mode_t *sm, zn_data_handler_t data_handler, void *arg)
+    return rv;
+}
+
+// zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char *resource, const zn_sub_mode_t *sm, zn_data_handler_t data_handler, void *arg)
 // {
 //     zn_sub_p_result_t r;
 //     assert((sm->kind > 0) && (sm->kind <= 4));

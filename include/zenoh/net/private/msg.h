@@ -230,8 +230,8 @@ _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 typedef struct
 {
     z_zint_t what;
-} zn_scout_t;
-ZN_RESULT_DECLARE(zn_scout_t, scout)
+} _zn_scout_t;
+_ZN_RESULT_DECLARE(_zn_scout_t, scout)
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -268,8 +268,8 @@ typedef struct
     z_zint_t whatami;
     z_uint8_array_t pid;
     z_string_array_t locators;
-} zn_hello_t;
-ZN_RESULT_DECLARE(zn_hello_t, hello)
+} _zn_hello_t;
+_ZN_RESULT_DECLARE(_zn_hello_t, hello)
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -563,8 +563,8 @@ typedef struct
     _zn_attachment_t *attachment;
     union
     {
-        zn_scout_t scout;
-        zn_hello_t hello;
+        _zn_scout_t scout;
+        _zn_hello_t hello;
         _zn_open_t open;
         _zn_accept_t accept;
         _zn_close_t close;
@@ -575,8 +575,8 @@ typedef struct
         _zn_frame_t frame;
     } body;
     uint8_t header;
-} zn_session_message_t;
-ZN_P_RESULT_DECLARE(zn_session_message_t, session_message)
+} _zn_session_message_t;
+_ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -873,7 +873,7 @@ typedef struct
         _zn_pull_t pull;
     } body;
     uint8_t header;
-} zn_zenoh_message_t;
-ZN_P_RESULT_DECLARE(zn_zenoh_message_t, zenoh_message)
+} _zn_zenoh_message_t;
+_ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 
 #endif /* ZENOH_C_NET_MSG_H */

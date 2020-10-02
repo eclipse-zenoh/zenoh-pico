@@ -376,11 +376,11 @@ int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf)
     return rb;
 }
 
-size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_t *m)
+size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *m)
 {
     _Z_DEBUG(">> send_msg\n");
     z_iobuf_clear(buf);
-    zn_session_message_encode(buf, m);
+    _zn_session_message_encode(buf, m);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -414,8 +414,7 @@ size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_t *m
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
-// size_t
-// _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m)
+// size_t _zn_send_z_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m)
 // {
 //     _Z_DEBUG(">> send_msg\n");
 //     z_iobuf_clear(buf);
@@ -434,8 +433,7 @@ size_t _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_t *m
 //     return rv;
 // }
 
-// size_t
-// _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m, unsigned int max_len)
+// size_t _zn_send_z_large_msg(_zn_socket_t sock, z_iobuf_t *buf, z_zenoh_message_t *m, unsigned int max_len)
 // {
 //     if (max_len > buf->capacity)
 //     {
@@ -477,7 +475,7 @@ z_zint_result_t _zn_recv_zint(_zn_socket_t sock)
     return z_zint_decode(&iobuf);
 }
 
-void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_p_result_t *r)
+void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_result_t *r)
 {
     z_iobuf_clear(buf);
     _Z_DEBUG(">> recv_msg\n");
@@ -528,18 +526,18 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_session_message_p_re
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 
     _Z_DEBUG(">> \t session_message_decode\n");
-    zn_session_message_decode_na(buf, r);
+    _zn_session_message_decode_na(buf, r);
 }
 
-zn_session_message_p_result_t _zn_recv_s_msg(_zn_socket_t sock, z_iobuf_t *buf)
+_zn_session_message_p_result_t _zn_recv_s_msg(_zn_socket_t sock, z_iobuf_t *buf)
 {
-    zn_session_message_p_result_t r;
-    zn_session_message_p_result_init(&r);
+    _zn_session_message_p_result_t r;
+    _zn_session_message_p_result_init(&r);
     zn_recv_s_msg_na(sock, buf, &r);
     return r;
 }
 
-void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
+void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
 {
     z_iobuf_clear(buf);
     _Z_DEBUG(">> recv_msg\n");
@@ -558,13 +556,13 @@ void _zn_recv_z_msg_na(_zn_socket_t sock, z_iobuf_t *buf, zn_zenoh_message_p_res
     buf->r_pos = 0;
     buf->w_pos = len;
     _Z_DEBUG(">> \t z_message_decode\n");
-    zn_zenoh_message_decode_na(buf, r);
+    _zn_zenoh_message_decode_na(buf, r);
 }
 
-zn_zenoh_message_p_result_t _zn_recv_z_msg(_zn_socket_t sock, z_iobuf_t *buf)
+_zn_zenoh_message_p_result_t _zn_recv_z_msg(_zn_socket_t sock, z_iobuf_t *buf)
 {
-    zn_zenoh_message_p_result_t r;
-    zn_zenoh_message_p_result_init(&r);
+    _zn_zenoh_message_p_result_t r;
+    _zn_zenoh_message_p_result_init(&r);
     _zn_recv_z_msg_na(sock, buf, &r);
     return r;
 }

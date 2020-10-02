@@ -889,7 +889,7 @@ _zn_query_result_t _zn_query_decode(z_iobuf_t *buf, uint8_t header)
 }
 
 /*------------------ Zenoh Message ------------------*/
-void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *msg)
+void _zn_zenoh_message_encode(z_iobuf_t *buf, const _zn_zenoh_message_t *msg)
 {
     // Encode the decorators if present
     if (msg->attachment)
@@ -932,7 +932,7 @@ void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *msg)
     if (!_ZN_HAS_FLAG(f, _ZN_SESSION_MESSAGE_DECORATOR_REPLY_CONTEXT)) \
         r->value.zenoh_message->reply_context = NULL;
 
-void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
+void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r)
 {
     r->tag = Z_OK_TAG;
 
@@ -1005,11 +1005,11 @@ void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r)
     } while (1);
 }
 
-zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf)
+_zn_zenoh_message_p_result_t _zn_zenoh_message_decode(z_iobuf_t *buf)
 {
-    zn_zenoh_message_p_result_t r;
-    zn_zenoh_message_p_result_init(&r);
-    zn_zenoh_message_decode_na(buf, &r);
+    _zn_zenoh_message_p_result_t r;
+    _zn_zenoh_message_p_result_init(&r);
+    _zn_zenoh_message_decode_na(buf, &r);
     return r;
 }
 
@@ -1017,7 +1017,7 @@ zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf)
 /*       Session Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-void zn_scout_encode(z_iobuf_t *buf, uint8_t header, const zn_scout_t *msg)
+void _zn_scout_encode(z_iobuf_t *buf, uint8_t header, const _zn_scout_t *msg)
 {
     _Z_DEBUG("Encoding _ZN_MID_SCOUT\n");
 
@@ -1026,7 +1026,7 @@ void zn_scout_encode(z_iobuf_t *buf, uint8_t header, const zn_scout_t *msg)
         z_zint_encode(buf, msg->what);
 }
 
-void zn_scout_decode_na(z_iobuf_t *buf, uint8_t header, zn_scout_result_t *r)
+void _zn_scout_decode_na(z_iobuf_t *buf, uint8_t header, _zn_scout_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_SCOUT\n");
     r->tag = Z_OK_TAG;
@@ -1040,15 +1040,15 @@ void zn_scout_decode_na(z_iobuf_t *buf, uint8_t header, zn_scout_result_t *r)
     }
 }
 
-zn_scout_result_t zn_scout_decode(z_iobuf_t *buf, uint8_t header)
+_zn_scout_result_t _zn_scout_decode(z_iobuf_t *buf, uint8_t header)
 {
-    zn_scout_result_t r;
-    zn_scout_decode_na(buf, header, &r);
+    _zn_scout_result_t r;
+    _zn_scout_decode_na(buf, header, &r);
     return r;
 }
 
 /*------------------ Hello Message ------------------*/
-void zn_hello_encode(z_iobuf_t *buf, uint8_t header, const zn_hello_t *msg)
+void _zn_hello_encode(z_iobuf_t *buf, uint8_t header, const _zn_hello_t *msg)
 {
     _Z_DEBUG("Encoding _ZN_MID_HELLO\n");
 
@@ -1063,7 +1063,7 @@ void zn_hello_encode(z_iobuf_t *buf, uint8_t header, const zn_hello_t *msg)
         z_string_array_encode(buf, &msg->locators);
 }
 
-void zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, zn_hello_result_t *r)
+void _zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, _zn_hello_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_HELLO\n");
     r->tag = Z_OK_TAG;
@@ -1091,10 +1091,10 @@ void zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, zn_hello_result_t *r)
     }
 }
 
-zn_hello_result_t zn_hello_decode(z_iobuf_t *buf, uint8_t header)
+_zn_hello_result_t _zn_hello_decode(z_iobuf_t *buf, uint8_t header)
 {
-    zn_hello_result_t r;
-    zn_hello_decode_na(buf, header, &r);
+    _zn_hello_result_t r;
+    _zn_hello_decode_na(buf, header, &r);
     return r;
 }
 
@@ -1457,7 +1457,7 @@ void _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     {
         unsigned int len = z_vec_length(&msg->payload.messages);
         for (unsigned int i = 0; i < len; ++i)
-            zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
+            _zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
     }
 }
 
@@ -1483,7 +1483,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
         r->value.frame.payload.messages = z_vec_make(_ZENOH_C_FRAME_MESSAGES_VEC_SIZE);
         while (z_iobuf_readable(buf))
         {
-            zn_zenoh_message_p_result_t r_zm = zn_zenoh_message_decode(buf);
+            _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
                 z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
             else
@@ -1500,7 +1500,7 @@ _zn_frame_result_t _zn_frame_decode(z_iobuf_t *buf, uint8_t header)
 }
 
 /*------------------ Session Message ------------------*/
-void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *msg)
+void _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *msg)
 {
     // Encode the decorators if present
     if (msg->attachment)
@@ -1513,10 +1513,10 @@ void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *msg)
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_SCOUT:
-        zn_scout_encode(buf, msg->header, &msg->body.scout);
+        _zn_scout_encode(buf, msg->header, &msg->body.scout);
         break;
     case _ZN_MID_HELLO:
-        zn_hello_encode(buf, msg->header, &msg->body.hello);
+        _zn_hello_encode(buf, msg->header, &msg->body.hello);
         break;
     case _ZN_MID_OPEN:
         _zn_open_encode(buf, msg->header, &msg->body.open);
@@ -1553,13 +1553,13 @@ void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *msg)
     if (!_ZN_HAS_FLAG(f, _ZN_SESSION_MESSAGE_DECORATOR_ATTACHMENT)) \
         r->value.session_message->attachment = NULL;
 
-void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t *r)
+void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_t *r)
 {
     r->tag = Z_OK_TAG;
 
     _zn_attachment_p_result_t r_at;
-    zn_scout_result_t r_sc;
-    zn_hello_result_t r_he;
+    _zn_scout_result_t r_sc;
+    _zn_hello_result_t r_he;
     _zn_open_result_t r_op;
     _zn_accept_result_t r_ac;
     _zn_close_result_t r_cl;
@@ -1588,14 +1588,14 @@ void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t 
         case _ZN_MID_SCOUT:
             _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
 
-            r_sc = zn_scout_decode(buf, r->value.session_message->header);
+            r_sc = _zn_scout_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_sc, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.scout = r_sc.value.scout;
             return;
         case _ZN_MID_HELLO:
             _ZN_INIT_SESSION_MESSAGE_DECORATORS(r, has_decorator)
 
-            r_he = zn_hello_decode(buf, r->value.session_message->header);
+            r_he = _zn_hello_decode(buf, r->value.session_message->header);
             ASSURE_P_RESULT(r_he, r, ZN_SESSION_MESSAGE_PARSE_ERROR)
             r->value.session_message->body.hello = r_he.value.hello;
             return;
@@ -1664,10 +1664,10 @@ void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t 
     } while (1);
 }
 
-zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf)
+_zn_session_message_p_result_t _zn_session_message_decode(z_iobuf_t *buf)
 {
-    zn_session_message_p_result_t r;
-    zn_session_message_p_result_init(&r);
-    zn_session_message_decode_na(buf, &r);
+    _zn_session_message_p_result_t r;
+    _zn_session_message_p_result_init(&r);
+    _zn_session_message_decode_na(buf, &r);
     return r;
 }

@@ -23,26 +23,6 @@
 
 #define _ZENOH_C_FRAME_MESSAGES_VEC_SIZE 32
 
-/*------------------ Session Message ------------------*/
-void zn_session_message_encode(z_iobuf_t *buf, const zn_session_message_t *m);
-zn_session_message_p_result_t zn_session_message_decode(z_iobuf_t *buf);
-void zn_session_message_decode_na(z_iobuf_t *buf, zn_session_message_p_result_t *r);
-
-ZN_DECLARE_ENCODE(scout);
-ZN_DECLARE_DECODE(scout);
-
-ZN_DECLARE_ENCODE(hello);
-ZN_DECLARE_DECODE(hello);
-
-/*------------------ Zenoh Message ------------------*/
-void zn_zenoh_message_encode(z_iobuf_t *buf, const zn_zenoh_message_t *m);
-zn_zenoh_message_p_result_t zn_zenoh_message_decode(z_iobuf_t *buf);
-void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r);
-
-#endif /* ZENOH_C_NET_MSGCODEC_H */
-
-// NOTE: the following headers are for unit tests only
-#ifdef ZENOH_C_NET_MSGCODEC_T
 #define _ZN_DECLARE_ENCODE(name) \
     void _zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const _zn_##name##_t *m)
 
@@ -61,13 +41,35 @@ void zn_zenoh_message_decode_na(z_iobuf_t *buf, zn_zenoh_message_p_result_t *r);
     _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
     void _zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, _zn_##name##_p_result_t *r)
 
-/*------------------ Message Fields ------------------*/
-_ZN_DECLARE_ENCODE_NOH(payload);
-_ZN_DECLARE_DECODE_NOH(payload);
+#define _ZN_DECLARE_P_DECODE_NOH(name)                           \
+    _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_p_result_t *r)
 
+/*------------------ Session Message ------------------*/
+_ZN_DECLARE_ENCODE(scout);
+_ZN_DECLARE_DECODE(scout);
+
+_ZN_DECLARE_ENCODE(hello);
+_ZN_DECLARE_DECODE(hello);
+
+_ZN_DECLARE_ENCODE_NOH(session_message);
+_ZN_DECLARE_P_DECODE_NOH(session_message);
+
+/*------------------ Zenoh Message ------------------*/
+_ZN_DECLARE_ENCODE_NOH(zenoh_message);
+_ZN_DECLARE_P_DECODE_NOH(zenoh_message);
+
+#endif /* ZENOH_C_NET_MSGCODEC_H */
+
+// NOTE: the following headers are for unit tests only
+#ifdef ZENOH_C_NET_MSGCODEC_T
+/*------------------ Message Fields ------------------*/
 void _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts);
 void _zn_timestamp_decode_na(z_iobuf_t *buf, _zn_timestamp_result_t *r);
 _zn_timestamp_result_t _zn_timestamp_decode(z_iobuf_t *buf);
+
+_ZN_DECLARE_ENCODE_NOH(payload);
+_ZN_DECLARE_DECODE_NOH(payload);
 
 ZN_DECLARE_ENCODE(res_key);
 ZN_DECLARE_DECODE(res_key);

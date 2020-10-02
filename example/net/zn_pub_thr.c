@@ -48,8 +48,11 @@ int main(int argc, char **argv)
     zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     if (r_z.tag == Z_ERROR_TAG)
         return -1;
-
     printf("SESSION OPEN!!!\n");
+
+    zn_session_t *z = r_z.value.session;
+    zn_close(z);
+    printf("SESSION CLOSE!!!\n");
 
     // z_iobuf_t data = z_iobuf_make(len);
     // for (unsigned int i = 0; i < len; ++i)

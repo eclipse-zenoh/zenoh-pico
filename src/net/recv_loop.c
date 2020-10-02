@@ -478,12 +478,12 @@ typedef struct
 //     }
 // }
 
-// void handle_z_msg(zn_session_t *z, zn_zenoh_message_p_result_t r)
+// void handle_z_msg(zn_session_t *z, _zn_zenoh_message_p_result_t r)
 // {
 
 // }
 
-int handle_session_msg(zn_session_t *z, zn_session_message_t *msg)
+int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
 {
     printf("%d", z->running);
 
@@ -529,8 +529,8 @@ int handle_session_msg(zn_session_t *z, zn_session_message_t *msg)
 
 void *zn_recv_loop(zn_session_t *z)
 {
-    zn_session_message_p_result_t r;
-    zn_session_message_p_result_init(&r);
+    _zn_session_message_p_result_t r;
+    _zn_session_message_p_result_init(&r);
     z_iobuf_clear(&z->rbuf);
     z->running = 1;
 
@@ -567,7 +567,7 @@ void *zn_recv_loop(zn_session_t *z)
         while (z_iobuf_readable(&z->rbuf))
         {
             // Descode session messages
-            zn_session_message_decode_na(&z->rbuf, &r);
+            _zn_session_message_decode_na(&z->rbuf, &r);
             if (r.tag == Z_OK_TAG)
             {
                 handle_session_msg(z, r.value.session_message);
