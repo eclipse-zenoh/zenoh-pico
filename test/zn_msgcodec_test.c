@@ -254,17 +254,18 @@ void timestamp_field()
     z_iobuf_free(&buf);
 }
 
-/*------------------ SubMode field ------------------*/
-zn_sub_mode_t gen_sub_mode()
+/*------------------ SubInfo field ------------------*/
+zn_sub_info_t gen_sub_info()
 {
     uint8_t kind[] = {ZN_PUSH_MODE, ZN_PULL_MODE};
 
-    zn_sub_mode_t sm;
-    sm.header = kind[rand() % (sizeof(kind) / sizeof(uint8_t))];
+    zn_sub_info_t sm;
+    sm.mode = kind[rand() % (sizeof(kind) / sizeof(uint8_t))];
+    sm.is_reliable = gen_bool();
+    sm.is_periodic = gen_bool();
 
-    if (gen_bool())
+    if (sm.is_periodic)
     {
-        _ZN_SET_FLAG(sm.header, _ZN_FLAG_Z_P);
         zn_temporal_property_t t_p;
         t_p.origin = gen_zint();
         t_p.period = gen_zint();
@@ -275,24 +276,30 @@ zn_sub_mode_t gen_sub_mode()
     return sm;
 }
 
-void assert_eq_sub_mode(const zn_sub_mode_t *left, const zn_sub_mode_t *right)
+void assert_eq_sub_info(const zn_sub_info_t *left, const zn_sub_info_t *right)
 {
-    printf("SubMode -> ");
-    printf("Kind (%u:%u), ", left->header, right->header);
-    assert(left->header == right->header);
+    printf("SubInfo -> ");
+    printf("Mode (%u:%u), ", left->mode, right->mode);
+    assert(left->mode == right->mode);
+
+    printf("Reliable (%u:%u), ", left->is_reliable, right->is_reliable);
+    assert(left->is_reliable == right->is_reliable);
+
+    printf("Periodic (%u:%u), ", left->is_periodic, right->is_periodic);
+    assert(left->is_periodic == right->is_periodic);
 
     printf("Period (");
-    if _ZN_HAS_FLAG (left->header, _ZN_FLAG_Z_P)
+    if (left->is_periodic)
         printf("<%zu:%zu,%zu>", left->period.origin, left->period.period, left->period.duration);
     else
         printf("NULL");
     printf(":");
-    if _ZN_HAS_FLAG (right->header, _ZN_FLAG_Z_P)
+    if (right->is_periodic)
         printf("<%zu:%zu,%zu>", right->period.origin, right->period.period, right->period.duration);
     else
         printf("NULL");
     printf(")");
-    if (_ZN_HAS_FLAG(left->header, _ZN_FLAG_Z_P) && _ZN_HAS_FLAG(right->header, _ZN_FLAG_Z_P))
+    if (left->is_periodic && right->is_periodic)
     {
         assert(left->period.origin == right->period.origin);
         assert(left->period.period == right->period.period);
@@ -300,24 +307,28 @@ void assert_eq_sub_mode(const zn_sub_mode_t *left, const zn_sub_mode_t *right)
     }
 }
 
-void sub_mode_field()
+void sub_info_field()
 {
-    printf("\n>> SubMode field\n");
+    printf("\n>> SubInfo field\n");
     z_iobuf_t buf = z_iobuf_make(128);
 
     // Initialize
-    zn_sub_mode_t e_sm = gen_sub_mode();
+    printf("Ready to generate\n");
+    zn_sub_info_t e_sm = gen_sub_info();
 
     // Encode
-    zn_sub_mode_encode(&buf, &e_sm);
+    printf("Ready to encode\n");
+    uint8_t header = e_sm.is_reliable ? _ZN_FLAG_Z_R : 0;
+    zn_sub_info_encode(&buf, &e_sm);
 
+    printf("Ready to decode\n");
     // Decode
-    zn_sub_mode_result_t r_sm = zn_sub_mode_decode(&buf);
+    zn_sub_info_result_t r_sm = zn_sub_info_decode(&buf, header);
     assert(r_sm.tag == Z_OK_TAG);
 
-    zn_sub_mode_t d_sm = r_sm.value.sub_mode;
+    zn_sub_info_t d_sm = r_sm.value.sub_info;
     printf("   ");
-    assert_eq_sub_mode(&e_sm, &d_sm);
+    assert_eq_sub_info(&e_sm, &d_sm);
     printf("\n");
 
     z_iobuf_free(&buf);
@@ -721,14 +732,15 @@ _zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
 {
     _zn_sub_decl_t e_sd;
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_R : 0);
-    if (gen_bool())
-    {
+    e_sd.sub_info = gen_sub_info();
+    if (e_sd.sub_info.mode != ZN_PUSH_MODE || e_sd.sub_info.is_periodic)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_S);
-        e_sd.sub_mode = gen_sub_mode();
-    }
+    if (e_sd.sub_info.is_reliable)
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_R);
+
     e_sd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_sd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    if (!e_sd.key.rname)
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_K);
 
     return e_sd;
 }
@@ -739,7 +751,7 @@ void assert_eq_subscriber_declaration(const _zn_sub_decl_t *left, const _zn_sub_
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
     {
         printf(", ");
-        assert_eq_sub_mode(&left->sub_mode, &right->sub_mode);
+        assert_eq_sub_info(&left->sub_info, &right->sub_info);
     }
 }
 
@@ -2292,7 +2304,7 @@ int main()
         // Message fields
         payload_field();
         timestamp_field();
-        sub_mode_field();
+        sub_info_field();
         res_key_field();
         data_info_field();
         // Message decorators

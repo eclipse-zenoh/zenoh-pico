@@ -485,14 +485,19 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_DECLARE:
+        printf("Received declare");
         break;
     case _ZN_MID_DATA:
+        printf("Received data");
         break;
     case _ZN_MID_PULL:
+        printf("Received pull");
         break;
     case _ZN_MID_QUERY:
+        printf("Received query");
         break;
     case _ZN_MID_UNIT:
+        printf("Received unit");
         // Do nothing. Unit messages have no body
         break;
     default:
@@ -555,6 +560,18 @@ int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
     return 0;
 }
 
+void print_iobuf(z_iobuf_t *buf)
+{
+    printf("Capacity: %u, Rpos: %u, Wpos: %u, Buffer: [", buf->capacity, buf->r_pos, buf->w_pos);
+    for (unsigned int i = 0; i < buf->capacity; ++i)
+    {
+        printf("%02x", buf->buf[i]);
+        if (i < buf->capacity - 1)
+            printf(" ");
+    }
+    printf("]\n");
+}
+
 void *zn_recv_loop(zn_session_t *z)
 {
     _zn_session_message_p_result_t r;
@@ -566,6 +583,7 @@ void *zn_recv_loop(zn_session_t *z)
     {
         z_iobuf_compact(&z->rbuf);
 
+        print_iobuf(&z->rbuf);
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -581,7 +599,9 @@ void *zn_recv_loop(zn_session_t *z)
                 return 0;
         }
         // Decode the message length
-        uint16_t to_read = (z_iobuf_read(&z->rbuf) << 8) | z_iobuf_read(&z->rbuf);
+        print_iobuf(&z->rbuf);
+        uint16_t to_read = z_iobuf_read(&z->rbuf) | (z_iobuf_read(&z->rbuf) << 8);
+        printf("To read: %u, Read: %u\n", to_read, z_iobuf_readable(&z->rbuf));
         // Read the rest of bytes to decode one or more session messages.
         while (z_iobuf_readable(&z->rbuf) < to_read)
         {
@@ -599,10 +619,18 @@ void *zn_recv_loop(zn_session_t *z)
         }
 #endif
 
-        while (z_iobuf_readable(&z->rbuf))
+        // while (z_iobuf_readable(&z->rbuf))
+        while (to_read > 0)
         {
-            // Descode session messages
+            uint16_t before_decode = z_iobuf_readable(&z->rbuf);
+            printf("Decode session message before: %u\n", before_decode);
+            // Decode session messages
             _zn_session_message_decode_na(&z->rbuf, &r);
+
+            uint16_t after_decode = z_iobuf_readable(&z->rbuf);
+            printf("Decode session message after: %u\n", before_decode);
+            to_read -= (before_decode - after_decode);
+
             if (r.tag == Z_OK_TAG)
             {
                 handle_session_msg(z, r.value.session_message);

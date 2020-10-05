@@ -163,7 +163,7 @@ Data Structures
 
       A resource name (string) when :c:member:`zn_res_key_t.kind` equals ``ZN_STR_RES_KEY``.
 
-.. c:type:: struct zn_sub_mode_t
+.. c:type:: struct zn_sub_info_t
 
   Data structure representing a subscription mode (see :c:func:`zn_declare_subscriber`).
 
@@ -319,7 +319,7 @@ Functions
   Return a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session 
   represented by **z**.
 
-.. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_sub_mode_t *sm, zn_data_handler_t data_handler, void *arg)
+.. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_sub_info_t *sm, zn_data_handler_t data_handler, void *arg)
 
   Declare a subscription for all published data matching the provided resource name **resource** in session **z**. 
   

@@ -12,13 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-// #include <stdio.h>
-// #include <unistd.h>
-// #include <assert.h>
-// #include "zenoh.h"
-// #include "zenoh/mvar.h"
-// #include "zenoh/codec.h"
-// #include "zenoh/net/recv_loop.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include "zenoh.h"
+#include "zenoh/mvar.h"
+#include "zenoh/codec.h"
+#include "zenoh/net/recv_loop.h"
 
 // typedef struct
 // {
@@ -195,7 +195,7 @@
 
 int main(int argc, char **argv)
 {
-    // Z_UNUSED_ARG_2(argc, argv);
+    Z_UNUSED_ARG_2(argc, argv);
 
     // z1_sub1_mvar = z_mvar_empty();
     // z2_sub1_mvar = z_mvar_empty();
@@ -205,17 +205,37 @@ int main(int argc, char **argv)
     // storage_replies_mvar = z_mvar_empty();
     // eval_replies_mvar = z_mvar_empty();
 
-    // char *locator = strdup("tcp/127.0.0.1:7447");
+    char *locator = strdup("tcp/127.0.0.1:7447");
+    char *path = "/test/client";
 
-    // zn_sub_mode_t push_mode = {ZN_PUSH_MODE, {0, 0, 0}};
-    // zn_sub_mode_t pull_mode = {ZN_PULL_MODE, {0, 0, 0}};
+    // zn_sub_info_t push_mode = {ZN_PUSH_MODE, {0, 0, 0}};
+    // zn_sub_info_t pull_mode = {ZN_PULL_MODE, {0, 0, 0}};
     // zn_query_dest_t best_match = {ZN_QTGT_BEST_MATCH, 0};
     // zn_query_dest_t none = {ZN_QTGT_NONE, 0};
 
-    // zn_session_p_result_t z1_r = zn_open(locator, 0, 0);
-    // ASSERT_RESULT(z1_r, "Unable to open session with broker")
-    // zn_session_t *z1 = z1_r.value.session;
-    // zn_start_recv_loop(z1);
+    printf(">> Open session\n");
+    zn_session_p_result_t z1_r = zn_open(locator, 0, 0);
+    ASSERT_RESULT(z1_r, "Unable to open session with router")
+    zn_session_t *z1 = z1_r.value.session;
+    zn_start_recv_loop(z1);
+
+    printf(">> Declare resource\n");
+    zn_res_p_result_t z1_res1_r = zn_declare_resource(z1, path);
+    ASSERT_P_RESULT(z1_res1_r, "Unable to declare resource.\n");
+    zn_res_t *z1_res1 = z1_res1_r.value.res;
+
+    printf(">> Declare publisher\n");
+    zn_pub_p_result_t z1_pub1_r = zn_declare_publisher(z1, &z1_res1->key);
+    ASSERT_P_RESULT(z1_pub1_r, "Unable to declare publisher.\n");
+    zn_pub_t *z1_pub1 = z1_pub1_r.value.pub;
+
+    printf(">> Undeclare publisher\n");
+    int z1_unpub1_r = zn_undeclare_publisher(z1_pub1);
+    assert(z1_unpub1_r == 0);
+
+    printf(">> Undeclare resource\n");
+    int z1_unres1_r = zn_undeclare_resource(z1_res1);
+    assert(z1_unres1_r == 0);
 
     // z_vec_t z1_info = zn_info(z1);
     // assert(0 == strcmp(locator, (const char *)((zn_property_t *)z_vec_get(&z1_info, ZN_INFO_PEER_KEY))->value.elem));
@@ -518,11 +538,14 @@ int main(int argc, char **argv)
     // zn_undeclare_publisher(z1_pub1);
     // zn_undeclare_publisher(z2_pub1);
 
-    // zn_close(z1);
+    // sleep(1); // Give time for msgs to reach the router
+
+    printf(">> Close session\n");
+    zn_close(z1);
     // zn_close(z2);
     // zn_close(z3);
 
-    // sleep(1); // let time for close msg to comme back from router
+    sleep(1); // Give time for the close msg to reach the router
 
     // zn_stop_recv_loop(z1);
     // zn_stop_recv_loop(z2);

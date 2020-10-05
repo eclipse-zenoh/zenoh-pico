@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     // zn_start_recv_loop(z);
 
     // printf("Declaring Subscriber on '%s'...\n", selector);
-    // zn_sub_mode_t sm;
+    // zn_sub_info_t sm;
     // sm.kind = ZN_PUSH_MODE;
     // zn_sub_p_result_t r = zn_declare_subscriber(z, selector, &sm, data_handler, NULL);
     // ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");

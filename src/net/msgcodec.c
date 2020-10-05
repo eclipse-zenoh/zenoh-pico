@@ -84,39 +84,45 @@ _zn_timestamp_result_t _zn_timestamp_decode(z_iobuf_t *buf)
 }
 
 /*------------------ SubMode Field ------------------*/
-void zn_sub_mode_encode(z_iobuf_t *buf, const zn_sub_mode_t *fld)
+void zn_sub_info_encode(z_iobuf_t *buf, const zn_sub_info_t *fld)
 {
     _Z_DEBUG("Encoding _SUB_MODE\n");
 
     // Encode the header
-    z_iobuf_write(buf, fld->header);
+    uint8_t header = fld->mode;
+    if (fld->is_periodic)
+        _ZN_SET_FLAG(header, _ZN_FLAG_Z_P);
+    z_iobuf_write(buf, header);
 
     // Encode the body
-    if _ZN_HAS_FLAG (fld->header, _ZN_FLAG_Z_P)
+    if (fld->is_periodic)
         zn_temporal_property_encode(buf, &fld->period);
 }
 
-void zn_sub_mode_decode_na(z_iobuf_t *buf, zn_sub_mode_result_t *r)
+void zn_sub_info_decode_na(z_iobuf_t *buf, uint8_t header, zn_sub_info_result_t *r)
 {
     _Z_DEBUG("Decoding _SUB_MODE\n");
     r->tag = Z_OK_TAG;
 
     // Decode the header
-    r->value.sub_mode.header = z_iobuf_read(buf);
+    r->value.sub_info.is_reliable = _ZN_HAS_FLAG(header, _ZN_FLAG_Z_R);
 
     // Decode the body
-    if _ZN_HAS_FLAG (r->value.sub_mode.header, _ZN_FLAG_Z_P)
+    uint8_t mode = z_iobuf_read(buf);
+    r->value.sub_info.mode = _ZN_MID(mode);
+    r->value.sub_info.is_periodic = _ZN_HAS_FLAG(mode, _ZN_FLAG_Z_P);
+    if (r->value.sub_info.is_periodic)
     {
         zn_temporal_property_result_t r_tp = zn_temporal_property_decode(buf);
         ASSURE_P_RESULT(r_tp, r, ZN_SUB_MODE_PARSE_ERROR)
-        r->value.sub_mode.period = r_tp.value.temporal_property;
+        r->value.sub_info.period = r_tp.value.temporal_property;
     }
 }
 
-zn_sub_mode_result_t zn_sub_mode_decode(z_iobuf_t *buf)
+zn_sub_info_result_t zn_sub_info_decode(z_iobuf_t *buf, uint8_t header)
 {
-    zn_sub_mode_result_t r;
-    zn_sub_mode_decode_na(buf, &r);
+    zn_sub_info_result_t r;
+    zn_sub_info_decode_na(buf, header, &r);
     return r;
 }
 
@@ -315,7 +321,7 @@ void _zn_sub_decl_encode(z_iobuf_t *buf, uint8_t header, const _zn_sub_decl_t *d
     // Encode the body
     zn_res_key_encode(buf, header, &dcl->key);
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
-        zn_sub_mode_encode(buf, &dcl->sub_mode);
+        zn_sub_info_encode(buf, &dcl->sub_info);
 }
 
 void _zn_sub_decl_decode_na(z_iobuf_t *buf, uint8_t header, _zn_sub_decl_result_t *r)
@@ -330,16 +336,16 @@ void _zn_sub_decl_decode_na(z_iobuf_t *buf, uint8_t header, _zn_sub_decl_result_
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
     {
-        zn_sub_mode_result_t r_smd = zn_sub_mode_decode(buf);
+        zn_sub_info_result_t r_smd = zn_sub_info_decode(buf, header);
         ASSURE_P_RESULT(r_smd, r, ZN_SUB_MODE_PARSE_ERROR)
-        r->value.sub_decl.sub_mode = r_smd.value.sub_mode;
+        r->value.sub_decl.sub_info = r_smd.value.sub_info;
     }
     else
     {
-        // Default subscription mode is PUSH
-        zn_sub_mode_t sm;
-        sm.header = _ZN_SUBMODE_PUSH;
-        r->value.sub_decl.sub_mode = sm;
+        // Default subscription mode is non-periodic PUSH
+        r->value.sub_decl.sub_info.mode = _ZN_SUBMODE_PUSH;
+        r->value.sub_decl.sub_info.is_periodic = 0;
+        r->value.sub_decl.sub_info.is_reliable = _ZN_HAS_FLAG(header, _ZN_FLAG_Z_R);
     }
 }
 

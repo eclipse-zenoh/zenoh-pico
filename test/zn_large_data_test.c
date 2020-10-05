@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     //     zn_session_t *z2 = z2_r.value.session;
     //     zn_start_recv_loop(z2);
 
-    //     zn_sub_mode_t sm;
+    //     zn_sub_info_t sm;
     //     sm.kind = ZN_PUSH_MODE;
     //     zn_sub_p_result_t z2_sub1_r = zn_declare_subscriber(z2, "/test/large_data/big", &sm, sub_listener, NULL);
     //     ASSERT_P_RESULT(z2_sub1_r, "Unable to declare subscriber\n");

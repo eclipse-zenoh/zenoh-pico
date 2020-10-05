@@ -104,14 +104,18 @@ _zn_res_decl_t *_zn_get_res_decl_by_rname(zn_session_t *z, const char *rname)
     }
 }
 
-void _zn_register_subscription(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_data_handler_t data_handler, void *arg)
+void _zn_register_subscription(zn_session_t *z, const zn_res_key_t *res_key, z_zint_t id, zn_data_handler_t data_handler, void *arg)
 {
     _zn_sub_t *sub = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
-    sub->rid = rid;
+    sub->key.rid = res_key->rid;
+    if (res_key->rname)
+        sub->key.rname = strdup(res_key->rname);
+    else
+        sub->key.rname = NULL;
+
     sub->id = id;
-    _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
+    _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, res_key->rid);
     assert(decl != 0);
-    sub->rname = strdup(decl->key.rname);
     sub->data_handler = data_handler;
     sub->arg = arg;
     z->subscriptions = z_list_cons(z->subscriptions, sub);
@@ -168,7 +172,7 @@ z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
         {
             sub = (_zn_sub_t *)z_list_head(subs);
             subs = z_list_tail(subs);
-            if (sub->rid == rid)
+            if (sub->key.rid == rid)
             {
                 xs = z_list_cons(xs, sub);
             }
@@ -193,7 +197,7 @@ z_list_t *_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname)
         {
             sub = (_zn_sub_t *)z_list_head(subs);
             subs = z_list_tail(subs);
-            if (zn_rname_intersect(sub->rname, (char *)rname))
+            if (zn_rname_intersect(sub->key.rname, (char *)rname))
             {
                 xs = z_list_cons(xs, sub);
             }
@@ -286,7 +290,7 @@ z_list_t *_zn_get_queryables_by_rname(zn_session_t *z, const char *rname)
 
 int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid)
 {
-    return z_i_map_get(z->remote_subs, rid) != 0 ? 1 : 0;
+    return z_i_map_get(z->remote_subscriptions, rid) != 0 ? 1 : 0;
 }
 
 void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg)

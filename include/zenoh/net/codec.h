@@ -42,7 +42,4 @@ ZN_DECLARE_DECODE_NOH(temporal_property);
 
 void zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps);
 
-ZN_DECLARE_ENCODE_NOH(sub_mode);
-ZN_DECLARE_DECODE_NOH(sub_mode);
-
 #endif /* ZENOH_C_NET_CODEC_H */

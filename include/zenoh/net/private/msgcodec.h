@@ -71,6 +71,9 @@ _zn_timestamp_result_t _zn_timestamp_decode(z_iobuf_t *buf);
 _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
 
+ZN_DECLARE_ENCODE_NOH(sub_info);
+ZN_DECLARE_DECODE(sub_info);
+
 ZN_DECLARE_ENCODE(res_key);
 ZN_DECLARE_DECODE(res_key);
 

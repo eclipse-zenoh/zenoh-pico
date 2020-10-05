@@ -37,7 +37,7 @@ int _zn_register_res_decl(zn_session_t *z, z_zint_t rid, const char *rname);
 _zn_res_decl_t *_zn_get_res_decl_by_rid(zn_session_t *z, z_zint_t rid);
 _zn_res_decl_t *_zn_get_res_decl_by_rname(zn_session_t *z, const char *rname);
 
-void _zn_register_subscription(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_data_handler_t data_handler, void *arg);
+void _zn_register_subscription(zn_session_t *z, const zn_res_key_t *res_key, z_zint_t id, zn_data_handler_t data_handler, void *arg);
 const char *_zn_get_resource_name(zn_session_t *z, z_zint_t rid);
 z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid);
 z_list_t *_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname);
@@ -62,8 +62,7 @@ _zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid);
 
 typedef struct
 {
-    char *rname;
-    z_zint_t rid;
+    zn_res_key_t key;
     z_zint_t id;
     zn_data_handler_t data_handler;
     void *arg;

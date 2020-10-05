@@ -618,30 +618,32 @@ typedef struct
 } _zn_pub_decl_t;
 _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 
-/*------------------ SubMode Field ------------------*/
+/*------------------ SubInfo Field ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+---------+
 // |P|X|X|  SM_ID  |
 // +---------------+
-// ~    Period     ~ if P==1. Otherwise: None
+// ~    Period     ~ if P==1
 // +---------------+
 //
-// typdef struct { ... } zn_sub_mode_t; is defined in net/types.h
+// typdef struct { ... } zn_sub_info_t; is defined in net/types.h
 
 /*------------------ Subscriber Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|S|R|   SUB   |  R for Reliable
+// |K|S|R|   SUB   |
 // +---------------+
 // ~    ResKey     ~ if K==1 then only numerical id
 // +---------------+
-// ~    SubMode    ~ if S==1. Otherwise: SubMode=Push
+// ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
 // +---------------+
+//
+// - if R==1 then the subscription is reliable, best-effort otherwise.
 //
 typedef struct
 {
     zn_res_key_t key;
-    zn_sub_mode_t sub_mode;
+    zn_sub_info_t sub_info;
 } _zn_sub_decl_t;
 _ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
 
@@ -650,7 +652,7 @@ _ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  QABLE  |
 // +---------------+
-// ~     ResKey    ~ if  K==1 then only numerical id
+// ~     ResKey    ~ if K==1 then only numerical id
 // +---------------+
 //
 typedef struct

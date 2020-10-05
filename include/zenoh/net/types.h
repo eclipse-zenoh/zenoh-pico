@@ -71,20 +71,23 @@
 #define ZN_DATA_INFO_KIND 0x20   // 1 << 5
 #define ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
-// -- SubMode is optionally included in Subscriber Declarations
+// -- SubInfo is optionally included in Subscriber Declarations
+// -- The reliabiliey
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+---------+
 // |P|X|X| SubMode | if S==1. Otherwise: SubMode=Push
 // +---------------+
-// ~    Period     ~ if P==1. Otherwise: None
+// ~    Period     ~ if P==1
 // +---------------+
 typedef struct
 {
-    uint8_t header;
+    int is_reliable;
+    int is_periodic;
     zn_temporal_property_t period;
-} zn_sub_mode_t;
-ZN_RESULT_DECLARE(zn_sub_mode_t, sub_mode)
+    uint8_t mode;
+} zn_sub_info_t;
+ZN_RESULT_DECLARE(zn_sub_info_t, sub_info)
 
 // -- DataInfo is optionally included in Data Messages
 //
@@ -199,7 +202,7 @@ typedef struct
     z_list_t *queryables;
     z_list_t *replywaiters;
 
-    z_i_map_t *remote_subs; // List of remote subscriptions
+    z_i_map_t *remote_subscriptions; // List of remote subscriptions
 
     volatile int running;
     void *thread;
@@ -208,9 +211,8 @@ typedef struct
 typedef struct
 {
     zn_session_t *z;
-    z_zint_t rid;
-    z_zint_t id;
-} zn_sub_t;
+    zn_res_key_t key;
+} zn_res_t;
 
 typedef struct
 {
@@ -222,11 +224,19 @@ typedef struct
 typedef struct
 {
     zn_session_t *z;
+    zn_res_key_t key;
+    z_zint_t id;
+} zn_sub_t;
+
+typedef struct
+{
+    zn_session_t *z;
     z_zint_t rid;
     z_zint_t id;
 } zn_qle_t;
 
 ZN_P_RESULT_DECLARE(zn_session_t, session)
+ZN_P_RESULT_DECLARE(zn_res_t, res)
 ZN_P_RESULT_DECLARE(zn_sub_t, sub)
 ZN_P_RESULT_DECLARE(zn_pub_t, pub)
 ZN_P_RESULT_DECLARE(zn_qle_t, qle)

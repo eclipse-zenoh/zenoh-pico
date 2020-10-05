@@ -332,7 +332,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.value.session->subscriptions = z_list_empty;
         r.value.session->queryables = z_list_empty;
         r.value.session->replywaiters = z_list_empty;
-        r.value.session->remote_subs = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+        r.value.session->remote_subscriptions = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
         r.value.session->running = 0;
         r.value.session->thread = 0;
 
@@ -387,159 +387,6 @@ int zn_close(zn_session_t *z)
 
     return rv;
 }
-
-// zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char *resource, const zn_sub_mode_t *sm, zn_data_handler_t data_handler, void *arg)
-// {
-//     zn_sub_p_result_t r;
-//     assert((sm->kind > 0) && (sm->kind <= 4));
-//     r.tag = Z_OK_TAG;
-//     r.value.sub = (zn_sub_t *)malloc(sizeof(zn_sub_t));
-//     r.value.sub->z = z;
-//     int id = _zn_get_entity_id(z);
-//     r.value.sub->id = id;
-
-//     _zn_message_t msg;
-//     msg.header = _ZN_DECLARE;
-//     msg.payload.declare.sn = z->sn++;
-//     int dnum = 3;
-//     _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//     int rid = _zn_get_resource_id(z, resource);
-//     r.value.sub->rid = rid;
-
-//     decl.elem[0].header = _ZN_RESOURCE_DECL;
-//     decl.elem[0].payload.resource.r_name = (char *)resource;
-//     decl.elem[0].payload.resource.rid = rid;
-
-//     decl.elem[1].header = _ZN_SUBSCRIBER_DECL;
-//     decl.elem[1].payload.sub.sub_mode = *sm;
-//     decl.elem[1].payload.sub.rid = rid;
-
-//     decl.elem[2].header = _ZN_COMMIT_DECL;
-//     decl.elem[2].payload.commit.cid = z->cid++;
-
-//     msg.payload.declare.declarations = decl;
-
-//     if (_zn_send_msg(z->sock, &z->wbuf, &msg) != 0)
-//     {
-//         _Z_DEBUG("Trying to reconnect....\n");
-//         z->on_disconnect(z);
-//         _zn_send_msg(z->sock, &z->wbuf, &msg);
-//     }
-//     ARRAY_S_FREE(decl);
-//     _zn_register_res_decl(z, rid, resource);
-//     _zn_register_subscription(z, rid, id, data_handler, arg);
-//     // -- This will be refactored to use mvars
-//     return r;
-// }
-
-// int zn_undeclare_subscriber(zn_sub_t *sub)
-// {
-//     _zn_unregister_subscription(sub);
-//     z_list_t *subs = _zn_get_subscriptions_by_rid(sub->z, sub->rid);
-//     if (subs == z_list_empty)
-//     {
-//         _zn_message_t msg;
-//         msg.header = _ZN_DECLARE;
-//         msg.payload.declare.sn = sub->z->sn++;
-//         int dnum = 2;
-//         _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//         decl.elem[0].header = _ZN_FORGET_SUBSCRIBER_DECL;
-//         decl.elem[0].payload.forget_sub.rid = sub->rid;
-
-//         decl.elem[1].header = _ZN_COMMIT_DECL;
-//         decl.elem[1].payload.commit.cid = sub->z->cid++;
-
-//         msg.payload.declare.declarations = decl;
-
-//         if (_zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg) != 0)
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             sub->z->on_disconnect(sub->z);
-//             _zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg);
-//         }
-//         ARRAY_S_FREE(decl);
-//     }
-//     z_list_free(&subs);
-//     // TODO free subscription
-//     return 0;
-// }
-
-// zn_sto_p_result_t zn_declare_storage(zn_session_t *z, const char *resource, zn_data_handler_t data_handler, zn_query_handler_t query_handler, void *arg)
-// {
-//     zn_sto_p_result_t r;
-//     r.tag = Z_OK_TAG;
-//     r.value.sto = (zn_sto_t *)malloc(sizeof(zn_sto_t));
-//     r.value.sto->z = z;
-//     z_zint_t id = _zn_get_entity_id(z);
-//     r.value.sto->id = id;
-
-//     _zn_message_t msg;
-//     msg.header = _ZN_DECLARE;
-//     msg.payload.declare.sn = z->sn++;
-//     int dnum = 3;
-//     _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//     int rid = _zn_get_resource_id(z, resource);
-//     r.value.sto->rid = rid;
-
-//     decl.elem[0].header = _ZN_RESOURCE_DECL;
-//     decl.elem[0].payload.resource.r_name = (char *)resource;
-//     decl.elem[0].payload.resource.rid = rid;
-
-//     decl.elem[1].header = _ZN_STORAGE_DECL;
-//     decl.elem[1].payload.storage.rid = rid;
-
-//     decl.elem[2].header = _ZN_COMMIT_DECL;
-//     decl.elem[2].payload.commit.cid = z->cid++;
-
-//     msg.payload.declare.declarations = decl;
-//     if (_zn_send_msg(z->sock, &z->wbuf, &msg) != 0)
-//     {
-//         _Z_DEBUG("Trying to reconnect....\n");
-//         z->on_disconnect(z);
-//         _zn_send_msg(z->sock, &z->wbuf, &msg);
-//     }
-//     ARRAY_S_FREE(decl);
-//     _zn_register_res_decl(z, rid, resource);
-//     _zn_register_storage(z, rid, id, data_handler, query_handler, arg);
-//     // -- This will be refactored to use mvars
-//     return r;
-// }
-
-// int zn_undeclare_storage(zn_sto_t *sto)
-// {
-//     _zn_unregister_storage(sto);
-//     z_list_t *stos = _zn_get_storages_by_rid(sto->z, sto->rid);
-//     if (stos == z_list_empty)
-//     {
-//         _zn_message_t msg;
-//         msg.header = _ZN_DECLARE;
-//         msg.payload.declare.sn = sto->z->sn++;
-//         int dnum = 2;
-//         _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//         decl.elem[0].header = _ZN_FORGET_STORAGE_DECL;
-//         decl.elem[0].payload.forget_sto.rid = sto->rid;
-
-//         decl.elem[1].header = _ZN_COMMIT_DECL;
-//         decl.elem[1].payload.commit.cid = sto->z->cid++;
-
-//         msg.payload.declare.declarations = decl;
-
-//         if (_zn_send_msg(sto->z->sock, &sto->z->wbuf, &msg) != 0)
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             sto->z->on_disconnect(sto->z);
-//             _zn_send_msg(sto->z->sock, &sto->z->wbuf, &msg);
-//         }
-//         ARRAY_S_FREE(decl);
-//     }
-//     z_list_free(&stos);
-//     // TODO free storages
-//     return 0;
-// }
 
 // zn_eval_p_result_t zn_declare_eval(zn_session_t *z, const char *resource, zn_query_handler_t query_handler, void *arg)
 // {
@@ -616,39 +463,30 @@ int zn_close(zn_session_t *z)
 //     return 0;
 // }
 
-zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const char *resource)
+/*------------------  Resource Declaration ------------------*/
+zn_res_p_result_t zn_declare_resource(zn_session_t *z, const char *resource)
 {
-    zn_pub_p_result_t r;
+    zn_res_p_result_t r;
     r.tag = Z_OK_TAG;
-    r.value.pub = (zn_pub_t *)malloc(sizeof(zn_pub_t));
-    r.value.pub->z = z;
-    r.value.pub->id = _zn_get_entity_id(z);
+    r.value.res = (zn_res_t *)malloc(sizeof(zn_res_t));
+    r.value.res->z = z;
+    r.value.res->key.rid = _zn_get_resource_id(z, resource);
+    r.value.res->key.rname = NULL;
 
     _zn_zenoh_message_t z_msg;
     z_msg.attachment = NULL;
     z_msg.reply_context = NULL;
     z_msg.header = _ZN_MID_DECLARE;
 
-    // Generate a resource ID
-    r.value.pub->key.rid = _zn_get_resource_id(z, resource);
-    r.value.pub->key.rname = NULL;
-
-    // We need to declare the resource and the publisher
-    int decl_num = 2;
+    // We need to declare the resource
+    int decl_num = 1;
     _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
 
     // Resource declaration
     decl.elem[0].header = _ZN_DECL_RESOURCE;
-    decl.elem[0].body.res.rid = r.value.pub->key.rid;
+    decl.elem[0].body.res.rid = r.value.res->key.rid;
     decl.elem[0].body.res.key.rid = ZN_NO_RESOURCE_ID;
     decl.elem[0].body.res.key.rname = (char *)resource;
-
-    // Publisher declaration
-    decl.elem[1].header = _ZN_DECL_PUBLISHER;
-    decl.elem[1].body.pub.key.rid = r.value.pub->key.rid;
-    decl.elem[1].body.pub.key.rname = NULL;
-    // Mark the key as numerical
-    _ZN_SET_FLAG(decl.elem[1].header, _ZN_FLAG_Z_K);
 
     z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, 1) != 0)
@@ -657,226 +495,219 @@ zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const char *resource)
         z->on_disconnect(z);
         _zn_send_z_msg(z, &z_msg, 1);
     }
-
     ARRAY_S_FREE(decl);
-    _zn_register_res_decl(z, r.value.pub->key.rid, resource);
+    _zn_register_res_decl(z, r.value.res->key.rid, resource);
 
-    // -- This will be refactored to use mvars
     return r;
 }
 
-// int zn_undeclare_publisher(zn_pub_t *pub)
-// {
-//     _zn_message_t msg;
-//     msg.header = _ZN_DECLARE;
-//     msg.payload.declare.sn = pub->z->sn++;
-//     int dnum = 2;
-//     _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//     decl.elem[0].header = _ZN_FORGET_PUBLISHER_DECL;
-//     decl.elem[0].payload.forget_pub.rid = pub->rid;
-
-//     decl.elem[1].header = _ZN_COMMIT_DECL;
-//     decl.elem[1].payload.commit.cid = pub->z->cid++;
-
-//     msg.payload.declare.declarations = decl;
-
-//     if (_zn_send_msg(pub->z->sock, &pub->z->wbuf, &msg) != 0)
-//     {
-//         _Z_DEBUG("Trying to reconnect....\n");
-//         pub->z->on_disconnect(pub->z);
-//         _zn_send_msg(pub->z->sock, &pub->z->wbuf, &msg);
-//     }
-//     ARRAY_S_FREE(decl);
-
-//     // TODO manage multi publishers
-//     return 0;
-// }
-
-// int zn_stream_compact_data(zn_pub_t *pub, const unsigned char *data, size_t length)
-// {
-//     const char *rname = _zn_get_resource_name(pub->z, pub->rid);
-//     zn_res_key_t rkey;
-//     _zn_sub_t *sub;
-//     _zn_sto_t *sto;
-//     z_list_t *subs = z_list_empty;
-//     z_list_t *stos = z_list_empty;
-//     z_list_t *xs;
-//     if (rname != 0)
-//     {
-//         subs = _zn_get_subscriptions_by_rname(pub->z, rname);
-//         stos = _zn_get_storages_by_rname(pub->z, rname);
-//         rkey.kind = ZN_STR_RES_KEY;
-//         rkey.key.rname = (char *)rname;
-//     }
-//     else
-//     {
-//         subs = _zn_get_subscriptions_by_rid(pub->z, pub->rid);
-//         rkey.kind = ZN_INT_RES_KEY;
-//         rkey.key.rid = pub->rid;
-//     }
-
-//     if (subs != 0 || stos != 0)
-//     {
-//         zn_data_info_t info;
-//         memset(&info, 0, sizeof(zn_data_info_t));
-
-//         if (subs != 0)
-//         {
-//             xs = subs;
-//             while (xs != z_list_empty)
-//             {
-//                 sub = z_list_head(xs);
-//                 sub->data_handler(&rkey, data, length, &info, sub->arg);
-//                 xs = z_list_tail(xs);
-//             }
-//             z_list_free(&subs);
-//         }
-
-//         if (stos != 0)
-//         {
-//             xs = stos;
-//             while (xs != z_list_empty)
-//             {
-//                 sto = z_list_head(xs);
-//                 sto->data_handler(&rkey, data, length, &info, sto->arg);
-//                 xs = z_list_tail(xs);
-//             }
-//             z_list_free(&stos);
-//         }
-//     }
-
-//     if (_zn_matching_remote_sub(pub->z, pub->rid) == 1)
-//     {
-//         _zn_message_t msg;
-//         msg.header = _ZN_COMPACT_DATA;
-//         msg.payload.compact_data.rid = pub->rid;
-//         msg.payload.compact_data.payload = z_iobuf_wrap_wo((unsigned char *)data, length, 0, length);
-//         msg.payload.compact_data.sn = pub->z->sn++;
-//         if (_zn_send_large_msg(pub->z->sock, &pub->z->wbuf, &msg, length + 128) == 0)
-//             return 0;
-//         else
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             pub->z->on_disconnect(pub->z);
-//             return _zn_send_large_msg(pub->z->sock, &pub->z->wbuf, &msg, length + 128);
-//         }
-//     }
-//     return 0;
-// }
-
-// int zn_stream_data_wo(zn_pub_t *pub, const unsigned char *data, size_t length, uint8_t encoding, uint8_t kind)
-// {
-//     const char *rname = _zn_get_resource_name(pub->z, pub->rid);
-//     zn_res_key_t rkey;
-//     _zn_sub_t *sub;
-//     _zn_sto_t *sto;
-//     z_list_t *subs = z_list_empty;
-//     z_list_t *stos = z_list_empty;
-//     z_list_t *xs;
-//     if (rname != 0)
-//     {
-//         subs = _zn_get_subscriptions_by_rname(pub->z, rname);
-//         stos = _zn_get_storages_by_rname(pub->z, rname);
-//         rkey.kind = ZN_STR_RES_KEY;
-//         rkey.key.rname = (char *)rname;
-//     }
-//     else
-//     {
-//         subs = _zn_get_subscriptions_by_rid(pub->z, pub->rid);
-//         rkey.kind = ZN_INT_RES_KEY;
-//         rkey.key.rid = pub->rid;
-//     }
-
-//     if (subs != 0 || stos != 0)
-//     {
-//         zn_data_info_t info;
-//         info.flags = _ZN_ENCODING | _ZN_KIND;
-//         info.encoding = encoding;
-//         info.kind = kind;
-
-//         if (subs != 0)
-//         {
-//             xs = subs;
-//             while (xs != z_list_empty)
-//             {
-//                 sub = z_list_head(xs);
-//                 sub->data_handler(&rkey, data, length, &info, sub->arg);
-//                 xs = z_list_tail(xs);
-//             }
-//             z_list_free(&subs);
-//         }
-
-//         if (stos != 0)
-//         {
-//             xs = stos;
-//             while (xs != z_list_empty)
-//             {
-//                 sto = z_list_head(xs);
-//                 sto->data_handler(&rkey, data, length, &info, sto->arg);
-//                 xs = z_list_tail(xs);
-//             }
-//             z_list_free(&stos);
-//         }
-//     }
-
-//     if (_zn_matching_remote_sub(pub->z, pub->rid) == 1)
-//     {
-//         _zn_payload_header_t ph;
-//         ph.flags = _ZN_ENCODING | _ZN_KIND;
-//         ph.encoding = encoding;
-//         ph.kind = kind;
-//         ph.payload = z_iobuf_wrap_wo((unsigned char *)data, length, 0, length);
-//         z_iobuf_t buf = z_iobuf_make(length + 32);
-//         _zn_payload_header_encode(&buf, &ph);
-
-//         _zn_message_t msg;
-//         msg.header = _ZN_STREAM_DATA;
-//         // No need to take ownership, avoid strdup.
-//         msg.payload.stream_data.rid = pub->rid;
-//         msg.payload.stream_data.sn = pub->z->sn++;
-//         msg.payload.stream_data.payload_header = buf;
-//         if (_zn_send_large_msg(pub->z->sock, &pub->z->wbuf, &msg, length + 128) == 0)
-//         {
-//             z_iobuf_free(&buf);
-//             return 0;
-//         }
-//         else
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             pub->z->on_disconnect(pub->z);
-//             int rv = _zn_send_large_msg(pub->z->sock, &pub->z->wbuf, &msg, length + 128);
-//             z_iobuf_free(&buf);
-//             return rv;
-//         }
-//     }
-//     else
-//     {
-//         _Z_DEBUG_VA("No remote subscription matching for rid = %zu\n", pub->rid);
-//     }
-
-//     return 0;
-// }
-
-// int zn_stream_data(zn_pub_t *pub, const unsigned char *data, size_t length)
-// {
-//     return zn_stream_data_wo(pub, data, length, 0, 0);
-// }
-
-int zn_write_data_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind)
+int zn_undeclare_resource(zn_res_t *res)
 {
+    _zn_zenoh_message_t z_msg;
+    z_msg.attachment = NULL;
+    z_msg.reply_context = NULL;
+    z_msg.header = _ZN_MID_DECLARE;
+
+    // We need to undeclare the resource and the publisher
+    int decl_num = 1;
+    _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+
+    // Resource declaration
+    decl.elem[0].header = _ZN_DECL_FORGET_RESOURCE;
+    decl.elem[0].body.forget_res.rid = res->key.rid;
+
+    z_msg.body.declare.declarations = decl;
+    if (_zn_send_z_msg(res->z, &z_msg, 1) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect...\n");
+        res->z->on_disconnect(res->z);
+        _zn_send_z_msg(res->z, &z_msg, 1);
+    }
+    ARRAY_S_FREE(decl);
+
+    return 0;
+}
+
+/*------------------  Publisher Declaration ------------------*/
+zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const zn_res_key_t *res_key)
+{
+    zn_pub_p_result_t r;
+    r.tag = Z_OK_TAG;
+    r.value.pub = (zn_pub_t *)malloc(sizeof(zn_pub_t));
+    r.value.pub->z = z;
+    r.value.pub->key.rid = res_key->rid;
+    if (res_key->rname)
+        r.value.pub->key.rname = strdup(res_key->rname);
+    else
+        r.value.pub->key.rname = NULL;
+    r.value.pub->id = _zn_get_entity_id(z);
+
+    _zn_zenoh_message_t z_msg;
+    z_msg.attachment = NULL;
+    z_msg.reply_context = NULL;
+    z_msg.header = _ZN_MID_DECLARE;
+
+    // We need to declare the resource and the publisher
+    int decl_num = 1;
+    _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+
+    // Publisher declaration
+    decl.elem[0].header = _ZN_DECL_PUBLISHER;
+    decl.elem[0].body.pub.key.rid = r.value.pub->key.rid;
+    decl.elem[0].body.pub.key.rname = r.value.pub->key.rname;
+    // Mark the key as numerical if the key has no resource name
+    if (!decl.elem[0].body.pub.key.rname)
+        _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_K);
+
+    z_msg.body.declare.declarations = decl;
+    if (_zn_send_z_msg(z, &z_msg, 1) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect...\n");
+        z->on_disconnect(z);
+        _zn_send_z_msg(z, &z_msg, 1);
+    }
+    ARRAY_S_FREE(decl);
+
+    return r;
+}
+
+int zn_undeclare_publisher(zn_pub_t *pub)
+{
+    // @TODO: manage multi publishers
+
+    _zn_zenoh_message_t z_msg;
+    z_msg.attachment = NULL;
+    z_msg.reply_context = NULL;
+    z_msg.header = _ZN_MID_DECLARE;
+
+    // We need to undeclare the publisher
+    int dnum = 1;
+    _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+
+    // Forget publisher declaration
+    decl.elem[0].header = _ZN_DECL_FORGET_PUBLISHER;
+    decl.elem[0].body.forget_pub.key.rid = pub->key.rid;
+    decl.elem[0].body.forget_pub.key.rname = pub->key.rname;
+    // Mark the key as numerical if the key has no resource name
+    if (!decl.elem[0].body.forget_pub.key.rname)
+        _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_K);
+
+    z_msg.body.declare.declarations = decl;
+    if (_zn_send_z_msg(pub->z, &z_msg, 1) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect...\n");
+        pub->z->on_disconnect(pub->z);
+        _zn_send_z_msg(pub->z, &z_msg, 1);
+    }
+    ARRAY_S_FREE(decl);
+
+    return 0;
+}
+
+/*------------------  Subscriber Declaration ------------------*/
+zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res_key, const zn_sub_info_t *si, zn_data_handler_t data_handler, void *arg)
+{
+    zn_sub_p_result_t r;
+    r.tag = Z_OK_TAG;
+    r.value.sub = (zn_sub_t *)malloc(sizeof(zn_sub_t));
+    r.value.sub->z = z;
+    r.value.sub->id = _zn_get_entity_id(z);
+    r.value.sub->key.rid = res_key->rid;
+    if (res_key->rname)
+        r.value.sub->key.rname = strdup(res_key->rname);
+    else
+        r.value.sub->key.rname = NULL;
+
+    _zn_zenoh_message_t z_msg;
+    z_msg.attachment = NULL;
+    z_msg.reply_context = NULL;
+    z_msg.header = _ZN_MID_DECLARE;
+
+    // We need to declare the subscriber
+    int dnum = 1;
+    _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+
+    // Subscriber declaration
+    decl.elem[0].header = _ZN_DECL_SUBSCRIBER;
+    if (!res_key->rname)
+        _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_K);
+    if (si->mode != ZN_PUSH_MODE || si->is_periodic)
+        _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_S);
+    if (si->is_reliable)
+        _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_R);
+
+    decl.elem[0].body.sub.key = r.value.sub->key;
+
+    // SubMode
+    decl.elem[0].body.sub.sub_info.mode = si->mode;
+    decl.elem[0].body.sub.sub_info.is_reliable = si->is_reliable;
+    decl.elem[0].body.sub.sub_info.is_periodic = si->is_periodic;
+    decl.elem[0].body.sub.sub_info.period = si->period;
+
+    z_msg.body.declare.declarations = decl;
+    if (_zn_send_z_msg(z, &z_msg, 1) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect....\n");
+        z->on_disconnect(z);
+        _zn_send_z_msg(z, &z_msg, 1);
+    }
+    ARRAY_S_FREE(decl);
+    _zn_register_subscription(z, res_key, r.value.sub->id, data_handler, arg);
+
+    return r;
+}
+
+// int zn_undeclare_subscriber(zn_sub_t *sub)
+// {
+//     _zn_unregister_subscription(sub);
+//     z_list_t *subs = _zn_get_subscriptions_by_rid(sub->z, sub->rid);
+//     if (subs == z_list_empty)
+//     {
+//         _zn_message_t msg;
+//         msg.header = _ZN_DECLARE;
+//         msg.payload.declare.sn = sub->z->sn++;
+//         int dnum = 2;
+//         _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+
+//         decl.elem[0].header = _ZN_FORGET_SUBSCRIBER_DECL;
+//         decl.elem[0].payload.forget_sub.rid = sub->rid;
+
+//         decl.elem[1].header = _ZN_COMMIT_DECL;
+//         decl.elem[1].payload.commit.cid = sub->z->cid++;
+
+//         msg.payload.declare.declarations = decl;
+
+//         if (_zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg) != 0)
+//         {
+//             _Z_DEBUG("Trying to reconnect....\n");
+//             sub->z->on_disconnect(sub->z);
+//             _zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg);
+//         }
+//         ARRAY_S_FREE(decl);
+//     }
+//     z_list_free(&subs);
+//     // TODO free subscription
+//     return 0;
+// }
+
+int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, int is_droppable)
+{
+    // @TODO: Need to verify there are active subscriptions matching the write
+    // @TODO: Need to check subscriptions to determine the right reliability value
+
     _zn_zenoh_message_t z_msg;
     // Set the message decorators
     z_msg.attachment = NULL;
     z_msg.reply_context = NULL;
     // Set the header
     z_msg.header = _ZN_MID_DATA;
+    // Eventually mark the message for congestion control
+    _ZN_SET_FLAG(z_msg.header, is_droppable ? _ZN_FLAG_Z_D : 0);
     // Set the resource key
     z_msg.body.data.key.rid = resource->rid;
     z_msg.body.data.key.rname = resource->rname;
     _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
 
-    // @TODO: DO WE NEED DATA INFO HERE?
     // Set the data info
     _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_I);
     zn_data_info_t info;
@@ -890,23 +721,31 @@ int zn_write_data_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned cha
     // Set the payload
     z_msg.body.data.payload.iobuf = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
 
-    // @TODO: Verify that there are active subscriptions
-    // z_list_t *subs = _zn_get_subscriptions_by_rname(z, resource);
-    // _zn_sub_t *sub;
-    // while (subs != NULL)
-    // {
-    //     sub = z_list_head(subs);
-    //     sub->data_handler(&z_msg.body.data.key, payload, length, &info, sub->arg);
-    //     subs = z_list_tail(subs);
-    // }
-
-    // @TODO: need to check subscriptions to determine the right reliability value
     return _zn_send_z_msg(z, &z_msg, 1);
 }
 
-int zn_write_data(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
+int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
 {
-    return zn_write_data_wo(z, resource, payload, length, 0, 0);
+    // @TODO: Need to verify there are active subscriptions matching the write
+    // @TODO: Need to check subscriptions to determine the right reliability value
+
+    _zn_zenoh_message_t z_msg;
+    // Set the message decorators
+    z_msg.attachment = NULL;
+    z_msg.reply_context = NULL;
+    // Set the header
+    z_msg.header = _ZN_MID_DATA;
+    // Eventually mark the message for congestion control
+    _ZN_SET_FLAG(z_msg.header, ZENOH_NET_CONGESTION_CONTROL_DEFAULT ? _ZN_FLAG_Z_D : 0);
+    // Set the resource key
+    z_msg.body.data.key.rid = resource->rid;
+    z_msg.body.data.key.rname = resource->rname;
+    _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
+
+    // Set the payload
+    z_msg.body.data.payload.iobuf = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+
+    return _zn_send_z_msg(z, &z_msg, 1);
 }
 
 // int zn_pull(zn_sub_t *sub)

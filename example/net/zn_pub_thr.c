@@ -45,24 +45,30 @@ int main(int argc, char **argv)
         locator = argv[2];
     }
 
-    z_iobuf_t data = z_iobuf_make(len);
-    for (unsigned int i = 0; i < len; ++i)
-        z_iobuf_write(&data, i % 10);
-
+    // Open a session
     zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     zn_session_t *z = r_z.value.session;
     zn_start_recv_loop(z);
 
-    zn_pub_p_result_t rp = zn_declare_publisher(z, path);
+    // Declare a resource
+    zn_res_p_result_t rr = zn_declare_resource(z, path);
+    ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
+    zn_res_t *res = rr.value.res;
+
+    // Declare a publisher
+    zn_pub_p_result_t rp = zn_declare_publisher(z, &res->key);
     ASSERT_P_RESULT(rp, "Unable to declare publisher.\n");
     zn_pub_t *pub = rp.value.pub;
 
+    // Create random data
+    z_iobuf_t data = z_iobuf_make(len);
+    for (unsigned int i = 0; i < len; ++i)
+        z_iobuf_write(&data, i % 10);
+    // Loop endessly and write data
     while (1)
     {
-        zn_write_data(z, &pub->key, data.buf, z_iobuf_readable(&data));
+        zn_write(z, &pub->key, data.buf, z_iobuf_readable(&data));
     }
-
-    zn_close(z);
 
     return 0;
 }
