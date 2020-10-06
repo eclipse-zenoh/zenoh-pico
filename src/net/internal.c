@@ -107,6 +107,7 @@ _zn_res_decl_t *_zn_get_res_decl_by_rname(zn_session_t *z, const char *rname)
 void _zn_register_subscription(zn_session_t *z, const zn_res_key_t *res_key, z_zint_t id, zn_data_handler_t data_handler, void *arg)
 {
     _zn_sub_t *sub = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
+
     sub->key.rid = res_key->rid;
     if (res_key->rname)
         sub->key.rname = strdup(res_key->rname);
@@ -158,26 +159,29 @@ const char *_zn_get_resource_name(zn_session_t *z, z_zint_t rid)
 
 z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
 {
-    z_list_t *subs = z_list_empty;
-    if (z->subscriptions == 0)
-    {
-        return subs;
-    }
-    else
+    if (z->subscriptions)
     {
         _zn_sub_t *sub = 0;
         z_list_t *subs = z->subscriptions;
         z_list_t *xs = z_list_empty;
+
         do
         {
             sub = (_zn_sub_t *)z_list_head(subs);
             subs = z_list_tail(subs);
             if (sub->key.rid == rid)
             {
+
                 xs = z_list_cons(xs, sub);
             }
-        } while (subs != 0);
+        } while (subs);
+
         return xs;
+    }
+    else
+    {
+        z_list_t *subs = z_list_empty;
+        return subs;
     }
 }
 

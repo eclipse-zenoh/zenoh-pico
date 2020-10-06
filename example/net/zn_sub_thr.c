@@ -34,6 +34,7 @@ void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t len
 {
     Z_UNUSED_ARG_5(rid, data, length, info, arg);
 
+    printf("DATA HANDLER\n");
     struct timeval tv;
     if (count == 0)
     {

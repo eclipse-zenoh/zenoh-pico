@@ -480,20 +480,92 @@ typedef struct
 
 void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 {
-    printf(" %d", z->running);
+    if (z->running == 0)
+    {
+        return;
+    }
 
-    // z_list_t *subs;
-    // _zn_sub_t *sub;
-    // subs = z_list_empty;
+    z_list_t *subs;
+    _zn_sub_t *sub;
+    subs = z_list_empty;
 
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_DECLARE:
-        printf("Received declare");
+        _Z_DEBUG("Received _ZN_DECLARE message\n");
+        for (unsigned int i = 0; i < msg->body.declare.declarations.length; ++i)
+        {
+            switch (_ZN_MID(msg->body.declare.declarations.elem[i].header))
+            {
+            case _ZN_DECL_RESOURCE:
+                _Z_DEBUG("Received declare-resource message\n");
+                printf("Received declare: %zu, %zu, %s\n", msg->body.declare.declarations.elem[i].body.res.rid, msg->body.declare.declarations.elem[i].body.res.key.rid, msg->body.declare.declarations.elem[i].body.res.key.rname);
+                _zn_register_res_decl(z,
+                                      msg->body.declare.declarations.elem[i].body.res.rid,
+                                      msg->body.declare.declarations.elem[i].body.res.key.rname);
+                break;
+            case _ZN_DECL_PUBLISHER:
+                break;
+            case _ZN_DECL_SUBSCRIBER:
+                // _Z_DEBUG_VA("Registering remote subscription for resource: %zu\n", decls[i].payload.sub.rid);
+                // rd = _zn_get_res_decl_by_rid(z, decls[i].payload.sub.rid);
+                // if (rd != 0)
+                //     z_i_map_set(z->remote_subs, decls[i].payload.sub.rid, rd);
+                break;
+            case _ZN_DECL_QUERYABLE:
+                break;
+            case _ZN_DECL_FORGET_RESOURCE:
+            case _ZN_DECL_FORGET_PUBLISHER:
+            case _ZN_DECL_FORGET_SUBSCRIBER:
+            case _ZN_DECL_FORGET_QUERYABLE:
+            default:
+                break;
+            }
+        }
         break;
     case _ZN_MID_DATA:
-        printf("Received data");
-        // subs = _zn_get_subscriptions_by_rname(z, msg->body.data.key.rname);
+        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
+        if (msg->body.data.key.rid == ZN_NO_RESOURCE_ID)
+        {
+            if (msg->body.data.key.rname)
+            {
+                printf("RID: %s\n", msg->body.data.key.rname);
+                subs = _zn_get_subscriptions_by_rname(z, msg->body.data.key.rname);
+
+                while (subs && subs != z_list_empty)
+                {
+                    sub = (_zn_sub_t *)z_list_head(subs);
+                    sub->data_handler(
+                        &msg->body.data.key,
+                        msg->body.data.payload.iobuf.buf,
+                        z_iobuf_readable(&msg->body.data.payload.iobuf),
+                        &msg->body.data.info,
+                        sub->arg);
+                    subs = z_list_tail(subs);
+                }
+            }
+            else
+            {
+                _Z_DEBUG("Unknown zenoh message ID");
+            }
+        }
+        else
+        {
+            subs = _zn_get_subscriptions_by_rid(z, msg->body.data.key.rid);
+
+            while (subs != z_list_empty)
+            {
+                printf("RID: %zu\n", msg->body.data.key.rid);
+                sub = (_zn_sub_t *)z_list_head(subs);
+                sub->data_handler(
+                    &msg->body.data.key,
+                    msg->body.data.payload.iobuf.buf,
+                    z_iobuf_readable(&msg->body.data.payload.iobuf),
+                    &msg->body.data.info,
+                    sub->arg);
+                subs = z_list_tail(subs);
+            }
+        }
 
         break;
     case _ZN_MID_PULL:
@@ -514,7 +586,10 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 
 int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
 {
-    printf("%d ", z->running);
+    if (z->running == 0)
+    {
+        return -1;
+    }
 
     switch (_ZN_MID(msg->header))
     {
