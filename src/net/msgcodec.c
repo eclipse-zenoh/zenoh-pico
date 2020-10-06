@@ -1005,7 +1005,6 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
         default:
             r->tag = Z_ERROR_TAG;
             r->value.error = ZN_ZENOH_MESSAGE_PARSE_ERROR;
-            _Z_ERROR("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", _ZN_MID(r->value.zenoh_message->header));
             return;
         }
     } while (1);
@@ -1489,6 +1488,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
         r->value.frame.payload.messages = z_vec_make(_ZENOH_C_FRAME_MESSAGES_VEC_SIZE);
         while (z_iobuf_readable(buf))
         {
+            // Mark the reading position of the buffer
             unsigned int mark = buf->r_pos;
             _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
@@ -1497,6 +1497,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
             }
             else
             {
+                // Restore the reading position of the buffer
                 buf->r_pos = mark;
                 return;
             }

@@ -49,6 +49,46 @@ void print_uint8_array(z_uint8_array_t *arr)
     printf("]");
 }
 
+void print_session_message_type(uint8_t header)
+{
+    switch (_ZN_MID(header))
+    {
+    case _ZN_MID_SCOUT:
+        printf("Scout message");
+        break;
+    case _ZN_MID_HELLO:
+        printf("Hello message");
+        break;
+    case _ZN_MID_OPEN:
+        printf("Open message");
+        break;
+    case _ZN_MID_ACCEPT:
+        printf("Accept message");
+        break;
+    case _ZN_MID_CLOSE:
+        printf("Close message");
+        break;
+    case _ZN_MID_SYNC:
+        printf("Sync message");
+        break;
+    case _ZN_MID_ACK_NACK:
+        printf("AckNack message");
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        printf("KeepAlive message");
+        break;
+    case _ZN_MID_PING_PONG:
+        printf("PingPong message");
+        break;
+    case _ZN_MID_FRAME:
+        printf("Frame message");
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
@@ -2083,8 +2123,6 @@ void frame_message()
 {
     printf("\n>> Frame message\n");
     z_iobuf_t buf = z_iobuf_make(1024);
-    for (z_zint_t i = 0; i < buf.capacity; ++i)
-        z_iobuf_put(&buf, 0, i);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2238,44 +2276,8 @@ void session_message()
 
     // Initialize
     _zn_session_message_t *e_sm = gen_session_message();
-
     printf(" - ");
-    switch (_ZN_MID(e_sm->header))
-    {
-    case _ZN_MID_SCOUT:
-        printf("Scout message");
-        break;
-    case _ZN_MID_HELLO:
-        printf("Hello message");
-        break;
-    case _ZN_MID_OPEN:
-        printf("Open message");
-        break;
-    case _ZN_MID_ACCEPT:
-        printf("Accept message");
-        break;
-    case _ZN_MID_CLOSE:
-        printf("Close message");
-        break;
-    case _ZN_MID_SYNC:
-        printf("Sync message");
-        break;
-    case _ZN_MID_ACK_NACK:
-        printf("AckNack message");
-        break;
-    case _ZN_MID_KEEP_ALIVE:
-        printf("KeepAlive message");
-        break;
-    case _ZN_MID_PING_PONG:
-        printf("PingPong message");
-        break;
-    case _ZN_MID_FRAME:
-        printf("Frame message");
-        break;
-    default:
-        assert(0);
-        break;
-    }
+    print_session_message_type(e_sm->header);
     printf("\n");
 
     // Encode
@@ -2290,6 +2292,63 @@ void session_message()
 
     free(e_sm);
     _zn_session_message_p_result_free(&r_zm);
+    z_iobuf_free(&buf);
+}
+
+/*------------------ Batch ------------------*/
+void batch()
+{
+    printf("\n>> Batch\n");
+    uint8_t bef_num = (gen_uint8() % 3);
+    uint8_t frm_num = 2 + (gen_uint8() % 3);
+    uint8_t aft_num = (gen_uint8() % 3);
+    uint8_t tot_num = bef_num + frm_num + aft_num;
+    z_iobuf_t buf = z_iobuf_make(tot_num * 1024);
+
+    // Initialize
+    _zn_session_message_t **e_sm = (_zn_session_message_t **)malloc(tot_num * sizeof(_zn_session_message_t *));
+    for (unsigned int i = 0; i < bef_num; ++i)
+    {
+        // Initialize random session message
+        e_sm[i] = gen_session_message();
+        // Encode
+        _zn_session_message_encode(&buf, e_sm[i]);
+    }
+    for (unsigned int i = bef_num; i < bef_num + frm_num; ++i)
+    {
+        // Initialize random session message
+        e_sm[i] = gen_session_message();
+        // Override it with a frame message
+        e_sm[i]->header = _ZN_MID_FRAME;
+        e_sm[i]->body.frame = gen_frame_message(&e_sm[i]->header);
+        // Encode
+        _zn_session_message_encode(&buf, e_sm[i]);
+    }
+    for (unsigned int i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
+    {
+        // Initialize random session message
+        e_sm[i] = gen_session_message();
+        // Encode
+        _zn_session_message_encode(&buf, e_sm[i]);
+    }
+
+    // Decode
+    for (unsigned int i = 0; i < tot_num; ++i)
+    {
+        _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&buf);
+        assert(r_zm.tag == Z_OK_TAG);
+
+        _zn_session_message_t *d_zm = r_zm.value.session_message;
+        printf(" - ");
+        print_session_message_type(d_zm->header);
+        printf("\n");
+        assert_eq_session_message(e_sm[i], d_zm);
+
+        _zn_session_message_p_result_free(&r_zm);
+        free(e_sm[i]);
+    }
+
+    free(e_sm);
     z_iobuf_free(&buf);
 }
 
@@ -2337,6 +2396,7 @@ int main()
         ping_pong_message();
         frame_message();
         session_message();
+        batch();
     }
 
     return 0;
