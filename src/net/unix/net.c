@@ -427,11 +427,15 @@ size_t _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable)
     if (reliable)
     {
         _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
-        s_msg.body.frame.sn = z->sn_tx_reliable++;
+        s_msg.body.frame.sn = z->sn_tx_reliable;
+        // Update the sequence number in modulo operation
+        z->sn_tx_reliable = (z->sn_tx_reliable + 1) % z->sn_resolution;
     }
     else
     {
-        s_msg.body.frame.sn = z->sn_tx_best_effort++;
+        s_msg.body.frame.sn = z->sn_tx_best_effort;
+        // Update the sequence number in modulo operation
+        z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
     }
     // Do not allocate a z_vec_t for the encoding
     s_msg.body.frame.payload.messages = z_vec_make(1);

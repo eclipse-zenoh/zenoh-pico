@@ -480,7 +480,11 @@ typedef struct
 
 void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 {
-    printf("%d", z->running);
+    printf(" %d", z->running);
+
+    // z_list_t *subs;
+    // _zn_sub_t *sub;
+    // subs = z_list_empty;
 
     switch (_ZN_MID(msg->header))
     {
@@ -489,6 +493,8 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
         break;
     case _ZN_MID_DATA:
         printf("Received data");
+        // subs = _zn_get_subscriptions_by_rname(z, msg->body.data.key.rname);
+
         break;
     case _ZN_MID_PULL:
         printf("Received pull");
@@ -508,49 +514,48 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 
 int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
 {
-    printf("%d", z->running);
+    printf("%d ", z->running);
 
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_SCOUT:
-        // @TODO
-        printf("SCOUT\n");
+        _Z_DEBUG("Handling of Scout messages not implemented");
         break;
     case _ZN_MID_HELLO:
-        // @TODO
-        printf("HELLO\n");
+        _Z_DEBUG("Handling of Hello messages not implemented");
         break;
     case _ZN_MID_OPEN:
-        // @TODO
-        printf("OPEN\n");
+        _Z_DEBUG("Handling of Open messages not implemented");
         break;
     case _ZN_MID_ACCEPT:
-        // @TODO
-        printf("ACCEPT\n");
+        _Z_DEBUG("Handling of Accept messages not implemented");
         break;
     case _ZN_MID_CLOSE:
-        // @TODO
-        printf("CLOSE\n");
+        _Z_DEBUG("Handling of Close messages not implemented");
         break;
     case _ZN_MID_SYNC:
         _Z_DEBUG("Handling of Sync messages not implemented");
-        printf("SYNC\n");
         break;
     case _ZN_MID_ACK_NACK:
         _Z_DEBUG("Handling of AckNack messages not implemented");
-        printf("ACK_NACK\n");
         break;
     case _ZN_MID_KEEP_ALIVE:
-        // @TODO
-        printf("KEEP_ALIVE\n");
+        _Z_DEBUG("Handling of KeepAlive messages not implemented");
         break;
     case _ZN_MID_PING_PONG:
         _Z_DEBUG("Handling of PingPong messages not implemented");
-        printf("PING_PONG\n");
         break;
     case _ZN_MID_FRAME:
-        // @TODO
-        printf("FRAME\n");
+        if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
+        {
+            unsigned int len = z_vec_length(&msg->body.frame.payload.messages);
+            for (unsigned int i = 0; i < len; ++i)
+                handle_zenoh_msg(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
+        }
+        else
+        {
+            _Z_DEBUG("Handling of Fragmented Frame messages not implemented");
+        }
         break;
     default:
         _Z_DEBUG("Unknown session message ID");
@@ -560,76 +565,59 @@ int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
     return 0;
 }
 
-void print_iobuf(z_iobuf_t *buf)
-{
-    printf("Capacity: %u, Rpos: %u, Wpos: %u, Buffer: [", buf->capacity, buf->r_pos, buf->w_pos);
-    for (unsigned int i = 0; i < buf->capacity; ++i)
-    {
-        printf("%02x", buf->buf[i]);
-        if (i < buf->capacity - 1)
-            printf(" ");
-    }
-    printf("]\n");
-}
-
 void *zn_recv_loop(zn_session_t *z)
 {
-    _zn_session_message_p_result_t r;
-    _zn_session_message_p_result_init(&r);
-    z_iobuf_clear(&z->rbuf);
     z->running = 1;
 
+    _zn_session_message_p_result_t r;
+    _zn_session_message_p_result_init(&r);
+
+    z_iobuf_clear(&z->rbuf);
     while (z->running)
     {
         z_iobuf_compact(&z->rbuf);
 
-        print_iobuf(&z->rbuf);
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
         //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
         //       the boundary of the serialized messages. The length is encoded as little-endian.
         //       In any case, the length of a message must not exceed 65_535 bytes.
-        //
-        // Read number of bytes to read.
+
+        // Read number of bytes to read
         while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
-            z_iobuf_compact(&z->rbuf);
             if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
                 return 0;
         }
+
         // Decode the message length
-        print_iobuf(&z->rbuf);
-        uint16_t to_read = z_iobuf_read(&z->rbuf) | (z_iobuf_read(&z->rbuf) << 8);
-        printf("To read: %u, Read: %u\n", to_read, z_iobuf_readable(&z->rbuf));
+        unsigned int to_read = (unsigned int)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
+
         // Read the rest of bytes to decode one or more session messages.
         while (z_iobuf_readable(&z->rbuf) < to_read)
         {
-            z_iobuf_compact(&z->rbuf);
             if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
                 return 0;
         }
+
+        // Wrap the main buffer for to_read bytes
+        z_iobuf_t rbuf = z_iobuf_wrap_wo((uint8_t *)(z->rbuf.buf + z->rbuf.r_pos), to_read, 0, to_read);
 #else
         // Read bytes from the socket.
         while (z_iobuf_readable(&z->rbuf) == 0)
         {
-            z_iobuf_compact(&z->rbuf);
             if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
                 return 0;
         }
+
+        z_iobuf_t rbuf = z->rbuf;
 #endif
 
-        // while (z_iobuf_readable(&z->rbuf))
-        while (to_read > 0)
+        while (z_iobuf_readable(&rbuf) > 0)
         {
-            uint16_t before_decode = z_iobuf_readable(&z->rbuf);
-            printf("Decode session message before: %u\n", before_decode);
-            // Decode session messages
-            _zn_session_message_decode_na(&z->rbuf, &r);
-
-            uint16_t after_decode = z_iobuf_readable(&z->rbuf);
-            printf("Decode session message after: %u\n", before_decode);
-            to_read -= (before_decode - after_decode);
+            // Decode one session message
+            _zn_session_message_decode_na(&rbuf, &r);
 
             if (r.tag == Z_OK_TAG)
             {
@@ -641,6 +629,11 @@ void *zn_recv_loop(zn_session_t *z)
                 return 0;
             }
         }
+
+#ifdef ZENOH_NET_TRANSPORT_TCP_IP
+        // Move the read position of the read buffer
+        z->rbuf.r_pos += to_read;
+#endif
     }
 
     return 0;

@@ -68,7 +68,7 @@ void z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, unsigned int offset,
     iob->w_pos += length;
 }
 
-void z_iobuf_write_bytes(z_iobuf_t *iob, const unsigned char *bs, unsigned int length)
+void z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, unsigned int length)
 {
     assert(z_iobuf_writable(iob) >= length);
     memcpy(iob->buf + iob->w_pos, bs, length);
@@ -101,7 +101,7 @@ void z_iobuf_put(z_iobuf_t *iob, uint8_t b, unsigned int pos)
     iob->buf[pos] = b;
 }
 
-uint8_t z_iobuf_sget(z_iobuf_t *iob, unsigned int pos)
+uint8_t z_iobuf_get(z_iobuf_t *iob, unsigned int pos)
 {
     assert(pos < iob->capacity);
     return iob->buf[pos];
