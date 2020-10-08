@@ -545,7 +545,7 @@ int zn_undeclare_publisher(zn_pub_t *pub)
     return 0;
 }
 
-/*------------------  Subscriber Declaration ------------------*/
+/*------------------ Subscriber Declaration ------------------*/
 zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res_key, const zn_sub_info_t *si, zn_data_handler_t data_handler, void *arg)
 {
     zn_sub_p_result_t r;
