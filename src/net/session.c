@@ -314,25 +314,31 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn;
 
         // Initialize the counters to 1.
-        r.value.session->eid = 1;
-        r.value.session->rid = 1;
-        r.value.session->qid = 1;
+        r.value.session->entity_id = 1;
+        r.value.session->resource_id = 1;
+        r.value.session->query_id = 1;
 
         // Initialize the buffers
         r.value.session->rbuf = rbuf;
         r.value.session->wbuf = wbuf;
 
         // Initialize the Peer IDs
-        r.value.session->pid = pid;
-        ARRAY_S_COPY(uint8_t, r.value.session->peer_pid, r_msg.value.session_message->body.accept.apid);
+        r.value.session->local_pid = pid;
+        ARRAY_S_COPY(uint8_t, r.value.session->remote_pid, r_msg.value.session_message->body.accept.apid);
 
         r.value.session->locator = strdup(locator);
-        r.value.session->on_disconnect = on_disconnect != 0 ? on_disconnect : &default_on_disconnect;
-        r.value.session->declarations = z_list_empty;
-        r.value.session->subscriptions = z_list_empty;
-        r.value.session->queryables = z_list_empty;
+
+        r.value.session->local_resources = z_list_empty;
+        r.value.session->remote_resources = z_list_empty;
+
+        r.value.session->local_subscriptions = z_list_empty;
+        // r.value.session->remote_subscriptions = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+        r.value.session->remote_subscriptions = z_list_empty;
+
+        r.value.session->local_queryables = z_list_empty;
         r.value.session->replywaiters = z_list_empty;
-        r.value.session->remote_subscriptions = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+
+        r.value.session->on_disconnect = on_disconnect != 0 ? on_disconnect : &default_on_disconnect;
         r.value.session->running = 0;
         r.value.session->thread = 0;
 
@@ -377,7 +383,7 @@ int zn_close(zn_session_t *z)
     _zn_session_message_t c;
     c.attachment = NULL;
     c.header = _ZN_MID_CLOSE;
-    c.body.close.pid = z->pid;
+    c.body.close.pid = z->local_pid;
     c.body.close.reason = _ZN_CLOSE_GENERIC;
     _ZN_SET_FLAG(c.header, _ZN_FLAG_S_I);
     // NOTE: we are closing the whole zenoh session.
@@ -388,90 +394,21 @@ int zn_close(zn_session_t *z)
     return rv;
 }
 
-// zn_eval_p_result_t zn_declare_eval(zn_session_t *z, const char *resource, zn_query_handler_t query_handler, void *arg)
-// {
-//     zn_eval_p_result_t r;
-//     r.tag = Z_OK_TAG;
-//     r.value.eval = (zn_eva_t *)malloc(sizeof(zn_eva_t));
-//     r.value.eval->z = z;
-//     z_zint_t id = _zn_get_entity_id(z);
-//     r.value.eval->id = id;
-
-//     _zn_message_t msg;
-//     msg.header = _ZN_DECLARE;
-//     msg.payload.declare.sn = z->sn++;
-//     int dnum = 3;
-//     _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//     int rid = _zn_get_resource_id(z, resource);
-//     r.value.eval->rid = rid;
-
-//     decl.elem[0].header = _ZN_RESOURCE_DECL;
-//     decl.elem[0].payload.resource.r_name = (char *)resource;
-//     decl.elem[0].payload.resource.rid = rid;
-
-//     decl.elem[1].header = _ZN_EVAL_DECL;
-//     decl.elem[1].payload.eval.rid = rid;
-
-//     decl.elem[2].header = _ZN_COMMIT_DECL;
-//     decl.elem[2].payload.commit.cid = z->cid++;
-
-//     msg.payload.declare.declarations = decl;
-//     if (_zn_send_msg(z->sock, &z->wbuf, &msg) != 0)
-//     {
-//         _Z_DEBUG("Trying to reconnect....\n");
-//         z->on_disconnect(z);
-//         _zn_send_msg(z->sock, &z->wbuf, &msg);
-//     }
-//     ARRAY_S_FREE(decl);
-//     _zn_register_res_decl(z, rid, resource);
-//     _zn_register_eval(z, rid, id, query_handler, arg);
-//     // -- This will be refactored to use mvars
-//     return r;
-// }
-
-// int zn_undeclare_eval(zn_eva_t *eval)
-// {
-//     _zn_unregister_eval(eval);
-//     z_list_t *evals = _zn_get_evals_by_rid(eval->z, eval->rid);
-//     if (evals == z_list_empty)
-//     {
-//         _zn_message_t msg;
-//         msg.header = _ZN_DECLARE;
-//         msg.payload.declare.sn = eval->z->sn++;
-//         int dnum = 2;
-//         _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
-
-//         decl.elem[0].header = _ZN_FORGET_EVAL_DECL;
-//         decl.elem[0].payload.forget_eval.rid = eval->rid;
-
-//         decl.elem[1].header = _ZN_COMMIT_DECL;
-//         decl.elem[1].payload.commit.cid = eval->z->cid++;
-
-//         msg.payload.declare.declarations = decl;
-
-//         if (_zn_send_msg(eval->z->sock, &eval->z->wbuf, &msg) != 0)
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             eval->z->on_disconnect(eval->z);
-//             _zn_send_msg(eval->z->sock, &eval->z->wbuf, &msg);
-//         }
-//         ARRAY_S_FREE(decl);
-//     }
-//     z_list_free(&evals);
-//     // TODO free evals
-//     return 0;
-// }
-
 /*------------------  Resource Declaration ------------------*/
 zn_res_p_result_t zn_declare_resource(zn_session_t *z, const char *resource)
 {
+    // Create the resource key to declare
+    zn_res_key_t res_key;
+    res_key.rid = ZN_NO_RESOURCE_ID;
+    res_key.rname = (char *)resource;
+
+    // Create the result
     zn_res_p_result_t r;
     r.tag = Z_OK_TAG;
     r.value.res = (zn_res_t *)malloc(sizeof(zn_res_t));
     r.value.res->z = z;
-    r.value.res->key.rid = _zn_get_resource_id(z, resource);
-    r.value.res->key.rname = NULL;
+    r.value.res->id = _zn_get_resource_id(z, &res_key);
+    r.value.res->key = res_key;
 
     _zn_zenoh_message_t z_msg;
     z_msg.attachment = NULL;
@@ -484,9 +421,8 @@ zn_res_p_result_t zn_declare_resource(zn_session_t *z, const char *resource)
 
     // Resource declaration
     decl.elem[0].header = _ZN_DECL_RESOURCE;
-    decl.elem[0].body.res.rid = r.value.res->key.rid;
-    decl.elem[0].body.res.key.rid = ZN_NO_RESOURCE_ID;
-    decl.elem[0].body.res.key.rname = (char *)resource;
+    decl.elem[0].body.res.id = r.value.res->id;
+    decl.elem[0].body.res.key = r.value.res->key;
 
     z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, 1) != 0)
@@ -496,34 +432,39 @@ zn_res_p_result_t zn_declare_resource(zn_session_t *z, const char *resource)
         _zn_send_z_msg(z, &z_msg, 1);
     }
     ARRAY_S_FREE(decl);
-    _zn_register_res_decl(z, r.value.res->key.rid, resource);
+    _zn_register_resource(z, 1, r.value.res->id, &r.value.res->key);
 
     return r;
 }
 
 int zn_undeclare_resource(zn_res_t *res)
 {
-    _zn_zenoh_message_t z_msg;
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
-    z_msg.header = _ZN_MID_DECLARE;
-
-    // We need to undeclare the resource and the publisher
-    int decl_num = 1;
-    _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
-
-    // Resource declaration
-    decl.elem[0].header = _ZN_DECL_FORGET_RESOURCE;
-    decl.elem[0].body.forget_res.rid = res->key.rid;
-
-    z_msg.body.declare.declarations = decl;
-    if (_zn_send_z_msg(res->z, &z_msg, 1) != 0)
+    _zn_res_decl_t *r = _zn_get_resource_by_id(res->z->local_resources, res->id);
+    if (r)
     {
-        _Z_DEBUG("Trying to reconnect...\n");
-        res->z->on_disconnect(res->z);
-        _zn_send_z_msg(res->z, &z_msg, 1);
+        _zn_zenoh_message_t z_msg;
+        z_msg.attachment = NULL;
+        z_msg.reply_context = NULL;
+        z_msg.header = _ZN_MID_DECLARE;
+
+        // We need to undeclare the resource and the publisher
+        int decl_num = 1;
+        _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+
+        // Resource declaration
+        decl.elem[0].header = _ZN_DECL_FORGET_RESOURCE;
+        decl.elem[0].body.forget_res.rid = res->id;
+
+        z_msg.body.declare.declarations = decl;
+        if (_zn_send_z_msg(res->z, &z_msg, 1) != 0)
+        {
+            _Z_DEBUG("Trying to reconnect...\n");
+            res->z->on_disconnect(res->z);
+            _zn_send_z_msg(res->z, &z_msg, 1);
+        }
+        ARRAY_S_FREE(decl);
+        _zn_unregister_resource(res->z, 1, r);
     }
-    ARRAY_S_FREE(decl);
 
     return 0;
 }
@@ -652,48 +593,52 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res
         _zn_send_z_msg(z, &z_msg, 1);
     }
     ARRAY_S_FREE(decl);
-    _zn_register_subscription(z, res_key, r.value.sub->id, data_handler, arg);
+    _zn_register_subscription(z, 1, r.value.sub->id, res_key, data_handler, arg);
 
     return r;
 }
 
-// int zn_undeclare_subscriber(zn_sub_t *sub)
-// {
-//     _zn_unregister_subscription(sub);
-//     z_list_t *subs = _zn_get_subscriptions_by_rid(sub->z, sub->rid);
-//     if (subs == z_list_empty)
-//     {
-//         _zn_message_t msg;
-//         msg.header = _ZN_DECLARE;
-//         msg.payload.declare.sn = sub->z->sn++;
-//         int dnum = 2;
-//         _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+int zn_undeclare_subscriber(zn_sub_t *sub)
+{
+    _zn_sub_t *s = _zn_get_subscription_by_id(sub->z->local_subscriptions, sub->id);
+    if (s)
+    {
+        _zn_zenoh_message_t z_msg;
+        z_msg.attachment = NULL;
+        z_msg.reply_context = NULL;
+        z_msg.header = _ZN_MID_DECLARE;
 
-//         decl.elem[0].header = _ZN_FORGET_SUBSCRIBER_DECL;
-//         decl.elem[0].payload.forget_sub.rid = sub->rid;
+        // We need to undeclare the subscriber
+        int dnum = 1;
+        _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
 
-//         decl.elem[1].header = _ZN_COMMIT_DECL;
-//         decl.elem[1].payload.commit.cid = sub->z->cid++;
+        // Forget Subscriber declaration
+        decl.elem[0].header = _ZN_DECL_FORGET_SUBSCRIBER;
+        if (!sub->key.rname)
+            _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_K);
 
-//         msg.payload.declare.declarations = decl;
+        decl.elem[0].body.forget_sub.key = sub->key;
 
-//         if (_zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg) != 0)
-//         {
-//             _Z_DEBUG("Trying to reconnect....\n");
-//             sub->z->on_disconnect(sub->z);
-//             _zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg);
-//         }
-//         ARRAY_S_FREE(decl);
-//     }
-//     z_list_free(&subs);
-//     // TODO free subscription
-//     return 0;
-// }
+        z_msg.body.declare.declarations = decl;
+        if (_zn_send_z_msg(sub->z, &z_msg, 1) != 0)
+        {
+            _Z_DEBUG("Trying to reconnect....\n");
+            sub->z->on_disconnect(sub->z);
+            _zn_send_z_msg(sub->z, &z_msg, 1);
+        }
+        ARRAY_S_FREE(decl);
+
+        _zn_unregister_subscription(sub);
+    }
+
+    return 0;
+}
 
 int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, int is_droppable)
 {
-    // @TODO: Need to verify there are active subscriptions matching the write
-    // @TODO: Need to check subscriptions to determine the right reliability value
+    // @TODO: Need to verify that I have declared a publisher with the same resource key.
+    //        Then, need to verify there are active subscriptions matching the publisher.
+    // @TODO: Need to check subscriptions to determine the right reliability value.
 
     _zn_zenoh_message_t z_msg;
     // Set the message decorators
@@ -726,8 +671,9 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
 
 int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
 {
-    // @TODO: Need to verify there are active subscriptions matching the write
-    // @TODO: Need to check subscriptions to determine the right reliability value
+    // @TODO: Need to verify that I have declared a publisher with the same resource key.
+    //        Then, need to verify there are active subscriptions matching the publisher.
+    // @TODO: Need to check subscriptions to determine the right reliability value.
 
     _zn_zenoh_message_t z_msg;
     // Set the message decorators

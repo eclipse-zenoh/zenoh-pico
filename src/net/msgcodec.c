@@ -260,7 +260,7 @@ void _zn_res_decl_encode(z_iobuf_t *buf, uint8_t header, const _zn_res_decl_t *d
     _Z_DEBUG("Encoding _ZN_DECL_RESOURCE\n");
 
     // Encode the body
-    z_zint_encode(buf, dcl->rid);
+    z_zint_encode(buf, dcl->id);
     zn_res_key_encode(buf, header, &dcl->key);
 }
 
@@ -272,7 +272,7 @@ void _zn_res_decl_decode_na(z_iobuf_t *buf, uint8_t header, _zn_res_decl_result_
     // Decode the body
     z_zint_result_t r_zint = z_zint_decode(buf);
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    r->value.res_decl.rid = r_zint.value.zint;
+    r->value.res_decl.id = r_zint.value.zint;
 
     zn_res_key_result_t r_res = zn_res_key_decode(buf, header);
     ASSURE_P_RESULT(r_res, r, ZN_RES_KEY_PARSE_ERROR)

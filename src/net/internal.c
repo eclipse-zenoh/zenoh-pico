@@ -12,318 +12,414 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <assert.h>
 #include "zenoh/rname.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/private/logging.h"
 
+// TO REMOVE
+#include <stdio.h>
+
+/*------------------ Entity ------------------*/
 z_zint_t _zn_get_entity_id(zn_session_t *z)
 {
-    return z->eid++;
+    return z->entity_id++;
 }
 
-z_zint_t _zn_get_resource_id(zn_session_t *z, const char *rname)
+/*------------------ Resource ------------------*/
+z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key)
 {
-    _zn_res_decl_t *rd_brn = _zn_get_res_decl_by_rname(z, rname);
-    if (rd_brn == 0)
+    _zn_res_decl_t *res_decl = _zn_get_resource_by_key(z->local_resources, res_key);
+    if (res_decl)
     {
-        z_zint_t rid = z->rid++;
-        while (_zn_get_res_decl_by_rid(z, rid) != 0)
-        {
-            rid++;
-        }
-        z->rid = rid;
-        return rid;
+        return res_decl->id;
     }
     else
-        return rd_brn->rid;
+    {
+        z_zint_t id = z->resource_id++;
+        while (_zn_get_resource_by_id(z->local_resources, id) != 0)
+        {
+            id++;
+        }
+        z->resource_id = id;
+        return id;
+    }
 }
 
-int _zn_register_res_decl(zn_session_t *z, z_zint_t rid, const char *rname)
+const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key_t *res_key)
 {
-    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%s)\n", rid, rname);
-    _zn_res_decl_t *rd_bid = _zn_get_res_decl_by_rid(z, rid);
-    _zn_res_decl_t *rd_brn = _zn_get_res_decl_by_rname(z, rname);
+    char *rname = NULL;
 
-    if (rd_bid == 0 && rd_brn == 0)
+    if (resources)
     {
+        z_list_t *strs = z_list_empty;
+        z_zint_t rid = res_key->rid;
+        _zn_res_decl_t *decl = _zn_get_resource_by_id(resources, rid);
+
+        // Travel all the matching RID to reconstruct the full resource name
+        unsigned int len = 0;
+        while (decl)
+        {
+            len += strlen(decl->key.rname);
+            strs = z_list_cons(strs, decl->key.rname);
+
+            if (decl->id == ZN_NO_RESOURCE_ID)
+                break;
+
+            decl = _zn_get_resource_by_id(resources, decl->key.rid);
+        }
+
+        if (strs)
+        {
+            // Concatenate all the partial resource names
+            rname = (char *)malloc(len + 1);
+            char *s = (char *)z_list_head(strs);
+            while (strs)
+            {
+                strcat(rname, s);
+                s = (char *)z_list_head(strs);
+                strs = z_list_tail(strs);
+            }
+        }
+    }
+
+    return rname;
+}
+
+_zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key)
+{
+    z_list_t *decls = resources;
+    while (decls)
+    {
+        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(decls);
+
+        if (decl->key.rid == res_key->rid && strcmp(decl->key.rname, res_key->rname) == 0)
+            return decl;
+
+        decls = z_list_tail(decls);
+    }
+
+    return NULL;
+}
+
+_zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t id)
+{
+    z_list_t *decls = resources;
+    while (decls)
+    {
+        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(resources);
+
+        if (decl->id == id)
+            return decl;
+
+        decls = z_list_tail(decls);
+    }
+
+    return NULL;
+}
+
+int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key)
+{
+    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%s)\n", res_key->rid, res_key->rname);
+    _zn_res_decl_t *rd_rid;
+    _zn_res_decl_t *rd_key;
+    if (is_local)
+    {
+        rd_rid = _zn_get_resource_by_id(z->local_resources, id);
+        rd_key = _zn_get_resource_by_key(z->local_resources, res_key);
+    }
+    else
+    {
+        rd_rid = _zn_get_resource_by_id(z->remote_resources, id);
+        rd_key = _zn_get_resource_by_key(z->remote_resources, res_key);
+    }
+
+    if (!rd_rid && !rd_key)
+    {
+        // No resource declaration has been found, create a new one
         _zn_res_decl_t *rdecl = (_zn_res_decl_t *)malloc(sizeof(_zn_res_decl_t));
-        rdecl->rid = rid;
-        rdecl->key.rname = strdup(rname);
-        z->declarations = z_list_cons(z->declarations, rdecl);
+        rdecl->id = id;
+        rdecl->key.rid = res_key->rid;
+        rdecl->key.rname = strdup(res_key->rname);
+
+        if (is_local)
+            z->local_resources = z_list_cons(z->local_resources, rdecl);
+        else
+            z->remote_resources = z_list_cons(z->remote_resources, rdecl);
+
         return 0;
     }
-    else if (rd_bid == rd_brn)
-        return 0;
-    else
+    else if (rd_rid == rd_key)
+    {
+        // A resource declaration for this id and key has been found, return
         return 1;
+    }
+    else
+    {
+        // Inconsistent declarations have been found, return an error
+        return -1;
+    }
 }
 
-_zn_res_decl_t *_zn_get_res_decl_by_rid(zn_session_t *z, z_zint_t rid)
+int _zn_resource_predicate(void *elem, void *arg)
 {
-    if (z->declarations == 0)
+    _zn_res_decl_t *rel = (_zn_res_decl_t *)elem;
+    _zn_res_decl_t *rar = (_zn_res_decl_t *)arg;
+    if (rel->id == rar->id)
+        return 1;
+    else
+        return 0;
+}
+
+void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *r)
+{
+    if (is_local)
+        z->local_resources = z_list_remove(z->local_resources, _zn_resource_predicate, r);
+    else
+        z->remote_resources = z_list_remove(z->remote_resources, _zn_resource_predicate, r);
+}
+
+/*------------------ Subscription ------------------*/
+z_list_t *_zn_get_subscriptions_from_remote_resources(zn_session_t *z, const zn_res_key_t *res_key)
+{
+    z_list_t *xs = z_list_empty;
+
+    // First try to get a remote resource declaration
+    _zn_res_decl_t *remote = _zn_get_resource_by_id(z->remote_resources, res_key->rid);
+    if (!remote)
     {
+        // No remote resource was found, return
+        return xs;
+    }
+
+    // Check if there is a local subscriptions matching the resource declaration
+    z_list_t *subs = z->local_subscriptions;
+    while (subs)
+    {
+        _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+
+        _zn_res_decl_t *local = _zn_get_resource_by_key(z->local_resources, &remote->key);
+        if (!local)
+        {
+            // No remote resource was found, return
+            return xs;
+        }
+
+        // printf("YES LOCAL %zu:%s, %zu:%zu:%s!\n", sub->key.rid, sub->key.rname, local->id, local->key.rid, local->key.rname);
+        // Check if the resource ids match
+        if (sub->key.rid == local->key.rid)
+        {
+            // We have a matching resource id
+            if (sub->key.rname)
+            {
+                // A string resource has been defined, check if they intersect
+                if (zn_rname_intersect(sub->key.rname, local->key.rname))
+                {
+                    // This is a matching subscription
+                    xs = z_list_cons(xs, sub);
+                    // printf("OH YES\n");
+                }
+                else
+                {
+                    // printf("OH NO\n");
+                }
+            }
+            else
+            {
+                // printf("#");
+                // This is a matching subscription
+                xs = z_list_cons(xs, sub);
+            }
+        }
+
+        subs = z_list_tail(subs);
+    }
+
+    return xs;
+}
+
+_zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id)
+{
+    z_list_t *subs = subscriptions;
+    while (subs)
+    {
+        _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+
+        if (sub->id == id)
+            return sub;
+
+        subs = z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+int _zn_register_subscription(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key, zn_data_handler_t data_handler, void *arg)
+{
+    _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", res_key->rid, res_key->rname);
+
+    _zn_res_decl_t *sb_key;
+    if (is_local)
+        sb_key = _zn_get_resource_by_key(z->local_subscriptions, res_key);
+    else
+        sb_key = _zn_get_resource_by_key(z->remote_subscriptions, res_key);
+
+    if (sb_key)
+    {
+        // A subscription for this key already exist, return
+        return 1;
+    }
+    else
+    {
+        _zn_sub_t *sub = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
+
+        sub->id = id;
+        sub->key.rid = res_key->rid;
+        if (res_key->rname)
+            sub->key.rname = strdup(res_key->rname);
+        else
+            sub->key.rname = NULL;
+        sub->data_handler = data_handler;
+        sub->arg = arg;
+
+        if (is_local)
+            z->local_subscriptions = z_list_cons(z->local_subscriptions, sub);
+        else
+            z->remote_subscriptions = z_list_cons(z->remote_subscriptions, sub);
+
         return 0;
     }
-    else
-    {
-        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(z->declarations);
-        z_list_t *decls = z_list_tail(z->declarations);
-        while (decls != 0 && decl->rid != rid)
-        {
-            decl = z_list_head(decls);
-            decls = z_list_tail(decls);
-        }
-        if (decl->rid == rid)
-            return decl;
-        else
-            return 0;
-    }
 }
 
-_zn_res_decl_t *_zn_get_res_decl_by_rname(zn_session_t *z, const char *rname)
-{
-    if (z->declarations == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(z->declarations);
-        z_list_t *decls = z_list_tail(z->declarations);
-
-        while (decls != 0 && strcmp(decl->key.rname, rname) != 0)
-        {
-            decl = z_list_head(decls);
-            decls = z_list_tail(decls);
-        }
-        if (strcmp(decl->key.rname, rname) == 0)
-            return decl;
-        else
-            return 0;
-    }
-}
-
-void _zn_register_subscription(zn_session_t *z, const zn_res_key_t *res_key, z_zint_t id, zn_data_handler_t data_handler, void *arg)
-{
-    _zn_sub_t *sub = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
-
-    sub->key.rid = res_key->rid;
-    if (res_key->rname)
-        sub->key.rname = strdup(res_key->rname);
-    else
-        sub->key.rname = NULL;
-
-    sub->id = id;
-    _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, res_key->rid);
-    assert(decl != 0);
-    sub->data_handler = data_handler;
-    sub->arg = arg;
-    z->subscriptions = z_list_cons(z->subscriptions, sub);
-}
-
-int sub_predicate(void *elem, void *arg)
+int subscription_predicate(void *elem, void *arg)
 {
     zn_sub_t *s = (zn_sub_t *)arg;
     _zn_sub_t *sub = (_zn_sub_t *)elem;
     if (sub->id == s->id)
-    {
         return 1;
-    }
     else
-    {
         return 0;
-    }
 }
 
 void _zn_unregister_subscription(zn_sub_t *s)
 {
-    s->z->subscriptions = z_list_remove(s->z->subscriptions, sub_predicate, s);
+    s->z->local_subscriptions = z_list_remove(s->z->local_subscriptions, subscription_predicate, s);
 }
 
-const char *_zn_get_resource_name(zn_session_t *z, z_zint_t rid)
-{
-    z_list_t *ds = z->declarations;
-    _zn_res_decl_t *d;
-    while (ds != z_list_empty)
-    {
-        d = z_list_head(ds);
-        if (d->rid == rid)
-        {
-            return d->key.rname;
-        }
-        ds = z_list_tail(ds);
-    }
-    return 0;
-}
+/*------------------ Queryable ------------------*/
+// void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
+// {
+//     _zn_qle_t *qle = (_zn_qle_t *)malloc(sizeof(_zn_qle_t));
+//     qle->rid = rid;
+//     qle->id = id;
+//     _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
+//     assert(decl != 0);
+//     qle->rname = strdup(decl->key.rname);
+//     qle->query_handler = query_handler;
+//     qle->arg = arg;
+//     z->queryables = z_list_cons(z->queryables, qle);
+// }
 
-z_list_t *_zn_get_subscriptions_by_rid(zn_session_t *z, z_zint_t rid)
-{
-    if (z->subscriptions)
-    {
-        _zn_sub_t *sub = 0;
-        z_list_t *subs = z->subscriptions;
-        z_list_t *xs = z_list_empty;
+// int qle_predicate(void *elem, void *arg)
+// {
+//     zn_qle_t *q = (zn_qle_t *)arg;
+//     _zn_qle_t *queryable = (_zn_qle_t *)elem;
+//     if (queryable->id == q->id)
+//     {
+//         return 1;
+//     }
+//     else
+//     {
+//         return 0;
+//     }
+// }
 
-        do
-        {
-            sub = (_zn_sub_t *)z_list_head(subs);
-            subs = z_list_tail(subs);
-            if (sub->key.rid == rid)
-            {
+// void _zn_unregister_queryable(zn_qle_t *e)
+// {
+//     e->z->queryables = z_list_remove(e->z->queryables, qle_predicate, e);
+// }
 
-                xs = z_list_cons(xs, sub);
-            }
-        } while (subs);
+// z_list_t *_zn_get_queryables_by_rid(zn_session_t *z, z_zint_t rid)
+// {
+//     z_list_t *queryables = z_list_empty;
+//     if (z->queryables == 0)
+//     {
+//         return queryables;
+//     }
+//     else
+//     {
+//         _zn_qle_t *queryable = 0;
+//         z_list_t *queryables = z->queryables;
+//         z_list_t *xs = z_list_empty;
+//         do
+//         {
+//             queryable = (_zn_qle_t *)z_list_head(queryables);
+//             queryables = z_list_tail(queryables);
+//             if (queryable->rid == rid)
+//             {
+//                 xs = z_list_cons(xs, queryable);
+//             }
+//         } while (queryables != 0);
+//         return xs;
+//     }
+// }
 
-        return xs;
-    }
-    else
-    {
-        z_list_t *subs = z_list_empty;
-        return subs;
-    }
-}
+// z_list_t *_zn_get_queryables_by_rname(zn_session_t *z, const char *rname)
+// {
+//     z_list_t *queryables = z_list_empty;
+//     if (z->queryables == 0)
+//     {
+//         return queryables;
+//     }
+//     else
+//     {
+//         _zn_qle_t *queryable = 0;
+//         z_list_t *queryables = z->queryables;
+//         z_list_t *xs = z_list_empty;
+//         do
+//         {
+//             queryable = (_zn_qle_t *)z_list_head(queryables);
+//             queryables = z_list_tail(queryables);
+//             if (zn_rname_intersect(queryable->rname, (char *)rname))
+//             {
+//                 xs = z_list_cons(xs, queryable);
+//             }
+//         } while (queryables != 0);
+//         return xs;
+//     }
+// }
 
-z_list_t *_zn_get_subscriptions_by_rname(zn_session_t *z, const char *rname)
-{
-    z_list_t *subs = z_list_empty;
-    if (z->subscriptions == 0)
-    {
-        return subs;
-    }
-    else
-    {
-        _zn_sub_t *sub = 0;
-        z_list_t *subs = z->subscriptions;
-        z_list_t *xs = z_list_empty;
-        do
-        {
-            sub = (_zn_sub_t *)z_list_head(subs);
-            subs = z_list_tail(subs);
-            if (zn_rname_intersect(sub->key.rname, (char *)rname))
-            {
-                xs = z_list_cons(xs, sub);
-            }
-        } while (subs != 0);
-        return xs;
-    }
-}
+// int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid)
+// {
+//     return z_i_map_get(z->remote_subscriptions, rid) != 0 ? 1 : 0;
+// }
 
-void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
-{
-    _zn_qle_t *qle = (_zn_qle_t *)malloc(sizeof(_zn_qle_t));
-    qle->rid = rid;
-    qle->id = id;
-    _zn_res_decl_t *decl = _zn_get_res_decl_by_rid(z, rid);
-    assert(decl != 0);
-    qle->rname = strdup(decl->key.rname);
-    qle->query_handler = query_handler;
-    qle->arg = arg;
-    z->queryables = z_list_cons(z->queryables, qle);
-}
+// void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg)
+// {
+//     _zn_replywaiter_t *rw = (_zn_replywaiter_t *)malloc(sizeof(_zn_replywaiter_t));
+//     rw->qid = qid;
+//     rw->reply_handler = reply_handler;
+//     rw->arg = arg;
+//     z->replywaiters = z_list_cons(z->replywaiters, rw);
+// }
 
-int qle_predicate(void *elem, void *arg)
-{
-    zn_qle_t *q = (zn_qle_t *)arg;
-    _zn_qle_t *queryable = (_zn_qle_t *)elem;
-    if (queryable->id == q->id)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-void _zn_unregister_queryable(zn_qle_t *e)
-{
-    e->z->queryables = z_list_remove(e->z->queryables, qle_predicate, e);
-}
-
-z_list_t *_zn_get_queryables_by_rid(zn_session_t *z, z_zint_t rid)
-{
-    z_list_t *queryables = z_list_empty;
-    if (z->queryables == 0)
-    {
-        return queryables;
-    }
-    else
-    {
-        _zn_qle_t *queryable = 0;
-        z_list_t *queryables = z->queryables;
-        z_list_t *xs = z_list_empty;
-        do
-        {
-            queryable = (_zn_qle_t *)z_list_head(queryables);
-            queryables = z_list_tail(queryables);
-            if (queryable->rid == rid)
-            {
-                xs = z_list_cons(xs, queryable);
-            }
-        } while (queryables != 0);
-        return xs;
-    }
-}
-
-z_list_t *_zn_get_queryables_by_rname(zn_session_t *z, const char *rname)
-{
-    z_list_t *queryables = z_list_empty;
-    if (z->queryables == 0)
-    {
-        return queryables;
-    }
-    else
-    {
-        _zn_qle_t *queryable = 0;
-        z_list_t *queryables = z->queryables;
-        z_list_t *xs = z_list_empty;
-        do
-        {
-            queryable = (_zn_qle_t *)z_list_head(queryables);
-            queryables = z_list_tail(queryables);
-            if (zn_rname_intersect(queryable->rname, (char *)rname))
-            {
-                xs = z_list_cons(xs, queryable);
-            }
-        } while (queryables != 0);
-        return xs;
-    }
-}
-
-int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid)
-{
-    return z_i_map_get(z->remote_subscriptions, rid) != 0 ? 1 : 0;
-}
-
-void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg)
-{
-    _zn_replywaiter_t *rw = (_zn_replywaiter_t *)malloc(sizeof(_zn_replywaiter_t));
-    rw->qid = qid;
-    rw->reply_handler = reply_handler;
-    rw->arg = arg;
-    z->replywaiters = z_list_cons(z->replywaiters, rw);
-}
-
-_zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid)
-{
-    if (z->replywaiters == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        _zn_replywaiter_t *rw = (_zn_replywaiter_t *)z_list_head(z->replywaiters);
-        z_list_t *rws = z_list_tail(z->replywaiters);
-        while (rws != 0 && rw->qid != qid)
-        {
-            rw = z_list_head(rws);
-            rws = z_list_tail(rws);
-        }
-        if (rw->qid == qid)
-            return rw;
-        else
-            return 0;
-    }
-}
+// _zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid)
+// {
+//     if (z->replywaiters == 0)
+//     {
+//         return 0;
+//     }
+//     else
+//     {
+//         _zn_replywaiter_t *rw = (_zn_replywaiter_t *)z_list_head(z->replywaiters);
+//         z_list_t *rws = z_list_tail(z->replywaiters);
+//         while (rws != 0 && rw->qid != qid)
+//         {
+//             rw = z_list_head(rws);
+//             rws = z_list_tail(rws);
+//         }
+//         if (rw->qid == qid)
+//             return rw;
+//         else
+//             return 0;
+//     }
+// }

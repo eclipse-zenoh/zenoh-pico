@@ -34,7 +34,6 @@ void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t len
 {
     Z_UNUSED_ARG_5(rid, data, length, info, arg);
 
-    printf("DATA HANDLER\n");
     struct timeval tv;
     if (count == 0)
     {
@@ -92,11 +91,12 @@ int main(int argc, char **argv)
     si.is_periodic = 0;
     zn_sub_p_result_t r = zn_declare_subscriber(z, &res->key, &si, data_handler, NULL);
     ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
-    // zn_sub_t *sub = r.value.sub;
+    zn_sub_t *sub = r.value.sub;
 
-    sleep(60);
+    sleep(3600);
 
-    // zn_undeclare_subscriber(sub);
+    zn_undeclare_subscriber(sub);
+    zn_undeclare_resource(res);
     zn_close(z);
     zn_stop_recv_loop(z);
 

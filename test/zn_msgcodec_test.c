@@ -689,7 +689,7 @@ _zn_res_decl_t gen_resource_declaration(uint8_t *header)
 {
     _zn_res_decl_t e_rd;
 
-    e_rd.rid = gen_zint();
+    e_rd.id = gen_zint();
     e_rd.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_rd.key.rname) ? 0 : _ZN_FLAG_Z_K);
 
@@ -698,8 +698,8 @@ _zn_res_decl_t gen_resource_declaration(uint8_t *header)
 
 void assert_eq_resource_declaration(const _zn_res_decl_t *left, const _zn_res_decl_t *right, uint8_t header)
 {
-    printf("RID (%zu:%zu), ", left->rid, right->rid);
-    assert(left->rid == right->rid);
+    printf("RID (%zu:%zu), ", left->id, right->id);
+    assert(left->id == right->id);
     assert_eq_res_key(&left->key, &right->key, header);
 }
 

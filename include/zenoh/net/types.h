@@ -172,13 +172,17 @@ typedef void (*zn_on_disconnect_t)(void *z);
 
 typedef struct
 {
+    // Socket and internal buffers
     _zn_socket_t sock;
 
     z_iobuf_t wbuf;
     z_iobuf_t rbuf;
 
-    z_uint8_array_t pid;
-    z_uint8_array_t peer_pid;
+    // Connection state
+    z_uint8_array_t local_pid;
+    z_uint8_array_t remote_pid;
+
+    char *locator;
 
     z_zint_t lease;
     z_zint_t sn_resolution;
@@ -189,20 +193,25 @@ typedef struct
     z_zint_t sn_rx_reliable;
     z_zint_t sn_rx_best_effort;
 
-    z_zint_t rid; // Counter for Resource ID
-    z_zint_t eid; // Counter for Entities
-    z_zint_t qid; // Counter for Query ID
+    // Counters
+    z_zint_t resource_id;
+    z_zint_t entity_id;
+    z_zint_t query_id;
 
-    char *locator;
+    // Declarations
+    z_list_t *local_resources;
+    z_list_t *remote_resources;
 
-    zn_on_disconnect_t on_disconnect;
+    z_list_t *local_subscriptions;
+    z_list_t *remote_subscriptions; // @TODO: replace it with a z_i_map_t
 
-    z_list_t *declarations;
-    z_list_t *subscriptions;
-    z_list_t *queryables;
+    z_list_t *local_publishers;
+    z_list_t *local_queryables;
+
     z_list_t *replywaiters;
 
-    z_i_map_t *remote_subscriptions; // List of remote subscriptions
+    // Runtime
+    zn_on_disconnect_t on_disconnect;
 
     volatile int running;
     void *thread;
@@ -211,14 +220,15 @@ typedef struct
 typedef struct
 {
     zn_session_t *z;
+    z_zint_t id;
     zn_res_key_t key;
 } zn_res_t;
 
 typedef struct
 {
     zn_session_t *z;
-    zn_res_key_t key;
     z_zint_t id;
+    zn_res_key_t key;
 } zn_pub_t;
 
 typedef struct

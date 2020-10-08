@@ -480,17 +480,27 @@ typedef struct
 
 void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 {
-    if (z->running == 0)
-    {
-        return;
-    }
-
-    z_list_t *subs;
-    _zn_sub_t *sub;
-    subs = z_list_empty;
-
     switch (_ZN_MID(msg->header))
     {
+    case _ZN_MID_DATA:
+        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
+
+        z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
+        while (subs)
+        {
+            _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+
+            sub->data_handler(
+                &msg->body.data.key,
+                msg->body.data.payload.iobuf.buf,
+                z_iobuf_readable(&msg->body.data.payload.iobuf),
+                &msg->body.data.info,
+                sub->arg);
+
+            subs = z_list_tail(subs);
+        }
+
+        break;
     case _ZN_MID_DECLARE:
         _Z_DEBUG("Received _ZN_DECLARE message\n");
         for (unsigned int i = 0; i < msg->body.declare.declarations.length; ++i)
@@ -499,21 +509,16 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
             {
             case _ZN_DECL_RESOURCE:
                 _Z_DEBUG("Received declare-resource message\n");
-                printf("Received declare: %zu, %zu, %s\n", msg->body.declare.declarations.elem[i].body.res.rid, msg->body.declare.declarations.elem[i].body.res.key.rid, msg->body.declare.declarations.elem[i].body.res.key.rname);
-                _zn_register_res_decl(z,
-                                      msg->body.declare.declarations.elem[i].body.res.rid,
-                                      msg->body.declare.declarations.elem[i].body.res.key.rname);
+
+                // Register remote resource declaration
+                _zn_register_resource(z, 0,
+                                      msg->body.declare.declarations.elem[i].body.res.id,
+                                      &msg->body.declare.declarations.elem[i].body.res.key);
+
                 break;
             case _ZN_DECL_PUBLISHER:
-                break;
             case _ZN_DECL_SUBSCRIBER:
-                // _Z_DEBUG_VA("Registering remote subscription for resource: %zu\n", decls[i].payload.sub.rid);
-                // rd = _zn_get_res_decl_by_rid(z, decls[i].payload.sub.rid);
-                // if (rd != 0)
-                //     z_i_map_set(z->remote_subs, decls[i].payload.sub.rid, rd);
-                break;
             case _ZN_DECL_QUERYABLE:
-                break;
             case _ZN_DECL_FORGET_RESOURCE:
             case _ZN_DECL_FORGET_PUBLISHER:
             case _ZN_DECL_FORGET_SUBSCRIBER:
@@ -523,59 +528,14 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
         }
         break;
-    case _ZN_MID_DATA:
-        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
-        if (msg->body.data.key.rid == ZN_NO_RESOURCE_ID)
-        {
-            if (msg->body.data.key.rname)
-            {
-                printf("RID: %s\n", msg->body.data.key.rname);
-                subs = _zn_get_subscriptions_by_rname(z, msg->body.data.key.rname);
-
-                while (subs && subs != z_list_empty)
-                {
-                    sub = (_zn_sub_t *)z_list_head(subs);
-                    sub->data_handler(
-                        &msg->body.data.key,
-                        msg->body.data.payload.iobuf.buf,
-                        z_iobuf_readable(&msg->body.data.payload.iobuf),
-                        &msg->body.data.info,
-                        sub->arg);
-                    subs = z_list_tail(subs);
-                }
-            }
-            else
-            {
-                _Z_DEBUG("Unknown zenoh message ID");
-            }
-        }
-        else
-        {
-            subs = _zn_get_subscriptions_by_rid(z, msg->body.data.key.rid);
-
-            while (subs != z_list_empty)
-            {
-                printf("RID: %zu\n", msg->body.data.key.rid);
-                sub = (_zn_sub_t *)z_list_head(subs);
-                sub->data_handler(
-                    &msg->body.data.key,
-                    msg->body.data.payload.iobuf.buf,
-                    z_iobuf_readable(&msg->body.data.payload.iobuf),
-                    &msg->body.data.info,
-                    sub->arg);
-                subs = z_list_tail(subs);
-            }
-        }
-
-        break;
     case _ZN_MID_PULL:
-        printf("Received pull");
+        _Z_DEBUG("Handling of Pull messages not implemented");
         break;
     case _ZN_MID_QUERY:
-        printf("Received query");
+        _Z_DEBUG("Handling of Query messages not implemented");
         break;
     case _ZN_MID_UNIT:
-        printf("Received unit");
+        _Z_DEBUG("Handling of Unit messages not implemented");
         // Do nothing. Unit messages have no body
         break;
     default:
@@ -662,17 +622,17 @@ void *zn_recv_loop(zn_session_t *z)
         // Read number of bytes to read
         while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 return 0;
         }
 
         // Decode the message length
         unsigned int to_read = (unsigned int)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
 
-        // Read the rest of bytes to decode one or more session messages.
+        // Read the rest of bytes to decode one or more session messages
         while (z_iobuf_readable(&z->rbuf) < to_read)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 return 0;
         }
 
@@ -682,7 +642,7 @@ void *zn_recv_loop(zn_session_t *z)
         // Read bytes from the socket.
         while (z_iobuf_readable(&z->rbuf) == 0)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) < 0)
+            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 return 0;
         }
 
