@@ -51,9 +51,6 @@ Z_RESULT_DECLARE(z_uint8_array_t, uint8_array)
 typedef char *z_string_t;
 Z_RESULT_DECLARE(z_string_t, string)
 
-Z_ARRAY_DECLARE(string)
-Z_RESULT_DECLARE(z_string_array_t, string_array)
-
 // -- Timestamp is optionally included in the DataInfo Field
 //
 //  7 6 5 4 3 2 1 0

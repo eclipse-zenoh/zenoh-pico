@@ -133,6 +133,18 @@
 typedef z_iobuf_t _zn_payload_t;
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 
+/*------------------ Locators Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// ~  Num of Locs  ~
+// +---------------+
+// ~   [Locator]   ~
+// +---------------+
+//
+// NOTE: Locators is a vector of strings and are encoded as such
+typedef z_vec_t _zn_locators_t;
+_ZN_RESULT_DECLARE(_zn_locators_t, locators)
+
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
@@ -197,18 +209,6 @@ _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 /*=============================*/
 /*      Session Messages       */
 /*=============================*/
-/*------------------ Locators Field ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// ~  Num of Locs  ~
-// +---------------+
-// ~   [Locator]   ~
-// +---------------+
-//
-// NOTE: Locators is a vector of strings and are encoded as such
-typedef z_vec_t _zn_locators_t;
-_ZN_RESULT_DECLARE(_zn_locators_t, locators)
-
 /*------------------ Scout Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.

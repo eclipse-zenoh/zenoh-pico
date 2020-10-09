@@ -20,6 +20,12 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 
+#define ZN_DECLARE_FREE(name) \
+    void zn_##name##_free(zn_##name##_t *m, uint8_t header)
+
+#define ZN_DECLARE_FREE_NOH(name) \
+    void zn_##name##_free(zn_##name##_t *m)
+
 #define ZN_DECLARE_ENCODE(name) \
     void zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const zn_##name##_t *m)
 

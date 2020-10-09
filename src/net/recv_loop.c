@@ -485,20 +485,20 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
     case _ZN_MID_DATA:
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
 
-        z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
-        while (subs)
-        {
-            _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+        // z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
+        // while (subs)
+        // {
+        //     _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
 
-            sub->data_handler(
-                &msg->body.data.key,
-                msg->body.data.payload.buf,
-                z_iobuf_readable(&msg->body.data.payload),
-                &msg->body.data.info,
-                sub->arg);
+        //     sub->data_handler(
+        //         &msg->body.data.key,
+        //         msg->body.data.payload.buf,
+        //         z_iobuf_readable(&msg->body.data.payload),
+        //         &msg->body.data.info,
+        //         sub->arg);
 
-            subs = z_list_tail(subs);
-        }
+        //     subs = z_list_tail(subs);
+        // }
 
         break;
     case _ZN_MID_DECLARE:
@@ -657,10 +657,13 @@ void *zn_recv_loop(zn_session_t *z)
             if (r.tag == Z_OK_TAG)
             {
                 handle_session_msg(z, r.value.session_message);
+                // Free the memory
+                _zn_session_message_free(r.value.session_message);
             }
             else
             {
                 _Z_DEBUG("Connection closed due to receive error");
+                _zn_session_message_p_result_free(&r);
                 return 0;
             }
         }

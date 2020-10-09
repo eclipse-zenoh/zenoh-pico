@@ -18,7 +18,7 @@
 #include <assert.h>
 
 /*-------- Linked List --------*/
-z_list_t *z_list_empty = 0;
+z_list_t *z_list_empty = NULL;
 
 inline z_vec_t z_vec_make(unsigned int capacity)
 {
@@ -41,10 +41,10 @@ void z_vec_free(z_vec_t *v)
 {
     for (unsigned int i = 0; i < v->length_; ++i)
         free(v->elem_[i]);
+    free(v->elem_);
     v->length_ = 0;
     v->capacity_ = 0;
-    free(v->elem_);
-    v->elem_ = 0;
+    v->elem_ = NULL;
 }
 
 inline unsigned int z_vec_length(const z_vec_t *v) { return v->length_; }
