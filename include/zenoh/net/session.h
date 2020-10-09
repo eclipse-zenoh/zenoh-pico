@@ -27,7 +27,7 @@
 #define ZN_INFO_PEER_PID_KEY 0x02
 
 /*------------------ Scout/Open/Close ------------------*/
-z_string_array_t zn_scout(char *iface, size_t tries, size_t period);
+z_vec_t zn_scout(char *iface, size_t tries, size_t period);
 zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps);
 int zn_close(zn_session_t *z);
 

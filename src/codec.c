@@ -94,39 +94,3 @@ z_string_result_t z_string_decode(z_iobuf_t *buf)
     r.value.string = s;
     return r;
 }
-
-/*------------------ string_array ------------------*/
-void z_string_array_encode(z_iobuf_t *buf, const z_string_array_t *sa)
-{
-    z_zint_encode(buf, sa->length);
-    // Encode the locators
-    for (z_zint_t i = 0; i < sa->length; ++i)
-        z_string_encode(buf, sa->elem[i]);
-}
-
-void z_string_array_decode_na(z_iobuf_t *buf, z_string_array_result_t *r)
-{
-    r->tag = Z_OK_TAG;
-
-    // Decode the number of elements
-    z_zint_result_t r_n = z_zint_decode(buf);
-    ASSURE_P_RESULT(r_n, r, Z_ZINT_PARSE_ERROR)
-    z_zint_t len = r_n.value.zint;
-    r->value.string_array.length = len;
-
-    r->value.string_array.elem = (z_string_t *)malloc(sizeof(z_string_t) * len);
-    // Decode the elements
-    for (z_zint_t i = 0; i < len; ++i)
-    {
-        z_string_result_t r_s = z_string_decode(buf);
-        ASSURE_P_RESULT(r_s, r, Z_STRING_PARSE_ERROR)
-        r->value.string_array.elem[i] = r_s.value.string;
-    }
-}
-
-z_string_array_result_t z_string_array_decode(z_iobuf_t *buf)
-{
-    z_string_array_result_t r;
-    z_string_array_decode_na(buf, &r);
-    return r;
-}

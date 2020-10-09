@@ -36,6 +36,7 @@ void zn_property_decode_na(z_iobuf_t *buf, zn_property_result_t *r)
     r->value.property.id = r_zint.value.zint;
     r->value.property.value = r_a8.value.uint8_array;
 }
+
 zn_property_result_t zn_property_decode(z_iobuf_t *buf)
 {
     zn_property_result_t r;
@@ -77,8 +78,7 @@ void zn_temporal_property_decode_na(z_iobuf_t *buf, zn_temporal_property_result_
     r->value.temporal_property.duration = r_duration.value.zint;
 }
 
-zn_temporal_property_result_t
-zn_temporal_property_decode(z_iobuf_t *buf)
+zn_temporal_property_result_t zn_temporal_property_decode(z_iobuf_t *buf)
 {
     zn_temporal_property_result_t r;
     zn_temporal_property_decode_na(buf, &r);

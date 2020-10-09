@@ -110,9 +110,9 @@ z_zint_t gen_zint()
 _zn_payload_t gen_payload(unsigned int len)
 {
     _zn_payload_t pld;
-    pld.iobuf = z_iobuf_make(len);
+    pld = z_iobuf_make(len);
     for (z_zint_t i = 0; i < len; ++i)
-        z_iobuf_write(&pld.iobuf, gen_uint8());
+        z_iobuf_write(&pld, gen_uint8());
 
     return pld;
 }
@@ -146,14 +146,11 @@ z_string_t gen_string(unsigned int size)
     return str;
 }
 
-z_string_array_t gen_string_array(unsigned int size)
+z_vec_t gen_string_vec(unsigned int size)
 {
-    z_string_array_t sa;
-    sa.length = size;
-    sa.elem = (z_string_t *)malloc(sizeof(z_string_t) * size);
-
+    z_vec_t sa = z_vec_make(size);
     for (unsigned int i = 0; i < size; ++i)
-        sa.elem[i] = gen_string(16);
+        z_vec_append(&sa, gen_string(16));
 
     return sa;
 }
@@ -164,17 +161,17 @@ z_string_array_t gen_string_array(unsigned int size)
 void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
 {
     printf("Payload -> ");
-    printf("Capacity (%u:%u), ", left->iobuf.capacity, right->iobuf.capacity);
+    printf("Capacity (%u:%u), ", left->capacity, right->capacity);
 
-    assert(left->iobuf.capacity == right->iobuf.capacity);
+    assert(left->capacity == right->capacity);
     printf("Content (");
-    for (z_zint_t i = 0; i < left->iobuf.capacity; ++i)
+    for (z_zint_t i = 0; i < left->capacity; ++i)
     {
-        uint8_t l = left->iobuf.buf[i];
-        uint8_t r = right->iobuf.buf[i];
+        uint8_t l = left->buf[i];
+        uint8_t r = right->buf[i];
 
         printf("%02x:%02x", l, r);
-        if (i < left->iobuf.capacity - 1)
+        if (i < left->capacity - 1)
             printf(" ");
 
         assert(l == r);
@@ -203,20 +200,20 @@ void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *r
     printf(")");
 }
 
-void assert_eq_string_array(const z_string_array_t *left, const z_string_array_t *right)
+void assert_eq_string_vec(const z_vec_t *left, const z_vec_t *right)
 {
     printf("Array -> ");
-    printf("Length (%u:%u), ", left->length, right->length);
+    printf("Length (%u:%u), ", z_vec_length(left), z_vec_length(right));
 
-    assert(left->length == right->length);
+    assert(z_vec_length(left) == z_vec_length(right));
     printf("Content (");
-    for (unsigned int i = 0; i < left->length; ++i)
+    for (unsigned int i = 0; i < z_vec_length(left); ++i)
     {
-        z_string_t l = left->elem[i];
-        z_string_t r = right->elem[i];
+        char *l = (char *)z_vec_get(left, i);
+        char *r = (char *)z_vec_get(right, i);
 
         printf("%s:%s", l, r);
-        if (i < left->length - 1)
+        if (i < z_vec_length(left) - 1)
             printf(" ");
 
         assert(!strcmp(l, r));
@@ -554,7 +551,7 @@ void print_attachment(const _zn_attachment_t *att)
 {
     printf("      Header: %x\n", att->header);
     printf("      Payload: ");
-    print_iobuf((z_iobuf_t *)&att->payload.iobuf);
+    print_iobuf((z_iobuf_t *)&att->payload);
     printf("\n");
 }
 
@@ -1573,7 +1570,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_he.locators = gen_string_array((gen_uint8() % 4) + 1);
+        e_he.locators = gen_string_vec((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1597,7 +1594,7 @@ void assert_eq_hello_message(const _zn_hello_t *left, const _zn_hello_t *right, 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_array(&left->locators, &right->locators);
+        assert_eq_string_vec(&left->locators, &right->locators);
         printf("\n");
     }
 }
@@ -1642,7 +1639,7 @@ _zn_open_t gen_open_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_op.locators = gen_string_array((gen_uint8() % 4) + 1);
+        e_op.locators = gen_string_vec((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(e_op.options, _ZN_FLAG_S_L);
     }
     if (e_op.options)
@@ -1690,7 +1687,7 @@ void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uin
         if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_L)
         {
             printf("   ");
-            assert_eq_string_array(&left->locators, &right->locators);
+            assert_eq_string_vec(&left->locators, &right->locators);
             printf("\n");
         }
     }
@@ -1740,7 +1737,7 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_ac.locators = gen_string_array((gen_uint8() % 4) + 1);
+        e_ac.locators = gen_string_vec((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_L);
     }
     if (e_ac.options)
@@ -1790,7 +1787,7 @@ void assert_eq_accept_message(const _zn_accept_t *left, const _zn_accept_t *righ
         if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_L)
         {
             printf("   ");
-            assert_eq_string_array(&left->locators, &right->locators);
+            assert_eq_string_vec(&left->locators, &right->locators);
             printf("\n");
         }
     }

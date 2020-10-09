@@ -45,13 +45,16 @@ void default_on_disconnect(void *vz)
     }
 }
 
-z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+_zn_locators_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
 {
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
     z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-    z_string_array_t ls;
-    ls.length = 0;
+    _zn_locators_t ls;
+    ls.capacity_ = 0;
+    ls.length_ = 0;
+    ls.elem_ = NULL;
+
     while (tries != 0)
     {
         tries--;
@@ -91,7 +94,7 @@ z_string_array_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, cons
     return ls;
 }
 
-z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
+z_vec_t zn_scout(char *iface, size_t tries, size_t period)
 {
     char *addr = iface;
     if ((iface == 0) || (strcmp(iface, "auto") == 0))
@@ -114,13 +117,14 @@ z_string_array_t zn_scout(char *iface, size_t tries, size_t period)
     struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
     socklen_t salen = sizeof(struct sockaddr_in);
     // Scout on Localhost
-    z_string_array_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
+    z_vec_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
 
-    if (locs.length == 0)
+    if (z_vec_length(&locs) == 0)
     {
         // We did not find an router on localhost, hence Scout on the LAN
         locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
     }
+
     z_iobuf_free(&sbuf);
 
     return locs;
@@ -131,10 +135,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     zn_session_p_result_t r;
     if (!locator)
     {
-        z_string_array_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
-        if (locs.length > 0)
+        z_vec_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
+        if (z_vec_length(&locs) > 0)
         {
-            locator = strdup((const char *)locs.elem[0]);
+            locator = strdup((const char *)z_vec_get(&locs, 0));
         }
         else
         {
@@ -169,8 +173,8 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     {
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
         om.attachment->header = _ZN_MID_ACCEPT | _ZN_ATT_ENC_PROPERTIES;
-        om.attachment->payload.iobuf = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
-        zn_properties_encode(&om.attachment->payload.iobuf, ps);
+        om.attachment->payload = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
+        zn_properties_encode(&om.attachment->payload, ps);
     }
     else
     {
@@ -201,7 +205,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     // Free attachment buffer if allocated
     if (om.attachment)
     {
-        z_iobuf_free(&om.attachment->payload.iobuf);
+        z_iobuf_free(&om.attachment->payload);
         free(om.attachment);
     }
 
@@ -664,7 +668,7 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     z_msg.body.data.info = info;
 
     // Set the payload
-    z_msg.body.data.payload.iobuf = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
@@ -689,7 +693,7 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
     _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
 
     // Set the payload
-    z_msg.body.data.payload.iobuf = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }

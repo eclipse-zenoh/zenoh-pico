@@ -492,8 +492,8 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
 
             sub->data_handler(
                 &msg->body.data.key,
-                msg->body.data.payload.iobuf.buf,
-                z_iobuf_readable(&msg->body.data.payload.iobuf),
+                msg->body.data.payload.buf,
+                z_iobuf_readable(&msg->body.data.payload),
                 &msg->body.data.info,
                 sub->arg);
 

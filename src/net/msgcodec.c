@@ -25,9 +25,9 @@ void _zn_payload_encode(z_iobuf_t *buf, const _zn_payload_t *pld)
     _Z_DEBUG("Encoding _PAYLOAD\n");
 
     // Encode the body
-    z_zint_t len = pld->iobuf.w_pos - pld->iobuf.r_pos;
+    z_zint_t len = z_iobuf_readable(pld);
     z_zint_encode(buf, len);
-    z_iobuf_write_slice(buf, pld->iobuf.buf, pld->iobuf.r_pos, pld->iobuf.w_pos);
+    z_iobuf_write_slice(buf, pld->buf, pld->r_pos, pld->w_pos);
 }
 
 void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)
@@ -41,7 +41,7 @@ void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)
     z_zint_t len = r_zint.value.zint;
 
     uint8_t *bs = z_iobuf_read_n(buf, len);
-    r->value.payload.iobuf = z_iobuf_wrap_wo(bs, len, 0, len);
+    r->value.payload = z_iobuf_wrap_wo(bs, len, 0, len);
 }
 
 _zn_payload_result_t _zn_payload_decode(z_iobuf_t *buf)
@@ -163,6 +163,42 @@ zn_res_key_result_t zn_res_key_decode(z_iobuf_t *buf, uint8_t header)
 {
     zn_res_key_result_t r;
     zn_res_key_decode_na(buf, header, &r);
+    return r;
+}
+
+/*------------------ Locators Field ------------------*/
+void _zn_locators_encode(z_iobuf_t *buf, const _zn_locators_t *ls)
+{
+    unsigned int len = z_vec_length(ls);
+    z_zint_encode(buf, len);
+    // Encode the locators
+    for (unsigned int i = 0; i < len; ++i)
+        z_string_encode(buf, (char *)z_vec_get(ls, i));
+}
+
+void _zn_locators_decode_na(z_iobuf_t *buf, _zn_locators_result_t *r)
+{
+    r->tag = Z_OK_TAG;
+
+    // Decode the number of elements
+    z_zint_result_t r_n = z_zint_decode(buf);
+    ASSURE_P_RESULT(r_n, r, Z_ZINT_PARSE_ERROR)
+    z_zint_t len = r_n.value.zint;
+    r->value.locators = z_vec_make(len);
+
+    // Decode the elements
+    for (z_zint_t i = 0; i < len; ++i)
+    {
+        z_string_result_t r_s = z_string_decode(buf);
+        ASSURE_P_RESULT(r_s, r, Z_STRING_PARSE_ERROR)
+        z_vec_append(&r->value.locators, r_s.value.string);
+    }
+}
+
+_zn_locators_result_t _zn_locators_decode(z_iobuf_t *buf)
+{
+    _zn_locators_result_t r;
+    _zn_locators_decode_na(buf, &r);
     return r;
 }
 
@@ -1065,7 +1101,7 @@ void _zn_hello_encode(z_iobuf_t *buf, uint8_t header, const _zn_hello_t *msg)
         z_zint_encode(buf, msg->whatami);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        z_string_array_encode(buf, &msg->locators);
+        _zn_locators_encode(buf, &msg->locators);
 }
 
 void _zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, _zn_hello_result_t *r)
@@ -1090,9 +1126,9 @@ void _zn_hello_decode_na(z_iobuf_t *buf, uint8_t header, _zn_hello_result_t *r)
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
-        z_string_array_result_t r_locs = z_string_array_decode(buf);
+        _zn_locators_result_t r_locs = _zn_locators_decode(buf);
         ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
-        r->value.hello.locators = r_locs.value.string_array;
+        r->value.hello.locators = r_locs.value.locators;
     }
 }
 
@@ -1128,7 +1164,7 @@ void _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
             z_zint_encode(buf, msg->sn_resolution);
 
         if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            z_string_array_encode(buf, &msg->locators);
+            _zn_locators_encode(buf, &msg->locators);
     }
 }
 
@@ -1170,9 +1206,9 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
 
         if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_L)
         {
-            z_string_array_result_t r_locs = z_string_array_decode(buf);
+            _zn_locators_result_t r_locs = _zn_locators_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
-            r->value.open.locators = r_locs.value.string_array;
+            r->value.open.locators = r_locs.value.locators;
         }
     }
     else
@@ -1214,7 +1250,7 @@ void _zn_accept_encode(z_iobuf_t *buf, uint8_t header, const _zn_accept_t *msg)
             z_zint_encode(buf, msg->lease);
 
         if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            z_string_array_encode(buf, &msg->locators);
+            _zn_locators_encode(buf, &msg->locators);
     }
 }
 
@@ -1261,9 +1297,9 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
 
         if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_L)
         {
-            z_string_array_result_t r_locs = z_string_array_decode(buf);
+            _zn_locators_result_t r_locs = _zn_locators_decode(buf);
             ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
-            r->value.accept.locators = r_locs.value.string_array;
+            r->value.accept.locators = r_locs.value.locators;
         }
     }
     else

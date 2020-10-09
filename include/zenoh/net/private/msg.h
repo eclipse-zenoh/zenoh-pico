@@ -129,10 +129,8 @@
 // +---------------+
 // ~    Buffer     ~
 // +---------------+
-typedef struct
-{
-    z_iobuf_t iobuf;
-} _zn_payload_t;
+//
+typedef z_iobuf_t _zn_payload_t;
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 
 /*=============================*/
@@ -207,7 +205,9 @@ _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 // ~   [Locator]   ~
 // +---------------+
 //
-// NOTE: Locators are strings and are encoded as such
+// NOTE: Locators is a vector of strings and are encoded as such
+typedef z_vec_t _zn_locators_t;
+_ZN_RESULT_DECLARE(_zn_locators_t, locators)
 
 /*------------------ Scout Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -267,7 +267,7 @@ typedef struct
 {
     z_zint_t whatami;
     z_uint8_array_t pid;
-    z_string_array_t locators;
+    _zn_locators_t locators;
 } _zn_hello_t;
 _ZN_RESULT_DECLARE(_zn_hello_t, hello)
 
@@ -316,7 +316,7 @@ typedef struct
     z_zint_t lease;
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
-    z_string_array_t locators;
+    _zn_locators_t locators;
     uint8_t version;
     uint8_t options;
 } _zn_open_t;
@@ -378,7 +378,7 @@ typedef struct
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
     z_zint_t lease;
-    z_string_array_t locators;
+    _zn_locators_t locators;
     uint8_t options;
 } _zn_accept_t;
 _ZN_RESULT_DECLARE(_zn_accept_t, accept)
