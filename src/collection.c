@@ -17,9 +17,7 @@
 #include <string.h>
 #include <assert.h>
 
-/*-------- Linked List --------*/
-z_list_t *z_list_empty = NULL;
-
+/*-------- Vec --------*/
 inline z_vec_t z_vec_make(unsigned int capacity)
 {
     z_vec_t v;
@@ -71,6 +69,9 @@ void z_vec_set(z_vec_t *v, unsigned int i, void *e)
     assert(i < v->capacity_);
     v->elem_[i] = e;
 }
+
+/*-------- Linked List --------*/
+z_list_t *z_list_empty = NULL;
 
 z_list_t *z_list_of(void *x)
 {

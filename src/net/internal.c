@@ -88,9 +88,10 @@ const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key
 _zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key)
 {
     z_list_t *decls = resources;
+    _zn_res_decl_t *decl;
     while (decls)
     {
-        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(decls);
+        decl = (_zn_res_decl_t *)z_list_head(decls);
 
         if (decl->key.rid == res_key->rid && strcmp(decl->key.rname, res_key->rname) == 0)
             return decl;
@@ -104,9 +105,10 @@ _zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t 
 _zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t id)
 {
     z_list_t *decls = resources;
+    _zn_res_decl_t *decl;
     while (decls)
     {
-        _zn_res_decl_t *decl = (_zn_res_decl_t *)z_list_head(resources);
+        decl = (_zn_res_decl_t *)z_list_head(resources);
 
         if (decl->id == id)
             return decl;
@@ -193,11 +195,13 @@ z_list_t *_zn_get_subscriptions_from_remote_resources(zn_session_t *z, const zn_
 
     // Check if there is a local subscriptions matching the resource declaration
     z_list_t *subs = z->local_subscriptions;
+    _zn_sub_t *sub;
+    _zn_res_decl_t *local;
     while (subs)
     {
-        _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+        sub = (_zn_sub_t *)z_list_head(subs);
 
-        _zn_res_decl_t *local = _zn_get_resource_by_key(z->local_resources, &remote->key);
+        local = _zn_get_resource_by_key(z->local_resources, &remote->key);
         if (!local)
         {
             // No remote resource was found, return
@@ -240,9 +244,10 @@ z_list_t *_zn_get_subscriptions_from_remote_resources(zn_session_t *z, const zn_
 _zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id)
 {
     z_list_t *subs = subscriptions;
+    _zn_sub_t *sub;
     while (subs)
     {
-        _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+        sub = (_zn_sub_t *)z_list_head(subs);
 
         if (sub->id == id)
             return sub;

@@ -478,27 +478,29 @@ typedef struct
 //     }
 // }
 
-void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
+void handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
 {
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_DATA:
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
 
-        // z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
-        // while (subs)
-        // {
-        //     _zn_sub_t *sub = (_zn_sub_t *)z_list_head(subs);
+        z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
+        _zn_sub_t *sub;
+        while (subs)
+        {
+            sub = (_zn_sub_t *)z_list_head(subs);
 
-        //     sub->data_handler(
-        //         &msg->body.data.key,
-        //         msg->body.data.payload.buf,
-        //         z_iobuf_readable(&msg->body.data.payload),
-        //         &msg->body.data.info,
-        //         sub->arg);
+            sub->data_handler(
+                &msg->body.data.key,
+                msg->body.data.payload.buf,
+                z_iobuf_readable(&msg->body.data.payload),
+                &msg->body.data.info,
+                sub->arg);
 
-        //     subs = z_list_tail(subs);
-        // }
+            // Drop the head and continue with the tail
+            subs = z_list_drop_elem(subs, 0);
+        }
 
         break;
     case _ZN_MID_DECLARE:
@@ -544,7 +546,7 @@ void handle_zenoh_msg(zn_session_t *z, _zn_zenoh_message_t *msg)
     }
 }
 
-int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
+int handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
 {
     if (z->running == 0)
     {
@@ -585,7 +587,7 @@ int handle_session_msg(zn_session_t *z, _zn_session_message_t *msg)
         {
             unsigned int len = z_vec_length(&msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; ++i)
-                handle_zenoh_msg(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
+                handle_zenoh_message(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
         }
         else
         {
@@ -656,7 +658,7 @@ void *zn_recv_loop(zn_session_t *z)
 
             if (r.tag == Z_OK_TAG)
             {
-                handle_session_msg(z, r.value.session_message);
+                handle_session_message(z, r.value.session_message);
                 // Free the memory
                 _zn_session_message_free(r.value.session_message);
             }
