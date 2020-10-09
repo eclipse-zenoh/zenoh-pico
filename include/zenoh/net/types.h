@@ -203,7 +203,8 @@ typedef struct
     z_list_t *remote_resources;
 
     z_list_t *local_subscriptions;
-    z_list_t *remote_subscriptions; // @TODO: replace it with a z_i_map_t
+    z_list_t *remote_subscriptions;
+    z_i_map_t *rem_loc_sub_map;
 
     z_list_t *local_publishers;
     z_list_t *local_queryables;

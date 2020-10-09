@@ -59,8 +59,9 @@ int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_
 void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *res);
 
 /*------------------ Subscription ------------------*/
-z_list_t *_zn_get_subscriptions_from_remote_resources(zn_session_t *z, const zn_res_key_t *res_key);
+z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_key_t *res_key);
 _zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id);
+_zn_sub_t *_zn_get_subscription_by_key(z_list_t *subscriptions, const zn_res_key_t *res_key);
 int _zn_register_subscription(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key, zn_data_handler_t data_handler, void *arg);
 void _zn_unregister_subscription(zn_sub_t *s);
 

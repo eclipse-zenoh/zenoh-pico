@@ -485,7 +485,7 @@ void handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
     case _ZN_MID_DATA:
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
 
-        z_list_t *subs = _zn_get_subscriptions_from_remote_resources(z, &msg->body.data.key);
+        z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
         _zn_sub_t *sub;
         while (subs)
         {
@@ -498,7 +498,7 @@ void handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 &msg->body.data.info,
                 sub->arg);
 
-            // Drop the head and continue with the tail
+            // Drop the head element and continue with the tail
             subs = z_list_drop_elem(subs, 0);
         }
 
@@ -512,10 +512,19 @@ void handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             case _ZN_DECL_RESOURCE:
                 _Z_DEBUG("Received declare-resource message\n");
 
+                z_zint_t id = msg->body.declare.declarations.elem[i].body.res.id;
+                zn_res_key_t key = msg->body.declare.declarations.elem[i].body.res.key;
+
                 // Register remote resource declaration
-                _zn_register_resource(z, 0,
-                                      msg->body.declare.declarations.elem[i].body.res.id,
-                                      &msg->body.declare.declarations.elem[i].body.res.key);
+                _zn_register_resource(z, 0, id, &key);
+
+                // Check if there is a matching local subscriiption
+                _zn_sub_t *sub = _zn_get_subscription_by_key(z->local_subscriptions, &key);
+                if (sub)
+                {
+                    // Add the mapping between remote id and local subscription
+                    z_i_map_set(z->rem_loc_sub_map, id, sub);
+                }
 
                 break;
             case _ZN_DECL_PUBLISHER:

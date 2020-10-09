@@ -336,8 +336,8 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.value.session->remote_resources = z_list_empty;
 
         r.value.session->local_subscriptions = z_list_empty;
-        // r.value.session->remote_subscriptions = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
         r.value.session->remote_subscriptions = z_list_empty;
+        r.value.session->rem_loc_sub_map = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
 
         r.value.session->local_queryables = z_list_empty;
         r.value.session->replywaiters = z_list_empty;

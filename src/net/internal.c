@@ -16,9 +16,6 @@
 #include "zenoh/net/private/internal.h"
 #include "zenoh/private/logging.h"
 
-// TO REMOVE
-#include <stdio.h>
-
 /*------------------ Entity ------------------*/
 z_zint_t _zn_get_entity_id(zn_session_t *z)
 {
@@ -85,23 +82,6 @@ const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key
     return rname;
 }
 
-_zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key)
-{
-    z_list_t *decls = resources;
-    _zn_res_decl_t *decl;
-    while (decls)
-    {
-        decl = (_zn_res_decl_t *)z_list_head(decls);
-
-        if (decl->key.rid == res_key->rid && strcmp(decl->key.rname, res_key->rname) == 0)
-            return decl;
-
-        decls = z_list_tail(decls);
-    }
-
-    return NULL;
-}
-
 _zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t id)
 {
     z_list_t *decls = resources;
@@ -111,6 +91,23 @@ _zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t id)
         decl = (_zn_res_decl_t *)z_list_head(resources);
 
         if (decl->id == id)
+            return decl;
+
+        decls = z_list_tail(decls);
+    }
+
+    return NULL;
+}
+
+_zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key)
+{
+    z_list_t *decls = resources;
+    _zn_res_decl_t *decl;
+    while (decls)
+    {
+        decl = (_zn_res_decl_t *)z_list_head(decls);
+
+        if (decl->key.rid == res_key->rid && strcmp(decl->key.rname, res_key->rname) == 0)
             return decl;
 
         decls = z_list_tail(decls);
@@ -181,56 +178,53 @@ void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *r)
 }
 
 /*------------------ Subscription ------------------*/
-z_list_t *_zn_get_subscriptions_from_remote_resources(zn_session_t *z, const zn_res_key_t *res_key)
+z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_key_t *res_key)
 {
     z_list_t *xs = z_list_empty;
 
-    // First try to get a remote resource declaration
+    // First try to get the remote id->local subscription mapping if numeric-only resources
+    if (!res_key->rname)
+    {
+        _zn_sub_t *sub = (_zn_sub_t *)z_i_map_get(z->rem_loc_sub_map, res_key->rid);
+        if (sub)
+            return z_list_cons(xs, sub);
+        else
+            return xs;
+    }
+
+    // If no mapping was found, then try to get a remote resource declaration
     _zn_res_decl_t *remote = _zn_get_resource_by_id(z->remote_resources, res_key->rid);
     if (!remote)
     {
-        // No remote resource was found, return
+        // No remote resource was found matching the provided id, return empty list
         return xs;
     }
 
-    // Check if there is a local subscriptions matching the resource declaration
+    // Check if there is a local subscriptions matching the remote resource declaration
+    _zn_res_decl_t *local = _zn_get_resource_by_key(z->local_resources, &remote->key);
+    if (!local)
+    {
+        // No local resource was found matching the provided key, return empty list
+        return xs;
+    }
+
     z_list_t *subs = z->local_subscriptions;
     _zn_sub_t *sub;
-    _zn_res_decl_t *local;
     while (subs)
     {
         sub = (_zn_sub_t *)z_list_head(subs);
 
-        local = _zn_get_resource_by_key(z->local_resources, &remote->key);
-        if (!local)
-        {
-            // No remote resource was found, return
-            return xs;
-        }
-
-        // printf("YES LOCAL %zu:%s, %zu:%zu:%s!\n", sub->key.rid, sub->key.rname, local->id, local->key.rid, local->key.rname);
         // Check if the resource ids match
         if (sub->key.rid == local->key.rid)
         {
-            // We have a matching resource id
             if (sub->key.rname)
             {
                 // A string resource has been defined, check if they intersect
                 if (zn_rname_intersect(sub->key.rname, local->key.rname))
-                {
-                    // This is a matching subscription
                     xs = z_list_cons(xs, sub);
-                    // printf("OH YES\n");
-                }
-                else
-                {
-                    // printf("OH NO\n");
-                }
             }
             else
             {
-                // printf("#");
-                // This is a matching subscription
                 xs = z_list_cons(xs, sub);
             }
         }
@@ -250,6 +244,23 @@ _zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id)
         sub = (_zn_sub_t *)z_list_head(subs);
 
         if (sub->id == id)
+            return sub;
+
+        subs = z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+_zn_sub_t *_zn_get_subscription_by_key(z_list_t *subscriptions, const zn_res_key_t *res_key)
+{
+    z_list_t *subs = subscriptions;
+    _zn_sub_t *sub;
+    while (subs)
+    {
+        sub = (_zn_sub_t *)z_list_head(subs);
+
+        if (sub->key.rid == res_key->rid && strcmp(sub->key.rname, res_key->rname) == 0)
             return sub;
 
         subs = z_list_tail(subs);

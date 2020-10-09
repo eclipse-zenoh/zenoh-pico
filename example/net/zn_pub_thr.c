@@ -64,7 +64,9 @@ int main(int argc, char **argv)
     z_iobuf_t data = z_iobuf_make(len);
     for (unsigned int i = 0; i < len; ++i)
         z_iobuf_write(&data, i % 10);
+
     // Loop endessly and write data
+    // @TODO: provide an helper function to extract numeric keys
     while (1)
     {
         zn_write(z, &pub->key, data.buf, z_iobuf_readable(&data));
