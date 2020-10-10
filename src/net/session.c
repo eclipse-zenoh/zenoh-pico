@@ -267,8 +267,6 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
         // Free the message and result
         _zn_session_message_free(&om);
-        _zn_session_message_free(r_msg.value.session_message);
-        _zn_session_message_p_result_free(&r_msg);
 
         return r;
     }

@@ -674,7 +674,6 @@ void *zn_recv_loop(zn_session_t *z)
             else
             {
                 _Z_DEBUG("Connection closed due to receive error");
-                _zn_session_message_p_result_free(&r);
                 return 0;
             }
         }

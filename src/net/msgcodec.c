@@ -1177,6 +1177,7 @@ void _zn_zenoh_message_decode_na(z_iobuf_t *buf, _zn_zenoh_message_p_result_t *r
         case _ZN_MID_UNIT:
             return;
         default:
+            _zn_zenoh_message_p_result_free(r);
             r->tag = Z_ERROR_TAG;
             r->value.error = ZN_ZENOH_MESSAGE_PARSE_ERROR;
             return;
@@ -1914,6 +1915,7 @@ void _zn_session_message_decode_na(z_iobuf_t *buf, _zn_session_message_p_result_
             r->value.session_message->body.frame = r_fr.value.frame;
             return;
         default:
+            _zn_session_message_p_result_free(r);
             r->tag = Z_ERROR_TAG;
             r->value.error = ZN_SESSION_MESSAGE_PARSE_ERROR;
             _Z_ERROR("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
