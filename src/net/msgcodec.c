@@ -254,8 +254,7 @@ void _zn_attachment_decode_na(z_iobuf_t *buf, uint8_t header, _zn_attachment_p_r
 
     // Decode the body
     _zn_payload_result_t r_pld = _zn_payload_decode(buf);
-    ASSURE_P_RESULT(r_pld, r, Z_ZINT_PARSE_ERROR)
-    r->value.attachment->payload = r_pld.value.payload;
+    ASSURE_FREE_P_RESULT(r_pld, r, ZN_PAYLOAD_PARSE_ERROR, attachment)
 }
 
 _zn_attachment_p_result_t _zn_attachment_decode(z_iobuf_t *buf, uint8_t header)
@@ -296,17 +295,17 @@ void _zn_reply_context_decode_na(z_iobuf_t *buf, uint8_t header, _zn_reply_conte
 
     // Decode the body
     z_zint_result_t r_zint = z_zint_decode(buf);
-    ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
+    ASSURE_FREE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR, reply_context)
     r->value.reply_context->qid = r_zint.value.zint;
 
     r_zint = z_zint_decode(buf);
-    ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
+    ASSURE_FREE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR, reply_context)
     r->value.reply_context->source_kind = r_zint.value.zint;
 
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_F))
     {
         z_uint8_array_result_t r_arr = z_uint8_array_decode(buf);
-        ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
+        ASSURE_FREE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR, reply_context)
         r->value.reply_context->replier_id = r_arr.value.uint8_array;
     }
 }

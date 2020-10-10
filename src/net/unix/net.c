@@ -430,6 +430,7 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_r
     // Read the message length
     if (_zn_recv_n(sock, buf->buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
+        _zn_session_message_p_result_free(r);
         r->tag = Z_ERROR_TAG;
         r->value.error = ZN_IO_ERROR;
         return;
@@ -440,6 +441,7 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_r
     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
     if (z_iobuf_writable(buf) < len)
     {
+        _zn_session_message_p_result_free(r);
         r->tag = Z_ERROR_TAG;
         r->value.error = ZN_INSUFFICIENT_IOBUF_SIZE;
         return;
@@ -448,6 +450,7 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_r
     // Read enough bytes to decode the message
     if (_zn_recv_n(sock, buf->buf, len) < 0)
     {
+        _zn_session_message_p_result_free(r);
         r->tag = Z_ERROR_TAG;
         r->value.error = ZN_IO_ERROR;
         return;
@@ -458,6 +461,7 @@ void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_r
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {
+        _zn_session_message_p_result_free(r);
         r->tag = Z_ERROR_TAG;
         r->value.error = ZN_IO_ERROR;
         return;

@@ -69,6 +69,16 @@
         out_r->value.error = e;         \
         return;                         \
     }
+
+#define ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
+    if (in_r.tag == Z_ERROR_TAG)                   \
+    {                                              \
+        free(out_r->value.name);                   \
+        out_r->tag = Z_ERROR_TAG;                  \
+        out_r->value.error = e;                    \
+        return;                                    \
+    }
+
 #define ASSERT_RESULT(r, msg) \
     if (r.tag == Z_ERROR_TAG) \
     {                         \
