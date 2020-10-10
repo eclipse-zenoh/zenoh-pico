@@ -18,6 +18,20 @@
 #include <assert.h>
 
 /*-------- Vec --------*/
+inline z_vec_t z_vec_uninit()
+{
+    z_vec_t v;
+    v.length_ = 0;
+    v.capacity_ = 0;
+    v.elem_ = NULL;
+    return v;
+}
+
+inline int z_vec_is_init(const z_vec_t *v)
+{
+    return (v->elem_ != NULL);
+}
+
 inline z_vec_t z_vec_make(unsigned int capacity)
 {
     z_vec_t v;
@@ -35,14 +49,19 @@ z_vec_t z_vec_clone(const z_vec_t *v)
     return u;
 }
 
-void z_vec_free(z_vec_t *v)
+void z_vec_free_inner(z_vec_t *v)
 {
-    for (unsigned int i = 0; i < v->length_; ++i)
-        free(v->elem_[i]);
     free(v->elem_);
     v->length_ = 0;
     v->capacity_ = 0;
     v->elem_ = NULL;
+}
+
+void z_vec_free(z_vec_t *v)
+{
+    for (unsigned int i = 0; i < v->length_; ++i)
+        free(v->elem_[i]);
+    z_vec_free_inner(v);
 }
 
 inline unsigned int z_vec_length(const z_vec_t *v) { return v->length_; }

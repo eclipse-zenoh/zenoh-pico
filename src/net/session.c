@@ -45,50 +45,69 @@ void default_on_disconnect(void *vz)
     }
 }
 
-_zn_locators_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
 {
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
     z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-    _zn_locators_t ls;
-    ls.capacity_ = 0;
-    ls.length_ = 0;
-    ls.elem_ = NULL;
+    z_vec_t ls = z_vec_uninit();
 
-    while (tries != 0)
+    while (tries > 0)
     {
         tries--;
+
         // Send the scout message
         _zn_send_dgram_to(socket, sbuf, dest, salen);
         // Eventually read hello messages
         z_iobuf_clear(&hbuf);
         int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
 
-        if (len > 0)
+        // Retry if we haven't received anything
+        if (len <= 0)
+            continue;
+
+        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&hbuf);
+        if (r_hm.tag == Z_ERROR_TAG)
         {
-            _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&hbuf);
-            if (r_hm.tag == Z_ERROR_TAG)
-            {
-                perror("Scouting loop received unexpected message\n");
-                continue;
-            }
-
-            switch (_ZN_MID(r_hm.value.session_message->header))
-            {
-            case _ZN_MID_HELLO:
-            {
-                ls = r_hm.value.session_message->body.hello.locators;
-                break;
-            }
-            default:
-                perror("Scouting loop received unexpected message\n");
-                continue;
-            }
-
-            z_iobuf_free(&hbuf);
-            return ls;
+            perror("Scouting loop received malformed message\n");
+            continue;
         }
+
+        _zn_session_message_t *s_msg = r_hm.value.session_message;
+        switch (_ZN_MID(s_msg->header))
+        {
+        case _ZN_MID_HELLO:
+        {
+            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_L)
+            {
+                // Clone the locators vector
+                ls = z_vec_clone(&s_msg->body.hello.locators);
+                // Free the internal memory allocation of the vector without freeing the
+                // element, i.e., the locators
+                z_vec_free_inner(&s_msg->body.hello.locators);
+            }
+            else
+            {
+                // @TODO: construct the locator departing from the from sock address
+            }
+
+            break;
+        }
+        default:
+            perror("Scouting loop received unexpected message\n");
+            break;
+        }
+
+        _zn_session_message_free(s_msg);
+        _zn_session_message_p_result_free(&r_hm);
+
+        if (z_vec_is_init(&ls))
+            break;
+        else
+            continue;
     }
+
+    free(from);
     z_iobuf_free(&hbuf);
 
     return ls;
@@ -96,10 +115,12 @@ _zn_locators_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const 
 
 z_vec_t zn_scout(char *iface, size_t tries, size_t period)
 {
+    int is_auto = 0;
     char *addr = iface;
-    if ((iface == 0) || (strcmp(iface, "auto") == 0))
+    if (!iface || (strcmp(iface, "auto") == 0))
     {
         addr = _zn_select_scout_iface();
+        is_auto = 1;
     }
 
     z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
@@ -112,19 +133,22 @@ z_vec_t zn_scout(char *iface, size_t tries, size_t period)
     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
     ASSERT_RESULT(r, "Unable to create scouting socket\n");
 
-    // Scout first on local node.
-    struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
-    struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
     socklen_t salen = sizeof(struct sockaddr_in);
-    // Scout on Localhost
+    // Scout first on localhost
+    struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
     z_vec_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
+    free(laddr);
 
     if (z_vec_length(&locs) == 0)
     {
-        // We did not find an router on localhost, hence Scout on the LAN
+        // We did not find a router on localhost, hence scout on the LAN
+        struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
         locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
+        free(maddr);
     }
 
+    if (is_auto)
+        free(addr);
     z_iobuf_free(&sbuf);
 
     return locs;
@@ -133,12 +157,17 @@ z_vec_t zn_scout(char *iface, size_t tries, size_t period)
 zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
 {
     zn_session_p_result_t r;
+    int locator_is_scouted = 0;
     if (!locator)
     {
         z_vec_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
         if (z_vec_length(&locs) > 0)
         {
             locator = strdup((const char *)z_vec_get(&locs, 0));
+            // Mark that the locator has been scouted, need to be freed before returning
+            locator_is_scouted = 1;
+            // Free all the scouted locators
+            z_vec_free(&locs);
         }
         else
         {
@@ -146,33 +175,45 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
             _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
             r.tag = Z_ERROR_TAG;
             r.value.error = ZN_TX_CONNECTION_ERROR;
+            // Free all the scouted locators
+            z_vec_free(&locs);
+
             return r;
         }
     }
-    r.value.session = 0;
+
+    // Initialize the session to null
+    r.value.session = NULL;
     srand(clock());
 
+    // Attempt to open a socket
     _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
     if (r_sock.tag == Z_ERROR_TAG)
     {
         r.tag = Z_ERROR_TAG;
         r.value.error = ZN_IO_ERROR;
+
+        if (locator_is_scouted)
+            free(locator);
+
         return r;
     }
 
     r.tag = Z_OK_TAG;
 
+    // Randomly generate a peer ID
     ARRAY_S_DEFINE(uint8_t, uint8, z_, pid, ZENOH_NET_PID_LENGTH);
     for (int i = 0; i < ZENOH_NET_PID_LENGTH; ++i)
         pid.elem[i] = rand() % 255;
 
+    // Build the open message
     _zn_session_message_t om;
 
     // Add an attachement if properties have been provided
     if (ps)
     {
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
-        om.attachment->header = _ZN_MID_ACCEPT | _ZN_ATT_ENC_PROPERTIES;
+        om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
         om.attachment->payload = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
         zn_properties_encode(&om.attachment->payload, ps);
     }
@@ -202,12 +243,6 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     z_iobuf_t wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
     // Encode and send the message
     _zn_send_s_msg(r_sock.value.socket, &wbuf, &om);
-    // Free attachment buffer if allocated
-    if (om.attachment)
-    {
-        z_iobuf_free(&om.attachment->payload);
-        free(om.attachment);
-    }
 
     // Create read buffer
     z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
@@ -222,10 +257,17 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.tag = Z_ERROR_TAG;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
+        // Free the locator
+        if (locator_is_scouted)
+            free(locator);
+
         // Free read and write buffers
         z_iobuf_free(&wbuf);
         z_iobuf_free(&rbuf);
-        // Free the result
+
+        // Free the message and result
+        _zn_session_message_free(&om);
+        _zn_session_message_free(r_msg.value.session_message);
         _zn_session_message_p_result_free(&r_msg);
 
         return r;
@@ -274,10 +316,17 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                     r.tag = Z_ERROR_TAG;
                     r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
+                    // Free the locator
+                    if (locator_is_scouted)
+                        free(locator);
+
                     // Free read and write buffers
                     z_iobuf_free(&wbuf);
                     z_iobuf_free(&rbuf);
-                    // Free the result
+
+                    // Free the message and result
+                    _zn_session_message_free(&om);
+                    _zn_session_message_free(p_am);
                     _zn_session_message_p_result_free(&r_msg);
 
                     return r;
@@ -298,10 +347,17 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                     r.tag = Z_ERROR_TAG;
                     r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
+                    // Free the locator
+                    if (locator_is_scouted)
+                        free(locator);
+
                     // Free read and write buffers
                     z_iobuf_free(&wbuf);
                     z_iobuf_free(&rbuf);
-                    // Free the result
+
+                    // Free the message and result
+                    _zn_session_message_free(&om);
+                    _zn_session_message_free(p_am);
                     _zn_session_message_p_result_free(&r_msg);
 
                     return r;
@@ -358,7 +414,13 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         break;
     }
 
-    // Free the result
+    // Free the locator
+    if (locator_is_scouted)
+        free(locator);
+
+    // Free the messages and result
+    _zn_session_message_free(&om);
+    _zn_session_message_free(p_am);
     _zn_session_message_p_result_free(&r_msg);
 
     return r;

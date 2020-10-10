@@ -101,8 +101,11 @@ typedef struct
     void **elem_;
 } z_vec_t;
 
+z_vec_t z_vec_uninit();
+int z_vec_is_init(const z_vec_t *v);
 z_vec_t z_vec_make(unsigned int capacity);
 z_vec_t z_vec_clone(const z_vec_t *v);
+void z_vec_free_inner(z_vec_t *v);
 void z_vec_free(z_vec_t *v);
 
 unsigned int z_vec_length(const z_vec_t *v);
