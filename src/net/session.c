@@ -458,21 +458,36 @@ int zn_close(zn_session_t *z)
     return rv;
 }
 
-/*------------------  Resource Declaration ------------------*/
-zn_res_p_result_t zn_declare_resource(zn_session_t *z, const char *resource)
+/*------------------ Keys operations ------------------*/
+zn_res_key_t zn_rname(const char *rname)
 {
-    // Create the resource key to declare
-    zn_res_key_t res_key;
-    res_key.rid = ZN_NO_RESOURCE_ID;
-    res_key.rname = (char *)resource;
+    zn_res_key_t rk;
+    rk.rid = ZN_NO_RESOURCE_ID;
+    rk.rname = strdup(rname);
 
+    return rk;
+}
+
+zn_res_key_t zn_rid(const zn_res_t *rd)
+{
+    zn_res_key_t rk;
+    rk.rid = rd->id;
+    rk.rname = NULL;
+
+    return rk;
+}
+
+/*------------------ Resource Declaration ------------------*/
+zn_res_p_result_t zn_declare_resource(zn_session_t *z, const zn_res_key_t *res_key)
+{
     // Create the result
     zn_res_p_result_t r;
     r.tag = Z_OK_TAG;
     r.value.res = (zn_res_t *)malloc(sizeof(zn_res_t));
     r.value.res->z = z;
-    r.value.res->id = _zn_get_resource_id(z, &res_key);
-    r.value.res->key = res_key;
+    r.value.res->id = _zn_get_resource_id(z, res_key);
+    r.value.res->key.rid = res_key->rid;
+    r.value.res->key.rname = res_key->rname;
 
     _zn_zenoh_message_t z_msg;
     z_msg.attachment = NULL;

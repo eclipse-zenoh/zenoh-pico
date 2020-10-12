@@ -56,7 +56,7 @@ void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t len
 
 int main(int argc, char **argv)
 {
-    char *path = "/test/thr";
+    const char *path = "/test/thr";
     char *locator = 0;
     if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
     {
@@ -75,13 +75,16 @@ int main(int argc, char **argv)
     }
 
     // Open a session
-    zn_session_p_result_t r_z = zn_open(locator, 0, 0);
-    ASSERT_RESULT(r_z, "Unable to open session.\n")
-    zn_session_t *z = r_z.value.session;
+    zn_session_p_result_t rz = zn_open(locator, 0, 0);
+    ASSERT_RESULT(rz, "Unable to open a session.\n")
+    zn_session_t *z = rz.value.session;
     zn_start_recv_loop(z);
 
+    // Build the resource key
+    zn_res_key_t rk = zn_rname(path);
+
     // Declare a resource
-    zn_res_p_result_t rr = zn_declare_resource(z, path);
+    zn_res_p_result_t rr = zn_declare_resource(z, &rk);
     ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
     zn_res_t *res = rr.value.res;
 

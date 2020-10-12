@@ -518,7 +518,7 @@ void handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 // Register remote resource declaration
                 _zn_register_resource(z, 0, id, &key);
 
-                // Check if there is a matching local subscriiption
+                // Check if there is a matching local subscription
                 _zn_sub_t *sub = _zn_get_subscription_by_key(z->local_subscriptions, &key);
                 if (sub)
                 {
