@@ -229,14 +229,12 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     om.body.open.lease = ZENOH_NET_DEFAULT_LEASE;
     om.body.open.initial_sn = (z_zint_t)rand() % ZENOH_NET_SN_RESOLUTION;
     om.body.open.sn_resolution = ZENOH_NET_SN_RESOLUTION;
-    om.body.open.options = 0;
 
     if (ZENOH_NET_SN_RESOLUTION != ZENOH_NET_SN_RESOLUTION_DEFAULT)
-        _ZN_SET_FLAG(om.body.open.options, _ZN_FLAG_S_S);
+        _ZN_SET_FLAG(om.header, _ZN_FLAG_S_S);
     // NOTE: optionally the open can include a list of locators the opener
     //       is reachable at. Since zenoh-pico acts as a client, this is not
     //       needed because a client is not expected to receive opens.
-    _ZN_SET_FLAG(om.header, om.body.open.options ? _ZN_FLAG_S_O : 0);
 
     _Z_DEBUG("Sending Open\n");
     // Create write buffer
@@ -281,90 +279,56 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.value.session->sock = r_sock.value.socket;
 
         // Set the default values sent in the open for: Lease, SN resolution, Initial SN
-        r.value.session->lease = om.body.open.lease;
+        r.value.session->lease = om.body.open.lease; // @TODO: Set lease
         r.value.session->sn_resolution = om.body.open.sn_resolution;
         r.value.session->sn_tx_reliable = om.body.open.initial_sn;
         r.value.session->sn_tx_best_effort = om.body.open.initial_sn;
 
-        // If options are present, the above values may be overridden
-        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_O)
+        // Handle SN resolution option if present
+        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_S)
         {
-            // Handle SN resolution option
-            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_S)
+            // The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
+            // otherwise the ACCEPT message is considered invalid and it should be treated as a
+            // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
+            if (p_am->body.accept.sn_resolution <= om.body.open.sn_resolution)
             {
-                // The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
-                // otherwise the ACCEPT message is considered invalid and it should be treated as a
-                // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
-                if (p_am->body.accept.sn_resolution <= om.body.open.sn_resolution)
+                // In case of the SN Resolution proposed in this ACCEPT message is smaller than the SN Resolution
+                // proposed in the OPEN message AND the Initial SN contained in the OPEN messages results to be
+                // out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
+                // following modulo operation:
+                //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
+                if (om.body.open.initial_sn >= r.value.session->sn_resolution)
                 {
-                    // In case of the SN Resolution proposed in this ACCEPT message is smaller than the SN Resolution
-                    // proposed in the OPEN message AND the Initial SN contained in the OPEN messages results to be
-                    // out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
-                    // following modulo operation:
-                    //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
-                    if (om.body.open.initial_sn >= r.value.session->sn_resolution)
-                    {
-                        r.value.session->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
-                        r.value.session->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
-                    }
-                    r.value.session->sn_resolution = p_am->body.accept.sn_resolution;
+                    r.value.session->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                    r.value.session->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
                 }
-                else
-                {
-                    r.tag = Z_ERROR_TAG;
-                    r.value.error = ZN_FAILED_TO_OPEN_SESSION;
-
-                    // Free the locator
-                    if (locator_is_scouted)
-                        free(locator);
-
-                    // Free read and write buffers
-                    z_iobuf_free(&wbuf);
-                    z_iobuf_free(&rbuf);
-
-                    // Free the message and result
-                    _zn_session_message_free(&om);
-                    _zn_session_message_free(p_am);
-                    _zn_session_message_p_result_free(&r_msg);
-
-                    return r;
-                }
+                r.value.session->sn_resolution = p_am->body.accept.sn_resolution;
             }
-            // Handle Lease option
-            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_D)
+            else
             {
-                // The lease period in the ACCEPT must be less or equal than the lease period in the OPEN,
-                // otherwise the ACCEPT message is considered invalid and it should be treated as a
-                // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
-                if (p_am->body.accept.lease <= om.body.open.lease)
-                {
-                    r.value.session->lease = p_am->body.accept.lease;
-                }
-                else
-                {
-                    r.tag = Z_ERROR_TAG;
-                    r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+                r.tag = Z_ERROR_TAG;
+                r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
-                    // Free the locator
-                    if (locator_is_scouted)
-                        free(locator);
+                // Free the locator
+                if (locator_is_scouted)
+                    free(locator);
 
-                    // Free read and write buffers
-                    z_iobuf_free(&wbuf);
-                    z_iobuf_free(&rbuf);
+                // Free read and write buffers
+                z_iobuf_free(&wbuf);
+                z_iobuf_free(&rbuf);
 
-                    // Free the message and result
-                    _zn_session_message_free(&om);
-                    _zn_session_message_free(p_am);
-                    _zn_session_message_p_result_free(&r_msg);
+                // Free the message and result
+                _zn_session_message_free(&om);
+                _zn_session_message_free(p_am);
+                _zn_session_message_p_result_free(&r_msg);
 
-                    return r;
-                }
+                return r;
             }
-            if _ZN_HAS_FLAG (p_am->body.accept.options, _ZN_FLAG_S_L)
-            {
-                // @TODO: we might want to connect or store the locators
-            }
+        }
+
+        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_L)
+        {
+            // @TODO: we might want to connect or store the locators
         }
 
         // The initial SN at RX side

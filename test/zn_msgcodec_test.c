@@ -1675,20 +1675,15 @@ _zn_open_t gen_open_message(uint8_t *header)
     e_op.opid = gen_uint8_array(16);
     e_op.lease = gen_zint();
     e_op.initial_sn = gen_zint();
-    e_op.options = 0;
     if (gen_bool())
     {
         e_op.sn_resolution = gen_zint();
-        _ZN_SET_FLAG(e_op.options, _ZN_FLAG_S_S);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_S);
     }
     if (gen_bool())
     {
         e_op.locators = gen_string_vec((gen_uint8() % 4) + 1);
-        _ZN_SET_FLAG(e_op.options, _ZN_FLAG_S_L);
-    }
-    if (e_op.options)
-    {
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_O);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
     return e_op;
@@ -1716,24 +1711,18 @@ void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uin
     assert(left->initial_sn == right->initial_sn);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
     {
-        printf("   Options (%x:%x)", left->options, right->options);
-        assert(left->options == right->options);
+        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
+        assert(left->sn_resolution == right->sn_resolution);
         printf("\n");
+    }
 
-        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_S)
-        {
-            printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
-            assert(left->sn_resolution == right->sn_resolution);
-            printf("\n");
-        }
-        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_L)
-        {
-            printf("   ");
-            assert_eq_string_vec(&left->locators, &right->locators);
-            printf("\n");
-        }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    {
+        printf("   ");
+        assert_eq_string_vec(&left->locators, &right->locators);
+        printf("\n");
     }
 }
 
@@ -1770,25 +1759,15 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     e_ac.opid = gen_uint8_array(16);
     e_ac.apid = gen_uint8_array(16);
     e_ac.initial_sn = gen_zint();
-    e_ac.options = 0;
     if (gen_bool())
     {
         e_ac.sn_resolution = gen_zint();
-        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_S);
-    }
-    if (gen_bool())
-    {
-        e_ac.lease = gen_zint();
-        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_D);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_S);
     }
     if (gen_bool())
     {
         e_ac.locators = gen_string_vec((gen_uint8() % 4) + 1);
-        _ZN_SET_FLAG(e_ac.options, _ZN_FLAG_S_L);
-    }
-    if (e_ac.options)
-    {
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_O);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
     return e_ac;
@@ -1808,34 +1787,26 @@ void assert_eq_accept_message(const _zn_accept_t *left, const _zn_accept_t *righ
     assert_eq_uint8_array(&left->apid, &right->apid);
     printf("\n");
 
+    printf("   LEase (%zu:%zu)", left->lease, right->lease);
+    assert(left->lease == right->lease);
+    printf("\n");
+
     printf("   Initial SN (%zu:%zu)", left->initial_sn, right->initial_sn);
     assert(left->initial_sn == right->initial_sn);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
     {
-        printf("   Options (%x:%x)", left->options, right->options);
-        assert(left->options == right->options);
+        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
+        assert(left->sn_resolution == right->sn_resolution);
         printf("\n");
+    }
 
-        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_S)
-        {
-            printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
-            assert(left->sn_resolution == right->sn_resolution);
-            printf("\n");
-        }
-        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_D)
-        {
-            printf("   Lease (%zu:%zu)", left->lease, right->lease);
-            assert(left->lease == right->lease);
-            printf("\n");
-        }
-        if _ZN_HAS_FLAG (left->options, _ZN_FLAG_S_L)
-        {
-            printf("   ");
-            assert_eq_string_vec(&left->locators, &right->locators);
-            printf("\n");
-        }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    {
+        printf("   ");
+        assert_eq_string_vec(&left->locators, &right->locators);
+        printf("\n");
     }
 }
 

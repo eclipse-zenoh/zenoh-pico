@@ -255,6 +255,7 @@ void _zn_attachment_decode_na(z_iobuf_t *buf, uint8_t header, _zn_attachment_p_r
     // Decode the body
     _zn_payload_result_t r_pld = _zn_payload_decode(buf);
     ASSURE_FREE_P_RESULT(r_pld, r, ZN_PAYLOAD_PARSE_ERROR, attachment)
+    r->value.attachment->payload = r_pld.value.payload;
 }
 
 _zn_attachment_p_result_t _zn_attachment_decode(z_iobuf_t *buf, uint8_t header)
@@ -1326,26 +1327,14 @@ void _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
 
     // Encode the body
     z_iobuf_write(buf, msg->version);
-
     z_zint_encode(buf, msg->whatami);
-
     z_uint8_array_encode(buf, &msg->opid);
-
     z_zint_encode(buf, msg->lease);
-
     z_zint_encode(buf, msg->initial_sn);
-
-    // Encode and write the options if any
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
-    {
-        z_iobuf_write(buf, msg->options);
-
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_S)
-            z_zint_encode(buf, msg->sn_resolution);
-
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            _zn_locators_encode(buf, &msg->locators);
-    }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
+        z_zint_encode(buf, msg->sn_resolution);
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+        _zn_locators_encode(buf, &msg->locators);
 }
 
 void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
@@ -1372,28 +1361,18 @@ void _zn_open_decode_na(z_iobuf_t *buf, uint8_t header, _zn_open_result_t *r)
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
     r->value.open.initial_sn = r_zint.value.zint;
 
-    // Decode the options if any
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
     {
-        r->value.open.options = z_iobuf_read(buf);
-
-        if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_S)
-        {
-            z_zint_result_t r_zint = z_zint_decode(buf);
-            ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-            r->value.open.sn_resolution = r_zint.value.zint;
-        }
-
-        if _ZN_HAS_FLAG (r->value.open.options, _ZN_FLAG_S_L)
-        {
-            _zn_locators_result_t r_locs = _zn_locators_decode(buf);
-            ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
-            r->value.open.locators = r_locs.value.locators;
-        }
+        z_zint_result_t r_zint = z_zint_decode(buf);
+        ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
+        r->value.open.sn_resolution = r_zint.value.zint;
     }
-    else
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
-        r->value.open.options = 0;
+        _zn_locators_result_t r_locs = _zn_locators_decode(buf);
+        ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
+        r->value.open.locators = r_locs.value.locators;
     }
 }
 
@@ -1408,11 +1387,8 @@ void _zn_open_free(_zn_open_t *msg, uint8_t header)
 {
     ARRAY_S_FREE(msg->opid);
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
-    {
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            _zn_locators_free(&msg->locators);
-    }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+        _zn_locators_free(&msg->locators);
 }
 
 /*------------------ Accept Message ------------------*/
@@ -1422,27 +1398,14 @@ void _zn_accept_encode(z_iobuf_t *buf, uint8_t header, const _zn_accept_t *msg)
 
     // Encode the body
     z_zint_encode(buf, msg->whatami);
-
     z_uint8_array_encode(buf, &msg->opid);
-
     z_uint8_array_encode(buf, &msg->apid);
-
+    z_zint_encode(buf, msg->lease);
     z_zint_encode(buf, msg->initial_sn);
-
-    // Encode and write the options
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
-    {
-        z_iobuf_write(buf, msg->options);
-
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_S)
-            z_zint_encode(buf, msg->sn_resolution);
-
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_D)
-            z_zint_encode(buf, msg->lease);
-
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            _zn_locators_encode(buf, &msg->locators);
-    }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
+        z_zint_encode(buf, msg->sn_resolution);
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+        _zn_locators_encode(buf, &msg->locators);
 }
 
 void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r)
@@ -1463,39 +1426,26 @@ void _zn_accept_decode_na(z_iobuf_t *buf, uint8_t header, _zn_accept_result_t *r
     ASSURE_P_RESULT(r_apid, r, Z_ARRAY_PARSE_ERROR)
     r->value.accept.apid = r_apid.value.uint8_array;
 
+    z_zint_result_t r_lease = z_zint_decode(buf);
+    ASSURE_P_RESULT(r_lease, r, Z_ZINT_PARSE_ERROR)
+    r->value.accept.lease = r_lease.value.zint;
+
     z_zint_result_t r_insn = z_zint_decode(buf);
     ASSURE_P_RESULT(r_insn, r, Z_ZINT_PARSE_ERROR)
     r->value.accept.initial_sn = r_insn.value.zint;
 
-    // Decode the options
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
     {
-        r->value.accept.options = z_iobuf_read(buf);
-
-        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_S)
-        {
-            z_zint_result_t r_zint = z_zint_decode(buf);
-            ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-            r->value.accept.sn_resolution = r_zint.value.zint;
-        }
-
-        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_D)
-        {
-            z_zint_result_t r_zint = z_zint_decode(buf);
-            ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-            r->value.accept.lease = r_zint.value.zint;
-        }
-
-        if _ZN_HAS_FLAG (r->value.accept.options, _ZN_FLAG_S_L)
-        {
-            _zn_locators_result_t r_locs = _zn_locators_decode(buf);
-            ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
-            r->value.accept.locators = r_locs.value.locators;
-        }
+        z_zint_result_t r_zint = z_zint_decode(buf);
+        ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
+        r->value.accept.sn_resolution = r_zint.value.zint;
     }
-    else
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
-        r->value.accept.options = 0;
+        _zn_locators_result_t r_locs = _zn_locators_decode(buf);
+        ASSURE_P_RESULT(r_locs, r, Z_ARRAY_PARSE_ERROR)
+        r->value.accept.locators = r_locs.value.locators;
     }
 }
 
@@ -1511,11 +1461,8 @@ void _zn_accept_free(_zn_accept_t *msg, uint8_t header)
     ARRAY_S_FREE(msg->opid);
     ARRAY_S_FREE(msg->apid);
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_O)
-    {
-        if _ZN_HAS_FLAG (msg->options, _ZN_FLAG_S_L)
-            _zn_locators_free(&msg->locators);
-    }
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+        _zn_locators_free(&msg->locators);
 }
 
 /*------------------ Close Message ------------------*/
