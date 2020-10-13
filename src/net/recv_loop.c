@@ -18,6 +18,7 @@
 #include "zenoh/net/recv_loop.h"
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/net.h"
+#include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 
 typedef struct

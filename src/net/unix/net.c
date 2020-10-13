@@ -27,7 +27,6 @@
 #include "zenoh/private/logging.h"
 #include "zenoh/net/session.h"
 #include "zenoh/net/private/net.h"
-#include "zenoh/net/private/msgcodec.h"
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
@@ -98,8 +97,9 @@ struct sockaddr_in *_zn_make_socket_address(const char *addr, int port)
     if (inet_pton(AF_INET, addr, &(saddr->sin_addr)) <= 0)
     {
         free(saddr);
-        return 0;
+        return NULL;
     }
+
     return saddr;
 }
 
@@ -140,6 +140,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         r.value.socket = 0;
         return r;
     }
+
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = timeout_usec;
@@ -151,6 +152,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         r.value.socket = 0;
         return r;
     }
+
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
     {
         r.tag = Z_ERROR_TAG;
@@ -159,6 +161,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         r.value.socket = 0;
         return r;
     }
+
     return r;
 }
 
@@ -274,118 +277,6 @@ int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *buf, struct sockaddr *from
     return rb;
 }
 
-/*------------------ Send ------------------*/
-int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *buf)
-{
-    int len = z_iobuf_readable(buf);
-    uint8_t *ptr = buf->buf + buf->r_pos;
-    int n = len;
-    int wb;
-    do
-    {
-        _Z_DEBUG("Sending data on socket....\n");
-#if (ZENOH_LINUX == 1)
-        wb = send(sock, ptr, n, MSG_NOSIGNAL);
-#else
-        wb = send(sock, ptr, n, 0);
-#endif
-        _Z_DEBUG_VA("Socket returned: %d\n", wb);
-        if (wb <= 0)
-        {
-            _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-            return -1;
-        }
-        n -= wb;
-        ptr = ptr + (len - n);
-    } while (n > 0);
-    return 0;
-}
-
-void _zn_prepare_buf(z_iobuf_t *buf)
-{
-    z_iobuf_clear(buf);
-
-#ifdef ZENOH_NET_TRANSPORT_TCP_IP
-    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-    //       the boundary of the serialized messages. The length is encoded as little-endian.
-    //       In any case, the length of a message must not exceed 65_535 bytes.
-    for (unsigned int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_write(buf, 0);
-#endif /* ZENOH_NET_TRANSPORT_TCP_IP */
-}
-
-void _zn_finalize_buf(z_iobuf_t *buf)
-{
-#ifdef ZENOH_NET_TRANSPORT_TCP_IP
-    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-    //       the boundary of the serialized messages. The length is encoded as little-endian.
-    //       In any case, the length of a message must not exceed 65_535 bytes.
-    unsigned int len = z_iobuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
-    assert(len < (1 << (8 * _ZN_MSG_LEN_ENC_SIZE)));
-
-    for (unsigned int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
-#endif /* ZENOH_NET_TRANSPORT_TCP_IP */
-}
-
-int _zn_send_s_msg(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_t *s_msg)
-{
-    _Z_DEBUG(">> send session message\n");
-
-    // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_buf(buf);
-    // Encode the session message
-    _zn_session_message_encode(buf, s_msg);
-    // Write the message legnth in the reserved space if needed
-    _zn_finalize_buf(buf);
-
-    return _zn_send_buf(sock, buf);
-}
-
-int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
-{
-    // @TODO: implement fragmentation
-    _Z_DEBUG(">> send zenoh message\n");
-
-    // Create the frame session message that carries the zenoh message
-    _zn_session_message_t s_msg;
-    s_msg.attachment = NULL;
-    s_msg.header = _ZN_MID_FRAME;
-    if (reliable)
-    {
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
-        s_msg.body.frame.sn = z->sn_tx_reliable;
-        // Update the sequence number in modulo operation
-        z->sn_tx_reliable = (z->sn_tx_reliable + 1) % z->sn_resolution;
-    }
-    else
-    {
-        s_msg.body.frame.sn = z->sn_tx_best_effort;
-        // Update the sequence number in modulo operation
-        z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
-    }
-
-    // Do not allocate the vector containing the messages
-    s_msg.body.frame.payload.messages.capacity_ = 0;
-    s_msg.body.frame.payload.messages.length_ = 0;
-    s_msg.body.frame.payload.messages.elem_ = NULL;
-
-    // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_buf(&z->wbuf);
-    // Encode the frame header
-    _zn_session_message_encode(&z->wbuf, &s_msg);
-    // Encode the zenoh message
-    _zn_zenoh_message_encode(&z->wbuf, z_msg);
-    // Write the message legnth in the reserved space if needed
-    _zn_finalize_buf(&z->wbuf);
-
-    return _zn_send_buf(z->sock, &z->wbuf);
-}
-
 /*------------------ Receive ------------------*/
 int _zn_recv_n(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
@@ -414,70 +305,32 @@ int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf)
     return rb;
 }
 
-void zn_recv_s_msg_na(_zn_socket_t sock, z_iobuf_t *buf, _zn_session_message_p_result_t *r)
+/*------------------ Send ------------------*/
+int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *buf)
 {
-    z_iobuf_clear(buf);
-    _Z_DEBUG(">> recv session msg\n");
-    r->tag = Z_OK_TAG;
-
-#ifdef ZENOH_NET_TRANSPORT_TCP_IP
-    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-    //       the boundary of the serialized messages. The length is encoded as little-endian.
-    //       In any case, the length of a message must not exceed 65_535 bytes.
-
-    // Read the message length
-    if (_zn_recv_n(sock, buf->buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
+    int len = z_iobuf_readable(buf);
+    uint8_t *ptr = buf->buf + buf->r_pos;
+    int n = len;
+    int wb;
+    do
     {
-        _zn_session_message_p_result_free(r);
-        r->tag = Z_ERROR_TAG;
-        r->value.error = ZN_IO_ERROR;
-        return;
-    }
-    buf->w_pos = _ZN_MSG_LEN_ENC_SIZE;
-
-    uint16_t len = z_iobuf_read(buf) | (z_iobuf_read(buf) << 8);
-    _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
-    if (z_iobuf_writable(buf) < len)
-    {
-        _zn_session_message_p_result_free(r);
-        r->tag = Z_ERROR_TAG;
-        r->value.error = ZN_INSUFFICIENT_IOBUF_SIZE;
-        return;
-    }
-
-    // Read enough bytes to decode the message
-    if (_zn_recv_n(sock, buf->buf, len) < 0)
-    {
-        _zn_session_message_p_result_free(r);
-        r->tag = Z_ERROR_TAG;
-        r->value.error = ZN_IO_ERROR;
-        return;
-    }
-
-    buf->r_pos = 0;
-    buf->w_pos = len;
+        _Z_DEBUG("Sending data on socket....\n");
+#if (ZENOH_LINUX == 1)
+        wb = send(sock, ptr, n, MSG_NOSIGNAL);
 #else
-    if (_zn_recv_buf(sock, buf) < 0)
-    {
-        _zn_session_message_p_result_free(r);
-        r->tag = Z_ERROR_TAG;
-        r->value.error = ZN_IO_ERROR;
-        return;
-    }
-#endif /* ZENOH_NET_TRANSPORT_TCP_IP */
+        wb = send(sock, ptr, n, 0);
+#endif
+        _Z_DEBUG_VA("Socket returned: %d\n", wb);
+        if (wb <= 0)
+        {
+            _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
+            return -1;
+        }
+        n -= wb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
 
-    _Z_DEBUG(">> \t session_message_decode\n");
-    _zn_session_message_decode_na(buf, r);
-}
-
-_zn_session_message_p_result_t _zn_recv_s_msg(_zn_socket_t sock, z_iobuf_t *buf)
-{
-    _zn_session_message_p_result_t r;
-    _zn_session_message_p_result_init(&r);
-    zn_recv_s_msg_na(sock, buf, &r);
-    return r;
+    return 0;
 }
 
 // size_t _zn_iovs_len(struct iovec *iov, int iovcnt)

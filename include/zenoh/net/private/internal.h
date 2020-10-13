@@ -15,38 +15,15 @@
 #ifndef ZENOH_C_NET_INTERNAL_H
 #define ZENOH_C_NET_INTERNAL_H
 
+#include "zenoh/net/private/msg.h"
 #include "zenoh/net/types.h"
 
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X| RESOURCE|
-// +---------------+
-// ~     ResID     ~
-// +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
-// +---------------+
-typedef struct
-{
-    z_zint_t id;
-    zn_res_key_t key;
-} _zn_res_decl_t;
+/*------------------ Transmission and Reception helpers ------------------*/
+int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
+int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);
 
-typedef struct
-{
-    z_zint_t id;
-    zn_res_key_t key;
-    zn_data_handler_t data_handler;
-    void *arg;
-} _zn_sub_t;
-
-typedef struct
-{
-    char *rname;
-    z_zint_t rid;
-    z_zint_t id;
-    zn_query_handler_t query_handler;
-    void *arg;
-} _zn_qle_t;
+_zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *z);
+void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);
 
 /*------------------ Entity ------------------*/
 z_zint_t _zn_get_entity_id(zn_session_t *z);

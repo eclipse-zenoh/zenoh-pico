@@ -41,11 +41,16 @@
 // #define ZENOH_NET_TRANSPORT_BLE 1
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
-#define ZENOH_NET_READ_BUF_LEN 65536 + _ZN_MSG_LEN_ENC_SIZE
-#define ZENOH_NET_WRITE_BUF_LEN 65536 + _ZN_MSG_LEN_ENC_SIZE
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+//       the boundary of the serialized messages. The length is encoded as little-endian.
+//       In any case, the length of a message must not exceed 65_535 bytes.
+#define ZENOH_NET_READ_BUF_LEN 65535 + _ZN_MSG_LEN_ENC_SIZE
+#define ZENOH_NET_WRITE_BUF_LEN 65535 + _ZN_MSG_LEN_ENC_SIZE
 #else
-#define ZENOH_NET_READ_BUF_LEN 65536
-#define ZENOH_NET_WRITE_BUF_LEN 65536
+#define ZENOH_NET_READ_BUF_LEN 65535
+#define ZENOH_NET_WRITE_BUF_LEN 65535
 #endif
 
 #endif /* ZENOH_C_NET_CONFIG_H */

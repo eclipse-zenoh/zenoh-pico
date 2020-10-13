@@ -174,6 +174,7 @@ typedef struct
 {
     // Socket and internal buffers
     _zn_socket_t sock;
+    _zn_mutex_t mutex;
 
     z_iobuf_t wbuf;
     z_iobuf_t rbuf;

@@ -12,11 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_UNIX_TYPES_H_
-#define ZENOH_C_NET_UNIX_TYPES_H_
-#include <pthread.h>
+#ifndef ZENOH_C_SYNC_H
+#define ZENOH_C_SYNC_H
 
-typedef int _zn_socket_t;
-typedef pthread_mutex_t _zn_mutex_t;
+#include "zenoh/net/types.h"
 
-#endif /* ZENOH_C_NET_UNIX_TYPES_H_ */
+int _zn_mutex_init(_zn_mutex_t *m);
+int _zn_mutex_free(_zn_mutex_t *m);
+
+int _zn_mutex_lock(_zn_mutex_t *m);
+int _zn_mutex_trylock(_zn_mutex_t *m);
+int _zn_mutex_unlock(_zn_mutex_t *m);
+
+#endif /* ZENOH_C_SYNC_H */

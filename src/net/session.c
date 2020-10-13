@@ -18,15 +18,71 @@
 #include <time.h>
 #include <stdatomic.h>
 #include <sys/socket.h>
-#include "zenoh/private/logging.h"
 #include "zenoh/net/session.h"
 #include "zenoh/net/property.h"
 #include "zenoh/net/recv_loop.h"
-#include "zenoh/net/private/net.h"
+#include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
+#include "zenoh/net/private/net.h"
+#include "zenoh/net/private/sync.h"
+#include "zenoh/private/logging.h"
 
-// -- Some refactoring will be done to support multiple platforms / transports
+/*------------------ Init/Free session ------------------*/
+zn_session_t *_zn_session_init()
+{
+    zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
 
+    // Initialize the buffers
+    z->wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
+    z->rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
+
+    // Initialize the mutex
+    _zn_mutex_init(&z->mutex);
+
+    // The initial SN at RX side
+    z->lease = 0;
+    z->sn_resolution = 0;
+
+    // The initial SN at RX side
+    z->sn_rx_reliable = 0;
+    z->sn_rx_best_effort = 0;
+
+    // The initial SN at TX side
+    z->sn_tx_reliable = 0;
+    z->sn_tx_best_effort = 0;
+
+    // Initialize the counters to 1
+    z->entity_id = 1;
+    z->resource_id = 1;
+    z->query_id = 1;
+
+    // Initialize the data structs
+    z->local_resources = z_list_empty;
+    z->remote_resources = z_list_empty;
+
+    z->local_subscriptions = z_list_empty;
+    z->remote_subscriptions = z_list_empty;
+    z->rem_loc_sub_map = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+
+    z->local_publishers = z_list_empty;
+    z->local_queryables = z_list_empty;
+
+    z->replywaiters = z_list_empty;
+
+    z->running = 0;
+    z->thread = 0;
+
+    return z;
+}
+
+void _zn_session_free(zn_session_t *z)
+{
+    free(&z->wbuf);
+    free(&z->rbuf);
+    free(z);
+}
+
+/*------------------ Scout/Open/Close Session ------------------*/
 void default_on_disconnect(void *vz)
 {
     zn_session_t *z = (zn_session_t *)vz;
@@ -236,20 +292,15 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     //       is reachable at. Since zenoh-pico acts as a client, this is not
     //       needed because a client is not expected to receive opens.
 
+    // Initialize the session
+    r.value.session = _zn_session_init();
+    r.value.session->sock = r_sock.value.socket;
+
     _Z_DEBUG("Sending Open\n");
-    // Create write buffer
-    z_iobuf_t wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
     // Encode and send the message
-    _zn_send_s_msg(r_sock.value.socket, &wbuf, &om);
+    _zn_send_s_msg(r.value.session, &om);
 
-    // Create read buffer
-    z_iobuf_t rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
-
-    // Read response message
-    z_iobuf_clear(&rbuf);
-
-    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r_sock.value.socket, &rbuf);
-
+    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r.value.session);
     if (r_msg.tag == Z_ERROR_TAG)
     {
         r.tag = Z_ERROR_TAG;
@@ -259,11 +310,8 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         if (locator_is_scouted)
             free(locator);
 
-        // Free read and write buffers
-        z_iobuf_free(&wbuf);
-        z_iobuf_free(&rbuf);
-
-        // Free the message and result
+        // Free
+        _zn_session_free(r.value.session);
         _zn_session_message_free(&om);
 
         return r;
@@ -275,12 +323,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     case _ZN_MID_ACCEPT:
         r.tag = Z_OK_TAG;
 
-        r.value.session = (zn_session_t *)malloc(sizeof(zn_session_t));
-        r.value.session->sock = r_sock.value.socket;
-
-        // Set the default values sent in the open for: Lease, SN resolution, Initial SN
-        r.value.session->lease = om.body.open.lease; // @TODO: Set lease
+        // The announced sn resolution
         r.value.session->sn_resolution = om.body.open.sn_resolution;
+
+        // The announced initial SN at TX side
         r.value.session->sn_tx_reliable = om.body.open.initial_sn;
         r.value.session->sn_tx_best_effort = om.body.open.initial_sn;
 
@@ -297,7 +343,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                 // out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
                 // following modulo operation:
                 //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
-                if (om.body.open.initial_sn >= r.value.session->sn_resolution)
+                if (om.body.open.initial_sn >= p_am->body.accept.sn_resolution)
                 {
                     r.value.session->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
                     r.value.session->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
@@ -313,9 +359,8 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                 if (locator_is_scouted)
                     free(locator);
 
-                // Free read and write buffers
-                z_iobuf_free(&wbuf);
-                z_iobuf_free(&rbuf);
+                // Free session
+                _zn_session_free(r.value.session);
 
                 // Free the message and result
                 _zn_session_message_free(&om);
@@ -331,18 +376,12 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
             // @TODO: we might want to connect or store the locators
         }
 
+        // The session lease
+        r.value.session->lease = p_am->body.accept.lease;
+
         // The initial SN at RX side
         r.value.session->sn_rx_reliable = p_am->body.accept.initial_sn;
         r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn;
-
-        // Initialize the counters to 1.
-        r.value.session->entity_id = 1;
-        r.value.session->resource_id = 1;
-        r.value.session->query_id = 1;
-
-        // Initialize the buffers
-        r.value.session->rbuf = rbuf;
-        r.value.session->wbuf = wbuf;
 
         // Initialize the Peer IDs
         r.value.session->local_pid = pid;
@@ -350,28 +389,15 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
         r.value.session->locator = strdup(locator);
 
-        r.value.session->local_resources = z_list_empty;
-        r.value.session->remote_resources = z_list_empty;
-
-        r.value.session->local_subscriptions = z_list_empty;
-        r.value.session->remote_subscriptions = z_list_empty;
-        r.value.session->rem_loc_sub_map = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
-
-        r.value.session->local_queryables = z_list_empty;
-        r.value.session->replywaiters = z_list_empty;
-
         r.value.session->on_disconnect = on_disconnect != 0 ? on_disconnect : &default_on_disconnect;
-        r.value.session->running = 0;
-        r.value.session->thread = 0;
 
         break;
     default:
+        // Free the session
+        _zn_session_free(r.value.session);
+
         r.tag = Z_ERROR_TAG;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
-
-        // Free read and write buffers
-        z_iobuf_free(&wbuf);
-        z_iobuf_free(&rbuf);
 
         break;
     }
@@ -416,7 +442,7 @@ int zn_close(zn_session_t *z)
     _ZN_SET_FLAG(c.header, _ZN_FLAG_S_I);
     // NOTE: we are closing the whole zenoh session.
     //       So, the K flag in the close message is set to 0
-    int rv = _zn_send_s_msg(z->sock, &z->wbuf, &c);
+    int rv = _zn_send_s_msg(z, &c);
     close(z->sock);
 
     return rv;

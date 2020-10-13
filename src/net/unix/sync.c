@@ -12,3 +12,30 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <pthread.h>
+#include "zenoh/net/private/sync.h"
+
+int _zn_mutex_init(_zn_mutex_t *m)
+{
+    return pthread_mutex_init(m, 0);
+}
+
+int _zn_mutex_free(_zn_mutex_t *m)
+{
+    return pthread_mutex_destroy(m);
+}
+
+int _zn_mutex_lock(_zn_mutex_t *m)
+{
+    return pthread_mutex_lock(m);
+}
+
+int _zn_mutex_trylock(_zn_mutex_t *m)
+{
+    return pthread_mutex_trylock(m);
+}
+
+int _zn_mutex_unlock(_zn_mutex_t *m)
+{
+    return pthread_mutex_unlock(m);
+}
