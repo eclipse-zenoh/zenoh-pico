@@ -50,6 +50,8 @@ int zn_undeclare_queryable(zn_qle_t *q);
 zn_res_key_t zn_rid(const zn_res_t *rd);
 zn_res_key_t zn_rname(const char *rname);
 
+int zn_send_keep_alive(zn_session_t *z);
+
 int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len);
 int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind, int is_droppable);
 

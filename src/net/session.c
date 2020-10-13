@@ -11,16 +11,13 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-#include <stdlib.h>
+
 #include <stdio.h>
-#include <assert.h>
 #include <unistd.h>
-#include <time.h>
-#include <stdatomic.h>
-#include <sys/socket.h>
-#include "zenoh/net/session.h"
+#include "zenoh/net/keep_alive_loop.h"
 #include "zenoh/net/property.h"
 #include "zenoh/net/recv_loop.h"
+#include "zenoh/net/session.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 #include "zenoh/net/private/net.h"
@@ -70,7 +67,10 @@ zn_session_t *_zn_session_init()
     z->replywaiters = z_list_empty;
 
     z->running = 0;
-    z->thread = 0;
+    z->recv_loop_thread = NULL;
+
+    z->transmitted = 0;
+    z->keep_alive_loop_thread = NULL;
 
     return z;
 }
@@ -125,7 +125,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
         _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&hbuf);
         if (r_hm.tag == Z_ERROR_TAG)
         {
-            perror("Scouting loop received malformed message\n");
+            _Z_DEBUG("Scouting loop received malformed message\n");
             continue;
         }
 
@@ -150,7 +150,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
             break;
         }
         default:
-            perror("Scouting loop received unexpected message\n");
+            _Z_DEBUG("Scouting loop received unexpected message\n");
             break;
         }
 
@@ -227,7 +227,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         }
         else
         {
-            perror("Unable to scout a zenoh router ");
+            _Z_DEBUG("Unable to scout a zenoh router\n");
             _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
             r.tag = Z_ERROR_TAG;
             r.value.error = ZN_TX_CONNECTION_ERROR;
@@ -282,7 +282,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     om.body.open.version = ZENOH_NET_PROTO_VERSION;
     om.body.open.whatami = ZN_WHATAMI_CLIENT;
     om.body.open.opid = pid;
-    om.body.open.lease = ZENOH_NET_DEFAULT_LEASE;
+    om.body.open.lease = ZENOH_NET_SESSION_LEASE;
     om.body.open.initial_sn = (z_zint_t)rand() % ZENOH_NET_SN_RESOLUTION;
     om.body.open.sn_resolution = ZENOH_NET_SN_RESOLUTION;
 
@@ -703,6 +703,7 @@ int zn_undeclare_subscriber(zn_sub_t *sub)
     return 0;
 }
 
+/*------------------ Write ------------------*/
 int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, int is_droppable)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
@@ -761,6 +762,15 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
     z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
+}
+
+/*------------------ Keep Alive ------------------*/
+int zn_send_keep_alive(zn_session_t *z)
+{
+    _zn_session_message_t s_msg;
+    s_msg.header = _ZN_MID_KEEP_ALIVE;
+
+    return _zn_send_s_msg(z, &s_msg);
 }
 
 // int zn_pull(zn_sub_t *sub)

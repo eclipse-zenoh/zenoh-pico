@@ -15,8 +15,8 @@
 #ifndef ZENOH_C_NET_INTERNAL_H
 #define ZENOH_C_NET_INTERNAL_H
 
-#include "zenoh/net/private/msg.h"
 #include "zenoh/net/types.h"
+#include "zenoh/net/private/msg.h"
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);

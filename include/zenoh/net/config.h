@@ -19,8 +19,8 @@
 #define ZENOH_NET_PID_LENGTH 8
 #define ZENOH_NET_PROTO_VERSION 0x00
 // Default session lease in milliseconds: 10 seconds
-// #define ZENOH_NET_DEFAULT_LEASE 10000 // @TODO: Restore
-#define ZENOH_NET_DEFAULT_LEASE 3600000
+#define ZENOH_NET_SESSION_LEASE 10000
+#define ZENOH_NET_KEEP_ALIVE_INTERVAL 1000
 
 // The default sequence number resolution takes 4 bytes on the wire.
 // Given the VLE encoding of ZInt, 4 bytes result in 28 useful bits.

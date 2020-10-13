@@ -216,7 +216,10 @@ typedef struct
     zn_on_disconnect_t on_disconnect;
 
     volatile int running;
-    void *thread;
+    void *recv_loop_thread;
+
+    volatile int transmitted;
+    void *keep_alive_loop_thread;
 } zn_session_t;
 
 typedef struct

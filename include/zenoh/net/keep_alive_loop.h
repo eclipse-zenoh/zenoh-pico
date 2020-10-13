@@ -12,13 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_H_DEFINED_
-#define ZENOH_C_H_DEFINED_
+#ifndef ZENOH_C_NET_KEEP_ALIVE_LOOP_H
+#define ZENOH_C_NET_KEEP_ALIVE_LOOP_H
 
-#include "zenoh/types.h"
-#include "zenoh/rname.h"
-#include "zenoh/net/session.h"
-#include "zenoh/net/recv_loop.h"
-#include "zenoh/net/keep_alive_loop.h"
+#include "zenoh/net/types.h"
 
-#endif /* ZENOH_C_H_DEFINED_ */
+void *zn_keep_alive_loop(zn_session_t *z);
+
+int zn_running(zn_session_t *z);
+
+int zn_start_keep_alive_loop(zn_session_t *z);
+
+int zn_stop_keep_alive_loop(zn_session_t *z);
+
+#endif /* ZENOH_C_NET_KEEP_ALIVE_LOOP_H */

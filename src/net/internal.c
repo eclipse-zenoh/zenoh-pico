@@ -67,6 +67,10 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
     // Release the lock
     _zn_mutex_unlock(&z->mutex);
 
+    // Mark the succesful transmission of data
+    if (res == 0)
+        z->transmitted = 1;
+
     return res;
 }
 
@@ -112,6 +116,10 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
     int res = _zn_send_buf(z->sock, &z->wbuf);
     // Release the lock
     _zn_mutex_unlock(&z->mutex);
+
+    // Mark the succesful transmission of data
+    if (res == 0)
+        z->transmitted = 1;
 
     return res;
 }
