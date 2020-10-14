@@ -14,6 +14,7 @@
 
 #ifndef ZENOH_C_NET_UNIX_TYPES_H_
 #define ZENOH_C_NET_UNIX_TYPES_H_
+
 #include <pthread.h>
 
 typedef int _zn_socket_t;

@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_H
 #define ZENOH_C_NET_H
 
+// @TODO: remote the platform-specific include
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>

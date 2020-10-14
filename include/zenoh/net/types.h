@@ -17,7 +17,6 @@
 
 #include <string.h>
 #include "zenoh/iobuf.h"
-#include "zenoh/mvar.h"
 #include "zenoh/net/result.h"
 #include "zenoh/net/collection.h"
 #include "zenoh/net/config.h"

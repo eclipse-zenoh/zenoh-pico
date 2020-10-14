@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // printf("Scouting...\n");
+    printf("Scouting...\n");
     // z_vec_t locs = zn_scout("auto", 10, 500000);
     // if (z_vec_length(&locs) > 0) {
     //     for (unsigned int i = 0; i < z_vec_length(&locs); ++i) {
@@ -32,5 +32,6 @@ int main(int argc, char *argv[])
     // } else {
     //     printf("Did not find any zenoh router.\n");
     // }
+
     return 0;
 }

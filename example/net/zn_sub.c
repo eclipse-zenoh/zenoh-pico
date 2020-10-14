@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     // }
 
     // zn_undeclare_subscriber(sub);
+    // zn_undeclare_resource(res);
     // zn_close(z);
     // zn_stop_recv_loop(z);
     return 0;

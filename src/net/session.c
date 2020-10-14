@@ -178,7 +178,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
     return ls;
 }
 
-z_vec_t zn_scout(char *iface, size_t tries, size_t period)
+z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
 {
     int is_auto = 0;
     char *addr = iface;
@@ -791,7 +791,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
         break;
     case _ZN_MID_DECLARE:
         _Z_DEBUG("Received _ZN_DECLARE message\n");
-        for (unsigned int i = 0; i < msg->body.declare.declarations.length; ++i)
+        for (size_t i = 0; i < msg->body.declare.declarations.length; ++i)
         {
             switch (_ZN_MID(msg->body.declare.declarations.elem[i].header))
             {
@@ -877,8 +877,8 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
     case _ZN_MID_FRAME:
         if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
-            unsigned int len = z_vec_length(&msg->body.frame.payload.messages);
-            for (unsigned int i = 0; i < len; ++i)
+            size_t len = z_vec_length(&msg->body.frame.payload.messages);
+            for (size_t i = 0; i < len; ++i)
             {
                 int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != 0)

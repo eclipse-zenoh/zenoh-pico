@@ -25,9 +25,9 @@ int main(int argc, char **argv)
 
     xs = z_list_cons(xs, "two");
     xs = z_list_cons(xs, "three");
-    printf("list len = %u\n", z_list_len(xs));
+    printf("list len = %zu\n", z_list_len(xs));
     xs = z_list_drop_elem(xs, 1);
-    printf("list len = %u\n", z_list_len(xs));
+    printf("list len = %zu\n", z_list_len(xs));
     z_list_free(&xs);
 
     z_i_map_set(map, 0, "0");
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     z_i_map_set(map, 9, "9");
     z_i_map_set(map, 10, "10");
 
-    printf("Map size: %d\n", z_i_map_size(map));
+    printf("Map size: %zu\n", z_i_map_size(map));
     printf("get(0) = %s\n", (char *)z_i_map_get(map, 0));
     printf("get(1) = %s\n", (char *)z_i_map_get(map, 1));
     printf("get(2) = %s\n", (char *)z_i_map_get(map, 2));

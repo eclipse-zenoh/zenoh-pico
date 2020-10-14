@@ -60,7 +60,7 @@ void z_uint8_array_decode_na(z_iobuf_t *buf, z_uint8_array_result_t *r)
     r->tag = Z_OK_TAG;
     z_zint_result_t r_zint = z_zint_decode(buf);
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    r->value.uint8_array.length = (unsigned int)r_zint.value.zint;
+    r->value.uint8_array.length = (size_t)r_zint.value.zint;
     r->value.uint8_array.elem = z_iobuf_read_n(buf, r->value.uint8_array.length);
 }
 

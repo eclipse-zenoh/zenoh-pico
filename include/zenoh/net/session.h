@@ -17,17 +17,8 @@
 
 #include "zenoh/net/types.h"
 
-#define ZN_SN_KEY 0x01
-#define ZN_COMPACT_CLIENT_KEY 0x02
-#define ZN_USER_KEY 0x50
-#define ZN_PASSWD_KEY 0x51
-
-#define ZN_INFO_PID_KEY 0x00
-#define ZN_INFO_PEER_KEY 0x01
-#define ZN_INFO_PEER_PID_KEY 0x02
-
 /*------------------ Scout/Open/Close ------------------*/
-z_vec_t zn_scout(char *iface, size_t tries, size_t period);
+z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period);
 zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps);
 int zn_close(zn_session_t *z);
 

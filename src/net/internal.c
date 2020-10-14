@@ -31,7 +31,7 @@ void _zn_prepare_buf(z_iobuf_t *buf)
     //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
-    for (unsigned int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
+    for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
         z_iobuf_write(buf, 0);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
@@ -44,8 +44,8 @@ void _zn_finalize_buf(z_iobuf_t *buf)
     //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
-    unsigned int len = z_iobuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
-    for (unsigned int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
+    size_t len = z_iobuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
+    for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
         z_iobuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
@@ -243,7 +243,7 @@ const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key
         _zn_res_decl_t *decl = _zn_get_resource_by_id(resources, rid);
 
         // Travel all the matching RID to reconstruct the full resource name
-        unsigned int len = 0;
+        size_t len = 0;
         while (decl)
         {
             len += strlen(decl->key.rname);

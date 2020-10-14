@@ -16,7 +16,6 @@
 #define ZENOH_C_TYPES_H_
 
 #include <stdlib.h>
-#include <stdint.h>
 #include "zenoh/result.h"
 #include "zenoh/collection.h"
 

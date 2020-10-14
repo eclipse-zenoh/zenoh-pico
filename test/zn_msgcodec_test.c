@@ -17,7 +17,7 @@
 #include <time.h>
 #include "zenoh/iobuf.h"
 
-#define ZENOH_C_NET_MSGCODEC_T
+#define ZENOH_C_NET_MSGCODEC_H_T
 #include "zenoh/net/private/msgcodec.h"
 
 #define RUNS 1000
@@ -27,8 +27,8 @@
 /*=============================*/
 void print_iobuf(z_iobuf_t *buf)
 {
-    printf("Capacity: %u, Rpos: %u, Wpos: %u, Buffer: [", buf->capacity, buf->r_pos, buf->w_pos);
-    for (unsigned int i = 0; i < buf->capacity; ++i)
+    printf("Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", buf->capacity, buf->r_pos, buf->w_pos);
+    for (size_t i = 0; i < buf->capacity; ++i)
     {
         printf("%02x", buf->buf[i]);
         if (i < buf->capacity - 1)
@@ -39,8 +39,8 @@ void print_iobuf(z_iobuf_t *buf)
 
 void print_uint8_array(z_uint8_array_t *arr)
 {
-    printf("Length: %u, Buffer: [", arr->length);
-    for (unsigned int i = 0; i < arr->length; ++i)
+    printf("Length: %zu, Buffer: [", arr->length);
+    for (size_t i = 0; i < arr->length; ++i)
     {
         printf("%02x", arr->elem[i]);
         if (i < arr->length - 1)
@@ -107,7 +107,7 @@ z_zint_t gen_zint()
     return (z_zint_t)rand();
 }
 
-_zn_payload_t gen_payload(unsigned int len)
+_zn_payload_t gen_payload(size_t len)
 {
     _zn_payload_t pld;
     pld = z_iobuf_make(len);
@@ -117,7 +117,7 @@ _zn_payload_t gen_payload(unsigned int len)
     return pld;
 }
 
-z_uint8_array_t gen_uint8_array(unsigned int len)
+z_uint8_array_t gen_uint8_array(size_t len)
 {
     z_uint8_array_t arr;
     arr.length = len;
@@ -133,7 +133,7 @@ uint64_t gen_time()
     return (uint64_t)time(NULL);
 }
 
-char *gen_string(unsigned int size)
+char *gen_string(size_t size)
 {
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
     char *str = (char *)malloc((sizeof(char) * size) + 1);
@@ -146,10 +146,10 @@ char *gen_string(unsigned int size)
     return str;
 }
 
-z_vec_t gen_string_vec(unsigned int size)
+z_vec_t gen_string_vec(size_t size)
 {
     z_vec_t sa = z_vec_make(size);
-    for (unsigned int i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
         z_vec_append(&sa, gen_string(16));
 
     return sa;
@@ -161,7 +161,7 @@ z_vec_t gen_string_vec(unsigned int size)
 void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
 {
     printf("Payload -> ");
-    printf("Capacity (%u:%u), ", left->capacity, right->capacity);
+    printf("Capacity (%zu:%zu), ", left->capacity, right->capacity);
 
     assert(left->capacity == right->capacity);
     printf("Content (");
@@ -182,11 +182,11 @@ void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
 void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *right)
 {
     printf("Array -> ");
-    printf("Length (%u:%u), ", left->length, right->length);
+    printf("Length (%zu:%zu), ", left->length, right->length);
 
     assert(left->length == right->length);
     printf("Content (");
-    for (unsigned int i = 0; i < left->length; ++i)
+    for (size_t i = 0; i < left->length; ++i)
     {
         uint8_t l = left->elem[i];
         uint8_t r = right->elem[i];
@@ -203,11 +203,11 @@ void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *r
 void assert_eq_string_vec(const z_vec_t *left, const z_vec_t *right)
 {
     printf("Array -> ");
-    printf("Length (%u:%u), ", z_vec_length(left), z_vec_length(right));
+    printf("Length (%zu:%zu), ", z_vec_length(left), z_vec_length(right));
 
     assert(z_vec_length(left) == z_vec_length(right));
     printf("Content (");
-    for (unsigned int i = 0; i < z_vec_length(left); ++i)
+    for (size_t i = 0; i < z_vec_length(left); ++i)
     {
         char *l = (char *)z_vec_get(left, i);
         char *r = (char *)z_vec_get(right, i);
@@ -2135,12 +2135,12 @@ void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, 
     }
     else
     {
-        unsigned int l_len = z_vec_length(&left->payload.messages);
-        unsigned int r_len = z_vec_length(&right->payload.messages);
-        printf("   Lenght (%u:%u)", l_len, r_len);
+        size_t l_len = z_vec_length(&left->payload.messages);
+        size_t r_len = z_vec_length(&right->payload.messages);
+        printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 
-        for (unsigned int i = 0; i < l_len; ++i)
+        for (size_t i = 0; i < l_len; ++i)
             assert_eq_zenoh_message(z_vec_get(&left->payload.messages, i), z_vec_get(&right->payload.messages, i));
     }
 }
@@ -2337,14 +2337,14 @@ void batch()
 
     // Initialize
     _zn_session_message_t **e_sm = (_zn_session_message_t **)malloc(tot_num * sizeof(_zn_session_message_t *));
-    for (unsigned int i = 0; i < bef_num; ++i)
+    for (uint8_t i = 0; i < bef_num; ++i)
     {
         // Initialize random session message
         e_sm[i] = gen_session_message();
         // Encode
         _zn_session_message_encode(&buf, e_sm[i]);
     }
-    for (unsigned int i = bef_num; i < bef_num + frm_num; ++i)
+    for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
     {
         // Initialize random session message
         e_sm[i] = gen_session_message();
@@ -2354,7 +2354,7 @@ void batch()
         // Encode
         _zn_session_message_encode(&buf, e_sm[i]);
     }
-    for (unsigned int i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
+    for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
     {
         // Initialize random session message
         e_sm[i] = gen_session_message();
@@ -2363,7 +2363,7 @@ void batch()
     }
 
     // Decode
-    for (unsigned int i = 0; i < tot_num; ++i)
+    for (uint8_t i = 0; i < tot_num; ++i)
     {
         _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&buf);
         assert(r_sm.tag == Z_OK_TAG);

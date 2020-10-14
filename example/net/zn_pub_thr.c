@@ -76,6 +76,5 @@ int main(int argc, char **argv)
         zn_write(z, &ri, data.buf, z_iobuf_readable(&data));
     }
 
-    printf("DONE\n");
     return 0;
 }

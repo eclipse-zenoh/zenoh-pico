@@ -77,8 +77,8 @@ _ZN_DECLARE_FREE_NOH(zenoh_message);
 
 #endif /* ZENOH_C_NET_MSGCODEC_H */
 
-// NOTE: the following headers are for unit tests only
-#ifdef ZENOH_C_NET_MSGCODEC_T
+// NOTE: the following headers are for unit testing only
+#ifdef ZENOH_C_NET_MSGCODEC_H_T
 /*------------------ Message Fields ------------------*/
 void _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts);
 void _zn_timestamp_decode_na(z_iobuf_t *buf, _zn_timestamp_result_t *r);
@@ -192,4 +192,4 @@ _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
 _ZN_DECLARE_FREE(frame);
 
-#endif /* ZENOH_C_NET_MSGCODEC_T */
+#endif /* ZENOH_C_NET_MSGCODEC_H_T */

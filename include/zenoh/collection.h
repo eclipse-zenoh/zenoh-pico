@@ -15,12 +15,14 @@
 #ifndef ZENOH_C_COLLECTION_H
 #define ZENOH_C_COLLECTION_H
 
+#include <stdlib.h>
+
 #define DEFAULT_I_MAP_CAPACITY 64
 
 #define ARRAY_DECLARE(type, name, prefix) \
     typedef struct                        \
     {                                     \
-        unsigned int length;              \
+        size_t length;                    \
         type *elem;                       \
     } prefix##name##_array_t;
 #define Z_ARRAY_DECLARE(name) ARRAY_DECLARE(z_##name##_t, name, z_)
@@ -29,7 +31,7 @@
 #define ARRAY_P_DECLARE(type, name, prefix) \
     typedef struct                          \
     {                                       \
-        unsigned int length;                \
+        size_t length;                      \
         type **elem;                        \
     } prefix##name##_p_array_t;
 #define Z_ARRAY_P_DECLARE(name) ARRAY_P_DECLARE(z_##name##_t, name, z_)
@@ -94,35 +96,35 @@
     arr->elem = 0;        \
     arr->length = 0
 
+/*-------- Dynamically allocated vector --------*/
 typedef struct
 {
-    unsigned int capacity_;
-    unsigned int length_;
+    size_t capacity_;
+    size_t length_;
     void **elem_;
 } z_vec_t;
 
 z_vec_t z_vec_uninit();
 int z_vec_is_init(const z_vec_t *v);
-z_vec_t z_vec_make(unsigned int capacity);
+z_vec_t z_vec_make(size_t capacity);
 z_vec_t z_vec_clone(const z_vec_t *v);
 void z_vec_free_inner(z_vec_t *v);
 void z_vec_free(z_vec_t *v);
 
-unsigned int z_vec_length(const z_vec_t *v);
+size_t z_vec_length(const z_vec_t *v);
 /*
  * Append an element ot the vector and takes ownership of the appended element.
  */
 void z_vec_append(z_vec_t *v, void *e);
 
-const void *z_vec_get(const z_vec_t *v, unsigned int i);
+const void *z_vec_get(const z_vec_t *v, size_t i);
 
 /*
  * Set the element at the i-th position of the vector and takes ownership.
  */
-void z_vec_set(z_vec_t *sv, unsigned int i, void *e);
+void z_vec_set(z_vec_t *sv, size_t i, void *e);
 
 /*-------- Linked List --------*/
-
 typedef int (*z_list_predicate)(void *, void *);
 typedef struct z_list
 {
@@ -135,13 +137,16 @@ z_list_t *z_list_of(void *x);
 z_list_t *z_list_cons(z_list_t *xs, void *x);
 void *z_list_head(z_list_t *xs);
 z_list_t *z_list_tail(z_list_t *xs);
-unsigned int z_list_len(z_list_t *xs);
+size_t z_list_len(z_list_t *xs);
 z_list_t *z_list_remove(z_list_t *xs, z_list_predicate p, void *arg);
 
 /**
  * Drops the element at the specified position.
  */
-z_list_t *z_list_drop_elem(z_list_t *xs, unsigned int position);
+z_list_t *z_list_drop_elem(z_list_t *xs, size_t position);
+/**
+ * Free the list and all its elements.
+ */
 void z_list_free(z_list_t **xs);
 
 /*-------- Int Map --------*/
@@ -154,17 +159,17 @@ typedef struct
 typedef struct
 {
     z_list_t **elems;
-    unsigned int capacity;
-    unsigned int n;
+    size_t capacity;
+    size_t n;
 } z_i_map_t;
 
 extern z_i_map_t *z_i_map_empty;
-z_i_map_t *z_i_map_make(unsigned int capacity);
+z_i_map_t *z_i_map_make(size_t capacity);
 void z_i_map_free(z_i_map_t **map);
 void z_i_map_set(z_i_map_t *map, int k, void *v);
 void *z_i_map_get(z_i_map_t *map, int k);
 void z_i_map_remove(z_i_map_t *map, int k);
-unsigned int z_i_map_capacity(z_i_map_t *map);
-unsigned int z_i_map_size(z_i_map_t *map);
+size_t z_i_map_capacity(z_i_map_t *map);
+size_t z_i_map_size(z_i_map_t *map);
 
 #endif /* ZENOH_C_COLLECTION_H */

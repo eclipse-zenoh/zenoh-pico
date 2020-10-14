@@ -191,10 +191,10 @@ void zn_res_key_free(zn_res_key_t *rk)
 /*------------------ Locators Field ------------------*/
 void _zn_locators_encode(z_iobuf_t *buf, const _zn_locators_t *ls)
 {
-    unsigned int len = z_vec_length(ls);
+    size_t len = z_vec_length(ls);
     z_zint_encode(buf, len);
     // Encode the locators
-    for (unsigned int i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; ++i)
         z_string_encode(buf, (char *)z_vec_get(ls, i));
 }
 
@@ -770,11 +770,11 @@ void _zn_declare_decode_na(z_iobuf_t *buf, _zn_declare_result_t *r)
     // Decode the body
     z_zint_result_t r_dlen = z_zint_decode(buf);
     ASSURE_P_RESULT(r_dlen, r, Z_ZINT_PARSE_ERROR)
-    unsigned int len = r_dlen.value.zint;
+    size_t len = (size_t)r_dlen.value.zint;
     ARRAY_S_INIT(_zn_declaration_t, r->value.declare.declarations, len);
 
     _zn_declaration_result_t *r_decl = (_zn_declaration_result_t *)malloc(sizeof(_zn_declaration_result_t));
-    for (unsigned int i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; ++i)
     {
         _zn_declaration_decode_na(buf, r_decl);
         if (r_decl->tag == Z_OK_TAG)
@@ -786,7 +786,7 @@ void _zn_declare_decode_na(z_iobuf_t *buf, _zn_declare_result_t *r)
             r->tag = Z_ERROR_TAG;
             r->value.error = ZN_ZENOH_MESSAGE_PARSE_ERROR;
 
-            for (unsigned int j = 0; j < i; ++j)
+            for (size_t j = 0; j < i; ++j)
                 _zn_declaration_free(&r->value.declare.declarations.elem[j]);
             ARRAY_S_FREE(r->value.declare.declarations);
 
@@ -805,7 +805,7 @@ _zn_declare_result_t _zn_declare_decode(z_iobuf_t *buf)
 
 void _zn_declare_free(_zn_declare_t *dcl)
 {
-    for (unsigned int i = 0; i < dcl->declarations.length; ++i)
+    for (size_t i = 0; i < dcl->declarations.length; ++i)
         _zn_declaration_free(&dcl->declarations.elem[i]);
     free(dcl->declarations.elem);
 }
@@ -1664,8 +1664,8 @@ void _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        unsigned int len = z_vec_length(&msg->payload.messages);
-        for (unsigned int i = 0; i < len; ++i)
+        size_t len = z_vec_length(&msg->payload.messages);
+        for (size_t i = 0; i < len; ++i)
             _zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i));
     }
 }
@@ -1693,7 +1693,7 @@ void _zn_frame_decode_na(z_iobuf_t *buf, uint8_t header, _zn_frame_result_t *r)
         while (z_iobuf_readable(buf))
         {
             // Mark the reading position of the buffer
-            unsigned int mark = buf->r_pos;
+            size_t mark = buf->r_pos;
             _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(buf);
             if (r_zm.tag == Z_OK_TAG)
             {
@@ -1724,7 +1724,7 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
     }
     else
     {
-        for (unsigned int i = 0; i < z_vec_length(&msg->payload.messages); ++i)
+        for (size_t i = 0; i < z_vec_length(&msg->payload.messages); ++i)
             _zn_zenoh_message_free((_zn_zenoh_message_t *)z_vec_get(&msg->payload.messages, i));
         z_vec_free(&msg->payload.messages);
     }

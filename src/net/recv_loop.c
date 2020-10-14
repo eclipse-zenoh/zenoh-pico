@@ -512,7 +512,7 @@ void *zn_recv_loop(zn_session_t *z)
         }
 
         // Decode the message length
-        unsigned int to_read = (unsigned int)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
+        size_t to_read = (size_t)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
 
         // Read the rest of bytes to decode one or more session messages
         while (z_iobuf_readable(&z->rbuf) < to_read)

@@ -32,7 +32,7 @@ inline int z_vec_is_init(const z_vec_t *v)
     return (v->elem_ != NULL);
 }
 
-inline z_vec_t z_vec_make(unsigned int capacity)
+inline z_vec_t z_vec_make(size_t capacity)
 {
     z_vec_t v;
     v.capacity_ = capacity;
@@ -44,7 +44,7 @@ inline z_vec_t z_vec_make(unsigned int capacity)
 z_vec_t z_vec_clone(const z_vec_t *v)
 {
     z_vec_t u = z_vec_make(v->capacity_);
-    for (unsigned int i = 0; i < v->length_; ++i)
+    for (size_t i = 0; i < v->length_; ++i)
         z_vec_append(&u, v->elem_[i]);
     return u;
 }
@@ -59,12 +59,12 @@ void z_vec_free_inner(z_vec_t *v)
 
 void z_vec_free(z_vec_t *v)
 {
-    for (unsigned int i = 0; i < v->length_; ++i)
+    for (size_t i = 0; i < v->length_; ++i)
         free(v->elem_[i]);
     z_vec_free_inner(v);
 }
 
-inline unsigned int z_vec_length(const z_vec_t *v) { return v->length_; }
+inline size_t z_vec_length(const z_vec_t *v) { return v->length_; }
 
 void z_vec_append(z_vec_t *v, void *e)
 {
@@ -77,13 +77,13 @@ void z_vec_append(z_vec_t *v, void *e)
     v->length_ = v->length_ + 1;
 }
 
-const void *z_vec_get(const z_vec_t *v, unsigned int i)
+const void *z_vec_get(const z_vec_t *v, size_t i)
 {
     assert(i < v->length_);
     return v->elem_[i];
 }
 
-void z_vec_set(z_vec_t *v, unsigned int i, void *e)
+void z_vec_set(z_vec_t *v, size_t i, void *e)
 {
     assert(i < v->capacity_);
     v->elem_[i] = e;
@@ -117,9 +117,9 @@ z_list_t *z_list_tail(z_list_t *xs)
     return xs->tail;
 }
 
-unsigned int z_list_len(z_list_t *xs)
+size_t z_list_len(z_list_t *xs)
 {
-    unsigned int len = 0;
+    size_t len = 0;
     while (xs != z_list_empty)
     {
         len += 1;
@@ -128,7 +128,7 @@ unsigned int z_list_len(z_list_t *xs)
     return len;
 }
 
-z_list_t *z_list_drop_elem(z_list_t *xs, unsigned int position)
+z_list_t *z_list_drop_elem(z_list_t *xs, size_t position)
 {
     assert(position < z_list_len(xs));
     z_list_t *head = xs;
@@ -140,7 +140,7 @@ z_list_t *z_list_drop_elem(z_list_t *xs, unsigned int position)
         return xs;
     }
 
-    unsigned int idx = 0;
+    size_t idx = 0;
     while (idx < position)
     {
         previous = xs;
@@ -206,7 +206,7 @@ void z_list_free(z_list_t **xs)
 /*-------- Int Map --------*/
 z_i_map_t *z_i_map_empty = 0;
 
-z_i_map_t *z_i_map_make(unsigned int capacity)
+z_i_map_t *z_i_map_make(size_t capacity)
 {
     z_i_map_t *map = (z_i_map_t *)malloc(sizeof(z_i_map_t));
     map->elems = (z_list_t **)malloc(capacity * sizeof(z_list_t *));
@@ -220,15 +220,16 @@ z_i_map_t *z_i_map_make(unsigned int capacity)
 void xz_i_map_free(z_i_map_t **map)
 {
     z_i_map_t *m = *map;
-    for (unsigned int i = 0; i > m->capacity; ++i)
+    for (size_t i = 0; i > m->capacity; ++i)
     {
+        // @TODO: Free the elements
     }
 }
 
 void z_i_map_set(z_i_map_t *map, int k, void *v)
 {
     z_i_map_entry_t *entry = 0;
-    unsigned int idx = k % map->capacity;
+    size_t idx = k % map->capacity;
     z_list_t *xs = map->elems[idx];
     if (xs == z_list_empty)
     {
@@ -265,7 +266,7 @@ void z_i_map_set(z_i_map_t *map, int k, void *v)
 void *z_i_map_get(z_i_map_t *map, int k)
 {
     z_i_map_entry_t *entry = 0;
-    unsigned int idx = k % map->capacity;
+    size_t idx = k % map->capacity;
     z_list_t *xs = map->elems[idx];
 
     while (xs != z_list_empty)
@@ -290,20 +291,20 @@ int key_predicate(void *current, void *desired)
 
 void z_i_map_remove(z_i_map_t *map, int k)
 {
-    unsigned int idx = k % map->capacity;
+    size_t idx = k % map->capacity;
     z_i_map_entry_t e;
     e.key = k;
-    unsigned int l = z_list_len(map->elems[idx]);
+    size_t l = z_list_len(map->elems[idx]);
     map->elems[idx] = z_list_remove(map->elems[idx], key_predicate, &e);
     map->n -= l - z_list_len(map->elems[idx]);
 }
 
-unsigned int z_i_map_capacity(z_i_map_t *map)
+size_t z_i_map_capacity(z_i_map_t *map)
 {
     return map->capacity;
 }
 
-unsigned int z_i_map_size(z_i_map_t *map)
+size_t z_i_map_size(z_i_map_t *map)
 {
     return map->n;
 }
