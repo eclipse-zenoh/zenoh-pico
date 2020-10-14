@@ -50,6 +50,7 @@ int main(int argc, char **argv)
     ASSERT_P_RESULT(rz, "Unable to open a session.\n");
     zn_session_t *z = rz.value.session;
     zn_start_recv_loop(z);
+    zn_start_lease_loop(z);
 
     // Build the resource key
     zn_res_key_t rk = zn_rname(path);
@@ -75,5 +76,6 @@ int main(int argc, char **argv)
         zn_write(z, &ri, data.buf, z_iobuf_readable(&data));
     }
 
+    printf("DONE\n");
     return 0;
 }

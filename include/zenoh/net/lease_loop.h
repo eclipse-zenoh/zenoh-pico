@@ -12,23 +12,15 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh/net/session.h"
+#ifndef ZENOH_C_NET_KEEP_ALIVE_LOOP_H
+#define ZENOH_C_NET_KEEP_ALIVE_LOOP_H
+
 #include "zenoh/net/types.h"
-#include "zenoh/net/private/sync.h"
 
-#include <stdio.h>
+void *zn_lease_loop(zn_session_t *z);
 
-void *zn_keep_alive_loop(zn_session_t *z)
-{
-    while (z->running)
-    {
-        z->transmitted = 0;
+int zn_start_lease_loop(zn_session_t *z);
 
-        // The ZENOH_NET_KEEP_ALIVE_INTERVAL is expressed in milliseconds
-        _zn_sleep_ms(ZENOH_NET_KEEP_ALIVE_INTERVAL);
-        if (z->transmitted == 0)
-            zn_send_keep_alive(z);
-    }
+int zn_stop_lease_loop(zn_session_t *z);
 
-    return 0;
-}
+#endif /* ZENOH_C_NET_KEEP_ALIVE_LOOP_H */

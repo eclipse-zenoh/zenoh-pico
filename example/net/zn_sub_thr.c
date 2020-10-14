@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     ASSERT_RESULT(rz, "Unable to open a session.\n")
     zn_session_t *z = rz.value.session;
     zn_start_recv_loop(z);
-    zn_start_keep_alive_loop(z);
+    zn_start_lease_loop(z);
 
     // Build the resource key
     zn_res_key_t rk = zn_rname(path);
@@ -97,7 +97,10 @@ int main(int argc, char **argv)
     ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
     zn_sub_t *sub = r.value.sub;
 
-    sleep(3600);
+    while (z)
+    {
+        sleep(3600);
+    }
 
     zn_undeclare_subscriber(sub);
     zn_undeclare_resource(res);

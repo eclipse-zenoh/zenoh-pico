@@ -55,6 +55,8 @@ int zn_send_keep_alive(zn_session_t *z);
 int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len);
 int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind, int is_droppable);
 
+int zn_read(zn_session_t *z);
+
 int zn_pull(zn_sub_t *sub);
 
 int zn_query(zn_session_t *z, zn_res_key_t *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg);

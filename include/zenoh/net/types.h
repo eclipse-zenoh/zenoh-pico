@@ -174,7 +174,8 @@ typedef struct
 {
     // Socket and internal buffers
     _zn_socket_t sock;
-    _zn_mutex_t mutex;
+    _zn_mutex_t mutex_rx;
+    _zn_mutex_t mutex_tx;
 
     z_iobuf_t wbuf;
     z_iobuf_t rbuf;
@@ -215,11 +216,13 @@ typedef struct
     // Runtime
     zn_on_disconnect_t on_disconnect;
 
-    volatile int running;
+    volatile int recv_loop_running;
     void *recv_loop_thread;
 
+    volatile int lease_loop_running;
+    volatile int received;
     volatile int transmitted;
-    void *keep_alive_loop_thread;
+    void *lease_loop_thread;
 } zn_session_t;
 
 typedef struct

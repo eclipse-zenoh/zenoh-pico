@@ -33,6 +33,6 @@ int zn_start_recv_loop(zn_session_t *z)
 
 int zn_stop_recv_loop(zn_session_t *z)
 {
-    z->running = 0;
+    z->recv_loop_running = 0;
     return 0;
 }

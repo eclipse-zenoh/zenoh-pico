@@ -20,4 +20,7 @@
 zn_session_t *_zn_session_init();
 void _zn_session_free(zn_session_t *z);
 
+int _zn_handle_session_message();
+int _zn_handle_zenoh_message(zn_session_t *z);
+
 #endif /* ZENOH_C_NET_PRIVATE_SESSION_H */
