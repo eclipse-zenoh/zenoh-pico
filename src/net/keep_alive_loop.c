@@ -12,9 +12,11 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <unistd.h>
 #include "zenoh/net/session.h"
 #include "zenoh/net/types.h"
+#include "zenoh/net/private/sync.h"
+
+#include <stdio.h>
 
 void *zn_keep_alive_loop(zn_session_t *z)
 {
@@ -22,10 +24,8 @@ void *zn_keep_alive_loop(zn_session_t *z)
     {
         z->transmitted = 0;
 
-        // @TODO: Need to abstract usleep for multiple platforms
         // The ZENOH_NET_KEEP_ALIVE_INTERVAL is expressed in milliseconds
-        usleep(1000 * ZENOH_NET_KEEP_ALIVE_INTERVAL);
-
+        _zn_sleep_ms(ZENOH_NET_KEEP_ALIVE_INTERVAL);
         if (z->transmitted == 0)
             zn_send_keep_alive(z);
     }

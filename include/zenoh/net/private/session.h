@@ -12,22 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_SYNC_H
-#define ZENOH_C_SYNC_H
+#ifndef ZENOH_C_NET_PRIVATE_SESSION_H
+#define ZENOH_C_NET_PRIVATE_SESSION_H
 
 #include "zenoh/net/types.h"
 
-/*------------------ Mutex ------------------*/
-int _zn_mutex_init(_zn_mutex_t *m);
-int _zn_mutex_free(_zn_mutex_t *m);
+zn_session_t *_zn_session_init();
+void _zn_session_free(zn_session_t *z);
 
-int _zn_mutex_lock(_zn_mutex_t *m);
-int _zn_mutex_trylock(_zn_mutex_t *m);
-int _zn_mutex_unlock(_zn_mutex_t *m);
-
-/*------------------ Sleep ------------------*/
-int _zn_sleep_us(unsigned int time);
-int _zn_sleep_ms(unsigned int time);
-int _zn_sleep_s(unsigned int time);
-
-#endif /* ZENOH_C_SYNC_H */
+#endif /* ZENOH_C_NET_PRIVATE_SESSION_H */

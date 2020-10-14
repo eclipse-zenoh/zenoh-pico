@@ -13,8 +13,10 @@
  */
 
 #include <pthread.h>
+#include <unistd.h>
 #include "zenoh/net/private/sync.h"
 
+/*------------------ Mutex ------------------*/
 int _zn_mutex_init(_zn_mutex_t *m)
 {
     return pthread_mutex_init(m, 0);
@@ -38,4 +40,20 @@ int _zn_mutex_trylock(_zn_mutex_t *m)
 int _zn_mutex_unlock(_zn_mutex_t *m)
 {
     return pthread_mutex_unlock(m);
+}
+
+/*------------------ Sleep ------------------*/
+int _zn_sleep_us(unsigned int time)
+{
+    return usleep(time);
+}
+
+int _zn_sleep_ms(unsigned int time)
+{
+    return usleep(1000 * time);
+}
+
+int _zn_sleep_s(unsigned int time)
+{
+    return sleep(time);
 }

@@ -77,8 +77,13 @@ zn_session_t *_zn_session_init()
 
 void _zn_session_free(zn_session_t *z)
 {
-    free(&z->wbuf);
-    free(&z->rbuf);
+    close(z->sock);
+
+    _zn_mutex_free(&z->mutex);
+
+    z_iobuf_free(&z->wbuf);
+    z_iobuf_free(&z->rbuf);
+
     free(z);
 }
 
@@ -181,6 +186,7 @@ z_vec_t zn_scout(char *iface, size_t tries, size_t period)
 
     z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
     _zn_session_message_t scout;
+    _ZN_INIT_S_MSG(scout)
     scout.header = _ZN_MID_SCOUT;
     // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
     //       and the what value is not sent on the wire. Here we scout for Routers
@@ -264,8 +270,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
     // Build the open message
     _zn_session_message_t om;
+    _ZN_INIT_S_MSG(om);
+    om.header = _ZN_MID_OPEN
 
-    // Add an attachement if properties have been provided
+        ; // Add an attachement if properties have been provided
     if (ps)
     {
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
@@ -273,12 +281,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         om.attachment->payload = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
         zn_properties_encode(&om.attachment->payload, ps);
     }
-    else
-    {
-        om.attachment = NULL;
-    }
 
-    om.header = _ZN_MID_OPEN;
     om.body.open.version = ZENOH_NET_PROTO_VERSION;
     om.body.open.whatami = ZN_WHATAMI_CLIENT;
     om.body.open.opid = pid;
@@ -435,7 +438,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 int zn_close(zn_session_t *z)
 {
     _zn_session_message_t c;
-    c.attachment = NULL;
+    _ZN_INIT_S_MSG(c);
     c.header = _ZN_MID_CLOSE;
     c.body.close.pid = z->local_pid;
     c.body.close.reason = _ZN_CLOSE_GENERIC;
@@ -443,7 +446,9 @@ int zn_close(zn_session_t *z)
     // NOTE: we are closing the whole zenoh session.
     //       So, the K flag in the close message is set to 0
     int rv = _zn_send_s_msg(z, &c);
-    close(z->sock);
+
+    // Free the session
+    _zn_session_free(z);
 
     return rv;
 }
@@ -480,8 +485,7 @@ zn_res_p_result_t zn_declare_resource(zn_session_t *z, const zn_res_key_t *res_k
     r.value.res->key.rname = res_key->rname;
 
     _zn_zenoh_message_t z_msg;
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg);
     z_msg.header = _ZN_MID_DECLARE;
 
     // We need to declare the resource
@@ -512,8 +516,7 @@ int zn_undeclare_resource(zn_res_t *res)
     if (r)
     {
         _zn_zenoh_message_t z_msg;
-        z_msg.attachment = NULL;
-        z_msg.reply_context = NULL;
+        _ZN_INIT_Z_MSG(z_msg)
         z_msg.header = _ZN_MID_DECLARE;
 
         // We need to undeclare the resource and the publisher
@@ -553,8 +556,7 @@ zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const zn_res_key_t *res_
     r.value.pub->id = _zn_get_entity_id(z);
 
     _zn_zenoh_message_t z_msg;
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg)
     z_msg.header = _ZN_MID_DECLARE;
 
     // We need to declare the resource and the publisher
@@ -586,8 +588,7 @@ int zn_undeclare_publisher(zn_pub_t *pub)
     // @TODO: manage multi publishers
 
     _zn_zenoh_message_t z_msg;
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg)
     z_msg.header = _ZN_MID_DECLARE;
 
     // We need to undeclare the publisher
@@ -629,8 +630,7 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res
         r.value.sub->key.rname = NULL;
 
     _zn_zenoh_message_t z_msg;
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg)
     z_msg.header = _ZN_MID_DECLARE;
 
     // We need to declare the subscriber
@@ -673,8 +673,7 @@ int zn_undeclare_subscriber(zn_sub_t *sub)
     if (s)
     {
         _zn_zenoh_message_t z_msg;
-        z_msg.attachment = NULL;
-        z_msg.reply_context = NULL;
+        _ZN_INIT_Z_MSG(z_msg)
         z_msg.header = _ZN_MID_DECLARE;
 
         // We need to undeclare the subscriber
@@ -711,9 +710,7 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     // @TODO: Need to check subscriptions to determine the right reliability value.
 
     _zn_zenoh_message_t z_msg;
-    // Set the message decorators
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg)
     // Set the header
     z_msg.header = _ZN_MID_DATA;
     // Eventually mark the message for congestion control
@@ -746,9 +743,7 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
     // @TODO: Need to check subscriptions to determine the right reliability value.
 
     _zn_zenoh_message_t z_msg;
-    // Set the message decorators
-    z_msg.attachment = NULL;
-    z_msg.reply_context = NULL;
+    _ZN_INIT_Z_MSG(z_msg)
     // Set the header
     z_msg.header = _ZN_MID_DATA;
     // Eventually mark the message for congestion control
@@ -768,6 +763,7 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
 int zn_send_keep_alive(zn_session_t *z)
 {
     _zn_session_message_t s_msg;
+    _ZN_INIT_S_MSG(s_msg)
     s_msg.header = _ZN_MID_KEEP_ALIVE;
 
     return _zn_send_s_msg(z, &s_msg);

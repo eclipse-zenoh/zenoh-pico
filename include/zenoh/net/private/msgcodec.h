@@ -51,6 +51,13 @@
     _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf); \
     void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_p_result_t *r)
 
+#define _ZN_INIT_S_MSG(msg) \
+    msg.attachment = NULL;
+
+#define _ZN_INIT_Z_MSG(msg) \
+    msg.attachment = NULL;  \
+    msg.reply_context = NULL;
+
 /*------------------ Session Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
 _ZN_DECLARE_DECODE(scout);
