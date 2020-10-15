@@ -16,8 +16,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "zenoh/mvar.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 typedef struct
 {

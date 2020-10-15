@@ -12,64 +12,77 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 #include "zenoh.h"
 
-// #define MAX_LEN 256
+#define MAX_LEN 256
 
-// void data_handler(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
-// {
-//     Z_UNUSED_ARG_2(info, arg);
-//     char str[MAX_LEN];
-//     memcpy(&str, data, length < MAX_LEN ? length : MAX_LEN - 1);
-//     str[length < MAX_LEN ? length : MAX_LEN - 1] = 0;
-//     if (rkey->kind == ZN_INT_RES_KEY)
-//         printf(">> [Subscription listener] Received (#%zu: '%s')\n", rkey->key.rid, str);
-//     else
-//         printf(">> [Subscription listener] Received ('%s': '%s')\n", rkey->key.rname, str);
-// }
+void data_handler(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+{
+    Z_UNUSED_ARG_2(info, arg);
+    char str[MAX_LEN];
+    memcpy(&str, data, length < MAX_LEN ? length : MAX_LEN - 1);
+    str[length < MAX_LEN ? length : MAX_LEN - 1] = 0;
+
+    printf(">> [Subscription listener] Received ('%s'): '%s')...\n", rkey->rname, str);
+}
 
 int main(int argc, char **argv)
 {
-    char *selector = "/zenoh/examples/**";
-    char *locator = 0;
+    char *path = "/demo/example/**";
+    char *locator = NULL;
 
     if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
     {
-        printf("USAGE:\n\tzn_sub [<selector>=%s] [<locator>=auto]\n\n", selector);
+        printf("USAGE:\n\tzn_sub [<path>=%s] [<locator>=auto]\n\n", path);
         return 0;
     }
     if (argc > 1)
     {
-        selector = argv[1];
+        path = argv[1];
     }
     if (argc > 2)
     {
-        locator = argv[2];
+        if (strcmp(argv[2], "auto") != 0)
+            locator = argv[2];
     }
 
-    // printf("Openning session...\n");
-    // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
-    // ASSERT_RESULT(r_z, "Unable to open session.\n")
-    // zn_session_t *z = r_z.value.session;
-    // zn_start_recv_loop(z);
+    // Open a session
+    zn_session_p_result_t rz = zn_open(locator, 0, 0);
+    ASSERT_RESULT(rz, "Unable to open a session.\n")
+    zn_session_t *z = rz.value.session;
+    zn_start_recv_loop(z);
+    zn_start_lease_loop(z);
 
-    // printf("Declaring Subscriber on '%s'...\n", selector);
-    // zn_sub_info_t sm;
-    // sm.kind = ZN_PUSH_MODE;
-    // zn_sub_p_result_t r = zn_declare_subscriber(z, selector, &sm, data_handler, NULL);
-    // ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
-    // zn_sub_t *sub = r.value.sub;
+    // Build the resource key
+    zn_res_key_t rk = zn_rname(path);
 
-    // char c = 0;
-    // while (c != 'q')
-    // {
-    //     c = fgetc(stdin);
-    // }
+    // Declare a resource
+    zn_res_p_result_t rr = zn_declare_resource(z, &rk);
+    ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
+    zn_res_t *res = rr.value.res;
 
-    // zn_undeclare_subscriber(sub);
-    // zn_undeclare_resource(res);
-    // zn_close(z);
-    // zn_stop_recv_loop(z);
+    zn_sub_info_t si;
+    si.mode = ZN_PUSH_MODE;
+    si.is_reliable = 1;
+    si.is_periodic = 0;
+    zn_sub_p_result_t r = zn_declare_subscriber(z, &res->key, &si, data_handler, NULL);
+    ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
+    zn_sub_t *sub = r.value.sub;
+
+    char c = 0;
+    while (c != 'q')
+    {
+        c = fgetc(stdin);
+    }
+
+    zn_undeclare_subscriber(sub);
+    zn_undeclare_resource(res);
+    zn_close(z);
+    zn_stop_lease_loop(z);
+    zn_stop_recv_loop(z);
+
     return 0;
 }

@@ -441,16 +441,15 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
 int zn_close(zn_session_t *z)
 {
-    _zn_session_message_t c;
-    _ZN_INIT_S_MSG(c);
-    c.header = _ZN_MID_CLOSE;
-    c.body.close.pid = z->local_pid;
-    c.body.close.reason = _ZN_CLOSE_GENERIC;
-    _ZN_SET_FLAG(c.header, _ZN_FLAG_S_I);
+    _zn_session_message_t cm;
+    _ZN_INIT_S_MSG(cm);
+    cm.header = _ZN_MID_CLOSE;
+    cm.body.close.reason = _ZN_CLOSE_GENERIC;
     // NOTE: we are closing the whole zenoh session.
     //       So, the K flag in the close message is set to 0
-    int rv = _zn_send_s_msg(z, &c);
+    int rv = _zn_send_s_msg(z, &cm);
 
+    _zn_session_message_free(&cm);
     // Free the session
     _zn_session_free(z);
 
@@ -778,7 +777,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             sub = (_zn_sub_t *)z_list_head(subs);
 
             sub->data_handler(
-                &msg->body.data.key,
+                &sub->key,
                 msg->body.data.payload.buf,
                 z_iobuf_readable(&msg->body.data.payload),
                 &msg->body.data.info,

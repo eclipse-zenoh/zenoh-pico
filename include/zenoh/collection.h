@@ -15,7 +15,7 @@
 #ifndef ZENOH_C_COLLECTION_H
 #define ZENOH_C_COLLECTION_H
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #define DEFAULT_I_MAP_CAPACITY 64
 

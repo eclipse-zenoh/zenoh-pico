@@ -13,12 +13,11 @@
  */
 
 #include <pthread.h>
-#include <time.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
-#include "zenoh/types.h"
 #include "zenoh/mvar.h"
+#include "zenoh/types.h"
 
 char msg[256];
 

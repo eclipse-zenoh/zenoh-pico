@@ -11,26 +11,20 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
+
+#include <arpa/inet.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <assert.h>
-#include <sys/uio.h>
-
-#include "zenoh/private/logging.h"
-#include "zenoh/net/session.h"
 #include "zenoh/net/private/net.h"
+#include "zenoh/private/logging.h"
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
 {
+    // @TODO: improve network interface selection
     char *eth_prefix = "en";
     char *lo_prefix = "lo";
     size_t len = 2;
