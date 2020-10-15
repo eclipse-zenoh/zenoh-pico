@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "zenoh/codec.h"
 #include "zenoh/net/codec.h"
+#include "zenoh/net/private/codec.h"
 #include "zenoh/private/logging.h"
 
 /*------------------ z_zint ------------------*/
@@ -23,7 +24,7 @@ int z_zint_encode(z_iobuf_t *buf, z_zint_t v)
     while (v > 0x7f)
     {
         uint8_t c = (v & 0x7f) | 0x80;
-        ENC_CHK(z_iobuf_write(buf, (uint8_t)c))
+        _ZN_EC(z_iobuf_write(buf, (uint8_t)c))
         v = v >> 7;
     }
     return z_iobuf_write(buf, (uint8_t)v);
@@ -52,7 +53,7 @@ z_zint_result_t z_zint_decode(z_iobuf_t *buf)
 /*------------------ uint8_array ------------------*/
 int z_uint8_array_encode(z_iobuf_t *buf, const z_uint8_array_t *bs)
 {
-    ENC_CHK(z_zint_encode(buf, bs->length))
+    _ZN_EC(z_zint_encode(buf, bs->length))
     return z_iobuf_write_slice(buf, bs->elem, 0, bs->length);
 }
 
@@ -76,7 +77,7 @@ z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *buf)
 int z_string_encode(z_iobuf_t *buf, const char *s)
 {
     size_t len = strlen(s);
-    ENC_CHK(z_zint_encode(buf, len))
+    _ZN_EC(z_zint_encode(buf, len))
     // Note that this does not put the string terminator on the wire.
     return z_iobuf_write_slice(buf, (uint8_t *)s, 0, len);
 }

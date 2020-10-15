@@ -20,7 +20,7 @@
 
 int zn_property_encode(z_iobuf_t *buf, const zn_property_t *m)
 {
-    ENC_CHK(z_zint_encode(buf, m->id))
+    _ZN_EC(z_zint_encode(buf, m->id))
     return z_uint8_array_encode(buf, &m->value);
 }
 
@@ -48,19 +48,19 @@ int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
 {
     zn_property_t *p;
     size_t l = z_vec_length(ps);
-    ENC_CHK(z_zint_encode(buf, l))
+    _ZN_EC(z_zint_encode(buf, l))
     for (size_t i = 0; i < l; ++i)
     {
         p = (zn_property_t *)z_vec_get(ps, i);
-        ENC_CHK(zn_property_encode(buf, p))
+        _ZN_EC(zn_property_encode(buf, p))
     }
     return 0;
 }
 
 int zn_temporal_property_encode(z_iobuf_t *buf, const zn_temporal_property_t *tp)
 {
-    ENC_CHK(z_zint_encode(buf, tp->origin))
-    ENC_CHK(z_zint_encode(buf, tp->period))
+    _ZN_EC(z_zint_encode(buf, tp->origin))
+    _ZN_EC(z_zint_encode(buf, tp->period))
     return z_zint_encode(buf, tp->duration);
 }
 

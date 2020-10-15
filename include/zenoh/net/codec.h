@@ -20,12 +20,6 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 
-#define ENC_CHK(fn) \
-    if (fn != 0)    \
-    {               \
-        return -1;  \
-    }
-
 #define ZN_DECLARE_FREE(name) \
     void zn_##name##_free(zn_##name##_t *m, uint8_t header)
 

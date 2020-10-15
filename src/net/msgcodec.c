@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include "zenoh/private/codec.h"
 #include "zenoh/private/logging.h"
 #include "zenoh/net/private/msgcodec.h"
 
@@ -26,7 +27,7 @@ int _zn_payload_encode(z_iobuf_t *buf, const _zn_payload_t *pld)
 
     // Encode the body
     z_zint_t len = z_iobuf_readable(pld);
-    ENC_CHK(z_zint_encode(buf, len))
+    _ZN_EC(z_zint_encode(buf, len))
     return z_iobuf_write_slice(buf, pld->buf, pld->r_pos, pld->w_pos);
 }
 
@@ -62,7 +63,7 @@ int _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts)
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, ts->time))
+    _ZN_EC(z_zint_encode(buf, ts->time))
     return z_uint8_array_encode(buf, &ts->id);
 }
 
@@ -102,7 +103,7 @@ int zn_sub_info_encode(z_iobuf_t *buf, const zn_sub_info_t *fld)
     uint8_t header = fld->mode;
     if (fld->is_periodic)
         _ZN_SET_FLAG(header, _ZN_FLAG_Z_P);
-    ENC_CHK(z_iobuf_write(buf, header))
+    _ZN_EC(z_iobuf_write(buf, header))
 
     // Encode the body
     if (fld->is_periodic)
@@ -146,7 +147,7 @@ int zn_res_key_encode(z_iobuf_t *buf, uint8_t header, const zn_res_key_t *fld)
     _Z_DEBUG("Encoding _RES_KEY\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, fld->rid))
+    _ZN_EC(z_zint_encode(buf, fld->rid))
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
         return z_string_encode(buf, fld->rname);
 
@@ -196,11 +197,11 @@ void zn_res_key_free(zn_res_key_t *rk)
 int _zn_locators_encode(z_iobuf_t *buf, const _zn_locators_t *ls)
 {
     size_t len = z_vec_length(ls);
-    ENC_CHK(z_zint_encode(buf, len))
+    _ZN_EC(z_zint_encode(buf, len))
     // Encode the locators
     for (size_t i = 0; i < len; ++i)
     {
-        ENC_CHK(z_string_encode(buf, (char *)z_vec_get(ls, i)))
+        _ZN_EC(z_string_encode(buf, (char *)z_vec_get(ls, i)))
     }
 
     return 0;
@@ -246,7 +247,7 @@ int _zn_attachment_encode(z_iobuf_t *buf, const _zn_attachment_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_ATTACHMENT\n");
 
     // Encode the header
-    ENC_CHK(z_iobuf_write(buf, msg->header))
+    _ZN_EC(z_iobuf_write(buf, msg->header))
 
     // Encode the body
     return _zn_payload_encode(buf, &msg->payload);
@@ -285,11 +286,11 @@ int _zn_reply_context_encode(z_iobuf_t *buf, const _zn_reply_context_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_REPLY_CONTEXT\n");
 
     // Encode the header
-    ENC_CHK(z_iobuf_write(buf, msg->header))
+    _ZN_EC(z_iobuf_write(buf, msg->header))
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, msg->qid))
-    ENC_CHK(z_zint_encode(buf, msg->source_kind))
+    _ZN_EC(z_zint_encode(buf, msg->qid))
+    _ZN_EC(z_zint_encode(buf, msg->source_kind))
     if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_Z_F))
         return z_uint8_array_encode(buf, &msg->replier_id);
 
@@ -344,7 +345,7 @@ int _zn_res_decl_encode(z_iobuf_t *buf, uint8_t header, const _zn_res_decl_t *dc
     _Z_DEBUG("Encoding _ZN_DECL_RESOURCE\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, dcl->id))
+    _ZN_EC(z_zint_encode(buf, dcl->id))
     return zn_res_key_encode(buf, header, &dcl->key);
 }
 
@@ -413,7 +414,7 @@ int _zn_sub_decl_encode(z_iobuf_t *buf, uint8_t header, const _zn_sub_decl_t *dc
     _Z_DEBUG("Encoding _ZN_DECL_SUBSCRIBER\n");
 
     // Encode the body
-    ENC_CHK(zn_res_key_encode(buf, header, &dcl->key))
+    _ZN_EC(zn_res_key_encode(buf, header, &dcl->key))
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
         return zn_sub_info_encode(buf, &dcl->sub_info);
 
@@ -619,7 +620,7 @@ void _zn_forget_qle_decl_free(_zn_forget_qle_decl_t *dcl)
 int _zn_declaration_encode(z_iobuf_t *buf, _zn_declaration_t *dcl)
 {
     // Encode the header
-    ENC_CHK(z_iobuf_write(buf, dcl->header))
+    _ZN_EC(z_iobuf_write(buf, dcl->header))
     // Encode the body
     uint8_t did = _ZN_MID(dcl->header);
     switch (did)
@@ -761,10 +762,10 @@ int _zn_declare_encode(z_iobuf_t *buf, const _zn_declare_t *msg)
 
     // Encode the body
     z_zint_t len = msg->declarations.length;
-    ENC_CHK(z_zint_encode(buf, len))
+    _ZN_EC(z_zint_encode(buf, len))
     for (z_zint_t i = 0; i < len; ++i)
     {
-        ENC_CHK(_zn_declaration_encode(buf, &msg->declarations.elem[i]))
+        _ZN_EC(_zn_declaration_encode(buf, &msg->declarations.elem[i]))
     }
 
     return 0;
@@ -824,29 +825,29 @@ int zn_data_info_encode(z_iobuf_t *buf, const zn_data_info_t *fld)
     _Z_DEBUG("Encoding ZN_DATA_INFO\n");
 
     // Encode the flags
-    ENC_CHK(z_zint_encode(buf, fld->flags))
+    _ZN_EC(z_zint_encode(buf, fld->flags))
 
     // Encode the body
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_SRC_ID)
-        ENC_CHK(z_uint8_array_encode(buf, &fld->source_id))
+        _ZN_EC(z_uint8_array_encode(buf, &fld->source_id))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_SRC_SN)
-        ENC_CHK(z_zint_encode(buf, fld->source_sn))
+        _ZN_EC(z_zint_encode(buf, fld->source_sn))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_RTR_ID)
-        ENC_CHK(z_uint8_array_encode(buf, &fld->first_router_id))
+        _ZN_EC(z_uint8_array_encode(buf, &fld->first_router_id))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_RTR_SN)
-        ENC_CHK(z_zint_encode(buf, fld->first_router_sn))
+        _ZN_EC(z_zint_encode(buf, fld->first_router_sn))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_TSTAMP)
-        ENC_CHK(_zn_timestamp_encode(buf, &fld->tstamp))
+        _ZN_EC(_zn_timestamp_encode(buf, &fld->tstamp))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_KIND)
-        ENC_CHK(z_zint_encode(buf, fld->kind))
+        _ZN_EC(z_zint_encode(buf, fld->kind))
 
     if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_ENC)
-        ENC_CHK(z_zint_encode(buf, fld->encoding))
+        _ZN_EC(z_zint_encode(buf, fld->encoding))
 
     return 0;
 }
@@ -943,10 +944,10 @@ int _zn_data_encode(z_iobuf_t *buf, uint8_t header, const _zn_data_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_DATA\n");
 
     // Encode the body
-    ENC_CHK(zn_res_key_encode(buf, header, &msg->key))
+    _ZN_EC(zn_res_key_encode(buf, header, &msg->key))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
-        ENC_CHK(zn_data_info_encode(buf, &msg->info))
+        _ZN_EC(zn_data_info_encode(buf, &msg->info))
 
     return _zn_payload_encode(buf, &msg->payload);
 }
@@ -997,12 +998,12 @@ int _zn_pull_encode(z_iobuf_t *buf, uint8_t header, const _zn_pull_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_PULL\n");
 
     // Encode the body
-    ENC_CHK(zn_res_key_encode(buf, header, &msg->key))
+    _ZN_EC(zn_res_key_encode(buf, header, &msg->key))
 
-    ENC_CHK(z_zint_encode(buf, msg->pull_id))
+    _ZN_EC(z_zint_encode(buf, msg->pull_id))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_N)
-        ENC_CHK(z_zint_encode(buf, msg->max_samples))
+        _ZN_EC(z_zint_encode(buf, msg->max_samples))
 
     return 0;
 }
@@ -1047,14 +1048,14 @@ int _zn_query_encode(z_iobuf_t *buf, uint8_t header, const _zn_query_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_QUERY\n");
 
     // Encode the body
-    ENC_CHK(zn_res_key_encode(buf, header, &msg->key))
+    _ZN_EC(zn_res_key_encode(buf, header, &msg->key))
 
-    ENC_CHK(z_string_encode(buf, msg->predicate))
+    _ZN_EC(z_string_encode(buf, msg->predicate))
 
-    ENC_CHK(z_zint_encode(buf, msg->qid))
+    _ZN_EC(z_zint_encode(buf, msg->qid))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
-        ENC_CHK(z_zint_encode(buf, msg->target))
+        _ZN_EC(z_zint_encode(buf, msg->target))
 
     return z_zint_encode(buf, msg->consolidation);
 }
@@ -1105,12 +1106,12 @@ int _zn_zenoh_message_encode(z_iobuf_t *buf, const _zn_zenoh_message_t *msg)
 {
     // Encode the decorators if present
     if (msg->attachment)
-        ENC_CHK(_zn_attachment_encode(buf, msg->attachment))
+        _ZN_EC(_zn_attachment_encode(buf, msg->attachment))
     if (msg->reply_context)
-        ENC_CHK(_zn_reply_context_encode(buf, msg->reply_context))
+        _ZN_EC(_zn_reply_context_encode(buf, msg->reply_context))
 
     // Encode the header
-    ENC_CHK(z_iobuf_write(buf, msg->header))
+    _ZN_EC(z_iobuf_write(buf, msg->header))
 
     // Encode the body
     uint8_t mid = _ZN_MID(msg->header);
@@ -1242,7 +1243,7 @@ int _zn_scout_encode(z_iobuf_t *buf, uint8_t header, const _zn_scout_t *msg)
 
     // Encode the body
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
-        ENC_CHK(z_zint_encode(buf, msg->what))
+        _ZN_EC(z_zint_encode(buf, msg->what))
 
     return 0;
 }
@@ -1277,13 +1278,13 @@ int _zn_hello_encode(z_iobuf_t *buf, uint8_t header, const _zn_hello_t *msg)
 
     // Encode the body
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ENC_CHK(z_uint8_array_encode(buf, &msg->pid))
+        _ZN_EC(z_uint8_array_encode(buf, &msg->pid))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
-        ENC_CHK(z_zint_encode(buf, msg->whatami))
+        _ZN_EC(z_zint_encode(buf, msg->whatami))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        ENC_CHK(_zn_locators_encode(buf, &msg->locators))
+        _ZN_EC(_zn_locators_encode(buf, &msg->locators))
 
     return 0;
 }
@@ -1338,15 +1339,15 @@ int _zn_open_encode(z_iobuf_t *buf, uint8_t header, const _zn_open_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_OPEN\n");
 
     // Encode the body
-    ENC_CHK(z_iobuf_write(buf, msg->version))
-    ENC_CHK(z_zint_encode(buf, msg->whatami))
-    ENC_CHK(z_uint8_array_encode(buf, &msg->opid))
-    ENC_CHK(z_zint_encode(buf, msg->lease))
-    ENC_CHK(z_zint_encode(buf, msg->initial_sn))
+    _ZN_EC(z_iobuf_write(buf, msg->version))
+    _ZN_EC(z_zint_encode(buf, msg->whatami))
+    _ZN_EC(z_uint8_array_encode(buf, &msg->opid))
+    _ZN_EC(z_zint_encode(buf, msg->lease))
+    _ZN_EC(z_zint_encode(buf, msg->initial_sn))
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-        ENC_CHK(z_zint_encode(buf, msg->sn_resolution))
+        _ZN_EC(z_zint_encode(buf, msg->sn_resolution))
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        ENC_CHK(_zn_locators_encode(buf, &msg->locators))
+        _ZN_EC(_zn_locators_encode(buf, &msg->locators))
 
     return 0;
 }
@@ -1411,15 +1412,15 @@ int _zn_accept_encode(z_iobuf_t *buf, uint8_t header, const _zn_accept_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_ACCEPT\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, msg->whatami))
-    ENC_CHK(z_uint8_array_encode(buf, &msg->opid))
-    ENC_CHK(z_uint8_array_encode(buf, &msg->apid))
-    ENC_CHK(z_zint_encode(buf, msg->lease))
-    ENC_CHK(z_zint_encode(buf, msg->initial_sn))
+    _ZN_EC(z_zint_encode(buf, msg->whatami))
+    _ZN_EC(z_uint8_array_encode(buf, &msg->opid))
+    _ZN_EC(z_uint8_array_encode(buf, &msg->apid))
+    _ZN_EC(z_zint_encode(buf, msg->lease))
+    _ZN_EC(z_zint_encode(buf, msg->initial_sn))
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-        ENC_CHK(z_zint_encode(buf, msg->sn_resolution))
+        _ZN_EC(z_zint_encode(buf, msg->sn_resolution))
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        ENC_CHK(_zn_locators_encode(buf, &msg->locators))
+        _ZN_EC(_zn_locators_encode(buf, &msg->locators))
 
     return 0;
 }
@@ -1488,7 +1489,7 @@ int _zn_close_encode(z_iobuf_t *buf, uint8_t header, const _zn_close_t *msg)
 
     // Encode the body
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ENC_CHK(z_uint8_array_encode(buf, &msg->pid))
+        _ZN_EC(z_uint8_array_encode(buf, &msg->pid))
 
     return z_iobuf_write(buf, msg->reason);
 }
@@ -1528,10 +1529,10 @@ int _zn_sync_encode(z_iobuf_t *buf, uint8_t header, const _zn_sync_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_SYNC\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, msg->sn))
+    _ZN_EC(z_zint_encode(buf, msg->sn))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_C)
-        ENC_CHK(z_zint_encode(buf, msg->count))
+        _ZN_EC(z_zint_encode(buf, msg->count))
 
     return 0;
 }
@@ -1569,10 +1570,10 @@ int _zn_ack_nack_encode(z_iobuf_t *buf, uint8_t header, const _zn_ack_nack_t *ms
     _Z_DEBUG("Encoding _ZN_MID_ACK_NACK\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, msg->sn))
+    _ZN_EC(z_zint_encode(buf, msg->sn))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_M)
-        ENC_CHK(z_zint_encode(buf, msg->mask))
+        _ZN_EC(z_zint_encode(buf, msg->mask))
 
     return 0;
 }
@@ -1611,7 +1612,7 @@ int _zn_keep_alive_encode(z_iobuf_t *buf, uint8_t header, const _zn_keep_alive_t
 
     // Encode the body
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ENC_CHK(z_uint8_array_encode(buf, &msg->pid))
+        _ZN_EC(z_uint8_array_encode(buf, &msg->pid))
 
     return 0;
 }
@@ -1678,7 +1679,7 @@ int _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_FRAME\n");
 
     // Encode the body
-    ENC_CHK(z_zint_encode(buf, msg->sn))
+    _ZN_EC(z_zint_encode(buf, msg->sn))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
     {
@@ -1688,7 +1689,7 @@ int _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     {
         size_t len = z_vec_length(&msg->payload.messages);
         for (size_t i = 0; i < len; ++i)
-            ENC_CHK(_zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i)))
+            _ZN_EC(_zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i)))
 
         return 0;
     }
@@ -1759,10 +1760,10 @@ int _zn_session_message_encode(z_iobuf_t *buf, const _zn_session_message_t *msg)
 {
     // Encode the decorators if present
     if (msg->attachment)
-        ENC_CHK(_zn_attachment_encode(buf, msg->attachment))
+        _ZN_EC(_zn_attachment_encode(buf, msg->attachment))
 
     // Encode the header
-    ENC_CHK(z_iobuf_write(buf, msg->header))
+    _ZN_EC(z_iobuf_write(buf, msg->header))
 
     // Encode the body
     switch (_ZN_MID(msg->header))
