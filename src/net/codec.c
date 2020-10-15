@@ -16,6 +16,7 @@
 #include "zenoh/private/logging.h"
 #include "zenoh/codec.h"
 #include "zenoh/net/codec.h"
+#include "zenoh/net/private/codec.h"
 #include "zenoh/net/property.h"
 
 int zn_property_encode(z_iobuf_t *buf, const zn_property_t *m)

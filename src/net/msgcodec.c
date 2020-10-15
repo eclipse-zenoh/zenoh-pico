@@ -13,8 +13,8 @@
  */
 
 #include <stdio.h>
-#include "zenoh/private/codec.h"
 #include "zenoh/private/logging.h"
+#include "zenoh/net/private/codec.h"
 #include "zenoh/net/private/msgcodec.h"
 
 /*=============================*/

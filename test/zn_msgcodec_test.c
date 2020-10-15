@@ -234,7 +234,7 @@ void payload_field()
     _zn_payload_t e_pld = gen_payload(64);
 
     // Encode
-    _zn_payload_encode(&buf, &e_pld);
+    assert(_zn_payload_encode(&buf, &e_pld) == 0);
 
     // Decode
     _zn_payload_result_t r_pld = _zn_payload_decode(&buf);
@@ -279,7 +279,7 @@ void timestamp_field()
     z_timestamp_t e_ts = gen_timestamp();
 
     // Encode
-    _zn_timestamp_encode(&buf, &e_ts);
+    assert(_zn_timestamp_encode(&buf, &e_ts) == 0);
 
     // Decode
     _zn_timestamp_result_t r_ts = _zn_timestamp_decode(&buf);
@@ -360,7 +360,7 @@ void sub_info_field()
     // Encode
     printf("Ready to encode\n");
     uint8_t header = e_sm.is_reliable ? _ZN_FLAG_Z_R : 0;
-    zn_sub_info_encode(&buf, &e_sm);
+    assert(zn_sub_info_encode(&buf, &e_sm) == 0);
 
     printf("Ready to decode\n");
     // Decode
@@ -420,7 +420,7 @@ void res_key_field()
 
     // Encode
     uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
-    zn_res_key_encode(&buf, header, &e_rk);
+    assert(zn_res_key_encode(&buf, header, &e_rk) == 0);
 
     // Decode
     zn_res_key_result_t r_rk = zn_res_key_decode(&buf, header);
@@ -537,7 +537,7 @@ void data_info_field()
     zn_data_info_t e_di = gen_data_info();
 
     // Encode
-    zn_data_info_encode(&buf, &e_di);
+    assert(zn_data_info_encode(&buf, &e_di) == 0);
 
     // Decode
     zn_data_info_result_t r_di = zn_data_info_decode(&buf);
@@ -592,7 +592,7 @@ void attachment_decorator()
     _zn_attachment_t *e_at = gen_attachment();
 
     // Encode
-    _zn_attachment_encode(&buf, e_at);
+    assert(_zn_attachment_encode(&buf, e_at) == 0);
 
     // Decode
     uint8_t header = z_iobuf_read(&buf);
@@ -673,7 +673,7 @@ void reply_contex_decorator()
     _zn_reply_context_t *e_rc = gen_reply_context();
 
     // Encode
-    _zn_reply_context_encode(&buf, e_rc);
+    assert(_zn_reply_context_encode(&buf, e_rc) == 0);
 
     // Decode
     uint8_t header = z_iobuf_read(&buf);
@@ -724,7 +724,7 @@ void resource_declaration()
     _zn_res_decl_t e_rd = gen_resource_declaration(&e_hdr);
 
     // Encode
-    _zn_res_decl_encode(&buf, e_hdr, &e_rd);
+    assert(_zn_res_decl_encode(&buf, e_hdr, &e_rd) == 0);
 
     // Decode
     _zn_res_decl_result_t r_rd = _zn_res_decl_decode(&buf, e_hdr);
@@ -766,7 +766,7 @@ void publisher_declaration()
     _zn_pub_decl_t e_pd = gen_publisher_declaration(&e_hdr);
 
     // Encode
-    _zn_pub_decl_encode(&buf, e_hdr, &e_pd);
+    assert(_zn_pub_decl_encode(&buf, e_hdr, &e_pd) == 0);
 
     // Decode
     _zn_pub_decl_result_t r_pd = _zn_pub_decl_decode(&buf, e_hdr);
@@ -820,7 +820,7 @@ void subscriber_declaration()
     _zn_sub_decl_t e_sd = gen_subscriber_declaration(&e_hdr);
 
     // Encode
-    _zn_sub_decl_encode(&buf, e_hdr, &e_sd);
+    assert(_zn_sub_decl_encode(&buf, e_hdr, &e_sd) == 0);
 
     // Decode
     _zn_sub_decl_result_t r_pd = _zn_sub_decl_decode(&buf, e_hdr);
@@ -862,7 +862,7 @@ void queryable_declaration()
     _zn_qle_decl_t e_qd = gen_queryable_declaration(&e_hdr);
 
     // Encode
-    _zn_qle_decl_encode(&buf, e_hdr, &e_qd);
+    assert(_zn_qle_decl_encode(&buf, e_hdr, &e_qd) == 0);
 
     // Decode
     _zn_qle_decl_result_t r_qd = _zn_qle_decl_decode(&buf, e_hdr);
@@ -903,7 +903,7 @@ void forget_resource_declaration()
     _zn_forget_res_decl_t e_frd = gen_forget_resource_declaration();
 
     // Encode
-    _zn_forget_res_decl_encode(&buf, &e_frd);
+    assert(_zn_forget_res_decl_encode(&buf, &e_frd) == 0);
 
     // Decode
     _zn_forget_res_decl_result_t r_frd = _zn_forget_res_decl_decode(&buf);
@@ -945,7 +945,7 @@ void forget_publisher_declaration()
     _zn_forget_pub_decl_t e_fpd = gen_forget_publisher_declaration(&e_hdr);
 
     // Encode
-    _zn_forget_pub_decl_encode(&buf, e_hdr, &e_fpd);
+    assert(_zn_forget_pub_decl_encode(&buf, e_hdr, &e_fpd) == 0);
 
     // Decode
     _zn_forget_pub_decl_result_t r_fpd = _zn_forget_pub_decl_decode(&buf, e_hdr);
@@ -987,7 +987,7 @@ void forget_subscriber_declaration()
     _zn_forget_sub_decl_t e_fsd = gen_forget_subscriber_declaration(&e_hdr);
 
     // Encode
-    _zn_forget_sub_decl_encode(&buf, e_hdr, &e_fsd);
+    assert(_zn_forget_sub_decl_encode(&buf, e_hdr, &e_fsd) == 0);
 
     // Decode
     _zn_forget_sub_decl_result_t r_fsd = _zn_forget_sub_decl_decode(&buf, e_hdr);
@@ -1029,7 +1029,7 @@ void forget_queryable_declaration()
     _zn_forget_qle_decl_t e_fqd = gen_forget_queryable_declaration(&e_hdr);
 
     // Encode
-    _zn_forget_qle_decl_encode(&buf, e_hdr, &e_fqd);
+    assert(_zn_forget_qle_decl_encode(&buf, e_hdr, &e_fqd) == 0);
 
     // Decode
     _zn_forget_qle_decl_result_t r_fqd = _zn_forget_qle_decl_decode(&buf, e_hdr);
@@ -1164,7 +1164,7 @@ void declare_message()
     _zn_declare_t e_dcl = gen_declare_message();
 
     // Encode
-    _zn_declare_encode(&buf, &e_dcl);
+    assert(_zn_declare_encode(&buf, &e_dcl) == 0);
 
     // Decode
     _zn_declare_result_t r_dcl = _zn_declare_decode(&buf);
@@ -1222,7 +1222,7 @@ void data_message()
     _zn_data_t e_da = gen_data_message(&e_hdr);
 
     // Encode
-    _zn_data_encode(&buf, e_hdr, &e_da);
+    assert(_zn_data_encode(&buf, e_hdr, &e_da) == 0);
 
     // Decode
     _zn_data_result_t r_da = _zn_data_decode(&buf, e_hdr);
@@ -1282,7 +1282,7 @@ void pull_message()
     _zn_pull_t e_pu = gen_pull_message(&e_hdr);
 
     // Encode
-    _zn_pull_encode(&buf, e_hdr, &e_pu);
+    assert(_zn_pull_encode(&buf, e_hdr, &e_pu) == 0);
 
     // Decode
     _zn_pull_result_t r_pu = _zn_pull_decode(&buf, e_hdr);
@@ -1360,7 +1360,7 @@ void query_message()
     _zn_query_t e_qy = gen_query_message(&e_hdr);
 
     // Encode
-    _zn_query_encode(&buf, e_hdr, &e_qy);
+    assert(_zn_query_encode(&buf, e_hdr, &e_qy) == 0);
 
     // Decode
     _zn_query_result_t r_qy = _zn_query_decode(&buf, e_hdr);
@@ -1522,7 +1522,7 @@ void zenoh_message()
     printf("\n");
 
     // Encode
-    _zn_zenoh_message_encode(&buf, e_zm);
+    assert(_zn_zenoh_message_encode(&buf, e_zm) == 0);
 
     // Decode
     _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&buf);
@@ -1579,7 +1579,7 @@ void scout_message()
     _zn_scout_t e_sc = gen_scout_message(&e_hdr);
 
     // Encode
-    _zn_scout_encode(&buf, e_hdr, &e_sc);
+    assert(_zn_scout_encode(&buf, e_hdr, &e_sc) == 0);
 
     // Decode
     _zn_scout_result_t r_sc = _zn_scout_decode(&buf, e_hdr);
@@ -1651,7 +1651,7 @@ void hello_message()
     _zn_hello_t e_he = gen_hello_message(&e_hdr);
 
     // Encode
-    _zn_hello_encode(&buf, e_hdr, &e_he);
+    assert(_zn_hello_encode(&buf, e_hdr, &e_he) == 0);
 
     // Decode
     _zn_hello_result_t r_he = _zn_hello_decode(&buf, e_hdr);
@@ -1736,7 +1736,7 @@ void open_message()
     _zn_open_t e_op = gen_open_message(&e_hdr);
 
     // Encode
-    _zn_open_encode(&buf, e_hdr, &e_op);
+    assert(_zn_open_encode(&buf, e_hdr, &e_op) == 0);
 
     // Decode
     _zn_open_result_t r_op = _zn_open_decode(&buf, e_hdr);
@@ -1820,7 +1820,7 @@ void accept_message()
     _zn_accept_t e_ac = gen_accept_message(&e_hdr);
 
     // Encode
-    _zn_accept_encode(&buf, e_hdr, &e_ac);
+    assert(_zn_accept_encode(&buf, e_hdr, &e_ac) == 0);
 
     // Decode
     _zn_accept_result_t r_ac = _zn_accept_decode(&buf, e_hdr);
@@ -1874,7 +1874,7 @@ void close_message()
     _zn_close_t e_cl = gen_close_message(&e_hdr);
 
     // Encode
-    _zn_close_encode(&buf, e_hdr, &e_cl);
+    assert(_zn_close_encode(&buf, e_hdr, &e_cl) == 0);
 
     // Decode
     _zn_close_result_t r_cl = _zn_close_decode(&buf, e_hdr);
@@ -1931,7 +1931,7 @@ void sync_message()
     _zn_sync_t e_sy = gen_sync_message(&e_hdr);
 
     // Encode
-    _zn_sync_encode(&buf, e_hdr, &e_sy);
+    assert(_zn_sync_encode(&buf, e_hdr, &e_sy) == 0);
 
     // Decode
     _zn_sync_result_t r_sy = _zn_sync_decode(&buf, e_hdr);
@@ -1984,7 +1984,7 @@ void ack_nack_message()
     _zn_ack_nack_t e_an = gen_ack_nack_message(&e_hdr);
 
     // Encode
-    _zn_ack_nack_encode(&buf, e_hdr, &e_an);
+    assert(_zn_ack_nack_encode(&buf, e_hdr, &e_an) == 0);
 
     // Decode
     _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(&buf, e_hdr);
@@ -2038,7 +2038,7 @@ void keep_alive_message()
     _zn_keep_alive_t e_ka = gen_keep_alive_message(&e_hdr);
 
     // Encode
-    _zn_keep_alive_encode(&buf, e_hdr, &e_ka);
+    assert(_zn_keep_alive_encode(&buf, e_hdr, &e_ka) == 0);
 
     // Decode
     _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(&buf, e_hdr);
@@ -2080,7 +2080,7 @@ void ping_pong_message()
     _zn_ping_pong_t e_pp = gen_ping_pong_message(&e_hdr);
 
     // Encode
-    _zn_ping_pong_encode(&buf, &e_pp);
+    assert(_zn_ping_pong_encode(&buf, &e_pp) == 0);
 
     // Decode
     _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(&buf);
@@ -2155,7 +2155,7 @@ void frame_message()
     _zn_frame_t e_fr = gen_frame_message(&e_hdr);
 
     // Encode
-    _zn_frame_encode(&buf, e_hdr, &e_fr);
+    assert(_zn_frame_encode(&buf, e_hdr, &e_fr) == 0);
 
     // Decode
     _zn_frame_result_t r_fr = _zn_frame_decode(&buf, e_hdr);
@@ -2309,7 +2309,7 @@ void session_message()
     printf("\n");
 
     // Encode
-    _zn_session_message_encode(&buf, e_sm);
+    assert(_zn_session_message_encode(&buf, e_sm) == 0);
 
     // Decode
     _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&buf);
@@ -2342,7 +2342,7 @@ void batch()
         // Initialize random session message
         e_sm[i] = gen_session_message();
         // Encode
-        _zn_session_message_encode(&buf, e_sm[i]);
+        assert(_zn_session_message_encode(&buf, e_sm[i]) == 0);
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
     {
@@ -2352,14 +2352,14 @@ void batch()
         e_sm[i]->header = _ZN_MID_FRAME;
         e_sm[i]->body.frame = gen_frame_message(&e_sm[i]->header);
         // Encode
-        _zn_session_message_encode(&buf, e_sm[i]);
+        assert(_zn_session_message_encode(&buf, e_sm[i]) == 0);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
     {
         // Initialize random session message
         e_sm[i] = gen_session_message();
         // Encode
-        _zn_session_message_encode(&buf, e_sm[i]);
+        assert(_zn_session_message_encode(&buf, e_sm[i]) == 0);
     }
 
     // Decode
