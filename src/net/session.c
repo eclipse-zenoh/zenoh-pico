@@ -390,8 +390,8 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.value.session->sn_rx_reliable = p_am->body.accept.initial_sn;
         r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn;
 
-        // Initialize the Peer IDs
-        r.value.session->local_pid = pid;
+        // Initialize the Local and Remote Peer IDs
+        ARRAY_S_COPY(uint8_t, r.value.session->local_pid, pid);
         ARRAY_S_COPY(uint8_t, r.value.session->remote_pid, r_msg.value.session_message->body.accept.apid);
 
         r.value.session->locator = strdup(locator);
@@ -444,7 +444,9 @@ int zn_close(zn_session_t *z)
     _zn_session_message_t cm;
     _ZN_INIT_S_MSG(cm);
     cm.header = _ZN_MID_CLOSE;
+    cm.body.close.pid = z->local_pid;
     cm.body.close.reason = _ZN_CLOSE_GENERIC;
+    _ZN_SET_FLAG(cm.header, _ZN_FLAG_S_I);
     // NOTE: we are closing the whole zenoh session.
     //       So, the K flag in the close message is set to 0
     int rv = _zn_send_s_msg(z, &cm);
