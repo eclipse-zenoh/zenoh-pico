@@ -205,7 +205,8 @@ typedef struct
 
     z_list_t *local_subscriptions;
     z_list_t *remote_subscriptions;
-    z_i_map_t *rem_loc_sub_map;
+
+    z_i_map_t *rem_res_loc_sub_map;
 
     z_list_t *local_publishers;
     z_list_t *local_queryables;
@@ -241,6 +242,7 @@ typedef struct
 typedef struct
 {
     zn_session_t *z;
+    zn_sub_info_t info;
     zn_res_key_t key;
     z_zint_t id;
 } zn_sub_t;

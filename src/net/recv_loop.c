@@ -548,7 +548,7 @@ void *zn_recv_loop(zn_session_t *z)
                 // Free the memory
                 _zn_session_message_free(r.value.session_message);
                 // Exit if error
-                if (res != 0)
+                if (res != Z_RECV_OK)
                     goto EXIT_RECV_LOOP;
             }
             else

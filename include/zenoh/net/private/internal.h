@@ -18,6 +18,9 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
 
+#define _ZN_IS_REMOTE 0
+#define _ZN_IS_LOCAL 1
+
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
 int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);
@@ -30,17 +33,17 @@ z_zint_t _zn_get_entity_id(zn_session_t *z);
 
 /*------------------ Resource ------------------*/
 z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key);
-_zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t rid);
-_zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key);
+_zn_res_decl_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
+_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
 int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_res_key_t *res_key);
 void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *res);
 
 /*------------------ Subscription ------------------*/
 z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_key_t *res_key);
-_zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id);
-_zn_sub_t *_zn_get_subscription_by_key(z_list_t *subscriptions, const zn_res_key_t *res_key);
-int _zn_register_subscription(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key, zn_data_handler_t data_handler, void *arg);
-void _zn_unregister_subscription(zn_sub_t *s);
+_zn_sub_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
+_zn_sub_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
+int _zn_register_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
+void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
 
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
 // z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);

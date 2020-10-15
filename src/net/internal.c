@@ -215,7 +215,7 @@ z_zint_t _zn_get_entity_id(zn_session_t *z)
 /*------------------ Resource ------------------*/
 z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key)
 {
-    _zn_res_decl_t *res_decl = _zn_get_resource_by_key(z->local_resources, res_key);
+    _zn_res_decl_t *res_decl = _zn_get_resource_by_key(z, _ZN_IS_LOCAL, res_key);
     if (res_decl)
     {
         return res_decl->id;
@@ -223,7 +223,7 @@ z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key)
     else
     {
         z_zint_t id = z->resource_id++;
-        while (_zn_get_resource_by_id(z->local_resources, id) != 0)
+        while (_zn_get_resource_by_id(z, _ZN_IS_LOCAL, id) != 0)
         {
             id++;
         }
@@ -232,15 +232,16 @@ z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key)
     }
 }
 
-const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key_t *res_key)
+const char *_zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key)
 {
     char *rname = NULL;
 
+    z_list_t *resources = is_local ? z->local_resources : z->remote_resources;
     if (resources)
     {
         z_list_t *strs = z_list_empty;
         z_zint_t rid = res_key->rid;
-        _zn_res_decl_t *decl = _zn_get_resource_by_id(resources, rid);
+        _zn_res_decl_t *decl = _zn_get_resource_by_id(z, is_local, rid);
 
         // Travel all the matching RID to reconstruct the full resource name
         size_t len = 0;
@@ -252,7 +253,7 @@ const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key
             if (decl->id == ZN_NO_RESOURCE_ID)
                 break;
 
-            decl = _zn_get_resource_by_id(resources, decl->key.rid);
+            decl = _zn_get_resource_by_id(z, is_local, decl->key.rid);
         }
 
         if (strs)
@@ -272,55 +273,45 @@ const char *_zn_get_resource_name_from_key(z_list_t *resources, const zn_res_key
     return rname;
 }
 
-_zn_res_decl_t *_zn_get_resource_by_id(z_list_t *resources, z_zint_t id)
+_zn_res_decl_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t id)
 {
-    z_list_t *decls = resources;
-    _zn_res_decl_t *decl;
+    z_list_t *decls = is_local ? z->local_resources : z->remote_resources;
+    _zn_res_decl_t *decl = NULL;
     while (decls)
     {
-        decl = (_zn_res_decl_t *)z_list_head(resources);
+        decl = (_zn_res_decl_t *)z_list_head(decls);
 
         if (decl->id == id)
-            return decl;
+            break;
 
         decls = z_list_tail(decls);
     }
 
-    return NULL;
+    return decl;
 }
 
-_zn_res_decl_t *_zn_get_resource_by_key(z_list_t *resources, const zn_res_key_t *res_key)
+_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key)
 {
-    z_list_t *decls = resources;
-    _zn_res_decl_t *decl;
+    z_list_t *decls = is_local ? z->local_resources : z->remote_resources;
+    _zn_res_decl_t *decl = NULL;
     while (decls)
     {
         decl = (_zn_res_decl_t *)z_list_head(decls);
 
         if (decl->key.rid == res_key->rid && strcmp(decl->key.rname, res_key->rname) == 0)
-            return decl;
+            break;
 
         decls = z_list_tail(decls);
     }
 
-    return NULL;
+    return decl;
 }
 
 int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key)
 {
     _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%s)\n", res_key->rid, res_key->rname);
-    _zn_res_decl_t *rd_rid;
-    _zn_res_decl_t *rd_key;
-    if (is_local)
-    {
-        rd_rid = _zn_get_resource_by_id(z->local_resources, id);
-        rd_key = _zn_get_resource_by_key(z->local_resources, res_key);
-    }
-    else
-    {
-        rd_rid = _zn_get_resource_by_id(z->remote_resources, id);
-        rd_key = _zn_get_resource_by_key(z->remote_resources, res_key);
-    }
+    _zn_res_decl_t *rd_rid = _zn_get_resource_by_id(z, is_local, id);
+    _zn_res_decl_t *rd_key = _zn_get_resource_by_key(z, is_local, res_key);
 
     if (!rd_rid && !rd_key)
     {
@@ -375,7 +366,7 @@ z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_ke
     // First try to get the remote id->local subscription mapping if numeric-only resources
     if (!res_key->rname)
     {
-        _zn_sub_t *sub = (_zn_sub_t *)z_i_map_get(z->rem_loc_sub_map, res_key->rid);
+        _zn_sub_t *sub = (_zn_sub_t *)z_i_map_get(z->rem_res_loc_sub_map, res_key->rid);
         if (sub)
             return z_list_cons(xs, sub);
         else
@@ -383,7 +374,7 @@ z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_ke
     }
 
     // If no mapping was found, then try to get a remote resource declaration
-    _zn_res_decl_t *remote = _zn_get_resource_by_id(z->remote_resources, res_key->rid);
+    _zn_res_decl_t *remote = _zn_get_resource_by_id(z, _ZN_IS_REMOTE, res_key->rid);
     if (!remote)
     {
         // No remote resource was found matching the provided id, return empty list
@@ -391,7 +382,7 @@ z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_ke
     }
 
     // Check if there is a local subscriptions matching the remote resource declaration
-    _zn_res_decl_t *local = _zn_get_resource_by_key(z->local_resources, &remote->key);
+    _zn_res_decl_t *local = _zn_get_resource_by_key(z, _ZN_IS_LOCAL, &remote->key);
     if (!local)
     {
         // No local resource was found matching the provided key, return empty list
@@ -425,9 +416,9 @@ z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_ke
     return xs;
 }
 
-_zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id)
+_zn_sub_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id)
 {
-    z_list_t *subs = subscriptions;
+    z_list_t *subs = is_local ? z->local_subscriptions : z->remote_subscriptions;
     _zn_sub_t *sub;
     while (subs)
     {
@@ -442,9 +433,10 @@ _zn_sub_t *_zn_get_subscription_by_id(z_list_t *subscriptions, z_zint_t id)
     return NULL;
 }
 
-_zn_sub_t *_zn_get_subscription_by_key(z_list_t *subscriptions, const zn_res_key_t *res_key)
+_zn_sub_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key)
 {
-    z_list_t *subs = subscriptions;
+    z_list_t *subs = is_local ? z->local_subscriptions : z->remote_subscriptions;
+
     _zn_sub_t *sub;
     while (subs)
     {
@@ -459,46 +451,48 @@ _zn_sub_t *_zn_get_subscription_by_key(z_list_t *subscriptions, const zn_res_key
     return NULL;
 }
 
-int _zn_register_subscription(zn_session_t *z, int is_local, z_zint_t id, const zn_res_key_t *res_key, zn_data_handler_t data_handler, void *arg)
+int _zn_register_subscription(zn_session_t *z, int is_local, _zn_sub_t *sub)
 {
     _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", res_key->rid, res_key->rname);
 
-    _zn_res_decl_t *sb_key;
+    _zn_sub_t *s = _zn_get_subscription_by_id(z, is_local, sub->id);
+    if (s)
+    {
+        // A subscription for this id already exists, return
+        return -1;
+    }
+
+    s = _zn_get_subscription_by_key(z, is_local, &sub->key);
+    if (s)
+    {
+        // A subscription for this key already exists, return
+        return -1;
+    }
+
+    // Register the new subscription
+    s = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
+
+    s->id = sub->id;
+    s->key.rid = sub->key.rid;
+    if (sub->key.rname)
+        s->key.rname = strdup(sub->key.rname);
+    else
+        s->key.rname = NULL;
+    memcpy(&s->info, &sub->info, sizeof(zn_sub_info_t));
+    s->data_handler = sub->data_handler;
+    s->arg = sub->arg;
+
     if (is_local)
-        sb_key = _zn_get_resource_by_key(z->local_subscriptions, res_key);
+        z->local_subscriptions = z_list_cons(z->local_subscriptions, s);
     else
-        sb_key = _zn_get_resource_by_key(z->remote_subscriptions, res_key);
+        z->remote_subscriptions = z_list_cons(z->remote_subscriptions, s);
 
-    if (sb_key)
-    {
-        // A subscription for this key already exist, return
-        return 1;
-    }
-    else
-    {
-        _zn_sub_t *sub = (_zn_sub_t *)malloc(sizeof(_zn_sub_t));
-
-        sub->id = id;
-        sub->key.rid = res_key->rid;
-        if (res_key->rname)
-            sub->key.rname = strdup(res_key->rname);
-        else
-            sub->key.rname = NULL;
-        sub->data_handler = data_handler;
-        sub->arg = arg;
-
-        if (is_local)
-            z->local_subscriptions = z_list_cons(z->local_subscriptions, sub);
-        else
-            z->remote_subscriptions = z_list_cons(z->remote_subscriptions, sub);
-
-        return 0;
-    }
+    return 0;
 }
 
-int subscription_predicate(void *elem, void *arg)
+int _zn_subscription_predicate(void *elem, void *arg)
 {
-    zn_sub_t *s = (zn_sub_t *)arg;
+    _zn_sub_t *s = (_zn_sub_t *)arg;
     _zn_sub_t *sub = (_zn_sub_t *)elem;
     if (sub->id == s->id)
         return 1;
@@ -506,9 +500,12 @@ int subscription_predicate(void *elem, void *arg)
         return 0;
 }
 
-void _zn_unregister_subscription(zn_sub_t *s)
+void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_sub_t *s)
 {
-    s->z->local_subscriptions = z_list_remove(s->z->local_subscriptions, subscription_predicate, s);
+    if (is_local)
+        z->local_subscriptions = z_list_remove(z->local_subscriptions, _zn_subscription_predicate, s);
+    else
+        z->remote_subscriptions = z_list_remove(z->remote_subscriptions, _zn_subscription_predicate, s);
 }
 
 /*------------------ Queryable ------------------*/

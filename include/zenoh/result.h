@@ -19,6 +19,10 @@
 #define Z_ARRAY_PARSE_ERROR 0x02
 #define Z_STRING_PARSE_ERROR 0x03
 
+#define Z_RECV_OK 0
+#define Z_RECV_ERR -1
+#define Z_RECV_CLOSE 1
+
 #define RESULT_DECLARE(type, name, prefix) \
     typedef struct                         \
     {                                      \

@@ -14,8 +14,10 @@
 
 #include "zenoh/net/session.h"
 #include "zenoh/net/types.h"
+#include "zenoh/net/private/msg.h"
 #include "zenoh/net/private/session.h"
 #include "zenoh/net/private/sync.h"
+#include "zenoh/private/logging.h"
 
 void *zn_lease_loop(zn_session_t *z)
 {
@@ -49,7 +51,8 @@ void *zn_lease_loop(zn_session_t *z)
             // Check if received data
             if (z->received == 0)
             {
-                _zn_session_free(z);
+                _Z_DEBUG_VA("Closing session because it has expired after %zums", z->lease);
+                _zn_session_close(z, _ZN_CLOSE_EXPIRED);
                 return 0;
             }
 

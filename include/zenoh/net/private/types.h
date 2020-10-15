@@ -34,9 +34,16 @@ typedef struct
 {
     z_zint_t id;
     zn_res_key_t key;
+    zn_sub_info_t info;
     zn_data_handler_t data_handler;
     void *arg;
 } _zn_sub_t;
+
+// typedef struct
+// {
+//     zn_res_key_t key;
+//     zn_sub_info_t info;
+// } _zn_sub_rem_t;
 
 typedef struct
 {

@@ -370,7 +370,7 @@ typedef struct
 } _zn_accept_t;
 _ZN_RESULT_DECLARE(_zn_accept_t, accept)
 
-/*------------------  Close Message ------------------*/
+/*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -401,7 +401,7 @@ typedef struct
 } _zn_close_t;
 _ZN_RESULT_DECLARE(_zn_close_t, close)
 
-/*------------------  Sync Message ------------------*/
+/*------------------ Sync Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -431,7 +431,7 @@ typedef struct
 } _zn_sync_t;
 _ZN_RESULT_DECLARE(_zn_sync_t, sync)
 
-/*------------------  AckNack Message ------------------*/
+/*------------------ AckNack Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -457,7 +457,7 @@ typedef struct
 } _zn_ack_nack_t;
 _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 
-/*------------------  Keep Alive Message ------------------*/
+/*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -480,7 +480,7 @@ typedef struct
 } _zn_keep_alive_t;
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 
-/*------------------  PingPong Messages ------------------*/
+/*------------------ PingPong Messages ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -502,7 +502,7 @@ typedef struct
 } _zn_ping_pong_t;
 _ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 
-/*------------------  Frame Message ------------------*/
+/*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -544,7 +544,7 @@ typedef struct
 } _zn_frame_t;
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
 
-/*------------------  Session Message ------------------*/
+/*------------------ Session Message ------------------*/
 typedef struct
 {
     _zn_attachment_t *attachment;
@@ -568,7 +568,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 /*=============================*/
 /*       Zenoh Messages        */
 /*=============================*/
-/*------------------  ResKey Field ------------------*/
+/*------------------ ResKey Field ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
 // ~      RID      ~
@@ -578,7 +578,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 //
 // typdef struct { ... } zn_res_key_t; is defined in net/types.h
 
-/*------------------  Resource Declaration ------------------*/
+/*------------------ Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|   RES   |

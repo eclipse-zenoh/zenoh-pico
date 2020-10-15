@@ -18,6 +18,7 @@
 #include "zenoh/net/types.h"
 
 zn_session_t *_zn_session_init();
+void _zn_session_close(zn_session_t *z, unsigned int reason);
 void _zn_session_free(zn_session_t *z);
 
 int _zn_handle_session_message();
