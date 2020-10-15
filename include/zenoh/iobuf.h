@@ -37,9 +37,9 @@ uint8_t *z_iobuf_read_to_n(z_iobuf_t *buf, uint8_t *dest, size_t length);
 uint8_t z_iobuf_get(z_iobuf_t *buf, size_t pos);
 
 size_t z_iobuf_writable(const z_iobuf_t *buf);
-void z_iobuf_write(z_iobuf_t *buf, uint8_t b);
-void z_iobuf_write_slice(z_iobuf_t *buf, const uint8_t *bs, size_t offset, size_t length);
-void z_iobuf_write_bytes(z_iobuf_t *buf, const uint8_t *bs, size_t length);
+int z_iobuf_write(z_iobuf_t *buf, uint8_t b);
+int z_iobuf_write_slice(z_iobuf_t *buf, const uint8_t *bs, size_t offset, size_t length);
+int z_iobuf_write_bytes(z_iobuf_t *buf, const uint8_t *bs, size_t length);
 void z_iobuf_put(z_iobuf_t *buf, uint8_t b, size_t pos);
 
 void z_iobuf_clear(z_iobuf_t *buf);

@@ -55,24 +55,33 @@ size_t z_iobuf_writable(const z_iobuf_t *iob)
     return iob->capacity - iob->w_pos;
 }
 
-void z_iobuf_write(z_iobuf_t *iob, uint8_t b)
+int z_iobuf_write(z_iobuf_t *iob, uint8_t b)
 {
-    assert(iob->w_pos < iob->capacity);
+    if (iob->w_pos >= iob->capacity)
+        return -1;
+
     iob->buf[iob->w_pos++] = b;
+    return 0;
 }
 
-void z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length)
+int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length)
 {
-    assert(z_iobuf_writable(iob) >= length);
+    if (z_iobuf_writable(iob) < length)
+        return -1;
+
     memcpy(iob->buf + iob->w_pos, bs + offset, length);
     iob->w_pos += length;
+    return 0;
 }
 
-void z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length)
+int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length)
 {
-    assert(z_iobuf_writable(iob) >= length);
+    if (z_iobuf_writable(iob) < length)
+        return -1;
+
     memcpy(iob->buf + iob->w_pos, bs, length);
     iob->w_pos += length;
+    return 0;
 }
 
 uint8_t z_iobuf_read(z_iobuf_t *iob)
