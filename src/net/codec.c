@@ -18,10 +18,10 @@
 #include "zenoh/net/codec.h"
 #include "zenoh/net/property.h"
 
-void zn_property_encode(z_iobuf_t *buf, const zn_property_t *m)
+int zn_property_encode(z_iobuf_t *buf, const zn_property_t *m)
 {
-    z_zint_encode(buf, m->id);
-    z_uint8_array_encode(buf, &m->value);
+    ENC_CHK(z_zint_encode(buf, m->id))
+    return z_uint8_array_encode(buf, &m->value);
 }
 
 void zn_property_decode_na(z_iobuf_t *buf, zn_property_result_t *r)
@@ -44,23 +44,24 @@ zn_property_result_t zn_property_decode(z_iobuf_t *buf)
     return r;
 }
 
-void zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
+int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
 {
     zn_property_t *p;
     size_t l = z_vec_length(ps);
-    z_zint_encode(buf, l);
+    ENC_CHK(z_zint_encode(buf, l))
     for (size_t i = 0; i < l; ++i)
     {
         p = (zn_property_t *)z_vec_get(ps, i);
-        zn_property_encode(buf, p);
+        ENC_CHK(zn_property_encode(buf, p))
     }
+    return 0;
 }
 
-void zn_temporal_property_encode(z_iobuf_t *buf, const zn_temporal_property_t *tp)
+int zn_temporal_property_encode(z_iobuf_t *buf, const zn_temporal_property_t *tp)
 {
-    z_zint_encode(buf, tp->origin);
-    z_zint_encode(buf, tp->period);
-    z_zint_encode(buf, tp->duration);
+    ENC_CHK(z_zint_encode(buf, tp->origin))
+    ENC_CHK(z_zint_encode(buf, tp->period))
+    return z_zint_encode(buf, tp->duration);
 }
 
 void zn_temporal_property_decode_na(z_iobuf_t *buf, zn_temporal_property_result_t *r)

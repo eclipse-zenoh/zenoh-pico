@@ -20,13 +20,13 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 
-void z_zint_encode(z_iobuf_t *buf, z_zint_t v);
+int z_zint_encode(z_iobuf_t *buf, z_zint_t v);
 z_zint_result_t z_zint_decode(z_iobuf_t *buf);
 
-void z_uint8_array_encode(z_iobuf_t *buf, const z_uint8_array_t *bs);
+int z_uint8_array_encode(z_iobuf_t *buf, const z_uint8_array_t *bs);
 z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *buf);
 
-void z_string_encode(z_iobuf_t *buf, const char *s);
+int z_string_encode(z_iobuf_t *buf, const char *s);
 z_string_result_t z_string_decode(z_iobuf_t *buf);
 
 #endif /* ZENOH_C_CODEC_H */

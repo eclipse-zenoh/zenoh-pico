@@ -20,6 +20,12 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 
+#define ENC_CHK(fn) \
+    if (fn != 0)    \
+    {               \
+        return -1;  \
+    }
+
 #define ZN_DECLARE_FREE(name) \
     void zn_##name##_free(zn_##name##_t *m, uint8_t header)
 
@@ -27,10 +33,10 @@
     void zn_##name##_free(zn_##name##_t *m)
 
 #define ZN_DECLARE_ENCODE(name) \
-    void zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const zn_##name##_t *m)
+    int zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const zn_##name##_t *m)
 
 #define ZN_DECLARE_ENCODE_NOH(name) \
-    void zn_##name##_encode(z_iobuf_t *buf, const zn_##name##_t *m)
+    int zn_##name##_encode(z_iobuf_t *buf, const zn_##name##_t *m)
 
 #define ZN_DECLARE_DECODE(name)                                              \
     zn_##name##_result_t zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
@@ -46,6 +52,6 @@ ZN_DECLARE_DECODE_NOH(property);
 ZN_DECLARE_ENCODE_NOH(temporal_property);
 ZN_DECLARE_DECODE_NOH(temporal_property);
 
-void zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps);
+int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps);
 
 #endif /* ZENOH_C_NET_CODEC_H */

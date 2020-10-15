@@ -30,10 +30,10 @@
     void _zn_##name##_free(_zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE(name) \
-    void _zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const _zn_##name##_t *m)
+    int _zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const _zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE_NOH(name) \
-    void _zn_##name##_encode(z_iobuf_t *buf, const _zn_##name##_t *m)
+    int _zn_##name##_encode(z_iobuf_t *buf, const _zn_##name##_t *m)
 
 #define _ZN_DECLARE_DECODE(name)                                               \
     _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
