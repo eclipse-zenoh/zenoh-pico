@@ -28,7 +28,7 @@ int _zn_payload_encode(z_iobuf_t *buf, const _zn_payload_t *pld)
     // Encode the body
     z_zint_t len = z_iobuf_readable(pld);
     _ZN_EC(z_zint_encode(buf, len))
-    return z_iobuf_write_slice(buf, pld->buf, pld->r_pos, pld->w_pos);
+    return z_iobuf_write_slice(buf, pld->buf, pld->r_pos, len);
 }
 
 void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)

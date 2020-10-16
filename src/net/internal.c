@@ -32,7 +32,9 @@ void _zn_prepare_buf(z_iobuf_t *buf)
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_write(buf, 0);
+        z_iobuf_put(buf, 0, i);
+
+    buf->w_pos = _ZN_MSG_LEN_ENC_SIZE;
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
@@ -59,7 +61,13 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
     // Prepare the buffer eventually reserving space for the message length
     _zn_prepare_buf(&z->wbuf);
     // Encode the session message
-    _zn_session_message_encode(&z->wbuf, s_msg);
+    if (_zn_session_message_encode(&z->wbuf, s_msg) != 0)
+    {
+        _Z_DEBUG("Dropping session message because it is too large");
+        // Release the lock
+        _zn_mutex_unlock(&z->mutex_tx);
+        return -1;
+    }
     // Write the message legnth in the reserved space if needed
     _zn_finalize_buf(&z->wbuf);
     // Send the buffer on the socket
@@ -80,7 +88,7 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
 
     // Create the frame session message that carries the zenoh message
     _zn_session_message_t s_msg;
-    s_msg.attachment = NULL;
+    _ZN_INIT_S_MSG(s_msg)
     s_msg.header = _ZN_MID_FRAME;
     if (reliable)
     {
@@ -106,9 +114,21 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
     // Prepare the buffer eventually reserving space for the message length
     _zn_prepare_buf(&z->wbuf);
     // Encode the frame header
-    _zn_session_message_encode(&z->wbuf, &s_msg);
+    if (_zn_session_message_encode(&z->wbuf, &s_msg) != 0)
+    {
+        _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded");
+        // Release the lock
+        _zn_mutex_unlock(&z->mutex_tx);
+        return -1;
+    }
     // Encode the zenoh message
-    _zn_zenoh_message_encode(&z->wbuf, z_msg);
+    if (_zn_zenoh_message_encode(&z->wbuf, z_msg) != 0)
+    {
+        _Z_DEBUG("Dropping zenoh message because it is too large");
+        // Release the lock
+        _zn_mutex_unlock(&z->mutex_tx);
+        return -1;
+    }
     // Write the message legnth in the reserved space if needed
     _zn_finalize_buf(&z->wbuf);
     // Send the buffer on the socket
