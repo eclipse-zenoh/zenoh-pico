@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "zenoh/private/logging.h"
 #include "zenoh/net/private/codec.h"

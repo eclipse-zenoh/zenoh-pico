@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_MSG_H
 #define ZENOH_C_NET_MSG_H
 
+#include <stdint.h>
 #include "zenoh/net/private/types.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length

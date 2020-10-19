@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_TYPES_H_
 #define ZENOH_C_TYPES_H_
 
+#include <stdint.h>
 #include <stdlib.h>
 #include "zenoh/result.h"
 #include "zenoh/collection.h"
