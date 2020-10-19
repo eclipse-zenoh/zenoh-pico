@@ -42,7 +42,7 @@ void _zn_payload_decode_na(z_iobuf_t *buf, _zn_payload_result_t *r)
     z_zint_t len = r_zint.value.zint;
 
     uint8_t *bs = z_iobuf_read_n(buf, len);
-    r->value.payload = z_iobuf_wrap_wo(bs, len, 0, len);
+    r->value.payload = z_iobuf_wrap_wo(bs, len, 0, len - 1);
 }
 
 _zn_payload_result_t _zn_payload_decode(z_iobuf_t *buf)
@@ -196,7 +196,7 @@ void zn_res_key_free(zn_res_key_t *rk)
 /*------------------ Locators Field ------------------*/
 int _zn_locators_encode(z_iobuf_t *buf, const _zn_locators_t *ls)
 {
-    size_t len = z_vec_length(ls);
+    size_t len = z_vec_len(ls);
     _ZN_EC(z_zint_encode(buf, len))
     // Encode the locators
     for (size_t i = 0; i < len; ++i)
@@ -1687,7 +1687,7 @@ int _zn_frame_encode(z_iobuf_t *buf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        size_t len = z_vec_length(&msg->payload.messages);
+        size_t len = z_vec_len(&msg->payload.messages);
         for (size_t i = 0; i < len; ++i)
             _ZN_EC(_zn_zenoh_message_encode(buf, z_vec_get(&msg->payload.messages, i)))
 
@@ -1749,7 +1749,7 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
     }
     else
     {
-        for (size_t i = 0; i < z_vec_length(&msg->payload.messages); ++i)
+        for (size_t i = 0; i < z_vec_len(&msg->payload.messages); ++i)
             _zn_zenoh_message_free((_zn_zenoh_message_t *)z_vec_get(&msg->payload.messages, i));
         z_vec_free(&msg->payload.messages);
     }

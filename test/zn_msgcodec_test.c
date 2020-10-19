@@ -203,17 +203,17 @@ void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *r
 void assert_eq_string_vec(const z_vec_t *left, const z_vec_t *right)
 {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", z_vec_length(left), z_vec_length(right));
+    printf("Length (%zu:%zu), ", z_vec_len(left), z_vec_len(right));
 
-    assert(z_vec_length(left) == z_vec_length(right));
+    assert(z_vec_len(left) == z_vec_len(right));
     printf("Content (");
-    for (size_t i = 0; i < z_vec_length(left); ++i)
+    for (size_t i = 0; i < z_vec_len(left); ++i)
     {
         char *l = (char *)z_vec_get(left, i);
         char *r = (char *)z_vec_get(right, i);
 
         printf("%s:%s", l, r);
-        if (i < z_vec_length(left) - 1)
+        if (i < z_vec_len(left) - 1)
             printf(" ");
 
         assert(strcmp(l, r) == 0);
@@ -1191,7 +1191,7 @@ _zn_data_t gen_data_message(uint8_t *header)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_I);
     }
     _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-    e_da.payload = gen_payload(gen_uint8() % 64);
+    e_da.payload = gen_payload(1 + gen_uint8() % 64);
 
     return e_da;
 }
@@ -2135,8 +2135,8 @@ void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, 
     }
     else
     {
-        size_t l_len = z_vec_length(&left->payload.messages);
-        size_t r_len = z_vec_length(&right->payload.messages);
+        size_t l_len = z_vec_len(&left->payload.messages);
+        size_t r_len = z_vec_len(&right->payload.messages);
         printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 

@@ -452,7 +452,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
     {
         if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
-            size_t len = z_vec_length(&msg->body.frame.payload.messages);
+            size_t len = z_vec_len(&msg->body.frame.payload.messages);
             for (size_t i = 0; i < len; ++i)
             {
                 int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
@@ -505,7 +505,7 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
     z_vec_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
     free(laddr);
 
-    if (z_vec_length(&locs) == 0)
+    if (z_vec_len(&locs) == 0)
     {
         // We did not find a router on localhost, hence scout on the LAN
         struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
@@ -532,7 +532,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     if (!locator)
     {
         z_vec_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
-        if (z_vec_length(&locs) > 0)
+        if (z_vec_len(&locs) > 0)
         {
             locator = strdup((const char *)z_vec_get(&locs, 0));
             // Mark that the locator has been scouted, need to be freed before returning

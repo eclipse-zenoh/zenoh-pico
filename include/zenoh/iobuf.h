@@ -17,6 +17,7 @@
 
 #include "zenoh/types.h"
 
+/*------------------ IOBuf ------------------*/
 typedef struct
 {
     size_t r_pos;
@@ -28,22 +29,45 @@ typedef struct
 z_iobuf_t z_iobuf_make(size_t capacity);
 z_iobuf_t z_iobuf_wrap(uint8_t *buf, size_t capacity);
 z_iobuf_t z_iobuf_wrap_wo(uint8_t *buf, size_t capacity, size_t rpos, size_t wpos);
-z_uint8_array_t z_iobuf_to_array(z_iobuf_t *buf);
 
-size_t z_iobuf_readable(const z_iobuf_t *buf);
-uint8_t z_iobuf_read(z_iobuf_t *buf);
-uint8_t *z_iobuf_read_n(z_iobuf_t *buf, size_t length);
-uint8_t *z_iobuf_read_to_n(z_iobuf_t *buf, uint8_t *dest, size_t length);
-uint8_t z_iobuf_get(z_iobuf_t *buf, size_t pos);
+size_t z_iobuf_readable(const z_iobuf_t *iob);
+uint8_t z_iobuf_read(z_iobuf_t *iob);
+uint8_t *z_iobuf_read_n(z_iobuf_t *iob, size_t length);
+uint8_t *z_iobuf_read_to_n(z_iobuf_t *iob, uint8_t *dest, size_t length);
+uint8_t z_iobuf_get(z_iobuf_t *iob, size_t pos);
 
-size_t z_iobuf_writable(const z_iobuf_t *buf);
-int z_iobuf_write(z_iobuf_t *buf, uint8_t b);
-int z_iobuf_write_slice(z_iobuf_t *buf, const uint8_t *bs, size_t offset, size_t length);
-int z_iobuf_write_bytes(z_iobuf_t *buf, const uint8_t *bs, size_t length);
-void z_iobuf_put(z_iobuf_t *buf, uint8_t b, size_t pos);
+size_t z_iobuf_writable(const z_iobuf_t *iob);
+int z_iobuf_write(z_iobuf_t *iob, uint8_t b);
+int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length);
+int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length);
+void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos);
 
-void z_iobuf_clear(z_iobuf_t *buf);
-void z_iobuf_compact(z_iobuf_t *buf);
-void z_iobuf_free(z_iobuf_t *buf);
+void z_iobuf_clear(z_iobuf_t *iob);
+void z_iobuf_compact(z_iobuf_t *iob);
+void z_iobuf_free(z_iobuf_t *iob);
+
+/*------------------ WBuf ------------------*/
+typedef struct
+{
+    int is_expandable;
+    int is_contigous;
+    size_t idx;
+    size_t capacity;
+    z_vec_t iobs;
+} z_wbuf_t;
+
+z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable, int is_contigous);
+size_t z_iobuf_writable(const z_iobuf_t *iob);
+int z_iobuf_write(z_iobuf_t *iob, uint8_t b);
+int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length);
+int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length);
+void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos);
+
+/*------------------ RBuf ------------------*/
+// typedef struct
+// {
+//     size_t r_idx;
+//     z_vec_t slis;
+// } z_rbuf_t;
 
 #endif /* ZENOH_C_IOBUF_H_ */

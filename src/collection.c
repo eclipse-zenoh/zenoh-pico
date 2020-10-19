@@ -64,7 +64,7 @@ void z_vec_free(z_vec_t *v)
     z_vec_free_inner(v);
 }
 
-inline size_t z_vec_length(const z_vec_t *v) { return v->length_; }
+inline size_t z_vec_len(const z_vec_t *v) { return v->length_; }
 
 void z_vec_append(z_vec_t *v, void *e)
 {

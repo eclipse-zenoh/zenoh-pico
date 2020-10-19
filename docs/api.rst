@@ -122,7 +122,7 @@ Vectors
   a :c:member:`z_vec_t.length_` of **0** and a :c:member:`z_vec_t.elem_` pointing to a 
   newly allocated array of **capacity** pointers.
 
-.. c:function:: unsigned int z_vec_length(const z_vec_t* v)
+.. c:function:: unsigned int z_vec_len(const z_vec_t* v)
 
   Return the current length of the given :c:type:z_vec_t.
 

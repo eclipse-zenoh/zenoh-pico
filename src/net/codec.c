@@ -48,7 +48,7 @@ zn_property_result_t zn_property_decode(z_iobuf_t *buf)
 int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
 {
     zn_property_t *p;
-    size_t l = z_vec_length(ps);
+    size_t l = z_vec_len(ps);
     _ZN_EC(z_zint_encode(buf, l))
     for (size_t i = 0; i < l; ++i)
     {

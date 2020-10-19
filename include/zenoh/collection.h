@@ -111,7 +111,7 @@ z_vec_t z_vec_clone(const z_vec_t *v);
 void z_vec_free_inner(z_vec_t *v);
 void z_vec_free(z_vec_t *v);
 
-size_t z_vec_length(const z_vec_t *v);
+size_t z_vec_len(const z_vec_t *v);
 /*
  * Append an element ot the vector and takes ownership of the appended element.
  */
