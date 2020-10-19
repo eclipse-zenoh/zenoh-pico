@@ -64,10 +64,16 @@ int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length);
 void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos);
 
 /*------------------ RBuf ------------------*/
-// typedef struct
-// {
-//     size_t r_idx;
-//     z_vec_t slis;
-// } z_rbuf_t;
+typedef struct
+{
+    size_t r_idx;
+    z_vec_t slis;
+} z_rbuf_t;
+
+size_t z_rbuf_readable(const z_iobuf_t *iob);
+uint8_t z_iobuf_read(z_iobuf_t *iob);
+uint8_t *z_iobuf_read_to_n(z_iobuf_t *iob, uint8_t *dest, size_t length);
+uint8_t *z_iobuf_read_n(z_iobuf_t *iob, size_t length);
+uint8_t z_iobuf_get(z_iobuf_t *iob, size_t pos);
 
 #endif /* ZENOH_C_IOBUF_H_ */

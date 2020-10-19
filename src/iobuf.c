@@ -67,6 +67,7 @@ size_t z_iobuf_readable(const z_iobuf_t *iob)
 {
     return iob->w_pos - iob->r_pos;
 }
+
 size_t z_iobuf_writable(const z_iobuf_t *iob)
 {
     return iob->capacity - iob->w_pos;
@@ -217,9 +218,9 @@ int z_wbuf_write(z_wbuf_t *wb, uint8_t b)
             }
             else
             {
-                // Create a new slice
+                // Create a new iobuf
                 z_iobuf_t niob = z_iobuf_make(wb->capacity);
-                // Add the new slice to the current buffer
+                // Add the new iobuf to the current buffer
                 z_wbuf_add_iobuf(wb, &niob);
 
                 wb->idx++;
@@ -276,12 +277,12 @@ int z_wbuf_write_slice(z_wbuf_t *wb, const uint8_t *bs, size_t offset, size_t le
                 // Update the offset
                 offset += writable;
                 length -= writable;
-                // Create a new slice
-                z_iobuf_t nios = z_iobuf_make(wb->capacity);
-                // Add the new slice to the current buffer
-                z_wbuf_add_iosli(iob, &nios);
+                // Create a new iobuf
+                z_iobuf_t niob = z_iobuf_make(wb->capacity);
+                // Add the new iobuf to the current buffer
+                z_wbuf_add_iobuf(wb, &niob);
 
-                iob->idx++;
+                wb->idx++;
             }
         }
         else
@@ -296,21 +297,21 @@ int z_wbuf_write_bytes(z_wbuf_t *wb, const uint8_t *bs, size_t length)
     return z_wbuf_write_slice(wb, bs, 0, length);
 }
 
-// void z_wbuf_put(z_wbuf_t *iob, uint8_t b, size_t pos)
-// {
-//     size_t i = 0;
-//     do
-//     {
-//         z_iobuf_t *ios = (z_iobuf_t *)z_vec_get(&wb->iobs, i);
-//         if (pos < ios->capacity)
-//         {
-//             z_iobuf_put(ios, pos, b);
-//             return;
-//         }
+void z_wbuf_put(z_wbuf_t *wb, uint8_t b, size_t pos)
+{
+    size_t i = 0;
+    do
+    {
+        z_iobuf_t *iob = (z_iobuf_t *)z_vec_get(&wb->iobs, i);
+        if (pos < iob->capacity)
+        {
+            z_iobuf_put(iob, pos, b);
+            return;
+        }
 
-//         i++;
-//         pos -= ios->capacity;
-//     } while (1);
-// }
+        i++;
+        pos -= iob->capacity;
+    } while (1);
+}
 
 /*------------------ RBuf ------------------*/
