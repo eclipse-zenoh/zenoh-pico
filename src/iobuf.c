@@ -233,48 +233,68 @@ int z_wbuf_write(z_wbuf_t *wb, uint8_t b)
     } while (1);
 }
 
-// int z_wbuf_write_slice(z_wbuf_t *iob, const uint8_t *bs, size_t offset, size_t length)
-// {
-//     do
-//     {
-//         z_iobuf_t *ios = (z_iobuf_t *)z_vec_get(&wb->iobs, iob->idx);
-//         size_t writable = z_iobuf_writable(ios);
-//         size_t to_write = writable < length ? writable : length;
+int z_wbuf_write_slice(z_wbuf_t *wb, const uint8_t *bs, size_t offset, size_t length)
+{
+    do
+    {
+        z_iobuf_t *iob = (z_iobuf_t *)z_vec_get(&wb->iobs, wb->idx);
+        int res = z_iobuf_write_slice(iob, bs, offset, length);
 
-//         int res = z_iobuf_write_slice(ios, bs, offset, length);
-//         length -= to_write;
-//         offset += to_write;
+        if (res == 0)
+        {
+            return 0;
+        }
+        else if (wb->idx + 1 < z_vec_len(&wb->iobs))
+        {
+            wb->idx++;
+        }
+        else if (wb->is_expandable)
+        {
+            if (wb->is_contigous)
+            {
+                // Compute the new target size
+                size_t min_cap = iob->capacity + length - z_iobuf_writable(iob);
+                size_t new_cap = iob->capacity;
+                do
+                {
+                    new_cap += wb->capacity;
+                } while (new_cap < min_cap);
 
-//         if (res == 0 && length == 0)
-//         {
-//             return 0;
-//         }
-//         else if (iob->idx + 1 < z_vec_len(&wb->iobs))
-//         {
-//             iob->idx++;
-//         }
-//         else if (iob->is_expandable)
-//         {
-//             // Get the capacity of the first slice
-//             z_iobuf_t *fios = (z_iobuf_t *)z_vec_get(&wb->iobs, 0);
-//             // Create a new slice
-//             z_iobuf_t nios = z_iobuf_make(fios->capacity);
-//             // Add the new slice to the current buffer
-//             z_wbuf_add_iosli(iob, &nios);
+                // Resize
+                res = z_iobuf_resize(iob, new_cap);
+                if (res != 0)
+                    return -1;
+            }
+            else
+            {
+                // Write what remains here
+                size_t writable = z_iobuf_writable(iob);
+                int res = z_iobuf_write_slice(iob, bs, offset, writable);
+                if (res != 0)
+                    return -1;
 
-//             iob->idx++;
-//         }
-//         else
-//         {
-//             return -1;
-//         }
-//     } while (1);
-// }
+                // Update the offset
+                offset += writable;
+                length -= writable;
+                // Create a new slice
+                z_iobuf_t nios = z_iobuf_make(wb->capacity);
+                // Add the new slice to the current buffer
+                z_wbuf_add_iosli(iob, &nios);
 
-// int z_wbuf_write_bytes(z_wbuf_t *iob, const uint8_t *bs, size_t length)
-// {
-//     return z_wbuf_write_slice(iob, bs, 0, length);
-// }
+                iob->idx++;
+            }
+        }
+        else
+        {
+            return -1;
+        }
+    } while (1);
+}
+
+int z_wbuf_write_bytes(z_wbuf_t *wb, const uint8_t *bs, size_t length)
+{
+    return z_wbuf_write_slice(wb, bs, 0, length);
+}
 
 // void z_wbuf_put(z_wbuf_t *iob, uint8_t b, size_t pos)
 // {
