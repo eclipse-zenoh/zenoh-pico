@@ -16,11 +16,11 @@
 #include <assert.h>
 #include "zenoh/iobuf.h"
 
-/*------------------ IOBuf ------------------*/
-z_iobuf_t z_iobuf_wrap_wo(uint8_t *buf, size_t capacity, size_t rpos, size_t wpos)
+/*------------------ IOSli ------------------*/
+_z_iosli_t _z_iosli_wrap_wo(uint8_t *buf, size_t capacity, size_t rpos, size_t wpos)
 {
     assert(rpos < capacity && wpos < capacity);
-    z_iobuf_t iob;
+    _z_iosli_t iob;
     iob.r_pos = rpos;
     iob.w_pos = wpos;
     iob.capacity = capacity;
@@ -28,17 +28,17 @@ z_iobuf_t z_iobuf_wrap_wo(uint8_t *buf, size_t capacity, size_t rpos, size_t wpo
     return iob;
 }
 
-z_iobuf_t z_iobuf_wrap(uint8_t *buf, size_t capacity)
+_z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity)
 {
-    return z_iobuf_wrap_wo(buf, capacity, 0, 0);
+    return _z_iosli_wrap_wo(buf, capacity, 0, 0);
 }
 
-z_iobuf_t z_iobuf_make(size_t capacity)
+_z_iosli_t _z_iosli_make(size_t capacity)
 {
-    return z_iobuf_wrap((uint8_t *)malloc(capacity), capacity);
+    return _z_iosli_wrap((uint8_t *)malloc(capacity), capacity);
 }
 
-int z_iobuf_resize(z_iobuf_t *iob, size_t capacity)
+int _z_iosli_resize(_z_iosli_t *iob, size_t capacity)
 {
     assert(iob->w_pos < capacity && iob->r_pos < capacity);
 
@@ -54,7 +54,7 @@ int z_iobuf_resize(z_iobuf_t *iob, size_t capacity)
     }
 }
 
-void z_iobuf_free(z_iobuf_t *iob)
+void _z_iosli_free(_z_iosli_t *iob)
 {
     iob->r_pos = 0;
     iob->w_pos = 0;
@@ -63,17 +63,17 @@ void z_iobuf_free(z_iobuf_t *iob)
     iob = NULL;
 }
 
-size_t z_iobuf_readable(const z_iobuf_t *iob)
+size_t _z_iosli_readable(const _z_iosli_t *iob)
 {
     return iob->w_pos - iob->r_pos;
 }
 
-size_t z_iobuf_writable(const z_iobuf_t *iob)
+size_t _z_iosli_writable(const _z_iosli_t *iob)
 {
     return iob->capacity - iob->w_pos;
 }
 
-int z_iobuf_write(z_iobuf_t *iob, uint8_t b)
+int _z_iosli_write(_z_iosli_t *iob, uint8_t b)
 {
     if (iob->w_pos >= iob->capacity)
         return -1;
@@ -82,9 +82,9 @@ int z_iobuf_write(z_iobuf_t *iob, uint8_t b)
     return 0;
 }
 
-int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length)
+int _z_iosli_write_slice(_z_iosli_t *iob, const uint8_t *bs, size_t offset, size_t length)
 {
-    if (z_iobuf_writable(iob) < length)
+    if (_z_iosli_writable(iob) < length)
         return -1;
 
     memcpy(iob->buf + iob->w_pos, bs + offset, length);
@@ -92,50 +92,50 @@ int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t
     return 0;
 }
 
-int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length)
+int _z_iosli_write_bytes(_z_iosli_t *iob, const uint8_t *bs, size_t length)
 {
-    return z_iobuf_write_slice(iob, bs, 0, length);
+    return _z_iosli_write_slice(iob, bs, 0, length);
 }
 
-uint8_t z_iobuf_read(z_iobuf_t *iob)
+uint8_t _z_iosli_read(_z_iosli_t *iob)
 {
     assert(iob->r_pos < iob->w_pos);
     return iob->buf[iob->r_pos++];
 }
 
-uint8_t *z_iobuf_read_to_n(z_iobuf_t *iob, uint8_t *dst, size_t length)
+uint8_t *_z_iosli_read_to_n(_z_iosli_t *iob, uint8_t *dst, size_t length)
 {
-    assert(z_iobuf_readable(iob) >= length);
+    assert(_z_iosli_readable(iob) >= length);
     memcpy(dst, iob->buf + iob->r_pos, length);
     iob->r_pos += length;
     return dst;
 }
 
-uint8_t *z_iobuf_read_n(z_iobuf_t *iob, size_t length)
+uint8_t *_z_iosli_read_n(_z_iosli_t *iob, size_t length)
 {
     uint8_t *dst = (uint8_t *)malloc(length);
-    return z_iobuf_read_to_n(iob, dst, length);
+    return _z_iosli_read_to_n(iob, dst, length);
 }
 
-void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos)
+void _z_iosli_put(_z_iosli_t *iob, uint8_t b, size_t pos)
 {
     assert(pos < iob->capacity);
     iob->buf[pos] = b;
 }
 
-uint8_t z_iobuf_get(z_iobuf_t *iob, size_t pos)
+uint8_t _z_iosli_get(_z_iosli_t *iob, size_t pos)
 {
     assert(pos < iob->capacity);
     return iob->buf[pos];
 }
 
-void z_iobuf_clear(z_iobuf_t *iob)
+void _z_iosli_clear(_z_iosli_t *iob)
 {
     iob->r_pos = 0;
     iob->w_pos = 0;
 }
 
-void z_iobuf_compact(z_iobuf_t *iob)
+void _z_iosli_compact(_z_iosli_t *iob)
 {
     if (iob->r_pos == 0 && iob->w_pos == 0)
     {
@@ -148,12 +148,12 @@ void z_iobuf_compact(z_iobuf_t *iob)
     iob->w_pos = len;
 }
 
-/*------------------ WBuf ------------------*/
-int z_wbuf_add_iobuf(z_wbuf_t *wb, z_iobuf_t *iob)
+/*------------------ IOBuf ------------------*/
+int z_iobuf_add_iosli(z_iobuf_t *iob, _z_iosli_t *ios)
 {
-    if (wb->is_expandable && !wb->is_contigous)
+    if (z_iobuf_is_expandable(iob) && !z_iobuf_is_contigous(iob))
     {
-        z_vec_append(&wb->iobs, iob);
+        z_vec_append(&iob->ioss, ios);
         return 0;
     }
     else
@@ -162,68 +162,78 @@ int z_wbuf_add_iobuf(z_wbuf_t *wb, z_iobuf_t *iob)
     }
 }
 
-z_iobuf_t *z_wbuf_get_iobuf(z_wbuf_t *wb, unsigned int idx)
+_z_iosli_t *z_iobuf_get_iosli(z_iobuf_t *iob, unsigned int idx)
 {
-    return (z_iobuf_t *)z_vec_get(&wb->iobs, idx);
+    return (_z_iosli_t *)z_vec_get(&iob->ioss, idx);
 }
 
-z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable, int is_contigous)
+z_iobuf_t z_iobuf_make(size_t chunk, unsigned int mode)
 {
-    z_wbuf_t wb;
-    wb.is_expandable = is_expandable;
-    wb.is_contigous = is_contigous;
-    wb.capacity = capacity;
-    wb.idx = 0;
+    z_iobuf_t iob;
+    iob.mode = mode;
+    iob.r_idx = 0;
+    iob.w_idx = 0;
+    iob.chunk = chunk;
 
-    wb.iobs = z_vec_make(1);
-    z_iobuf_t iob = z_iobuf_make(capacity);
-    z_vec_append(&wb.iobs, &iob);
+    iob.ioss = z_vec_make(1);
+    _z_iosli_t ios = _z_iosli_make(chunk);
+    z_vec_append(&iob.ioss, &ios);
 
-    return wb;
+    return iob;
 }
 
-size_t z_wbuf_writable(const z_wbuf_t *wb)
+int z_iobuf_is_contigous(const z_iobuf_t *iob)
 {
-    size_t len = z_vec_len(&wb->iobs) - wb->idx;
+    return iob->mode & Z_IOBUF_MODE_CONTIGOUS;
+}
+
+int z_iobuf_is_expandable(const z_iobuf_t *iob)
+{
+    return iob->mode & Z_IOBUF_MODE_EXPANDABLE;
+}
+
+size_t z_iobuf_writable(const z_iobuf_t *iob)
+{
+    size_t len = z_vec_len(&iob->ioss) - iob->w_idx;
     size_t writable = 0;
-    for (size_t i = wb->idx; i < len; i++)
+    for (size_t i = iob->w_idx; i < len; i++)
     {
-        writable += z_iobuf_writable((z_iobuf_t *)z_vec_get(&wb->iobs, i));
+        writable += _z_iosli_writable((_z_iosli_t *)z_vec_get(&iob->ioss, i));
     }
 
     return writable;
 }
 
-int z_wbuf_write(z_wbuf_t *wb, uint8_t b)
+int z_iobuf_write(z_iobuf_t *iob, uint8_t b)
 {
     do
     {
-        z_iobuf_t *iob = (z_iobuf_t *)z_vec_get(&wb->iobs, wb->idx);
-        int res = z_iobuf_write(iob, b);
+        _z_iosli_t *ios = (_z_iosli_t *)z_vec_get(&iob->ioss, iob->w_idx);
+        int res = _z_iosli_write(ios, b);
         if (res == 0)
         {
             return 0;
         }
-        else if (wb->idx + 1 < z_vec_len(&wb->iobs))
+        else if (iob->w_idx + 1 < z_vec_len(&iob->ioss))
         {
-            wb->idx++;
+            iob->w_idx++;
         }
-        else if (wb->is_expandable)
+        else if (z_iobuf_is_expandable(iob))
         {
-            if (wb->is_contigous)
+            if (z_iobuf_is_contigous(iob))
             {
-                res = z_iobuf_resize(iob, iob->capacity + wb->capacity);
+                res = _z_iosli_resize(ios, ios->capacity + iob->chunk);
                 if (res != 0)
                     return -1;
             }
             else
             {
                 // Create a new iobuf
-                z_iobuf_t niob = z_iobuf_make(wb->capacity);
+                _z_iosli_t niob = _z_iosli_make(iob->chunk);
                 // Add the new iobuf to the current buffer
-                z_wbuf_add_iobuf(wb, &niob);
+                z_iobuf_add_iosli(iob, &niob);
 
-                wb->idx++;
+                iob->w_idx++;
             }
         }
         else
@@ -234,43 +244,43 @@ int z_wbuf_write(z_wbuf_t *wb, uint8_t b)
     } while (1);
 }
 
-int z_wbuf_write_slice(z_wbuf_t *wb, const uint8_t *bs, size_t offset, size_t length)
+int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length)
 {
     do
     {
-        z_iobuf_t *iob = (z_iobuf_t *)z_vec_get(&wb->iobs, wb->idx);
-        int res = z_iobuf_write_slice(iob, bs, offset, length);
+        _z_iosli_t *ios = (_z_iosli_t *)z_vec_get(&iob->ioss, iob->w_idx);
+        int res = _z_iosli_write_slice(ios, bs, offset, length);
 
         if (res == 0)
         {
             return 0;
         }
-        else if (wb->idx + 1 < z_vec_len(&wb->iobs))
+        else if (iob->w_idx + 1 < z_vec_len(&iob->ioss))
         {
-            wb->idx++;
+            iob->w_idx++;
         }
-        else if (wb->is_expandable)
+        else if (z_iobuf_is_expandable(iob))
         {
-            if (wb->is_contigous)
+            if (z_iobuf_is_contigous(iob))
             {
                 // Compute the new target size
-                size_t min_cap = iob->capacity + length - z_iobuf_writable(iob);
-                size_t new_cap = iob->capacity;
+                size_t min_cap = ios->capacity + length - _z_iosli_writable(ios);
+                size_t new_cap = iob->chunk;
                 do
                 {
-                    new_cap += wb->capacity;
+                    new_cap += iob->chunk;
                 } while (new_cap < min_cap);
 
                 // Resize
-                res = z_iobuf_resize(iob, new_cap);
+                res = _z_iosli_resize(ios, new_cap);
                 if (res != 0)
                     return -1;
             }
             else
             {
                 // Write what remains here
-                size_t writable = z_iobuf_writable(iob);
-                int res = z_iobuf_write_slice(iob, bs, offset, writable);
+                size_t writable = _z_iosli_writable(ios);
+                int res = _z_iosli_write_slice(ios, bs, offset, writable);
                 if (res != 0)
                     return -1;
 
@@ -278,11 +288,11 @@ int z_wbuf_write_slice(z_wbuf_t *wb, const uint8_t *bs, size_t offset, size_t le
                 offset += writable;
                 length -= writable;
                 // Create a new iobuf
-                z_iobuf_t niob = z_iobuf_make(wb->capacity);
+                _z_iosli_t niob = _z_iosli_make(iob->chunk);
                 // Add the new iobuf to the current buffer
-                z_wbuf_add_iobuf(wb, &niob);
+                z_iobuf_add_iosli(iob, &niob);
 
-                wb->idx++;
+                iob->w_idx++;
             }
         }
         else
@@ -292,26 +302,121 @@ int z_wbuf_write_slice(z_wbuf_t *wb, const uint8_t *bs, size_t offset, size_t le
     } while (1);
 }
 
-int z_wbuf_write_bytes(z_wbuf_t *wb, const uint8_t *bs, size_t length)
+int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length)
 {
-    return z_wbuf_write_slice(wb, bs, 0, length);
+    return z_iobuf_write_slice(iob, bs, 0, length);
 }
 
-void z_wbuf_put(z_wbuf_t *wb, uint8_t b, size_t pos)
+void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos)
 {
     size_t i = 0;
     do
     {
-        z_iobuf_t *iob = (z_iobuf_t *)z_vec_get(&wb->iobs, i);
-        if (pos < iob->capacity)
+        _z_iosli_t *ios = (_z_iosli_t *)z_vec_get(&iob->ioss, i);
+        if (pos < ios->capacity)
         {
-            z_iobuf_put(iob, pos, b);
+            _z_iosli_put(ios, pos, b);
             return;
         }
 
         i++;
-        pos -= iob->capacity;
+        pos -= ios->capacity;
     } while (1);
 }
 
-/*------------------ RBuf ------------------*/
+size_t z_iobuf_readable(const z_iobuf_t *iob)
+{
+    size_t len = z_vec_len(&iob->ioss) - iob->r_idx;
+    size_t readable = 0;
+    for (size_t i = iob->r_idx; i < len; i++)
+    {
+        readable += _z_iosli_readable((_z_iosli_t *)z_vec_get(&iob->ioss, i));
+    }
+
+    return readable;
+}
+
+uint8_t z_iobuf_read(z_iobuf_t *iob)
+{
+    _z_iosli_t *iosli;
+    do
+    {
+        iosli = (_z_iosli_t *)z_vec_get(&iob->ioss, iob->r_idx);
+        if (_z_iosli_readable(iosli) > 0)
+        {
+            return _z_iosli_read(iosli);
+        }
+        else
+        {
+            iob->r_idx++;
+        }
+    } while (1);
+}
+
+uint8_t *z_iobuf_read_to_n(z_iobuf_t *iob, uint8_t *dst, size_t length)
+{
+    uint8_t *w_pos = dst;
+    do
+    {
+        _z_iosli_t *ios = (_z_iosli_t *)z_vec_get(&iob->ioss, iob->r_idx);
+        size_t readbale = _z_iosli_readable(ios);
+        if (readbale > 0)
+        {
+            size_t to_read = readbale < length ? readbale : length;
+            _z_iosli_read_to_n(ios, w_pos, to_read);
+            length -= to_read;
+            w_pos += to_read;
+        }
+        else
+        {
+            iob->r_idx++;
+        }
+    } while (length > 0);
+
+    return dst;
+}
+
+uint8_t *z_iobuf_read_n(z_iobuf_t *iob, size_t length)
+{
+    uint8_t *dst = (uint8_t *)malloc(length);
+    return z_iobuf_read_to_n(iob, dst, length);
+}
+
+uint8_t z_iobuf_get(z_iobuf_t *iob, size_t pos)
+{
+    size_t i = 0;
+    do
+    {
+        _z_iosli_t *ios = (_z_iosli_t *)z_vec_get(&iob->ioss, i);
+        if (pos < ios->capacity)
+        {
+            return _z_iosli_get(ios, pos);
+        }
+
+        i++;
+        pos -= ios->capacity;
+    } while (1);
+}
+
+void z_iobuf_clear(z_iobuf_t *iob)
+{
+    iob->r_idx = 0;
+    iob->w_idx = 0;
+    for (size_t i = 0; i < z_vec_len(&iob->ioss); i++)
+        _z_iosli_clear((_z_iosli_t *)z_vec_get(&iob->ioss, i));
+}
+
+void z_iobuf_compact(z_iobuf_t *iob)
+{
+    assert(!z_iobuf_is_expandable(iob) || z_iobuf_is_contigous(iob));
+
+    for (size_t i = 0; i < z_vec_len(&iob->ioss); i++)
+        _z_iosli_compact((_z_iosli_t *)z_vec_get(&iob->ioss, i));
+}
+
+void z_iobuf_free(z_iobuf_t *iob)
+{
+    for (size_t i = 0; i < z_vec_len(&iob->ioss); i++)
+        _z_iosli_free((_z_iosli_t *)z_vec_get(&iob->ioss, i));
+    z_vec_free(&iob->ioss);
+}

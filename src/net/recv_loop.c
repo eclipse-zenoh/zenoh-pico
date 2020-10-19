@@ -56,38 +56,38 @@ typedef struct
 //         _Z_DEBUG_VA("[%d] - Payload Length: %zu\n", i, replies.elem[i]->length);
 //         _Z_DEBUG_VA("[%d] - Payload address: %p\n", i, (void *)replies.elem[i]->data);
 
-//         ph.payload = z_iobuf_wrap_wo((unsigned char *)replies.elem[i]->data, replies.elem[i]->length, 0, replies.elem[i]->length);
-//         z_iobuf_t buf = z_iobuf_make(replies.elem[i]->length + 32);
+//         ph.payload = _z_iosli_wrap_wo((unsigned char *)replies.elem[i]->data, replies.elem[i]->length, 0, replies.elem[i]->length);
+//         _z_iosli_t buf = _z_iosli_make(replies.elem[i]->length + 32);
 //         _zn_payload_header_encode(&buf, &ph);
 //         msg.payload.reply.payload_header = buf;
 
 //         if (_zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128) == 0)
 //         {
-//             z_iobuf_free(&buf);
+//             _z_iosli_free(&buf);
 //         }
 //         else
 //         {
 //             _Z_DEBUG("Trying to reconnect....\n");
 //             handle->z->on_disconnect(handle->z);
 //             _zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128);
-//             z_iobuf_free(&buf);
+//             _z_iosli_free(&buf);
 //         }
 //     }
 //     msg.payload.reply.rsn = rsn++;
 //     msg.payload.reply.rname = "";
-//     z_iobuf_t buf = z_iobuf_make(0);
+//     _z_iosli_t buf = _z_iosli_make(0);
 //     msg.payload.reply.payload_header = buf;
 
 //     if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) == 0)
 //     {
-//         z_iobuf_free(&buf);
+//         _z_iosli_free(&buf);
 //     }
 //     else
 //     {
 //         _Z_DEBUG("Trying to reconnect....\n");
 //         handle->z->on_disconnect(handle->z);
 //         _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
-//         z_iobuf_free(&buf);
+//         _z_iosli_free(&buf);
 //     }
 
 //     atomic_fetch_sub(&handle->nb_qhandlers, 1);
@@ -173,14 +173,14 @@ typedef struct
 //                 while (lit != z_list_empty)
 //                 {
 //                     sub = z_list_head(lit);
-//                     sub->data_handler(&rkey, r_ph.value.payload_header.payload.buf, z_iobuf_readable(&r_ph.value.payload_header.payload), &info, sub->arg);
+//                     sub->data_handler(&rkey, r_ph.value.payload_header.payload.buf, _z_iosli_readable(&r_ph.value.payload_header.payload), &info, sub->arg);
 //                     lit = z_list_tail(lit);
 //                 }
 //                 lit = stos;
 //                 while (lit != z_list_empty)
 //                 {
 //                     sto = z_list_head(lit);
-//                     sto->data_handler(&rkey, r_ph.value.payload_header.payload.buf, z_iobuf_readable(&r_ph.value.payload_header.payload), &info, sto->arg);
+//                     sto->data_handler(&rkey, r_ph.value.payload_header.payload.buf, _z_iosli_readable(&r_ph.value.payload_header.payload), &info, sto->arg);
 //                     lit = z_list_tail(lit);
 //                 }
 //                 free(r_ph.value.payload_header.payload.buf);
@@ -199,7 +199,7 @@ typedef struct
 //         {
 //             _Z_DEBUG_VA("No subscription found for resource %zu\n", r.value.message->payload.stream_data.rid);
 //         }
-//         z_iobuf_free(&r.value.message->payload.stream_data.payload_header);
+//         _z_iosli_free(&r.value.message->payload.stream_data.payload_header);
 //         break;
 //     case _ZN_COMPACT_DATA:
 //         _Z_DEBUG_VA("Received _Z_COMPACT_DATA message %d\n", _Z_MID(r.value.message->header));
@@ -228,7 +228,7 @@ typedef struct
 //                 sub->data_handler(
 //                     &rkey,
 //                     r.value.message->payload.compact_data.payload.buf,
-//                     z_iobuf_readable(&r.value.message->payload.compact_data.payload),
+//                     _z_iosli_readable(&r.value.message->payload.compact_data.payload),
 //                     &info,
 //                     sub->arg);
 //                 lit = z_list_tail(lit);
@@ -240,7 +240,7 @@ typedef struct
 //                 sto->data_handler(
 //                     &rkey,
 //                     r.value.message->payload.compact_data.payload.buf,
-//                     z_iobuf_readable(&r.value.message->payload.compact_data.payload),
+//                     _z_iosli_readable(&r.value.message->payload.compact_data.payload),
 //                     &info,
 //                     sto->arg);
 //                 lit = z_list_tail(lit);
@@ -274,7 +274,7 @@ typedef struct
 //                     sub->data_handler(
 //                         &rkey,
 //                         r_ph.value.payload_header.payload.buf,
-//                         z_iobuf_readable(&r_ph.value.payload_header.payload),
+//                         _z_iosli_readable(&r_ph.value.payload_header.payload),
 //                         &info,
 //                         sub->arg);
 //                     subs = z_list_tail(subs);
@@ -285,7 +285,7 @@ typedef struct
 //                     sto->data_handler(
 //                         &rkey,
 //                         r_ph.value.payload_header.payload.buf,
-//                         z_iobuf_readable(&r_ph.value.payload_header.payload),
+//                         _z_iosli_readable(&r_ph.value.payload_header.payload),
 //                         &info,
 //                         sto->arg);
 //                     stos = z_list_tail(stos);
@@ -299,7 +299,7 @@ typedef struct
 //         {
 //             _Z_DEBUG_VA("No subscription found for resource %s\n", r.value.message->payload.write_data.rname);
 //         }
-//         z_iobuf_free(&r.value.message->payload.write_data.payload_header);
+//         _z_iosli_free(&r.value.message->payload.write_data.payload_header);
 //         break;
 //     case _ZN_QUERY:
 //         _Z_DEBUG("Received _Z_QUERY message\n");
@@ -383,7 +383,7 @@ typedef struct
 //                             rvalue.info.tstamp = r_ph.value.payload_header.tstamp;
 //                         }
 //                         rvalue.data = r_ph.value.payload_header.payload.buf;
-//                         rvalue.data_length = z_iobuf_readable(&r_ph.value.payload_header.payload);
+//                         rvalue.data_length = _z_iosli_readable(&r_ph.value.payload_header.payload);
 //                     }
 //                     else
 //                     {
@@ -492,10 +492,10 @@ void *zn_recv_loop(zn_session_t *z)
     // Acquire and keep the lock
     _zn_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
-    z_iobuf_clear(&z->rbuf);
+    _z_iosli_clear(&z->rbuf);
     while (z->recv_loop_running)
     {
-        z_iobuf_compact(&z->rbuf);
+        _z_iosli_compact(&z->rbuf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -505,36 +505,36 @@ void *zn_recv_loop(zn_session_t *z)
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read number of bytes to read
-        while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+        while (_z_iosli_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
             if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
         // Decode the message length
-        size_t to_read = (size_t)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
+        size_t to_read = (size_t)((uint16_t)_z_iosli_read(&z->rbuf) | ((uint16_t)_z_iosli_read(&z->rbuf) << 8));
 
         // Read the rest of bytes to decode one or more session messages
-        while (z_iobuf_readable(&z->rbuf) < to_read)
+        while (_z_iosli_readable(&z->rbuf) < to_read)
         {
             if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
         // Wrap the main buffer for to_read bytes
-        z_iobuf_t rbuf = z_iobuf_wrap_wo((uint8_t *)(z->rbuf.buf + z->rbuf.r_pos), to_read, 0, to_read);
+        _z_iosli_t rbuf = _z_iosli_wrap_wo((uint8_t *)(z->rbuf.buf + z->rbuf.r_pos), to_read, 0, to_read);
 #else
         // Read bytes from the socket.
-        while (z_iobuf_readable(&z->rbuf) == 0)
+        while (_z_iosli_readable(&z->rbuf) == 0)
         {
             if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
-        z_iobuf_t rbuf = z->rbuf;
+        _z_iosli_t rbuf = z->rbuf;
 #endif
 
-        while (z_iobuf_readable(&rbuf) > 0)
+        while (_z_iosli_readable(&rbuf) > 0)
         {
             // Mark the session that we have received data
             z->received = 1;

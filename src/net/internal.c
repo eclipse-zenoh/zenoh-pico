@@ -21,9 +21,9 @@
 #include "zenoh/rname.h"
 
 /*------------------ Transmission and Reception helper ------------------*/
-void _zn_prepare_buf(z_iobuf_t *buf)
+void _zn_prepare_buf(_z_iosli_t *buf)
 {
-    z_iobuf_clear(buf);
+    _z_iosli_clear(buf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -32,13 +32,13 @@ void _zn_prepare_buf(z_iobuf_t *buf)
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_put(buf, 0, i);
+        _z_iosli_put(buf, 0, i);
 
     buf->w_pos = _ZN_MSG_LEN_ENC_SIZE;
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
-void _zn_finalize_buf(z_iobuf_t *buf)
+void _zn_finalize_buf(_z_iosli_t *buf)
 {
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -46,9 +46,9 @@ void _zn_finalize_buf(z_iobuf_t *buf)
     //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
-    size_t len = z_iobuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
+    size_t len = _z_iosli_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+        _z_iosli_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
@@ -150,7 +150,7 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
-    z_iobuf_clear(&z->rbuf);
+    _z_iosli_clear(&z->rbuf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -171,9 +171,9 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
     }
     z->rbuf.w_pos = _ZN_MSG_LEN_ENC_SIZE;
 
-    uint16_t len = z_iobuf_read(&z->rbuf) | (z_iobuf_read(&z->rbuf) << 8);
+    uint16_t len = _z_iosli_read(&z->rbuf) | (_z_iosli_read(&z->rbuf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
-    if (z_iobuf_writable(&z->rbuf) < len)
+    if (_z_iosli_writable(&z->rbuf) < len)
     {
         // Release the lock
         _zn_mutex_unlock(&z->mutex_rx);

@@ -65,15 +65,15 @@ int main(int argc, char **argv)
     ASSERT_P_RESULT(rp, "Unable to declare publisher.\n");
 
     // Create random data
-    z_iobuf_t data = z_iobuf_make(len);
+    _z_iosli_t data = _z_iosli_make(len);
     for (unsigned int i = 0; i < len; ++i)
-        z_iobuf_write(&data, i % 10);
+        _z_iosli_write(&data, i % 10);
 
     // Loop endessly and write data
     zn_res_key_t ri = zn_rid(res);
     while (1)
     {
-        zn_write(z, &ri, data.buf, z_iobuf_readable(&data));
+        zn_write(z, &ri, data.buf, _z_iosli_readable(&data));
     }
 
     return 0;

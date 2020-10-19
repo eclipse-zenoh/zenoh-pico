@@ -19,13 +19,13 @@
 #include "zenoh/net/private/codec.h"
 #include "zenoh/net/property.h"
 
-int zn_property_encode(z_iobuf_t *buf, const zn_property_t *m)
+int zn_property_encode(_z_iosli_t *buf, const zn_property_t *m)
 {
     _ZN_EC(z_zint_encode(buf, m->id))
     return z_uint8_array_encode(buf, &m->value);
 }
 
-void zn_property_decode_na(z_iobuf_t *buf, zn_property_result_t *r)
+void zn_property_decode_na(_z_iosli_t *buf, zn_property_result_t *r)
 {
     z_zint_result_t r_zint;
     z_uint8_array_result_t r_a8;
@@ -38,14 +38,14 @@ void zn_property_decode_na(z_iobuf_t *buf, zn_property_result_t *r)
     r->value.property.value = r_a8.value.uint8_array;
 }
 
-zn_property_result_t zn_property_decode(z_iobuf_t *buf)
+zn_property_result_t zn_property_decode(_z_iosli_t *buf)
 {
     zn_property_result_t r;
     zn_property_decode_na(buf, &r);
     return r;
 }
 
-int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
+int zn_properties_encode(_z_iosli_t *buf, const z_vec_t *ps)
 {
     zn_property_t *p;
     size_t l = z_vec_len(ps);
@@ -58,14 +58,14 @@ int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps)
     return 0;
 }
 
-int zn_temporal_property_encode(z_iobuf_t *buf, const zn_temporal_property_t *tp)
+int zn_temporal_property_encode(_z_iosli_t *buf, const zn_temporal_property_t *tp)
 {
     _ZN_EC(z_zint_encode(buf, tp->origin))
     _ZN_EC(z_zint_encode(buf, tp->period))
     return z_zint_encode(buf, tp->duration);
 }
 
-void zn_temporal_property_decode_na(z_iobuf_t *buf, zn_temporal_property_result_t *r)
+void zn_temporal_property_decode_na(_z_iosli_t *buf, zn_temporal_property_result_t *r)
 {
     r->tag = Z_OK_TAG;
     z_zint_result_t r_origin = z_zint_decode(buf);
@@ -80,7 +80,7 @@ void zn_temporal_property_decode_na(z_iobuf_t *buf, zn_temporal_property_result_
     r->value.temporal_property.duration = r_duration.value.zint;
 }
 
-zn_temporal_property_result_t zn_temporal_property_decode(z_iobuf_t *buf)
+zn_temporal_property_result_t zn_temporal_property_decode(_z_iosli_t *buf)
 {
     zn_temporal_property_result_t r;
     zn_temporal_property_decode_na(buf, &r);

@@ -244,9 +244,9 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 }
 
 /*------------------ Datagram ------------------*/
-int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *buf, const struct sockaddr *dest, socklen_t salen)
+int _zn_send_dgram_to(_zn_socket_t sock, const _z_iosli_t *buf, const struct sockaddr *dest, socklen_t salen)
 {
-    int len = z_iobuf_readable(buf);
+    int len = _z_iosli_readable(buf);
     uint8_t *ptr = buf->buf + buf->r_pos;
     int n = len;
     int wb;
@@ -261,7 +261,7 @@ int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *buf, const struct sock
     return wb;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *buf, struct sockaddr *from, socklen_t *salen)
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_iosli_t *buf, struct sockaddr *from, socklen_t *salen)
 {
     size_t writable = buf->capacity - buf->w_pos;
     uint8_t *cp = buf->buf + buf->w_pos;
@@ -289,7 +289,7 @@ int _zn_recv_n(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return 0;
 }
 
-int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf)
+int _zn_recv_buf(_zn_socket_t sock, _z_iosli_t *buf)
 {
     size_t writable = buf->capacity - buf->w_pos;
     uint8_t *cp = buf->buf + buf->w_pos;
@@ -300,9 +300,9 @@ int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf)
 }
 
 /*------------------ Send ------------------*/
-int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *buf)
+int _zn_send_buf(_zn_socket_t sock, const _z_iosli_t *buf)
 {
-    int len = z_iobuf_readable(buf);
+    int len = _z_iosli_readable(buf);
     uint8_t *ptr = buf->buf + buf->r_pos;
     int n = len;
     int wb;

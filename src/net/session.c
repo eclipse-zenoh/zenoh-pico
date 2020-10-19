@@ -33,8 +33,8 @@ zn_session_t *_zn_session_init()
     zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
 
     // Initialize the buffers
-    z->wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN);
-    z->rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN);
+    z->wbuf = _z_iosli_make(ZENOH_NET_WRITE_BUF_LEN);
+    z->rbuf = _z_iosli_make(ZENOH_NET_READ_BUF_LEN);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -88,8 +88,8 @@ void _zn_session_free(zn_session_t *z)
     _zn_mutex_free(&z->mutex_tx);
     _zn_mutex_free(&z->mutex_rx);
 
-    z_iobuf_free(&z->wbuf);
-    z_iobuf_free(&z->rbuf);
+    _z_iosli_free(&z->wbuf);
+    _z_iosli_free(&z->rbuf);
 
     free(z);
 }
@@ -141,12 +141,12 @@ void _zn_default_on_disconnect(void *vz)
 }
 
 /*------------------ Scout ------------------*/
-z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+z_vec_t _zn_scout_loop(_zn_socket_t socket, const _z_iosli_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
 {
     // @TODO: need to abstract the platform-specific data types
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
-    z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
+    _z_iosli_t hbuf = _z_iosli_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
     z_vec_t ls = z_vec_uninit();
 
     while (tries > 0)
@@ -156,7 +156,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
         // Send the scout message
         _zn_send_dgram_to(socket, sbuf, dest, salen);
         // Eventually read hello messages
-        z_iobuf_clear(&hbuf);
+        _z_iosli_clear(&hbuf);
         int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
 
         // Retry if we haven't received anything
@@ -208,7 +208,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
     }
 
     free(from);
-    z_iobuf_free(&hbuf);
+    _z_iosli_free(&hbuf);
 
     return ls;
 }
@@ -231,7 +231,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             sub->data_handler(
                 &sub->key,
                 msg->body.data.payload.buf,
-                z_iobuf_readable(&msg->body.data.payload),
+                _z_iosli_readable(&msg->body.data.payload),
                 &msg->body.data.info,
                 sub->arg);
 
@@ -488,7 +488,7 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
         is_auto = 1;
     }
 
-    z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
+    _z_iosli_t sbuf = _z_iosli_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
     _zn_session_message_t scout;
     _ZN_INIT_S_MSG(scout)
     scout.header = _ZN_MID_SCOUT;
@@ -515,7 +515,7 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
 
     if (is_auto)
         free(addr);
-    z_iobuf_free(&sbuf);
+    _z_iosli_free(&sbuf);
 
     return locs;
 }
@@ -586,7 +586,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     {
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
         om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
-        om.attachment->payload = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
+        om.attachment->payload = _z_iosli_make(ZENOH_NET_ATTACHMENT_BUF_LEN);
         zn_properties_encode(&om.attachment->payload, ps);
     }
 
@@ -1025,7 +1025,7 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     z_msg.body.data.info = info;
 
     // Set the payload
-    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+    z_msg.body.data.payload = _z_iosli_wrap_wo((unsigned char *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
@@ -1048,7 +1048,7 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
     _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
 
     // Set the payload
-    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+    z_msg.body.data.payload = _z_iosli_wrap_wo((unsigned char *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
