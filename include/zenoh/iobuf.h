@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_IOBUF_H_
 #define ZENOH_C_IOBUF_H_
 
+#include <stdint.h>
 #include "zenoh/types.h"
 
 /*------------------ IOBuf ------------------*/

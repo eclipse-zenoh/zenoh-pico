@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_MSGCODEC_H
 #define ZENOH_C_NET_MSGCODEC_H
 
+#include <stdint.h>
 #include "zenoh/net/codec.h"
 #include "zenoh/net/result.h"
 #include "zenoh/net/types.h"

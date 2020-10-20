@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdatomic.h>
 #include "zenoh/net/recv_loop.h"

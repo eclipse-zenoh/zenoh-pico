@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_TYPES_H_
 #define ZENOH_C_NET_TYPES_H_
 
+#include <stdint.h>
 #include <string.h>
 #include "zenoh/iobuf.h"
 #include "zenoh/net/result.h"
