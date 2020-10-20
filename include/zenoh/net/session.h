@@ -15,6 +15,7 @@
 #ifndef ZENOH_C_NET_SESSION_H
 #define ZENOH_C_NET_SESSION_H
 
+#include <stdint.h>
 #include "zenoh/net/types.h"
 
 /*------------------ Scout/Open/Close ------------------*/

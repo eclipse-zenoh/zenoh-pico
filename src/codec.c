@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "zenoh/codec.h"
 #include "zenoh/net/codec.h"

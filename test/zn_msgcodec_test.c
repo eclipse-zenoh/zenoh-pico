@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <time.h>
