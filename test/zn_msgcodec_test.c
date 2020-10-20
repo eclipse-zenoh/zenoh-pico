@@ -125,10 +125,27 @@ z_zint_t gen_zint()
     return (z_zint_t)rand();
 }
 
+z_iobuf_t gen_iobuf(size_t len)
+{
+    unsigned int mode = 0;
+    // if (gen_bool())
+    // {
+    mode |= Z_IOBUF_MODE_CONTIGOUS;
+    // }
+    // if (gen_bool())
+    // {
+    mode |= Z_IOBUF_MODE_EXPANDABLE;
+    len = 8;
+    // }
+
+    printf("   IOBuf: Contigous: %u, Expandable: %u\n", mode & Z_IOBUF_MODE_CONTIGOUS, mode & Z_IOBUF_MODE_EXPANDABLE);
+    return z_iobuf_make(len, mode);
+}
+
 _zn_payload_t gen_payload(size_t len)
 {
     _zn_payload_t pld;
-    pld = z_iobuf_make(len, Z_IOBUF_MODE_CONTIGOUS);
+    pld = gen_iobuf(len);
     for (z_zint_t i = 0; i < len; ++i)
         z_iobuf_write(&pld, gen_uint8());
 
@@ -153,7 +170,7 @@ uint64_t gen_time()
 
 char *gen_string(size_t size)
 {
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
     char *str = (char *)malloc((sizeof(char) * size) + 1);
     for (z_zint_t i = 0; i < size; ++i)
     {
@@ -176,7 +193,7 @@ z_vec_t gen_string_vec(size_t size)
 /*=============================*/
 /*     Asserting functions     */
 /*=============================*/
-void assert_eq_iosli(const z_iosli_t *left, const z_iosli_t *right)
+void assert_eq_iosli(z_iosli_t *left, z_iosli_t *right)
 {
     printf("IOSli -> ");
     printf("Capacity (%zu:%zu), ", left->capacity, right->capacity);
@@ -198,33 +215,30 @@ void assert_eq_iosli(const z_iosli_t *left, const z_iosli_t *right)
     printf(")");
 }
 
-void assert_eq_payload(const _zn_payload_t *left, const _zn_payload_t *right)
+void assert_eq_payload(_zn_payload_t *left, _zn_payload_t *right)
 {
     printf("Payload -> ");
-    printf("Mode (%u:%u), ", left->mode, right->mode);
+    size_t lreadable = z_iobuf_readable(left);
+    size_t rreadable = z_iobuf_readable(right);
+    printf("Readable (%zu:%zu), ", lreadable, rreadable);
 
-    assert(left->mode == right->mode);
-    if (z_iobuf_is_contigous(left))
+    assert(lreadable == rreadable);
+    printf("Content (");
+    for (size_t i = 0; i < lreadable; i++)
     {
-        assert_eq_iosli(&left->value.cios, &right->value.cios);
-    }
-    else
-    {
-        size_t llen = z_iobuf_len_iosli(left);
-        size_t rlen = z_iobuf_len_iosli(right);
-        printf("IOSli len (%zu:%zu), ", z_iobuf_len_iosli(left), z_iobuf_len_iosli(right));
-        assert(llen == rlen);
+        uint8_t l = z_iobuf_read(left);
+        uint8_t r = z_iobuf_read(right);
 
-        for (size_t i = 0; i < llen; i++)
-        {
-            z_iosli_t *lios = z_iobuf_get_iosli(left, i);
-            z_iosli_t *rios = z_iobuf_get_iosli(right, i);
-            assert_eq_iosli(lios, rios);
-        }
+        printf("%02x:%02x", l, r);
+        if (i < lreadable - 1)
+            printf(" ");
+
+        assert(l == r);
     }
+    printf(")");
 }
 
-void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *right)
+void assert_eq_uint8_array(z_uint8_array_t *left, z_uint8_array_t *right)
 {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->length, right->length);
@@ -245,7 +259,7 @@ void assert_eq_uint8_array(const z_uint8_array_t *left, const z_uint8_array_t *r
     printf(")");
 }
 
-void assert_eq_string_vec(const z_vec_t *left, const z_vec_t *right)
+void assert_eq_string_vec(z_vec_t *left, z_vec_t *right)
 {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", z_vec_len(left), z_vec_len(right));
@@ -273,7 +287,7 @@ void assert_eq_string_vec(const z_vec_t *left, const z_vec_t *right)
 void payload_field()
 {
     printf("\n>> Payload field\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     _zn_payload_t e_pld = gen_payload(64);
@@ -304,7 +318,7 @@ z_timestamp_t gen_timestamp()
     return ts;
 }
 
-void assert_eq_timestamp(const z_timestamp_t *left, const z_timestamp_t *right)
+void assert_eq_timestamp(z_timestamp_t *left, z_timestamp_t *right)
 {
     printf("Timestamp -> ");
     printf("Time (%llu:%llu), ", left->time, right->time);
@@ -318,7 +332,7 @@ void assert_eq_timestamp(const z_timestamp_t *left, const z_timestamp_t *right)
 void timestamp_field()
 {
     printf("\n>> Timestamp field\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     z_timestamp_t e_ts = gen_timestamp();
@@ -362,7 +376,7 @@ zn_sub_info_t gen_sub_info()
     return sm;
 }
 
-void assert_eq_sub_info(const zn_sub_info_t *left, const zn_sub_info_t *right)
+void assert_eq_sub_info(zn_sub_info_t *left, zn_sub_info_t *right)
 {
     printf("SubInfo -> ");
     printf("Mode (%u:%u), ", left->mode, right->mode);
@@ -396,18 +410,15 @@ void assert_eq_sub_info(const zn_sub_info_t *left, const zn_sub_info_t *right)
 void sub_info_field()
 {
     printf("\n>> SubInfo field\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
-    printf("Ready to generate\n");
     zn_sub_info_t e_sm = gen_sub_info();
 
     // Encode
-    printf("Ready to encode\n");
     uint8_t header = e_sm.is_reliable ? _ZN_FLAG_Z_R : 0;
     assert(zn_sub_info_encode(&buf, &e_sm) == 0);
 
-    printf("Ready to decode\n");
     // Decode
     zn_sub_info_result_t r_sm = zn_sub_info_decode(&buf, header);
     assert(r_sm.tag == Z_OK_TAG);
@@ -436,7 +447,7 @@ zn_res_key_t gen_res_key()
     return key;
 }
 
-void assert_eq_res_key(const zn_res_key_t *left, const zn_res_key_t *right, uint8_t header)
+void assert_eq_res_key(zn_res_key_t *left, zn_res_key_t *right, uint8_t header)
 {
     printf("ResKey -> ");
     printf("ID (%zu:%zu), ", left->rid, right->rid);
@@ -458,7 +469,7 @@ void assert_eq_res_key(const zn_res_key_t *left, const zn_res_key_t *right, uint
 void res_key_field()
 {
     printf("\n>> ResKey field\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     zn_res_key_t e_rk = gen_res_key();
@@ -527,7 +538,7 @@ zn_data_info_t gen_data_info()
     return di;
 }
 
-void assert_eq_data_info(const zn_data_info_t *left, const zn_data_info_t *right)
+void assert_eq_data_info(zn_data_info_t *left, zn_data_info_t *right)
 {
     printf("DataInfo -> ");
     printf("Flags (%zu:%zu), ", left->flags, right->flags);
@@ -576,7 +587,7 @@ void assert_eq_data_info(const zn_data_info_t *left, const zn_data_info_t *right
 void data_info_field()
 {
     printf("\n>> DataInfo field\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     zn_data_info_t e_di = gen_data_info();
@@ -602,7 +613,7 @@ void data_info_field()
 /*     Message decorators      */
 /*=============================*/
 /*------------------ Attachment decorator ------------------*/
-void print_attachment(const _zn_attachment_t *att)
+void print_attachment(_zn_attachment_t *att)
 {
     printf("      Header: %x\n", att->header);
     printf("      Payload: ");
@@ -621,7 +632,7 @@ _zn_attachment_t *gen_attachment()
     return p_at;
 }
 
-void assert_eq_attachment(const _zn_attachment_t *left, const _zn_attachment_t *right)
+void assert_eq_attachment(_zn_attachment_t *left, _zn_attachment_t *right)
 {
     printf("Header (%x:%x), ", left->header, right->header);
     assert(left->header == right->header);
@@ -631,7 +642,7 @@ void assert_eq_attachment(const _zn_attachment_t *left, const _zn_attachment_t *
 void attachment_decorator()
 {
     printf("\n>> Attachment decorator\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     _zn_attachment_t *e_at = gen_attachment();
@@ -657,7 +668,7 @@ void attachment_decorator()
 }
 
 /*------------------ ReplyContext decorator ------------------*/
-void print_reply_context(const _zn_reply_context_t *rc)
+void print_reply_context(_zn_reply_context_t *rc)
 {
     printf("      Header: %x\n", rc->header);
     printf("      QID: %zu\n", rc->qid);
@@ -690,7 +701,7 @@ _zn_reply_context_t *gen_reply_context()
     return p_rc;
 }
 
-void assert_eq_reply_context(const _zn_reply_context_t *left, const _zn_reply_context_t *right)
+void assert_eq_reply_context(_zn_reply_context_t *left, _zn_reply_context_t *right)
 {
     printf("Header (%x:%x), ", left->header, right->header);
     assert(left->header == right->header);
@@ -712,7 +723,7 @@ void assert_eq_reply_context(const _zn_reply_context_t *left, const _zn_reply_co
 void reply_contex_decorator()
 {
     printf("\n>> ReplyContext decorator\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     _zn_reply_context_t *e_rc = gen_reply_context();
@@ -752,7 +763,7 @@ _zn_res_decl_t gen_resource_declaration(uint8_t *header)
     return e_rd;
 }
 
-void assert_eq_resource_declaration(const _zn_res_decl_t *left, const _zn_res_decl_t *right, uint8_t header)
+void assert_eq_resource_declaration(_zn_res_decl_t *left, _zn_res_decl_t *right, uint8_t header)
 {
     printf("RID (%zu:%zu), ", left->id, right->id);
     assert(left->id == right->id);
@@ -762,7 +773,7 @@ void assert_eq_resource_declaration(const _zn_res_decl_t *left, const _zn_res_de
 void resource_declaration()
 {
     printf("\n>> Resource declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -796,7 +807,7 @@ _zn_pub_decl_t gen_publisher_declaration(uint8_t *header)
     return e_pd;
 }
 
-void assert_eq_publisher_declaration(const _zn_pub_decl_t *left, const _zn_pub_decl_t *right, uint8_t header)
+void assert_eq_publisher_declaration(_zn_pub_decl_t *left, _zn_pub_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
 }
@@ -804,7 +815,7 @@ void assert_eq_publisher_declaration(const _zn_pub_decl_t *left, const _zn_pub_d
 void publisher_declaration()
 {
     printf("\n>> Publisher declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -845,7 +856,7 @@ _zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
     return e_sd;
 }
 
-void assert_eq_subscriber_declaration(const _zn_sub_decl_t *left, const _zn_sub_decl_t *right, uint8_t header)
+void assert_eq_subscriber_declaration(_zn_sub_decl_t *left, _zn_sub_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
@@ -858,7 +869,7 @@ void assert_eq_subscriber_declaration(const _zn_sub_decl_t *left, const _zn_sub_
 void subscriber_declaration()
 {
     printf("\n>> Subscriber declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -892,7 +903,7 @@ _zn_qle_decl_t gen_queryable_declaration(uint8_t *header)
     return e_qd;
 }
 
-void assert_eq_queryable_declaration(const _zn_qle_decl_t *left, const _zn_qle_decl_t *right, uint8_t header)
+void assert_eq_queryable_declaration(_zn_qle_decl_t *left, _zn_qle_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
 }
@@ -900,7 +911,7 @@ void assert_eq_queryable_declaration(const _zn_qle_decl_t *left, const _zn_qle_d
 void queryable_declaration()
 {
     printf("\n>> Queryable declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -933,7 +944,7 @@ _zn_forget_res_decl_t gen_forget_resource_declaration()
     return e_frd;
 }
 
-void assert_eq_forget_resource_declaration(const _zn_forget_res_decl_t *left, const _zn_forget_res_decl_t *right)
+void assert_eq_forget_resource_declaration(_zn_forget_res_decl_t *left, _zn_forget_res_decl_t *right)
 {
     printf("RID (%zu:%zu)", left->rid, right->rid);
     assert(left->rid == right->rid);
@@ -942,7 +953,7 @@ void assert_eq_forget_resource_declaration(const _zn_forget_res_decl_t *left, co
 void forget_resource_declaration()
 {
     printf("\n>> Forget resource declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     _zn_forget_res_decl_t e_frd = gen_forget_resource_declaration();
@@ -975,7 +986,7 @@ _zn_forget_pub_decl_t gen_forget_publisher_declaration(uint8_t *header)
     return e_fpd;
 }
 
-void assert_eq_forget_publisher_declaration(const _zn_forget_pub_decl_t *left, const _zn_forget_pub_decl_t *right, uint8_t header)
+void assert_eq_forget_publisher_declaration(_zn_forget_pub_decl_t *left, _zn_forget_pub_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
 }
@@ -983,7 +994,7 @@ void assert_eq_forget_publisher_declaration(const _zn_forget_pub_decl_t *left, c
 void forget_publisher_declaration()
 {
     printf("\n>> Forget publisher declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1017,7 +1028,7 @@ _zn_forget_sub_decl_t gen_forget_subscriber_declaration(uint8_t *header)
     return e_fsd;
 }
 
-void assert_eq_forget_subscriber_declaration(const _zn_forget_sub_decl_t *left, const _zn_forget_sub_decl_t *right, uint8_t header)
+void assert_eq_forget_subscriber_declaration(_zn_forget_sub_decl_t *left, _zn_forget_sub_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
 }
@@ -1025,7 +1036,7 @@ void assert_eq_forget_subscriber_declaration(const _zn_forget_sub_decl_t *left, 
 void forget_subscriber_declaration()
 {
     printf("\n>> Forget subscriber declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1059,7 +1070,7 @@ _zn_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
     return e_fqd;
 }
 
-void assert_eq_forget_queryable_declaration(const _zn_forget_qle_decl_t *left, const _zn_forget_qle_decl_t *right, uint8_t header)
+void assert_eq_forget_queryable_declaration(_zn_forget_qle_decl_t *left, _zn_forget_qle_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
 }
@@ -1067,7 +1078,7 @@ void assert_eq_forget_queryable_declaration(const _zn_forget_qle_decl_t *left, c
 void forget_queryable_declaration()
 {
     printf("\n>> Forget queryable declaration\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1137,7 +1148,7 @@ _zn_declaration_t gen_declaration()
     return d;
 }
 
-void assert_eq_declaration(const _zn_declaration_t *left, const _zn_declaration_t *right)
+void assert_eq_declaration(_zn_declaration_t *left, _zn_declaration_t *right)
 {
     printf("Declaration -> ");
     printf("Header (%x:%x), ", left->header, right->header);
@@ -1188,7 +1199,7 @@ _zn_declare_t gen_declare_message()
     return e_dcl;
 }
 
-void assert_eq_declare_message(const _zn_declare_t *left, const _zn_declare_t *right)
+void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
 {
     assert(left->declarations.length == right->declarations.length);
 
@@ -1203,7 +1214,7 @@ void assert_eq_declare_message(const _zn_declare_t *left, const _zn_declare_t *r
 void declare_message()
 {
     printf("\n>> Declare message\n");
-    z_iobuf_t buf = z_iobuf_make(512, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(512);
 
     // Initialize
     _zn_declare_t e_dcl = gen_declare_message();
@@ -1241,7 +1252,7 @@ _zn_data_t gen_data_message(uint8_t *header)
     return e_da;
 }
 
-void assert_eq_data_message(const _zn_data_t *left, const _zn_data_t *right, uint8_t header)
+void assert_eq_data_message(_zn_data_t *left, _zn_data_t *right, uint8_t header)
 {
     printf("   ");
     assert_eq_res_key(&left->key, &right->key, header);
@@ -1260,7 +1271,7 @@ void assert_eq_data_message(const _zn_data_t *left, const _zn_data_t *right, uin
 void data_message()
 {
     printf("\n>> Data message\n");
-    z_iobuf_t buf = z_iobuf_make(256, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(256);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1299,7 +1310,7 @@ _zn_pull_t gen_pull_message(uint8_t *header)
     return e_pu;
 }
 
-void assert_eq_pull_message(const _zn_pull_t *left, const _zn_pull_t *right, uint8_t header)
+void assert_eq_pull_message(_zn_pull_t *left, _zn_pull_t *right, uint8_t header)
 {
     printf("   ");
     assert_eq_res_key(&left->key, &right->key, header);
@@ -1320,7 +1331,7 @@ void assert_eq_pull_message(const _zn_pull_t *left, const _zn_pull_t *right, uin
 void pull_message()
 {
     printf("\n>> Pull message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1369,7 +1380,7 @@ _zn_query_t gen_query_message(uint8_t *header)
     return e_qy;
 }
 
-void assert_eq_query_message(const _zn_query_t *left, const _zn_query_t *right, uint8_t header)
+void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t header)
 {
     printf("   ");
     assert_eq_res_key(&left->key, &right->key, header);
@@ -1398,7 +1409,7 @@ void assert_eq_query_message(const _zn_query_t *left, const _zn_query_t *right, 
 void query_message()
 {
     printf("\n>> Query message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1470,7 +1481,7 @@ _zn_zenoh_message_t *gen_zenoh_message()
     return p_zm;
 }
 
-void assert_eq_zenoh_message(const _zn_zenoh_message_t *left, const _zn_zenoh_message_t *right)
+void assert_eq_zenoh_message(_zn_zenoh_message_t *left, _zn_zenoh_message_t *right)
 {
     // Test message decorators
     if (left->attachment && right->attachment)
@@ -1525,7 +1536,7 @@ void assert_eq_zenoh_message(const _zn_zenoh_message_t *left, const _zn_zenoh_me
 void zenoh_message()
 {
     printf("\n>> Zenoh message\n");
-    z_iobuf_t buf = z_iobuf_make(1024, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(1024);
 
     // Initialize
     _zn_zenoh_message_t *e_zm = gen_zenoh_message();
@@ -1605,11 +1616,11 @@ _zn_scout_t gen_scout_message(uint8_t *header)
     return e_sc;
 }
 
-void assert_eq_scout_message(const _zn_scout_t *left, const _zn_scout_t *right, uint8_t header)
+void assert_eq_scout_message(_zn_scout_t *left, _zn_scout_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
     {
-        printf("What (%zu:%zu)", left->what, right->what);
+        printf("   What (%zu:%zu)\n", left->what, right->what);
         assert(left->what == right->what);
     }
 }
@@ -1617,7 +1628,7 @@ void assert_eq_scout_message(const _zn_scout_t *left, const _zn_scout_t *right, 
 void scout_message()
 {
     printf("\n>> Scout message\n");
-    z_iobuf_t buf = z_iobuf_make(1024, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(1024);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1631,9 +1642,7 @@ void scout_message()
     assert(r_sc.tag == Z_OK_TAG);
 
     _zn_scout_t d_sc = r_sc.value.scout;
-    printf("   ");
     assert_eq_scout_message(&e_sc, &d_sc, e_hdr);
-    printf("\n");
 
     // Free
     // NOTE: scout does not involve any heap allocation
@@ -1664,7 +1673,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     return e_he;
 }
 
-void assert_eq_hello_message(const _zn_hello_t *left, const _zn_hello_t *right, uint8_t header)
+void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
     {
@@ -1689,7 +1698,7 @@ void assert_eq_hello_message(const _zn_hello_t *left, const _zn_hello_t *right, 
 void hello_message()
 {
     printf("\n>> Hello message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1734,7 +1743,7 @@ _zn_open_t gen_open_message(uint8_t *header)
     return e_op;
 }
 
-void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uint8_t header)
+void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
 {
     printf("   Version (%u:%u)", left->version, right->version);
     assert(left->version == right->version);
@@ -1774,7 +1783,7 @@ void assert_eq_open_message(const _zn_open_t *left, const _zn_open_t *right, uin
 void open_message()
 {
     printf("\n>> Open message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1818,7 +1827,7 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     return e_ac;
 }
 
-void assert_eq_accept_message(const _zn_accept_t *left, const _zn_accept_t *right, uint8_t header)
+void assert_eq_accept_message(_zn_accept_t *left, _zn_accept_t *right, uint8_t header)
 {
     printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
     assert(left->whatami == right->whatami);
@@ -1858,7 +1867,7 @@ void assert_eq_accept_message(const _zn_accept_t *left, const _zn_accept_t *righ
 void accept_message()
 {
     printf("\n>> Accept message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1895,7 +1904,7 @@ _zn_close_t gen_close_message(uint8_t *header)
     return e_cl;
 }
 
-void assert_eq_close_message(const _zn_close_t *left, const _zn_close_t *right, uint8_t header)
+void assert_eq_close_message(_zn_close_t *left, _zn_close_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
     {
@@ -1912,7 +1921,7 @@ void assert_eq_close_message(const _zn_close_t *left, const _zn_close_t *right, 
 void close_message()
 {
     printf("\n>> Close message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1952,7 +1961,7 @@ _zn_sync_t gen_sync_message(uint8_t *header)
     return e_sy;
 }
 
-void assert_eq_sync_message(const _zn_sync_t *left, const _zn_sync_t *right, uint8_t header)
+void assert_eq_sync_message(_zn_sync_t *left, _zn_sync_t *right, uint8_t header)
 {
     printf("   SN (%zu:%zu)", left->sn, right->sn);
     assert(left->sn == right->sn);
@@ -1969,7 +1978,7 @@ void assert_eq_sync_message(const _zn_sync_t *left, const _zn_sync_t *right, uin
 void sync_message()
 {
     printf("\n>> Sync message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2005,7 +2014,7 @@ _zn_ack_nack_t gen_ack_nack_message(uint8_t *header)
     return e_an;
 }
 
-void assert_eq_ack_nack_message(const _zn_ack_nack_t *left, const _zn_ack_nack_t *right, uint8_t header)
+void assert_eq_ack_nack_message(_zn_ack_nack_t *left, _zn_ack_nack_t *right, uint8_t header)
 {
     printf("   SN (%zu:%zu)", left->sn, right->sn);
     assert(left->sn == right->sn);
@@ -2022,7 +2031,7 @@ void assert_eq_ack_nack_message(const _zn_ack_nack_t *left, const _zn_ack_nack_t
 void ack_nack_message()
 {
     printf("\n>> AckNack message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2063,7 +2072,7 @@ _zn_keep_alive_t gen_keep_alive_message(uint8_t *header)
     return e_ka;
 }
 
-void assert_eq_keep_alive_message(const _zn_keep_alive_t *left, const _zn_keep_alive_t *right, uint8_t header)
+void assert_eq_keep_alive_message(_zn_keep_alive_t *left, _zn_keep_alive_t *right, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
     {
@@ -2076,7 +2085,7 @@ void assert_eq_keep_alive_message(const _zn_keep_alive_t *left, const _zn_keep_a
 void keep_alive_message()
 {
     printf("\n>> KeepAlive message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2108,7 +2117,7 @@ _zn_ping_pong_t gen_ping_pong_message(uint8_t *header)
     return e_pp;
 }
 
-void assert_eq_ping_pong_message(const _zn_ping_pong_t *left, const _zn_ping_pong_t *right)
+void assert_eq_ping_pong_message(_zn_ping_pong_t *left, _zn_ping_pong_t *right)
 {
     printf("   Hash (%zu:%zu)", left->hash, right->hash);
     assert(left->hash == right->hash);
@@ -2118,7 +2127,7 @@ void assert_eq_ping_pong_message(const _zn_ping_pong_t *left, const _zn_ping_pon
 void ping_pong_message()
 {
     printf("\n>> PingPong message\n");
-    z_iobuf_t buf = z_iobuf_make(128, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2166,7 +2175,7 @@ _zn_frame_t gen_frame_message(uint8_t *header)
     return e_fr;
 }
 
-void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, uint8_t header)
+void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t header)
 {
     printf("   SN (%zu:%zu)", left->sn, right->sn);
     assert(left->sn == right->sn);
@@ -2186,14 +2195,14 @@ void assert_eq_frame_message(const _zn_frame_t *left, const _zn_frame_t *right, 
         assert(r_len == r_len);
 
         for (size_t i = 0; i < l_len; ++i)
-            assert_eq_zenoh_message(z_vec_get(&left->payload.messages, i), z_vec_get(&right->payload.messages, i));
+            assert_eq_zenoh_message((_zn_zenoh_message_t *)z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)z_vec_get(&right->payload.messages, i));
     }
 }
 
 void frame_message()
 {
     printf("\n>> Frame message\n");
-    z_iobuf_t buf = z_iobuf_make(1024, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(1024);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2287,7 +2296,7 @@ _zn_session_message_t *gen_session_message()
     return p_sm;
 }
 
-void assert_eq_session_message(const _zn_session_message_t *left, const _zn_session_message_t *right)
+void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_t *right)
 {
     // Test message decorators
     if (left->attachment && right->attachment)
@@ -2345,7 +2354,7 @@ void assert_eq_session_message(const _zn_session_message_t *left, const _zn_sess
 void session_message()
 {
     printf("\n>> Session message\n");
-    z_iobuf_t buf = z_iobuf_make(1024, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(1024);
 
     // Initialize
     _zn_session_message_t *e_sm = gen_session_message();
@@ -2378,7 +2387,7 @@ void batch()
     uint8_t frm_num = 2 + (gen_uint8() % 3);
     uint8_t aft_num = (gen_uint8() % 3);
     uint8_t tot_num = bef_num + frm_num + aft_num;
-    z_iobuf_t buf = z_iobuf_make(tot_num * 1024, Z_IOBUF_MODE_CONTIGOUS);
+    z_iobuf_t buf = gen_iobuf(tot_num * 1024);
 
     // Initialize
     _zn_session_message_t **e_sm = (_zn_session_message_t **)malloc(tot_num * sizeof(_zn_session_message_t *));

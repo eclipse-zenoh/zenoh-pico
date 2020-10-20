@@ -42,7 +42,7 @@ void _zn_payload_decode_na(z_iobuf_t *iob, _zn_payload_result_t *r)
     z_zint_t len = r_zint.value.zint;
 
     uint8_t *bs = z_iobuf_read_n(iob, len);
-    r->value.payload = z_iobuf_wrap_wo(bs, len, 0, len - 1);
+    r->value.payload = z_iobuf_wrap_wo(bs, len, 0, len);
 }
 
 _zn_payload_result_t _zn_payload_decode(z_iobuf_t *iob)

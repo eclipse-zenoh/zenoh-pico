@@ -51,48 +51,48 @@ z_zint_result_t z_zint_decode(z_iobuf_t *buf)
 }
 
 /*------------------ uint8_array ------------------*/
-int z_uint8_array_encode(z_iobuf_t *buf, const z_uint8_array_t *bs)
+int z_uint8_array_encode(z_iobuf_t *iob, const z_uint8_array_t *bs)
 {
-    _ZN_EC(z_zint_encode(buf, bs->length))
-    return z_iobuf_write_slice(buf, bs->elem, 0, bs->length);
+    _ZN_EC(z_zint_encode(iob, bs->length))
+    return z_iobuf_write_bytes(iob, bs->elem, bs->length);
 }
 
-void z_uint8_array_decode_na(z_iobuf_t *buf, z_uint8_array_result_t *r)
+void z_uint8_array_decode_na(z_iobuf_t *iob, z_uint8_array_result_t *r)
 {
     r->tag = Z_OK_TAG;
-    z_zint_result_t r_zint = z_zint_decode(buf);
+    z_zint_result_t r_zint = z_zint_decode(iob);
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
     r->value.uint8_array.length = (size_t)r_zint.value.zint;
-    r->value.uint8_array.elem = z_iobuf_read_n(buf, r->value.uint8_array.length);
+    r->value.uint8_array.elem = z_iobuf_read_n(iob, r->value.uint8_array.length);
 }
 
-z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *buf)
+z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *iob)
 {
     z_uint8_array_result_t r;
-    z_uint8_array_decode_na(buf, &r);
+    z_uint8_array_decode_na(iob, &r);
     return r;
 }
 
 /*------------------ string ------------------*/
-int z_string_encode(z_iobuf_t *buf, const char *s)
+int z_string_encode(z_iobuf_t *iob, const char *s)
 {
     size_t len = strlen(s);
-    _ZN_EC(z_zint_encode(buf, len))
+    _ZN_EC(z_zint_encode(iob, len))
     // Note that this does not put the string terminator on the wire.
-    return z_iobuf_write_slice(buf, (uint8_t *)s, 0, len);
+    return z_iobuf_write_slice(iob, (uint8_t *)s, 0, len);
 }
 
-z_string_result_t z_string_decode(z_iobuf_t *buf)
+z_string_result_t z_string_decode(z_iobuf_t *iob)
 {
     z_string_result_t r;
     r.tag = Z_OK_TAG;
-    z_zint_result_t vr = z_zint_decode(buf);
+    z_zint_result_t vr = z_zint_decode(iob);
     ASSURE_RESULT(vr, r, Z_ZINT_PARSE_ERROR)
     size_t len = vr.value.zint;
     // Allocate space for the string terminator
     char *s = (char *)malloc(len + 1);
     s[len] = '\0';
-    z_iobuf_read_to_n(buf, (uint8_t *)s, len);
+    z_iobuf_read_to_n(iob, (uint8_t *)s, len);
     r.value.string = s;
     return r;
 }

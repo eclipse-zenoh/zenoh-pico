@@ -1026,12 +1026,12 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     z_msg.body.data.info = info;
 
     // Set the payload
-    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length - 1);
+    z_msg.body.data.payload = z_iobuf_wrap_wo((uint8_t *)payload, length, 0, length);
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
 
-int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
+int zn_write(zn_session_t *z, zn_res_key_t *resource, const uint8_t *payload, size_t length)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.

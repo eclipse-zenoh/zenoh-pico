@@ -523,9 +523,7 @@ void *zn_recv_loop(zn_session_t *z)
 
         // Wrap the main buffer for to_read bytes
         z_uint8_array_t a = z_iobuf_to_array(&z->rbuf);
-        size_t r_pos = z_iobuf_get_rpos(&z->rbuf);
-        size_t w_pos = r_pos + to_read;
-        z_iobuf_t rbuf = z_iobuf_wrap_wo(a.elem, to_read, r_pos, w_pos);
+        z_iobuf_t rbuf = z_iobuf_wrap_wo(a.elem, to_read, 0, to_read);
 #else
         // Read bytes from the socket.
         while (z_iobuf_readable(&z->rbuf) == 0)
@@ -563,7 +561,7 @@ void *zn_recv_loop(zn_session_t *z)
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // Move the read position of the read buffer
-        r_pos = z_iobuf_get_rpos(&z->rbuf) + to_read;
+        size_t r_pos = z_iobuf_get_rpos(&z->rbuf) + to_read;
         z_iobuf_set_rpos(&z->rbuf, r_pos);
 #endif
     }

@@ -27,6 +27,7 @@ typedef struct
 } z_iosli_t;
 
 z_iosli_t z_iosli_make(size_t capacity);
+z_iosli_t *z_iosli_alloc(size_t capacity);
 z_iosli_t z_iosli_wrap(uint8_t *buf, size_t capacity);
 z_iosli_t z_iosli_wrap_wo(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 
