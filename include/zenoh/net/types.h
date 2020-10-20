@@ -176,8 +176,8 @@ typedef struct
     _zn_mutex_t mutex_rx;
     _zn_mutex_t mutex_tx;
 
-    _z_iosli_t wbuf;
-    _z_iosli_t rbuf;
+    z_iobuf_t wbuf;
+    z_iobuf_t rbuf;
 
     // Connection state
     z_uint8_array_t local_pid;

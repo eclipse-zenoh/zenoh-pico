@@ -27,18 +27,18 @@
     void zn_##name##_free(zn_##name##_t *m)
 
 #define ZN_DECLARE_ENCODE(name) \
-    int zn_##name##_encode(_z_iosli_t *buf, uint8_t header, const zn_##name##_t *m)
+    int zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const zn_##name##_t *m)
 
 #define ZN_DECLARE_ENCODE_NOH(name) \
-    int zn_##name##_encode(_z_iosli_t *buf, const zn_##name##_t *m)
+    int zn_##name##_encode(z_iobuf_t *buf, const zn_##name##_t *m)
 
-#define ZN_DECLARE_DECODE(name)                                               \
-    zn_##name##_result_t zn_##name##_decode(_z_iosli_t *buf, uint8_t header); \
-    void zn_##name##_decode_na(_z_iosli_t *buf, uint8_t header, zn_##name##_result_t *r)
+#define ZN_DECLARE_DECODE(name)                                              \
+    zn_##name##_result_t zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
+    void zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, zn_##name##_result_t *r)
 
-#define ZN_DECLARE_DECODE_NOH(name)                           \
-    zn_##name##_result_t zn_##name##_decode(_z_iosli_t *buf); \
-    void zn_##name##_decode_na(_z_iosli_t *buf, zn_##name##_result_t *r)
+#define ZN_DECLARE_DECODE_NOH(name)                          \
+    zn_##name##_result_t zn_##name##_decode(z_iobuf_t *buf); \
+    void zn_##name##_decode_na(z_iobuf_t *buf, zn_##name##_result_t *r)
 
 ZN_DECLARE_ENCODE_NOH(property);
 ZN_DECLARE_DECODE_NOH(property);
@@ -46,6 +46,6 @@ ZN_DECLARE_DECODE_NOH(property);
 ZN_DECLARE_ENCODE_NOH(temporal_property);
 ZN_DECLARE_DECODE_NOH(temporal_property);
 
-int zn_properties_encode(_z_iosli_t *buf, const z_vec_t *ps);
+int zn_properties_encode(z_iobuf_t *buf, const z_vec_t *ps);
 
 #endif /* ZENOH_C_NET_CODEC_H */

@@ -30,26 +30,26 @@
     void _zn_##name##_free(_zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE(name) \
-    int _zn_##name##_encode(_z_iosli_t *buf, uint8_t header, const _zn_##name##_t *m)
+    int _zn_##name##_encode(z_iobuf_t *buf, uint8_t header, const _zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE_NOH(name) \
-    int _zn_##name##_encode(_z_iosli_t *buf, const _zn_##name##_t *m)
+    int _zn_##name##_encode(z_iobuf_t *buf, const _zn_##name##_t *m)
 
-#define _ZN_DECLARE_DECODE(name)                                                \
-    _zn_##name##_result_t _zn_##name##_decode(_z_iosli_t *buf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_iosli_t *buf, uint8_t header, _zn_##name##_result_t *r)
+#define _ZN_DECLARE_DECODE(name)                                               \
+    _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, _zn_##name##_result_t *r)
 
-#define _ZN_DECLARE_DECODE_NOH(name)                            \
-    _zn_##name##_result_t _zn_##name##_decode(_z_iosli_t *buf); \
-    void _zn_##name##_decode_na(_z_iosli_t *buf, _zn_##name##_result_t *r)
+#define _ZN_DECLARE_DECODE_NOH(name)                           \
+    _zn_##name##_result_t _zn_##name##_decode(z_iobuf_t *buf); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE(name)                                                \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_iosli_t *buf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_iosli_t *buf, uint8_t header, _zn_##name##_p_result_t *r)
+#define _ZN_DECLARE_P_DECODE(name)                                               \
+    _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf, uint8_t header); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, uint8_t header, _zn_##name##_p_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE_NOH(name)                            \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_iosli_t *buf); \
-    void _zn_##name##_decode_na(_z_iosli_t *buf, _zn_##name##_p_result_t *r)
+#define _ZN_DECLARE_P_DECODE_NOH(name)                           \
+    _zn_##name##_p_result_t _zn_##name##_decode(z_iobuf_t *buf); \
+    void _zn_##name##_decode_na(z_iobuf_t *buf, _zn_##name##_p_result_t *r)
 
 #define _ZN_INIT_S_MSG(msg) \
     msg.attachment = NULL;
@@ -80,9 +80,9 @@ _ZN_DECLARE_FREE_NOH(zenoh_message);
 // NOTE: the following headers are for unit testing only
 #ifdef ZENOH_C_NET_MSGCODEC_H_T
 /*------------------ Message Fields ------------------*/
-int _zn_timestamp_encode(_z_iosli_t *buf, const z_timestamp_t *ts);
-void _zn_timestamp_decode_na(_z_iosli_t *buf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t _zn_timestamp_decode(_z_iosli_t *buf);
+int _zn_timestamp_encode(z_iobuf_t *buf, const z_timestamp_t *ts);
+void _zn_timestamp_decode_na(z_iobuf_t *buf, _zn_timestamp_result_t *r);
+_zn_timestamp_result_t _zn_timestamp_decode(z_iobuf_t *buf);
 void _zn_timestamp_free(z_timestamp_t *ts);
 
 _ZN_DECLARE_ENCODE_NOH(payload);

@@ -244,14 +244,11 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 }
 
 /*------------------ Datagram ------------------*/
-int _zn_send_dgram_to(_zn_socket_t sock, const _z_iosli_t *buf, const struct sockaddr *dest, socklen_t salen)
+int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *iob, const struct sockaddr *dest, socklen_t salen)
 {
-    int len = _z_iosli_readable(buf);
-    uint8_t *ptr = buf->buf + buf->r_pos;
-    int n = len;
-    int wb;
     _Z_DEBUG("Sending data on socket....\n");
-    wb = sendto(sock, ptr, n, 0, dest, salen);
+    z_uint8_array_t a = z_iobuf_to_array(iob);
+    int wb = sendto(sock, a.elem, a.length, 0, dest, salen);
     _Z_DEBUG_VA("Socket returned: %d\n", wb);
     if (wb <= 0)
     {
@@ -261,13 +258,11 @@ int _zn_send_dgram_to(_zn_socket_t sock, const _z_iosli_t *buf, const struct soc
     return wb;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, _z_iosli_t *buf, struct sockaddr *from, socklen_t *salen)
+int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *iob, struct sockaddr *from, socklen_t *salen)
 {
-    size_t writable = buf->capacity - buf->w_pos;
-    uint8_t *cp = buf->buf + buf->w_pos;
-    int rb = 0;
-    rb = recvfrom(sock, cp, writable, 0, from, salen);
-    buf->w_pos = buf->w_pos + rb;
+    z_uint8_array_t a = z_iobuf_to_array(iob);
+    int rb = recvfrom(sock, (uint8_t *)a.elem + a.length, z_iobuf_writable(iob), 0, from, salen);
+    z_iobuf_set_wpos(iob, z_iobuf_get_wpos(iob) + rb);
     return rb;
 }
 
@@ -289,21 +284,20 @@ int _zn_recv_n(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return 0;
 }
 
-int _zn_recv_buf(_zn_socket_t sock, _z_iosli_t *buf)
+int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *iob)
 {
-    size_t writable = buf->capacity - buf->w_pos;
-    uint8_t *cp = buf->buf + buf->w_pos;
-    int rb = 0;
-    rb = recv(sock, cp, writable, 0);
-    buf->w_pos = buf->w_pos + rb;
+    z_uint8_array_t a = z_iobuf_to_array(iob);
+    int rb = recv(sock, (uint8_t *)a.elem + a.length, z_iobuf_writable(iob), 0);
+    z_iobuf_set_wpos(iob, z_iobuf_get_wpos(iob) + rb);
     return rb;
 }
 
 /*------------------ Send ------------------*/
-int _zn_send_buf(_zn_socket_t sock, const _z_iosli_t *buf)
+int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *iob)
 {
-    int len = _z_iosli_readable(buf);
-    uint8_t *ptr = buf->buf + buf->r_pos;
+    z_uint8_array_t a = z_iobuf_to_array(iob);
+    uint8_t *ptr = a.elem;
+    int len = a.length;
     int n = len;
     int wb;
     do

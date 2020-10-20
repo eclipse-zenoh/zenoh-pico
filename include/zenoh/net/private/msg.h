@@ -128,7 +128,7 @@
 // ~    Buffer     ~
 // +---------------+
 //
-typedef _z_iosli_t _zn_payload_t;
+typedef z_iobuf_t _zn_payload_t;
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 
 /*------------------ Locators Field ------------------*/
