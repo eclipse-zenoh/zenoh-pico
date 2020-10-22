@@ -70,11 +70,25 @@ void z_vec_append(z_vec_t *v, void *e)
 {
     if (v->length_ == v->capacity_)
     {
-        v->capacity_ = v->capacity_ + v->capacity_;
-        v->elem_ = realloc(v->elem_, v->capacity_);
+        // v->capacity_ += v->capacity_;
+        // v->elem_ = realloc(v->elem_, v->capacity_);
+
+        // printf("1) Before realloc => Velem: %p, Velem + capacity: %p\n", (void *)v->elem_, (void *)(v->elem_ + v->capacity_));
+        // Allocate a new vector
+        size_t capacity_ = 2 * v->capacity_;
+        void **elem_ = (void **)malloc(capacity_ * sizeof(void *));
+        // Copy the element from the old vector to the new vector
+        for (size_t i = 0; i < v->length_; i++)
+            elem_[i] = v->elem_[i];
+        // Free the old vector
+        free(v->elem_);
+        // Update the vector
+        v->elem_ = elem_;
+        v->capacity_ = capacity_;
+        // printf("2) After realloc => Velem: %p, Velem + capacity: %p\n", (void *)v->elem_, (void *)(v->elem_ + v->capacity_));
     }
     v->elem_[v->length_] = e;
-    v->length_ = v->length_ + 1;
+    v->length_++;
 }
 
 const void *z_vec_get(const z_vec_t *v, size_t i)

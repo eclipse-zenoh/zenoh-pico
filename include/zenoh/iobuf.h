@@ -45,18 +45,6 @@ void z_iosli_clear(z_iosli_t *ios);
 void z_iosli_compact(z_iosli_t *ios);
 void z_iosli_free(z_iosli_t *ios);
 
-/*------------------ IOSliArray ------------------*/
-typedef struct
-{
-    size_t capacity;
-    size_t length;
-    z_iosli_t *elem;
-} z_iosli_array_t;
-
-z_iosli_array_t z_iosli_array_make(size_t capacity);
-void z_iosli_array_append(z_iosli_array_t *ioss, z_iosli_t ios);
-void z_iosli_array_free(z_iosli_array_t *ioss);
-
 /*------------------ RBuf ------------------*/
 typedef struct
 {
@@ -91,7 +79,7 @@ typedef struct
     size_t r_idx;
     size_t w_idx;
     size_t capacity;
-    z_iosli_array_t ioss;
+    z_vec_t ioss;
     int is_expandable;
 } z_wbuf_t;
 
@@ -112,6 +100,7 @@ size_t z_wbuf_get_wpos(const z_wbuf_t *wbf);
 void z_wbuf_set_rpos(z_wbuf_t *wbf, size_t r_pos);
 void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t w_pos);
 
+void z_wbuf_add_iosli(z_wbuf_t *wbf, z_iosli_t *ios);
 z_uint8_array_t z_wbuf_to_array(const z_wbuf_t *wbf);
 
 void z_wbuf_clear(z_wbuf_t *wbf);
