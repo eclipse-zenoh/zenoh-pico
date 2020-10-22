@@ -21,9 +21,9 @@
 #include "zenoh/rname.h"
 
 /*------------------ Transmission and Reception helper ------------------*/
-void _zn_prepare_buf(z_iobuf_t *buf)
+void _zn_prepare_wbuf(z_wbuf_t *buf)
 {
-    z_iobuf_clear(buf);
+    z_wbuf_clear(buf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -32,13 +32,13 @@ void _zn_prepare_buf(z_iobuf_t *buf)
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_put(buf, 0, i);
+        z_wbuf_put(buf, 0, i);
 
-    z_iobuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
+    z_wbuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
-void _zn_finalize_buf(z_iobuf_t *buf)
+void _zn_finalize_wbuf(z_wbuf_t *buf)
 {
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -46,9 +46,9 @@ void _zn_finalize_buf(z_iobuf_t *buf)
     //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
-    size_t len = z_iobuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
+    size_t len = z_wbuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        z_iobuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+        z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
 }
 
@@ -59,7 +59,7 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_tx);
     // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_buf(&z->wbuf);
+    _zn_prepare_wbuf(&z->wbuf);
     // Encode the session message
     if (_zn_session_message_encode(&z->wbuf, s_msg) != 0)
     {
@@ -69,9 +69,9 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
         return -1;
     }
     // Write the message legnth in the reserved space if needed
-    _zn_finalize_buf(&z->wbuf);
-    // Send the buffer on the socket
-    int res = _zn_send_buf(z->sock, &z->wbuf);
+    _zn_finalize_wbuf(&z->wbuf);
+    // Send the wbuf on the socket
+    int res = _zn_send_wbuf(z->sock, &z->wbuf);
     // Release the lock
     _zn_mutex_unlock(&z->mutex_tx);
 
@@ -112,7 +112,7 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_tx);
     // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_buf(&z->wbuf);
+    _zn_prepare_wbuf(&z->wbuf);
     // Encode the frame header
     if (_zn_session_message_encode(&z->wbuf, &s_msg) != 0)
     {
@@ -130,9 +130,9 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
         return -1;
     }
     // Write the message legnth in the reserved space if needed
-    _zn_finalize_buf(&z->wbuf);
-    // Send the buffer on the socket
-    int res = _zn_send_buf(z->sock, &z->wbuf);
+    _zn_finalize_wbuf(&z->wbuf);
+    // Send the wbuf on the socket
+    int res = _zn_send_wbuf(z->sock, &z->wbuf);
     // Release the lock
     _zn_mutex_unlock(&z->mutex_tx);
 
@@ -150,7 +150,7 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
-    z_iobuf_clear(&z->rbuf);
+    z_rbuf_clear(&z->rbuf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -160,8 +160,7 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
     //       In any case, the length of a message must not exceed 65_535 bytes.
 
     // Read the message length
-    z_uint8_array_t arr = z_iobuf_to_array(&z->rbuf);
-    if (_zn_recv_n(z->sock, arr.elem, _ZN_MSG_LEN_ENC_SIZE) < 0)
+    if (_zn_recv_bytes(z->sock, z->rbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
         // Release the lock
         _zn_mutex_lock(&z->mutex_rx);
@@ -170,11 +169,11 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
         r->value.error = ZN_IO_ERROR;
         return;
     }
-    z_iobuf_set_wpos(&z->rbuf, _ZN_MSG_LEN_ENC_SIZE);
+    z_rbuf_set_wpos(&z->rbuf, _ZN_MSG_LEN_ENC_SIZE);
 
-    uint16_t len = z_iobuf_read(&z->rbuf) | (z_iobuf_read(&z->rbuf) << 8);
+    uint16_t len = z_rbuf_read(&z->rbuf) | (z_rbuf_read(&z->rbuf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
-    if (z_iobuf_writable(&z->rbuf) < len)
+    if (z_rbuf_writable(&z->rbuf) < len)
     {
         // Release the lock
         _zn_mutex_unlock(&z->mutex_rx);
@@ -185,7 +184,7 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
     }
 
     // Read enough bytes to decode the message
-    if (_zn_recv_n(z->sock, arr.elem, len) < 0)
+    if (_zn_recv_bytes(z->sock, z->rbuf.ios.buf, len) < 0)
     {
         // Release the lock
         _zn_mutex_unlock(&z->mutex_rx);
@@ -195,8 +194,8 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
         return;
     }
 
-    z_iobuf_set_rpos(&z->rbuf, 0);
-    z_iobuf_set_wpos(&z->rbuf, len);
+    z_rbuf_set_rpos(&z->rbuf, 0);
+    z_rbuf_set_wpos(&z->rbuf, len);
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {

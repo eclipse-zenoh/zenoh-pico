@@ -493,10 +493,10 @@ void *zn_recv_loop(zn_session_t *z)
     // Acquire and keep the lock
     _zn_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
-    z_iobuf_clear(&z->rbuf);
+    z_rbuf_clear(&z->rbuf);
     while (z->recv_loop_running)
     {
-        z_iobuf_compact(&z->rbuf);
+        z_rbuf_compact(&z->rbuf);
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -506,37 +506,37 @@ void *zn_recv_loop(zn_session_t *z)
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read number of bytes to read
-        while (z_iobuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+        while (z_rbuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
+            if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
         // Decode the message length
-        size_t to_read = (size_t)((uint16_t)z_iobuf_read(&z->rbuf) | ((uint16_t)z_iobuf_read(&z->rbuf) << 8));
+        size_t to_read = (size_t)((uint16_t)z_rbuf_read(&z->rbuf) | ((uint16_t)z_rbuf_read(&z->rbuf) << 8));
 
         // Read the rest of bytes to decode one or more session messages
-        while (z_iobuf_readable(&z->rbuf) < to_read)
+        while (z_rbuf_readable(&z->rbuf) < to_read)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
+            if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
+        z_rbuf_set_wpos(&z->rbuf, z_rbuf_get_wpos(&z->rbuf) + to_read);
         // Wrap the main buffer for to_read bytes
-        z_uint8_array_t a = z_iobuf_to_array(&z->rbuf);
-        z_iobuf_t rbuf = z_iobuf_wrap_wo(a.elem, to_read, 0, to_read);
+        z_rbuf_t rbuf = z_rbuf_view(&z->rbuf, to_read);
 #else
         // Read bytes from the socket.
-        while (z_iobuf_readable(&z->rbuf) == 0)
+        while (z_rbuf_readable(&z->rbuf) == 0)
         {
-            if (_zn_recv_buf(z->sock, &z->rbuf) <= 0)
+            if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
         }
 
         z_iobuf_t rbuf = z->rbuf;
 #endif
 
-        while (z_iobuf_readable(&rbuf) > 0)
+        while (z_rbuf_readable(&rbuf) > 0)
         {
             // Mark the session that we have received data
             z->received = 1;
@@ -562,8 +562,8 @@ void *zn_recv_loop(zn_session_t *z)
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // Move the read position of the read buffer
-        size_t r_pos = z_iobuf_get_rpos(&z->rbuf) + to_read;
-        z_iobuf_set_rpos(&z->rbuf, r_pos);
+        size_t r_pos = z_rbuf_get_rpos(&z->rbuf) + to_read;
+        z_rbuf_set_rpos(&z->rbuf, r_pos);
 #endif
     }
 

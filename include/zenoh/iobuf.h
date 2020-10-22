@@ -66,6 +66,7 @@ typedef struct
 
 z_rbuf_t z_rbuf_wrap(z_iosli_t ios, int is_expandable);
 z_rbuf_t z_rbuf_make(size_t capacity, int is_expandable);
+z_rbuf_t z_rbuf_view(z_rbuf_t *rbf, size_t length);
 
 size_t z_rbuf_readable(const z_rbuf_t *rbf);
 uint8_t z_rbuf_read(z_rbuf_t *rbf);
@@ -110,6 +111,8 @@ size_t z_wbuf_get_rpos(const z_wbuf_t *wbf);
 size_t z_wbuf_get_wpos(const z_wbuf_t *wbf);
 void z_wbuf_set_rpos(z_wbuf_t *wbf, size_t r_pos);
 void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t w_pos);
+
+z_uint8_array_t z_wbuf_to_array(const z_wbuf_t *wbf);
 
 void z_wbuf_clear(z_wbuf_t *wbf);
 void z_wbuf_free(z_wbuf_t *wbf);

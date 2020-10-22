@@ -245,10 +245,10 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 }
 
 /*------------------ Datagram ------------------*/
-int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *iob, const struct sockaddr *dest, socklen_t salen)
+int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen)
 {
     _Z_DEBUG("Sending data on socket....\n");
-    z_uint8_array_t a = z_iobuf_to_array(iob);
+    z_uint8_array_t a = z_wbuf_to_array(wbf);
     int wb = sendto(sock, a.elem, a.length, 0, dest, salen);
     _Z_DEBUG_VA("Socket returned: %d\n", wb);
     if (wb <= 0)
@@ -259,16 +259,17 @@ int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *iob, const struct sock
     return wb;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *iob, struct sockaddr *from, socklen_t *salen)
+int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
 {
-    z_uint8_array_t a = z_iobuf_to_array(iob);
-    int rb = recvfrom(sock, (uint8_t *)a.elem + a.length, z_iobuf_writable(iob), 0, from, salen);
-    z_iobuf_set_wpos(iob, z_iobuf_get_wpos(iob) + rb);
+    size_t writable = z_rbuf_writable(rbf);
+    uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
+    int rb = rb = recvfrom(sock, cp, writable, 0, from, salen);
+    z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
     return rb;
 }
 
 /*------------------ Receive ------------------*/
-int _zn_recv_n(_zn_socket_t sock, uint8_t *ptr, size_t len)
+int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
     int n = len;
     int rb;
@@ -285,18 +286,19 @@ int _zn_recv_n(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return 0;
 }
 
-int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *iob)
+int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf)
 {
-    z_uint8_array_t a = z_iobuf_to_array(iob);
-    int rb = recv(sock, (uint8_t *)a.elem + a.length, z_iobuf_writable(iob), 0);
-    z_iobuf_set_wpos(iob, z_iobuf_get_wpos(iob) + rb);
+    size_t writable = z_rbuf_writable(rbf);
+    uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
+    int rb = recv(sock, cp, writable, 0);
+    z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
     return rb;
 }
 
 /*------------------ Send ------------------*/
-int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *iob)
+int _zn_send_wbuf(_zn_socket_t sock, const z_wbuf_t *wbf)
 {
-    z_uint8_array_t a = z_iobuf_to_array(iob);
+    z_uint8_array_t a = z_wbuf_to_array(wbf);
     uint8_t *ptr = a.elem;
     int len = a.length;
     int n = len;
@@ -316,7 +318,7 @@ int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *iob)
             return -1;
         }
         n -= wb;
-        ptr = ptr + (len - n);
+        ptr += len - n;
     } while (n > 0);
 
     return 0;

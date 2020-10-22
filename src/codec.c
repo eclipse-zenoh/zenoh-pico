@@ -20,18 +20,18 @@
 #include "zenoh/private/logging.h"
 
 /*------------------ z_zint ------------------*/
-int z_zint_encode(z_iobuf_t *buf, z_zint_t v)
+int z_zint_encode(z_wbuf_t *wbf, z_zint_t v)
 {
     while (v > 0x7f)
     {
         uint8_t c = (v & 0x7f) | 0x80;
-        _ZN_EC(z_iobuf_write(buf, (uint8_t)c))
+        _ZN_EC(z_wbuf_write(wbf, (uint8_t)c))
         v = v >> 7;
     }
-    return z_iobuf_write(buf, (uint8_t)v);
+    return z_wbuf_write(wbf, (uint8_t)v);
 }
 
-z_zint_result_t z_zint_decode(z_iobuf_t *buf)
+z_zint_result_t z_zint_decode(z_rbuf_t *rbf)
 {
     z_zint_result_t r;
     r.tag = Z_OK_TAG;
@@ -41,7 +41,7 @@ z_zint_result_t z_zint_decode(z_iobuf_t *buf)
     int i = 0;
     do
     {
-        c = z_iobuf_read(buf);
+        c = z_rbuf_read(rbf);
         _Z_DEBUG_VA("zint c = 0x%x\n", c);
         r.value.zint = r.value.zint | (((z_zint_t)c & 0x7f) << i);
         _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
@@ -52,48 +52,50 @@ z_zint_result_t z_zint_decode(z_iobuf_t *buf)
 }
 
 /*------------------ uint8_array ------------------*/
-int z_uint8_array_encode(z_iobuf_t *iob, const z_uint8_array_t *bs)
+int z_uint8_array_encode(z_wbuf_t *wbf, const z_uint8_array_t *bs)
 {
-    _ZN_EC(z_zint_encode(iob, bs->length))
-    return z_iobuf_write_bytes(iob, bs->elem, bs->length);
+    _ZN_EC(z_zint_encode(wbf, bs->length))
+    return z_wbuf_write_bytes(wbf, bs->elem, 0, bs->length);
 }
 
-void z_uint8_array_decode_na(z_iobuf_t *iob, z_uint8_array_result_t *r)
+void z_uint8_array_decode_na(z_rbuf_t *rbf, z_uint8_array_result_t *r)
 {
     r->tag = Z_OK_TAG;
-    z_zint_result_t r_zint = z_zint_decode(iob);
+    z_zint_result_t r_zint = z_zint_decode(rbf);
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
     r->value.uint8_array.length = (size_t)r_zint.value.zint;
-    r->value.uint8_array.elem = z_iobuf_read_n(iob, r->value.uint8_array.length);
+    uint8_t *elem = (uint8_t *)malloc(r->value.uint8_array.length * sizeof(uint8_t));
+    z_rbuf_read_bytes(rbf, elem, 0, r->value.uint8_array.length);
+    r->value.uint8_array.elem = elem;
 }
 
-z_uint8_array_result_t z_uint8_array_decode(z_iobuf_t *iob)
+z_uint8_array_result_t z_uint8_array_decode(z_rbuf_t *rbf)
 {
     z_uint8_array_result_t r;
-    z_uint8_array_decode_na(iob, &r);
+    z_uint8_array_decode_na(rbf, &r);
     return r;
 }
 
 /*------------------ string ------------------*/
-int z_string_encode(z_iobuf_t *iob, const char *s)
+int z_string_encode(z_wbuf_t *wbf, const char *s)
 {
     size_t len = strlen(s);
-    _ZN_EC(z_zint_encode(iob, len))
+    _ZN_EC(z_zint_encode(wbf, len))
     // Note that this does not put the string terminator on the wire.
-    return z_iobuf_write_slice(iob, (uint8_t *)s, 0, len);
+    return z_wbuf_write_bytes(wbf, (uint8_t *)s, 0, len);
 }
 
-z_string_result_t z_string_decode(z_iobuf_t *iob)
+z_string_result_t z_string_decode(z_rbuf_t *rbf)
 {
     z_string_result_t r;
     r.tag = Z_OK_TAG;
-    z_zint_result_t vr = z_zint_decode(iob);
+    z_zint_result_t vr = z_zint_decode(rbf);
     ASSURE_RESULT(vr, r, Z_ZINT_PARSE_ERROR)
     size_t len = vr.value.zint;
     // Allocate space for the string terminator
     char *s = (char *)malloc(len + 1);
     s[len] = '\0';
-    z_iobuf_read_to_n(iob, (uint8_t *)s, len);
+    z_rbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
     r.value.string = s;
     return r;
 }

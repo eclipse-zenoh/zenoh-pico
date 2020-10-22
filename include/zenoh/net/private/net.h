@@ -34,11 +34,11 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator);
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
 
-int _zn_send_dgram_to(_zn_socket_t sock, const z_iobuf_t *buf, const struct sockaddr *dest, socklen_t salen);
-int _zn_recv_dgram_from(_zn_socket_t sock, z_iobuf_t *buf, struct sockaddr *from, socklen_t *salen);
+int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
+int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
 
-int _zn_send_buf(_zn_socket_t sock, const z_iobuf_t *buf);
-int _zn_recv_buf(_zn_socket_t sock, z_iobuf_t *buf);
-int _zn_recv_n(_zn_socket_t sock, uint8_t *buf, size_t len);
+int _zn_send_wbuf(_zn_socket_t sock, const z_wbuf_t *wbf);
+int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf);
+int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
 #endif /* ZENOH_C_NET_H */

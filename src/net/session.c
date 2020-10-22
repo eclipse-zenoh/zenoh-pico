@@ -34,8 +34,8 @@ zn_session_t *_zn_session_init()
     zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
 
     // Initialize the buffers
-    z->wbuf = z_iobuf_make(ZENOH_NET_WRITE_BUF_LEN, Z_IOBUF_MODE_CONTIGOUS);
-    z->rbuf = z_iobuf_make(ZENOH_NET_READ_BUF_LEN, Z_IOBUF_MODE_CONTIGOUS);
+    z->wbuf = z_wbuf_make(ZENOH_NET_WRITE_BUF_LEN, 0);
+    z->rbuf = z_rbuf_make(ZENOH_NET_READ_BUF_LEN, 0);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -89,8 +89,8 @@ void _zn_session_free(zn_session_t *z)
     _zn_mutex_free(&z->mutex_tx);
     _zn_mutex_free(&z->mutex_rx);
 
-    z_iobuf_free(&z->wbuf);
-    z_iobuf_free(&z->rbuf);
+    z_wbuf_free(&z->wbuf);
+    z_rbuf_free(&z->rbuf);
 
     free(z);
 }
@@ -142,12 +142,12 @@ void _zn_default_on_disconnect(void *vz)
 }
 
 /*------------------ Scout ------------------*/
-z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen, size_t tries)
 {
     // @TODO: need to abstract the platform-specific data types
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
-    z_iobuf_t hbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, Z_IOBUF_MODE_CONTIGOUS);
+    z_rbuf_t rbf = z_rbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, 0);
     z_vec_t ls = z_vec_uninit();
 
     while (tries > 0)
@@ -155,16 +155,16 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
         tries--;
 
         // Send the scout message
-        _zn_send_dgram_to(socket, sbuf, dest, salen);
+        _zn_send_dgram_to(socket, wbf, dest, salen);
         // Eventually read hello messages
-        z_iobuf_clear(&hbuf);
-        int len = _zn_recv_dgram_from(socket, &hbuf, from, &flen);
+        z_rbuf_clear(&rbf);
+        int len = _zn_recv_dgram_from(socket, &rbf, from, &flen);
 
         // Retry if we haven't received anything
         if (len <= 0)
             continue;
 
-        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&hbuf);
+        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&rbf);
         if (r_hm.tag == Z_ERROR_TAG)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
@@ -209,7 +209,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_iobuf_t *sbuf, const struct 
     }
 
     free(from);
-    z_iobuf_free(&hbuf);
+    z_rbuf_free(&rbf);
 
     return ls;
 }
@@ -229,11 +229,10 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
         {
             sub = (_zn_sub_t *)z_list_head(subs);
 
-            z_uint8_array_t a = z_iobuf_to_array(&msg->body.data.payload);
             sub->data_handler(
                 &sub->key,
-                a.elem,
-                a.length,
+                msg->body.data.payload.elem,
+                msg->body.data.payload.length,
                 &msg->body.data.info,
                 sub->arg);
 
@@ -490,13 +489,13 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
         is_auto = 1;
     }
 
-    z_iobuf_t sbuf = z_iobuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, Z_IOBUF_MODE_CONTIGOUS);
+    z_wbuf_t wbf = z_wbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, 0);
     _zn_session_message_t scout;
     _ZN_INIT_S_MSG(scout)
     scout.header = _ZN_MID_SCOUT;
     // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
     //       and the what value is not sent on the wire. Here we scout for Routers
-    _zn_session_message_encode(&sbuf, &scout);
+    _zn_session_message_encode(&wbf, &scout);
 
     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
     ASSERT_RESULT(r, "Unable to create scouting socket\n");
@@ -504,20 +503,20 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
     socklen_t salen = sizeof(struct sockaddr_in);
     // Scout first on localhost
     struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
-    z_vec_t locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)laddr, salen, tries);
+    z_vec_t locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, tries);
     free(laddr);
 
     if (z_vec_len(&locs) == 0)
     {
         // We did not find a router on localhost, hence scout on the LAN
         struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
-        locs = _zn_scout_loop(r.value.socket, &sbuf, (struct sockaddr *)maddr, salen, tries);
+        locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)maddr, salen, tries);
         free(maddr);
     }
 
     if (is_auto)
         free(addr);
-    z_iobuf_free(&sbuf);
+    z_wbuf_free(&wbf);
 
     return locs;
 }
@@ -584,12 +583,15 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     _ZN_INIT_S_MSG(om);
     om.header = _ZN_MID_OPEN;
     // Add an attachement if properties have been provided
+    z_wbuf_t att_pld;
     if (ps)
     {
+        att_pld = z_wbuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN, 0);
+        zn_properties_encode(&att_pld, ps);
+
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
         om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
-        om.attachment->payload = z_iobuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN, Z_IOBUF_MODE_CONTIGOUS);
-        zn_properties_encode(&om.attachment->payload, ps);
+        om.attachment->payload = z_wbuf_to_array(&att_pld);
     }
 
     om.body.open.version = ZENOH_NET_PROTO_VERSION;
@@ -618,6 +620,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     {
         r.tag = Z_ERROR_TAG;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
+
+        // Free the attachment payload;
+        if (ps)
+            z_wbuf_free(&att_pld);
 
         // Free the locator
         if (locator_is_scouted)
@@ -710,6 +716,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         break;
     }
     }
+
+    // Free the attachment payload;
+    if (ps)
+        z_wbuf_free(&att_pld);
 
     // Free the locator
     if (locator_is_scouted)
@@ -1027,12 +1037,13 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     z_msg.body.data.info = info;
 
     // Set the payload
-    z_msg.body.data.payload = z_iobuf_wrap_wo((uint8_t *)payload, length, 0, length);
+    z_msg.body.data.payload.length = length;
+    z_msg.body.data.payload.elem = (uint8_t *)payload;
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
 
-int zn_write(zn_session_t *z, zn_res_key_t *resource, const uint8_t *payload, size_t length)
+int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1050,7 +1061,8 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const uint8_t *payload, si
     _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
 
     // Set the payload
-    z_msg.body.data.payload = z_iobuf_wrap_wo((unsigned char *)payload, length, 0, length);
+    z_msg.body.data.payload.length = length;
+    z_msg.body.data.payload.elem = (uint8_t *)payload;
 
     return _zn_send_z_msg(z, &z_msg, 1);
 }
