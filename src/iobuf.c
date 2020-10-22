@@ -128,14 +128,17 @@ z_iosli_array_t z_iosli_array_make(size_t capacity)
 
 void z_iosli_array_append(z_iosli_array_t *ioss, z_iosli_t ios)
 {
+    printf("Length: %zu, Capacity: %zu\n", ioss->length, ioss->capacity);
     if (ioss->length == ioss->capacity)
     {
+        printf("Realloc array\n");
         // Allocate more elements if we ran out of space
         ioss->capacity *= 2;
         ioss->elem = (z_iosli_t *)realloc(ioss->elem, ioss->capacity);
     }
     if (ioss->length > 0)
     {
+        printf("Appending to array\n");
         // We are appending a new iosli, the last iosli becomes
         // no longer writable
         z_iosli_t *last = &ioss->elem[ioss->length - 1];
@@ -305,6 +308,7 @@ size_t z_wbuf_readable(const z_wbuf_t *wbf)
     for (size_t i = wbf->r_idx; i <= wbf->w_idx; i++)
     {
         readable += z_iosli_readable(&wbf->ioss.elem[i]);
+        printf("IOSLI %zu, Readable: %zu\n", i, readable);
     }
     return readable;
 }
@@ -374,14 +378,17 @@ int z_wbuf_write(z_wbuf_t *wbf, uint8_t b)
     size_t writable = z_iosli_writable(&wbf->ioss.elem[wbf->w_idx]);
     if (writable >= 1)
     {
+        printf("Writing\n");
         z_iosli_write(&wbf->ioss.elem[wbf->w_idx], b);
         return 0;
     }
     else if (wbf->is_expandable)
     {
+        printf("Expanding\n");
         z_iosli_t ios = z_iosli_make(wbf->capacity);
         z_iosli_array_append(&wbf->ioss, ios);
         wbf->w_idx++;
+        printf("Writing\n");
         z_iosli_write(&wbf->ioss.elem[wbf->w_idx], b);
         return 0;
     }
