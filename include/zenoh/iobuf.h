@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include "zenoh/types.h"
 
-/*------------------ IOBuf ------------------*/
+/*------------------ IOSli ------------------*/
 typedef struct
 {
     size_t r_pos;
@@ -27,80 +27,91 @@ typedef struct
     uint8_t *buf;
 } z_iosli_t;
 
+z_iosli_t z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 z_iosli_t z_iosli_make(size_t capacity);
-z_iosli_t *z_iosli_alloc(size_t capacity);
-z_iosli_t z_iosli_wrap(uint8_t *buf, size_t capacity);
-z_iosli_t z_iosli_wrap_wo(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
+void z_iosli_resize(z_iosli_t *ios, size_t capacity);
 
 size_t z_iosli_readable(const z_iosli_t *ios);
 uint8_t z_iosli_read(z_iosli_t *ios);
-uint8_t *z_iosli_read_n(z_iosli_t *ios, size_t length);
-void z_iosli_read_to_n(z_iosli_t *ios, uint8_t *dest, size_t length);
+void z_iosli_read_bytes(z_iosli_t *ios, uint8_t *dest, size_t offset, size_t length);
 uint8_t z_iosli_get(const z_iosli_t *ios, size_t pos);
 
 size_t z_iosli_writable(const z_iosli_t *ios);
-int z_iosli_write(z_iosli_t *ios, uint8_t b);
-int z_iosli_write_slice(z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
-int z_iosli_write_bytes(z_iosli_t *ios, const uint8_t *bs, size_t length);
+void z_iosli_write(z_iosli_t *ios, uint8_t b);
+void z_iosli_write_bytes(z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
 void z_iosli_put(z_iosli_t *ios, uint8_t b, size_t pos);
 
-int z_iosli_resize(z_iosli_t *ios, size_t capacity);
 void z_iosli_clear(z_iosli_t *ios);
 void z_iosli_compact(z_iosli_t *ios);
 void z_iosli_free(z_iosli_t *ios);
 
-/*------------------ IOBuf ------------------*/
-#define Z_IOBUF_MODE_CONTIGOUS 0x01  // 1 << 0
-#define Z_IOBUF_MODE_EXPANDABLE 0x02 // 1 << 1
-
+/*------------------ IOSliArray ------------------*/
 typedef struct
 {
-    union
-    {
-        z_iosli_t cios;
-        struct
-        {
-            size_t r_idx;
-            size_t w_idx;
-            size_t chunk;
-            z_vec_t ioss;
-        } eios;
-    } value;
-    unsigned int mode;
-} z_iobuf_t;
+    size_t capacity;
+    size_t length;
+    z_iosli_t *elem;
+} z_iosli_array_t;
 
-z_iobuf_t z_iobuf_make(size_t capacity, unsigned int mode);
-z_iobuf_t z_iobuf_wrap(uint8_t *buf, size_t capacity);
-z_iobuf_t z_iobuf_wrap_wo(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
+z_iosli_array_t z_iosli_array_make(size_t capacity);
+void z_iosli_array_append(z_iosli_array_t *ioss, z_iosli_t ios);
+void z_iosli_array_free(z_iosli_array_t *ioss);
 
-int z_iobuf_is_contigous(const z_iobuf_t *iob);
-int z_iobuf_is_expandable(const z_iobuf_t *iob);
-void z_iobuf_add_iosli(z_iobuf_t *iob, const z_iosli_t *ios);
-z_iosli_t *z_iobuf_get_iosli(const z_iobuf_t *iob, unsigned int idx);
-size_t z_iobuf_len_iosli(const z_iobuf_t *iob);
+/*------------------ RBuf ------------------*/
+typedef struct
+{
+    z_iosli_t ios;
+    int is_expandable;
+} z_rbuf_t;
 
-size_t z_iobuf_writable(const z_iobuf_t *iob);
-int z_iobuf_write(z_iobuf_t *iob, uint8_t b);
-int z_iobuf_write_slice(z_iobuf_t *iob, const uint8_t *bs, size_t offset, size_t length);
-int z_iobuf_write_bytes(z_iobuf_t *iob, const uint8_t *bs, size_t length);
-void z_iobuf_put(z_iobuf_t *iob, uint8_t b, size_t pos);
+z_rbuf_t z_rbuf_wrap(z_iosli_t ios, int is_expandable);
+z_rbuf_t z_rbuf_make(size_t capacity, int is_expandable);
 
-size_t z_iobuf_readable(const z_iobuf_t *iob);
-uint8_t z_iobuf_read(z_iobuf_t *iob);
-void z_iobuf_read_to_n(z_iobuf_t *iob, uint8_t *dest, size_t length);
-uint8_t *z_iobuf_read_n(z_iobuf_t *iob, size_t length);
-uint8_t z_iobuf_get(const z_iobuf_t *iob, size_t pos);
+size_t z_rbuf_readable(const z_rbuf_t *rbf);
+uint8_t z_rbuf_read(z_rbuf_t *rbf);
+void z_rbuf_read_bytes(z_rbuf_t *rbf, uint8_t *dest, size_t offset, size_t length);
 
-size_t z_iobuf_get_rpos(const z_iobuf_t *iob);
-size_t z_iobuf_get_wpos(const z_iobuf_t *iob);
-void z_iobuf_set_rpos(z_iobuf_t *iob, size_t r_pos);
-void z_iobuf_set_wpos(z_iobuf_t *iob, size_t w_pos);
+size_t z_rbuf_writable(const z_rbuf_t *rbf);
+int z_rbuf_write(z_rbuf_t *rbf, uint8_t b);
+int z_rbuf_write_bytes(z_rbuf_t *rbf, const uint8_t *bs, size_t offset, size_t length);
 
-z_uint8_array_t z_iobuf_to_array(const z_iobuf_t *iob);
-int z_iobuf_copy_into(z_iobuf_t *dst, const z_iobuf_t *src);
+size_t z_rbuf_get_rpos(const z_rbuf_t *rbf);
+size_t z_rbuf_get_wpos(const z_rbuf_t *rbf);
+void z_rbuf_set_rpos(z_rbuf_t *rbf, size_t r_pos);
+void z_rbuf_set_wpos(z_rbuf_t *rbf, size_t w_pos);
 
-void z_iobuf_clear(z_iobuf_t *iob);
-void z_iobuf_compact(z_iobuf_t *iob);
-void z_iobuf_free(z_iobuf_t *iob);
+void z_rbuf_clear(z_rbuf_t *rbf);
+void z_rbuf_compact(z_rbuf_t *rbf);
+void z_rbuf_free(z_rbuf_t *rbf);
+
+/*------------------ WBuf ------------------*/
+typedef struct
+{
+    size_t r_idx;
+    size_t w_idx;
+    size_t capacity;
+    z_iosli_array_t ioss;
+    int is_expandable;
+} z_wbuf_t;
+
+z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable);
+
+size_t z_wbuf_readable(const z_wbuf_t *wbf);
+uint8_t z_wbuf_read(z_wbuf_t *wbf);
+void z_wbuf_read_bytes(z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t length);
+uint8_t z_wbuf_get(const z_wbuf_t *wbf, size_t pos);
+
+size_t z_wbuf_writable(const z_wbuf_t *wbf);
+int z_wbuf_write(z_wbuf_t *wbf, uint8_t b);
+int z_wbuf_write_bytes(z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+void z_wbuf_put(z_wbuf_t *wbf, uint8_t b, size_t pos);
+
+size_t z_wbuf_get_rpos(const z_wbuf_t *wbf);
+size_t z_wbuf_get_wpos(const z_wbuf_t *wbf);
+void z_wbuf_set_rpos(z_wbuf_t *wbf, size_t r_pos);
+void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t w_pos);
+
+void z_wbuf_clear(z_wbuf_t *wbf);
+void z_wbuf_free(z_wbuf_t *wbf);
 
 #endif /* ZENOH_C_IOBUF_H_ */
