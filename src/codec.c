@@ -63,10 +63,13 @@ void z_uint8_array_decode_na(z_rbuf_t *rbf, z_uint8_array_result_t *r)
     r->tag = Z_OK_TAG;
     z_zint_result_t r_zint = z_zint_decode(rbf);
     ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    r->value.uint8_array.length = (size_t)r_zint.value.zint;
-    uint8_t *elem = (uint8_t *)malloc(r->value.uint8_array.length * sizeof(uint8_t));
-    z_rbuf_read_bytes(rbf, elem, 0, r->value.uint8_array.length);
-    r->value.uint8_array.elem = elem;
+    r->value.uint8_array.length = r_zint.value.zint;
+    // Decode without allocating
+    r->value.uint8_array.elem = z_rbuf_get_rptr(rbf);
+    // Move the read position
+    z_rbuf_set_rpos(rbf, z_rbuf_get_rpos(rbf) + r->value.uint8_array.length);
+    // uint8_t *elem = (uint8_t *)malloc(r->value.uint8_array.length * sizeof(uint8_t));
+    // z_rbuf_read_bytes(rbf, elem, 0, r->value.uint8_array.length);
 }
 
 z_uint8_array_result_t z_uint8_array_decode(z_rbuf_t *rbf)

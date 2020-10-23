@@ -38,21 +38,9 @@ void _zn_payload_decode_na(z_rbuf_t *rbf, _zn_payload_result_t *r)
     _Z_DEBUG("Decoding _PAYLOAD\n");
     r->tag = Z_OK_TAG;
 
-    // @TODO: remove allocation
     z_uint8_array_result_t r_arr = z_uint8_array_decode(rbf);
     ASSURE_P_RESULT(r_arr, r, Z_ARRAY_PARSE_ERROR)
     r->value.payload = r_arr.value.uint8_array;
-
-    // Decode the body
-    // z_zint_result_t r_zint = z_zint_decode(rbf);
-    // ASSURE_P_RESULT(r_zint, r, Z_ZINT_PARSE_ERROR)
-    // z_zint_t len = r_zint.value.zint;
-
-    // Do not allocate memory for the payload, wrap the rbuf
-    // z_uint8_array_t a;
-    // a.length = len;
-    // a.elem = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
-    // r->value.payload = a;
 }
 
 _zn_payload_result_t _zn_payload_decode(z_rbuf_t *rbf)
@@ -64,8 +52,7 @@ _zn_payload_result_t _zn_payload_decode(z_rbuf_t *rbf)
 
 void _zn_payload_free(_zn_payload_t *p)
 {
-    // (void)(p);
-    ARRAY_H_FREE(p);
+    Z_UNUSED_ARG(p);
 }
 
 /*------------------ Timestamp Field ------------------*/
@@ -103,7 +90,7 @@ _zn_timestamp_result_t _zn_timestamp_decode(z_rbuf_t *rbf)
 
 void _zn_timestamp_free(z_timestamp_t *ts)
 {
-    ARRAY_S_FREE(ts->id);
+    Z_UNUSED_ARG(ts);
 }
 
 /*------------------ SubMode Field ------------------*/
@@ -344,8 +331,10 @@ _zn_reply_context_p_result_t _zn_reply_context_decode(z_rbuf_t *rbf, uint8_t hea
 
 void _zn_reply_context_free(_zn_reply_context_t *rc)
 {
-    if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
-        ARRAY_S_FREE(rc->replier_id);
+    Z_UNUSED_ARG(rc);
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
+    //     ARRAY_S_FREE(rc->replier_id);
 }
 
 /*=============================*/
@@ -940,11 +929,13 @@ void zn_data_info_free(zn_data_info_t *di)
     //   - kind
     //   - encoding
 
-    if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_SRC_ID)
-        ARRAY_S_FREE(di->source_id);
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_SRC_ID)
+    //     ARRAY_S_FREE(di->source_id);
 
-    if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_RTR_ID)
-        ARRAY_S_FREE(di->first_router_id);
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_RTR_ID)
+    //     ARRAY_S_FREE(di->first_router_id);
 
     if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_TSTAMP)
         _zn_timestamp_free(&di->tstamp);
@@ -1338,8 +1329,9 @@ _zn_hello_result_t _zn_hello_decode(z_rbuf_t *rbf, uint8_t header)
 
 void _zn_hello_free(_zn_hello_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ARRAY_S_FREE(msg->pid)
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    //     ARRAY_S_FREE(msg->pid)
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1412,7 +1404,8 @@ _zn_open_result_t _zn_open_decode(z_rbuf_t *rbf, uint8_t header)
 
 void _zn_open_free(_zn_open_t *msg, uint8_t header)
 {
-    ARRAY_S_FREE(msg->opid);
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // ARRAY_S_FREE(msg->opid);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1487,8 +1480,9 @@ _zn_accept_result_t _zn_accept_decode(z_rbuf_t *rbf, uint8_t header)
 
 void _zn_accept_free(_zn_accept_t *msg, uint8_t header)
 {
-    ARRAY_S_FREE(msg->opid);
-    ARRAY_S_FREE(msg->apid);
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // ARRAY_S_FREE(msg->opid);
+    // ARRAY_S_FREE(msg->apid);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1531,8 +1525,10 @@ _zn_close_result_t _zn_close_decode(z_rbuf_t *rbf, uint8_t header)
 
 void _zn_close_free(_zn_close_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ARRAY_S_FREE(msg->pid)
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    //     ARRAY_S_FREE(msg->pid)
+    Z_UNUSED_ARG_2(msg, header);
 }
 
 /*------------------ Sync Message ------------------*/
@@ -1652,8 +1648,10 @@ _zn_keep_alive_result_t _zn_keep_alive_decode(z_rbuf_t *rbf, uint8_t header)
 
 void _zn_keep_alive_free(_zn_keep_alive_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        ARRAY_S_FREE(msg->pid)
+    // NOTE: z_uint8_array do not involve any heap allocation
+    // if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    //     ARRAY_S_FREE(msg->pid)
+    Z_UNUSED_ARG_2(msg, header);
 }
 
 /*------------------ PingPong Messages ------------------*/
