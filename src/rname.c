@@ -24,7 +24,7 @@
 #define WILD(str) (str[0] == '*' && str[1] == '*' && (str[2] == '/' || str[2] == 0))
 #define NEXT(str) next_chunk(str)
 
-#define DEFINE_INTERSECT(name, end, wild, next, elem_intersect) \
+#define DEFINE_INTERSECT(name, end, wild, next, _elemintersect) \
     int name(char *c1, char *c2)                                \
     {                                                           \
         if (end(c1) && end(c2))                                 \
@@ -42,7 +42,7 @@
         }                                                       \
         if (end(c1) || end(c2))                                 \
             return 0;                                           \
-        if (elem_intersect(c1, c2))                             \
+        if (_elemintersect(c1, c2))                             \
             return name(next(c1), next(c2));                    \
         return 0;                                               \
     }

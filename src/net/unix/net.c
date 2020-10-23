@@ -261,7 +261,7 @@ int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct socka
 
 int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
 {
-    size_t writable = z_rbuf_writable(rbf);
+    size_t writable = z_rbuf_capacity(rbf) - z_rbuf_get_wpos(rbf);
     uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
     int rb = rb = recvfrom(sock, cp, writable, 0, from, salen);
     z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
@@ -288,7 +288,7 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
 
 int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf)
 {
-    size_t writable = z_rbuf_writable(rbf);
+    size_t writable = z_rbuf_capacity(rbf) - z_rbuf_get_wpos(rbf);
     uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
     int rb = recv(sock, cp, writable, 0);
     z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);

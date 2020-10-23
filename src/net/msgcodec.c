@@ -1727,7 +1727,7 @@ void _zn_frame_decode_na(z_rbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
     else
     {
         r->value.frame.payload.messages = z_vec_make(_ZENOH_C_FRAME_MESSAGES_VEC_SIZE);
-        while (z_rbuf_readable(rbf))
+        while (z_rbuf_len(rbf))
         {
             // Mark the reading position of the iobfer
             size_t r_pos = z_rbuf_get_rpos(rbf);

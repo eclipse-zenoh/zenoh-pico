@@ -183,7 +183,7 @@ if (TESTS)
 #   add_executable(z_rname_test test/z_rname_test.c)
 #   add_executable(zn_client_test test/zn_client_test.c)
 #   add_executable(zn_large_data_test test/zn_large_data_test.c)
-#   add_executable(zn_msgcodec_test test/zn_msgcodec_test.c)
+  add_executable(zn_msgcodec_test test/zn_msgcodec_test.c)
 
     target_link_libraries(z_iobuf_test ${Libname})
 #   target_link_libraries(z_data_struct ${Libname})
@@ -191,7 +191,7 @@ if (TESTS)
 #   target_link_libraries(z_rname_test ${Libname})
 #   target_link_libraries(zn_client_test ${Libname})
 #   target_link_libraries(zn_large_data_test ${Libname})
-#   target_link_libraries(zn_msgcodec_test ${Libname})
+  target_link_libraries(zn_msgcodec_test ${Libname})
 
 #   configure_file(test/routed.sh routed.sh COPYONLY)
 
@@ -202,7 +202,7 @@ if (TESTS)
 #   add_test(z_rname_test z_rname_test)
 #   add_test(zn_client_test bash routed.sh zn_client_test)
 #   add_test(zn_large_data_test bash routed.sh zn_large_data_test)
-#   add_test(zn_msgcodec_test zn_msgcodec_test)
+  add_test(zn_msgcodec_test zn_msgcodec_test)
 endif(TESTS)
 
 

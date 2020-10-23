@@ -104,22 +104,22 @@ Vectors
 
   A sequence container that encapsulates a dynamic size array of pointers. 
 
-  .. c:member:: unsigned int capacity_
+  .. c:member:: unsigned int _capacity
 
     The maximum capacity of the vector.
 
-  .. c:member:: unsigned int length_
+  .. c:member:: unsigned int _length
 
     The current length of the vector.
 
-  .. c:member:: void **elem_
+  .. c:member:: void **_elem
 
     The pointers to the values.
 
 .. c:function:: z_vec_t z_vec_make(unsigned int capacity)
 
-  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t.capacity_` of **capacity**, 
-  a :c:member:`z_vec_t.length_` of **0** and a :c:member:`z_vec_t.elem_` pointing to a 
+  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t._capacity` of **capacity**, 
+  a :c:member:`z_vec_t._length` of **0** and a :c:member:`z_vec_t._elem` pointing to a 
   newly allocated array of **capacity** pointers.
 
 .. c:function:: unsigned int z_vec_len(const z_vec_t* v)

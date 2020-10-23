@@ -99,9 +99,9 @@
 /*-------- Dynamically allocated vector --------*/
 typedef struct
 {
-    size_t capacity_;
-    size_t length_;
-    void **elem_;
+    size_t _capacity;
+    size_t _length;
+    void **_elem;
 } z_vec_t;
 
 z_vec_t z_vec_uninit();

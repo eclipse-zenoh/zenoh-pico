@@ -24,7 +24,7 @@
 /*=============================*/
 void print_rbuf_overview(z_rbuf_t *rbf)
 {
-    printf("    RBuf => Expandable: %u, Capacity: %zu\n", rbf->is_expandable, rbf->ios.capacity);
+    printf("    RBuf => Capacity: %zu\n", rbf->ios.capacity);
 }
 
 void print_wbuf_overview(z_wbuf_t *wbf)
@@ -34,14 +34,14 @@ void print_wbuf_overview(z_wbuf_t *wbf)
 
 void print_iosli(z_iosli_t *ios)
 {
-    printf("    IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
+    printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [ ", ios->capacity, ios->r_pos, ios->w_pos);
     for (size_t i = 0; i < ios->capacity; ++i)
     {
         printf("%02x", ios->buf[i]);
         if (i < ios->capacity - 1)
             printf(" ");
     }
-    printf("]");
+    printf(" ]");
 }
 
 /*=============================*/
@@ -64,15 +64,7 @@ size_t gen_size_t()
 
 z_rbuf_t gen_rbuf(size_t len)
 {
-    int is_expandable = 0;
-
-    if (gen_bool())
-    {
-        is_expandable = 1;
-        len = 1 + gen_uint8();
-    }
-
-    return z_rbuf_make(len, is_expandable);
+    return z_rbuf_make(len);
 }
 
 z_wbuf_t gen_wbuf(size_t len)
@@ -89,33 +81,55 @@ z_wbuf_t gen_wbuf(size_t len)
 }
 
 /*=============================*/
-/*      Helper functions       */
-/*=============================*/
-z_rbuf_t wbuf_to_rbuf(const z_wbuf_t *wbf)
-{
-    z_rbuf_t rbf = z_rbuf_make(z_wbuf_readable(wbf), 0);
-    for (size_t i = 0; i < z_vec_len(&wbf->ioss); i++)
-    {
-        z_iosli_t *ios = (z_iosli_t *)z_vec_get(&wbf->ioss, i);
-        z_rbuf_write_bytes(&rbf, ios->buf, ios->r_pos, z_iosli_readable(ios));
-    }
-    return rbf;
-}
-
-/*=============================*/
 /*           Tests             */
 /*=============================*/
+void rbuf_writable_readable()
+{
+    size_t len = 128;
+    z_rbuf_t rbf = z_rbuf_make(len);
+    printf("\n>>> RBuf => Writable and Readable\n");
+
+    size_t writable = z_rbuf_space_left(&rbf);
+    printf("    Writable: %zu\n", writable);
+    assert(writable == len);
+
+    size_t readable = z_rbuf_len(&rbf);
+    printf("    Readable: %zu\n", readable);
+    assert(readable == 0);
+
+    z_rbuf_set_wpos(&rbf, len);
+
+    size_t read = 0;
+    while (read < len)
+    {
+        size_t to_read = 1 + gen_size_t() % (len - read);
+        for (size_t i = 0; i < to_read; i++)
+        {
+            z_rbuf_read(&rbf);
+        }
+        read += to_read;
+
+        writable = z_rbuf_space_left(&rbf);
+        printf("    Writable: %zu\n", writable);
+        assert(writable == 0);
+
+        readable = z_rbuf_len(&rbf);
+        printf("    Readable: %zu\n", readable);
+        assert(readable == len - read);
+    }
+}
+
 void wbuf_writable_readable()
 {
     size_t len = 128;
     z_wbuf_t wbf = z_wbuf_make(len, 0);
-    printf(">>> WBuf => Writable and Readable\n");
+    printf("\n>>> WBuf => Writable and Readable\n");
 
-    size_t writable = z_wbuf_writable(&wbf);
+    size_t writable = z_wbuf_space_left(&wbf);
     printf("    Writable: %zu\n", writable);
     assert(writable == len);
 
-    size_t readable = z_wbuf_readable(&wbf);
+    size_t readable = z_wbuf_len(&wbf);
     printf("    Readable: %zu\n", readable);
     assert(readable == 0);
 
@@ -129,21 +143,21 @@ void wbuf_writable_readable()
         }
         written += to_write;
 
-        writable = z_wbuf_writable(&wbf);
+        writable = z_wbuf_space_left(&wbf);
         printf("    Writable: %zu\n", writable);
         assert(writable == len - written);
 
-        readable = z_wbuf_readable(&wbf);
+        readable = z_wbuf_len(&wbf);
         printf("    Readable: %zu\n", readable);
         assert(readable == written);
     }
 }
 
-void wbuf_write_wbuf_read()
+void wbuf_write_rbuf_read()
 {
     size_t len = 128;
     z_wbuf_t wbf = gen_wbuf(len);
-    printf(">>> WBuf => Write and Read\n");
+    printf("\n>>> WBuf => Write and Read\n");
     print_wbuf_overview(&wbf);
     printf("    Writing %zu bytes\n", len);
     for (size_t i = 0; i < len; i++)
@@ -151,27 +165,31 @@ void wbuf_write_wbuf_read()
         z_wbuf_write(&wbf, (uint8_t)i % 255);
     }
 
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_vec_len(&wbf.ioss), wbf.r_idx, wbf.w_idx);
-    printf("    Written: %zu, Readable: %zu\n", len, z_wbuf_readable(&wbf));
-    assert(z_wbuf_readable(&wbf) == len);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    Written: %zu, Readable: %zu\n", len, z_wbuf_len(&wbf));
+    assert(z_wbuf_len(&wbf) == len);
 
+    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
     printf("    Reading %zu bytes\n", len);
-    for (size_t i = 0; i < len; i++)
+    printf("    [");
+    for (uint8_t i = 0; i < len; i++)
     {
         uint8_t l = (uint8_t)i % 255;
-        uint8_t r = z_wbuf_read(&wbf);
-        printf("    L: %u, R: %u\n", l, r);
+        uint8_t r = z_rbuf_read(&rbf);
+        printf(" %02x:%02x", l, r);
         assert(l == r);
     }
+    printf("]\n");
 
+    z_rbuf_free(&rbf);
     z_wbuf_free(&wbf);
 }
 
-void wbuf_write_wbuf_read_bytes()
+void wbuf_write_rbuf_read_bytes()
 {
     size_t len = 128;
     z_wbuf_t wbf = gen_wbuf(len);
-    printf(">>> WBuf => Write and Read bytes\n");
+    printf("\n>>> WBuf => Write and Read bytes\n");
     print_wbuf_overview(&wbf);
 
     printf("    Writing %zu bytes\n", len);
@@ -182,39 +200,38 @@ void wbuf_write_wbuf_read_bytes()
     }
     z_wbuf_write_bytes(&wbf, buf01, 0, len);
 
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_vec_len(&wbf.ioss), wbf.r_idx, wbf.w_idx);
-    printf("    Written: %zu, Readable: %zu\n", len, z_wbuf_readable(&wbf));
-    assert(z_wbuf_readable(&wbf) == len);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    Written: %zu, Readable: %zu\n", len, z_wbuf_len(&wbf));
+    assert(z_wbuf_len(&wbf) == len);
 
-    printf("    Reading %zu bytes\n", len);
-    uint8_t *buf02 = (uint8_t *)malloc(len * sizeof(uint8_t));
-    z_wbuf_read_bytes(&wbf, buf02, 0, len);
-
+    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    printf("    [");
     for (size_t i = 0; i < len; i++)
     {
         uint8_t l = buf01[i];
-        uint8_t r = buf02[i];
-        printf("    L: %u, R: %u\n", l, r);
+        uint8_t r = z_rbuf_read(&rbf);
+        printf(" %02x:%02x", l, r);
         assert(l == r);
     }
+    printf(" ]\n");
 
     free(buf01);
-    free(buf02);
+    z_rbuf_free(&rbf);
     z_wbuf_free(&wbf);
 }
 
-void wbuf_put_wbuf_get()
+void wbuf_put_rbuf_get()
 {
     size_t len = 128;
     z_wbuf_t wbf = gen_wbuf(len);
-    printf(">>> WBuf => Put and Get\n");
+    printf("\n>>> WBuf => Put and Get\n");
     print_wbuf_overview(&wbf);
     // Initialize to 0
     for (size_t i = 0; i < len; i++)
     {
         z_wbuf_write(&wbf, 0);
     }
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_vec_len(&wbf.ioss), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
 
     printf("    Putting %zu bytes\n", len);
     // Put data
@@ -223,15 +240,19 @@ void wbuf_put_wbuf_get()
         z_wbuf_put(&wbf, (uint8_t)i % 255, i);
     }
 
+    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
     printf("    Getting %zu bytes\n", len);
-    for (size_t i = 0; i < len; i++)
+    printf("    [");
+    for (uint8_t i = 0; i < len; i++)
     {
         uint8_t l = (uint8_t)i % 255;
-        uint8_t r = z_wbuf_get(&wbf, i);
-        printf("    L: %u, R: %u\n", l, r);
+        uint8_t r = z_rbuf_read(&rbf);
+        printf(" %02x:%02x", l, r);
         assert(l == r);
     }
+    printf(" ]\n");
 
+    z_rbuf_free(&rbf);
     z_wbuf_free(&wbf);
 }
 
@@ -239,7 +260,7 @@ void wbuf_set_pos_wbuf_get_pos()
 {
     size_t len = 128;
     z_wbuf_t wbf = gen_wbuf(len);
-    printf(">>> WBuf => SetPos and GetPos\n");
+    printf("\n>>> WBuf => SetPos and GetPos\n");
     print_wbuf_overview(&wbf);
     // Initialize to 0
     for (size_t i = 0; i < len; i++)
@@ -248,7 +269,7 @@ void wbuf_set_pos_wbuf_get_pos()
     }
     assert(z_wbuf_get_rpos(&wbf) == 0);
     assert(z_wbuf_get_wpos(&wbf) == len);
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_vec_len(&wbf.ioss), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
 
     for (size_t i = 0; i < 10; i++)
     {
@@ -280,7 +301,7 @@ void wbuf_add_iosli()
 {
     uint8_t len = 16;
     z_wbuf_t wbf = z_wbuf_make(len, 1);
-    printf(">>> WBuf => Add IOSli\n");
+    printf("\n>>> WBuf => Add IOSli\n");
     print_wbuf_overview(&wbf);
 
     size_t written = 0;
@@ -318,22 +339,28 @@ void wbuf_add_iosli()
         written += to_write;
     }
 
-    printf("\n    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_vec_len(&wbf.ioss), wbf.r_idx, wbf.w_idx);
-    for (size_t i = 0; i < z_vec_len(&wbf.ioss); i++)
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    for (size_t i = 0; i < z_wbuf_len_iosli(&wbf); i++)
     {
-        z_iosli_t *ios = (z_iosli_t *)z_vec_get(&wbf.ioss, i);
-        printf("    IOSli => Idx: %zu\n", i);
+        z_iosli_t *ios = z_wbuf_get_iosli(&wbf, i);
+        printf("    Idx: %zu => ", i);
         print_iosli(ios);
         printf("\n");
     }
 
+    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    printf("    [");
     for (uint8_t i = 0; i < counter; i++)
     {
         uint8_t l = i;
-        uint8_t r = z_wbuf_read(&wbf);
-        printf("    L: %u, R: %u\n", l, r);
+        uint8_t r = z_rbuf_read(&rbf);
+        printf(" %02x:%02x", l, r);
         assert(l == r);
     }
+    printf(" ]\n");
+
+    z_rbuf_free(&rbf);
+    z_wbuf_free(&wbf);
 }
 
 /*=============================*/
@@ -344,10 +371,11 @@ int main()
     for (unsigned int i = 0; i < RUNS; ++i)
     {
         printf("\n\n== RUN %u\n", i);
+        rbuf_writable_readable();
         wbuf_writable_readable();
-        wbuf_write_wbuf_read();
-        wbuf_write_wbuf_read_bytes();
-        wbuf_put_wbuf_get();
+        wbuf_write_rbuf_read();
+        wbuf_write_rbuf_read_bytes();
+        wbuf_put_rbuf_get();
         wbuf_set_pos_wbuf_get_pos();
         wbuf_add_iosli();
     }

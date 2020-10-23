@@ -29,7 +29,6 @@ typedef struct
 
 z_iosli_t z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 z_iosli_t z_iosli_make(size_t capacity);
-void z_iosli_resize(z_iosli_t *ios, size_t capacity);
 
 size_t z_iosli_readable(const z_iosli_t *ios);
 uint8_t z_iosli_read(z_iosli_t *ios);
@@ -42,27 +41,25 @@ void z_iosli_write_bytes(z_iosli_t *ios, const uint8_t *bs, size_t offset, size_
 void z_iosli_put(z_iosli_t *ios, uint8_t b, size_t pos);
 
 void z_iosli_clear(z_iosli_t *ios);
-void z_iosli_compact(z_iosli_t *ios);
 void z_iosli_free(z_iosli_t *ios);
 
 /*------------------ RBuf ------------------*/
 typedef struct
 {
     z_iosli_t ios;
-    int is_expandable;
 } z_rbuf_t;
 
-z_rbuf_t z_rbuf_wrap(z_iosli_t ios, int is_expandable);
-z_rbuf_t z_rbuf_make(size_t capacity, int is_expandable);
+z_rbuf_t z_rbuf_wrap(z_iosli_t ios);
+z_rbuf_t z_rbuf_make(size_t capacity);
 z_rbuf_t z_rbuf_view(z_rbuf_t *rbf, size_t length);
 
-size_t z_rbuf_readable(const z_rbuf_t *rbf);
+size_t z_rbuf_capacity(const z_rbuf_t *rbf);
+size_t z_rbuf_len(const z_rbuf_t *rbf);
+size_t z_rbuf_space_left(const z_rbuf_t *rbf);
+
 uint8_t z_rbuf_read(z_rbuf_t *rbf);
 void z_rbuf_read_bytes(z_rbuf_t *rbf, uint8_t *dest, size_t offset, size_t length);
-
-size_t z_rbuf_writable(const z_rbuf_t *rbf);
-int z_rbuf_write(z_rbuf_t *rbf, uint8_t b);
-int z_rbuf_write_bytes(z_rbuf_t *rbf, const uint8_t *bs, size_t offset, size_t length);
+uint8_t z_rbuf_get(const z_rbuf_t *rbf, size_t pos);
 
 size_t z_rbuf_get_rpos(const z_rbuf_t *rbf);
 size_t z_rbuf_get_wpos(const z_rbuf_t *rbf);
@@ -85,12 +82,10 @@ typedef struct
 
 z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable);
 
-size_t z_wbuf_readable(const z_wbuf_t *wbf);
-uint8_t z_wbuf_read(z_wbuf_t *wbf);
-void z_wbuf_read_bytes(z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t length);
-uint8_t z_wbuf_get(const z_wbuf_t *wbf, size_t pos);
+size_t z_wbuf_capacity(const z_wbuf_t *wbf);
+size_t z_wbuf_len(const z_wbuf_t *wbf);
+size_t z_wbuf_space_left(const z_wbuf_t *wbf);
 
-size_t z_wbuf_writable(const z_wbuf_t *wbf);
 int z_wbuf_write(z_wbuf_t *wbf, uint8_t b);
 int z_wbuf_write_bytes(z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
 void z_wbuf_put(z_wbuf_t *wbf, uint8_t b, size_t pos);
@@ -101,6 +96,11 @@ void z_wbuf_set_rpos(z_wbuf_t *wbf, size_t r_pos);
 void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t w_pos);
 
 void z_wbuf_add_iosli(z_wbuf_t *wbf, z_iosli_t *ios);
+z_iosli_t *z_wbuf_get_iosli(const z_wbuf_t *wbf, size_t idx);
+size_t z_wbuf_len_iosli(const z_wbuf_t *wbf);
+
+z_rbuf_t z_wbuf_to_rbuf(const z_wbuf_t *wbf);
+int z_wbuf_copy_into(z_wbuf_t *dst, z_wbuf_t *src, size_t length);
 z_uint8_array_t z_wbuf_to_array(const z_wbuf_t *wbf);
 
 void z_wbuf_clear(z_wbuf_t *wbf);

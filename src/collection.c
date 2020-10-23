@@ -21,86 +21,80 @@
 inline z_vec_t z_vec_uninit()
 {
     z_vec_t v;
-    v.length_ = 0;
-    v.capacity_ = 0;
-    v.elem_ = NULL;
+    v._length = 0;
+    v._capacity = 0;
+    v._elem = NULL;
     return v;
 }
 
 inline int z_vec_is_init(const z_vec_t *v)
 {
-    return (v->elem_ != NULL);
+    return (v->_elem != NULL);
 }
 
 inline z_vec_t z_vec_make(size_t capacity)
 {
     z_vec_t v;
-    v.capacity_ = capacity;
-    v.length_ = 0;
-    v.elem_ = (void **)malloc(sizeof(void *) * capacity);
+    v._capacity = capacity;
+    v._length = 0;
+    v._elem = (void **)malloc(sizeof(void *) * capacity);
     return v;
 }
 
 z_vec_t z_vec_clone(const z_vec_t *v)
 {
-    z_vec_t u = z_vec_make(v->capacity_);
-    for (size_t i = 0; i < v->length_; ++i)
-        z_vec_append(&u, v->elem_[i]);
+    z_vec_t u = z_vec_make(v->_capacity);
+    for (size_t i = 0; i < v->_length; ++i)
+        z_vec_append(&u, v->_elem[i]);
     return u;
 }
 
 void z_vec_free_inner(z_vec_t *v)
 {
-    free(v->elem_);
-    v->length_ = 0;
-    v->capacity_ = 0;
-    v->elem_ = NULL;
+    free(v->_elem);
+    v->_length = 0;
+    v->_capacity = 0;
+    v->_elem = NULL;
 }
 
 void z_vec_free(z_vec_t *v)
 {
-    for (size_t i = 0; i < v->length_; ++i)
-        free(v->elem_[i]);
+    for (size_t i = 0; i < v->_length; ++i)
+        free(v->_elem[i]);
     z_vec_free_inner(v);
 }
 
-inline size_t z_vec_len(const z_vec_t *v) { return v->length_; }
+inline size_t z_vec_len(const z_vec_t *v) { return v->_length; }
 
 void z_vec_append(z_vec_t *v, void *e)
 {
-    if (v->length_ == v->capacity_)
+    if (v->_length == v->_capacity)
     {
-        // v->capacity_ += v->capacity_;
-        // v->elem_ = realloc(v->elem_, v->capacity_);
-
-        // printf("1) Before realloc => Velem: %p, Velem + capacity: %p\n", (void *)v->elem_, (void *)(v->elem_ + v->capacity_));
         // Allocate a new vector
-        size_t capacity_ = 2 * v->capacity_;
-        void **elem_ = (void **)malloc(capacity_ * sizeof(void *));
-        // Copy the element from the old vector to the new vector
-        for (size_t i = 0; i < v->length_; i++)
-            elem_[i] = v->elem_[i];
+        size_t _capacity = 2 * v->_capacity;
+        void **_elem = (void **)malloc(_capacity * sizeof(void *));
+        memcpy(_elem, v->_elem, v->_capacity * sizeof(void *));
         // Free the old vector
-        free(v->elem_);
-        // Update the vector
-        v->elem_ = elem_;
-        v->capacity_ = capacity_;
-        // printf("2) After realloc => Velem: %p, Velem + capacity: %p\n", (void *)v->elem_, (void *)(v->elem_ + v->capacity_));
+        free(v->_elem);
+        // Update the current vector
+        v->_elem = _elem;
+        v->_capacity = _capacity;
     }
-    v->elem_[v->length_] = e;
-    v->length_++;
+
+    v->_elem[v->_length] = e;
+    v->_length++;
 }
 
 const void *z_vec_get(const z_vec_t *v, size_t i)
 {
-    assert(i < v->length_);
-    return v->elem_[i];
+    assert(i < v->_length);
+    return v->_elem[i];
 }
 
 void z_vec_set(z_vec_t *v, size_t i, void *e)
 {
-    assert(i < v->capacity_);
-    v->elem_[i] = e;
+    assert(i < v->_capacity);
+    v->_elem[i] = e;
 }
 
 /*-------- Linked List --------*/

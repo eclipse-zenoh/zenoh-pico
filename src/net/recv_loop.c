@@ -506,7 +506,7 @@ void *zn_recv_loop(zn_session_t *z)
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read number of bytes to read
-        while (z_rbuf_readable(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+        while (z_rbuf_len(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
             if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
@@ -516,7 +516,7 @@ void *zn_recv_loop(zn_session_t *z)
         size_t to_read = (size_t)((uint16_t)z_rbuf_read(&z->rbuf) | ((uint16_t)z_rbuf_read(&z->rbuf) << 8));
 
         // Read the rest of bytes to decode one or more session messages
-        while (z_rbuf_readable(&z->rbuf) < to_read)
+        while (z_rbuf_len(&z->rbuf) < to_read)
         {
             if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
@@ -527,7 +527,7 @@ void *zn_recv_loop(zn_session_t *z)
         z_rbuf_t rbuf = z_rbuf_view(&z->rbuf, to_read);
 #else
         // Read bytes from the socket.
-        while (z_rbuf_readable(&z->rbuf) == 0)
+        while (z_rbuf_len(&z->rbuf) == 0)
         {
             if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
                 goto EXIT_RECV_LOOP;
@@ -536,7 +536,7 @@ void *zn_recv_loop(zn_session_t *z)
         z_iobuf_t rbuf = z->rbuf;
 #endif
 
-        while (z_rbuf_readable(&rbuf) > 0)
+        while (z_rbuf_len(&rbuf) > 0)
         {
             // Mark the session that we have received data
             z->received = 1;

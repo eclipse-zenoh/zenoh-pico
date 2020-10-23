@@ -35,7 +35,7 @@ zn_session_t *_zn_session_init()
 
     // Initialize the buffers
     z->wbuf = z_wbuf_make(ZENOH_NET_WRITE_BUF_LEN, 0);
-    z->rbuf = z_rbuf_make(ZENOH_NET_READ_BUF_LEN, 0);
+    z->rbuf = z_rbuf_make(ZENOH_NET_READ_BUF_LEN);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -147,7 +147,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct so
     // @TODO: need to abstract the platform-specific data types
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
-    z_rbuf_t rbf = z_rbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, 0);
+    z_rbuf_t rbf = z_rbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
     z_vec_t ls = z_vec_uninit();
 
     while (tries > 0)
@@ -746,7 +746,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 //     z_vec_set(&res, ZN_INFO_PID_KEY, pid);
 //     z_vec_set(&res, ZN_INFO_PEER_KEY, peer);
 //     z_vec_set(&res, ZN_INFO_PEER_PID_KEY, peer_pid);
-//     res.length_ = 3;
+//     res._length = 3;
 
 //     return res;
 // }

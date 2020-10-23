@@ -46,7 +46,7 @@ void _zn_finalize_wbuf(z_wbuf_t *buf)
     //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
     //       the boundary of the serialized messages. The length is encoded as little-endian.
     //       In any case, the length of a message must not exceed 65_535 bytes.
-    size_t len = z_wbuf_readable(buf) - _ZN_MSG_LEN_ENC_SIZE;
+    size_t len = z_wbuf_len(buf) - _ZN_MSG_LEN_ENC_SIZE;
     for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
         z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
 #endif /* ZENOH_NET_TRANSPORT_TCP_IP */
@@ -105,9 +105,9 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
     }
 
     // Do not allocate the vector containing the messages
-    s_msg.body.frame.payload.messages.capacity_ = 0;
-    s_msg.body.frame.payload.messages.length_ = 0;
-    s_msg.body.frame.payload.messages.elem_ = NULL;
+    s_msg.body.frame.payload.messages._capacity = 0;
+    s_msg.body.frame.payload.messages._length = 0;
+    s_msg.body.frame.payload.messages._elem = NULL;
 
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_tx);
@@ -173,7 +173,8 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)
 
     uint16_t len = z_rbuf_read(&z->rbuf) | (z_rbuf_read(&z->rbuf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
-    if (z_rbuf_writable(&z->rbuf) < len)
+    size_t writable = z_rbuf_capacity(&z->rbuf) - z_rbuf_len(&z->rbuf);
+    if (writable < len)
     {
         // Release the lock
         _zn_mutex_unlock(&z->mutex_rx);
