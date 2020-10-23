@@ -248,23 +248,28 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen)
 {
     _Z_DEBUG("Sending data on socket....\n");
-    z_uint8_array_t a = z_wbuf_to_array(wbf);
-    int wb = sendto(sock, a.elem, a.length, 0, dest, salen);
-    _Z_DEBUG_VA("Socket returned: %d\n", wb);
-    if (wb <= 0)
+    int wb = 0;
+    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
     {
-        _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-        return -1;
+        z_uint8_array_t a = z_iosli_to_array(z_wbuf_get_iosli(wbf, i));
+        int res = sendto(sock, a.elem, a.length, 0, dest, salen);
+        _Z_DEBUG_VA("Socket returned: %d\n", wb);
+        if (res <= 0)
+        {
+            _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
+            return -1;
+        }
+        wb += res;
     }
     return wb;
 }
 
 int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
 {
-    size_t writable = z_rbuf_capacity(rbf) - z_rbuf_get_wpos(rbf);
-    uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
-    int rb = rb = recvfrom(sock, cp, writable, 0, from, salen);
-    z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
+    int rb = recvfrom(sock, z_rbuf_get_wptr(rbf), z_rbuf_space_left(rbf), 0, from, salen);
+    if (rb > 0)
+        z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
+
     return rb;
 }
 
@@ -288,38 +293,38 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
 
 int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf)
 {
-    size_t writable = z_rbuf_capacity(rbf) - z_rbuf_get_wpos(rbf);
-    uint8_t *cp = (uint8_t *)rbf->ios.buf + rbf->ios.r_pos;
-    int rb = recv(sock, cp, writable, 0);
-    z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
+    int rb = recv(sock, z_rbuf_get_wptr(rbf), z_rbuf_space_left(rbf), 0);
+    if (rb > 0)
+        z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
     return rb;
 }
 
 /*------------------ Send ------------------*/
 int _zn_send_wbuf(_zn_socket_t sock, const z_wbuf_t *wbf)
 {
-    z_uint8_array_t a = z_wbuf_to_array(wbf);
-    uint8_t *ptr = a.elem;
-    int len = a.length;
-    int n = len;
-    int wb;
-    do
+    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
     {
-        _Z_DEBUG("Sending data on socket....\n");
-#if (ZENOH_LINUX == 1)
-        wb = send(sock, ptr, n, MSG_NOSIGNAL);
-#else
-        wb = send(sock, ptr, n, 0);
-#endif
-        _Z_DEBUG_VA("Socket returned: %d\n", wb);
-        if (wb <= 0)
+        z_uint8_array_t a = z_iosli_to_array(z_wbuf_get_iosli(wbf, i));
+        int n = a.length;
+        int wb;
+        do
         {
-            _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-            return -1;
-        }
-        n -= wb;
-        ptr += len - n;
-    } while (n > 0);
+            _Z_DEBUG("Sending data on socket....\n");
+#if (ZENOH_LINUX == 1)
+            wb = send(sock, a.elem, n, MSG_NOSIGNAL);
+#else
+            wb = send(sock, a.elem, n, 0);
+#endif
+            _Z_DEBUG_VA("Socket returned: %d\n", wb);
+            if (wb <= 0)
+            {
+                _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
+                return -1;
+            }
+            n -= wb;
+            a.elem += a.length - n;
+        } while (n > 0);
+    }
 
     return 0;
 }

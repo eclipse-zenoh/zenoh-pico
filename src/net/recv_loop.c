@@ -496,36 +496,42 @@ void *zn_recv_loop(zn_session_t *z)
     z_rbuf_clear(&z->rbuf);
     while (z->recv_loop_running)
     {
-        z_rbuf_compact(&z->rbuf);
-
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
         //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
         //       the boundary of the serialized messages. The length is encoded as little-endian.
         //       In any case, the length of a message must not exceed 65_535 bytes.
-
-        // Read number of bytes to read
-        while (z_rbuf_len(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+        if (z_rbuf_len(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
         {
-            if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
-                goto EXIT_RECV_LOOP;
+            z_rbuf_compact(&z->rbuf);
+            // Read number of bytes to read
+            while (z_rbuf_len(&z->rbuf) < _ZN_MSG_LEN_ENC_SIZE)
+            {
+                if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
+                    goto EXIT_RECV_LOOP;
+            }
         }
 
         // Decode the message length
         size_t to_read = (size_t)((uint16_t)z_rbuf_read(&z->rbuf) | ((uint16_t)z_rbuf_read(&z->rbuf) << 8));
 
-        // Read the rest of bytes to decode one or more session messages
-        while (z_rbuf_len(&z->rbuf) < to_read)
+        if (z_rbuf_len(&z->rbuf) < to_read)
         {
-            if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
-                goto EXIT_RECV_LOOP;
+            z_rbuf_compact(&z->rbuf);
+            // Read the rest of bytes to decode one or more session messages
+            while (z_rbuf_len(&z->rbuf) < to_read)
+            {
+                if (_zn_recv_rbuf(z->sock, &z->rbuf) <= 0)
+                    goto EXIT_RECV_LOOP;
+            }
         }
 
-        z_rbuf_set_wpos(&z->rbuf, z_rbuf_get_wpos(&z->rbuf) + to_read);
         // Wrap the main buffer for to_read bytes
         z_rbuf_t rbuf = z_rbuf_view(&z->rbuf, to_read);
 #else
+        z_rbuf_compact(&z->rbuf);
+
         // Read bytes from the socket.
         while (z_rbuf_len(&z->rbuf) == 0)
         {
@@ -562,8 +568,7 @@ void *zn_recv_loop(zn_session_t *z)
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
         // Move the read position of the read buffer
-        size_t r_pos = z_rbuf_get_rpos(&z->rbuf) + to_read;
-        z_rbuf_set_rpos(&z->rbuf, r_pos);
+        z_rbuf_set_rpos(&z->rbuf, z_rbuf_get_rpos(&z->rbuf) + to_read);
 #endif
     }
 

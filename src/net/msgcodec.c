@@ -64,8 +64,8 @@ _zn_payload_result_t _zn_payload_decode(z_rbuf_t *rbf)
 
 void _zn_payload_free(_zn_payload_t *p)
 {
-    (void)(p);
-    // ARRAY_S_FREE(p);
+    // (void)(p);
+    ARRAY_H_FREE(p);
 }
 
 /*------------------ Timestamp Field ------------------*/

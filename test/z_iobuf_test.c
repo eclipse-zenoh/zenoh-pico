@@ -119,6 +119,78 @@ void rbuf_writable_readable()
     }
 }
 
+void rbuf_comapct()
+{
+    uint8_t len = 128;
+    z_rbuf_t rbf = z_rbuf_make(len);
+    printf("\n>>> RBuf => Compact\n");
+
+    for (uint8_t i = 0; i < len; i++)
+    {
+        z_iosli_write(&rbf.ios, i);
+    }
+
+    uint8_t counter = 0;
+
+    while (counter < len)
+    {
+        size_t len01 = z_rbuf_len(&rbf);
+        z_rbuf_compact(&rbf);
+        assert(z_rbuf_get_rpos(&rbf) == 0);
+        assert(z_rbuf_get_wpos(&rbf) == len01);
+        assert(z_rbuf_len(&rbf) == len01);
+        printf("    Len: %zu, Rpos: %zu, Wpos: %zu\n", len01, z_rbuf_get_rpos(&rbf), z_rbuf_get_wpos(&rbf));
+
+        uint8_t vs = 1 + gen_uint8() % (len - counter);
+        printf("    Read %u bytes => [", vs);
+        for (uint8_t i = 0; i < vs; i++)
+        {
+            uint8_t l = counter++;
+            uint8_t r = z_rbuf_read(&rbf);
+            printf(" %02x:%02x", l, r);
+            assert(l == r);
+        }
+        printf(" ]\n");
+    }
+}
+
+void rbuf_view()
+{
+    uint8_t len = 128;
+    z_rbuf_t rbf = z_rbuf_make(len);
+    printf("\n>>> RBuf => View\n");
+
+    for (uint8_t i = 0; i < len; i++)
+    {
+        z_iosli_write(&rbf.ios, i);
+    }
+
+    uint8_t counter = 0;
+
+    while (counter < len)
+    {
+        uint8_t vs = 1 + gen_uint8() % (len - counter);
+        z_rbuf_t rv = z_rbuf_view(&rbf, vs);
+
+        printf("    View of %u bytes: ", vs);
+        assert(z_rbuf_capacity(&rv) == vs);
+        assert(z_rbuf_len(&rv) == vs);
+        assert(z_rbuf_space_left(&rv) == 0);
+
+        printf("[");
+        for (uint8_t i = 0; i < vs; i++)
+        {
+            uint8_t l = counter++;
+            uint8_t r = z_rbuf_read(&rv);
+            printf(" %02x:%02x", l, r);
+            assert(l == r);
+        }
+        printf(" ]\n");
+
+        z_rbuf_set_rpos(&rbf, z_rbuf_get_rpos(&rbf) + vs);
+    }
+}
+
 void wbuf_writable_readable()
 {
     size_t len = 128;
@@ -371,12 +443,17 @@ int main()
     for (unsigned int i = 0; i < RUNS; ++i)
     {
         printf("\n\n== RUN %u\n", i);
+        // RBuf
         rbuf_writable_readable();
+        rbuf_comapct();
+        rbuf_view();
+        // WBuf
         wbuf_writable_readable();
+        wbuf_set_pos_wbuf_get_pos();
+        wbuf_add_iosli();
+        // WBuf and RBuf
         wbuf_write_rbuf_read();
         wbuf_write_rbuf_read_bytes();
         wbuf_put_rbuf_get();
-        wbuf_set_pos_wbuf_get_pos();
-        wbuf_add_iosli();
     }
 }

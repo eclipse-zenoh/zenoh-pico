@@ -84,6 +84,7 @@ zn_session_t *_zn_session_init()
 
 void _zn_session_free(zn_session_t *z)
 {
+    printf("SESSION FREE!!!\n");
     close(z->sock);
 
     _zn_mutex_free(&z->mutex_tx);
@@ -591,7 +592,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
         om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
-        om.attachment->payload = z_wbuf_to_array(&att_pld);
+        om.attachment->payload = z_iosli_to_array(z_wbuf_get_iosli(&att_pld, 0));
     }
 
     om.body.open.version = ZENOH_NET_PROTO_VERSION;

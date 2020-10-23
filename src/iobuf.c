@@ -91,6 +91,14 @@ void z_iosli_put(z_iosli_t *ios, uint8_t b, size_t pos)
     ios->buf[pos] = b;
 }
 
+z_uint8_array_t z_iosli_to_array(const z_iosli_t *ios)
+{
+    z_uint8_array_t a;
+    a.length = z_iosli_readable(ios);
+    a.elem = ios->buf + ios->r_pos;
+    return a;
+}
+
 void z_iosli_clear(z_iosli_t *ios)
 {
     ios->r_pos = 0;
@@ -104,22 +112,18 @@ void z_iosli_free(z_iosli_t *ios)
 }
 
 /*------------------ RBuf ------------------*/
-z_rbuf_t z_rbuf_wrap(z_iosli_t ios)
-{
-    z_rbuf_t rbf;
-    rbf.ios = ios;
-    return rbf;
-}
-
 z_rbuf_t z_rbuf_make(size_t capacity)
 {
-    return z_rbuf_wrap(z_iosli_make(capacity));
+    z_rbuf_t rbf;
+    rbf.ios = z_iosli_make(capacity);
+    return rbf;
 }
 
 z_rbuf_t z_rbuf_view(z_rbuf_t *rbf, size_t length)
 {
+    assert(z_iosli_readable(&rbf->ios) >= length);
     z_rbuf_t v;
-    v.ios = z_iosli_wrap((uint8_t *)rbf->ios.buf + rbf->ios.r_pos, length, 0, length);
+    v.ios = z_iosli_wrap(z_rbuf_get_rptr(rbf), length, 0, length);
     return v;
 }
 
@@ -153,34 +157,6 @@ uint8_t z_rbuf_get(const z_rbuf_t *rbf, size_t pos)
     return z_iosli_get(&rbf->ios, pos);
 }
 
-// int z_rbuf_write(z_rbuf_t *rbf, uint8_t b)
-// {
-//     size_t writable = z_iosli_writable(&rbf->ios);
-//     if (writable >= 1)
-//     {
-//         z_iosli_write(&rbf->ios, b);
-//         return 0;
-//     }
-//     else
-//     {
-//         return -1;
-//     }
-// }
-
-// int z_rbuf_write_bytes(z_rbuf_t *rbf, const uint8_t *bs, size_t offset, size_t length)
-// {
-//     size_t writable = z_iosli_writable(&rbf->ios);
-//     if (writable >= length)
-//     {
-//         z_iosli_write_bytes(&rbf->ios, bs, offset, length);
-//         return 0;
-//     }
-//     else
-//     {
-//         return -1;
-//     }
-// }
-
 size_t z_rbuf_get_rpos(const z_rbuf_t *rbf)
 {
     return rbf->ios.r_pos;
@@ -203,6 +179,16 @@ void z_rbuf_set_wpos(z_rbuf_t *rbf, size_t w_pos)
     rbf->ios.w_pos = w_pos;
 }
 
+uint8_t *z_rbuf_get_rptr(const z_rbuf_t *rbf)
+{
+    return rbf->ios.buf + rbf->ios.r_pos;
+}
+
+uint8_t *z_rbuf_get_wptr(const z_rbuf_t *rbf)
+{
+    return rbf->ios.buf + rbf->ios.w_pos;
+}
+
 void z_rbuf_clear(z_rbuf_t *rbf)
 {
     z_iosli_clear(&rbf->ios);
@@ -211,16 +197,12 @@ void z_rbuf_clear(z_rbuf_t *rbf)
 void z_rbuf_compact(z_rbuf_t *rbf)
 {
     if (rbf->ios.r_pos == 0 && rbf->ios.w_pos == 0)
-    {
         return;
-    }
 
-    uint8_t *cp = rbf->ios.buf + rbf->ios.r_pos;
     size_t len = z_iosli_readable(&rbf->ios);
-    memcpy(rbf->ios.buf, cp, len);
+    memcpy(rbf->ios.buf, z_rbuf_get_rptr(rbf), len * sizeof(uint8_t));
     z_rbuf_set_rpos(rbf, 0);
     z_rbuf_set_wpos(rbf, len);
-    rbf->ios.r_pos = 0;
 }
 
 void z_rbuf_free(z_rbuf_t *rbf)
@@ -287,6 +269,17 @@ z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable)
     return wbf;
 }
 
+size_t z_wbuf_capacity(const z_wbuf_t *wbf)
+{
+    size_t cap = 0;
+    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
+    {
+        z_iosli_t *ios = z_wbuf_get_iosli(wbf, i);
+        cap += ios->capacity;
+    }
+    return cap;
+}
+
 size_t z_wbuf_len(const z_wbuf_t *wbf)
 {
     size_t len = 0;
@@ -296,6 +289,12 @@ size_t z_wbuf_len(const z_wbuf_t *wbf)
         len += z_iosli_readable(ios);
     }
     return len;
+}
+
+size_t z_wbuf_space_left(const z_wbuf_t *wbf)
+{
+    z_iosli_t *ios = z_wbuf_get_iosli(wbf, wbf->w_idx);
+    return z_iosli_writable(ios);
 }
 
 uint8_t _z_wbuf_read(z_wbuf_t *wbf)
@@ -352,12 +351,6 @@ uint8_t _z_wbuf_get(const z_wbuf_t *wbf, size_t pos)
     } while (++i);
 
     return z_iosli_get(ios, pos);
-}
-
-size_t z_wbuf_space_left(const z_wbuf_t *wbf)
-{
-    z_iosli_t *ios = z_wbuf_get_iosli(wbf, wbf->w_idx);
-    return z_iosli_writable(ios);
 }
 
 int z_wbuf_write(z_wbuf_t *wbf, uint8_t b)
@@ -496,16 +489,6 @@ void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t pos)
         ios->w_pos = ios->capacity;
         pos -= ios->capacity;
     } while (++i);
-}
-
-z_uint8_array_t z_wbuf_to_array(const z_wbuf_t *wbf)
-{
-    assert(z_vec_len(&wbf->ioss) == 1);
-    z_iosli_t *ios = z_wbuf_get_iosli(wbf, 0);
-    z_uint8_array_t a;
-    a.length = z_iosli_readable(ios);
-    a.elem = (uint8_t *)ios->buf + ios->r_pos;
-    return a;
 }
 
 z_rbuf_t z_wbuf_to_rbuf(const z_wbuf_t *wbf)
