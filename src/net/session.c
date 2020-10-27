@@ -484,10 +484,8 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
             int res = Z_RECV_OK;
-            // Create an iosli for decoding
-            z_uint8_array_t fragment = msg->body.frame.payload.fragment;
-            // Add the iosli to the defragmentation buffer
-            z_wbuf_add_iosli_from(&z->dbuf, fragment.elem, fragment.length);
+            // Add the fragment to the defragmentation buffer
+            z_wbuf_add_iosli_from(&z->dbuf, msg->body.frame.payload.fragment.elem, msg->body.frame.payload.fragment.length);
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
@@ -495,7 +493,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
                 // Convert the defragmentation buffer into a decoding buffer
                 z_rbuf_t rbf = z_wbuf_to_rbuf(&z->dbuf);
 
-                // Decode the message
+                // Decode the zenoh message
                 _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
                 if (r_zm.tag == Z_OK_TAG)
                 {
@@ -521,6 +519,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         }
         else
         {
+            // Handle all the zenoh message, one by one
             size_t len = z_vec_len(&msg->body.frame.payload.messages);
             for (size_t i = 0; i < len; ++i)
             {
