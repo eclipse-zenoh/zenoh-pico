@@ -622,6 +622,9 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         r.tag = Z_ERROR_TAG;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
+        // Free the pid
+        ARRAY_S_FREE(pid);
+
         // Free the attachment payload;
         if (ps)
             z_wbuf_free(&att_pld);
@@ -717,6 +720,9 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         break;
     }
     }
+
+    // Free the pid
+    ARRAY_S_FREE(pid);
 
     // Free the attachment payload;
     if (ps)

@@ -2531,8 +2531,6 @@ int _zn_serialize_zenoh_fragment(z_wbuf_t *dst, z_wbuf_t *src, int is_reliable, 
         size_t w_pos = z_wbuf_get_wpos(dst);
         // Get the frame header
         _zn_session_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
-        // printf("   Encoded Frame Header: ");
-        // print_wbuf(dst);
         // Encode the frame header
         int res = _zn_session_message_encode(dst, &f_hdr);
         if (res == 0)
