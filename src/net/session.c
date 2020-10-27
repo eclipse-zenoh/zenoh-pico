@@ -453,6 +453,34 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
 
     case _ZN_MID_FRAME:
     {
+        // Check if the SN is correct
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R))
+        {
+            // @TODO: amend once reliability is in place. For the time being only
+            //        monothonic SNs are ensured
+            if (_zn_sn_precedes(z->sn_resolution_half, z->sn_rx_reliable, msg->body.frame.sn))
+            {
+                z->sn_rx_reliable = msg->body.frame.sn;
+            }
+            else
+            {
+                _Z_DEBUG("Reliable message dropped because it is out of order");
+                return Z_RECV_OK;
+            }
+        }
+        else
+        {
+            if (_zn_sn_precedes(z->sn_resolution_half, z->sn_rx_best_effort, msg->body.frame.sn))
+            {
+                z->sn_rx_best_effort = msg->body.frame.sn;
+            }
+            else
+            {
+                _Z_DEBUG("Best effort message dropped because it is out of order");
+                return Z_RECV_OK;
+            }
+        }
+
         if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
             int res = Z_RECV_OK;
@@ -684,6 +712,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
         // The announced sn resolution
         r.value.session->sn_resolution = om.body.open.sn_resolution;
+        r.value.session->sn_resolution_half = r.value.session->sn_resolution / 2;
 
         // The announced initial SN at TX side
         r.value.session->sn_tx_reliable = om.body.open.initial_sn;
@@ -708,6 +737,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                     r.value.session->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
                 }
                 r.value.session->sn_resolution = p_am->body.accept.sn_resolution;
+                r.value.session->sn_resolution_half = r.value.session->sn_resolution / 2;
             }
             else
             {
@@ -729,9 +759,18 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         // The session lease
         r.value.session->lease = p_am->body.accept.lease;
 
-        // The initial SN at RX side
-        r.value.session->sn_rx_reliable = p_am->body.accept.initial_sn;
-        r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn;
+        // The initial SN at RX side. Initialize the session as we had already received
+        // a message with a SN equal to initial_sn - 1.
+        if (p_am->body.accept.initial_sn > 0)
+        {
+            r.value.session->sn_rx_reliable = p_am->body.accept.initial_sn - 1;
+            r.value.session->sn_rx_best_effort = p_am->body.accept.initial_sn - 1;
+        }
+        else
+        {
+            r.value.session->sn_rx_reliable = r.value.session->sn_resolution - 1;
+            r.value.session->sn_rx_best_effort = r.value.session->sn_resolution - 1;
+        }
 
         // Initialize the Local and Remote Peer IDs
         ARRAY_S_COPY(uint8_t, r.value.session->local_pid, pid);

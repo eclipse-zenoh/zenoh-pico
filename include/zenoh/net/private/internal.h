@@ -21,6 +21,9 @@
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1
 
+/*------------------ SN helpers ------------------*/
+int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
+
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
 int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);

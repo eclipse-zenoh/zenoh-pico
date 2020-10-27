@@ -20,6 +20,32 @@
 #include "zenoh/private/logging.h"
 #include "zenoh/rname.h"
 
+/*------------------ SN helper ------------------*/
+z_zint_t _zn_get_sn(zn_session_t *z, int is_reliable)
+{
+    size_t sn;
+    // Get the sequence number and update it in modulo operation
+    if (is_reliable)
+    {
+        sn = z->sn_tx_reliable;
+        z->sn_tx_reliable = (z->sn_tx_reliable + 1) % z->sn_resolution;
+    }
+    else
+    {
+        sn = z->sn_tx_best_effort;
+        z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
+    }
+    return sn;
+}
+
+int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right)
+{
+    if (sn_right > sn_left)
+        return (sn_right - sn_left <= sn_resolution_half);
+    else
+        return (sn_left - sn_right > sn_resolution_half);
+}
+
 /*------------------ Transmission and Reception helper ------------------*/
 void _zn_prepare_wbuf(z_wbuf_t *buf)
 {
@@ -79,61 +105,6 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
     z->transmitted = 1;
 
     return res;
-}
-
-// _zn_session_message_t _zn_frame_header(zn_session_t *z, int is_reliable, int is_fragment, int is_final)
-// {
-//     // Create the frame session message that carries the zenoh message
-//     _zn_session_message_t s_msg;
-//     _ZN_INIT_S_MSG(s_msg)
-//     s_msg.header = _ZN_MID_FRAME;
-//     if (is_reliable)
-//     {
-//         _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
-//         s_msg.body.frame.sn = z->sn_tx_reliable;
-//         // Update the sequence number in modulo operation
-//         z->sn_tx_reliable = (z->sn_tx_reliable + 1) % z->sn_resolution;
-//     }
-//     else
-//     {
-//         s_msg.body.frame.sn = z->sn_tx_best_effort;
-//         // Update the sequence number in modulo operation
-//         z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
-//     }
-
-//     if (is_fragment)
-//     {
-//         _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
-//     }
-
-//     if (is_final)
-//     {
-//         _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
-//     }
-
-//     // Do not allocate the vector containing the messages
-//     s_msg.body.frame.payload.messages._capacity = 0;
-//     s_msg.body.frame.payload.messages._length = 0;
-//     s_msg.body.frame.payload.messages._elem = NULL;
-
-//     return s_msg;
-// }
-
-z_zint_t _zn_get_sn(zn_session_t *z, int is_reliable)
-{
-    size_t sn;
-    // Get the sequence number and update it in modulo operation
-    if (is_reliable)
-    {
-        sn = z->sn_tx_reliable;
-        z->sn_tx_reliable = (z->sn_tx_reliable + 1) % z->sn_resolution;
-    }
-    else
-    {
-        sn = z->sn_tx_best_effort;
-        z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
-    }
-    return sn;
 }
 
 _zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)

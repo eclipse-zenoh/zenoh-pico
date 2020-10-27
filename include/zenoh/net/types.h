@@ -189,6 +189,7 @@ typedef struct
 
     z_zint_t lease;
     z_zint_t sn_resolution;
+    z_zint_t sn_resolution_half;
 
     // SN numbers
     z_zint_t sn_tx_reliable;
