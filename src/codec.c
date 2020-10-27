@@ -55,7 +55,21 @@ z_zint_result_t z_zint_decode(z_rbuf_t *rbf)
 int z_uint8_array_encode(z_wbuf_t *wbf, const z_uint8_array_t *bs)
 {
     _ZN_EC(z_zint_encode(wbf, bs->length))
-    return z_wbuf_write_bytes(wbf, bs->elem, 0, bs->length);
+    if (wbf->is_expandable && bs->length > ZENOH_NET_TSID_LENGTH)
+    {
+        // Do not copy, just add a slice to the expandable buffer
+        // Only create a new slice if the malloc is cheaper than copying a
+        // large amount of data
+        z_iosli_t sios = z_iosli_wrap(bs->elem, bs->length, 0, bs->length);
+        z_iosli_t *pios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
+        memcpy(pios, &sios, sizeof(z_iosli_t));
+        z_wbuf_add_iosli(wbf, pios);
+        return 0;
+    }
+    else
+    {
+        return z_wbuf_write_bytes(wbf, bs->elem, 0, bs->length);
+    }
 }
 
 void z_uint8_array_decode_na(z_rbuf_t *rbf, z_uint8_array_result_t *r)
@@ -68,8 +82,6 @@ void z_uint8_array_decode_na(z_rbuf_t *rbf, z_uint8_array_result_t *r)
     r->value.uint8_array.elem = z_rbuf_get_rptr(rbf);
     // Move the read position
     z_rbuf_set_rpos(rbf, z_rbuf_get_rpos(rbf) + r->value.uint8_array.length);
-    // uint8_t *elem = (uint8_t *)malloc(r->value.uint8_array.length * sizeof(uint8_t));
-    // z_rbuf_read_bytes(rbf, elem, 0, r->value.uint8_array.length);
 }
 
 z_uint8_array_result_t z_uint8_array_decode(z_rbuf_t *rbf)

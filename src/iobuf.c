@@ -27,20 +27,16 @@ z_iosli_t z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos
     ios.r_pos = r_pos;
     ios.w_pos = w_pos;
     ios.capacity = capacity;
+    ios.is_alloc = 0;
     ios.buf = buf;
     return ios;
 }
 
 z_iosli_t z_iosli_make(size_t capacity)
 {
-    return z_iosli_wrap((uint8_t *)malloc(capacity), capacity, 0, 0);
-}
-
-void z_iosli_resize(z_iosli_t *ios, size_t capacity)
-{
-    assert(ios->w_pos <= capacity);
-    ios->capacity = capacity;
-    ios->buf = (uint8_t *)realloc(ios->buf, ios->capacity);
+    z_iosli_t ios = z_iosli_wrap((uint8_t *)malloc(capacity), capacity, 0, 0);
+    ios.is_alloc = 1;
+    return ios;
 }
 
 size_t z_iosli_readable(const z_iosli_t *ios)
@@ -107,7 +103,8 @@ void z_iosli_clear(z_iosli_t *ios)
 
 void z_iosli_free(z_iosli_t *ios)
 {
-    free(ios->buf);
+    if (ios->is_alloc)
+        free(ios->buf);
     ios = NULL;
 }
 
@@ -228,13 +225,11 @@ void z_wbuf_add_iosli(z_wbuf_t *wbf, z_iosli_t *ios)
 
 void z_wbuf_new_iosli(z_wbuf_t *wbf, size_t capacity)
 {
-    z_iosli_t *ios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
-    ios->r_pos = 0;
-    ios->w_pos = 0;
-    ios->capacity = capacity;
-    ios->buf = (uint8_t *)malloc(capacity);
+    z_iosli_t sios = z_iosli_make(capacity);
+    z_iosli_t *pios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
+    memcpy(pios, &sios, sizeof(z_iosli_t));
 
-    z_wbuf_add_iosli(wbf, ios);
+    z_wbuf_add_iosli(wbf, pios);
 }
 
 z_iosli_t *z_wbuf_get_iosli(const z_wbuf_t *wbf, size_t idx)
@@ -252,7 +247,6 @@ z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable)
     z_wbuf_t wbf;
     wbf.r_idx = 0;
     wbf.w_idx = 0;
-    wbf.capacity = capacity;
     if (is_expandable)
     {
         // Preallocate 4 slots, this is usually what we expect
@@ -263,8 +257,13 @@ z_wbuf_t z_wbuf_make(size_t capacity, int is_expandable)
     {
         wbf.ioss = z_vec_make(1);
     }
-    z_wbuf_new_iosli(&wbf, capacity);
     wbf.is_expandable = is_expandable;
+
+    if (capacity > 0)
+    {
+        z_wbuf_new_iosli(&wbf, capacity);
+    }
+    wbf.capacity = capacity;
 
     return wbf;
 }
@@ -495,7 +494,7 @@ z_rbuf_t z_wbuf_to_rbuf(const z_wbuf_t *wbf)
 {
     size_t len = z_wbuf_len(wbf);
     z_rbuf_t rbf = z_rbuf_make(len);
-    for (size_t i = 0; i < z_vec_len(&wbf->ioss); i++)
+    for (size_t i = wbf->r_idx; i <= wbf->w_idx; i++)
     {
         z_iosli_t *ios = z_wbuf_get_iosli(wbf, i);
         z_iosli_write_bytes(&rbf.ios, ios->buf, ios->r_pos, z_iosli_readable(ios));

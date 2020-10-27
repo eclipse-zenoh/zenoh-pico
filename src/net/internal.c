@@ -81,16 +81,13 @@ int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *s_msg)
     return res;
 }
 
-int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
+_zn_session_message_t _zn_frame_header(zn_session_t *z, int is_reliable, int is_fragment, int is_final)
 {
-    // @TODO: implement fragmentation
-    _Z_DEBUG(">> send zenoh message\n");
-
     // Create the frame session message that carries the zenoh message
     _zn_session_message_t s_msg;
     _ZN_INIT_S_MSG(s_msg)
     s_msg.header = _ZN_MID_FRAME;
-    if (reliable)
+    if (is_reliable)
     {
         _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
         s_msg.body.frame.sn = z->sn_tx_reliable;
@@ -104,42 +101,156 @@ int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int reliable)
         z->sn_tx_best_effort = (z->sn_tx_best_effort + 1) % z->sn_resolution;
     }
 
+    if (is_fragment)
+    {
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
+    }
+
+    if (is_final)
+    {
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
+    }
+
     // Do not allocate the vector containing the messages
     s_msg.body.frame.payload.messages._capacity = 0;
     s_msg.body.frame.payload.messages._length = 0;
     s_msg.body.frame.payload.messages._elem = NULL;
 
+    return s_msg;
+}
+
+#include <stdio.h>
+int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *z_msg, int is_reliable)
+{
+    // @TODO: implement fragmentation
+    _Z_DEBUG(">> send zenoh message\n");
+
     // Acquire the lock
     _zn_mutex_lock(&z->mutex_tx);
     // Prepare the buffer eventually reserving space for the message length
     _zn_prepare_wbuf(&z->wbuf);
+    // Create the frame session message that carries the zenoh message
+    _zn_session_message_t s_msg = _zn_frame_header(z, is_reliable, 0, 0);
     // Encode the frame header
-    if (_zn_session_message_encode(&z->wbuf, &s_msg) != 0)
+    int res = _zn_session_message_encode(&z->wbuf, &s_msg);
+    if (res != 0)
     {
         _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded");
         // Release the lock
         _zn_mutex_unlock(&z->mutex_tx);
         return -1;
     }
+
     // Encode the zenoh message
-    if (_zn_zenoh_message_encode(&z->wbuf, z_msg) != 0)
+    res = _zn_zenoh_message_encode(&z->wbuf, z_msg);
+    if (res == 0)
     {
-        _Z_DEBUG("Dropping zenoh message because it is too large");
+        // Write the message legnth in the reserved space if needed
+        _zn_finalize_wbuf(&z->wbuf);
+        // Send the wbuf on the socket
+        res = _zn_send_wbuf(z->sock, &z->wbuf);
+
+        // Mark the session that we have transmitted data
+        z->transmitted = 1;
+
         // Release the lock
         _zn_mutex_unlock(&z->mutex_tx);
-        return -1;
+
+        return res;
     }
-    // Write the message legnth in the reserved space if needed
-    _zn_finalize_wbuf(&z->wbuf);
-    // Send the wbuf on the socket
-    int res = _zn_send_wbuf(z->sock, &z->wbuf);
-    // Release the lock
-    _zn_mutex_unlock(&z->mutex_tx);
+    else
+    {
+        // Create an expandable wbuf for fragmentation
+        z_wbuf_t fbf = z_wbuf_make(ZENOH_NET_FRAG_BUF_TX_CHUNK, 1);
 
-    // Mark the session that we have transmitted data
-    z->transmitted = 1;
+        // Encode the message
+        res = _zn_zenoh_message_encode(&fbf, z_msg);
+        if (res != 0)
+        {
+            _Z_DEBUG("Dropping zenoh message because it can not be fragmented");
+            goto EXIT_FRAG_PROC;
+        }
 
-    return res;
+        printf("Fragmenting %zu bytes\n", z_wbuf_len(&fbf));
+
+        int is_first = 1;
+        // Fragment the message
+        while (z_wbuf_len(&fbf) > 0)
+        {
+            // Prepare the buffer eventually reserving space for the message length
+            _zn_prepare_wbuf(&z->wbuf);
+
+            if (is_first)
+            {
+                // Need to mark this header as a fragment
+                _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
+                is_first = 0;
+            }
+            else
+            {
+                // Create the frame session message that carries the zenoh message
+                s_msg = _zn_frame_header(z, is_reliable, 1, 0);
+            }
+
+            // Encode the frame header
+            res = _zn_session_message_encode(&z->wbuf, &s_msg);
+            if (res != 0)
+                goto EXIT_FRAG_PROC;
+
+            // Compute the space left, the amount of bytes to copy
+            size_t space_left = z_wbuf_space_left(&z->wbuf);
+            size_t bytes_left = z_wbuf_len(&fbf);
+            size_t to_copy = space_left;
+
+            // Check if this is the last fragment
+            if (bytes_left <= space_left)
+            {
+                to_copy = bytes_left;
+
+                // Need to mark this fragment as last
+                _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
+                // Prepare the buffer eventually reserving space for the message length
+                _zn_prepare_wbuf(&z->wbuf);
+                // Re-encode the frame header
+                res = _zn_session_message_encode(&z->wbuf, &s_msg);
+                if (res != 0)
+                    goto EXIT_FRAG_PROC;
+            }
+
+            printf("Bytes left: %zu, Space left: %zu, Fragment size: %zu\n", bytes_left, space_left, to_copy);
+            res = z_wbuf_copy_into(&z->wbuf, &fbf, to_copy);
+            if (res != 0)
+            {
+                printf("Copy error\n");
+                goto EXIT_FRAG_PROC;
+            }
+
+            // Write the message length in the reserved space if needed
+            _zn_finalize_wbuf(&z->wbuf);
+
+            // Send the wbuf on the socket
+            res = _zn_send_wbuf(z->sock, &z->wbuf);
+            if (res != 0)
+            {
+                printf("Send error\n");
+                goto EXIT_FRAG_PROC;
+            }
+
+            // Mark the session that we have transmitted data
+            z->transmitted = 1;
+        }
+
+        res = 0;
+
+    EXIT_FRAG_PROC:
+        // Free the memory
+        z_wbuf_free(&fbf);
+
+        // Release the lock
+        _zn_mutex_unlock(&z->mutex_tx);
+
+        return res;
+    }
 }
 
 void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r)

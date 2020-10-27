@@ -24,6 +24,7 @@ typedef struct
     size_t r_pos;
     size_t w_pos;
     size_t capacity;
+    int is_alloc;
     uint8_t *buf;
 } z_iosli_t;
 

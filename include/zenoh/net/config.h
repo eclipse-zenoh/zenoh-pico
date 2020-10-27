@@ -17,6 +17,7 @@
 
 #define ZENOH_NET_ATTACHMENT_BUF_LEN 16384
 #define ZENOH_NET_PID_LENGTH 8
+#define ZENOH_NET_TSID_LENGTH 16
 #define ZENOH_NET_PROTO_VERSION 0x00
 // Default session lease in milliseconds: 10 seconds
 #define ZENOH_NET_SESSION_LEASE 10000
@@ -39,6 +40,9 @@
 
 #define ZENOH_NET_TRANSPORT_TCP_IP 1
 // #define ZENOH_NET_TRANSPORT_BLE 1
+
+#define ZENOH_NET_FRAG_BUF_TX_CHUNK 128
+#define ZENOH_NET_FRAG_BUF_RX_LIMIT 10000000
 
 #ifdef ZENOH_NET_TRANSPORT_TCP_IP
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length

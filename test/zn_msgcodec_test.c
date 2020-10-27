@@ -40,9 +40,10 @@ void print_iosli(z_iosli_t *ios)
 
 void print_wbuf(z_wbuf_t *wbf)
 {
-    printf("WBuf: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(wbf), wbf->r_idx, wbf->w_idx);
+    printf("   WBuf: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(wbf), wbf->r_idx, wbf->w_idx);
     for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
     {
+        printf("   - ");
         print_iosli(z_wbuf_get_iosli(wbf, i));
         printf("\n");
     }
@@ -136,8 +137,8 @@ _zn_payload_t gen_payload(size_t len)
     _zn_payload_t pld;
     pld.length = len;
     pld.elem = (uint8_t *)malloc(len * sizeof(uint8_t));
-    for (z_zint_t i = 0; i < len; ++i)
-        pld.elem[i] = gen_uint8();
+    for (size_t i = 0; i < len; ++i)
+        pld.elem[i] = 0xff;
 
     return pld;
 }
@@ -217,7 +218,7 @@ void assert_eq_uint8_array(z_uint8_array_t *left, z_uint8_array_t *right)
         uint8_t l = left->elem[i];
         uint8_t r = right->elem[i];
 
-        printf("%u:%u", l, r);
+        printf("%02x:%02x", l, r);
         if (i < left->length - 1)
             printf(" ");
 
@@ -1251,7 +1252,7 @@ _zn_data_t gen_data_message(uint8_t *header)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_I);
     }
     _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-    e_da.payload = gen_payload(1 + gen_uint8() % 64);
+    e_da.payload = gen_payload(1 + gen_zint() % 64);
 
     return e_da;
 }
@@ -1502,8 +1503,10 @@ void assert_eq_zenoh_message(_zn_zenoh_message_t *left, _zn_zenoh_message_t *rig
     }
     else
     {
+        printf("   Attachment: %p:%p\n", (void *)left->attachment, (void *)right->attachment);
         assert(left->attachment == right->attachment);
     }
+
     if (left->reply_context && right->reply_context)
     {
         printf("   ");
@@ -1512,6 +1515,7 @@ void assert_eq_zenoh_message(_zn_zenoh_message_t *left, _zn_zenoh_message_t *rig
     }
     else
     {
+        printf("   Reply Context: %p:%p\n", (void *)left->reply_context, (void *)right->reply_context);
         assert(left->reply_context == right->reply_context);
     }
 
@@ -2179,15 +2183,15 @@ void ping_pong_message()
 }
 
 /*------------------ Frame Message ------------------*/
-_zn_frame_t gen_frame_message(uint8_t *header)
+_zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
 {
     _zn_frame_t e_fr;
 
     e_fr.sn = gen_zint();
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_F : 0);
-    if _ZN_HAS_FLAG (*header, _ZN_FLAG_S_F)
+    if (can_be_fragment && gen_bool())
     {
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_F);
         _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_E : 0);
         e_fr.payload.fragment = gen_payload(64);
     }
@@ -2236,7 +2240,7 @@ void frame_message()
 
     // Initialize
     uint8_t e_hdr = 0;
-    _zn_frame_t e_fr = gen_frame_message(&e_hdr);
+    _zn_frame_t e_fr = gen_frame_message(&e_hdr, 1);
 
     // Encode
     assert(_zn_frame_encode(&wbf, e_hdr, &e_fr) == 0);
@@ -2256,7 +2260,7 @@ void frame_message()
 }
 
 /*------------------ Session Message ------------------*/
-_zn_session_message_t *gen_session_message()
+_zn_session_message_t *gen_session_message(int can_be_fragment)
 {
     _zn_session_message_t *p_sm = (_zn_session_message_t *)malloc(sizeof(_zn_session_message_t));
 
@@ -2318,7 +2322,7 @@ _zn_session_message_t *gen_session_message()
         break;
     case _ZN_MID_FRAME:
         p_sm->header = _ZN_MID_FRAME;
-        p_sm->body.frame = gen_frame_message(&p_sm->header);
+        p_sm->body.frame = gen_frame_message(&p_sm->header, can_be_fragment);
         break;
     default:
         assert(0);
@@ -2389,7 +2393,7 @@ void session_message()
     z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
-    _zn_session_message_t *e_sm = gen_session_message();
+    _zn_session_message_t *e_sm = gen_session_message(1);
     printf(" - ");
     print_session_message_type(e_sm->header);
     printf("\n");
@@ -2428,24 +2432,24 @@ void batch()
     for (uint8_t i = 0; i < bef_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message();
+        e_sm[i] = gen_session_message(0);
         // Encode
         assert(_zn_session_message_encode(&wbf, e_sm[i]) == 0);
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message();
+        e_sm[i] = gen_session_message(0);
         // Override it with a frame message
         e_sm[i]->header = _ZN_MID_FRAME;
-        e_sm[i]->body.frame = gen_frame_message(&e_sm[i]->header);
+        e_sm[i]->body.frame = gen_frame_message(&e_sm[i]->header, 0);
         // Encode
         assert(_zn_session_message_encode(&wbf, e_sm[i]) == 0);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message();
+        e_sm[i] = gen_session_message(0);
         // Encode
         assert(_zn_session_message_encode(&wbf, e_sm[i]) == 0);
     }
@@ -2472,6 +2476,183 @@ void batch()
     free(e_sm);
     z_rbuf_free(&rbf);
     z_wbuf_free(&wbf);
+}
+
+/*------------------ Fragmentation ------------------*/
+_zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
+{
+    // Create the frame session message that carries the zenoh message
+    _zn_session_message_t s_msg;
+    _ZN_INIT_S_MSG(s_msg)
+    s_msg.header = _ZN_MID_FRAME;
+    s_msg.body.frame.sn = sn;
+
+    if (is_reliable)
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
+
+    if (is_fragment)
+    {
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
+
+        if (is_final)
+            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
+
+        // Do not add the payload
+        s_msg.body.frame.payload.fragment.length = 0;
+        s_msg.body.frame.payload.fragment.elem = NULL;
+    }
+    else
+    {
+        // Do not allocate the vector containing the messages
+        s_msg.body.frame.payload.messages._capacity = 0;
+        s_msg.body.frame.payload.messages._length = 0;
+        s_msg.body.frame.payload.messages._elem = NULL;
+    }
+
+    return s_msg;
+}
+
+void _zn_wbuf_prepare(z_wbuf_t *wbf)
+{
+    // Clear the buffer for serialization
+    z_wbuf_clear(wbf);
+
+    for (size_t i = 0; i < z_wbuf_space_left(wbf); i++)
+        z_wbuf_put(wbf, 0xff, i);
+}
+
+int _zn_serialize_zenoh_fragment(z_wbuf_t *dst, z_wbuf_t *src, int is_reliable, size_t sn)
+{
+    // Assume first that this is not the final fragment
+    int is_final = 0;
+    do
+    {
+        // Mark the buffer for the writing operation
+        size_t w_pos = z_wbuf_get_wpos(dst);
+        // Get the frame header
+        _zn_session_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
+        // printf("   Encoded Frame Header: ");
+        // print_wbuf(dst);
+        // Encode the frame header
+        int res = _zn_session_message_encode(dst, &f_hdr);
+        if (res == 0)
+        {
+            size_t space_left = z_wbuf_space_left(dst);
+            size_t bytes_left = z_wbuf_len(src);
+            // Check if it is really the final fragment
+            if (!is_final && (bytes_left <= space_left))
+            {
+                // Revert the buffer
+                z_wbuf_set_wpos(dst, w_pos);
+                // It is really the finally fragment, reserialize the header
+                is_final = 1;
+                continue;
+            }
+            // Write the fragment
+            size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
+            printf("  -Bytes left: %zu, Space left: %zu, Fragment size: %zu, Is final: %d\n", bytes_left, space_left, to_copy, is_final);
+            return z_wbuf_copy_into(dst, src, to_copy);
+        }
+        else
+        {
+            return 0;
+        }
+    } while (1);
+}
+
+void fragmentation()
+{
+    printf("\n>> Fragmentation\n");
+    size_t len = 16;
+    z_wbuf_t wbf = z_wbuf_make(len, 0);
+    z_wbuf_t fbf = z_wbuf_make(len, 1);
+    z_wbuf_t dbf = z_wbuf_make(0, 1);
+
+    _zn_zenoh_message_t *e_zm;
+
+    do
+    {
+        z_wbuf_clear(&fbf);
+        // Generate and serialize the message
+        e_zm = gen_zenoh_message();
+        _zn_zenoh_message_encode(&fbf, e_zm);
+        // Check that the message actually requires fragmentation
+        if (z_wbuf_len(&fbf) <= len)
+            _zn_zenoh_message_free(e_zm);
+        else
+            break;
+    } while (1);
+
+    // Fragment the message
+    int is_reliable = gen_bool();
+    // Fix the sn resoulution to 128 in such a way it requires only 1 byte for encoding
+    size_t sn_resolution = 128;
+    size_t sn = sn_resolution - 1;
+
+    printf(" - Message serialized\n");
+    print_wbuf(&fbf);
+
+    printf(" - Start fragmenting\n");
+    int res = 0;
+    while (z_wbuf_len(&fbf) > 0)
+    {
+        // Clear the buffer for serialization
+        _zn_wbuf_prepare(&wbf);
+
+        // Get the fragment sequence number
+        sn = (sn + 1) % sn_resolution;
+
+        size_t written = z_wbuf_len(&fbf);
+        res = _zn_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
+        assert(res == 0);
+        written -= z_wbuf_len(&fbf);
+
+        printf("  -Encoded Fragment: ");
+        print_wbuf(&wbf);
+
+        // Decode the message
+        z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+
+        _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&rbf);
+        assert(r_sm.tag == Z_OK_TAG);
+
+        z_uint8_array_t fragment = r_sm.value.session_message->body.frame.payload.fragment;
+        printf("  -Decoded Fragment length: %zu\n", fragment.length);
+        assert(fragment.length == written);
+
+        // Create an iosli for decoding
+        z_iosli_t s_ios = z_iosli_make(fragment.length);
+        z_iosli_t *p_ios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
+        memcpy(p_ios, &s_ios, sizeof(z_iosli_t));
+        memcpy(p_ios->buf, fragment.elem, fragment.length);
+        p_ios->w_pos = p_ios->capacity;
+
+        printf("  -");
+        print_iosli(p_ios);
+        printf("\n");
+        // Add the iosli to the defragmentation buffer
+        z_wbuf_add_iosli(&dbf, p_ios);
+
+        print_wbuf(&dbf);
+
+        // Free the read buffer
+        z_rbuf_free(&rbf);
+    }
+
+    printf(" - Start defragmenting\n");
+    print_wbuf(&dbf);
+    z_rbuf_t rbf = z_wbuf_to_rbuf(&dbf);
+    printf("   Defragmented: ");
+    print_iosli(&rbf.ios);
+    printf("\n");
+    _zn_zenoh_message_p_result_t r_sm = _zn_zenoh_message_decode(&rbf);
+    assert(r_sm.tag == Z_OK_TAG);
+    _zn_zenoh_message_t *d_zm = r_sm.value.zenoh_message;
+    assert_eq_zenoh_message(e_zm, d_zm);
+
+    z_wbuf_free(&dbf);
+    z_wbuf_free(&wbf);
+    z_wbuf_free(&fbf);
 }
 
 /*=============================*/
@@ -2519,6 +2700,7 @@ int main()
         frame_message();
         session_message();
         batch();
+        fragmentation();
     }
 
     return 0;

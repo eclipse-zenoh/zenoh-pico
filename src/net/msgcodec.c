@@ -27,9 +27,6 @@ int _zn_payload_encode(z_wbuf_t *wbf, const _zn_payload_t *pld)
     _Z_DEBUG("Encoding _PAYLOAD\n");
 
     // Encode the body
-    // z_zint_t len = z_iobuf_readable(pld);
-    // _ZN_EC(z_zint_encode(wbf, len))
-    // return z_iobuf_copy_into(wbf, pld);
     return z_uint8_array_encode(wbf, pld);
 }
 
@@ -1693,7 +1690,9 @@ int _zn_frame_encode(z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
     {
-        return _zn_payload_encode(wbf, &msg->payload.fragment);
+        // Do not write the fragment as z_uint8_array_t since the total frame length
+        // is eventually prepended to the frame. There is no need to encode the fragment length.
+        return z_wbuf_write_bytes(wbf, msg->payload.fragment.elem, 0, msg->payload.fragment.length);
     }
     else
     {
@@ -1718,9 +1717,12 @@ void _zn_frame_decode_na(z_rbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
     // Decode the payload
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
     {
-        _zn_payload_result_t r_pld = _zn_payload_decode(rbf);
-        ASSURE_P_RESULT(r_pld, r, ZN_PAYLOAD_PARSE_ERROR);
-        r->value.frame.payload.fragment = r_pld.value.payload;
+        // Read all the remaining bytes in the buffer as the fragment
+        r->value.frame.payload.fragment.length = z_rbuf_len(rbf);
+        r->value.frame.payload.fragment.elem = z_rbuf_get_rptr(rbf);
+
+        // We need to manually move the r_pos to w_pos, we have read it all
+        z_rbuf_set_rpos(rbf, z_rbuf_get_wpos(rbf));
     }
     else
     {
