@@ -101,6 +101,7 @@ void z_wbuf_set_rpos(z_wbuf_t *wbf, size_t r_pos);
 void z_wbuf_set_wpos(z_wbuf_t *wbf, size_t w_pos);
 
 void z_wbuf_add_iosli(z_wbuf_t *wbf, z_iosli_t *ios);
+void z_wbuf_add_iosli_from(z_wbuf_t *wbf, uint8_t *buf, size_t capacity);
 z_iosli_t *z_wbuf_get_iosli(const z_wbuf_t *wbf, size_t idx);
 size_t z_wbuf_len_iosli(const z_wbuf_t *wbf);
 
@@ -108,6 +109,7 @@ z_rbuf_t z_wbuf_to_rbuf(const z_wbuf_t *wbf);
 int z_wbuf_copy_into(z_wbuf_t *dst, z_wbuf_t *src, size_t length);
 
 void z_wbuf_clear(z_wbuf_t *wbf);
+void z_wbuf_reset(z_wbuf_t *wbf);
 void z_wbuf_free(z_wbuf_t *wbf);
 
 #endif /* ZENOH_C_IOBUF_H_ */

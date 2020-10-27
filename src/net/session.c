@@ -36,6 +36,7 @@ zn_session_t *_zn_session_init()
     // Initialize the buffers
     z->wbuf = z_wbuf_make(ZENOH_NET_WRITE_BUF_LEN, 0);
     z->rbuf = z_rbuf_make(ZENOH_NET_READ_BUF_LEN);
+    z->dbuf = z_wbuf_make(0, 1);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -452,7 +453,45 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
 
     case _ZN_MID_FRAME:
     {
-        if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
+        {
+            int res = Z_RECV_OK;
+            // Create an iosli for decoding
+            z_uint8_array_t fragment = msg->body.frame.payload.fragment;
+            // Add the iosli to the defragmentation buffer
+            z_wbuf_add_iosli_from(&z->dbuf, fragment.elem, fragment.length);
+
+            // Check if this is the last fragment
+            if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
+            {
+                // Convert the defragmentation buffer into a decoding buffer
+                z_rbuf_t rbf = z_wbuf_to_rbuf(&z->dbuf);
+
+                // Decode the message
+                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
+                if (r_zm.tag == Z_OK_TAG)
+                {
+                    _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
+                    res = _zn_handle_zenoh_message(z, d_zm);
+                    // Free the decoded message
+                    _zn_zenoh_message_free(d_zm);
+                }
+                else
+                {
+                    res = Z_RECV_ERR;
+                }
+
+                // Free the result
+                _zn_zenoh_message_p_result_free(&r_zm);
+                // Free the decoding buffer
+                z_rbuf_free(&rbf);
+                // Reset the defragmentation buffer
+                z_wbuf_reset(&z->dbuf);
+            }
+
+            return res;
+        }
+        else
         {
             size_t len = z_vec_len(&msg->body.frame.payload.messages);
             for (size_t i = 0; i < len; ++i)
@@ -461,12 +500,8 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
                 if (res != Z_RECV_OK)
                     return res;
             }
+            return Z_RECV_OK;
         }
-        else
-        {
-            _Z_DEBUG("Handling of Fragmented Frame messages not implemented");
-        }
-        return Z_RECV_OK;
     }
 
     default:

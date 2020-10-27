@@ -179,6 +179,7 @@ typedef struct
 
     z_wbuf_t wbuf;
     z_rbuf_t rbuf;
+    z_wbuf_t dbuf;
 
     // Connection state
     z_uint8_array_t local_pid;

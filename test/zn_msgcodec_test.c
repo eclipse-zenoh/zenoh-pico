@@ -2619,17 +2619,7 @@ void fragmentation()
         assert(fragment.length == written);
 
         // Create an iosli for decoding
-        z_iosli_t s_ios = z_iosli_make(fragment.length);
-        z_iosli_t *p_ios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
-        memcpy(p_ios, &s_ios, sizeof(z_iosli_t));
-        memcpy(p_ios->buf, fragment.elem, fragment.length);
-        p_ios->w_pos = p_ios->capacity;
-
-        printf("  -");
-        print_iosli(p_ios);
-        printf("\n");
-        // Add the iosli to the defragmentation buffer
-        z_wbuf_add_iosli(&dbf, p_ios);
+        z_wbuf_add_iosli_from(&dbf, fragment.elem, fragment.length);
 
         print_wbuf(&dbf);
 

@@ -223,6 +223,17 @@ void z_wbuf_add_iosli(z_wbuf_t *wbf, z_iosli_t *ios)
     z_vec_append(&wbf->ioss, ios);
 }
 
+void z_wbuf_add_iosli_from(z_wbuf_t *wbf, uint8_t *buf, size_t capacity)
+{
+    z_iosli_t sios = z_iosli_make(capacity);
+    z_iosli_t *pios = (z_iosli_t *)malloc(sizeof(z_iosli_t));
+    memcpy(pios, &sios, sizeof(z_iosli_t));
+    memcpy(pios->buf, buf, capacity);
+    pios->w_pos = pios->capacity;
+
+    z_wbuf_add_iosli(wbf, pios);
+}
+
 void z_wbuf_new_iosli(z_wbuf_t *wbf, size_t capacity)
 {
     z_iosli_t sios = z_iosli_make(capacity);
@@ -520,6 +531,29 @@ void z_wbuf_clear(z_wbuf_t *wbf)
     for (size_t i = 0; i < z_vec_len(&wbf->ioss); i++)
     {
         z_iosli_clear(z_wbuf_get_iosli(wbf, i));
+    }
+}
+
+void z_wbuf_reset(z_wbuf_t *wbf)
+{
+    wbf->r_idx = 0;
+    wbf->w_idx = 0;
+    for (size_t i = 0; i < z_vec_len(&wbf->ioss); i++)
+    {
+        z_iosli_t *ios = z_wbuf_get_iosli(wbf, i);
+        z_iosli_free(ios);
+    }
+    z_vec_free(&wbf->ioss);
+
+    if (wbf->is_expandable)
+    {
+        // Preallocate 4 slots, this is usually what we expect
+        // when fragmenting a zenoh data message with attachment
+        wbf->ioss = z_vec_make(4);
+    }
+    else
+    {
+        wbf->ioss = z_vec_make(1);
     }
 }
 
