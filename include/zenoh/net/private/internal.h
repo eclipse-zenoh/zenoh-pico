@@ -21,6 +21,10 @@
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1
 
+/*------------------ Message helper ------------------*/
+_zn_session_message_t _zn_session_message_init(void);
+_zn_zenoh_message_t _zn_zenoh_message_init(void);
+
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
@@ -35,23 +39,25 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);
 z_zint_t _zn_get_entity_id(zn_session_t *z);
 
 /*------------------ Resource ------------------*/
-z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key);
+z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_reskey_t *res_key);
 _zn_res_decl_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
-_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
-int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_res_key_t *res_key);
+_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+char *_zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+
+int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_reskey_t *res_key);
 void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *res);
 
 /*------------------ Subscription ------------------*/
-z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_key_t *res_key);
-_zn_sub_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
-_zn_sub_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
-int _zn_register_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
-void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
+_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_reskey_t *res_key);
+_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
+_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
+void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
 
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
-// z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
-// z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
-// void _zn_unregister_queryable(zn_qle_t *s);
+// _z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
+// _z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
+// void _zn_unregister_queryable(zn_queryable_t *s);
 
 // int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid);
 

@@ -35,7 +35,7 @@
 // resource rep_last_res;
 // z_mvar_t *rep_mvar = 0;
 
-// void sub_listener(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+// void sub_listener(const zn_reskey_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
 // {
 //     Z_UNUSED_ARG_2(info, arg);
 //     sub_last_res.name = strdup(rkey->rname);
@@ -45,7 +45,7 @@
 //     z_mvar_put(sub_mvar, &sub_last_res);
 // }
 
-// void sto_listener(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+// void sto_listener(const zn_reskey_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
 // {
 //     Z_UNUSED_ARG_2(info, arg);
 //     sto_last_res.name = strdup(rkey->rname);
@@ -111,18 +111,18 @@ int main(int argc, char **argv)
 
     //     zn_pub_p_result_t z1_pub1_r = zn_declare_publisher(z1, "/test/large_data/big");
     //     ASSERT_P_RESULT(z1_pub1_r, "Unable to declare publisher\n");
-    //     zn_pub_t *z1_pub1 = z1_pub1_r.value.pub;
+    //     zn_publisher_t *z1_pub1 = z1_pub1_r.value.pub;
 
     //     zn_session_p_result_t z2_r = zn_open(locator, 0, 0);
     //     ASSERT_RESULT(z2_r, "Unable to open session with broker")
     //     zn_session_t *z2 = z2_r.value.session;
     //     zn_start_recv_loop(z2);
 
-    //     zn_sub_info_t sm;
+    //     zn_subinfo_t sm;
     //     sm.kind = ZN_PUSH_MODE;
     //     zn_sub_p_result_t z2_sub1_r = zn_declare_subscriber(z2, "/test/large_data/big", &sm, sub_listener, NULL);
     //     ASSERT_P_RESULT(z2_sub1_r, "Unable to declare subscriber\n");
-    //     zn_sub_t *z2_sub1 = z2_sub1_r.value.sub;
+    //     zn_subscriber_t *z2_sub1 = z2_sub1_r.value.sub;
 
     //     zn_sto_p_result_t z2_sto1_r = zn_declare_storage(z2, "/test/large_data/big", sto_listener, sto_handler, NULL);
     //     ASSERT_P_RESULT(z2_sto1_r, "Unable to declare storage\n");

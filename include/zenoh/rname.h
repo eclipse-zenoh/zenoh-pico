@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_RNAME_H_
-#define ZENOH_C_RNAME_H_
+#ifndef ZENOH_C_RNAME_H
+#define ZENOH_C_RNAME_H
 
-int zn_rname_intersect(char *c1, char *c2);
+int z_rname_intersect(const char *c1, const char *c2);
 
-#endif /* ZENOH_C_RNAME_H_ */
+#endif /* ZENOH_C_RNAME_H */

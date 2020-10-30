@@ -101,7 +101,7 @@ struct sockaddr_in *_zn_make_socket_address(const char *addr, int port)
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeout_usec)
 {
     _zn_socket_result_t r;
-    r.tag = Z_OK_TAG;
+    r.tag = _z_res_t_OK;
 
     _Z_DEBUG_VA("Binding UDP Socket to: %s:%d\n", addr, port);
     struct sockaddr_in saddr;
@@ -110,7 +110,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
 
     if (r.value.socket < 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = r.value.socket;
         r.value.socket = 0;
         return r;
@@ -122,7 +122,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
 
     if (inet_pton(AF_INET, addr, &saddr.sin_addr) <= 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_INVALID_ADDRESS_ERROR;
         r.value.socket = 0;
         return r;
@@ -130,7 +130,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
 
     if (bind(r.value.socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_INVALID_ADDRESS_ERROR;
         r.value.socket = 0;
         return r;
@@ -141,7 +141,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
     timeout.tv_usec = timeout_usec;
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = errno;
         close(r.value.socket);
         r.value.socket = 0;
@@ -150,7 +150,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
 
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = errno;
         close(r.value.socket);
         r.value.socket = 0;
@@ -163,7 +163,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
 _zn_socket_result_t _zn_open_tx_session(const char *locator)
 {
     _zn_socket_result_t r;
-    r.tag = Z_OK_TAG;
+    r.tag = _z_res_t_OK;
     char *l = strdup(locator);
     _Z_DEBUG_VA("Connecting to: %s:\n", locator);
     char *tx = strtok(l, "/");
@@ -201,7 +201,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
     if (r.value.socket < 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = r.value.socket;
         r.value.socket = 0;
         return r;
@@ -210,7 +210,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     int flags = 1;
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) == -1)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = errno;
         close(r.value.socket);
         r.value.socket = 0;
@@ -227,7 +227,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
     if (inet_pton(AF_INET, ip_addr, &serv_addr.sin_addr) <= 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_INVALID_ADDRESS_ERROR;
         r.value.socket = 0;
         return r;
@@ -235,7 +235,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
     if (connect(r.value.socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_TX_CONNECTION_ERROR;
         r.value.socket = 0;
         return r;
@@ -245,13 +245,13 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 }
 
 /*------------------ Datagram ------------------*/
-int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen)
+int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen)
 {
     _Z_DEBUG("Sending data on socket....\n");
     int wb = 0;
-    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
-        z_uint8_array_t a = z_iosli_to_array(z_wbuf_get_iosli(wbf, i));
+        z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         int res = sendto(sock, a.elem, a.length, 0, dest, salen);
         _Z_DEBUG_VA("Socket returned: %d\n", wb);
         if (res <= 0)
@@ -264,11 +264,11 @@ int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct socka
     return wb;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
 {
-    int rb = recvfrom(sock, z_rbuf_get_wptr(rbf), z_rbuf_space_left(rbf), 0, from, salen);
+    int rb = recvfrom(sock, _z_rbuf_get_wptr(rbf), _z_rbuf_space_left(rbf), 0, from, salen);
     if (rb > 0)
-        z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
+        _z_rbuf_set_wpos(rbf, _z_rbuf_get_wpos(rbf) + rb);
 
     return rb;
 }
@@ -291,20 +291,20 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return 0;
 }
 
-int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf)
+int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf)
 {
-    int rb = recv(sock, z_rbuf_get_wptr(rbf), z_rbuf_space_left(rbf), 0);
+    int rb = recv(sock, _z_rbuf_get_wptr(rbf), _z_rbuf_space_left(rbf), 0);
     if (rb > 0)
-        z_rbuf_set_wpos(rbf, z_rbuf_get_wpos(rbf) + rb);
+        _z_rbuf_set_wpos(rbf, _z_rbuf_get_wpos(rbf) + rb);
     return rb;
 }
 
 /*------------------ Send ------------------*/
-int _zn_send_wbuf(_zn_socket_t sock, const z_wbuf_t *wbf)
+int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
 {
-    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
-        z_uint8_array_t a = z_iosli_to_array(z_wbuf_get_iosli(wbf, i));
+        z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         int n = a.length;
         int wb;
         do

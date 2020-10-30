@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     zn_session_t *z = rz.value.session;
 
     // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
+    zn_reskey_t rk = zn_rname(path);
     zn_write(z, &rk, (const unsigned char *)value, strlen(value));
 
     // Close the session

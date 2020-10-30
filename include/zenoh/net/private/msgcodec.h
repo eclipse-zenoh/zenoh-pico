@@ -12,18 +12,19 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_MSGCODEC_H
-#define ZENOH_C_NET_MSGCODEC_H
+#ifndef _ZENOH_C_NET_MSGCODEC_H
+#define _ZENOH_C_NET_MSGCODEC_H
 
 #include <stdint.h>
-#include "zenoh/net/codec.h"
-#include "zenoh/net/result.h"
+#include "zenoh/net/private/codec.h"
+#include "zenoh/net/private/result.h"
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 #include "zenoh/net/private/msg.h"
 
 #define _ZENOH_C_FRAME_MESSAGES_VEC_SIZE 32
 
+/*------------------ Internal Zenoh-net Macros ------------------*/
 #define _ZN_DECLARE_FREE(name) \
     void _zn_##name##_free(_zn_##name##_t *m, uint8_t header)
 
@@ -31,33 +32,26 @@
     void _zn_##name##_free(_zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE(name) \
-    int _zn_##name##_encode(z_wbuf_t *wbf, uint8_t header, const _zn_##name##_t *m)
+    int _zn_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE_NOH(name) \
-    int _zn_##name##_encode(z_wbuf_t *wbf, const _zn_##name##_t *m)
+    int _zn_##name##_encode(_z_wbuf_t *wbf, const _zn_##name##_t *m)
 
-#define _ZN_DECLARE_DECODE(name)                                              \
-    _zn_##name##_result_t _zn_##name##_decode(z_rbuf_t *rbf, uint8_t header); \
-    void _zn_##name##_decode_na(z_rbuf_t *rbf, uint8_t header, _zn_##name##_result_t *r)
+#define _ZN_DECLARE_DECODE(name)                                               \
+    _zn_##name##_result_t _zn_##name##_decode(_z_rbuf_t *rbf, uint8_t header); \
+    void _zn_##name##_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_##name##_result_t *r)
 
-#define _ZN_DECLARE_DECODE_NOH(name)                          \
-    _zn_##name##_result_t _zn_##name##_decode(z_rbuf_t *rbf); \
-    void _zn_##name##_decode_na(z_rbuf_t *rbf, _zn_##name##_result_t *r)
+#define _ZN_DECLARE_DECODE_NOH(name)                           \
+    _zn_##name##_result_t _zn_##name##_decode(_z_rbuf_t *rbf); \
+    void _zn_##name##_decode_na(_z_rbuf_t *rbf, _zn_##name##_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE(name)                                              \
-    _zn_##name##_p_result_t _zn_##name##_decode(z_rbuf_t *rbf, uint8_t header); \
-    void _zn_##name##_decode_na(z_rbuf_t *rbf, uint8_t header, _zn_##name##_p_result_t *r)
+#define _ZN_DECLARE_P_DECODE(name)                                               \
+    _zn_##name##_p_result_t _zn_##name##_decode(_z_rbuf_t *rbf, uint8_t header); \
+    void _zn_##name##_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_##name##_p_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE_NOH(name)                          \
-    _zn_##name##_p_result_t _zn_##name##_decode(z_rbuf_t *rbf); \
-    void _zn_##name##_decode_na(z_rbuf_t *rbf, _zn_##name##_p_result_t *r)
-
-#define _ZN_INIT_S_MSG(msg) \
-    msg.attachment = NULL;
-
-#define _ZN_INIT_Z_MSG(msg) \
-    msg.attachment = NULL;  \
-    msg.reply_context = NULL;
+#define _ZN_DECLARE_P_DECODE_NOH(name)                           \
+    _zn_##name##_p_result_t _zn_##name##_decode(_z_rbuf_t *rbf); \
+    void _zn_##name##_decode_na(_z_rbuf_t *rbf, _zn_##name##_p_result_t *r)
 
 /*------------------ Session Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
@@ -79,23 +73,22 @@ _ZN_DECLARE_FREE_NOH(zenoh_message);
 #endif /* ZENOH_C_NET_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
-#ifdef ZENOH_C_NET_MSGCODEC_H_T
+#ifdef _ZENOH_C_NET_MSGCODEC_H_T
 /*------------------ Message Fields ------------------*/
-int _zn_timestamp_encode(z_wbuf_t *wbf, const z_timestamp_t *ts);
-void _zn_timestamp_decode_na(z_rbuf_t *rbf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t _zn_timestamp_decode(z_rbuf_t *rbf);
-void _zn_timestamp_free(z_timestamp_t *ts);
+ZN_DECLARE_ENCODE_NOH(timestamp);
+_ZN_DECLARE_DECODE_NOH(timestamp);
+ZN_DECLARE_FREE_NOH(timestamp);
 
 _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
 _ZN_DECLARE_FREE_NOH(payload);
 
-ZN_DECLARE_ENCODE_NOH(sub_info);
-ZN_DECLARE_DECODE(sub_info);
+ZN_DECLARE_ENCODE_NOH(subinfo);
+_ZN_DECLARE_DECODE(subinfo);
 
-ZN_DECLARE_ENCODE(res_key);
-ZN_DECLARE_DECODE(res_key);
-ZN_DECLARE_FREE_NOH(res_key);
+ZN_DECLARE_ENCODE(reskey);
+_ZN_DECLARE_DECODE(reskey);
+ZN_DECLARE_FREE_NOH(reskey);
 
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);
@@ -147,9 +140,9 @@ _ZN_DECLARE_ENCODE_NOH(declare);
 _ZN_DECLARE_DECODE_NOH(declare);
 _ZN_DECLARE_FREE_NOH(declare);
 
-ZN_DECLARE_ENCODE_NOH(data_info);
-ZN_DECLARE_DECODE_NOH(data_info);
-ZN_DECLARE_FREE_NOH(data_info);
+_ZN_DECLARE_ENCODE_NOH(data_info);
+_ZN_DECLARE_DECODE_NOH(data_info);
+_ZN_DECLARE_FREE_NOH(data_info);
 
 _ZN_DECLARE_ENCODE(data);
 _ZN_DECLARE_DECODE(data);
@@ -178,9 +171,11 @@ _ZN_DECLARE_FREE(close);
 
 _ZN_DECLARE_ENCODE(sync);
 _ZN_DECLARE_DECODE(sync);
+_ZN_DECLARE_FREE_NOH(sync);
 
 _ZN_DECLARE_ENCODE(ack_nack);
 _ZN_DECLARE_DECODE(ack_nack);
+_ZN_DECLARE_FREE_NOH(ack_nack);
 
 _ZN_DECLARE_ENCODE(keep_alive);
 _ZN_DECLARE_DECODE(keep_alive);
@@ -188,9 +183,10 @@ _ZN_DECLARE_FREE(keep_alive);
 
 _ZN_DECLARE_ENCODE_NOH(ping_pong);
 _ZN_DECLARE_DECODE_NOH(ping_pong);
+_ZN_DECLARE_FREE_NOH(ping_pong);
 
 _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
 _ZN_DECLARE_FREE(frame);
 
-#endif /* ZENOH_C_NET_MSGCODEC_H_T */
+#endif /* _ZENOH_C_NET_MSGCODEC_H_T */

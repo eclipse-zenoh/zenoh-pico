@@ -23,6 +23,7 @@
 #include "zenoh/net/private/msgcodec.h"
 #include "zenoh/net/private/net.h"
 #include "zenoh/net/private/sync.h"
+#include "zenoh/private/internal.h"
 #include "zenoh/private/logging.h"
 
 /*=============================*/
@@ -34,9 +35,9 @@ zn_session_t *_zn_session_init()
     zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
 
     // Initialize the buffers
-    z->wbuf = z_wbuf_make(ZENOH_NET_WRITE_BUF_LEN, 0);
-    z->rbuf = z_rbuf_make(ZENOH_NET_READ_BUF_LEN);
-    z->dbuf = z_wbuf_make(0, 1);
+    z->wbuf = _z_wbuf_make(ZENOH_NET_WRITE_BUF_LEN, 0);
+    z->rbuf = _z_rbuf_make(ZENOH_NET_READ_BUF_LEN);
+    z->dbuf = _z_wbuf_make(0, 1);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -60,17 +61,17 @@ zn_session_t *_zn_session_init()
     z->query_id = 1;
 
     // Initialize the data structs
-    z->local_resources = z_list_empty;
-    z->remote_resources = z_list_empty;
+    z->local_resources = _z_list_empty;
+    z->remote_resources = _z_list_empty;
 
-    z->local_subscriptions = z_list_empty;
-    z->remote_subscriptions = z_list_empty;
-    z->rem_res_loc_sub_map = z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+    z->local_subscriptions = _z_list_empty;
+    z->remote_subscriptions = _z_list_empty;
+    z->rem_res_loc_sub_map = _z_i_map_make(DEFAULT_I_MAP_CAPACITY);
 
-    z->local_publishers = z_list_empty;
-    z->local_queryables = z_list_empty;
+    z->local_publishers = _z_list_empty;
+    z->local_queryables = _z_list_empty;
 
-    z->replywaiters = z_list_empty;
+    z->replywaiters = _z_list_empty;
 
     z->recv_loop_running = 0;
     z->recv_loop_thread = NULL;
@@ -91,16 +92,15 @@ void _zn_session_free(zn_session_t *z)
     _zn_mutex_free(&z->mutex_tx);
     _zn_mutex_free(&z->mutex_rx);
 
-    z_wbuf_free(&z->wbuf);
-    z_rbuf_free(&z->rbuf);
+    _z_wbuf_free(&z->wbuf);
+    _z_rbuf_free(&z->rbuf);
 
     free(z);
 }
 
 int _zn_send_close(zn_session_t *z, unsigned int reason, int link_only)
 {
-    _zn_session_message_t cm;
-    _ZN_INIT_S_MSG(cm);
+    _zn_session_message_t cm = _zn_session_message_init();
     cm.header = _ZN_MID_CLOSE;
     cm.body.close.pid = z->local_pid;
     cm.body.close.reason = reason;
@@ -135,7 +135,7 @@ void _zn_default_on_disconnect(void *vz)
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
         _zn_socket_result_t r_sock = _zn_open_tx_session(strdup(z->locator));
-        if (r_sock.tag == Z_OK_TAG)
+        if (r_sock.tag == _z_res_t_OK)
         {
             z->sock = r_sock.value.socket;
             return;
@@ -144,13 +144,15 @@ void _zn_default_on_disconnect(void *vz)
 }
 
 /*------------------ Scout ------------------*/
-z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen, size_t tries)
+zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen, size_t tries)
 {
     // @TODO: need to abstract the platform-specific data types
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
     socklen_t flen = 0;
-    z_rbuf_t rbf = z_rbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
-    z_vec_t ls = z_vec_uninit();
+    _z_rbuf_t rbf = _z_rbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN);
+    zn_hello_array_t ls;
+    ls.len = 0;
+    ls.val = NULL;
 
     while (tries > 0)
     {
@@ -159,7 +161,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct so
         // Send the scout message
         _zn_send_dgram_to(socket, wbf, dest, salen);
         // Eventually read hello messages
-        z_rbuf_clear(&rbf);
+        _z_rbuf_clear(&rbf);
         int len = _zn_recv_dgram_from(socket, &rbf, from, &flen);
 
         // Retry if we haven't received anything
@@ -167,7 +169,7 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct so
             continue;
 
         _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&rbf);
-        if (r_hm.tag == Z_ERROR_TAG)
+        if (r_hm.tag == _z_res_t_ERR)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
             continue;
@@ -178,13 +180,19 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct so
         {
         case _ZN_MID_HELLO:
         {
+            if (!ls.val)
+            {
+                ls.val = (zn_hello_t *)malloc(sizeof(zn_hello_t));
+                ls.len = 1;
+                memset((void *)&ls.val[0], 0, sizeof(zn_hello_t));
+            }
+
             if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_L)
             {
-                // Clone the locators vector
-                ls = z_vec_clone(&s_msg->body.hello.locators);
-                // Free the internal memory allocation of the vector without freeing the
-                // element, i.e., the locators
-                z_vec_free_inner(&s_msg->body.hello.locators);
+                zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
+                sc->whatami = s_msg->body.hello.whatami;
+                _z_bytes_move(&sc->pid, &s_msg->body.hello.pid);
+                _z_str_array_move(&sc->locators, &s_msg->body.hello.locators);
             }
             else
             {
@@ -204,14 +212,14 @@ z_vec_t _zn_scout_loop(_zn_socket_t socket, const z_wbuf_t *wbf, const struct so
         _zn_session_message_free(s_msg);
         _zn_session_message_p_result_free(&r_hm);
 
-        if (z_vec_is_init(&ls))
+        if (ls.val)
             break;
         else
             continue;
     }
 
     free(from);
-    z_rbuf_free(&rbf);
+    _z_rbuf_free(&rbf);
 
     return ls;
 }
@@ -225,32 +233,41 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
     {
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
 
-        z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
-        _zn_sub_t *sub;
+        _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
+        _zn_subscriber_t *sub;
         while (subs)
         {
-            sub = (_zn_sub_t *)z_list_head(subs);
+            sub = (_zn_subscriber_t *)_z_list_head(subs);
 
-            sub->data_handler(
-                &sub->key,
-                msg->body.data.payload.elem,
-                msg->body.data.payload.length,
-                &msg->body.data.info,
-                sub->arg);
+            // Reconstruct the whole key name
+            // @TODO: store this in the subscription and do not
+            //        compute it every time
+            char *ks = _zn_get_resource_name_from_key(z, 1, &sub->key);
+            z_string_t key;
+            key.val = ks;
+            key.len = strlen(ks);
+
+            // Build the sample
+            zn_sample_t sample;
+            sample.key = key;
+            sample.value = msg->body.data.payload;
+
+            // Call the callback at API level
+            sub->data_handler(&sample, sub->arg);
 
             // Drop the head element and continue with the tail
-            subs = z_list_drop_elem(subs, 0);
+            subs = _z_list_drop_val(subs, 0);
         }
 
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_DECLARE:
     {
         _Z_DEBUG("Received _ZN_DECLARE message\n");
-        for (size_t i = 0; i < msg->body.declare.declarations.length; ++i)
+        for (size_t i = 0; i < msg->body.declare.declarations.len; ++i)
         {
-            _zn_declaration_t decl = msg->body.declare.declarations.elem[i];
+            _zn_declaration_t decl = msg->body.declare.declarations.val[i];
             switch (_ZN_MID(decl.header))
             {
             case _ZN_DECL_RESOURCE:
@@ -258,17 +275,17 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 _Z_DEBUG("Received declare-resource message\n");
 
                 z_zint_t id = decl.body.res.id;
-                zn_res_key_t key = decl.body.res.key;
+                zn_reskey_t key = decl.body.res.key;
 
                 // Register remote resource declaration
                 _zn_register_resource(z, _ZN_IS_REMOTE, id, &key);
 
                 // Check if there is a matching local subscription
-                _zn_sub_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_LOCAL, &key);
+                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_LOCAL, &key);
                 if (sub)
                 {
                     // Add the mapping between remote id and local subscription
-                    z_i_map_set(z->rem_res_loc_sub_map, id, sub);
+                    _z_i_map_set(z->rem_res_loc_sub_map, id, sub);
                 }
 
                 break;
@@ -277,48 +294,47 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             case _ZN_DECL_PUBLISHER:
             {
                 // Check if there are matching local subscriptions
-                z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
-                size_t len = z_list_len(subs);
+                _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
+                size_t len = _z_list_len(subs);
                 if (len > 0)
                 {
                     // Need to reply with a decl subscriber
-                    _zn_zenoh_message_t ds;
-                    _ZN_INIT_Z_MSG(ds);
+                    _zn_zenoh_message_t ds = _zn_zenoh_message_init();
                     ds.header = _ZN_MID_DECLARE;
                     _ZN_ARRAY_S_DEFINE(declaration, declarations, len);
 
-                    _zn_sub_t *sub;
+                    _zn_subscriber_t *sub;
                     while (subs)
                     {
                         len--;
-                        sub = (_zn_sub_t *)z_list_head(subs);
+                        sub = (_zn_subscriber_t *)_z_list_head(subs);
 
-                        declarations.elem[len].header = _ZN_DECL_SUBSCRIBER;
-                        declarations.elem[len].body.sub.key = sub->key;
-                        declarations.elem[len].body.sub.sub_info = sub->info;
+                        declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
+                        declarations.val[len].body.sub.key = sub->key;
+                        declarations.val[len].body.sub.subinfo = sub->info;
 
                         // Drop the head element and continue with the tail
-                        subs = z_list_drop_elem(subs, 0);
+                        subs = _z_list_drop_val(subs, 0);
                     }
 
                     // Send the message
                     _zn_send_z_msg(z, &ds, 1);
 
                     // Free the declarations
-                    ARRAY_S_FREE(declarations);
+                    _ARRAY_S_FREE(declarations);
                 }
                 break;
             }
 
             case _ZN_DECL_SUBSCRIBER:
             {
-                _zn_sub_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.sub.key);
+                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.sub.key);
                 if (sub)
                 {
-                    _zn_sub_t rs;
+                    _zn_subscriber_t rs;
                     rs.id = _zn_get_entity_id(z);
                     rs.key = decl.body.sub.key;
-                    rs.info = decl.body.sub.sub_info;
+                    rs.info = decl.body.sub.subinfo;
                     rs.data_handler = NULL;
                     rs.arg = NULL;
                     _zn_register_subscription(z, _ZN_IS_REMOTE, &rs);
@@ -346,7 +362,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
-                _zn_sub_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
+                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
                 if (sub)
                     _zn_unregister_subscription(z, _ZN_IS_REMOTE, sub);
 
@@ -359,36 +375,36 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
             default:
             {
-                return Z_RECV_ERR;
+                return _z_res_t_ERR;
             }
             }
         }
 
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_PULL:
     {
         _Z_DEBUG("Handling of Pull messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_QUERY:
     {
         _Z_DEBUG("Handling of Query messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_UNIT:
     {
         _Z_DEBUG("Handling of Unit messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     default:
     {
         _Z_DEBUG("Unknown zenoh message ID");
-        return Z_RECV_ERR;
+        return _z_res_t_ERR;
     }
     }
 }
@@ -400,55 +416,55 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
     case _ZN_MID_SCOUT:
     {
         _Z_DEBUG("Handling of Scout messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_HELLO:
     {
         _Z_DEBUG("Handling of Hello messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_OPEN:
     {
         _Z_DEBUG("Handling of Open messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_ACCEPT:
     {
         _Z_DEBUG("Handling of Accept messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
         _zn_session_free(z);
-        return Z_RECV_CLOSE;
+        return _z_res_t_ERR;
     }
 
     case _ZN_MID_SYNC:
     {
         _Z_DEBUG("Handling of Sync messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_ACK_NACK:
     {
         _Z_DEBUG("Handling of AckNack messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_KEEP_ALIVE:
     {
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_PING_PONG:
     {
         _Z_DEBUG("Handling of PingPong messages not implemented");
-        return Z_RECV_OK;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_FRAME:
@@ -465,7 +481,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             else
             {
                 _Z_DEBUG("Reliable message dropped because it is out of order");
-                return Z_RECV_OK;
+                return _z_res_t_OK;
             }
         }
         else
@@ -477,25 +493,25 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             else
             {
                 _Z_DEBUG("Best effort message dropped because it is out of order");
-                return Z_RECV_OK;
+                return _z_res_t_OK;
             }
         }
 
         if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
-            int res = Z_RECV_OK;
+            int res = _z_res_t_OK;
             // Add the fragment to the defragmentation buffer
-            z_wbuf_add_iosli_from(&z->dbuf, msg->body.frame.payload.fragment.elem, msg->body.frame.payload.fragment.length);
+            _z_wbuf_add_iosli_from(&z->dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
-                z_rbuf_t rbf = z_wbuf_to_rbuf(&z->dbuf);
+                _z_rbuf_t rbf = _z_wbuf_to_rbuf(&z->dbuf);
 
                 // Decode the zenoh message
                 _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
-                if (r_zm.tag == Z_OK_TAG)
+                if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
                     res = _zn_handle_zenoh_message(z, d_zm);
@@ -504,15 +520,15 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
                 }
                 else
                 {
-                    res = Z_RECV_ERR;
+                    res = _z_res_t_ERR;
                 }
 
                 // Free the result
                 _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
-                z_rbuf_free(&rbf);
+                _z_rbuf_free(&rbf);
                 // Reset the defragmentation buffer
-                z_wbuf_reset(&z->dbuf);
+                _z_wbuf_reset(&z->dbuf);
             }
 
             return res;
@@ -520,21 +536,21 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         else
         {
             // Handle all the zenoh message, one by one
-            size_t len = z_vec_len(&msg->body.frame.payload.messages);
+            size_t len = _z_vec_len(&msg->body.frame.payload.messages);
             for (size_t i = 0; i < len; ++i)
             {
-                int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
-                if (res != Z_RECV_OK)
+                int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
+                if (res != _z_res_t_OK)
                     return res;
             }
-            return Z_RECV_OK;
+            return _z_res_t_OK;
         }
     }
 
     default:
     {
         _Z_DEBUG("Unknown session message ID");
-        return Z_RECV_ERR;
+        return _z_res_t_ERR;
     }
     }
 }
@@ -542,34 +558,43 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
 /*=============================*/
 /*           Public            */
 /*=============================*/
-z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
+// zn_hello_array_t zn_scout(char *iface, unsigned int tries, unsigned int period)
+zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period)
 {
-    int is_auto = 0;
-    char *addr = iface;
-    if (!iface || (strcmp(iface, "auto") == 0))
+    zn_hello_array_t locs;
+    locs.len = 0;
+    locs.val = NULL;
+
+    char *addr = _zn_select_scout_iface();
+    _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, scout_period);
+    if (r.tag == _z_res_t_ERR)
     {
-        addr = _zn_select_scout_iface();
-        is_auto = 1;
+        _Z_DEBUG("Unable to create scouting socket\n");
+        free(addr);
+        return locs;
     }
 
-    z_wbuf_t wbf = z_wbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, 0);
-    _zn_session_message_t scout;
-    _ZN_INIT_S_MSG(scout)
+    _z_wbuf_t wbf = _z_wbuf_make(ZENOH_NET_MAX_SCOUT_MSG_LEN, 0);
+    _zn_session_message_t scout = _zn_session_message_init();
     scout.header = _ZN_MID_SCOUT;
+    // @TODO: check the
+    scout.body.scout.what = what;
     // NOTE: when W flag is set to 0 in the header, it means implicitly scouting for Routers
-    //       and the what value is not sent on the wire. Here we scout for Routers
+    //       and the what value is not sent on the wire. Here we scout for Routers.
     _zn_session_message_encode(&wbf, &scout);
-
-    _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, period);
-    ASSERT_RESULT(r, "Unable to create scouting socket\n");
 
     socklen_t salen = sizeof(struct sockaddr_in);
     // Scout first on localhost
     struct sockaddr_in *laddr = _zn_make_socket_address(addr, ZENOH_NET_SCOUT_PORT);
-    z_vec_t locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, tries);
+
+    // @TODO: take the tries from config properties
+    (void)(config);
+    unsigned int tries = 30;
+
+    locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, tries);
     free(laddr);
 
-    if (z_vec_len(&locs) == 0)
+    if (locs.len == 0)
     {
         // We did not find a router on localhost, hence scout on the LAN
         struct sockaddr_in *maddr = _zn_make_socket_address(ZENOH_NET_SCOUT_MCAST_ADDR, ZENOH_NET_SCOUT_PORT);
@@ -577,41 +602,41 @@ z_vec_t zn_scout(char *iface, unsigned int tries, unsigned int period)
         free(maddr);
     }
 
-    if (is_auto)
-        free(addr);
-    z_wbuf_free(&wbf);
+    free(addr);
+    _z_wbuf_free(&wbf);
 
     return locs;
 }
 
-int zn_close(zn_session_t *z)
+void zn_close(zn_session_t *z)
 {
-    return _zn_session_close(z, _ZN_CLOSE_GENERIC);
+    _zn_session_close(z, _ZN_CLOSE_GENERIC);
+    return;
 }
 
-zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
+zn_session_t *zn_open(zn_properties_t *config)
 {
-    zn_session_p_result_t r;
+    _zn_session_p_result_t r;
     int locator_is_scouted = 0;
     if (!locator)
     {
-        z_vec_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
-        if (z_vec_len(&locs) > 0)
+        zn_hello_array_t locs = zn_scout("auto", ZENOH_NET_SCOUT_TRIES, ZENOH_NET_SCOUT_TIMEOUT);
+        if (locs.len > 0)
         {
-            locator = strdup((const char *)z_vec_get(&locs, 0));
+            locator = strdup((const char *)_z_vec_get(&locs, 0));
             // Mark that the locator has been scouted, need to be freed before returning
             locator_is_scouted = 1;
             // Free all the scouted locators
-            z_vec_free(&locs);
+            _z_vec_free(&locs);
         }
         else
         {
             _Z_DEBUG("Unable to scout a zenoh router\n");
             _Z_ERROR("%sPlease make sure one is running on your network!\n", "");
-            r.tag = Z_ERROR_TAG;
-            r.value.error = ZN_TX_CONNECTION_ERROR;
+            r.tag = _z_res_t_ERR;
+            r.value.error = _zn_err_t_TX_CONNECTION;
             // Free all the scouted locators
-            z_vec_free(&locs);
+            _z_vec_free(&locs);
 
             return r;
         }
@@ -623,10 +648,10 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
     // Attempt to open a socket
     _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
-    if (r_sock.tag == Z_ERROR_TAG)
+    if (r_sock.tag == _z_res_t_ERR)
     {
-        r.tag = Z_ERROR_TAG;
-        r.value.error = ZN_IO_ERROR;
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_IO_GENERIC;
 
         if (locator_is_scouted)
             free(locator);
@@ -634,27 +659,26 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         return r;
     }
 
-    r.tag = Z_OK_TAG;
+    r.tag = _z_res_t_OK;
 
     // Randomly generate a peer ID
-    ARRAY_S_DEFINE(uint8_t, uint8, z_, pid, ZENOH_NET_PID_LENGTH);
+    _ARRAY_S_DEFINE(uint8_t, bytes, z_, pid, ZENOH_NET_PID_LENGTH);
     for (int i = 0; i < ZENOH_NET_PID_LENGTH; ++i)
         pid.elem[i] = rand() % 255;
 
     // Build the open message
-    _zn_session_message_t om;
-    _ZN_INIT_S_MSG(om);
+    _zn_session_message_t om = _zn_session_message_init();
     om.header = _ZN_MID_OPEN;
     // Add an attachement if properties have been provided
-    z_wbuf_t att_pld;
+    _z_wbuf_t att_pld;
     if (ps)
     {
-        att_pld = z_wbuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN, 0);
+        att_pld = _z_wbuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN, 0);
         zn_properties_encode(&att_pld, ps);
 
         om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
         om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
-        om.attachment->payload = z_iosli_to_array(z_wbuf_get_iosli(&att_pld, 0));
+        om.attachment->payload = _z_iosli_to_bytes(_z_wbuf_get_iosli(&att_pld, 0));
     }
 
     om.body.open.version = ZENOH_NET_PROTO_VERSION;
@@ -679,9 +703,9 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     _zn_send_s_msg(r.value.session, &om);
 
     _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(r.value.session);
-    if (r_msg.tag == Z_ERROR_TAG)
+    if (r_msg.tag == _z_res_t_ERR)
     {
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
         // Free the pid
@@ -689,7 +713,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
         // Free the attachment payload;
         if (ps)
-            z_wbuf_free(&att_pld);
+            _z_wbuf_free(&att_pld);
 
         // Free the locator
         if (locator_is_scouted)
@@ -707,7 +731,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     {
     case _ZN_MID_ACCEPT:
     {
-        r.tag = Z_OK_TAG;
+        r.tag = _z_res_t_OK;
 
         // The announced sn resolution
         r.value.session->sn_resolution = om.body.open.sn_resolution;
@@ -743,7 +767,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
                 // Close the session
                 _zn_session_close(r.value.session, _ZN_CLOSE_INVALID);
 
-                r.tag = Z_ERROR_TAG;
+                r.tag = _z_res_t_ERR;
                 r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
                 break;
@@ -787,7 +811,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
         // Close the session
         _zn_session_close(r.value.session, _ZN_CLOSE_INVALID);
 
-        r.tag = Z_ERROR_TAG;
+        r.tag = _z_res_t_ERR;
         r.value.error = ZN_FAILED_TO_OPEN_SESSION;
 
         break;
@@ -799,7 +823,7 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
 
     // Free the attachment payload;
     if (ps)
-        z_wbuf_free(&att_pld);
+        _z_wbuf_free(&att_pld);
 
     // Free the locator
     if (locator_is_scouted)
@@ -813,37 +837,37 @@ zn_session_p_result_t zn_open(char *locator, zn_on_disconnect_t on_disconnect, c
     return r;
 }
 
-// z_vec_t zn_info(zn_session_t *z)
+// _z_vec_t zn_info(zn_session_t *z)
 // {
-//     z_vec_t res = z_vec_make(3);
+//     _z_vec_t res = _z_vec_make(3);
 //     zn_property_t *pid = zn_property_make(ZN_INFO_PID_KEY, z->pid);
-//     z_uint8_array_t locator;
+//     z_bytes_t locator;
 //     locator.length = strlen(z->locator) + 1;
 //     locator.elem = (uint8_t *)z->locator;
 //     zn_property_t *peer = zn_property_make(ZN_INFO_PEER_KEY, locator);
 //     zn_property_t *peer_pid = zn_property_make(ZN_INFO_PEER_PID_KEY, z->peer_pid);
 
-//     z_vec_set(&res, ZN_INFO_PID_KEY, pid);
-//     z_vec_set(&res, ZN_INFO_PEER_KEY, peer);
-//     z_vec_set(&res, ZN_INFO_PEER_PID_KEY, peer_pid);
+//     _z_vec_set(&res, ZN_INFO_PID_KEY, pid);
+//     _z_vec_set(&res, ZN_INFO_PEER_KEY, peer);
+//     _z_vec_set(&res, ZN_INFO_PEER_PID_KEY, peer_pid);
 //     res._length = 3;
 
 //     return res;
 // }
 
 /*------------------ Resource Keys operations ------------------*/
-zn_res_key_t zn_rname(const char *rname)
+zn_reskey_t zn_rname(const char *rname)
 {
-    zn_res_key_t rk;
+    zn_reskey_t rk;
     rk.rid = ZN_NO_RESOURCE_ID;
     rk.rname = strdup(rname);
 
     return rk;
 }
 
-zn_res_key_t zn_rid(const zn_res_t *rd)
+zn_reskey_t zn_rid(const zn_resource_t *rd)
 {
-    zn_res_key_t rk;
+    zn_reskey_t rk;
     rk.rid = rd->id;
     rk.rname = NULL;
 
@@ -851,16 +875,16 @@ zn_res_key_t zn_rid(const zn_res_t *rd)
 }
 
 /*------------------ Resource Declaration ------------------*/
-zn_res_p_result_t zn_declare_resource(zn_session_t *z, const zn_res_key_t *res_key)
+zn_res_p_result_t zn_declare_resource(zn_session_t *z, const zn_reskey_t *reskey)
 {
     // Create the result
     zn_res_p_result_t r;
-    r.tag = Z_OK_TAG;
-    r.value.res = (zn_res_t *)malloc(sizeof(zn_res_t));
+    r.tag = _z_res_t_OK;
+    r.value.res = (zn_resource_t *)malloc(sizeof(zn_resource_t));
     r.value.res->z = z;
-    r.value.res->id = _zn_get_resource_id(z, res_key);
-    r.value.res->key.rid = res_key->rid;
-    r.value.res->key.rname = res_key->rname;
+    r.value.res->id = _zn_get_resource_id(z, reskey);
+    r.value.res->key.rid = reskey->rid;
+    r.value.res->key.rname = reskey->rname;
 
     _zn_zenoh_message_t z_msg;
     _ZN_INIT_Z_MSG(z_msg);
@@ -888,7 +912,7 @@ zn_res_p_result_t zn_declare_resource(zn_session_t *z, const zn_res_key_t *res_k
     return r;
 }
 
-int zn_undeclare_resource(zn_res_t *res)
+int zn_undeclare_resource(zn_resource_t *res)
 {
     _zn_res_decl_t *r = _zn_get_resource_by_id(res->z, _ZN_IS_LOCAL, res->id);
     if (r)
@@ -920,15 +944,15 @@ int zn_undeclare_resource(zn_res_t *res)
 }
 
 /*------------------  Publisher Declaration ------------------*/
-zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const zn_res_key_t *res_key)
+zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const zn_reskey_t *reskey)
 {
     zn_pub_p_result_t r;
-    r.tag = Z_OK_TAG;
-    r.value.pub = (zn_pub_t *)malloc(sizeof(zn_pub_t));
+    r.tag = _z_res_t_OK;
+    r.value.pub = (zn_publisher_t *)malloc(sizeof(zn_publisher_t));
     r.value.pub->z = z;
-    r.value.pub->key.rid = res_key->rid;
-    if (res_key->rname)
-        r.value.pub->key.rname = strdup(res_key->rname);
+    r.value.pub->key.rid = reskey->rid;
+    if (reskey->rname)
+        r.value.pub->key.rname = strdup(reskey->rname);
     else
         r.value.pub->key.rname = NULL;
     r.value.pub->id = _zn_get_entity_id(z);
@@ -961,7 +985,7 @@ zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const zn_res_key_t *res_
     return r;
 }
 
-int zn_undeclare_publisher(zn_pub_t *pub)
+int zn_undeclare_publisher(zn_publisher_t *pub)
 {
     // @TODO: manage multi publishers
 
@@ -994,19 +1018,17 @@ int zn_undeclare_publisher(zn_pub_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res_key, const zn_sub_info_t *si, zn_data_handler_t data_handler, void *arg)
+zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t *reskey, zn_subinfo_t sub_info, zn_data_handler_t zn_data_handler_t, void *arg)
 {
-    zn_sub_p_result_t r;
-    r.tag = Z_OK_TAG;
-    r.value.sub = (zn_sub_t *)malloc(sizeof(zn_sub_t));
-    r.value.sub->z = z;
-    r.value.sub->id = _zn_get_entity_id(z);
-    r.value.sub->key.rid = res_key->rid;
-    if (res_key->rname)
-        r.value.sub->key.rname = strdup(res_key->rname);
+    zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
+    subscriber->z = z;
+    subscriber->id = _zn_get_entity_id(z);
+    subscriber->key.rid = reskey->rid;
+    if (reskey->rname)
+        subscriber->key.rname = strdup(reskey->rname);
     else
-        r.value.sub->key.rname = NULL;
-    memcpy(&r.value.sub->info, si, sizeof(zn_sub_info_t));
+        subscriber->key.rname = NULL;
+    memcpy(&subscriber->info, &sub_info, sizeof(zn_subinfo_t));
 
     _zn_zenoh_message_t z_msg;
     _ZN_INIT_Z_MSG(z_msg)
@@ -1018,20 +1040,20 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res
 
     // Subscriber declaration
     decl.elem[0].header = _ZN_DECL_SUBSCRIBER;
-    if (!res_key->rname)
+    if (!reskey->rname)
         _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_K);
-    if (si->mode != ZN_PUSH_MODE || si->is_periodic)
+    if (sub_info.mode != ZN_PUSH_MODE || sub_info.is_periodic)
         _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_S);
-    if (si->is_reliable)
+    if (sub_info.is_reliable)
         _ZN_SET_FLAG(decl.elem[0].header, _ZN_FLAG_Z_R);
 
-    decl.elem[0].body.sub.key = r.value.sub->key;
+    decl.elem[0].body.sub.key = subscriber->key;
 
     // SubMode
-    decl.elem[0].body.sub.sub_info.mode = si->mode;
-    decl.elem[0].body.sub.sub_info.is_reliable = si->is_reliable;
-    decl.elem[0].body.sub.sub_info.is_periodic = si->is_periodic;
-    decl.elem[0].body.sub.sub_info.period = si->period;
+    decl.elem[0].body.sub.subinfo.mode = sub_info.mode;
+    decl.elem[0].body.sub.subinfo.is_reliable = sub_info->is_reliable;
+    decl.elem[0].body.sub.subinfo.is_periodic = sub_info->is_periodic;
+    decl.elem[0].body.sub.subinfo.period = sub_info.period;
 
     z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, 1) != 0)
@@ -1040,9 +1062,12 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res
         z->on_disconnect(z);
         _zn_send_z_msg(z, &z_msg, 1);
     }
-    ARRAY_S_FREE(decl);
+    _ARRAY_S_FREE(decl);
 
-    _zn_sub_t rs;
+    z_string_t s;
+    s.val = _zn_get_resource_name_from_key();
+
+    _zn_subscriber_t rs;
     rs.id = r.value.sub->id;
     rs.key = r.value.sub->key;
     rs.info = r.value.sub->info;
@@ -1053,9 +1078,9 @@ zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const zn_res_key_t *res
     return r;
 }
 
-int zn_undeclare_subscriber(zn_sub_t *sub)
+int zn_undeclare_subscriber(zn_subscriber_t *sub)
 {
-    _zn_sub_t *s = _zn_get_subscription_by_id(sub->z, _ZN_IS_LOCAL, sub->id);
+    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->z, _ZN_IS_LOCAL, sub->id);
     if (s)
     {
         _zn_zenoh_message_t z_msg;
@@ -1089,7 +1114,7 @@ int zn_undeclare_subscriber(zn_sub_t *sub)
 }
 
 /*------------------ Write ------------------*/
-int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, int is_droppable)
+int zn_write_wo(zn_session_t *z, zn_reskey_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, int is_droppable)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1123,7 +1148,7 @@ int zn_write_wo(zn_session_t *z, zn_res_key_t *resource, const unsigned char *pa
     return _zn_send_z_msg(z, &z_msg, 1);
 }
 
-int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *payload, size_t length)
+int zn_write(zn_session_t *z, zn_reskey_t *resource, const unsigned char *payload, size_t length)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1152,7 +1177,7 @@ int zn_write(zn_session_t *z, zn_res_key_t *resource, const unsigned char *paylo
 int zn_read(zn_session_t *z)
 {
     _zn_session_message_p_result_t r_s = _zn_recv_s_msg(z);
-    if (r_s.tag == Z_OK_TAG)
+    if (r_s.tag == _z_res_t_OK)
     {
         int res = _zn_handle_session_message(z, r_s.value.session_message);
         _zn_session_message_free(r_s.value.session_message);
@@ -1162,21 +1187,20 @@ int zn_read(zn_session_t *z)
     else
     {
         _zn_session_message_p_result_free(&r_s);
-        return Z_RECV_ERR;
+        return _z_res_t_ERR;
     }
 }
 
 /*------------------ Keep Alive ------------------*/
 int zn_send_keep_alive(zn_session_t *z)
 {
-    _zn_session_message_t s_msg;
-    _ZN_INIT_S_MSG(s_msg)
+    _zn_session_message_t s_msg = _zn_session_message_init();
     s_msg.header = _ZN_MID_KEEP_ALIVE;
 
     return _zn_send_s_msg(z, &s_msg);
 }
 
-// int zn_pull(zn_sub_t *sub)
+// int zn_pull(zn_subscriber_t *sub)
 // {
 //     _zn_message_t msg;
 //     msg.header = _ZN_PULL | _ZN_F_FLAG | _ZN_S_FLAG;
@@ -1257,16 +1281,16 @@ int zn_send_keep_alive(zn_session_t *z)
 //         if (handle->dest_storages.kind != ZN_BEST_MATCH || handle->dest_evals.kind != ZN_BEST_MATCH)
 //         {
 //             msg.header = _ZN_QUERY | _ZN_P_FLAG;
-//             z_vec_t ps = z_vec_make(2);
+//             _z_vec_t ps = _z_vec_make(2);
 //             if (handle->dest_storages.kind != ZN_BEST_MATCH)
 //             {
 //                 zn_property_t dest_storages_prop = {ZN_DEST_STORAGES_KEY, {1, (uint8_t *)&handle->dest_storages.kind}};
-//                 z_vec_append(&ps, &dest_storages_prop);
+//                 _z_vec_append(&ps, &dest_storages_prop);
 //             }
 //             if (handle->dest_evals.kind != ZN_BEST_MATCH)
 //             {
 //                 zn_property_t dest_evals_prop = {ZN_DEST_EVALS_KEY, {1, (uint8_t *)&handle->dest_evals.kind}};
-//                 z_vec_append(&ps, &dest_evals_prop);
+//                 _z_vec_append(&ps, &dest_evals_prop);
 //             }
 //             msg.properties = &ps;
 //         }
@@ -1294,13 +1318,13 @@ int zn_send_keep_alive(zn_session_t *z)
 
 // int zn_query_wo(zn_session_t *z, const char *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg, zn_query_dest_t dest_storages, zn_query_dest_t dest_evals)
 // {
-//     z_list_t *stos = dest_storages.kind == ZN_NONE ? 0 : _zn_get_storages_by_rname(z, resource);
-//     z_list_t *evals = dest_evals.kind == ZN_NONE ? 0 : _zn_get_evals_by_rname(z, resource);
+//     _z_list_t *stos = dest_storages.kind == ZN_NONE ? 0 : _zn_get_storages_by_rname(z, resource);
+//     _z_list_t *evals = dest_evals.kind == ZN_NONE ? 0 : _zn_get_evals_by_rname(z, resource);
 //     if (stos != 0 || evals != 0)
 //     {
 //         _zn_sto_t *sto;
 //         _zn_eva_t *eval;
-//         z_list_t *lit;
+//         _z_list_t *lit;
 
 //         local_query_handle_t *handle = malloc(sizeof(local_query_handle_t));
 //         handle->z = z;
@@ -1314,11 +1338,11 @@ int zn_send_keep_alive(zn_session_t *z)
 //         int nb_qhandlers = 0;
 //         if (stos != 0)
 //         {
-//             nb_qhandlers += z_list_len(stos);
+//             nb_qhandlers += _z_list_len(stos);
 //         }
 //         if (evals != 0)
 //         {
-//             nb_qhandlers += z_list_len(evals);
+//             nb_qhandlers += _z_list_len(evals);
 //         }
 //         atomic_init(&handle->nb_qhandlers, nb_qhandlers);
 //         atomic_flag_clear(&handle->sent_final);
@@ -1328,11 +1352,11 @@ int zn_send_keep_alive(zn_session_t *z)
 //             lit = stos;
 //             while (lit != 0)
 //             {
-//                 sto = z_list_head(lit);
+//                 sto = _z_list_head(lit);
 //                 sto->query_handler(resource, predicate, send_local_storage_replies, handle, sto->arg);
-//                 lit = z_list_tail(lit);
+//                 lit = _z_list_tail(lit);
 //             }
-//             z_list_free(&stos);
+//             _z_list_free(&stos);
 //         }
 
 //         if (evals != 0)
@@ -1340,11 +1364,11 @@ int zn_send_keep_alive(zn_session_t *z)
 //             lit = evals;
 //             while (lit != 0)
 //             {
-//                 eval = z_list_head(lit);
+//                 eval = _z_list_head(lit);
 //                 eval->query_handler(resource, predicate, send_local_eval_replies, handle, eval->arg);
-//                 lit = z_list_tail(lit);
+//                 lit = _z_list_tail(lit);
 //             }
-//             z_list_free(&evals);
+//             _z_list_free(&evals);
 //         }
 //     }
 //     else
@@ -1359,16 +1383,16 @@ int zn_send_keep_alive(zn_session_t *z)
 //         if (dest_storages.kind != ZN_BEST_MATCH || dest_evals.kind != ZN_BEST_MATCH)
 //         {
 //             msg.header = _ZN_QUERY | _ZN_P_FLAG;
-//             z_vec_t ps = z_vec_make(2);
+//             _z_vec_t ps = _z_vec_make(2);
 //             if (dest_storages.kind != ZN_BEST_MATCH)
 //             {
 //                 zn_property_t dest_storages_prop = {ZN_DEST_STORAGES_KEY, {1, (uint8_t *)&dest_storages.kind}};
-//                 z_vec_append(&ps, &dest_storages_prop);
+//                 _z_vec_append(&ps, &dest_storages_prop);
 //             }
 //             if (dest_evals.kind != ZN_BEST_MATCH)
 //             {
 //                 zn_property_t dest_evals_prop = {ZN_DEST_EVALS_KEY, {1, (uint8_t *)&dest_evals.kind}};
-//                 z_vec_append(&ps, &dest_evals_prop);
+//                 _z_vec_append(&ps, &dest_evals_prop);
 //             }
 //             msg.properties = &ps;
 //         }

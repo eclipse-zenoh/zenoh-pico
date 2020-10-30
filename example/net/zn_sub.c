@@ -19,7 +19,7 @@
 
 #define MAX_LEN 256
 
-void data_handler(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+void data_handler(const zn_reskey_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
 {
     Z_UNUSED_ARG_2(info, arg);
     char str[MAX_LEN];
@@ -57,20 +57,20 @@ int main(int argc, char **argv)
     zn_start_lease_loop(z);
 
     // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
+    zn_reskey_t rk = zn_rname(path);
 
     // Declare a resource
     zn_res_p_result_t rr = zn_declare_resource(z, &rk);
     ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_res_t *res = rr.value.res;
+    zn_resource_t *res = rr.value.res;
 
-    zn_sub_info_t si;
+    zn_subinfo_t si;
     si.mode = ZN_PUSH_MODE;
     si.is_reliable = 1;
     si.is_periodic = 0;
     zn_sub_p_result_t r = zn_declare_subscriber(z, &res->key, &si, data_handler, NULL);
     ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
-    zn_sub_t *sub = r.value.sub;
+    zn_subscriber_t *sub = r.value.sub;
 
     char c = 0;
     while (c != 'q')

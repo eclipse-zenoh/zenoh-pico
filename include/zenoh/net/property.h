@@ -15,32 +15,76 @@
 #ifndef ZENOH_C_PROPERTY_H
 #define ZENOH_C_PROPERTY_H
 
-#include "zenoh/iobuf.h"
-#include "zenoh/net/result.h"
+#include <stdint.h>
+#include "zenoh/net/types.h"
 
-typedef struct
-{
-    z_zint_t id;
-    z_uint8_array_t value;
-} zn_property_t;
+// Properties for zenoh net session configuration
+#define ZN_CONFIG_MODE_KEY 0x40
+#define ZN_CONFIG_PEER_KEY 0x41
+#define ZN_CONFIG_LISTENER_KEY 0x42
+#define ZN_CONFIG_USER_KEY 0x43
+#define ZN_CONFIG_PASSWORD_KEY 0x44
+#define ZN_CONFIG_MULTICAST_SCOUTING_KEY 0x45
+#define ZN_CONFIG_MULTICAST_INTERFACE_KEY 0x46
+#define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
+#define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
+#define ZN_CONFIG_SCOUTING_DELAY_KEY 0x49
+#define ZN_CONFIG_ADD_TIMESTAMP_KEY 0x4A
+#define ZN_CONFIG_LOCAL_ROUTING_KEY 0x60
 
-ZN_RESULT_DECLARE(zn_property_t, property)
+// Properties returned by zn_info()
+#define ZN_INFO_PID_KEY 0x00
+#define ZN_INFO_PEER_PID_KEY 0x01
+#define ZN_INFO_ROUTER_PID_KEY 0x02
 
-/*
- * Creates a new property with the given id and name. Notice that the ownership
- * for the name remains with the caller.
+/**
+ * Return a new empty map of properties.
  */
-zn_property_t *zn_property_make(z_zint_t id, z_uint8_array_t value);
-zn_property_t *zn_property_make_from_str(z_zint_t id, char *value);
-void zn_property_free(zn_property_t **p);
+zn_properties_t *zn_properties_make(void);
 
-typedef struct
-{
-    z_zint_t origin;
-    z_zint_t period;
-    z_zint_t duration;
-} zn_temporal_property_t;
+/**
+ * Insert a property with a given key to a properties map.
+ * If a property with the same key already exists in the properties map, it is replaced.
+ *
+ * Parameters:
+ *   ps: A pointer to the properties map.
+ *   key: The key of the property to add.
+ *   value: The value of the property to add.
+ *
+ * Returns:
+ *     A pointer to the updated properties map.
+ */
+zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, char *value);
 
-ZN_RESULT_DECLARE(zn_temporal_property_t, temporal_property)
+/**
+ * Get the property with the given key from a properties map.
+ *
+ * Parameters:
+ *     ps: A pointer to properties map.
+ *     key: The key of the property.
+ *
+ * Returns:
+ *     The value of the property with key ``key`` in properties map ``ps``.
+ */
+z_string_t zn_properties_get(zn_properties_t *ps, unsigned long key);
+
+/**
+ * Get the length of the given properties map.
+ *
+ * Parameters:
+ *     ps: A pointer to the properties map.
+ *
+ * Returns:
+ *     The length of the given properties map.
+ */
+unsigned int zn_properties_len(zn_properties_t *ps);
+
+/**
+ * Free a set of properties.
+ *
+ * Parameters:
+ *   ps: A pointer to the properties.
+ */
+void zn_properties_free(zn_properties_t *ps);
 
 #endif /* ZENOH_C_PROPERTY_H */

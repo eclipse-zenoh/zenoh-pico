@@ -17,11 +17,10 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "zenoh/iobuf.h"
-#include "zenoh/net/result.h"
-#include "zenoh/net/collection.h"
 #include "zenoh/net/config.h"
-#include "zenoh/net/property.h"
+#include "zenoh/private/collection.h"
+#include "zenoh/private/iobuf.h"
+#include "zenoh/types.h"
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
 #include "zenoh/net/private/unix/types.h"
@@ -71,105 +70,263 @@
 #define ZN_DATA_INFO_KIND 0x20   // 1 << 5
 #define ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
-// -- SubInfo is optionally included in Subscriber Declarations
-// -- The reliabiliey
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// |P|X|X| SubMode | if S==1. Otherwise: SubMode=Push
-// +---------------+
-// ~    Period     ~ if P==1
-// +---------------+
+/**
+ * A zenoh-net property.
+ *
+ * Members:
+ *   size_t id: The property ID.
+ *   z_string_t value: The property value as a string.
+ *
+ */
 typedef struct
 {
-    int is_reliable;
-    int is_periodic;
-    zn_temporal_property_t period;
-    uint8_t mode;
-} zn_sub_info_t;
-ZN_RESULT_DECLARE(zn_sub_info_t, sub_info)
+    size_t id;
+    z_string_t value;
+} zn_property_t;
 
-// -- DataInfo is optionally included in Data Messages
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// ~     flags     ~ -- encoded as z_zint_t
-// +---------------+
-// ~   source_id   ~ if ZN_DATA_INFO_SRC_ID==1
-// +---------------+
-// ~   source_sn   ~ if ZN_DATA_INFO_SRC_SN==1
-// +---------------+
-// ~first_router_id~ if ZN_DATA_INFO_RTR_ID==1
-// +---------------+
-// ~first_router_sn~ if ZN_DATA_INFO_RTR_SN==1
-// +---------------+
-// ~   timestamp   ~ if ZN_DATA_INFO_TSTAMP==1
-// +---------------+
-// ~      kind     ~ if ZN_DATA_INFO_KIND==1
-// +---------------+
-// ~   encoding    ~ if ZN_DATA_INFO_ENC==1
-// +---------------+
-//
-typedef struct
-{
-    z_zint_t flags;
-    z_uint8_array_t source_id;
-    z_zint_t source_sn;
-    z_uint8_array_t first_router_id;
-    z_zint_t first_router_sn;
-    z_timestamp_t tstamp;
-    z_zint_t kind;
-    z_zint_t encoding;
-} zn_data_info_t;
-ZN_RESULT_DECLARE(zn_data_info_t, data_info)
+/**
+ * Zenoh-net properties are represented as int-string map.
+ * 
+ */
+typedef _z_i_map_t zn_properties_t;
 
-// -- ResKey is a field used in Declarations
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// ~      RID      ~
-// +---------------+
-// ~    Suffix     ~ if K==1
-// +---------------+
+/**
+ * A zenoh-net resource key.
+ *
+ * Members:
+ *   z_zint_t: The resource ID.
+ *   const char *val: A pointer to the string containing the resource name.
+ *
+ */
 typedef struct
 {
     z_zint_t rid;
-    char *rname;
-} zn_res_key_t;
-ZN_RESULT_DECLARE(zn_res_key_t, res_key)
+    z_str_t rname;
+} zn_reskey_t;
+
+/**
+ * A zenoh-net data sample.
+ *
+ * A sample is the value associated to a given resource at a given point in time.
+ *
+ * Members:
+ *   zn_string_t key: The resource key of this data sample.
+ *   zn_bytes_t value: The value of this data sample.
+ */
+typedef struct
+{
+    z_string_t key;
+    z_bytes_t value;
+} zn_sample_t;
+
+/**
+ * A hello message returned by a zenoh entity to a scout message sent with :c:func:`zn_scout`.
+ *
+ * Members:
+ *   unsigned int whatami: The kind of zenoh entity.
+ *   zn_bytes_t pid: The peer id of the scouted entity (empty if absent).
+ *   zn_str_array_t locators: The locators of the scouted entity.
+ *
+ */
+typedef struct zn_hello_t
+{
+    z_zint_t whatami;
+    z_bytes_t pid;
+    z_str_array_t locators;
+} zn_hello_t;
+
+/**
+ * An array of :c:struct:`zn_hello_t` messages.
+ *
+ * Members:
+ *   const zn_hello_t *val: A pointer to the array.
+ *   unsigned int len: The length of the array.
+ *
+ */
+typedef struct zn_hello_array_t
+{
+    size_t len;
+    const zn_hello_t *val;
+} zn_hello_array_t;
+
+/**
+ * The possible values of :c:member:`zn_target_t.tag`.
+ *
+ *     - **zn_target_t_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
+ *     - **zn_target_t_COMPLETE**: A set of complete queryables.
+ *     - **zn_target_t_ALL**: All matching queryables.
+ *     - **zn_target_t_NONE**: No queryables.
+ */
+typedef enum
+{
+    zn_target_t_BEST_MATCHING,
+    zn_target_t_COMPLETE,
+    zn_target_t_ALL,
+    zn_target_t_NONE,
+} zn_target_t_Tag;
 
 typedef struct
 {
-    char kind;
-    const unsigned char *srcid;
-    size_t srcid_length;
-    z_zint_t rsn;
-    const char *rname;
-    const unsigned char *data;
-    size_t data_length;
-    zn_data_info_t info;
-} zn_reply_value_t;
-
-typedef void (*zn_reply_handler_t)(const zn_reply_value_t *reply, void *arg);
-
-typedef void (*zn_data_handler_t)(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg);
+    unsigned int n;
+} zn_target_t_COMPLETE_Body;
 
 typedef struct
 {
-    const char *rname;
-    const unsigned char *data;
-    size_t length;
-    unsigned short encoding;
-    unsigned short kind;
-    void *context;
-} zn_resource_t;
+    zn_target_t_Tag tag;
+    union
+    {
+        zn_target_t_COMPLETE_Body complete;
+    } type;
+} zn_target_t;
 
-ZN_ARRAY_P_DECLARE(resource)
+/**
+ * The zenoh-net queryables that should be target of a :c:func:`zn_query`.
+ *
+ * Members:
+ *     unsigned int kind: A mask of queryable kinds.
+ *     zn_target_t target: The query target.
+ */
+typedef struct zn_query_target_t
+{
+    unsigned int kind;
+    zn_target_t target;
+} zn_query_target_t;
 
-typedef void (*zn_replies_sender_t)(void *query_handle, zn_resource_p_array_t replies);
-typedef void (*zn_query_handler_t)(const char *rname, const char *predicate, zn_replies_sender_t send_replies, void *query_handle, void *arg);
+/**
+ * Information on the source of a reply.
+ *
+ * Members:
+ *   unsigned int kind: The kind of source.
+ *   zn_bytes_t id: The unique id of the source.
+ */
+typedef struct
+{
+    unsigned int kind;
+    z_bytes_t id;
+} zn_source_info_t;
+
+/**
+ * The kind of consolidation that should be applied on replies to a :c:func:`zn_query`.
+ *
+ *     - **zn_consolidation_mode_t_FULL**: Guaranties unicity of replies. Optimizes bandwidth.
+ *     - **zn_consolidation_mode_t_LAZY**: Does not garanty unicity. Optimizes latency.
+ *     - **zn_consolidation_mode_t_NONE**: No consolidation.
+ */
+typedef enum
+{
+    zn_consolidation_mode_t_FULL,
+    zn_consolidation_mode_t_LAZY,
+    zn_consolidation_mode_t_NONE,
+} zn_consolidation_mode_t;
+
+/**
+ * The kind of consolidation that should be applied on replies to a :c:func:`zn_query`
+ * at the different stages of the reply process.
+ *
+ * Members:
+ *   zn_consolidation_mode_t first_routers: The consolidation mode to apply on first routers of the replies routing path.
+ *   zn_consolidation_mode_t last_router: The consolidation mode to apply on last router of the replies routing path.
+ *   zn_consolidation_mode_t reception: The consolidation mode to apply at reception of the replies.
+ */
+typedef struct zn_query_consolidation_t
+{
+    zn_consolidation_mode_t first_routers;
+    zn_consolidation_mode_t last_router;
+    zn_consolidation_mode_t reception;
+} zn_query_consolidation_t;
+
+/**
+ * The subscription reliability.
+ *
+ *     - **zn_reliability_t_BEST_EFFORT**
+ *     - **zn_reliability_t_RELIABLE**
+ */
+typedef enum
+{
+    zn_reliability_t_BEST_EFFORT,
+    zn_reliability_t_RELIABLE,
+} zn_reliability_t;
+
+/**
+ * The congestion control.
+ *
+ *     - **zn_congestion_control_t_BLOCK**
+ *     - **zn_congestion_control_t_DROP**
+ */
+typedef enum
+{
+    zn_congestion_control_t_BLOCK,
+    zn_congestion_control_t_DROP,
+} zn_congestion_control_t;
+
+/**
+ * The subscription period.
+ *
+ * Members:
+ *     unsigned int origin:
+ *     unsigned int period:
+ *     unsigned int duration:
+ */
+typedef struct
+{
+    unsigned int origin;
+    unsigned int period;
+    unsigned int duration;
+} zn_period_t;
+
+/**
+ * The subscription mode.
+ *
+ *     - **zn_submode_t_PUSH**
+ *     - **zn_submode_t_PULL**
+ */
+typedef enum
+{
+    zn_submode_t_PUSH,
+    zn_submode_t_PULL,
+} zn_submode_t;
+
+/**
+ * Informations to be passed to :c:func:`zn_declare_subscriber` to configure the created :c:type:`zn_subscriber_t`.
+ *
+ * Members:
+ *     zn_reliability_t reliability: The subscription reliability.
+ *     zn_submode_t mode: The subscription mode.
+ *     zn_period_t *period: The subscription period.
+ */
+typedef struct
+{
+    zn_reliability_t reliability;
+    zn_submode_t mode;
+    zn_period_t *period;
+} zn_subinfo_t;
+
+// typedef struct
+// {
+//     char kind;
+//     const unsigned char *srcid;
+//     size_t srcid_length;
+//     z_zint_t rsn;
+//     const char *rname;
+//     const unsigned char *data;
+//     size_t data_length;
+//     zn_data_info_t info;
+// } zn_reply_value_t;
+
+// @TODO: define zn_query_t
+typedef void zn_query_t;
+
+typedef void (*zn_data_handler_t)(const zn_sample_t *, const void *arg);
+typedef void (*zn_query_handler_t)(zn_query_t *, const void *arg);
+
+// typedef void (*zn_reply_handler_t)(const zn_reply_value_t *reply, void *arg);
+// typedef void (*zn_replies_sender_t)(void *query_handle, zn_resource_p_array_t replies);
 typedef void (*zn_on_disconnect_t)(void *z);
 
+/**
+ * A zenoh-net session.
+ * 
+ */
 typedef struct
 {
     // Socket and internal buffers
@@ -177,13 +334,13 @@ typedef struct
     _zn_mutex_t mutex_rx;
     _zn_mutex_t mutex_tx;
 
-    z_wbuf_t wbuf;
-    z_rbuf_t rbuf;
-    z_wbuf_t dbuf;
+    _z_wbuf_t wbuf;
+    _z_rbuf_t rbuf;
+    _z_wbuf_t dbuf;
 
     // Connection state
-    z_uint8_array_t local_pid;
-    z_uint8_array_t remote_pid;
+    z_bytes_t local_pid;
+    z_bytes_t remote_pid;
 
     char *locator;
 
@@ -203,18 +360,18 @@ typedef struct
     z_zint_t query_id;
 
     // Declarations
-    z_list_t *local_resources;
-    z_list_t *remote_resources;
+    _z_list_t *local_resources;
+    _z_list_t *remote_resources;
 
-    z_list_t *local_subscriptions;
-    z_list_t *remote_subscriptions;
+    _z_list_t *local_subscriptions;
+    _z_list_t *remote_subscriptions;
 
-    z_i_map_t *rem_res_loc_sub_map;
+    _z_i_map_t *rem_res_loc_sub_map;
 
-    z_list_t *local_publishers;
-    z_list_t *local_queryables;
+    _z_list_t *local_publishers;
+    _z_list_t *local_queryables;
 
-    z_list_t *replywaiters;
+    _z_list_t *replywaiters;
 
     // Runtime
     zn_on_disconnect_t on_disconnect;
@@ -232,41 +389,29 @@ typedef struct
 {
     zn_session_t *z;
     z_zint_t id;
-    zn_res_key_t key;
-} zn_res_t;
+    zn_reskey_t key;
+} zn_resource_t;
 
 typedef struct
 {
     zn_session_t *z;
     z_zint_t id;
-    zn_res_key_t key;
-} zn_pub_t;
+    zn_reskey_t key;
+} zn_publisher_t;
 
 typedef struct
 {
     zn_session_t *z;
-    zn_sub_info_t info;
-    zn_res_key_t key;
+    zn_subinfo_t info;
+    zn_reskey_t key;
     z_zint_t id;
-} zn_sub_t;
+} zn_subscriber_t;
 
 typedef struct
 {
     zn_session_t *z;
     z_zint_t rid;
     z_zint_t id;
-} zn_qle_t;
-
-ZN_P_RESULT_DECLARE(zn_session_t, session)
-ZN_P_RESULT_DECLARE(zn_res_t, res)
-ZN_P_RESULT_DECLARE(zn_sub_t, sub)
-ZN_P_RESULT_DECLARE(zn_pub_t, pub)
-ZN_P_RESULT_DECLARE(zn_qle_t, qle)
-
-typedef struct
-{
-    uint8_t kind;
-    uint8_t nb;
-} zn_query_dest_t;
+} zn_queryable_t;
 
 #endif /* ZENOH_C_NET_TYPES_H_ */

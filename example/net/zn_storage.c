@@ -24,7 +24,7 @@
 //     size_t length;
 // } sample_t;
 
-// z_list_t *stored = 0;
+// _z_list_t *stored = 0;
 
 // int remove_data(void *elem, void *args)
 // {
@@ -38,14 +38,14 @@
 //     return 0;
 // }
 
-// void data_handler(const zn_res_key_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+// void data_handler(const zn_reskey_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
 // {
 //     Z_UNUSED_ARG_2(info, arg);
 //     char str[MAX_LEN];
 //     memcpy(&str, data, length < MAX_LEN ? length : MAX_LEN - 1);
 //     str[length < MAX_LEN ? length : MAX_LEN - 1] = 0;
 //     printf(">> [Storage listener] Received ('%20s' : '%s')\n", rkey->key.rname, str);
-//     stored = z_list_remove(stored, remove_data, rkey->key.rname);
+//     stored = _z_list_remove(stored, remove_data, rkey->key.rname);
 
 //     sample_t *sample = (sample_t *)malloc(sizeof(sample_t));
 //     sample->rname = strdup(rkey->key.rname);
@@ -53,7 +53,7 @@
 //     memcpy(sample->data, data, length);
 //     sample->length = length;
 
-//     stored = z_list_cons(stored, sample);
+//     stored = _z_list_cons(stored, sample);
 // }
 
 // void query_handler(const char *rname, const char *predicate, zn_replies_sender_t send_replies, void *query_handle, void *arg)
@@ -61,39 +61,39 @@
 //     Z_UNUSED_ARG(arg);
 //     printf(">> [Query handler   ] Handling '%s?%s'\n", rname, predicate);
 //     zn_resource_p_array_t replies;
-//     z_list_t *matching_samples = 0;
+//     _z_list_t *matching_samples = 0;
 
-//     z_list_t *samples = stored;
+//     _z_list_t *samples = stored;
 //     sample_t *sample;
-//     while (samples != z_list_empty)
+//     while (samples != _z_list_empty)
 //     {
-//         sample = (sample_t *)z_list_head(samples);
+//         sample = (sample_t *)_z_list_head(samples);
 //         if (zn_rname_intersect((char *)rname, sample->rname))
 //         {
-//             matching_samples = z_list_cons(matching_samples, sample);
+//             matching_samples = _z_list_cons(matching_samples, sample);
 //         }
-//         samples = z_list_tail(samples);
+//         samples = _z_list_tail(samples);
 //     }
-//     replies.length = z_list_len(matching_samples);
+//     replies.length = _z_list_len(matching_samples);
 
 //     zn_resource_t resources[replies.length];
 //     zn_resource_t *p_resources[replies.length];
 
 //     samples = matching_samples;
 //     int i = 0;
-//     while (samples != z_list_empty)
+//     while (samples != _z_list_empty)
 //     {
-//         sample = (sample_t *)z_list_head(samples);
+//         sample = (sample_t *)_z_list_head(samples);
 //         resources[i].rname = sample->rname;
 //         resources[i].data = (const unsigned char *)sample->data;
 //         resources[i].length = sample->length;
 //         resources[i].encoding = 0;
 //         resources[i].kind = 0;
 //         p_resources[i] = &resources[i];
-//         samples = z_list_tail(samples);
+//         samples = _z_list_tail(samples);
 //         ++i;
 //     }
-//     z_list_free(&matching_samples);
+//     _z_list_free(&matching_samples);
 
 //     replies.elem = &p_resources[0];
 

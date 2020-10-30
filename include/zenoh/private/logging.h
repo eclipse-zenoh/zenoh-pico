@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_LOGGING_H_
-#define ZENOH_C_LOGGING_H_
+#ifndef _ZENOH_C_LOGGING_H
+#define _ZENOH_C_LOGGING_H
 
 #if (ZENOH_DEBUG == 2)
 #include <stdio.h>
@@ -35,4 +35,4 @@
 #define _Z_ERROR(x, ...) (void)(_z_dummy_arg)
 #endif
 
-#endif /* ZENOH_C_LOGGING_H_ */
+#endif /* _ZENOH_C_LOGGING_H */

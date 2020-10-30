@@ -30,7 +30,7 @@ void print_stats(volatile struct timeval *start, volatile struct timeval *stop)
     printf("%f msgs/sec\n", thpt);
 }
 
-void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+void data_handler(const zn_reskey_t *rid, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
 {
     Z_UNUSED_ARG_5(rid, data, length, info, arg);
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     char *locator = 0;
     if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
     {
-        printf("USAGE:\n\tzn_sub_thr [<path>=%s] [<locator>=auto]\n\n", path);
+        printf("USAGE:\n\tzn_subscriber_thr [<path>=%s] [<locator>=auto]\n\n", path);
         return 0;
     }
 
@@ -82,14 +82,14 @@ int main(int argc, char **argv)
     zn_start_lease_loop(z);
 
     // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
+    zn_reskey_t rk = zn_rname(path);
 
     // Declare a resource
     zn_res_p_result_t rr = zn_declare_resource(z, &rk);
     ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_res_t *res = rr.value.res;
+    zn_resource_t *res = rr.value.res;
 
-    zn_sub_info_t si;
+    zn_subinfo_t si;
     si.mode = ZN_PUSH_MODE;
     si.is_reliable = 1;
     si.is_periodic = 0;

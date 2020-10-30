@@ -26,12 +26,12 @@ int main(int argc, char *argv[])
     }
 
     printf("Scouting...\n");
-    z_vec_t locs = zn_scout("auto", 10, 100000);
-    if (z_vec_len(&locs) > 0)
+    _z_vec_t locs = zn_scout("auto", 10, 100000);
+    if (_z_vec_len(&locs) > 0)
     {
-        for (size_t i = 0; i < z_vec_len(&locs); ++i)
+        for (size_t i = 0; i < _z_vec_len(&locs); ++i)
         {
-            printf("Locator: %s\n", (char *)z_vec_get(&locs, i));
+            printf("Locator: %s\n", (char *)_z_vec_get(&locs, i));
         }
     }
     else

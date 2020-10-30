@@ -12,17 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_PRIVATE_SESSION_H
-#define ZENOH_C_NET_PRIVATE_SESSION_H
+#ifndef _ZENOH_C_MVAR_H
+#define _ZENOH_C_MVAR_H
 
-#include "zenoh/net/types.h"
-#include "zenoh/net/private/msg.h"
+typedef void *_z_mvar_t;
 
-zn_session_t *_zn_session_init(void);
-void _zn_session_close(zn_session_t *z, uint8_t reason);
-void _zn_session_free(zn_session_t *z);
+_z_mvar_t *_z_mvar_empty(void);
+int _z_mvar_is_empty(_z_mvar_t *mv);
 
-int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *s_msg);
-int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *z_msg);
+_z_mvar_t *_z_mvar_of(void *e);
+void *_z_mvar_get(_z_mvar_t *mv);
+void _z_mvar_put(_z_mvar_t *mv, void *e);
 
-#endif /* ZENOH_C_NET_PRIVATE_SESSION_H */
+#endif /* _ZENOH_C_MVAR_H */

@@ -15,7 +15,7 @@
 #ifndef ZENOH_C_NET_H
 #define ZENOH_C_NET_H
 
-// @TODO: remote the platform-specific include
+// @TODO: remove the platform-specific include
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -25,20 +25,19 @@
 #include <net/if.h>
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
+#include "zenoh/net/private/result.h"
 
-_ZN_RESULT_DECLARE(_zn_socket_t, socket)
-
-char *_zn_select_scout_iface();
+char *_zn_select_scout_iface(void);
 _zn_socket_result_t _zn_open_tx_session(const char *locator);
 
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
 
-int _zn_send_dgram_to(_zn_socket_t sock, const z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
-int _zn_recv_dgram_from(_zn_socket_t sock, z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
+int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
 
-int _zn_send_wbuf(_zn_socket_t sock, const z_wbuf_t *wbf);
-int _zn_recv_rbuf(_zn_socket_t sock, z_rbuf_t *rbf);
+int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
+int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf);
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
 #endif /* ZENOH_C_NET_H */

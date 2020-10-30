@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_UNIX_TYPES_H_
-#define ZENOH_C_NET_UNIX_TYPES_H_
+#ifndef _ZENOH_C_NET_UNIX_TYPES_H
+#define _ZENOH_C_NET_UNIX_TYPES_H
 
 #include <pthread.h>
 
 typedef int _zn_socket_t;
 typedef pthread_mutex_t _zn_mutex_t;
 
-#endif /* ZENOH_C_NET_UNIX_TYPES_H_ */
+#endif /* _ZENOH_C_NET_UNIX_TYPES_H_ */

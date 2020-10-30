@@ -50,12 +50,12 @@ int main(int argc, char **argv)
     zn_start_lease_loop(z);
 
     // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
+    zn_reskey_t rk = zn_rname(path);
 
     // Declare a resource
     zn_res_p_result_t rr = zn_declare_resource(z, &rk);
     ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_res_t *res = rr.value.res;
+    zn_resource_t *res = rr.value.res;
 
     // Declare a publisher
     zn_pub_p_result_t rp = zn_declare_publisher(z, &res->key);
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     char data[MAX_LEN];
 
     // Loop endessly and write data
-    zn_res_key_t ri = zn_rid(res);
+    zn_reskey_t ri = zn_rid(res);
     unsigned int count = 0;
     while (1)
     {

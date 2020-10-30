@@ -14,36 +14,27 @@
 #ifndef ZENOH_C_PRIVATE_TYPES_H
 #define ZENOH_C_PRIVATE_TYPES_H
 
+#include "zenoh/types.h"
 #include "zenoh/net/types.h"
 
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X| RESOURCE|
-// +---------------+
-// ~     ResID     ~
-// +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
-// +---------------+
 typedef struct
 {
     z_zint_t id;
-    zn_res_key_t key;
-} _zn_res_decl_t;
+    zn_reskey_t key;
+    uint8_t encoding;
+    uint8_t kind;
+    void *context;
+} _zn_resource_t;
 
 typedef struct
 {
     z_zint_t id;
-    zn_res_key_t key;
-    zn_sub_info_t info;
+    zn_reskey_t key;
+    z_string_t resource;
+    zn_subinfo_t info;
     zn_data_handler_t data_handler;
     void *arg;
-} _zn_sub_t;
-
-// typedef struct
-// {
-//     zn_res_key_t key;
-//     zn_sub_info_t info;
-// } _zn_sub_rem_t;
+} _zn_subscriber_t;
 
 typedef struct
 {
@@ -52,6 +43,6 @@ typedef struct
     z_zint_t id;
     zn_query_handler_t query_handler;
     void *arg;
-} _zn_qle_t;
+} _zn_queryable_t;
 
 #endif /* ZENOH_C_PRIVATE_TYPES_H */
