@@ -131,7 +131,7 @@ zn_properties_t *zn_info(zn_session_t *session);
  *     A numerical id.
  * 
  */
-z_zint_t zn_declare_resource(zn_session_t *session, zn_reskey_t *reskey);
+z_zint_t zn_declare_resource(zn_session_t *session, zn_reskey_t reskey);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -163,7 +163,7 @@ int zn_undeclare_resource(zn_session_t *session, z_zint_t rid);
  *    The created :c:type:`zn_publisher_t` or null if the declaration failed.
  * 
  */
-zn_publisher_t *zn_declare_publisher(zn_session_t *session, zn_reskey_t *reskey);
+zn_publisher_t *zn_declare_publisher(zn_session_t *session, zn_reskey_t reskey);
 
 /**
  * Undeclare a :c:type:`zn_publisher_t`.
@@ -189,7 +189,7 @@ void zn_undeclare_publisher(zn_publisher_t *publ);
  * 
  */
 zn_subscriber_t *zn_declare_subscriber(zn_session_t *session,
-                                       zn_reskey_t *reskey,
+                                       zn_reskey_t reskey,
                                        zn_subinfo_t sub_info,
                                        zn_data_handler_t callback,
                                        void *arg);
@@ -218,7 +218,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub);
  * 
  */
 zn_queryable_t *zn_declare_queryable(zn_session_t *session,
-                                     zn_reskey_t *reskey,
+                                     zn_reskey_t reskey,
                                      unsigned int kind,
                                      zn_query_handler_t callback,
                                      void *arg);
@@ -243,7 +243,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle);
  *     Return a new resource key.
  * 
  */
-zn_reskey_t zn_rid(const zn_resource_t *rd);
+zn_reskey_t zn_rid(const unsigned long rid);
 zn_reskey_t zn_rname(const char *rname);
 
 int zn_send_keep_alive(zn_session_t *z);
@@ -259,9 +259,9 @@ int zn_send_keep_alive(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``1`` in case of failure.
  */
-int zn_write(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, size_t len);
+int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len);
 
-int zn_write_ext(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
+int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
 
 int zn_read(zn_session_t *z);
 

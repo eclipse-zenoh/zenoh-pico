@@ -14,12 +14,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-// #include <unistd.h>
-#include "zenoh.h"
-// #include "zenoh/net/lease_loop.h"
-// #include "zenoh/net/property.h"
-// #include "zenoh/net/recv_loop.h"
-// #include "zenoh/net/session.h"
+#include "zenoh/net.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 #include "zenoh/net/private/net.h"
@@ -952,24 +947,22 @@ zn_reskey_t zn_rname(const char *rname)
     zn_reskey_t rk;
     rk.rid = ZN_NO_RESOURCE_ID;
     rk.rname = strdup(rname);
-
     return rk;
 }
 
-zn_reskey_t zn_rid(const zn_resource_t *rd)
+zn_reskey_t zn_rid(const unsigned long rid)
 {
     zn_reskey_t rk;
-    rk.rid = rd->id;
+    rk.rid = rid;
     rk.rname = NULL;
-
     return rk;
 }
 
 /*------------------ Resource Declaration ------------------*/
-z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t *reskey)
+z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
 {
     // Generate a new resource ID
-    z_zint_t rid = _zn_get_resource_id(z, reskey);
+    z_zint_t rid = _zn_get_resource_id(z, &reskey);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -981,8 +974,7 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t *reskey)
     // Resource declaration
     decl.val[0].header = _ZN_DECL_RESOURCE;
     decl.val[0].body.res.id = rid;
-    decl.val[0].body.res.key.rid = reskey->rid;
-    decl.val[0].body.res.key.rname = reskey->rname;
+    decl.val[0].body.res.key = reskey;
 
     z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
@@ -992,7 +984,7 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t *reskey)
         _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
     }
     _ARRAY_S_FREE(decl);
-    _zn_register_resource(z, _ZN_IS_LOCAL, rid, reskey);
+    _zn_register_resource(z, _ZN_IS_LOCAL, rid, &reskey);
 
     return rid;
 }
@@ -1027,13 +1019,13 @@ int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
 }
 
 /*------------------  Publisher Declaration ------------------*/
-zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t *reskey)
+zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t reskey)
 {
     zn_publisher_t *pub = (zn_publisher_t *)malloc(sizeof(zn_publisher_t));
     pub->z = z;
-    pub->key.rid = reskey->rid;
-    if (reskey->rname)
-        pub->key.rname = strdup(reskey->rname);
+    pub->key.rid = reskey.rid;
+    if (reskey.rname)
+        pub->key.rname = strdup(reskey.rname);
     else
         pub->key.rname = NULL;
     pub->id = _zn_get_entity_id(z);
@@ -1095,16 +1087,12 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t *reskey, zn_subinfo_t sub_info, zn_data_handler_t data_handler, void *arg)
+zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t data_handler, void *arg)
 {
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
     subscriber->z = z;
     subscriber->id = _zn_get_entity_id(z);
-    subscriber->key.rid = reskey->rid;
-    if (reskey->rname)
-        subscriber->key.rname = strdup(reskey->rname);
-    else
-        subscriber->key.rname = NULL;
+    subscriber->key = reskey;
     memcpy(&subscriber->info, &sub_info, sizeof(zn_subinfo_t));
 
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -1115,7 +1103,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t *reskey, zn_
 
     // Subscriber declaration
     decl.val[0].header = _ZN_DECL_SUBSCRIBER;
-    if (!reskey->rname)
+    if (!reskey.rname)
         _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_K);
     if (sub_info.mode != zn_submode_t_PUSH || sub_info.period)
         _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_S);
@@ -1142,7 +1130,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t *reskey, zn_
     rs.id = subscriber->id;
     rs.key = subscriber->key;
     // Get the complete resource name from the resource key
-    rs.resource.val = _zn_get_resource_name_from_key(z, _ZN_IS_LOCAL, reskey);
+    rs.resource.val = _zn_get_resource_name_from_key(z, _ZN_IS_LOCAL, &reskey);
     rs.resource.len = strlen(rs.resource.val);
     rs.info = subscriber->info;
     rs.data_handler = data_handler;
@@ -1186,7 +1174,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 }
 
 /*------------------ Write ------------------*/
-int zn_write_ext(zn_session_t *z, zn_reskey_t *resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1197,9 +1185,8 @@ int zn_write_ext(zn_session_t *z, zn_reskey_t *resource, const unsigned char *pa
     if (cong_ctrl == zn_congestion_control_t_DROP)
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
     // Set the resource key
-    z_msg.body.data.key.rid = resource->rid;
-    z_msg.body.data.key.rname = resource->rname;
-    _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
+    z_msg.body.data.key = reskey;
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
 
     // Set the data info
     _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_I);
@@ -1218,7 +1205,7 @@ int zn_write_ext(zn_session_t *z, zn_reskey_t *resource, const unsigned char *pa
     return _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
 }
 
-int zn_write(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, size_t length)
+int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t length)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1228,9 +1215,8 @@ int zn_write(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, siz
     // Eventually mark the message for congestion control
     _ZN_SET_FLAG(z_msg.header, ZN_CONGESTION_CONTROL_DEFAULT ? _ZN_FLAG_Z_D : 0);
     // Set the resource key
-    z_msg.body.data.key.rid = resource->rid;
-    z_msg.body.data.key.rname = resource->rname;
-    _ZN_SET_FLAG(z_msg.header, resource->rname ? 0 : _ZN_FLAG_Z_K);
+    z_msg.body.data.key = reskey;
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
 
     // Set the payload
     z_msg.body.data.payload.len = length;

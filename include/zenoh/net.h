@@ -17,9 +17,10 @@
 
 #include "zenoh/types.h"
 #include "zenoh/utils.h"
+#include "zenoh/net/lease_loop.h"
+#include "zenoh/net/property.h"
+#include "zenoh/net/recv_loop.h"
 #include "zenoh/net/rname.h"
 #include "zenoh/net/session.h"
-#include "zenoh/net/recv_loop.h"
-#include "zenoh/net/lease_loop.h"
 
 #endif /* ZENOH_NET_C_H_DEFINED */
