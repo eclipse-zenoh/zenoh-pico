@@ -14,7 +14,7 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include "zenoh/collection.h"
+#include "zenoh/private/collection.h"
 #include "zenoh/types.h"
 
 int main(int argc, char **argv)
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     _z_i_map_set(map, 9, "9");
     _z_i_map_set(map, 10, "10");
 
-    printf("Map size: %zu\n", _z_i_map_size(map));
+    printf("Map size: %zu\n", _z_i_map_len(map));
     printf("get(0) = %s\n", (char *)_z_i_map_get(map, 0));
     printf("get(1) = %s\n", (char *)_z_i_map_get(map, 1));
     printf("get(2) = %s\n", (char *)_z_i_map_get(map, 2));

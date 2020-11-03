@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "zenoh/mvar.h"
+#include "zenoh/private/mvar.h"
 
 typedef struct
 {
@@ -26,31 +26,31 @@ typedef struct
     pthread_cond_t can_get;
 } z_posix_mvar_t;
 
-z_mvar_t *z_mvar_empty()
+_z_mvar_t *_z_mvar_empty()
 {
     z_posix_mvar_t *mv = (z_posix_mvar_t *)malloc(sizeof(z_posix_mvar_t));
     memset(mv, 0, sizeof(z_posix_mvar_t));
     pthread_mutex_init(&mv->mtx, 0);
     pthread_cond_init(&mv->can_get, 0);
     pthread_cond_init(&mv->can_put, 0);
-    return (z_mvar_t *)mv;
+    return (_z_mvar_t *)mv;
 }
 
-int z_mvar_is_empty(z_mvar_t *zmv)
+int _z_mvar_is_empty(_z_mvar_t *zmv)
 {
     z_posix_mvar_t *mv = (z_posix_mvar_t *)zmv;
     return mv->full == 0;
 }
 
-z_mvar_t *z_mvar_of(void *e)
+_z_mvar_t *_z_mvar_of(void *e)
 {
-    z_posix_mvar_t *mv = (z_posix_mvar_t *)z_mvar_empty();
+    z_posix_mvar_t *mv = (z_posix_mvar_t *)_z_mvar_empty();
     mv->elem = e;
     mv->full = 1;
-    return (z_mvar_t *)mv;
+    return (_z_mvar_t *)mv;
 }
 
-void *z_mvar_get(z_mvar_t *zmv)
+void *_z_mvar_get(_z_mvar_t *zmv)
 {
     z_posix_mvar_t *mv = (z_posix_mvar_t *)zmv;
     int lock = 1;
@@ -75,7 +75,7 @@ void *z_mvar_get(z_mvar_t *zmv)
     } while (1);
 }
 
-void z_mvar_put(z_mvar_t *zmv, void *e)
+void _z_mvar_put(_z_mvar_t *zmv, void *e)
 {
     z_posix_mvar_t *mv = (z_posix_mvar_t *)zmv;
     int lock = 1;

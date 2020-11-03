@@ -164,7 +164,7 @@ int main(int argc, char **argv)
     //     assert(0 == memcmp(sent_res.data, rcvd_res->data, sent_res.length));
 
     //     int i;
-    //     for (i = (ZENOH_NET_WRITE_BUF_LEN - 500); i <= (ZENOH_NET_WRITE_BUF_LEN + 500); ++i)
+    //     for (i = (ZN_WRITE_BUF_LEN - 500); i <= (ZN_WRITE_BUF_LEN + 500); ++i)
     //     {
     //         sent_res.length = i;
     //         zn_write_data(z1, sent_res.name, sent_res.data, sent_res.length);
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
     //         assert(sent_res.length == rcvd_res->length);
     //         assert(0 == memcmp(sent_res.data, rcvd_res->data, sent_res.length));
     //     }
-    //     for (i = (ZENOH_NET_WRITE_BUF_LEN + 500); i >= (ZENOH_NET_WRITE_BUF_LEN - 500); --i)
+    //     for (i = (ZN_WRITE_BUF_LEN + 500); i >= (ZN_WRITE_BUF_LEN - 500); --i)
     //     {
     //         sent_res.length = i;
     //         zn_write_data(z1, sent_res.name, sent_res.data, sent_res.length);

@@ -18,11 +18,14 @@
 #include "zenoh/types.h"
 
 /*-------- Operations on Bytes --------*/
+z_bytes_t _z_bytes_make(size_t capacity);
+void _z_bytes_init(z_bytes_t *bs, size_t capacity);
 void _z_bytes_copy(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_free(z_bytes_t *bs);
 
 /*-------- Operations on StrArray --------*/
+z_str_array_t _z_str_array_make(size_t len);
 void _z_str_array_init(z_str_array_t *sa, size_t len);
 void _z_str_array_copy(z_str_array_t *dst, z_str_array_t *src);
 void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);

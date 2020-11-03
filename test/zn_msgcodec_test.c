@@ -18,6 +18,7 @@
 #include <time.h>
 #include "zenoh/private/internal.h"
 #include "zenoh/private/iobuf.h"
+#include "zenoh/net/private/internal.h"
 #define _ZENOH_C_NET_MSGCODEC_H_T
 #include "zenoh/net/private/msgcodec.h"
 
@@ -172,11 +173,11 @@ char *gen_string(size_t size)
     return str;
 }
 
-_z_vec_t gen_string_vec(size_t size)
+z_str_array_t gen_str_array(size_t size)
 {
-    _z_vec_t sa = _z_vec_make(size);
+    z_str_array_t sa = _z_str_array_make(size);
     for (size_t i = 0; i < size; ++i)
-        _z_vec_append(&sa, gen_string(16));
+        ((z_str_t *)sa.val)[i] = gen_string(16);
 
     return sa;
 }
@@ -227,20 +228,20 @@ void assert_eq_uint8_array(z_bytes_t *left, z_bytes_t *right)
     printf(")");
 }
 
-void assert_eq_string_vec(_z_vec_t *left, _z_vec_t *right)
+void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
 {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", _z_vec_len(left), _z_vec_len(right));
+    printf("Length (%zu:%zu), ", left->len, right->len);
 
-    assert(_z_vec_len(left) == _z_vec_len(right));
+    assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < _z_vec_len(left); ++i)
+    for (size_t i = 0; i < left->len; ++i)
     {
-        char *l = (char *)_z_vec_get(left, i);
-        char *r = (char *)_z_vec_get(right, i);
+        const char *l = left->val[i];
+        const char *r = right->val[i];
 
         printf("%s:%s", l, r);
-        if (i < _z_vec_len(left) - 1)
+        if (i < left->len - 1)
             printf(" ");
 
         assert(strcmp(l, r) == 0);
@@ -334,10 +335,8 @@ void timestamp_field()
 /*------------------ SubInfo field ------------------*/
 zn_subinfo_t gen_subinfo()
 {
-    uint8_t kind[] = {ZN_PUSH_MODE, ZN_PULL_MODE};
-
     zn_subinfo_t sm;
-    sm.mode = kind[rand() % (sizeof(kind) / sizeof(uint8_t))];
+    sm.mode = gen_bool() ? zn_submode_t_PUSH : zn_submode_t_PULL;
     sm.reliability = gen_bool() ? zn_reliability_t_RELIABLE : zn_reliability_t_BEST_EFFORT;
     sm.period = gen_bool() ? (zn_period_t *)malloc(sizeof(zn_period_t)) : NULL;
 
@@ -360,17 +359,17 @@ void assert_eq_subinfo(zn_subinfo_t *left, zn_subinfo_t *right)
     printf("Reliable (%u:%u), ", left->reliability, right->reliability);
     assert(left->reliability == right->reliability);
 
-    printf("Periodic (%u:%u), ", left->period, right->period);
+    printf("Periodic (%d:%d), ", left->period ? 1 : 0, right->period ? 1 : 0);
     assert((left->period == NULL) == (right->period == NULL));
 
     printf("Period (");
     if (left->period)
-        printf("<%zu:%zu,%zu>", left->period->origin, left->period->period, left->period->duration);
+        printf("<%u:%u,%u>", left->period->origin, left->period->period, left->period->duration);
     else
         printf("NULL");
     printf(":");
     if (right->period)
-        printf("<%zu:%zu,%zu>", right->period->origin, right->period->period, right->period->duration);
+        printf("<%u:%u,%u>", right->period->origin, right->period->period, right->period->duration);
     else
         printf("NULL");
     printf(")");
@@ -392,7 +391,7 @@ void subinfo_field()
 
     // Encode
     uint8_t header = e_sm.reliability == zn_reliability_t_RELIABLE ? _ZN_FLAG_Z_R : 0;
-    assert(zn_subinfo_encode(&wbf, &e_sm) == 0);
+    assert(_zn_subinfo_encode(&wbf, &e_sm) == 0);
 
     // Decode
     _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
@@ -453,7 +452,7 @@ void res_key_field()
 
     // Encode
     uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
-    assert(zn_reskey_encode(&wbf, header, &e_rk) == 0);
+    assert(_zn_reskey_encode(&wbf, header, &e_rk) == 0);
 
     // Decode
     _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
@@ -466,7 +465,7 @@ void res_key_field()
     printf("\n");
 
     // Free
-    zn_reskey_free(&d_rk);
+    _zn_reskey_free(&d_rk);
     _z_rbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
@@ -481,37 +480,37 @@ _zn_data_info_t gen_data_info()
     if (gen_bool())
     {
         di.source_id = gen_bytes(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_ID);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_SRC_ID);
     }
     if (gen_bool())
     {
         di.source_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_SN);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_SRC_SN);
     }
     if (gen_bool())
     {
         di.first_router_id = gen_bytes(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_ID);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_RTR_ID);
     }
     if (gen_bool())
     {
         di.first_router_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_SN);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_RTR_SN);
     }
     if (gen_bool())
     {
         di.tstamp = gen_timestamp();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_TSTAMP);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_TSTAMP);
     }
     if (gen_bool())
     {
         di.kind = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_KIND);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_KIND);
     }
     if (gen_bool())
     {
         di.encoding = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_ENC);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
     }
 
     return di;
@@ -523,40 +522,40 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
     printf("Flags (%zu:%zu), ", left->flags, right->flags);
     assert(left->flags == right->flags);
 
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_SRC_ID)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_SRC_ID)
     {
         printf("Src ID -> ");
         assert_eq_uint8_array(&left->source_id, &right->source_id);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_SRC_SN)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_SRC_SN)
     {
         printf("Src SN (%zu:%zu), ", left->source_sn, right->source_sn);
         assert(left->source_sn == right->source_sn);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_RTR_ID)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_RTR_ID)
     {
         printf("Rtr ID -> ");
         assert_eq_uint8_array(&left->first_router_id, &right->first_router_id);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_RTR_SN)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_RTR_SN)
     {
         printf("Rtr SN (%zu:%zu), ", left->first_router_sn, right->first_router_sn);
         assert(left->first_router_sn == right->first_router_sn);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_TSTAMP)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
     {
         printf("Tstamp -> ");
         assert_eq_timestamp(&left->tstamp, &right->tstamp);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_KIND)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_KIND)
     {
         printf("Kind (%zu:%zu), ", left->kind, right->kind);
         assert(left->kind == right->kind);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_ENC)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
     {
         printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
         assert(left->encoding == right->encoding);
@@ -572,7 +571,7 @@ void data_info_field()
     _zn_data_info_t e_di = gen_data_info();
 
     // Encode
-    assert(zn_data_info_encode(&wbf, &e_di) == 0);
+    assert(_zn_data_info_encode(&wbf, &e_di) == 0);
 
     // Decode
     _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
@@ -585,7 +584,7 @@ void data_info_field()
     printf("\n");
 
     // Free
-    zn_data_info_free(&d_di);
+    _zn_data_info_free(&d_di);
     _z_rbuf_free(&rbf);
     _z_wbuf_clear(&wbf);
 }
@@ -833,7 +832,7 @@ _zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
     _zn_sub_decl_t e_sd;
 
     e_sd.subinfo = gen_subinfo();
-    if (e_sd.subinfo.mode != ZN_PUSH_MODE || e_sd.subinfo.period)
+    if (e_sd.subinfo.mode != zn_submode_t_PUSH || e_sd.subinfo.period)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_S);
     if (e_sd.subinfo.reliability == zn_reliability_t_RELIABLE)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_R);
@@ -1371,17 +1370,17 @@ _zn_query_t gen_query_message(uint8_t *header)
     if (gen_bool())
     {
         uint8_t tgt[] = {
-            ZN_QTGT_BEST_MATCH,
-            ZN_QTGT_COMPLETE,
-            ZN_QTGT_ALL,
-            ZN_QTGT_NONE};
+            zn_target_t_BEST_MATCHING,
+            zn_target_t_COMPLETE,
+            zn_target_t_ALL,
+            zn_target_t_NONE};
         e_qy.target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_T);
     }
     uint8_t con[] = {
-        ZN_QCON_NONE,
-        ZN_QCON_LAST_HOP,
-        ZN_QCON_INCREMENTAL};
+        zn_consolidation_mode_t_FULL,
+        zn_consolidation_mode_t_LAZY,
+        zn_consolidation_mode_t_NONE};
     e_qy.consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
     return e_qy;
@@ -1682,7 +1681,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_he.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_he.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1706,7 +1705,7 @@ void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t head
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
@@ -1754,7 +1753,7 @@ _zn_open_t gen_open_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_op.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_op.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1793,7 +1792,7 @@ void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
@@ -1840,7 +1839,7 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_ac.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_ac.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1879,7 +1878,7 @@ void assert_eq_accept_message(_zn_accept_t *left, _zn_accept_t *right, uint8_t h
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
@@ -2480,8 +2479,7 @@ void batch()
 _zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_session_message_t s_msg = _zn_session_message_init();
-    s_msg.header = _ZN_MID_FRAME;
+    _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_FRAME);
     s_msg.body.frame.sn = sn;
 
     if (is_reliable)

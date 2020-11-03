@@ -21,9 +21,9 @@ zn_properties_t *zn_properties_make(void)
     return _z_i_map_make(DEFAULT_I_MAP_CAPACITY);
 }
 
-zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, char *value)
+zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, z_string_t value)
 {
-    _z_i_map_set(ps, key, value);
+    _z_i_map_set(ps, key, (char *)value.val);
     return ps;
 }
 

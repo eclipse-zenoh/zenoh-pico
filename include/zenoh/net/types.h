@@ -28,47 +28,15 @@
 #include "zenoh/net/private/contiki/types.h"
 #endif
 
-#define ZN_WHATAMI_ROUTER 0x01 // 1 << 0
-#define ZN_WHATAMI_PEER 0x02   // 1 << 1
-#define ZN_WHATAMI_CLIENT 0x04 // 1 << 2
-
-#define ZN_PUSH_MODE 0x01
-#define ZN_PULL_MODE 0x02
+#define ZN_ROUTER 0x01 // 1 << 0
+#define ZN_PEER 0x02   // 1 << 1
+#define ZN_CLIENT 0x04 // 1 << 2
 
 #define ZN_NO_RESOURCE_ID 0
-
-#define ZN_DEST_STORAGES_KEY 0x10
-#define ZN_DEST_EVALS_KEY 0x11
-
-#define ZN_STORAGE_DATA 0
-#define ZN_STORAGE_FINAL 1
-#define ZN_EVAL_DATA 2
-#define ZN_EVAL_FINAL 3
-#define ZN_REPLY_FINAL 4
 
 #define ZN_T_STAMP 0x10
 #define ZN_KIND 0x20
 #define ZN_ENCODING 0x40
-
-#define ZN_QTGT_BEST_MATCH 0
-#define ZN_QTGT_COMPLETE 1
-#define ZN_QTGT_ALL 2
-#define ZN_QTGT_NONE 3
-
-#define ZN_QCON_NONE 0
-#define ZN_QCON_LAST_HOP 1
-#define ZN_QCON_INCREMENTAL 2
-
-/*=============================*/
-/*       DataInfo flags        */
-/*=============================*/
-#define ZN_DATA_INFO_SRC_ID 0x01 // 1 << 0
-#define ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
-#define ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
-#define ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
-#define ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
-#define ZN_DATA_INFO_KIND 0x20   // 1 << 5
-#define ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
 /**
  * A zenoh-net property.
@@ -139,8 +107,8 @@ typedef struct zn_hello_t
  * An array of :c:struct:`zn_hello_t` messages.
  *
  * Members:
+ *   size_t len: The length of the array.
  *   const zn_hello_t *val: A pointer to the array.
- *   unsigned int len: The length of the array.
  *
  */
 typedef struct zn_hello_array_t

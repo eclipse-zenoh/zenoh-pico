@@ -16,7 +16,7 @@
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
 #include "zenoh/net/private/session.h"
-#include "zenoh/net/private/sync.h"
+#include "zenoh/net/private/system.h"
 #include "zenoh/private/logging.h"
 
 void *zn_lease_loop(zn_session_t *z)
@@ -27,17 +27,17 @@ void *zn_lease_loop(zn_session_t *z)
     z->transmitted = 0;
 
     unsigned int next_lease = z->lease;
-    unsigned int next_keep_alive = ZENOH_NET_KEEP_ALIVE_INTERVAL;
+    unsigned int next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
     while (z->lease_loop_running)
     {
         // Compute the target interval
         unsigned int interval;
         if (next_lease < next_keep_alive)
             interval = next_lease;
-        else if (next_keep_alive < ZENOH_NET_KEEP_ALIVE_INTERVAL)
+        else if (next_keep_alive < ZN_KEEP_ALIVE_INTERVAL)
             interval = next_keep_alive;
         else
-            interval = ZENOH_NET_KEEP_ALIVE_INTERVAL;
+            interval = ZN_KEEP_ALIVE_INTERVAL;
 
         // The keep alive and lease intervals are expressed in milliseconds
         _zn_sleep_ms(interval);
@@ -71,7 +71,7 @@ void *zn_lease_loop(zn_session_t *z)
 
             // Reset the keep alive parameters
             z->transmitted = 0;
-            next_keep_alive = ZENOH_NET_KEEP_ALIVE_INTERVAL;
+            next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
         }
     }
 

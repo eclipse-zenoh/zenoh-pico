@@ -123,7 +123,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
     if (inet_pton(AF_INET, addr, &saddr.sin_addr) <= 0)
     {
         r.tag = _z_res_t_ERR;
-        r.value.error = ZN_INVALID_ADDRESS_ERROR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
         r.value.socket = 0;
         return r;
     }
@@ -131,7 +131,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
     if (bind(r.value.socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
     {
         r.tag = _z_res_t_ERR;
-        r.value.error = ZN_INVALID_ADDRESS_ERROR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
         r.value.socket = 0;
         return r;
     }
@@ -228,7 +228,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     if (inet_pton(AF_INET, ip_addr, &serv_addr.sin_addr) <= 0)
     {
         r.tag = _z_res_t_ERR;
-        r.value.error = ZN_INVALID_ADDRESS_ERROR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
         r.value.socket = 0;
         return r;
     }
@@ -236,12 +236,17 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     if (connect(r.value.socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         r.tag = _z_res_t_ERR;
-        r.value.error = ZN_TX_CONNECTION_ERROR;
+        r.value.error = _zn_err_t_TX_CONNECTION;
         r.value.socket = 0;
         return r;
     }
 
     return r;
+}
+
+void _zn_close_tx_session(_zn_socket_t sock)
+{
+    close(sock);
 }
 
 /*------------------ Datagram ------------------*/
@@ -252,7 +257,7 @@ int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sock
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int res = sendto(sock, a.elem, a.length, 0, dest, salen);
+        int res = sendto(sock, a.val, a.len, 0, dest, salen);
         _Z_DEBUG_VA("Socket returned: %d\n", wb);
         if (res <= 0)
         {
@@ -305,15 +310,15 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int n = a.length;
+        int n = a.len;
         int wb;
         do
         {
             _Z_DEBUG("Sending data on socket....\n");
 #if (ZENOH_LINUX == 1)
-            wb = send(sock, a.elem, n, MSG_NOSIGNAL);
+            wb = send(sock, a.val, n, MSG_NOSIGNAL);
 #else
-            wb = send(sock, a.elem, n, 0);
+            wb = send(sock, a.val, n, 0);
 #endif
             _Z_DEBUG_VA("Socket returned: %d\n", wb);
             if (wb <= 0)
@@ -322,7 +327,7 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
                 return -1;
             }
             n -= wb;
-            a.elem += a.length - n;
+            a.val += a.len - n;
         } while (n > 0);
     }
 

@@ -55,7 +55,7 @@ _z_zint_result_t _z_zint_decode(_z_rbuf_t *rbf)
 int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
 {
     _ZN_EC(_z_zint_encode(wbf, bs->len))
-    if (wbf->is_expandable && bs->len > ZENOH_NET_TSID_LENGTH)
+    if (wbf->is_expandable && bs->len > ZN_TSID_LENGTH)
     {
         // Do not copy, just add a slice to the expandable buffer
         // Only create a new slice if the malloc is cheaper than copying a
@@ -86,12 +86,6 @@ _z_bytes_result_t _z_bytes_decode(_z_rbuf_t *rbf)
     _z_bytes_result_t r;
     _z_bytes_decode_na(rbf, &r);
     return r;
-}
-
-void _z_bytes_free(z_bytes_t *bs)
-{
-    // NOTE: z_bytes_t does not involve directly any heap allocation
-    Z_UNUSED_ARG(bs);
 }
 
 /*------------------ string with null terminator ------------------*/

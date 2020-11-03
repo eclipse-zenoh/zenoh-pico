@@ -18,20 +18,6 @@
 #include <stdint.h>
 #include "zenoh/net/types.h"
 
-// Properties for zenoh net session configuration
-#define ZN_CONFIG_MODE_KEY 0x40
-#define ZN_CONFIG_PEER_KEY 0x41
-#define ZN_CONFIG_LISTENER_KEY 0x42
-#define ZN_CONFIG_USER_KEY 0x43
-#define ZN_CONFIG_PASSWORD_KEY 0x44
-#define ZN_CONFIG_MULTICAST_SCOUTING_KEY 0x45
-#define ZN_CONFIG_MULTICAST_INTERFACE_KEY 0x46
-#define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
-#define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
-#define ZN_CONFIG_SCOUTING_DELAY_KEY 0x49
-#define ZN_CONFIG_ADD_TIMESTAMP_KEY 0x4A
-#define ZN_CONFIG_LOCAL_ROUTING_KEY 0x60
-
 // Properties returned by zn_info()
 #define ZN_INFO_PID_KEY 0x00
 #define ZN_INFO_PEER_PID_KEY 0x01
@@ -54,7 +40,7 @@ zn_properties_t *zn_properties_make(void);
  * Returns:
  *     A pointer to the updated properties map.
  */
-zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, char *value);
+zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, z_string_t value);
 
 /**
  * Get the property with the given key from a properties map.

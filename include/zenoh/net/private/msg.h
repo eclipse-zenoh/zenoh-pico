@@ -109,9 +109,6 @@
 #define _ZN_DECL_FORGET_PUBLISHER 0x12
 #define _ZN_DECL_FORGET_SUBSCRIBER 0x13
 #define _ZN_DECL_FORGET_QUERYABLE 0x14
-/* SubModes IDs */
-#define _ZN_SUBMODE_PUSH 0x00
-#define _ZN_SUBMODE_PULL 0x01
 
 /*=============================*/
 /*        Close reasons        */
@@ -122,6 +119,17 @@
 #define _ZN_CLOSE_MAX_SESSIONS 0x03
 #define _ZN_CLOSE_MAX_LINKS 0x04
 #define _ZN_CLOSE_EXPIRED 0x05
+
+/*=============================*/
+/*       DataInfo flags        */
+/*=============================*/
+#define _ZN_DATA_INFO_SRC_ID 0x01 // 1 << 0
+#define _ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
+#define _ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
+#define _ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
+#define _ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
+#define _ZN_DATA_INFO_KIND 0x20   // 1 << 5
+#define _ZN_DATA_INFO_ENC 0x40    // 1 << 6
 
 /*------------------ Payload field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -259,7 +267,7 @@ _ZN_RESULT_DECLARE(_zn_scout_t, scout)
 // +-+-+-+-+-------+
 // ~    peer-id    ~ if I==1
 // +---------------+
-// ~    whatami    ~ if W==1 -- Otherwise it is from a Broker
+// ~    whatami    ~ if W==1 -- Otherwise it is from a Router
 // +---------------+
 // ~    Locators   ~ if L==1 -- Otherwise src-address is the locator
 // +---------------+
@@ -761,19 +769,19 @@ _ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
 // +-+-+-+---------+
 // ~     flags     ~ -- encoded as z_zint_t
 // +---------------+
-// ~   source_id   ~ if ZN_DATA_INFO_SRC_ID==1
+// ~   source_id   ~ if _ZN_DATA_INFO_SRC_ID==1
 // +---------------+
-// ~   source_sn   ~ if ZN_DATA_INFO_SRC_SN==1
+// ~   source_sn   ~ if _ZN_DATA_INFO_SRC_SN==1
 // +---------------+
-// ~first_router_id~ if ZN_DATA_INFO_RTR_ID==1
+// ~first_router_id~ if _ZN_DATA_INFO_RTR_ID==1
 // +---------------+
-// ~first_router_sn~ if ZN_DATA_INFO_RTR_SN==1
+// ~first_router_sn~ if _ZN_DATA_INFO_RTR_SN==1
 // +---------------+
-// ~   timestamp   ~ if ZN_DATA_INFO_TSTAMP==1
+// ~   timestamp   ~ if _ZN_DATA_INFO_TSTAMP==1
 // +---------------+
-// ~      kind     ~ if ZN_DATA_INFO_KIND==1
+// ~      kind     ~ if _ZN_DATA_INFO_KIND==1
 // +---------------+
-// ~   encoding    ~ if ZN_DATA_INFO_ENC==1
+// ~   encoding    ~ if _ZN_DATA_INFO_ENC==1
 // +---------------+
 //
 typedef struct

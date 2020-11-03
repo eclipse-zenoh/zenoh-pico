@@ -12,14 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_UNIX_TYPES_H
-#define _ZENOH_C_NET_UNIX_TYPES_H
+#include <string.h>
+#include "zenoh/utils.h"
 
-#include <pthread.h>
-
-typedef int _zn_socket_t;
-typedef pthread_mutex_t _zn_mutex_t;
-typedef struct timespec _zn_clock_t;
-typedef struct timeval _zn_time_t;
-
-#endif /* _ZENOH_C_NET_UNIX_TYPES_H_ */
+z_string_t z_string_make(const char *value)
+{
+    z_string_t s;
+    s.val = strdup(value);
+    s.len = strlen(value);
+    return s;
+}

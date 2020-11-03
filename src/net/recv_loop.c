@@ -23,7 +23,7 @@
 #include "zenoh/net/private/msg.h"
 #include "zenoh/net/private/net.h"
 #include "zenoh/net/private/session.h"
-#include "zenoh/net/private/sync.h"
+#include "zenoh/net/private/system.h"
 
 typedef struct
 {
@@ -496,7 +496,7 @@ void *zn_recv_loop(zn_session_t *z)
     _z_rbuf_clear(&z->rbuf);
     while (z->recv_loop_running)
     {
-#ifdef ZENOH_NET_TRANSPORT_TCP_IP
+#ifdef ZN_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
         //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -566,7 +566,7 @@ void *zn_recv_loop(zn_session_t *z)
             }
         }
 
-#ifdef ZENOH_NET_TRANSPORT_TCP_IP
+#ifdef ZN_TRANSPORT_TCP_IP
         // Move the read position of the read buffer
         _z_rbuf_set_rpos(&z->rbuf, _z_rbuf_get_rpos(&z->rbuf) + to_read);
 #endif

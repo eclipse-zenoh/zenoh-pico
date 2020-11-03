@@ -59,14 +59,14 @@
 //     return 0;
 // }
 
-int zn_period_encode(_z_wbuf_t *buf, const zn_period_t *tp)
+int _zn_period_encode(_z_wbuf_t *buf, const zn_period_t *tp)
 {
     _ZN_EC(_z_zint_encode(buf, tp->origin))
     _ZN_EC(_z_zint_encode(buf, tp->period))
     return _z_zint_encode(buf, tp->duration);
 }
 
-void zn_period_decode_na(_z_rbuf_t *buf, _zn_period_result_t *r)
+void _zn_period_decode_na(_z_rbuf_t *buf, _zn_period_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
@@ -82,7 +82,7 @@ void zn_period_decode_na(_z_rbuf_t *buf, _zn_period_result_t *r)
     r->value.period.duration = r_duration.value.zint;
 }
 
-_zn_period_result_t zn_period_decode(_z_rbuf_t *buf)
+_zn_period_result_t _zn_period_decode(_z_rbuf_t *buf)
 {
     _zn_period_result_t r;
     _zn_period_decode_na(buf, &r);

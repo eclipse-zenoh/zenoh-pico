@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-#include "zenoh/iobuf.h"
+#include "zenoh/private/iobuf.h"
 
 #define RUNS 1000
 

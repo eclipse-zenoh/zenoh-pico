@@ -30,4 +30,16 @@ int _zn_sleep_us(unsigned int time);
 int _zn_sleep_ms(unsigned int time);
 int _zn_sleep_s(unsigned int time);
 
+/*------------------ Clock ------------------*/
+_zn_clock_t _zn_clock_now(void);
+clock_t _zn_clock_elapsed_us(_zn_clock_t *time);
+clock_t _zn_clock_elapsed_ms(_zn_clock_t *time);
+clock_t _zn_clock_elapsed_s(_zn_clock_t *time);
+
+/*------------------ Time ------------------*/
+_zn_time_t _zn_time_now(void);
+time_t _zn_time_elapsed_us(_zn_time_t *time);
+time_t _zn_time_elapsed_ms(_zn_time_t *time);
+time_t _zn_time_elapsed_s(_zn_time_t *time);
+
 #endif /* ZENOH_C_SYNC_H */

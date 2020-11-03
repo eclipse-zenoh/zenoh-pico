@@ -29,6 +29,7 @@
 
 char *_zn_select_scout_iface(void);
 _zn_socket_result_t _zn_open_tx_session(const char *locator);
+void _zn_close_tx_session(_zn_socket_t sock);
 
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);

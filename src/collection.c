@@ -199,7 +199,7 @@ void _z_list_free(_z_list_t **xs)
 }
 
 /*-------- Int Map --------*/
-_z_i_map_t *_z_i_map_empty = 0;
+_z_i_map_t *_z_i_map_empty = NULL;
 
 _z_i_map_t *_z_i_map_make(size_t capacity)
 {
@@ -207,32 +207,37 @@ _z_i_map_t *_z_i_map_make(size_t capacity)
     map->vals = (_z_list_t **)malloc(capacity * sizeof(_z_list_t *));
     memset(map->vals, 0, capacity * sizeof(_z_list_t *));
     map->capacity = capacity;
-    map->n = 0;
+    map->len = 0;
 
     return map;
 }
 
-void x_z_i_map_free(_z_i_map_t **map)
+size_t _z_i_map_capacity(_z_i_map_t *map)
 {
-    _z_i_map_t *m = *map;
-    for (size_t i = 0; i > m->capacity; ++i)
-    {
-        // @TODO: Free the valents
-    }
+    return map->capacity;
+}
+
+size_t _z_i_map_len(_z_i_map_t *map)
+{
+    return map->len;
 }
 
 void _z_i_map_set(_z_i_map_t *map, size_t k, void *v)
 {
-    _z_i_map_entry_t *entry = 0;
+    _z_i_map_entry_t *entry = NULL;
+
+    // Compute the hash
     size_t idx = k % map->capacity;
+    // Get the list associated to the hash
     _z_list_t *xs = map->vals[idx];
+
     if (xs == _z_list_empty)
     {
         entry = (_z_i_map_entry_t *)malloc(sizeof(_z_i_map_entry_t));
         entry->key = k;
         entry->value = v;
         map->vals[idx] = _z_list_cons(_z_list_empty, entry);
-        map->n++;
+        map->len++;
     }
     else
     {
@@ -245,22 +250,25 @@ void _z_i_map_set(_z_i_map_t *map, size_t k, void *v)
                 break;
             }
             else
+            {
                 xs = xs->tail;
+            }
         }
+
         if (xs == _z_list_empty)
         {
             entry = (_z_i_map_entry_t *)malloc(sizeof(_z_i_map_entry_t));
             entry->key = k;
             entry->value = v;
             map->vals[idx] = _z_list_cons(map->vals[idx], entry);
-            map->n++;
+            map->len++;
         }
     }
 }
 
 void *_z_i_map_get(_z_i_map_t *map, size_t k)
 {
-    _z_i_map_entry_t *entry = 0;
+    _z_i_map_entry_t *entry = NULL;
     size_t idx = k % map->capacity;
     _z_list_t *xs = map->vals[idx];
 
@@ -272,10 +280,10 @@ void *_z_i_map_get(_z_i_map_t *map, size_t k)
         xs = xs->tail;
     }
 
-    return 0;
+    return NULL;
 }
 
-int key_predicate(void *current, void *desired)
+int _z_i_map_key_predicate(void *current, void *desired)
 {
     _z_i_map_entry_t *c = (_z_i_map_entry_t *)current;
     _z_i_map_entry_t *d = (_z_i_map_entry_t *)desired;
@@ -290,16 +298,20 @@ void _z_i_map_remove(_z_i_map_t *map, size_t k)
     _z_i_map_entry_t e;
     e.key = k;
     size_t l = _z_list_len(map->vals[idx]);
-    map->vals[idx] = _z_list_remove(map->vals[idx], key_predicate, &e);
-    map->n -= l - _z_list_len(map->vals[idx]);
+    map->vals[idx] = _z_list_remove(map->vals[idx], _z_i_map_key_predicate, &e);
+    map->len -= l - _z_list_len(map->vals[idx]);
 }
 
-size_t _z_i_map_capacity(_z_i_map_t *map)
+void _z_i_map_free(_z_i_map_t *map)
 {
-    return map->capacity;
-}
-
-size_t _z_i_map_len(_z_i_map_t *map)
-{
-    return map->n;
+    if (map != _z_i_map_empty)
+    {
+        for (size_t i = 0; i < map->capacity; i++)
+        {
+            if (map->vals[i] != _z_list_empty)
+                _z_list_free(&map->vals[i]);
+        }
+        free(map->vals);
+        free(map);
+    }
 }

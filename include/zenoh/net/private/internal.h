@@ -22,15 +22,15 @@
 #define _ZN_IS_LOCAL 1
 
 /*------------------ Message helper ------------------*/
-_zn_session_message_t _zn_session_message_init(void);
-_zn_zenoh_message_t _zn_zenoh_message_init(void);
+_zn_session_message_t _zn_session_message_init(uint8_t header);
+_zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
 
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
-int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);
+int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, zn_reliability_t reliability);
 
 _zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *z);
 void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);

@@ -12,16 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_MVAR_H_
-#define ZENOH_C_MVAR_H_
+#ifndef ZENOH_NET_C_H_DEFINED
+#define ZENOH_NET_C_H_DEFINED
 
-typedef void* z_mvar_t;
+#include "zenoh/types.h"
+#include "zenoh/utils.h"
+#include "zenoh/net/rname.h"
+#include "zenoh/net/session.h"
+#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/lease_loop.h"
 
-z_mvar_t *z_mvar_empty();
-int z_mvar_is_empty(z_mvar_t *mv);
-
-z_mvar_t *z_mvar_of(void *e);
-void * z_mvar_get(z_mvar_t *mv);
-void z_mvar_put(z_mvar_t *mv, void *e);
-
-#endif /* ZENOH_C_MVAR_H_ */
+#endif /* ZENOH_NET_C_H_DEFINED */

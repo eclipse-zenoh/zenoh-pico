@@ -12,9 +12,11 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_RNAME_H
-#define ZENOH_C_RNAME_H
+#ifndef ZENOH_C_UTILS_H
+#define ZENOH_C_UTILS_H
 
-int z_rname_intersect(const char *c1, const char *c2);
+#include "zenoh/types.h"
 
-#endif /* ZENOH_C_RNAME_H */
+z_string_t z_string_make(const char *value);
+
+#endif /* ZENOH_C_UTILS_H */

@@ -167,7 +167,7 @@ typedef struct
 {
     _z_list_t **vals;
     size_t capacity;
-    size_t n;
+    size_t len;
 } _z_i_map_t;
 
 _z_i_map_t *_z_i_map_empty;
@@ -180,6 +180,6 @@ void _z_i_map_set(_z_i_map_t *map, size_t k, void *v);
 void *_z_i_map_get(_z_i_map_t *map, size_t k);
 void _z_i_map_remove(_z_i_map_t *map, size_t k);
 
-void _z_i_map_free(_z_i_map_t **map);
+void _z_i_map_free(_z_i_map_t *map);
 
 #endif /* _ZENOH_C_COLLECTION_H */

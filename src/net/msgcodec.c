@@ -51,7 +51,7 @@ _zn_payload_result_t _zn_payload_decode(_z_rbuf_t *rbf)
 
 void _zn_payload_free(_zn_payload_t *p)
 {
-    _z_bytes_free(p);
+    (void)(p);
 }
 
 /*------------------ Timestamp Field ------------------*/
@@ -88,7 +88,7 @@ _zn_timestamp_result_t _zn_timestamp_decode(_z_rbuf_t *rbf)
 
 void _zn_timestamp_free(z_timestamp_t *ts)
 {
-    _z_bytes_free(&ts->id);
+    (void)(&ts->id);
 }
 
 /*------------------ SubMode Field ------------------*/
@@ -233,7 +233,7 @@ void _zn_locators_decode_na(_z_rbuf_t *rbf, _zn_locators_result_t *r)
     {
         _z_str_result_t r_s = _z_str_decode(rbf);
         _ASSURE_P_RESULT(r_s, r, _z_err_t_PARSE_STRING);
-        ((char **)r->value.locators.val)[i] = r_s.value.str;
+        ((z_str_t *)r->value.locators.val)[i] = r_s.value.str;
     }
 }
 
@@ -344,7 +344,7 @@ _zn_reply_context_p_result_t _zn_reply_context_decode(_z_rbuf_t *rbf, uint8_t he
 void _zn_reply_context_free(_zn_reply_context_t *rc)
 {
     if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
-        _z_bytes_free(&rc->replier_id);
+        (void)(&rc->replier_id);
 }
 
 /*=============================*/
@@ -451,7 +451,7 @@ void _zn_sub_decl_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_sub_decl_result_
     else
     {
         // Default subscription mode is non-periodic PUSH
-        r->value.sub_decl.subinfo.mode = _ZN_SUBMODE_PUSH;
+        r->value.sub_decl.subinfo.mode = zn_submode_t_PUSH;
         r->value.sub_decl.subinfo.period = NULL;
         if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_R)
             r->value.sub_decl.subinfo.reliability = zn_reliability_t_RELIABLE;
@@ -842,31 +842,31 @@ void _zn_declare_free(_zn_declare_t *dcl)
 /*------------------ Data Info Field ------------------*/
 int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
 {
-    _Z_DEBUG("Encoding ZN_DATA_INFO\n");
+    _Z_DEBUG("Encoding _ZN_DATA_INFO\n");
 
     // Encode the flags
     _ZN_EC(_z_zint_encode(wbf, fld->flags))
 
     // Encode the body
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_SRC_ID)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_SRC_ID)
         _ZN_EC(_z_bytes_encode(wbf, &fld->source_id))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_SRC_SN)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_SRC_SN)
         _ZN_EC(_z_zint_encode(wbf, fld->source_sn))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_RTR_ID)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_RTR_ID)
         _ZN_EC(_z_bytes_encode(wbf, &fld->first_router_id))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_RTR_SN)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_RTR_SN)
         _ZN_EC(_z_zint_encode(wbf, fld->first_router_sn))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_TSTAMP)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_TSTAMP)
         _ZN_EC(_zn_timestamp_encode(wbf, &fld->tstamp))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_KIND)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_KIND)
         _ZN_EC(_z_zint_encode(wbf, fld->kind))
 
-    if _ZN_HAS_FLAG (fld->flags, ZN_DATA_INFO_ENC)
+    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_ENC)
         _ZN_EC(_z_zint_encode(wbf, fld->encoding))
 
     return 0;
@@ -874,7 +874,7 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
 
 void _zn_data_info_decode_na(_z_rbuf_t *rbf, _zn_data_info_result_t *r)
 {
-    _Z_DEBUG("Decoding ZN_DATA_INFO\n");
+    _Z_DEBUG("Decoding _ZN_DATA_INFO\n");
     r->tag = _z_res_t_OK;
 
     // Decode the flags
@@ -883,49 +883,49 @@ void _zn_data_info_decode_na(_z_rbuf_t *rbf, _zn_data_info_result_t *r)
     r->value.data_info.flags = r_flags.value.zint;
 
     // Decode the body
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_SRC_ID)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_SRC_ID)
     {
         _z_bytes_result_t r_sid = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_sid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.source_id = r_sid.value.bytes;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_SRC_SN)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_SRC_SN)
     {
         _z_zint_result_t r_ssn = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_ssn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.source_sn = r_ssn.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_RTR_ID)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_RTR_ID)
     {
         _z_bytes_result_t r_rid = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_rid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.first_router_id = r_rid.value.bytes;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_RTR_SN)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_RTR_SN)
     {
         _z_zint_result_t r_rsn = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_rsn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.first_router_sn = r_rsn.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_TSTAMP)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP)
     {
         _zn_timestamp_result_t r_tsp = _zn_timestamp_decode(rbf);
         _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
         r->value.data_info.tstamp = r_tsp.value.timestamp;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_KIND)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_KIND)
     {
         _z_zint_result_t r_knd = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_knd, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.kind = r_knd.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, ZN_DATA_INFO_ENC)
+    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_ENC)
     {
         _z_zint_result_t r_enc = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_enc, r, _z_err_t_PARSE_ZINT)
@@ -948,13 +948,13 @@ void _zn_data_info_free(_zn_data_info_t *di)
     //   - kind
     //   - encoding
 
-    if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_SRC_ID)
-        _z_bytes_free(&di->source_id);
+    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_SRC_ID)
+        (void)(&di->source_id);
 
-    if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_RTR_ID)
-        _z_bytes_free(&di->first_router_id);
+    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_RTR_ID)
+        (void)(&di->first_router_id);
 
-    if _ZN_HAS_FLAG (di->flags, ZN_DATA_INFO_TSTAMP)
+    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_TSTAMP)
         _zn_timestamp_free(&di->tstamp);
 }
 
@@ -1337,7 +1337,7 @@ void _zn_hello_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_hello_result_t *r)
     {
         _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        r->value.hello.locators = r_locs.value.locators;
+        _z_str_array_move(&r->value.hello.locators, &r_locs.value.locators);
     }
 }
 
@@ -1351,7 +1351,7 @@ _zn_hello_result_t _zn_hello_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_hello_free(_zn_hello_t *msg, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        _z_bytes_free(&msg->pid);
+        (void)(&msg->pid);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1411,7 +1411,7 @@ void _zn_open_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_open_result_t *r)
     {
         _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        r->value.open.locators = r_locs.value.locators;
+        _z_str_array_move(&r->value.open.locators, &r_locs.value.locators);
     }
 }
 
@@ -1424,7 +1424,7 @@ _zn_open_result_t _zn_open_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_open_free(_zn_open_t *msg, uint8_t header)
 {
-    _z_bytes_free(&msg->opid);
+    (void)(&msg->opid);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1486,7 +1486,7 @@ void _zn_accept_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_accept_result_t *r
     {
         _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        r->value.accept.locators = r_locs.value.locators;
+        _z_str_array_move(&r->value.accept.locators, &r_locs.value.locators);
     }
 }
 
@@ -1499,8 +1499,8 @@ _zn_accept_result_t _zn_accept_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_accept_free(_zn_accept_t *msg, uint8_t header)
 {
-    _z_bytes_free(&msg->opid);
-    _z_bytes_free(&msg->apid);
+    (void)(&msg->opid);
+    (void)(&msg->apid);
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
         _zn_locators_free(&msg->locators);
@@ -1544,7 +1544,7 @@ _zn_close_result_t _zn_close_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_close_free(_zn_close_t *msg, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        _z_bytes_free(&msg->pid);
+        (void)(&msg->pid);
 }
 
 /*------------------ Sync Message ------------------*/
@@ -1673,7 +1673,7 @@ _zn_keep_alive_result_t _zn_keep_alive_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_keep_alive_free(_zn_keep_alive_t *msg, uint8_t header)
 {
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
-        _z_bytes_free(&msg->pid);
+        (void)(&msg->pid);
 }
 
 /*------------------ PingPong Messages ------------------*/

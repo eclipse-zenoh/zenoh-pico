@@ -26,36 +26,36 @@
 void zn_init_logger(void);
 
 /**
+ * Create an empty set of properties for zenoh-net session configuration.
+ * 
+ */
+zn_properties_t *zn_config_empty(void);
+
+/**
  * Create a default set of properties for client mode zenoh-net session configuration.
  * If peer is not null, it is added to the configuration as remote peer.
  *
  * Parameters:
  *   peer: An optional peer locator.
+ * 
  */
 zn_properties_t *zn_config_client(const char *locator);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
+ * 
  */
 zn_properties_t *zn_config_default(void);
 
 /**
- * Create an empty set of properties for zenoh-net session configuration.
- */
-zn_properties_t *zn_config_empty(void);
-
-/**
- * Create a default set of properties for peer mode zenoh-net session configuration.
- */
-zn_properties_t *zn_config_peer(void);
-
-/**
  * Create a default subscription info.
+ * 
  */
 zn_subinfo_t zn_subinfo_default(void);
 
 /**
  * Create a default :c:type:`zn_target_t`.
+ * 
  */
 zn_target_t zn_target_default(void);
 
@@ -70,8 +70,18 @@ zn_target_t zn_target_default(void);
  *
  * Returns:
  *     An array of :c:struct:`zn_hello_t` messages.
+ * 
  */
 zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period);
+
+/**
+ * Free an array of :c:struct:`zn_hello_t` messages and it's contained :c:struct:`zn_hello_t` messages recursively.
+ *
+ * Parameters:
+ *     strs: The array of :c:struct:`zn_hello_t` messages to free.
+ *
+ */
+void zn_hello_array_free(zn_hello_array_t hellos);
 
 /**
  * Open a zenoh-net session
@@ -81,6 +91,7 @@ zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned l
  *
  * Returns:
  *     The created zenoh-net session or null if the creation did not succeed.
+ * 
  */
 zn_session_t *zn_open(zn_properties_t *config);
 
@@ -89,6 +100,7 @@ zn_session_t *zn_open(zn_properties_t *config);
  *
  * Parameters:
  *     session: A zenoh-net session.
+ * 
  */
 void zn_close(zn_session_t *session);
 
@@ -100,6 +112,7 @@ void zn_close(zn_session_t *session);
  *
  * Returns:
  *     A :c:type:`zn_properties_t` map containing informations on the given zenoh-net session.
+ * 
  */
 zn_properties_t *zn_info(zn_session_t *session);
 
@@ -116,6 +129,7 @@ zn_properties_t *zn_info(zn_session_t *session);
  *
  * Returns:
  *     A numerical id.
+ * 
  */
 z_zint_t zn_declare_resource(zn_session_t *session, zn_reskey_t *reskey);
 
@@ -131,8 +145,9 @@ z_zint_t zn_declare_resource(zn_session_t *session, zn_reskey_t *reskey);
  *
  * Returns:
  *     A numerical id.
+ * 
  */
-int zn_undeclare_resource(z_zint_t rid);
+int zn_undeclare_resource(zn_session_t *session, z_zint_t rid);
 
 /**
  * Declare a :c:type:`zn_publisher_t` for the given resource key.
@@ -146,6 +161,7 @@ int zn_undeclare_resource(z_zint_t rid);
  *
  * Returns:
  *    The created :c:type:`zn_publisher_t` or null if the declaration failed.
+ * 
  */
 zn_publisher_t *zn_declare_publisher(zn_session_t *session, zn_reskey_t *reskey);
 
@@ -154,6 +170,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *session, zn_reskey_t *reskey)
  *
  * Parameters:
  *     sub: The :c:type:`zn_publisher_t` to undeclare.
+ * 
  */
 void zn_undeclare_publisher(zn_publisher_t *publ);
 
@@ -169,6 +186,7 @@ void zn_undeclare_publisher(zn_publisher_t *publ);
  *
  * Returns:
  *    The created :c:type:`zn_subscriber_t` or null if the declaration failed.
+ * 
  */
 zn_subscriber_t *zn_declare_subscriber(zn_session_t *session,
                                        zn_reskey_t *reskey,
@@ -181,6 +199,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *session,
  *
  * Parameters:
  *     sub: The :c:type:`zn_subscriber_t` to undeclare.
+ * 
  */
 void zn_undeclare_subscriber(zn_subscriber_t *sub);
 
@@ -196,6 +215,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub);
  *
  * Returns:
  *    The created :c:type:`zn_queryable_t` or null if the declaration failed.
+ * 
  */
 zn_queryable_t *zn_declare_queryable(zn_session_t *session,
                                      zn_reskey_t *reskey,
@@ -208,17 +228,40 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *session,
  *
  * Parameters:
  *     qle: The :c:type:`zn_queryable_t` to undeclare.
+ * 
  */
 void zn_undeclare_queryable(zn_queryable_t *qle);
 
 /*------------------ Operations ------------------*/
+/**
+ * Create a resource key from a resource id.
+ *
+ * Parameters:
+ *     id: The resource id.
+ *
+ * Returns:
+ *     Return a new resource key.
+ * 
+ */
 zn_reskey_t zn_rid(const zn_resource_t *rd);
 zn_reskey_t zn_rname(const char *rname);
 
 int zn_send_keep_alive(zn_session_t *z);
 
-int zn_write(zn_session_t *z, zn_reskey_t *resource, const unsigned char *payload, size_t len);
-int zn_write_wo(zn_session_t *z, zn_reskey_t *resource, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind, int is_droppable);
+/**
+ * Write data.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ *     resource: The resource key to write.
+ *     payload: The value to write.
+ *     len: The length of the value to write.
+ * Returns:
+ *     ``0`` in case of success, ``1`` in case of failure.
+ */
+int zn_write(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, size_t len);
+
+int zn_write_ext(zn_session_t *z, zn_reskey_t *resource, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
 
 int zn_read(zn_session_t *z);
 

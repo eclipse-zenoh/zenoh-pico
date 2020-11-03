@@ -75,20 +75,24 @@ _ZN_DECLARE_FREE_NOH(zenoh_message);
 // NOTE: the following headers are for unit testing only
 #ifdef _ZENOH_C_NET_MSGCODEC_H_T
 /*------------------ Message Fields ------------------*/
-ZN_DECLARE_ENCODE_NOH(timestamp);
-_ZN_DECLARE_DECODE_NOH(timestamp);
-ZN_DECLARE_FREE_NOH(timestamp);
+int _zn_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
+void _zn_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r);
+_zn_timestamp_result_t _zn_timestamp_decode(_z_rbuf_t *rbf);
+void _zn_timestamp_free(z_timestamp_t *ts);
 
 _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
 _ZN_DECLARE_FREE_NOH(payload);
 
-ZN_DECLARE_ENCODE_NOH(subinfo);
-_ZN_DECLARE_DECODE(subinfo);
+int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
+void _zn_subinfo_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_subinfo_result_t *r);
+_zn_subinfo_result_t _zn_subinfo_decode(_z_rbuf_t *rbf, uint8_t header);
+void _zn_subinfo_free(zn_subinfo_t *si);
 
-ZN_DECLARE_ENCODE(reskey);
-_ZN_DECLARE_DECODE(reskey);
-ZN_DECLARE_FREE_NOH(reskey);
+int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld);
+void _zn_reskey_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r);
+_zn_reskey_result_t _zn_reskey_decode(_z_rbuf_t *rbf, uint8_t header);
+void _zn_reskey_free(zn_reskey_t *rk);
 
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);

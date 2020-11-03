@@ -12,14 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_UNIX_TYPES_H
-#define _ZENOH_C_NET_UNIX_TYPES_H
+#ifndef ZENOH_C_RNAME_H
+#define ZENOH_C_RNAME_H
 
-#include <pthread.h>
+int zn_rname_intersect(const char *c1, const char *c2);
 
-typedef int _zn_socket_t;
-typedef pthread_mutex_t _zn_mutex_t;
-typedef struct timespec _zn_clock_t;
-typedef struct timeval _zn_time_t;
-
-#endif /* _ZENOH_C_NET_UNIX_TYPES_H_ */
+#endif /* ZENOH_C_RNAME_H */
