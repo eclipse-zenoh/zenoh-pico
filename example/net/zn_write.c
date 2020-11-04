@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     }
 
     printf("Writing Data ('%s': '%s')...\n", uri, value);
-    zn_write(s, zn_rname(uri), (uint8_t *)value, strlen(value));
+    zn_write(s, zn_rname(uri), (const uint8_t *)value, strlen(value));
 
     zn_close(s);
     return 0;

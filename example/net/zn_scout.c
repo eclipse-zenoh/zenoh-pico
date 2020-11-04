@@ -24,7 +24,7 @@ void fprintpid(FILE *stream, z_bytes_t pid)
     else
     {
         fprintf(stream, "Some(");
-        for (size_t i = 0; i < pid.len; i++)
+        for (unsigned int i = 0; i < pid.len; i++)
         {
             fprintf(stream, "%02X", pid.val[i]);
         }

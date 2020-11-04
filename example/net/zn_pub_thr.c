@@ -12,69 +12,48 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include <unistd.h>
-#include "zenoh.h"
+#include <string.h>
+#include "zenoh/net.h"
 
 int main(int argc, char **argv)
 {
-    size_t len = 256;
-    const char *path = "/test/thr";
-    char *locator = 0;
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
+    if (argc < 2)
     {
-        printf("USAGE:\n\tzn_publisher_thr [<payload-size>=%zu] [<path>=%s] [<locator>=auto]\n\n", len, path);
-        return 0;
+        printf("USAGE:\n\tzn_pub_thr <payload-size> [<zenoh-locator>]\n\n");
+        exit(-1);
     }
-
-    if (argc > 1)
-    {
-        len = atoi(argv[1]);
-    }
-    if (argc > 2)
-    {
-        path = argv[2];
-    }
-    if (argc > 3)
-    {
-        locator = argv[3];
-    }
-
+    size_t len = atoi(argv[1]);
     printf("Running throughput test for payload of %zu bytes.\n", len);
+    zn_properties_t *config = zn_config_default();
     if (argc > 2)
     {
-        locator = argv[2];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    // Open a session
-    zn_session_p_result_t rz = zn_open(locator, 0, 0);
-    ASSERT_P_RESULT(rz, "Unable to open a session.\n");
-    zn_session_t *z = rz.value.session;
-    zn_start_recv_loop(z);
-    zn_start_lease_loop(z);
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // Build the resource key
-    zn_reskey_t rk = zn_rname(path);
+    // Start the read session session lease loops
+    zn_start_read_loop(s);
+    zn_start_lease_loop(s);
 
-    // Declare a resource
-    zn_res_p_result_t rr = zn_declare_resource(z, &rk);
-    ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_resource_t *res = rr.value.res;
+    char *data = (char *)malloc(len);
+    memset(data, 1, len);
 
-    // Declare a publisher
-    zn_pub_p_result_t rp = zn_declare_publisher(z, &res->key);
-    ASSERT_P_RESULT(rp, "Unable to declare publisher.\n");
+    zn_reskey_t reskey = zn_rid(zn_declare_resource(s, zn_rname("/test/thr")));
+    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
+    if (pub == 0)
+    {
+        printf("Unable to declare publisher.\n");
+        exit(-1);
+    }
 
-    // Create random data
-    uint8_t *data = (uint8_t *)malloc(len);
-    for (size_t i = 0; i < len; ++i)
-        data[i] = i % 10;
-
-    // Loop endessly and write data
-    zn_reskey_t ri = zn_rid(res);
     while (1)
     {
-        zn_write(z, &ri, data, len);
+        zn_write(s, reskey, (const uint8_t *)data, len);
     }
-
-    return 0;
 }

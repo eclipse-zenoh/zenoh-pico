@@ -43,6 +43,10 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    // Start the receive and the session lease loop
+    zn_start_read_loop(s);
+    zn_start_lease_loop(s);
+
     printf("Declaring Resource '%s'", uri);
     unsigned long rid = zn_declare_resource(s, zn_rname(uri));
     printf(" => RId %lu\n", rid);
@@ -62,7 +66,7 @@ int main(int argc, char **argv)
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Writing Data ('%lu': '%s')...\n", rid, buf);
-        zn_write(s, reskey, (uint8_t *)buf, strlen(buf));
+        zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
     }
 
     zn_undeclare_publisher(pub);

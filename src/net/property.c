@@ -16,21 +16,21 @@
 #include "zenoh/net/property.h"
 #include "zenoh/private/collection.h"
 
-zn_properties_t *zn_properties_make(void)
+zn_properties_t *zn_properties_make()
 {
     return _z_i_map_make(DEFAULT_I_MAP_CAPACITY);
 }
 
 zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, z_string_t value)
 {
-    _z_i_map_set(ps, key, (char *)value.val);
+    _z_i_map_set(ps, key, (z_str_t)value.val);
     return ps;
 }
 
 z_string_t zn_properties_get(zn_properties_t *ps, unsigned long key)
 {
     z_string_t s;
-    char *p = _z_i_map_get(ps, key);
+    z_str_t p = _z_i_map_get(ps, key);
     if (p)
     {
         s.val = p;

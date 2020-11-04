@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     // ASSERT_RESULT(r_z, "Unable to open session.\n")
     // zn_session_t *z = r_z.value.session;
-    // zn_start_recv_loop(z);
+    // zn_start_read_loop(z);
 
     // printf("Declaring Subscriber on '%s'...\n", selector);
     // zn_subinfo_t sm;
@@ -73,6 +73,6 @@ int main(int argc, char **argv)
 
     // zn_undeclare_subscriber(sub);
     // zn_close(z);
-    // zn_stop_recv_loop(z);
+    // zn_stop_read_loop(z);
     return 0;
 }

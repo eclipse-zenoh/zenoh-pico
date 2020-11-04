@@ -40,12 +40,12 @@ z_zint_t _zn_get_entity_id(zn_session_t *z);
 
 /*------------------ Resource ------------------*/
 z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_reskey_t *res_key);
-_zn_res_decl_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
-_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
-char *_zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+_zn_resource_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
+_zn_resource_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+z_str_t _zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
 
-int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_reskey_t *res_key);
-void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *res);
+int _zn_register_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
+void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
 
 /*------------------ Subscription ------------------*/
 _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_reskey_t *res_key);
@@ -53,6 +53,7 @@ _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zi
 _zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
 int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
 void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
+void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const z_bytes_t payload);
 
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
 // _z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);

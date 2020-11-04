@@ -105,7 +105,7 @@ _z_str_result_t _z_str_decode(_z_rbuf_t *rbf)
     _ASSURE_RESULT(vr, r, _z_err_t_PARSE_ZINT);
     size_t len = vr.value.zint;
     // Allocate space for the string terminator
-    char *s = (char *)malloc(len + 1);
+    z_str_t s = (z_str_t)malloc(len + 1);
     s[len] = '\0';
     _z_rbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
     r.value.str = s;

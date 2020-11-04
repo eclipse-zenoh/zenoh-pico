@@ -30,7 +30,6 @@ typedef struct
 {
     z_zint_t id;
     zn_reskey_t key;
-    z_string_t resource;
     zn_subinfo_t info;
     zn_data_handler_t data_handler;
     void *arg;
@@ -38,7 +37,7 @@ typedef struct
 
 typedef struct
 {
-    char *rname;
+    z_str_t rname;
     z_zint_t rid;
     z_zint_t id;
     zn_query_handler_t query_handler;

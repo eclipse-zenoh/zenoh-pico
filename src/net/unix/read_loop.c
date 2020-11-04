@@ -12,27 +12,27 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <pthread.h>
-#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/read_loop.h"
 
-void *pthread_recv_loop(void *arg)
+void *pthread_read_loop(void *arg)
 {
-    return zn_recv_loop((zn_session_t *)arg);
+    return zn_read_loop((zn_session_t *)arg);
 }
 
-int zn_start_recv_loop(zn_session_t *z)
+int zn_start_read_loop(zn_session_t *z)
 {
     pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));
     memset(thread, 0, sizeof(pthread_t));
-    z->recv_loop_thread = thread;
-    if (pthread_create(thread, 0, pthread_recv_loop, z) != 0)
+    z->read_loop_thread = thread;
+    if (pthread_create(thread, 0, pthread_read_loop, z) != 0)
     {
         return -1;
     }
     return 0;
 }
 
-int zn_stop_recv_loop(zn_session_t *z)
+int zn_stop_read_loop(zn_session_t *z)
 {
-    z->recv_loop_running = 0;
+    z->read_loop_running = 0;
     return 0;
 }

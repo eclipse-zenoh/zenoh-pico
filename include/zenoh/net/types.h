@@ -32,7 +32,7 @@
 #define ZN_PEER 0x02   // 1 << 1
 #define ZN_CLIENT 0x04 // 1 << 2
 
-#define ZN_NO_RESOURCE_ID 0
+#define ZN_RESOURCE_ID_NONE 0
 
 #define ZN_T_STAMP 0x10
 #define ZN_KIND 0x20
@@ -344,8 +344,8 @@ typedef struct
     // Runtime
     zn_on_disconnect_t on_disconnect;
 
-    volatile int recv_loop_running;
-    void *recv_loop_thread;
+    volatile int read_loop_running;
+    void *read_loop_thread;
 
     volatile int lease_loop_running;
     volatile int received;

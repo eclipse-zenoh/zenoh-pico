@@ -22,3 +22,8 @@ z_string_t z_string_make(const char *value)
     s.len = strlen(value);
     return s;
 }
+
+void z_string_free(z_string_t *s)
+{
+    free((char *)s->val);
+}

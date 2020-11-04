@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     // ASSERT_RESULT(r_z, "Unable to open session.\n")
     // zn_session_t *z = r_z.value.session;
-    // zn_start_recv_loop(z);
+    // zn_start_read_loop(z);
 
     // printf("Declaring Storage on '%s'...\n", selector);
     // zn_sto_p_result_t r = zn_declare_storage(z, selector, data_handler, query_handler, NULL);
@@ -138,6 +138,6 @@ int main(int argc, char **argv)
 
     // zn_undeclare_storage(sto);
     // zn_close(z);
-    // zn_stop_recv_loop(z);
+    // zn_stop_read_loop(z);
     return 0;
 }

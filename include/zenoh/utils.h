@@ -18,5 +18,6 @@
 #include "zenoh/types.h"
 
 z_string_t z_string_make(const char *value);
+void z_string_free(z_string_t *s);
 
 #endif /* ZENOH_C_UTILS_H */

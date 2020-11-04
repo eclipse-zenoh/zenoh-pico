@@ -18,7 +18,7 @@
 #include "zenoh.h"
 #include "zenoh/mvar.h"
 #include "zenoh/codec.h"
-#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/read_loop.h"
 
 // typedef struct
 // {
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
     zn_session_p_result_t z1_r = zn_open(locator, 0, 0);
     ASSERT_RESULT(z1_r, "Unable to open session with router")
     zn_session_t *z1 = z1_r.value.session;
-    zn_start_recv_loop(z1);
+    zn_start_read_loop(z1);
 
     printf(">> Declare resource\n");
     zn_res_p_result_t z1_res1_r = zn_declare_resource(z1, path);
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t z2_r = zn_open(locator, 0, 0);
     // ASSERT_RESULT(z2_r, "Unable to open session with broker")
     // zn_session_t *z2 = z2_r.value.session;
-    // zn_start_recv_loop(z2);
+    // zn_start_read_loop(z2);
 
     // _z_vec_t z2_info = zn_info(z2);
     // assert(0 == strcmp(locator, (const char *)((zn_property_t *)_z_vec_get(&z2_info, ZN_INFO_PEER_KEY))->value.elem));
@@ -285,7 +285,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t z3_r = zn_open(locator, 0, 0);
     // ASSERT_RESULT(z3_r, "Unable to open session with broker")
     // zn_session_t *z3 = z3_r.value.session;
-    // zn_start_recv_loop(z3);
+    // zn_start_read_loop(z3);
 
     // _z_vec_t z3_info = zn_info(z3);
     // assert(0 == strcmp(locator, (const char *)((zn_property_t *)_z_vec_get(&z3_info, ZN_INFO_PEER_KEY))->value.elem));
@@ -547,9 +547,9 @@ int main(int argc, char **argv)
 
     sleep(1); // Give time for the close msg to reach the router
 
-    // zn_stop_recv_loop(z1);
-    // zn_stop_recv_loop(z2);
-    // zn_stop_recv_loop(z3);
+    // zn_stop_read_loop(z1);
+    // zn_stop_read_loop(z2);
+    // zn_stop_read_loop(z3);
 
     // assert(0 == zn_running(z1));
     // assert(0 == zn_running(z2));

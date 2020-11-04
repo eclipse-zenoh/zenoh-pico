@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdatomic.h>
-#include "zenoh/net/recv_loop.h"
+#include "zenoh/net/read_loop.h"
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/private/logging.h"
@@ -483,9 +483,9 @@ typedef struct
 //     }
 // }
 
-void *zn_recv_loop(zn_session_t *z)
+void *zn_read_loop(zn_session_t *z)
 {
-    z->recv_loop_running = 1;
+    z->read_loop_running = 1;
 
     _zn_session_message_p_result_t r;
     _zn_session_message_p_result_init(&r);
@@ -494,7 +494,7 @@ void *zn_recv_loop(zn_session_t *z)
     _zn_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
     _z_rbuf_clear(&z->rbuf);
-    while (z->recv_loop_running)
+    while (z->read_loop_running)
     {
 #ifdef ZN_TRANSPORT_TCP_IP
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -575,7 +575,7 @@ void *zn_recv_loop(zn_session_t *z)
 EXIT_RECV_LOOP:
     if (z)
     {
-        z->recv_loop_running = 0;
+        z->read_loop_running = 0;
         // Release the lock
         _zn_mutex_unlock(&z->mutex_rx);
     }

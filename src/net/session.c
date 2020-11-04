@@ -69,8 +69,8 @@ zn_session_t *_zn_session_init()
 
     z->replywaiters = _z_list_empty;
 
-    z->recv_loop_running = 0;
-    z->recv_loop_thread = NULL;
+    z->read_loop_running = 0;
+    z->read_loop_thread = NULL;
 
     z->received = 0;
     z->transmitted = 0;
@@ -142,8 +142,18 @@ void _zn_default_on_disconnect(void *vz)
 /*------------------ Scout ------------------*/
 zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen, clock_t period)
 {
+    // Define an empty array
+    zn_hello_array_t ls;
+    ls.len = 0;
+    ls.val = NULL;
+
     // Send the scout message
-    _zn_send_dgram_to(socket, wbf, dest, salen);
+    int res = _zn_send_dgram_to(socket, wbf, dest, salen);
+    if (res <= 0)
+    {
+        _Z_DEBUG("Unable to send scout message\n");
+        return ls;
+    }
 
     // @TODO: need to abstract the platform-specific data types
     struct sockaddr *from = (struct sockaddr *)malloc(2 * sizeof(struct sockaddr_in *));
@@ -151,11 +161,6 @@ zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const
 
     // The receiving buffer
     _z_rbuf_t rbf = _z_rbuf_make(ZN_READ_BUF_LEN);
-
-    // Define an empty array
-    zn_hello_array_t ls;
-    ls.len = 0;
-    ls.val = NULL;
 
     _zn_clock_t start = _zn_clock_now();
     while (_zn_clock_elapsed_ms(&start) < period)
@@ -240,6 +245,9 @@ zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const
 
         _zn_session_message_free(s_msg);
         _zn_session_message_p_result_free(&r_hm);
+
+        if (ls.len > 0)
+            break;
     }
 
     free(from);
@@ -256,33 +264,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
     case _ZN_MID_DATA:
     {
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
-
-        _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
-        _zn_subscriber_t *sub;
-        while (subs)
-        {
-            sub = (_zn_subscriber_t *)_z_list_head(subs);
-
-            // Reconstruct the whole key name
-            // @TODO: store this in the subscription and do not
-            //        compute it every time
-            char *ks = _zn_get_resource_name_from_key(z, 1, &sub->key);
-            z_string_t key;
-            key.val = ks;
-            key.len = strlen(ks);
-
-            // Build the sample
-            zn_sample_t sample;
-            sample.key = key;
-            sample.value = msg->body.data.payload;
-
-            // Call the callback at API level
-            sub->data_handler(&sample, sub->arg);
-
-            // Drop the head element and continue with the tail
-            subs = _z_list_drop_val(subs, 0);
-        }
-
+        _zn_trigger_subscriptions(z, msg->body.data.key, msg->body.data.payload);
         return _z_res_t_OK;
     }
 
@@ -302,14 +284,33 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 zn_reskey_t key = decl.body.res.key;
 
                 // Register remote resource declaration
-                _zn_register_resource(z, _ZN_IS_REMOTE, id, &key);
+                _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+                r->id = id;
+                r->key.rid = key.rid;
+                r->key.rname = strdup(key.rname);
 
-                // Check if there is a matching local subscription
-                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_LOCAL, &key);
-                if (sub)
+                int res = _zn_register_resource(z, _ZN_IS_REMOTE, r);
+                if (res == 0)
                 {
-                    // Add the mapping between remote id and local subscription
-                    _z_i_map_set(z->rem_res_loc_sub_map, id, sub);
+                    // Check if there is a matching local subscription
+                    _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &key);
+                    if (subs)
+                    {
+                        // Update the list
+                        _z_list_t *sons = _z_i_map_get(z->rem_res_loc_sub_map, id);
+                        if (sons)
+                        {
+                            // Free any ancient list
+                            _z_list_free(&sons);
+                        }
+                        // Update the list of active subscriptions
+                        _z_i_map_set(z->rem_res_loc_sub_map, id, subs);
+                    }
+                }
+                else
+                {
+                    free(r->key.rname);
+                    free(r);
                 }
 
                 break;
@@ -326,11 +327,9 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                     _zn_zenoh_message_t ds = _zn_zenoh_message_init(_ZN_MID_DECLARE);
                     _ZN_ARRAY_S_DEFINE(declaration, declarations, len);
 
-                    _zn_subscriber_t *sub;
                     while (subs)
                     {
-                        len--;
-                        sub = (_zn_subscriber_t *)_z_list_head(subs);
+                        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
                         declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
                         declarations.val[len].body.sub.key = sub->key;
@@ -372,7 +371,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_RESOURCE:
             {
-                _zn_res_decl_t *rd = _zn_get_resource_by_id(z, _ZN_IS_REMOTE, decl.body.forget_res.rid);
+                _zn_resource_t *rd = _zn_get_resource_by_id(z, _ZN_IS_REMOTE, decl.body.forget_res.rid);
                 if (rd)
                     _zn_unregister_resource(z, _ZN_IS_REMOTE, rd);
 
@@ -652,7 +651,7 @@ zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned l
     locs.len = 0;
     locs.val = NULL;
 
-    char *addr = _zn_select_scout_iface();
+    z_str_t addr = _zn_select_scout_iface();
     _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, scout_period);
     if (r.tag == _z_res_t_ERR)
     {
@@ -675,23 +674,23 @@ zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned l
     _zn_session_message_encode(&wbf, &scout);
 
     socklen_t salen = sizeof(struct sockaddr_in);
+
     // Scout first on localhost
-    char *sock_addr = strdup(zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val);
-    char *ip_addr = strtok(sock_addr, ":");
+    // struct sockaddr_in *laddr = _zn_make_socket_address(addr, port_num);
+    // locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, scout_period);
+    // free(laddr);
+
+    // if (locs.len == 0)
+    // {
+    // We did not find a router on localhost, hence scout on the LAN
+    z_str_t sock_addr = strdup(zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val);
+    z_str_t ip_addr = strtok(sock_addr, ":");
     int port_num = atoi(strtok(NULL, ":"));
 
-    struct sockaddr_in *laddr = _zn_make_socket_address(addr, port_num);
-
-    locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, scout_period);
-    free(laddr);
-
-    if (locs.len == 0)
-    {
-        // We did not find a router on localhost, hence scout on the LAN
-        struct sockaddr_in *maddr = _zn_make_socket_address(ip_addr, port_num);
-        locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)maddr, salen, scout_period);
-        free(maddr);
-    }
+    struct sockaddr_in *maddr = _zn_make_socket_address(ip_addr, port_num);
+    locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)maddr, salen, scout_period);
+    free(maddr);
+    // }
 
     free(sock_addr);
     free(addr);
@@ -723,7 +722,14 @@ zn_session_t *zn_open(zn_properties_t *config)
             return z;
         }
 
-        clock_t timeout = strtoul(zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val, NULL, 10);
+        const char *to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
+        if (to == NULL)
+        {
+            to = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        }
+        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
+        // scout loop timeout uses milliseconds granularity
+        clock_t timeout = (clock_t)1000 * strtof(to, NULL);
         zn_hello_array_t locs = zn_scout(what, config, timeout);
         if (locs.len > 0)
         {
@@ -768,17 +774,6 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Build the open message
     _zn_session_message_t om = _zn_session_message_init(_ZN_MID_OPEN);
-    // Add an attachement if properties have been provided
-    // _z_wbuf_t att_pld;
-    // if (ps)
-    // {
-    //     att_pld = _z_wbuf_make(ZENOH_NET_ATTACHMENT_BUF_LEN, 0);
-    //     zn_properties_encode(&att_pld, ps);
-
-    //     om.attachment = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
-    //     om.attachment->header = _ZN_MID_OPEN | _ZN_ATT_ENC_PROPERTIES;
-    //     om.attachment->payload = _z_iosli_to_bytes(_z_wbuf_get_iosli(&att_pld, 0));
-    // }
 
     om.body.open.version = ZN_PROTO_VERSION;
     om.body.open.whatami = ZN_CLIENT;
@@ -806,10 +801,6 @@ zn_session_t *zn_open(zn_properties_t *config)
     {
         // Free the pid
         _z_bytes_free(&pid);
-
-        // Free the attachment payload;
-        // if (ps)
-        //     _z_wbuf_free(&att_pld);
 
         // Free the locator
         if (locator_is_scouted)
@@ -907,14 +898,6 @@ zn_session_t *zn_open(zn_properties_t *config)
     }
     }
 
-    // Free the attachment payload;
-    // if (ps)
-    //     _z_wbuf_free(&att_pld);
-
-    // Free the locator
-    // if (locator_is_scouted)
-    //     free(locator);
-
     // Free the messages and result
     _zn_session_message_free(&om);
     _zn_session_message_free(p_am);
@@ -945,7 +928,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 zn_reskey_t zn_rname(const char *rname)
 {
     zn_reskey_t rk;
-    rk.rid = ZN_NO_RESOURCE_ID;
+    rk.rid = ZN_RESOURCE_ID_NONE;
     rk.rname = strdup(rname);
     return rk;
 }
@@ -984,14 +967,20 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
         _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
     }
     _ARRAY_S_FREE(decl);
-    _zn_register_resource(z, _ZN_IS_LOCAL, rid, &reskey);
+
+    _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+    int res = _zn_register_resource(z, _ZN_IS_LOCAL, r);
+    if (res != 0)
+    {
+        free(r);
+    }
 
     return rid;
 }
 
 int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
 {
-    _zn_res_decl_t *r = _zn_get_resource_by_id(z, _ZN_IS_LOCAL, rid);
+    _zn_resource_t *r = _zn_get_resource_by_id(z, _ZN_IS_LOCAL, rid);
     if (r)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -1126,16 +1115,20 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
     }
     _ARRAY_S_FREE(decl);
 
-    _zn_subscriber_t rs;
-    rs.id = subscriber->id;
-    rs.key = subscriber->key;
-    // Get the complete resource name from the resource key
-    rs.resource.val = _zn_get_resource_name_from_key(z, _ZN_IS_LOCAL, &reskey);
-    rs.resource.len = strlen(rs.resource.val);
-    rs.info = subscriber->info;
-    rs.data_handler = data_handler;
-    rs.arg = arg;
-    _zn_register_subscription(z, 1, &rs);
+    _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
+    rs->id = subscriber->id;
+    rs->key = subscriber->key;
+    rs->info = subscriber->info;
+    rs->data_handler = data_handler;
+    rs->arg = arg;
+
+    int res = _zn_register_subscription(z, _ZN_IS_LOCAL, rs);
+    if (res != 0)
+    {
+        free(rs);
+        free(subscriber);
+        subscriber = NULL;
+    }
 
     return subscriber;
 }
@@ -1226,7 +1219,6 @@ int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t
 }
 
 /*------------------ Read ------------------*/
-
 int zn_read(zn_session_t *z)
 {
     _zn_session_message_p_result_t r_s = _zn_recv_s_msg(z);
