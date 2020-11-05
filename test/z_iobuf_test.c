@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
 #include "zenoh/private/iobuf.h"
 
 #define RUNS 1000
@@ -47,17 +46,17 @@ void print_iosli(_z_iosli_t *ios)
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-int gen_bool()
+int gen_bool(void)
 {
     return rand() % 2;
 }
 
-uint8_t gen_uint8()
+uint8_t gen_uint8(void)
 {
     return (uint8_t)rand() % 255;
 }
 
-size_t gen_size_t()
+size_t gen_size_t(void)
 {
     return (size_t)rand();
 }
@@ -83,7 +82,7 @@ _z_wbuf_t gen_wbuf(size_t len)
 /*=============================*/
 /*           Tests             */
 /*=============================*/
-void rbuf_writable_readable()
+void rbuf_writable_readable(void)
 {
     size_t len = 128;
     _z_rbuf_t rbf = _z_rbuf_make(len);
@@ -119,7 +118,7 @@ void rbuf_writable_readable()
     }
 }
 
-void rbuf_comapct()
+void rbuf_comapct(void)
 {
     uint8_t len = 128;
     _z_rbuf_t rbf = _z_rbuf_make(len);
@@ -154,7 +153,7 @@ void rbuf_comapct()
     }
 }
 
-void rbuf_view()
+void rbuf_view(void)
 {
     uint8_t len = 128;
     _z_rbuf_t rbf = _z_rbuf_make(len);
@@ -191,7 +190,7 @@ void rbuf_view()
     }
 }
 
-void wbuf_writable_readable()
+void wbuf_writable_readable(void)
 {
     size_t len = 128;
     _z_wbuf_t wbf = _z_wbuf_make(len, 0);
@@ -225,7 +224,7 @@ void wbuf_writable_readable()
     }
 }
 
-void wbuf_write_rbuf_read()
+void wbuf_write_rbuf_read(void)
 {
     size_t len = 128;
     _z_wbuf_t wbf = gen_wbuf(len);
@@ -257,7 +256,7 @@ void wbuf_write_rbuf_read()
     _z_wbuf_free(&wbf);
 }
 
-void wbuf_write_rbuf_read_bytes()
+void wbuf_write_rbuf_read_bytes(void)
 {
     size_t len = 128;
     _z_wbuf_t wbf = gen_wbuf(len);
@@ -292,7 +291,7 @@ void wbuf_write_rbuf_read_bytes()
     _z_wbuf_free(&wbf);
 }
 
-void wbuf_put_rbuf_get()
+void wbuf_put_rbuf_get(void)
 {
     size_t len = 128;
     _z_wbuf_t wbf = gen_wbuf(len);
@@ -328,7 +327,7 @@ void wbuf_put_rbuf_get()
     _z_wbuf_free(&wbf);
 }
 
-void wbuf_set_pos_wbuf_get_pos()
+void wbuf_set_pos_wbuf_get_pos(void)
 {
     size_t len = 128;
     _z_wbuf_t wbf = gen_wbuf(len);
@@ -369,7 +368,7 @@ void wbuf_set_pos_wbuf_get_pos()
     _z_wbuf_free(&wbf);
 }
 
-void wbuf_add_iosli()
+void wbuf_add_iosli(void)
 {
     uint8_t len = 16;
     _z_wbuf_t wbf = _z_wbuf_make(len, 1);
@@ -438,7 +437,7 @@ void wbuf_add_iosli()
 /*=============================*/
 /*            Main             */
 /*=============================*/
-int main()
+int main(void)
 {
     for (unsigned int i = 0; i < RUNS; ++i)
     {

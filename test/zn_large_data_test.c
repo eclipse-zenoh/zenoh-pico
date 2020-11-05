@@ -94,7 +94,7 @@
 //     }
 // }
 
-int main(int argc, char **argv)
+int main(void)
 {
     //     Z_UNUSED_ARG_2(argc, argv);
 

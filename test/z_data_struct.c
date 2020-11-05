@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include "zenoh/private/collection.h"
 #include "zenoh/types.h"
 
-int main()
+int main(void)
 {
     _z_list_t *xs = _z_list_of("one");
     _z_i_map_t *map = _z_i_map_make(5);

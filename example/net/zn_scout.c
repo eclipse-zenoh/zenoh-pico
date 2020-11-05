@@ -75,7 +75,7 @@ void fprinthello(FILE *stream, zn_hello_t hello)
     fprintf(stream, " }");
 }
 
-int main()
+int main(void)
 {
     zn_properties_t *config = zn_config_default();
 

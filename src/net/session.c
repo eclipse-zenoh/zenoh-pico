@@ -139,7 +139,13 @@ void _zn_default_on_disconnect(void *vz)
 }
 
 /*------------------ Scout ------------------*/
-zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen, clock_t period)
+zn_hello_array_t _zn_scout_loop(
+    _zn_socket_t socket,
+    const _z_wbuf_t *wbf,
+    const struct sockaddr *dest,
+    socklen_t salen,
+    clock_t period,
+    int exit_on_first)
 {
     // Define an empty array
     zn_hello_array_t ls;
@@ -239,12 +245,60 @@ zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const
 
         _zn_session_message_free(s_msg);
         _zn_session_message_p_result_free(&r_hm);
+
+        if (ls.len > 0 && exit_on_first)
+            break;
     }
 
     free(from);
     _z_rbuf_free(&rbf);
 
     return ls;
+}
+
+zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period, int exit_on_first)
+{
+    zn_hello_array_t locs;
+    locs.len = 0;
+    locs.val = NULL;
+
+    z_str_t addr = _zn_select_scout_iface();
+    _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, scout_period);
+    if (r.tag == _z_res_t_ERR)
+    {
+        _Z_DEBUG("Unable to create scouting socket\n");
+        free(addr);
+        return locs;
+    }
+
+    // Create the buffer to serialize the scout message on
+    _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
+
+    // Create and encode the scout message
+    _zn_session_message_t scout = _zn_session_message_init(_ZN_MID_SCOUT);
+    // Ask for peer ID to be put in the scout message
+    _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_I);
+    scout.body.scout.what = what;
+    if (what != ZN_ROUTER)
+        _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_W);
+
+    _zn_session_message_encode(&wbf, &scout);
+
+    // Scout on multicast
+    z_str_t sock_addr = strdup(zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val);
+    z_str_t ip_addr = strtok(sock_addr, ":");
+    int port_num = atoi(strtok(NULL, ":"));
+
+    struct sockaddr_in *maddr = _zn_make_socket_address(ip_addr, port_num);
+    socklen_t salen = sizeof(struct sockaddr_in);
+    locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)maddr, salen, scout_period, exit_on_first);
+    free(maddr);
+
+    free(sock_addr);
+    free(addr);
+    _z_wbuf_free(&wbf);
+
+    return locs;
 }
 
 /*------------------ Handle message ------------------*/
@@ -636,58 +690,9 @@ void zn_hello_array_free(zn_hello_array_t hellos)
     }
 }
 
-zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period)
+zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long timeout)
 {
-    zn_hello_array_t locs;
-    locs.len = 0;
-    locs.val = NULL;
-
-    z_str_t addr = _zn_select_scout_iface();
-    _zn_socket_result_t r = _zn_create_udp_socket(addr, 0, scout_period);
-    if (r.tag == _z_res_t_ERR)
-    {
-        _Z_DEBUG("Unable to create scouting socket\n");
-        free(addr);
-        return locs;
-    }
-
-    // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
-
-    // Create and encode the scout message
-    _zn_session_message_t scout = _zn_session_message_init(_ZN_MID_SCOUT);
-    // Ask for peer ID to be put in the scout message
-    _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_I);
-    scout.body.scout.what = what;
-    if (what != ZN_ROUTER)
-        _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_W);
-
-    _zn_session_message_encode(&wbf, &scout);
-
-    socklen_t salen = sizeof(struct sockaddr_in);
-
-    // Scout first on localhost
-    // struct sockaddr_in *laddr = _zn_make_socket_address(addr, port_num);
-    // locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)laddr, salen, scout_period);
-    // free(laddr);
-
-    // if (locs.len == 0)
-    // {
-    // We did not find a router on localhost, hence scout on the LAN
-    z_str_t sock_addr = strdup(zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val);
-    z_str_t ip_addr = strtok(sock_addr, ":");
-    int port_num = atoi(strtok(NULL, ":"));
-
-    struct sockaddr_in *maddr = _zn_make_socket_address(ip_addr, port_num);
-    locs = _zn_scout_loop(r.value.socket, &wbf, (struct sockaddr *)maddr, salen, scout_period);
-    free(maddr);
-    // }
-
-    free(sock_addr);
-    free(addr);
-    _z_wbuf_free(&wbf);
-
-    return locs;
+    return _zn_scout(what, config, timeout, 0);
 }
 
 void zn_close(zn_session_t *z)
@@ -721,10 +726,10 @@ zn_session_t *zn_open(zn_properties_t *config)
         // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
         // scout loop timeout uses milliseconds granularity
         clock_t timeout = (clock_t)1000 * strtof(to, NULL);
-        zn_hello_array_t locs = zn_scout(what, config, timeout);
+        // Scout and return upon the first result
+        zn_hello_array_t locs = _zn_scout(what, config, timeout, 1);
         if (locs.len > 0)
         {
-            // @TODO: perform a more intelligent selection
             if (locs.val[0].locators.len > 0)
             {
                 locator = strdup(locs.val[0].locators.val[0]);

@@ -15,14 +15,14 @@
 #ifndef _ZENOH_NET_PICO_MSGCODEC_H
 #define _ZENOH_NET_PICO_MSGCODEC_H
 
+#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
+
 #include <stdint.h>
 #include "zenoh/net/private/codec.h"
 #include "zenoh/net/private/result.h"
 #include "zenoh/net/types.h"
 #include "zenoh/net/property.h"
 #include "zenoh/net/private/msg.h"
-
-#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 /*------------------ Result declarations ------------------*/
 _ZN_RESULT_DECLARE(zn_reskey_t, reskey)

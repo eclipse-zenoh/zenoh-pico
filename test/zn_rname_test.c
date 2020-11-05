@@ -16,7 +16,7 @@
 #include "zenoh/net/rname.h"
 #include "zenoh/types.h"
 
-int main()
+int main(void)
 {
     assert(zn_rname_intersect("/", "/"));
     assert(zn_rname_intersect("/a", "/a"));
