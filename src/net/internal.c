@@ -20,7 +20,17 @@
 #include "zenoh/private/logging.h"
 #include "zenoh/utils.h"
 
-#include <stdio.h>
+/*------------------ ResKey helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(zn_reskey_t *reskey)
+{
+    zn_reskey_t rk;
+    rk.rid = reskey->rid;
+    if (reskey->rname)
+        rk.rname = strdup(reskey->rname);
+    else
+        rk.rname = NULL;
+    return rk;
+}
 
 /*------------------ Message helpers ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header)
@@ -412,7 +422,7 @@ z_str_t _zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_r
     }
 
     // Need to build the complete resource name
-    _z_list_t *strs = _z_list_empty;
+    _z_list_t *strs = NULL;
     size_t len = 0;
 
     if (reskey->rname)
@@ -433,21 +443,25 @@ z_str_t _zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_r
             return rname;
         }
 
-        len += strlen(res->key.rname);
-        strs = _z_list_cons(strs, (void *)res->key.rname);
+        if (res->key.rname)
+        {
+            len += strlen(res->key.rname);
+            strs = _z_list_cons(strs, (void *)res->key.rname);
+        }
 
         id = res->key.rid;
     } while (id != ZN_RESOURCE_ID_NONE);
 
     // Concatenate all the partial resource names
     rname = (z_str_t)malloc(len + 1);
+    // Start with a zero-length string to concatenate upon
+    rname[0] = '\0';
     while (strs)
     {
         z_str_t s = (z_str_t)_z_list_head(strs);
         strcat(rname, s);
-        strs = _z_list_drop_val(strs, 0);
+        strs = _z_list_pop(strs);
     }
-    rname[len] = '\0';
 
     return rname;
 }
@@ -522,12 +536,12 @@ int _zn_resource_predicate(void *elem, void *arg)
         return 0;
 }
 
-void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_resource_t *r)
+void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_resource_t *res)
 {
     if (is_local)
-        z->local_resources = _z_list_remove(z->local_resources, _zn_resource_predicate, r);
+        z->local_resources = _z_list_remove(z->local_resources, _zn_resource_predicate, res);
     else
-        z->remote_resources = _z_list_remove(z->remote_resources, _zn_resource_predicate, r);
+        z->remote_resources = _z_list_remove(z->remote_resources, _zn_resource_predicate, res);
 }
 
 /*------------------ Subscription ------------------*/
@@ -676,14 +690,14 @@ int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s
     _zn_subscriber_t *s = _zn_get_subscription_by_id(z, is_local, sub->id);
     if (s)
     {
-        // A subscription for this id already exists, return
+        // A subscription for this id already exists, return error
         return -1;
     }
 
     s = _zn_get_subscription_by_key(z, is_local, &sub->key);
     if (s)
     {
-        // A subscription for this key already exists, return
+        // A subscription for this key already exists, return error
         return -1;
     }
 

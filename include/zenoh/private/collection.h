@@ -101,6 +101,7 @@ _z_list_t *_z_list_tail(_z_list_t *xs);
 size_t _z_list_len(_z_list_t *xs);
 _z_list_t *_z_list_remove(_z_list_t *xs, _z_list_predicate p, void *arg);
 
+_z_list_t *_z_list_pop(_z_list_t *xs);
 _z_list_t *_z_list_drop_val(_z_list_t *xs, size_t position);
 void _z_list_free(_z_list_t **xs);
 

@@ -123,6 +123,14 @@ size_t _z_list_len(_z_list_t *xs)
     return len;
 }
 
+_z_list_t *_z_list_pop(_z_list_t *xs)
+{
+    _z_list_t *head = xs;
+    xs = head->tail;
+    free(head);
+    return xs;
+}
+
 _z_list_t *_z_list_drop_val(_z_list_t *xs, size_t position)
 {
     assert(position < _z_list_len(xs));

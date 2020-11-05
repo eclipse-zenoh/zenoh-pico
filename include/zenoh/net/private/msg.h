@@ -16,8 +16,6 @@
 #define ZENOH_C_NET_MSG_H
 
 #include <stdint.h>
-#include "zenoh/net/private/collection.h"
-#include "zenoh/net/private/result.h"
 #include "zenoh/net/private/types.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -721,7 +719,7 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_declaration_t;
-_ZN_ARRAY_DECLARE(declaration)
+_ARRAY_DECLARE(_zn_declaration_t, declaration, _zn_)
 
 typedef struct
 {

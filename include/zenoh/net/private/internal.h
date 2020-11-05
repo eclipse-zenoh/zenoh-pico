@@ -27,6 +27,9 @@ void _zn_session_free(zn_session_t *z);
 int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *s_msg);
 int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *z_msg);
 
+/*------------------ ResKey helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(zn_reskey_t *resky);
+
 /*------------------ Message helper ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header);
 _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);

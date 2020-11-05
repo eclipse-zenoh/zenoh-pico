@@ -88,10 +88,9 @@ void *_znp_read_task(zn_session_t *z)
             if (r.tag == _z_res_t_OK)
             {
                 int res = _zn_handle_session_message(z, r.value.session_message);
-                // Free the memory
-                _zn_session_message_free(r.value.session_message);
-                // Exit if error
-                if (res != _z_res_t_OK)
+                if (res == _z_res_t_OK)
+                    _zn_session_message_free(r.value.session_message);
+                else
                     goto EXIT_RECV_LOOP;
             }
             else

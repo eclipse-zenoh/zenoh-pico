@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh/net.h"
+#include "zenoh/net/private/collection.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 #include "zenoh/net/private/system.h"
@@ -334,8 +335,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                         declarations.val[len].body.sub.key = sub->key;
                         declarations.val[len].body.sub.subinfo = sub->info;
 
-                        // Drop the head element and continue with the tail
-                        subs = _z_list_drop_val(subs, 0);
+                        subs = _z_list_pop(subs);
                     }
 
                     // Send the message
@@ -950,24 +950,31 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the resource
-    int decl_num = 1;
-    _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+    size_t len = 1;
+    z_msg.body.declare.declarations.len = len;
+    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Resource declaration
-    decl.val[0].header = _ZN_DECL_RESOURCE;
-    decl.val[0].body.res.id = rid;
-    decl.val[0].body.res.key = reskey;
+    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_RESOURCE;
+    z_msg.body.declare.declarations.val[0].body.res.id = rid;
+    z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&reskey);
 
-    z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         z->on_disconnect(z);
         _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
     }
-    _ARRAY_S_FREE(decl);
+
+    _zn_zenoh_message_free(&z_msg);
 
     _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+    r->id = rid;
+    r->key = reskey;
+    r->encoding = 0;
+    r->kind = 0;
+    r->context = NULL;
+
     int res = _zn_register_resource(z, _ZN_IS_LOCAL, r);
     if (res != 0)
     {
@@ -985,21 +992,23 @@ int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
         // We need to undeclare the resource and the publisher
-        int decl_num = 1;
-        _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+        size_t len = 1;
+        z_msg.body.declare.declarations.len = len;
+        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
         // Resource declaration
-        decl.val[0].header = _ZN_DECL_FORGET_RESOURCE;
-        decl.val[0].body.forget_res.rid = rid;
+        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_RESOURCE;
+        z_msg.body.declare.declarations.val[0].body.forget_res.rid = rid;
 
-        z_msg.body.declare.declarations = decl;
         if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
         {
             _Z_DEBUG("Trying to reconnect...\n");
             z->on_disconnect(z);
             _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
         }
-        _ARRAY_S_FREE(decl);
+
+        _zn_zenoh_message_free(&z_msg);
+
         _zn_unregister_resource(z, _ZN_IS_LOCAL, r);
     }
 
@@ -1021,25 +1030,25 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t reskey)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the resource and the publisher
-    int decl_num = 1;
-    _ZN_ARRAY_S_DEFINE(declaration, decl, decl_num)
+    size_t len = 1;
+    z_msg.body.declare.declarations.len = len;
+    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Publisher declaration
-    decl.val[0].header = _ZN_DECL_PUBLISHER;
-    decl.val[0].body.pub.key.rid = pub->key.rid;
-    decl.val[0].body.pub.key.rname = pub->key.rname;
+    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_PUBLISHER;
+    z_msg.body.declare.declarations.val[0].body.pub.key = _zn_reskey_clone(&reskey);
     // Mark the key as numerical if the key has no resource name
-    if (!decl.val[0].body.pub.key.rname)
-        _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_K);
+    if (!pub->key.rname)
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         z->on_disconnect(z);
         _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
     }
-    _ARRAY_S_FREE(decl);
+
+    _zn_zenoh_message_free(&z_msg);
 
     return pub;
 }
@@ -1051,25 +1060,25 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to undeclare the publisher
-    int dnum = 1;
-    _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+    size_t len = 1;
+    z_msg.body.declare.declarations.len = len;
+    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Forget publisher declaration
-    decl.val[0].header = _ZN_DECL_FORGET_PUBLISHER;
-    decl.val[0].body.forget_pub.key.rid = pub->key.rid;
-    decl.val[0].body.forget_pub.key.rname = pub->key.rname;
+    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_PUBLISHER;
+    z_msg.body.declare.declarations.val[0].body.forget_pub.key = _zn_reskey_clone(&pub->key);
     // Mark the key as numerical if the key has no resource name
-    if (!decl.val[0].body.forget_pub.key.rname)
-        _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_K);
+    if (!pub->key.rname)
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(pub->z, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         pub->z->on_disconnect(pub->z);
         _zn_send_z_msg(pub->z, &z_msg, zn_reliability_t_RELIABLE);
     }
-    _ARRAY_S_FREE(decl);
+
+    _zn_zenoh_message_free(&z_msg);
 
     return;
 }
@@ -1086,33 +1095,34 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the subscriber
-    int dnum = 1;
-    _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+    size_t len = 1;
+    z_msg.body.declare.declarations.len = len;
+    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Subscriber declaration
-    decl.val[0].header = _ZN_DECL_SUBSCRIBER;
+    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_SUBSCRIBER;
     if (!reskey.rname)
-        _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_K);
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
     if (sub_info.mode != zn_submode_t_PUSH || sub_info.period)
-        _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_S);
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_S);
     if (sub_info.reliability == zn_reliability_t_RELIABLE)
-        _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_R);
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_R);
 
-    decl.val[0].body.sub.key = subscriber->key;
+    z_msg.body.declare.declarations.val[0].body.sub.key = _zn_reskey_clone(&subscriber->key);
 
     // SubMode
-    decl.val[0].body.sub.subinfo.mode = sub_info.mode;
-    decl.val[0].body.sub.subinfo.reliability = sub_info.reliability;
-    decl.val[0].body.sub.subinfo.period = sub_info.period;
+    z_msg.body.declare.declarations.val[0].body.sub.subinfo.mode = sub_info.mode;
+    z_msg.body.declare.declarations.val[0].body.sub.subinfo.reliability = sub_info.reliability;
+    z_msg.body.declare.declarations.val[0].body.sub.subinfo.period = sub_info.period;
 
-    z_msg.body.declare.declarations = decl;
     if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect....\n");
         z->on_disconnect(z);
         _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
     }
-    _ARRAY_S_FREE(decl);
+
+    _zn_zenoh_message_free(&z_msg);
 
     _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
     rs->id = subscriber->id;
@@ -1140,24 +1150,25 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
         // We need to undeclare the subscriber
-        int dnum = 1;
-        _ZN_ARRAY_S_DEFINE(declaration, decl, dnum)
+        size_t len = 1;
+        z_msg.body.declare.declarations.len = len;
+        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
         // Forget Subscriber declaration
-        decl.val[0].header = _ZN_DECL_FORGET_SUBSCRIBER;
+        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_SUBSCRIBER;
         if (!sub->key.rname)
-            _ZN_SET_FLAG(decl.val[0].header, _ZN_FLAG_Z_K);
+            _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-        decl.val[0].body.forget_sub.key = sub->key;
+        z_msg.body.declare.declarations.val[0].body.forget_sub.key = sub->key;
 
-        z_msg.body.declare.declarations = decl;
         if (_zn_send_z_msg(sub->z, &z_msg, zn_reliability_t_RELIABLE) != 0)
         {
             _Z_DEBUG("Trying to reconnect....\n");
             sub->z->on_disconnect(sub->z);
             _zn_send_z_msg(sub->z, &z_msg, zn_reliability_t_RELIABLE);
         }
-        _ARRAY_S_FREE(decl);
+
+        _zn_zenoh_message_free(&z_msg);
 
         _zn_unregister_subscription(sub->z, _ZN_IS_LOCAL, s);
     }
