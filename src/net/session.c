@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh/net.h"
-#include "zenoh/net/private/collection.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 #include "zenoh/net/private/system.h"
