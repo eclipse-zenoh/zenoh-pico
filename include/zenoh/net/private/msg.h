@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_MSG_H
-#define ZENOH_C_NET_MSG_H
+#ifndef _ZENOH_NET_PICO_MSG_H
+#define _ZENOH_NET_PICO_MSG_H
 
 #include <stdint.h>
 #include "zenoh/net/private/types.h"
@@ -107,9 +107,6 @@
 #define _ZN_DECL_FORGET_PUBLISHER 0x12
 #define _ZN_DECL_FORGET_SUBSCRIBER 0x13
 #define _ZN_DECL_FORGET_QUERYABLE 0x14
-/* SubModes IDs */
-#define _ZN_SUBMODE_PUSH 0x00
-#define _ZN_SUBMODE_PULL 0x01
 
 /*=============================*/
 /*        Close reasons        */
@@ -121,6 +118,17 @@
 #define _ZN_CLOSE_MAX_LINKS 0x04
 #define _ZN_CLOSE_EXPIRED 0x05
 
+/*=============================*/
+/*       DataInfo flags        */
+/*=============================*/
+#define _ZN_DATA_INFO_SRC_ID 0x01 // 1 << 0
+#define _ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
+#define _ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
+#define _ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
+#define _ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
+#define _ZN_DATA_INFO_KIND 0x20   // 1 << 5
+#define _ZN_DATA_INFO_ENC 0x40    // 1 << 6
+
 /*------------------ Payload field ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
@@ -129,8 +137,7 @@
 // ~    Buffer     ~
 // +---------------+
 //
-typedef z_uint8_array_t _zn_payload_t;
-_ZN_RESULT_DECLARE(_zn_payload_t, payload)
+typedef z_bytes_t _zn_payload_t;
 
 /*------------------ Locators Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -141,8 +148,7 @@ _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 // +---------------+
 //
 // NOTE: Locators is a vector of strings and are encoded as such
-typedef z_vec_t _zn_locators_t;
-_ZN_RESULT_DECLARE(_zn_locators_t, locators)
+typedef z_str_array_t _zn_locators_t;
 
 /*=============================*/
 /*     Message decorators      */
@@ -174,7 +180,6 @@ typedef struct
     _zn_payload_t payload;
     uint8_t header;
 } _zn_attachment_t;
-_ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 
 /*------------------ ReplyContext Decorator ------------------*/
 // The ReplyContext is a message decorator for either:
@@ -200,10 +205,9 @@ typedef struct
 {
     z_zint_t qid;
     z_zint_t source_kind;
-    z_uint8_array_t replier_id;
+    z_bytes_t replier_id;
     uint8_t header;
 } _zn_reply_context_t;
-_ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 
 /*=============================*/
 /*      Session Messages       */
@@ -230,7 +234,6 @@ typedef struct
 {
     z_zint_t what;
 } _zn_scout_t;
-_ZN_RESULT_DECLARE(_zn_scout_t, scout)
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -257,7 +260,7 @@ _ZN_RESULT_DECLARE(_zn_scout_t, scout)
 // +-+-+-+-+-------+
 // ~    peer-id    ~ if I==1
 // +---------------+
-// ~    whatami    ~ if W==1 -- Otherwise it is from a Broker
+// ~    whatami    ~ if W==1 -- Otherwise it is from a Router
 // +---------------+
 // ~    Locators   ~ if L==1 -- Otherwise src-address is the locator
 // +---------------+
@@ -265,10 +268,9 @@ _ZN_RESULT_DECLARE(_zn_scout_t, scout)
 typedef struct
 {
     z_zint_t whatami;
-    z_uint8_array_t pid;
+    z_bytes_t pid;
     _zn_locators_t locators;
 } _zn_hello_t;
-_ZN_RESULT_DECLARE(_zn_hello_t, hello)
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -309,14 +311,13 @@ _ZN_RESULT_DECLARE(_zn_hello_t, hello)
 typedef struct
 {
     z_zint_t whatami;
-    z_uint8_array_t opid;
+    z_bytes_t opid;
     z_zint_t lease;
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
     _zn_locators_t locators;
     uint8_t version;
 } _zn_open_t;
-_ZN_RESULT_DECLARE(_zn_open_t, open)
 
 /*------------------ Accept Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -362,14 +363,13 @@ _ZN_RESULT_DECLARE(_zn_open_t, open)
 typedef struct
 {
     z_zint_t whatami;
-    z_uint8_array_t opid;
-    z_uint8_array_t apid;
+    z_bytes_t opid;
+    z_bytes_t apid;
     z_zint_t lease;
     z_zint_t initial_sn;
     z_zint_t sn_resolution;
     _zn_locators_t locators;
 } _zn_accept_t;
-_ZN_RESULT_DECLARE(_zn_accept_t, accept)
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -397,10 +397,9 @@ _ZN_RESULT_DECLARE(_zn_accept_t, accept)
 //           the session's lease period expires.
 typedef struct
 {
-    z_uint8_array_t pid;
+    z_bytes_t pid;
     uint8_t reason;
 } _zn_close_t;
-_ZN_RESULT_DECLARE(_zn_close_t, close)
 
 /*------------------ Sync Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -430,7 +429,6 @@ typedef struct
     z_zint_t sn;
     z_zint_t count;
 } _zn_sync_t;
-_ZN_RESULT_DECLARE(_zn_sync_t, sync)
 
 /*------------------ AckNack Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -456,7 +454,6 @@ typedef struct
     z_zint_t sn;
     z_zint_t mask;
 } _zn_ack_nack_t;
-_ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 
 /*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -477,9 +474,8 @@ _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 //
 typedef struct
 {
-    z_uint8_array_t pid;
+    z_bytes_t pid;
 } _zn_keep_alive_t;
-_ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 
 /*------------------ PingPong Messages ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -501,7 +497,6 @@ typedef struct
 {
     z_zint_t hash;
 } _zn_ping_pong_t;
-_ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -540,10 +535,9 @@ typedef struct
     union
     {
         _zn_payload_t fragment;
-        z_vec_t messages;
+        _z_vec_t messages;
     } payload;
 } _zn_frame_t;
-_ZN_RESULT_DECLARE(_zn_frame_t, frame)
 
 /*------------------ Session Message ------------------*/
 typedef struct
@@ -564,7 +558,6 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_session_message_t;
-_ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -577,7 +570,7 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 // ~    Suffix     ~ if K==1
 // +---------------+
 //
-// typdef struct { ... } zn_res_key_t; is defined in net/types.h
+// typdef struct { ... } zn_reskey_t; is defined in zenoh/net/types.h
 
 /*------------------ Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -589,8 +582,11 @@ _ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
 // ~    ResKey     ~ if  K==1 then only numerical id
 // +---------------+
 //
-// typdef struct { ... } _zn_res_decl_t; is defined in net/private/internal.h
-_ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+} _zn_res_decl_t;
 
 /*------------------ Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -602,9 +598,8 @@ _ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
 } _zn_pub_decl_t;
-_ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 
 /*------------------ SubInfo Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -614,7 +609,7 @@ _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 // ~    Period     ~ if P==1
 // +---------------+
 //
-// typdef struct { ... } zn_sub_info_t; is defined in net/types.h
+// typdef struct { ... } zn_subinfo_t; is defined in net/types.h
 
 /*------------------ Subscriber Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -630,10 +625,9 @@ _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
-    zn_sub_info_t sub_info;
+    zn_reskey_t key;
+    zn_subinfo_t subinfo;
 } _zn_sub_decl_t;
-_ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
 
 /*------------------ Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -645,9 +639,8 @@ _ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
 } _zn_qle_decl_t;
-_ZN_RESULT_DECLARE(_zn_qle_decl_t, qle_decl)
 
 /*------------------ Forget Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -661,7 +654,6 @@ typedef struct
 {
     z_zint_t rid;
 } _zn_forget_res_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_res_decl_t, forget_res_decl)
 
 /*------------------ Forget Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -673,9 +665,8 @@ _ZN_RESULT_DECLARE(_zn_forget_res_decl_t, forget_res_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
 } _zn_forget_pub_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_pub_decl_t, forget_pub_decl)
 
 /*------------------ Forget Subscriber Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -687,9 +678,8 @@ _ZN_RESULT_DECLARE(_zn_forget_pub_decl_t, forget_pub_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
 } _zn_forget_sub_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_sub_decl_t, forget_sub_decl)
 
 /*------------------ Forget Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -701,9 +691,8 @@ _ZN_RESULT_DECLARE(_zn_forget_sub_decl_t, forget_sub_decl)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
 } _zn_forget_qle_decl_t;
-_ZN_RESULT_DECLARE(_zn_forget_qle_decl_t, forget_qle_decl)
 
 /*------------------ Declaration  Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -730,14 +719,12 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_declaration_t;
-_ZN_ARRAY_DECLARE(declaration)
-_ZN_RESULT_DECLARE(_zn_declaration_t, declaration)
+_ARRAY_DECLARE(_zn_declaration_t, declaration, _zn_)
 
 typedef struct
 {
     _zn_declaration_array_t declarations;
 } _zn_declare_t;
-_ZN_RESULT_DECLARE(_zn_declare_t, declare)
 
 /*------------------ Timestamp Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -747,30 +734,39 @@ _ZN_RESULT_DECLARE(_zn_declare_t, declare)
 // ~      ID       ~
 // +---------------+
 //
-// typdef struct { ... } z_timestamp_t; is defined in types.h
-_ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
+// typdef struct { ... } z_timestamp_t; is defined in zenoh/types.h
 
 /*------------------ Data Info Field ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+---------+
-// ~X|G|F|E|D|C|B|A~ -- encoded as z_zint_t
+// ~     flags     ~ -- encoded as z_zint_t
 // +---------------+
-// ~   source_id   ~ if A==1
+// ~   source_id   ~ if _ZN_DATA_INFO_SRC_ID==1
 // +---------------+
-// ~   source_sn   ~ if B==1
+// ~   source_sn   ~ if _ZN_DATA_INFO_SRC_SN==1
 // +---------------+
-// ~first_router_id~ if C==1
+// ~first_router_id~ if _ZN_DATA_INFO_RTR_ID==1
 // +---------------+
-// ~first_router_sn~ if D==1
+// ~first_router_sn~ if _ZN_DATA_INFO_RTR_SN==1
 // +---------------+
-// ~   timestamp   ~ if E==1
+// ~   timestamp   ~ if _ZN_DATA_INFO_TSTAMP==1
 // +---------------+
-// ~      kind     ~ if F==1
+// ~      kind     ~ if _ZN_DATA_INFO_KIND==1
 // +---------------+
-// ~   encoding    ~ if G==1
+// ~   encoding    ~ if _ZN_DATA_INFO_ENC==1
 // +---------------+
 //
-// typdef struct { ... } zn_data_info_t; is defined in net/types.h
+typedef struct
+{
+    z_zint_t flags;
+    z_bytes_t source_id;
+    z_zint_t source_sn;
+    z_bytes_t first_router_id;
+    z_zint_t first_router_sn;
+    z_timestamp_t tstamp;
+    z_zint_t kind;
+    z_zint_t encoding;
+} _zn_data_info_t;
 
 /*------------------ Data Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -788,11 +784,10 @@ _ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
 //
 typedef struct
 {
-    zn_res_key_t key;
-    zn_data_info_t info;
+    zn_reskey_t key;
+    _zn_data_info_t info;
     _zn_payload_t payload;
 } _zn_data_t;
-_ZN_RESULT_DECLARE(_zn_data_t, data)
 
 /*------------------ Unit Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -818,11 +813,10 @@ _ZN_RESULT_DECLARE(_zn_data_t, data)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
     z_zint_t pull_id;
     z_zint_t max_samples;
 } _zn_pull_t;
-_ZN_RESULT_DECLARE(_zn_pull_t, pull)
 
 /*------------------ Query Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -842,13 +836,12 @@ _ZN_RESULT_DECLARE(_zn_pull_t, pull)
 //
 typedef struct
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
     z_zint_t qid;
     z_zint_t target;
     z_zint_t consolidation;
-    char *predicate;
+    z_str_t predicate;
 } _zn_query_t;
-_ZN_RESULT_DECLARE(_zn_query_t, query)
 
 /*------------------ Zenoh Message ------------------*/
 typedef struct
@@ -864,6 +857,5 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_zenoh_message_t;
-_ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 
-#endif /* ZENOH_C_NET_MSG_H */
+#endif /* _ZENOH_NET_PICO_MSG_H */

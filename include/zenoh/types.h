@@ -12,58 +12,74 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_TYPES_H_
-#define ZENOH_C_TYPES_H_
+#ifndef ZENOH_PICO_TYPES_H
+#define ZENOH_PICO_TYPES_H
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "zenoh/result.h"
-#include "zenoh/collection.h"
 
-extern const int _z_dummy_arg;
-
-#define Z_UNUSED_ARG(z) (void)(z)
-#define Z_UNUSED_ARG_2(z1, z2) \
-    (void)(z1);                \
-    (void)(z2)
-#define Z_UNUSED_ARG_3(z1, z2, z3) \
-    (void)(z1);                    \
-    (void)(z2);                    \
-    (void)(z3)
-#define Z_UNUSED_ARG_4(z1, z2, z3, z4) \
-    (void)(z1);                        \
-    (void)(z2);                        \
-    (void)(z3);                        \
-    (void)(z4)
-#define Z_UNUSED_ARG_5(z1, z2, z3, z4, z5) \
-    (void)(z1);                            \
-    (void)(z2);                            \
-    (void)(z3);                            \
-    (void)(z4);                            \
-    (void)(z5)
-
+/**
+ * A variable-length encoding unsigned integer. 
+ * 
+ */
 typedef size_t z_zint_t;
-Z_RESULT_DECLARE(z_zint_t, zint)
 
-ARRAY_DECLARE(uint8_t, uint8, z_)
-Z_RESULT_DECLARE(z_uint8_array_t, uint8_array)
+/**
+ * A string with null terminator.
+ *
+ */
+typedef char *z_str_t;
 
-typedef char *z_string_t;
-Z_RESULT_DECLARE(z_string_t, string)
+/**
+ * A string with no terminator.
+ *
+ * Members:
+ *   size_t len: The length of the string.
+ *   const char *val: A pointer to the string.
+ *
+ */
+typedef struct z_string_t
+{
+    size_t len;
+    const char *val;
+} z_string_t;
 
-// -- Timestamp is optionally included in the DataInfo Field
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// ~     Time      ~  Encoded as z_zint_t
-// +---------------+
-// ~      ID       ~
-// +---------------+
+/**
+ * An array of bytes.
+ *
+ * Members:
+ *   size_t len: The length of the bytes array.
+ *   const uint8_t *val: A pointer to the bytes array.
+ *
+ */
+typedef struct z_bytes_t
+{
+    size_t len;
+    const uint8_t *val;
+} z_bytes_t;
+
+/**
+ * An array of NULL terminated strings.
+ *
+ * Members:
+ *   size_t len: The length of the array.
+ *   char *const *val: A pointer to the array.
+ *
+ */
+typedef struct
+{
+    size_t len;
+    const char *const *val;
+} z_str_array_t;
+
+/**
+ * A zenoh timestamp.
+ * 
+ */
 typedef struct
 {
     uint64_t time;
-    z_uint8_array_t id;
+    z_bytes_t id;
 } z_timestamp_t;
-Z_RESULT_DECLARE(z_timestamp_t, timestamp)
 
-#endif /* ZENOH_C_TYPES_H_ */
+#endif /* ZENOH_PICO_TYPES_H */

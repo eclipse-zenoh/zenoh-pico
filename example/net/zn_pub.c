@@ -13,68 +13,63 @@
  */
 #include <stdio.h>
 #include <unistd.h>
-#include "zenoh.h"
-
-#define MAX_LEN 256
+#include <string.h>
+#include "zenoh/net.h"
 
 int main(int argc, char **argv)
 {
-    char *path = "/demo/example/**";
-    char *locator = NULL;
-    char *value = "Pub from Zenoh-pico!";
-
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_pub [<path>=%s] [<locator>=auto] [<value>='%s']\n\n", path, value);
-        return 0;
-    }
+    char *uri = "/demo/example/zenoh-pico-pub";
     if (argc > 1)
     {
-        path = argv[1];
+        uri = argv[1];
     }
+    char *value = "Pub from pico!";
     if (argc > 2)
     {
-        if (strcmp(argv[2], "auto") != 0)
-            locator = argv[2];
+        value = argv[2];
     }
+
+    zn_properties_t *config = zn_config_default();
     if (argc > 3)
     {
-        value = argv[3];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[3]));
     }
 
-    // Open a session
-    zn_session_p_result_t rz = zn_open(locator, 0, 0);
-    ASSERT_P_RESULT(rz, "Unable to open a session.\n");
-    zn_session_t *z = rz.value.session;
-    zn_start_recv_loop(z);
-    zn_start_lease_loop(z);
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
+    // Start the receive and the session lease loop for zenoh-pico
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
-    // Declare a resource
-    zn_res_p_result_t rr = zn_declare_resource(z, &rk);
-    ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_res_t *res = rr.value.res;
+    printf("Declaring Resource '%s'", uri);
+    unsigned long rid = zn_declare_resource(s, zn_rname(uri));
+    printf(" => RId %lu\n", rid);
+    zn_reskey_t reskey = zn_rid(rid);
 
-    // Declare a publisher
-    zn_pub_p_result_t rp = zn_declare_publisher(z, &res->key);
-    ASSERT_P_RESULT(rp, "Unable to declare publisher.\n");
+    printf("Declaring Publisher on %lu\n", rid);
+    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
+    if (pub == 0)
+    {
+        printf("Unable to declare publisher.\n");
+        exit(-1);
+    }
 
-    // Create random data
-    char data[MAX_LEN];
-
-    // Loop endessly and write data
-    zn_res_key_t ri = zn_rid(res);
-    unsigned int count = 0;
-    while (1)
+    char buf[256];
+    for (int idx = 0; 1; ++idx)
     {
         sleep(1);
-        snprintf(data, MAX_LEN, "[%4d] %s", count, value);
-        printf("Writing Data ('%zu': '%s')...\n", ri.rid, data);
-        zn_write(z, &ri, (const unsigned char *)data, strlen(data));
-        count++;
+        sprintf(buf, "[%4d] %s", idx, value);
+        printf("Writing Data ('%lu': '%s')...\n", rid, buf);
+        zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
     }
 
+    zn_undeclare_publisher(pub);
+    zn_close(s);
     return 0;
 }

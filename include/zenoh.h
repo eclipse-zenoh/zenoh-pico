@@ -12,13 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_H_DEFINED_
-#define ZENOH_C_H_DEFINED_
+#ifndef ZENOH_PICO_H
+#define ZENOH_PICO_H
 
-#include "zenoh/types.h"
-#include "zenoh/rname.h"
-#include "zenoh/net/session.h"
-#include "zenoh/net/recv_loop.h"
-#include "zenoh/net/lease_loop.h"
+#include "zenoh/net.h"
 
-#endif /* ZENOH_C_H_DEFINED_ */
+#endif /* ZENOH_PICO_H */

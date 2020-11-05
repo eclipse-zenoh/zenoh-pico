@@ -11,14 +11,15 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
+
+#define _ZENOH_NET_PICO_MSGCODEC_H_T
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
-#include <time.h>
-#include "zenoh/iobuf.h"
-
-#define ZENOH_C_NET_MSGCODEC_H_T
+#include "zenoh/private/collection.h"
+#include "zenoh/private/iobuf.h"
+#include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
 
 #define RUNS 1000
@@ -26,7 +27,7 @@
 /*=============================*/
 /*       Helper functions      */
 /*=============================*/
-void print_iosli(z_iosli_t *ios)
+void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
     for (size_t i = 0; i < ios->capacity; ++i)
@@ -38,24 +39,24 @@ void print_iosli(z_iosli_t *ios)
     printf("]");
 }
 
-void print_wbuf(z_wbuf_t *wbf)
+void print_wbuf(_z_wbuf_t *wbf)
 {
-    printf("   WBuf: %zu, RIdx: %zu, WIdx: %zu\n", z_wbuf_len_iosli(wbf), wbf->r_idx, wbf->w_idx);
-    for (size_t i = 0; i < z_wbuf_len_iosli(wbf); i++)
+    printf("   WBuf: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(wbf), wbf->r_idx, wbf->w_idx);
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         printf("   - ");
-        print_iosli(z_wbuf_get_iosli(wbf, i));
+        print_iosli(_z_wbuf_get_iosli(wbf, i));
         printf("\n");
     }
 }
 
-void print_uint8_array(z_uint8_array_t *arr)
+void print_uint8_array(z_bytes_t *arr)
 {
-    printf("Length: %zu, Buffer: [", arr->length);
-    for (size_t i = 0; i < arr->length; ++i)
+    printf("Length: %zu, Buffer: [", arr->len);
+    for (size_t i = 0; i < arr->len; ++i)
     {
-        printf("%02x", arr->elem[i]);
-        if (i < arr->length - 1)
+        printf("%02x", arr->val[i]);
+        if (i < arr->len - 1)
             printf(" ");
     }
     printf("]");
@@ -104,22 +105,22 @@ void print_session_message_type(uint8_t header)
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-int gen_bool()
+int gen_bool(void)
 {
     return rand() % 2;
 }
 
-uint8_t gen_uint8()
+uint8_t gen_uint8(void)
 {
     return (uint8_t)rand() % 255;
 }
 
-z_zint_t gen_zint()
+z_zint_t gen_zint(void)
 {
     return (z_zint_t)rand();
 }
 
-z_wbuf_t gen_wbuf(size_t len)
+_z_wbuf_t gen_wbuf(size_t len)
 {
     int is_expandable = 0;
 
@@ -129,32 +130,32 @@ z_wbuf_t gen_wbuf(size_t len)
         len = 1 + (gen_zint() % len);
     }
 
-    return z_wbuf_make(len, is_expandable);
+    return _z_wbuf_make(len, is_expandable);
 }
 
 _zn_payload_t gen_payload(size_t len)
 {
     _zn_payload_t pld;
-    pld.length = len;
-    pld.elem = (uint8_t *)malloc(len * sizeof(uint8_t));
+    pld.len = len;
+    pld.val = (uint8_t *)malloc(len * sizeof(uint8_t));
     for (size_t i = 0; i < len; ++i)
-        pld.elem[i] = 0xff;
+        ((uint8_t *)pld.val)[i] = 0xff;
 
     return pld;
 }
 
-z_uint8_array_t gen_uint8_array(size_t len)
+z_bytes_t gen_bytes(size_t len)
 {
-    z_uint8_array_t arr;
-    arr.length = len;
-    arr.elem = (uint8_t *)malloc(sizeof(uint8_t) * len);
+    z_bytes_t arr;
+    arr.len = len;
+    arr.val = (uint8_t *)malloc(sizeof(uint8_t) * len);
     for (z_zint_t i = 0; i < len; ++i)
-        arr.elem[i] = gen_uint8();
+        ((uint8_t *)arr.val)[i] = gen_uint8();
 
     return arr;
 }
 
-uint64_t gen_time()
+uint64_t gen_time(void)
 {
     return (uint64_t)time(NULL);
 }
@@ -172,11 +173,11 @@ char *gen_string(size_t size)
     return str;
 }
 
-z_vec_t gen_string_vec(size_t size)
+z_str_array_t gen_str_array(size_t size)
 {
-    z_vec_t sa = z_vec_make(size);
+    z_str_array_t sa = _z_str_array_make(size);
     for (size_t i = 0; i < size; ++i)
-        z_vec_append(&sa, gen_string(16));
+        ((z_str_t *)sa.val)[i] = gen_string(16);
 
     return sa;
 }
@@ -184,7 +185,7 @@ z_vec_t gen_string_vec(size_t size)
 /*=============================*/
 /*     Asserting functions     */
 /*=============================*/
-void assert_eq_iosli(z_iosli_t *left, z_iosli_t *right)
+void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right)
 {
     printf("IOSli -> ");
     printf("Capacity (%zu:%zu), ", left->capacity, right->capacity);
@@ -206,20 +207,20 @@ void assert_eq_iosli(z_iosli_t *left, z_iosli_t *right)
     printf(")");
 }
 
-void assert_eq_uint8_array(z_uint8_array_t *left, z_uint8_array_t *right)
+void assert_eq_uint8_array(z_bytes_t *left, z_bytes_t *right)
 {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", left->length, right->length);
+    printf("Length (%zu:%zu), ", left->len, right->len);
 
-    assert(left->length == right->length);
+    assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->length; ++i)
+    for (size_t i = 0; i < left->len; ++i)
     {
-        uint8_t l = left->elem[i];
-        uint8_t r = right->elem[i];
+        uint8_t l = left->val[i];
+        uint8_t r = right->val[i];
 
         printf("%02x:%02x", l, r);
-        if (i < left->length - 1)
+        if (i < left->len - 1)
             printf(" ");
 
         assert(l == r);
@@ -227,20 +228,20 @@ void assert_eq_uint8_array(z_uint8_array_t *left, z_uint8_array_t *right)
     printf(")");
 }
 
-void assert_eq_string_vec(z_vec_t *left, z_vec_t *right)
+void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
 {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", z_vec_len(left), z_vec_len(right));
+    printf("Length (%zu:%zu), ", left->len, right->len);
 
-    assert(z_vec_len(left) == z_vec_len(right));
+    assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < z_vec_len(left); ++i)
+    for (size_t i = 0; i < left->len; ++i)
     {
-        char *l = (char *)z_vec_get(left, i);
-        char *r = (char *)z_vec_get(right, i);
+        const char *l = left->val[i];
+        const char *r = right->val[i];
 
         printf("%s:%s", l, r);
-        if (i < z_vec_len(left) - 1)
+        if (i < left->len - 1)
             printf(" ");
 
         assert(strcmp(l, r) == 0);
@@ -257,10 +258,10 @@ void assert_eq_payload(_zn_payload_t *left, _zn_payload_t *right)
     assert_eq_uint8_array(left, right);
 }
 
-void payload_field()
+void payload_field(void)
 {
     printf("\n>> Payload field\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     _zn_payload_t e_pld = gen_payload(64);
@@ -269,9 +270,9 @@ void payload_field()
     assert(_zn_payload_encode(&wbf, &e_pld) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_payload_result_t r_pld = _zn_payload_decode(&rbf);
-    assert(r_pld.tag == Z_OK_TAG);
+    assert(r_pld.tag == _z_res_t_OK);
     _zn_payload_t d_pld = r_pld.value.payload;
     printf("   ");
     assert_eq_payload(&e_pld, &d_pld);
@@ -279,16 +280,16 @@ void payload_field()
 
     // Free
     _zn_payload_free(&d_pld);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Timestamp field ------------------*/
-z_timestamp_t gen_timestamp()
+z_timestamp_t gen_timestamp(void)
 {
     z_timestamp_t ts;
     ts.time = (u_int64_t)time(NULL);
-    ts.id = gen_uint8_array(16);
+    ts.id = gen_bytes(16);
 
     return ts;
 }
@@ -296,7 +297,7 @@ z_timestamp_t gen_timestamp()
 void assert_eq_timestamp(z_timestamp_t *left, z_timestamp_t *right)
 {
     printf("Timestamp -> ");
-    printf("Time (%llu:%llu), ", left->time, right->time);
+    printf("Time (%llu:%llu), ", (unsigned long long)left->time, (unsigned long long)right->time);
     assert(left->time == right->time);
 
     printf("ID (");
@@ -304,10 +305,10 @@ void assert_eq_timestamp(z_timestamp_t *left, z_timestamp_t *right)
     printf(")");
 }
 
-void timestamp_field()
+void timestamp_field(void)
 {
     printf("\n>> Timestamp field\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     z_timestamp_t e_ts = gen_timestamp();
@@ -316,9 +317,9 @@ void timestamp_field()
     assert(_zn_timestamp_encode(&wbf, &e_ts) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_timestamp_result_t r_ts = _zn_timestamp_decode(&rbf);
-    assert(r_ts.tag == Z_OK_TAG);
+    assert(r_ts.tag == _z_res_t_OK);
 
     z_timestamp_t d_ts = r_ts.value.timestamp;
     printf("   ");
@@ -327,95 +328,91 @@ void timestamp_field()
 
     // Free
     _zn_timestamp_free(&d_ts);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ SubInfo field ------------------*/
-zn_sub_info_t gen_sub_info()
+zn_subinfo_t gen_subinfo(void)
 {
-    uint8_t kind[] = {ZN_PUSH_MODE, ZN_PULL_MODE};
+    zn_subinfo_t sm;
+    sm.mode = gen_bool() ? zn_submode_t_PUSH : zn_submode_t_PULL;
+    sm.reliability = gen_bool() ? zn_reliability_t_RELIABLE : zn_reliability_t_BEST_EFFORT;
+    sm.period = gen_bool() ? (zn_period_t *)malloc(sizeof(zn_period_t)) : NULL;
 
-    zn_sub_info_t sm;
-    sm.mode = kind[rand() % (sizeof(kind) / sizeof(uint8_t))];
-    sm.is_reliable = gen_bool();
-    sm.is_periodic = gen_bool();
-
-    if (sm.is_periodic)
+    if (sm.period)
     {
-        zn_temporal_property_t t_p;
-        t_p.origin = gen_zint();
-        t_p.period = gen_zint();
-        t_p.duration = gen_zint();
-        sm.period = t_p;
+        sm.period->origin = gen_zint();
+        sm.period->period = gen_zint();
+        sm.period->duration = gen_zint();
     }
 
     return sm;
 }
 
-void assert_eq_sub_info(zn_sub_info_t *left, zn_sub_info_t *right)
+void assert_eq_subinfo(zn_subinfo_t *left, zn_subinfo_t *right)
 {
     printf("SubInfo -> ");
     printf("Mode (%u:%u), ", left->mode, right->mode);
     assert(left->mode == right->mode);
 
-    printf("Reliable (%u:%u), ", left->is_reliable, right->is_reliable);
-    assert(left->is_reliable == right->is_reliable);
+    printf("Reliable (%u:%u), ", left->reliability, right->reliability);
+    assert(left->reliability == right->reliability);
 
-    printf("Periodic (%u:%u), ", left->is_periodic, right->is_periodic);
-    assert(left->is_periodic == right->is_periodic);
+    printf("Periodic (%d:%d), ", left->period ? 1 : 0, right->period ? 1 : 0);
+    assert((left->period == NULL) == (right->period == NULL));
 
     printf("Period (");
-    if (left->is_periodic)
-        printf("<%zu:%zu,%zu>", left->period.origin, left->period.period, left->period.duration);
+    if (left->period)
+        printf("<%u:%u,%u>", left->period->origin, left->period->period, left->period->duration);
     else
         printf("NULL");
     printf(":");
-    if (right->is_periodic)
-        printf("<%zu:%zu,%zu>", right->period.origin, right->period.period, right->period.duration);
+    if (right->period)
+        printf("<%u:%u,%u>", right->period->origin, right->period->period, right->period->duration);
     else
         printf("NULL");
     printf(")");
-    if (left->is_periodic && right->is_periodic)
+    if (left->period && right->period)
     {
-        assert(left->period.origin == right->period.origin);
-        assert(left->period.period == right->period.period);
-        assert(left->period.duration == right->period.duration);
+        assert(left->period->origin == right->period->origin);
+        assert(left->period->period == right->period->period);
+        assert(left->period->duration == right->period->duration);
     }
 }
 
-void sub_info_field()
+void subinfo_field(void)
 {
     printf("\n>> SubInfo field\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
-    zn_sub_info_t e_sm = gen_sub_info();
+    zn_subinfo_t e_sm = gen_subinfo();
 
     // Encode
-    uint8_t header = e_sm.is_reliable ? _ZN_FLAG_Z_R : 0;
-    assert(zn_sub_info_encode(&wbf, &e_sm) == 0);
+    uint8_t header = e_sm.reliability == zn_reliability_t_RELIABLE ? _ZN_FLAG_Z_R : 0;
+    assert(_zn_subinfo_encode(&wbf, &e_sm) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
-    zn_sub_info_result_t r_sm = zn_sub_info_decode(&rbf, header);
-    assert(r_sm.tag == Z_OK_TAG);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _zn_subinfo_result_t r_sm = _zn_subinfo_decode(&rbf, header);
+    assert(r_sm.tag == _z_res_t_OK);
 
-    zn_sub_info_t d_sm = r_sm.value.sub_info;
+    zn_subinfo_t d_sm = r_sm.value.subinfo;
     printf("   ");
-    assert_eq_sub_info(&e_sm, &d_sm);
+    assert_eq_subinfo(&e_sm, &d_sm);
     printf("\n");
 
     // Free
-    // NOTE: sub_info does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    // NOTE: subinfo does not involve any heap allocation
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ ResKey field ------------------*/
-zn_res_key_t gen_res_key()
+zn_reskey_t gen_res_key(void)
 {
-    zn_res_key_t key;
+    zn_reskey_t key;
     key.rid = gen_zint();
     int is_numerical = gen_bool();
     if (is_numerical)
@@ -426,7 +423,7 @@ zn_res_key_t gen_res_key()
     return key;
 }
 
-void assert_eq_res_key(zn_res_key_t *left, zn_res_key_t *right, uint8_t header)
+void assert_eq_res_key(zn_reskey_t *left, zn_reskey_t *right, uint8_t header)
 {
     printf("ResKey -> ");
     printf("ID (%zu:%zu), ", left->rid, right->rid);
@@ -445,151 +442,151 @@ void assert_eq_res_key(zn_res_key_t *left, zn_res_key_t *right, uint8_t header)
     printf(")");
 }
 
-void res_key_field()
+void res_key_field(void)
 {
     printf("\n>> ResKey field\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
-    zn_res_key_t e_rk = gen_res_key();
+    zn_reskey_t e_rk = gen_res_key();
 
     // Encode
     uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
-    assert(zn_res_key_encode(&wbf, header, &e_rk) == 0);
+    assert(_zn_reskey_encode(&wbf, header, &e_rk) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
-    zn_res_key_result_t r_rk = zn_res_key_decode(&rbf, header);
-    assert(r_rk.tag == Z_OK_TAG);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _zn_reskey_result_t r_rk = _zn_reskey_decode(&rbf, header);
+    assert(r_rk.tag == _z_res_t_OK);
 
-    zn_res_key_t d_rk = r_rk.value.res_key;
+    zn_reskey_t d_rk = r_rk.value.reskey;
     printf("   ");
     assert_eq_res_key(&e_rk, &d_rk, header);
     printf("\n");
 
     // Free
-    zn_res_key_free(&d_rk);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _zn_reskey_free(&d_rk);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ DataInfo field ------------------*/
-zn_data_info_t gen_data_info()
+_zn_data_info_t gen_data_info(void)
 {
-    zn_data_info_t di;
+    _zn_data_info_t di;
 
     di.flags = 0;
 
     if (gen_bool())
     {
-        di.source_id = gen_uint8_array(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_ID);
+        di.source_id = gen_bytes(16);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_SRC_ID);
     }
     if (gen_bool())
     {
         di.source_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_SRC_SN);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_SRC_SN);
     }
     if (gen_bool())
     {
-        di.first_router_id = gen_uint8_array(16);
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_ID);
+        di.first_router_id = gen_bytes(16);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_RTR_ID);
     }
     if (gen_bool())
     {
         di.first_router_sn = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_RTR_SN);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_RTR_SN);
     }
     if (gen_bool())
     {
         di.tstamp = gen_timestamp();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_TSTAMP);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_TSTAMP);
     }
     if (gen_bool())
     {
         di.kind = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_KIND);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_KIND);
     }
     if (gen_bool())
     {
         di.encoding = gen_zint();
-        _ZN_SET_FLAG(di.flags, ZN_DATA_INFO_ENC);
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
     }
 
     return di;
 }
 
-void assert_eq_data_info(zn_data_info_t *left, zn_data_info_t *right)
+void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
 {
     printf("DataInfo -> ");
     printf("Flags (%zu:%zu), ", left->flags, right->flags);
     assert(left->flags == right->flags);
 
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_SRC_ID)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_SRC_ID)
     {
         printf("Src ID -> ");
         assert_eq_uint8_array(&left->source_id, &right->source_id);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_SRC_SN)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_SRC_SN)
     {
         printf("Src SN (%zu:%zu), ", left->source_sn, right->source_sn);
         assert(left->source_sn == right->source_sn);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_RTR_ID)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_RTR_ID)
     {
         printf("Rtr ID -> ");
         assert_eq_uint8_array(&left->first_router_id, &right->first_router_id);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_RTR_SN)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_RTR_SN)
     {
         printf("Rtr SN (%zu:%zu), ", left->first_router_sn, right->first_router_sn);
         assert(left->first_router_sn == right->first_router_sn);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_TSTAMP)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
     {
         printf("Tstamp -> ");
         assert_eq_timestamp(&left->tstamp, &right->tstamp);
         printf(", ");
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_KIND)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_KIND)
     {
         printf("Kind (%zu:%zu), ", left->kind, right->kind);
         assert(left->kind == right->kind);
     }
-    if _ZN_HAS_FLAG (left->flags, ZN_DATA_INFO_ENC)
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
     {
         printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
         assert(left->encoding == right->encoding);
     }
 }
 
-void data_info_field()
+void data_info_field(void)
 {
     printf("\n>> DataInfo field\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
-    zn_data_info_t e_di = gen_data_info();
+    _zn_data_info_t e_di = gen_data_info();
 
     // Encode
-    assert(zn_data_info_encode(&wbf, &e_di) == 0);
+    assert(_zn_data_info_encode(&wbf, &e_di) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
-    zn_data_info_result_t r_di = zn_data_info_decode(&rbf);
-    assert(r_di.tag == Z_OK_TAG);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _zn_data_info_result_t r_di = _zn_data_info_decode(&rbf);
+    assert(r_di.tag == _z_res_t_OK);
 
-    zn_data_info_t d_di = r_di.value.data_info;
+    _zn_data_info_t d_di = r_di.value.data_info;
     printf("   ");
     assert_eq_data_info(&e_di, &d_di);
     printf("\n");
 
     // Free
-    zn_data_info_free(&d_di);
-    z_rbuf_free(&rbf);
-    z_wbuf_clear(&wbf);
+    _zn_data_info_free(&d_di);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_clear(&wbf);
 }
 
 /*=============================*/
@@ -604,7 +601,7 @@ void print_attachment(_zn_attachment_t *att)
     printf("\n");
 }
 
-_zn_attachment_t *gen_attachment()
+_zn_attachment_t *gen_attachment(void)
 {
     _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
 
@@ -622,10 +619,10 @@ void assert_eq_attachment(_zn_attachment_t *left, _zn_attachment_t *right)
     assert_eq_payload(&left->payload, &right->payload);
 }
 
-void attachment_decorator()
+void attachment_decorator(void)
 {
     printf("\n>> Attachment decorator\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     _zn_attachment_t *e_at = gen_attachment();
@@ -634,10 +631,10 @@ void attachment_decorator()
     assert(_zn_attachment_encode(&wbf, e_at) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
-    uint8_t header = z_rbuf_read(&rbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    uint8_t header = _z_rbuf_read(&rbf);
     _zn_attachment_p_result_t r_at = _zn_attachment_decode(&rbf, header);
-    assert(r_at.tag == Z_OK_TAG);
+    assert(r_at.tag == _z_res_t_OK);
 
     _zn_attachment_t *d_at = r_at.value.attachment;
     printf("   ");
@@ -648,8 +645,8 @@ void attachment_decorator()
     free(e_at);
     _zn_attachment_free(d_at);
     _zn_attachment_p_result_free(&r_at);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ ReplyContext decorator ------------------*/
@@ -661,12 +658,12 @@ void print_reply_context(_zn_reply_context_t *rc)
     if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
     {
         printf("      Reply ID: ");
-        print_uint8_array((z_uint8_array_t *)&rc->replier_id);
+        print_uint8_array((z_bytes_t *)&rc->replier_id);
     }
     printf("\n");
 }
 
-_zn_reply_context_t *gen_reply_context()
+_zn_reply_context_t *gen_reply_context(void)
 {
     _zn_reply_context_t *p_rc = (_zn_reply_context_t *)malloc(sizeof(_zn_reply_context_t));
 
@@ -675,7 +672,7 @@ _zn_reply_context_t *gen_reply_context()
     p_rc->source_kind = gen_zint();
     if (gen_bool())
     {
-        z_uint8_array_t id = gen_uint8_array(16);
+        z_bytes_t id = gen_bytes(16);
         p_rc->replier_id = id;
     }
     else
@@ -705,10 +702,10 @@ void assert_eq_reply_context(_zn_reply_context_t *left, _zn_reply_context_t *rig
     printf(")");
 }
 
-void reply_contex_decorator()
+void reply_contex_decorator(void)
 {
     printf("\n>> ReplyContext decorator\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     _zn_reply_context_t *e_rc = gen_reply_context();
@@ -717,10 +714,10 @@ void reply_contex_decorator()
     assert(_zn_reply_context_encode(&wbf, e_rc) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
-    uint8_t header = z_rbuf_read(&rbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    uint8_t header = _z_rbuf_read(&rbf);
     _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(&rbf, header);
-    assert(r_rc.tag == Z_OK_TAG);
+    assert(r_rc.tag == _z_res_t_OK);
 
     _zn_reply_context_t *d_rc = r_rc.value.reply_context;
     printf("   ");
@@ -731,8 +728,8 @@ void reply_contex_decorator()
     free(e_rc);
     _zn_reply_context_free(d_rc);
     _zn_reply_context_p_result_free(&r_rc);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*=============================*/
@@ -757,10 +754,10 @@ void assert_eq_resource_declaration(_zn_res_decl_t *left, _zn_res_decl_t *right,
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void resource_declaration()
+void resource_declaration(void)
 {
     printf("\n>> Resource declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -770,9 +767,9 @@ void resource_declaration()
     assert(_zn_res_decl_encode(&wbf, e_hdr, &e_rd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_res_decl_result_t r_rd = _zn_res_decl_decode(&rbf, e_hdr);
-    assert(r_rd.tag == Z_OK_TAG);
+    assert(r_rd.tag == _z_res_t_OK);
 
     _zn_res_decl_t d_rd = r_rd.value.res_decl;
     printf("   ");
@@ -781,8 +778,8 @@ void resource_declaration()
 
     // Free
     _zn_res_decl_free(&d_rd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Publisher declaration ------------------*/
@@ -801,10 +798,10 @@ void assert_eq_publisher_declaration(_zn_pub_decl_t *left, _zn_pub_decl_t *right
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void publisher_declaration()
+void publisher_declaration(void)
 {
     printf("\n>> Publisher declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -814,9 +811,9 @@ void publisher_declaration()
     assert(_zn_pub_decl_encode(&wbf, e_hdr, &e_pd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_pub_decl_result_t r_pd = _zn_pub_decl_decode(&rbf, e_hdr);
-    assert(r_pd.tag == Z_OK_TAG);
+    assert(r_pd.tag == _z_res_t_OK);
 
     _zn_pub_decl_t d_pd = r_pd.value.pub_decl;
     printf("   ");
@@ -825,8 +822,8 @@ void publisher_declaration()
 
     // Free
     _zn_pub_decl_free(&d_pd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Subscriber declaration ------------------*/
@@ -834,10 +831,10 @@ _zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
 {
     _zn_sub_decl_t e_sd;
 
-    e_sd.sub_info = gen_sub_info();
-    if (e_sd.sub_info.mode != ZN_PUSH_MODE || e_sd.sub_info.is_periodic)
+    e_sd.subinfo = gen_subinfo();
+    if (e_sd.subinfo.mode != zn_submode_t_PUSH || e_sd.subinfo.period)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_S);
-    if (e_sd.sub_info.is_reliable)
+    if (e_sd.subinfo.reliability == zn_reliability_t_RELIABLE)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_R);
 
     e_sd.key = gen_res_key();
@@ -853,14 +850,14 @@ void assert_eq_subscriber_declaration(_zn_sub_decl_t *left, _zn_sub_decl_t *righ
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
     {
         printf(", ");
-        assert_eq_sub_info(&left->sub_info, &right->sub_info);
+        assert_eq_subinfo(&left->subinfo, &right->subinfo);
     }
 }
 
-void subscriber_declaration()
+void subscriber_declaration(void)
 {
     printf("\n>> Subscriber declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -870,9 +867,9 @@ void subscriber_declaration()
     assert(_zn_sub_decl_encode(&wbf, e_hdr, &e_sd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_sub_decl_result_t r_pd = _zn_sub_decl_decode(&rbf, e_hdr);
-    assert(r_pd.tag == Z_OK_TAG);
+    assert(r_pd.tag == _z_res_t_OK);
 
     _zn_sub_decl_t d_sd = r_pd.value.sub_decl;
     printf("   ");
@@ -881,8 +878,8 @@ void subscriber_declaration()
 
     // Free
     _zn_sub_decl_free(&d_sd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Queryable declaration ------------------*/
@@ -901,10 +898,10 @@ void assert_eq_queryable_declaration(_zn_qle_decl_t *left, _zn_qle_decl_t *right
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void queryable_declaration()
+void queryable_declaration(void)
 {
     printf("\n>> Queryable declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -914,9 +911,9 @@ void queryable_declaration()
     assert(_zn_qle_decl_encode(&wbf, e_hdr, &e_qd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_qle_decl_result_t r_qd = _zn_qle_decl_decode(&rbf, e_hdr);
-    assert(r_qd.tag == Z_OK_TAG);
+    assert(r_qd.tag == _z_res_t_OK);
 
     _zn_qle_decl_t d_qd = r_qd.value.qle_decl;
     printf("   ");
@@ -925,12 +922,12 @@ void queryable_declaration()
 
     // Free
     _zn_qle_decl_free(&d_qd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Forget Resource declaration ------------------*/
-_zn_forget_res_decl_t gen_forget_resource_declaration()
+_zn_forget_res_decl_t gen_forget_resource_declaration(void)
 {
     _zn_forget_res_decl_t e_frd;
 
@@ -945,10 +942,10 @@ void assert_eq_forget_resource_declaration(_zn_forget_res_decl_t *left, _zn_forg
     assert(left->rid == right->rid);
 }
 
-void forget_resource_declaration()
+void forget_resource_declaration(void)
 {
     printf("\n>> Forget resource declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     _zn_forget_res_decl_t e_frd = gen_forget_resource_declaration();
@@ -957,9 +954,9 @@ void forget_resource_declaration()
     assert(_zn_forget_res_decl_encode(&wbf, &e_frd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_forget_res_decl_result_t r_frd = _zn_forget_res_decl_decode(&rbf);
-    assert(r_frd.tag == Z_OK_TAG);
+    assert(r_frd.tag == _z_res_t_OK);
 
     _zn_forget_res_decl_t d_frd = r_frd.value.forget_res_decl;
     printf("   ");
@@ -968,8 +965,8 @@ void forget_resource_declaration()
 
     // Free
     // NOTE: forget_res_decl does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Forget Publisher declaration ------------------*/
@@ -988,10 +985,10 @@ void assert_eq_forget_publisher_declaration(_zn_forget_pub_decl_t *left, _zn_for
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void forget_publisher_declaration()
+void forget_publisher_declaration(void)
 {
     printf("\n>> Forget publisher declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1001,9 +998,9 @@ void forget_publisher_declaration()
     assert(_zn_forget_pub_decl_encode(&wbf, e_hdr, &e_fpd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_forget_pub_decl_result_t r_fpd = _zn_forget_pub_decl_decode(&rbf, e_hdr);
-    assert(r_fpd.tag == Z_OK_TAG);
+    assert(r_fpd.tag == _z_res_t_OK);
 
     _zn_forget_pub_decl_t d_fpd = r_fpd.value.forget_pub_decl;
     printf("   ");
@@ -1012,8 +1009,8 @@ void forget_publisher_declaration()
 
     // Free
     _zn_forget_pub_decl_free(&d_fpd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Forget Subscriber declaration ------------------*/
@@ -1032,10 +1029,10 @@ void assert_eq_forget_subscriber_declaration(_zn_forget_sub_decl_t *left, _zn_fo
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void forget_subscriber_declaration()
+void forget_subscriber_declaration(void)
 {
     printf("\n>> Forget subscriber declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1045,9 +1042,9 @@ void forget_subscriber_declaration()
     assert(_zn_forget_sub_decl_encode(&wbf, e_hdr, &e_fsd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_forget_sub_decl_result_t r_fsd = _zn_forget_sub_decl_decode(&rbf, e_hdr);
-    assert(r_fsd.tag == Z_OK_TAG);
+    assert(r_fsd.tag == _z_res_t_OK);
 
     _zn_forget_sub_decl_t d_fsd = r_fsd.value.forget_sub_decl;
     printf("   ");
@@ -1056,8 +1053,8 @@ void forget_subscriber_declaration()
 
     // Free
     _zn_forget_sub_decl_free(&d_fsd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Forget Queryable declaration ------------------*/
@@ -1076,10 +1073,10 @@ void assert_eq_forget_queryable_declaration(_zn_forget_qle_decl_t *left, _zn_for
     assert_eq_res_key(&left->key, &right->key, header);
 }
 
-void forget_queryable_declaration()
+void forget_queryable_declaration(void)
 {
     printf("\n>> Forget queryable declaration\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1089,9 +1086,9 @@ void forget_queryable_declaration()
     assert(_zn_forget_qle_decl_encode(&wbf, e_hdr, &e_fqd) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_forget_qle_decl_result_t r_fqd = _zn_forget_qle_decl_decode(&rbf, e_hdr);
-    assert(r_fqd.tag == Z_OK_TAG);
+    assert(r_fqd.tag == _z_res_t_OK);
 
     _zn_forget_qle_decl_t d_fqd = r_fqd.value.forget_qle_decl;
     printf("   ");
@@ -1100,12 +1097,12 @@ void forget_queryable_declaration()
 
     // Free
     _zn_forget_qle_decl_free(&d_fqd);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Declaration ------------------*/
-_zn_declaration_t gen_declaration()
+_zn_declaration_t gen_declaration(void)
 {
     uint8_t decl[] = {
         _ZN_DECL_RESOURCE,
@@ -1190,34 +1187,34 @@ void assert_eq_declaration(_zn_declaration_t *left, _zn_declaration_t *right)
 /*        Zenoh Messages       */
 /*=============================*/
 /*------------------ Declare message ------------------*/
-_zn_declare_t gen_declare_message()
+_zn_declare_t gen_declare_message(void)
 {
     _zn_declare_t e_dcl;
-    e_dcl.declarations.length = gen_zint() % 16;
-    e_dcl.declarations.elem = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.length);
+    e_dcl.declarations.len = gen_zint() % 16;
+    e_dcl.declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.len);
 
-    for (z_zint_t i = 0; i < e_dcl.declarations.length; ++i)
-        e_dcl.declarations.elem[i] = gen_declaration();
+    for (z_zint_t i = 0; i < e_dcl.declarations.len; ++i)
+        e_dcl.declarations.val[i] = gen_declaration();
 
     return e_dcl;
 }
 
 void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
 {
-    assert(left->declarations.length == right->declarations.length);
+    assert(left->declarations.len == right->declarations.len);
 
-    for (z_zint_t i = 0; i < left->declarations.length; ++i)
+    for (z_zint_t i = 0; i < left->declarations.len; ++i)
     {
         printf("   ");
-        assert_eq_declaration(&left->declarations.elem[i], &right->declarations.elem[i]);
+        assert_eq_declaration(&left->declarations.val[i], &right->declarations.val[i]);
         printf("\n");
     }
 }
 
-void declare_message()
+void declare_message(void)
 {
     printf("\n>> Declare message\n");
-    z_wbuf_t wbf = gen_wbuf(512);
+    _z_wbuf_t wbf = gen_wbuf(512);
 
     // Initialize
     _zn_declare_t e_dcl = gen_declare_message();
@@ -1226,17 +1223,17 @@ void declare_message()
     assert(_zn_declare_encode(&wbf, &e_dcl) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_declare_result_t r_dcl = _zn_declare_decode(&rbf);
-    assert(r_dcl.tag == Z_OK_TAG);
+    assert(r_dcl.tag == _z_res_t_OK);
 
     _zn_declare_t d_dcl = r_dcl.value.declare;
     assert_eq_declare_message(&e_dcl, &d_dcl);
 
     // Free
     _zn_declare_free(&d_dcl);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Data message ------------------*/
@@ -1273,10 +1270,10 @@ void assert_eq_data_message(_zn_data_t *left, _zn_data_t *right, uint8_t header)
     printf("\n");
 }
 
-void data_message()
+void data_message(void)
 {
     printf("\n>> Data message\n");
-    z_wbuf_t wbf = gen_wbuf(256);
+    _z_wbuf_t wbf = gen_wbuf(256);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1286,17 +1283,17 @@ void data_message()
     assert(_zn_data_encode(&wbf, e_hdr, &e_da) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_data_result_t r_da = _zn_data_decode(&rbf, e_hdr);
-    assert(r_da.tag == Z_OK_TAG);
+    assert(r_da.tag == _z_res_t_OK);
 
     _zn_data_t d_da = r_da.value.data;
     assert_eq_data_message(&e_da, &d_da, e_hdr);
 
     // Free
     _zn_data_free(&d_da);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Pull message ------------------*/
@@ -1335,10 +1332,10 @@ void assert_eq_pull_message(_zn_pull_t *left, _zn_pull_t *right, uint8_t header)
     }
 }
 
-void pull_message()
+void pull_message(void)
 {
     printf("\n>> Pull message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1348,17 +1345,17 @@ void pull_message()
     assert(_zn_pull_encode(&wbf, e_hdr, &e_pu) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_pull_result_t r_pu = _zn_pull_decode(&rbf, e_hdr);
-    assert(r_pu.tag == Z_OK_TAG);
+    assert(r_pu.tag == _z_res_t_OK);
 
     _zn_pull_t d_pu = r_pu.value.pull;
     assert_eq_pull_message(&e_pu, &d_pu, e_hdr);
 
     // Free
     _zn_pull_free(&d_pu);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Query message ------------------*/
@@ -1373,17 +1370,17 @@ _zn_query_t gen_query_message(uint8_t *header)
     if (gen_bool())
     {
         uint8_t tgt[] = {
-            ZN_QTGT_BEST_MATCH,
-            ZN_QTGT_COMPLETE,
-            ZN_QTGT_ALL,
-            ZN_QTGT_NONE};
+            zn_target_t_BEST_MATCHING,
+            zn_target_t_COMPLETE,
+            zn_target_t_ALL,
+            zn_target_t_NONE};
         e_qy.target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_T);
     }
     uint8_t con[] = {
-        ZN_QCON_NONE,
-        ZN_QCON_LAST_HOP,
-        ZN_QCON_INCREMENTAL};
+        zn_consolidation_mode_t_FULL,
+        zn_consolidation_mode_t_LAZY,
+        zn_consolidation_mode_t_NONE};
     e_qy.consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
     return e_qy;
@@ -1415,10 +1412,10 @@ void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t head
     printf("\n");
 }
 
-void query_message()
+void query_message(void)
 {
     printf("\n>> Query message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1428,21 +1425,21 @@ void query_message()
     assert(_zn_query_encode(&wbf, e_hdr, &e_qy) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_query_result_t r_qy = _zn_query_decode(&rbf, e_hdr);
-    assert(r_qy.tag == Z_OK_TAG);
+    assert(r_qy.tag == _z_res_t_OK);
 
     _zn_query_t d_qy = r_qy.value.query;
     assert_eq_query_message(&e_qy, &d_qy, e_hdr);
 
     // Free
     _zn_query_free(&d_qy);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Zenoh message ------------------*/
-_zn_zenoh_message_t *gen_zenoh_message()
+_zn_zenoh_message_t *gen_zenoh_message(void)
 {
     _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
     if (gen_bool())
@@ -1547,10 +1544,10 @@ void assert_eq_zenoh_message(_zn_zenoh_message_t *left, _zn_zenoh_message_t *rig
     }
 }
 
-void zenoh_message()
+void zenoh_message(void)
 {
     printf("\n>> Zenoh message\n");
-    z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
     _zn_zenoh_message_t *e_zm = gen_zenoh_message();
@@ -1595,9 +1592,9 @@ void zenoh_message()
     assert(_zn_zenoh_message_encode(&wbf, e_zm) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
-    assert(r_zm.tag == Z_OK_TAG);
+    assert(r_zm.tag == _z_res_t_OK);
 
     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
     assert_eq_zenoh_message(e_zm, d_zm);
@@ -1606,8 +1603,8 @@ void zenoh_message()
     free(e_zm);
     _zn_zenoh_message_free(d_zm);
     _zn_zenoh_message_p_result_free(&r_zm);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*=============================*/
@@ -1641,10 +1638,10 @@ void assert_eq_scout_message(_zn_scout_t *left, _zn_scout_t *right, uint8_t head
     }
 }
 
-void scout_message()
+void scout_message(void)
 {
     printf("\n>> Scout message\n");
-    z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1654,17 +1651,17 @@ void scout_message()
     assert(_zn_scout_encode(&wbf, e_hdr, &e_sc) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_scout_result_t r_sc = _zn_scout_decode(&rbf, e_hdr);
-    assert(r_sc.tag == Z_OK_TAG);
+    assert(r_sc.tag == _z_res_t_OK);
 
     _zn_scout_t d_sc = r_sc.value.scout;
     assert_eq_scout_message(&e_sc, &d_sc, e_hdr);
 
     // Free
     // NOTE: scout does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Hello Message ------------------*/
@@ -1674,7 +1671,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
 
     if (gen_bool())
     {
-        e_he.pid = gen_uint8_array(16);
+        e_he.pid = gen_bytes(16);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
     }
     if (gen_bool())
@@ -1684,7 +1681,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_he.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_he.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1708,15 +1705,15 @@ void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t head
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
 
-void hello_message()
+void hello_message(void)
 {
     printf("\n>> Hello message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1726,17 +1723,17 @@ void hello_message()
     assert(_zn_hello_encode(&wbf, e_hdr, &e_he) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_hello_result_t r_he = _zn_hello_decode(&rbf, e_hdr);
-    assert(r_he.tag == Z_OK_TAG);
+    assert(r_he.tag == _z_res_t_OK);
 
     _zn_hello_t d_he = r_he.value.hello;
     assert_eq_hello_message(&e_he, &d_he, e_hdr);
 
     // Free
     _zn_hello_free(&d_he, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Open Message ------------------*/
@@ -1746,7 +1743,7 @@ _zn_open_t gen_open_message(uint8_t *header)
 
     e_op.version = gen_uint8();
     e_op.whatami = gen_zint();
-    e_op.opid = gen_uint8_array(16);
+    e_op.opid = gen_bytes(16);
     e_op.lease = gen_zint();
     e_op.initial_sn = gen_zint();
     if (gen_bool())
@@ -1756,7 +1753,7 @@ _zn_open_t gen_open_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_op.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_op.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1795,15 +1792,15 @@ void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
 
-void open_message()
+void open_message(void)
 {
     printf("\n>> Open message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1813,17 +1810,17 @@ void open_message()
     assert(_zn_open_encode(&wbf, e_hdr, &e_op) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_open_result_t r_op = _zn_open_decode(&rbf, e_hdr);
-    assert(r_op.tag == Z_OK_TAG);
+    assert(r_op.tag == _z_res_t_OK);
 
     _zn_open_t d_op = r_op.value.open;
     assert_eq_open_message(&e_op, &d_op, e_hdr);
 
     // Free
     _zn_open_free(&d_op, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Accept Message ------------------*/
@@ -1832,8 +1829,8 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     _zn_accept_t e_ac;
 
     e_ac.whatami = gen_zint();
-    e_ac.opid = gen_uint8_array(16);
-    e_ac.apid = gen_uint8_array(16);
+    e_ac.opid = gen_bytes(16);
+    e_ac.apid = gen_bytes(16);
     e_ac.initial_sn = gen_zint();
     if (gen_bool())
     {
@@ -1842,7 +1839,7 @@ _zn_accept_t gen_accept_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_ac.locators = gen_string_vec((gen_uint8() % 4) + 1);
+        e_ac.locators = gen_str_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
     }
 
@@ -1881,15 +1878,15 @@ void assert_eq_accept_message(_zn_accept_t *left, _zn_accept_t *right, uint8_t h
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
     {
         printf("   ");
-        assert_eq_string_vec(&left->locators, &right->locators);
+        assert_eq_str_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
 
-void accept_message()
+void accept_message(void)
 {
     printf("\n>> Accept message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1899,17 +1896,17 @@ void accept_message()
     assert(_zn_accept_encode(&wbf, e_hdr, &e_ac) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_accept_result_t r_ac = _zn_accept_decode(&rbf, e_hdr);
-    assert(r_ac.tag == Z_OK_TAG);
+    assert(r_ac.tag == _z_res_t_OK);
 
     _zn_accept_t d_ac = r_ac.value.accept;
     assert_eq_accept_message(&e_ac, &d_ac, e_hdr);
 
     // Free
     _zn_accept_free(&d_ac, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Close Message ------------------*/
@@ -1920,7 +1917,7 @@ _zn_close_t gen_close_message(uint8_t *header)
     _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_K : 0);
     if (gen_bool())
     {
-        e_cl.pid = gen_uint8_array(16);
+        e_cl.pid = gen_bytes(16);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
     }
     e_cl.reason = gen_uint8();
@@ -1942,10 +1939,10 @@ void assert_eq_close_message(_zn_close_t *left, _zn_close_t *right, uint8_t head
     printf("\n");
 }
 
-void close_message()
+void close_message(void)
 {
     printf("\n>> Close message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1955,17 +1952,17 @@ void close_message()
     assert(_zn_close_encode(&wbf, e_hdr, &e_cl) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_close_result_t r_cl = _zn_close_decode(&rbf, e_hdr);
-    assert(r_cl.tag == Z_OK_TAG);
+    assert(r_cl.tag == _z_res_t_OK);
 
     _zn_close_t d_cl = r_cl.value.close;
     assert_eq_close_message(&e_cl, &d_cl, e_hdr);
 
     // Free
     _zn_close_free(&d_cl, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Sync Message ------------------*/
@@ -2001,10 +1998,10 @@ void assert_eq_sync_message(_zn_sync_t *left, _zn_sync_t *right, uint8_t header)
     }
 }
 
-void sync_message()
+void sync_message(void)
 {
     printf("\n>> Sync message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2014,17 +2011,17 @@ void sync_message()
     assert(_zn_sync_encode(&wbf, e_hdr, &e_sy) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_sync_result_t r_sy = _zn_sync_decode(&rbf, e_hdr);
-    assert(r_sy.tag == Z_OK_TAG);
+    assert(r_sy.tag == _z_res_t_OK);
 
     _zn_sync_t d_sy = r_sy.value.sync;
     assert_eq_sync_message(&e_sy, &d_sy, e_hdr);
 
     // Free
     // NOTE: sync does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ AckNack Message ------------------*/
@@ -2056,10 +2053,10 @@ void assert_eq_ack_nack_message(_zn_ack_nack_t *left, _zn_ack_nack_t *right, uin
     }
 }
 
-void ack_nack_message()
+void ack_nack_message(void)
 {
     printf("\n>> AckNack message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2069,17 +2066,17 @@ void ack_nack_message()
     assert(_zn_ack_nack_encode(&wbf, e_hdr, &e_an) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(&rbf, e_hdr);
-    assert(r_an.tag == Z_OK_TAG);
+    assert(r_an.tag == _z_res_t_OK);
 
     _zn_ack_nack_t d_an = r_an.value.ack_nack;
     assert_eq_ack_nack_message(&e_an, &d_an, e_hdr);
 
     // Free
     // NOTE: ack_nack does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ KeepAlive Message ------------------*/
@@ -2089,14 +2086,14 @@ _zn_keep_alive_t gen_keep_alive_message(uint8_t *header)
 
     if (gen_bool())
     {
-        e_ka.pid = gen_uint8_array(16);
+        e_ka.pid = gen_bytes(16);
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
     }
     else
     {
         // NOTE: this should not be needed. However, the compiler complains
         // that the variable might be used initialized. Initialize it to 0.
-        e_ka.pid = gen_uint8_array(0);
+        e_ka.pid = gen_bytes(0);
     }
 
     return e_ka;
@@ -2112,10 +2109,10 @@ void assert_eq_keep_alive_message(_zn_keep_alive_t *left, _zn_keep_alive_t *righ
     }
 }
 
-void keep_alive_message()
+void keep_alive_message(void)
 {
     printf("\n>> KeepAlive message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2125,17 +2122,17 @@ void keep_alive_message()
     assert(_zn_keep_alive_encode(&wbf, e_hdr, &e_ka) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(&rbf, e_hdr);
-    assert(r_ka.tag == Z_OK_TAG);
+    assert(r_ka.tag == _z_res_t_OK);
 
     _zn_keep_alive_t d_ka = r_ka.value.keep_alive;
     assert_eq_keep_alive_message(&e_ka, &d_ka, e_hdr);
 
     // Free
     _zn_keep_alive_free(&d_ka, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ PingPong Message ------------------*/
@@ -2156,10 +2153,10 @@ void assert_eq_ping_pong_message(_zn_ping_pong_t *left, _zn_ping_pong_t *right)
     printf("\n");
 }
 
-void ping_pong_message()
+void ping_pong_message(void)
 {
     printf("\n>> PingPong message\n");
-    z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2169,17 +2166,17 @@ void ping_pong_message()
     assert(_zn_ping_pong_encode(&wbf, &e_pp) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(&rbf);
-    assert(r_pp.tag == Z_OK_TAG);
+    assert(r_pp.tag == _z_res_t_OK);
 
     _zn_ping_pong_t d_pp = r_pp.value.ping_pong;
     assert_eq_ping_pong_message(&e_pp, &d_pp);
 
     // Free
     // NOTE: ping_pong does not involve any heap allocation
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Frame Message ------------------*/
@@ -2198,11 +2195,11 @@ _zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
     else
     {
         z_zint_t num = (gen_zint() % 4) + 1;
-        e_fr.payload.messages = z_vec_make(num);
+        e_fr.payload.messages = _z_vec_make(num);
         for (z_zint_t i = 0; i < num; ++i)
         {
             _zn_zenoh_message_t *p_zm = gen_zenoh_message();
-            z_vec_append(&e_fr.payload.messages, p_zm);
+            _z_vec_append(&e_fr.payload.messages, p_zm);
         }
     }
 
@@ -2223,20 +2220,20 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
     }
     else
     {
-        size_t l_len = z_vec_len(&left->payload.messages);
-        size_t r_len = z_vec_len(&right->payload.messages);
+        size_t l_len = _z_vec_len(&left->payload.messages);
+        size_t r_len = _z_vec_len(&right->payload.messages);
         printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 
         for (size_t i = 0; i < l_len; ++i)
-            assert_eq_zenoh_message((_zn_zenoh_message_t *)z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)z_vec_get(&right->payload.messages, i));
+            assert_eq_zenoh_message((_zn_zenoh_message_t *)_z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)_z_vec_get(&right->payload.messages, i));
     }
 }
 
-void frame_message()
+void frame_message(void)
 {
     printf("\n>> Frame message\n");
-    z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -2246,17 +2243,17 @@ void frame_message()
     assert(_zn_frame_encode(&wbf, e_hdr, &e_fr) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_frame_result_t r_fr = _zn_frame_decode(&rbf, e_hdr);
-    assert(r_fr.tag == Z_OK_TAG);
+    assert(r_fr.tag == _z_res_t_OK);
 
     _zn_frame_t d_fr = r_fr.value.frame;
     assert_eq_frame_message(&e_fr, &d_fr, e_hdr);
 
     // Frame
     _zn_frame_free(&d_fr, e_hdr);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Session Message ------------------*/
@@ -2387,10 +2384,10 @@ void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_
     }
 }
 
-void session_message()
+void session_message(void)
 {
     printf("\n>> Session message\n");
-    z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
     _zn_session_message_t *e_sm = gen_session_message(1);
@@ -2402,9 +2399,9 @@ void session_message()
     assert(_zn_session_message_encode(&wbf, e_sm) == 0);
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&rbf);
-    assert(r_zm.tag == Z_OK_TAG);
+    assert(r_zm.tag == _z_res_t_OK);
 
     _zn_session_message_t *d_sm = r_zm.value.session_message;
     assert_eq_session_message(e_sm, d_sm);
@@ -2413,19 +2410,19 @@ void session_message()
     free(e_sm);
     _zn_session_message_free(d_sm);
     _zn_session_message_p_result_free(&r_zm);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Batch ------------------*/
-void batch()
+void batch(void)
 {
     printf("\n>> Batch\n");
     uint8_t bef_num = (gen_uint8() % 3);
     uint8_t frm_num = 2 + (gen_uint8() % 3);
     uint8_t aft_num = (gen_uint8() % 3);
     uint8_t tot_num = bef_num + frm_num + aft_num;
-    z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
+    _z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
 
     // Initialize
     _zn_session_message_t **e_sm = (_zn_session_message_t **)malloc(tot_num * sizeof(_zn_session_message_t *));
@@ -2455,11 +2452,11 @@ void batch()
     }
 
     // Decode
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
     for (uint8_t i = 0; i < tot_num; ++i)
     {
         _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&rbf);
-        assert(r_sm.tag == Z_OK_TAG);
+        assert(r_sm.tag == _z_res_t_OK);
 
         _zn_session_message_t *d_sm = r_sm.value.session_message;
         printf(" - ");
@@ -2474,17 +2471,15 @@ void batch()
     }
 
     free(e_sm);
-    z_rbuf_free(&rbf);
-    z_wbuf_free(&wbf);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
 }
 
 /*------------------ Fragmentation ------------------*/
 _zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_session_message_t s_msg;
-    _ZN_INIT_S_MSG(s_msg)
-    s_msg.header = _ZN_MID_FRAME;
+    _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_FRAME);
     s_msg.body.frame.sn = sn;
 
     if (is_reliable)
@@ -2498,50 +2493,50 @@ _zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_
             _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
 
         // Do not add the payload
-        s_msg.body.frame.payload.fragment.length = 0;
-        s_msg.body.frame.payload.fragment.elem = NULL;
+        s_msg.body.frame.payload.fragment.len = 0;
+        s_msg.body.frame.payload.fragment.val = NULL;
     }
     else
     {
         // Do not allocate the vector containing the messages
         s_msg.body.frame.payload.messages._capacity = 0;
-        s_msg.body.frame.payload.messages._length = 0;
-        s_msg.body.frame.payload.messages._elem = NULL;
+        s_msg.body.frame.payload.messages._len = 0;
+        s_msg.body.frame.payload.messages._val = NULL;
     }
 
     return s_msg;
 }
 
-void _zn_wbuf_prepare(z_wbuf_t *wbf)
+void _zn_wbuf_prepare(_z_wbuf_t *wbf)
 {
     // Clear the buffer for serialization
-    z_wbuf_clear(wbf);
+    _z_wbuf_clear(wbf);
 
-    for (size_t i = 0; i < z_wbuf_space_left(wbf); i++)
-        z_wbuf_put(wbf, 0xff, i);
+    for (size_t i = 0; i < _z_wbuf_space_left(wbf); i++)
+        _z_wbuf_put(wbf, 0xff, i);
 }
 
-int _zn_serialize_zenoh_fragment(z_wbuf_t *dst, z_wbuf_t *src, int is_reliable, size_t sn)
+int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable, size_t sn)
 {
     // Assume first that this is not the final fragment
     int is_final = 0;
     do
     {
         // Mark the buffer for the writing operation
-        size_t w_pos = z_wbuf_get_wpos(dst);
+        size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
         _zn_session_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
         // Encode the frame header
         int res = _zn_session_message_encode(dst, &f_hdr);
         if (res == 0)
         {
-            size_t space_left = z_wbuf_space_left(dst);
-            size_t bytes_left = z_wbuf_len(src);
+            size_t space_left = _z_wbuf_space_left(dst);
+            size_t bytes_left = _z_wbuf_len(src);
             // Check if it is really the final fragment
             if (!is_final && (bytes_left <= space_left))
             {
                 // Revert the buffer
-                z_wbuf_set_wpos(dst, w_pos);
+                _z_wbuf_set_wpos(dst, w_pos);
                 // It is really the finally fragment, reserialize the header
                 is_final = 1;
                 continue;
@@ -2549,7 +2544,7 @@ int _zn_serialize_zenoh_fragment(z_wbuf_t *dst, z_wbuf_t *src, int is_reliable, 
             // Write the fragment
             size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
             printf("  -Bytes left: %zu, Space left: %zu, Fragment size: %zu, Is final: %d\n", bytes_left, space_left, to_copy, is_final);
-            return z_wbuf_copy_into(dst, src, to_copy);
+            return _z_wbuf_copy_into(dst, src, to_copy);
         }
         else
         {
@@ -2558,24 +2553,24 @@ int _zn_serialize_zenoh_fragment(z_wbuf_t *dst, z_wbuf_t *src, int is_reliable, 
     } while (1);
 }
 
-void fragmentation()
+void fragmentation(void)
 {
     printf("\n>> Fragmentation\n");
     size_t len = 16;
-    z_wbuf_t wbf = z_wbuf_make(len, 0);
-    z_wbuf_t fbf = z_wbuf_make(len, 1);
-    z_wbuf_t dbf = z_wbuf_make(0, 1);
+    _z_wbuf_t wbf = _z_wbuf_make(len, 0);
+    _z_wbuf_t fbf = _z_wbuf_make(len, 1);
+    _z_wbuf_t dbf = _z_wbuf_make(0, 1);
 
     _zn_zenoh_message_t *e_zm;
 
     do
     {
-        z_wbuf_clear(&fbf);
+        _z_wbuf_clear(&fbf);
         // Generate and serialize the message
         e_zm = gen_zenoh_message();
         _zn_zenoh_message_encode(&fbf, e_zm);
         // Check that the message actually requires fragmentation
-        if (z_wbuf_len(&fbf) <= len)
+        if (_z_wbuf_len(&fbf) <= len)
             _zn_zenoh_message_free(e_zm);
         else
             break;
@@ -2592,7 +2587,7 @@ void fragmentation()
 
     printf(" - Start fragmenting\n");
     int res = 0;
-    while (z_wbuf_len(&fbf) > 0)
+    while (_z_wbuf_len(&fbf) > 0)
     {
         // Clear the buffer for serialization
         _zn_wbuf_prepare(&wbf);
@@ -2600,53 +2595,53 @@ void fragmentation()
         // Get the fragment sequence number
         sn = (sn + 1) % sn_resolution;
 
-        size_t written = z_wbuf_len(&fbf);
+        size_t written = _z_wbuf_len(&fbf);
         res = _zn_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == 0);
-        written -= z_wbuf_len(&fbf);
+        written -= _z_wbuf_len(&fbf);
 
         printf("  -Encoded Fragment: ");
         print_wbuf(&wbf);
 
         // Decode the message
-        z_rbuf_t rbf = z_wbuf_to_rbuf(&wbf);
+        _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
 
         _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&rbf);
-        assert(r_sm.tag == Z_OK_TAG);
+        assert(r_sm.tag == _z_res_t_OK);
 
-        z_uint8_array_t fragment = r_sm.value.session_message->body.frame.payload.fragment;
-        printf("  -Decoded Fragment length: %zu\n", fragment.length);
-        assert(fragment.length == written);
+        z_bytes_t fragment = r_sm.value.session_message->body.frame.payload.fragment;
+        printf("  -Decoded Fragment length: %zu\n", fragment.len);
+        assert(fragment.len == written);
 
         // Create an iosli for decoding
-        z_wbuf_add_iosli_from(&dbf, fragment.elem, fragment.length);
+        _z_wbuf_add_iosli_from(&dbf, fragment.val, fragment.len);
 
         print_wbuf(&dbf);
 
         // Free the read buffer
-        z_rbuf_free(&rbf);
+        _z_rbuf_free(&rbf);
     }
 
     printf(" - Start defragmenting\n");
     print_wbuf(&dbf);
-    z_rbuf_t rbf = z_wbuf_to_rbuf(&dbf);
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&dbf);
     printf("   Defragmented: ");
     print_iosli(&rbf.ios);
     printf("\n");
     _zn_zenoh_message_p_result_t r_sm = _zn_zenoh_message_decode(&rbf);
-    assert(r_sm.tag == Z_OK_TAG);
+    assert(r_sm.tag == _z_res_t_OK);
     _zn_zenoh_message_t *d_zm = r_sm.value.zenoh_message;
     assert_eq_zenoh_message(e_zm, d_zm);
 
-    z_wbuf_free(&dbf);
-    z_wbuf_free(&wbf);
-    z_wbuf_free(&fbf);
+    _z_wbuf_free(&dbf);
+    _z_wbuf_free(&wbf);
+    _z_wbuf_free(&fbf);
 }
 
 /*=============================*/
 /*            Main             */
 /*=============================*/
-int main()
+int main(void)
 {
     for (unsigned int i = 0; i < RUNS; ++i)
     {
@@ -2654,7 +2649,7 @@ int main()
         // Message fields
         payload_field();
         timestamp_field();
-        sub_info_field();
+        subinfo_field();
         res_key_field();
         data_info_field();
         // Message decorators

@@ -12,16 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_PRIVATE_SESSION_H
-#define ZENOH_C_NET_PRIVATE_SESSION_H
+#ifndef _ZENOH_NET_PICO_TASKS_H
+#define _ZENOH_NET_PICO_TASKS_H
 
 #include "zenoh/net/types.h"
 
-zn_session_t *_zn_session_init();
-void _zn_session_close(zn_session_t *z, unsigned int reason);
-void _zn_session_free(zn_session_t *z);
+void *_znp_lease_task(zn_session_t *z);
+void *_znp_read_task(zn_session_t *z);
 
-int _zn_handle_session_message();
-int _zn_handle_zenoh_message(zn_session_t *z);
-
-#endif /* ZENOH_C_NET_PRIVATE_SESSION_H */
+#endif /* _ZENOH_NET_PICO_TASKS_H */

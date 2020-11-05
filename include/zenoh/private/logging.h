@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_LOGGING_H_
-#define ZENOH_C_LOGGING_H_
+#ifndef _ZENOH_PICO_LOGGING_H
+#define _ZENOH_PICO_LOGGING_H
 
 #if (ZENOH_DEBUG == 2)
 #include <stdio.h>
@@ -22,17 +22,15 @@
 #define _Z_DEBUG_VA(x, ...) printf(x, __VA_ARGS__)
 #define _Z_ERROR(x, ...) printf(x, __VA_ARGS__)
 #elif (ZENOH_DEBUG == 1)
-#include "zenoh/types.h"
+#include <stdio.h>
 
 #define _Z_ERROR(x, ...) printf(x, __VA_ARGS__)
-#define _Z_DEBUG_VA(x, ...) (void)(_z_dummy_arg)
-#define _Z_DEBUG(x) (void)(_z_dummy_arg)
+#define _Z_DEBUG_VA(x, ...) (void)(0)
+#define _Z_DEBUG(x) (void)(0)
 #elif (ZENOH_DEBUG == 0)
-#include "zenoh/types.h"
-
-#define _Z_DEBUG(x) (void)(_z_dummy_arg)
-#define _Z_DEBUG_VA(x, ...) (void)(_z_dummy_arg)
-#define _Z_ERROR(x, ...) (void)(_z_dummy_arg)
+#define _Z_DEBUG(x) (void)(0)
+#define _Z_DEBUG_VA(x, ...) (void)(0)
+#define _Z_ERROR(x, ...) (void)(0)
 #endif
 
-#endif /* ZENOH_C_LOGGING_H_ */
+#endif /* _ZENOH_PICO_LOGGING_H */

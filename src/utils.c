@@ -12,15 +12,18 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_RECV_LOOP_H
-#define ZENOH_C_NET_RECV_LOOP_H
+#include <string.h>
+#include "zenoh/utils.h"
 
-#include "zenoh/net/types.h"
+z_string_t z_string_make(const char *value)
+{
+    z_string_t s;
+    s.val = strdup(value);
+    s.len = strlen(value);
+    return s;
+}
 
-void *zn_recv_loop(zn_session_t *z);
-
-int zn_start_recv_loop(zn_session_t *z);
-
-int zn_stop_recv_loop(zn_session_t *z);
-
-#endif /* ZENOH_C_NET_RECV_LOOP_H */
+void z_string_free(z_string_t *s)
+{
+    free((char *)s->val);
+}

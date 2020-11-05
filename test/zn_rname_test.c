@@ -13,12 +13,11 @@
  */
 
 #include <assert.h>
-#include "zenoh/rname.h"
+#include "zenoh/net/rname.h"
 #include "zenoh/types.h"
 
-int main(int argc, char **argv)
+int main(void)
 {
-    Z_UNUSED_ARG_2(argc, argv);
     assert(zn_rname_intersect("/", "/"));
     assert(zn_rname_intersect("/a", "/a"));
     assert(zn_rname_intersect("/a/", "/a"));

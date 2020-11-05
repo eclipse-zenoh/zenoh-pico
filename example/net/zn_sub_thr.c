@@ -13,8 +13,7 @@
  */
 #include <stdio.h>
 #include <sys/time.h>
-#include <unistd.h>
-#include "zenoh.h"
+#include "zenoh/net.h"
 
 #define N 100000
 
@@ -30,9 +29,10 @@ void print_stats(volatile struct timeval *start, volatile struct timeval *stop)
     printf("%f msgs/sec\n", thpt);
 }
 
-void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+void data_handler(const zn_sample_t *sample, const void *arg)
 {
-    Z_UNUSED_ARG_5(rid, data, length, info, arg);
+    (void)(sample); // Unused argument
+    (void)(arg);    // Unused argument
 
     struct timeval tv;
     if (count == 0)
@@ -56,50 +56,39 @@ void data_handler(const zn_res_key_t *rid, const unsigned char *data, size_t len
 
 int main(int argc, char **argv)
 {
-    const char *path = "/test/thr";
-    char *locator = 0;
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_sub_thr [<path>=%s] [<locator>=auto]\n\n", path);
-        return 0;
-    }
-
+    zn_properties_t *config = zn_config_default();
     if (argc > 1)
     {
-        path = argv[1];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
     }
 
-    if (argc > 2)
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
     {
-        locator = argv[2];
+        printf("Unable to open session!\n");
+        exit(-1);
     }
 
-    // Open a session
-    zn_session_p_result_t rz = zn_open(locator, 0, 0);
-    ASSERT_RESULT(rz, "Unable to open a session.\n")
-    zn_session_t *z = rz.value.session;
-    zn_start_recv_loop(z);
-    zn_start_lease_loop(z);
+    // Start the read session session lease loops
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
-    // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
-
-    // Declare a resource
-    zn_res_p_result_t rr = zn_declare_resource(z, &rk);
-    ASSERT_P_RESULT(rr, "Unable to declare resource.\n");
-    zn_res_t *res = rr.value.res;
-
-    zn_sub_info_t si;
-    si.mode = ZN_PUSH_MODE;
-    si.is_reliable = 1;
-    si.is_periodic = 0;
-    zn_sub_p_result_t r = zn_declare_subscriber(z, &res->key, &si, data_handler, NULL);
-    ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
-
-    while (z)
+    zn_reskey_t rid = zn_rid(zn_declare_resource(s, zn_rname("/test/thr")));
+    zn_subscriber_t *sub = zn_declare_subscriber(s, rid, zn_subinfo_default(), data_handler, NULL);
+    if (sub == 0)
     {
-        sleep(3600);
+        printf("Unable to declare subscriber.\n");
+        exit(-1);
     }
 
+    char c = 0;
+    while (c != 'q')
+    {
+        c = fgetc(stdin);
+    }
+
+    zn_undeclare_subscriber(sub);
+    zn_close(s);
     return 0;
 }

@@ -11,47 +11,40 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-#ifndef ZENOH_C_PRIVATE_TYPES_H
-#define ZENOH_C_PRIVATE_TYPES_H
+#ifndef _ZENOH_NET_PICO_TYPES_H
+#define _ZENOH_NET_PICO_TYPES_H
 
+#include "zenoh/types.h"
 #include "zenoh/net/types.h"
 
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X| RESOURCE|
-// +---------------+
-// ~     ResID     ~
-// +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
-// +---------------+
-typedef struct
-{
-    z_zint_t id;
-    zn_res_key_t key;
-} _zn_res_decl_t;
+#define _ZN_IS_REMOTE 0
+#define _ZN_IS_LOCAL 1
 
 typedef struct
 {
     z_zint_t id;
-    zn_res_key_t key;
-    zn_sub_info_t info;
+    zn_reskey_t key;
+    uint8_t encoding;
+    uint8_t kind;
+    void *context;
+} _zn_resource_t;
+
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+    zn_subinfo_t info;
     zn_data_handler_t data_handler;
     void *arg;
-} _zn_sub_t;
-
-// typedef struct
-// {
-//     zn_res_key_t key;
-//     zn_sub_info_t info;
-// } _zn_sub_rem_t;
+} _zn_subscriber_t;
 
 typedef struct
 {
-    char *rname;
+    z_str_t rname;
     z_zint_t rid;
     z_zint_t id;
     zn_query_handler_t query_handler;
     void *arg;
-} _zn_qle_t;
+} _zn_queryable_t;
 
-#endif /* ZENOH_C_PRIVATE_TYPES_H */
+#endif /* _ZENOH_PICO_PRIVATE_TYPES_H */

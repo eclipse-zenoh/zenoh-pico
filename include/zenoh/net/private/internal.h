@@ -12,21 +12,34 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_INTERNAL_H
-#define ZENOH_C_NET_INTERNAL_H
+#ifndef _ZENOH_NET_PICO_INTERNAL_H
+#define _ZENOH_NET_PICO_INTERNAL_H
 
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
+#include "zenoh/net/private/msgcodec.h"
 
-#define _ZN_IS_REMOTE 0
-#define _ZN_IS_LOCAL 1
+/*------------------ Session ------------------*/
+zn_session_t *_zn_session_init(void);
+int _zn_session_close(zn_session_t *z, uint8_t reason);
+void _zn_session_free(zn_session_t *z);
+
+int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *s_msg);
+int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *z_msg);
+
+/*------------------ ResKey helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(zn_reskey_t *resky);
+
+/*------------------ Message helper ------------------*/
+_zn_session_message_t _zn_session_message_init(uint8_t header);
+_zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
 
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
-int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, int reliable);
+int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, zn_reliability_t reliability);
 
 _zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *z);
 void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);
@@ -35,23 +48,26 @@ void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);
 z_zint_t _zn_get_entity_id(zn_session_t *z);
 
 /*------------------ Resource ------------------*/
-z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_res_key_t *res_key);
-_zn_res_decl_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
-_zn_res_decl_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
-int _zn_register_resource(zn_session_t *z, int is_local, z_zint_t rid, const zn_res_key_t *res_key);
-void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_res_decl_t *res);
+z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_reskey_t *res_key);
+_zn_resource_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
+_zn_resource_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+z_str_t _zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+
+int _zn_register_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
+void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
 
 /*------------------ Subscription ------------------*/
-z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_res_key_t *res_key);
-_zn_sub_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
-_zn_sub_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_res_key_t *res_key);
-int _zn_register_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
-void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
+_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_reskey_t *res_key);
+_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
+_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
+void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
+void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const z_bytes_t payload);
 
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
-// z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
-// z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
-// void _zn_unregister_queryable(zn_qle_t *s);
+// _z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
+// _z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
+// void _zn_unregister_queryable(zn_queryable_t *s);
 
 // int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid);
 
@@ -65,4 +81,4 @@ void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_sub_t *s);
 // void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg);
 // _zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid);
 
-#endif /* ZENOH_C_NET_INTERNAL_H */
+#endif /* _ZENOH_NET_PICO_INTERNAL_H */

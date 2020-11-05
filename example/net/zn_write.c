@@ -12,64 +12,38 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include <unistd.h>
-#include "zenoh.h"
-
-/*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
-#include <stdio.h>
-#include <unistd.h>
-#include "zenoh.h"
-
-#define MAX_LEN 256
+#include <string.h>
+#include "zenoh/net.h"
 
 int main(int argc, char **argv)
 {
-    char *path = "/demo/example/write";
-    char *locator = NULL;
-    char *value = "Write from Zenoh-pico!";
-
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_pub [<path>=%s] [<locator>=auto] [<value>='%s']\n\n", path, value);
-        return 0;
-    }
+    char *uri = "/demo/example/zenoh-pico-write";
     if (argc > 1)
     {
-        path = argv[1];
+        uri = argv[1];
     }
+    char *value = "Write from pico!";
     if (argc > 2)
     {
-        if (strcmp(argv[2], "auto") != 0)
-            locator = argv[2];
+        value = argv[2];
     }
+    zn_properties_t *config = zn_config_default();
     if (argc > 3)
     {
-        value = argv[3];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[3]));
     }
 
-    // Open a session
-    zn_session_p_result_t rz = zn_open(locator, 0, 0);
-    ASSERT_P_RESULT(rz, "Unable to open a session.\n");
-    zn_session_t *z = rz.value.session;
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // Build the resource key
-    zn_res_key_t rk = zn_rname(path);
-    zn_write(z, &rk, (const unsigned char *)value, strlen(value));
+    printf("Writing Data ('%s': '%s')...\n", uri, value);
+    zn_write(s, zn_rname(uri), (const uint8_t *)value, strlen(value));
 
-    // Close the session
-    zn_close(z);
-
+    zn_close(s);
     return 0;
 }
