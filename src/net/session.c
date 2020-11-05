@@ -271,7 +271,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
     case _ZN_MID_DECLARE:
     {
         _Z_DEBUG("Received _ZN_DECLARE message\n");
-        for (size_t i = 0; i < msg->body.declare.declarations.len; ++i)
+        for (unsigned int i = 0; i < msg->body.declare.declarations.len; ++i)
         {
             _zn_declaration_t decl = msg->body.declare.declarations.val[i];
             switch (_ZN_MID(decl.header))
@@ -320,29 +320,31 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             {
                 // Check if there are matching local subscriptions
                 _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
-                size_t len = _z_list_len(subs);
+                unsigned int len = _z_list_len(subs);
                 if (len > 0)
                 {
                     // Need to reply with a decl subscriber
-                    _zn_zenoh_message_t ds = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-                    _ZN_ARRAY_S_DEFINE(declaration, declarations, len);
+                    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
+                    unsigned int len = 1;
+                    z_msg.body.declare.declarations.len = len;
+                    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
                     while (subs)
                     {
                         _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
-                        declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
-                        declarations.val[len].body.sub.key = sub->key;
-                        declarations.val[len].body.sub.subinfo = sub->info;
+                        z_msg.body.declare.declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
+                        z_msg.body.declare.declarations.val[len].body.sub.key = sub->key;
+                        z_msg.body.declare.declarations.val[len].body.sub.subinfo = sub->info;
 
                         subs = _z_list_pop(subs);
                     }
 
                     // Send the message
-                    _zn_send_z_msg(z, &ds, zn_reliability_t_RELIABLE);
+                    _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
 
                     // Free the declarations
-                    _ARRAY_S_FREE(declarations);
+                    _zn_zenoh_message_free(&z_msg);
                 }
                 break;
             }
@@ -557,8 +559,8 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         else
         {
             // Handle all the zenoh message, one by one
-            size_t len = _z_vec_len(&msg->body.frame.payload.messages);
-            for (size_t i = 0; i < len; ++i)
+            unsigned int len = _z_vec_len(&msg->body.frame.payload.messages);
+            for (unsigned int i = 0; i < len; ++i)
             {
                 int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
@@ -632,7 +634,7 @@ void zn_hello_array_free(zn_hello_array_t hellos)
     zn_hello_t *h = (zn_hello_t *)hellos.val;
     if (h)
     {
-        for (size_t i = 0; i < hellos.len; i++)
+        for (unsigned int i = 0; i < hellos.len; i++)
         {
             if (h[i].pid.len > 0)
                 _z_bytes_free(&h[i].pid);
@@ -768,7 +770,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Randomly generate a peer ID
     z_bytes_t pid = _z_bytes_make(ZN_PID_LENGTH);
-    for (size_t i = 0; i < pid.len; i++)
+    for (unsigned int i = 0; i < pid.len; i++)
         ((uint8_t *)pid.val)[i] = rand() % 255;
 
     // Build the open message
@@ -950,7 +952,7 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the resource
-    size_t len = 1;
+    unsigned int len = 1;
     z_msg.body.declare.declarations.len = len;
     z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -992,7 +994,7 @@ int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
         // We need to undeclare the resource and the publisher
-        size_t len = 1;
+        unsigned int len = 1;
         z_msg.body.declare.declarations.len = len;
         z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -1030,7 +1032,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t reskey)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the resource and the publisher
-    size_t len = 1;
+    unsigned int len = 1;
     z_msg.body.declare.declarations.len = len;
     z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -1060,7 +1062,7 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to undeclare the publisher
-    size_t len = 1;
+    unsigned int len = 1;
     z_msg.body.declare.declarations.len = len;
     z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -1095,7 +1097,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the subscriber
-    size_t len = 1;
+    unsigned int len = 1;
     z_msg.body.declare.declarations.len = len;
     z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -1150,7 +1152,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
         // We need to undeclare the subscriber
-        size_t len = 1;
+        unsigned int len = 1;
         z_msg.body.declare.declarations.len = len;
         z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
