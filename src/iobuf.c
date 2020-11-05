@@ -526,7 +526,7 @@ void _z_wbuf_clear(_z_wbuf_t *wbf)
 {
     wbf->r_idx = 0;
     wbf->w_idx = 0;
-    for (size_t i = 0; i < _z_vec_len(&wbf->ioss); i++)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         _z_iosli_clear(_z_wbuf_get_iosli(wbf, i));
     }
@@ -536,7 +536,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf)
 {
     wbf->r_idx = 0;
     wbf->w_idx = 0;
-    for (size_t i = 0; i < _z_vec_len(&wbf->ioss); i++)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         _z_iosli_free(ios);
@@ -557,7 +557,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf)
 
 void _z_wbuf_free(_z_wbuf_t *wbf)
 {
-    for (size_t i = 0; i < _z_vec_len(&wbf->ioss); i++)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         _z_iosli_free(ios);

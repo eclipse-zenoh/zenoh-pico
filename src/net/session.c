@@ -29,10 +29,13 @@ zn_session_t *_zn_session_init()
 {
     zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
 
-    // Initialize the buffers
+    // Initialize the read and write buffers
     z->wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
     z->rbuf = _z_rbuf_make(ZN_READ_BUF_LEN);
-    z->dbuf = _z_wbuf_make(0, 1);
+
+    // Initialize the defragmentation buffers
+    z->dbuf_reliable = _z_wbuf_make(0, 1);
+    z->dbuf_best_effort = _z_wbuf_make(0, 1);
 
     // Initialize the mutexes
     _zn_mutex_init(&z->mutex_rx);
@@ -88,6 +91,9 @@ void _zn_session_free(zn_session_t *z)
 
     _z_wbuf_free(&z->wbuf);
     _z_rbuf_free(&z->rbuf);
+
+    _z_wbuf_free(&z->dbuf_reliable);
+    _z_wbuf_free(&z->dbuf_best_effort);
 
     free(z);
 
@@ -547,6 +553,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             }
             else
             {
+                _z_wbuf_reset(&z->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -559,6 +566,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             }
             else
             {
+                _z_wbuf_reset(&z->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -567,14 +575,17 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
         {
             int res = _z_res_t_OK;
+
+            // Select the right defragmentation buffer
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R) ? &z->dbuf_reliable : &z->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
-            _z_wbuf_add_iosli_from(&z->dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
+            _z_wbuf_add_iosli_from(dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
-                _z_rbuf_t rbf = _z_wbuf_to_rbuf(&z->dbuf);
+                _z_rbuf_t rbf = _z_wbuf_to_rbuf(dbuf);
 
                 // Decode the zenoh message
                 _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
@@ -595,7 +606,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
                 // Free the decoding buffer
                 _z_rbuf_free(&rbf);
                 // Reset the defragmentation buffer
-                _z_wbuf_reset(&z->dbuf);
+                _z_wbuf_reset(dbuf);
             }
 
             return res;

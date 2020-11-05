@@ -299,7 +299,9 @@ typedef struct
 
     _z_wbuf_t wbuf;
     _z_rbuf_t rbuf;
-    _z_wbuf_t dbuf;
+
+    _z_wbuf_t dbuf_reliable;
+    _z_wbuf_t dbuf_best_effort;
 
     // Connection state
     z_bytes_t local_pid;
