@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_RESULT_H
-#define ZENOH_C_NET_RESULT_H
+#ifndef _ZENOH_NET_PICO_RESULT_H
+#define _ZENOH_NET_PICO_RESULT_H
 
 #include "zenoh/net/types.h"
 #include "zenoh/private/result.h"
@@ -44,4 +44,4 @@ typedef enum
 #define _ZN_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _zn)
 #define _ZN_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _zn)
 
-#endif /* ZENOH_C_NET_RESULT_H */
+#endif /* _ZENOH_NET_PICO_RESULT_H */

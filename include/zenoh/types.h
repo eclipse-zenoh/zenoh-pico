@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_TYPES_H
-#define ZENOH_C_TYPES_H
+#ifndef ZENOH_PICO_TYPES_H
+#define ZENOH_PICO_TYPES_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -82,4 +82,4 @@ typedef struct
     z_bytes_t id;
 } z_timestamp_t;
 
-#endif /* ZENOH_C_TYPES_H */
+#endif /* ZENOH_PICO_TYPES_H */

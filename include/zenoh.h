@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_H_DEFINED
-#define ZENOH_C_H_DEFINED
+#ifndef ZENOH_PICO_H
+#define ZENOH_PICO_H
 
 #include "zenoh/net.h"
 
-#endif /* ZENOH_C_H_DEFINED */
+#endif /* ZENOH_PICO_H */

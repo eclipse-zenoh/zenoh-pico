@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_TYPES_H_
-#define ZENOH_C_NET_TYPES_H_
+#ifndef ZENOH_NET_PICO_TYPES_H_
+#define ZENOH_NET_PICO_TYPES_H_
 
 #include <stdint.h>
 #include <string.h>
@@ -23,7 +23,7 @@
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
 #include "zenoh/net/private/unix/types.h"
-#elif (ZENOH_CONTIKI == 1)
+#elif (ZENOH_PICOONTIKI == 1)
 #include "zenoh/net/private/contiki/types.h"
 #endif
 
@@ -377,4 +377,4 @@ typedef struct
     z_zint_t id;
 } zn_queryable_t;
 
-#endif /* ZENOH_C_NET_TYPES_H_ */
+#endif /* ZENOH_NET_PICO_TYPES_H_ */

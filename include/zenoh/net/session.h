@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_SESSION_H
-#define ZENOH_C_NET_SESSION_H
+#ifndef ZENOH_NET_PICO_SESSION_H
+#define ZENOH_NET_PICO_SESSION_H
 
 #include <stdint.h>
 #include "zenoh/net/types.h"
@@ -353,4 +353,4 @@ int znp_start_lease_task(zn_session_t *z);
  */
 int znp_stop_lease_task(zn_session_t *z);
 
-#endif /* ZENOH_C_NET_SESSION_H */
+#endif /* ZENOH_NET_PICO_SESSION_H */

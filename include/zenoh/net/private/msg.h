@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_MSG_H
-#define ZENOH_C_NET_MSG_H
+#ifndef _ZENOH_NET_PICO_MSG_H
+#define _ZENOH_NET_PICO_MSG_H
 
 #include <stdint.h>
 #include "zenoh/net/private/types.h"
@@ -858,4 +858,4 @@ typedef struct
     uint8_t header;
 } _zn_zenoh_message_t;
 
-#endif /* ZENOH_C_NET_MSG_H */
+#endif /* _ZENOH_NET_PICO_MSG_H */

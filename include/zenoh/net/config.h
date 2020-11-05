@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_CONFIG_H
-#define ZENOH_C_NET_CONFIG_H
+#ifndef ZENOH_NET_PICO_CONFIG_H
+#define ZENOH_NET_PICO_CONFIG_H
 
 /*------------------ Configuration properties ------------------*/
 /** 
@@ -150,4 +150,4 @@
 #define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE
 #endif
 
-#endif /* ZENOH_C_NET_CONFIG_H */
+#endif /* ZENOH_NET_PICO_CONFIG_H */

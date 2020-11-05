@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_CODEC_H
-#define _ZENOH_C_NET_CODEC_H
+#ifndef _ZENOH_NET_PICO_TASKS_H
+#define _ZENOH_NET_PICO_TASKS_H
 
 #include "zenoh/net/types.h"
 
 void *_znp_lease_task(zn_session_t *z);
 void *_znp_read_task(zn_session_t *z);
 
-#endif /* _ZENOH_C_NET_CODEC_H */
+#endif /* _ZENOH_NET_PICO_TASKS_H */

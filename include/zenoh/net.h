@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_NET_C_H_DEFINED
-#define ZENOH_NET_C_H_DEFINED
+#ifndef ZENOH_NET_PICO_H
+#define ZENOH_NET_PICO_H
 
 #include "zenoh/types.h"
 #include "zenoh/utils.h"
@@ -21,4 +21,4 @@
 #include "zenoh/net/rname.h"
 #include "zenoh/net/session.h"
 
-#endif /* ZENOH_NET_C_H_DEFINED */
+#endif /* ZENOH_NET_PICO_H */

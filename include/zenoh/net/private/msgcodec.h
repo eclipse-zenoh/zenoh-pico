@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_MSGCODEC_H
-#define _ZENOH_C_NET_MSGCODEC_H
+#ifndef _ZENOH_NET_PICO_MSGCODEC_H
+#define _ZENOH_NET_PICO_MSGCODEC_H
 
 #include <stdint.h>
 #include "zenoh/net/private/codec.h"
@@ -22,7 +22,7 @@
 #include "zenoh/net/property.h"
 #include "zenoh/net/private/msg.h"
 
-#define _ZENOH_C_FRAME_MESSAGES_VEC_SIZE 32
+#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 /*------------------ Result declarations ------------------*/
 _ZN_RESULT_DECLARE(zn_reskey_t, reskey)
@@ -112,10 +112,10 @@ _ZN_DECLARE_ENCODE_NOH(zenoh_message);
 _ZN_DECLARE_P_DECODE_NOH(zenoh_message);
 _ZN_DECLARE_FREE_NOH(zenoh_message);
 
-#endif /* ZENOH_C_NET_MSGCODEC_H */
+#endif /* ZENOH_NET_PICO_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
-#ifdef _ZENOH_C_NET_MSGCODEC_H_T
+#ifdef _ZENOH_NET_PICO_MSGCODEC_H_T
 /*------------------ Message Fields ------------------*/
 _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
@@ -235,4 +235,4 @@ _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
 _ZN_DECLARE_FREE(frame);
 
-#endif /* _ZENOH_C_NET_MSGCODEC_H_T */
+#endif /* _ZENOH_NET_PICO_MSGCODEC_H_T */

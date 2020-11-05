@@ -11,8 +11,8 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-#ifndef ZENOH_C_PRIVATE_TYPES_H
-#define ZENOH_C_PRIVATE_TYPES_H
+#ifndef _ZENOH_NET_PICO_TYPES_H
+#define _ZENOH_NET_PICO_TYPES_H
 
 #include "zenoh/types.h"
 #include "zenoh/net/types.h"
@@ -47,4 +47,4 @@ typedef struct
     void *arg;
 } _zn_queryable_t;
 
-#endif /* ZENOH_C_PRIVATE_TYPES_H */
+#endif /* _ZENOH_PICO_PRIVATE_TYPES_H */

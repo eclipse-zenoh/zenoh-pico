@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_COLLECTION_H
-#define _ZENOH_C_COLLECTION_H
+#ifndef _ZENOH_PICO_COLLECTION_H
+#define _ZENOH_PICO_COLLECTION_H
 
 #include <stdint.h>
 #include "zenoh/private/types.h"
@@ -106,7 +106,7 @@ _z_list_t *_z_list_drop_val(_z_list_t *xs, size_t position);
 void _z_list_free(_z_list_t **xs);
 
 /*-------- Int Map --------*/
-#define DEFAULT_I_MAP_CAPACITY 64
+#define _Z_DEFAULT_I_MAP_CAPACITY 64
 
 _z_i_map_t *_z_i_map_empty;
 _z_i_map_t *_z_i_map_make(size_t capacity);
@@ -134,4 +134,4 @@ void _z_str_array_copy(z_str_array_t *dst, z_str_array_t *src);
 void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);
 void _z_str_array_free(z_str_array_t *sa);
 
-#endif /* _ZENOH_C_COLLECTION_H */
+#endif /* _ZENOH_PICO_COLLECTION_H */

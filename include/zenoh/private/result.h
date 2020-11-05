@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_RESULT_H
-#define _ZENOH_C_RESULT_H
+#ifndef _ZENOH_PICO_RESULT_H
+#define _ZENOH_PICO_RESULT_H
 
 /*------------------ Result Enums ------------------*/
 typedef enum _z_err_t
@@ -108,4 +108,4 @@ typedef enum _z_res_t
 #define _Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _z)
 #define _Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _z)
 
-#endif /* _ZENOH_C_RESULT_H */
+#endif /* _ZENOH_PICO_RESULT_H */

@@ -31,8 +31,8 @@ void print_stats(volatile struct timeval *start, volatile struct timeval *stop)
 
 void data_handler(const zn_sample_t *sample, const void *arg)
 {
-    (void)(sample);
-    (void)(arg);
+    (void)(sample); // Unused argument
+    (void)(arg);    // Unused argument
 
     struct timeval tv;
     if (count == 0)

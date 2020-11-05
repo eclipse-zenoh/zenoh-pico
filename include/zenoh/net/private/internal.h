@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_INTERNAL_H
-#define ZENOH_C_NET_INTERNAL_H
+#ifndef _ZENOH_NET_PICO_INTERNAL_H
+#define _ZENOH_NET_PICO_INTERNAL_H
 
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
@@ -81,4 +81,4 @@ void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const 
 // void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg);
 // _zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid);
 
-#endif /* ZENOH_C_NET_INTERNAL_H */
+#endif /* _ZENOH_NET_PICO_INTERNAL_H */

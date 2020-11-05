@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_CODEC_H
-#define _ZENOH_C_NET_CODEC_H
+#ifndef _ZENOH_NET_PICO_CODEC_H
+#define _ZENOH_NET_PICO_CODEC_H
 
 #include <stdint.h>
 #include "zenoh/net/property.h"
@@ -36,4 +36,4 @@ int _zn_period_encode(_z_wbuf_t *wbf, const zn_period_t *m);
 _zn_period_result_t _zn_period_decode(_z_rbuf_t *rbf);
 void _zn_period_decode_na(_z_rbuf_t *rbf, _zn_period_result_t *r);
 
-#endif /* _ZENOH_C_NET_CODEC_H */
+#endif /* _ZENOH_NET_PICO_CODEC_H */

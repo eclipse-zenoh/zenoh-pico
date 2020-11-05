@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_IOBUF_H
-#define _ZENOH_C_IOBUF_H
+#ifndef _ZENOH_PICO_IOBUF_H
+#define _ZENOH_PICO_IOBUF_H
 
 #include <stdint.h>
 #include "zenoh/private/collection.h"
@@ -90,4 +90,4 @@ void _z_wbuf_clear(_z_wbuf_t *wbf);
 void _z_wbuf_reset(_z_wbuf_t *wbf);
 void _z_wbuf_free(_z_wbuf_t *wbf);
 
-#endif /* _ZENOH_C_IOBUF_H */
+#endif /* _ZENOH_PICO_IOBUF_H */

@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_CODEC_H
-#define _ZENOH_C_CODEC_H
+#ifndef _ZENOH_PICO_CODEC_H
+#define _ZENOH_PICO_CODEC_H
 
 #include "zenoh/types.h"
 #include "zenoh/private/iobuf.h"
@@ -39,4 +39,4 @@ _Z_RESULT_DECLARE(z_str_t, str)
 int _z_str_encode(_z_wbuf_t *buf, const z_str_t s);
 _z_str_result_t _z_str_decode(_z_rbuf_t *buf);
 
-#endif /* _ZENOH_C_CODEC_H */
+#endif /* _ZENOH_PICO_CODEC_H */

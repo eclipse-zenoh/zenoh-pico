@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_NET_KONTIKI_TYPES_H
-#define _ZENOH_C_NET_KONTIKI_TYPES_H
+#ifndef _ZENOH_NET_PICO_KONTIKI_TYPES_H
+#define _ZENOH_NET_PICO_KONTIKI_TYPES_H
 
 #include "contiki-net.h"
 #include "sys/cc.h"
 
 typedef struct tcp_socket _zn_socket_t;
 
-#endif /* _ZENOH_C_NET_KONTIKI_TYPES_H */
+#endif /* _ZENOH_NET_PICO_KONTIKI_TYPES_H */

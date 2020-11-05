@@ -19,7 +19,7 @@
 #include "zenoh/private/collection.h"
 #include "zenoh/private/iobuf.h"
 #include "zenoh/net/private/internal.h"
-#define _ZENOH_C_NET_MSGCODEC_H_T
+#define _ZENOH_NET_PICO_MSGCODEC_H_T
 #include "zenoh/net/private/msgcodec.h"
 
 #define RUNS 1000

@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_UTILS_H
-#define ZENOH_C_UTILS_H
+#ifndef ZENOH_PICO_UTILS_H
+#define ZENOH_PICO_UTILS_H
 
 #include "zenoh/types.h"
 
 z_string_t z_string_make(const char *value);
 void z_string_free(z_string_t *s);
 
-#endif /* ZENOH_C_UTILS_H */
+#endif /* ZENOH_PICO_UTILS_H */

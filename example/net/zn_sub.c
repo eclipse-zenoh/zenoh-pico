@@ -16,7 +16,8 @@
 
 void data_handler(const zn_sample_t *sample, const void *arg)
 {
-    (void)(arg);
+    (void)(arg); // Unused argument
+
     printf(">> [Subscription listener] Received (%.*s, %.*s)\n",
            (int)sample->key.len, sample->key.val,
            (int)sample->value.len, sample->value.val);

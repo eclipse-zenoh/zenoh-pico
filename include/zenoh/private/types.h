@@ -13,8 +13,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_C_TYPES_H
-#define _ZENOH_C_TYPES_H
+#ifndef _ZENOH_PICO_TYPES_H
+#define _ZENOH_PICO_TYPES_H
 
 #include <stdint.h>
 
@@ -70,4 +70,4 @@ typedef struct
     int is_expandable;
 } _z_wbuf_t;
 
-#endif /* _ZENOH_C_TYPES_H */
+#endif /* _ZENOH_PICO_TYPES_H */

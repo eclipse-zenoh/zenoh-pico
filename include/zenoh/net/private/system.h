@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_SYNC_H
-#define ZENOH_C_SYNC_H
+#ifndef _ZENOH_PICO_SYSTEM_H
+#define _ZENOH_PICO_SYSTEM_H
 
 #include "zenoh/net/types.h"
 
@@ -63,4 +63,4 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
 int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf);
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
-#endif /* ZENOH_C_SYNC_H */
+#endif /* _ZENOH_PICO_SYSTEM_H */

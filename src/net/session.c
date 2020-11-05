@@ -61,7 +61,7 @@ zn_session_t *_zn_session_init()
 
     z->local_subscriptions = _z_list_empty;
     z->remote_subscriptions = _z_list_empty;
-    z->rem_res_loc_sub_map = _z_i_map_make(DEFAULT_I_MAP_CAPACITY);
+    z->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
     z->local_publishers = _z_list_empty;
     z->local_queryables = _z_list_empty;
@@ -212,14 +212,9 @@ zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const
             }
 
             if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_W)
-            {
                 sc->whatami = s_msg->body.hello.whatami;
-            }
             else
-            {
-                // Default value is from a router
-                sc->whatami = ZN_ROUTER;
-            }
+                sc->whatami = ZN_ROUTER; // Default value is from a router
 
             if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_L)
             {
@@ -244,9 +239,6 @@ zn_hello_array_t _zn_scout_loop(_zn_socket_t socket, const _z_wbuf_t *wbf, const
 
         _zn_session_message_free(s_msg);
         _zn_session_message_p_result_free(&r_hm);
-
-        if (ls.len > 0)
-            break;
     }
 
     free(from);
@@ -322,9 +314,8 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 unsigned int len = _z_list_len(subs);
                 if (len > 0)
                 {
-                    // Need to reply with a decl subscriber
+                    // Need to reply with a declare subscriber
                     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-                    unsigned int len = 1;
                     z_msg.body.declare.declarations.len = len;
                     z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
@@ -342,7 +333,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                     // Send the message
                     _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
 
-                    // Free the declarations
+                    // Free the message
                     _zn_zenoh_message_free(&z_msg);
                 }
                 break;
