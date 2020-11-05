@@ -15,7 +15,6 @@
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msg.h"
 #include "zenoh/net/private/msgcodec.h"
-#include "zenoh/net/private/net.h"
 #include "zenoh/net/private/system.h"
 #include "zenoh/net/rname.h"
 #include "zenoh/private/logging.h"
@@ -23,7 +22,7 @@
 
 #include <stdio.h>
 
-/*------------------ Message helper ------------------*/
+/*------------------ Message helpers ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header)
 {
     _zn_session_message_t sm;

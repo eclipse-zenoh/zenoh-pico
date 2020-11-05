@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     // ASSERT_RESULT(r_z, "Unable to open session.\n")
     // zn_session_t *z = r_z.value.session;
-    // zn_start_read_loop(z);
+    // znp_start_read_task(z);
 
     // printf("Sending Query '%s'...\n", selector);
     // zn_query_dest_t dest_all = {ZN_ALL, 0};
@@ -85,6 +85,6 @@ int main(int argc, char **argv)
     // sleep(1);
 
     // zn_close(z);
-    // zn_stop_read_loop(z);
+    // znp_stop_read_task(z);
     return 0;
 }

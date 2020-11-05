@@ -38,8 +38,8 @@ int main(int argc, char **argv)
     }
 
     // Start the read session session lease loops
-    zn_start_read_loop(s);
-    zn_start_lease_loop(s);
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
     char *data = (char *)malloc(len);
     memset(data, 1, len);

@@ -13,22 +13,20 @@
  */
 
 #include "zenoh/net/session.h"
-#include "zenoh/net/types.h"
-#include "zenoh/net/private/msg.h"
-#include "zenoh/net/private/session.h"
+#include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/system.h"
 #include "zenoh/private/logging.h"
 
-void *zn_lease_loop(zn_session_t *z)
+void *_znp_lease_task(zn_session_t *z)
 {
-    z->lease_loop_running = 1;
+    z->lease_task_running = 1;
 
     z->received = 0;
     z->transmitted = 0;
 
     unsigned int next_lease = z->lease;
     unsigned int next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
-    while (z->lease_loop_running)
+    while (z->lease_task_running)
     {
         // Compute the target interval
         unsigned int interval;
@@ -66,7 +64,7 @@ void *zn_lease_loop(zn_session_t *z)
             // Check if need to send a keep alive
             if (z->transmitted == 0)
             {
-                zn_send_keep_alive(z);
+                znp_send_keep_alive(z);
             }
 
             // Reset the keep alive parameters

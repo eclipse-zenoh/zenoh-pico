@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh/private/codec.h"
-#include "zenoh/private/internal.h"
+#include "zenoh/private/collection.h"
 #include "zenoh/private/logging.h"
 #include "zenoh/net/private/codec.h"
 #include "zenoh/net/private/msgcodec.h"
@@ -535,7 +535,7 @@ _zn_forget_res_decl_result_t _zn_forget_res_decl_decode(_z_rbuf_t *rbf)
 void _zn_forget_res_decl_free(_zn_forget_res_decl_t *dcl)
 {
     // NOTE: forget_res_decl does not require any heap allocation
-    Z_UNUSED_ARG(dcl);
+    (void)(dcl);
 }
 
 /*------------------ Forget Publisher Declaration ------------------*/
@@ -1292,7 +1292,7 @@ _zn_scout_result_t _zn_scout_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_scout_free(_zn_scout_t *msg)
 {
     // NOTE: scout does not involve any heap allocation
-    Z_UNUSED_ARG(msg);
+    (void)(msg);
 }
 
 /*------------------ Hello Message ------------------*/
@@ -1589,7 +1589,7 @@ _zn_sync_result_t _zn_sync_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_sync_free(_zn_sync_t *msg)
 {
     // NOTE: sync does not involve any heap allocation
-    Z_UNUSED_ARG(msg);
+    (void)(msg);
 }
 
 /*------------------ AckNack Message ------------------*/
@@ -1634,7 +1634,7 @@ _zn_ack_nack_result_t _zn_ack_nack_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_ack_nack_free(_zn_ack_nack_t *msg)
 {
     // NOTE: ack_nack does not involve any heap allocation
-    Z_UNUSED_ARG(msg);
+    (void)(msg);
 }
 
 /*------------------ Keep Alive Message ------------------*/
@@ -1706,7 +1706,7 @@ _zn_ping_pong_result_t _zn_ping_pong_decode(_z_rbuf_t *rbf)
 void _zn_ping_pong_free(_zn_ping_pong_t *msg)
 {
     // NOTE: ping_pong does not involve any heap allocation
-    Z_UNUSED_ARG(msg);
+    (void)(msg);
 }
 
 /*------------------ Frame Message ------------------*/

@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     }
 
     // Start the read session session lease loops
-    zn_start_read_loop(s);
-    zn_start_lease_loop(s);
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
     printf("Declaring Subscriber on '%s'...\n", uri);
     zn_subscriber_t *sub = zn_declare_subscriber(s, zn_rname(uri), zn_subinfo_default(), data_handler, NULL);

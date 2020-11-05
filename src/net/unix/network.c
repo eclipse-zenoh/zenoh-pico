@@ -14,12 +14,14 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <ifaddrs.h>
 #include <netdb.h>
+#include <net/if.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "zenoh/net/private/net.h"
+#include "zenoh/net/private/system.h"
 #include "zenoh/private/logging.h"
 
 /*------------------ Interfaces and sockets ------------------*/

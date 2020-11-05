@@ -44,18 +44,4 @@ typedef enum
 #define _ZN_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _zn)
 #define _ZN_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _zn)
 
-_ZN_RESULT_DECLARE(zn_reskey_t, reskey)
-_ZN_RESULT_DECLARE(zn_subinfo_t, subinfo)
-_ZN_P_RESULT_DECLARE(zn_session_t, session)
-_ZN_P_RESULT_DECLARE(zn_resource_t, resource)
-_ZN_P_RESULT_DECLARE(zn_subscriber_t, subscriber)
-_ZN_P_RESULT_DECLARE(zn_publisher_t, publisher)
-_ZN_P_RESULT_DECLARE(zn_queryable_t, queryable)
-
-_ZN_RESULT_DECLARE(zn_period_t, period)
-_ZN_RESULT_DECLARE(zn_property_t, property)
-_ZN_RESULT_DECLARE(zn_properties_t, properties)
-
-_ZN_RESULT_DECLARE(_zn_socket_t, socket)
-
 #endif /* ZENOH_C_NET_RESULT_H */

@@ -15,6 +15,18 @@
 #ifndef ZENOH_C_RNAME_H
 #define ZENOH_C_RNAME_H
 
-int zn_rname_intersect(const char *c1, const char *c2);
+/**
+ * Intersects two resource names. This function compares two resource names
+ * and verifies that the first resource name intersects (i.e., matches) the
+ * second resource name. E.g., /foo/\* interesects /foo/a.
+ *
+ * Parameters:
+ *     left: The resource name to match against.
+ *     right: The resource name to be compared.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int zn_rname_intersect(const char *left, const char *right);
 
 #endif /* ZENOH_C_RNAME_H */

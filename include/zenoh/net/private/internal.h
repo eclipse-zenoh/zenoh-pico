@@ -17,9 +17,15 @@
 
 #include "zenoh/net/types.h"
 #include "zenoh/net/private/msg.h"
+#include "zenoh/net/private/msgcodec.h"
 
-#define _ZN_IS_REMOTE 0
-#define _ZN_IS_LOCAL 1
+/*------------------ Session ------------------*/
+zn_session_t *_zn_session_init(void);
+int _zn_session_close(zn_session_t *z, uint8_t reason);
+void _zn_session_free(zn_session_t *z);
+
+int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *s_msg);
+int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *z_msg);
 
 /*------------------ Message helper ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header);

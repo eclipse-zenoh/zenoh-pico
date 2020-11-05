@@ -18,7 +18,7 @@
 #include "zenoh/net/private/system.h"
 
 /*------------------ Mutex ------------------*/
-// As define in "zenoh/net/private/system.h"
+// As defined in "zenoh/net/private/system.h"
 // typedef pthread_mutex_t _zn_mutex_t;
 int _zn_mutex_init(pthread_mutex_t *m)
 {
@@ -62,7 +62,7 @@ int _zn_sleep_s(unsigned int time)
 }
 
 /*------------------ Instant ------------------*/
-// As define in "zenoh/net/private/system.h"
+// As defined in "zenoh/net/private/system.h"
 // typedef struct timespec _zn_clock_t;
 struct timespec _zn_clock_now()
 {
@@ -99,7 +99,7 @@ clock_t _zn_clock_elapsed_s(struct timespec *instant)
 }
 
 /*------------------ Time ------------------*/
-// As define in "zenoh/net/private/system.h"
+// As defined in "zenoh/net/private/system.h"
 // typedef struct timeval _zn_time_t;
 struct timeval _zn_time_now()
 {

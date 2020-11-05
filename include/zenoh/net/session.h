@@ -237,16 +237,25 @@ void zn_undeclare_queryable(zn_queryable_t *qle);
  * Create a resource key from a resource id.
  *
  * Parameters:
- *     id: The resource id.
+ *     rid: The resource id.
  *
  * Returns:
  *     Return a new resource key.
  * 
  */
 zn_reskey_t zn_rid(const unsigned long rid);
-zn_reskey_t zn_rname(const char *rname);
 
-int zn_send_keep_alive(zn_session_t *z);
+/**
+ * Create a resource key from a resource name.
+ *
+ * Parameters:
+ *     rname: The resource name.
+ *
+ * Returns:
+ *     Return a new resource key.
+ * 
+ */
+zn_reskey_t zn_rname(const char *rname);
 
 /**
  * Write data.
@@ -258,16 +267,90 @@ int zn_send_keep_alive(zn_session_t *z);
  *     len: The length of the value to write.
  * Returns:
  *     ``0`` in case of success, ``1`` in case of failure.
+ * 
  */
 int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len);
 
 int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
 
-int zn_read(zn_session_t *z);
-
 int zn_pull(zn_subscriber_t *sub);
 
 // int zn_query(zn_session_t *z, zn_reskey_t *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg);
 // int zn_query_wo(zn_session_t *z, zn_reskey_t *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg, zn_query_dest_t dest_storages, zn_query_dest_t dest_evals);
+
+/*------------------ Zenoh-pico operations ------------------*/
+/**
+ * Read from the network. This function should be called manually called when 
+ * the read loop has not been started, e.g., when running in a single thread.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_read(zn_session_t *z);
+
+/**
+ * Start a separate task to read from the network and process the messages
+ * as soon as they are received. Note that the task can be implemented in 
+ * form of thread, process, etc. and its implementation is platform-dependent.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_start_read_task(zn_session_t *z);
+
+/**
+ * Stop the read task. This may result in stopping a thread or a process depending
+ * on the target platform.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_stop_read_task(zn_session_t *z);
+
+/**
+ * Send a KeepAlive message.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_send_keep_alive(zn_session_t *z);
+
+/**
+ * Start a separate task to handle the session lease. This task will send ``KeepAlive``
+ * messages when needed and will close the session when the lease is expired. Note that 
+ * the task can be implemented in form of thread, process, etc. and its implementation 
+ * is platform-dependent.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_start_lease_task(zn_session_t *z);
+
+/**
+ * Stop the lease task. This may result in stopping a thread or a process depending
+ * on the target platform.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ * 
+ */
+int znp_stop_lease_task(zn_session_t *z);
 
 #endif /* ZENOH_C_NET_SESSION_H */

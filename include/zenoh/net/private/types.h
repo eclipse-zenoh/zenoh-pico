@@ -17,6 +17,9 @@
 #include "zenoh/types.h"
 #include "zenoh/net/types.h"
 
+#define _ZN_IS_REMOTE 0
+#define _ZN_IS_LOCAL 1
+
 typedef struct
 {
     z_zint_t id;

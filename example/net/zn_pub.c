@@ -43,9 +43,9 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start the receive and the session lease loop
-    zn_start_read_loop(s);
-    zn_start_lease_loop(s);
+    // Start the receive and the session lease loop for zenoh-pico
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
     printf("Declaring Resource '%s'", uri);
     unsigned long rid = zn_declare_resource(s, zn_rname(uri));

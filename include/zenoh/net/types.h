@@ -20,7 +20,6 @@
 #include "zenoh/net/config.h"
 #include "zenoh/private/collection.h"
 #include "zenoh/private/iobuf.h"
-#include "zenoh/types.h"
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
 #include "zenoh/net/private/unix/types.h"
@@ -33,10 +32,6 @@
 #define ZN_CLIENT 0x04 // 1 << 2
 
 #define ZN_RESOURCE_ID_NONE 0
-
-#define ZN_T_STAMP 0x10
-#define ZN_KIND 0x20
-#define ZN_ENCODING 0x40
 
 /**
  * A zenoh-net property.
@@ -344,13 +339,13 @@ typedef struct
     // Runtime
     zn_on_disconnect_t on_disconnect;
 
-    volatile int read_loop_running;
-    void *read_loop_thread;
+    volatile int read_task_running;
+    void *read_task_thread;
 
-    volatile int lease_loop_running;
+    volatile int lease_task_running;
     volatile int received;
     volatile int transmitted;
-    void *lease_loop_thread;
+    void *lease_task_thread;
 } zn_session_t;
 
 typedef struct

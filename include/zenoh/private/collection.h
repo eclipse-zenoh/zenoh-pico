@@ -15,29 +15,9 @@
 #ifndef _ZENOH_C_COLLECTION_H
 #define _ZENOH_C_COLLECTION_H
 
-#include <stddef.h>
-
-extern const int _z_dummy_arg;
-
-#define Z_UNUSED_ARG(z) (void)(z)
-#define Z_UNUSED_ARG_2(z1, z2) \
-    (void)(z1);                \
-    (void)(z2)
-#define Z_UNUSED_ARG_3(z1, z2, z3) \
-    (void)(z1);                    \
-    (void)(z2);                    \
-    (void)(z3)
-#define Z_UNUSED_ARG_4(z1, z2, z3, z4) \
-    (void)(z1);                        \
-    (void)(z2);                        \
-    (void)(z3);                        \
-    (void)(z4)
-#define Z_UNUSED_ARG_5(z1, z2, z3, z4, z5) \
-    (void)(z1);                            \
-    (void)(z2);                            \
-    (void)(z3);                            \
-    (void)(z4);                            \
-    (void)(z5)
+#include <stdint.h>
+#include "zenoh/private/types.h"
+#include "zenoh/types.h"
 
 /*------------------ Internal Array Macros ------------------*/
 #define _ARRAY_DECLARE(type, name, prefix) \
@@ -97,30 +77,7 @@ extern const int _z_dummy_arg;
     arr->val = 0;          \
     arr->len = 0
 
-/*-------- Internal Zenoh Array Macros --------*/
-#define _Z_ARRAY_DECLARE(name) ARRAY_DECLARE(_z_##name##_t, name, _z_)
-#define _Z_ARRAY_P_DECLARE(name) ARRAY_P_DECLARE(_z_##name##_t, name, _z_)
-
-#define _Z_ARRAY_S_DEFINE(name, arr, len) ARRAY_S_DEFINE(_z_##name##_t, name, _z_, arr, len)
-#define _Z_ARRAY_P_S_DEFINE(name, arr, len) ARRAY_P_S_DEFINE(_z_##name##_t, name, _z_, arr, len)
-
-#define _Z_ARRAY_H_DEFINE(name, arr, len) ARRAY_H_DEFINE(_z_##name##_t, name, _z_, arr, len)
-#define _Z_ARRAY_S_INIT(name, arr, len) ARRAY_S_INIT(_z_##name##_t, arr, len)
-
-#define _Z_ARRAY_P_S_INIT(name, arr, len) ARRAY_P_S_INIT(_z_##name##_t, arr, len)
-#define _Z_ARRAY_H_INIT(name, arr, len) ARRAY_H_INIT(_z_##name##_t, arr, len)
-
-#define _Z_ARRAY_S_COPY(name, dst, src) ARRAY_S_COPY(_z_##name##_t, dst, src)
-#define _Z_ARRAY_H_COPY(name, dst, src) ARRAY_H_COPY(_z_##name##_t, dst, src)
-
 /*-------- Dynamically allocated vector --------*/
-typedef struct
-{
-    size_t _capacity;
-    size_t _len;
-    void **_val;
-} _z_vec_t;
-
 _z_vec_t _z_vec_make(size_t capacity);
 _z_vec_t _z_vec_clone(const _z_vec_t *v);
 
@@ -133,13 +90,6 @@ void _z_vec_free_inner(_z_vec_t *v);
 void _z_vec_free(_z_vec_t *v);
 
 /*-------- Linked List --------*/
-typedef int (*_z_list_predicate)(void *, void *);
-typedef struct z_list
-{
-    void *val;
-    struct z_list *tail;
-} _z_list_t;
-
 extern _z_list_t *_z_list_empty;
 
 _z_list_t *_z_list_of(void *x);
@@ -157,19 +107,6 @@ void _z_list_free(_z_list_t **xs);
 /*-------- Int Map --------*/
 #define DEFAULT_I_MAP_CAPACITY 64
 
-typedef struct
-{
-    size_t key;
-    void *value;
-} _z_i_map_entry_t;
-
-typedef struct
-{
-    _z_list_t **vals;
-    size_t capacity;
-    size_t len;
-} _z_i_map_t;
-
 _z_i_map_t *_z_i_map_empty;
 _z_i_map_t *_z_i_map_make(size_t capacity);
 
@@ -181,5 +118,19 @@ void *_z_i_map_get(_z_i_map_t *map, size_t k);
 void _z_i_map_remove(_z_i_map_t *map, size_t k);
 
 void _z_i_map_free(_z_i_map_t *map);
+
+/*-------- Operations on Bytes --------*/
+z_bytes_t _z_bytes_make(size_t capacity);
+void _z_bytes_init(z_bytes_t *bs, size_t capacity);
+void _z_bytes_copy(z_bytes_t *dst, z_bytes_t *src);
+void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
+void _z_bytes_free(z_bytes_t *bs);
+
+/*-------- Operations on StrArray --------*/
+z_str_array_t _z_str_array_make(size_t len);
+void _z_str_array_init(z_str_array_t *sa, size_t len);
+void _z_str_array_copy(z_str_array_t *dst, z_str_array_t *src);
+void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);
+void _z_str_array_free(z_str_array_t *sa);
 
 #endif /* _ZENOH_C_COLLECTION_H */

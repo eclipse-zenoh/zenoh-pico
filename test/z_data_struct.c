@@ -17,9 +17,8 @@
 #include "zenoh/private/collection.h"
 #include "zenoh/types.h"
 
-int main(int argc, char **argv)
+int main()
 {
-    Z_UNUSED_ARG_2(argc, argv);
     _z_list_t *xs = _z_list_of("one");
     _z_i_map_t *map = _z_i_map_make(5);
 

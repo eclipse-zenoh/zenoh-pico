@@ -16,7 +16,7 @@
 // #include <unistd.h>
 // #include <assert.h>
 // #include "zenoh.h"
-// #include "zenoh/net/read_loop.h"
+// #include "zenoh/net/read_task.h"
 // #include "zenoh/mvar.h"
 
 // typedef struct
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     //     zn_session_p_result_t z1_r = zn_open(locator, 0, 0);
     //     ASSERT_RESULT(z1_r, "Unable to open session with broker")
     //     zn_session_t *z1 = z1_r.value.session;
-    //     zn_start_read_loop(z1);
+    //     znp_start_read_task(z1);
 
     //     zn_pub_p_result_t z1_pub1_r = zn_declare_publisher(z1, "/test/large_data/big");
     //     ASSERT_P_RESULT(z1_pub1_r, "Unable to declare publisher\n");
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     //     zn_session_p_result_t z2_r = zn_open(locator, 0, 0);
     //     ASSERT_RESULT(z2_r, "Unable to open session with broker")
     //     zn_session_t *z2 = z2_r.value.session;
-    //     zn_start_read_loop(z2);
+    //     znp_start_read_task(z2);
 
     //     zn_subinfo_t sm;
     //     sm.kind = ZN_PUSH_MODE;
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
     //     zn_close(z1);
     //     zn_close(z2);
 
-    //     zn_stop_read_loop(z1);
-    //     zn_stop_read_loop(z2);
+    //     znp_stop_read_task(z1);
+    //     znp_stop_read_task(z2);
     return 0;
 }

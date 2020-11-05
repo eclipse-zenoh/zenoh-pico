@@ -42,4 +42,25 @@ time_t _zn_time_elapsed_us(_zn_time_t *time);
 time_t _zn_time_elapsed_ms(_zn_time_t *time);
 time_t _zn_time_elapsed_s(_zn_time_t *time);
 
+/*------------------ Network ------------------*/
+// @TODO: remove the platform-specific include and data types
+#include <netinet/in.h>
+#include "zenoh/net/private/result.h"
+
+_ZN_RESULT_DECLARE(_zn_socket_t, socket)
+
+char *_zn_select_scout_iface(void);
+_zn_socket_result_t _zn_open_tx_session(const char *locator);
+void _zn_close_tx_session(_zn_socket_t sock);
+
+struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
+_zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
+
+int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
+
+int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
+int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf);
+int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
+
 #endif /* ZENOH_C_SYNC_H */

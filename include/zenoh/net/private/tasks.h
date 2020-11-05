@@ -12,15 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_C_NET_RECV_LOOP_H
-#define ZENOH_C_NET_RECV_LOOP_H
+#ifndef _ZENOH_C_NET_CODEC_H
+#define _ZENOH_C_NET_CODEC_H
 
 #include "zenoh/net/types.h"
 
-void *zn_read_loop(zn_session_t *z);
+void *_znp_lease_task(zn_session_t *z);
+void *_znp_read_task(zn_session_t *z);
 
-int zn_start_read_loop(zn_session_t *z);
-
-int zn_stop_read_loop(zn_session_t *z);
-
-#endif /* ZENOH_C_NET_RECV_LOOP_H */
+#endif /* _ZENOH_C_NET_CODEC_H */

@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
     // ASSERT_RESULT(r_z, "Unable to open session.\n")
     // zn_session_t *z = r_z.value.session;
-    // zn_start_read_loop(z);
+    // znp_start_read_task(z);
 
     // printf("Declaring Eval on '%s'...\n", selector);
     // zn_eval_p_result_t r = zn_declare_eval(z, selector, query_handler, selector);
@@ -68,6 +68,6 @@ int main(int argc, char **argv)
 
     // zn_undeclare_eval(eval);
     // zn_close(z);
-    // zn_stop_read_loop(z);
+    // znp_stop_read_task(z);
     return 0;
 }

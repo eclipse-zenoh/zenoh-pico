@@ -15,8 +15,6 @@
 #ifndef _ZENOH_C_RESULT_H
 #define _ZENOH_C_RESULT_H
 
-#include "zenoh/types.h"
-
 /*------------------ Result Enums ------------------*/
 typedef enum _z_err_t
 {
@@ -109,10 +107,5 @@ typedef enum _z_res_t
 /*------------------ Internal Zenoh Results ------------------*/
 #define _Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _z)
 #define _Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _z)
-
-_Z_RESULT_DECLARE(z_zint_t, zint)
-_Z_RESULT_DECLARE(z_bytes_t, bytes)
-_Z_RESULT_DECLARE(z_str_t, str)
-_Z_RESULT_DECLARE(z_timestamp_t, timestamp)
 
 #endif /* _ZENOH_C_RESULT_H */

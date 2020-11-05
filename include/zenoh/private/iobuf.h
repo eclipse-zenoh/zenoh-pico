@@ -16,19 +16,10 @@
 #define _ZENOH_C_IOBUF_H
 
 #include <stdint.h>
-#include "zenoh/types.h"
 #include "zenoh/private/collection.h"
+#include "zenoh/private/types.h"
 
 /*------------------ IOSli ------------------*/
-typedef struct
-{
-    size_t r_pos;
-    size_t w_pos;
-    size_t capacity;
-    int is_alloc;
-    uint8_t *buf;
-} _z_iosli_t;
-
 _z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 _z_iosli_t _z_iosli_make(size_t capacity);
 
@@ -48,11 +39,6 @@ void _z_iosli_clear(_z_iosli_t *ios);
 void _z_iosli_free(_z_iosli_t *ios);
 
 /*------------------ RBuf ------------------*/
-typedef struct
-{
-    _z_iosli_t ios;
-} _z_rbuf_t;
-
 _z_rbuf_t _z_rbuf_make(size_t capacity);
 _z_rbuf_t _z_rbuf_view(_z_rbuf_t *rbf, size_t length);
 
@@ -77,15 +63,6 @@ void _z_rbuf_compact(_z_rbuf_t *rbf);
 void _z_rbuf_free(_z_rbuf_t *rbf);
 
 /*------------------ WBuf ------------------*/
-typedef struct
-{
-    size_t r_idx;
-    size_t w_idx;
-    size_t capacity;
-    _z_vec_t ioss;
-    int is_expandable;
-} _z_wbuf_t;
-
 _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);

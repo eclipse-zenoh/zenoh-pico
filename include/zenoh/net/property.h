@@ -25,6 +25,7 @@
 
 /**
  * Return a new empty map of properties.
+ * 
  */
 zn_properties_t *zn_properties_make(void);
 
@@ -39,6 +40,7 @@ zn_properties_t *zn_properties_make(void);
  *
  * Returns:
  *     A pointer to the updated properties map.
+ * 
  */
 zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, z_string_t value);
 
@@ -51,6 +53,7 @@ zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned long key, z_
  *
  * Returns:
  *     The value of the property with key ``key`` in properties map ``ps``.
+ * 
  */
 z_string_t zn_properties_get(zn_properties_t *ps, unsigned long key);
 
@@ -62,6 +65,7 @@ z_string_t zn_properties_get(zn_properties_t *ps, unsigned long key);
  *
  * Returns:
  *     The length of the given properties map.
+ * 
  */
 unsigned int zn_properties_len(zn_properties_t *ps);
 
@@ -70,6 +74,7 @@ unsigned int zn_properties_len(zn_properties_t *ps);
  *
  * Parameters:
  *   ps: A pointer to the properties.
+ * 
  */
 void zn_properties_free(zn_properties_t *ps);
 

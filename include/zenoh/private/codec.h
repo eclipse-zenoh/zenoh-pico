@@ -26,13 +26,16 @@
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
+_Z_RESULT_DECLARE(z_zint_t, zint)
 int _z_zint_encode(_z_wbuf_t *buf, z_zint_t v);
 _z_zint_result_t _z_zint_decode(_z_rbuf_t *buf);
 
+_Z_RESULT_DECLARE(z_bytes_t, bytes)
 int _z_bytes_encode(_z_wbuf_t *buf, const z_bytes_t *bs);
 _z_bytes_result_t _z_bytes_decode(_z_rbuf_t *buf);
 void _z_bytes_free(z_bytes_t *bs);
 
+_Z_RESULT_DECLARE(z_str_t, str)
 int _z_str_encode(_z_wbuf_t *buf, const z_str_t s);
 _z_str_result_t _z_str_decode(_z_rbuf_t *buf);
 

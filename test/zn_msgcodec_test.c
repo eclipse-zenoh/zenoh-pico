@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <time.h>
-#include "zenoh/private/internal.h"
+#include "zenoh/private/collection.h"
 #include "zenoh/private/iobuf.h"
 #include "zenoh/net/private/internal.h"
 #define _ZENOH_C_NET_MSGCODEC_H_T

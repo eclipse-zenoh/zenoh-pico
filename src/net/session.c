@@ -17,9 +17,8 @@
 #include "zenoh/net.h"
 #include "zenoh/net/private/internal.h"
 #include "zenoh/net/private/msgcodec.h"
-#include "zenoh/net/private/net.h"
 #include "zenoh/net/private/system.h"
-#include "zenoh/private/internal.h"
+#include "zenoh/private/collection.h"
 #include "zenoh/private/logging.h"
 
 /*=============================*/
@@ -69,13 +68,13 @@ zn_session_t *_zn_session_init()
 
     z->replywaiters = _z_list_empty;
 
-    z->read_loop_running = 0;
-    z->read_loop_thread = NULL;
+    z->read_task_running = 0;
+    z->read_task_thread = NULL;
 
     z->received = 0;
     z->transmitted = 0;
-    z->lease_loop_running = 0;
-    z->lease_loop_thread = NULL;
+    z->lease_task_running = 0;
+    z->lease_task_thread = NULL;
 
     return z;
 }
@@ -95,7 +94,7 @@ void _zn_session_free(zn_session_t *z)
     z = NULL;
 }
 
-int _zn_send_close(zn_session_t *z, unsigned int reason, int link_only)
+int _zn_send_close(zn_session_t *z, uint8_t reason, int link_only)
 {
     _zn_session_message_t cm = _zn_session_message_init(_ZN_MID_CLOSE);
     cm.body.close.pid = z->local_pid;
@@ -112,7 +111,7 @@ int _zn_send_close(zn_session_t *z, unsigned int reason, int link_only)
     return res;
 }
 
-int _zn_session_close(zn_session_t *z, unsigned int reason)
+int _zn_session_close(zn_session_t *z, uint8_t reason)
 {
     int res = _zn_send_close(z, reason, 0);
     // Free the session
@@ -1219,7 +1218,7 @@ int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t
 }
 
 /*------------------ Read ------------------*/
-int zn_read(zn_session_t *z)
+int znp_read(zn_session_t *z)
 {
     _zn_session_message_p_result_t r_s = _zn_recv_s_msg(z);
     if (r_s.tag == _z_res_t_OK)
@@ -1237,7 +1236,7 @@ int zn_read(zn_session_t *z)
 }
 
 /*------------------ Keep Alive ------------------*/
-int zn_send_keep_alive(zn_session_t *z)
+int znp_send_keep_alive(zn_session_t *z)
 {
     _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_KEEP_ALIVE);
 
@@ -1271,6 +1270,87 @@ int zn_send_keep_alive(zn_session_t *z)
 //     atomic_int nb_qhandlers;
 //     atomic_flag sent_final;
 // } local_query_handle_t;
+
+// void send_replies(void *query_handle, zn_resource_p_array_t replies, uint8_t eval_flag)
+// {
+//     unsigned int i;
+//     int rsn = 0;
+//     query_handle_t *handle = (query_handle_t *)query_handle;
+//     _zn_message_t msg;
+//     msg.header = _ZN_REPLY | _ZN_F_FLAG | eval_flag;
+//     msg.payload.reply.qid = handle->qid;
+//     msg.payload.reply.qpid = handle->qpid;
+//     msg.payload.reply.srcid = handle->z->pid;
+
+//     for (i = 0; i < replies.length; ++i)
+//     {
+//         msg.payload.reply.rsn = rsn++;
+//         msg.payload.reply.rname = (char *)replies.elem[i]->rname;
+//         _Z_DEBUG_VA("[%d] - Query reply key: %s\n", i, msg.payload.reply.rname);
+//         _zn_payload_header_t ph;
+//         ph.flags = _ZN_ENCODING | _ZN_KIND;
+//         ph.encoding = replies.elem[i]->encoding;
+//         ph.kind = replies.elem[i]->kind;
+//         _Z_DEBUG_VA("[%d] - Payload Length: %zu\n", i, replies.elem[i]->length);
+//         _Z_DEBUG_VA("[%d] - Payload address: %p\n", i, (void *)replies.elem[i]->data);
+
+//         ph.payload = z_iobuf_wrap_wo((unsigned char *)replies.elem[i]->data, replies.elem[i]->length, 0, replies.elem[i]->length);
+//         z_iobuf_t buf = z_iobuf_make(replies.elem[i]->length + 32);
+//         _zn_payload_header_encode(&buf, &ph);
+//         msg.payload.reply.payload_header = buf;
+
+//         if (_zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128) == 0)
+//         {
+//             z_iobuf_free(&buf);
+//         }
+//         else
+//         {
+//             _Z_DEBUG("Trying to reconnect....\n");
+//             handle->z->on_disconnect(handle->z);
+//             _zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128);
+//             z_iobuf_free(&buf);
+//         }
+//     }
+//     msg.payload.reply.rsn = rsn++;
+//     msg.payload.reply.rname = "";
+//     z_iobuf_t buf = z_iobuf_make(0);
+//     msg.payload.reply.payload_header = buf;
+
+//     if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) == 0)
+//     {
+//         z_iobuf_free(&buf);
+//     }
+//     else
+//     {
+//         _Z_DEBUG("Trying to reconnect....\n");
+//         handle->z->on_disconnect(handle->z);
+//         _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
+//         z_iobuf_free(&buf);
+//     }
+
+//     atomic_fetch_sub(&handle->nb_qhandlers, 1);
+//     if (handle->nb_qhandlers <= 0 && !atomic_flag_test_and_set(&handle->sent_final))
+//     {
+//         msg.header = _ZN_REPLY;
+
+//         if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) != 0)
+//         {
+//             _Z_DEBUG("Trying to reconnect....\n");
+//             handle->z->on_disconnect(handle->z);
+//             _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
+//         }
+//     }
+// }
+
+// void send_eval_replies(void *query_handle, zn_resource_p_array_t replies)
+// {
+//     send_replies(query_handle, replies, _ZN_E_FLAG);
+// }
+
+// void send_storage_replies(void *query_handle, zn_resource_p_array_t replies)
+// {
+//     send_replies(query_handle, replies, 0);
+// }
 
 // void send_local_replies(void *query_handle, zn_resource_p_array_t replies, char eval)
 // {

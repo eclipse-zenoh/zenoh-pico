@@ -71,8 +71,8 @@ int main(int argc, char **argv)
     }
 
     // Start the read session session lease loops
-    zn_start_read_loop(s);
-    zn_start_lease_loop(s);
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
     zn_reskey_t rid = zn_rid(zn_declare_resource(s, zn_rname("/test/thr")));
     zn_subscriber_t *sub = zn_declare_subscriber(s, rid, zn_subinfo_default(), data_handler, NULL);

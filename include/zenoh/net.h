@@ -17,9 +17,7 @@
 
 #include "zenoh/types.h"
 #include "zenoh/utils.h"
-#include "zenoh/net/lease_loop.h"
 #include "zenoh/net/property.h"
-#include "zenoh/net/read_loop.h"
 #include "zenoh/net/rname.h"
 #include "zenoh/net/session.h"
 
