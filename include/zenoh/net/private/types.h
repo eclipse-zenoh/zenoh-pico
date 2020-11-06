@@ -24,9 +24,6 @@ typedef struct
 {
     z_zint_t id;
     zn_reskey_t key;
-    uint8_t encoding;
-    uint8_t kind;
-    void *context;
 } _zn_resource_t;
 
 typedef struct
@@ -40,10 +37,20 @@ typedef struct
 
 typedef struct
 {
-    z_str_t rname;
-    z_zint_t rid;
     z_zint_t id;
+    zn_reskey_t key;
+    const char *predicate;
+    zn_query_target_t target;
+    zn_query_consolidation_t consolidation;
     zn_query_handler_t query_handler;
+    void *arg;
+} _zn_query_reply_t;
+
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+    zn_queryable_handler_t queryable_handler;
     void *arg;
 } _zn_queryable_t;
 

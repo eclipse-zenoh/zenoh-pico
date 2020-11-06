@@ -183,9 +183,8 @@ typedef struct
 
 /*------------------ ReplyContext Decorator ------------------*/
 // The ReplyContext is a message decorator for either:
-//   - the Data messages that result from a query
-//   - or a Unit message in case the message is a
-//     SOURCE_FINAL or REPLY_FINAL.
+//   - the Data messages that results from a query
+//   - or a Unit message in case the message is a REPLY_FINAL.
 //  The replier-id (eval or storage id) is represented as a byte-array.
 //
 //  7 6 5 4 3 2 1 0
@@ -837,10 +836,10 @@ typedef struct
 typedef struct
 {
     zn_reskey_t key;
+    z_str_t predicate;
     z_zint_t qid;
     z_zint_t target;
     z_zint_t consolidation;
-    z_str_t predicate;
 } _zn_query_t;
 
 /*------------------ Zenoh Message ------------------*/

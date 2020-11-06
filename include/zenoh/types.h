@@ -20,13 +20,11 @@
 
 /**
  * A variable-length encoding unsigned integer. 
- * 
  */
 typedef size_t z_zint_t;
 
 /**
  * A string with null terminator.
- *
  */
 typedef char *z_str_t;
 
@@ -36,7 +34,6 @@ typedef char *z_str_t;
  * Members:
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
- *
  */
 typedef struct z_string_t
 {
@@ -50,7 +47,6 @@ typedef struct z_string_t
  * Members:
  *   size_t len: The length of the bytes array.
  *   const uint8_t *val: A pointer to the bytes array.
- *
  */
 typedef struct z_bytes_t
 {
@@ -64,7 +60,6 @@ typedef struct z_bytes_t
  * Members:
  *   size_t len: The length of the array.
  *   char *const *val: A pointer to the array.
- *
  */
 typedef struct
 {
@@ -74,7 +69,6 @@ typedef struct
 
 /**
  * A zenoh timestamp.
- * 
  */
 typedef struct
 {

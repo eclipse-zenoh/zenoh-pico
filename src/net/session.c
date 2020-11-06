@@ -66,10 +66,10 @@ zn_session_t *_zn_session_init()
     z->remote_subscriptions = _z_list_empty;
     z->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    z->local_publishers = _z_list_empty;
     z->local_queryables = _z_list_empty;
+    z->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    z->replywaiters = _z_list_empty;
+    z->local_queries = _z_list_empty;
 
     z->read_task_running = 0;
     z->read_task_thread = NULL;
@@ -636,6 +636,11 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
 /*=============================*/
 /*           Public            */
 /*=============================*/
+void zn_init_logger()
+{
+    // @TODO
+}
+
 /*------------------ Init/Config ------------------*/
 zn_properties_t *zn_config_empty()
 {
@@ -665,22 +670,6 @@ zn_properties_t *zn_config_client(const char *locator)
 zn_properties_t *zn_config_default()
 {
     return zn_config_client(NULL);
-}
-
-zn_subinfo_t zn_subinfo_default()
-{
-    zn_subinfo_t si;
-    si.reliability = zn_reliability_t_RELIABLE;
-    si.mode = zn_submode_t_PUSH;
-    si.period = NULL;
-    return si;
-}
-
-zn_target_t zn_target_default()
-{
-    zn_target_t t;
-    t.tag = zn_target_t_BEST_MATCHING;
-    return t;
 }
 
 /*------------------ Scout/Open/Close ------------------*/
@@ -979,9 +968,6 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
     r->id = rid;
     r->key = reskey;
-    r->encoding = 0;
-    r->kind = 0;
-    r->context = NULL;
 
     int res = _zn_register_resource(z, _ZN_IS_LOCAL, r);
     if (res != 0)
@@ -1092,6 +1078,15 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
+zn_subinfo_t zn_subinfo_default()
+{
+    zn_subinfo_t si;
+    si.reliability = zn_reliability_t_RELIABLE;
+    si.mode = zn_submode_t_PUSH;
+    si.period = NULL;
+    return si;
+}
+
 zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t data_handler, void *arg)
 {
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
@@ -1236,6 +1231,96 @@ int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t
     return _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
 }
 
+/*------------------ Querty/Queryable ------------------*/
+zn_query_consolidation_t zn_query_consolidation_default(void)
+{
+    zn_query_consolidation_t qc;
+    qc.first_routers = zn_consolidation_mode_t_LAZY;
+    qc.last_router = zn_consolidation_mode_t_LAZY;
+    qc.reception = zn_consolidation_mode_t_FULL;
+    return qc;
+}
+
+z_string_t zn_query_predicate(zn_query_t *query)
+{
+    z_string_t s;
+    s.len = strlen(query->predicate);
+    s.val = query->predicate;
+    return s;
+}
+
+z_string_t zn_query_res_name(zn_query_t *query)
+{
+    z_string_t s;
+    s.len = strlen(query->rname);
+    s.val = query->rname;
+    return s;
+}
+
+zn_target_t zn_target_default(void)
+{
+    zn_target_t t;
+    t.tag = zn_target_t_BEST_MATCHING;
+    return t;
+}
+
+zn_query_target_t zn_query_target_default(void)
+{
+    zn_query_target_t qt;
+    qt.kind = ZN_QUERYABLE_ALL_KINDS;
+    qt.target = zn_target_default();
+    return qt;
+}
+
+void zn_query(zn_session_t *session, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
+{
+    (void)(session);
+    (void)(reskey);
+    (void)(predicate);
+    (void)(target);
+    (void)(consolidation);
+    (void)(callback);
+    (void)(arg);
+    // @TODO
+}
+
+zn_queryable_t *zn_declare_queryable(zn_session_t *session, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)
+{
+    (void)(session);
+    (void)(reskey);
+    (void)(kind);
+    (void)(callback);
+    (void)(arg);
+    // @TODO
+    return NULL;
+}
+
+void zn_undeclare_queryable(zn_queryable_t *qle)
+{
+    (void)(qle);
+    // @TODO
+}
+
+void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, size_t len)
+{
+    (void)(query);
+    (void)(key);
+    (void)(payload);
+    (void)(len);
+    // @TODO
+}
+
+/*------------------ Pull ------------------*/
+int zn_pull(zn_subscriber_t *sub)
+{
+    (void)(sub);
+    // @TODO
+    return 0;
+}
+
+/*-----------------------------------------------------------*/
+/*------------------ Zenoh-pico operations ------------------*/
+/*-----------------------------------------------------------*/
 /*------------------ Read ------------------*/
 int znp_read(zn_session_t *z)
 {

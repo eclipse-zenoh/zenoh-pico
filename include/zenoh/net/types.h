@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_NET_PICO_TYPES_H_
-#define ZENOH_NET_PICO_TYPES_H_
+#ifndef ZENOH_NET_PICO_TYPES_H
+#define ZENOH_NET_PICO_TYPES_H
 
 #include <stdint.h>
 #include <string.h>
@@ -23,14 +23,27 @@
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
 #include "zenoh/net/private/unix/types.h"
-#elif (ZENOH_PICOONTIKI == 1)
+#elif (ZENOH_CONTIKI == 1)
 #include "zenoh/net/private/contiki/types.h"
 #endif
 
+/**
+ * Whatami values.
+ */
 #define ZN_ROUTER 0x01 // 1 << 0
 #define ZN_PEER 0x02   // 1 << 1
 #define ZN_CLIENT 0x04 // 1 << 2
 
+/**
+ * Query kind values.
+ */
+#define ZN_QUERYABLE_ALL_KINDS 0x01 // 1 << 0
+#define ZN_QUERYABLE_STORAGE 0x02   // 1 << 1
+#define ZN_QUERYABLE_EVAL 0x04      // 1 << 2
+
+/**
+ * The reserved resource ID indicating a string-only resource key.
+ */
 #define ZN_RESOURCE_ID_NONE 0
 
 /**
@@ -39,7 +52,6 @@
  * Members:
  *   size_t id: The property ID.
  *   z_string_t value: The property value as a string.
- *
  */
 typedef struct
 {
@@ -49,7 +61,6 @@ typedef struct
 
 /**
  * Zenoh-net properties are represented as int-string map.
- * 
  */
 typedef _z_i_map_t zn_properties_t;
 
@@ -59,7 +70,6 @@ typedef _z_i_map_t zn_properties_t;
  * Members:
  *   z_zint_t: The resource ID.
  *   const char *val: A pointer to the string containing the resource name.
- *
  */
 typedef struct
 {
@@ -89,7 +99,6 @@ typedef struct
  *   unsigned int whatami: The kind of zenoh entity.
  *   zn_bytes_t pid: The peer id of the scouted entity (empty if absent).
  *   zn_str_array_t locators: The locators of the scouted entity.
- *
  */
 typedef struct zn_hello_t
 {
@@ -104,7 +113,6 @@ typedef struct zn_hello_t
  * Members:
  *   size_t len: The length of the array.
  *   const zn_hello_t *val: A pointer to the array.
- *
  */
 typedef struct zn_hello_array_t
 {
@@ -264,31 +272,13 @@ typedef struct
     zn_period_t *period;
 } zn_subinfo_t;
 
-// typedef struct
-// {
-//     char kind;
-//     const unsigned char *srcid;
-//     size_t srcid_length;
-//     z_zint_t rsn;
-//     const char *rname;
-//     const unsigned char *data;
-//     size_t data_length;
-//     zn_data_info_t info;
-// } zn_reply_value_t;
-
-// @TODO: define zn_query_t
-typedef void zn_query_t;
-
-typedef void (*zn_data_handler_t)(const zn_sample_t *, const void *arg);
-typedef void (*zn_query_handler_t)(zn_query_t *, const void *arg);
-
-// typedef void (*zn_reply_handler_t)(const zn_reply_value_t *reply, void *arg);
-// typedef void (*zn_replies_sender_t)(void *query_handle, zn_resource_p_array_t replies);
+/**
+ * The callback signature of the functions handling session discionnection.
+ */
 typedef void (*zn_on_disconnect_t)(void *z);
 
 /**
  * A zenoh-net session.
- * 
  */
 typedef struct
 {
@@ -330,13 +320,12 @@ typedef struct
 
     _z_list_t *local_subscriptions;
     _z_list_t *remote_subscriptions;
-
     _z_i_map_t *rem_res_loc_sub_map;
 
-    _z_list_t *local_publishers;
     _z_list_t *local_queryables;
+    _z_i_map_t *rem_res_loc_qle_map;
 
-    _z_list_t *replywaiters;
+    _z_list_t *local_queries;
 
     // Runtime
     zn_on_disconnect_t on_disconnect;
@@ -350,13 +339,9 @@ typedef struct
     void *lease_task_thread;
 } zn_session_t;
 
-typedef struct
-{
-    zn_session_t *z;
-    z_zint_t id;
-    zn_reskey_t key;
-} zn_resource_t;
-
+/**
+ * Return type when declaring a publisher.
+ */
 typedef struct
 {
     zn_session_t *z;
@@ -364,6 +349,9 @@ typedef struct
     zn_reskey_t key;
 } zn_publisher_t;
 
+/**
+ * Return type when declaring a subscriber.
+ */
 typedef struct
 {
     zn_session_t *z;
@@ -372,6 +360,9 @@ typedef struct
     z_zint_t id;
 } zn_subscriber_t;
 
+/**
+ * Return type when declaring a queryable.
+ */
 typedef struct
 {
     zn_session_t *z;
@@ -379,4 +370,28 @@ typedef struct
     z_zint_t id;
 } zn_queryable_t;
 
-#endif /* ZENOH_NET_PICO_TYPES_H_ */
+/**
+ * The query to be answered by a queryable.
+ */
+typedef struct
+{
+    zn_session_t *z;
+    z_zint_t qid;
+    const char *rname;
+    const char *predicate;
+} zn_query_t;
+
+/**
+ * The callback signature of the functions handling data messages.
+ */
+typedef void (*zn_data_handler_t)(const zn_sample_t *sample, const void *arg);
+/**
+ * The callback signature of the functions handling query replies.
+ */
+typedef void (*zn_query_handler_t)(const zn_source_info_t *source_info, const zn_sample_t *sample, const void *arg);
+/**
+ * The callback signature of the functions handling query messages.
+ */
+typedef void (*zn_queryable_handler_t)(zn_query_t *query, const void *arg);
+
+#endif /* ZENOH_NET_PICO_TYPES_H */

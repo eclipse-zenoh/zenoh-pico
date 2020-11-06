@@ -21,7 +21,6 @@
  * String key : `"mode"`.
  * Accepted values : `"client"`.
  * Default value : `"client"`.
- *
  */
 #define ZN_CONFIG_MODE_KEY 0x40
 #define ZN_CONFIG_MODE_DEFAULT "client"
@@ -32,7 +31,6 @@
  * Accepted values : `<locator>` (ex: `"tcp/10.10.10.10:7447"`).
  * Default value : None.
  * Multiple values are not accepted in zenoh-pico.
- * 
  */
 #define ZN_CONFIG_PEER_KEY 0x41
 
@@ -41,7 +39,6 @@
  * String key : `"user"`.
  * Accepted values : `<string>`.
  * Default value : None.
- *
  */
 #define ZN_CONFIG_USER_KEY 0x43
 
@@ -50,7 +47,6 @@
  * String key : `"password"`.
  * Accepted values : `<string>`.
  * Default value : None.
- *
  */
 #define ZN_CONFIG_PASSWORD_KEY 0x44
 
@@ -59,7 +55,6 @@
  * String key : `"multicast_scouting"`.
  * Accepted values : `0`, `1`.
  * Default value : `1`.
- *
  */
 #define ZN_CONFIG_MULTICAST_SCOUTING_KEY 0x45
 #define ZN_CONFIG_MULTICAST_SCOUTING_DEFAULT "true"
@@ -69,7 +64,6 @@
  * String key : `"multicast_interface"`.
  * Accepted values : `"auto"`, `<ip address>`, `<interface name>`.
  * Default value : `"auto"`.
- *
  */
 #define ZN_CONFIG_MULTICAST_INTERFACE_KEY 0x46
 #define ZN_CONFIG_MULTICAST_INTERFACE_DEFAULT "auto"
@@ -79,7 +73,6 @@
  * String key : `"multicast_address"`.
  * Accepted values : `<ip address>:<port>`.
  * Default value : `"224.0.0.224:7447"`.
- *
  */
 #define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
 #define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "224.0.0.224:7447"
@@ -89,7 +82,6 @@
  * String key : `"scouting_timeout"`.
  * Accepted values : `<float in seconds>`.
  * Default value : `"3.0"`.
- *
  */
 #define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
 #define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3.0"
@@ -99,7 +91,6 @@
  * String key : `"add_timestamp"`.
  * Accepted values : `0`, `1`.
  * Default value : `0`.
- *
  */
 #define ZN_CONFIG_ADD_TIMESTAMP_KEY 0x4A
 #define ZN_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
@@ -111,7 +102,6 @@
 #define ZN_PROTO_VERSION 0x00
 /** 
  * Default session lease in milliseconds: 10 seconds
- *
  */
 #define ZN_SESSION_LEASE 10000
 #define ZN_KEEP_ALIVE_INTERVAL 1000
@@ -120,7 +110,6 @@
  * The default sequence number resolution takes 4 bytes on the wire.
  * Given the VLE encoding of ZInt, 4 bytes result in 28 useful bits.
  * 2^28 = 268_435_456 => Max Seq Num = 268_435_455
- *
  */
 #define ZN_SN_RESOLUTION_DEFAULT 268435455
 #define ZN_SN_RESOLUTION ZN_SN_RESOLUTION_DEFAULT
@@ -141,7 +130,6 @@
  *       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
  *       the boundary of the serialized messages. The length is encoded as little-endian.
  *       In any case, the length of a message must not exceed 65_535 bytes.
- *
  */
 #define ZN_READ_BUF_LEN 65535 + _ZN_MSG_LEN_ENC_SIZE
 #define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE + _ZN_MSG_LEN_ENC_SIZE

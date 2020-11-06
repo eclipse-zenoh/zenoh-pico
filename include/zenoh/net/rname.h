@@ -25,7 +25,6 @@
  *     right: The resource name to be compared.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
- * 
  */
 int zn_rname_intersect(const char *left, const char *right);
 
