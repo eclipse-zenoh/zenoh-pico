@@ -21,11 +21,11 @@
 
 /*------------------ Session ------------------*/
 zn_session_t *_zn_session_init(void);
-int _zn_session_close(zn_session_t *z, uint8_t reason);
-void _zn_session_free(zn_session_t *z);
+int _zn_session_close(zn_session_t *zn, uint8_t reason);
+void _zn_session_free(zn_session_t *zn);
 
-int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *s_msg);
-int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *z_msg);
+int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *s_msg);
+int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
 
 /*------------------ ResKey helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(zn_reskey_t *resky);
@@ -38,41 +38,41 @@ _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
 /*------------------ Transmission and Reception helpers ------------------*/
-int _zn_send_s_msg(zn_session_t *z, _zn_session_message_t *m);
-int _zn_send_z_msg(zn_session_t *z, _zn_zenoh_message_t *m, zn_reliability_t reliability);
+int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *m);
+int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *m, zn_reliability_t reliability);
 
-_zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *z);
-void _zn_recv_s_msg_na(zn_session_t *z, _zn_session_message_p_result_t *r);
+_zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *zn);
+void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r);
 
 /*------------------ Entity ------------------*/
-z_zint_t _zn_get_entity_id(zn_session_t *z);
+z_zint_t _zn_get_entity_id(zn_session_t *zn);
 
 /*------------------ Resource ------------------*/
-z_zint_t _zn_get_resource_id(zn_session_t *z, const zn_reskey_t *res_key);
-_zn_resource_t *_zn_get_resource_by_id(zn_session_t *z, int is_local, z_zint_t rid);
-_zn_resource_t *_zn_get_resource_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
-z_str_t _zn_get_resource_name_from_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
+z_zint_t _zn_get_resource_id(zn_session_t *zn, const zn_reskey_t *res_key);
+_zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t rid);
+_zn_resource_t *_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *res_key);
+z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *res_key);
 
-int _zn_register_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
-void _zn_unregister_resource(zn_session_t *z, int is_local, _zn_resource_t *res);
+int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res);
+void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res);
 
 /*------------------ Subscription ------------------*/
-_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *z, const zn_reskey_t *res_key);
-_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *z, int is_local, z_zint_t id);
-_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *z, int is_local, const zn_reskey_t *res_key);
-int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
-void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
-void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const z_bytes_t payload);
+_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *res_key);
+_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id);
+_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *res_key);
+int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s);
+void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s);
+void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload);
 
 /*------------------ Query ------------------*/
-z_zint_t _zn_get_query_id(zn_session_t *z);
+z_zint_t _zn_get_query_id(zn_session_t *zn);
 
-// void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
-// _z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
-// _z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);
+// void _zn_register_queryable(zn_session_t *zn, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
+// _z_list_t *_zn_get_queryable_by_rid(zn_session_t *zn, z_zint_t rid);
+// _z_list_t *_zn_get_queryable_by_rname(zn_session_t *zn, const char *rname);
 // void _zn_unregister_queryable(zn_queryable_t *s);
 
-// int _zn_matching_remote_sub(zn_session_t *z, z_zint_t rid);
+// int _zn_matching_remote_sub(zn_session_t *zn, z_zint_t rid);
 
 // typedef struct
 // {
@@ -81,7 +81,7 @@ z_zint_t _zn_get_query_id(zn_session_t *z);
 //     void *arg;
 // } _zn_replywaiter_t;
 
-// void _zn_register_query(zn_session_t *z, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg);
-// _zn_replywaiter_t *_zn_get_query(zn_session_t *z, z_zint_t qid);
+// void _zn_register_query(zn_session_t *zn, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg);
+// _zn_replywaiter_t *_zn_get_query(zn_session_t *zn, z_zint_t qid);
 
 #endif /* _ZENOH_NET_PICO_INTERNAL_H */

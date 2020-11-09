@@ -27,89 +27,89 @@
 /*------------------ Init/Free/Close session ------------------*/
 zn_session_t *_zn_session_init()
 {
-    zn_session_t *z = (zn_session_t *)malloc(sizeof(zn_session_t));
+    zn_session_t *zn = (zn_session_t *)malloc(sizeof(zn_session_t));
 
     // Initialize the read and write buffers
-    z->wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
-    z->rbuf = _z_rbuf_make(ZN_READ_BUF_LEN);
+    zn->wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
+    zn->rbuf = _z_rbuf_make(ZN_READ_BUF_LEN);
 
     // Initialize the defragmentation buffers
-    z->dbuf_reliable = _z_wbuf_make(0, 1);
-    z->dbuf_best_effort = _z_wbuf_make(0, 1);
+    zn->dbuf_reliable = _z_wbuf_make(0, 1);
+    zn->dbuf_best_effort = _z_wbuf_make(0, 1);
 
     // Initialize the mutexes
-    _zn_mutex_init(&z->mutex_rx);
-    _zn_mutex_init(&z->mutex_tx);
+    _zn_mutex_init(&zn->mutex_rx);
+    _zn_mutex_init(&zn->mutex_tx);
 
     // The initial SN at RX side
-    z->lease = 0;
-    z->sn_resolution = 0;
+    zn->lease = 0;
+    zn->sn_resolution = 0;
 
     // The initial SN at RX side
-    z->sn_rx_reliable = 0;
-    z->sn_rx_best_effort = 0;
+    zn->sn_rx_reliable = 0;
+    zn->sn_rx_best_effort = 0;
 
     // The initial SN at TX side
-    z->sn_tx_reliable = 0;
-    z->sn_tx_best_effort = 0;
+    zn->sn_tx_reliable = 0;
+    zn->sn_tx_best_effort = 0;
 
     // Initialize the counters to 1
-    z->entity_id = 1;
-    z->resource_id = 1;
-    z->query_id = 1;
+    zn->entity_id = 1;
+    zn->resource_id = 1;
+    zn->query_id = 1;
 
     // Initialize the data structs
-    z->local_resources = _z_list_empty;
-    z->remote_resources = _z_list_empty;
+    zn->local_resources = _z_list_empty;
+    zn->remote_resources = _z_list_empty;
 
-    z->local_subscriptions = _z_list_empty;
-    z->remote_subscriptions = _z_list_empty;
-    z->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->local_subscriptions = _z_list_empty;
+    zn->remote_subscriptions = _z_list_empty;
+    zn->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    z->local_queryables = _z_list_empty;
-    z->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->local_queryables = _z_list_empty;
+    zn->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    z->local_queries = _z_list_empty;
+    zn->local_queries = _z_list_empty;
 
-    z->read_task_running = 0;
-    z->read_task_thread = NULL;
+    zn->read_task_running = 0;
+    zn->read_task_thread = NULL;
 
-    z->received = 0;
-    z->transmitted = 0;
-    z->lease_task_running = 0;
-    z->lease_task_thread = NULL;
+    zn->received = 0;
+    zn->transmitted = 0;
+    zn->lease_task_running = 0;
+    zn->lease_task_thread = NULL;
 
-    return z;
+    return zn;
 }
 
-void _zn_session_free(zn_session_t *z)
+void _zn_session_free(zn_session_t *zn)
 {
-    _zn_close_tx_session(z->sock);
+    _zn_close_tx_session(zn->sock);
 
-    _zn_mutex_free(&z->mutex_tx);
-    _zn_mutex_free(&z->mutex_rx);
+    _zn_mutex_free(&zn->mutex_tx);
+    _zn_mutex_free(&zn->mutex_rx);
 
-    _z_wbuf_free(&z->wbuf);
-    _z_rbuf_free(&z->rbuf);
+    _z_wbuf_free(&zn->wbuf);
+    _z_rbuf_free(&zn->rbuf);
 
-    _z_wbuf_free(&z->dbuf_reliable);
-    _z_wbuf_free(&z->dbuf_best_effort);
+    _z_wbuf_free(&zn->dbuf_reliable);
+    _z_wbuf_free(&zn->dbuf_best_effort);
 
-    free(z);
+    free(zn);
 
-    z = NULL;
+    zn = NULL;
 }
 
-int _zn_send_close(zn_session_t *z, uint8_t reason, int link_only)
+int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 {
     _zn_session_message_t cm = _zn_session_message_init(_ZN_MID_CLOSE);
-    cm.body.close.pid = z->local_pid;
+    cm.body.close.pid = zn->local_pid;
     cm.body.close.reason = reason;
     _ZN_SET_FLAG(cm.header, _ZN_FLAG_S_I);
     if (link_only)
         _ZN_SET_FLAG(cm.header, _ZN_FLAG_S_K);
 
-    int res = _zn_send_s_msg(z, &cm);
+    int res = _zn_send_s_msg(zn, &cm);
 
     // Free the message
     _zn_session_message_free(&cm);
@@ -117,28 +117,28 @@ int _zn_send_close(zn_session_t *z, uint8_t reason, int link_only)
     return res;
 }
 
-int _zn_session_close(zn_session_t *z, uint8_t reason)
+int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
-    int res = _zn_send_close(z, reason, 0);
+    int res = _zn_send_close(zn, reason, 0);
     // Free the session
-    _zn_session_free(z);
+    _zn_session_free(zn);
 
     return res;
 }
 
 void _zn_default_on_disconnect(void *vz)
 {
-    zn_session_t *z = (zn_session_t *)vz;
-    for (int i = 0; i < 3; ++i)
+    zn_session_t *zn = (zn_session_t *)vz;
+    for (int i = 0; i < 3; i++)
     {
         _zn_sleep_s(3);
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        _zn_socket_result_t r_sock = _zn_open_tx_session(z->locator);
+        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
         if (r_sock.tag == _z_res_t_OK)
         {
-            z->sock = r_sock.value.socket;
+            zn->sock = r_sock.value.socket;
             return;
         }
     }
@@ -308,14 +308,14 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
 }
 
 /*------------------ Handle message ------------------*/
-int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
+int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 {
     switch (_ZN_MID(msg->header))
     {
     case _ZN_MID_DATA:
     {
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
-        _zn_trigger_subscriptions(z, msg->body.data.key, msg->body.data.payload);
+        _zn_trigger_subscriptions(zn, msg->body.data.key, msg->body.data.payload);
         return _z_res_t_OK;
     }
 
@@ -340,22 +340,22 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                 r->key.rid = key.rid;
                 r->key.rname = strdup(key.rname);
 
-                int res = _zn_register_resource(z, _ZN_IS_REMOTE, r);
+                int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
                 if (res == 0)
                 {
                     // Check if there is a matching local subscription
-                    _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &key);
+                    _z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &key);
                     if (subs)
                     {
                         // Update the list
-                        _z_list_t *sons = _z_i_map_get(z->rem_res_loc_sub_map, id);
+                        _z_list_t *sons = _z_i_map_get(zn->rem_res_loc_sub_map, id);
                         if (sons)
                         {
                             // Free any ancient list
                             _z_list_free(&sons);
                         }
                         // Update the list of active subscriptions
-                        _z_i_map_set(z->rem_res_loc_sub_map, id, subs);
+                        _z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
                     }
                 }
                 else
@@ -370,7 +370,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             case _ZN_DECL_PUBLISHER:
             {
                 // Check if there are matching local subscriptions
-                _z_list_t *subs = _zn_get_subscriptions_from_remote_key(z, &msg->body.data.key);
+                _z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key);
                 unsigned int len = _z_list_len(subs);
                 if (len > 0)
                 {
@@ -391,7 +391,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
                     }
 
                     // Send the message
-                    _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+                    _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
 
                     // Free the message
                     _zn_zenoh_message_free(&z_msg);
@@ -401,16 +401,16 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
 
             case _ZN_DECL_SUBSCRIBER:
             {
-                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.sub.key);
+                _zn_subscriber_t *sub = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.sub.key);
                 if (sub)
                 {
                     _zn_subscriber_t rs;
-                    rs.id = _zn_get_entity_id(z);
+                    rs.id = _zn_get_entity_id(zn);
                     rs.key = decl.body.sub.key;
                     rs.info = decl.body.sub.subinfo;
                     rs.data_handler = NULL;
                     rs.arg = NULL;
-                    _zn_register_subscription(z, _ZN_IS_REMOTE, &rs);
+                    _zn_register_subscription(zn, _ZN_IS_REMOTE, &rs);
                 }
 
                 break;
@@ -422,9 +422,9 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_RESOURCE:
             {
-                _zn_resource_t *rd = _zn_get_resource_by_id(z, _ZN_IS_REMOTE, decl.body.forget_res.rid);
+                _zn_resource_t *rd = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, decl.body.forget_res.rid);
                 if (rd)
-                    _zn_unregister_resource(z, _ZN_IS_REMOTE, rd);
+                    _zn_unregister_resource(zn, _ZN_IS_REMOTE, rd);
 
                 break;
             }
@@ -435,9 +435,9 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
-                _zn_subscriber_t *sub = _zn_get_subscription_by_key(z, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
+                _zn_subscriber_t *sub = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
                 if (sub)
-                    _zn_unregister_subscription(z, _ZN_IS_REMOTE, sub);
+                    _zn_unregister_subscription(zn, _ZN_IS_REMOTE, sub);
 
                 break;
             }
@@ -482,7 +482,7 @@ int _zn_handle_zenoh_message(zn_session_t *z, _zn_zenoh_message_t *msg)
     }
 }
 
-int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
+int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
 {
     switch (_ZN_MID(msg->header))
     {
@@ -513,7 +513,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
-        _zn_session_free(z);
+        _zn_session_free(zn);
         return _z_res_t_ERR;
     }
 
@@ -547,26 +547,26 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_zn_sn_precedes(z->sn_resolution_half, z->sn_rx_reliable, msg->body.frame.sn))
+            if (_zn_sn_precedes(zn->sn_resolution_half, zn->sn_rx_reliable, msg->body.frame.sn))
             {
-                z->sn_rx_reliable = msg->body.frame.sn;
+                zn->sn_rx_reliable = msg->body.frame.sn;
             }
             else
             {
-                _z_wbuf_reset(&z->dbuf_reliable);
+                _z_wbuf_reset(&zn->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
         }
         else
         {
-            if (_zn_sn_precedes(z->sn_resolution_half, z->sn_rx_best_effort, msg->body.frame.sn))
+            if (_zn_sn_precedes(zn->sn_resolution_half, zn->sn_rx_best_effort, msg->body.frame.sn))
             {
-                z->sn_rx_best_effort = msg->body.frame.sn;
+                zn->sn_rx_best_effort = msg->body.frame.sn;
             }
             else
             {
-                _z_wbuf_reset(&z->dbuf_best_effort);
+                _z_wbuf_reset(&zn->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -577,7 +577,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             int res = _z_res_t_OK;
 
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R) ? &z->dbuf_reliable : &z->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R) ? &zn->dbuf_reliable : &zn->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
             _z_wbuf_add_iosli_from(dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
 
@@ -592,7 +592,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(z, d_zm);
+                    res = _zn_handle_zenoh_message(zn, d_zm);
                     // Free the decoded message
                     _zn_zenoh_message_free(d_zm);
                 }
@@ -617,7 +617,7 @@ int _zn_handle_session_message(zn_session_t *z, _zn_session_message_t *msg)
             unsigned int len = _z_vec_len(&msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; ++i)
             {
-                int res = _zn_handle_zenoh_message(z, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
+                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
                     return res;
             }
@@ -695,15 +695,15 @@ zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned l
     return _zn_scout(what, config, timeout, 0);
 }
 
-void zn_close(zn_session_t *z)
+void zn_close(zn_session_t *zn)
 {
-    _zn_session_close(z, _ZN_CLOSE_GENERIC);
+    _zn_session_close(zn, _ZN_CLOSE_GENERIC);
     return;
 }
 
 zn_session_t *zn_open(zn_properties_t *config)
 {
-    zn_session_t *z = NULL;
+    zn_session_t *zn = NULL;
 
     int locator_is_scouted = 0;
     const char *locator = zn_properties_get(config, ZN_CONFIG_PEER_KEY).val;
@@ -715,7 +715,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         const char *mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
         if (mode == NULL)
         {
-            return z;
+            return zn;
         }
 
         const char *to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
@@ -746,7 +746,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             // Free all the scouted locators
             zn_hello_array_free(locs);
 
-            return z;
+            return zn;
         }
     }
 
@@ -760,7 +760,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         if (locator_is_scouted)
             free((char *)locator);
 
-        return z;
+        return zn;
     }
 
     // Randomly generate a peer ID
@@ -785,14 +785,14 @@ zn_session_t *zn_open(zn_properties_t *config)
     //       needed because a client is not expected to receive opens.
 
     // Initialize the session
-    z = _zn_session_init();
-    z->sock = r_sock.value.socket;
+    zn = _zn_session_init();
+    zn->sock = r_sock.value.socket;
 
     _Z_DEBUG("Sending Open\n");
     // Encode and send the message
-    _zn_send_s_msg(z, &om);
+    _zn_send_s_msg(zn, &om);
 
-    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(z);
+    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(zn);
     if (r_msg.tag == _z_res_t_ERR)
     {
         // Free the pid
@@ -804,9 +804,9 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free
         _zn_session_message_free(&om);
-        _zn_session_free(z);
+        _zn_session_free(zn);
 
-        return z;
+        return zn;
     }
 
     _zn_session_message_t *p_am = r_msg.value.session_message;
@@ -815,12 +815,12 @@ zn_session_t *zn_open(zn_properties_t *config)
     case _ZN_MID_ACCEPT:
     {
         // The announced sn resolution
-        z->sn_resolution = om.body.open.sn_resolution;
-        z->sn_resolution_half = z->sn_resolution / 2;
+        zn->sn_resolution = om.body.open.sn_resolution;
+        zn->sn_resolution_half = zn->sn_resolution / 2;
 
         // The announced initial SN at TX side
-        z->sn_tx_reliable = om.body.open.initial_sn;
-        z->sn_tx_best_effort = om.body.open.initial_sn;
+        zn->sn_tx_reliable = om.body.open.initial_sn;
+        zn->sn_tx_best_effort = om.body.open.initial_sn;
 
         // Handle SN resolution option if present
         if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_S)
@@ -837,16 +837,16 @@ zn_session_t *zn_open(zn_properties_t *config)
                 //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
                 if (om.body.open.initial_sn >= p_am->body.accept.sn_resolution)
                 {
-                    z->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
-                    z->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                    zn->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                    zn->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
                 }
-                z->sn_resolution = p_am->body.accept.sn_resolution;
-                z->sn_resolution_half = z->sn_resolution / 2;
+                zn->sn_resolution = p_am->body.accept.sn_resolution;
+                zn->sn_resolution_half = zn->sn_resolution / 2;
             }
             else
             {
                 // Close the session
-                _zn_session_close(z, _ZN_CLOSE_INVALID);
+                _zn_session_close(zn, _ZN_CLOSE_INVALID);
                 break;
             }
         }
@@ -857,31 +857,31 @@ zn_session_t *zn_open(zn_properties_t *config)
         }
 
         // The session lease
-        z->lease = p_am->body.accept.lease;
+        zn->lease = p_am->body.accept.lease;
 
         // The initial SN at RX side. Initialize the session as we had already received
         // a message with a SN equal to initial_sn - 1.
         if (p_am->body.accept.initial_sn > 0)
         {
-            z->sn_rx_reliable = p_am->body.accept.initial_sn - 1;
-            z->sn_rx_best_effort = p_am->body.accept.initial_sn - 1;
+            zn->sn_rx_reliable = p_am->body.accept.initial_sn - 1;
+            zn->sn_rx_best_effort = p_am->body.accept.initial_sn - 1;
         }
         else
         {
-            z->sn_rx_reliable = z->sn_resolution - 1;
-            z->sn_rx_best_effort = z->sn_resolution - 1;
+            zn->sn_rx_reliable = zn->sn_resolution - 1;
+            zn->sn_rx_best_effort = zn->sn_resolution - 1;
         }
 
         // Initialize the Local and Remote Peer IDs
-        _z_bytes_move(&z->local_pid, &pid);
-        _z_bytes_copy(&z->remote_pid, &r_msg.value.session_message->body.accept.apid);
+        _z_bytes_move(&zn->local_pid, &pid);
+        _z_bytes_copy(&zn->remote_pid, &r_msg.value.session_message->body.accept.apid);
 
         if (locator_is_scouted)
-            z->locator = (char *)locator;
+            zn->locator = (char *)locator;
         else
-            z->locator = strdup(locator);
+            zn->locator = strdup(locator);
 
-        z->on_disconnect = &_zn_default_on_disconnect;
+        zn->on_disconnect = &_zn_default_on_disconnect;
 
         break;
     }
@@ -889,7 +889,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     default:
     {
         // Close the session
-        _zn_session_close(z, _ZN_CLOSE_INVALID);
+        _zn_session_close(zn, _ZN_CLOSE_INVALID);
         break;
     }
     }
@@ -899,18 +899,18 @@ zn_session_t *zn_open(zn_properties_t *config)
     _zn_session_message_free(p_am);
     _zn_session_message_p_result_free(&r_msg);
 
-    return z;
+    return zn;
 }
 
-// _z_vec_t zn_info(zn_session_t *z)
+// _z_vec_t zn_info(zn_session_t *zn)
 // {
 //     _z_vec_t res = _z_vec_make(3);
-//     zn_property_t *pid = zn_property_make(ZN_INFO_PID_KEY, z->pid);
+//     zn_property_t *pid = zn_property_make(ZN_INFO_PID_KEY, zn->pid);
 //     z_bytes_t locator;
-//     locator.len = strlen(z->locator) + 1;
-//     locator.val = (uint8_t *)z->locator;
+//     locator.len = strlen(zn->locator) + 1;
+//     locator.val = (uint8_t *)zn->locator;
 //     zn_property_t *peer = zn_property_make(ZN_INFO_PEER_KEY, locator);
-//     zn_property_t *peer_pid = zn_property_make(ZN_INFO_PEER_PID_KEY, z->peer_pid);
+//     zn_property_t *peer_pid = zn_property_make(ZN_INFO_PEER_PID_KEY, zn->peer_pid);
 
 //     _z_vec_set(&res, ZN_INFO_PID_KEY, pid);
 //     _z_vec_set(&res, ZN_INFO_PEER_KEY, peer);
@@ -938,10 +938,10 @@ zn_reskey_t zn_rid(const unsigned long rid)
 }
 
 /*------------------ Resource Declaration ------------------*/
-z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
+z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 {
     // Generate a new resource ID
-    z_zint_t rid = _zn_get_resource_id(z, &reskey);
+    z_zint_t rid = _zn_get_resource_id(zn, &reskey);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -956,11 +956,11 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     z_msg.body.declare.declarations.val[0].body.res.id = rid;
     z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&reskey);
 
-    if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
-        z->on_disconnect(z);
-        _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+        zn->on_disconnect(zn);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -969,7 +969,7 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     r->id = rid;
     r->key = reskey;
 
-    int res = _zn_register_resource(z, _ZN_IS_LOCAL, r);
+    int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
     if (res != 0)
     {
         free(r);
@@ -978,9 +978,9 @@ z_zint_t zn_declare_resource(zn_session_t *z, zn_reskey_t reskey)
     return rid;
 }
 
-int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
+int zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
 {
-    _zn_resource_t *r = _zn_get_resource_by_id(z, _ZN_IS_LOCAL, rid);
+    _zn_resource_t *r = _zn_get_resource_by_id(zn, _ZN_IS_LOCAL, rid);
     if (r)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -994,32 +994,32 @@ int zn_undeclare_resource(zn_session_t *z, z_zint_t rid)
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_RESOURCE;
         z_msg.body.declare.declarations.val[0].body.forget_res.rid = rid;
 
-        if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
         {
             _Z_DEBUG("Trying to reconnect...\n");
-            z->on_disconnect(z);
-            _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+            zn->on_disconnect(zn);
+            _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
         }
 
         _zn_zenoh_message_free(&z_msg);
 
-        _zn_unregister_resource(z, _ZN_IS_LOCAL, r);
+        _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
     }
 
     return 0;
 }
 
 /*------------------  Publisher Declaration ------------------*/
-zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t reskey)
+zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 {
     zn_publisher_t *pub = (zn_publisher_t *)malloc(sizeof(zn_publisher_t));
-    pub->z = z;
+    pub->zn = zn;
     pub->key.rid = reskey.rid;
     if (reskey.rname)
         pub->key.rname = strdup(reskey.rname);
     else
         pub->key.rname = NULL;
-    pub->id = _zn_get_entity_id(z);
+    pub->id = _zn_get_entity_id(zn);
 
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
@@ -1035,11 +1035,11 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *z, zn_reskey_t reskey)
     if (!pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
-        z->on_disconnect(z);
-        _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+        zn->on_disconnect(zn);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1065,11 +1065,11 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     if (!pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    if (_zn_send_z_msg(pub->z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
-        pub->z->on_disconnect(pub->z);
-        _zn_send_z_msg(pub->z, &z_msg, zn_reliability_t_RELIABLE);
+        pub->zn->on_disconnect(pub->zn);
+        _zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1087,11 +1087,11 @@ zn_subinfo_t zn_subinfo_default()
     return si;
 }
 
-zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t data_handler, void *arg)
+zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t data_handler, void *arg)
 {
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
-    subscriber->z = z;
-    subscriber->id = _zn_get_entity_id(z);
+    subscriber->zn = zn;
+    subscriber->id = _zn_get_entity_id(zn);
     subscriber->key = reskey;
     memcpy(&subscriber->info, &sub_info, sizeof(zn_subinfo_t));
 
@@ -1118,11 +1118,11 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
     z_msg.body.declare.declarations.val[0].body.sub.subinfo.reliability = sub_info.reliability;
     z_msg.body.declare.declarations.val[0].body.sub.subinfo.period = sub_info.period;
 
-    if (_zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
         _Z_DEBUG("Trying to reconnect....\n");
-        z->on_disconnect(z);
-        _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+        zn->on_disconnect(zn);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1134,7 +1134,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
     rs->data_handler = data_handler;
     rs->arg = arg;
 
-    int res = _zn_register_subscription(z, _ZN_IS_LOCAL, rs);
+    int res = _zn_register_subscription(zn, _ZN_IS_LOCAL, rs);
     if (res != 0)
     {
         free(rs);
@@ -1147,7 +1147,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *z, zn_reskey_t reskey, zn_s
 
 void zn_undeclare_subscriber(zn_subscriber_t *sub)
 {
-    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->z, _ZN_IS_LOCAL, sub->id);
+    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
     if (s)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -1164,23 +1164,23 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
         z_msg.body.declare.declarations.val[0].body.forget_sub.key = sub->key;
 
-        if (_zn_send_z_msg(sub->z, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
         {
             _Z_DEBUG("Trying to reconnect....\n");
-            sub->z->on_disconnect(sub->z);
-            _zn_send_z_msg(sub->z, &z_msg, zn_reliability_t_RELIABLE);
+            sub->zn->on_disconnect(sub->zn);
+            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE);
         }
 
         _zn_zenoh_message_free(&z_msg);
 
-        _zn_unregister_subscription(sub->z, _ZN_IS_LOCAL, s);
+        _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
     }
 
     return;
 }
 
 /*------------------ Write ------------------*/
-int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1208,10 +1208,10 @@ int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const unsigned char *paylo
     z_msg.body.data.payload.len = length;
     z_msg.body.data.payload.val = (uint8_t *)payload;
 
-    return _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
 }
 
-int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t length)
+int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -1228,7 +1228,7 @@ int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t
     z_msg.body.data.payload.len = length;
     z_msg.body.data.payload.val = (uint8_t *)payload;
 
-    return _zn_send_z_msg(z, &z_msg, zn_reliability_t_RELIABLE);
+    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
 }
 
 /*------------------ Querty/Queryable ------------------*/
@@ -1329,12 +1329,12 @@ int zn_pull(zn_subscriber_t *sub)
 /*------------------ Zenoh-pico operations ------------------*/
 /*-----------------------------------------------------------*/
 /*------------------ Read ------------------*/
-int znp_read(zn_session_t *z)
+int znp_read(zn_session_t *zn)
 {
-    _zn_session_message_p_result_t r_s = _zn_recv_s_msg(z);
+    _zn_session_message_p_result_t r_s = _zn_recv_s_msg(zn);
     if (r_s.tag == _z_res_t_OK)
     {
-        int res = _zn_handle_session_message(z, r_s.value.session_message);
+        int res = _zn_handle_session_message(zn, r_s.value.session_message);
         _zn_session_message_free(r_s.value.session_message);
         _zn_session_message_p_result_free(&r_s);
         return res;
@@ -1347,24 +1347,24 @@ int znp_read(zn_session_t *z)
 }
 
 /*------------------ Keep Alive ------------------*/
-int znp_send_keep_alive(zn_session_t *z)
+int znp_send_keep_alive(zn_session_t *zn)
 {
     _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_KEEP_ALIVE);
 
-    return _zn_send_s_msg(z, &s_msg);
+    return _zn_send_s_msg(zn, &s_msg);
 }
 
 // int zn_pull(zn_subscriber_t *sub)
 // {
 //     _zn_message_t msg;
 //     msg.header = _ZN_PULL | _ZN_F_FLAG | _ZN_S_FLAG;
-//     msg.payload.pull.sn = sub->z->sn++;
+//     msg.payload.pull.sn = sub->zn->sn++;
 //     msg.payload.pull.id = sub->rid;
-//     if (_zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg) != 0)
+//     if (_zn_send_msg(sub->zn->sock, &sub->zn->wbuf, &msg) != 0)
 //     {
 //         _Z_DEBUG("Trying to reconnect....\n");
-//         sub->z->on_disconnect(sub->z);
-//         return _zn_send_msg(sub->z->sock, &sub->z->wbuf, &msg);
+//         sub->zn->on_disconnect(sub->z);
+//         return _zn_send_msg(sub->zn->sock, &sub->zn->wbuf, &msg);
 //     }
 //     return 0;
 // }
@@ -1391,7 +1391,7 @@ int znp_send_keep_alive(zn_session_t *z)
 //     msg.header = _ZN_REPLY | _ZN_F_FLAG | eval_flag;
 //     msg.payload.reply.qid = handle->qid;
 //     msg.payload.reply.qpid = handle->qpid;
-//     msg.payload.reply.srcid = handle->z->pid;
+//     msg.payload.reply.srcid = handle->zn->pid;
 
 //     for (i = 0; i < replies.length; ++i)
 //     {
@@ -1410,15 +1410,15 @@ int znp_send_keep_alive(zn_session_t *z)
 //         _zn_payload_header_encode(&buf, &ph);
 //         msg.payload.reply.payload_header = buf;
 
-//         if (_zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128) == 0)
+//         if (_zn_send_large_msg(handle->zn->sock, &handle->zn->wbuf, &msg, replies.elem[i]->length + 128) == 0)
 //         {
 //             z_iobuf_free(&buf);
 //         }
 //         else
 //         {
 //             _Z_DEBUG("Trying to reconnect....\n");
-//             handle->z->on_disconnect(handle->z);
-//             _zn_send_large_msg(handle->z->sock, &handle->z->wbuf, &msg, replies.elem[i]->length + 128);
+//             handle->zn->on_disconnect(handle->z);
+//             _zn_send_large_msg(handle->zn->sock, &handle->zn->wbuf, &msg, replies.elem[i]->length + 128);
 //             z_iobuf_free(&buf);
 //         }
 //     }
@@ -1427,15 +1427,15 @@ int znp_send_keep_alive(zn_session_t *z)
 //     z_iobuf_t buf = z_iobuf_make(0);
 //     msg.payload.reply.payload_header = buf;
 
-//     if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) == 0)
+//     if (_zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg) == 0)
 //     {
 //         z_iobuf_free(&buf);
 //     }
 //     else
 //     {
 //         _Z_DEBUG("Trying to reconnect....\n");
-//         handle->z->on_disconnect(handle->z);
-//         _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
+//         handle->zn->on_disconnect(handle->z);
+//         _zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg);
 //         z_iobuf_free(&buf);
 //     }
 
@@ -1444,11 +1444,11 @@ int znp_send_keep_alive(zn_session_t *z)
 //     {
 //         msg.header = _ZN_REPLY;
 
-//         if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) != 0)
+//         if (_zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg) != 0)
 //         {
 //             _Z_DEBUG("Trying to reconnect....\n");
-//             handle->z->on_disconnect(handle->z);
-//             _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
+//             handle->zn->on_disconnect(handle->z);
+//             _zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg);
 //         }
 //     }
 // }
@@ -1478,8 +1478,8 @@ int znp_send_keep_alive(zn_session_t *z)
 //         {
 //             rep.kind = ZN_STORAGE_DATA;
 //         }
-//         rep.srcid = handle->z->pid.val;
-//         rep.srcid_length = handle->z->pid.len;
+//         rep.srcid = handle->zn->pid.val;
+//         rep.srcid_length = handle->zn->pid.len;
 //         rep.rsn = i;
 //         rep.rname = replies.val[i]->rname;
 //         rep.info.flags = _ZN_ENCODING | _ZN_KIND;
@@ -1498,8 +1498,8 @@ int znp_send_keep_alive(zn_session_t *z)
 //     {
 //         rep.kind = ZN_STORAGE_FINAL;
 //     }
-//     rep.srcid = handle->z->pid.val;
-//     rep.srcid_length = handle->z->pid.len;
+//     rep.srcid = handle->zn->pid.val;
+//     rep.srcid_length = handle->zn->pid.len;
 //     rep.rsn = i;
 //     handle->reply_handler(&rep, handle->arg);
 
@@ -1508,8 +1508,8 @@ int znp_send_keep_alive(zn_session_t *z)
 //     {
 //         _zn_message_t msg;
 //         msg.header = _ZN_QUERY;
-//         msg.payload.query.pid = handle->z->pid;
-//         msg.payload.query.qid = handle->z->qid++;
+//         msg.payload.query.pid = handle->zn->pid;
+//         msg.payload.query.qid = handle->zn->qid++;
 //         msg.payload.query.rname = handle->resource;
 //         msg.payload.query.predicate = handle->predicate;
 
@@ -1531,11 +1531,11 @@ int znp_send_keep_alive(zn_session_t *z)
 //         }
 
 //         _zn_register_query(handle->z, msg.payload.query.qid, handle->reply_handler, handle->arg);
-//         if (_zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg) != 0)
+//         if (_zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg) != 0)
 //         {
 //             _Z_DEBUG("Trying to reconnect....\n");
-//             handle->z->on_disconnect(handle->z);
-//             _zn_send_msg(handle->z->sock, &handle->z->wbuf, &msg);
+//             handle->zn->on_disconnect(handle->z);
+//             _zn_send_msg(handle->zn->sock, &handle->zn->wbuf, &msg);
 //         }
 //         free(handle);
 //     }
@@ -1551,10 +1551,10 @@ int znp_send_keep_alive(zn_session_t *z)
 //     send_local_replies(query_handle, replies, 1);
 // }
 
-// int zn_query_wo(zn_session_t *z, const char *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg, zn_query_dest_t dest_storages, zn_query_dest_t dest_evals)
+// int zn_query_wo(zn_session_t *zn, const char *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg, zn_query_dest_t dest_storages, zn_query_dest_t dest_evals)
 // {
-//     _z_list_t *stos = dest_storages.kind == ZN_NONE ? 0 : _zn_get_storages_by_rname(z, resource);
-//     _z_list_t *evals = dest_evals.kind == ZN_NONE ? 0 : _zn_get_evals_by_rname(z, resource);
+//     _z_list_t *stos = dest_storages.kind == ZN_NONE ? 0 : _zn_get_storages_by_rname(zn, resource);
+//     _z_list_t *evals = dest_evals.kind == ZN_NONE ? 0 : _zn_get_evals_by_rname(zn, resource);
 //     if (stos != 0 || evals != 0)
 //     {
 //         _zn_sto_t *sto;
@@ -1562,7 +1562,7 @@ int znp_send_keep_alive(zn_session_t *z)
 //         _z_list_t *lit;
 
 //         local_query_handle_t *handle = malloc(sizeof(local_query_handle_t));
-//         handle->z = z;
+//         handle->zn = zn;
 //         handle->resource = (char *)resource;
 //         handle->predicate = (char *)predicate;
 //         handle->reply_handler = reply_handler;
@@ -1610,8 +1610,8 @@ int znp_send_keep_alive(zn_session_t *z)
 //     {
 //         _zn_message_t msg;
 //         msg.header = _ZN_QUERY;
-//         msg.payload.query.pid = z->pid;
-//         msg.payload.query.qid = z->qid++;
+//         msg.payload.query.pid = zn->pid;
+//         msg.payload.query.qid = zn->qid++;
 //         msg.payload.query.rname = (char *)resource;
 //         msg.payload.query.predicate = (char *)predicate;
 
@@ -1632,19 +1632,19 @@ int znp_send_keep_alive(zn_session_t *z)
 //             msg.properties = &ps;
 //         }
 
-//         _zn_register_query(z, msg.payload.query.qid, reply_handler, arg);
-//         if (_zn_send_msg(z->sock, &z->wbuf, &msg) != 0)
+//         _zn_register_query(zn, msg.payload.query.qid, reply_handler, arg);
+//         if (_zn_send_msg(zn->sock, &zn->wbuf, &msg) != 0)
 //         {
 //             _Z_DEBUG("Trying to reconnect....\n");
-//             z->on_disconnect(z);
-//             _zn_send_msg(z->sock, &z->wbuf, &msg);
+//             zn->on_disconnect(zn);
+//             _zn_send_msg(zn->sock, &zn->wbuf, &msg);
 //         }
 //     }
 //     return 0;
 // }
 
-// int zn_query(zn_session_t *z, const char *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg)
+// int zn_query(zn_session_t *zn, const char *resource, const char *predicate, zn_reply_handler_t reply_handler, void *arg)
 // {
 //     zn_query_dest_t best_match = {ZN_BEST_MATCH, 0};
-//     return zn_query_wo(z, resource, predicate, reply_handler, arg, best_match, best_match);
+//     return zn_query_wo(zn, resource, predicate, reply_handler, arg, best_match, best_match);
 // }

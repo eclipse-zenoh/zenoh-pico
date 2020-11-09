@@ -275,7 +275,7 @@ typedef struct
 /**
  * The callback signature of the functions handling session discionnection.
  */
-typedef void (*zn_on_disconnect_t)(void *z);
+typedef void (*zn_on_disconnect_t)(void *zn);
 
 /**
  * A zenoh-net session.
@@ -344,7 +344,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *z;
+    zn_session_t *zn;
     z_zint_t id;
     zn_reskey_t key;
 } zn_publisher_t;
@@ -354,7 +354,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *z;
+    zn_session_t *zn;
     zn_subinfo_t info;
     zn_reskey_t key;
     z_zint_t id;
@@ -365,7 +365,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *z;
+    zn_session_t *zn;
     z_zint_t rid;
     z_zint_t id;
 } zn_queryable_t;
@@ -375,7 +375,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *z;
+    zn_session_t *zn;
     z_zint_t qid;
     const char *rname;
     const char *predicate;

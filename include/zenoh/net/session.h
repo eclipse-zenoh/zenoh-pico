@@ -247,7 +247,7 @@ zn_reskey_t zn_rname(const char *rname);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len);
+int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len);
 
 /**
  * Write data.
@@ -263,7 +263,7 @@ int zn_write(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int zn_write_ext(zn_session_t *z, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
+int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`zn_subscriber_t`. The pulled data will be provided
