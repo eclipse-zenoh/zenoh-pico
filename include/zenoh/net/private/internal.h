@@ -28,7 +28,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *s_msg);
 int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
 
 /*------------------ ResKey helpers ------------------*/
-zn_reskey_t _zn_reskey_clone(zn_reskey_t *resky);
+zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
 
 /*------------------ Message helper ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header);
@@ -66,7 +66,13 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn);
+_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id);
+int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
+void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
+void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info);
+void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context);
 
+/*------------------ Queryable ------------------*/
 // void _zn_register_queryable(zn_session_t *zn, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
 // _z_list_t *_zn_get_queryable_by_rid(zn_session_t *zn, z_zint_t rid);
 // _z_list_t *_zn_get_queryable_by_rname(zn_session_t *zn, const char *rname);

@@ -325,7 +325,7 @@ typedef struct
     _z_list_t *local_queryables;
     _z_i_map_t *rem_res_loc_qle_map;
 
-    _z_list_t *local_queries;
+    _z_list_t *pending_queries;
 
     // Runtime
     zn_on_disconnect_t on_disconnect;

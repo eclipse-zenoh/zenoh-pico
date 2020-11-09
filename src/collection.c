@@ -343,7 +343,7 @@ void _z_bytes_free(z_bytes_t *bs)
     free((uint8_t *)bs->val);
 }
 
-void _z_bytes_copy(z_bytes_t *dst, z_bytes_t *src)
+void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src)
 {
     _z_bytes_init(dst, src->len);
     memcpy((uint8_t *)dst->val, src->val, src->len);
@@ -356,6 +356,19 @@ void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src)
 
     src->val = NULL;
     src->len = 0;
+}
+
+void _z_bytes_reset(z_bytes_t *bs)
+{
+    bs->val = NULL;
+    bs->len = 0;
+}
+
+/*-------- string --------*/
+void _z_string_reset(z_string_t *str)
+{
+    str->val = NULL;
+    str->len = 0;
 }
 
 /*-------- str_array --------*/
@@ -380,7 +393,7 @@ void _z_str_array_free(z_str_array_t *sa)
     free((z_str_t *)sa->val);
 }
 
-void _z_str_array_copy(z_str_array_t *dst, z_str_array_t *src)
+void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src)
 {
     _z_str_array_init(dst, src->len);
     for (size_t i = 0; i < src->len; i++)

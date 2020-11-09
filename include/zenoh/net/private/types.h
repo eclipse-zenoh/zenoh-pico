@@ -37,14 +37,22 @@ typedef struct
 
 typedef struct
 {
+    zn_source_info_t source_info;
+    zn_sample_t sample;
+    z_timestamp_t tstamp;
+} _zn_pending_reply_t;
+
+typedef struct
+{
     z_zint_t id;
     zn_reskey_t key;
     const char *predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
     zn_query_handler_t query_handler;
+    _z_list_t *pending_replies;
     void *arg;
-} _zn_query_reply_t;
+} _zn_pending_query_t;
 
 typedef struct
 {

@@ -13,78 +13,49 @@
  */
 #include <stdio.h>
 #include <unistd.h>
-#include "zenoh.h"
+#include <string.h>
+#include "zenoh/net.h"
 
-// #define MAX_LEN 256
+void reply_handler(const zn_source_info_t *info, const zn_sample_t *sample, const void *arg)
+{
+    (void)(info); // Unused parameter
+    (void)(arg);  // Unused parameter
 
-// void reply_handler(const zn_reply_value_t *reply, void *arg)
-// {
-//     Z_UNUSED_ARG(arg);
-//     char str[MAX_LEN];
-//     switch (reply->kind)
-//     {
-//     case ZN_STORAGE_DATA:
-//     case ZN_EVAL_DATA:
-//         memcpy(&str, reply->data, reply->data_length < MAX_LEN ? reply->data_length : MAX_LEN - 1);
-//         str[reply->data_length < MAX_LEN ? reply->data_length : MAX_LEN - 1] = 0;
-//         switch (reply->kind)
-//         {
-//         case ZN_STORAGE_DATA:
-//             printf(">> [Reply handler] received -Storage Data- ('%s': '%s')\n", reply->rname, str);
-//             break;
-//         case ZN_EVAL_DATA:
-//             printf(">> [Reply handler] received -Eval Data-        ('%s': '%s')\n", reply->rname, str);
-//             break;
-//         }
-//         break;
-//     case ZN_STORAGE_FINAL:
-//         printf(">> [Reply handler] received -Storage Final-\n");
-//         break;
-//     case ZN_EVAL_FINAL:
-//         printf(">> [Reply handler] received -Eval Final-\n");
-//         break;
-//     case ZN_REPLY_FINAL:
-//         printf(">> [Reply handler] received -Reply Final-\n");
-//         break;
-//     }
-// }
+    printf(">> [Reply handler] received (%.*s, %.*s)\n",
+           (int)sample->key.len, sample->key.val,
+           (int)sample->value.len, sample->value.val);
+}
 
 int main(int argc, char **argv)
 {
-    char *selector = "/zenoh/examples/**";
-    char *locator = 0;
-
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_query [<selector>=%s] [<locator>=auto]\n\n", selector);
-        return 0;
-    }
+    char *uri = "/demo/example/**";
     if (argc > 1)
     {
-        selector = argv[1];
+        uri = argv[1];
     }
+    zn_properties_t *config = zn_config_default();
     if (argc > 2)
     {
-        locator = argv[2];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    // printf("Openning session...\n");
-    // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
-    // ASSERT_RESULT(r_z, "Unable to open session.\n")
-    // zn_session_t *z = r_z.value.session;
-    // znp_start_read_task(z);
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // printf("Sending Query '%s'...\n", selector);
-    // zn_query_dest_t dest_all = {ZN_ALL, 0};
-    // if (zn_query_wo(z, selector, "", reply_handler, NULL, dest_all, dest_all) != 0)
-    // {
-    //     printf("Unable to query.\n");
-    //     return -1;
-    // }
+    // Start the receive and the session lease loop for zenoh-pico
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
-    // sleep(1);
+    printf("Sending Query '%s'...\n", uri);
+    zn_query(s, zn_rname(uri), "", zn_query_target_default(), zn_query_consolidation_default(), reply_handler, NULL);
 
-    // zn_close(z);
-    // znp_stop_read_task(z);
+    sleep(1);
+
+    zn_close(s);
     return 0;
 }

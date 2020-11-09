@@ -69,7 +69,7 @@ zn_session_t *_zn_session_init()
     zn->local_queryables = _z_list_empty;
     zn->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    zn->local_queries = _z_list_empty;
+    zn->pending_queries = _z_list_empty;
 
     zn->read_task_running = 0;
     zn->read_task_thread = NULL;
@@ -214,14 +214,9 @@ zn_hello_array_t _zn_scout_loop(
             zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
 
             if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_I)
-            {
                 _z_bytes_copy(&sc->pid, &s_msg->body.hello.pid);
-            }
             else
-            {
-                sc->pid.len = 0;
-                sc->pid.val = NULL;
-            }
+                _z_bytes_reset(&sc->pid);
 
             if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_W)
                 sc->whatami = s_msg->body.hello.whatami;
@@ -315,7 +310,16 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     case _ZN_MID_DATA:
     {
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
-        _zn_trigger_subscriptions(zn, msg->body.data.key, msg->body.data.payload);
+        if (msg->reply_context)
+        {
+            // This is some data from a query
+            _zn_trigger_query_reply_partial(zn, msg->reply_context, msg->body.data.key, msg->body.data.payload, msg->body.data.info);
+        }
+        else
+        {
+            // This is pure data
+            _zn_trigger_subscriptions(zn, msg->body.data.key, msg->body.data.payload);
+        }
         return _z_res_t_OK;
     }
 
@@ -470,7 +474,11 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     case _ZN_MID_UNIT:
     {
-        _Z_DEBUG("Handling of Unit messages not implemented");
+        if (msg->reply_context)
+        {
+            // This might be the final reply
+            _zn_trigger_query_reply_final(zn, msg->reply_context);
+        }
         return _z_res_t_OK;
     }
 
@@ -1272,28 +1280,38 @@ zn_query_target_t zn_query_target_default(void)
     return qt;
 }
 
-void zn_query(zn_session_t *session, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
+void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
 
-    z_msg.body.query.qid = _zn_get_query_id(session);
+    z_msg.body.query.qid = _zn_get_query_id(zn);
     z_msg.body.query.key = reskey;
     z_msg.body.query.predicate = (z_str_t)predicate;
     z_msg.body.query.target = target;
     z_msg.body.query.consolidation = consolidation;
 
-    int res = _zn_send_z_msg(session, &z_msg, zn_reliability_t_RELIABLE);
+    int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
     if (res == 0)
     {
-        // @TODO: store the waiters
-        (void)(callback);
-        (void)(arg);
+        // Create the pending query object
+        _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
+        pq->id = z_msg.body.query.qid;
+        pq->key = _zn_reskey_clone(&reskey);
+        pq->predicate = strdup(predicate);
+        pq->target = target;
+        pq->consolidation = consolidation;
+        pq->query_handler = callback;
+        pq->pending_replies = _z_list_empty;
+        pq->arg = arg;
+
+        // Add the pending query to the current session
+        zn->pending_queries = _z_list_cons(zn->pending_queries, pq);
     }
 }
 
-zn_queryable_t *zn_declare_queryable(zn_session_t *session, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)
+zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)
 {
-    (void)(session);
+    (void)(zn);
     (void)(reskey);
     (void)(kind);
     (void)(callback);

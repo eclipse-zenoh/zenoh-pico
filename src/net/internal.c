@@ -20,8 +20,8 @@
 #include "zenoh/private/logging.h"
 #include "zenoh/utils.h"
 
-/*------------------ ResKey helpers ------------------*/
-zn_reskey_t _zn_reskey_clone(zn_reskey_t *reskey)
+/*------------------ Clone helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
 {
     zn_reskey_t rk;
     rk.rid = reskey->rid;
@@ -30,6 +30,20 @@ zn_reskey_t _zn_reskey_clone(zn_reskey_t *reskey)
     else
         rk.rname = NULL;
     return rk;
+}
+
+z_timestamp_t _z_timestamp_clone(const z_timestamp_t *tstamp)
+{
+    z_timestamp_t ts;
+    _z_bytes_copy(&ts.id, &tstamp->id);
+    ts.time = tstamp->time;
+    return ts;
+}
+
+void _z_timestamp_reset(z_timestamp_t *tstamp)
+{
+    _z_bytes_reset(&tstamp->id);
+    tstamp->time = 0;
 }
 
 /*------------------ Message helpers ------------------*/
@@ -651,10 +665,9 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
 _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
     _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-    _zn_subscriber_t *sub;
     while (subs)
     {
-        sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
         if (sub->id == id)
             return sub;
@@ -668,11 +681,9 @@ _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_z
 _zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
     _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-
-    _zn_subscriber_t *sub;
     while (subs)
     {
-        sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
         if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
             return sub;
@@ -874,6 +885,282 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 z_zint_t _zn_get_query_id(zn_session_t *zn)
 {
     return zn->query_id++;
+}
+
+_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
+{
+    _z_list_t *queries = zn->pending_queries;
+    while (queries)
+    {
+        _zn_pending_query_t *query = (_zn_pending_query_t *)_z_list_head(queries);
+
+        if (query->id == id)
+            return query;
+
+        queries = _z_list_tail(queries);
+    }
+
+    return NULL;
+}
+
+int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
+{
+    _Z_DEBUG_VA(">>> Allocating query for (%zu,%s,%s)\n", pq->key.rid, pq->key.rname, pq->predicate);
+
+    _zn_pending_query_t *q = _zn_get_pending_query_by_id(zn, pq->id);
+    if (q)
+    {
+        // A query for this id already exists, return error
+        return -1;
+    }
+
+    // Register the query
+    zn->pending_queries = _z_list_cons(zn->pending_queries, pq);
+
+    return 0;
+}
+
+int _zn_pending_query_predicate(void *elem, void *arg)
+{
+    _zn_pending_query_t *pq = (_zn_pending_query_t *)arg;
+    _zn_pending_query_t *query = (_zn_pending_query_t *)elem;
+    if (query->id == pq->id)
+    {
+        free((z_str_t)pq->key.rname);
+        free((z_str_t)pq->predicate);
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
+{
+    zn->pending_queries = _z_list_remove(zn->pending_queries, _zn_pending_query_predicate, pq);
+}
+
+void _zn_free_pending_reply(_zn_pending_reply_t *pr)
+{
+    // Free the sample
+    if (pr->sample.value.val)
+        _z_bytes_free(&pr->sample.value);
+    if (pr->sample.key.val)
+        free((z_str_t)pr->sample.key.val);
+
+    // Free the source info
+    if (pr->source_info.id.val)
+        _z_bytes_free(&pr->source_info.id);
+
+    // Free the timestamp
+    if (pr->tstamp.id.val)
+        _z_bytes_free(&pr->tstamp.id);
+
+    pr = NULL;
+}
+
+void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info)
+{
+    if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
+    {
+        _Z_DEBUG(">>> Partial reply received with invalid final flag\n");
+        return;
+    }
+
+    _zn_pending_query_t *pq = _zn_get_pending_query_by_id(zn, reply_context->qid);
+    if (pq == NULL)
+    {
+        _Z_DEBUG_VA(">>> Partial reply received for unkwon query id (%zu)\n", reply_context->qid);
+        return;
+    }
+
+    if (pq->target.kind != ZN_QUERYABLE_ALL_KINDS && (pq->target.kind & reply_context->source_kind) == 0)
+    {
+        _Z_DEBUG_VA(">>> Partial reply received from an unknown target (%zu)\n", reply_context->source_kind);
+        return;
+    }
+
+    switch (pq->consolidation.reception)
+    {
+    case zn_consolidation_mode_t_FULL:
+    {
+        // @TODO: Consolidation should be done per resource key
+
+        // Allocate a pending reply
+        _zn_pending_reply_t *pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+
+        // Make a copy of the sample
+        _z_bytes_copy((z_bytes_t *)&pr->sample.value, (z_bytes_t *)&payload);
+        pr->sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        pr->sample.key.len = strlen(pr->sample.key.val);
+
+        // Make a copy of the source info
+        _z_bytes_copy((z_bytes_t *)&pr->source_info.id, (z_bytes_t *)&reply_context->replier_id);
+        pr->source_info.kind = reply_context->source_kind;
+
+        // Make a copy of the data info timestamp if present
+        if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
+            pr->tstamp = _z_timestamp_clone(&data_info.tstamp);
+        else
+            _z_timestamp_reset(&pr->tstamp);
+
+        // Add it to the list of pending replies
+        pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
+
+        break;
+    }
+    case zn_consolidation_mode_t_LAZY:
+    {
+        // @TODO: Consolidation should be done per resource key
+
+        // Check if this is a newer reply
+        if (pq->pending_replies)
+        {
+            _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(pq->pending_replies);
+            if (data_info.tstamp.time <= reply->tstamp.time)
+            {
+                _Z_DEBUG(">>> Reply received with old timestamp\n");
+                return;
+            }
+            else
+            {
+                // We are going to have a more recente reply, remove the old one
+                _zn_pending_reply_t *pr = (_zn_pending_reply_t *)_z_list_pop(pq->pending_replies);
+                _zn_free_pending_reply(pr);
+            }
+        }
+
+        // Allocate a pending reply
+        _zn_pending_reply_t *pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+
+        // Do not copy the payload, we are triggering the handler straight away
+        pr->sample.value = payload;
+        if (reskey.rid == ZN_RESOURCE_ID_NONE)
+            pr->sample.key.val = reskey.rname;
+        else
+            pr->sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        pr->sample.key.len = strlen(pr->sample.key.val);
+
+        // Do not copy the source info, we are triggering the handler straight away
+        pr->source_info.id = reply_context->replier_id;
+        pr->source_info.kind = reply_context->source_kind;
+
+        // Make a copy of the data info timestamp if present
+        if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
+            pr->tstamp = _z_timestamp_clone(&data_info.tstamp);
+        else
+            _z_timestamp_reset(&pr->tstamp);
+
+        // Add it to the list of pending replies
+        pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
+
+        // Trigger the handler
+        pq->query_handler(&pr->source_info, &pr->sample, pq->arg);
+
+        // Free the resource name if allocated
+        if (reskey.rid != ZN_RESOURCE_ID_NONE)
+            free((z_str_t)pr->sample.key.val);
+
+        // Set to null the sample and source_info
+        _z_bytes_reset(&pr->sample.value);
+        _z_string_reset(&pr->sample.key);
+        _z_bytes_reset(&pr->source_info.id);
+
+        break;
+    }
+    case zn_consolidation_mode_t_NONE:
+    {
+        // Build the source info
+        zn_source_info_t source_info;
+        source_info.kind = reply_context->source_kind;
+        source_info.id = reply_context->replier_id;
+
+        // Build the sample
+        zn_sample_t sample;
+        sample.value = payload;
+        if (reskey.rid == ZN_RESOURCE_ID_NONE)
+            sample.key.val = reskey.rname;
+        else
+            sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        sample.key.len = strlen(sample.key.val);
+
+        // Trigger the handler
+        pq->query_handler(&source_info, &sample, pq->arg);
+
+        // Free the resource name if allocated
+        if (reskey.rid != ZN_RESOURCE_ID_NONE)
+            free((z_str_t)sample.key.val);
+
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
+{
+    if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
+    {
+        _Z_DEBUG(">>> Final reply received with invalid final flag\n");
+        return;
+    }
+
+    _zn_pending_query_t *pq = _zn_get_pending_query_by_id(zn, reply_context->qid);
+    if (pq == NULL)
+    {
+        _Z_DEBUG_VA(">>> Final reply received for unkwon query id (%zu)\n", reply_context->qid);
+        return;
+    }
+
+    if (pq->target.kind != ZN_QUERYABLE_ALL_KINDS && (pq->target.kind & reply_context->source_kind) == 0)
+    {
+        _Z_DEBUG_VA(">>> Final reply received from an unknown target (%zu)\n", reply_context->source_kind);
+        return;
+    }
+
+    // The reply is the final one, apply consolidation if needed
+    switch (pq->consolidation.reception)
+    {
+    case zn_consolidation_mode_t_FULL:
+    {
+        // @TODO: Consolidation should be done per resource key
+
+        _zn_pending_reply_t *latest = NULL;
+        _z_list_t *replies = pq->pending_replies;
+        while (replies)
+        {
+            _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(replies);
+            if (latest == NULL || reply->tstamp.time > latest->tstamp.time)
+                latest = reply;
+            else
+                _zn_free_pending_reply(reply);
+            replies = _z_list_pop(replies);
+        }
+
+        if (latest)
+        {
+            // Trigger the query handler
+            pq->query_handler(&latest->source_info, &latest->sample, pq->arg);
+            _zn_free_pending_reply(latest);
+        }
+        break;
+    }
+    case zn_consolidation_mode_t_LAZY:
+    {
+        // Free the latest pending reply
+        _z_list_pop(pq->pending_replies);
+        break;
+    }
+    case zn_consolidation_mode_t_NONE:
+    {
+        // Do nothing
+        break;
+    }
+    }
+
+    _zn_unregister_pending_query(zn, pq);
 }
 
 /*------------------ Queryable ------------------*/
