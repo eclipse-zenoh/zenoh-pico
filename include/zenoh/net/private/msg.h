@@ -838,8 +838,8 @@ typedef struct
     zn_reskey_t key;
     z_str_t predicate;
     z_zint_t qid;
-    z_zint_t target;
-    z_zint_t consolidation;
+    zn_query_target_t target;
+    zn_query_consolidation_t consolidation;
 } _zn_query_t;
 
 /*------------------ Zenoh Message ------------------*/

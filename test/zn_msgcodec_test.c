@@ -1367,21 +1367,30 @@ _zn_query_t gen_query_message(uint8_t *header)
     _ZN_SET_FLAG(*header, (e_qy.key.rname) ? 0 : _ZN_FLAG_Z_K);
     e_qy.predicate = gen_string(gen_uint8() % 16);
     e_qy.qid = gen_zint();
+
     if (gen_bool())
     {
+        e_qy.target.kind = gen_uint8();
+
         uint8_t tgt[] = {
             zn_target_t_BEST_MATCHING,
             zn_target_t_COMPLETE,
             zn_target_t_ALL,
             zn_target_t_NONE};
-        e_qy.target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
+        e_qy.target.target.tag = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
+        if (e_qy.target.target.tag == zn_target_t_COMPLETE)
+            e_qy.target.target.type.complete.n = gen_uint8();
+
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_T);
     }
+
     uint8_t con[] = {
         zn_consolidation_mode_t_FULL,
         zn_consolidation_mode_t_LAZY,
         zn_consolidation_mode_t_NONE};
-    e_qy.consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    e_qy.consolidation.first_routers = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    e_qy.consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    e_qy.consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
     return e_qy;
 }
@@ -1402,13 +1411,29 @@ void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t head
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
     {
-        printf("   Target (%zu:%zu)", left->target, right->target);
-        assert(left->target == right->target);
+        printf("   Target => ");
+        printf("Kind (%u:%u), ", left->target.kind, right->target.kind);
+        assert(left->target.kind == right->target.kind);
+
+        printf("Tag (%u:%u)", left->target.target.tag, right->target.target.tag);
+        assert(left->target.target.tag == right->target.target.tag);
+
+        if (left->target.target.tag == zn_target_t_COMPLETE)
+        {
+            printf(", N (%u:%u)", left->target.target.type.complete.n, right->target.target.type.complete.n);
+            assert(left->target.target.type.complete.n == right->target.target.type.complete.n);
+        }
+
         printf("\n");
     }
 
-    printf("   Consolidation (%zu:%zu)", left->consolidation, right->consolidation);
-    assert(left->consolidation == right->consolidation);
+    printf("   Consolidation (%u:%u, %u:%u, %u:%u)",
+           left->consolidation.first_routers, right->consolidation.first_routers,
+           left->consolidation.last_router, right->consolidation.last_router,
+           left->consolidation.reception, right->consolidation.reception);
+    assert(left->consolidation.first_routers == right->consolidation.first_routers);
+    assert(left->consolidation.last_router == right->consolidation.last_router);
+    assert(left->consolidation.reception == right->consolidation.reception);
     printf("\n");
 }
 

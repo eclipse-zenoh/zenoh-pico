@@ -1274,14 +1274,21 @@ zn_query_target_t zn_query_target_default(void)
 
 void zn_query(zn_session_t *session, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
-    (void)(session);
-    (void)(reskey);
-    (void)(predicate);
-    (void)(target);
-    (void)(consolidation);
-    (void)(callback);
-    (void)(arg);
-    // @TODO
+    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
+
+    z_msg.body.query.qid = _zn_get_query_id(session);
+    z_msg.body.query.key = reskey;
+    z_msg.body.query.predicate = (z_str_t)predicate;
+    z_msg.body.query.target = target;
+    z_msg.body.query.consolidation = consolidation;
+
+    int res = _zn_send_z_msg(session, &z_msg, zn_reliability_t_RELIABLE);
+    if (res == 0)
+    {
+        // @TODO: store the waiters
+        (void)(callback);
+        (void)(arg);
+    }
 }
 
 zn_queryable_t *zn_declare_queryable(zn_session_t *session, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)

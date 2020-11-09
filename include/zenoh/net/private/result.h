@@ -25,6 +25,7 @@ typedef enum
     _zn_err_t_IOBUF_NO_SPACE,
     _zn_err_t_INVALID_LOCATOR,
     _zn_err_t_OPEN_SESSION_FAILED,
+    _zn_err_t_PARSE_CONSOLIDATION,
     _zn_err_t_PARSE_DECLARATION,
     _zn_err_t_PARSE_PAYLOAD,
     _zn_err_t_PARSE_PERIOD,

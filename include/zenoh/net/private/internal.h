@@ -64,6 +64,9 @@ int _zn_register_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s
 void _zn_unregister_subscription(zn_session_t *z, int is_local, _zn_subscriber_t *s);
 void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const z_bytes_t payload);
 
+/*------------------ Query ------------------*/
+z_zint_t _zn_get_query_id(zn_session_t *z);
+
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
 // _z_list_t *_zn_get_queryable_by_rid(zn_session_t *z, z_zint_t rid);
 // _z_list_t *_zn_get_queryable_by_rname(zn_session_t *z, const char *rname);

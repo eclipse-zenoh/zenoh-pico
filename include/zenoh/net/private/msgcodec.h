@@ -25,9 +25,11 @@
 #include "zenoh/net/private/msg.h"
 
 /*------------------ Result declarations ------------------*/
+_ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
 _ZN_RESULT_DECLARE(zn_reskey_t, reskey)
 _ZN_RESULT_DECLARE(zn_subinfo_t, subinfo)
-_ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
+_ZN_RESULT_DECLARE(zn_query_target_t, query_target)
+_ZN_RESULT_DECLARE(zn_query_consolidation_t, query_consolidation)
 
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
 _ZN_RESULT_DECLARE(_zn_locators_t, locators)

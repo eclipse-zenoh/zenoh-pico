@@ -1063,6 +1063,26 @@ void _zn_pull_free(_zn_pull_t *msg)
 }
 
 /*------------------ Query Message ------------------*/
+int _zn_query_target_encode(_z_wbuf_t *wbf, const zn_query_target_t *qt)
+{
+    _ZN_EC(_z_zint_encode(wbf, qt->kind))
+
+    _ZN_EC(_z_zint_encode(wbf, qt->target.tag))
+    if (qt->target.tag == zn_target_t_COMPLETE)
+        _ZN_EC(_z_zint_encode(wbf, qt->target.type.complete.n))
+
+    return 0;
+}
+
+int _zn_query_consolidation_encode(_z_wbuf_t *wbf, const zn_query_consolidation_t *qc)
+{
+    z_zint_t consolidation = qc->reception;
+    consolidation |= qc->last_router << 2;
+    consolidation |= qc->first_routers << 4;
+
+    return _z_zint_encode(wbf, consolidation);
+}
+
 int _zn_query_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_query_t *msg)
 {
     _Z_DEBUG("Encoding _ZN_MID_QUERY\n");
@@ -1075,9 +1095,83 @@ int _zn_query_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_query_t *msg)
     _ZN_EC(_z_zint_encode(wbf, msg->qid))
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
-        _ZN_EC(_z_zint_encode(wbf, msg->target))
+        _ZN_EC(_zn_query_target_encode(wbf, &msg->target))
 
-    return _z_zint_encode(wbf, msg->consolidation);
+    return _zn_query_consolidation_encode(wbf, &msg->consolidation);
+}
+
+_zn_query_target_result_t _zn_query_target_decode(_z_rbuf_t *rbf)
+{
+    _zn_query_target_result_t r;
+
+    _z_zint_result_t r_kind = _z_zint_decode(rbf);
+    _ASSURE_RESULT(r_kind, r, _z_err_t_PARSE_ZINT)
+    r.value.query_target.kind = r_kind.value.zint;
+
+    _z_zint_result_t r_tag = _z_zint_decode(rbf);
+    _ASSURE_RESULT(r_tag, r, _z_err_t_PARSE_ZINT)
+    r.value.query_target.target.tag = r_tag.value.zint;
+
+    if (r.value.query_target.target.tag == zn_target_t_COMPLETE)
+    {
+        _z_zint_result_t r_n = _z_zint_decode(rbf);
+        _ASSURE_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
+        r.value.query_target.target.type.complete.n = r_n.value.zint;
+    }
+
+    return r;
+}
+
+_zn_query_consolidation_result_t _zn_query_consolidation_decode(_z_rbuf_t *rbf)
+{
+    _zn_query_consolidation_result_t r;
+
+    _z_zint_result_t r_con = _z_zint_decode(rbf);
+    _ASSURE_RESULT(r_con, r, _z_err_t_PARSE_ZINT)
+
+    unsigned int mode = (r_con.value.zint >> 4) & 0x03;
+    switch (mode)
+    {
+    case zn_consolidation_mode_t_NONE:
+    case zn_consolidation_mode_t_LAZY:
+    case zn_consolidation_mode_t_FULL:
+        r.value.query_consolidation.first_routers = mode;
+        break;
+    default:
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_PARSE_CONSOLIDATION;
+        return r;
+    }
+
+    mode = (r_con.value.zint >> 2) & 0x03;
+    switch (mode)
+    {
+    case zn_consolidation_mode_t_NONE:
+    case zn_consolidation_mode_t_LAZY:
+    case zn_consolidation_mode_t_FULL:
+        r.value.query_consolidation.last_router = mode;
+        break;
+    default:
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_PARSE_CONSOLIDATION;
+        return r;
+    }
+
+    mode = r_con.value.zint & 0x03;
+    switch (mode)
+    {
+    case zn_consolidation_mode_t_NONE:
+    case zn_consolidation_mode_t_LAZY:
+    case zn_consolidation_mode_t_FULL:
+        r.value.query_consolidation.reception = mode;
+        break;
+    default:
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_PARSE_CONSOLIDATION;
+        return r;
+    }
+
+    return r;
 }
 
 void _zn_query_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
@@ -1099,14 +1193,14 @@ void _zn_query_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.query.target = r_zint.value.zint;
+        _zn_query_target_result_t r_qt = _zn_query_target_decode(rbf);
+        _ASSURE_P_RESULT(r_qt, r, _z_err_t_PARSE_ZINT)
+        r->value.query.target = r_qt.value.query_target;
     }
 
-    _z_zint_result_t r_con = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_con, r, _z_err_t_PARSE_ZINT)
-    r->value.query.consolidation = r_con.value.zint;
+    _zn_query_consolidation_result_t r_con = _zn_query_consolidation_decode(rbf);
+    _ASSURE_P_RESULT(r_con, r, _zn_err_t_PARSE_CONSOLIDATION)
+    r->value.query.consolidation = r_con.value.query_consolidation;
 }
 
 _zn_query_result_t _zn_query_decode(_z_rbuf_t *rbf, uint8_t header)

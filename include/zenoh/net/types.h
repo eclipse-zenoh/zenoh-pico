@@ -130,10 +130,10 @@ typedef struct zn_hello_array_t
  */
 typedef enum
 {
-    zn_target_t_BEST_MATCHING,
-    zn_target_t_COMPLETE,
-    zn_target_t_ALL,
-    zn_target_t_NONE,
+    zn_target_t_BEST_MATCHING = 0,
+    zn_target_t_COMPLETE = 1,
+    zn_target_t_ALL = 2,
+    zn_target_t_NONE = 3,
 } zn_target_t_Tag;
 
 typedef struct
@@ -185,9 +185,9 @@ typedef struct
  */
 typedef enum
 {
-    zn_consolidation_mode_t_FULL,
-    zn_consolidation_mode_t_LAZY,
-    zn_consolidation_mode_t_NONE,
+    zn_consolidation_mode_t_NONE = 0,
+    zn_consolidation_mode_t_LAZY = 1,
+    zn_consolidation_mode_t_FULL = 2,
 } zn_consolidation_mode_t;
 
 /**

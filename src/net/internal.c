@@ -870,6 +870,12 @@ void _zn_trigger_subscriptions(zn_session_t *z, const zn_reskey_t reskey, const 
     }
 }
 
+/*------------------ Query ------------------*/
+z_zint_t _zn_get_query_id(zn_session_t *z)
+{
+    return z->query_id++;
+}
+
 /*------------------ Queryable ------------------*/
 // void _zn_register_queryable(zn_session_t *z, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
 // {
