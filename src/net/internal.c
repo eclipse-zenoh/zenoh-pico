@@ -881,6 +881,12 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
     }
 }
 
+/*------------------ Pull ------------------*/
+z_zint_t _zn_get_pull_id(zn_session_t *zn)
+{
+    return zn->pull_id++;
+}
+
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn)
 {

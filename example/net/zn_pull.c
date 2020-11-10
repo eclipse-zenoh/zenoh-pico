@@ -12,67 +12,63 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include <unistd.h>
-#include "zenoh.h"
+#include "zenoh/net.h"
 
-// #define MAX_LEN 256
+void data_handler(const zn_sample_t *sample, const void *arg)
+{
+    (void)(arg); // Unused argument
 
-// void data_handler(const zn_reskey_t *rkey, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
-// {
-//     Z_UNUSED_ARG_2(info, arg);
-//     char str[MAX_LEN];
-//     memcpy(&str, data, length < MAX_LEN ? length : MAX_LEN - 1);
-//     str[length < MAX_LEN ? length : MAX_LEN - 1] = 0;
-//     if (rkey->kind == ZN_INT_RES_KEY)
-//         printf(">> [Subscription listener] Received (#%zu: '%s')\n", rkey->key.rid, str);
-//     else
-//         printf(">> [Subscription listener] Received ('%s': '%s')\n", rkey->key.rname, str);
-// }
+    printf(">> [Subscription listener] Received (%.*s, %.*s)\n",
+           (int)sample->key.len, sample->key.val,
+           (int)sample->value.len, sample->value.val);
+}
 
 int main(int argc, char **argv)
 {
-    char *selector = "/zenoh/examples/**";
-    char *locator = 0;
-
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_pull [<selector>=%s] [<locator>=auto]\n\n", selector);
-        return 0;
-    }
-
+    char *uri = "/demo/example/**";
     if (argc > 1)
     {
-        selector = argv[1];
+        uri = argv[1];
     }
-
+    zn_properties_t *config = zn_config_default();
     if (argc > 2)
     {
-        locator = argv[2];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    // printf("Openning session...\n");
-    // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
-    // ASSERT_RESULT(r_z, "Unable to open session.\n")
-    // zn_session_t *z = r_z.value.session;
-    // znp_start_read_task(z);
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // printf("Declaring Subscriber on '%s'...\n", selector);
-    // zn_subinfo_t sm;
-    // sm.kind = ZN_PULL_MODE;
-    // zn_sub_p_result_t r = zn_declare_subscriber(z, selector, &sm, data_handler, NULL);
-    // ASSERT_P_RESULT(r, "Unable to declare subscriber.\n");
-    // zn_subscriber_t *sub = r.value.sub;
+    // Start the receive and the session lease loop for zenoh-pico
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
-    // printf("Press <enter> to pull data...\n");
-    // char c = 0;
-    // while (c != 'q')
-    // {
-    //     c = fgetc(stdin);
-    //     zn_pull(sub);
-    // }
+    printf("Declaring Subscriber on '%s'...\n", uri);
+    zn_subinfo_t subinfo;
+    subinfo.reliability = zn_reliability_t_RELIABLE;
+    subinfo.mode = zn_submode_t_PULL;
+    subinfo.period = NULL;
+    zn_subscriber_t *sub = zn_declare_subscriber(s, zn_rname(uri), subinfo, data_handler, NULL);
+    if (sub == 0)
+    {
+        printf("Unable to declare subscriber.\n");
+        exit(-1);
+    }
 
-    // zn_undeclare_subscriber(sub);
-    // zn_close(z);
-    // znp_stop_read_task(z);
+    printf("Press <enter> to pull data...\n");
+    char c = 0;
+    while (c != 'q')
+    {
+        c = fgetc(stdin);
+        zn_pull(sub);
+    }
+
+    zn_undeclare_subscriber(sub);
+    zn_close(s);
     return 0;
 }

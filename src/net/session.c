@@ -57,6 +57,7 @@ zn_session_t *_zn_session_init()
     zn->entity_id = 1;
     zn->resource_id = 1;
     zn->query_id = 1;
+    zn->pull_id = 1;
 
     // Initialize the data structs
     zn->local_resources = _z_list_empty;
@@ -1239,7 +1240,7 @@ int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_
     return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
 }
 
-/*------------------ Querty/Queryable ------------------*/
+/*------------------ Query/Queryable ------------------*/
 zn_query_consolidation_t zn_query_consolidation_default(void)
 {
     zn_query_consolidation_t qc;
@@ -1338,8 +1339,25 @@ void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, s
 /*------------------ Pull ------------------*/
 int zn_pull(zn_subscriber_t *sub)
 {
-    (void)(sub);
-    // @TODO
+    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_PULL);
+    z_msg.body.pull.key = _zn_reskey_clone(&sub->key);
+    _ZN_SET_FLAG(z_msg.header, sub->key.rname ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_F);
+
+    z_msg.body.pull.pull_id = _zn_get_pull_id(sub->zn);
+    // @TODO: get the correct value for max_sample
+    z_msg.body.pull.max_samples = 0;
+    // _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_N);
+
+    if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect....\n");
+        sub->zn->on_disconnect(sub->zn);
+        _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE);
+    }
+
+    _zn_zenoh_message_free(&z_msg);
+
     return 0;
 }
 
@@ -1371,21 +1389,6 @@ int znp_send_keep_alive(zn_session_t *zn)
 
     return _zn_send_s_msg(zn, &s_msg);
 }
-
-// int zn_pull(zn_subscriber_t *sub)
-// {
-//     _zn_message_t msg;
-//     msg.header = _ZN_PULL | _ZN_F_FLAG | _ZN_S_FLAG;
-//     msg.payload.pull.sn = sub->zn->sn++;
-//     msg.payload.pull.id = sub->rid;
-//     if (_zn_send_msg(sub->zn->sock, &sub->zn->wbuf, &msg) != 0)
-//     {
-//         _Z_DEBUG("Trying to reconnect....\n");
-//         sub->zn->on_disconnect(sub->z);
-//         return _zn_send_msg(sub->zn->sock, &sub->zn->wbuf, &msg);
-//     }
-//     return 0;
-// }
 
 // typedef struct
 // {

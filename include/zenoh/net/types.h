@@ -312,6 +312,7 @@ typedef struct
     // Counters
     z_zint_t resource_id;
     z_zint_t entity_id;
+    z_zint_t pull_id;
     z_zint_t query_id;
 
     // Declarations

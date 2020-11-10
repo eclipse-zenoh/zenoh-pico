@@ -148,6 +148,7 @@ typedef z_bytes_t _zn_payload_t;
 // +---------------+
 //
 // NOTE: Locators is a vector of strings and are encoded as such
+//
 typedef z_str_array_t _zn_locators_t;
 
 /*=============================*/
