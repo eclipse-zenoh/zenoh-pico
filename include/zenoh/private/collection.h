@@ -108,7 +108,7 @@ void _z_list_free(_z_list_t **xs);
 /*-------- Int Map --------*/
 #define _Z_DEFAULT_I_MAP_CAPACITY 64
 
-_z_i_map_t *_z_i_map_empty;
+extern _z_i_map_t *_z_i_map_empty;
 _z_i_map_t *_z_i_map_make(size_t capacity);
 
 size_t _z_i_map_capacity(_z_i_map_t *map);
