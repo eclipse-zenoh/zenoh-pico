@@ -911,23 +911,13 @@ zn_session_t *zn_open(zn_properties_t *config)
     return zn;
 }
 
-// _z_vec_t zn_info(zn_session_t *zn)
-// {
-//     _z_vec_t res = _z_vec_make(3);
-//     zn_property_t *pid = zn_property_make(ZN_INFO_PID_KEY, zn->pid);
-//     z_bytes_t locator;
-//     locator.len = strlen(zn->locator) + 1;
-//     locator.val = (uint8_t *)zn->locator;
-//     zn_property_t *peer = zn_property_make(ZN_INFO_PEER_KEY, locator);
-//     zn_property_t *peer_pid = zn_property_make(ZN_INFO_PEER_PID_KEY, zn->peer_pid);
-
-//     _z_vec_set(&res, ZN_INFO_PID_KEY, pid);
-//     _z_vec_set(&res, ZN_INFO_PEER_KEY, peer);
-//     _z_vec_set(&res, ZN_INFO_PEER_PID_KEY, peer_pid);
-//     res._length = 3;
-
-//     return res;
-// }
+zn_properties_t *zn_info(zn_session_t *zn)
+{
+    zn_properties_t *ps = zn_properties_make();
+    zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->local_pid));
+    zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->remote_pid));
+    return ps;
+}
 
 /*------------------ Resource Keys operations ------------------*/
 zn_reskey_t zn_rname(const char *rname)

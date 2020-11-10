@@ -51,5 +51,19 @@ unsigned int zn_properties_len(zn_properties_t *ps)
 
 void zn_properties_free(zn_properties_t *ps)
 {
-    _z_i_map_free(ps);
+    if (ps != _z_i_map_empty)
+    {
+        for (size_t i = 0; i < ps->capacity; i++)
+        {
+            _z_list_t *list = ps->vals[i];
+            while (list)
+            {
+                z_string_t *p = (z_string_t *)_z_list_head(list);
+                free((char *)p->val);
+                list = _z_list_pop(list);
+            }
+        }
+        free(ps->vals);
+        free(ps);
+    }
 }

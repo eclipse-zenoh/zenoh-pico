@@ -16,6 +16,7 @@
 #define _ZENOH_PICO_COLLECTION_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include "zenoh/private/types.h"
 #include "zenoh/types.h"
 
@@ -130,6 +131,7 @@ void _z_bytes_reset(z_bytes_t *bs);
 
 /*-------- Operations on String --------*/
 void _z_string_reset(z_string_t *str);
+z_string_t _z_string_from_bytes(z_bytes_t *bs);
 
 /*-------- Operations on StrArray --------*/
 z_str_array_t _z_str_array_make(size_t len);

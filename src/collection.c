@@ -371,6 +371,24 @@ void _z_string_reset(z_string_t *str)
     str->len = 0;
 }
 
+z_string_t _z_string_from_bytes(z_bytes_t *bs)
+{
+    z_string_t s;
+    s.len = 2 * bs->len;
+    char *s_val = (char *)malloc(s.len * sizeof(char) + 1);
+
+    char c[] = "0123456789ABCDEF";
+    for (size_t i = 0; i < bs->len; i++)
+    {
+        s_val[2 * i] = c[(bs->val[i] & 0xF0) >> 4];
+        s_val[2 * i + 1] = c[bs->val[i] & 0x0F];
+    }
+    s_val[s.len] = '\0';
+    s.val = s_val;
+
+    return s;
+}
+
 /*-------- str_array --------*/
 void _z_str_array_init(z_str_array_t *sa, size_t len)
 {
