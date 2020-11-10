@@ -956,8 +956,6 @@ void _zn_free_pending_reply(_zn_pending_reply_t *pr)
     // Free the timestamp
     if (pr->tstamp.id.val)
         _z_bytes_free(&pr->tstamp.id);
-
-    pr = NULL;
 }
 
 void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info)
@@ -981,109 +979,150 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
         return;
     }
 
+    // Take the right timestamp, or default to none
+    z_timestamp_t ts;
+    if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
+        ts = data_info.tstamp;
+    else
+        _z_timestamp_reset(&ts);
+
+    // Build the sample
+    zn_sample_t sample;
+    sample.value = payload;
+    if (reskey.rid == ZN_RESOURCE_ID_NONE)
+        sample.key.val = reskey.rname;
+    else
+        sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+    sample.key.len = strlen(sample.key.val);
+
+    // Verify if this is a newer reply, free the old one in case it is
+    _zn_pending_reply_t *latest = NULL;
     switch (pq->consolidation.reception)
     {
     case zn_consolidation_mode_t_FULL:
+    case zn_consolidation_mode_t_LAZY:
     {
-        // @TODO: Consolidation should be done per resource key
+        // Check if this is a newer reply
+        _z_list_t *replies = pq->pending_replies;
+        while (replies)
+        {
+            _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(replies);
 
-        // Allocate a pending reply
-        _zn_pending_reply_t *pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+            // Check if this is the same resource key
+            if (strcmp(sample.key.val, reply->sample.key.val) == 0)
+            {
+                if (ts.time <= reply->tstamp.time)
+                {
+                    _Z_DEBUG(">>> Reply received with old timestamp\n");
+                    if (reskey.rid != ZN_RESOURCE_ID_NONE)
+                        free((z_str_t)sample.key.val);
+                    return;
+                }
+                else
+                {
+                    // We are going to have a more recent reply, free the old one
+                    _zn_free_pending_reply(reply);
+                    // We are going to reuse the allocated memory in the list
+                    latest = reply;
+                    break;
+                }
+            }
+            else
+            {
+                replies = _z_list_tail(replies);
+            }
+        }
+        break;
+    }
+    case zn_consolidation_mode_t_NONE:
+    {
+        // Do nothing. Replies are not stored with no consolidation
+        break;
+    }
+    }
 
-        // Make a copy of the sample
-        _z_bytes_copy((z_bytes_t *)&pr->sample.value, (z_bytes_t *)&payload);
-        pr->sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
-        pr->sample.key.len = strlen(pr->sample.key.val);
+    // Store the reply and trigger the callback if needed
+    switch (pq->consolidation.reception)
+    {
+    // Store the reply but do not trigger the callback
+    case zn_consolidation_mode_t_FULL:
+    {
+        // Allocate a pending reply if needed
+        _zn_pending_reply_t *pr;
+        if (latest == NULL)
+            pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+        else
+            pr = latest;
+
+        // Make a copy of the sample if needed
+        _z_bytes_copy((z_bytes_t *)&pr->sample.value, (z_bytes_t *)&sample.value);
+        if (reskey.rid == ZN_RESOURCE_ID_NONE)
+            pr->sample.key.val = strdup(sample.key.val);
+        else
+            pr->sample.key.val = sample.key.val;
+        pr->sample.key.len = sample.key.len;
 
         // Make a copy of the source info
         _z_bytes_copy((z_bytes_t *)&pr->source_info.id, (z_bytes_t *)&reply_context->replier_id);
         pr->source_info.kind = reply_context->source_kind;
 
         // Make a copy of the data info timestamp if present
-        if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
-            pr->tstamp = _z_timestamp_clone(&data_info.tstamp);
-        else
-            _z_timestamp_reset(&pr->tstamp);
+        pr->tstamp = _z_timestamp_clone(&ts);
 
-        // Add it to the list of pending replies
-        pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
+        // Add it to the list of pending replies if new
+        if (latest == NULL)
+            pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
 
         break;
     }
+    // Trigger the callback, store only the timestamp of the reply
     case zn_consolidation_mode_t_LAZY:
     {
-        // @TODO: Consolidation should be done per resource key
-
-        // Check if this is a newer reply
-        if (pq->pending_replies)
-        {
-            _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(pq->pending_replies);
-            if (data_info.tstamp.time <= reply->tstamp.time)
-            {
-                _Z_DEBUG(">>> Reply received with old timestamp\n");
-                return;
-            }
-            else
-            {
-                // We are going to have a more recente reply, remove the old one
-                _zn_pending_reply_t *pr = (_zn_pending_reply_t *)_z_list_pop(pq->pending_replies);
-                _zn_free_pending_reply(pr);
-            }
-        }
-
-        // Allocate a pending reply
-        _zn_pending_reply_t *pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+        // Allocate a pending reply if needed
+        _zn_pending_reply_t *pr;
+        if (latest == NULL)
+            pr = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+        else
+            pr = latest;
 
         // Do not copy the payload, we are triggering the handler straight away
+        // Copy the resource key
         pr->sample.value = payload;
         if (reskey.rid == ZN_RESOURCE_ID_NONE)
-            pr->sample.key.val = reskey.rname;
+            pr->sample.key.val = strdup(sample.key.val);
         else
-            pr->sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
-        pr->sample.key.len = strlen(pr->sample.key.val);
+            pr->sample.key.val = sample.key.val;
+        pr->sample.key.len = sample.key.len;
 
         // Do not copy the source info, we are triggering the handler straight away
         pr->source_info.id = reply_context->replier_id;
         pr->source_info.kind = reply_context->source_kind;
 
-        // Make a copy of the data info timestamp if present
-        if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
-            pr->tstamp = _z_timestamp_clone(&data_info.tstamp);
-        else
-            _z_timestamp_reset(&pr->tstamp);
+        // Do not sotre the replier ID, we are triggering the handler straight away
+        // Make a copy of the timestamp
+        _z_bytes_reset(&pr->tstamp.id);
+        pr->tstamp.time = ts.time;
 
         // Add it to the list of pending replies
-        pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
+        if (latest == NULL)
+            pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
 
         // Trigger the handler
         pq->query_handler(&pr->source_info, &pr->sample, pq->arg);
 
-        // Free the resource name if allocated
-        if (reskey.rid != ZN_RESOURCE_ID_NONE)
-            free((z_str_t)pr->sample.key.val);
-
         // Set to null the sample and source_info
         _z_bytes_reset(&pr->sample.value);
-        _z_string_reset(&pr->sample.key);
         _z_bytes_reset(&pr->source_info.id);
 
         break;
     }
+    // Trigger only the callback, do not store the reply
     case zn_consolidation_mode_t_NONE:
     {
         // Build the source info
         zn_source_info_t source_info;
         source_info.kind = reply_context->source_kind;
         source_info.id = reply_context->replier_id;
-
-        // Build the sample
-        zn_sample_t sample;
-        sample.value = payload;
-        if (reskey.rid == ZN_RESOURCE_ID_NONE)
-            sample.key.val = reskey.rname;
-        else
-            sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
-        sample.key.len = strlen(sample.key.val);
 
         // Trigger the handler
         pq->query_handler(&source_info, &sample, pq->arg);
@@ -1125,32 +1164,22 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
     {
     case zn_consolidation_mode_t_FULL:
     {
-        // @TODO: Consolidation should be done per resource key
-
-        _zn_pending_reply_t *latest = NULL;
         _z_list_t *replies = pq->pending_replies;
         while (replies)
         {
             _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(replies);
-            if (latest == NULL || reply->tstamp.time > latest->tstamp.time)
-                latest = reply;
-            else
-                _zn_free_pending_reply(reply);
-            replies = _z_list_pop(replies);
-        }
-
-        if (latest)
-        {
             // Trigger the query handler
-            pq->query_handler(&latest->source_info, &latest->sample, pq->arg);
-            _zn_free_pending_reply(latest);
+            pq->query_handler(&reply->source_info, &reply->sample, pq->arg);
+            // Drop the element
+            // _zn_free_pending_reply(reply);
+            replies = _z_list_pop(replies);
         }
         break;
     }
     case zn_consolidation_mode_t_LAZY:
     {
-        // Free the latest pending reply
-        _z_list_pop(pq->pending_replies);
+        // Free the pending replies
+        _z_list_free(&pq->pending_replies);
         break;
     }
     case zn_consolidation_mode_t_NONE:
