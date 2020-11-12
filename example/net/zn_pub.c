@@ -71,5 +71,6 @@ int main(int argc, char **argv)
 
     zn_undeclare_publisher(pub);
     zn_close(s);
+
     return 0;
 }

@@ -31,9 +31,15 @@ typedef struct
     z_zint_t id;
     zn_reskey_t key;
     zn_subinfo_t info;
-    zn_data_handler_t data_handler;
+    zn_data_handler_t callback;
     void *arg;
 } _zn_subscriber_t;
+
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+} _zn_publisher_t;
 
 typedef struct
 {
@@ -49,8 +55,8 @@ typedef struct
     const char *predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    zn_query_handler_t query_handler;
     _z_list_t *pending_replies;
+    zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
 
@@ -58,7 +64,8 @@ typedef struct
 {
     z_zint_t id;
     zn_reskey_t key;
-    zn_queryable_handler_t queryable_handler;
+    unsigned int kind;
+    zn_queryable_handler_t callback;
     void *arg;
 } _zn_queryable_t;
 

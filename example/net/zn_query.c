@@ -57,5 +57,6 @@ int main(int argc, char **argv)
     sleep(1);
 
     zn_close(s);
+
     return 0;
 }

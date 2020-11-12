@@ -63,6 +63,22 @@ _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header)
     return zm;
 }
 
+_zn_reply_context_t *_zn_reply_context_init(void)
+{
+    _zn_reply_context_t *rc = (_zn_reply_context_t *)malloc(sizeof(_zn_reply_context_t));
+    memset(rc, 0, sizeof(_zn_reply_context_t));
+    rc->header = _ZN_MID_REPLY_CONTEXT;
+    return rc;
+}
+
+_zn_attachment_t *_zn_attachment_init(void)
+{
+    _zn_attachment_t *att = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
+    memset(att, 0, sizeof(_zn_attachment_t));
+    att->header = _ZN_MID_ATTACHMENT;
+    return att;
+}
+
 /*------------------ SN helper ------------------*/
 z_zint_t _zn_get_sn(zn_session_t *zn, zn_reliability_t reliability)
 {
@@ -247,6 +263,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     {
         // Write the message legnth in the reserved space if needed
         _zn_finalize_wbuf(&zn->wbuf);
+
         // Send the wbuf on the socket
         res = _zn_send_wbuf(zn->sock, &zn->wbuf);
         if (res == 0)
@@ -556,6 +573,7 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
         zn->local_resources = _z_list_remove(zn->local_resources, _zn_resource_predicate, res);
     else
         zn->remote_resources = _z_list_remove(zn->remote_resources, _zn_resource_predicate, res);
+    free(res);
 }
 
 /*------------------ Subscription ------------------*/
@@ -727,7 +745,7 @@ int _zn_subscription_predicate(void *elem, void *arg)
     _zn_subscriber_t *sub = (_zn_subscriber_t *)elem;
     if (sub->id == s->id)
     {
-        free(sub->key.rname);
+        // free(sub->key.rname);
         return 1;
     }
     else
@@ -742,6 +760,7 @@ void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_
         zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, _zn_subscription_predicate, s);
     else
         zn->remote_subscriptions = _z_list_remove(zn->remote_subscriptions, _zn_subscription_predicate, s);
+    free(s);
 }
 
 void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload)
@@ -780,7 +799,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         while (subs)
         {
             _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-            sub->data_handler(&s, sub->arg);
+            sub->callback(&s, sub->arg);
             subs = _z_list_tail(subs);
         }
 
@@ -819,7 +838,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             }
 
             if (zn_rname_intersect(rname, reskey.rname))
-                sub->data_handler(&s, sub->arg);
+                sub->callback(&s, sub->arg);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(rname);
@@ -832,12 +851,10 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
     // Case 3) -> numerical reskey with suffix
     else
     {
-        _zn_resource_t *remote = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey.rid);
-        if (remote == NULL)
-            return;
-
         // Compute the complete remote resource name starting from the key
         z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        if (rname == NULL)
+            return;
 
         // Build the sample
         zn_sample_t s;
@@ -846,10 +863,9 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.value = payload;
 
         _z_list_t *subs = zn->local_subscriptions;
-        _zn_subscriber_t *sub;
         while (subs)
         {
-            sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -867,7 +883,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             }
 
             if (zn_rname_intersect(lname, rname))
-                sub->data_handler(&s, sub->arg);
+                sub->callback(&s, sub->arg);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
@@ -932,8 +948,10 @@ int _zn_pending_query_predicate(void *elem, void *arg)
     _zn_pending_query_t *query = (_zn_pending_query_t *)elem;
     if (query->id == pq->id)
     {
-        free((z_str_t)pq->key.rname);
-        free((z_str_t)pq->predicate);
+        if (pq->key.rname)
+            free((z_str_t)pq->key.rname);
+        if (pq->predicate)
+            free((z_str_t)pq->predicate);
         return 1;
     }
     else
@@ -945,6 +963,7 @@ int _zn_pending_query_predicate(void *elem, void *arg)
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
     zn->pending_queries = _z_list_remove(zn->pending_queries, _zn_pending_query_predicate, pq);
+    free(pq);
 }
 
 void _zn_free_pending_reply(_zn_pending_reply_t *pr)
@@ -1114,7 +1133,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
             pq->pending_replies = _z_list_cons(pq->pending_replies, pr);
 
         // Trigger the handler
-        pq->query_handler(&pr->source_info, &pr->sample, pq->arg);
+        pq->callback(&pr->source_info, &pr->sample, pq->arg);
 
         // Set to null the sample and source_info
         _z_bytes_reset(&pr->sample.value);
@@ -1131,7 +1150,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
         source_info.id = reply_context->replier_id;
 
         // Trigger the handler
-        pq->query_handler(&source_info, &sample, pq->arg);
+        pq->callback(&source_info, &sample, pq->arg);
 
         // Free the resource name if allocated
         if (reskey.rid != ZN_RESOURCE_ID_NONE)
@@ -1166,153 +1185,244 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
     }
 
     // The reply is the final one, apply consolidation if needed
-    switch (pq->consolidation.reception)
+
+    _z_list_t *replies = pq->pending_replies;
+    while (replies)
     {
-    case zn_consolidation_mode_t_FULL:
-    {
-        _z_list_t *replies = pq->pending_replies;
-        while (replies)
+        _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(replies);
+        if (pq->consolidation.reception == zn_consolidation_mode_t_FULL)
         {
-            _zn_pending_reply_t *reply = (_zn_pending_reply_t *)_z_list_head(replies);
             // Trigger the query handler
-            pq->query_handler(&reply->source_info, &reply->sample, pq->arg);
-            // Drop the element
-            // _zn_free_pending_reply(reply);
-            replies = _z_list_pop(replies);
+            pq->callback(&reply->source_info, &reply->sample, pq->arg);
         }
-        break;
-    }
-    case zn_consolidation_mode_t_LAZY:
-    {
-        // Free the pending replies
-        _z_list_free(&pq->pending_replies);
-        break;
-    }
-    case zn_consolidation_mode_t_NONE:
-    {
-        // Do nothing
-        break;
-    }
+        // Drop the element
+        _zn_free_pending_reply(reply);
+        free(reply);
+        replies = _z_list_pop(replies);
     }
 
     _zn_unregister_pending_query(zn, pq);
 }
 
 /*------------------ Queryable ------------------*/
-// void _zn_register_queryable(zn_session_t *zn, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg)
-// {
-//     _zn_queryable_t *qle = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
-//     qle->rid = rid;
-//     qle->id = id;
-//     _zn_resource_t *decl = _zn_get_res_decl_by_rid(zn, rid);
-//     assert(decl != 0);
-//     qle->rname = strdup(decl->key.rname);
-//     qle->query_handler = query_handler;
-//     qle->arg = arg;
-//     zn->queryables = _z_list_cons(zn->queryables, qle);
-// }
+_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
+{
+    _z_list_t *queryables = zn->local_queryables;
+    while (queryables)
+    {
+        _zn_queryable_t *queryable = (_zn_queryable_t *)_z_list_head(queryables);
 
-// int qle_predicate(void *elem, void *arg)
-// {
-//     zn_queryable_t *q = (zn_queryable_t *)arg;
-//     _zn_queryable_t *queryable = (_zn_queryable_t *)elem;
-//     if (queryable->id == q->id)
-//     {
-//         return 1;
-//     }
-//     else
-//     {
-//         return 0;
-//     }
-// }
+        if (queryable->id == id)
+            return queryable;
 
-// void _zn_unregister_queryable(zn_queryable_t *e)
-// {
-//     e->zn->queryables = _z_list_remove(e->zn->queryables, qle_predicate, e);
-// }
+        queryables = _z_list_tail(queryables);
+    }
 
-// _z_list_t *_zn_get_queryables_by_rid(zn_session_t *zn, z_zint_t rid)
-// {
-//     _z_list_t *queryables = _z_list_empty;
-//     if (zn->queryables == 0)
-//     {
-//         return queryables;
-//     }
-//     else
-//     {
-//         _zn_queryable_t *queryable = 0;
-//         _z_list_t *queryables = zn->queryables;
-//         _z_list_t *xs = _z_list_empty;
-//         do
-//         {
-//             queryable = (_zn_queryable_t *)_z_list_head(queryables);
-//             queryables = _z_list_tail(queryables);
-//             if (queryable->rid == rid)
-//             {
-//                 xs = _z_list_cons(xs, queryable);
-//             }
-//         } while (queryables != 0);
-//         return xs;
-//     }
-// }
+    return NULL;
+}
 
-// _z_list_t *_zn_get_queryables_by_rname(zn_session_t *zn, const char *rname)
-// {
-//     _z_list_t *queryables = _z_list_empty;
-//     if (zn->queryables == 0)
-//     {
-//         return queryables;
-//     }
-//     else
-//     {
-//         _zn_queryable_t *queryable = 0;
-//         _z_list_t *queryables = zn->queryables;
-//         _z_list_t *xs = _z_list_empty;
-//         do
-//         {
-//             queryable = (_zn_queryable_t *)_z_list_head(queryables);
-//             queryables = _z_list_tail(queryables);
-//             if (zn_rname_intersect(queryable->rname, (char *)rname))
-//             {
-//                 xs = _z_list_cons(xs, queryable);
-//             }
-//         } while (queryables != 0);
-//         return xs;
-//     }
-// }
+int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
+{
+    _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
-// int _zn_matching_remote_sub(zn_session_t *zn, z_zint_t rid)
-// {
-//     return _z_i_map_get(zn->remote_subscriptions, rid) != 0 ? 1 : 0;
-// }
+    _zn_queryable_t *q = _zn_get_queryable_by_id(zn, qle->id);
+    if (q)
+    {
+        // A queryable for this id already exists, return error
+        return -1;
+    }
 
-// void _zn_register_query(zn_session_t *zn, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg)
-// {
-//     _zn_replywaiter_t *rw = (_zn_replywaiter_t *)malloc(sizeof(_zn_replywaiter_t));
-//     rw->qid = qid;
-//     rw->reply_handler = reply_handler;
-//     rw->arg = arg;
-//     zn->replywaiters = _z_list_cons(zn->replywaiters, rw);
-// }
+    // Register the queryable
+    zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
 
-// _zn_replywaiter_t *_zn_get_query(zn_session_t *zn, z_zint_t qid)
-// {
-//     if (zn->replywaiters == 0)
-//     {
-//         return 0;
-//     }
-//     else
-//     {
-//         _zn_replywaiter_t *rw = (_zn_replywaiter_t *)_z_list_head(zn->replywaiters);
-//         _z_list_t *rws = _z_list_tail(zn->replywaiters);
-//         while (rws != 0 && rw->qid != qid)
-//         {
-//             rw = _z_list_head(rws);
-//             rws = _z_list_tail(rws);
-//         }
-//         if (rw->qid == qid)
-//             return rw;
-//         else
-//             return 0;
-//     }
-// }
+    return 0;
+}
+
+int _zn_queryable_predicate(void *elem, void *arg)
+{
+    _zn_queryable_t *qle = (_zn_queryable_t *)arg;
+    _zn_queryable_t *queryable = (_zn_queryable_t *)elem;
+    if (queryable->id == qle->id)
+    {
+        if (qle->key.rname)
+            free((z_str_t)qle->key.rname);
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
+{
+    zn->local_queryables = _z_list_remove(zn->local_queryables, _zn_queryable_predicate, qle);
+    free(qle);
+}
+
+void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
+{
+    // Case 1) -> numeric only reskey
+    if (query->key.rname == NULL)
+    {
+        // Get the declared resource
+        _zn_resource_t *res = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, query->key.rid);
+        if (res == NULL)
+            return;
+
+        // Get the complete resource name to be passed to the subscription callback
+        z_str_t rname;
+        if (res->key.rid == ZN_RESOURCE_ID_NONE)
+        {
+            // Do not allocate
+            rname = res->key.rname;
+        }
+        else
+        {
+            // Allocate a computed string
+            rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
+            if (rname == NULL)
+                return;
+        }
+
+        // Build the query
+        zn_query_t q;
+        q.zn = zn;
+        q.qid = query->qid;
+        q.rname = rname;
+        q.predicate = query->predicate;
+
+        // Iterate over the matching queryables
+        _z_list_t *qles = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_qle_map, query->key.rid);
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
+            if (target != 0)
+            {
+                q.kind = qle->kind;
+                qle->callback(&q, qle->arg);
+            }
+            qles = _z_list_tail(qles);
+        }
+
+        if (res->key.rid != ZN_RESOURCE_ID_NONE)
+            free(rname);
+    }
+    // Case 2) -> string only reskey
+    else if (query->key.rid == ZN_RESOURCE_ID_NONE)
+    {
+        // Build the query
+        zn_query_t q;
+        q.zn = zn;
+        q.qid = query->qid;
+        q.rname = query->key.rname;
+        q.predicate = query->predicate;
+
+        // Iterate over the matching queryables
+        _z_list_t *qles = zn->local_queryables;
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+
+            unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
+            if (target != 0)
+            {
+                // Get the complete resource name to be passed to the subscription callback
+                z_str_t rname;
+                if (qle->key.rid == ZN_RESOURCE_ID_NONE)
+                {
+                    // Do not allocate
+                    rname = qle->key.rname;
+                }
+                else
+                {
+                    // Allocate a computed string
+                    rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                    if (rname == NULL)
+                        continue;
+                }
+
+                if (zn_rname_intersect(rname, query->key.rname))
+                {
+                    q.kind = qle->kind;
+                    qle->callback(&q, qle->arg);
+                }
+
+                if (qle->key.rid != ZN_RESOURCE_ID_NONE)
+                    free(rname);
+            }
+
+            qles = _z_list_tail(qles);
+        }
+    }
+    // Case 3) -> numerical reskey with suffix
+    else
+    {
+        // Compute the complete remote resource name starting from the key
+        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &query->key);
+        if (rname == NULL)
+            return;
+
+        // Build the query
+        zn_query_t q;
+        q.zn = zn;
+        q.qid = query->qid;
+        q.rname = query->key.rname;
+        q.predicate = query->predicate;
+
+        _z_list_t *qles = zn->local_queryables;
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+
+            unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
+            if (target != 0)
+            {
+                // Get the complete resource name to be passed to the subscription callback
+                z_str_t lname;
+                if (qle->key.rid == ZN_RESOURCE_ID_NONE)
+                {
+                    // Do not allocate
+                    lname = qle->key.rname;
+                }
+                else
+                {
+                    // Allocate a computed string
+                    lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                    if (lname == NULL)
+                        continue;
+                }
+
+                if (zn_rname_intersect(lname, rname))
+                {
+                    q.kind = qle->kind;
+                    qle->callback(&q, qle->arg);
+                }
+
+                if (qle->key.rid != ZN_RESOURCE_ID_NONE)
+                    free(lname);
+            }
+
+            qles = _z_list_tail(qles);
+        }
+
+        free(rname);
+    }
+
+    // Send the final reply
+    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_UNIT);
+    z_msg.reply_context = _zn_reply_context_init();
+    _ZN_SET_FLAG(z_msg.reply_context->header, _ZN_FLAG_Z_F);
+    z_msg.reply_context->qid = query->qid;
+    z_msg.reply_context->source_kind = 0;
+
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    {
+        _Z_DEBUG("Trying to reconnect....\n");
+        zn->on_disconnect(zn);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+    }
+
+    _zn_zenoh_message_free(&z_msg);
+}

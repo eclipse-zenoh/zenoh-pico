@@ -42,4 +42,6 @@ int main(int argc, char **argv)
 
     zn_properties_free(ps);
     zn_close(s);
+
+    return 0;
 }

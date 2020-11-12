@@ -33,7 +33,8 @@ zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
 /*------------------ Message helper ------------------*/
 _zn_session_message_t _zn_session_message_init(uint8_t header);
 _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
-
+_zn_reply_context_t *_zn_reply_context_init(void);
+_zn_attachment_t *_zn_attachment_init(void);
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
@@ -76,21 +77,9 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
 void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context);
 
 /*------------------ Queryable ------------------*/
-// void _zn_register_queryable(zn_session_t *zn, z_zint_t rid, z_zint_t id, zn_query_handler_t query_handler, void *arg);
-// _z_list_t *_zn_get_queryable_by_rid(zn_session_t *zn, z_zint_t rid);
-// _z_list_t *_zn_get_queryable_by_rname(zn_session_t *zn, const char *rname);
-// void _zn_unregister_queryable(zn_queryable_t *s);
-
-// int _zn_matching_remote_sub(zn_session_t *zn, z_zint_t rid);
-
-// typedef struct
-// {
-//     z_zint_t qid;
-//     zn_reply_handler_t reply_handler;
-//     void *arg;
-// } _zn_replywaiter_t;
-
-// void _zn_register_query(zn_session_t *zn, z_zint_t qid, zn_reply_handler_t reply_handler, void *arg);
-// _zn_replywaiter_t *_zn_get_query(zn_session_t *zn, z_zint_t qid);
+_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id);
+int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *q);
+void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *q);
+void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query);
 
 #endif /* _ZENOH_NET_PICO_INTERNAL_H */

@@ -64,5 +64,6 @@ int main(int argc, char **argv)
 
     zn_undeclare_subscriber(sub);
     zn_close(s);
+
     return 0;
 }

@@ -12,62 +12,62 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include <unistd.h>
-#include "zenoh.h"
+#include <string.h>
+#include "zenoh/net.h"
 
-// void query_handler(const char *rname, const char *predicate, zn_replies_sender_t send_replies, void *query_handle, void *arg) {
-//     printf(">> [Query handler] Handling '%s?%s'\n", rname, predicate);
+char *uri = "/demo/example/zenoh-pico-eval";
+char *value = "Eval from pico!";
 
-//     char *data = "Eval from C!";
-//     zn_resource_t resource;
-//     resource.rname = arg;
-//     resource.data = (const unsigned char *)data;
-//     resource.length = strlen(data);
-//     resource.encoding = 0;
-//     resource.kind = 0;
-//     zn_resource_t *p_resource = &resource;
-//     zn_resource_p_array_t replies = {1, &p_resource};
+void query_handler(zn_query_t *query, const void *arg)
+{
+    (void)(arg); // Unused paramater
 
-//     send_replies(query_handle, replies);
-// }
+    z_string_t res = zn_query_res_name(query);
+    z_string_t pred = zn_query_predicate(query);
+    printf(">> [Query handler] Handling '%.*s?%.*s'\n", (int)res.len, res.val, (int)pred.len, pred.val);
+    zn_send_reply(query, uri, (const unsigned char *)value, strlen(value));
+}
 
 int main(int argc, char **argv)
 {
-    char *selector = "/zenoh/examples/c/eval";
-    char *locator = 0;
-
-    if ((argc > 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)))
-    {
-        printf("USAGE:\n\tzn_eval [<path>=%s] [<locator>=auto]\n\n", selector);
-        return 0;
-    }
     if (argc > 1)
     {
-        selector = argv[1];
+        uri = argv[1];
     }
+    zn_properties_t *config = zn_config_default();
     if (argc > 2)
     {
-        locator = argv[2];
+        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    // printf("Openning session...\n");
-    // zn_session_p_result_t r_z = zn_open(locator, 0, 0);
-    // ASSERT_RESULT(r_z, "Unable to open session.\n")
-    // zn_session_t *z = r_z.value.session;
-    // znp_start_read_task(z);
+    printf("Openning session...\n");
+    zn_session_t *s = zn_open(config);
+    if (s == 0)
+    {
+        printf("Unable to open session!\n");
+        exit(-1);
+    }
 
-    // printf("Declaring Eval on '%s'...\n", selector);
-    // zn_eval_p_result_t r = zn_declare_eval(z, selector, query_handler, selector);
-    // ASSERT_P_RESULT(r, "Unable to declare eval.\n");
-    // zn_eva_t *eval = r.value.eval;
+    // Start the receive and the session lease loop for zenoh-pico
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 
-    // char c = 0;
-    // while (c != 'q') {
-    //     c = fgetc(stdin);
-    // }
+    printf("Declaring Queryable on '%s'...\n", uri);
+    zn_queryable_t *qable = zn_declare_queryable(s, zn_rname(uri), ZN_QUERYABLE_EVAL, query_handler, NULL);
+    if (qable == 0)
+    {
+        printf("Unable to declare queryable.\n");
+        exit(-1);
+    }
 
-    // zn_undeclare_eval(eval);
-    // zn_close(z);
-    // znp_stop_read_task(z);
+    char c = 0;
+    while (c != 'q')
+    {
+        c = fgetc(stdin);
+    }
+
+    zn_undeclare_queryable(qable);
+    zn_close(s);
+
     return 0;
 }

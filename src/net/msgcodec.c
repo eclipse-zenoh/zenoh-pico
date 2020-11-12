@@ -1197,6 +1197,11 @@ void _zn_query_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
         _ASSURE_P_RESULT(r_qt, r, _z_err_t_PARSE_ZINT)
         r->value.query.target = r_qt.value.query_target;
     }
+    else
+    {
+        r->value.query.target.kind = ZN_QUERYABLE_ALL_KINDS;
+        r->value.query.target.target.tag = zn_target_t_BEST_MATCHING;
+    }
 
     _zn_query_consolidation_result_t r_con = _zn_query_consolidation_decode(rbf);
     _ASSURE_P_RESULT(r_con, r, _zn_err_t_PARSE_CONSOLIDATION)
@@ -1213,6 +1218,7 @@ _zn_query_result_t _zn_query_decode(_z_rbuf_t *rbf, uint8_t header)
 void _zn_query_free(_zn_query_t *msg)
 {
     _zn_reskey_free(&msg->key);
+    free(msg->predicate);
 }
 
 /*------------------ Zenoh Message ------------------*/
@@ -1319,9 +1325,15 @@ _zn_zenoh_message_p_result_t _zn_zenoh_message_decode(_z_rbuf_t *rbf)
 void _zn_zenoh_message_free(_zn_zenoh_message_t *msg)
 {
     if (msg->attachment)
+    {
         _zn_attachment_free(msg->attachment);
+        free(msg->attachment);
+    }
     if (msg->reply_context)
+    {
         _zn_reply_context_free(msg->reply_context);
+        free(msg->reply_context);
+    }
 
     uint8_t mid = _ZN_MID(msg->header);
     switch (mid)
@@ -2031,7 +2043,10 @@ _zn_session_message_p_result_t _zn_session_message_decode(_z_rbuf_t *rbf)
 void _zn_session_message_free(_zn_session_message_t *msg)
 {
     if (msg->attachment)
+    {
         _zn_attachment_free(msg->attachment);
+        free(msg->attachment);
+    }
 
     uint8_t mid = _ZN_MID(msg->header);
     switch (mid)

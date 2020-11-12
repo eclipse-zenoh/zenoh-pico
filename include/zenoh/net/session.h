@@ -134,7 +134,7 @@ z_zint_t zn_declare_resource(zn_session_t *session, zn_reskey_t reskey);
  * Returns:
  *     A numerical id.
  */
-int zn_undeclare_resource(zn_session_t *session, z_zint_t rid);
+void zn_undeclare_resource(zn_session_t *session, z_zint_t rid);
 
 /**
  * Declare a :c:type:`zn_publisher_t` for the given resource key.

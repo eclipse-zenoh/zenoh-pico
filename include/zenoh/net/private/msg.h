@@ -194,7 +194,7 @@ typedef struct
 // +-+-+-+---------+
 // ~      qid      ~
 // +---------------+
-// ~  source_kind  ~
+// ~  source_kind  ~ //@TODO: make it if F==0
 // +---------------+
 // ~   replier_id  ~ if F==0
 // +---------------+
@@ -829,9 +829,9 @@ typedef struct
 // +---------------+
 // ~      qid      ~
 // +---------------+
-// ~     target    ~ if T==1
+// ~     target    ~ if T==1. Otherwise target.kind = ZN_QUERYABLE_ALL_KINDS, target.tag = zn_target_t_BEST_MATCHING
 // +---------------+
-// ~ consolidation ~
+// ~ consolidation ~ // @TODO make it optional
 // +---------------+
 //
 typedef struct

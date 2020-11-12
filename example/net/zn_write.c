@@ -45,5 +45,6 @@ int main(int argc, char **argv)
     zn_write(s, zn_rname(uri), (const uint8_t *)value, strlen(value));
 
     zn_close(s);
+
     return 0;
 }

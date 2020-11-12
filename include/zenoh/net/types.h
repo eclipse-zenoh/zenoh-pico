@@ -356,8 +356,6 @@ typedef struct
 typedef struct
 {
     zn_session_t *zn;
-    zn_subinfo_t info;
-    zn_reskey_t key;
     z_zint_t id;
 } zn_subscriber_t;
 
@@ -367,7 +365,6 @@ typedef struct
 typedef struct
 {
     zn_session_t *zn;
-    z_zint_t rid;
     z_zint_t id;
 } zn_queryable_t;
 
@@ -378,6 +375,7 @@ typedef struct
 {
     zn_session_t *zn;
     z_zint_t qid;
+    unsigned int kind;
     const char *rname;
     const char *predicate;
 } zn_query_t;
