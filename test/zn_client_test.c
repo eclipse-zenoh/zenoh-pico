@@ -143,6 +143,7 @@ int main(void)
     // Write data from firt session
     size_t len = 1024;
     const uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+
     for (unsigned int i = 0; i < RUN; i++)
     {
         zn_reskey_t rk = zn_rid(rids1[i]);
@@ -158,6 +159,7 @@ int main(void)
         printf("Waiting for datas... %u/%u\n", datas, RUN);
         _zn_sleep_s(1);
     }
+    datas = 0;
 
     // Query data from first session
     for (unsigned int i = 0; i < RUN; i++)
@@ -176,6 +178,7 @@ int main(void)
         printf("Waiting for queries... %u/%u\n", queries, RUN);
         _zn_sleep_s(1);
     }
+    queries = 0;
 
     // Wait to receive all the replies
     now = _zn_clock_now();
@@ -185,6 +188,7 @@ int main(void)
         printf("Waiting for replies... %u/%u\n", replies, RUN);
         _zn_sleep_s(1);
     }
+    replies = 0;
 
     // Undeclare publishers on first session
     while (pubs1)

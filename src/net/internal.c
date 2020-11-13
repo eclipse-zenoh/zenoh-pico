@@ -1138,7 +1138,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         else
         {
             // Allocate a computed string
-            rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
+            rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
             if (rname == NULL)
                 goto EXIT_SUB_TRIG;
         }
@@ -1185,7 +1185,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (rname == NULL)
                     continue;
             }
@@ -1203,7 +1203,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
     else
     {
         // Compute the complete remote resource name starting from the key
-        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
         if (rname == NULL)
             goto EXIT_SUB_TRIG;
 
@@ -1228,7 +1228,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                     continue;
             }
