@@ -50,58 +50,62 @@ int main(void)
     znp_start_read_task(s);
     znp_start_lease_task(s);
 
-    _z_list_t *subs = _z_list_empty;
-    _z_list_t *qles = _z_list_empty;
-    unsigned long rids[RUN];
-
-    char res[64];
     for (unsigned int i = 0; i < RUN; i++)
     {
-        sprintf(res, "%s%d", uri, i);
-        zn_reskey_t rk = zn_rname(res);
-        unsigned long rid = zn_declare_resource(s, rk);
-        printf("Declared resource: %zu %s\n", rid, res);
-        rids[i] = rid;
-    }
+        _z_list_t *subs = _z_list_empty;
+        _z_list_t *qles = _z_list_empty;
+        unsigned long rids[RUN];
 
-    for (unsigned int i = 0; i < RUN; i++)
-    {
-        zn_reskey_t rk = zn_rid(rids[i]);
-        zn_subscriber_t *sub = zn_declare_subscriber(s, rk, zn_subinfo_default(), data_handler, NULL);
-        assert(sub != NULL);
-        printf("Declared subscription: %zu %s\n", sub->id, res);
-        subs = _z_list_cons(subs, sub);
-    }
+        char res[64];
+        for (unsigned int i = 0; i < RUN; i++)
+        {
+            sprintf(res, "%s%d", uri, i);
+            zn_reskey_t rk = zn_rname(res);
+            unsigned long rid = zn_declare_resource(s, rk);
+            printf("Declared resource: %zu %s\n", rid, res);
+            rids[i] = rid;
+            free(rk.rname);
+        }
 
-    for (unsigned int i = 0; i < RUN; i++)
-    {
-        zn_reskey_t rk = zn_rid(rids[i]);
-        zn_queryable_t *qle = zn_declare_queryable(s, rk, ZN_QUERYABLE_EVAL, query_handler, NULL);
-        assert(qle != NULL);
-        printf("Declared queryable: %zu %s\n", qle->id, res);
-        qles = _z_list_cons(qles, qle);
-    }
+        for (unsigned int i = 0; i < RUN; i++)
+        {
+            zn_reskey_t rk = zn_rid(rids[i]);
+            zn_subscriber_t *sub = zn_declare_subscriber(s, rk, zn_subinfo_default(), data_handler, NULL);
+            assert(sub != NULL);
+            printf("Declared subscription: %zu %s\n", sub->id, res);
+            subs = _z_list_cons(subs, sub);
+        }
 
-    while (subs)
-    {
-        zn_subscriber_t *sub = _z_list_head(subs);
-        printf("Undeclaring subscription: %zu\n", sub->id);
-        zn_undeclare_subscriber(sub);
-        subs = _z_list_pop(subs);
-    }
+        for (unsigned int i = 0; i < RUN; i++)
+        {
+            zn_reskey_t rk = zn_rid(rids[i]);
+            zn_queryable_t *qle = zn_declare_queryable(s, rk, ZN_QUERYABLE_EVAL, query_handler, NULL);
+            assert(qle != NULL);
+            printf("Declared queryable: %zu %s\n", qle->id, res);
+            qles = _z_list_cons(qles, qle);
+        }
 
-    while (qles)
-    {
-        zn_queryable_t *qle = _z_list_head(qles);
-        printf("Undeclaring queryable: %zu\n", qle->id);
-        zn_undeclare_queryable(qle);
-        qles = _z_list_pop(qles);
-    }
+        while (subs)
+        {
+            zn_subscriber_t *sub = _z_list_head(subs);
+            printf("Undeclaring subscription: %zu\n", sub->id);
+            zn_undeclare_subscriber(sub);
+            subs = _z_list_pop(subs);
+        }
 
-    for (unsigned int i = 0; i < RUN; i++)
-    {
-        zn_undeclare_resource(s, rids[i]);
-        printf("Undeclared resource: %zu\n", rids[i]);
+        while (qles)
+        {
+            zn_queryable_t *qle = _z_list_head(qles);
+            printf("Undeclaring queryable: %zu\n", qle->id);
+            zn_undeclare_queryable(qle);
+            qles = _z_list_pop(qles);
+        }
+
+        for (unsigned int i = 0; i < RUN; i++)
+        {
+            zn_undeclare_resource(s, rids[i]);
+            printf("Undeclared resource: %zu\n", rids[i]);
+        }
     }
 
     znp_stop_lease_task(s);

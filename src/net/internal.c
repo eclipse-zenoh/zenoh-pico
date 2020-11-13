@@ -791,9 +791,14 @@ int __zn_subscription_predicate(void *elem, void *arg)
     _zn_subscriber_t *s = (_zn_subscriber_t *)arg;
     _zn_subscriber_t *sub = (_zn_subscriber_t *)elem;
     if (sub->id == s->id)
+    {
+        _zn_reskey_free(&sub->key);
         return 1;
+    }
     else
+    {
         return 0;
+    }
 }
 
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
@@ -1005,8 +1010,7 @@ int __zn_pending_query_predicate(void *elem, void *arg)
     _zn_pending_query_t *query = (_zn_pending_query_t *)elem;
     if (query->id == pq->id)
     {
-        if (pq->key.rname)
-            free((z_str_t)pq->key.rname);
+        _zn_reskey_free(&pq->key);
         if (pq->predicate)
             free((z_str_t)pq->predicate);
         return 1;
@@ -1030,10 +1034,10 @@ void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 void __zn_free_pending_reply(_zn_pending_reply_t *pr)
 {
     // Free the sample
-    if (pr->sample.value.val)
-        _z_bytes_free(&pr->sample.value);
     if (pr->sample.key.val)
         free((z_str_t)pr->sample.key.val);
+    if (pr->sample.value.val)
+        _z_bytes_free(&pr->sample.value);
 
     // Free the source info
     if (pr->source_info.id.val)
@@ -1218,7 +1222,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
 
         // Free the resource name if allocated
         if (reskey.rid != ZN_RESOURCE_ID_NONE)
-            free((z_str_t)sample.key.val);
+            free((char *)sample.key.val);
 
         break;
     }
@@ -1295,6 +1299,16 @@ _zn_queryable_t *__zn_unsafe_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
     return NULL;
 }
 
+_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
+{
+    // Acquire the lock on the queryables
+    _zn_mutex_lock(&zn->mutex_qle);
+    _zn_queryable_t *qle = __zn_unsafe_get_queryable_by_id(zn, id);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qle);
+    return qle;
+}
+
 int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
@@ -1327,8 +1341,7 @@ int __zn_queryable_predicate(void *elem, void *arg)
     _zn_queryable_t *queryable = (_zn_queryable_t *)elem;
     if (queryable->id == qle->id)
     {
-        if (qle->key.rname)
-            free((z_str_t)qle->key.rname);
+        _zn_reskey_free(&qle->key);
         return 1;
     }
     else

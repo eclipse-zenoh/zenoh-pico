@@ -374,7 +374,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 }
                 else
                 {
-                    free(r->key.rname);
+                    _zn_reskey_free(&r->key);
                     free(r);
                 }
 
@@ -1052,8 +1052,6 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 
 void zn_undeclare_publisher(zn_publisher_t *pub)
 {
-    // @TODO: manage multi publishers
-
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to undeclare the publisher
@@ -1076,6 +1074,8 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     }
 
     _zn_zenoh_message_free(&z_msg);
+
+    free(pub);
 }
 
 /*------------------ Subscriber Declaration ------------------*/
@@ -1173,6 +1173,8 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
         _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
     }
+
+    free(sub);
 }
 
 /*------------------ Write ------------------*/
@@ -1346,8 +1348,36 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
 void zn_undeclare_queryable(zn_queryable_t *qle)
 {
-    (void)(qle);
-    // @TODO
+    _zn_queryable_t *q = _zn_get_queryable_by_id(qle->zn, qle->id);
+    if (q)
+    {
+        _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
+
+        // We need to undeclare the subscriber
+        unsigned int len = 1;
+        z_msg.body.declare.declarations.len = len;
+        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+
+        // Forget Subscriber declaration
+        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_QUERYABLE;
+        if (!q->key.rname)
+            _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
+
+        z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
+
+        if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        {
+            _Z_DEBUG("Trying to reconnect....\n");
+            qle->zn->on_disconnect(qle->zn);
+            _zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE);
+        }
+
+        _zn_zenoh_message_free(&z_msg);
+
+        _zn_unregister_queryable(qle->zn, q);
+    }
+
+    free(qle);
 }
 
 void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, size_t len)

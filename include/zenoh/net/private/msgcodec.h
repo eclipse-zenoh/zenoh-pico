@@ -109,6 +109,9 @@ _ZN_DECLARE_ENCODE_NOH(zenoh_message);
 _ZN_DECLARE_P_DECODE_NOH(zenoh_message);
 _ZN_DECLARE_FREE_NOH(zenoh_message);
 
+/*------------------ Free Helpers ------------------*/
+void _zn_reskey_free(zn_reskey_t *rk);
+
 #endif /* ZENOH_NET_PICO_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
@@ -131,7 +134,6 @@ void _zn_subinfo_free(zn_subinfo_t *si);
 int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld);
 void _zn_reskey_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r);
 _zn_reskey_result_t _zn_reskey_decode(_z_rbuf_t *rbf, uint8_t header);
-void _zn_reskey_free(zn_reskey_t *rk);
 
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);
