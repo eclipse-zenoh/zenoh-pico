@@ -12,13 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh/net/private/internal.h"
-#include "zenoh/net/private/msg.h"
-#include "zenoh/net/private/msgcodec.h"
-#include "zenoh/net/private/system.h"
-#include "zenoh/net/rname.h"
-#include "zenoh/private/logging.h"
-#include "zenoh/utils.h"
+#include "zenoh-pico/net/private/internal.h"
+#include "zenoh-pico/net/private/msg.h"
+#include "zenoh-pico/net/private/msgcodec.h"
+#include "zenoh-pico/net/private/system.h"
+#include "zenoh-pico/net/rname.h"
+#include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/utils.h"
 
 /*------------------ Clone helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)

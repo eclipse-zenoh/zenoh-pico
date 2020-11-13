@@ -15,7 +15,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "zenoh/net/private/system.h"
+#include "zenoh-pico/net/private/system.h"
 
 /*------------------ Mutex ------------------*/
 // As defined in "zenoh/net/private/system.h"

@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_UTILS_H
 #define ZENOH_PICO_UTILS_H
 
-#include "zenoh/types.h"
+#include "zenoh-pico/types.h"
 
 z_string_t z_string_make(const char *value);
 void z_string_free(z_string_t *s);

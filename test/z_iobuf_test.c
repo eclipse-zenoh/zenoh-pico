@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh/private/iobuf.h"
+#include "zenoh-pico/private/iobuf.h"
 
 #define RUNS 1000
 

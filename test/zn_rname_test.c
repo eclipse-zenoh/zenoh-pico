@@ -13,8 +13,8 @@
  */
 
 #include <assert.h>
-#include "zenoh/net/rname.h"
-#include "zenoh/types.h"
+#include "zenoh-pico/net/rname.h"
+#include "zenoh-pico/types.h"
 
 int main(void)
 {

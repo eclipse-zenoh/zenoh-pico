@@ -16,7 +16,7 @@
 #define _ZENOH_NET_PICO_MSG_H
 
 #include <stdint.h>
-#include "zenoh/net/private/types.h"
+#include "zenoh-pico/net/private/types.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.

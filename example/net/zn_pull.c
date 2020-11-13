@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 void data_handler(const zn_sample_t *sample, const void *arg)
 {

@@ -13,7 +13,7 @@
  */
 
 #include <string.h>
-#include "zenoh/utils.h"
+#include "zenoh-pico/utils.h"
 
 z_string_t z_string_make(const char *value)
 {

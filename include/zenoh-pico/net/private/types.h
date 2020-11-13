@@ -14,8 +14,8 @@
 #ifndef _ZENOH_NET_PICO_TYPES_H
 #define _ZENOH_NET_PICO_TYPES_H
 
-#include "zenoh/types.h"
-#include "zenoh/net/types.h"
+#include "zenoh-pico/types.h"
+#include "zenoh-pico/net/types.h"
 
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1

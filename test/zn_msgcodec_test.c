@@ -17,10 +17,10 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh/private/collection.h"
-#include "zenoh/private/iobuf.h"
-#include "zenoh/net/private/internal.h"
-#include "zenoh/net/private/msgcodec.h"
+#include "zenoh-pico/private/collection.h"
+#include "zenoh-pico/private/iobuf.h"
+#include "zenoh-pico/net/private/internal.h"
+#include "zenoh-pico/net/private/msgcodec.h"
 
 #define RUNS 1000
 

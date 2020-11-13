@@ -13,10 +13,10 @@
  */
 
 #include <stdint.h>
-#include "zenoh/net/private/internal.h"
-#include "zenoh/private/logging.h"
-#include "zenoh/net/private/msgcodec.h"
-#include "zenoh/net/private/system.h"
+#include "zenoh-pico/net/private/internal.h"
+#include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/net/private/msgcodec.h"
+#include "zenoh-pico/net/private/system.h"
 
 void *_znp_read_task(zn_session_t *z)
 {

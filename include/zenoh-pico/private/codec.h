@@ -15,9 +15,9 @@
 #ifndef _ZENOH_PICO_CODEC_H
 #define _ZENOH_PICO_CODEC_H
 
-#include "zenoh/types.h"
-#include "zenoh/private/iobuf.h"
-#include "zenoh/private/result.h"
+#include "zenoh-pico/types.h"
+#include "zenoh-pico/private/iobuf.h"
+#include "zenoh-pico/private/result.h"
 
 #define _ZN_EC(fn) \
     if (fn != 0)   \

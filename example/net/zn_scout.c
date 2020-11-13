@@ -13,7 +13,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 void fprintpid(FILE *stream, z_bytes_t pid)
 {

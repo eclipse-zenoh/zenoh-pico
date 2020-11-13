@@ -14,8 +14,8 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "zenoh/private/collection.h"
-#include "zenoh/types.h"
+#include "zenoh-pico/private/collection.h"
+#include "zenoh-pico/types.h"
 
 int main(void)
 {

@@ -16,7 +16,7 @@
 #define ZENOH_NET_PICO_SESSION_H
 
 #include <stdint.h>
-#include "zenoh/net/types.h"
+#include "zenoh-pico/net/types.h"
 
 /*------------------ Init/Config ------------------*/
 /**

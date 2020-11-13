@@ -15,9 +15,9 @@
 #ifndef _ZENOH_NET_PICO_INTERNAL_H
 #define _ZENOH_NET_PICO_INTERNAL_H
 
-#include "zenoh/net/types.h"
-#include "zenoh/net/private/msg.h"
-#include "zenoh/net/private/msgcodec.h"
+#include "zenoh-pico/net/types.h"
+#include "zenoh-pico/net/private/msg.h"
+#include "zenoh-pico/net/private/msgcodec.h"
 
 /*------------------ Session ------------------*/
 zn_session_t *_zn_session_init(void);

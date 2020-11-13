@@ -15,7 +15,7 @@
 #ifndef _ZENOH_PICO_SYSTEM_H
 #define _ZENOH_PICO_SYSTEM_H
 
-#include "zenoh/net/types.h"
+#include "zenoh-pico/net/types.h"
 
 /*------------------ Mutex ------------------*/
 int _zn_mutex_init(_zn_mutex_t *m);
@@ -45,7 +45,7 @@ time_t _zn_time_elapsed_s(_zn_time_t *time);
 /*------------------ Network ------------------*/
 // @TODO: remove the platform-specific include and data types
 #include <netinet/in.h>
-#include "zenoh/net/private/result.h"
+#include "zenoh-pico/net/private/result.h"
 
 _ZN_RESULT_DECLARE(_zn_socket_t, socket)
 

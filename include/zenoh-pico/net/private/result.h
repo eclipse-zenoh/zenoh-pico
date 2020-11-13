@@ -15,8 +15,8 @@
 #ifndef _ZENOH_NET_PICO_RESULT_H
 #define _ZENOH_NET_PICO_RESULT_H
 
-#include "zenoh/net/types.h"
-#include "zenoh/private/result.h"
+#include "zenoh-pico/net/types.h"
+#include "zenoh-pico/private/result.h"
 
 /*------------------ Internal Zenoh-net Errors ------------------*/
 typedef enum

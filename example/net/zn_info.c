@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <stdio.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 int main(int argc, char **argv)
 {

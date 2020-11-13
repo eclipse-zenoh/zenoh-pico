@@ -14,10 +14,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh/private/codec.h"
-#include "zenoh/net/private/codec.h"
-#include "zenoh/net/private/codec.h"
-#include "zenoh/private/logging.h"
+#include "zenoh-pico/private/codec.h"
+#include "zenoh-pico/net/private/codec.h"
+#include "zenoh-pico/net/private/codec.h"
+#include "zenoh-pico/private/logging.h"
 
 /*------------------ z_zint ------------------*/
 int _z_zint_encode(_z_wbuf_t *wbf, z_zint_t v)

@@ -13,7 +13,7 @@
  */
 #include <stdio.h>
 #include <sys/time.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 #define N 100000
 

@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 #include <pthread.h>
-#include "zenoh/net/private/tasks.h"
+#include "zenoh-pico/net/private/tasks.h"
 
 /*------------------ Read task ------------------*/
 void *pthread_read_task(void *arg)

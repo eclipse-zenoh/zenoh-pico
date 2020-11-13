@@ -15,7 +15,7 @@
 #ifndef _ZENOH_NET_PICO_TASKS_H
 #define _ZENOH_NET_PICO_TASKS_H
 
-#include "zenoh/net/types.h"
+#include "zenoh-pico/net/types.h"
 
 void *_znp_lease_task(zn_session_t *z);
 void *_znp_read_task(zn_session_t *z);

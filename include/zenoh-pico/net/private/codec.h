@@ -16,9 +16,9 @@
 #define _ZENOH_NET_PICO_CODEC_H
 
 #include <stdint.h>
-#include "zenoh/net/property.h"
-#include "zenoh/net/private/result.h"
-#include "zenoh/private/iobuf.h"
+#include "zenoh-pico/net/property.h"
+#include "zenoh-pico/net/private/result.h"
+#include "zenoh-pico/private/iobuf.h"
 
 /*------------------ Internal Zenoh-net Encoding/Decoding ------------------*/
 _ZN_RESULT_DECLARE(zn_property_t, property)

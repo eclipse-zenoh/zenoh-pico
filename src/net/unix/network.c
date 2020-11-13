@@ -21,8 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "zenoh/net/private/system.h"
-#include "zenoh/private/logging.h"
+#include "zenoh-pico/net/private/system.h"
+#include "zenoh-pico/private/logging.h"
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()

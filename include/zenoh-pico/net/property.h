@@ -16,7 +16,7 @@
 #define ZENOH_PICO_PROPERTY_H
 
 #include <stdint.h>
-#include "zenoh/net/types.h"
+#include "zenoh-pico/net/types.h"
 
 // Properties returned by zn_info()
 #define ZN_INFO_PID_KEY 0x00

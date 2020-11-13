@@ -17,8 +17,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh/private/types.h"
-#include "zenoh/types.h"
+#include "zenoh-pico/private/types.h"
+#include "zenoh-pico/types.h"
 
 /*------------------ Internal Array Macros ------------------*/
 #define _ARRAY_DECLARE(type, name, prefix) \

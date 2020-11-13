@@ -13,7 +13,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 char *uri = "/demo/example/zenoh-pico-eval";
 char *value = "Eval from pico!";

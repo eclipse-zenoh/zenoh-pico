@@ -15,6 +15,6 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 #endif /* ZENOH_PICO_H */

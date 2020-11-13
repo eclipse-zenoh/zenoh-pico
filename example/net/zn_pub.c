@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 int main(int argc, char **argv)
 {

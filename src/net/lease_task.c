@@ -12,10 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh/net/session.h"
-#include "zenoh/net/private/internal.h"
-#include "zenoh/net/private/system.h"
-#include "zenoh/private/logging.h"
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/net/private/internal.h"
+#include "zenoh-pico/net/private/system.h"
+#include "zenoh-pico/private/logging.h"
 
 void *_znp_lease_task(zn_session_t *z)
 {

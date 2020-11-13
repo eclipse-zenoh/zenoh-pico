@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "zenoh/net.h"
+#include "zenoh-pico/net.h"
 
 void reply_handler(const zn_source_info_t *info, const zn_sample_t *sample, const void *arg)
 {

@@ -15,10 +15,10 @@
 #ifndef ZENOH_NET_PICO_H
 #define ZENOH_NET_PICO_H
 
-#include "zenoh/types.h"
-#include "zenoh/utils.h"
-#include "zenoh/net/property.h"
-#include "zenoh/net/rname.h"
-#include "zenoh/net/session.h"
+#include "zenoh-pico/types.h"
+#include "zenoh-pico/utils.h"
+#include "zenoh-pico/net/property.h"
+#include "zenoh-pico/net/rname.h"
+#include "zenoh-pico/net/session.h"
 
 #endif /* ZENOH_NET_PICO_H */
