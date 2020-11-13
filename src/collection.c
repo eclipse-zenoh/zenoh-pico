@@ -162,6 +162,7 @@ _z_list_t *_z_list_remove(_z_list_t *xs, _z_list_predicate predicate, void *arg)
     _z_list_t *current = xs;
     if (xs == _z_list_empty)
         return xs;
+
     while (current != _z_list_empty)
     {
         // head removal

@@ -106,6 +106,11 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
 }
 
 /*------------------ Transmission and Reception helper ------------------*/
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_tx
+ */
 void __zn_unsafe_prepare_wbuf(_z_wbuf_t *buf)
 {
     _z_wbuf_clear(buf);
@@ -123,6 +128,11 @@ void __zn_unsafe_prepare_wbuf(_z_wbuf_t *buf)
 #endif /* ZN_TRANSPORT_TCP_IP */
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_tx
+ */
 void __zn_unsafe_finalize_wbuf(_z_wbuf_t *buf)
 {
 #ifdef ZN_TRANSPORT_TCP_IP
@@ -143,6 +153,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
 
     // Acquire the lock
     _zn_mutex_lock(&zn->mutex_tx);
+
     // Prepare the buffer eventually reserving space for the message length
     __zn_unsafe_prepare_wbuf(&zn->wbuf);
     // Encode the session message
@@ -197,6 +208,11 @@ _zn_session_message_t __zn_frame_header(zn_reliability_t reliability, int is_fra
     return s_msg;
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_tx
+ */
 int __zn_unsafe_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
 {
     // Assume first that this is not the final fragment
@@ -239,6 +255,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
 
     // Acquire the lock
     _zn_mutex_lock(&zn->mutex_tx);
+
     // Prepare the buffer eventually reserving space for the message length
     __zn_unsafe_prepare_wbuf(&zn->wbuf);
 
@@ -337,6 +354,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
 
     // Acquire the lock
     _zn_mutex_lock(&zn->mutex_rx);
+
     // Prepare the buffer
     _z_rbuf_clear(&zn->rbuf);
 
@@ -351,7 +369,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     if (_zn_recv_bytes(zn->sock, zn->rbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
         // Release the lock
-        _zn_mutex_lock(&zn->mutex_rx);
+        _zn_mutex_unlock(&zn->mutex_rx);
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
@@ -422,22 +440,11 @@ z_zint_t _zn_get_entity_id(zn_session_t *zn)
 }
 
 /*------------------ Resource ------------------*/
-_zn_resource_t *__zn_unsafe_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
-{
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
-    while (decls)
-    {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
-
-        if (decl->key.rid == reskey->rid && strcmp(decl->key.rname, reskey->rname) == 0)
-            return decl;
-
-        decls = _z_list_tail(decls);
-    }
-
-    return NULL;
-}
-
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
 _zn_resource_t *__zn_unsafe_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
     _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
@@ -454,6 +461,32 @@ _zn_resource_t *__zn_unsafe_get_resource_by_id(zn_session_t *zn, int is_local, z
     return NULL;
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_zn_resource_t *__zn_unsafe_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    while (decls)
+    {
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+
+        if (decl->key.rid == reskey->rid && strcmp(decl->key.rname, reskey->rname) == 0)
+            return decl;
+
+        decls = _z_list_tail(decls);
+    }
+
+    return NULL;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
 z_str_t __zn_unsafe_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
     z_str_t rname = NULL;
@@ -510,152 +543,62 @@ z_str_t __zn_unsafe_get_resource_name_from_key(zn_session_t *zn, int is_local, c
     return rname;
 }
 
-z_zint_t _zn_get_resource_id(zn_session_t *zn)
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_zn_resource_t *__zn_unsafe_get_resource_matching_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    return zn->resource_id++;
-}
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
 
-_zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t rid)
-{
-    // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_res);
-    _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, is_local, rid);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_res);
-    return res;
-}
+    z_str_t rname;
+    if (reskey->rid == ZN_RESOURCE_ID_NONE)
+        rname = reskey->rname;
+    else
+        rname = __zn_unsafe_get_resource_name_from_key(zn, is_local, reskey);
 
-_zn_resource_t *_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
-{
-    // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_res);
-    _zn_resource_t *res = __zn_unsafe_get_resource_by_key(zn, is_local, reskey);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_res);
-    return res;
-}
-
-int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
-{
-    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%zu,%s)\n", res->id, res->key.rid, res->key.rname);
-
-    // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_res);
-
-    _zn_resource_t *rd_rid = __zn_unsafe_get_resource_by_id(zn, is_local, res->id);
-    _zn_resource_t *rd_key = __zn_unsafe_get_resource_by_key(zn, is_local, &res->key);
-
-    int r;
-    if (!rd_rid && !rd_key)
+    while (decls)
     {
-        // No resource declaration has been found, add the new one
-        if (is_local)
-            zn->local_resources = _z_list_cons(zn->local_resources, res);
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+
+        z_str_t lname;
+        if (decl->key.rid == ZN_RESOURCE_ID_NONE)
+            lname = decl->key.rname;
         else
-            zn->remote_resources = _z_list_cons(zn->remote_resources, res);
+            lname = __zn_unsafe_get_resource_name_from_key(zn, is_local, &decl->key);
 
-        r = 0;
+        // Verify if it intersects
+        int res = zn_rname_intersect(lname, rname);
+
+        // Free the resource key if allocated
+        if (decl->key.rid != ZN_RESOURCE_ID_NONE)
+            free(lname);
+
+        // Exit if it inersects
+        if (res)
+        {
+            if (reskey->rid != ZN_RESOURCE_ID_NONE)
+                free(rname);
+            return decl;
+        }
+
+        decls = _z_list_tail(decls);
     }
-    else if (rd_rid == rd_key)
-    {
-        // A resource declaration for this id and key has been found, return
-        r = 1;
-    }
-    else
-    {
-        // Inconsistent declarations have been found, return an error
-        r = -1;
-    }
 
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_res);
-
-    return r;
-}
-
-int __zn_unsafe_resource_predicate(void *elem, void *arg)
-{
-    _zn_resource_t *rel = (_zn_resource_t *)elem;
-    _zn_resource_t *rar = (_zn_resource_t *)arg;
-    if (rel->id == rar->id)
-        return 1;
-    else
-        return 0;
-}
-
-void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
-{
-    // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_res);
-
-    if (is_local)
-        zn->local_resources = _z_list_remove(zn->local_resources, __zn_unsafe_resource_predicate, res);
-    else
-        zn->remote_resources = _z_list_remove(zn->remote_resources, __zn_unsafe_resource_predicate, res);
-    free(res);
-
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_res);
-}
-
-/*------------------ Subscription ------------------*/
-_zn_subscriber_t *__zn_unsafe_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
-{
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-    while (subs)
-    {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-
-        if (sub->id == id)
-            return sub;
-
-        subs = _z_list_tail(subs);
-    }
+    if (reskey->rid != ZN_RESOURCE_ID_NONE)
+        free(rname);
 
     return NULL;
 }
 
-_zn_subscriber_t *__zn_unsafe_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_z_list_t *__zn_unsafe_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-    while (subs)
-    {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-
-        if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
-            return sub;
-
-        subs = _z_list_tail(subs);
-    }
-
-    return NULL;
-}
-
-_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
-{
-    // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_sub);
-    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_id(zn, is_local, id);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
-    return sub;
-}
-
-_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
-{
-    // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_sub);
-    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_key(zn, is_local, reskey);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
-    return sub;
-}
-
-_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
-{
-    // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_sub);
-
     _z_list_t *xs = _z_list_empty;
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
@@ -694,7 +637,7 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
                 {
                     _z_list_free(&xs);
                     xs = NULL;
-                    goto EXIT_SUB_LIST;
+                    return xs;
                 }
             }
 
@@ -712,16 +655,15 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
     {
         _zn_resource_t *remote = __zn_unsafe_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey->rid);
         if (remote == NULL)
-            goto EXIT_SUB_LIST;
+            return xs;
 
         // Compute the complete remote resource name starting from the key
         z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
         _z_list_t *subs = zn->local_subscriptions;
-        _zn_subscriber_t *sub;
         while (subs)
         {
-            sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -750,10 +692,361 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
         free(rname);
     }
 
-EXIT_SUB_LIST:
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
+    return xs;
+}
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+void __zn_unsafe_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
+{
+    // Check if there is a matching local subscription
+    _z_list_t *subs = __zn_unsafe_get_subscriptions_from_remote_key(zn, reskey);
+    if (subs)
+    {
+        // Update the list
+        _z_list_t *sl = _z_i_map_get(zn->rem_res_loc_sub_map, id);
+        if (sl)
+        {
+            // Free any ancient list
+            _z_list_free(&sl);
+        }
+        // Update the list of active subscriptions
+        _z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
+    }
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_z_list_t *__zn_unsafe_get_queryables_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+{
+    _z_list_t *xs = _z_list_empty;
+    // Case 1) -> numerical only reskey
+    if (reskey->rname == NULL)
+    {
+        _z_list_t *qles = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_qle_map, reskey->rid);
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            xs = _z_list_cons(xs, qle);
+            qles = _z_list_tail(qles);
+        }
+    }
+    // Case 2) -> string only reskey
+    else if (reskey->rid == ZN_RESOURCE_ID_NONE)
+    {
+        // The complete resource name of the remote key
+        z_str_t rname = reskey->rname;
+
+        _z_list_t *qles = zn->local_queryables;
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+
+            // The complete resource name of the subscribed key
+            z_str_t lname;
+            if (qle->key.rid == ZN_RESOURCE_ID_NONE)
+            {
+                // Do not allocate
+                lname = qle->key.rname;
+            }
+            else
+            {
+                // Allocate a computed string
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                if (lname == NULL)
+                {
+                    _z_list_free(&xs);
+                    xs = NULL;
+                    return xs;
+                }
+            }
+
+            if (zn_rname_intersect(lname, rname))
+                xs = _z_list_cons(xs, qle);
+
+            if (qle->key.rid != ZN_RESOURCE_ID_NONE)
+                free(lname);
+
+            qles = _z_list_tail(qles);
+        }
+    }
+    // Case 3) -> numerical reskey with suffix
+    else
+    {
+        _zn_resource_t *remote = __zn_unsafe_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey->rid);
+        if (remote == NULL)
+            return xs;
+
+        // Compute the complete remote resource name starting from the key
+        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
+
+        _z_list_t *qles = zn->local_queryables;
+        while (qles)
+        {
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+
+            // Get the complete resource name to be passed to the subscription callback
+            z_str_t lname;
+            if (qle->key.rid == ZN_RESOURCE_ID_NONE)
+            {
+                // Do not allocate
+                lname = qle->key.rname;
+            }
+            else
+            {
+                // Allocate a computed string
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                if (lname == NULL)
+                    continue;
+            }
+
+            if (zn_rname_intersect(lname, rname))
+                xs = _z_list_cons(xs, qle);
+
+            if (qle->key.rid != ZN_RESOURCE_ID_NONE)
+                free(lname);
+
+            qles = _z_list_tail(qles);
+        }
+
+        free(rname);
+    }
+
+    return xs;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+void __zn_unsafe_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
+{
+    // Check if there is a matching local subscription
+    _z_list_t *qles = __zn_unsafe_get_queryables_from_remote_key(zn, reskey);
+    if (qles)
+    {
+        // Update the list
+        _z_list_t *ql = _z_i_map_get(zn->rem_res_loc_qle_map, id);
+        if (ql)
+        {
+            // Free any ancient list
+            _z_list_free(&ql);
+        }
+        // Update the list of active subscriptions
+        _z_i_map_set(zn->rem_res_loc_qle_map, id, qles);
+    }
+}
+
+z_zint_t _zn_get_resource_id(zn_session_t *zn)
+{
+    return zn->resource_id++;
+}
+
+_zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t rid)
+{
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+
+    _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, is_local, rid);
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return res;
+}
+
+_zn_resource_t *_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _zn_mutex_lock(&zn->mutex_inner);
+    _zn_resource_t *res = __zn_unsafe_get_resource_by_key(zn, is_local, reskey);
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return res;
+}
+
+z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _zn_mutex_lock(&zn->mutex_inner);
+    z_str_t res = __zn_unsafe_get_resource_name_from_key(zn, is_local, reskey);
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return res;
+}
+
+_zn_resource_t *_zn_get_resource_matching_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _zn_mutex_lock(&zn->mutex_inner);
+    _zn_resource_t *res = __zn_unsafe_get_resource_matching_key(zn, is_local, reskey);
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return res;
+}
+
+int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
+{
+    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%zu,%s)\n", res->id, res->key.rid, res->key.rname);
+
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+
+    _zn_resource_t *rd_rid = __zn_unsafe_get_resource_by_id(zn, is_local, res->id);
+
+    int r;
+    if (rd_rid)
+    {
+        // Inconsistent declarations have been found, return an error
+        r = -1;
+    }
+    else
+    {
+        // No resource declaration has been found, add the new one
+        if (is_local)
+        {
+            zn->local_resources = _z_list_cons(zn->local_resources, res);
+        }
+        else
+        {
+            __zn_unsafe_add_rem_res_to_loc_sub_map(zn, res->id, &res->key);
+            __zn_unsafe_add_rem_res_to_loc_qle_map(zn, res->id, &res->key);
+            zn->remote_resources = _z_list_cons(zn->remote_resources, res);
+        }
+
+        r = 0;
+    }
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
+
+    return r;
+}
+
+int __zn_resource_predicate(void *elem, void *arg)
+{
+    _zn_resource_t *rel = (_zn_resource_t *)elem;
+    _zn_resource_t *rar = (_zn_resource_t *)arg;
+    if (rel->id == rar->id)
+        return 1;
+    else
+        return 0;
+}
+
+void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
+{
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+
+    if (is_local)
+        zn->local_resources = _z_list_remove(zn->local_resources, __zn_resource_predicate, res);
+    else
+        zn->remote_resources = _z_list_remove(zn->remote_resources, __zn_resource_predicate, res);
+    free(res);
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
+}
+
+/*------------------ Subscription ------------------*/
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_zn_subscriber_t *__zn_unsafe_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+{
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    while (subs)
+    {
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+
+        if (sub->id == id)
+            return sub;
+
+        subs = _z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+_zn_subscriber_t *__zn_unsafe_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    while (subs)
+    {
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+
+        if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
+            return sub;
+
+        subs = _z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+{
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_id(zn, is_local, id);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return sub;
+}
+
+_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_key(zn, is_local, reskey);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
+    return sub;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ *  - zn->mutes_sub
+ */
+void __zn_unsafe_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *sub)
+{
+    // Need to check if there is a remote resource declaration matching the new subscription
+    zn_reskey_t loc_key;
+    loc_key.rid = ZN_RESOURCE_ID_NONE;
+    if (sub->key.rid == ZN_RESOURCE_ID_NONE)
+        loc_key.rname = sub->key.rname;
+    else
+        loc_key.rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+
+    _zn_resource_t *rem_res = __zn_unsafe_get_resource_matching_key(zn, _ZN_IS_REMOTE, &loc_key);
+    if (rem_res)
+    {
+        // Update the list of active subscriptions
+        _z_list_t *subs = _z_i_map_get(zn->rem_res_loc_sub_map, rem_res->id);
+        subs = _z_list_cons(subs, sub);
+        _z_i_map_set(zn->rem_res_loc_sub_map, rem_res->id, subs);
+    }
+
+    if (sub->key.rid != ZN_RESOURCE_ID_NONE)
+        free(loc_key.rname);
+}
+
+_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+{
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_inner);
+    _z_list_t *xs = __zn_unsafe_get_subscriptions_from_remote_key(zn, reskey);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_inner);
     return xs;
 }
 
@@ -762,7 +1055,8 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", reskey->rid, reskey->rname);
 
     // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_sub);
+    _zn_mutex_lock(&zn->mutex_inner);
+
     int res;
     _zn_subscriber_t *s = __zn_unsafe_get_subscription_by_key(zn, is_local, &sub->key);
     if (s)
@@ -774,14 +1068,19 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     {
         // Register the new subscription
         if (is_local)
+        {
+            __zn_unsafe_add_loc_sub_to_rem_res_map(zn, sub);
             zn->local_subscriptions = _z_list_cons(zn->local_subscriptions, sub);
+        }
         else
+        {
             zn->remote_subscriptions = _z_list_cons(zn->remote_subscriptions, sub);
+        }
         res = 0;
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
+    _zn_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -804,7 +1103,7 @@ int __zn_subscription_predicate(void *elem, void *arg)
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
 {
     // Acquire the lock on the subscription list
-    _zn_mutex_lock(&zn->mutex_sub);
+    _zn_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
         zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, __zn_subscription_predicate, s);
@@ -813,13 +1112,13 @@ void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_
     free(s);
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload)
 {
     // Acquire the lock on the subscription list
-    _zn_mutex_lock(&zn->mutex_sub);
+    _zn_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (reskey.rname == NULL)
@@ -839,7 +1138,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         else
         {
             // Allocate a computed string
-            rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
+            rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
             if (rname == NULL)
                 goto EXIT_SUB_TRIG;
         }
@@ -886,7 +1185,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (rname == NULL)
                     continue;
             }
@@ -904,7 +1203,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
     else
     {
         // Compute the complete remote resource name starting from the key
-        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
         if (rname == NULL)
             goto EXIT_SUB_TRIG;
 
@@ -929,7 +1228,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                     continue;
             }
@@ -948,7 +1247,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
 EXIT_SUB_TRIG:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_sub);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 /*------------------ Pull ------------------*/
@@ -963,6 +1262,11 @@ z_zint_t _zn_get_query_id(zn_session_t *zn)
     return zn->query_id++;
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
 _zn_pending_query_t *__zn_unsafe_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 {
     _z_list_t *queries = zn->pending_queries;
@@ -983,7 +1287,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
     _Z_DEBUG_VA(">>> Allocating query for (%zu,%s,%s)\n", pq->key.rid, pq->key.rname, pq->predicate);
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_qry);
+    _zn_mutex_lock(&zn->mutex_inner);
     int res;
     _zn_pending_query_t *q = __zn_unsafe_get_pending_query_by_id(zn, pq->id);
     if (q)
@@ -999,7 +1303,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qry);
+    _zn_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -1021,14 +1325,22 @@ int __zn_pending_query_predicate(void *elem, void *arg)
     }
 }
 
-void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+void __zn_unsafe_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
-    // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_qry);
     zn->pending_queries = _z_list_remove(zn->pending_queries, __zn_pending_query_predicate, pq);
     free(pq);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qry);
+}
+
+void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
+{
+    _zn_mutex_lock(&zn->mutex_inner);
+    __zn_unsafe_unregister_pending_query(zn, pq);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 void __zn_free_pending_reply(_zn_pending_reply_t *pr)
@@ -1048,10 +1360,14 @@ void __zn_free_pending_reply(_zn_pending_reply_t *pr)
         _z_bytes_free(&pr->tstamp.id);
 }
 
-void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info)
+void _zn_trigger_query_reply_partial(zn_session_t *zn,
+                                     const _zn_reply_context_t *reply_context,
+                                     const zn_reskey_t reskey,
+                                     const z_bytes_t payload,
+                                     const _zn_data_info_t data_info)
 {
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_qry);
+    _zn_mutex_lock(&zn->mutex_inner);
 
     if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -1232,13 +1548,13 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
 
 EXIT_QRY_TRIG_PAR:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qry);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
 {
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_qry);
+    _zn_mutex_lock(&zn->mutex_inner);
 
     if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -1275,14 +1591,19 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
         replies = _z_list_pop(replies);
     }
 
-    _zn_unregister_pending_query(zn, pq);
+    __zn_unsafe_unregister_pending_query(zn, pq);
 
 EXIT_QRY_TRIG_FIN:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qry);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 /*------------------ Queryable ------------------*/
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
 _zn_queryable_t *__zn_unsafe_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
     _z_list_t *queryables = zn->local_queryables;
@@ -1299,13 +1620,40 @@ _zn_queryable_t *__zn_unsafe_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
     return NULL;
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ *  - zn->mutes_sub
+ */
+void __zn_unsafe_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *qle)
+{
+    // Need to check if there is a remote resource declaration matching the new subscription
+    zn_reskey_t loc_key;
+    loc_key.rid = ZN_RESOURCE_ID_NONE;
+    if (qle->key.rid == ZN_RESOURCE_ID_NONE)
+        loc_key.rname = qle->key.rname;
+    else
+        loc_key.rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+
+    _zn_resource_t *rem_res = __zn_unsafe_get_resource_matching_key(zn, _ZN_IS_REMOTE, &loc_key);
+    if (rem_res)
+    {
+        // Update the list of active subscriptions
+        _z_list_t *qles = _z_i_map_get(zn->rem_res_loc_qle_map, rem_res->id);
+        qles = _z_list_cons(qles, qle);
+        _z_i_map_set(zn->rem_res_loc_qle_map, rem_res->id, qles);
+    }
+
+    if (qle->key.rid != ZN_RESOURCE_ID_NONE)
+        free(loc_key.rname);
+}
+
 _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
-    // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_qle);
+    _zn_mutex_lock(&zn->mutex_inner);
     _zn_queryable_t *qle = __zn_unsafe_get_queryable_by_id(zn, id);
-    // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qle);
+    _zn_mutex_unlock(&zn->mutex_inner);
     return qle;
 }
 
@@ -1314,7 +1662,8 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_qle);
+    _zn_mutex_lock(&zn->mutex_inner);
+
     int res;
     _zn_queryable_t *q = __zn_unsafe_get_queryable_by_id(zn, qle->id);
     if (q)
@@ -1325,12 +1674,13 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     else
     {
         // Register the queryable
+        __zn_unsafe_add_loc_qle_to_rem_res_map(zn, qle);
         zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
         res = 0;
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qle);
+    _zn_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -1353,17 +1703,19 @@ int __zn_queryable_predicate(void *elem, void *arg)
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_qle);
+    _zn_mutex_lock(&zn->mutex_inner);
+
     zn->local_queryables = _z_list_remove(zn->local_queryables, __zn_queryable_predicate, qle);
     free(qle);
+
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qle);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 {
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_qle);
+    _zn_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (query->key.rname == NULL)
@@ -1531,5 +1883,5 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
 EXIT_QLE_TRIG:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_qle);
+    _zn_mutex_unlock(&zn->mutex_inner);
 }

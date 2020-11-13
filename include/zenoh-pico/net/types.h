@@ -286,6 +286,7 @@ typedef struct
     _zn_socket_t sock;
     _zn_mutex_t mutex_rx;
     _zn_mutex_t mutex_tx;
+    _zn_mutex_t mutex_inner;
 
     _z_wbuf_t wbuf;
     _z_rbuf_t rbuf;
@@ -316,20 +317,16 @@ typedef struct
     z_zint_t query_id;
 
     // Declarations
-    _zn_mutex_t mutex_res;
     _z_list_t *local_resources;
     _z_list_t *remote_resources;
 
-    _zn_mutex_t mutex_sub;
     _z_list_t *local_subscriptions;
     _z_list_t *remote_subscriptions;
     _z_i_map_t *rem_res_loc_sub_map;
 
-    _zn_mutex_t mutex_qle;
     _z_list_t *local_queryables;
     _z_i_map_t *rem_res_loc_qle_map;
 
-    _zn_mutex_t mutex_qry;
     _z_list_t *pending_queries;
 
     // Runtime

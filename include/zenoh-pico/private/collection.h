@@ -121,6 +121,16 @@ void _z_i_map_remove(_z_i_map_t *map, size_t k);
 
 void _z_i_map_free(_z_i_map_t *map);
 
+/*-------- Mvar --------*/
+typedef void *_z_mvar_t;
+
+_z_mvar_t *_z_mvar_empty(void);
+int _z_mvar_is_empty(_z_mvar_t *mv);
+
+_z_mvar_t *_z_mvar_of(void *e);
+void *_z_mvar_get(_z_mvar_t *mv);
+void _z_mvar_put(_z_mvar_t *mv, void *e);
+
 /*-------- Operations on Bytes --------*/
 z_bytes_t _z_bytes_make(size_t capacity);
 void _z_bytes_init(z_bytes_t *bs, size_t capacity);

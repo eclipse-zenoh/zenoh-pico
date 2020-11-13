@@ -187,14 +187,14 @@ if (TESTS)
   target_link_libraries(zn_client_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
 
-#   configure_file(test/routed.sh routed.sh COPYONLY)
+  configure_file(test/routed.sh routed.sh COPYONLY)
 
   enable_testing()
   add_test(z_iobuf_test z_iobuf_test)
   add_test(z_data_struct z_data_struct)
   add_test(zn_rname_test zn_rname_test)
   add_test(zn_msgcodec_test zn_msgcodec_test)
-  #   add_test(zn_client_test bash routed.sh zn_client_test)
+  add_test(zn_client_test bash routed.sh zn_client_test)
 endif(TESTS)
 
 

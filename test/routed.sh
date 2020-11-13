@@ -13,26 +13,26 @@
 #
 
 echo "------------------ Running test $1 -------------------"
+LINK=""
 if [[ ! -f zenohd ]]; then
-#     if [[ "$OSTYPE" == "darwin"* ]]; then 
-#         echo "> Downloading https://github.com/atolab/atobin/raw/master/zenoh/unstable/macos/10.14.6/zenohd ..."
-#         curl -L -o zenohd https://github.com/atolab/atobin/raw/master/zenoh/unstable/macos/10.14.6/zenohd
-#     elif [[ "$OSTYPE" == "linux-gnu" ]] && [[ -f /etc/redhat-release ]]; then 
-#         echo "> Downloading https://github.com/atolab/atobin/raw/master/zenoh/latest/centos/7.2.1511/zenohd ..."
-#         curl -L -o zenohd https://github.com/atolab/atobin/raw/master/zenoh/latest/centos/7.2.1511/zenohd
-#     else 
-#         echo "> Downloading https://github.com/atolab/atobin/raw/master/zenoh/unstable/ubuntu/16.04/zenohd ..."
-#         curl -L -o zenohd https://github.com/atolab/atobin/raw/master/zenoh/unstable/ubuntu/16.04/zenohd
-#     fi
-    cp ../../eclipse-zenoh/target/release/zenohd .
+    if [[ "$OSTYPE" == "darwin"* ]]; then 
+        LINK="https://download.eclipse.org/zenoh/zenoh/master/eclipse-zenoh-0.5.0-beta.5-macosx10.7-x86-64.tgz"
+    elif [[ "$OSTYPE" == "linux-gnu" ]]; then 
+        LINK="https://download.eclipse.org/zenoh/zenoh/master/eclipse-zenoh-0.5.0-beta.5-x86_64-unknown-linux-gnu.tgz"
+    else 
+       exit -1
+    fi
 fi
+
+echo "> Downloading $LINK ..."
+curl -L -o zenohd.tar.gz $LINK
+tar -xzf zenohd.tar.gz
 chmod +x zenohd
 
 echo "> Running zenohd ..."
-# ./zenohd --verbosity=info > zenohd.$1.log &
-RUST_LOG=trace ./zenohd &> zenohd.$1.log &
+RUST_LOG=debug ./zenohd &> zenohd.$1.log &
 ZPID=$!
-sleep 0.2
+sleep 1
 
 echo "> Running $1 ..."
 ./$1

@@ -40,6 +40,7 @@ zn_session_t *_zn_session_init()
     // Initialize the mutexes
     _zn_mutex_init(&zn->mutex_rx);
     _zn_mutex_init(&zn->mutex_tx);
+    _zn_mutex_init(&zn->mutex_inner);
 
     // The initial SN at RX side
     zn->lease = 0;
@@ -60,20 +61,16 @@ zn_session_t *_zn_session_init()
     zn->pull_id = 1;
 
     // Initialize the data structs
-    _zn_mutex_init(&zn->mutex_res);
     zn->local_resources = _z_list_empty;
     zn->remote_resources = _z_list_empty;
 
-    _zn_mutex_init(&zn->mutex_sub);
     zn->local_subscriptions = _z_list_empty;
     zn->remote_subscriptions = _z_list_empty;
     zn->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    _zn_mutex_init(&zn->mutex_qle);
     zn->local_queryables = _z_list_empty;
     zn->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    _zn_mutex_init(&zn->mutex_qry);
     zn->pending_queries = _z_list_empty;
 
     zn->read_task_running = 0;
@@ -91,11 +88,7 @@ void _zn_session_free(zn_session_t *zn)
 {
     _zn_close_tx_session(zn->sock);
 
-    _zn_mutex_free(&zn->mutex_res);
-    _zn_mutex_free(&zn->mutex_sub);
-    _zn_mutex_free(&zn->mutex_qle);
-    _zn_mutex_free(&zn->mutex_qry);
-
+    _zn_mutex_free(&zn->mutex_inner);
     _zn_mutex_free(&zn->mutex_tx);
     _zn_mutex_free(&zn->mutex_rx);
 
@@ -355,24 +348,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 r->key.rname = strdup(key.rname);
 
                 int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
-                if (res == 0)
-                {
-                    // Check if there is a matching local subscription
-                    _z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &key);
-                    if (subs)
-                    {
-                        // Update the list
-                        _z_list_t *sons = _z_i_map_get(zn->rem_res_loc_sub_map, id);
-                        if (sons)
-                        {
-                            // Free any ancient list
-                            _z_list_free(&sons);
-                        }
-                        // Update the list of active subscriptions
-                        _z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
-                    }
-                }
-                else
+                if (res != 0)
                 {
                     _zn_reskey_free(&r->key);
                     free(r);
@@ -948,8 +924,16 @@ zn_reskey_t zn_rid(const unsigned long rid)
 /*------------------ Resource Declaration ------------------*/
 z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 {
-    // Generate a new resource ID
-    z_zint_t rid = _zn_get_resource_id(zn);
+    _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+    r->id = _zn_get_resource_id(zn);
+    r->key = reskey;
+
+    int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
+    if (res != 0)
+    {
+        free(r);
+        return ZN_RESOURCE_ID_NONE;
+    }
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -961,8 +945,8 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 
     // Resource declaration
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_RESOURCE;
-    z_msg.body.declare.declarations.val[0].body.res.id = rid;
-    z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&reskey);
+    z_msg.body.declare.declarations.val[0].body.res.id = r->id;
+    z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&r->key);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
     {
@@ -973,17 +957,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 
     _zn_zenoh_message_free(&z_msg);
 
-    _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
-    r->id = rid;
-    r->key = reskey;
-
-    int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
-    if (res != 0)
-    {
-        free(r);
-    }
-
-    return rid;
+    return r->id;
 }
 
 void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
@@ -1104,10 +1078,6 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
         return NULL;
     }
 
-    zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
-    subscriber->zn = zn;
-    subscriber->id = rs->id;
-
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
     // We need to declare the subscriber
@@ -1139,6 +1109,10 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     }
 
     _zn_zenoh_message_free(&z_msg);
+
+    zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
+    subscriber->zn = zn;
+    subscriber->id = rs->id;
 
     return subscriber;
 }
@@ -1272,38 +1246,49 @@ zn_query_target_t zn_query_target_default(void)
 
 void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
+    // Create the pending query object
+    _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
+    pq->id = _zn_get_query_id(zn);
+    pq->key = _zn_reskey_clone(&reskey);
+    pq->predicate = strdup(predicate);
+    pq->target = target;
+    pq->consolidation = consolidation;
+    pq->callback = callback;
+    pq->pending_replies = _z_list_empty;
+    pq->arg = arg;
 
-    z_msg.body.query.qid = _zn_get_query_id(zn);
+    // Add the pending query to the current session
+    _zn_register_pending_query(zn, pq);
+
+    // Send the query
+    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
+    z_msg.body.query.qid = pq->id;
     z_msg.body.query.key = reskey;
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
     z_msg.body.query.predicate = (z_str_t)predicate;
     z_msg.body.query.target = target;
     z_msg.body.query.consolidation = consolidation;
 
     int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
-    if (res == 0)
-    {
-        // Create the pending query object
-        _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
-        pq->id = z_msg.body.query.qid;
-        pq->key = _zn_reskey_clone(&reskey);
-        pq->predicate = strdup(predicate);
-        pq->target = target;
-        pq->consolidation = consolidation;
-        pq->callback = callback;
-        pq->pending_replies = _z_list_empty;
-        pq->arg = arg;
-
-        // Add the pending query to the current session
-        zn->pending_queries = _z_list_cons(zn->pending_queries, pq);
-    }
+    if (res != 0)
+        _zn_unregister_pending_query(zn, pq);
 }
 
 zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)
 {
-    zn_queryable_t *queryable = (zn_queryable_t *)malloc(sizeof(zn_queryable_t));
-    queryable->zn = zn;
-    queryable->id = _zn_get_entity_id(zn);
+    _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
+    rq->id = _zn_get_entity_id(zn);
+    rq->key = reskey;
+    rq->kind = kind;
+    rq->callback = callback;
+    rq->arg = arg;
+
+    int res = _zn_register_queryable(zn, rq);
+    if (res != 0)
+    {
+        free(rq);
+        return NULL;
+    }
 
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
@@ -1328,20 +1313,9 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     _zn_zenoh_message_free(&z_msg);
 
-    _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
-    rq->id = queryable->id;
-    rq->key = reskey;
-    rq->kind = kind;
-    rq->callback = callback;
-    rq->arg = arg;
-
-    int res = _zn_register_queryable(zn, rq);
-    if (res != 0)
-    {
-        free(rq);
-        free(queryable);
-        queryable = NULL;
-    }
+    zn_queryable_t *queryable = (zn_queryable_t *)malloc(sizeof(zn_queryable_t));
+    queryable->zn = zn;
+    queryable->id = rq->id;
 
     return queryable;
 }
