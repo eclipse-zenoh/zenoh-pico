@@ -106,7 +106,7 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
 }
 
 /*------------------ Transmission and Reception helper ------------------*/
-void _zn_prepare_wbuf(_z_wbuf_t *buf)
+void __zn_unsafe_prepare_wbuf(_z_wbuf_t *buf)
 {
     _z_wbuf_clear(buf);
 
@@ -123,7 +123,7 @@ void _zn_prepare_wbuf(_z_wbuf_t *buf)
 #endif /* ZN_TRANSPORT_TCP_IP */
 }
 
-void _zn_finalize_wbuf(_z_wbuf_t *buf)
+void __zn_unsafe_finalize_wbuf(_z_wbuf_t *buf)
 {
 #ifdef ZN_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -144,7 +144,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     // Acquire the lock
     _zn_mutex_lock(&zn->mutex_tx);
     // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_wbuf(&zn->wbuf);
+    __zn_unsafe_prepare_wbuf(&zn->wbuf);
     // Encode the session message
     if (_zn_session_message_encode(&zn->wbuf, s_msg) != 0)
     {
@@ -154,7 +154,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
         return -1;
     }
     // Write the message legnth in the reserved space if needed
-    _zn_finalize_wbuf(&zn->wbuf);
+    __zn_unsafe_finalize_wbuf(&zn->wbuf);
     // Send the wbuf on the socket
     int res = _zn_send_wbuf(zn->sock, &zn->wbuf);
     // Release the lock
@@ -166,7 +166,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     return res;
 }
 
-_zn_session_message_t _zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
+_zn_session_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
     _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_FRAME);
@@ -197,7 +197,7 @@ _zn_session_message_t _zn_frame_header(zn_reliability_t reliability, int is_frag
     return s_msg;
 }
 
-int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
+int __zn_unsafe_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
 {
     // Assume first that this is not the final fragment
     int is_final = 0;
@@ -206,7 +206,7 @@ int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _zn_session_message_t f_hdr = _zn_frame_header(reliability, 1, is_final, sn);
+        _zn_session_message_t f_hdr = __zn_frame_header(reliability, 1, is_final, sn);
         // Encode the frame header
         int res = _zn_session_message_encode(dst, &f_hdr);
         if (res == 0)
@@ -240,12 +240,12 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     // Acquire the lock
     _zn_mutex_lock(&zn->mutex_tx);
     // Prepare the buffer eventually reserving space for the message length
-    _zn_prepare_wbuf(&zn->wbuf);
+    __zn_unsafe_prepare_wbuf(&zn->wbuf);
 
     // Get the next sequence number
     size_t sn = _zn_get_sn(zn, reliability);
     // Create the frame header that carries the zenoh message
-    _zn_session_message_t s_msg = _zn_frame_header(reliability, 0, 0, sn);
+    _zn_session_message_t s_msg = __zn_frame_header(reliability, 0, 0, sn);
 
     // Encode the frame header
     int res = _zn_session_message_encode(&zn->wbuf, &s_msg);
@@ -262,7 +262,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        _zn_finalize_wbuf(&zn->wbuf);
+        __zn_unsafe_finalize_wbuf(&zn->wbuf);
 
         // Send the wbuf on the socket
         res = _zn_send_wbuf(zn->sock, &zn->wbuf);
@@ -294,10 +294,10 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             is_first = 0;
 
             // Clear the buffer for serialization
-            _zn_prepare_wbuf(&zn->wbuf);
+            __zn_unsafe_prepare_wbuf(&zn->wbuf);
 
             // Serialize one fragment
-            res = _zn_serialize_zenoh_fragment(&zn->wbuf, &fbf, reliability, sn);
+            res = __zn_unsafe_serialize_zenoh_fragment(&zn->wbuf, &fbf, reliability, sn);
             if (res != 0)
             {
                 _Z_DEBUG("Dropping zenoh message because it can not be fragmented");
@@ -305,7 +305,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             }
 
             // Write the message length in the reserved space if needed
-            _zn_finalize_wbuf(&zn->wbuf);
+            __zn_unsafe_finalize_wbuf(&zn->wbuf);
 
             // Send the wbuf on the socket
             res = _zn_send_wbuf(zn->sock, &zn->wbuf);
@@ -422,26 +422,39 @@ z_zint_t _zn_get_entity_id(zn_session_t *zn)
 }
 
 /*------------------ Resource ------------------*/
-z_zint_t _zn_get_resource_id(zn_session_t *zn, const zn_reskey_t *reskey)
+_zn_resource_t *__zn_unsafe_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _zn_resource_t *res_decl = _zn_get_resource_by_key(zn, _ZN_IS_LOCAL, reskey);
-    if (res_decl)
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    while (decls)
     {
-        return res_decl->id;
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+
+        if (decl->key.rid == reskey->rid && strcmp(decl->key.rname, reskey->rname) == 0)
+            return decl;
+
+        decls = _z_list_tail(decls);
     }
-    else
-    {
-        z_zint_t id = zn->resource_id++;
-        while (_zn_get_resource_by_id(zn, _ZN_IS_LOCAL, id) != 0)
-        {
-            id++;
-        }
-        zn->resource_id = id;
-        return id;
-    }
+
+    return NULL;
 }
 
-z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+_zn_resource_t *__zn_unsafe_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+{
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    while (decls)
+    {
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+
+        if (decl->id == id)
+            return decl;
+
+        decls = _z_list_tail(decls);
+    }
+
+    return NULL;
+}
+
+z_str_t __zn_unsafe_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
     z_str_t rname = NULL;
 
@@ -467,7 +480,7 @@ z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_
     z_zint_t id = reskey->rid;
     do
     {
-        _zn_resource_t *res = _zn_get_resource_by_id(zn, is_local, id);
+        _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, is_local, id);
         if (res == NULL)
         {
             _z_list_free(&strs);
@@ -497,44 +510,42 @@ z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_
     return rname;
 }
 
-_zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+z_zint_t _zn_get_resource_id(zn_session_t *zn)
 {
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
-    while (decls)
-    {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+    return zn->resource_id++;
+}
 
-        if (decl->id == id)
-            return decl;
-
-        decls = _z_list_tail(decls);
-    }
-
-    return NULL;
+_zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t rid)
+{
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_res);
+    _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, is_local, rid);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_res);
+    return res;
 }
 
 _zn_resource_t *_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
-    while (decls)
-    {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
-
-        if (decl->key.rid == reskey->rid && strcmp(decl->key.rname, reskey->rname) == 0)
-            return decl;
-
-        decls = _z_list_tail(decls);
-    }
-
-    return NULL;
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_res);
+    _zn_resource_t *res = __zn_unsafe_get_resource_by_key(zn, is_local, reskey);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_res);
+    return res;
 }
 
 int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
 {
     _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%zu,%s)\n", res->id, res->key.rid, res->key.rname);
-    _zn_resource_t *rd_rid = _zn_get_resource_by_id(zn, is_local, res->id);
-    _zn_resource_t *rd_key = _zn_get_resource_by_key(zn, is_local, &res->key);
 
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_res);
+
+    _zn_resource_t *rd_rid = __zn_unsafe_get_resource_by_id(zn, is_local, res->id);
+    _zn_resource_t *rd_key = __zn_unsafe_get_resource_by_key(zn, is_local, &res->key);
+
+    int r;
     if (!rd_rid && !rd_key)
     {
         // No resource declaration has been found, add the new one
@@ -543,21 +554,26 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
         else
             zn->remote_resources = _z_list_cons(zn->remote_resources, res);
 
-        return 0;
+        r = 0;
     }
     else if (rd_rid == rd_key)
     {
         // A resource declaration for this id and key has been found, return
-        return 1;
+        r = 1;
     }
     else
     {
         // Inconsistent declarations have been found, return an error
-        return -1;
+        r = -1;
     }
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_res);
+
+    return r;
 }
 
-int _zn_resource_predicate(void *elem, void *arg)
+int __zn_unsafe_resource_predicate(void *elem, void *arg)
 {
     _zn_resource_t *rel = (_zn_resource_t *)elem;
     _zn_resource_t *rar = (_zn_resource_t *)arg;
@@ -569,18 +585,78 @@ int _zn_resource_predicate(void *elem, void *arg)
 
 void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
 {
+    // Lock the resources data struct
+    _zn_mutex_lock(&zn->mutex_res);
+
     if (is_local)
-        zn->local_resources = _z_list_remove(zn->local_resources, _zn_resource_predicate, res);
+        zn->local_resources = _z_list_remove(zn->local_resources, __zn_unsafe_resource_predicate, res);
     else
-        zn->remote_resources = _z_list_remove(zn->remote_resources, _zn_resource_predicate, res);
+        zn->remote_resources = _z_list_remove(zn->remote_resources, __zn_unsafe_resource_predicate, res);
     free(res);
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_res);
 }
 
 /*------------------ Subscription ------------------*/
+_zn_subscriber_t *__zn_unsafe_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+{
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    while (subs)
+    {
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+
+        if (sub->id == id)
+            return sub;
+
+        subs = _z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+_zn_subscriber_t *__zn_unsafe_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    while (subs)
+    {
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+
+        if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
+            return sub;
+
+        subs = _z_list_tail(subs);
+    }
+
+    return NULL;
+}
+
+_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
+{
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_sub);
+    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_id(zn, is_local, id);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
+    return sub;
+}
+
+_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
+{
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_sub);
+    _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_key(zn, is_local, reskey);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
+    return sub;
+}
+
 _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
-    _z_list_t *xs = _z_list_empty;
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_sub);
 
+    _z_list_t *xs = _z_list_empty;
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
@@ -591,7 +667,6 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
             xs = _z_list_cons(xs, sub);
             subs = _z_list_tail(subs);
         }
-        return xs;
     }
     // Case 2) -> string only reskey
     else if (reskey->rid == ZN_RESOURCE_ID_NONE)
@@ -614,12 +689,12 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
             else
             {
                 // Allocate a computed string
-                lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                 {
                     _z_list_free(&xs);
                     xs = NULL;
-                    return xs;
+                    goto EXIT_SUB_LIST;
                 }
             }
 
@@ -631,18 +706,16 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
 
             subs = _z_list_tail(subs);
         }
-
-        return xs;
     }
     // Case 3) -> numerical reskey with suffix
     else
     {
-        _zn_resource_t *remote = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey->rid);
+        _zn_resource_t *remote = __zn_unsafe_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey->rid);
         if (remote == NULL)
-            return xs;
+            goto EXIT_SUB_LIST;
 
         // Compute the complete remote resource name starting from the key
-        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
+        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
         _z_list_t *subs = zn->local_subscriptions;
         _zn_subscriber_t *sub;
@@ -660,7 +733,7 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
             else
             {
                 // Allocate a computed string
-                lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                     continue;
             }
@@ -675,103 +748,81 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
         }
 
         free(rname);
-
-        return xs;
-    }
-}
-
-_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
-{
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-    while (subs)
-    {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-
-        if (sub->id == id)
-            return sub;
-
-        subs = _z_list_tail(subs);
     }
 
-    return NULL;
-}
+EXIT_SUB_LIST:
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
 
-_zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
-{
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
-    while (subs)
-    {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-
-        if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
-            return sub;
-
-        subs = _z_list_tail(subs);
-    }
-
-    return NULL;
+    return xs;
 }
 
 int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub)
 {
     _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", reskey->rid, reskey->rname);
 
-    _zn_subscriber_t *s = _zn_get_subscription_by_id(zn, is_local, sub->id);
-    if (s)
-    {
-        // A subscription for this id already exists, return error
-        return -1;
-    }
-
-    s = _zn_get_subscription_by_key(zn, is_local, &sub->key);
+    // Acquire the lock on the subscriptions data struct
+    _zn_mutex_lock(&zn->mutex_sub);
+    int res;
+    _zn_subscriber_t *s = __zn_unsafe_get_subscription_by_key(zn, is_local, &sub->key);
     if (s)
     {
         // A subscription for this key already exists, return error
-        return -1;
+        res = -1;
+    }
+    else
+    {
+        // Register the new subscription
+        if (is_local)
+            zn->local_subscriptions = _z_list_cons(zn->local_subscriptions, sub);
+        else
+            zn->remote_subscriptions = _z_list_cons(zn->remote_subscriptions, sub);
+        res = 0;
     }
 
-    // Register the new subscription
-    if (is_local)
-        zn->local_subscriptions = _z_list_cons(zn->local_subscriptions, sub);
-    else
-        zn->remote_subscriptions = _z_list_cons(zn->remote_subscriptions, sub);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
 
-    return 0;
+    return res;
 }
 
-int _zn_subscription_predicate(void *elem, void *arg)
+int __zn_subscription_predicate(void *elem, void *arg)
 {
     _zn_subscriber_t *s = (_zn_subscriber_t *)arg;
     _zn_subscriber_t *sub = (_zn_subscriber_t *)elem;
     if (sub->id == s->id)
-    {
-        // free(sub->key.rname);
         return 1;
-    }
     else
-    {
         return 0;
-    }
 }
 
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
 {
+    // Acquire the lock on the subscription list
+    _zn_mutex_lock(&zn->mutex_sub);
+
     if (is_local)
-        zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, _zn_subscription_predicate, s);
+        zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, __zn_subscription_predicate, s);
     else
-        zn->remote_subscriptions = _z_list_remove(zn->remote_subscriptions, _zn_subscription_predicate, s);
+        zn->remote_subscriptions = _z_list_remove(zn->remote_subscriptions, __zn_subscription_predicate, s);
     free(s);
+
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
 }
 
 void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload)
 {
+    // Acquire the lock on the subscription list
+    _zn_mutex_lock(&zn->mutex_sub);
+
     // Case 1) -> numeric only reskey
     if (reskey.rname == NULL)
     {
         // Get the declared resource
-        _zn_resource_t *res = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey.rid);
+        _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, _ZN_IS_REMOTE, reskey.rid);
         if (res == NULL)
-            return;
+            goto EXIT_SUB_TRIG;
 
         // Get the complete resource name to be passed to the subscription callback
         z_str_t rname;
@@ -783,9 +834,9 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         else
         {
             // Allocate a computed string
-            rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
+            rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
             if (rname == NULL)
-                return;
+                goto EXIT_SUB_TRIG;
         }
 
         // Build the sample
@@ -805,8 +856,6 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
         if (res->key.rid != ZN_RESOURCE_ID_NONE)
             free(rname);
-
-        return;
     }
     // Case 2) -> string only reskey
     else if (reskey.rid == ZN_RESOURCE_ID_NONE)
@@ -832,7 +881,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (rname == NULL)
                     continue;
             }
@@ -845,16 +894,14 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
             subs = _z_list_tail(subs);
         }
-
-        return;
     }
     // Case 3) -> numerical reskey with suffix
     else
     {
         // Compute the complete remote resource name starting from the key
-        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
         if (rname == NULL)
-            return;
+            goto EXIT_SUB_TRIG;
 
         // Build the sample
         zn_sample_t s;
@@ -877,7 +924,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             else
             {
                 // Allocate a computed string
-                lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
+                lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                     continue;
             }
@@ -892,9 +939,11 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         }
 
         free(rname);
-
-        return;
     }
+
+EXIT_SUB_TRIG:
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_sub);
 }
 
 /*------------------ Pull ------------------*/
@@ -909,7 +958,7 @@ z_zint_t _zn_get_query_id(zn_session_t *zn)
     return zn->query_id++;
 }
 
-_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
+_zn_pending_query_t *__zn_unsafe_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 {
     _z_list_t *queries = zn->pending_queries;
     while (queries)
@@ -928,21 +977,29 @@ _zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
     _Z_DEBUG_VA(">>> Allocating query for (%zu,%s,%s)\n", pq->key.rid, pq->key.rname, pq->predicate);
-
-    _zn_pending_query_t *q = _zn_get_pending_query_by_id(zn, pq->id);
+    // Acquire the lock on the queries
+    _zn_mutex_lock(&zn->mutex_qry);
+    int res;
+    _zn_pending_query_t *q = __zn_unsafe_get_pending_query_by_id(zn, pq->id);
     if (q)
     {
         // A query for this id already exists, return error
-        return -1;
+        res = -1;
+    }
+    else
+    {
+        // Register the query
+        zn->pending_queries = _z_list_cons(zn->pending_queries, pq);
+        res = 0;
     }
 
-    // Register the query
-    zn->pending_queries = _z_list_cons(zn->pending_queries, pq);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qry);
 
-    return 0;
+    return res;
 }
 
-int _zn_pending_query_predicate(void *elem, void *arg)
+int __zn_pending_query_predicate(void *elem, void *arg)
 {
     _zn_pending_query_t *pq = (_zn_pending_query_t *)arg;
     _zn_pending_query_t *query = (_zn_pending_query_t *)elem;
@@ -962,11 +1019,15 @@ int _zn_pending_query_predicate(void *elem, void *arg)
 
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
-    zn->pending_queries = _z_list_remove(zn->pending_queries, _zn_pending_query_predicate, pq);
+    // Acquire the lock on the queries
+    _zn_mutex_lock(&zn->mutex_qry);
+    zn->pending_queries = _z_list_remove(zn->pending_queries, __zn_pending_query_predicate, pq);
     free(pq);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qry);
 }
 
-void _zn_free_pending_reply(_zn_pending_reply_t *pr)
+void __zn_free_pending_reply(_zn_pending_reply_t *pr)
 {
     // Free the sample
     if (pr->sample.value.val)
@@ -985,23 +1046,26 @@ void _zn_free_pending_reply(_zn_pending_reply_t *pr)
 
 void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info)
 {
+    // Acquire the lock on the queries
+    _zn_mutex_lock(&zn->mutex_qry);
+
     if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
         _Z_DEBUG(">>> Partial reply received with invalid final flag\n");
-        return;
+        goto EXIT_QRY_TRIG_PAR;
     }
 
-    _zn_pending_query_t *pq = _zn_get_pending_query_by_id(zn, reply_context->qid);
+    _zn_pending_query_t *pq = __zn_unsafe_get_pending_query_by_id(zn, reply_context->qid);
     if (pq == NULL)
     {
         _Z_DEBUG_VA(">>> Partial reply received for unkwon query id (%zu)\n", reply_context->qid);
-        return;
+        goto EXIT_QRY_TRIG_PAR;
     }
 
     if (pq->target.kind != ZN_QUERYABLE_ALL_KINDS && (pq->target.kind & reply_context->source_kind) == 0)
     {
         _Z_DEBUG_VA(">>> Partial reply received from an unknown target (%zu)\n", reply_context->source_kind);
-        return;
+        goto EXIT_QRY_TRIG_PAR;
     }
 
     // Take the right timestamp, or default to none
@@ -1017,7 +1081,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
     if (reskey.rid == ZN_RESOURCE_ID_NONE)
         sample.key.val = reskey.rname;
     else
-        sample.key.val = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        sample.key.val = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
     sample.key.len = strlen(sample.key.val);
 
     // Verify if this is a newer reply, free the old one in case it is
@@ -1041,12 +1105,12 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
                     _Z_DEBUG(">>> Reply received with old timestamp\n");
                     if (reskey.rid != ZN_RESOURCE_ID_NONE)
                         free((z_str_t)sample.key.val);
-                    return;
+                    goto EXIT_QRY_TRIG_PAR;
                 }
                 else
                 {
                     // We are going to have a more recent reply, free the old one
-                    _zn_free_pending_reply(reply);
+                    __zn_free_pending_reply(reply);
                     // We are going to reuse the allocated memory in the list
                     latest = reply;
                     break;
@@ -1161,31 +1225,37 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t
     default:
         break;
     }
+
+EXIT_QRY_TRIG_PAR:
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qry);
 }
 
 void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
 {
+    // Acquire the lock on the queries
+    _zn_mutex_lock(&zn->mutex_qry);
+
     if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
         _Z_DEBUG(">>> Final reply received with invalid final flag\n");
-        return;
+        goto EXIT_QRY_TRIG_FIN;
     }
 
-    _zn_pending_query_t *pq = _zn_get_pending_query_by_id(zn, reply_context->qid);
+    _zn_pending_query_t *pq = __zn_unsafe_get_pending_query_by_id(zn, reply_context->qid);
     if (pq == NULL)
     {
         _Z_DEBUG_VA(">>> Final reply received for unkwon query id (%zu)\n", reply_context->qid);
-        return;
+        goto EXIT_QRY_TRIG_FIN;
     }
 
     if (pq->target.kind != ZN_QUERYABLE_ALL_KINDS && (pq->target.kind & reply_context->source_kind) == 0)
     {
         _Z_DEBUG_VA(">>> Final reply received from an unknown target (%zu)\n", reply_context->source_kind);
-        return;
+        goto EXIT_QRY_TRIG_FIN;
     }
 
     // The reply is the final one, apply consolidation if needed
-
     _z_list_t *replies = pq->pending_replies;
     while (replies)
     {
@@ -1196,16 +1266,20 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
             pq->callback(&reply->source_info, &reply->sample, pq->arg);
         }
         // Drop the element
-        _zn_free_pending_reply(reply);
+        __zn_free_pending_reply(reply);
         free(reply);
         replies = _z_list_pop(replies);
     }
 
     _zn_unregister_pending_query(zn, pq);
+
+EXIT_QRY_TRIG_FIN:
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qry);
 }
 
 /*------------------ Queryable ------------------*/
-_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
+_zn_queryable_t *__zn_unsafe_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
     _z_list_t *queryables = zn->local_queryables;
     while (queryables)
@@ -1225,20 +1299,29 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
-    _zn_queryable_t *q = _zn_get_queryable_by_id(zn, qle->id);
+    // Acquire the lock on the queryables
+    _zn_mutex_lock(&zn->mutex_qle);
+    int res;
+    _zn_queryable_t *q = __zn_unsafe_get_queryable_by_id(zn, qle->id);
     if (q)
     {
         // A queryable for this id already exists, return error
-        return -1;
+        res = -1;
+    }
+    else
+    {
+        // Register the queryable
+        zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
+        res = 0;
     }
 
-    // Register the queryable
-    zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qle);
 
-    return 0;
+    return res;
 }
 
-int _zn_queryable_predicate(void *elem, void *arg)
+int __zn_queryable_predicate(void *elem, void *arg)
 {
     _zn_queryable_t *qle = (_zn_queryable_t *)arg;
     _zn_queryable_t *queryable = (_zn_queryable_t *)elem;
@@ -1256,19 +1339,26 @@ int _zn_queryable_predicate(void *elem, void *arg)
 
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
-    zn->local_queryables = _z_list_remove(zn->local_queryables, _zn_queryable_predicate, qle);
+    // Acquire the lock on the queryables
+    _zn_mutex_lock(&zn->mutex_qle);
+    zn->local_queryables = _z_list_remove(zn->local_queryables, __zn_queryable_predicate, qle);
     free(qle);
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qle);
 }
 
 void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 {
+    // Acquire the lock on the queryables
+    _zn_mutex_lock(&zn->mutex_qle);
+
     // Case 1) -> numeric only reskey
     if (query->key.rname == NULL)
     {
         // Get the declared resource
-        _zn_resource_t *res = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, query->key.rid);
+        _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, _ZN_IS_REMOTE, query->key.rid);
         if (res == NULL)
-            return;
+            goto EXIT_QLE_TRIG;
 
         // Get the complete resource name to be passed to the subscription callback
         z_str_t rname;
@@ -1280,9 +1370,9 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         else
         {
             // Allocate a computed string
-            rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
+            rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &res->key);
             if (rname == NULL)
-                return;
+                goto EXIT_QLE_TRIG;
         }
 
         // Build the query
@@ -1338,7 +1428,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                 else
                 {
                     // Allocate a computed string
-                    rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                    rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
                     if (rname == NULL)
                         continue;
                 }
@@ -1360,9 +1450,9 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     else
     {
         // Compute the complete remote resource name starting from the key
-        z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &query->key);
+        z_str_t rname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &query->key);
         if (rname == NULL)
-            return;
+            goto EXIT_QLE_TRIG;
 
         // Build the query
         zn_query_t q;
@@ -1389,7 +1479,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                 else
                 {
                     // Allocate a computed string
-                    lname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
+                    lname = __zn_unsafe_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
                     if (lname == NULL)
                         continue;
                 }
@@ -1425,4 +1515,8 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     }
 
     _zn_zenoh_message_free(&z_msg);
+
+EXIT_QLE_TRIG:
+    // Release the lock
+    _zn_mutex_unlock(&zn->mutex_qle);
 }

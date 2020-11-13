@@ -831,7 +831,7 @@ typedef struct
 // +---------------+
 // ~     target    ~ if T==1. Otherwise target.kind = ZN_QUERYABLE_ALL_KINDS, target.tag = zn_target_t_BEST_MATCHING
 // +---------------+
-// ~ consolidation ~ // @TODO make it optional
+// ~ consolidation ~
 // +---------------+
 //
 typedef struct

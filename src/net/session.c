@@ -60,16 +60,20 @@ zn_session_t *_zn_session_init()
     zn->pull_id = 1;
 
     // Initialize the data structs
+    _zn_mutex_init(&zn->mutex_res);
     zn->local_resources = _z_list_empty;
     zn->remote_resources = _z_list_empty;
 
+    _zn_mutex_init(&zn->mutex_sub);
     zn->local_subscriptions = _z_list_empty;
     zn->remote_subscriptions = _z_list_empty;
     zn->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
+    _zn_mutex_init(&zn->mutex_qle);
     zn->local_queryables = _z_list_empty;
     zn->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
+    _zn_mutex_init(&zn->mutex_qry);
     zn->pending_queries = _z_list_empty;
 
     zn->read_task_running = 0;
@@ -86,6 +90,11 @@ zn_session_t *_zn_session_init()
 void _zn_session_free(zn_session_t *zn)
 {
     _zn_close_tx_session(zn->sock);
+
+    _zn_mutex_free(&zn->mutex_res);
+    _zn_mutex_free(&zn->mutex_sub);
+    _zn_mutex_free(&zn->mutex_qle);
+    _zn_mutex_free(&zn->mutex_qry);
 
     _zn_mutex_free(&zn->mutex_tx);
     _zn_mutex_free(&zn->mutex_rx);
@@ -940,7 +949,7 @@ zn_reskey_t zn_rid(const unsigned long rid)
 z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 {
     // Generate a new resource ID
-    z_zint_t rid = _zn_get_resource_id(zn, &reskey);
+    z_zint_t rid = _zn_get_resource_id(zn);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
@@ -1081,9 +1090,23 @@ zn_subinfo_t zn_subinfo_default()
 
 zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t callback, void *arg)
 {
+    _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
+    rs->id = _zn_get_entity_id(zn);
+    rs->key = reskey;
+    rs->info = sub_info;
+    rs->callback = callback;
+    rs->arg = arg;
+
+    int res = _zn_register_subscription(zn, _ZN_IS_LOCAL, rs);
+    if (res != 0)
+    {
+        free(rs);
+        return NULL;
+    }
+
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
     subscriber->zn = zn;
-    subscriber->id = _zn_get_entity_id(zn);
+    subscriber->id = rs->id;
 
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
@@ -1116,21 +1139,6 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     }
 
     _zn_zenoh_message_free(&z_msg);
-
-    _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
-    rs->id = subscriber->id;
-    rs->key = reskey;
-    rs->info = sub_info;
-    rs->callback = callback;
-    rs->arg = arg;
-
-    int res = _zn_register_subscription(zn, _ZN_IS_LOCAL, rs);
-    if (res != 0)
-    {
-        free(rs);
-        free(subscriber);
-        subscriber = NULL;
-    }
 
     return subscriber;
 }
