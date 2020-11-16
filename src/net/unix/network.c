@@ -195,7 +195,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     int port;
     sscanf(s_port, "%d", &port);
 
-    _Z_DEBUG_VA("Connecting to: %s:%d\n", addr, port);
+    _Z_DEBUG_VA("Connecting to: %s:%d\n", addr_name, port);
     free(l);
     struct sockaddr_in serv_addr;
 
@@ -211,6 +211,18 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
     int flags = 1;
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) == -1)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = errno;
+        close(r.value.socket);
+        r.value.socket = 0;
+        return r;
+    }
+
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = ZN_SESSION_LEASE / 1000;
+    if (setsockopt(r.value.socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) == -1)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = errno;
@@ -248,7 +260,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
 void _zn_close_tx_session(_zn_socket_t sock)
 {
-    close(sock);
+    shutdown(sock, 2);
 }
 
 /*------------------ Datagram ------------------*/
@@ -311,25 +323,25 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
 {
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
-        z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int n = a.len;
+        z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
+        int n = bs.len;
         int wb;
         do
         {
-            _Z_DEBUG("Sending data on socket....\n");
+            _Z_DEBUG("Sending wbuf on socket...");
 #if (ZENOH_LINUX == 1)
-            wb = send(sock, a.val, n, MSG_NOSIGNAL);
+            wb = send(sock, bs.val, n, MSG_NOSIGNAL);
 #else
-            wb = send(sock, a.val, n, 0);
+            wb = send(sock, bs.val, n, 0);
 #endif
-            _Z_DEBUG_VA("Socket returned: %d\n", wb);
+            _Z_DEBUG_VA(" sent %d bytes\n", wb);
             if (wb <= 0)
             {
                 _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
                 return -1;
             }
             n -= wb;
-            a.val += a.len - n;
+            bs.val += bs.len - n;
         } while (n > 0);
     }
 

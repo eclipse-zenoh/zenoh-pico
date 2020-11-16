@@ -312,7 +312,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     {
     case _ZN_MID_DATA:
     {
-        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", _Z_MID(msg->header));
+        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", msg->header);
         if (msg->reply_context)
         {
             // This is some data from a query
@@ -381,7 +381,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                     }
 
                     // Send the message
-                    _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+                    _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
 
                     // Free the message
                     _zn_zenoh_message_free(&z_msg);
@@ -948,11 +948,11 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     z_msg.body.declare.declarations.val[0].body.res.id = r->id;
     z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&r->key);
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -976,11 +976,11 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_RESOURCE;
         z_msg.body.declare.declarations.val[0].body.forget_res.rid = rid;
 
-        if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
             _Z_DEBUG("Trying to reconnect...\n");
             zn->on_disconnect(zn);
-            _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+            _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -1012,11 +1012,11 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
     if (!pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1040,11 +1040,11 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     if (!pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-    if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect...\n");
         pub->zn->on_disconnect(pub->zn);
-        _zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1101,11 +1101,11 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     z_msg.body.declare.declarations.val[0].body.sub.subinfo.reliability = sub_info.reliability;
     z_msg.body.declare.declarations.val[0].body.sub.subinfo.period = sub_info.period;
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect....\n");
         zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1136,11 +1136,11 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
         z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&s->key);
 
-        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
             _Z_DEBUG("Trying to reconnect....\n");
             sub->zn->on_disconnect(sub->zn);
-            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE);
+            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -1180,7 +1180,7 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payl
     z_msg.body.data.payload.len = length;
     z_msg.body.data.payload.val = (uint8_t *)payload;
 
-    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, cong_ctrl);
 }
 
 int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length)
@@ -1191,7 +1191,8 @@ int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_
 
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DATA);
     // Eventually mark the message for congestion control
-    _ZN_SET_FLAG(z_msg.header, ZN_CONGESTION_CONTROL_DEFAULT ? _ZN_FLAG_Z_D : 0);
+    if (ZN_CONGESTION_CONTROL_DEFAULT == zn_congestion_control_t_DROP)
+        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
     // Set the resource key
     z_msg.body.data.key = reskey;
     _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
@@ -1200,7 +1201,7 @@ int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_
     z_msg.body.data.payload.len = length;
     z_msg.body.data.payload.val = (uint8_t *)payload;
 
-    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+    return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, ZN_CONGESTION_CONTROL_DEFAULT);
 }
 
 /*------------------ Query/Queryable ------------------*/
@@ -1249,7 +1250,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_qu
     // Create the pending query object
     _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
     pq->id = _zn_get_query_id(zn);
-    pq->key = _zn_reskey_clone(&reskey);
+    pq->key = reskey;
     pq->predicate = strdup(predicate);
     pq->target = target;
     pq->consolidation = consolidation;
@@ -1269,7 +1270,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_qu
     z_msg.body.query.target = target;
     z_msg.body.query.consolidation = consolidation;
 
-    int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+    int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     if (res != 0)
         _zn_unregister_pending_query(zn, pq);
 }
@@ -1304,11 +1305,11 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     z_msg.body.declare.declarations.val[0].body.qle.key = _zn_reskey_clone(&reskey);
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect....\n");
         zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -1339,11 +1340,11 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 
         z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
 
-        if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
             _Z_DEBUG("Trying to reconnect....\n");
             qle->zn->on_disconnect(qle->zn);
-            _zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE);
+            _zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -1374,11 +1375,11 @@ void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, s
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_K);
     // Do not set any data_info
 
-    if (_zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
         _Z_DEBUG("Trying to reconnect....\n");
         query->zn->on_disconnect(query->zn);
-        _zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     free(z_msg.reply_context);
@@ -1400,11 +1401,11 @@ int zn_pull(zn_subscriber_t *sub)
         z_msg.body.pull.max_samples = 0;
         // _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_N);
 
-        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
             _Z_DEBUG("Trying to reconnect....\n");
             sub->zn->on_disconnect(sub->zn);
-            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE);
+            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
         }
 
         _zn_zenoh_message_free(&z_msg);

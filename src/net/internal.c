@@ -80,9 +80,9 @@ _zn_attachment_t *_zn_attachment_init(void)
 }
 
 /*------------------ SN helper ------------------*/
-z_zint_t _zn_get_sn(zn_session_t *zn, zn_reliability_t reliability)
+z_zint_t __zn_unsafe_get_sn(zn_session_t *zn, zn_reliability_t reliability)
 {
-    size_t sn;
+    z_zint_t sn;
     // Get the sequence number and update it in modulo operation
     if (reliability == zn_reliability_t_RELIABLE)
     {
@@ -157,22 +157,23 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     // Prepare the buffer eventually reserving space for the message length
     __zn_unsafe_prepare_wbuf(&zn->wbuf);
     // Encode the session message
-    if (_zn_session_message_encode(&zn->wbuf, s_msg) != 0)
+    int res = _zn_session_message_encode(&zn->wbuf, s_msg);
+    if (res == 0)
+    {
+        // Write the message legnth in the reserved space if needed
+        __zn_unsafe_finalize_wbuf(&zn->wbuf);
+        // Send the wbuf on the socket
+        res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+        // Mark the session that we have transmitted data
+        zn->transmitted = 1;
+    }
+    else
     {
         _Z_DEBUG("Dropping session message because it is too large");
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_tx);
-        return -1;
     }
-    // Write the message legnth in the reserved space if needed
-    __zn_unsafe_finalize_wbuf(&zn->wbuf);
-    // Send the wbuf on the socket
-    int res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+
     // Release the lock
     _zn_mutex_unlock(&zn->mutex_tx);
-
-    // Mark the session that we have transmitted data
-    zn->transmitted = 1;
 
     return res;
 }
@@ -249,18 +250,31 @@ int __zn_unsafe_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability)
+int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl)
 {
     _Z_DEBUG(">> send zenoh message\n");
 
-    // Acquire the lock
-    _zn_mutex_lock(&zn->mutex_tx);
+    // Acquire the lock and drop the message if needed
+    if (cong_ctrl == zn_congestion_control_t_BLOCK)
+    {
+        _zn_mutex_lock(&zn->mutex_tx);
+    }
+    else
+    {
+        int locked = _zn_mutex_trylock(&zn->mutex_tx);
+        if (locked != 0)
+        {
+            _Z_DEBUG("Dropping zenoh message because of congestion control\n");
+            // We failed to acquire the lock, drop the message
+            return 0;
+        }
+    }
 
     // Prepare the buffer eventually reserving space for the message length
     __zn_unsafe_prepare_wbuf(&zn->wbuf);
 
     // Get the next sequence number
-    size_t sn = _zn_get_sn(zn, reliability);
+    z_zint_t sn = __zn_unsafe_get_sn(zn, reliability);
     // Create the frame header that carries the zenoh message
     _zn_session_message_t s_msg = __zn_frame_header(reliability, 0, 0, sn);
 
@@ -268,10 +282,8 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     int res = _zn_session_message_encode(&zn->wbuf, &s_msg);
     if (res != 0)
     {
-        _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded");
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_tx);
-        return -1;
+        _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded\n");
+        goto EXIT_ZSND_PROC;
     }
 
     // Encode the zenoh message
@@ -307,7 +319,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
         {
             // Get the fragment sequence number
             if (!is_first)
-                sn = _zn_get_sn(zn, reliability);
+                sn = __zn_unsafe_get_sn(zn, reliability);
             is_first = 0;
 
             // Clear the buffer for serialization
@@ -317,7 +329,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             res = __zn_unsafe_serialize_zenoh_fragment(&zn->wbuf, &fbf, reliability, sn);
             if (res != 0)
             {
-                _Z_DEBUG("Dropping zenoh message because it can not be fragmented");
+                _Z_DEBUG("Dropping zenoh message because it can not be fragmented\n");
                 goto EXIT_FRAG_PROC;
             }
 
@@ -328,7 +340,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             res = _zn_send_wbuf(zn->sock, &zn->wbuf);
             if (res != 0)
             {
-                _Z_DEBUG("Dropping zenoh message because it can not sent");
+                _Z_DEBUG("Dropping zenoh message because it can not sent\n");
                 goto EXIT_FRAG_PROC;
             }
 
@@ -341,6 +353,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
         _z_wbuf_free(&fbf);
     }
 
+EXIT_ZSND_PROC:
     // Release the lock
     _zn_mutex_unlock(&zn->mutex_tx);
 
@@ -368,37 +381,31 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     // Read the message length
     if (_zn_recv_bytes(zn->sock, zn->rbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_rx);
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
-        return;
+        goto EXIT_SRCV_PROC;
     }
     _z_rbuf_set_wpos(&zn->rbuf, _ZN_MSG_LEN_ENC_SIZE);
 
     uint16_t len = _z_rbuf_read(&zn->rbuf) | (_z_rbuf_read(&zn->rbuf) << 8);
-    _Z_DEBUG_VA(">> \t msg len = %zu\n", len);
+    _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
     size_t writable = _z_rbuf_capacity(&zn->rbuf) - _z_rbuf_len(&zn->rbuf);
     if (writable < len)
     {
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_rx);
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IOBUF_NO_SPACE;
-        return;
+        goto EXIT_SRCV_PROC;
     }
 
     // Read enough bytes to decode the message
     if (_zn_recv_bytes(zn->sock, zn->rbuf.ios.buf, len) < 0)
     {
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_rx);
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
-        return;
+        goto EXIT_SRCV_PROC;
     }
 
     _z_rbuf_set_rpos(&zn->rbuf, 0);
@@ -406,12 +413,10 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {
-        // Release the lock
-        _zn_mutex_unlock(&zn->mutex_rx);
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
-        return;
+        goto EXIT_SRCV_PROC;
     }
 #endif /* ZN_TRANSPORT_TCP_IP */
 
@@ -421,6 +426,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     _Z_DEBUG(">> \t session_message_decode\n");
     _zn_session_message_decode_na(&zn->rbuf, r);
 
+EXIT_SRCV_PROC:
     // Release the lock
     _zn_mutex_unlock(&zn->mutex_rx);
 }
@@ -1052,7 +1058,7 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
 
 int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub)
 {
-    _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", reskey->rid, reskey->rname);
+    _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", sub->key.rid, sub->key.rname);
 
     // Acquire the lock on the subscriptions data struct
     _zn_mutex_lock(&zn->mutex_inner);
@@ -1872,11 +1878,11 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     z_msg.reply_context->qid = query->qid;
     z_msg.reply_context->source_kind = 0;
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE) != 0)
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect....\n");
+        _Z_DEBUG("Trying to reconnect...\n");
         zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE);
+        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     }
 
     _zn_zenoh_message_free(&z_msg);

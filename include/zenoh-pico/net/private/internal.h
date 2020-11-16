@@ -40,7 +40,7 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *m);
-int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *m, zn_reliability_t reliability);
+int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *m, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl);
 
 _zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *zn);
 void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r);

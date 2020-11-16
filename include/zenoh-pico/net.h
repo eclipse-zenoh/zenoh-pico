@@ -15,6 +15,7 @@
 #ifndef ZENOH_NET_PICO_H
 #define ZENOH_NET_PICO_H
 
+#include "zenoh-pico/encoding.h"
 #include "zenoh-pico/types.h"
 #include "zenoh-pico/utils.h"
 #include "zenoh-pico/net/property.h"

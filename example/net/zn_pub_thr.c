@@ -54,6 +54,6 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        zn_write(s, reskey, (const uint8_t *)data, len);
+        zn_write_ext(s, reskey, (const uint8_t *)data, len, Z_ENCODING_DEFAULT, Z_DATA_KIND_DEFAULT, zn_congestion_control_t_BLOCK);
     }
 }

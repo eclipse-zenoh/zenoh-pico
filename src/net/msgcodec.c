@@ -153,7 +153,7 @@ void _zn_subinfo_free(zn_subinfo_t *si)
 /*------------------ ResKey Field ------------------*/
 int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
 {
-    _Z_DEBUG("Encoding _reskey\n");
+    _Z_DEBUG("Encoding _RESKEY\n");
 
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, fld->rid))
@@ -167,7 +167,7 @@ int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
 
 void _zn_reskey_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r)
 {
-    _Z_DEBUG("Decoding _reskey\n");
+    _Z_DEBUG("Decoding _RESKEY\n");
     r->tag = _z_res_t_OK;
 
     // Decode the header
