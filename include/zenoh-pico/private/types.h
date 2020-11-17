@@ -17,6 +17,7 @@
 #define _ZENOH_PICO_TYPES_H
 
 #include <stdint.h>
+#include "zenoh-pico/private/system.h"
 
 /*------------------ Collection ------------------*/
 typedef struct
@@ -45,6 +46,15 @@ typedef struct
     size_t capacity;
     size_t len;
 } _z_i_map_t;
+
+typedef struct
+{
+    void *elem;
+    int full;
+    _z_mutex_t mtx;
+    _z_condvar_t can_put;
+    _z_condvar_t can_get;
+} _z_mvar_t;
 
 /*------------------ IOBuf ------------------*/
 typedef struct

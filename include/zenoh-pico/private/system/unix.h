@@ -12,3 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#ifndef _ZENOH_PICO_UNIX_TYPES_H
+#define _ZENOH_PICO_UNIX_TYPES_H
+
+#include <pthread.h>
+
+typedef pthread_t _z_task_t;
+typedef pthread_attr_t _z_task_attr_t;
+typedef pthread_mutex_t _z_mutex_t;
+typedef pthread_cond_t _z_condvar_t;
+
+typedef struct timespec _z_clock_t;
+typedef struct timeval _z_time_t;
+
+#endif /* _ZENOH_PICO_UNIX_TYPES_H_ */

@@ -122,8 +122,6 @@ void _z_i_map_remove(_z_i_map_t *map, size_t k);
 void _z_i_map_free(_z_i_map_t *map);
 
 /*-------- Mvar --------*/
-typedef void *_z_mvar_t;
-
 _z_mvar_t *_z_mvar_empty(void);
 int _z_mvar_is_empty(_z_mvar_t *mv);
 

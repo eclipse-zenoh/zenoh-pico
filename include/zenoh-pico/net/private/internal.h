@@ -35,6 +35,7 @@ _zn_session_message_t _zn_session_message_init(uint8_t header);
 _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
 _zn_reply_context_t *_zn_reply_context_init(void);
 _zn_attachment_t *_zn_attachment_init(void);
+
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 

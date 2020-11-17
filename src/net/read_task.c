@@ -18,15 +18,16 @@
 #include "zenoh-pico/net/private/msgcodec.h"
 #include "zenoh-pico/net/private/system.h"
 
-void *_znp_read_task(zn_session_t *z)
+void *_znp_read_task(void *arg)
 {
+    zn_session_t *z = (zn_session_t *)arg;
     z->read_task_running = 1;
 
     _zn_session_message_p_result_t r;
     _zn_session_message_p_result_init(&r);
 
     // Acquire and keep the lock
-    _zn_mutex_lock(&z->mutex_rx);
+    _z_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
     _z_rbuf_clear(&z->rbuf);
     while (z->read_task_running)
@@ -111,8 +112,26 @@ EXIT_RECV_LOOP:
     {
         z->read_task_running = 0;
         // Release the lock
-        _zn_mutex_unlock(&z->mutex_rx);
+        _z_mutex_unlock(&z->mutex_rx);
     }
 
+    return 0;
+}
+
+int znp_start_read_task(zn_session_t *z)
+{
+    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    memset(task, 0, sizeof(pthread_t));
+    z->read_task_thread = task;
+    if (_z_task_init(task, NULL, _znp_read_task, z) != 0)
+    {
+        return -1;
+    }
+    return 0;
+}
+
+int znp_stop_read_task(zn_session_t *z)
+{
+    z->read_task_running = 0;
     return 0;
 }

@@ -121,10 +121,10 @@ _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
 _ZN_DECLARE_FREE_NOH(payload);
 
-int _zn_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
-void _zn_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t _zn_timestamp_decode(_z_rbuf_t *rbf);
-void _zn_timestamp_free(z_timestamp_t *ts);
+int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
+void _z_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r);
+_zn_timestamp_result_t _z_timestamp_decode(_z_rbuf_t *rbf);
+void _z_timestamp_free(z_timestamp_t *ts);
 
 int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
 void _zn_subinfo_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_subinfo_result_t *r);

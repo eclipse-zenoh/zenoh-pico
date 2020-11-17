@@ -22,7 +22,7 @@
 #include "zenoh-pico/private/iobuf.h"
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
-#include "zenoh-pico/net/private/unix/types.h"
+#include "zenoh-pico/net/private/system/unix.h"
 #elif (ZENOH_CONTIKI == 1)
 #include "zenoh-pico/net/private/contiki/types.h"
 #endif
@@ -284,9 +284,9 @@ typedef struct
 {
     // Socket and internal buffers
     _zn_socket_t sock;
-    _zn_mutex_t mutex_rx;
-    _zn_mutex_t mutex_tx;
-    _zn_mutex_t mutex_inner;
+    _z_mutex_t mutex_rx;
+    _z_mutex_t mutex_tx;
+    _z_mutex_t mutex_inner;
 
     _z_wbuf_t wbuf;
     _z_rbuf_t rbuf;
@@ -333,12 +333,12 @@ typedef struct
     zn_on_disconnect_t on_disconnect;
 
     volatile int read_task_running;
-    void *read_task_thread;
+    _z_task_t *read_task_thread;
 
     volatile int lease_task_running;
     volatile int received;
     volatile int transmitted;
-    void *lease_task_thread;
+    _z_task_t *lease_task_thread;
 } zn_session_t;
 
 /**

@@ -19,7 +19,7 @@
 
 #define MSG 1000
 #define QRY 10
-#define SET 1000
+#define SET 100
 #define TIMEOUT 60
 
 char *uri = "/demo/example/";
@@ -159,12 +159,12 @@ int main(void)
     }
 
     // Wait to receive all the data
-    _zn_clock_t now = _zn_clock_now();
+    _z_clock_t now = _z_clock_now();
     while (datas < MSG * SET)
     {
-        assert(_zn_clock_elapsed_s(&now) < TIMEOUT);
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for datas... %u/%u\n", datas, MSG * SET);
-        _zn_sleep_s(1);
+        _z_sleep_s(1);
     }
     datas = 0;
 
@@ -181,22 +181,22 @@ int main(void)
     }
 
     // Wait to receive all the queries
-    now = _zn_clock_now();
+    now = _z_clock_now();
     while (queries < QRY * SET)
     {
-        assert(_zn_clock_elapsed_s(&now) < TIMEOUT);
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for queries... %u/%u\n", queries, QRY * SET);
-        _zn_sleep_s(1);
+        _z_sleep_s(1);
     }
     queries = 0;
 
     // Wait to receive all the replies
-    now = _zn_clock_now();
+    now = _z_clock_now();
     while (replies < QRY * SET)
     {
-        assert(_zn_clock_elapsed_s(&now) < TIMEOUT);
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for replies... %u/%u\n", replies, QRY * SET);
-        _zn_sleep_s(1);
+        _z_sleep_s(1);
     }
     replies = 0;
 

@@ -314,11 +314,11 @@ void timestamp_field(void)
     z_timestamp_t e_ts = gen_timestamp();
 
     // Encode
-    assert(_zn_timestamp_encode(&wbf, &e_ts) == 0);
+    assert(_z_timestamp_encode(&wbf, &e_ts) == 0);
 
     // Decode
     _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
-    _zn_timestamp_result_t r_ts = _zn_timestamp_decode(&rbf);
+    _zn_timestamp_result_t r_ts = _z_timestamp_decode(&rbf);
     assert(r_ts.tag == _z_res_t_OK);
 
     z_timestamp_t d_ts = r_ts.value.timestamp;
@@ -327,7 +327,7 @@ void timestamp_field(void)
     printf("\n");
 
     // Free
-    _zn_timestamp_free(&d_ts);
+    _z_timestamp_free(&d_ts);
     _z_rbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }

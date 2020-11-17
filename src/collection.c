@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/private/collection.h"
+#include "zenoh-pico/private/system.h"
 #include "zenoh-pico/types.h"
 
 /*-------- Vec --------*/
@@ -427,4 +428,77 @@ void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src)
 
     src->val = NULL;
     src->len = 0;
+}
+
+/*-------- Mvar --------*/
+_z_mvar_t *_z_mvar_empty()
+{
+    _z_mvar_t *mv = (_z_mvar_t *)malloc(sizeof(_z_mvar_t));
+    memset(mv, 0, sizeof(_z_mvar_t));
+    _z_mutex_init(&mv->mtx);
+    _z_condvar_init(&mv->can_put);
+    _z_condvar_init(&mv->can_get);
+    return mv;
+}
+
+int _z_mvar_is_empty(_z_mvar_t *mv)
+{
+    return mv->full == 0;
+}
+
+_z_mvar_t *_z_mvar_of(void *e)
+{
+    _z_mvar_t *mv = _z_mvar_empty();
+    mv->elem = e;
+    mv->full = 1;
+    return mv;
+}
+
+void *_z_mvar_get(_z_mvar_t *mv)
+{
+    int lock = 1;
+    do
+    {
+        if (lock == 1)
+            _z_mutex_lock(&mv->mtx);
+
+        if (mv->full)
+        {
+            mv->full = 0;
+            void *e = mv->elem;
+            mv->elem = 0;
+            _z_mutex_unlock(&mv->mtx);
+            _z_condvar_signal(&mv->can_put);
+            return e;
+        }
+        else
+        {
+            _z_condvar_wait(&mv->can_get, &mv->mtx);
+            lock = 0;
+        }
+    } while (1);
+}
+
+void _z_mvar_put(_z_mvar_t *mv, void *e)
+{
+    int lock = 1;
+    do
+    {
+        if (lock == 1)
+            _z_mutex_lock(&mv->mtx);
+
+        if (mv->full)
+        {
+            _z_condvar_wait(&mv->can_put, &mv->mtx);
+            lock = 0;
+        }
+        else
+        {
+            mv->elem = e;
+            mv->full = 1;
+            _z_condvar_signal(&mv->can_get);
+            _z_mutex_unlock(&mv->mtx);
+            return;
+        }
+    } while (1);
 }

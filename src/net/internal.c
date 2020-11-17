@@ -18,6 +18,7 @@
 #include "zenoh-pico/net/private/system.h"
 #include "zenoh-pico/net/rname.h"
 #include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/private/system.h"
 #include "zenoh-pico/utils.h"
 
 /*------------------ Clone helpers ------------------*/
@@ -152,7 +153,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     _Z_DEBUG(">> send session message\n");
 
     // Acquire the lock
-    _zn_mutex_lock(&zn->mutex_tx);
+    _z_mutex_lock(&zn->mutex_tx);
 
     // Prepare the buffer eventually reserving space for the message length
     __zn_unsafe_prepare_wbuf(&zn->wbuf);
@@ -173,7 +174,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_tx);
+    _z_mutex_unlock(&zn->mutex_tx);
 
     return res;
 }
@@ -257,11 +258,11 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     // Acquire the lock and drop the message if needed
     if (cong_ctrl == zn_congestion_control_t_BLOCK)
     {
-        _zn_mutex_lock(&zn->mutex_tx);
+        _z_mutex_lock(&zn->mutex_tx);
     }
     else
     {
-        int locked = _zn_mutex_trylock(&zn->mutex_tx);
+        int locked = _z_mutex_trylock(&zn->mutex_tx);
         if (locked != 0)
         {
             _Z_DEBUG("Dropping zenoh message because of congestion control\n");
@@ -355,7 +356,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
 
 EXIT_ZSND_PROC:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_tx);
+    _z_mutex_unlock(&zn->mutex_tx);
 
     return res;
 }
@@ -366,7 +367,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Acquire the lock
-    _zn_mutex_lock(&zn->mutex_rx);
+    _z_mutex_lock(&zn->mutex_rx);
 
     // Prepare the buffer
     _z_rbuf_clear(&zn->rbuf);
@@ -428,7 +429,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
 
 EXIT_SRCV_PROC:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_rx);
+    _z_mutex_unlock(&zn->mutex_rx);
 }
 
 _zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *zn)
@@ -858,36 +859,36 @@ z_zint_t _zn_get_resource_id(zn_session_t *zn)
 _zn_resource_t *_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t rid)
 {
     // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     _zn_resource_t *res = __zn_unsafe_get_resource_by_id(zn, is_local, rid);
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return res;
 }
 
 _zn_resource_t *_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _zn_resource_t *res = __zn_unsafe_get_resource_by_key(zn, is_local, reskey);
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return res;
 }
 
 z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     z_str_t res = __zn_unsafe_get_resource_name_from_key(zn, is_local, reskey);
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return res;
 }
 
 _zn_resource_t *_zn_get_resource_matching_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _zn_resource_t *res = __zn_unsafe_get_resource_matching_key(zn, is_local, reskey);
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return res;
 }
 
@@ -896,7 +897,7 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
     _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%zu,%s)\n", res->id, res->key.rid, res->key.rname);
 
     // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     _zn_resource_t *rd_rid = __zn_unsafe_get_resource_by_id(zn, is_local, res->id);
 
@@ -924,7 +925,7 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 
     return r;
 }
@@ -942,7 +943,7 @@ int __zn_resource_predicate(void *elem, void *arg)
 void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
 {
     // Lock the resources data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
         zn->local_resources = _z_list_remove(zn->local_resources, __zn_resource_predicate, res);
@@ -951,7 +952,7 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
     free(res);
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 /*------------------ Subscription ------------------*/
@@ -1000,20 +1001,20 @@ _zn_subscriber_t *__zn_unsafe_get_subscription_by_key(zn_session_t *zn, int is_l
 _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
     // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_id(zn, is_local, id);
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return sub;
 }
 
 _zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
     // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _zn_subscriber_t *sub = __zn_unsafe_get_subscription_by_key(zn, is_local, reskey);
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return sub;
 }
 
@@ -1049,10 +1050,10 @@ void __zn_unsafe_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *
 _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
     // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _z_list_t *xs = __zn_unsafe_get_subscriptions_from_remote_key(zn, reskey);
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return xs;
 }
 
@@ -1061,7 +1062,7 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", sub->key.rid, sub->key.rname);
 
     // Acquire the lock on the subscriptions data struct
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     int res;
     _zn_subscriber_t *s = __zn_unsafe_get_subscription_by_key(zn, is_local, &sub->key);
@@ -1086,7 +1087,7 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -1109,7 +1110,7 @@ int __zn_subscription_predicate(void *elem, void *arg)
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
 {
     // Acquire the lock on the subscription list
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
         zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, __zn_subscription_predicate, s);
@@ -1118,13 +1119,13 @@ void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_
     free(s);
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload)
 {
     // Acquire the lock on the subscription list
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (reskey.rname == NULL)
@@ -1253,7 +1254,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
 EXIT_SUB_TRIG:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 /*------------------ Pull ------------------*/
@@ -1293,7 +1294,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
     _Z_DEBUG_VA(">>> Allocating query for (%zu,%s,%s)\n", pq->key.rid, pq->key.rname, pq->predicate);
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     int res;
     _zn_pending_query_t *q = __zn_unsafe_get_pending_query_by_id(zn, pq->id);
     if (q)
@@ -1309,7 +1310,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -1344,9 +1345,9 @@ void __zn_unsafe_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t 
 
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq)
 {
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     __zn_unsafe_unregister_pending_query(zn, pq);
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 void __zn_free_pending_reply(_zn_pending_reply_t *pr)
@@ -1373,7 +1374,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
                                      const _zn_data_info_t data_info)
 {
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -1554,13 +1555,13 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
 EXIT_QRY_TRIG_PAR:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
 {
     // Acquire the lock on the queries
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -1601,7 +1602,7 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
 
 EXIT_QRY_TRIG_FIN:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 /*------------------ Queryable ------------------*/
@@ -1657,9 +1658,9 @@ void __zn_unsafe_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
 
 _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
     _zn_queryable_t *qle = __zn_unsafe_get_queryable_by_id(zn, id);
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
     return qle;
 }
 
@@ -1668,7 +1669,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     int res;
     _zn_queryable_t *q = __zn_unsafe_get_queryable_by_id(zn, qle->id);
@@ -1686,7 +1687,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     }
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -1709,19 +1710,19 @@ int __zn_queryable_predicate(void *elem, void *arg)
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     zn->local_queryables = _z_list_remove(zn->local_queryables, __zn_queryable_predicate, qle);
     free(qle);
 
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 {
     // Acquire the lock on the queryables
-    _zn_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (query->key.rname == NULL)
@@ -1889,5 +1890,5 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
 EXIT_QLE_TRIG:
     // Release the lock
-    _zn_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->mutex_inner);
 }

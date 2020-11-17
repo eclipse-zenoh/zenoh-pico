@@ -55,7 +55,7 @@ void _zn_payload_free(_zn_payload_t *p)
 }
 
 /*------------------ Timestamp Field ------------------*/
-int _zn_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
+int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
 {
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
@@ -64,7 +64,7 @@ int _zn_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
     return _z_bytes_encode(wbf, &ts->id);
 }
 
-void _zn_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r)
+void _z_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r)
 {
     _Z_DEBUG("Decoding _TIMESTAMP\n");
     r->tag = _z_res_t_OK;
@@ -79,14 +79,14 @@ void _zn_timestamp_decode_na(_z_rbuf_t *rbf, _zn_timestamp_result_t *r)
     r->value.timestamp.id = r_arr.value.bytes;
 }
 
-_zn_timestamp_result_t _zn_timestamp_decode(_z_rbuf_t *rbf)
+_zn_timestamp_result_t _z_timestamp_decode(_z_rbuf_t *rbf)
 {
     _zn_timestamp_result_t r;
-    _zn_timestamp_decode_na(rbf, &r);
+    _z_timestamp_decode_na(rbf, &r);
     return r;
 }
 
-void _zn_timestamp_free(z_timestamp_t *ts)
+void _z_timestamp_free(z_timestamp_t *ts)
 {
     (void)(&ts->id);
 }
@@ -861,7 +861,7 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
         _ZN_EC(_z_zint_encode(wbf, fld->first_router_sn))
 
     if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_TSTAMP)
-        _ZN_EC(_zn_timestamp_encode(wbf, &fld->tstamp))
+        _ZN_EC(_z_timestamp_encode(wbf, &fld->tstamp))
 
     if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_KIND)
         _ZN_EC(_z_zint_encode(wbf, fld->kind))
@@ -913,7 +913,7 @@ void _zn_data_info_decode_na(_z_rbuf_t *rbf, _zn_data_info_result_t *r)
 
     if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP)
     {
-        _zn_timestamp_result_t r_tsp = _zn_timestamp_decode(rbf);
+        _zn_timestamp_result_t r_tsp = _z_timestamp_decode(rbf);
         _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
         r->value.data_info.tstamp = r_tsp.value.timestamp;
     }
@@ -955,7 +955,7 @@ void _zn_data_info_free(_zn_data_info_t *di)
         (void)(&di->first_router_id);
 
     if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_TSTAMP)
-        _zn_timestamp_free(&di->tstamp);
+        _z_timestamp_free(&di->tstamp);
 }
 
 /*------------------ Data Message ------------------*/

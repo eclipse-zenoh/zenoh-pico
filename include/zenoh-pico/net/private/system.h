@@ -12,35 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_H
-#define _ZENOH_PICO_SYSTEM_H
+#ifndef _ZENOH_NET_PICO_SYSTEM_H
+#define _ZENOH_NET_PICO_SYSTEM_H
 
-#include "zenoh-pico/net/types.h"
-
-/*------------------ Mutex ------------------*/
-int _zn_mutex_init(_zn_mutex_t *m);
-int _zn_mutex_free(_zn_mutex_t *m);
-
-int _zn_mutex_lock(_zn_mutex_t *m);
-int _zn_mutex_trylock(_zn_mutex_t *m);
-int _zn_mutex_unlock(_zn_mutex_t *m);
-
-/*------------------ Sleep ------------------*/
-int _zn_sleep_us(unsigned int time);
-int _zn_sleep_ms(unsigned int time);
-int _zn_sleep_s(unsigned int time);
-
-/*------------------ Clock ------------------*/
-_zn_clock_t _zn_clock_now(void);
-clock_t _zn_clock_elapsed_us(_zn_clock_t *time);
-clock_t _zn_clock_elapsed_ms(_zn_clock_t *time);
-clock_t _zn_clock_elapsed_s(_zn_clock_t *time);
-
-/*------------------ Time ------------------*/
-_zn_time_t _zn_time_now(void);
-time_t _zn_time_elapsed_us(_zn_time_t *time);
-time_t _zn_time_elapsed_ms(_zn_time_t *time);
-time_t _zn_time_elapsed_s(_zn_time_t *time);
+#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
+#include "zenoh-pico/net/private/system/unix.h"
+#elif (ZENOH_CONTIKI == 1)
+#include "zenoh-pico/net/private/contiki/types.h"
+#endif
 
 /*------------------ Network ------------------*/
 // @TODO: remove the platform-specific include and data types
@@ -63,4 +42,4 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
 int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf);
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
-#endif /* _ZENOH_PICO_SYSTEM_H */
+#endif /* _ZENOH_NET_PICO_SYSTEM_H */

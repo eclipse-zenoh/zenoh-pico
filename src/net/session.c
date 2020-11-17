@@ -38,9 +38,9 @@ zn_session_t *_zn_session_init()
     zn->dbuf_best_effort = _z_wbuf_make(0, 1);
 
     // Initialize the mutexes
-    _zn_mutex_init(&zn->mutex_rx);
-    _zn_mutex_init(&zn->mutex_tx);
-    _zn_mutex_init(&zn->mutex_inner);
+    _z_mutex_init(&zn->mutex_rx);
+    _z_mutex_init(&zn->mutex_tx);
+    _z_mutex_init(&zn->mutex_inner);
 
     // The initial SN at RX side
     zn->lease = 0;
@@ -88,9 +88,9 @@ void _zn_session_free(zn_session_t *zn)
 {
     _zn_close_tx_session(zn->sock);
 
-    _zn_mutex_free(&zn->mutex_inner);
-    _zn_mutex_free(&zn->mutex_tx);
-    _zn_mutex_free(&zn->mutex_rx);
+    _z_mutex_free(&zn->mutex_inner);
+    _z_mutex_free(&zn->mutex_tx);
+    _z_mutex_free(&zn->mutex_rx);
 
     _z_wbuf_free(&zn->wbuf);
     _z_rbuf_free(&zn->rbuf);
@@ -134,7 +134,7 @@ void _zn_default_on_disconnect(void *vz)
     zn_session_t *zn = (zn_session_t *)vz;
     for (int i = 0; i < 3; i++)
     {
-        _zn_sleep_s(3);
+        _z_sleep_s(3);
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
@@ -176,8 +176,8 @@ zn_hello_array_t _zn_scout_loop(
     // The receiving buffer
     _z_rbuf_t rbf = _z_rbuf_make(ZN_READ_BUF_LEN);
 
-    _zn_clock_t start = _zn_clock_now();
-    while (_zn_clock_elapsed_ms(&start) < period)
+    _z_clock_t start = _z_clock_now();
+    while (_z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
         _z_rbuf_clear(&rbf);
