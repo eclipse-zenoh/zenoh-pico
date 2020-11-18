@@ -56,12 +56,12 @@ pipeline {
           for PLATFORM in `ls build/crossbuilds/`; do
             echo "Deploy for platform: ${PLATFORM}"
             ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}/${PLATFORM}
-            scp  build/crossbuilds/${PLATFORM}/libzenohc*.* build/crossbuilds/${PLATFORM}/z_* build/crossbuilds/${PLATFORM}/zn_* ${HOST}:${DOWNLOAD_DIR}/${PLATFORM}/
+            scp  build/crossbuilds/${PLATFORM}/libzenohpico*.* build/crossbuilds/${PLATFORM}/z_* build/crossbuilds/${PLATFORM}/zn_* ${HOST}:${DOWNLOAD_DIR}/${PLATFORM}/
           done
 
           echo "Deploy for platform: OSX"
           ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}/OSX
-          scp  build/libzenohc*.* build/z_* build/zn_* ${HOST}:${DOWNLOAD_DIR}/OSX/
+          scp  build/libzenohpico*.* build/z_* build/zn_* ${HOST}:${DOWNLOAD_DIR}/OSX/
 
           echo "Deploy include files"
           tar czvf zenoh-pico-includes.tgz include/
@@ -74,7 +74,7 @@ pipeline {
 
   post {
     success {
-        archiveArtifacts artifacts: 'build/libzenohc*.*, build/crossbuilds/*/libzenohc*.so, build/crossbuilds/*/libzenohc*.rpm, build/crossbuilds/*/libzenohc*.deb', fingerprint: true
+        archiveArtifacts artifacts: 'build/libzenohpico*.*, build/crossbuilds/*/libzenohpico*.so, build/crossbuilds/*/libzenohpico*.rpm, build/crossbuilds/*/libzenohpico*.deb', fingerprint: true
     }
   }
 }

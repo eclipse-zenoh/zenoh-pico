@@ -28,7 +28,7 @@ option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
 option (CONTIKI "Use this for Contiki Cross compilation." OFF)
 option (TESTS "Use this to also build the tests." ON)
 option (EXAMPLES "Use this to also build the examples." ON)
-option (SWIG_JAVA "Use this to build the zenohc_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
+option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
 
 # Configure the transport to use with the following variables
 set (ZENOH_TRANSPORT_TCP "ON")
@@ -92,14 +92,14 @@ set(CMAKE_C_FLAGS_RELEASE "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -
 
 
 if (NOT SWIG_JAVA)
-  set(Libname "zenohc")
+  set(Libname "zenohpico")
   file(GLOB PublicHeaders "include/*.h" "include/zenoh/*.h" "include/zenoh/net/*.h")
   include_directories(
       "${PROJECT_SOURCE_DIR}/include"
       "${PROJECT_SOURCE_DIR}/include/net"
     )
 else()
-  set(Libname "zenohc_java")
+  set(Libname "zenohpico_java")
 
   if (NOT JNI_INCLUDE_HOME)
     message(STATUS "Looking for local JDK with JNI")
