@@ -139,11 +139,11 @@ if (NOT SWIG_JAVA)
             DESTINATION lib
             COMPONENT Library
           )
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh.h
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
             DESTINATION include
             COMPONENT Headers
           )
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh
+  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
             DESTINATION include
             COMPONENT Headers
           )
