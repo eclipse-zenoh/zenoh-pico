@@ -66,23 +66,6 @@ pipeline {
       }
     }
 
-    stage('[MacMini] MacOS package') {
-      when { expression { return params.BUILD_MACOSX }}
-      steps {
-        sh '''
-        if [ "${LABEL}" == "master" ]; then
-            LABEL="git${GIT_REVISION:0:7}"
-        fi
-
-        mkdir ${PACKAGE_DIR}
-
-        ROOT="build"
-        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/libs/*
-        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/examples/*
-        '''
-      }
-    }
-
     stage('[UbuntuVM] Linux crosscompiled build') {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
@@ -94,13 +77,32 @@ pipeline {
       }
     }
 
+    stage('[MacMini] MacOS package') {
+      when { expression { return params.BUILD_MACOSX }}
+      steps {
+        sh '''
+        if [ "${LABEL}" == "master" ]; then
+            GIT_HASH=$(git log -n 1 --pretty=format:'%H')
+            LABEL="git${GIT_HASH:0:7}"
+        fi
+
+        mkdir ${PACKAGE_DIR}
+
+        ROOT="build"
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/libs/*
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/examples/*
+        '''
+      }
+    }
+
     stage('[UbuntuVM] Linux crosscompiled packages') {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
         sh '''  
         if [ "${LABEL}" == "master" ]; then
-            LABEL="git${GIT_REVISION:0:7}"
+            GIT_HASH=$(git log -n 1 --pretty=format:'%H')
+            LABEL="git${GIT_HASH:0:7}"
         fi
 
         mkdir ${PACKAGE_DIR}
