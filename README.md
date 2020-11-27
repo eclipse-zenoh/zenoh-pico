@@ -19,7 +19,7 @@ zenoh-pico can be easily tested against a zenoh router running in a Docker conta
 -------------------------------
 ## How to install it
 
-The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** packages in the [Eclipse zenoh download area](https://download.eclipse.org/zenoh/zenoh-pico/).
+The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** packages in the [Eclipse zenoh-pico download area](https://download.eclipse.org/zenoh/zenoh-pico/).
 Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
 There are 2 kind of packages:
 
