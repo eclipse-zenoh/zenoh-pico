@@ -19,6 +19,7 @@ pipeline {
 
   environment {
       PACKAGE_NAME = "eclipse-zenoh-pico"
+      PACKAGE_DIR = "packages"
       LABEL = get_label()
       MACOSX_DEPLOYMENT_TARGET=10.7
       HTTP_USER = "genie.zenoh"
@@ -28,6 +29,21 @@ pipeline {
 
   stages {
     stage('[MacMini] Checkout Git TAG') {
+      steps {
+        deleteDir()
+        checkout([$class: 'GitSCM',
+                  branches: [[name: "${params.GIT_TAG}"]],
+                  doGenerateSubmoduleConfigurations: false,
+                  extensions: [],
+                  gitTool: 'Default',
+                  submoduleCfg: [],
+                  userRemoteConfigs: [[url: 'https://github.com/eclipse-zenoh/zenoh-pico.git']]
+                ])
+      }
+    }
+
+    stage('[UbuntuVM] Checkout Git TAG') {
+      agent { label 'UbuntuVM' }
       steps {
         deleteDir()
         checkout([$class: 'GitSCM',
@@ -54,29 +70,32 @@ pipeline {
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
       steps {
         sh '''
-        mkdir packages
+        mkdir ${PACKAGE_DIR}
 
         ROOT="build"
-        tar -czvf packages/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${BUILD}/libs/*
-        tar -czvf packages/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${BUILD}/examples/*
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/libs/*
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/examples/*
         '''
       }
     }
 
-    stage('[MacMini] Linux crosscompiled build') {
+    stage('[UbuntuVM] Linux crosscompiled build') {
+      agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
         sh '''
+        make clean
         make crossbuilds
         '''
       }
     }
 
-    stage('[MacMini] Linux crosscompiled packages') {
+    stage('[UbuntuVM] Linux crosscompiled packages') {
+      agent { label 'UbuntuVM' }
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
       steps {
-        sh '''
-        mkdir packages
+        sh '''        
+        mkdir ${PACKAGE_DIR}
 
         LIBNAME="libzenohpico"
         ROOT="crossbuilds"
@@ -84,48 +103,49 @@ pipeline {
         for TGT in $TARGETS; do
             echo "=== $TGT ==="
 
-            tar -czvf packages/${PACKAGE_NAME}-${LABEL}-${TGT}.tgz --strip-components 3 $ROOT/$TGT/libs/*
-            tar -czvf packages/${PACKAGE_NAME}-${LABEL}-examples-${TGT}.tgz --strip-components 3 $ROOT/$TGT/examples/*
+            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/libs/*
+            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/examples/*
 
             ARCH=$(echo $TGT | cut -d'-' -f2)
-            DEBS=$(ls $ROOT/$TGT/packages/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
+            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
             for D in $DEBS; do
-                cp $ROOT/$TGT/packages/$D packages/${PACKAGE_NAME}-${LABEL}_${ARCH}.deb
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}_${ARCH}.deb
             done
 
-            RPMS=$(ls $ROOT/$TGT/packages/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
+            RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
             for R in $RPMS; do
-                cp $ROOT/$TGT/packages/$R packages/${PACKAGE_NAME}-${LABEL}_${ARCH}.rpm
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}_${ARCH}.rpm
             done
         done
+
+        cd ${PACKAGE_DIR}
+        dpkg-scanpackages --multiversion . > Packages
+        cat Packages
+        gzip -c9 < Packages > Packages.gz
         '''
       }
     }
 
-    stage('[MacMini] Publish zenoh-pico packages to download.eclipse.org') {
-      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX64 }}
+    stage('[MacMini] Publish zenoh-pico MacOS X packages to download.eclipse.org') {
+      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''
             ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
-            scp packages/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
+            scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
       }
     }
 
-    stage('[UbuntuVM] Build Packages.gz for download.eclipse.org') {
+    stage('[UbuntuVM] Publish zenoh-pico Linux crosscompiled packages to download.eclipse.org') {
       agent { label 'UbuntuVM' }
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
       steps {
-        deleteDir()
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''
-          scp ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/*.deb ./
-          dpkg-scanpackages --multiversion . > Packages
-          cat Packages
-          gzip -c9 < Packages > Packages.gz
-          scp Packages.gz ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
+            scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
       }
