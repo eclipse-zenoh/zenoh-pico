@@ -199,14 +199,14 @@ if (TESTS)
   target_link_libraries(zn_client_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
 
-  configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_BINARY_DIR}/tests/routed.sh COPYONLY)
+  configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
   enable_testing()
-  add_test(zn_client_test bash ${CMAKE_BINARY_DIR}/tests/routed.sh zn_client_test)
-  add_test(z_iobuf_test ${CMAKE_BINARY_DIR}/tests/z_iobuf_test)
-  add_test(z_data_struct_test ${CMAKE_BINARY_DIR}/tests/z_data_struct_test)
-  add_test(zn_rname_test ${CMAKE_BINARY_DIR}/tests/zn_rname_test)
-  add_test(zn_msgcodec_test ${CMAKE_BINARY_DIR}/tests/zn_msgcodec_test)
+  add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
+  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
+  add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
+  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
+  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
 endif(TESTS)
 
 
