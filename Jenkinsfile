@@ -26,9 +26,9 @@ pipeline {
       HTTP_DIR = "/home/data/httpd/download.eclipse.org/zenoh/zenoh-pico/"
   }
 
-  stages {
-    agent { label 'MacMini' }
+  stages {   
     stage('[MacMini] Checkout Git TAG') {
+      agent { label 'MacMini' }
       steps {
         deleteDir()
         checkout([$class: 'GitSCM',
