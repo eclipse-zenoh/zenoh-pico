@@ -13,7 +13,7 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-project(libzenohc VERSION 0.4.2 LANGUAGES C)
+project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -22,13 +22,14 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
 option (CONTIKI "Use this for Contiki Cross compilation." OFF)
 option (TESTS "Use this to also build the tests." ON)
 option (EXAMPLES "Use this to also build the examples." ON)
-option (SWIG_JAVA "Use this to build the zenohc_java library, assuming the Swig generated C files in zenoh-c/src/ ." OFF)
+option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
 
 # Configure the transport to use with the following variables
 set (ZENOH_TRANSPORT_TCP "ON")
@@ -51,16 +52,16 @@ else()
   set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1") 
 endif() 
 
-message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+message(STATUS "Configuring for ${CMAKE_HOST_SYSTEM_NAME}")
+if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
   set(ZENOH_PLATFORM_OPT "-DZENOH_LINUX=1")  
   set(JNI_PLATFORM_NAME "linux")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
   set(ZENOH_PLATFORM_OPT "-DZENOH_MACOS=1")
   set(MACOSX_RPATH "ON")  
   set(JNI_PLATFORM_NAME "darwin")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  message(FATAL_ERROR "zenoh-c is not yet available on Windows platform")
+elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+  message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
   # set(ZENOH_PLATFORM_OPT "-DZENOH_WIN=1")
   # set(JNI_PLATFORM_NAME "win32")
 endif()
@@ -86,20 +87,21 @@ find_package(Threads REQUIRED)
 
 
 # Note: don't use CMAKE_C_STANDARD to be compatible with cmake <3.1.0
-set(CMAKE_C_FLAGS_DEBUG "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
+set(CMAKE_C_FLAGS_DEBUG "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0")
 set(CMAKE_C_FLAGS_GCOV "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -fprofile-arcs -ftest-coverage -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
 set(CMAKE_C_FLAGS_RELEASE "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -DNDEBUG -pipe -O3")
 
 
 if (NOT SWIG_JAVA)
-  set(Libname "zenohc")
+  set(Libname "zenohpico")
+
   file(GLOB PublicHeaders "include/*.h" "include/zenoh/*.h" "include/zenoh/net/*.h")
   include_directories(
-      "${PROJECT_SOURCE_DIR}/include"
-      "${PROJECT_SOURCE_DIR}/include/net"
+      ${PROJECT_SOURCE_DIR}/include
+      ${PROJECT_SOURCE_DIR}/include/net
     )
 else()
-  set(Libname "zenohc_java")
+  set(Libname "zenohpico_java") 
 
   if (NOT JNI_INCLUDE_HOME)
     message(STATUS "Looking for local JDK with JNI")
@@ -113,9 +115,9 @@ else()
   message(STATUS "Using JNI include paths: ${JNI_INCLUDE_DIRS}")
 
   include_directories(
-    "${PROJECT_SOURCE_DIR}/include"
-    "${PROJECT_SOURCE_DIR}/include/net"
-    "${JNI_INCLUDE_DIRS}"
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/net
+    ${JNI_INCLUDE_DIRS}
   )
 endif()
 
@@ -124,12 +126,17 @@ if (UNIX_TARGET)
   file(GLOB Sources "src/*.c" "src/net/*.c" "src/net/unix/*.c")
 endif()
 
-link_directories("${PROJECT_SOURCE_DIR}/build")
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
+link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} SHARED ${Sources})
 
 if (UNIX_TARGET)
-  target_link_libraries(${Libname} pthread)
+  if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(${Libname} pthread)
+  else()
+    target_link_libraries(${Libname} pthread rt)
+  endif()
 endif()
 
 target_link_libraries(${Libname})
@@ -139,36 +146,35 @@ if (NOT SWIG_JAVA)
             DESTINATION lib
             COMPONENT Library
           )
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh.h
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
             DESTINATION include
             COMPONENT Headers
           )
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh
+  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
             DESTINATION include
             COMPONENT Headers
           )
 endif()
 
-
 if (EXAMPLES)
-  add_executable(zn_write example/net/zn_write.c)
-  add_executable(zn_stream example/net/zn_stream.c)
-  add_executable(zn_sub example/net/zn_sub.c)
-  add_executable(zn_pull example/net/zn_pull.c)
-  add_executable(zn_query example/net/zn_query.c)
-  add_executable(zn_storage example/net/zn_storage.c)
-  add_executable(zn_eval example/net/zn_eval.c)
-  add_executable(zn_info example/net/zn_info.c)
-  add_executable(zn_pub_thr example/net/zn_pub_thr.c)
-  add_executable(zn_sub_thr example/net/zn_sub_thr.c)
-  add_executable(zn_scout example/net/zn_scout.c)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
+
+  add_executable(zn_write ${PROJECT_SOURCE_DIR}/examples/net/zn_write.c)
+  add_executable(zn_pub ${PROJECT_SOURCE_DIR}/examples/net/zn_pub.c)
+  add_executable(zn_sub ${PROJECT_SOURCE_DIR}/examples/net/zn_sub.c)
+  add_executable(zn_pull ${PROJECT_SOURCE_DIR}/examples/net/zn_pull.c)
+  add_executable(zn_query ${PROJECT_SOURCE_DIR}/examples/net/zn_query.c)
+  add_executable(zn_eval ${PROJECT_SOURCE_DIR}/examples/net/zn_eval.c)
+  add_executable(zn_info ${PROJECT_SOURCE_DIR}/examples/net/zn_info.c)
+  add_executable(zn_pub_thr ${PROJECT_SOURCE_DIR}/examples/net/zn_pub_thr.c)
+  add_executable(zn_sub_thr ${PROJECT_SOURCE_DIR}/examples/net/zn_sub_thr.c)
+  add_executable(zn_scout ${PROJECT_SOURCE_DIR}/examples/net/zn_scout.c)
 
   target_link_libraries(zn_write ${Libname})
-  target_link_libraries(zn_stream ${Libname})
+  target_link_libraries(zn_pub ${Libname})
   target_link_libraries(zn_sub ${Libname})
   target_link_libraries(zn_pull ${Libname})
   target_link_libraries(zn_query ${Libname})
-  target_link_libraries(zn_storage ${Libname})
   target_link_libraries(zn_eval ${Libname})
   target_link_libraries(zn_info ${Libname})
   target_link_libraries(zn_pub_thr ${Libname})
@@ -177,26 +183,30 @@ if (EXAMPLES)
 endif(EXAMPLES)
 
 if (TESTS)
-  add_executable(z_data_struct test/z_data_struct.c)
-  add_executable(z_mvar_test test/z_mvar_test.c)
-  add_executable(z_rname_test test/z_rname_test.c)
-  add_executable(zn_client_test test/zn_client_test.c)
-  add_executable(zn_large_data_test test/zn_large_data_test.c)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
-  target_link_libraries(z_data_struct ${Libname})
+  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
+  add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
+  add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)
+  add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
+  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
+  add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
+
+  target_link_libraries(z_iobuf_test ${Libname})
+  target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_mvar_test ${Libname})
-  target_link_libraries(z_rname_test ${Libname})
+  target_link_libraries(zn_rname_test ${Libname})
   target_link_libraries(zn_client_test ${Libname})
-  target_link_libraries(zn_large_data_test ${Libname})
+  target_link_libraries(zn_msgcodec_test ${Libname})
 
-  configure_file(test/routed.sh routed.sh COPYONLY)
+  configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_BINARY_DIR}/tests/routed.sh COPYONLY)
 
   enable_testing()
-  add_test(z_data_struct z_data_struct)
-  add_test(z_mvar_test z_mvar_test)
-  add_test(z_rname_test z_rname_test)
-  add_test(zn_client_test bash routed.sh zn_client_test)
-  add_test(zn_large_data_test bash routed.sh zn_large_data_test)
+  add_test(zn_client_test bash ${CMAKE_BINARY_DIR}/tests/routed.sh zn_client_test)
+  add_test(z_iobuf_test ${CMAKE_BINARY_DIR}/tests/z_iobuf_test)
+  add_test(z_data_struct_test ${CMAKE_BINARY_DIR}/tests/z_data_struct_test)
+  add_test(zn_rname_test ${CMAKE_BINARY_DIR}/tests/zn_rname_test)
+  add_test(zn_msgcodec_test ${CMAKE_BINARY_DIR}/tests/zn_msgcodec_test)
 endif(TESTS)
 
 
@@ -204,14 +214,7 @@ endif(TESTS)
 
 # For packaging
 if (PACKAGING)
-
-  # If not specified, try to guess target architecture, trying dpkg then uname
-  if(NOT TARGET_ARCH)
-    execute_process(COMMAND dpkg-architecture -qDEB_TARGET_ARCH OUTPUT_VARIABLE TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif()
-  if(NOT TARGET_ARCH)
-    execute_process(COMMAND uname -i OUTPUT_VARIABLE TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif()
+  set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
   set(CPACK_COMPONENTS_ALL Library Headers)
   set(CPACK_COMPONENT_LIBRARY_GROUP "lib")
@@ -223,34 +226,54 @@ if (PACKAGING)
   set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
   set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-  set(CPACK_COMPONENT_LIB_DESCRIPTION "The C client library for Eclipse zenoh")
+  set(CPACK_COMPONENT_LIB_DESCRIPTION "The C client library for Eclipse zenoh targeting pico devices")
   set(CPACK_COMPONENT_DEV_DESCRIPTION "${CPACK_COMPONENT_LIB_DESCRIPTION} - devel files")
 
   # Sources package
   set(CPACK_SOURCE_GENERATOR "TGZ")
-  set(CPACK_SOURCE_IGNORE_FILES "/.git/;/build/")
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")
-  set(CPACK_GENERATOR "")
+  set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.github/;/build/;/crossbuilds/")
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")  
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(STATUS "Configure packaging for Linux ${TARGET_ARCH}")
-    set(CPACK_GENERATOR "DEB;RPM")
+  if(PACKAGING MATCHES "DEB")
+    if(NOT DEBARCH)
+        set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+
+    message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")
+    if(CPACK_GENERATOR)
+        set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
+    else()
+        set(CPACK_GENERATOR "DEB")
+    endif()
   
     # DEB package
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ADLINK zenoh team, <zenoh@adlink-labs.tech>")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${TARGET_ARCH})
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
     set(CPACK_DEB_COMPONENT_INSTALL ON)
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
     set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
     set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${PROJECT_VERSION})")
+  endif()
+
+  if(PACKAGING MATCHES "RPM")
+    if(NOT RPMARCH)
+        set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+
+    message(STATUS "Configure RPM packaging for Linux ${RPMARCH}")
+    if(CPACK_GENERATOR)
+        set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
+    else()
+        set(CPACK_GENERATOR "RPM")
+    endif()
 
     # RPM package
-    execute_process(COMMAND yum install -y rpm-build)  # Because rpm-build not available on manylinux
+    set(CPACK_RPM_PACKAGE_ARCHITECTURE ${RPMARCH})
     set(CPACK_RPM_COMPONENT_INSTALL ON)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
     set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
-    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_DEBIAN_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
+    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
   endif()
 
   include(CPack)

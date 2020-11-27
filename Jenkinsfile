@@ -1,80 +1,138 @@
 pipeline {
   agent { label 'MacMini' }
+  options { skipDefaultCheckout() }
   parameters {
-    gitParameter name: 'TAG', 
-                 type: 'PT_TAG',
-                 defaultValue: 'master'
+    gitParameter(name: 'GIT_TAG',
+                 type: 'PT_BRANCH_TAG',
+                 description: 'The Git tag to checkout. If not specified "master" will be checkout.',
+                 defaultValue: 'master')
+    booleanParam(name: 'BUILD_MACOSX',
+                 description: 'Build MacOS X target.',
+                 defaultValue: true)
+    booleanParam(name: 'BUILD_LINUX_CROSS',
+                 description: 'Build Linux crosscompiled targets.',
+                 defaultValue: true)
+    booleanParam(name: 'PUBLISH_ECLIPSE_DOWNLOAD',
+                 description: 'Publish the resulting artifacts to Eclipse download.',
+                 defaultValue: false)
+  }
+
+  environment {
+      PACKAGE_NAME = "eclipse-zenoh-pico"
+      LABEL = get_label()
+      MACOSX_DEPLOYMENT_TARGET=10.7
+      HTTP_USER = "genie.zenoh"
+      HTTP_HOST = "projects-storage.eclipse.org"
+      HTTP_DIR = "/home/data/httpd/download.eclipse.org/zenoh/zenoh-pico/"
   }
 
   stages {
-    stage('Checkout Git TAG') {
+    stage('[MacMini] Checkout Git TAG') {
       steps {
-        cleanWs()
+        deleteDir()
         checkout([$class: 'GitSCM',
-                  branches: [[name: "${params.TAG}"]],
+                  branches: [[name: "${params.GIT_TAG}"]],
                   doGenerateSubmoduleConfigurations: false,
                   extensions: [],
                   gitTool: 'Default',
                   submoduleCfg: [],
-                  userRemoteConfigs: [[url: 'https://github.com/eclipse-zenoh/zenoh-c.git']]
+                  userRemoteConfigs: [[url: 'https://github.com/eclipse-zenoh/zenoh-pico.git']]
                 ])
       }
     }
-    stage('Simple build') {
+
+    stage('[MacMini] MacOS build') {
+      when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
-        . ~/.zshrc
-        env
-        echo $PATH
-        which cmake
-        cmake --version
-
-        git log --graph --date=short --pretty=tformat:'%ad - %h - %cn -%d %s' -n 20 || true
         make all
         '''
       }
     }
-    stage('Cross-platforms build') {
+
+    stage('[MacMini] MacOS package') {
+      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
       steps {
         sh '''
-        . ~/.zshrc
-        docker images || true
-        make all all-cross
+        mkdir packages
+
+        ROOT="build"
+        tar -czvf packages/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${BUILD}/libs/*
+        tar -czvf packages/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${BUILD}/examples/*
         '''
       }
     }
-    stage('Deploy to download.eclipse.org') {
+
+    stage('[MacMini] Linux crosscompiled build') {
+      when { expression { return params.BUILD_LINUX_CROSS }}
+      steps {
+        sh '''
+        make crossbuilds
+        '''
+      }
+    }
+
+    stage('[MacMini] Linux crosscompiled packages') {
+      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
+      steps {
+        sh '''
+        mkdir packages
+
+        LIBNAME="libzenohpico"
+        ROOT="crossbuilds"
+        TARGETS=$(ls $ROOT)
+        for TGT in $TARGETS; do
+            echo "=== $TGT ==="
+
+            tar -czvf packages/${PACKAGE_NAME}-${LABEL}-${TGT}.tgz --strip-components 3 $ROOT/$TGT/libs/*
+            tar -czvf packages/${PACKAGE_NAME}-${LABEL}-examples-${TGT}.tgz --strip-components 3 $ROOT/$TGT/examples/*
+
+            ARCH=$(echo $TGT | cut -d'-' -f2)
+            DEBS=$(ls $ROOT/$TGT/packages/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
+            for D in $DEBS; do
+                cp $ROOT/$TGT/packages/$D packages/${PACKAGE_NAME}-${LABEL}_${ARCH}.deb
+            done
+
+            RPMS=$(ls $ROOT/$TGT/packages/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
+            for R in $RPMS; do
+                cp $ROOT/$TGT/packages/$R packages/${PACKAGE_NAME}-${LABEL}_${ARCH}.rpm
+            done
+        done
+        '''
+      }
+    }
+
+    stage('[MacMini] Publish zenoh-pico packages to download.eclipse.org') {
+      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX64 }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''
-          . ~/.zshrc
-          HOST="genie.zenoh@projects-storage.eclipse.org"
-          DOWNLOAD_DIR="/home/data/httpd/download.eclipse.org/zenoh/zenoh-c/${TAG}"
-          ssh ${HOST} rm -fr ${DOWNLOAD_DIR}
-          ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
+            scp packages/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
+          '''
+        }
+      }
+    }
 
-          for PLATFORM in `ls build/crossbuilds/`; do
-            echo "Deploy for platform: ${PLATFORM}"
-            ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}/${PLATFORM}
-            scp  build/crossbuilds/${PLATFORM}/libzenohc*.* build/crossbuilds/${PLATFORM}/z_* build/crossbuilds/${PLATFORM}/zn_* ${HOST}:${DOWNLOAD_DIR}/${PLATFORM}/
-          done
-
-          echo "Deploy for platform: OSX"
-          ssh ${HOST} mkdir -p ${DOWNLOAD_DIR}/OSX
-          scp  build/libzenohc*.* build/z_* build/zn_* ${HOST}:${DOWNLOAD_DIR}/OSX/
-
-          echo "Deploy include files"
-          tar czvf zenoh-c-includes.tgz include/
-          scp  zenoh-c-includes.tgz ${HOST}:${DOWNLOAD_DIR}/
+    stage('[UbuntuVM] Build Packages.gz for download.eclipse.org') {
+      agent { label 'UbuntuVM' }
+      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
+      steps {
+        deleteDir()
+        sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
+          sh '''
+          scp ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/*.deb ./
+          dpkg-scanpackages --multiversion . > Packages
+          cat Packages
+          gzip -c9 < Packages > Packages.gz
+          scp Packages.gz ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
       }
     }
   }
+}
 
-  post {
-    success {
-        archiveArtifacts artifacts: 'build/libzenohc*.*, build/crossbuilds/*/libzenohc*.so, build/crossbuilds/*/libzenohc*.rpm, build/crossbuilds/*/libzenohc*.deb', fingerprint: true
-    }
-  }
+def get_label() {
+    return env.GIT_TAG.startsWith('origin/') ? env.GIT_TAG.minus('origin/') : env.GIT_TAG
 }

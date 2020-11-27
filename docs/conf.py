@@ -15,7 +15,7 @@
 # Configuration file for the Sphinx documentation builder.
 
 # -- Project information -----------------------------------------------------
-project = 'zenoh-c'
+project = 'zenoh-pico'
 copyright = '2017, 2020 ADLINK Technology Inc'
 author = 'ADLINK zenoh team'
 release = '0.4.0'

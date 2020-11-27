@@ -12,25 +12,44 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh/net/property.h"
 #include <string.h>
+#include "zenoh-pico/net/property.h"
+#include "zenoh-pico/private/collection.h"
 
-zn_property_t* zn_property_make(z_vle_t id, z_uint8_array_t value) {
-  zn_property_t* p = (zn_property_t*)malloc(sizeof(zn_property_t));
-  p->id = id;
-  p->value = value;
-  return p;
+zn_properties_t *zn_properties_make()
+{
+    return _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 }
 
-zn_property_t* zn_property_make_from_str(z_vle_t id, char *str) {
-  zn_property_t* p = (zn_property_t*)malloc(sizeof(zn_property_t));
-  p->id = id;
-  p->value.elem = (uint8_t *)str;
-  p->value.length = strlen(str);
-  return p;
+zn_properties_t *zn_properties_insert(zn_properties_t *ps, unsigned int key, z_string_t value)
+{
+    _z_i_map_set(ps, key, (z_str_t)value.val);
+    return ps;
 }
 
-void zn_property_free(zn_property_t** p) {
-  free((*p));
-  *p = 0;
-  }
+z_string_t zn_properties_get(zn_properties_t *ps, unsigned int key)
+{
+    z_string_t s;
+    z_str_t p = _z_i_map_get(ps, key);
+    if (p)
+    {
+        s.val = p;
+        s.len = strlen(p);
+    }
+    else
+    {
+        s.val = NULL;
+        s.len = 0;
+    }
+    return s;
+}
+
+unsigned int zn_properties_len(zn_properties_t *ps)
+{
+    return _z_i_map_len(ps);
+}
+
+void zn_properties_free(zn_properties_t *ps)
+{
+    _z_i_map_free(ps);
+}

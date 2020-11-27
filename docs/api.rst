@@ -30,18 +30,18 @@ or an error code when they fail.
 
     One of the following result kinds:
 
-      | ``Z_OK_TAG``
-      | ``Z_ERROR_TAG``
+      | ``_z_res_t_OK``
+      | ``_z_res_t_ERR``
 
   .. c:member:: union value
 
     .. c:member:: type <name> 
 
-      The actual value when :c:member:`name_result_t.tag` equals ``Z_OK_TAG``.
+      The actual value when :c:member:`name_result_t.tag` equals ``_z_res_t_OK``.
 
     .. c:member:: int error
 
-      The error code when :c:member:`name_result_t.tag` equals ``Z_ERROR_TAG``.
+      The error code when :c:member:`name_result_t.tag` equals ``_z_res_t_ERR``.
     
 .. c:type:: struct name_p_result_t
   
@@ -51,18 +51,18 @@ or an error code when they fail.
 
     One of the following result kinds:
 
-      | ``Z_OK_TAG``
-      | ``Z_ERROR_TAG``
+      | ``_z_res_t_OK``
+      | ``_z_res_t_ERR``
 
   .. c:member:: union value
 
     .. c:member:: type *<name> 
 
-      A pointer to the actual value when :c:member:`name_p_result_t.tag` equals ``Z_OK_TAG``.
+      A pointer to the actual value when :c:member:`name_p_result_t.tag` equals ``_z_res_t_OK``.
 
     .. c:member:: int error
 
-      The error code when :c:member:`name_p_result_t.tag` equals ``Z_ERROR_TAG``.
+      The error code when :c:member:`name_p_result_t.tag` equals ``_z_res_t_ERR``.
 
 
 Collections
@@ -100,41 +100,41 @@ Arrays
 Vectors
 ~~~~~~~
 
-.. c:type:: struct z_vec_t
+.. c:type:: struct _z_vec_t
 
   A sequence container that encapsulates a dynamic size array of pointers. 
 
-  .. c:member:: unsigned int capacity_
+  .. c:member:: unsigned int _capacity
 
     The maximum capacity of the vector.
 
-  .. c:member:: unsigned int length_
+  .. c:member:: unsigned int _length
 
     The current length of the vector.
 
-  .. c:member:: void **elem_
+  .. c:member:: void **_elem
 
     The pointers to the values.
 
-.. c:function:: z_vec_t z_vec_make(unsigned int capacity)
+.. c:function:: _z_vec_t _z_vec_make(unsigned int capacity)
 
-  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t.capacity_` of **capacity**, 
-  a :c:member:`z_vec_t.length_` of **0** and a :c:member:`z_vec_t.elem_` pointing to a 
+  Initialize a :c:type:`_z_vec_t` with a :c:member:`_z_vec_t._capacity` of **capacity**, 
+  a :c:member:`_z_vec_t._length` of **0** and a :c:member:`_z_vec_t._elem` pointing to a 
   newly allocated array of **capacity** pointers.
 
-.. c:function:: unsigned int z_vec_length(const z_vec_t* v)
+.. c:function:: unsigned int _z_vec_len(const _z_vec_t* v)
 
-  Return the current length of the given :c:type:z_vec_t.
+  Return the current length of the given :c:type:_z_vec_t.
 
-.. c:function:: void z_vec_append(z_vec_t* v, void* e) 
+.. c:function:: void _z_vec_append(_z_vec_t* v, void* e) 
 
   Append the element **e** to the vector **v** and take ownership of the appended element.
 
-.. c:function:: void z_vec_set(z_vec_t* sv, unsigned int i, void* e)
+.. c:function:: void _z_vec_set(_z_vec_t* sv, unsigned int i, void* e)
 
   Set the element **e** in the vector **v** at index **i** and take ownership of the element.
 
-.. c:function:: const void* z_vec_get(const z_vec_t* v, unsigned int i)
+.. c:function:: const void* _z_vec_get(const _z_vec_t* v, unsigned int i)
 
   Return the element at index **i** in vector **v**.
 
@@ -142,7 +142,7 @@ Vectors
 Data Structures
 ---------------
 
-.. c:type:: struct zn_resource_key_t
+.. c:type:: struct zn_reskey_t
 
   Data structure representing a resource key.
 
@@ -153,17 +153,17 @@ Data Structures
       | ``ZN_INT_RES_KEY``
       | ``ZN_STR_RES_KEY``
 
-  .. c:member:: union zn_res_key_t key
+  .. c:member:: union zn_reskey_t key
 
-    .. c:member:: z_vle_t rid
+    .. c:member:: z_zint_t rid
 
-      A resource id (integer) when :c:member:`zn_resource_key_t.kind` equals ``ZN_INT_RES_KEY``.
+      A resource id (integer) when :c:member:`zn_reskey_t.kind` equals ``ZN_INT_RES_KEY``.
 
     .. c:member:: char *rname
 
-      A resource name (string) when :c:member:`zn_resource_key_t.kind` equals ``ZN_STR_RES_KEY``.
+      A resource name (string) when :c:member:`zn_reskey_t.kind` equals ``ZN_STR_RES_KEY``.
 
-.. c:type:: struct zn_sub_mode_t
+.. c:type:: struct zn_subinfo_t
 
   Data structure representing a subscription mode (see :c:func:`zn_declare_subscriber`).
 
@@ -176,7 +176,7 @@ Data Structures
       | ``ZN_PERIODIC_PUSH_MODE``
       | ``ZN_PERIODIC_PULL_MODE``
 
-  .. c:member:: zn_temporal_property_t tprop
+  .. c:member:: zn_period_t tprop
 
     The period. *Unsupported*
 
@@ -184,7 +184,7 @@ Data Structures
 
   Data structure representing a unique timestamp.
 
-  .. c:member:: z_vle_t time
+  .. c:member:: z_zint_t time
 
     The time as a 64-bit long, where:
 
@@ -261,7 +261,7 @@ Data Structures
     The length of the :c:member:`zn_reply_value_t.srcid` when :c:member:`zn_reply_value_t.kind` equals 
     ``ZN_STORAGE_DATA``, ``ZN_STORAGE_FINAL``, ``ZN_EVAL_DATA`` or ``ZN_EVAL_FINAL``.
 
-  .. c:member:: z_vle_t rsn
+  .. c:member:: z_zint_t rsn
 
     The sequence number of the reply from the identified storage or eval when :c:member:`zn_reply_value_t.kind` equals 
     ``ZN_STORAGE_DATA``, ``ZN_STORAGE_FINAL``, ``ZN_EVAL_DATA`` or ``ZN_EVAL_FINAL``. 
@@ -290,7 +290,7 @@ Data Structures
 
   A key/value pair where the key is an integer and the value a byte sequence.
 
-  .. c:member:: z_vle_t id
+  .. c:member:: z_zint_t id
 
     The key of the :c:type:`zn_property_t`.
 
@@ -301,25 +301,25 @@ Data Structures
 Functions
 ---------
 
-.. c:function:: zn_session_p_result_t zn_open(char* locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
+.. c:function:: zn_session_p_result_t zn_open(char* locator, zn_on_disconnect_t on_disconnect, const _z_vec_t *ps)
 
   Open a zenoh-net session. 
   
   | **locator** is a string representing the network endpoint to which establish the session. A typical locator looks like this : ``tcp/127.0.0.1:7447``. 
     If ``NULL``, :c:func:`zn_open` will scout and try to establish the session automatically.
   | **on_disconnect** is a function that will be called each time the client API is disconnected from the infrastructure. It can be set to ``NULL``. 
-  | **ps** is a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` that will be used to establish and configure the zenoh-net session. 
+  | **ps** is a :c:type:`vector<_z_vec_t>` of :c:type:`zn_property_t` that will be used to establish and configure the zenoh-net session. 
     **ps** will typically contain the ``username`` and ``password`` informations needed to establish the zenoh-net session with a secured infrastructure. 
     It can be set to ``NULL``. 
   
   Return a handle to the zenoh-net session.
 
-.. c:function:: z_vec_t zn_info(zn_session_t *z)
+.. c:function:: _z_vec_t zn_info(zn_session_t *z)
 
-  Return a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session 
+  Return a :c:type:`vector<_z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session 
   represented by **z**.
 
-.. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_sub_mode_t *sm, zn_data_handler_t data_handler, void *arg)
+.. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_subinfo_t *sm, zn_data_handler_t data_handler, void *arg)
 
   Declare a subscription for all published data matching the provided resource name **resource** in session **z**. 
   
@@ -365,7 +365,7 @@ Functions
   
   Return a zenoh-net eval.
 
-.. c:function:: int zn_stream_compact_data(zn_pub_t *pub, const unsigned char *payload, size_t len)
+.. c:function:: int zn_stream_compact_data(zn_publisher_t *pub, const unsigned char *payload, size_t len)
 
   Send data in a *compact_data* message for the resource published by publisher **pub**. 
   
@@ -375,7 +375,7 @@ Functions
   
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_stream_data(zn_pub_t *pub, const unsigned char *payload, size_t len)
+.. c:function:: int zn_stream_data(zn_publisher_t *pub, const unsigned char *payload, size_t len)
 
   Send data in a *stream_data* message for the resource published by publisher **pub**. 
   
@@ -385,7 +385,7 @@ Functions
   
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_stream_data_wo(zn_pub_t *pub, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind)
+.. c:function:: int zn_stream_data_wo(zn_publisher_t *pub, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind)
 
   Send data in a *stream_data* message for the resource published by publisher **pub**. 
   
@@ -421,7 +421,7 @@ Functions
   
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_pull(zn_sub_t *sub)
+.. c:function:: int zn_pull(zn_subscriber_t *sub)
 
   Pull data for the `ZN_PULL_MODE` or `ZN_PERIODIC_PULL_MODE` subscription **sub**. The pulled data will be provided 
   by calling the **data_handler** function provided to the `c.zn_declare_subscriber`_ function.
@@ -458,7 +458,7 @@ Functions
   
   Return 0 if the query was sent successfully.
 
-.. c:function:: int zn_undeclare_subscriber(zn_sub_t *sub)
+.. c:function:: int zn_undeclare_subscriber(zn_subscriber_t *sub)
 
   Undeclare the subscrbtion **sub**.
   
@@ -466,7 +466,7 @@ Functions
 
   Return 0 when successful.
 
-.. c:function:: int zn_undeclare_publisher(zn_sub_t *pub)
+.. c:function:: int zn_undeclare_publisher(zn_subscriber_t *pub)
 
   Undeclare the publication *pub*.
   

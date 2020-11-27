@@ -12,80 +12,102 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-
+#include <stdint.h>
 #include <stdio.h>
-#include "zenoh/codec.h"
-#include "zenoh/private/logging.h"
+#include "zenoh-pico/private/codec.h"
+#include "zenoh-pico/net/private/codec.h"
+#include "zenoh-pico/net/private/codec.h"
+#include "zenoh-pico/private/logging.h"
 
-void
-z_vle_encode(z_iobuf_t* buf, z_vle_t v) {
-  while (v > 0x7f) {
-    uint8_t c = (v & 0x7f) | 0x80;
-    z_iobuf_write(buf, (uint8_t)c);
-    v = v >> 7;
-  }
-  z_iobuf_write(buf, (uint8_t)v);
+/*------------------ z_zint ------------------*/
+int _z_zint_encode(_z_wbuf_t *wbf, z_zint_t v)
+{
+    while (v > 0x7f)
+    {
+        uint8_t c = (v & 0x7f) | 0x80;
+        _ZN_EC(_z_wbuf_write(wbf, (uint8_t)c))
+        v = v >> 7;
+    }
+    return _z_wbuf_write(wbf, (uint8_t)v);
 }
 
-z_vle_result_t
-z_vle_decode(z_iobuf_t* buf) {
-  z_vle_result_t r;
-  r.tag = Z_OK_TAG;
-  r.value.vle = 0;
+_z_zint_result_t _z_zint_decode(_z_rbuf_t *rbf)
+{
+    _z_zint_result_t r;
+    r.tag = _z_res_t_OK;
+    r.value.zint = 0;
 
-  uint8_t c;
-  int i = 0;
-  do {
-    c = z_iobuf_read(buf);
-    _Z_DEBUG_VA("vle c = 0x%x\n",c);
-    r.value.vle = r.value.vle | (((z_vle_t)c & 0x7f) << i);
-    _Z_DEBUG_VA("current vle  = %zu\n",r.value.vle);
-    i += 7;
-  } while (c > 0x7f);
-  return r;
+    uint8_t c;
+    int i = 0;
+    do
+    {
+        c = _z_rbuf_read(rbf);
+        _Z_DEBUG_VA("zint c = 0x%x\n", c);
+        r.value.zint = r.value.zint | (((z_zint_t)c & 0x7f) << i);
+        _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
+        i += 7;
+    } while (c > 0x7f);
+
+    return r;
 }
 
-void
-z_uint8_array_encode(z_iobuf_t* buf, const z_uint8_array_t* bs) {
-  z_vle_encode(buf, bs->length);
-  z_iobuf_write_slice(buf, bs->elem, 0,  bs->length);
+/*------------------ uint8_array ------------------*/
+int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
+{
+    _ZN_EC(_z_zint_encode(wbf, bs->len))
+    if (wbf->is_expandable && bs->len > ZN_TSID_LENGTH)
+    {
+        // Do not copy, just add a slice to the expandable buffer
+        // Only create a new slice if the malloc is cheaper than copying a
+        // large amount of data
+        _z_wbuf_add_iosli_from(wbf, bs->val, bs->len);
+        return 0;
+    }
+    else
+    {
+        return _z_wbuf_write_bytes(wbf, bs->val, 0, bs->len);
+    }
 }
 
-void
-z_uint8_array_decode_na(z_iobuf_t* buf, z_uint8_array_result_t *r) {
-  r->tag = Z_OK_TAG;
-  z_vle_result_t r_vle = z_vle_decode(buf);
-  ASSURE_P_RESULT(r_vle, r, Z_VLE_PARSE_ERROR)
-  r->value.uint8_array.length = (unsigned int)r_vle.value.vle;
-  r->value.uint8_array.elem = z_iobuf_read_n(buf, r->value.uint8_array.length);
+void _z_bytes_decode_na(_z_rbuf_t *rbf, _z_bytes_result_t *r)
+{
+    r->tag = _z_res_t_OK;
+    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT);
+    r->value.bytes.len = r_zint.value.zint;
+    // Decode without allocating
+    r->value.bytes.val = _z_rbuf_get_rptr(rbf);
+    // Move the read position
+    _z_rbuf_set_rpos(rbf, _z_rbuf_get_rpos(rbf) + r->value.bytes.len);
 }
 
-z_uint8_array_result_t
-z_uint8_array_decode(z_iobuf_t* buf) {
-  z_uint8_array_result_t r;
-  z_uint8_array_decode_na(buf, &r);
-  return r;
+_z_bytes_result_t _z_bytes_decode(_z_rbuf_t *rbf)
+{
+    _z_bytes_result_t r;
+    _z_bytes_decode_na(rbf, &r);
+    return r;
 }
 
-void
-z_string_encode(z_iobuf_t* buf, const char* s) {
-  size_t len = strlen(s);
-  z_vle_encode(buf, len);
-  // Note that this does not put the string terminator on the wire.
-  z_iobuf_write_slice(buf, (uint8_t*)s, 0, len);
+/*------------------ string with null terminator ------------------*/
+int _z_str_encode(_z_wbuf_t *wbf, const z_str_t s)
+{
+    size_t len = strlen(s);
+    _ZN_EC(_z_zint_encode(wbf, len))
+    // Note that this does not put the string terminator on the wire.
+    return _z_wbuf_write_bytes(wbf, (uint8_t *)s, 0, len);
 }
 
-z_string_result_t
-z_string_decode(z_iobuf_t* buf) {
-  z_string_result_t r;
-  r.tag = Z_OK_TAG;
-  z_vle_result_t vr = z_vle_decode(buf);
-  ASSURE_RESULT(vr, r, Z_VLE_PARSE_ERROR)
-  size_t len = vr.value.vle;
-  // Allocate space for the string terminator.
-  char* s = (char*)malloc(len + 1);
-  s[len] = '\0';
-  z_iobuf_read_to_n(buf, (uint8_t*)s, len);
-  r.value.string = s;
-  return r;
+_z_str_result_t _z_str_decode(_z_rbuf_t *rbf)
+{
+    _z_str_result_t r;
+    r.tag = _z_res_t_OK;
+    _z_zint_result_t vr = _z_zint_decode(rbf);
+    _ASSURE_RESULT(vr, r, _z_err_t_PARSE_ZINT);
+    size_t len = vr.value.zint;
+    // Allocate space for the string terminator
+    z_str_t s = (z_str_t)malloc(len + 1);
+    s[len] = '\0';
+    _z_rbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
+    r.value.str = s;
+    return r;
 }
