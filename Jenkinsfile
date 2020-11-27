@@ -82,8 +82,8 @@ pipeline {
     stage('[MacMini] MacOS package') {
       when { expression { return params.BUILD_MACOSX }}
       steps {
-        sh '''
-        ZENOH_TAG=${LABEL} 
+        sh '''#!/bin/bash
+        ZENOH_TAG="${LABEL}"
         if [ "${ZENOH_TAG}" == "master" ]; then
             GIT_HASH=$(git log -n 1 --pretty=format:'%H')
             ZENOH_TAG="git${GIT_HASH:0:7}"
@@ -102,8 +102,8 @@ pipeline {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
-        sh ''' 
-        ZENOH_TAG=${LABEL} 
+        sh '''#!/bin/bash 
+        ZENOH_TAG="${LABEL}"
         if [ "${ZENOH_TAG}" == "master" ]; then
             GIT_HASH=$(git log -n 1 --pretty=format:'%H')
             ZENOH_TAG="git${GIT_HASH:0:7}"
