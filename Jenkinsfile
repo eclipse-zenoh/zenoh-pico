@@ -1,5 +1,4 @@
-pipeline {
-  agent { label 'MacMini' }
+pipeline {  
   options { skipDefaultCheckout() }
   parameters {
     gitParameter(name: 'GIT_TAG',
@@ -28,6 +27,7 @@ pipeline {
   }
 
   stages {
+    agent { label 'MacMini' }
     stage('[MacMini] Checkout Git TAG') {
       steps {
         deleteDir()
@@ -58,6 +58,7 @@ pipeline {
     }
 
     stage('[MacMini] MacOS build') {
+      agent { label 'MacMini' }
       when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
@@ -67,6 +68,7 @@ pipeline {
     }
 
     stage('[MacMini] MacOS package') {
+      agent { label 'MacMini' }
       when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
@@ -127,6 +129,7 @@ pipeline {
     }
 
     stage('[MacMini] Publish zenoh-pico MacOS X packages to download.eclipse.org') {
+      agent { label 'MacMini' }
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
