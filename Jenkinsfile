@@ -70,6 +70,10 @@ pipeline {
       when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
+        if [ "${LABEL}" == "master" ]; then
+            LABEL="git${GIT_REVISION,length=7}"
+        fi
+
         mkdir ${PACKAGE_DIR}
 
         ROOT="build"
@@ -94,7 +98,11 @@ pipeline {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
-        sh '''        
+        sh '''  
+        if [ "${LABEL}" == "master" ]; then
+            LABEL="git${GIT_REVISION,length=7}"
+        fi
+
         mkdir ${PACKAGE_DIR}
 
         LIBNAME="libzenohpico"
@@ -103,18 +111,32 @@ pipeline {
         for TGT in $TARGETS; do
             echo "=== $TGT ==="
 
+            ARCH=$(echo $TGT | cut -d'-' -f2)
+
+            # TGZ
             tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/libs/*
             tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/examples/*
 
-            ARCH=$(echo $TGT | cut -d'-' -f2)
+            # DEB
             DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
             for D in $DEBS; do
                 cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.deb
             done
 
+            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep "${LIBNAME}-dev" | grep -v "md5") 
+            for D in $DEBS; do
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${LABEL}-${ARCH}.deb
+            done
+
+            # RPM
             RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
             for R in $RPMS; do
                 cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.rpm
+            done
+
+            RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep "${LIBNAME}-dev" | grep -v "md5")
+            for R in $RPMS; do
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${LABEL}-${ARCH}.rpm
             done
         done
 
