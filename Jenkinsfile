@@ -81,16 +81,17 @@ pipeline {
       when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
-        if [ "${LABEL}" == "master" ]; then
+        ZENOH_VERSION=${LABEL} 
+        if [ "${ZENOH_VERSION}" == "master" ]; then
             GIT_HASH=$(git log -n 1 --pretty=format:'%H')
-            LABEL="git${GIT_HASH:0:7}"
+            ZENOH_VERSION="git${GIT_HASH:0:7}"
         fi
 
         mkdir ${PACKAGE_DIR}
 
         ROOT="build"
-        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/libs/*
-        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/examples/*
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/libs/*
+        tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-examples-macosx${MACOSX_DEPLOYMENT_TARGET}-x86-64.tgz --strip-components 2 ${ROOT}/examples/*
         '''
       }
     }
@@ -99,10 +100,11 @@ pipeline {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
-        sh '''  
-        if [ "${LABEL}" == "master" ]; then
+        sh ''' 
+        ZENOH_VERSION=${LABEL} 
+        if [ "${ZENOH_VERSION}" == "master" ]; then
             GIT_HASH=$(git log -n 1 --pretty=format:'%H')
-            LABEL="git${GIT_HASH:0:7}"
+            ZENOH_VERSION="git${GIT_HASH:0:7}"
         fi
 
         mkdir ${PACKAGE_DIR}
@@ -116,29 +118,29 @@ pipeline {
             ARCH=$(echo $TGT | cut -d'-' -f2)
 
             # TGZ
-            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/libs/*
-            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-examples-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/examples/*
+            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/libs/*
+            tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-examples-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/examples/*
 
             # DEB
             DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
             for D in $DEBS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.deb
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-${ARCH}.deb
             done
 
             DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep "${LIBNAME}-dev" | grep -v "md5") 
             for D in $DEBS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${LABEL}-${ARCH}.deb
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${ZENOH_VERSION}-${ARCH}.deb
             done
 
             # RPM
             RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
             for R in $RPMS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.rpm
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_VERSION}-${ARCH}.rpm
             done
 
             RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep "${LIBNAME}-dev" | grep -v "md5")
             for R in $RPMS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${LABEL}-${ARCH}.rpm
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${ZENOH_VERSION}-${ARCH}.rpm
             done
         done
 
