@@ -71,7 +71,7 @@ pipeline {
       steps {
         sh '''
         if [ "${LABEL}" == "master" ]; then
-            LABEL="git${GIT_REVISION,length=7}"
+            LABEL="git${GIT_REVISION:0:7}"
         fi
 
         mkdir ${PACKAGE_DIR}
@@ -100,7 +100,7 @@ pipeline {
       steps {
         sh '''  
         if [ "${LABEL}" == "master" ]; then
-            LABEL="git${GIT_REVISION,length=7}"
+            LABEL="git${GIT_REVISION:0:7}"
         fi
 
         mkdir ${PACKAGE_DIR}
