@@ -109,12 +109,12 @@ pipeline {
             ARCH=$(echo $TGT | cut -d'-' -f2)
             DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
             for D in $DEBS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}_${ARCH}.deb
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.deb
             done
 
             RPMS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "rpm" | grep -v "${LIBNAME}-dev" | grep -v "md5")
             for R in $RPMS; do
-                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}_${ARCH}.rpm
+                cp $ROOT/$TGT/${PACKAGE_DIR}/$R ${PACKAGE_DIR}/${PACKAGE_NAME}-${LABEL}-${ARCH}.rpm
             done
         done
 
@@ -122,6 +122,7 @@ pipeline {
         dpkg-scanpackages --multiversion . > Packages
         cat Packages
         gzip -c9 < Packages > Packages.gz
+        rm Packages
         '''
       }
     }
