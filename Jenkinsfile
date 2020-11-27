@@ -67,7 +67,7 @@ pipeline {
     }
 
     stage('[MacMini] MacOS package') {
-      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
+      when { expression { return params.BUILD_MACOSX }}
       steps {
         sh '''
         mkdir ${PACKAGE_DIR}
@@ -92,7 +92,7 @@ pipeline {
 
     stage('[UbuntuVM] Linux crosscompiled packages') {
       agent { label 'UbuntuVM' }
-      when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
+      when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
         sh '''        
         mkdir ${PACKAGE_DIR}
