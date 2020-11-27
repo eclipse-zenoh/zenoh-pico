@@ -159,8 +159,8 @@ pipeline {
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
-          sh '''
-            if [ "${ZENOH_TAG}" == "master" ]; then
+          sh '''#!/bin/bash
+            if [ "${LABEL}" == "master" ]; then
                 ssh ${HTTP_USER}@${HTTP_HOST} rm -rf ${HTTP_DIR}/${LABEL}
             fi
           '''
@@ -172,7 +172,7 @@ pipeline {
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_MACOSX }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
-          sh '''
+          sh '''#!/bin/bash
             ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
@@ -185,7 +185,7 @@ pipeline {
       when { expression { return params.PUBLISH_ECLIPSE_DOWNLOAD && params.BUILD_LINUX_CROSS }}
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
-          sh '''
+          sh '''#!/bin/bash
             ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
