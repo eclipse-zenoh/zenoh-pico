@@ -132,8 +132,8 @@ pipeline {
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''
-            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
-            ssh ${HTTP_USER}@${HTTP_HOST} rm -rf ${HTTP_DIR}/${LABEL}/*
+            ssh ${HTTP_USER}@${HTTP_HOST} rm -rf ${HTTP_DIR}/${LABEL}
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
@@ -146,8 +146,8 @@ pipeline {
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''
-            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
-            ssh ${HTTP_USER}@${HTTP_HOST} rm -rf ${HTTP_DIR}/${LABEL}/*
+            ssh ${HTTP_USER}@${HTTP_HOST} rm -rf ${HTTP_DIR}/${LABEL}
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
