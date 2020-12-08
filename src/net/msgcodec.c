@@ -115,7 +115,7 @@ void _zn_subinfo_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_subinfo_result_t 
     r->tag = _z_res_t_OK;
 
     // Decode the header
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_R)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_R))
         r->value.subinfo.reliability = zn_reliability_t_RELIABLE;
     else
         r->value.subinfo.reliability = zn_reliability_t_BEST_EFFORT;
@@ -123,7 +123,7 @@ void _zn_subinfo_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_subinfo_result_t 
     // Decode the body
     uint8_t mode = _z_rbuf_read(rbf);
     r->value.subinfo.mode = _ZN_MID(mode);
-    if _ZN_HAS_FLAG (mode, _ZN_FLAG_Z_P)
+    if (_ZN_HAS_FLAG(mode, _ZN_FLAG_Z_P))
     {
         _zn_period_result_t r_tp = _zn_period_decode(rbf);
         _ASSURE_P_RESULT(r_tp, r, _zn_err_t_PARSE_PERIOD)
@@ -426,7 +426,7 @@ int _zn_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_sub_decl_t *dc
 
     // Encode the body
     _ZN_EC(_zn_reskey_encode(wbf, header, &dcl->key))
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_S))
         return _zn_subinfo_encode(wbf, &dcl->subinfo);
 
     return 0;
@@ -442,7 +442,7 @@ void _zn_sub_decl_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_sub_decl_result_
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.sub_decl.key = r_res.value.reskey;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_S)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_S))
     {
         _zn_subinfo_result_t r_smd = _zn_subinfo_decode(rbf, header);
         _ASSURE_P_RESULT(r_smd, r, _zn_err_t_PARSE_SUBMODE)
@@ -453,7 +453,7 @@ void _zn_sub_decl_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_sub_decl_result_
         // Default subscription mode is non-periodic PUSH
         r->value.sub_decl.subinfo.mode = zn_submode_t_PUSH;
         r->value.sub_decl.subinfo.period = NULL;
-        if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_R)
+        if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_R))
             r->value.sub_decl.subinfo.reliability = zn_reliability_t_RELIABLE;
         else
             r->value.sub_decl.subinfo.reliability = zn_reliability_t_BEST_EFFORT;
@@ -848,25 +848,25 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
     _ZN_EC(_z_zint_encode(wbf, fld->flags))
 
     // Encode the body
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_SRC_ID)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_SRC_ID))
         _ZN_EC(_z_bytes_encode(wbf, &fld->source_id))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_SRC_SN)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_SRC_SN))
         _ZN_EC(_z_zint_encode(wbf, fld->source_sn))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_RTR_ID)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_RTR_ID))
         _ZN_EC(_z_bytes_encode(wbf, &fld->first_router_id))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_RTR_SN)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_RTR_SN))
         _ZN_EC(_z_zint_encode(wbf, fld->first_router_sn))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_TSTAMP)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_TSTAMP))
         _ZN_EC(_z_timestamp_encode(wbf, &fld->tstamp))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_KIND)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_KIND))
         _ZN_EC(_z_zint_encode(wbf, fld->kind))
 
-    if _ZN_HAS_FLAG (fld->flags, _ZN_DATA_INFO_ENC)
+    if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_ENC))
         _ZN_EC(_z_zint_encode(wbf, fld->encoding))
 
     return 0;
@@ -883,49 +883,49 @@ void _zn_data_info_decode_na(_z_rbuf_t *rbf, _zn_data_info_result_t *r)
     r->value.data_info.flags = r_flags.value.zint;
 
     // Decode the body
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_SRC_ID)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SRC_ID))
     {
         _z_bytes_result_t r_sid = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_sid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.source_id = r_sid.value.bytes;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_SRC_SN)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SRC_SN))
     {
         _z_zint_result_t r_ssn = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_ssn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.source_sn = r_ssn.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_RTR_ID)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_RTR_ID))
     {
         _z_bytes_result_t r_rid = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_rid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.first_router_id = r_rid.value.bytes;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_RTR_SN)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_RTR_SN))
     {
         _z_zint_result_t r_rsn = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_rsn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.first_router_sn = r_rsn.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP))
     {
         _zn_timestamp_result_t r_tsp = _z_timestamp_decode(rbf);
         _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
         r->value.data_info.tstamp = r_tsp.value.timestamp;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_KIND)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_KIND))
     {
         _z_zint_result_t r_knd = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_knd, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.kind = r_knd.value.zint;
     }
 
-    if _ZN_HAS_FLAG (r->value.data_info.flags, _ZN_DATA_INFO_ENC)
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_ENC))
     {
         _z_zint_result_t r_enc = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_enc, r, _z_err_t_PARSE_ZINT)
@@ -948,13 +948,13 @@ void _zn_data_info_free(_zn_data_info_t *di)
     //   - kind
     //   - encoding
 
-    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_SRC_ID)
+    if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_SRC_ID))
         (void)(&di->source_id);
 
-    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_RTR_ID)
+    if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_RTR_ID))
         (void)(&di->first_router_id);
 
-    if _ZN_HAS_FLAG (di->flags, _ZN_DATA_INFO_TSTAMP)
+    if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_TSTAMP))
         _z_timestamp_free(&di->tstamp);
 }
 
@@ -966,7 +966,7 @@ int _zn_data_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_data_t *msg)
     // Encode the body
     _ZN_EC(_zn_reskey_encode(wbf, header, &msg->key))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_I))
         _ZN_EC(_zn_data_info_encode(wbf, &msg->info))
 
     return _zn_payload_encode(wbf, &msg->payload);
@@ -982,7 +982,7 @@ void _zn_data_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_data_result_t *r)
     _ASSURE_P_RESULT(r_key, r, _zn_err_t_PARSE_RESKEY)
     r->value.data.key = r_key.value.reskey;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_I))
     {
         _zn_data_info_result_t r_dti = _zn_data_info_decode(rbf);
         _ASSURE_P_RESULT(r_dti, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
@@ -1022,7 +1022,7 @@ int _zn_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_pull_t *msg)
 
     _ZN_EC(_z_zint_encode(wbf, msg->pull_id))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_N)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_N))
         _ZN_EC(_z_zint_encode(wbf, msg->max_samples))
 
     return 0;
@@ -1042,7 +1042,7 @@ void _zn_pull_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_pull_result_t *r)
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.pull.pull_id = r_zint.value.zint;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_N)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_N))
     {
         _z_zint_result_t r_zint = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
@@ -1094,7 +1094,7 @@ int _zn_query_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_query_t *msg)
 
     _ZN_EC(_z_zint_encode(wbf, msg->qid))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_T))
         _ZN_EC(_zn_query_target_encode(wbf, &msg->target))
 
     return _zn_query_consolidation_encode(wbf, &msg->consolidation);
@@ -1193,7 +1193,7 @@ void _zn_query_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
     _ASSURE_P_RESULT(r_qid, r, _z_err_t_PARSE_ZINT)
     r->value.query.qid = r_qid.value.zint;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_T)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_T))
     {
         _zn_query_target_result_t r_qt = _zn_query_target_decode(rbf);
         _ASSURE_P_RESULT(r_qt, r, _z_err_t_PARSE_ZINT)
@@ -1382,7 +1382,7 @@ int _zn_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_scout_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_SCOUT\n");
 
     // Encode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
         _ZN_EC(_z_zint_encode(wbf, msg->what))
 
     return 0;
@@ -1394,7 +1394,7 @@ void _zn_scout_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_scout_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
     {
         _z_zint_result_t r_zint = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
@@ -1421,13 +1421,13 @@ int _zn_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_hello_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_HELLO\n");
 
     // Encode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
         _ZN_EC(_z_zint_encode(wbf, msg->whatami))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_L))
         _ZN_EC(_zn_locators_encode(wbf, &msg->locators))
 
     return 0;
@@ -1439,21 +1439,21 @@ void _zn_hello_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_hello_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
         _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
         r->value.hello.pid = r_arr.value.bytes;
     }
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
     {
         _z_zint_result_t r_zint = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.hello.whatami = r_zint.value.zint;
     }
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_L))
     {
         _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
@@ -1470,11 +1470,78 @@ _zn_hello_result_t _zn_hello_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_hello_free(_zn_hello_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         (void)(&msg->pid);
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_L))
         _zn_locators_free(&msg->locators);
+}
+
+/*------------------ Init Message ------------------*/
+int _zn_init_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_init_t *msg)
+{
+    _Z_DEBUG("Encoding _ZN_MID_ACCEPT\n");
+
+    // Encode the body
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+        _ZN_EC(_z_wbuf_write(wbf, msg->version))
+
+    _ZN_EC(_z_zint_encode(wbf, msg->whatami))
+    _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_S))
+        _ZN_EC(_z_zint_encode(wbf, msg->sn_resolution))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+        _ZN_EC(_z_bytes_encode(wbf, &msg->cookie))
+
+    return 0;
+}
+
+void _zn_init_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_init_result_t *r)
+{
+    _Z_DEBUG("Decoding _ZN_MID_ACCEPT\n");
+    r->tag = _z_res_t_OK;
+
+    // Decode the body
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    {
+        r->value.init.version = _z_rbuf_read(rbf);
+    }
+
+    _z_zint_result_t r_wami = _z_zint_decode(rbf);
+    _ASSURE_P_RESULT(r_wami, r, _z_err_t_PARSE_ZINT)
+    r->value.init.whatami = r_wami.value.zint;
+
+    _z_bytes_result_t r_pid = _z_bytes_decode(rbf);
+    _ASSURE_P_RESULT(r_pid, r, _z_err_t_PARSE_BYTES)
+    r->value.init.pid = r_pid.value.bytes;
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_S))
+    {
+        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+        r->value.init.sn_resolution = r_zint.value.zint;
+    }
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    {
+        _z_bytes_result_t r_cke = _z_bytes_decode(rbf);
+        _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
+        r->value.init.cookie = r_cke.value.bytes;
+    }
+}
+
+_zn_init_result_t _zn_init_decode(_z_rbuf_t *rbf, uint8_t header)
+{
+    _zn_init_result_t r;
+    _zn_init_decode_na(rbf, header, &r);
+    return r;
+}
+
+void _zn_init_free(_zn_init_t *msg, uint8_t header)
+{
+    (void)(&msg->pid);
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+        (void)(&msg->cookie);
 }
 
 /*------------------ Open Message ------------------*/
@@ -1483,15 +1550,18 @@ int _zn_open_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_open_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_OPEN\n");
 
     // Encode the body
-    _ZN_EC(_z_wbuf_write(wbf, msg->version))
-    _ZN_EC(_z_zint_encode(wbf, msg->whatami))
-    _ZN_EC(_z_bytes_encode(wbf, &msg->opid))
-    _ZN_EC(_z_zint_encode(wbf, msg->lease))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_T))
+    {
+        _ZN_EC(_z_zint_encode(wbf, msg->lease / 1000))
+    }
+    else
+    {
+        _ZN_EC(_z_zint_encode(wbf, msg->lease))
+    }
+
     _ZN_EC(_z_zint_encode(wbf, msg->initial_sn))
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-        _ZN_EC(_z_zint_encode(wbf, msg->sn_resolution))
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        _ZN_EC(_zn_locators_encode(wbf, &msg->locators))
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+        _ZN_EC(_z_bytes_encode(wbf, &msg->cookie))
 
     return 0;
 }
@@ -1502,36 +1572,21 @@ void _zn_open_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_open_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    r->value.open.version = _z_rbuf_read(rbf);
+    _z_zint_result_t r_lease = _z_zint_decode(rbf);
+    _ASSURE_P_RESULT(r_lease, r, _z_err_t_PARSE_ZINT)
+    r->value.open.lease = r_lease.value.zint;
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_T))
+        r->value.open.lease *= 1000;
 
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-    r->value.open.whatami = r_zint.value.zint;
+    _z_zint_result_t r_isn = _z_zint_decode(rbf);
+    _ASSURE_P_RESULT(r_isn, r, _z_err_t_PARSE_ZINT)
+    r->value.open.initial_sn = r_isn.value.zint;
 
-    _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
-    _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-    r->value.open.opid = r_arr.value.bytes;
-
-    r_zint = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-    r->value.open.lease = r_zint.value.zint;
-
-    r_zint = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-    r->value.open.initial_sn = r_zint.value.zint;
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.open.sn_resolution = r_zint.value.zint;
-    }
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-    {
-        _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
-        _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        _z_str_array_move(&r->value.open.locators, &r_locs.value.locators);
+        _z_bytes_result_t r_cke = _z_bytes_decode(rbf);
+        _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
+        r->value.open.cookie = r_cke.value.bytes;
     }
 }
 
@@ -1544,86 +1599,8 @@ _zn_open_result_t _zn_open_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_open_free(_zn_open_t *msg, uint8_t header)
 {
-    (void)(&msg->opid);
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        _zn_locators_free(&msg->locators);
-}
-
-/*------------------ Accept Message ------------------*/
-int _zn_accept_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_accept_t *msg)
-{
-    _Z_DEBUG("Encoding _ZN_MID_ACCEPT\n");
-
-    // Encode the body
-    _ZN_EC(_z_zint_encode(wbf, msg->whatami))
-    _ZN_EC(_z_bytes_encode(wbf, &msg->opid))
-    _ZN_EC(_z_bytes_encode(wbf, &msg->apid))
-    _ZN_EC(_z_zint_encode(wbf, msg->lease))
-    _ZN_EC(_z_zint_encode(wbf, msg->initial_sn))
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-        _ZN_EC(_z_zint_encode(wbf, msg->sn_resolution))
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        _ZN_EC(_zn_locators_encode(wbf, &msg->locators))
-
-    return 0;
-}
-
-void _zn_accept_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_accept_result_t *r)
-{
-    _Z_DEBUG("Decoding _ZN_MID_ACCEPT\n");
-    r->tag = _z_res_t_OK;
-
-    // Decode the body
-    _z_zint_result_t r_wami = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_wami, r, _z_err_t_PARSE_ZINT)
-    r->value.accept.whatami = r_wami.value.zint;
-
-    _z_bytes_result_t r_opid = _z_bytes_decode(rbf);
-    _ASSURE_P_RESULT(r_opid, r, _z_err_t_PARSE_BYTES)
-    r->value.accept.opid = r_opid.value.bytes;
-
-    _z_bytes_result_t r_apid = _z_bytes_decode(rbf);
-    _ASSURE_P_RESULT(r_apid, r, _z_err_t_PARSE_BYTES)
-    r->value.accept.apid = r_apid.value.bytes;
-
-    _z_zint_result_t r_lease = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_lease, r, _z_err_t_PARSE_ZINT)
-    r->value.accept.lease = r_lease.value.zint;
-
-    _z_zint_result_t r_insn = _z_zint_decode(rbf);
-    _ASSURE_P_RESULT(r_insn, r, _z_err_t_PARSE_ZINT)
-    r->value.accept.initial_sn = r_insn.value.zint;
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-    {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.accept.sn_resolution = r_zint.value.zint;
-    }
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-    {
-        _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
-        _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        _z_str_array_move(&r->value.accept.locators, &r_locs.value.locators);
-    }
-}
-
-_zn_accept_result_t _zn_accept_decode(_z_rbuf_t *rbf, uint8_t header)
-{
-    _zn_accept_result_t r;
-    _zn_accept_decode_na(rbf, header, &r);
-    return r;
-}
-
-void _zn_accept_free(_zn_accept_t *msg, uint8_t header)
-{
-    (void)(&msg->opid);
-    (void)(&msg->apid);
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-        _zn_locators_free(&msg->locators);
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+        (void)(&msg->cookie);
 }
 
 /*------------------ Close Message ------------------*/
@@ -1632,7 +1609,7 @@ int _zn_close_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_close_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_CLOSE\n");
 
     // Encode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
 
     return _z_wbuf_write(wbf, msg->reason);
@@ -1644,7 +1621,7 @@ void _zn_close_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_close_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
         _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
@@ -1663,7 +1640,7 @@ _zn_close_result_t _zn_close_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_close_free(_zn_close_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         (void)(&msg->pid);
 }
 
@@ -1675,7 +1652,7 @@ int _zn_sync_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_sync_t *msg)
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, msg->sn))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_C)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_C))
         _ZN_EC(_z_zint_encode(wbf, msg->count))
 
     return 0;
@@ -1720,7 +1697,7 @@ int _zn_ack_nack_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_ack_nack_t *ms
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, msg->sn))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_M)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_M))
         _ZN_EC(_z_zint_encode(wbf, msg->mask))
 
     return 0;
@@ -1736,7 +1713,7 @@ void _zn_ack_nack_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_ack_nack_result_
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.ack_nack.sn = r_zint.value.zint;
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_M)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_M))
     {
         _z_zint_result_t r_zint = _z_zint_decode(rbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
@@ -1763,7 +1740,7 @@ int _zn_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_keep_alive_t
     _Z_DEBUG("Encoding _ZN_MID_KEEP_ALIVE\n");
 
     // Encode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
 
     return 0;
@@ -1775,7 +1752,7 @@ void _zn_keep_alive_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_keep_alive_res
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
         _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
@@ -1792,7 +1769,7 @@ _zn_keep_alive_result_t _zn_keep_alive_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_keep_alive_free(_zn_keep_alive_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
         (void)(&msg->pid);
 }
 
@@ -1837,7 +1814,7 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, msg->sn))
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_F))
     {
         // Do not write the fragment as z_bytes_t since the total frame length
         // is eventually prepended to the frame. There is no need to encode the fragment length.
@@ -1864,7 +1841,7 @@ void _zn_frame_decode_na(_z_rbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
     r->value.frame.sn = r_zint.value.zint;
 
     // Decode the payload
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_F))
     {
         // Read all the remaining bytes in the buffer as the fragment
         r->value.frame.payload.fragment.len = _z_rbuf_len(rbf);
@@ -1904,7 +1881,7 @@ _zn_frame_result_t _zn_frame_decode(_z_rbuf_t *rbf, uint8_t header)
 
 void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_F))
     {
         _zn_payload_free(&msg->payload.fragment);
     }
@@ -1935,10 +1912,10 @@ int _zn_session_message_encode(_z_wbuf_t *wbf, const _zn_session_message_t *msg)
         return _zn_scout_encode(wbf, msg->header, &msg->body.scout);
     case _ZN_MID_HELLO:
         return _zn_hello_encode(wbf, msg->header, &msg->body.hello);
+    case _ZN_MID_INIT:
+        return _zn_init_encode(wbf, msg->header, &msg->body.init);
     case _ZN_MID_OPEN:
         return _zn_open_encode(wbf, msg->header, &msg->body.open);
-    case _ZN_MID_ACCEPT:
-        return _zn_accept_encode(wbf, msg->header, &msg->body.accept);
     case _ZN_MID_CLOSE:
         return _zn_close_encode(wbf, msg->header, &msg->body.close);
     case _ZN_MID_SYNC:
@@ -1997,18 +1974,18 @@ void _zn_session_message_decode_na(_z_rbuf_t *rbf, _zn_session_message_p_result_
             r->value.session_message->body.hello = r_he.value.hello;
             return;
         }
+        case _ZN_MID_INIT:
+        {
+            _zn_init_result_t r_ac = _zn_init_decode(rbf, r->value.session_message->header);
+            _ASSURE_P_RESULT(r_ac, r, _zn_err_t_PARSE_SESSION_MESSAGE)
+            r->value.session_message->body.init = r_ac.value.init;
+            return;
+        }
         case _ZN_MID_OPEN:
         {
             _zn_open_result_t r_op = _zn_open_decode(rbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_op, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.open = r_op.value.open;
-            return;
-        }
-        case _ZN_MID_ACCEPT:
-        {
-            _zn_accept_result_t r_ac = _zn_accept_decode(rbf, r->value.session_message->header);
-            _ASSURE_P_RESULT(r_ac, r, _zn_err_t_PARSE_SESSION_MESSAGE)
-            r->value.session_message->body.accept = r_ac.value.accept;
             return;
         }
         case _ZN_MID_CLOSE:
@@ -2082,11 +2059,11 @@ void _zn_session_message_free(_zn_session_message_t *msg)
     case _ZN_MID_HELLO:
         _zn_hello_free(&msg->body.hello, msg->header);
         break;
+    case _ZN_MID_INIT:
+        _zn_init_free(&msg->body.init, msg->header);
+        break;
     case _ZN_MID_OPEN:
         _zn_open_free(&msg->body.open, msg->header);
-        break;
-    case _ZN_MID_ACCEPT:
-        _zn_accept_free(&msg->body.accept, msg->header);
         break;
     case _ZN_MID_CLOSE:
         _zn_close_free(&msg->body.close, msg->header);

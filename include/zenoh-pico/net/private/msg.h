@@ -31,8 +31,8 @@
 /* Session Messages */
 #define _ZN_MID_SCOUT 0x01
 #define _ZN_MID_HELLO 0x02
-#define _ZN_MID_OPEN 0x03
-#define _ZN_MID_ACCEPT 0x04
+#define _ZN_MID_INIT 0x03
+#define _ZN_MID_OPEN 0x04
 #define _ZN_MID_CLOSE 0x05
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
@@ -53,6 +53,7 @@
 /*        Message flags        */
 /*=============================*/
 /* Session message flags */
+#define _ZN_FLAG_S_A 0x20 // 1 << 5 | Ack           if A==1 then the message is an acknowledgment
 #define _ZN_FLAG_S_C 0x40 // 1 << 6 | Count         if C==1 then number of unacknowledged messages is present
 #define _ZN_FLAG_S_E 0x80 // 1 << 7 | End           if E==1 then it is the last FRAME fragment
 #define _ZN_FLAG_S_F 0x40 // 1 << 6 | Fragment      if F==1 then the FRAME is a fragment
@@ -63,6 +64,7 @@
 #define _ZN_FLAG_S_P 0x20 // 1 << 5 | PingOrPong    if P==1 then the message is Ping, otherwise is Pong
 #define _ZN_FLAG_S_R 0x20 // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
 #define _ZN_FLAG_S_S 0x40 // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
+#define _ZN_FLAG_S_T 0x40 // 1 << 6 | TimeRes       if T==1 then the time resolution is in seconds
 #define _ZN_FLAG_S_W 0x40 // 1 << 6 | WhatAmI       if W==1 then WhatAmI is indicated
 #define _ZN_FLAG_S_X 0x00 // Unused flags are set to zero
 /* Zenoh message flags */
@@ -272,6 +274,45 @@ typedef struct
     _zn_locators_t locators;
 } _zn_hello_t;
 
+/*------------------ Init Message ------------------*/
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
+//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
+//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+//       the boundary of the serialized messages. The length is encoded as little-endian.
+//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//
+// The INIT message is sent on a specific Locator to initiate a session with the peer associated
+// with that Locator. The initiator MUST send an INIT message with the A flag set to 0.  If the
+// corresponding peer deems appropriate to initialize a session with the initiator, the corresponding
+// peer MUST reply with an INIT message with the A flag set to 1.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |X|S|A|   INIT  |
+// +-+-+-+-+-------+
+// | v_maj | v_min | if A==0 -- Protocol Version VMaj.VMin
+// +-------+-------+
+// ~    whatami    ~ -- Client, Router, Peer or a combination of them
+// +---------------+
+// ~    peer_id    ~ -- PID of the sender of the INIT message
+// +---------------+
+// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
+// +---------------+
+// ~     cookie    ~ if A==1
+// +---------------+
+//
+// (*) if A==0 and S==0 then 2^28 is assumed.
+//     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
+// ```
+typedef struct
+{
+    z_zint_t whatami;
+    z_zint_t sn_resolution;
+    z_bytes_t pid;
+    z_bytes_t cookie;
+    uint8_t version;
+} _zn_init_t;
+
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
 //       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
@@ -279,97 +320,28 @@ typedef struct
 //       the boundary of the serialized messages. The length is encoded as little-endian.
 //       In any case, the lenght of a message must not exceed 65_535 bytes.
 //
-// The OPEN message is sent on a specific Locator to initiate a session with the peer associated
-// with that Locator.
+// The OPEN message is sent on a link to finally open an initialized session with the peer.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |L|S|X|   OPEN  |
+// |X|T|A|   OPEN  |
 // +-+-+-+-+-------+
-// | v_maj | v_min | -- Protocol Version VMaj.VMin
-// +-------+-------+
-// ~    whatami    ~ -- Client, Router, Peer or a combination of them
+// ~ lease_period  ~ -- Lease period of the sender of the OPEN message(*)
 // +---------------+
-// ~   o_peer_id   ~ -- PID of the sender of the OPEN
+// ~  initial_sn   ~ -- Initial SN proposed by the sender of the OPEN(**)
 // +---------------+
-// ~ lease_period  ~ -- Lease period of the session opener
-// +---------------+
-// ~  initial_sn   ~ -- Initial SN proposed by the sender of the OPEN(*)
-// +---------------+
-// ~ sn_resolution ~ if S==1 -- Otherwise 2^28 is assumed(**)
-// +---------------+
-// ~    Locators   ~ if L==1 -- List of locators the sender of the OPEN is reachable at
+// ~    cookie     ~ if A==0(*)
 // +---------------+
 //
-// (*)  The Initial SN must be bound to the proposed SN Resolution. Otherwise the OPEN message is considered
-//      invalid and it should be discarded by the recipient of the OPEN message.
-// (**) In case of the Accepter Peer negotiates a smaller SN Resolution (see ACCEPT message) and the proposed
-//      Initial SN results to be out-of-bound, the new Agreed Initial SN is calculated according to the
-//      following modulo operation:
-//         Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
-//
+// (*) if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
+// (**) the cookie MUST be the same received in the INIT message with A==1 from the corresponding peer
+// ```
 typedef struct
 {
-    z_zint_t whatami;
-    z_bytes_t opid;
     z_zint_t lease;
     z_zint_t initial_sn;
-    z_zint_t sn_resolution;
-    _zn_locators_t locators;
-    uint8_t version;
+    z_bytes_t cookie;
 } _zn_open_t;
-
-/*------------------ Accept Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
-//
-// The ACCEPT message is sent in response of an OPEN message in case of accepting the new incoming session.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |L|S|X| ACCEPT  |
-// +-+-+-+-+-------+
-// ~    whatami    ~ -- Client, Router, Peer or a combination of them
-// +---------------+
-// ~   o_peer_id   ~ -- PID of the sender of the OPEN this ACCEPT is for
-// +---------------+
-// ~   a_peer_id   ~ -- PID of the sender of the ACCEPT
-// +---------------+
-// ~ lease_period  ~ -- Lease period of the session accepter
-// +---------------+
-// ~  initial_sn   ~ -- Initial SN proposed by the sender of the ACCEPT(*)
-// +---------------+
-// ~ sn_resolution + if S==1 -- Agreed SN Resolution(**)
-// +---------------+
-// ~    Locators   ~ if L==1
-// +---------------+
-//
-// - if S==0 then the agreed sequence number resolution is the one indicated in the OPEN message.
-// - if S==1 then the agreed sequence number resolution is the one indicated in this ACCEPT message.
-//           The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
-//           otherwise the ACCEPT message is consmsg::idered invalid and it should be treated as a
-//           CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
-//
-// (*)  The Initial SN is bound to the proposed SN Resolution.
-// (**) In case of the SN Resolution proposed in this ACCEPT message is smaller than the SN Resolution
-//      proposed in the OPEN message AND the Initial SN contained in the OPEN messages results to be
-//      out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
-//      following modulo operation:
-//         Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
-//
-typedef struct
-{
-    z_zint_t whatami;
-    z_bytes_t opid;
-    z_bytes_t apid;
-    z_zint_t lease;
-    z_zint_t initial_sn;
-    z_zint_t sn_resolution;
-    _zn_locators_t locators;
-} _zn_accept_t;
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -547,8 +519,8 @@ typedef struct
     {
         _zn_scout_t scout;
         _zn_hello_t hello;
+        _zn_init_t init;
         _zn_open_t open;
-        _zn_accept_t accept;
         _zn_close_t close;
         _zn_sync_t sync;
         _zn_ack_nack_t ack_nack;

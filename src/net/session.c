@@ -512,15 +512,33 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
         return _z_res_t_OK;
     }
 
-    case _ZN_MID_OPEN:
+    case _ZN_MID_INIT:
     {
-        // Do nothing, zenoh clients are not expected to handle open messages
+        // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
         return _z_res_t_OK;
     }
 
-    case _ZN_MID_ACCEPT:
+    case _ZN_MID_OPEN:
     {
-        // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_A))
+        {
+            // The session lease
+            zn->lease = msg->body.open.lease;
+
+            // The initial SN at RX side. Initialize the session as we had already received
+            // a message with a SN equal to initial_sn - 1.
+            if (msg->body.open.initial_sn > 0)
+            {
+                zn->sn_rx_reliable = msg->body.open.initial_sn - 1;
+                zn->sn_rx_best_effort = msg->body.open.initial_sn - 1;
+            }
+            else
+            {
+                zn->sn_rx_reliable = zn->sn_resolution - 1;
+                zn->sn_rx_best_effort = zn->sn_resolution - 1;
+            }
+        }
+
         return _z_res_t_OK;
     }
 
@@ -783,28 +801,38 @@ zn_session_t *zn_open(zn_properties_t *config)
         ((uint8_t *)pid.val)[i] = rand() % 255;
 
     // Build the open message
-    _zn_session_message_t om = _zn_session_message_init(_ZN_MID_OPEN);
+    _zn_session_message_t ism = _zn_session_message_init(_ZN_MID_INIT);
 
-    om.body.open.version = ZN_PROTO_VERSION;
-    om.body.open.whatami = ZN_CLIENT;
-    om.body.open.opid = pid;
-    om.body.open.lease = ZN_SESSION_LEASE;
-    om.body.open.initial_sn = (z_zint_t)rand() % ZN_SN_RESOLUTION;
-    om.body.open.sn_resolution = ZN_SN_RESOLUTION;
+    ism.body.init.version = ZN_PROTO_VERSION;
+    ism.body.init.whatami = ZN_CLIENT;
+    ism.body.init.pid = pid;
+    ism.body.init.sn_resolution = ZN_SN_RESOLUTION;
 
     if (ZN_SN_RESOLUTION != ZN_SN_RESOLUTION_DEFAULT)
-        _ZN_SET_FLAG(om.header, _ZN_FLAG_S_S);
-    // NOTE: optionally the open can include a list of locators the opener
-    //       is reachable at. Since zenoh-pico acts as a client, this is not
-    //       needed because a client is not expected to receive opens.
+        _ZN_SET_FLAG(ism.header, _ZN_FLAG_S_S);
 
     // Initialize the session
     zn = _zn_session_init();
     zn->sock = r_sock.value.socket;
 
-    _Z_DEBUG("Sending Open\n");
+    _Z_DEBUG("Sending InitSyn\n");
     // Encode and send the message
-    _zn_send_s_msg(zn, &om);
+    int res = _zn_send_s_msg(zn, &ism);
+    if (res != 0)
+    {
+        // Free the pid
+        _z_bytes_free(&pid);
+
+        // Free the locator
+        if (locator_is_scouted)
+            free((char *)locator);
+
+        // Free
+        _zn_session_message_free(&ism);
+        _zn_session_free(zn);
+
+        return zn;
+    }
 
     _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(zn);
     if (r_msg.tag == _z_res_t_ERR)
@@ -817,87 +845,87 @@ zn_session_t *zn_open(zn_properties_t *config)
             free((char *)locator);
 
         // Free
-        _zn_session_message_free(&om);
+        _zn_session_message_free(&ism);
         _zn_session_free(zn);
 
         return zn;
     }
 
-    _zn_session_message_t *p_am = r_msg.value.session_message;
-    switch (_ZN_MID(p_am->header))
+    _zn_session_message_t *p_iam = r_msg.value.session_message;
+    switch (_ZN_MID(p_iam->header))
     {
-    case _ZN_MID_ACCEPT:
+    case _ZN_MID_INIT:
     {
-        // The announced sn resolution
-        zn->sn_resolution = om.body.open.sn_resolution;
-        zn->sn_resolution_half = zn->sn_resolution / 2;
-
-        // The announced initial SN at TX side
-        zn->sn_tx_reliable = om.body.open.initial_sn;
-        zn->sn_tx_best_effort = om.body.open.initial_sn;
-
-        // Handle SN resolution option if present
-        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_S)
+        if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_S_A)
         {
-            // The resolution in the ACCEPT must be less or equal than the resolution in the OPEN,
-            // otherwise the ACCEPT message is considered invalid and it should be treated as a
-            // CLOSE message with L==0 by the Opener Peer -- the recipient of the ACCEPT message.
-            if (p_am->body.accept.sn_resolution <= om.body.open.sn_resolution)
+            // The announced sn resolution
+            zn->sn_resolution = ism.body.init.sn_resolution;
+            zn->sn_resolution_half = zn->sn_resolution / 2;
+
+            // Handle SN resolution option if present
+            if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_S_S)
             {
-                // In case of the SN Resolution proposed in this ACCEPT message is smaller than the SN Resolution
-                // proposed in the OPEN message AND the Initial SN contained in the OPEN messages results to be
-                // out-of-bound, the new Agreed Initial SN for the Opener Peer is calculated according to the
-                // following modulo operation:
-                //     Agreed Initial SN := (Initial SN_Open) mod (SN Resolution_Accept)
-                if (om.body.open.initial_sn >= p_am->body.accept.sn_resolution)
+                // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
+                // otherwise the InitAck message is considered invalid and it should be treated as a
+                // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+                if (p_iam->body.init.sn_resolution <= ism.body.init.sn_resolution)
                 {
-                    zn->sn_tx_reliable = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
-                    zn->sn_tx_best_effort = om.body.open.initial_sn % p_am->body.accept.sn_resolution;
+                    zn->sn_resolution = p_iam->body.init.sn_resolution;
+                    zn->sn_resolution_half = zn->sn_resolution / 2;
                 }
-                zn->sn_resolution = p_am->body.accept.sn_resolution;
-                zn->sn_resolution_half = zn->sn_resolution / 2;
+                else
+                {
+                    // Close the session
+                    _zn_session_close(zn, _ZN_CLOSE_INVALID);
+                    break;
+                }
             }
-            else
+
+            // The initial SN at TX side
+            z_zint_t initial_sn = (z_zint_t)rand() % zn->sn_resolution;
+            zn->sn_tx_reliable = initial_sn;
+            zn->sn_tx_best_effort = initial_sn;
+
+            // Create the OpenSyn message
+            _zn_session_message_t osm = _zn_session_message_init(_ZN_MID_OPEN);
+            osm.body.open.lease = ZN_SESSION_LEASE;
+            if (ZN_SESSION_LEASE % 1000 == 0)
+                _ZN_SET_FLAG(osm.header, _ZN_FLAG_S_T);
+            osm.body.open.initial_sn = initial_sn;
+            osm.body.open.cookie = p_iam->body.init.cookie;
+
+            _Z_DEBUG("Sending OpenSyn\n");
+            // Encode and send the message
+            int res = _zn_send_s_msg(zn, &osm);
+            _zn_session_message_free(&osm);
+            if (res != 0)
             {
-                // Close the session
-                _zn_session_close(zn, _ZN_CLOSE_INVALID);
+                _z_bytes_free(&pid);
+                if (locator_is_scouted)
+                    free((char *)locator);
+                _zn_session_free(zn);
                 break;
             }
-        }
 
-        if _ZN_HAS_FLAG (p_am->header, _ZN_FLAG_S_L)
-        {
-            // @TODO: we might want to connect or store the locators
-        }
+            // Initialize the Local and Remote Peer IDs
+            _z_bytes_move(&zn->local_pid, &pid);
+            _z_bytes_copy(&zn->remote_pid, &p_iam->body.init.pid);
 
-        // The session lease
-        zn->lease = p_am->body.accept.lease;
+            if (locator_is_scouted)
+                zn->locator = (char *)locator;
+            else
+                zn->locator = strdup(locator);
 
-        // The initial SN at RX side. Initialize the session as we had already received
-        // a message with a SN equal to initial_sn - 1.
-        if (p_am->body.accept.initial_sn > 0)
-        {
-            zn->sn_rx_reliable = p_am->body.accept.initial_sn - 1;
-            zn->sn_rx_best_effort = p_am->body.accept.initial_sn - 1;
+            zn->on_disconnect = &_zn_default_on_disconnect;
+
+            break;
         }
         else
         {
-            zn->sn_rx_reliable = zn->sn_resolution - 1;
-            zn->sn_rx_best_effort = zn->sn_resolution - 1;
+            // Close the session
+            _zn_session_close(zn, _ZN_CLOSE_INVALID);
+            break;
         }
-
-        // Initialize the Local and Remote Peer IDs
-        _z_bytes_move(&zn->local_pid, &pid);
-        _z_bytes_copy(&zn->remote_pid, &r_msg.value.session_message->body.accept.apid);
-
-        if (locator_is_scouted)
-            zn->locator = (char *)locator;
-        else
-            zn->locator = strdup(locator);
-
-        zn->on_disconnect = &_zn_default_on_disconnect;
-
-        break;
     }
 
     default:
@@ -909,8 +937,8 @@ zn_session_t *zn_open(zn_properties_t *config)
     }
 
     // Free the messages and result
-    _zn_session_message_free(&om);
-    _zn_session_message_free(p_am);
+    _zn_session_message_free(&ism);
+    _zn_session_message_free(p_iam);
     _zn_session_message_p_result_free(&r_msg);
 
     return zn;

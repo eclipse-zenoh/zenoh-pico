@@ -72,11 +72,11 @@ void print_session_message_type(uint8_t header)
     case _ZN_MID_HELLO:
         printf("Hello message");
         break;
+    case _ZN_MID_INIT:
+        printf("Init message");
+        break;
     case _ZN_MID_OPEN:
         printf("Open message");
-        break;
-    case _ZN_MID_ACCEPT:
-        printf("Accept message");
         break;
     case _ZN_MID_CLOSE:
         printf("Close message");
@@ -1782,50 +1782,39 @@ void hello_message(void)
     _z_wbuf_free(&wbf);
 }
 
-/*------------------ Open Message ------------------*/
-_zn_open_t gen_open_message(uint8_t *header)
+/*------------------ Init Message ------------------*/
+_zn_init_t gen_init_message(uint8_t *header)
 {
-    _zn_open_t e_op;
+    _zn_init_t e_it;
 
-    e_op.version = gen_uint8();
-    e_op.whatami = gen_zint();
-    e_op.opid = gen_bytes(16);
-    e_op.lease = gen_zint();
-    e_op.initial_sn = gen_zint();
+    e_it.whatami = gen_zint();
+    e_it.pid = gen_bytes(16);
     if (gen_bool())
     {
-        e_op.sn_resolution = gen_zint();
+        e_it.sn_resolution = gen_zint();
         _ZN_SET_FLAG(*header, _ZN_FLAG_S_S);
     }
     if (gen_bool())
     {
-        e_op.locators = gen_str_array((gen_uint8() % 4) + 1);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
+        e_it.cookie = gen_payload(64);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_A);
+    }
+    else
+    {
+        e_it.version = gen_uint8();
     }
 
-    return e_op;
+    return e_it;
 }
 
-void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
+void assert_eq_init_message(_zn_init_t *left, _zn_init_t *right, uint8_t header)
 {
-    printf("   Version (%u:%u)", left->version, right->version);
-    assert(left->version == right->version);
-    printf("\n");
-
     printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
     assert(left->whatami == right->whatami);
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->opid, &right->opid);
-    printf("\n");
-
-    printf("   Lease (%zu:%zu)", left->lease, right->lease);
-    assert(left->lease == right->lease);
-    printf("\n");
-
-    printf("   Initial SN (%zu:%zu)", left->initial_sn, right->initial_sn);
-    assert(left->initial_sn == right->initial_sn);
+    assert_eq_uint8_array(&left->pid, &right->pid);
     printf("\n");
 
     if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
@@ -1835,10 +1824,80 @@ void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
         printf("\n");
     }
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_A)
     {
         printf("   ");
-        assert_eq_str_array(&left->locators, &right->locators);
+        assert_eq_uint8_array(&left->cookie, &right->cookie);
+        printf("\n");
+    }
+    else
+    {
+        printf("   Version (%u:%u)", left->version, right->version);
+        assert(left->version == right->version);
+        printf("\n");
+    }
+}
+
+void init_message(void)
+{
+    printf("\n>> Init message\n");
+    _z_wbuf_t wbf = gen_wbuf(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_init_t e_it = gen_init_message(&e_hdr);
+
+    // Encode
+    int res = _zn_init_encode(&wbf, e_hdr, &e_it);
+    assert(res == 0);
+
+    // Decode
+    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _zn_init_result_t r_it = _zn_init_decode(&rbf, e_hdr);
+    assert(r_it.tag == _z_res_t_OK);
+
+    _zn_init_t d_it = r_it.value.init;
+    assert_eq_init_message(&e_it, &d_it, e_hdr);
+
+    // Free
+    _zn_init_free(&d_it, e_hdr);
+    _z_rbuf_free(&rbf);
+    _z_wbuf_free(&wbf);
+}
+
+/*------------------ Open Message ------------------*/
+_zn_open_t gen_open_message(uint8_t *header)
+{
+    _zn_open_t e_op;
+
+    e_op.lease = gen_zint();
+    e_op.initial_sn = gen_zint();
+    if (gen_bool())
+    {
+        e_op.cookie = gen_bytes(64);
+    }
+    else
+    {
+        _ZN_SET_FLAG(*header, _ZN_FLAG_S_A);
+    }
+
+    return e_op;
+}
+
+void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
+{
+    printf("   Lease (%zu:%zu)", left->lease, right->lease);
+    assert(left->lease == right->lease);
+    printf("\n");
+
+    printf("   Initial SN (%zu:%zu)", left->initial_sn, right->initial_sn);
+    assert(left->initial_sn == right->initial_sn);
+    printf("\n");
+
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    {
+        printf("   ");
+        assert_eq_uint8_array(&left->cookie, &right->cookie);
         printf("\n");
     }
 }
@@ -1866,93 +1925,6 @@ void open_message(void)
 
     // Free
     _zn_open_free(&d_op, e_hdr);
-    _z_rbuf_free(&rbf);
-    _z_wbuf_free(&wbf);
-}
-
-/*------------------ Accept Message ------------------*/
-_zn_accept_t gen_accept_message(uint8_t *header)
-{
-    _zn_accept_t e_ac;
-
-    e_ac.whatami = gen_zint();
-    e_ac.opid = gen_bytes(16);
-    e_ac.apid = gen_bytes(16);
-    e_ac.initial_sn = gen_zint();
-    if (gen_bool())
-    {
-        e_ac.sn_resolution = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_S);
-    }
-    if (gen_bool())
-    {
-        e_ac.locators = gen_str_array((gen_uint8() % 4) + 1);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
-    }
-
-    return e_ac;
-}
-
-void assert_eq_accept_message(_zn_accept_t *left, _zn_accept_t *right, uint8_t header)
-{
-    printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
-    assert(left->whatami == right->whatami);
-    printf("\n");
-
-    printf("   ");
-    assert_eq_uint8_array(&left->opid, &right->opid);
-    printf("\n");
-
-    printf("   ");
-    assert_eq_uint8_array(&left->apid, &right->apid);
-    printf("\n");
-
-    printf("   LEase (%zu:%zu)", left->lease, right->lease);
-    assert(left->lease == right->lease);
-    printf("\n");
-
-    printf("   Initial SN (%zu:%zu)", left->initial_sn, right->initial_sn);
-    assert(left->initial_sn == right->initial_sn);
-    printf("\n");
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
-    {
-        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
-        assert(left->sn_resolution == right->sn_resolution);
-        printf("\n");
-    }
-
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
-    {
-        printf("   ");
-        assert_eq_str_array(&left->locators, &right->locators);
-        printf("\n");
-    }
-}
-
-void accept_message(void)
-{
-    printf("\n>> Accept message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
-
-    // Initialize
-    uint8_t e_hdr = 0;
-    _zn_accept_t e_ac = gen_accept_message(&e_hdr);
-
-    // Encode
-    int res = _zn_accept_encode(&wbf, e_hdr, &e_ac);
-    assert(res == 0);
-
-    // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
-    _zn_accept_result_t r_ac = _zn_accept_decode(&rbf, e_hdr);
-    assert(r_ac.tag == _z_res_t_OK);
-
-    _zn_accept_t d_ac = r_ac.value.accept;
-    assert_eq_accept_message(&e_ac, &d_ac, e_hdr);
-
-    // Free
-    _zn_accept_free(&d_ac, e_hdr);
     _z_rbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
@@ -2323,8 +2295,8 @@ _zn_session_message_t *gen_session_message(int can_be_fragment)
     uint8_t mids[] = {
         _ZN_MID_SCOUT,
         _ZN_MID_HELLO,
+        _ZN_MID_INIT,
         _ZN_MID_OPEN,
-        _ZN_MID_ACCEPT,
         _ZN_MID_CLOSE,
         _ZN_MID_SYNC,
         _ZN_MID_ACK_NACK,
@@ -2343,13 +2315,13 @@ _zn_session_message_t *gen_session_message(int can_be_fragment)
         p_sm->header = _ZN_MID_HELLO;
         p_sm->body.hello = gen_hello_message(&p_sm->header);
         break;
+    case _ZN_MID_INIT:
+        p_sm->header = _ZN_MID_INIT;
+        p_sm->body.init = gen_init_message(&p_sm->header);
+        break;
     case _ZN_MID_OPEN:
         p_sm->header = _ZN_MID_OPEN;
         p_sm->body.open = gen_open_message(&p_sm->header);
-        break;
-    case _ZN_MID_ACCEPT:
-        p_sm->header = _ZN_MID_ACCEPT;
-        p_sm->body.accept = gen_accept_message(&p_sm->header);
         break;
     case _ZN_MID_CLOSE:
         p_sm->header = _ZN_MID_CLOSE;
@@ -2408,11 +2380,11 @@ void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_
     case _ZN_MID_HELLO:
         assert_eq_hello_message(&left->body.hello, &right->body.hello, left->header);
         break;
+    case _ZN_MID_INIT:
+        assert_eq_init_message(&left->body.init, &right->body.init, left->header);
+        break;
     case _ZN_MID_OPEN:
         assert_eq_open_message(&left->body.open, &right->body.open, left->header);
-        break;
-    case _ZN_MID_ACCEPT:
-        assert_eq_accept_message(&left->body.accept, &right->body.accept, left->header);
         break;
     case _ZN_MID_CLOSE:
         assert_eq_close_message(&left->body.close, &right->body.close, left->header);
@@ -2733,8 +2705,8 @@ int main(void)
         // Session messages
         scout_message();
         hello_message();
+        init_message();
         open_message();
-        accept_message();
         close_message();
         sync_message();
         ack_nack_message();

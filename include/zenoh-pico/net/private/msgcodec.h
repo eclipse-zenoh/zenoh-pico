@@ -37,8 +37,8 @@ _ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 _ZN_RESULT_DECLARE(_zn_scout_t, scout)
 _ZN_RESULT_DECLARE(_zn_hello_t, hello)
+_ZN_RESULT_DECLARE(_zn_init_t, init)
 _ZN_RESULT_DECLARE(_zn_open_t, open)
-_ZN_RESULT_DECLARE(_zn_accept_t, accept)
 _ZN_RESULT_DECLARE(_zn_close_t, close)
 _ZN_RESULT_DECLARE(_zn_sync_t, sync)
 _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
@@ -202,13 +202,13 @@ _ZN_DECLARE_DECODE(query);
 _ZN_DECLARE_FREE_NOH(query);
 
 /*------------------ Session Message ------------------*/
+_ZN_DECLARE_ENCODE(init);
+_ZN_DECLARE_DECODE(init);
+_ZN_DECLARE_FREE(init);
+
 _ZN_DECLARE_ENCODE(open);
 _ZN_DECLARE_DECODE(open);
 _ZN_DECLARE_FREE(open);
-
-_ZN_DECLARE_ENCODE(accept);
-_ZN_DECLARE_DECODE(accept);
-_ZN_DECLARE_FREE(accept);
 
 _ZN_DECLARE_ENCODE(close);
 _ZN_DECLARE_DECODE(close);
