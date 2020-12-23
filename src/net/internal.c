@@ -897,7 +897,7 @@ _zn_resource_t *_zn_get_resource_matching_key(zn_session_t *zn, int is_local, co
 
 int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
 {
-    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%zu,%s)\n", res->id, res->key.rid, res->key.rname);
+    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%lu,%s)\n", res->id, res->key.rid, res->key.rname);
 
     // Lock the resources data struct
     _z_mutex_lock(&zn->mutex_inner);
@@ -1106,7 +1106,7 @@ _z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_resk
 
 int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub)
 {
-    _Z_DEBUG_VA(">>> Allocating sub decl for (%zu,%s)\n", sub->key.rid, sub->key.rname);
+    _Z_DEBUG_VA(">>> Allocating sub decl for (%lu,%s)\n", sub->key.rid, sub->key.rname);
 
     // Acquire the lock on the subscriptions data struct
     _z_mutex_lock(&zn->mutex_inner);
@@ -1382,7 +1382,7 @@ _zn_pending_query_t *__unsafe_zn_get_pending_query_by_id(zn_session_t *zn, z_zin
 
 int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    _Z_DEBUG_VA(">>> Allocating query for (%zu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
+    _Z_DEBUG_VA(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
     // Acquire the lock on the queries
     _z_mutex_lock(&zn->mutex_inner);
     int res;
@@ -1816,7 +1816,7 @@ _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 
 int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
-    _Z_DEBUG_VA(">>> Allocating queryable for (%zu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
+    _Z_DEBUG_VA(">>> Allocating queryable for (%lu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
     // Acquire the lock on the queryables
     _z_mutex_lock(&zn->mutex_inner);
