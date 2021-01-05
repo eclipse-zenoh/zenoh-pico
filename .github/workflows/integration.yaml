@@ -27,6 +27,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2     
       
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
     - name: Compile release
       run: make all
       env:
