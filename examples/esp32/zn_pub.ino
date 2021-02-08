@@ -27,7 +27,6 @@ void setup() {
 
 void loop()
 {
-    delay(5000);
     zn_properties_t *config = zn_config_default();
     zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
     zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
@@ -51,7 +50,10 @@ void loop()
     char buf[30];
     delay(1000);
     sprintf(buf, "%s", DATA);
-    zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
+    while(true) {
+      zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
+      delay(5000);
+    }
 
     zn_undeclare_publisher(pub);
     zn_close(s);
