@@ -21,7 +21,7 @@
 #include "zenoh-pico/private/collection.h"
 #include "zenoh-pico/private/iobuf.h"
 
-#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
+#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1) || (ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)
 #include "zenoh-pico/net/private/system/unix.h"
 #elif (ZENOH_CONTIKI == 1)
 #include "zenoh-pico/net/private/contiki/types.h"

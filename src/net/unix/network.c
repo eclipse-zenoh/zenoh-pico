@@ -14,7 +14,11 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#if (ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)
+#include <lwip/sockets.h>
+#else
 #include <ifaddrs.h>
+#endif
 #include <netdb.h>
 #include <net/if.h>
 #include <stdint.h>
@@ -27,6 +31,8 @@
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
 {
+    char *result;
+#if (ESP32 == 0) && (ARDUINO_ARCH_ESP32 == 0)
     // @TODO: improve network interface selection
     char *eth_prefix = "en";
     char *lo_prefix = "lo";
@@ -79,8 +85,9 @@ char *_zn_select_scout_iface()
             current = current->ifa_next;
         } while ((iface == 0) && (current != 0));
     }
-    char *result = strdup((iface != 0) ? iface : loopback);
-    freeifaddrs(ifap);
+    result = strdup((iface != 0) ? iface : loopback);
+#endif
+
     return result;
 }
 
@@ -219,6 +226,9 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
         return r;
     }
 
+// Although SO_LINGER is implemented in ESP-IDF version of lwIP (esp-lwip),
+// sometimes SO_LINGER processing might be disabled.
+#if !(((ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)) && (LWIP_SO_LINGER == 0))
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = ZN_SESSION_LEASE / 1000;
@@ -230,6 +240,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
         r.value.socket = 0;
         return r;
     }
+#endif
 
 #if (ZENOH_MACOS == 1)
     setsockopt(r.value.socket, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));

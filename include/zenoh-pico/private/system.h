@@ -15,7 +15,7 @@
 #ifndef _ZENOH_PICO_SYSTEM_H
 #define _ZENOH_PICO_SYSTEM_H
 
-#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
+#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1) || (ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)
 #include "zenoh-pico/private/system/unix.h"
 #elif (ZENOH_CONTIKI == 1)
 #include "zenoh-pico/private/contiki/types.h"
