@@ -31,7 +31,7 @@
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
 {
-    char *result;
+    char *result = NULL;
 #if (ESP32 == 0) && (ARDUINO_ARCH_ESP32 == 0)
     // @TODO: improve network interface selection
     char *eth_prefix = "en";
