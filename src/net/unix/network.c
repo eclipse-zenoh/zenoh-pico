@@ -86,6 +86,7 @@ char *_zn_select_scout_iface()
         } while ((iface == 0) && (current != 0));
     }
     result = strdup((iface != 0) ? iface : loopback);
+    freeifaddrs(ifap);
 #endif
 
     return result;
