@@ -1,0 +1,8 @@
+{
+    "name": "zenoh_pico",
+    "type": "cmake",
+    "cmake-args":[
+        "-DTESTS=OFF",
+        "-DEXAMPLES=OFF",
+    ],
+}
