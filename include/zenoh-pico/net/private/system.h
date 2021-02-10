@@ -15,7 +15,7 @@
 #ifndef _ZENOH_NET_PICO_SYSTEM_H
 #define _ZENOH_NET_PICO_SYSTEM_H
 
-#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
+#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1) || (ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)
 #include "zenoh-pico/net/private/system/unix.h"
 #elif (ZENOH_CONTIKI == 1)
 #include "zenoh-pico/net/private/contiki/types.h"
@@ -23,7 +23,11 @@
 
 /*------------------ Network ------------------*/
 // @TODO: remove the platform-specific include and data types
+#if (ESP32 == 1) || (ARDUINO_ARCH_ESP32 == 1)
+#include <lwip/sockets.h>
+#else
 #include <netinet/in.h>
+#endif
 #include "zenoh-pico/net/private/result.h"
 
 _ZN_RESULT_DECLARE(_zn_socket_t, socket)

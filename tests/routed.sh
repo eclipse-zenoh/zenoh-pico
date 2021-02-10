@@ -14,37 +14,20 @@
 #
 
 TESTBIN=$1
+TESTDIR=$(dirname $0)
 
-cd $(dirname $0)
+cd $TESTDIR
 
 echo "------------------ Running test $TESTBIN -------------------"
 
 sleep 5
 
 if [ ! -f zenohd ]; then
-    VERSION=$(curl --silent "https://api.github.com/repos/eclipse-zenoh/zenoh/releases" | grep '"name"' | head -n1 | cut -d'"' -f4 | cut -d"v" -f2)
-    if [ -z "$VERSION" ]; then
-        echo "Unable to retrieve zenoh version ..."
-        exit -1
-    fi
-
-    echo "> Target zenoh version $VERSION ..."
-    LINK=""
-    case "$OSTYPE" in
-    "darwin"*)
-        LINK="https://download.eclipse.org/zenoh/zenoh/master/eclipse-zenoh-$VERSION-macosx10.7-x86-64.tgz"
-    ;;
-    "linux-gnu"*) 
-        LINK="https://download.eclipse.org/zenoh/zenoh/master/eclipse-zenoh-$VERSION-x86_64-unknown-linux-gnu.tgz"
-    ;;
-    *) 
-       exit -1
-    ;;
-    esac
-
-    echo "> Downloading $LINK ..."
-    curl --location --progress-bar --output zenohd.tar.gz $LINK
-    tar -xzf zenohd.tar.gz
+    git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
+    cd zenoh-git
+    cargo build
+    cp ./target/debug/zenohd $TESTDIR/
+    cd $TESTDIR
 fi
 
 chmod +x zenohd
