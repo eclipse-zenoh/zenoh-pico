@@ -539,7 +539,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // ~      RID      ~
 // +---------------+
-// ~    Suffix     ~ if K==1
+// ~    Suffix     ~ if K==0. Otherwise: only numerical RID
 // +---------------+
 //
 // typdef struct { ... } zn_reskey_t; is defined in zenoh/net/types.h
@@ -551,7 +551,7 @@ typedef struct
 // +---------------+
 // ~      RID      ~
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 //
 typedef struct
@@ -565,7 +565,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|   PUB   |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 //
 typedef struct
@@ -588,7 +588,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|S|R|   SUB   |
 // +---------------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 // ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
 // +---------------+
@@ -606,7 +606,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  QABLE  |
 // +---------------+
-// ~     ResKey    ~ if K==1 then only numerical id
+// ~     ResKey    ~
 // +---------------+
 //
 typedef struct
@@ -632,7 +632,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_PUB  |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 //
 typedef struct
@@ -645,7 +645,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_SUB  |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 //
 typedef struct
@@ -658,7 +658,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X| F_QABLE |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 //
 typedef struct
@@ -745,7 +745,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|I|D|  DATA   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 -- Only numerical id
+// ~    ResKey     ~
 // +---------------+
 // ~    DataInfo   ~ if I==1
 // +---------------+
@@ -776,7 +776,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|N|F|  PULL   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 // ~    pullid     ~
 // +---------------+
@@ -795,7 +795,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|T|  QUERY  |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~
 // +---------------+
 // ~   predicate   ~
 // +---------------+
