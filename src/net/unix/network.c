@@ -44,12 +44,9 @@ char *_zn_select_scout_iface()
     else
     {
         current = ifap;
-        int family;
         do
         {
-            family = current->ifa_addr->sa_family;
-
-            if (family == AF_INET)
+            if (current->ifa_addr != 0 && current->ifa_addr->sa_family == AF_INET)
             {
                 if (memcmp(current->ifa_name, eth_prefix, len) == 0)
                 {
