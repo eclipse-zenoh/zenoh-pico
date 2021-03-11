@@ -24,6 +24,11 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
+if(NOT BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif()
+message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
+
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
 option (CONTIKI "Use this for Contiki Cross compilation." OFF)
@@ -129,7 +134,7 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} SHARED ${Sources})
+add_library(${Libname} ${Sources})
 
 if (UNIX_TARGET)
   if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
