@@ -142,8 +142,9 @@ endif()
 target_link_libraries(${Libname})
 
 if (NOT SWIG_JAVA)
-  install(TARGETS ${Libname} LIBRARY
-            DESTINATION lib
+  install(TARGETS ${Libname}
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
             COMPONENT Library
           )
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
