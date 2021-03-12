@@ -75,28 +75,28 @@ crossbuild: check-docker
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
 	docker rmi dockcross/$(CROSSIMG)
 
-linux-armv5: 
+linux-armv5:
 	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
-linux-armv6: 
+linux-armv6:
 	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
-linux-armv7: 
+linux-armv7:
 	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
-linux-armv7a: 
+linux-armv7a:
 	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
-linux-arm64: 
+linux-arm64:
 	CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
 
-linux-mips: 
+linux-mips:
 	CROSSIMG=$@ DEBARCH=mips RPMARCH=mips make crossbuild
 
 linux-x86:
 	CROSSIMG=$@ DEBARCH=i386 RPMARCH=x86 make crossbuild
 
-linux-x64: 
+linux-x64:
 	CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
 
 

@@ -10,11 +10,11 @@
 
 # Eclipse zenoh C Client API
 
-[Eclipse zenoh](http://zenoh.io) is an extremely efficient and fault-tolerant [Named Data Networking](http://named-data.net) (NDN) protocol 
-that is able to scale down to extremely constrainded devices and networks. 
+[Eclipse zenoh](http://zenoh.io) is an extremely efficient and fault-tolerant [Named Data Networking](http://named-data.net) (NDN) protocol
+that is able to scale down to extremely constrainded devices and networks.
 
 zenoh-pico targets constrained devices and offers a C API for pure clients, i.e., it does not support peer-to-peer communication.
-zenoh-pico can be easily tested against a zenoh router running in a Docker container (see https://github.com/eclipse-zenoh/zenoh#how-to-test-it). 
+zenoh-pico can be easily tested against a zenoh router running in a Docker container (see https://github.com/eclipse-zenoh/zenoh#how-to-test-it).
 
 -------------------------------
 ## How to install it
@@ -31,12 +31,12 @@ For other platforms, you will need to clone and build the sources.
 WARNING: Note that zenoh-pico has not been ported on Windows yet!
 
 -------------------------------
-## How to build it 
-To build the **zenoh-pico** client API you need to ensure that [cmake](https://cmake.org) is available on your platform -- if not please install it. 
+## How to build it
+To build the **zenoh-pico** client API you need to ensure that [cmake](https://cmake.org) is available on your platform -- if not please install it.
 
 Once the [cmake](https://cmake.org) dependency is satisfied, just do the following for **CMake** version 3 and higher:
 
-  -- CMake version 3 and higher -- 
+  -- CMake version 3 and higher --
 
   ```bash
   $ cd /path/to/zenoh-pico
@@ -58,7 +58,7 @@ For those that still have **CMake** version 2.8, do the following commands:
   $ mkdir build
   $ cd build
   $ cmake -DCMAKE_BUILD_TYPE=Release ../cmake-2.8
-  $ make 
+  $ make
   $ make install # on Linux use **sudo**
   ```
 

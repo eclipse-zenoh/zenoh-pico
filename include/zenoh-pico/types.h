@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 /**
- * A variable-length encoding unsigned integer. 
+ * A variable-length encoding unsigned integer.
  */
 typedef size_t z_zint_t;
 
