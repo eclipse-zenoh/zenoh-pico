@@ -11,7 +11,7 @@
 # Contributors:
 #   ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10.2)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
@@ -94,15 +94,16 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-add_definitions(
-    "$<$<CONFIG:RELEASE>:-DNDEBUG>"
-    "$<$<CONFIG:DEBUG>:${ZENOH_DEBUG_OPT}>"
-)
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DNDEBUG)
+  else()
+    add_definitions(${ZENOH_DEBUG_OPT} -DZENOH_DEBUG=1)
+  endif()
+
   add_compile_options(
-      "$<$<CONFIG:RELEASE>:-pipe -O3>"
-      "$<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>"
+      $<$<CONFIG:RELEASE>:-pipe -O3>
+      $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
   )
 endif()
 
