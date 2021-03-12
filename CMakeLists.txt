@@ -15,6 +15,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
+message("---- SYSTEM_NAME ${CMAKE_SYSTEM_NAME} =====")
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
