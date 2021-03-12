@@ -15,6 +15,11 @@ cmake_minimum_required(VERSION 3.10)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
+
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
@@ -51,7 +56,7 @@ set (ZENOH_TRANSPORT_I2C "OFF")
 #   - 0 : NOTHING
 
 if (DEFINED ZENOH_DEBUG)
-  set (ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
+  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
 else()
   set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1")
 endif()
@@ -89,12 +94,15 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+add_definitions(
+    "$<$<CONFIG:RELEASE>:-DNDEBUG>"
+    "$<$<CONFIG:DEBUG>:${ZENOH_DEBUG_OPT}>"
+)
 
-# Note: don't use CMAKE_C_STANDARD to be compatible with cmake <3.1.0
-set(CMAKE_C_FLAGS_DEBUG "-std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0")
-set(CMAKE_C_FLAGS_GCOV "-std=gnu99 -fprofile-arcs -ftest-coverage -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
-set(CMAKE_C_FLAGS_RELEASE "-std=gnu99 -DNDEBUG -pipe -O3")
-
+add_compile_options(
+    "$<$<CONFIG:RELEASE>:-pipe -O3>"
+    "$<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>"
+)
 
 if (NOT SWIG_JAVA)
   set(Libname "zenohpico")
