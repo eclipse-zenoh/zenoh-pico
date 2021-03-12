@@ -146,8 +146,7 @@ link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} ${Sources})
 
-find_package(Threads REQUIRED)
-target_link_libraries(${Libname} Threads::Threads)
+target_link_libraries(${Libname} ${CMAKE_THREAD_LIBS_INIT})
 
 if (NOT SWIG_JAVA)
   install(TARGETS ${Libname}
