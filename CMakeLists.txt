@@ -99,10 +99,12 @@ add_definitions(
     "$<$<CONFIG:DEBUG>:${ZENOH_DEBUG_OPT}>"
 )
 
-add_compile_options(
-    "$<$<CONFIG:RELEASE>:-pipe -O3>"
-    "$<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>"
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(
+      "$<$<CONFIG:RELEASE>:-pipe -O3>"
+      "$<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>"
+  )
+endif()
 
 if (NOT SWIG_JAVA)
   set(Libname "zenohpico")
