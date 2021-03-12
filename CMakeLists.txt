@@ -146,7 +146,11 @@ link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} ${Sources})
 
-target_link_libraries(${Libname} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${Libname} Threads::Threads)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  target_link_libraries(${Libname} rt)
+endif()
 
 if (NOT SWIG_JAVA)
   install(TARGETS ${Libname}
