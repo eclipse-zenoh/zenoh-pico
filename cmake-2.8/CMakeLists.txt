@@ -40,17 +40,17 @@ set (ZENOH_TRANSPORT_I2C "OFF")
 #   - 1 : ERROR
 #   - 0 : NOTHING
 
-set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1") 
+set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   message(STATUS "Configuring on/for Linux")
-  set(ZENOH_PLATFORM_OPT "-DZENOH_LINUX=1")  
+  set(ZENOH_PLATFORM_OPT "-DZENOH_LINUX=1")
   set(INSTALL_RPATH "/usr/local/lib")
   set(INSTALL_NAME_DIR "/usr/local/lib")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message(STATUS "Configuring on/for macOS")
   set(ZENOH_PLATFORM_OPT "-DZENOH_MACOS=1")
-  set(MACOSX_RPATH "ON")  
+  set(MACOSX_RPATH "ON")
   set(INSTALL_NAME_DIR "/usr/local/lib")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   message(STATUS "Configuring on/for Windows")
@@ -79,11 +79,11 @@ set(CMAKE_C_FLAGS_DEBUG "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=c99 -Wall
 set(CMAKE_C_FLAGS_RELEASE "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=c99 -Wall -Wunused -pipe -O3")
 
 include_directories(
-  "${PROJECT_SOURCE_DIR}/../include"                
+  "${PROJECT_SOURCE_DIR}/../include"
 )
 
 if (UNIX_TARGET)
-  file(GLOB Sources "../src/*.c" "../src/unix/*.c")  
+  file(GLOB Sources "../src/*.c" "../src/unix/*.c")
 endif(UNIX_TARGET)
 
 link_directories("${PROJECT_SOURCE_DIR}/../build")
