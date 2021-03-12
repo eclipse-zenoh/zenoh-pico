@@ -11,7 +11,7 @@
 # Contributors:
 #   ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.8)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
