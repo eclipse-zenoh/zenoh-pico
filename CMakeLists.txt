@@ -34,6 +34,10 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
+if(NOT BUILD_TESTING)
+  set(BUILD_TESTING ON)
+endif()
+
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 option (EXAMPLES "Use this to also build the examples." ON)
 option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
