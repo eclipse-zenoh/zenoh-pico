@@ -11,11 +11,10 @@
 # Contributors:
 #   ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
 
-message("---- SYSTEM_NAME ${CMAKE_SYSTEM_NAME} =====")
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
@@ -57,17 +56,17 @@ else()
   set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1")
 endif()
 
-message(STATUS "Configuring for ${CMAKE_HOST_SYSTEM_NAME}")
-if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
-  set(ZENOH_PLATFORM_OPT "-DZENOH_LINUX=1")
+message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  add_definitions(-DZENOH_LINUX=1)
   set(JNI_PLATFORM_NAME "linux")
-elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
-  set(ZENOH_PLATFORM_OPT "-DZENOH_MACOS=1")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  add_definitions(-DZENOH_MACOS=1)
   set(MACOSX_RPATH "ON")
   set(JNI_PLATFORM_NAME "darwin")
-elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
-  # set(ZENOH_PLATFORM_OPT "-DZENOH_WIN=1")
+  # add_definitions(-DZENOH_WIN=1)
   # set(JNI_PLATFORM_NAME "win32")
 endif()
 
@@ -92,9 +91,9 @@ find_package(Threads REQUIRED)
 
 
 # Note: don't use CMAKE_C_STANDARD to be compatible with cmake <3.1.0
-set(CMAKE_C_FLAGS_DEBUG "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0")
-set(CMAKE_C_FLAGS_GCOV "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -fprofile-arcs -ftest-coverage -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
-set(CMAKE_C_FLAGS_RELEASE "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -DNDEBUG -pipe -O3")
+set(CMAKE_C_FLAGS_DEBUG "-std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0")
+set(CMAKE_C_FLAGS_GCOV "-std=gnu99 -fprofile-arcs -ftest-coverage -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
+set(CMAKE_C_FLAGS_RELEASE "-std=gnu99 -DNDEBUG -pipe -O3")
 
 
 if (NOT SWIG_JAVA)
@@ -127,7 +126,7 @@ else()
 endif()
 
 
-if (UNIX_TARGET)
+if (UNIX)
   file(GLOB Sources "src/*.c" "src/net/*.c" "src/net/unix/*.c")
 endif()
 
@@ -136,15 +135,8 @@ link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} ${Sources})
 
-if (UNIX_TARGET)
-  if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(${Libname} pthread)
-  else()
-    target_link_libraries(${Libname} pthread rt)
-  endif()
-endif()
-
-target_link_libraries(${Libname})
+find_package(Threads REQUIRED)
+target_link_libraries(${Libname} Threads::Threads)
 
 if (NOT SWIG_JAVA)
   install(TARGETS ${Libname}
