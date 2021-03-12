@@ -35,8 +35,6 @@ endif()
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
-option (TESTS "Use this to also build the tests." ON)
 option (EXAMPLES "Use this to also build the examples." ON)
 option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
 
@@ -194,7 +192,7 @@ if (EXAMPLES)
   target_link_libraries(zn_scout ${Libname})
 endif(EXAMPLES)
 
-if (TESTS)
+if(BUILD_TESTING)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
@@ -219,10 +217,7 @@ if (TESTS)
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
   add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
-endif(TESTS)
-
-
-
+endif()
 
 # For packaging
 if (PACKAGING)
