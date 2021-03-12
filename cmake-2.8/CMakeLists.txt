@@ -22,7 +22,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
-option (CONTIKI "Use this for Contiki Cross compilation." OFF)
 
 # Configure the transport to use with the following variables
 set (ZENOH_TRANSPORT_TCP "ON")
