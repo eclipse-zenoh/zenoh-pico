@@ -23,8 +23,8 @@
 
 #if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
 #include "zenoh-pico/net/private/system/unix.h"
-#elif (ZENOH_CONTIKI == 1)
-#include "zenoh-pico/net/private/contiki/types.h"
+#else
+#error Unknown platform
 #endif
 
 /**

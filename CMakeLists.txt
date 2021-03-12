@@ -31,7 +31,6 @@ message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
-option (CONTIKI "Use this for Contiki Cross compilation." OFF)
 option (TESTS "Use this to also build the tests." ON)
 option (EXAMPLES "Use this to also build the examples." ON)
 option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
