@@ -24,7 +24,8 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR=build
 
 # Crossbuild directory
-CROSSBUILD_TARGETS=linux-armv5 linux-armv6 linux-armv7 linux-armv7a linux-arm64 linux-mips linux-x86 linux-x64
+#CROSSBUILD_TARGETS=linux-armv5 linux-armv6 linux-armv7 linux-armv7a linux-arm64 linux-mips linux-x86 linux-x64
+CROSSBUILD_TARGETS=linux-armv5 linux-armv6 linux-armv7 linux-armv7a linux-arm64 linux-x86 linux-x64
 CROSSBUILD_DIR=crossbuilds
 CROSSIMG_PREFIX=zenoh-pico_
 # NOTES:
