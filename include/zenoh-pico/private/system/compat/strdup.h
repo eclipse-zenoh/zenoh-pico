@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,16 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_H
-#define ZENOH_PICO_UTILS_H
+#ifndef _ZENOH_NET_PICO_STRDUP_H
+#define _ZENOH_NET_PICO_STRDUP_H
 
-#include "zenoh-pico/types.h"
+char *strdup(const char *s);
 
-#if defined(ZENOH_NEEDS_STRDUP)
-#include "zenoh-pico/private/system/compat/strdup.h"
-#endif
-
-z_string_t z_string_make(const char *value);
-void z_string_free(z_string_t *s);
-
-#endif /* ZENOH_PICO_UTILS_H */
+#endif /* _ZENOH_NET_PICO_STRDUP_H */
