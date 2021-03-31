@@ -23,6 +23,8 @@
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS)
 #include "zenoh-pico/net/private/system/unix.h"
+#elif defined(ZENOH_ZEPHYR)
+#include "zenoh-pico/net/private/system/zephyr.h"
 #else
 #error Unknown platform
 #endif
