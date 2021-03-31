@@ -228,7 +228,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
         return r;
     }
 
-#if (ZENOH_MACOS == 1)
+#if defined(ZENOH_MACOS)
     setsockopt(r.value.socket, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
 #endif
 
@@ -326,7 +326,7 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
         do
         {
             _Z_DEBUG("Sending wbuf on socket...");
-#if (ZENOH_LINUX == 1)
+#if defined(ZENOH_LINUX)
             wb = send(sock, bs.val, n, MSG_NOSIGNAL);
 #else
             wb = send(sock, bs.val, n, 0);

@@ -15,7 +15,7 @@
 #ifndef _ZENOH_PICO_SYSTEM_H
 #define _ZENOH_PICO_SYSTEM_H
 
-#if (ZENOH_LINUX == 1) || (ZENOH_MACOS == 1)
+#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS)
 #include "zenoh-pico/private/system/unix.h"
 #else
 #error Unknown platform
