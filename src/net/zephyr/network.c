@@ -31,19 +31,19 @@
 #include "zenoh-pico/private/logging.h"
 #include "zenoh-pico/private/iobuf.h"
 
-typedef struct {
-    struct net_if * iface;
+typedef struct
+{
+    struct net_if *iface;
 } iface_info_t;
 
 void net_if_iterator_func(struct net_if *iface, void *user_data)
 {
-    iface_info_t * iface_info = user_data;
+    iface_info_t *iface_info = user_data;
 
     if (iface_info->iface == NULL)
     {
         iface_info->iface = iface;
     }
-
 }
 
 /*------------------ Interfaces and sockets ------------------*/
@@ -60,12 +60,12 @@ char *_zn_select_scout_iface()
     if (iface_info.iface != NULL)
     {
         struct net_addr addr = iface_info.iface->config.ip.ipv4->unicast->address;
-        struct sockaddr_in sa = { .sin_family = addr.family, .sin_addr = addr.in_addr };
+        struct sockaddr_in sa = {.sin_family = addr.family, .sin_addr = addr.in_addr};
 
-        getnameinfo((const struct sockaddr*)&sa,
-            sizeof(struct sockaddr_in),
-            host, NI_MAXHOST,
-            NULL, 0, NI_NUMERICHOST);
+        getnameinfo((const struct sockaddr *)&sa,
+                    sizeof(struct sockaddr_in),
+                    host, NI_MAXHOST,
+                    NULL, 0, NI_NUMERICHOST);
         _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
 
         char *result = strdup(host);
@@ -141,17 +141,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         return r;
     }
 
-    // NOTE(esteve): SO_SNDTIMEO not supported in Zephyr
-/*
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-*/
+    // NOTE: SO_SNDTIMEO socket option is not supported in Zephyr
     return r;
 }
 
@@ -202,7 +192,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
         return r;
     }
 
-    // NOTE(esteve): SO_KEEPALIVE and SO_LINGER not supported in Zephyr
+    // NOTE: SO_KEEPALIVE and SO_LINGER socket options are not supported in Zephyr
 
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -312,3 +302,5 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
 
     return 0;
 }
+
+// NOTE: iovec operations are not supported in Zephyr
