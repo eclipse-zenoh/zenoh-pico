@@ -203,29 +203,6 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     }
 
     // NOTE(esteve): SO_KEEPALIVE and SO_LINGER not supported in Zephyr
-/*
-    int flags = 1;
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-
-    struct linger ling;
-    ling.l_onoff = 1;
-    ling.l_linger = ZN_SESSION_LEASE / 1000;
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-*/
 
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
