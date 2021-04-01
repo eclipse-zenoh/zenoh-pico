@@ -783,7 +783,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     }
 
     // Initialize the PRNG
-    srand(clock());
+    srand(time(NULL));
 
     // Attempt to open a socket
     _zn_socket_result_t r_sock = _zn_open_tx_session(locator);

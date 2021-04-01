@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,73 +12,67 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <ifaddrs.h>
+#include <net/net_if.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <netdb.h>
 #include <net/if.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "zenoh-pico/net/private/system.h"
 #include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/private/iobuf.h"
+
+typedef struct {
+    struct net_if * iface;
+} iface_info_t;
+
+void net_if_iterator_func(struct net_if *iface, void *user_data)
+{
+    iface_info_t * iface_info = user_data;
+
+    if (iface_info->iface == NULL)
+    {
+        iface_info->iface = iface;
+    }
+
+}
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
 {
     // @TODO: improve network interface selection
-    char *eth_prefix = "en";
-    char *lo_prefix = "lo";
-    size_t len = 2;
-    char *loopback = 0;
-    char *iface = 0;
-    struct ifaddrs *ifap;
-    struct ifaddrs *current;
     char host[NI_MAXHOST];
 
-    if (getifaddrs(&ifap) == -1)
+    iface_info_t iface_info;
+    iface_info.iface = NULL;
+
+    net_if_foreach(net_if_iterator_func, &iface_info);
+
+    if (iface_info.iface != NULL)
     {
-        return 0;
+        struct net_addr addr = iface_info.iface->config.ip.ipv4->unicast->address;
+        struct sockaddr_in sa = { .sin_family = addr.family, .sin_addr = addr.in_addr };
+
+        getnameinfo((const struct sockaddr*)&sa,
+            sizeof(struct sockaddr_in),
+            host, NI_MAXHOST,
+            NULL, 0, NI_NUMERICHOST);
+        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
+
+        char *result = strdup(host);
+        return result;
     }
-    else
-    {
-        current = ifap;
-        do
-        {
-            if (current->ifa_addr != 0 && current->ifa_addr->sa_family == AF_INET)
-            {
-                if (memcmp(current->ifa_name, eth_prefix, len) == 0)
-                {
-                    if ((current->ifa_flags & (IFF_MULTICAST | IFF_UP | IFF_RUNNING)) && !(current->ifa_flags & IFF_PROMISC))
-                    {
-                        getnameinfo(current->ifa_addr,
-                                    sizeof(struct sockaddr_in),
-                                    host, NI_MAXHOST,
-                                    NULL, 0, NI_NUMERICHOST);
-                        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
-                        iface = host;
-                    }
-                }
-                else if (memcmp(current->ifa_name, lo_prefix, len) == 0)
-                {
-                    if ((current->ifa_flags & (IFF_UP | IFF_RUNNING)) && !(current->ifa_flags & IFF_PROMISC))
-                    {
-                        getnameinfo(current->ifa_addr,
-                                    sizeof(struct sockaddr_in),
-                                    host, NI_MAXHOST,
-                                    NULL, 0, NI_NUMERICHOST);
-                        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
-                        loopback = host;
-                    }
-                }
-            }
-            current = current->ifa_next;
-        } while ((iface == 0) && (current != 0));
-    }
-    char *result = strdup((iface != 0) ? iface : loopback);
-    freeifaddrs(ifap);
-    return result;
+
+    return 0;
 }
 
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port)
@@ -147,6 +141,8 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         return r;
     }
 
+    // NOTE(esteve): SO_SNDTIMEO not supported in Zephyr
+/*
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
     {
         r.tag = _z_res_t_ERR;
@@ -155,7 +151,7 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeou
         r.value.socket = 0;
         return r;
     }
-
+*/
     return r;
 }
 
@@ -206,31 +202,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
         return r;
     }
 
-    int flags = 1;
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-
-    struct linger ling;
-    ling.l_onoff = 1;
-    ling.l_linger = ZN_SESSION_LEASE / 1000;
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-
-#if defined(ZENOH_MACOS)
-    setsockopt(r.value.socket, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
-#endif
+    // NOTE(esteve): SO_KEEPALIVE and SO_LINGER not supported in Zephyr
 
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -326,11 +298,7 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
         do
         {
             _Z_DEBUG("Sending wbuf on socket...");
-#if defined(ZENOH_LINUX)
-            wb = send(sock, bs.val, n, MSG_NOSIGNAL);
-#else
             wb = send(sock, bs.val, n, 0);
-#endif
             _Z_DEBUG_VA(" sent %d bytes\n", wb);
             if (wb <= 0)
             {
@@ -344,55 +312,3 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
 
     return 0;
 }
-
-// size_t _zn_iovs_len(struct iovec *iov, int iovcnt)
-// {
-//     size_t len = 0;
-//     for (int i = 0; i < iovcnt; ++i)
-//         len += iov[i].iov_len;
-//     return len;
-// }
-
-// int _zn_compute_remaining(struct iovec *iov, int iovcnt, size_t sent)
-// {
-//     size_t idx = 0;
-//     int i = 0;
-//     while (idx + iov[i].iov_len <= sent)
-//     {
-//         idx += sent;
-//         i += 1;
-//     }
-//     int j = 0;
-//     if (idx + iov[i].iov_len > sent)
-//     {
-//         iov[0].iov_base = ((unsigned char *)iov[i].iov_base) + (sent - idx - iov[i].iov_len);
-//         j = 1;
-//         while (i < iovcnt)
-//         {
-//             iov[j] = iov[i];
-//             j++;
-//             i++;
-//         }
-//     }
-//     return j;
-// }
-
-// int _zn_send_iovec(_zn_socket_t sock, struct iovec *iov, int iovcnt)
-// {
-//     int len = 0;
-//     for (int i = 0; i < iovcnt; ++i)
-//         len += iov[i].iov_len;
-
-//     int n = writev(sock, iov, iovcnt);
-//     _Z_DEBUG_VA("z_send_iovec sent %d of %d bytes \n", n, len);
-//     while (n < len)
-//     {
-//         iovcnt = _zn_compute_remaining(iov, iovcnt, n);
-//         len = _zn_iovs_len(iov, iovcnt);
-//         n = writev(sock, iov, iovcnt);
-//         _Z_DEBUG_VA("z_send_iovec sent %d of %d bytes \n", n, len);
-//         if (n < 0)
-//             return -1;
-//     }
-//     return 0;
-// }
