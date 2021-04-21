@@ -182,7 +182,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     free(l);
     struct sockaddr_in serv_addr;
 
-    r.value.socket = socket(PF_INET, SOCK_STREAM, 0);
+    r.value.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (r.value.socket < 0)
     {
