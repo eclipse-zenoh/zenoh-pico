@@ -1,0 +1,7 @@
+{
+    "name": "zenoh-pico",
+    "license": "Apache-2.0",
+    "build": {
+        "extraScript": "extra_script.py"
+    }
+}
