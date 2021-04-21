@@ -165,7 +165,6 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     struct sockaddr_in *remote;
     struct addrinfo *res;
     status = getaddrinfo(addr_name, s_port, NULL, &res);
-    free(addr_name);
     if (status == 0 && res != NULL)
     {
         void *addr;
@@ -179,6 +178,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     sscanf(s_port, "%d", &port);
 
     _Z_DEBUG_VA("Connecting to: %s:%d\n", addr_name, port);
+    free(addr_name);
     free(l);
     struct sockaddr_in serv_addr;
 
