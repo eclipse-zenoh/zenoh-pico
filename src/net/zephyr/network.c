@@ -66,7 +66,7 @@ char *_zn_select_scout_iface()
                     sizeof(struct sockaddr_in),
                     host, NI_MAXHOST,
                     NULL, 0, NI_NUMERICHOST);
-        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
+        _Z_DEBUG_VA("\tAddress: <%s>\n", host);
 
         char *result = strdup(host);
         return result;
