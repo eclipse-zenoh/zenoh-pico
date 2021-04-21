@@ -155,7 +155,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     if (strcmp(tx, "tcp") != 0)
     {
         fprintf(stderr, "Locator provided is not for TCP\n");
-        exit(1);
+        _exit(-1);
     }
     char *addr_name = strdup(strtok(NULL, ":"));
     char *s_port = strtok(NULL, ":");
