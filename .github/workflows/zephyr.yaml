@@ -1,0 +1,87 @@
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+#
+name: zephyr
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install requirements
+      run: |
+        sudo apt-get install -y --no-install-recommends git cmake ninja-build gperf \
+          ccache dfu-util device-tree-compiler wget \
+          python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
+          make gcc gcc-multilib g++-multilib libsdl2-dev
+
+        pip3 install --user -U west
+        echo 'export PATH=~/.local/bin:"$PATH"' >> ~/.bashrc
+        source ~/.bashrc
+
+        west init ~/zephyrproject
+        cd ~/zephyrproject
+        west update
+
+        west zephyr-export
+
+        pip3 install --user -r ~/zephyrproject/zephyr/scripts/requirements.txt
+
+    - name: Install PlatformIO
+      run: |
+        python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+        . $HOME/.platformio/penv/bin/activate
+        platformio update
+
+    - name: Set up project
+      run: |
+        export ZEPHYR_BASE=~/zephyrproject/zephyr
+        . $HOME/.platformio/penv/bin/activate
+        cd ..
+        mkdir -p zenoh-pico-zephyr/zephyr
+        cat << EOF > zenoh-pico-zephyr/zephyr/CMakeLists.txt
+        cmake_minimum_required(VERSION 3.13.1)
+        include(\$ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
+        project(zenoh-pico-zephyr)
+
+        target_sources(app PRIVATE ../lib/zenoh-pico/examples/net/zn_pub.c)
+        EOF
+
+        mkdir -p zenoh-pico-zephyr/lib
+        cd zenoh-pico-zephyr/lib
+        ln -s ../../zenoh-pico
+        cd ..
+
+        cd zephyr
+        ln -s ../example-prj.conf prj.conf
+        cd ..
+
+        ln -s lib/zenoh-pico/example-platformio.ini platformio.ini
+
+    - name: Build
+      run: |
+        export ZEPHYR_BASE=~/zephyrproject/zephyr
+        . $HOME/.platformio/penv/bin/activate
+        cd ../zenoh-pico-zephyr
+        platformio run --environment nucleo_f767zi
