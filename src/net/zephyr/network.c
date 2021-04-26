@@ -66,7 +66,7 @@ char *_zn_select_scout_iface()
                     sizeof(struct sockaddr_in),
                     host, NI_MAXHOST,
                     NULL, 0, NI_NUMERICHOST);
-        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
+        _Z_DEBUG_VA("\tAddress: <%s>\n", host);
 
         char *result = strdup(host);
         return result;
@@ -155,7 +155,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     if (strcmp(tx, "tcp") != 0)
     {
         fprintf(stderr, "Locator provided is not for TCP\n");
-        exit(1);
+        _exit(-1);
     }
     char *addr_name = strdup(strtok(NULL, ":"));
     char *s_port = strtok(NULL, ":");
@@ -165,7 +165,6 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     struct sockaddr_in *remote;
     struct addrinfo *res;
     status = getaddrinfo(addr_name, s_port, NULL, &res);
-    free(addr_name);
     if (status == 0 && res != NULL)
     {
         void *addr;
@@ -179,10 +178,11 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
     sscanf(s_port, "%d", &port);
 
     _Z_DEBUG_VA("Connecting to: %s:%d\n", addr_name, port);
+    free(addr_name);
     free(l);
     struct sockaddr_in serv_addr;
 
-    r.value.socket = socket(PF_INET, SOCK_STREAM, 0);
+    r.value.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (r.value.socket < 0)
     {
