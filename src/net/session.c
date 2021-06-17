@@ -302,7 +302,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     _zn_session_message_t scout = _zn_session_message_init(_ZN_MID_SCOUT);
     // Ask for peer ID to be put in the scout message
     _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_I);
-    scout.body.scout.what = what;
+    scout.body.scout.what = (z_zint_t)what;
     if (what != ZN_ROUTER)
         _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_W);
 
@@ -1437,8 +1437,13 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_QUERYABLE;
     if (!reskey.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
+    if (kind != ZN_QUERYABLE_STORAGE)
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_Q);
 
-    z_msg.body.declare.declarations.val[0].body.qle.key = _zn_reskey_clone(&reskey);
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.key = _zn_reskey_clone(&reskey);
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.kind = (z_zint_t)kind;
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
