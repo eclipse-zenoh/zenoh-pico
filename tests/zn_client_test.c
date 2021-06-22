@@ -301,15 +301,6 @@ int main(int argc, char **argv)
 
     _z_sleep_s(SLEEP);
 
-    // Stop both sessions
-    printf("Stopping threads on session 1\n");
-    znp_stop_lease_task(s1);
-    znp_stop_read_task(s1);
-
-    printf("Stopping threads on session 2\n");
-    znp_stop_lease_task(s2);
-    znp_stop_read_task(s2);
-
     // Close both sessions
     printf("Closing session 1\n");
     zn_close(s1);

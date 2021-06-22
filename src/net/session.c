@@ -143,6 +143,11 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
     int res = _zn_send_close(zn, reason, 0);
+
+    // Stop tasks
+    znp_stop_lease_task(zn);
+    znp_stop_read_task(zn);
+
     // Free the session
     _zn_session_free(zn);
 
