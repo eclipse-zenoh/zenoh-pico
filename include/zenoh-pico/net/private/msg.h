@@ -74,6 +74,7 @@
 #define _ZN_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey   if K==1 then only numerical ID
 #define _ZN_FLAG_Z_N 0x40 // 1 << 6 | MaxSamples    if N==1 then the MaxSamples is indicated
 #define _ZN_FLAG_Z_P 0x80 // 1 << 7 | Period        if P==1 then a period is present
+#define _ZN_FLAG_Z_Q 0x40 // 1 << 6 | QueryableKind if Q==1 then the queryable kind is present
 #define _ZN_FLAG_Z_R 0x20 // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
 #define _ZN_FLAG_Z_S 0x40 // 1 << 6 | SubMode       if S==1 then the declaration SubMode is indicated
 #define _ZN_FLAG_Z_T 0x20 // 1 << 5 | QueryTarget   if T==1 then the query target is present
@@ -604,14 +605,17 @@ typedef struct
 /*------------------ Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|X|X|  QABLE  |
+// |K|Q|X|  QABLE  |
 // +---------------+
 // ~     ResKey    ~ if K==1 then only numerical id
+// +---------------+
+// ~     Kind      ~ if Q==1. Otherwise: STORAGE (0x02)
 // +---------------+
 //
 typedef struct
 {
     zn_reskey_t key;
+    z_zint_t kind;
 } _zn_qle_decl_t;
 
 /*------------------ Forget Resource Declaration ------------------*/

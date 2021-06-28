@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,12 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_NET_PICO_KONTIKI_TYPES_H
-#define _ZENOH_NET_PICO_KONTIKI_TYPES_H
+#ifndef _ZENOH_NET_PICO_STRDUP_H
+#define _ZENOH_NET_PICO_STRDUP_H
 
-#include "contiki-net.h"
-#include "sys/cc.h"
+char *strdup(const char *s);
 
-typedef struct tcp_socket _zn_socket_t;
-
-#endif /* _ZENOH_NET_PICO_KONTIKI_TYPES_H */
+#endif /* _ZENOH_NET_PICO_STRDUP_H */

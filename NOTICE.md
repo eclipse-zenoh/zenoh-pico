@@ -6,7 +6,7 @@ This content is produced and maintained by the Eclipse zenoh project.
 
 ## Trademarks
 
-Eclipse zenoh is trademark of the Eclipse Foundation. 
+Eclipse zenoh is trademark of the Eclipse Foundation.
 Eclipse, and the Eclipse Logo are registered trademarks of the Eclipse Foundation.
 
 ## Copyright

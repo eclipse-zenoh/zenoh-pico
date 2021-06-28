@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,16 +12,21 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_H
-#define ZENOH_PICO_UTILS_H
+#ifndef _ZENOH_PICO_UNIX_ZEPHYR_H
+#define _ZENOH_PICO_UNIX_ZEPHYR_H
 
-#include "zenoh-pico/types.h"
+#include <pthread.h>
 
-#if defined(ZENOH_NEEDS_STRDUP)
 #include "zenoh-pico/private/system/compat/strdup.h"
-#endif
 
-z_string_t z_string_make(const char *value);
-void z_string_free(z_string_t *s);
+typedef pthread_t _z_task_t;
+typedef pthread_attr_t _z_task_attr_t;
+typedef pthread_mutex_t _z_mutex_t;
+typedef pthread_cond_t _z_condvar_t;
 
-#endif /* ZENOH_PICO_UTILS_H */
+typedef struct timespec _z_clock_t;
+typedef struct timeval _z_time_t;
+
+typedef clockid_t clock_t;
+
+#endif /* _ZENOH_PICO_UNIX_ZEPHYR_H_ */

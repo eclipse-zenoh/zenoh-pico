@@ -1,4 +1,4 @@
-pipeline {  
+pipeline {
   agent { label 'MacMini' }
   options { skipDefaultCheckout() }
   parameters {
@@ -27,7 +27,7 @@ pipeline {
       HTTP_DIR = "/home/data/httpd/download.eclipse.org/zenoh/zenoh-pico/"
   }
 
-  stages {   
+  stages {
     stage('[MacMini] Checkout Git TAG') {
       when { expression { return params.BUILD_MACOSX }}
       steps {
@@ -102,7 +102,7 @@ pipeline {
       agent { label 'UbuntuVM' }
       when { expression { return params.BUILD_LINUX_CROSS }}
       steps {
-        sh '''#!/bin/bash 
+        sh '''#!/bin/bash
         ZENOH_TAG="${LABEL}"
         if [ "${ZENOH_TAG}" == "master" ]; then
             GIT_HASH=$(git log -n 1 --pretty=format:'%H')
@@ -124,12 +124,12 @@ pipeline {
             tar -czvf ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_TAG}-examples-${TGT}.tgz --strip-components 3 ${ROOT}/${TGT}/examples/*
 
             # DEB
-            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")  
+            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep -v "${LIBNAME}-dev" | grep -v "md5")
             for D in $DEBS; do
                 cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-${ZENOH_TAG}-${ARCH}.deb
             done
 
-            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep "${LIBNAME}-dev" | grep -v "md5") 
+            DEBS=$(ls $ROOT/$TGT/${PACKAGE_DIR}/ | grep "deb" | grep "${LIBNAME}-dev" | grep -v "md5")
             for D in $DEBS; do
                 cp $ROOT/$TGT/${PACKAGE_DIR}/$D ${PACKAGE_DIR}/${PACKAGE_NAME}-dev-${ZENOH_TAG}-${ARCH}.deb
             done
@@ -173,7 +173,7 @@ pipeline {
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''#!/bin/bash
-            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }
@@ -186,7 +186,7 @@ pipeline {
       steps {
         sshagent ( ['projects-storage.eclipse.org-bot-ssh']) {
           sh '''#!/bin/bash
-            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}            
+            ssh ${HTTP_USER}@${HTTP_HOST} mkdir -p ${HTTP_DIR}/${LABEL}
             scp ${PACKAGE_DIR}/* ${HTTP_USER}@${HTTP_HOST}:${HTTP_DIR}/${LABEL}/
           '''
         }

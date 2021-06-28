@@ -11,9 +11,14 @@
 # Contributors:
 #   ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.8)
 
 project(libzenohpico VERSION 0.5.0 LANGUAGES C)
+
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -24,10 +29,16 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
+if(NOT BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif()
+message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
+
+if(NOT BUILD_TESTING)
+  set(BUILD_TESTING ON)
+endif()
+
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-option (UNIX_TARGET "Use this for Linux, Macos, etc." ON)
-option (CONTIKI "Use this for Contiki Cross compilation." OFF)
-option (TESTS "Use this to also build the tests." ON)
 option (EXAMPLES "Use this to also build the examples." ON)
 option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
 
@@ -47,22 +58,22 @@ set (ZENOH_TRANSPORT_I2C "OFF")
 #   - 0 : NOTHING
 
 if (DEFINED ZENOH_DEBUG)
-  set (ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
+  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
 else()
-  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1") 
-endif() 
+  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1")
+endif()
 
-message(STATUS "Configuring for ${CMAKE_HOST_SYSTEM_NAME}")
-if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
-  set(ZENOH_PLATFORM_OPT "-DZENOH_LINUX=1")  
+message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  add_definitions(-DZENOH_LINUX)
   set(JNI_PLATFORM_NAME "linux")
-elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
-  set(ZENOH_PLATFORM_OPT "-DZENOH_MACOS=1")
-  set(MACOSX_RPATH "ON")  
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  add_definitions(-DZENOH_MACOS)
+  set(MACOSX_RPATH "ON")
   set(JNI_PLATFORM_NAME "darwin")
-elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
-  # set(ZENOH_PLATFORM_OPT "-DZENOH_WIN=1")
+  # add_definitions(-DZENOH_WIN)
   # set(JNI_PLATFORM_NAME "win32")
 endif()
 
@@ -73,24 +84,30 @@ if (SKBUILD)
 endif()
 
 if (ZENOH_TRANSPORT_TCP STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "-DZENOH_TRANSPORT_TCP_IP=1")
+  set (ZENOH_TRANSPORT_OPT "-DZENOH_TRANSPORT_TCP_IP")
 endif()
 if (ZENOH_TRANSPORT_UDP STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_UDP_IP=1")
+  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_UDP_IP")
 endif()
 if (ZENOH_TRANSPORT_BLE STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_BLE=1")
+  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_BLE")
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DNDEBUG)
+  else()
+    add_definitions(${ZENOH_DEBUG_OPT} -DZENOH_DEBUG=1)
+  endif()
 
-# Note: don't use CMAKE_C_STANDARD to be compatible with cmake <3.1.0
-set(CMAKE_C_FLAGS_DEBUG "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0")
-set(CMAKE_C_FLAGS_GCOV "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -fprofile-arcs -ftest-coverage -Wall -Wextra -Werror -Wpedantic -Wunused -pipe -g -O0")
-set(CMAKE_C_FLAGS_RELEASE "${ZENOH_DEBUG_OPT} ${ZENOH_PLATFORM_OPT} -std=gnu99 -DNDEBUG -pipe -O3")
-
+  add_compile_options(
+      $<$<CONFIG:RELEASE>:-pipe -O3>
+      $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
+  )
+endif()
 
 if (NOT SWIG_JAVA)
   set(Libname "zenohpico")
@@ -101,7 +118,7 @@ if (NOT SWIG_JAVA)
       ${PROJECT_SOURCE_DIR}/include/net
     )
 else()
-  set(Libname "zenohpico_java") 
+  set(Libname "zenohpico_java")
 
   if (NOT JNI_INCLUDE_HOME)
     message(STATUS "Looking for local JDK with JNI")
@@ -122,28 +139,25 @@ else()
 endif()
 
 
-if (UNIX_TARGET)
+if (UNIX)
   file(GLOB Sources "src/*.c" "src/net/*.c" "src/net/unix/*.c")
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} SHARED ${Sources})
+add_library(${Libname} ${Sources})
 
-if (UNIX_TARGET)
-  if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(${Libname} pthread)
-  else()
-    target_link_libraries(${Libname} pthread rt)
-  endif()
+target_link_libraries(${Libname} Threads::Threads)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  target_link_libraries(${Libname} rt)
 endif()
 
-target_link_libraries(${Libname})
-
 if (NOT SWIG_JAVA)
-  install(TARGETS ${Libname} LIBRARY
-            DESTINATION lib
+  install(TARGETS ${Libname}
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
             COMPONENT Library
           )
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
@@ -182,7 +196,7 @@ if (EXAMPLES)
   target_link_libraries(zn_scout ${Libname})
 endif(EXAMPLES)
 
-if (TESTS)
+if(BUILD_TESTING)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
@@ -207,10 +221,7 @@ if (TESTS)
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
   add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
-endif(TESTS)
-
-
-
+endif()
 
 # For packaging
 if (PACKAGING)
@@ -232,7 +243,7 @@ if (PACKAGING)
   # Sources package
   set(CPACK_SOURCE_GENERATOR "TGZ")
   set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.github/;/build/;/crossbuilds/")
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")  
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
@@ -245,7 +256,7 @@ if (PACKAGING)
     else()
         set(CPACK_GENERATOR "DEB")
     endif()
-  
+
     # DEB package
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ADLINK zenoh team, <zenoh@adlink-labs.tech>")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
