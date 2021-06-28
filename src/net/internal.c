@@ -372,7 +372,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     _z_mutex_lock(&zn->mutex_rx);
 
     // Prepare the buffer
-    _z_rbuf_clear(&zn->rbuf);
+    _z_zbuf_clear(&zn->zbuf);
 
 #ifdef ZN_TRANSPORT_TCP_IP
     // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -382,18 +382,18 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     //       In any case, the length of a message must not exceed 65_535 bytes.
 
     // Read the message length
-    if (_zn_recv_bytes(zn->sock, zn->rbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
+    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
         goto EXIT_SRCV_PROC;
     }
-    _z_rbuf_set_wpos(&zn->rbuf, _ZN_MSG_LEN_ENC_SIZE);
+    _z_zbuf_set_wpos(&zn->zbuf, _ZN_MSG_LEN_ENC_SIZE);
 
-    uint16_t len = _z_rbuf_read(&zn->rbuf) | (_z_rbuf_read(&zn->rbuf) << 8);
+    uint16_t len = _z_zbuf_read(&zn->zbuf) | (_z_zbuf_read(&zn->zbuf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
-    size_t writable = _z_rbuf_capacity(&zn->rbuf) - _z_rbuf_len(&zn->rbuf);
+    size_t writable = _z_zbuf_capacity(&zn->zbuf) - _z_zbuf_len(&zn->zbuf);
     if (writable < len)
     {
         _zn_session_message_p_result_free(r);
@@ -403,7 +403,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     }
 
     // Read enough bytes to decode the message
-    if (_zn_recv_bytes(zn->sock, zn->rbuf.ios.buf, len) < 0)
+    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, len) < 0)
     {
         _zn_session_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
@@ -411,8 +411,8 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
         goto EXIT_SRCV_PROC;
     }
 
-    _z_rbuf_set_rpos(&zn->rbuf, 0);
-    _z_rbuf_set_wpos(&zn->rbuf, len);
+    _z_zbuf_set_rpos(&zn->zbuf, 0);
+    _z_zbuf_set_wpos(&zn->zbuf, len);
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {
@@ -427,7 +427,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     zn->received = 1;
 
     _Z_DEBUG(">> \t session_message_decode\n");
-    _zn_session_message_decode_na(&zn->rbuf, r);
+    _zn_session_message_decode_na(&zn->zbuf, r);
 
 EXIT_SRCV_PROC:
     // Release the lock

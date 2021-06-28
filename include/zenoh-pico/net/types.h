@@ -278,7 +278,7 @@ typedef struct
     _z_mutex_t mutex_inner;
 
     _z_wbuf_t wbuf;
-    _z_rbuf_t rbuf;
+    _z_zbuf_t zbuf;
 
     _z_wbuf_t dbuf_reliable;
     _z_wbuf_t dbuf_best_effort;

@@ -69,7 +69,7 @@ typedef struct
 typedef struct
 {
     _z_iosli_t ios;
-} _z_rbuf_t;
+} _z_zbuf_t;
 
 typedef struct
 {

@@ -38,10 +38,10 @@ struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
 
 int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
-int _zn_recv_dgram_from(_zn_socket_t sock, _z_rbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *rbf, struct sockaddr *from, socklen_t *salen);
 
 int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
-int _zn_recv_rbuf(_zn_socket_t sock, _z_rbuf_t *rbf);
+int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *rbf);
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
 #endif /* _ZENOH_NET_PICO_SYSTEM_H */

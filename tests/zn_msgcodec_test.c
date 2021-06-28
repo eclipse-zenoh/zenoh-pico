@@ -271,7 +271,7 @@ void payload_field(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_payload_result_t r_pld = _zn_payload_decode(&rbf);
     assert(r_pld.tag == _z_res_t_OK);
     _zn_payload_t d_pld = r_pld.value.payload;
@@ -281,7 +281,7 @@ void payload_field(void)
 
     // Free
     _zn_payload_free(&d_pld);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -318,7 +318,7 @@ void timestamp_field(void)
     assert(_z_timestamp_encode(&wbf, &e_ts) == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_timestamp_result_t r_ts = _z_timestamp_decode(&rbf);
     assert(r_ts.tag == _z_res_t_OK);
 
@@ -329,7 +329,7 @@ void timestamp_field(void)
 
     // Free
     _z_timestamp_free(&d_ts);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -396,7 +396,7 @@ void subinfo_field(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_subinfo_result_t r_sm = _zn_subinfo_decode(&rbf, header);
     assert(r_sm.tag == _z_res_t_OK);
 
@@ -407,7 +407,7 @@ void subinfo_field(void)
 
     // Free
     // NOTE: subinfo does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -458,7 +458,7 @@ void res_key_field(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_reskey_result_t r_rk = _zn_reskey_decode(&rbf, header);
     assert(r_rk.tag == _z_res_t_OK);
 
@@ -469,7 +469,7 @@ void res_key_field(void)
 
     // Free
     _zn_reskey_free(&d_rk);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -479,6 +479,24 @@ _zn_data_info_t gen_data_info(void)
     _zn_data_info_t di;
 
     di.flags = 0;
+
+    if (gen_bool())
+    {
+        di.kind = gen_zint();
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_KIND);
+    }
+    if (gen_bool())
+    {
+        di.encoding = gen_zint();
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
+    }
+    if (gen_bool())
+    {
+        di.tstamp = gen_timestamp();
+        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_TSTAMP);
+    }
+
+    // WARNING: we do not support sliced content in zenoh-pico.
 
     if (gen_bool())
     {
@@ -500,21 +518,6 @@ _zn_data_info_t gen_data_info(void)
         di.first_router_sn = gen_zint();
         _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_RTR_SN);
     }
-    if (gen_bool())
-    {
-        di.tstamp = gen_timestamp();
-        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_TSTAMP);
-    }
-    if (gen_bool())
-    {
-        di.kind = gen_zint();
-        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_KIND);
-    }
-    if (gen_bool())
-    {
-        di.encoding = gen_zint();
-        _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
-    }
 
     return di;
 }
@@ -524,6 +527,23 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
     printf("DataInfo -> ");
     printf("Flags (%zu:%zu), ", left->flags, right->flags);
     assert(left->flags == right->flags);
+
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_KIND)
+    {
+        printf("Kind (%zu:%zu), ", left->kind, right->kind);
+        assert(left->kind == right->kind);
+    }
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
+    {
+        printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
+        assert(left->encoding == right->encoding);
+    }
+    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
+    {
+        printf("Tstamp -> ");
+        assert_eq_timestamp(&left->tstamp, &right->tstamp);
+        printf(", ");
+    }
 
     if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_SRC_ID)
     {
@@ -547,22 +567,6 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
         printf("Rtr SN (%zu:%zu), ", left->first_router_sn, right->first_router_sn);
         assert(left->first_router_sn == right->first_router_sn);
     }
-    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
-    {
-        printf("Tstamp -> ");
-        assert_eq_timestamp(&left->tstamp, &right->tstamp);
-        printf(", ");
-    }
-    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_KIND)
-    {
-        printf("Kind (%zu:%zu), ", left->kind, right->kind);
-        assert(left->kind == right->kind);
-    }
-    if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
-    {
-        printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
-        assert(left->encoding == right->encoding);
-    }
 }
 
 void data_info_field(void)
@@ -578,7 +582,7 @@ void data_info_field(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_data_info_result_t r_di = _zn_data_info_decode(&rbf);
     assert(r_di.tag == _z_res_t_OK);
 
@@ -589,7 +593,7 @@ void data_info_field(void)
 
     // Free
     _zn_data_info_free(&d_di);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_clear(&wbf);
 }
 
@@ -636,8 +640,8 @@ void attachment_decorator(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
-    uint8_t header = _z_rbuf_read(&rbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&rbf);
     _zn_attachment_p_result_t r_at = _zn_attachment_decode(&rbf, header);
     assert(r_at.tag == _z_res_t_OK);
 
@@ -650,7 +654,7 @@ void attachment_decorator(void)
     free(e_at);
     _zn_attachment_free(d_at);
     _zn_attachment_p_result_free(&r_at);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -720,8 +724,8 @@ void reply_contex_decorator(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
-    uint8_t header = _z_rbuf_read(&rbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&rbf);
     _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(&rbf, header);
     assert(r_rc.tag == _z_res_t_OK);
 
@@ -734,7 +738,7 @@ void reply_contex_decorator(void)
     free(e_rc);
     _zn_reply_context_free(d_rc);
     _zn_reply_context_p_result_free(&r_rc);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -774,7 +778,7 @@ void resource_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_res_decl_result_t r_rd = _zn_res_decl_decode(&rbf, e_hdr);
     assert(r_rd.tag == _z_res_t_OK);
 
@@ -785,7 +789,7 @@ void resource_declaration(void)
 
     // Free
     _zn_res_decl_free(&d_rd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -819,7 +823,7 @@ void publisher_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_pub_decl_result_t r_pd = _zn_pub_decl_decode(&rbf, e_hdr);
     assert(r_pd.tag == _z_res_t_OK);
 
@@ -830,7 +834,7 @@ void publisher_declaration(void)
 
     // Free
     _zn_pub_decl_free(&d_pd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -876,7 +880,7 @@ void subscriber_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_sub_decl_result_t r_pd = _zn_sub_decl_decode(&rbf, e_hdr);
     assert(r_pd.tag == _z_res_t_OK);
 
@@ -887,7 +891,7 @@ void subscriber_declaration(void)
 
     // Free
     _zn_sub_decl_free(&d_sd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -921,7 +925,7 @@ void queryable_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_qle_decl_result_t r_qd = _zn_qle_decl_decode(&rbf, e_hdr);
     assert(r_qd.tag == _z_res_t_OK);
 
@@ -932,7 +936,7 @@ void queryable_declaration(void)
 
     // Free
     _zn_qle_decl_free(&d_qd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -965,7 +969,7 @@ void forget_resource_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_forget_res_decl_result_t r_frd = _zn_forget_res_decl_decode(&rbf);
     assert(r_frd.tag == _z_res_t_OK);
 
@@ -976,7 +980,7 @@ void forget_resource_declaration(void)
 
     // Free
     // NOTE: forget_res_decl does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1010,7 +1014,7 @@ void forget_publisher_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_forget_pub_decl_result_t r_fpd = _zn_forget_pub_decl_decode(&rbf, e_hdr);
     assert(r_fpd.tag == _z_res_t_OK);
 
@@ -1021,7 +1025,7 @@ void forget_publisher_declaration(void)
 
     // Free
     _zn_forget_pub_decl_free(&d_fpd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1055,7 +1059,7 @@ void forget_subscriber_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_forget_sub_decl_result_t r_fsd = _zn_forget_sub_decl_decode(&rbf, e_hdr);
     assert(r_fsd.tag == _z_res_t_OK);
 
@@ -1066,7 +1070,7 @@ void forget_subscriber_declaration(void)
 
     // Free
     _zn_forget_sub_decl_free(&d_fsd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1100,7 +1104,7 @@ void forget_queryable_declaration(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_forget_qle_decl_result_t r_fqd = _zn_forget_qle_decl_decode(&rbf, e_hdr);
     assert(r_fqd.tag == _z_res_t_OK);
 
@@ -1111,7 +1115,7 @@ void forget_queryable_declaration(void)
 
     // Free
     _zn_forget_qle_decl_free(&d_fqd);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1238,7 +1242,7 @@ void declare_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_declare_result_t r_dcl = _zn_declare_decode(&rbf);
     assert(r_dcl.tag == _z_res_t_OK);
 
@@ -1247,7 +1251,7 @@ void declare_message(void)
 
     // Free
     _zn_declare_free(&d_dcl);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1299,7 +1303,7 @@ void data_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_data_result_t r_da = _zn_data_decode(&rbf, e_hdr);
     assert(r_da.tag == _z_res_t_OK);
 
@@ -1308,7 +1312,7 @@ void data_message(void)
 
     // Free
     _zn_data_free(&d_da);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1362,7 +1366,7 @@ void pull_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_pull_result_t r_pu = _zn_pull_decode(&rbf, e_hdr);
     assert(r_pu.tag == _z_res_t_OK);
 
@@ -1371,7 +1375,7 @@ void pull_message(void)
 
     // Free
     _zn_pull_free(&d_pu);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1468,7 +1472,7 @@ void query_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_query_result_t r_qy = _zn_query_decode(&rbf, e_hdr);
     assert(r_qy.tag == _z_res_t_OK);
 
@@ -1477,7 +1481,7 @@ void query_message(void)
 
     // Free
     _zn_query_free(&d_qy);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1636,7 +1640,7 @@ void zenoh_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
     assert(r_zm.tag == _z_res_t_OK);
 
@@ -1647,7 +1651,7 @@ void zenoh_message(void)
     free(e_zm);
     _zn_zenoh_message_free(d_zm);
     _zn_zenoh_message_p_result_free(&r_zm);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1696,7 +1700,7 @@ void scout_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_scout_result_t r_sc = _zn_scout_decode(&rbf, e_hdr);
     assert(r_sc.tag == _z_res_t_OK);
 
@@ -1705,7 +1709,7 @@ void scout_message(void)
 
     // Free
     // NOTE: scout does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1769,7 +1773,7 @@ void hello_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_hello_result_t r_he = _zn_hello_decode(&rbf, e_hdr);
     assert(r_he.tag == _z_res_t_OK);
 
@@ -1778,7 +1782,7 @@ void hello_message(void)
 
     // Free
     _zn_hello_free(&d_he, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1852,7 +1856,7 @@ void init_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_init_result_t r_it = _zn_init_decode(&rbf, e_hdr);
     assert(r_it.tag == _z_res_t_OK);
 
@@ -1861,7 +1865,7 @@ void init_message(void)
 
     // Free
     _zn_init_free(&d_it, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1916,7 +1920,7 @@ void open_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_open_result_t r_op = _zn_open_decode(&rbf, e_hdr);
     assert(r_op.tag == _z_res_t_OK);
 
@@ -1925,7 +1929,7 @@ void open_message(void)
 
     // Free
     _zn_open_free(&d_op, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -1973,7 +1977,7 @@ void close_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_close_result_t r_cl = _zn_close_decode(&rbf, e_hdr);
     assert(r_cl.tag == _z_res_t_OK);
 
@@ -1982,7 +1986,7 @@ void close_message(void)
 
     // Free
     _zn_close_free(&d_cl, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2033,7 +2037,7 @@ void sync_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_sync_result_t r_sy = _zn_sync_decode(&rbf, e_hdr);
     assert(r_sy.tag == _z_res_t_OK);
 
@@ -2042,7 +2046,7 @@ void sync_message(void)
 
     // Free
     // NOTE: sync does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2089,7 +2093,7 @@ void ack_nack_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(&rbf, e_hdr);
     assert(r_an.tag == _z_res_t_OK);
 
@@ -2098,7 +2102,7 @@ void ack_nack_message(void)
 
     // Free
     // NOTE: ack_nack does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2146,7 +2150,7 @@ void keep_alive_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(&rbf, e_hdr);
     assert(r_ka.tag == _z_res_t_OK);
 
@@ -2155,7 +2159,7 @@ void keep_alive_message(void)
 
     // Free
     _zn_keep_alive_free(&d_ka, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2191,7 +2195,7 @@ void ping_pong_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(&rbf);
     assert(r_pp.tag == _z_res_t_OK);
 
@@ -2200,7 +2204,7 @@ void ping_pong_message(void)
 
     // Free
     // NOTE: ping_pong does not involve any heap allocation
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2269,7 +2273,7 @@ void frame_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_frame_result_t r_fr = _zn_frame_decode(&rbf, e_hdr);
     assert(r_fr.tag == _z_res_t_OK);
 
@@ -2278,7 +2282,7 @@ void frame_message(void)
 
     // Frame
     _zn_frame_free(&d_fr, e_hdr);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2426,7 +2430,7 @@ void session_message(void)
     assert(res == 0);
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&rbf);
     assert(r_zm.tag == _z_res_t_OK);
 
@@ -2437,7 +2441,7 @@ void session_message(void)
     free(e_sm);
     _zn_session_message_free(d_sm);
     _zn_session_message_p_result_free(&r_zm);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2482,7 +2486,7 @@ void batch(void)
     }
 
     // Decode
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
     for (uint8_t i = 0; i < tot_num; ++i)
     {
         _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&rbf);
@@ -2501,7 +2505,7 @@ void batch(void)
     }
 
     free(e_sm);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
     _z_wbuf_free(&wbf);
 }
 
@@ -2634,7 +2638,7 @@ void fragmentation(void)
         print_wbuf(&wbf);
 
         // Decode the message
-        _z_rbuf_t rbf = _z_wbuf_to_rbuf(&wbf);
+        _z_zbuf_t rbf = _z_wbuf_to_zbuf(&wbf);
 
         _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&rbf);
         assert(r_sm.tag == _z_res_t_OK);
@@ -2649,12 +2653,12 @@ void fragmentation(void)
         print_wbuf(&dbf);
 
         // Free the read buffer
-        _z_rbuf_free(&rbf);
+        _z_zbuf_free(&rbf);
     }
 
     printf(" - Start defragmenting\n");
     print_wbuf(&dbf);
-    _z_rbuf_t rbf = _z_wbuf_to_rbuf(&dbf);
+    _z_zbuf_t rbf = _z_wbuf_to_zbuf(&dbf);
     printf("   Defragmented: ");
     print_iosli(&rbf.ios);
     printf("\n");

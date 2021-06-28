@@ -106,101 +106,101 @@ void _z_iosli_free(_z_iosli_t *ios)
     ios = NULL;
 }
 
-/*------------------ RBuf ------------------*/
-_z_rbuf_t _z_rbuf_make(size_t capacity)
+/*------------------ ZBuf ------------------*/
+_z_zbuf_t _z_zbuf_make(size_t capacity)
 {
-    _z_rbuf_t rbf;
+    _z_zbuf_t rbf;
     rbf.ios = _z_iosli_make(capacity);
     return rbf;
 }
 
-_z_rbuf_t _z_rbuf_view(_z_rbuf_t *rbf, size_t length)
+_z_zbuf_t _z_zbuf_view(_z_zbuf_t *rbf, size_t length)
 {
     assert(_z_iosli_readable(&rbf->ios) >= length);
-    _z_rbuf_t v;
-    v.ios = _z_iosli_wrap(_z_rbuf_get_rptr(rbf), length, 0, length);
+    _z_zbuf_t v;
+    v.ios = _z_iosli_wrap(_z_zbuf_get_rptr(rbf), length, 0, length);
     return v;
 }
 
-size_t _z_rbuf_capacity(const _z_rbuf_t *rbf)
+size_t _z_zbuf_capacity(const _z_zbuf_t *rbf)
 {
     return rbf->ios.capacity;
 }
 
-size_t _z_rbuf_space_left(const _z_rbuf_t *rbf)
+size_t _z_zbuf_space_left(const _z_zbuf_t *rbf)
 {
     return _z_iosli_writable(&rbf->ios);
 }
 
-size_t _z_rbuf_len(const _z_rbuf_t *rbf)
+size_t _z_zbuf_len(const _z_zbuf_t *rbf)
 {
     return _z_iosli_readable(&rbf->ios);
 }
 
-uint8_t _z_rbuf_read(_z_rbuf_t *rbf)
+uint8_t _z_zbuf_read(_z_zbuf_t *rbf)
 {
     return _z_iosli_read(&rbf->ios);
 }
 
-void _z_rbuf_read_bytes(_z_rbuf_t *rbf, uint8_t *dest, size_t offset, size_t length)
+void _z_zbuf_read_bytes(_z_zbuf_t *rbf, uint8_t *dest, size_t offset, size_t length)
 {
     _z_iosli_read_bytes(&rbf->ios, dest, offset, length);
 }
 
-uint8_t _z_rbuf_get(const _z_rbuf_t *rbf, size_t pos)
+uint8_t _z_zbuf_get(const _z_zbuf_t *rbf, size_t pos)
 {
     return _z_iosli_get(&rbf->ios, pos);
 }
 
-size_t _z_rbuf_get_rpos(const _z_rbuf_t *rbf)
+size_t _z_zbuf_get_rpos(const _z_zbuf_t *rbf)
 {
     return rbf->ios.r_pos;
 }
 
-size_t _z_rbuf_get_wpos(const _z_rbuf_t *rbf)
+size_t _z_zbuf_get_wpos(const _z_zbuf_t *rbf)
 {
     return rbf->ios.w_pos;
 }
 
-void _z_rbuf_set_rpos(_z_rbuf_t *rbf, size_t r_pos)
+void _z_zbuf_set_rpos(_z_zbuf_t *rbf, size_t r_pos)
 {
     assert(r_pos <= rbf->ios.w_pos);
     rbf->ios.r_pos = r_pos;
 }
 
-void _z_rbuf_set_wpos(_z_rbuf_t *rbf, size_t w_pos)
+void _z_zbuf_set_wpos(_z_zbuf_t *rbf, size_t w_pos)
 {
     assert(w_pos <= rbf->ios.capacity);
     rbf->ios.w_pos = w_pos;
 }
 
-uint8_t *_z_rbuf_get_rptr(const _z_rbuf_t *rbf)
+uint8_t *_z_zbuf_get_rptr(const _z_zbuf_t *rbf)
 {
     return rbf->ios.buf + rbf->ios.r_pos;
 }
 
-uint8_t *_z_rbuf_get_wptr(const _z_rbuf_t *rbf)
+uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *rbf)
 {
     return rbf->ios.buf + rbf->ios.w_pos;
 }
 
-void _z_rbuf_clear(_z_rbuf_t *rbf)
+void _z_zbuf_clear(_z_zbuf_t *rbf)
 {
     _z_iosli_clear(&rbf->ios);
 }
 
-void _z_rbuf_compact(_z_rbuf_t *rbf)
+void _z_zbuf_compact(_z_zbuf_t *rbf)
 {
     if (rbf->ios.r_pos == 0 && rbf->ios.w_pos == 0)
         return;
 
     size_t len = _z_iosli_readable(&rbf->ios);
-    memcpy(rbf->ios.buf, _z_rbuf_get_rptr(rbf), len * sizeof(uint8_t));
-    _z_rbuf_set_rpos(rbf, 0);
-    _z_rbuf_set_wpos(rbf, len);
+    memcpy(rbf->ios.buf, _z_zbuf_get_rptr(rbf), len * sizeof(uint8_t));
+    _z_zbuf_set_rpos(rbf, 0);
+    _z_zbuf_set_wpos(rbf, len);
 }
 
-void _z_rbuf_free(_z_rbuf_t *rbf)
+void _z_zbuf_free(_z_zbuf_t *rbf)
 {
     _z_iosli_free(&rbf->ios);
     rbf = NULL;
@@ -499,10 +499,10 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
     } while (++i);
 }
 
-_z_rbuf_t _z_wbuf_to_rbuf(const _z_wbuf_t *wbf)
+_z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf)
 {
     size_t len = _z_wbuf_len(wbf);
-    _z_rbuf_t rbf = _z_rbuf_make(len);
+    _z_zbuf_t rbf = _z_zbuf_make(len);
     for (size_t i = wbf->r_idx; i <= wbf->w_idx; i++)
     {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
