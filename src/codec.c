@@ -11,7 +11,6 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh-pico/private/codec.h"
@@ -31,7 +30,7 @@ int _z_zint_encode(_z_wbuf_t *wbf, z_zint_t v)
     return _z_wbuf_write(wbf, (uint8_t)v);
 }
 
-_z_zint_result_t _z_zint_decode(_z_rbuf_t *rbf)
+_z_zint_result_t _z_zint_decode(_z_zbuf_t *rbf)
 {
     _z_zint_result_t r;
     r.tag = _z_res_t_OK;
@@ -41,7 +40,7 @@ _z_zint_result_t _z_zint_decode(_z_rbuf_t *rbf)
     int i = 0;
     do
     {
-        c = _z_rbuf_read(rbf);
+        c = _z_zbuf_read(rbf);
         _Z_DEBUG_VA("zint c = 0x%x\n", c);
         r.value.zint = r.value.zint | (((z_zint_t)c & 0x7f) << i);
         _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
@@ -69,19 +68,19 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
     }
 }
 
-void _z_bytes_decode_na(_z_rbuf_t *rbf, _z_bytes_result_t *r)
+void _z_bytes_decode_na(_z_zbuf_t *rbf, _z_bytes_result_t *r)
 {
     r->tag = _z_res_t_OK;
     _z_zint_result_t r_zint = _z_zint_decode(rbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT);
     r->value.bytes.len = r_zint.value.zint;
     // Decode without allocating
-    r->value.bytes.val = _z_rbuf_get_rptr(rbf);
+    r->value.bytes.val = _z_zbuf_get_rptr(rbf);
     // Move the read position
-    _z_rbuf_set_rpos(rbf, _z_rbuf_get_rpos(rbf) + r->value.bytes.len);
+    _z_zbuf_set_rpos(rbf, _z_zbuf_get_rpos(rbf) + r->value.bytes.len);
 }
 
-_z_bytes_result_t _z_bytes_decode(_z_rbuf_t *rbf)
+_z_bytes_result_t _z_bytes_decode(_z_zbuf_t *rbf)
 {
     _z_bytes_result_t r;
     _z_bytes_decode_na(rbf, &r);
@@ -97,7 +96,7 @@ int _z_str_encode(_z_wbuf_t *wbf, const z_str_t s)
     return _z_wbuf_write_bytes(wbf, (uint8_t *)s, 0, len);
 }
 
-_z_str_result_t _z_str_decode(_z_rbuf_t *rbf)
+_z_str_result_t _z_str_decode(_z_zbuf_t *rbf)
 {
     _z_str_result_t r;
     r.tag = _z_res_t_OK;
@@ -107,7 +106,7 @@ _z_str_result_t _z_str_decode(_z_rbuf_t *rbf)
     // Allocate space for the string terminator
     z_str_t s = (z_str_t)malloc(len + 1);
     s[len] = '\0';
-    _z_rbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
+    _z_zbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
     r.value.str = s;
     return r;
 }

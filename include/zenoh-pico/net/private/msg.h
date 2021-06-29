@@ -66,6 +66,7 @@
 #define _ZN_FLAG_S_S 0x40 // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
 #define _ZN_FLAG_S_T 0x40 // 1 << 6 | TimeRes       if T==1 then the time resolution is in seconds
 #define _ZN_FLAG_S_W 0x40 // 1 << 6 | WhatAmI       if W==1 then WhatAmI is indicated
+#define _ZN_FLAG_S_Z 0x20 // 1 << 5 | MixedSlices   if Z==1 then the payload contains a mix of raw and shm_info payload
 #define _ZN_FLAG_S_X 0x00 // Unused flags are set to zero
 /* Zenoh message flags */
 #define _ZN_FLAG_Z_D 0x20 // 1 << 5 | Dropping      if D==1 then the message can be dropped
@@ -95,11 +96,6 @@
 #define _ZN_SET_FLAG(h, f) (h |= f)
 
 /*=============================*/
-/*     Attachment encodings    */
-/*=============================*/
-#define _ZN_ATT_ENC_PROPERTIES 0x00
-
-/*=============================*/
 /*       Declaration IDs       */
 /*=============================*/
 #define _ZN_DECL_RESOURCE 0x01
@@ -124,13 +120,16 @@
 /*=============================*/
 /*       DataInfo flags        */
 /*=============================*/
-#define _ZN_DATA_INFO_SRC_ID 0x01 // 1 << 0
-#define _ZN_DATA_INFO_SRC_SN 0x02 // 1 << 1
-#define _ZN_DATA_INFO_RTR_ID 0x04 // 1 << 2
-#define _ZN_DATA_INFO_RTR_SN 0x08 // 1 << 3
-#define _ZN_DATA_INFO_TSTAMP 0x10 // 1 << 4
-#define _ZN_DATA_INFO_KIND 0x20   // 1 << 5
-#define _ZN_DATA_INFO_ENC 0x40    // 1 << 6
+#define _ZN_DATA_INFO_KIND 0x01   // 1 << 0
+#define _ZN_DATA_INFO_ENC 0x02    // 1 << 1
+#define _ZN_DATA_INFO_TSTAMP 0x04 // 1 << 2
+// Reserved: bits 3-4
+#define _ZN_DATA_INFO_SLICED 0x20 // 1 << 5
+// Reserved: bits 6
+#define _ZN_DATA_INFO_SRC_ID 0x80  // 1 << 7
+#define _ZN_DATA_INFO_SRC_SN 0x100 // 1 << 8
+#define _ZN_DATA_INFO_RTR_ID 0x200 // 1 << 9
+#define _ZN_DATA_INFO_RTR_SN 0x400 // 1 << 10
 
 /*------------------ Payload field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -157,7 +156,9 @@ typedef z_str_array_t _zn_locators_t;
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
-/*------------------ Attachment Decorator ------------------*/
+// # Attachment decorator
+//
+// ```text
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -168,17 +169,15 @@ typedef z_str_array_t _zn_locators_t;
 // append to the message any additional information. Since the information contained in the
 // Attachement is relevant only to the layer that provided them (e.g., Session, Zenoh, User) it
 // is the duty of that layer to serialize and de-serialize the attachment whenever deemed necessary.
+// The attachement always contains serialized properties.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// | ENC |  ATTCH  |
+// |X|X|Z|  ATTCH  |
 // +-+-+-+---------+
-// ~    Buffer     ~
+// ~   Attachment  ~
 // +---------------+
-//
-// ENC values:
-// - 0x00 => Zenoh Properties
-//
+// ```
 typedef struct
 {
     _zn_payload_t payload;
@@ -735,13 +734,13 @@ typedef struct
 typedef struct
 {
     z_zint_t flags;
+    z_zint_t kind;
+    z_zint_t encoding;
+    z_timestamp_t tstamp;
     z_bytes_t source_id;
     z_zint_t source_sn;
     z_bytes_t first_router_id;
     z_zint_t first_router_sn;
-    z_timestamp_t tstamp;
-    z_zint_t kind;
-    z_zint_t encoding;
 } _zn_data_info_t;
 
 /*------------------ Data Message ------------------*/

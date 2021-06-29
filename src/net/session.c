@@ -31,7 +31,7 @@ zn_session_t *_zn_session_init()
 
     // Initialize the read and write buffers
     zn->wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
-    zn->rbuf = _z_rbuf_make(ZN_READ_BUF_LEN);
+    zn->zbuf = _z_zbuf_make(ZN_READ_BUF_LEN);
 
     // Initialize the defragmentation buffers
     zn->dbuf_reliable = _z_wbuf_make(0, 1);
@@ -102,7 +102,7 @@ void _zn_session_free(zn_session_t *zn)
 
     // Clean up the buffers
     _z_wbuf_free(&zn->wbuf);
-    _z_rbuf_free(&zn->rbuf);
+    _z_zbuf_free(&zn->zbuf);
 
     _z_wbuf_free(&zn->dbuf_reliable);
     _z_wbuf_free(&zn->dbuf_best_effort);
@@ -194,13 +194,13 @@ zn_hello_array_t _zn_scout_loop(
     socklen_t flen = 0;
 
     // The receiving buffer
-    _z_rbuf_t rbf = _z_rbuf_make(ZN_READ_BUF_LEN);
+    _z_zbuf_t rbf = _z_zbuf_make(ZN_READ_BUF_LEN);
 
     _z_clock_t start = _z_clock_now();
     while (_z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
-        _z_rbuf_clear(&rbf);
+        _z_zbuf_clear(&rbf);
         int len = _zn_recv_dgram_from(socket, &rbf, from, &flen);
 
         // Retry if we haven't received anything
@@ -275,7 +275,7 @@ zn_hello_array_t _zn_scout_loop(
     }
 
     free(from);
-    _z_rbuf_free(&rbf);
+    _z_zbuf_free(&rbf);
 
     return ls;
 }
@@ -617,7 +617,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
-                _z_rbuf_t rbf = _z_wbuf_to_rbuf(dbuf);
+                _z_zbuf_t rbf = _z_wbuf_to_zbuf(dbuf);
 
                 // Decode the zenoh message
                 _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
@@ -636,7 +636,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
                 // Free the result
                 _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
-                _z_rbuf_free(&rbf);
+                _z_zbuf_free(&rbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
