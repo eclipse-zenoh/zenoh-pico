@@ -26,7 +26,7 @@
 #elif defined(ZENOH_ZEPHYR)
 #include "zenoh-pico/net/private/system/zephyr.h"
 #else
-#error Unknown platform
+#error "Unknown platform"
 #endif
 
 /**
@@ -387,14 +387,14 @@ typedef enum zn_reply_t_Tag
  *
  * Members:
  *   zn_sample_t data: a :c:type:`zn_sample_t` containing the key and value of the reply.
- *   unsigned int source_kind: The kind of the replier that sent this reply.
+ *   unsigned int replier_kind: The kind of the replier that sent this reply.
  *   z_bytes_t replier_id: The id of the replier that sent this reply.
  *
  */
 typedef struct
 {
     zn_sample_t data;
-    unsigned int source_kind;
+    unsigned int replier_kind;
     z_bytes_t replier_id;
 } zn_reply_data_t;
 

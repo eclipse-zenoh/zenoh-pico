@@ -19,6 +19,7 @@
 #include "zenoh-pico/private/logging.h"
 #include "zenoh-pico/net/private/codec.h"
 #include "zenoh-pico/net/private/msgcodec.h"
+#include "zenoh-pico/net/session.h"
 
 /*=============================*/
 /*           Fields            */
@@ -312,9 +313,11 @@ int _zn_reply_context_encode(_z_wbuf_t *wbf, const _zn_reply_context_t *msg)
 
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, msg->qid))
-    _ZN_EC(_z_zint_encode(wbf, msg->source_kind))
     if (!_ZN_HAS_FLAG(msg->header, _ZN_FLAG_Z_F))
-        return _z_bytes_encode(wbf, &msg->replier_id);
+    {
+        _ZN_EC(_z_zint_encode(wbf, msg->replier_kind))
+        _ZN_EC(_z_bytes_encode(wbf, &msg->replier_id))
+    }
 
     return 0;
 }
@@ -332,12 +335,12 @@ void _zn_reply_context_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reply_conte
     _ASSURE_FREE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT, reply_context);
     r->value.reply_context->qid = r_zint.value.zint;
 
-    r_zint = _z_zint_decode(rbf);
-    _ASSURE_FREE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT, reply_context)
-    r->value.reply_context->source_kind = r_zint.value.zint;
-
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_F))
     {
+        r_zint = _z_zint_decode(rbf);
+        _ASSURE_FREE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT, reply_context)
+        r->value.reply_context->replier_kind = r_zint.value.zint;
+
         _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
         r->value.reply_context->replier_id = r_arr.value.bytes;

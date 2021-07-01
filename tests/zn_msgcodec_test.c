@@ -663,10 +663,10 @@ void print_reply_context(_zn_reply_context_t *rc)
 {
     printf("      Header: %x\n", rc->header);
     printf("      QID: %zu\n", rc->qid);
-    printf("      Source Kind: %zu\n", rc->source_kind);
     if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
     {
-        printf("      Reply ID: ");
+        printf("      Replier Kind: %zu\n", rc->replier_kind);
+        printf("      Replier ID: ");
         print_uint8_array((z_bytes_t *)&rc->replier_id);
     }
     printf("\n");
@@ -678,9 +678,9 @@ _zn_reply_context_t *gen_reply_context(void)
 
     p_rc->header = _ZN_MID_REPLY_CONTEXT;
     p_rc->qid = gen_zint();
-    p_rc->source_kind = gen_zint();
     if (gen_bool())
     {
+        p_rc->replier_kind = gen_zint();
         z_bytes_t id = gen_bytes(16);
         p_rc->replier_id = id;
     }
@@ -700,8 +700,17 @@ void assert_eq_reply_context(_zn_reply_context_t *left, _zn_reply_context_t *rig
     printf("QID (%zu:%zu), ", left->qid, right->qid);
     assert(left->qid == right->qid);
 
-    printf("Source Kind (%zu:%zu), ", left->source_kind, right->source_kind);
-    assert(left->source_kind == right->source_kind);
+    printf("Replier Kind (");
+    if (!_ZN_HAS_FLAG(left->header, _ZN_FLAG_Z_F))
+    {
+        printf("%zu:%zu", left->replier_kind, right->replier_kind);
+        assert(left->replier_kind == right->replier_kind);
+    }
+    else
+    {
+        printf("NULL:NULL");
+    }
+    printf(")");
 
     printf("Replier ID (");
     if (!_ZN_HAS_FLAG(left->header, _ZN_FLAG_Z_F))

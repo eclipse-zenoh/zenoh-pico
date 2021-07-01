@@ -1530,9 +1530,9 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         goto EXIT_QRY_TRIG_PAR;
     }
 
-    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->source_kind) == 0)
+    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->replier_kind) == 0)
     {
-        _Z_DEBUG_VA(">>> Partial reply received from an unknown target (%zu)\n", reply_context->source_kind);
+        _Z_DEBUG_VA(">>> Partial reply received from an unknown target (%zu)\n", reply_context->replier_kind);
         goto EXIT_QRY_TRIG_PAR;
     }
 
@@ -1553,7 +1553,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         reply.data.data.key.val = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
     reply.data.data.key.len = strlen(reply.data.data.key.val);
     reply.data.replier_id = reply_context->replier_id;
-    reply.data.source_kind = reply_context->source_kind;
+    reply.data.replier_kind = reply_context->replier_kind;
 
     // Verify if this is a newer reply, free the old one in case it is
     _zn_pending_reply_t *latest = NULL;
@@ -1627,7 +1627,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Make a copy of the source info
         _z_bytes_copy((z_bytes_t *)&pen_rep->reply.data.replier_id, (z_bytes_t *)&reply.data.replier_id);
-        pen_rep->reply.data.source_kind = reply.data.source_kind;
+        pen_rep->reply.data.replier_kind = reply.data.replier_kind;
 
         // Make a copy of the data info timestamp if present
         pen_rep->tstamp = _z_timestamp_clone(&ts);
@@ -1662,7 +1662,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Do not copy the source info, we are triggering the handler straight away
         pen_rep->reply.data.replier_id = reply.data.replier_id;
-        pen_rep->reply.data.source_kind = reply.data.source_kind;
+        pen_rep->reply.data.replier_kind = reply.data.replier_kind;
 
         // Do not sotre the replier ID, we are triggering the handler straight away
         // Make a copy of the timestamp
@@ -1721,9 +1721,9 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
         goto EXIT_QRY_TRIG_FIN;
     }
 
-    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->source_kind) == 0)
+    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->replier_kind) == 0)
     {
-        _Z_DEBUG_VA(">>> Final reply received from an unknown target (%zu)\n", reply_context->source_kind);
+        _Z_DEBUG_VA(">>> Final reply received from an unknown target (%zu)\n", reply_context->replier_kind);
         goto EXIT_QRY_TRIG_FIN;
     }
 
@@ -2060,7 +2060,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     z_msg.reply_context = _zn_reply_context_init();
     _ZN_SET_FLAG(z_msg.reply_context->header, _ZN_FLAG_Z_F);
     z_msg.reply_context->qid = query->qid;
-    z_msg.reply_context->source_kind = 0;
+    z_msg.reply_context->replier_kind = 0;
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {

@@ -196,7 +196,7 @@ typedef struct
 // +-+-+-+---------+
 // ~      qid      ~
 // +---------------+
-// ~  source_kind  ~ //@TODO: make it if F==0
+// ~  replier_kind ~ if F==0
 // +---------------+
 // ~   replier_id  ~ if F==0
 // +---------------+
@@ -206,7 +206,7 @@ typedef struct
 typedef struct
 {
     z_zint_t qid;
-    z_zint_t source_kind;
+    z_zint_t replier_kind;
     z_bytes_t replier_id;
     uint8_t header;
 } _zn_reply_context_t;
@@ -796,7 +796,7 @@ typedef struct
 /*------------------ Query Message ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|X|T|  QUERY  |
+// |K|C|T|  QUERY  |
 // +-+-+-+---------+
 // ~    ResKey     ~ if K==1 then only numerical id
 // +---------------+
