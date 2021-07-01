@@ -348,6 +348,11 @@ void zn_reply_data_array_free(zn_reply_data_array_t replies);
 zn_query_consolidation_t zn_query_consolidation_default(void);
 
 /**
+ * Create a none :c:type:`zn_query_consolidation_t`.
+ */
+zn_query_consolidation_t zn_query_consolidation_none(void);
+
+/**
  * Get the predicate of a received query.
  *
  * Parameters:

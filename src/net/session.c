@@ -1278,6 +1278,15 @@ zn_query_consolidation_t zn_query_consolidation_default(void)
     return qc;
 }
 
+zn_query_consolidation_t zn_query_consolidation_none(void)
+{
+    zn_query_consolidation_t qc;
+    qc.first_routers = zn_consolidation_mode_t_NONE;
+    qc.last_router = zn_consolidation_mode_t_NONE;
+    qc.reception = zn_consolidation_mode_t_NONE;
+    return qc;
+}
+
 z_string_t zn_query_predicate(zn_query_t *query)
 {
     z_string_t s;
@@ -1309,6 +1318,16 @@ zn_query_target_t zn_query_target_default(void)
     return qt;
 }
 
+int zn_query_target_equal(zn_query_target_t *left, zn_query_target_t *right)
+{
+    return memcmp(left, right, sizeof(zn_query_target_t));
+}
+
+int zn_query_consolidation_equal(zn_query_consolidation_t *left, zn_query_consolidation_t *right)
+{
+    return memcmp(left, right, sizeof(zn_query_consolidation_t));
+}
+
 void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
     // Create the pending query object
@@ -1331,7 +1350,14 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_qu
     z_msg.body.query.key = reskey;
     _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
     z_msg.body.query.predicate = (z_str_t)predicate;
-    z_msg.body.query.target = target;
+
+    zn_query_target_t qtd = zn_query_target_default();
+    if (!zn_query_target_equal(&target, &qtd))
+    {
+        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_T);
+        z_msg.body.query.target = target;
+    }
+
     z_msg.body.query.consolidation = consolidation;
 
     int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
@@ -1345,7 +1371,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
     if (reply.tag == zn_reply_t_Tag_DATA)
     {
         zn_reply_data_t *rd = (zn_reply_data_t *)malloc(sizeof(zn_reply_data_t));
-        rd->source_kind = reply.data.source_kind;
+        rd->replier_kind = reply.data.replier_kind;
         _z_bytes_copy(&rd->replier_id, &reply.data.replier_id);
         _z_string_copy(&rd->data.key, &reply.data.data.key);
         _z_bytes_copy(&rd->data.value, &reply.data.data.value);
@@ -1382,7 +1408,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     for (unsigned int i = 0; i < rda.len; i++)
     {
         zn_reply_data_t *reply = (zn_reply_data_t *)_z_vec_get(&pqc.replies, i);
-        replies[i].source_kind = reply->source_kind;
+        replies[i].replier_kind = reply->replier_kind;
         _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
         _z_string_move(&replies[i].data.key, &reply->data.key);
         _z_bytes_move(&replies[i].data.value, &reply->data.value);
@@ -1502,7 +1528,7 @@ void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, s
     // Build the reply context decorator. This is NOT the final reply.
     z_msg.reply_context = _zn_reply_context_init();
     z_msg.reply_context->qid = query->qid;
-    z_msg.reply_context->source_kind = query->kind;
+    z_msg.reply_context->replier_kind = query->kind;
     z_msg.reply_context->replier_id = query->zn->local_pid;
 
     // Build the data payload
