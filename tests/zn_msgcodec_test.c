@@ -1800,6 +1800,7 @@ _zn_init_t gen_init_message(uint8_t *header)
 {
     _zn_init_t e_it;
 
+    e_it.options = gen_zint();
     e_it.whatami = gen_zint();
     e_it.pid = gen_bytes(16);
     if (gen_bool())
@@ -1822,6 +1823,10 @@ _zn_init_t gen_init_message(uint8_t *header)
 
 void assert_eq_init_message(_zn_init_t *left, _zn_init_t *right, uint8_t header)
 {
+    printf("   Options (%zu:%zu)", left->options, right->options);
+    assert(left->options == right->options);
+    printf("\n");
+
     printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
     assert(left->whatami == right->whatami);
     printf("\n");

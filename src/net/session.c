@@ -803,6 +803,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Build the open message
     _zn_session_message_t ism = _zn_session_message_init(_ZN_MID_INIT);
 
+    ism.body.init.options = 0;
     ism.body.init.version = ZN_PROTO_VERSION;
     ism.body.init.whatami = ZN_CLIENT;
     ism.body.init.pid = pid;

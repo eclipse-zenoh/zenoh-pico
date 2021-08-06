@@ -61,6 +61,7 @@
 #define _ZN_FLAG_S_K 0x40 // 1 << 6 | CloseLink     if K==1 then close the transport link only
 #define _ZN_FLAG_S_L 0x80 // 1 << 7 | Locators      if L==1 then Locators are present
 #define _ZN_FLAG_S_M 0x20 // 1 << 5 | Mask          if M==1 then a Mask is present
+#define _ZN_FLAG_S_O 0x80 // 1 << 7 | Options       if O==1 then Options are present
 #define _ZN_FLAG_S_P 0x20 // 1 << 5 | PingOrPong    if P==1 then the message is Ping, otherwise is Pong
 #define _ZN_FLAG_S_R 0x20 // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
 #define _ZN_FLAG_S_S 0x40 // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
@@ -80,6 +81,9 @@
 #define _ZN_FLAG_Z_S 0x40 // 1 << 6 | SubMode       if S==1 then the declaration SubMode is indicated
 #define _ZN_FLAG_Z_T 0x20 // 1 << 5 | QueryTarget   if T==1 then the query target is present
 #define _ZN_FLAG_Z_X 0x00 // Unused flags are set to zero
+
+/* Init option flags */
+#define _ZN_OPT_INIT_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
 
 /*=============================*/
 /*       Message header        */
@@ -275,11 +279,14 @@ typedef struct
 } _zn_hello_t;
 
 /*------------------ Init Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
+// # Init message
+//
+// ```text
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The INIT message is sent on a specific Locator to initiate a session with the peer associated
 // with that Locator. The initiator MUST send an INIT message with the A flag set to 0.  If the
@@ -288,8 +295,10 @@ typedef struct
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|S|A|   INIT  |
+// |O|S|A|   INIT  |
 // +-+-+-+-+-------+
+// ~             |Q~ if O==1
+// +---------------+
 // | v_maj | v_min | if A==0 -- Protocol Version VMaj.VMin
 // +-------+-------+
 // ~    whatami    ~ -- Client, Router, Peer or a combination of them
@@ -303,9 +312,12 @@ typedef struct
 //
 // (*) if A==0 and S==0 then 2^28 is assumed.
 //     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
+//
+// - if Q==1 then the initiator/responder supports QoS.
 // ```
 typedef struct
 {
+    z_zint_t options;
     z_zint_t whatami;
     z_zint_t sn_resolution;
     z_bytes_t pid;

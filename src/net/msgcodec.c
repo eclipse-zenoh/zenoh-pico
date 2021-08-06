@@ -1522,6 +1522,9 @@ int _zn_init_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_init_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_ACCEPT\n");
 
     // Encode the body
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_O))
+        _ZN_EC(_z_zint_encode(wbf, msg->options))
+
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
         _ZN_EC(_z_wbuf_write(wbf, msg->version))
 
@@ -1541,6 +1544,17 @@ void _zn_init_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_init_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_O))
+    {
+        _z_zint_result_t r_opts = _z_zint_decode(rbf);
+        _ASSURE_P_RESULT(r_opts, r, _z_err_t_PARSE_ZINT)
+        r->value.init.options = r_opts.value.zint;
+    }
+    else
+    {
+        r->value.init.options = 0;
+    }
+
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
     {
         r->value.init.version = _z_zbuf_read(rbf);
