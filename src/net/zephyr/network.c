@@ -242,11 +242,11 @@ int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sock
     return wb;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *rbf, struct sockaddr *from, socklen_t *salen)
+int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *zbf, struct sockaddr *from, socklen_t *salen)
 {
-    int rb = recvfrom(sock, _z_zbuf_get_wptr(rbf), _z_zbuf_space_left(rbf), 0, from, salen);
+    int rb = recvfrom(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), 0, from, salen);
     if (rb > 0)
-        _z_zbuf_set_wpos(rbf, _z_zbuf_get_wpos(rbf) + rb);
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
 
     return rb;
 }
@@ -269,11 +269,11 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return 0;
 }
 
-int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *rbf)
+int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf)
 {
-    int rb = recv(sock, _z_zbuf_get_wptr(rbf), _z_zbuf_space_left(rbf), 0);
+    int rb = recv(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), 0);
     if (rb > 0)
-        _z_zbuf_set_wpos(rbf, _z_zbuf_get_wpos(rbf) + rb);
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
 

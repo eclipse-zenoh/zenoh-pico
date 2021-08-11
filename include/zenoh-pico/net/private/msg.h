@@ -45,7 +45,10 @@
 #define _ZN_MID_QUERY 0x0d
 #define _ZN_MID_PULL 0x0e
 #define _ZN_MID_UNIT 0x0f
+#define _ZN_MID_LINK_STATE_LIST 0x10
 /* Message decorators */
+#define _ZN_MID_PRIORITY 0x1c
+#define _ZN_MID_ROUTING_CONTEXT 0x1d
 #define _ZN_MID_REPLY_CONTEXT 0x1e
 #define _ZN_MID_ATTACHMENT 0x1f
 
@@ -61,6 +64,7 @@
 #define _ZN_FLAG_S_K 0x40 // 1 << 6 | CloseLink     if K==1 then close the transport link only
 #define _ZN_FLAG_S_L 0x80 // 1 << 7 | Locators      if L==1 then Locators are present
 #define _ZN_FLAG_S_M 0x20 // 1 << 5 | Mask          if M==1 then a Mask is present
+#define _ZN_FLAG_S_O 0x80 // 1 << 7 | Options       if O==1 then Options are present
 #define _ZN_FLAG_S_P 0x20 // 1 << 5 | PingOrPong    if P==1 then the message is Ping, otherwise is Pong
 #define _ZN_FLAG_S_R 0x20 // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
 #define _ZN_FLAG_S_S 0x40 // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
@@ -72,7 +76,7 @@
 #define _ZN_FLAG_Z_D 0x20 // 1 << 5 | Dropping      if D==1 then the message can be dropped
 #define _ZN_FLAG_Z_F 0x20 // 1 << 5 | Final         if F==1 then this is the final message (e.g., ReplyContext, Pull)
 #define _ZN_FLAG_Z_I 0x40 // 1 << 6 | DataInfo      if I==1 then DataInfo is present
-#define _ZN_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey   if K==1 then only numerical ID
+#define _ZN_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey   if K==1 then reskey is string
 #define _ZN_FLAG_Z_N 0x40 // 1 << 6 | MaxSamples    if N==1 then the MaxSamples is indicated
 #define _ZN_FLAG_Z_P 0x80 // 1 << 7 | Period        if P==1 then a period is present
 #define _ZN_FLAG_Z_Q 0x40 // 1 << 6 | QueryableKind if Q==1 then the queryable kind is present
@@ -80,6 +84,9 @@
 #define _ZN_FLAG_Z_S 0x40 // 1 << 6 | SubMode       if S==1 then the declaration SubMode is indicated
 #define _ZN_FLAG_Z_T 0x20 // 1 << 5 | QueryTarget   if T==1 then the query target is present
 #define _ZN_FLAG_Z_X 0x00 // Unused flags are set to zero
+
+/* Init option flags */
+#define _ZN_OPT_INIT_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
 
 /*=============================*/
 /*       Message header        */
@@ -120,12 +127,11 @@
 /*=============================*/
 /*       DataInfo flags        */
 /*=============================*/
-#define _ZN_DATA_INFO_KIND 0x01   // 1 << 0
-#define _ZN_DATA_INFO_ENC 0x02    // 1 << 1
-#define _ZN_DATA_INFO_TSTAMP 0x04 // 1 << 2
-// Reserved: bits 3-4
-#define _ZN_DATA_INFO_SLICED 0x20 // 1 << 5
-// Reserved: bits 6
+#define _ZN_DATA_INFO_SLICED 0x01 // 1 << 0
+#define _ZN_DATA_INFO_KIND 0x02   // 1 << 1
+#define _ZN_DATA_INFO_ENC 0x04    // 1 << 2
+#define _ZN_DATA_INFO_TSTAMP 0x08 // 1 << 3
+// Reserved: bits 4-6
 #define _ZN_DATA_INFO_SRC_ID 0x80  // 1 << 7
 #define _ZN_DATA_INFO_SRC_SN 0x100 // 1 << 8
 #define _ZN_DATA_INFO_RTR_ID 0x200 // 1 << 9
@@ -275,11 +281,14 @@ typedef struct
 } _zn_hello_t;
 
 /*------------------ Init Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
+// # Init message
+//
+// ```text
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The INIT message is sent on a specific Locator to initiate a session with the peer associated
 // with that Locator. The initiator MUST send an INIT message with the A flag set to 0.  If the
@@ -288,8 +297,10 @@ typedef struct
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|S|A|   INIT  |
+// |O|S|A|   INIT  |
 // +-+-+-+-+-------+
+// ~             |Q~ if O==1
+// +---------------+
 // | v_maj | v_min | if A==0 -- Protocol Version VMaj.VMin
 // +-------+-------+
 // ~    whatami    ~ -- Client, Router, Peer or a combination of them
@@ -303,9 +314,12 @@ typedef struct
 //
 // (*) if A==0 and S==0 then 2^28 is assumed.
 //     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
+//
+// - if Q==1 then the initiator/responder supports QoS.
 // ```
 typedef struct
 {
+    z_zint_t options;
     z_zint_t whatami;
     z_zint_t sn_resolution;
     z_bytes_t pid;
@@ -551,7 +565,7 @@ typedef struct
 // +---------------+
 // ~      RID      ~
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 //
 typedef struct
@@ -565,7 +579,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|   PUB   |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 //
 typedef struct
@@ -588,7 +602,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|S|R|   SUB   |
 // +---------------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 // ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
 // +---------------+
@@ -606,7 +620,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|Q|X|  QABLE  |
 // +---------------+
-// ~     ResKey    ~ if K==1 then only numerical id
+// ~     ResKey    ~ if K==1 then reskey is string
 // +---------------+
 // ~     Kind      ~ if Q==1. Otherwise: STORAGE (0x02)
 // +---------------+
@@ -635,7 +649,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_PUB  |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 //
 typedef struct
@@ -648,7 +662,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_SUB  |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 //
 typedef struct
@@ -661,7 +675,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|X|X| F_QABLE |
 // +---------------+
-// ~    ResKey     ~ if  K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 //
 typedef struct
@@ -748,7 +762,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|I|D|  DATA   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 -- Only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 // ~    DataInfo   ~ if I==1
 // +---------------+
@@ -779,7 +793,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|N|F|  PULL   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 // ~    pullid     ~
 // +---------------+
@@ -798,7 +812,7 @@ typedef struct
 // +-+-+-+-+-+-+-+-+
 // |K|C|T|  QUERY  |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then only numerical id
+// ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
 // ~   predicate   ~
 // +---------------+

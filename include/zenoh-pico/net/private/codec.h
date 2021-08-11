@@ -23,17 +23,17 @@
 /*------------------ Internal Zenoh-net Encoding/Decoding ------------------*/
 _ZN_RESULT_DECLARE(zn_property_t, property)
 int _zn_property_encode(_z_wbuf_t *wbf, const zn_property_t *m);
-_zn_property_result_t _zn_property_decode(_z_zbuf_t *rbf);
-void _zn_property_decode_na(_z_zbuf_t *rbf, _zn_property_result_t *r);
+_zn_property_result_t _zn_property_decode(_z_zbuf_t *zbf);
+void _zn_property_decode_na(_z_zbuf_t *zbf, _zn_property_result_t *r);
 
 _ZN_RESULT_DECLARE(zn_properties_t, properties)
 int _zn_properties_encode(_z_wbuf_t *wbf, const zn_properties_t *m);
-_zn_properties_result_t _zn_properties_decode(_z_zbuf_t *rbf);
-void _zn_properties_decode_na(_z_zbuf_t *rbf, _zn_properties_result_t *r);
+_zn_properties_result_t _zn_properties_decode(_z_zbuf_t *zbf);
+void _zn_properties_decode_na(_z_zbuf_t *zbf, _zn_properties_result_t *r);
 
 _ZN_RESULT_DECLARE(zn_period_t, period)
 int _zn_period_encode(_z_wbuf_t *wbf, const zn_period_t *m);
-_zn_period_result_t _zn_period_decode(_z_zbuf_t *rbf);
-void _zn_period_decode_na(_z_zbuf_t *rbf, _zn_period_result_t *r);
+_zn_period_result_t _zn_period_decode(_z_zbuf_t *zbf);
+void _zn_period_decode_na(_z_zbuf_t *zbf, _zn_period_result_t *r);
 
 #endif /* _ZENOH_NET_PICO_CODEC_H */

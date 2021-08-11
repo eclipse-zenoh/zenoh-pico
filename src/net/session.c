@@ -194,20 +194,20 @@ zn_hello_array_t _zn_scout_loop(
     socklen_t flen = 0;
 
     // The receiving buffer
-    _z_zbuf_t rbf = _z_zbuf_make(ZN_READ_BUF_LEN);
+    _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
 
     _z_clock_t start = _z_clock_now();
     while (_z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
-        _z_zbuf_clear(&rbf);
-        int len = _zn_recv_dgram_from(socket, &rbf, from, &flen);
+        _z_zbuf_clear(&zbf);
+        int len = _zn_recv_dgram_from(socket, &zbf, from, &flen);
 
         // Retry if we haven't received anything
         if (len <= 0)
             continue;
 
-        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&rbf);
+        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&zbf);
         if (r_hm.tag == _z_res_t_ERR)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
@@ -275,7 +275,7 @@ zn_hello_array_t _zn_scout_loop(
     }
 
     free(from);
-    _z_zbuf_free(&rbf);
+    _z_zbuf_free(&zbf);
 
     return ls;
 }
@@ -617,10 +617,10 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
-                _z_zbuf_t rbf = _z_wbuf_to_zbuf(dbuf);
+                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
                 // Decode the zenoh message
-                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
+                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&zbf);
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
@@ -636,7 +636,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
                 // Free the result
                 _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
-                _z_zbuf_free(&rbf);
+                _z_zbuf_free(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
@@ -803,6 +803,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Build the open message
     _zn_session_message_t ism = _zn_session_message_init(_ZN_MID_INIT);
 
+    ism.body.init.options = 0;
     ism.body.init.version = ZN_PROTO_VERSION;
     ism.body.init.whatami = ZN_CLIENT;
     ism.body.init.pid = pid;
@@ -1011,6 +1012,8 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_RESOURCE;
     z_msg.body.declare.declarations.val[0].body.res.id = r->id;
     z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&r->key);
+    if (r->key.rname)
+        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -1072,8 +1075,8 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_PUBLISHER;
     z_msg.body.declare.declarations.val[0].body.pub.key = _zn_reskey_clone(&reskey);
     ;
-    // Mark the key as numerical if the key has no resource name
-    if (!pub->key.rname)
+    // Mark the key as string if the key has resource name
+    if (pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
@@ -1100,8 +1103,8 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     // Forget publisher declaration
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_PUBLISHER;
     z_msg.body.declare.declarations.val[0].body.forget_pub.key = _zn_reskey_clone(&pub->key);
-    // Mark the key as numerical if the key has no resource name
-    if (!pub->key.rname)
+    // Mark the key as string if the key has resource name
+    if (pub->key.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
     if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
@@ -1151,7 +1154,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
     // Subscriber declaration
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_SUBSCRIBER;
-    if (!reskey.rname)
+    if (reskey.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
     if (sub_info.mode != zn_submode_t_PUSH || sub_info.period)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_S);
@@ -1195,7 +1198,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
         // Forget Subscriber declaration
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_SUBSCRIBER;
-        if (!s->key.rname)
+        if (s->key.rname)
             _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
         z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&s->key);
@@ -1228,7 +1231,7 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payl
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
     // Set the resource key
     z_msg.body.data.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
 
     // Set the data info
     _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_I);
@@ -1259,7 +1262,7 @@ int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
     // Set the resource key
     z_msg.body.data.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
 
     // Set the payload
     z_msg.body.data.payload.len = length;
@@ -1348,7 +1351,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_qu
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
     z_msg.body.query.qid = pq->id;
     z_msg.body.query.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
     z_msg.body.query.predicate = (z_str_t)predicate;
 
     zn_query_target_t qtd = zn_query_target_default();
@@ -1461,7 +1464,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     // Queryable declaration
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_QUERYABLE;
-    if (!reskey.rname)
+    if (reskey.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
     if (kind != ZN_QUERYABLE_STORAGE)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_Q);
@@ -1501,7 +1504,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 
         // Forget Subscriber declaration
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_QUERYABLE;
-        if (!q->key.rname)
+        if (q->key.rname)
             _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
         z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
@@ -1537,7 +1540,7 @@ void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, s
     // @TODO: use numerical resources if possible
     z_msg.body.data.key.rid = ZN_RESOURCE_ID_NONE;
     z_msg.body.data.key.rname = (z_str_t)key;
-    if (!z_msg.body.data.key.rname)
+    if (z_msg.body.data.key.rname)
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_K);
     // Do not set any data_info
 
@@ -1559,7 +1562,7 @@ int zn_pull(zn_subscriber_t *sub)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_PULL);
         z_msg.body.pull.key = _zn_reskey_clone(&s->key);
-        _ZN_SET_FLAG(z_msg.header, s->key.rname ? 0 : _ZN_FLAG_Z_K);
+        _ZN_SET_FLAG(z_msg.header, s->key.rname ? _ZN_FLAG_Z_K : 0);
         _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_F);
 
         z_msg.body.pull.pull_id = _zn_get_pull_id(sub->zn);

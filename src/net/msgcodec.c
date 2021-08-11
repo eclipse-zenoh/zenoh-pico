@@ -33,20 +33,20 @@ int _zn_payload_encode(_z_wbuf_t *wbf, const _zn_payload_t *pld)
     return _z_bytes_encode(wbf, pld);
 }
 
-void _zn_payload_decode_na(_z_zbuf_t *rbf, _zn_payload_result_t *r)
+void _zn_payload_decode_na(_z_zbuf_t *zbf, _zn_payload_result_t *r)
 {
     _Z_DEBUG("Decoding _PAYLOAD\n");
     r->tag = _z_res_t_OK;
 
-    _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
-    _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES);
+    _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
+    _ASSURE_P_RESULT(r_arr, r, _zn_err_t_PARSE_PAYLOAD);
     r->value.payload = r_arr.value.bytes;
 }
 
-_zn_payload_result_t _zn_payload_decode(_z_zbuf_t *rbf)
+_zn_payload_result_t _zn_payload_decode(_z_zbuf_t *zbf)
 {
     _zn_payload_result_t r;
-    _zn_payload_decode_na(rbf, &r);
+    _zn_payload_decode_na(zbf, &r);
     return r;
 }
 
@@ -65,25 +65,25 @@ int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
     return _z_bytes_encode(wbf, &ts->id);
 }
 
-void _z_timestamp_decode_na(_z_zbuf_t *rbf, _zn_timestamp_result_t *r)
+void _z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r)
 {
     _Z_DEBUG("Decoding _TIMESTAMP\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.timestamp.time = r_zint.value.zint;
 
-    _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
+    _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
     _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES);
     r->value.timestamp.id = r_arr.value.bytes;
 }
 
-_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *rbf)
+_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *zbf)
 {
     _zn_timestamp_result_t r;
-    _z_timestamp_decode_na(rbf, &r);
+    _z_timestamp_decode_na(zbf, &r);
     return r;
 }
 
@@ -110,7 +110,7 @@ int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld)
     return 0;
 }
 
-void _zn_subinfo_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_subinfo_result_t *r)
+void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t *r)
 {
     _Z_DEBUG("Decoding _SUB_MODE\n");
     r->tag = _z_res_t_OK;
@@ -122,11 +122,14 @@ void _zn_subinfo_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_subinfo_result_t 
         r->value.subinfo.reliability = zn_reliability_t_BEST_EFFORT;
 
     // Decode the body
-    uint8_t mode = _z_zbuf_read(rbf);
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_PERIOD)
+
+    uint8_t mode = r_uint8.value.uint8;
     r->value.subinfo.mode = _ZN_MID(mode);
     if (_ZN_HAS_FLAG(mode, _ZN_FLAG_Z_P))
     {
-        _zn_period_result_t r_tp = _zn_period_decode(rbf);
+        _zn_period_result_t r_tp = _zn_period_decode(zbf);
         _ASSURE_P_RESULT(r_tp, r, _zn_err_t_PARSE_PERIOD)
         zn_period_t *p_per = (zn_period_t *)malloc(sizeof(zn_period_t));
         memcpy(p_per, &r_tp.value.period, sizeof(zn_period_t));
@@ -138,10 +141,10 @@ void _zn_subinfo_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_subinfo_result_t 
     }
 }
 
-_zn_subinfo_result_t _zn_subinfo_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_subinfo_result_t _zn_subinfo_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_subinfo_result_t r;
-    _zn_subinfo_decode_na(rbf, header, &r);
+    _zn_subinfo_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -158,7 +161,7 @@ int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
 
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, fld->rid))
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
         return _z_str_encode(wbf, fld->rname);
     }
@@ -166,19 +169,19 @@ int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
     return 0;
 }
 
-void _zn_reskey_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r)
+void _zn_reskey_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reskey_result_t *r)
 {
     _Z_DEBUG("Decoding _RESKEY\n");
     r->tag = _z_res_t_OK;
 
     // Decode the header
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.reskey.rid = r_zint.value.zint;
 
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
-        _z_str_result_t r_str = _z_str_decode(rbf);
+        _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _z_err_t_PARSE_STRING)
         r->value.reskey.rname = r_str.value.str;
     }
@@ -188,10 +191,10 @@ void _zn_reskey_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r
     }
 }
 
-_zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_reskey_result_t r;
-    _zn_reskey_decode_na(rbf, header, &r);
+    _zn_reskey_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -218,12 +221,12 @@ int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locators_t *ls)
     return 0;
 }
 
-void _zn_locators_decode_na(_z_zbuf_t *rbf, _zn_locators_result_t *r)
+void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
     // Decode the number of elements
-    _z_zint_result_t r_n = _z_zint_decode(rbf);
+    _z_zint_result_t r_n = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
     size_t len = (size_t)r_n.value.zint;
 
@@ -232,16 +235,16 @@ void _zn_locators_decode_na(_z_zbuf_t *rbf, _zn_locators_result_t *r)
     // Decode the elements
     for (size_t i = 0; i < len; ++i)
     {
-        _z_str_result_t r_s = _z_str_decode(rbf);
+        _z_str_result_t r_s = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_s, r, _z_err_t_PARSE_STRING);
         ((z_str_t *)r->value.locators.val)[i] = r_s.value.str;
     }
 }
 
-_zn_locators_result_t _zn_locators_decode(_z_zbuf_t *rbf)
+_zn_locators_result_t _zn_locators_decode(_z_zbuf_t *zbf)
 {
     _zn_locators_result_t r;
-    _zn_locators_decode_na(rbf, &r);
+    _zn_locators_decode_na(zbf, &r);
     return r;
 }
 
@@ -267,7 +270,7 @@ int _zn_attachment_encode(_z_wbuf_t *wbf, const _zn_attachment_t *msg)
     return _zn_payload_encode(wbf, &msg->payload);
 }
 
-void _zn_attachment_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_attachment_p_result_t *r)
+void _zn_attachment_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_attachment_p_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_ATTACHMENT\n");
     r->tag = _z_res_t_OK;
@@ -285,16 +288,16 @@ void _zn_attachment_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_attachment_p_r
         return;
     }
 
-    _zn_payload_result_t r_pld = _zn_payload_decode(rbf);
+    _zn_payload_result_t r_pld = _zn_payload_decode(zbf);
     _ASSURE_FREE_P_RESULT(r_pld, r, _zn_err_t_PARSE_PAYLOAD, attachment)
     r->value.attachment->payload = r_pld.value.payload;
 }
 
-_zn_attachment_p_result_t _zn_attachment_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_attachment_p_result_t _zn_attachment_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_attachment_p_result_t r;
     _zn_attachment_p_result_init(&r);
-    _zn_attachment_decode_na(rbf, header, &r);
+    _zn_attachment_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -322,7 +325,7 @@ int _zn_reply_context_encode(_z_wbuf_t *wbf, const _zn_reply_context_t *msg)
     return 0;
 }
 
-void _zn_reply_context_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reply_context_p_result_t *r)
+void _zn_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reply_context_p_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_REPLY_CONTEXT\n");
     r->tag = _z_res_t_OK;
@@ -331,27 +334,27 @@ void _zn_reply_context_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reply_conte
     r->value.reply_context->header = header;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_FREE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT, reply_context);
     r->value.reply_context->qid = r_zint.value.zint;
 
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_F))
     {
-        r_zint = _z_zint_decode(rbf);
+        r_zint = _z_zint_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT, reply_context)
         r->value.reply_context->replier_kind = r_zint.value.zint;
 
-        _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
         r->value.reply_context->replier_id = r_arr.value.bytes;
     }
 }
 
-_zn_reply_context_p_result_t _zn_reply_context_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_reply_context_p_result_t _zn_reply_context_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_reply_context_p_result_t r;
     _zn_reply_context_p_result_init(&r);
-    _zn_reply_context_decode_na(rbf, header, &r);
+    _zn_reply_context_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -374,25 +377,25 @@ int _zn_res_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_res_decl_t *dc
     return _zn_reskey_encode(wbf, header, &dcl->key);
 }
 
-void _zn_res_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_res_decl_result_t *r)
+void _zn_res_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_res_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_RESOURCE\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.res_decl.id = r_zint.value.zint;
 
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.res_decl.key = r_res.value.reskey;
 }
 
-_zn_res_decl_result_t _zn_res_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_res_decl_result_t _zn_res_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_res_decl_result_t r;
-    _zn_res_decl_decode_na(rbf, header, &r);
+    _zn_res_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -410,21 +413,21 @@ int _zn_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_pub_decl_t *dc
     return _zn_reskey_encode(wbf, header, &dcl->key);
 }
 
-void _zn_pub_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_pub_decl_result_t *r)
+void _zn_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_pub_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_PUBLISHER\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.pub_decl.key = r_res.value.reskey;
 }
 
-_zn_pub_decl_result_t _zn_pub_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_pub_decl_result_t _zn_pub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_pub_decl_result_t r;
-    _zn_pub_decl_decode_na(rbf, header, &r);
+    _zn_pub_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -446,19 +449,19 @@ int _zn_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_sub_decl_t *dc
     return 0;
 }
 
-void _zn_sub_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_sub_decl_result_t *r)
+void _zn_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_sub_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_SUBSCRIBER\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.sub_decl.key = r_res.value.reskey;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_S))
     {
-        _zn_subinfo_result_t r_smd = _zn_subinfo_decode(rbf, header);
+        _zn_subinfo_result_t r_smd = _zn_subinfo_decode(zbf, header);
         _ASSURE_P_RESULT(r_smd, r, _zn_err_t_PARSE_SUBMODE)
         r->value.sub_decl.subinfo = r_smd.value.subinfo;
     }
@@ -474,10 +477,10 @@ void _zn_sub_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_sub_decl_result_
     }
 }
 
-_zn_sub_decl_result_t _zn_sub_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_sub_decl_result_t _zn_sub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_sub_decl_result_t r;
-    _zn_sub_decl_decode_na(rbf, header, &r);
+    _zn_sub_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -500,18 +503,18 @@ int _zn_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_qle_decl_t *dc
     return 0;
 }
 
-void _zn_qle_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_qle_decl_result_t *r)
+void _zn_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_qle_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_QUERYABLE\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.qle_decl.key = r_res.value.reskey;
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_Q))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.qle_decl.kind = r_zint.value.zint;
     }
@@ -521,10 +524,10 @@ void _zn_qle_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_qle_decl_result_
     }
 }
 
-_zn_qle_decl_result_t _zn_qle_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_qle_decl_result_t _zn_qle_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_qle_decl_result_t r;
-    _zn_qle_decl_decode_na(rbf, header, &r);
+    _zn_qle_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -542,21 +545,21 @@ int _zn_forget_res_decl_encode(_z_wbuf_t *wbf, const _zn_forget_res_decl_t *dcl)
     return _z_zint_encode(wbf, dcl->rid);
 }
 
-void _zn_forget_res_decl_decode_na(_z_zbuf_t *rbf, _zn_forget_res_decl_result_t *r)
+void _zn_forget_res_decl_decode_na(_z_zbuf_t *zbf, _zn_forget_res_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_FORGET_RESOURCE\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.forget_res_decl.rid = r_zint.value.zint;
 }
 
-_zn_forget_res_decl_result_t _zn_forget_res_decl_decode(_z_zbuf_t *rbf)
+_zn_forget_res_decl_result_t _zn_forget_res_decl_decode(_z_zbuf_t *zbf)
 {
     _zn_forget_res_decl_result_t r;
-    _zn_forget_res_decl_decode_na(rbf, &r);
+    _zn_forget_res_decl_decode_na(zbf, &r);
     return r;
 }
 
@@ -575,21 +578,21 @@ int _zn_forget_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_forget_
     return _zn_reskey_encode(wbf, header, &dcl->key);
 }
 
-void _zn_forget_pub_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_forget_pub_decl_result_t *r)
+void _zn_forget_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_forget_pub_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_FORGET_PUBLISHER\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.forget_pub_decl.key = r_res.value.reskey;
 }
 
-_zn_forget_pub_decl_result_t _zn_forget_pub_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_forget_pub_decl_result_t _zn_forget_pub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_forget_pub_decl_result_t r;
-    _zn_forget_pub_decl_decode_na(rbf, header, &r);
+    _zn_forget_pub_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -607,21 +610,21 @@ int _zn_forget_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_forget_
     return _zn_reskey_encode(wbf, header, &dcl->key);
 }
 
-void _zn_forget_sub_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_forget_sub_decl_result_t *r)
+void _zn_forget_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_forget_sub_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_FORGET_PUBLISHER\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.forget_sub_decl.key = r_res.value.reskey;
 }
 
-_zn_forget_sub_decl_result_t _zn_forget_sub_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_forget_sub_decl_result_t _zn_forget_sub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_forget_sub_decl_result_t r;
-    _zn_forget_sub_decl_decode_na(rbf, header, &r);
+    _zn_forget_sub_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -639,21 +642,21 @@ int _zn_forget_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_forget_
     return _zn_reskey_encode(wbf, header, &dcl->key);
 }
 
-void _zn_forget_qle_decl_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_forget_qle_decl_result_t *r)
+void _zn_forget_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_forget_qle_decl_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DECL_FORGET_QUERYABLE\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_res = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.forget_qle_decl.key = r_res.value.reskey;
 }
 
-_zn_forget_qle_decl_result_t _zn_forget_qle_decl_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_forget_qle_decl_result_t _zn_forget_qle_decl_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_forget_qle_decl_result_t r;
-    _zn_forget_qle_decl_decode_na(rbf, header, &r);
+    _zn_forget_qle_decl_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -693,12 +696,15 @@ int _zn_declaration_encode(_z_wbuf_t *wbf, _zn_declaration_t *dcl)
     }
 }
 
-void _zn_declaration_decode_na(_z_zbuf_t *rbf, _zn_declaration_result_t *r)
+void _zn_declaration_decode_na(_z_zbuf_t *zbf, _zn_declaration_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
     // Decode the header
-    r->value.declaration.header = _z_zbuf_read(rbf);
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_DECLARATION)
+
+    r->value.declaration.header = r_uint8.value.uint8;
     uint8_t mid = _ZN_MID(r->value.declaration.header);
 
     // Decode the body
@@ -714,42 +720,42 @@ void _zn_declaration_decode_na(_z_zbuf_t *rbf, _zn_declaration_result_t *r)
     switch (mid)
     {
     case _ZN_DECL_RESOURCE:
-        r_rdcl = _zn_res_decl_decode(rbf, r->value.declaration.header);
+        r_rdcl = _zn_res_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_rdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.res = r_rdcl.value.res_decl;
         break;
     case _ZN_DECL_PUBLISHER:
-        r_pdcl = _zn_pub_decl_decode(rbf, r->value.declaration.header);
+        r_pdcl = _zn_pub_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_pdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.pub = r_pdcl.value.pub_decl;
         break;
     case _ZN_DECL_SUBSCRIBER:
-        r_sdcl = _zn_sub_decl_decode(rbf, r->value.declaration.header);
+        r_sdcl = _zn_sub_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_sdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.sub = r_sdcl.value.sub_decl;
         break;
     case _ZN_DECL_QUERYABLE:
-        r_qdcl = _zn_qle_decl_decode(rbf, r->value.declaration.header);
+        r_qdcl = _zn_qle_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_qdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.qle = r_qdcl.value.qle_decl;
         break;
     case _ZN_DECL_FORGET_RESOURCE:
-        r_frdcl = _zn_forget_res_decl_decode(rbf);
+        r_frdcl = _zn_forget_res_decl_decode(zbf);
         _ASSURE_P_RESULT(r_frdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.forget_res = r_frdcl.value.forget_res_decl;
         break;
     case _ZN_DECL_FORGET_PUBLISHER:
-        r_fpdcl = _zn_forget_pub_decl_decode(rbf, r->value.declaration.header);
+        r_fpdcl = _zn_forget_pub_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_fpdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.forget_pub = r_fpdcl.value.forget_pub_decl;
         break;
     case _ZN_DECL_FORGET_SUBSCRIBER:
-        r_fsdcl = _zn_forget_sub_decl_decode(rbf, r->value.declaration.header);
+        r_fsdcl = _zn_forget_sub_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_fsdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.forget_sub = r_fsdcl.value.forget_sub_decl;
         break;
     case _ZN_DECL_FORGET_QUERYABLE:
-        r_fqdcl = _zn_forget_qle_decl_decode(rbf, r->value.declaration.header);
+        r_fqdcl = _zn_forget_qle_decl_decode(zbf, r->value.declaration.header);
         _ASSURE_P_RESULT(r_fqdcl, r, _zn_err_t_PARSE_DECLARATION)
         r->value.declaration.body.forget_qle = r_fqdcl.value.forget_qle_decl;
         break;
@@ -759,10 +765,10 @@ void _zn_declaration_decode_na(_z_zbuf_t *rbf, _zn_declaration_result_t *r)
     }
 }
 
-_zn_declaration_result_t _zn_declaration_decode(_z_zbuf_t *rbf)
+_zn_declaration_result_t _zn_declaration_decode(_z_zbuf_t *zbf)
 {
     _zn_declaration_result_t r;
-    _zn_declaration_decode_na(rbf, &r);
+    _zn_declaration_decode_na(zbf, &r);
     return r;
 }
 
@@ -817,13 +823,13 @@ int _zn_declare_encode(_z_wbuf_t *wbf, const _zn_declare_t *msg)
     return 0;
 }
 
-void _zn_declare_decode_na(_z_zbuf_t *rbf, _zn_declare_result_t *r)
+void _zn_declare_decode_na(_z_zbuf_t *zbf, _zn_declare_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_DECLARE\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_dlen = _z_zint_decode(rbf);
+    _z_zint_result_t r_dlen = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_dlen, r, _z_err_t_PARSE_ZINT)
     size_t len = (size_t)r_dlen.value.zint;
 
@@ -833,7 +839,7 @@ void _zn_declare_decode_na(_z_zbuf_t *rbf, _zn_declare_result_t *r)
     _zn_declaration_result_t *r_decl = (_zn_declaration_result_t *)malloc(sizeof(_zn_declaration_result_t));
     for (size_t i = 0; i < len; ++i)
     {
-        _zn_declaration_decode_na(rbf, r_decl);
+        _zn_declaration_decode_na(zbf, r_decl);
         if (r_decl->tag == _z_res_t_OK)
         {
             r->value.declare.declarations.val[i] = r_decl->value.declaration;
@@ -853,10 +859,10 @@ void _zn_declare_decode_na(_z_zbuf_t *rbf, _zn_declare_result_t *r)
     free(r_decl);
 }
 
-_zn_declare_result_t _zn_declare_decode(_z_zbuf_t *rbf)
+_zn_declare_result_t _zn_declare_decode(_z_zbuf_t *zbf)
 {
     _zn_declare_result_t r;
-    _zn_declare_decode_na(rbf, &r);
+    _zn_declare_decode_na(zbf, &r);
     return r;
 }
 
@@ -902,38 +908,17 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
     return 0;
 }
 
-void _zn_data_info_decode_na(_z_zbuf_t *rbf, _zn_data_info_result_t *r)
+void _zn_data_info_decode_na(_z_zbuf_t *zbf, _zn_data_info_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_DATA_INFO\n");
     r->tag = _z_res_t_OK;
 
     // Decode the flags
-    _z_zint_result_t r_flags = _z_zint_decode(rbf);
+    _z_zint_result_t r_flags = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_flags, r, _z_err_t_PARSE_ZINT)
     r->value.data_info.flags = r_flags.value.zint;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_KIND))
-    {
-        _z_zint_result_t r_knd = _z_zint_decode(rbf);
-        _ASSURE_P_RESULT(r_knd, r, _z_err_t_PARSE_ZINT)
-        r->value.data_info.kind = r_knd.value.zint;
-    }
-
-    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_ENC))
-    {
-        _z_zint_result_t r_enc = _z_zint_decode(rbf);
-        _ASSURE_P_RESULT(r_enc, r, _z_err_t_PARSE_ZINT)
-        r->value.data_info.encoding = r_enc.value.zint;
-    }
-
-    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP))
-    {
-        _zn_timestamp_result_t r_tsp = _z_timestamp_decode(rbf);
-        _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
-        r->value.data_info.tstamp = r_tsp.value.timestamp;
-    }
-
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Return error in case the payload is sliced.
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SLICED))
@@ -943,39 +928,60 @@ void _zn_data_info_decode_na(_z_zbuf_t *rbf, _zn_data_info_result_t *r)
         return;
     }
 
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_KIND))
+    {
+        _z_zint_result_t r_knd = _z_zint_decode(zbf);
+        _ASSURE_P_RESULT(r_knd, r, _z_err_t_PARSE_ZINT)
+        r->value.data_info.kind = r_knd.value.zint;
+    }
+
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_ENC))
+    {
+        _z_zint_result_t r_enc = _z_zint_decode(zbf);
+        _ASSURE_P_RESULT(r_enc, r, _z_err_t_PARSE_ZINT)
+        r->value.data_info.encoding = r_enc.value.zint;
+    }
+
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP))
+    {
+        _zn_timestamp_result_t r_tsp = _z_timestamp_decode(zbf);
+        _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
+        r->value.data_info.tstamp = r_tsp.value.timestamp;
+    }
+
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SRC_ID))
     {
-        _z_bytes_result_t r_sid = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_sid = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_sid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.source_id = r_sid.value.bytes;
     }
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SRC_SN))
     {
-        _z_zint_result_t r_ssn = _z_zint_decode(rbf);
+        _z_zint_result_t r_ssn = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_ssn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.source_sn = r_ssn.value.zint;
     }
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_RTR_ID))
     {
-        _z_bytes_result_t r_rid = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_rid = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_rid, r, _z_err_t_PARSE_BYTES)
         r->value.data_info.first_router_id = r_rid.value.bytes;
     }
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_RTR_SN))
     {
-        _z_zint_result_t r_rsn = _z_zint_decode(rbf);
+        _z_zint_result_t r_rsn = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_rsn, r, _z_err_t_PARSE_ZINT)
         r->value.data_info.first_router_sn = r_rsn.value.zint;
     }
 }
 
-_zn_data_info_result_t _zn_data_info_decode(_z_zbuf_t *rbf)
+_zn_data_info_result_t _zn_data_info_decode(_z_zbuf_t *zbf)
 {
     _zn_data_info_result_t r;
-    _zn_data_info_decode_na(rbf, &r);
+    _zn_data_info_decode_na(zbf, &r);
     return r;
 }
 
@@ -1011,19 +1017,19 @@ int _zn_data_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_data_t *msg)
     return _zn_payload_encode(wbf, &msg->payload);
 }
 
-void _zn_data_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_data_result_t *r)
+void _zn_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_data_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_DATA\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_key = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_key = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _zn_err_t_PARSE_RESKEY)
     r->value.data.key = r_key.value.reskey;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_I))
     {
-        _zn_data_info_result_t r_dti = _zn_data_info_decode(rbf);
+        _zn_data_info_result_t r_dti = _zn_data_info_decode(zbf);
         _ASSURE_P_RESULT(r_dti, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
         r->value.data.info = r_dti.value.data_info;
     }
@@ -1032,15 +1038,15 @@ void _zn_data_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_data_result_t *r)
         r->value.data.info.flags = 0;
     }
 
-    _zn_payload_result_t r_pld = _zn_payload_decode(rbf);
+    _zn_payload_result_t r_pld = _zn_payload_decode(zbf);
     _ASSURE_P_RESULT(r_pld, r, _z_err_t_PARSE_ZINT)
     r->value.data.payload = r_pld.value.payload;
 }
 
-_zn_data_result_t _zn_data_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_data_result_t _zn_data_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_data_result_t r;
-    _zn_data_decode_na(rbf, header, &r);
+    _zn_data_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1067,32 +1073,32 @@ int _zn_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_pull_t *msg)
     return 0;
 }
 
-void _zn_pull_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_pull_result_t *r)
+void _zn_pull_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_pull_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_PULL\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _zn_reskey_result_t r_key = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_key = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _zn_err_t_PARSE_RESKEY)
     r->value.pull.key = r_key.value.reskey;
 
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.pull.pull_id = r_zint.value.zint;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_N))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.pull.max_samples = r_zint.value.zint;
     }
 }
 
-_zn_pull_result_t _zn_pull_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_pull_result_t _zn_pull_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_pull_result_t r;
-    _zn_pull_decode_na(rbf, header, &r);
+    _zn_pull_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1139,22 +1145,22 @@ int _zn_query_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_query_t *msg)
     return _zn_query_consolidation_encode(wbf, &msg->consolidation);
 }
 
-_zn_query_target_result_t _zn_query_target_decode(_z_zbuf_t *rbf)
+_zn_query_target_result_t _zn_query_target_decode(_z_zbuf_t *zbf)
 {
     _zn_query_target_result_t r;
     r.tag = _z_res_t_OK;
 
-    _z_zint_result_t r_kind = _z_zint_decode(rbf);
+    _z_zint_result_t r_kind = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_kind, r, _z_err_t_PARSE_ZINT)
     r.value.query_target.kind = r_kind.value.zint;
 
-    _z_zint_result_t r_tag = _z_zint_decode(rbf);
+    _z_zint_result_t r_tag = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_tag, r, _z_err_t_PARSE_ZINT)
     r.value.query_target.target.tag = r_tag.value.zint;
 
     if (r.value.query_target.target.tag == zn_target_t_COMPLETE)
     {
-        _z_zint_result_t r_n = _z_zint_decode(rbf);
+        _z_zint_result_t r_n = _z_zint_decode(zbf);
         _ASSURE_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
         r.value.query_target.target.type.complete.n = r_n.value.zint;
     }
@@ -1162,12 +1168,12 @@ _zn_query_target_result_t _zn_query_target_decode(_z_zbuf_t *rbf)
     return r;
 }
 
-_zn_query_consolidation_result_t _zn_query_consolidation_decode(_z_zbuf_t *rbf)
+_zn_query_consolidation_result_t _zn_query_consolidation_decode(_z_zbuf_t *zbf)
 {
     _zn_query_consolidation_result_t r;
     r.tag = _z_res_t_OK;
 
-    _z_zint_result_t r_con = _z_zint_decode(rbf);
+    _z_zint_result_t r_con = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_con, r, _z_err_t_PARSE_ZINT)
 
     unsigned int mode = (r_con.value.zint >> 4) & 0x03;
@@ -1215,26 +1221,26 @@ _zn_query_consolidation_result_t _zn_query_consolidation_decode(_z_zbuf_t *rbf)
     return r;
 }
 
-void _zn_query_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
+void _zn_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_query_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_QUERY\n");
     r->tag = _z_res_t_OK;
 
-    _zn_reskey_result_t r_key = _zn_reskey_decode(rbf, header);
+    _zn_reskey_result_t r_key = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _zn_err_t_PARSE_RESKEY)
     r->value.query.key = r_key.value.reskey;
 
-    _z_str_result_t r_str = _z_str_decode(rbf);
+    _z_str_result_t r_str = _z_str_decode(zbf);
     _ASSURE_P_RESULT(r_str, r, _z_err_t_PARSE_STRING)
     r->value.query.predicate = r_str.value.str;
 
-    _z_zint_result_t r_qid = _z_zint_decode(rbf);
+    _z_zint_result_t r_qid = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_qid, r, _z_err_t_PARSE_ZINT)
     r->value.query.qid = r_qid.value.zint;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_T))
     {
-        _zn_query_target_result_t r_qt = _zn_query_target_decode(rbf);
+        _zn_query_target_result_t r_qt = _zn_query_target_decode(zbf);
         _ASSURE_P_RESULT(r_qt, r, _z_err_t_PARSE_ZINT)
         r->value.query.target = r_qt.value.query_target;
     }
@@ -1244,15 +1250,15 @@ void _zn_query_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_query_result_t *r)
         r->value.query.target.target.tag = zn_target_t_BEST_MATCHING;
     }
 
-    _zn_query_consolidation_result_t r_con = _zn_query_consolidation_decode(rbf);
+    _zn_query_consolidation_result_t r_con = _zn_query_consolidation_decode(zbf);
     _ASSURE_P_RESULT(r_con, r, _zn_err_t_PARSE_CONSOLIDATION)
     r->value.query.consolidation = r_con.value.query_consolidation;
 }
 
-_zn_query_result_t _zn_query_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_query_result_t _zn_query_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_query_result_t r;
-    _zn_query_decode_na(rbf, header, &r);
+    _zn_query_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1296,7 +1302,7 @@ int _zn_zenoh_message_encode(_z_wbuf_t *wbf, const _zn_zenoh_message_t *msg)
     }
 }
 
-void _zn_zenoh_message_decode_na(_z_zbuf_t *rbf, _zn_zenoh_message_p_result_t *r)
+void _zn_zenoh_message_decode_na(_z_zbuf_t *zbf, _zn_zenoh_message_p_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
@@ -1304,34 +1310,37 @@ void _zn_zenoh_message_decode_na(_z_zbuf_t *rbf, _zn_zenoh_message_p_result_t *r
     r->value.zenoh_message->reply_context = NULL;
     do
     {
-        r->value.zenoh_message->header = _z_zbuf_read(rbf);
+        _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+        _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
+        r->value.zenoh_message->header = r_uint8.value.uint8;
 
-        switch (_ZN_MID(r->value.zenoh_message->header))
+        uint8_t mid = _ZN_MID(r->value.zenoh_message->header);
+        switch (mid)
         {
         case _ZN_MID_DATA:
         {
-            _zn_data_result_t r_da = _zn_data_decode(rbf, r->value.zenoh_message->header);
+            _zn_data_result_t r_da = _zn_data_decode(zbf, r->value.zenoh_message->header);
             _ASSURE_P_RESULT(r_da, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->body.data = r_da.value.data;
             return;
         }
         case _ZN_MID_ATTACHMENT:
         {
-            _zn_attachment_p_result_t r_at = _zn_attachment_decode(rbf, r->value.zenoh_message->header);
+            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.zenoh_message->header);
             _ASSURE_P_RESULT(r_at, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->attachment = r_at.value.attachment;
             break;
         }
         case _ZN_MID_REPLY_CONTEXT:
         {
-            _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(rbf, r->value.zenoh_message->header);
+            _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(zbf, r->value.zenoh_message->header);
             _ASSURE_P_RESULT(r_rc, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->reply_context = r_rc.value.reply_context;
             break;
         }
         case _ZN_MID_DECLARE:
         {
-            _zn_declare_result_t r_de = _zn_declare_decode(rbf);
+            _zn_declare_result_t r_de = _zn_declare_decode(zbf);
             _ASSURE_P_RESULT(r_de, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->body.declare = r_de.value.declare;
             return;
@@ -1339,14 +1348,14 @@ void _zn_zenoh_message_decode_na(_z_zbuf_t *rbf, _zn_zenoh_message_p_result_t *r
         case _ZN_MID_QUERY:
         {
 
-            _zn_query_result_t r_qu = _zn_query_decode(rbf, r->value.zenoh_message->header);
+            _zn_query_result_t r_qu = _zn_query_decode(zbf, r->value.zenoh_message->header);
             _ASSURE_P_RESULT(r_qu, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->body.query = r_qu.value.query;
             return;
         }
         case _ZN_MID_PULL:
         {
-            _zn_pull_result_t r_pu = _zn_pull_decode(rbf, r->value.zenoh_message->header);
+            _zn_pull_result_t r_pu = _zn_pull_decode(zbf, r->value.zenoh_message->header);
             _ASSURE_P_RESULT(r_pu, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
             r->value.zenoh_message->body.pull = r_pu.value.pull;
             return;
@@ -1356,22 +1365,37 @@ void _zn_zenoh_message_decode_na(_z_zbuf_t *rbf, _zn_zenoh_message_p_result_t *r
             // Do nothing. Unit messages have no body.
             return;
         }
+        case _ZN_MID_PRIORITY:
+        {
+            // Ignore the priority decorator for the time being since zenoh-pico does not
+            // perform any routing. Hence, priority information does not need to be propagated.
+            continue;
+        }
+        case _ZN_MID_LINK_STATE_LIST:
+        {
+            _zn_zenoh_message_p_result_free(r);
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
+            _Z_ERROR("WARNING: Link state not supported in zenoh-pico\n");
+            return;
+        }
         default:
         {
             _zn_zenoh_message_p_result_free(r);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
+            _Z_ERROR("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
             return;
         }
         }
     } while (1);
 }
 
-_zn_zenoh_message_p_result_t _zn_zenoh_message_decode(_z_zbuf_t *rbf)
+_zn_zenoh_message_p_result_t _zn_zenoh_message_decode(_z_zbuf_t *zbf)
 {
     _zn_zenoh_message_p_result_t r;
     _zn_zenoh_message_p_result_init(&r);
-    _zn_zenoh_message_decode_na(rbf, &r);
+    _zn_zenoh_message_decode_na(zbf, &r);
     return r;
 }
 
@@ -1427,7 +1451,7 @@ int _zn_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_scout_t *msg)
     return 0;
 }
 
-void _zn_scout_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_scout_result_t *r)
+void _zn_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_scout_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_SCOUT\n");
     r->tag = _z_res_t_OK;
@@ -1435,16 +1459,16 @@ void _zn_scout_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_scout_result_t *r)
     // Decode the body
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.scout.what = r_zint.value.zint;
     }
 }
 
-_zn_scout_result_t _zn_scout_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_scout_result_t _zn_scout_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_scout_result_t r;
-    _zn_scout_decode_na(rbf, header, &r);
+    _zn_scout_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1472,7 +1496,7 @@ int _zn_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_hello_t *msg)
     return 0;
 }
 
-void _zn_hello_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_hello_result_t *r)
+void _zn_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_hello_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_HELLO\n");
     r->tag = _z_res_t_OK;
@@ -1480,30 +1504,30 @@ void _zn_hello_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_hello_result_t *r)
     // Decode the body
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
-        _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
         r->value.hello.pid = r_arr.value.bytes;
     }
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_W))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.hello.whatami = r_zint.value.zint;
     }
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_L))
     {
-        _zn_locators_result_t r_locs = _zn_locators_decode(rbf);
+        _zn_locators_result_t r_locs = _zn_locators_decode(zbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
         _z_str_array_move(&r->value.hello.locators, &r_locs.value.locators);
     }
 }
 
-_zn_hello_result_t _zn_hello_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_hello_result_t _zn_hello_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_hello_result_t r;
-    _zn_hello_decode_na(rbf, header, &r);
+    _zn_hello_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1522,6 +1546,9 @@ int _zn_init_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_init_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_ACCEPT\n");
 
     // Encode the body
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_O))
+        _ZN_EC(_z_zint_encode(wbf, msg->options))
+
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
         _ZN_EC(_z_wbuf_write(wbf, msg->version))
 
@@ -1535,44 +1562,57 @@ int _zn_init_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_init_t *msg)
     return 0;
 }
 
-void _zn_init_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_init_result_t *r)
+void _zn_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_init_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_ACCEPT\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_O))
     {
-        r->value.init.version = _z_zbuf_read(rbf);
+        _z_zint_result_t r_opts = _z_zint_decode(zbf);
+        _ASSURE_P_RESULT(r_opts, r, _z_err_t_PARSE_ZINT)
+        r->value.init.options = r_opts.value.zint;
+    }
+    else
+    {
+        r->value.init.options = 0;
     }
 
-    _z_zint_result_t r_wami = _z_zint_decode(rbf);
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    {
+        _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+        _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+        r->value.init.version = r_uint8.value.uint8;
+    }
+
+    _z_zint_result_t r_wami = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_wami, r, _z_err_t_PARSE_ZINT)
     r->value.init.whatami = r_wami.value.zint;
 
-    _z_bytes_result_t r_pid = _z_bytes_decode(rbf);
+    _z_bytes_result_t r_pid = _z_bytes_decode(zbf);
     _ASSURE_P_RESULT(r_pid, r, _z_err_t_PARSE_BYTES)
     r->value.init.pid = r_pid.value.bytes;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_S))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.init.sn_resolution = r_zint.value.zint;
     }
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
     {
-        _z_bytes_result_t r_cke = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
         r->value.init.cookie = r_cke.value.bytes;
     }
 }
 
-_zn_init_result_t _zn_init_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_init_result_t _zn_init_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_init_result_t r;
-    _zn_init_decode_na(rbf, header, &r);
+    _zn_init_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1605,34 +1645,34 @@ int _zn_open_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_open_t *msg)
     return 0;
 }
 
-void _zn_open_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_open_result_t *r)
+void _zn_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_open_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_OPEN\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_lease = _z_zint_decode(rbf);
+    _z_zint_result_t r_lease = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_lease, r, _z_err_t_PARSE_ZINT)
     r->value.open.lease = r_lease.value.zint;
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_T))
         r->value.open.lease *= 1000;
 
-    _z_zint_result_t r_isn = _z_zint_decode(rbf);
+    _z_zint_result_t r_isn = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_isn, r, _z_err_t_PARSE_ZINT)
     r->value.open.initial_sn = r_isn.value.zint;
 
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
     {
-        _z_bytes_result_t r_cke = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
         r->value.open.cookie = r_cke.value.bytes;
     }
 }
 
-_zn_open_result_t _zn_open_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_open_result_t _zn_open_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_open_result_t r;
-    _zn_open_decode_na(rbf, header, &r);
+    _zn_open_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1654,7 +1694,7 @@ int _zn_close_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_close_t *msg)
     return _z_wbuf_write(wbf, msg->reason);
 }
 
-void _zn_close_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_close_result_t *r)
+void _zn_close_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_close_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_CLOSE\n");
     r->tag = _z_res_t_OK;
@@ -1662,18 +1702,20 @@ void _zn_close_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_close_result_t *r)
     // Decode the body
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
-        _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
         r->value.close.pid = r_arr.value.bytes;
     }
 
-    r->value.close.reason = _z_zbuf_read(rbf);
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.close.reason = r_uint8.value.uint8;
 }
 
-_zn_close_result_t _zn_close_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_close_result_t _zn_close_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_close_result_t r;
-    _zn_close_decode_na(rbf, header, &r);
+    _zn_close_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1697,28 +1739,28 @@ int _zn_sync_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_sync_t *msg)
     return 0;
 }
 
-void _zn_sync_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_sync_result_t *r)
+void _zn_sync_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_sync_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_SYNC\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.sync.sn = r_zint.value.zint;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_R) && _ZN_HAS_FLAG(header, _ZN_FLAG_S_C))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.sync.count = r_zint.value.zint;
     }
 }
 
-_zn_sync_result_t _zn_sync_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_sync_result_t _zn_sync_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_sync_result_t r;
-    _zn_sync_decode_na(rbf, header, &r);
+    _zn_sync_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1742,28 +1784,28 @@ int _zn_ack_nack_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_ack_nack_t *ms
     return 0;
 }
 
-void _zn_ack_nack_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_ack_nack_result_t *r)
+void _zn_ack_nack_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_ack_nack_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_ACK_NACK\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.ack_nack.sn = r_zint.value.zint;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_M))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(rbf);
+        _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
         r->value.ack_nack.mask = r_zint.value.zint;
     }
 }
 
-_zn_ack_nack_result_t _zn_ack_nack_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_ack_nack_result_t _zn_ack_nack_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_ack_nack_result_t r;
-    _zn_ack_nack_decode_na(rbf, header, &r);
+    _zn_ack_nack_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1785,7 +1827,7 @@ int _zn_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_keep_alive_t
     return 0;
 }
 
-void _zn_keep_alive_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_keep_alive_result_t *r)
+void _zn_keep_alive_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_keep_alive_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_KEEP_ALIVE\n");
     r->tag = _z_res_t_OK;
@@ -1793,16 +1835,16 @@ void _zn_keep_alive_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_keep_alive_res
     // Decode the body
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_I))
     {
-        _z_bytes_result_t r_arr = _z_bytes_decode(rbf);
+        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
         r->value.keep_alive.pid = r_arr.value.bytes;
     }
 }
 
-_zn_keep_alive_result_t _zn_keep_alive_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_keep_alive_result_t _zn_keep_alive_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_keep_alive_result_t r;
-    _zn_keep_alive_decode_na(rbf, header, &r);
+    _zn_keep_alive_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1821,21 +1863,21 @@ int _zn_ping_pong_encode(_z_wbuf_t *wbf, const _zn_ping_pong_t *msg)
     return _z_zint_encode(wbf, msg->hash);
 }
 
-void _zn_ping_pong_decode_na(_z_zbuf_t *rbf, _zn_ping_pong_result_t *r)
+void _zn_ping_pong_decode_na(_z_zbuf_t *zbf, _zn_ping_pong_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_PING_PONG\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.ping_pong.hash = r_zint.value.zint;
 }
 
-_zn_ping_pong_result_t _zn_ping_pong_decode(_z_zbuf_t *rbf)
+_zn_ping_pong_result_t _zn_ping_pong_decode(_z_zbuf_t *zbf)
 {
     _zn_ping_pong_result_t r;
-    _zn_ping_pong_decode_na(rbf, &r);
+    _zn_ping_pong_decode_na(zbf, &r);
     return r;
 }
 
@@ -1869,13 +1911,13 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     }
 }
 
-void _zn_frame_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
+void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
 {
     _Z_DEBUG("Decoding _ZN_MID_FRAME\n");
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.frame.sn = r_zint.value.zint;
 
@@ -1883,20 +1925,20 @@ void _zn_frame_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_F))
     {
         // Read all the remaining bytes in the buffer as the fragment
-        r->value.frame.payload.fragment.len = _z_zbuf_len(rbf);
-        r->value.frame.payload.fragment.val = _z_zbuf_get_rptr(rbf);
+        r->value.frame.payload.fragment.len = _z_zbuf_len(zbf);
+        r->value.frame.payload.fragment.val = _z_zbuf_get_rptr(zbf);
 
         // We need to manually move the r_pos to w_pos, we have read it all
-        _z_zbuf_set_rpos(rbf, _z_zbuf_get_wpos(rbf));
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));
     }
     else
     {
         r->value.frame.payload.messages = _z_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-        while (_z_zbuf_len(rbf))
+        while (_z_zbuf_len(zbf))
         {
             // Mark the reading position of the iobfer
-            size_t r_pos = _z_zbuf_get_rpos(rbf);
-            _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(rbf);
+            size_t r_pos = _z_zbuf_get_rpos(zbf);
+            _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(zbf);
             if (r_zm.tag == _z_res_t_OK)
             {
                 _z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
@@ -1904,17 +1946,17 @@ void _zn_frame_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_frame_result_t *r)
             else
             {
                 // Restore the reading position of the iobfer
-                _z_zbuf_set_rpos(rbf, r_pos);
+                _z_zbuf_set_rpos(zbf, r_pos);
                 return;
             }
         }
     }
 }
 
-_zn_frame_result_t _zn_frame_decode(_z_zbuf_t *rbf, uint8_t header)
+_zn_frame_result_t _zn_frame_decode(_z_zbuf_t *zbf, uint8_t header)
 {
     _zn_frame_result_t r;
-    _zn_frame_decode_na(rbf, header, &r);
+    _zn_frame_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -1971,7 +2013,7 @@ int _zn_session_message_encode(_z_wbuf_t *wbf, const _zn_session_message_t *msg)
     }
 }
 
-void _zn_session_message_decode_na(_z_zbuf_t *rbf, _zn_session_message_p_result_t *r)
+void _zn_session_message_decode_na(_z_zbuf_t *zbf, _zn_session_message_p_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
@@ -1979,7 +2021,9 @@ void _zn_session_message_decode_na(_z_zbuf_t *rbf, _zn_session_message_p_result_
     do
     {
         // Decode the header
-        r->value.session_message->header = _z_zbuf_read(rbf);
+        _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+        _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_SESSION_MESSAGE)
+        r->value.session_message->header = r_uint8.value.uint8;
 
         // Decode the body
         uint8_t mid = _ZN_MID(r->value.session_message->header);
@@ -1987,79 +2031,86 @@ void _zn_session_message_decode_na(_z_zbuf_t *rbf, _zn_session_message_p_result_
         {
         case _ZN_MID_FRAME:
         {
-            _zn_frame_result_t r_fr = _zn_frame_decode(rbf, r->value.session_message->header);
+            _zn_frame_result_t r_fr = _zn_frame_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_fr, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.frame = r_fr.value.frame;
             return;
         }
         case _ZN_MID_ATTACHMENT:
         {
-            _zn_attachment_p_result_t r_at = _zn_attachment_decode(rbf, r->value.session_message->header);
+            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_at, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->attachment = r_at.value.attachment;
             break;
         }
         case _ZN_MID_SCOUT:
         {
-            _zn_scout_result_t r_sc = _zn_scout_decode(rbf, r->value.session_message->header);
+            _zn_scout_result_t r_sc = _zn_scout_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_sc, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.scout = r_sc.value.scout;
             return;
         }
         case _ZN_MID_HELLO:
         {
-            _zn_hello_result_t r_he = _zn_hello_decode(rbf, r->value.session_message->header);
+            _zn_hello_result_t r_he = _zn_hello_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_he, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.hello = r_he.value.hello;
             return;
         }
         case _ZN_MID_INIT:
         {
-            _zn_init_result_t r_ac = _zn_init_decode(rbf, r->value.session_message->header);
+            _zn_init_result_t r_ac = _zn_init_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_ac, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.init = r_ac.value.init;
             return;
         }
         case _ZN_MID_OPEN:
         {
-            _zn_open_result_t r_op = _zn_open_decode(rbf, r->value.session_message->header);
+            _zn_open_result_t r_op = _zn_open_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_op, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.open = r_op.value.open;
             return;
         }
         case _ZN_MID_CLOSE:
         {
-            _zn_close_result_t r_cl = _zn_close_decode(rbf, r->value.session_message->header);
+            _zn_close_result_t r_cl = _zn_close_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_cl, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.close = r_cl.value.close;
             return;
         }
         case _ZN_MID_SYNC:
         {
-            _zn_sync_result_t r_sy = _zn_sync_decode(rbf, r->value.session_message->header);
+            _zn_sync_result_t r_sy = _zn_sync_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_sy, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.sync = r_sy.value.sync;
             return;
         }
         case _ZN_MID_ACK_NACK:
         {
-            _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(rbf, r->value.session_message->header);
+            _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_an, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.ack_nack = r_an.value.ack_nack;
             return;
         }
         case _ZN_MID_KEEP_ALIVE:
         {
-            _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(rbf, r->value.session_message->header);
+            _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(zbf, r->value.session_message->header);
             _ASSURE_P_RESULT(r_ka, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.keep_alive = r_ka.value.keep_alive;
             return;
         }
         case _ZN_MID_PING_PONG:
         {
-            _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(rbf);
+            _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(zbf);
             _ASSURE_P_RESULT(r_pp, r, _zn_err_t_PARSE_SESSION_MESSAGE)
             r->value.session_message->body.ping_pong = r_pp.value.ping_pong;
+            return;
+        }
+        case _ZN_MID_PRIORITY:
+        {
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_PARSE_SESSION_MESSAGE;
+            _Z_ERROR("WARNING: Priorities are not supported in zenoh-pico\n");
             return;
         }
         default:
@@ -2073,11 +2124,11 @@ void _zn_session_message_decode_na(_z_zbuf_t *rbf, _zn_session_message_p_result_
     } while (1);
 }
 
-_zn_session_message_p_result_t _zn_session_message_decode(_z_zbuf_t *rbf)
+_zn_session_message_p_result_t _zn_session_message_decode(_z_zbuf_t *zbf)
 {
     _zn_session_message_p_result_t r;
     _zn_session_message_p_result_init(&r);
-    _zn_session_message_decode_na(rbf, &r);
+    _zn_session_message_decode_na(zbf, &r);
     return r;
 }
 

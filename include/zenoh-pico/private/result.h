@@ -18,6 +18,7 @@
 /*------------------ Result Enums ------------------*/
 typedef enum _z_err_t
 {
+    _z_err_t_PARSE_UINT8,
     _z_err_t_PARSE_ZINT,
     _z_err_t_PARSE_BYTES,
     _z_err_t_PARSE_STRING
