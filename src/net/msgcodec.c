@@ -158,7 +158,7 @@ int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
 
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, fld->rid))
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
         return _z_str_encode(wbf, fld->rname);
     }
@@ -176,7 +176,7 @@ void _zn_reskey_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.reskey.rid = r_zint.value.zint;
 
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
         _z_str_result_t r_str = _z_str_decode(rbf);
         _ASSURE_P_RESULT(r_str, r, _z_err_t_PARSE_STRING)
@@ -913,6 +913,15 @@ void _zn_data_info_decode_na(_z_zbuf_t *rbf, _zn_data_info_result_t *r)
     r->value.data_info.flags = r_flags.value.zint;
 
     // Decode the body
+    // WARNING: we do not support sliced content in zenoh-pico.
+    //          Return error in case the payload is sliced.
+    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SLICED))
+    {
+        r->tag = _z_res_t_ERR;
+        r->value.error = _zn_err_t_PARSE_PAYLOAD;
+        return;
+    }
+
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_KIND))
     {
         _z_zint_result_t r_knd = _z_zint_decode(rbf);
@@ -932,15 +941,6 @@ void _zn_data_info_decode_na(_z_zbuf_t *rbf, _zn_data_info_result_t *r)
         _zn_timestamp_result_t r_tsp = _z_timestamp_decode(rbf);
         _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
         r->value.data_info.tstamp = r_tsp.value.timestamp;
-    }
-
-    // WARNING: we do not support sliced content in zenoh-pico.
-    //          Return error in case the payload is sliced.
-    if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SLICED))
-    {
-        r->tag = _z_res_t_ERR;
-        r->value.error = _zn_err_t_PARSE_PAYLOAD;
-        return;
     }
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_SRC_ID))

@@ -184,7 +184,7 @@ int main(int argc, char **argv)
         {
             zn_reskey_t rk = zn_rid(rids1[i]);
             zn_write_ext(s1, rk, payload, len, Z_ENCODING_DEFAULT, Z_DATA_KIND_DEFAULT, zn_congestion_control_t_BLOCK);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.rid, len, (n + 1) * (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.rid, len, n * SET + (i + 1), total);
         }
     }
 

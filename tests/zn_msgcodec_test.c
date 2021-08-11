@@ -432,7 +432,7 @@ void assert_eq_res_key(zn_reskey_t *left, zn_reskey_t *right, uint8_t header)
     assert(left->rid == right->rid);
 
     printf("Name (");
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
         printf("%s:%s", left->rname, right->rname);
         assert(!strcmp(left->rname, right->rname));
@@ -453,7 +453,7 @@ void res_key_field(void)
     zn_reskey_t e_rk = gen_res_key();
 
     // Encode
-    uint8_t header = (e_rk.rname) ? 0 : _ZN_FLAG_Z_K;
+    uint8_t header = (e_rk.rname) ? _ZN_FLAG_Z_K : 0;
     int res = _zn_reskey_encode(&wbf, header, &e_rk);
     assert(res == 0);
 
@@ -761,7 +761,7 @@ _zn_res_decl_t gen_resource_declaration(uint8_t *header)
 
     e_rd.id = gen_zint();
     e_rd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_rd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_rd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_rd;
 }
@@ -808,7 +808,7 @@ _zn_pub_decl_t gen_publisher_declaration(uint8_t *header)
     _zn_pub_decl_t e_pd;
 
     e_pd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_pd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_pd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_pd;
 }
@@ -859,7 +859,7 @@ _zn_sub_decl_t gen_subscriber_declaration(uint8_t *header)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_R);
 
     e_sd.key = gen_res_key();
-    if (!e_sd.key.rname)
+    if (e_sd.key.rname)
         _ZN_SET_FLAG(*header, _ZN_FLAG_Z_K);
 
     return e_sd;
@@ -910,7 +910,7 @@ _zn_qle_decl_t gen_queryable_declaration(uint8_t *header)
     _zn_qle_decl_t e_qd;
 
     e_qd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_qd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_qd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_qd;
 }
@@ -999,7 +999,7 @@ _zn_forget_pub_decl_t gen_forget_publisher_declaration(uint8_t *header)
     _zn_forget_pub_decl_t e_fpd;
 
     e_fpd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_fpd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_fpd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_fpd;
 }
@@ -1044,7 +1044,7 @@ _zn_forget_sub_decl_t gen_forget_subscriber_declaration(uint8_t *header)
     _zn_forget_sub_decl_t e_fsd;
 
     e_fsd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_fsd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_fsd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_fsd;
 }
@@ -1089,7 +1089,7 @@ _zn_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
     _zn_forget_qle_decl_t e_fqd;
 
     e_fqd.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_fqd.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_fqd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
     return e_fqd;
 }
@@ -1270,7 +1270,7 @@ _zn_data_t gen_data_message(uint8_t *header)
     _zn_data_t e_da;
 
     e_da.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_da.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_da.key.rname) ? _ZN_FLAG_Z_K : 0);
     if (gen_bool())
     {
         e_da.info = gen_data_info();
@@ -1331,7 +1331,7 @@ _zn_pull_t gen_pull_message(uint8_t *header)
     _zn_pull_t e_pu;
 
     e_pu.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_pu.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_pu.key.rname) ? _ZN_FLAG_Z_K : 0);
     e_pu.pull_id = gen_zint();
     if (gen_bool())
     {
@@ -1394,7 +1394,7 @@ _zn_query_t gen_query_message(uint8_t *header)
     _zn_query_t e_qy;
 
     e_qy.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_qy.key.rname) ? 0 : _ZN_FLAG_Z_K);
+    _ZN_SET_FLAG(*header, (e_qy.key.rname) ? _ZN_FLAG_Z_K : 0);
     e_qy.predicate = gen_string(gen_uint8() % 16);
     e_qy.qid = gen_zint();
 
