@@ -26,6 +26,10 @@
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
+_Z_RESULT_DECLARE(uint8_t, uint8)
+int _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
+_z_uint8_result_t _z_uint8_decode(_z_zbuf_t *buf);
+
 _Z_RESULT_DECLARE(z_zint_t, zint)
 int _z_zint_encode(_z_wbuf_t *buf, z_zint_t v);
 _z_zint_result_t _z_zint_decode(_z_zbuf_t *buf);

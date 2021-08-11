@@ -40,27 +40,28 @@ void _z_iosli_free(_z_iosli_t *ios);
 
 /*------------------ ZBuf ------------------*/
 _z_zbuf_t _z_zbuf_make(size_t capacity);
-_z_zbuf_t _z_zbuf_view(_z_zbuf_t *rbf, size_t length);
+_z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 
-size_t _z_zbuf_capacity(const _z_zbuf_t *rbf);
-size_t _z_zbuf_len(const _z_zbuf_t *rbf);
-size_t _z_zbuf_space_left(const _z_zbuf_t *rbf);
+size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
+size_t _z_zbuf_len(const _z_zbuf_t *zbf);
+int _z_zbuf_can_read(const _z_zbuf_t *zbf);
+size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 
-uint8_t _z_zbuf_read(_z_zbuf_t *rbf);
-void _z_zbuf_read_bytes(_z_zbuf_t *rbf, uint8_t *dest, size_t offset, size_t length);
-uint8_t _z_zbuf_get(const _z_zbuf_t *rbf, size_t pos);
+uint8_t _z_zbuf_read(_z_zbuf_t *zbf);
+void _z_zbuf_read_bytes(_z_zbuf_t *zbf, uint8_t *dest, size_t offset, size_t length);
+uint8_t _z_zbuf_get(const _z_zbuf_t *zbf, size_t pos);
 
-size_t _z_zbuf_get_rpos(const _z_zbuf_t *rbf);
-size_t _z_zbuf_get_wpos(const _z_zbuf_t *rbf);
-void _z_zbuf_set_rpos(_z_zbuf_t *rbf, size_t r_pos);
-void _z_zbuf_set_wpos(_z_zbuf_t *rbf, size_t w_pos);
+size_t _z_zbuf_get_rpos(const _z_zbuf_t *zbf);
+size_t _z_zbuf_get_wpos(const _z_zbuf_t *zbf);
+void _z_zbuf_set_rpos(_z_zbuf_t *zbf, size_t r_pos);
+void _z_zbuf_set_wpos(_z_zbuf_t *zbf, size_t w_pos);
 
-uint8_t *_z_zbuf_get_rptr(const _z_zbuf_t *rbf);
-uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *rbf);
+uint8_t *_z_zbuf_get_rptr(const _z_zbuf_t *zbf);
+uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf);
 
-void _z_zbuf_clear(_z_zbuf_t *rbf);
-void _z_zbuf_compact(_z_zbuf_t *rbf);
-void _z_zbuf_free(_z_zbuf_t *rbf);
+void _z_zbuf_clear(_z_zbuf_t *zbf);
+void _z_zbuf_compact(_z_zbuf_t *zbf);
+void _z_zbuf_free(_z_zbuf_t *zbf);
 
 /*------------------ WBuf ------------------*/
 _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable);

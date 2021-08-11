@@ -194,20 +194,20 @@ zn_hello_array_t _zn_scout_loop(
     socklen_t flen = 0;
 
     // The receiving buffer
-    _z_zbuf_t rbf = _z_zbuf_make(ZN_READ_BUF_LEN);
+    _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
 
     _z_clock_t start = _z_clock_now();
     while (_z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
-        _z_zbuf_clear(&rbf);
-        int len = _zn_recv_dgram_from(socket, &rbf, from, &flen);
+        _z_zbuf_clear(&zbf);
+        int len = _zn_recv_dgram_from(socket, &zbf, from, &flen);
 
         // Retry if we haven't received anything
         if (len <= 0)
             continue;
 
-        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&rbf);
+        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&zbf);
         if (r_hm.tag == _z_res_t_ERR)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
@@ -275,7 +275,7 @@ zn_hello_array_t _zn_scout_loop(
     }
 
     free(from);
-    _z_zbuf_free(&rbf);
+    _z_zbuf_free(&zbf);
 
     return ls;
 }
@@ -617,10 +617,10 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
             if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
-                _z_zbuf_t rbf = _z_wbuf_to_zbuf(dbuf);
+                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
                 // Decode the zenoh message
-                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&rbf);
+                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&zbf);
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
@@ -636,7 +636,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
                 // Free the result
                 _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
-                _z_zbuf_free(&rbf);
+                _z_zbuf_free(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }

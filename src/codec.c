@@ -18,6 +18,31 @@
 #include "zenoh-pico/net/private/codec.h"
 #include "zenoh-pico/private/logging.h"
 
+/*------------------ uint8 -------------------*/
+int _z_uint8_encode(_z_wbuf_t *wbf, uint8_t v)
+{
+    return _z_wbuf_write(wbf, v);
+}
+
+_z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf)
+{
+    _z_uint8_result_t r;
+
+    if (_z_zbuf_can_read(zbf))
+    {
+        r.tag = _z_res_t_OK;
+        r.value.uint8 = _z_zbuf_read(zbf);
+    }
+    else
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _z_err_t_PARSE_UINT8;
+        _Z_ERROR("WARNING: Not enough bytes to read\n");
+    }
+
+    return r;
+}
+
 /*------------------ z_zint ------------------*/
 int _z_zint_encode(_z_wbuf_t *wbf, z_zint_t v)
 {
@@ -30,22 +55,24 @@ int _z_zint_encode(_z_wbuf_t *wbf, z_zint_t v)
     return _z_wbuf_write(wbf, (uint8_t)v);
 }
 
-_z_zint_result_t _z_zint_decode(_z_zbuf_t *rbf)
+_z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf)
 {
     _z_zint_result_t r;
     r.tag = _z_res_t_OK;
     r.value.zint = 0;
 
-    uint8_t c;
     int i = 0;
+    _z_uint8_result_t r_uint8;
     do
     {
-        c = _z_zbuf_read(rbf);
+        r_uint8 = _z_uint8_decode(zbf);
+        _ASSURE_RESULT(r_uint8, r, _z_err_t_PARSE_ZINT);
+
         _Z_DEBUG_VA("zint c = 0x%x\n", c);
-        r.value.zint = r.value.zint | (((z_zint_t)c & 0x7f) << i);
+        r.value.zint = r.value.zint | (((z_zint_t)r_uint8.value.uint8 & 0x7f) << i);
         _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
         i += 7;
-    } while (c > 0x7f);
+    } while (r_uint8.value.uint8 > 0x7f);
 
     return r;
 }
@@ -68,22 +95,31 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
     }
 }
 
-void _z_bytes_decode_na(_z_zbuf_t *rbf, _z_bytes_result_t *r)
+void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)
 {
     r->tag = _z_res_t_OK;
-    _z_zint_result_t r_zint = _z_zint_decode(rbf);
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT);
     r->value.bytes.len = r_zint.value.zint;
+    // Check if we have enought bytes to read
+    if (_z_zbuf_len(zbf) < r->value.bytes.len)
+    {
+        r->tag = _z_res_t_ERR;
+        r->value.error = _z_err_t_PARSE_BYTES;
+        _Z_ERROR("WARNING: Not enough bytes to read\n");
+        return;
+    }
+
     // Decode without allocating
-    r->value.bytes.val = _z_zbuf_get_rptr(rbf);
+    r->value.bytes.val = _z_zbuf_get_rptr(zbf);
     // Move the read position
-    _z_zbuf_set_rpos(rbf, _z_zbuf_get_rpos(rbf) + r->value.bytes.len);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->value.bytes.len);
 }
 
-_z_bytes_result_t _z_bytes_decode(_z_zbuf_t *rbf)
+_z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf)
 {
     _z_bytes_result_t r;
-    _z_bytes_decode_na(rbf, &r);
+    _z_bytes_decode_na(zbf, &r);
     return r;
 }
 
@@ -96,17 +132,25 @@ int _z_str_encode(_z_wbuf_t *wbf, const z_str_t s)
     return _z_wbuf_write_bytes(wbf, (uint8_t *)s, 0, len);
 }
 
-_z_str_result_t _z_str_decode(_z_zbuf_t *rbf)
+_z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
 {
     _z_str_result_t r;
     r.tag = _z_res_t_OK;
-    _z_zint_result_t vr = _z_zint_decode(rbf);
+    _z_zint_result_t vr = _z_zint_decode(zbf);
     _ASSURE_RESULT(vr, r, _z_err_t_PARSE_ZINT);
     size_t len = vr.value.zint;
+    // Check if we have enough bytes to read
+    if (_z_zbuf_len(zbf) < len)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _z_err_t_PARSE_STRING;
+        _Z_ERROR("WARNING: Not enough bytes to read\n");
+        return r;
+    }
     // Allocate space for the string terminator
     z_str_t s = (z_str_t)malloc(len + 1);
     s[len] = '\0';
-    _z_zbuf_read_bytes(rbf, (uint8_t *)s, 0, len);
+    _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
     r.value.str = s;
     return r;
 }

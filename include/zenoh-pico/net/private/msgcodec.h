@@ -77,20 +77,20 @@ _ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
     int _zn_##name##_encode(_z_wbuf_t *wbf, const _zn_##name##_t *m)
 
 #define _ZN_DECLARE_DECODE(name)                                               \
-    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *rbf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_##name##_result_t *r)
+    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
+    void _zn_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_##name##_result_t *r)
 
 #define _ZN_DECLARE_DECODE_NOH(name)                           \
-    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *rbf); \
-    void _zn_##name##_decode_na(_z_zbuf_t *rbf, _zn_##name##_result_t *r)
+    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *zbf); \
+    void _zn_##name##_decode_na(_z_zbuf_t *zbf, _zn_##name##_result_t *r)
 
 #define _ZN_DECLARE_P_DECODE(name)                                               \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *rbf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_##name##_p_result_t *r)
+    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
+    void _zn_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_##name##_p_result_t *r)
 
 #define _ZN_DECLARE_P_DECODE_NOH(name)                           \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *rbf); \
-    void _zn_##name##_decode_na(_z_zbuf_t *rbf, _zn_##name##_p_result_t *r)
+    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *zbf); \
+    void _zn_##name##_decode_na(_z_zbuf_t *zbf, _zn_##name##_p_result_t *r)
 
 /*------------------ Session Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
@@ -122,18 +122,18 @@ _ZN_DECLARE_DECODE_NOH(payload);
 _ZN_DECLARE_FREE_NOH(payload);
 
 int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
-void _z_timestamp_decode_na(_z_zbuf_t *rbf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *rbf);
+void _z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r);
+_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *zbf);
 void _z_timestamp_free(z_timestamp_t *ts);
 
 int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
-void _zn_subinfo_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_subinfo_result_t *r);
-_zn_subinfo_result_t _zn_subinfo_decode(_z_zbuf_t *rbf, uint8_t header);
+void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t *r);
+_zn_subinfo_result_t _zn_subinfo_decode(_z_zbuf_t *zbf, uint8_t header);
 void _zn_subinfo_free(zn_subinfo_t *si);
 
 int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld);
-void _zn_reskey_decode_na(_z_zbuf_t *rbf, uint8_t header, _zn_reskey_result_t *r);
-_zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *rbf, uint8_t header);
+void _zn_reskey_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reskey_result_t *r);
+_zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header);
 
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);
