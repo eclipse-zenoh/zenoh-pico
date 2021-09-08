@@ -28,7 +28,8 @@
 /*=============================*/
 /*         Message IDs         */
 /*=============================*/
-/* Session Messages */
+/* Transport Messages */
+#define _ZN_MID_JOIN 0x00
 #define _ZN_MID_SCOUT 0x01
 #define _ZN_MID_HELLO 0x02
 #define _ZN_MID_INIT 0x03
@@ -55,23 +56,24 @@
 /*=============================*/
 /*        Message flags        */
 /*=============================*/
-/* Session message flags */
-#define _ZN_FLAG_S_A 0x20 // 1 << 5 | Ack           if A==1 then the message is an acknowledgment
-#define _ZN_FLAG_S_C 0x40 // 1 << 6 | Count         if C==1 then number of unacknowledged messages is present
-#define _ZN_FLAG_S_E 0x80 // 1 << 7 | End           if E==1 then it is the last FRAME fragment
-#define _ZN_FLAG_S_F 0x40 // 1 << 6 | Fragment      if F==1 then the FRAME is a fragment
-#define _ZN_FLAG_S_I 0x20 // 1 << 5 | PeerID        if I==1 then the PeerID is present or requested
-#define _ZN_FLAG_S_K 0x40 // 1 << 6 | CloseLink     if K==1 then close the transport link only
-#define _ZN_FLAG_S_L 0x80 // 1 << 7 | Locators      if L==1 then Locators are present
-#define _ZN_FLAG_S_M 0x20 // 1 << 5 | Mask          if M==1 then a Mask is present
-#define _ZN_FLAG_S_O 0x80 // 1 << 7 | Options       if O==1 then Options are present
-#define _ZN_FLAG_S_P 0x20 // 1 << 5 | PingOrPong    if P==1 then the message is Ping, otherwise is Pong
-#define _ZN_FLAG_S_R 0x20 // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
-#define _ZN_FLAG_S_S 0x40 // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
-#define _ZN_FLAG_S_T 0x40 // 1 << 6 | TimeRes       if T==1 then the time resolution is in seconds
-#define _ZN_FLAG_S_W 0x40 // 1 << 6 | WhatAmI       if W==1 then WhatAmI is indicated
-#define _ZN_FLAG_S_Z 0x20 // 1 << 5 | MixedSlices   if Z==1 then the payload contains a mix of raw and shm_info payload
-#define _ZN_FLAG_S_X 0x00 // Unused flags are set to zero
+/* Transport message flags */
+#define _ZN_FLAG_T_A 0x20  // 1 << 5 | Ack           if A==1 then the message is an acknowledgment
+#define _ZN_FLAG_T_C 0x40  // 1 << 6 | Count         if C==1 then number of unacknowledged messages is present
+#define _ZN_FLAG_T_E 0x80  // 1 << 7 | End           if E==1 then it is the last FRAME fragment
+#define _ZN_FLAG_T_F 0x40  // 1 << 6 | Fragment      if F==1 then the FRAME is a fragment
+#define _ZN_FLAG_T_I 0x20  // 1 << 5 | PeerID        if I==1 then the PeerID is present or requested
+#define _ZN_FLAG_T_K 0x40  // 1 << 6 | CloseLink     if K==1 then close the transport link only
+#define _ZN_FLAG_T_L 0x80  // 1 << 7 | Locators      if L==1 then Locators are present
+#define _ZN_FLAG_T_M 0x20  // 1 << 5 | Mask          if M==1 then a Mask is present
+#define _ZN_FLAG_T_O 0x80  // 1 << 7 | Options       if O==1 then Options are present
+#define _ZN_FLAG_T_P 0x20  // 1 << 5 | PingOrPong    if P==1 then the message is Ping, otherwise is Pong
+#define _ZN_FLAG_T_R 0x20  // 1 << 5 | Reliable      if R==1 then it concerns the reliable channel, best-effort otherwise
+#define _ZN_FLAG_T_S 0x40  // 1 << 6 | SN Resolution if S==1 then the SN Resolution is present
+#define _ZN_FLAG_T_T1 0x40 // 1 << 5 | TimeRes       if T==1 then the time resolution is in seconds
+#define _ZN_FLAG_T_T2 0x40 // 1 << 6 | TimeRes       if T==1 then the time resolution is in seconds
+#define _ZN_FLAG_T_W 0x40  // 1 << 6 | WhatAmI       if W==1 then WhatAmI is indicated
+#define _ZN_FLAG_T_Z 0x20  // 1 << 5 | MixedSlices   if Z==1 then the payload contains a mix of raw and shm_info payload
+#define _ZN_FLAG_T_X 0x00  // Unused flags are set to zero
 /* Zenoh message flags */
 #define _ZN_FLAG_Z_D 0x20 // 1 << 5 | Dropping      if D==1 then the message can be dropped
 #define _ZN_FLAG_Z_F 0x20 // 1 << 5 | Final         if F==1 then this is the final message (e.g., ReplyContext, Pull)
@@ -87,6 +89,7 @@
 
 /* Init option flags */
 #define _ZN_OPT_INIT_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
+#define _ZN_OPT_JOIN_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
 
 /*=============================*/
 /*       Message header        */
@@ -120,7 +123,7 @@
 #define _ZN_CLOSE_GENERIC 0x00
 #define _ZN_CLOSE_UNSUPPORTED 0x01
 #define _ZN_CLOSE_INVALID 0x02
-#define _ZN_CLOSE_MAX_SESSIONS 0x03
+#define _ZN_CLOSE_MAX_TRANSPORTS 0x03
 #define _ZN_CLOSE_MAX_LINKS 0x04
 #define _ZN_CLOSE_EXPIRED 0x05
 
@@ -164,16 +167,15 @@ typedef z_str_array_t _zn_locators_t;
 /*=============================*/
 // # Attachment decorator
 //
-// ```text
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
 //       In any case, the length of a message must not exceed 65_535 bytes.
 //
-// The Attachment can decorate any message (i.e., SessionMessage and ZenohMessage) and it allows to
+// The Attachment can decorate any message (i.e., TransportMessage and ZenohMessage) and it allows to
 // append to the message any additional information. Since the information contained in the
-// Attachement is relevant only to the layer that provided them (e.g., Session, Zenoh, User) it
+// Attachement is relevant only to the layer that provided them (e.g., Transport, Zenoh, User) it
 // is the duty of that layer to serialize and de-serialize the attachment whenever deemed necessary.
 // The attachement always contains serialized properties.
 //
@@ -183,7 +185,7 @@ typedef z_str_array_t _zn_locators_t;
 // +-+-+-+---------+
 // ~   Attachment  ~
 // +---------------+
-// ```
+//
 typedef struct
 {
     _zn_payload_t payload;
@@ -217,8 +219,20 @@ typedef struct
     uint8_t header;
 } _zn_reply_context_t;
 
+// -- Priority decorator
+//
+// The Priority is a message decorator containing
+// informations related to the priority of the frame/zenoh message.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// | ID  |  Prio   |
+// +-+-+-+---------+
+//
+// WARNING: zenoh-pico does not support priorities and QoS.
+
 /*=============================*/
-/*      Session Messages       */
+/*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -280,10 +294,57 @@ typedef struct
     _zn_locators_t locators;
 } _zn_hello_t;
 
+/*------------------ Join Message ------------------*/
+// # Join message
+//
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+//       the boundary of the serialized messages. The length is encoded as little-endian.
+//       In any case, the length of a message must not exceed 65_535 bytes.
+//
+// The JOIN message is sent on a multicast Locator to advertise the transport parameters.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |O|S|T|   JOIN  |
+// +-+-+-+-+-------+
+// ~             |Q~ if O==1
+// +---------------+
+// | v_maj | v_min | -- Protocol Version VMaj.VMin
+// +-------+-------+
+// ~    whatami    ~ -- Router, Peer or a combination of them
+// +---------------+
+// ~    peer_id    ~ -- PID of the sender of the JOIN message
+// +---------------+
+// ~     lease     ~ -- Lease period of the sender of the JOIN message(*)
+// +---------------+
+// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
+// +---------------+
+// ~   [next_sn]   ~ (***)
+// +---------------+
+//
+// - if Q==1 then the sender supports QoS.
+//
+// (*)   if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
+// (**)  if S==0 then 2^28 is assumed.
+// (***) if Q==1 then 8 sequence numbers are present: one for each priority.
+//       if Q==0 then only one sequence number is present.
+//
+typedef struct
+{
+    z_zint_t options;
+    z_zint_t whatami;
+    z_zint_t lease;
+    z_zint_t sn_resolution;
+    z_bytes_t pid;
+    _zn_sns_t next_sns;
+    uint8_t version;
+} _zn_join_t;
+
 /*------------------ Init Message ------------------*/
 // # Init message
 //
-// ```text
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -316,7 +377,7 @@ typedef struct
 //     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
 //
 // - if Q==1 then the initiator/responder supports QoS.
-// ```
+//
 typedef struct
 {
     z_zint_t options;
@@ -349,7 +410,7 @@ typedef struct
 //
 // (*) if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
 // (**) the cookie MUST be the same received in the INIT message with A==1 from the corresponding peer
-// ```
+//
 typedef struct
 {
     z_zint_t lease;
@@ -525,7 +586,7 @@ typedef struct
     } payload;
 } _zn_frame_t;
 
-/*------------------ Session Message ------------------*/
+/*------------------ Transport Message ------------------*/
 typedef struct
 {
     _zn_attachment_t *attachment;
@@ -533,6 +594,7 @@ typedef struct
     {
         _zn_scout_t scout;
         _zn_hello_t hello;
+        _zn_join_t join;
         _zn_init_t init;
         _zn_open_t open;
         _zn_close_t close;
@@ -543,7 +605,7 @@ typedef struct
         _zn_frame_t frame;
     } body;
     uint8_t header;
-} _zn_session_message_t;
+} _zn_transport_message_t;
 
 /*=============================*/
 /*       Zenoh Messages        */

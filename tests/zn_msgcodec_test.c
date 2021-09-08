@@ -62,7 +62,7 @@ void print_uint8_array(z_bytes_t *arr)
     printf("]");
 }
 
-void print_session_message_type(uint8_t header)
+void print_transport_message_type(uint8_t header)
 {
     switch (_ZN_MID(header))
     {
@@ -1668,18 +1668,18 @@ void zenoh_message(void)
 }
 
 /*=============================*/
-/*       Session Messages      */
+/*       Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 _zn_scout_t gen_scout_message(uint8_t *header)
 {
     _zn_scout_t e_sc;
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_I : 0);
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_T_I : 0);
     if (gen_bool())
     {
         e_sc.what = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_W);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_W);
     }
     else
     {
@@ -1691,7 +1691,7 @@ _zn_scout_t gen_scout_message(uint8_t *header)
 
 void assert_eq_scout_message(_zn_scout_t *left, _zn_scout_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_W)
     {
         printf("   What (%zu:%zu)\n", left->what, right->what);
         assert(left->what == right->what);
@@ -1733,17 +1733,17 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     if (gen_bool())
     {
         e_he.pid = gen_bytes(16);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_I);
     }
     if (gen_bool())
     {
         e_he.whatami = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_W);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_W);
     }
     if (gen_bool())
     {
         e_he.locators = gen_str_array((gen_uint8() % 4) + 1);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_L);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_L);
     }
 
     return e_he;
@@ -1751,19 +1751,19 @@ _zn_hello_t gen_hello_message(uint8_t *header)
 
 void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
     {
         printf("   ");
         assert_eq_uint8_array(&left->pid, &right->pid);
         printf("\n");
     }
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_W)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_W)
     {
         printf("   What (%zu:%zu)", left->whatami, right->whatami);
         assert(left->whatami == right->whatami);
         printf("\n");
     }
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_L)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_L)
     {
         printf("   ");
         assert_eq_str_array(&left->locators, &right->locators);
@@ -1798,23 +1798,144 @@ void hello_message(void)
     _z_wbuf_free(&wbf);
 }
 
+/*------------------ Join Message ------------------*/
+_zn_join_t gen_join_message(uint8_t *header)
+{
+    _zn_join_t e_jn;
+
+    e_jn.options = 0;
+    e_jn.version = gen_uint8();
+    e_jn.whatami = gen_zint();
+    e_jn.pid = gen_bytes(16);
+    e_jn.lease = gen_zint();
+    if (gen_bool())
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_T1);
+
+    if (gen_bool())
+    {
+        e_jn.sn_resolution = gen_zint();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_S);
+    }
+
+    if (gen_bool())
+    {
+        e_jn.next_sns.is_qos = 1;
+        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        {
+            e_jn.next_sns.val.sns[i] = gen_zint();
+        }
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_O);
+        _ZN_SET_FLAG(e_jn.options, _ZN_OPT_JOIN_QOS);
+    }
+    else
+    {
+        e_jn.next_sns.is_qos = 0;
+        e_jn.next_sns.val.sn = gen_zint();
+    }
+
+    return e_jn;
+}
+
+void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
+{
+    printf("   Options (%zu:%zu)", left->options, right->options);
+    assert(left->options == right->options);
+    printf("\n");
+
+    printf("   Version (%u:%u)", left->version, right->version);
+    assert(left->version == right->version);
+    printf("\n");
+
+    printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
+    assert(left->whatami == right->whatami);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_uint8_array(&left->pid, &right->pid);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_S)
+    {
+        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
+        assert(left->sn_resolution == right->sn_resolution);
+        printf("\n");
+    }
+
+    printf("   Lease (%zu:%zu)", left->lease, right->lease);
+    assert(left->lease == right->lease);
+    printf("\n");
+
+    if _ZN_HAS_FLAG (left->options, _ZN_OPT_JOIN_QOS)
+    {
+        assert(left->next_sns.is_qos == 1);
+        assert(right->next_sns.is_qos == 1);
+
+        printf("   Next SNs: ");
+        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        {
+            printf("%zu:%zu ", left->next_sns.val.sns[i], right->next_sns.val.sns[i]);
+            assert(left->next_sns.val.sns[i] == right->next_sns.val.sns[i]);
+        }
+        printf("\n");
+    }
+    else
+    {
+        assert(left->next_sns.is_qos == 0);
+        assert(right->next_sns.is_qos == 0);
+
+        printf("   Next SN: %zu:%zu", left->next_sns.val.sn, right->next_sns.val.sn);
+        assert(left->next_sns.val.sn == right->next_sns.val.sn);
+        printf("\n");
+    }
+}
+
+void join_message(void)
+{
+    printf("\n>> Join message\n");
+    _z_wbuf_t wbf = gen_wbuf(128);
+
+    // Initialize
+    uint8_t e_hdr = 0;
+    _zn_join_t e_it = gen_join_message(&e_hdr);
+
+    // Encode
+    int res = _zn_join_encode(&wbf, e_hdr, &e_it);
+    assert(res == 0);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _zn_join_result_t r_it = _zn_join_decode(&zbf, e_hdr);
+    assert(r_it.tag == _z_res_t_OK);
+
+    _zn_join_t d_it = r_it.value.join;
+    assert_eq_join_message(&e_it, &d_it, e_hdr);
+
+    // Free
+    _zn_join_free(&d_it, e_hdr);
+    _z_zbuf_free(&zbf);
+    _z_wbuf_free(&wbf);
+}
+
 /*------------------ Init Message ------------------*/
 _zn_init_t gen_init_message(uint8_t *header)
 {
     _zn_init_t e_it;
 
-    e_it.options = gen_zint();
+    e_it.options = 0;
+    if (gen_bool())
+        _ZN_SET_FLAG(e_it.options, _ZN_OPT_INIT_QOS);
+
     e_it.whatami = gen_zint();
     e_it.pid = gen_bytes(16);
     if (gen_bool())
     {
         e_it.sn_resolution = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_S);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_S);
     }
     if (gen_bool())
     {
         e_it.cookie = gen_payload(64);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_A);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_A);
     }
     else
     {
@@ -1838,14 +1959,14 @@ void assert_eq_init_message(_zn_init_t *left, _zn_init_t *right, uint8_t header)
     assert_eq_uint8_array(&left->pid, &right->pid);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_S)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_S)
     {
         printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
         assert(left->sn_resolution == right->sn_resolution);
         printf("\n");
     }
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_A)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_A)
     {
         printf("   ");
         assert_eq_uint8_array(&left->cookie, &right->cookie);
@@ -1899,7 +2020,7 @@ _zn_open_t gen_open_message(uint8_t *header)
     }
     else
     {
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_A);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_A);
     }
 
     return e_op;
@@ -1915,7 +2036,7 @@ void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
     assert(left->initial_sn == right->initial_sn);
     printf("\n");
 
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_S_A))
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
     {
         printf("   ");
         assert_eq_uint8_array(&left->cookie, &right->cookie);
@@ -1955,11 +2076,11 @@ _zn_close_t gen_close_message(uint8_t *header)
 {
     _zn_close_t e_cl;
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_K : 0);
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_T_K : 0);
     if (gen_bool())
     {
         e_cl.pid = gen_bytes(16);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_I);
     }
     e_cl.reason = gen_uint8();
 
@@ -1968,7 +2089,7 @@ _zn_close_t gen_close_message(uint8_t *header)
 
 void assert_eq_close_message(_zn_close_t *left, _zn_close_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
     {
         printf("   ");
         assert_eq_uint8_array(&left->pid, &right->pid);
@@ -2012,14 +2133,14 @@ _zn_sync_t gen_sync_message(uint8_t *header)
 {
     _zn_sync_t e_sy;
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_R : 0);
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_T_R : 0);
     e_sy.sn = gen_zint();
-    if _ZN_HAS_FLAG (*header, _ZN_FLAG_S_R)
+    if _ZN_HAS_FLAG (*header, _ZN_FLAG_T_R)
     {
         if (gen_bool())
         {
             e_sy.count = gen_zint();
-            _ZN_SET_FLAG(*header, _ZN_FLAG_S_C);
+            _ZN_SET_FLAG(*header, _ZN_FLAG_T_C);
         }
     }
 
@@ -2032,7 +2153,7 @@ void assert_eq_sync_message(_zn_sync_t *left, _zn_sync_t *right, uint8_t header)
     assert(left->sn == right->sn);
     printf("\n");
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_S_R) && _ZN_HAS_FLAG(header, _ZN_FLAG_S_C))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_R) && _ZN_HAS_FLAG(header, _ZN_FLAG_T_C))
     {
         printf("   Count (%zu:%zu)", left->count, right->count);
         assert(left->count == right->count);
@@ -2076,7 +2197,7 @@ _zn_ack_nack_t gen_ack_nack_message(uint8_t *header)
     if (gen_bool())
     {
         e_an.mask = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_M);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_M);
     }
 
     return e_an;
@@ -2088,7 +2209,7 @@ void assert_eq_ack_nack_message(_zn_ack_nack_t *left, _zn_ack_nack_t *right, uin
     assert(left->sn == right->sn);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_M)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_M)
     {
         printf("   Mask (%zu:%zu)", left->mask, right->mask);
         assert(left->mask == right->mask);
@@ -2131,7 +2252,7 @@ _zn_keep_alive_t gen_keep_alive_message(uint8_t *header)
     if (gen_bool())
     {
         e_ka.pid = gen_bytes(16);
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_I);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_I);
     }
     else
     {
@@ -2145,7 +2266,7 @@ _zn_keep_alive_t gen_keep_alive_message(uint8_t *header)
 
 void assert_eq_keep_alive_message(_zn_keep_alive_t *left, _zn_keep_alive_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_I)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
     {
         printf("   ");
         assert_eq_uint8_array(&left->pid, &right->pid);
@@ -2185,7 +2306,7 @@ _zn_ping_pong_t gen_ping_pong_message(uint8_t *header)
 {
     _zn_ping_pong_t e_pp;
 
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_P : 0);
+    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_T_P : 0);
     e_pp.hash = gen_zint();
 
     return e_pp;
@@ -2234,8 +2355,8 @@ _zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
 
     if (can_be_fragment && gen_bool())
     {
-        _ZN_SET_FLAG(*header, _ZN_FLAG_S_F);
-        _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_S_E : 0);
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_F);
+        _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_T_E : 0);
         e_fr.payload.fragment = gen_payload(64);
     }
     else
@@ -2258,7 +2379,7 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
     assert(left->sn == right->sn);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_S_F)
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_F)
     {
         printf("   ");
         assert_eq_payload(&left->payload.fragment, &right->payload.fragment);
@@ -2303,10 +2424,10 @@ void frame_message(void)
     _z_wbuf_free(&wbf);
 }
 
-/*------------------ Session Message ------------------*/
-_zn_session_message_t *gen_session_message(int can_be_fragment)
+/*------------------ Transport Message ------------------*/
+_zn_transport_message_t *gen_transport_message(int can_be_fragment)
 {
-    _zn_session_message_t *p_sm = (_zn_session_message_t *)malloc(sizeof(_zn_session_message_t));
+    _zn_transport_message_t *p_sm = (_zn_transport_message_t *)malloc(sizeof(_zn_transport_message_t));
 
     if (gen_bool())
         p_sm->attachment = gen_attachment();
@@ -2316,6 +2437,7 @@ _zn_session_message_t *gen_session_message(int can_be_fragment)
     uint8_t mids[] = {
         _ZN_MID_SCOUT,
         _ZN_MID_HELLO,
+        _ZN_MID_JOIN,
         _ZN_MID_INIT,
         _ZN_MID_OPEN,
         _ZN_MID_CLOSE,
@@ -2335,6 +2457,10 @@ _zn_session_message_t *gen_session_message(int can_be_fragment)
     case _ZN_MID_HELLO:
         p_sm->header = _ZN_MID_HELLO;
         p_sm->body.hello = gen_hello_message(&p_sm->header);
+        break;
+    case _ZN_MID_JOIN:
+        p_sm->header = _ZN_MID_JOIN;
+        p_sm->body.join = gen_join_message(&p_sm->header);
         break;
     case _ZN_MID_INIT:
         p_sm->header = _ZN_MID_INIT;
@@ -2376,7 +2502,7 @@ _zn_session_message_t *gen_session_message(int can_be_fragment)
     return p_sm;
 }
 
-void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_t *right)
+void assert_eq_transport_message(_zn_transport_message_t *left, _zn_transport_message_t *right)
 {
     // Test message decorators
     if (left->attachment && right->attachment)
@@ -2400,6 +2526,9 @@ void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_
         break;
     case _ZN_MID_HELLO:
         assert_eq_hello_message(&left->body.hello, &right->body.hello, left->header);
+        break;
+    case _ZN_MID_JOIN:
+        assert_eq_join_message(&left->body.join, &right->body.join, left->header);
         break;
     case _ZN_MID_INIT:
         assert_eq_init_message(&left->body.init, &right->body.init, left->header);
@@ -2431,33 +2560,33 @@ void assert_eq_session_message(_zn_session_message_t *left, _zn_session_message_
     }
 }
 
-void session_message(void)
+void transport_message(void)
 {
     printf("\n>> Session message\n");
     _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
-    _zn_session_message_t *e_sm = gen_session_message(1);
+    _zn_transport_message_t *e_sm = gen_transport_message(1);
     printf(" - ");
-    print_session_message_type(e_sm->header);
+    print_transport_message_type(e_sm->header);
     printf("\n");
 
     // Encode
-    int res = _zn_session_message_encode(&wbf, e_sm);
+    int res = _zn_transport_message_encode(&wbf, e_sm);
     assert(res == 0);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_session_message_p_result_t r_zm = _zn_session_message_decode(&zbf);
+    _zn_transport_message_p_result_t r_zm = _zn_transport_message_decode(&zbf);
     assert(r_zm.tag == _z_res_t_OK);
 
-    _zn_session_message_t *d_sm = r_zm.value.session_message;
-    assert_eq_session_message(e_sm, d_sm);
+    _zn_transport_message_t *d_sm = r_zm.value.transport_message;
+    assert_eq_transport_message(e_sm, d_sm);
 
     // Free
     free(e_sm);
-    _zn_session_message_free(d_sm);
-    _zn_session_message_p_result_free(&r_zm);
+    _zn_transport_message_free(d_sm);
+    _zn_transport_message_p_result_free(&r_zm);
     _z_zbuf_free(&zbf);
     _z_wbuf_free(&wbf);
 }
@@ -2473,32 +2602,32 @@ void batch(void)
     _z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
 
     // Initialize
-    _zn_session_message_t **e_sm = (_zn_session_message_t **)malloc(tot_num * sizeof(_zn_session_message_t *));
+    _zn_transport_message_t **e_sm = (_zn_transport_message_t **)malloc(tot_num * sizeof(_zn_transport_message_t *));
     for (uint8_t i = 0; i < bef_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message(0);
+        e_sm[i] = gen_transport_message(0);
         // Encode
-        int res = _zn_session_message_encode(&wbf, e_sm[i]);
+        int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message(0);
+        e_sm[i] = gen_transport_message(0);
         // Override it with a frame message
         e_sm[i]->header = _ZN_MID_FRAME;
         e_sm[i]->body.frame = gen_frame_message(&e_sm[i]->header, 0);
         // Encode
-        int res = _zn_session_message_encode(&wbf, e_sm[i]);
+        int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
     {
         // Initialize random session message
-        e_sm[i] = gen_session_message(0);
+        e_sm[i] = gen_transport_message(0);
         // Encode
-        int res = _zn_session_message_encode(&wbf, e_sm[i]);
+        int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
 
@@ -2506,18 +2635,18 @@ void batch(void)
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     for (uint8_t i = 0; i < tot_num; ++i)
     {
-        _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&zbf);
+        _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
 
-        _zn_session_message_t *d_sm = r_sm.value.session_message;
+        _zn_transport_message_t *d_sm = r_sm.value.transport_message;
         printf(" - ");
-        print_session_message_type(d_sm->header);
+        print_transport_message_type(d_sm->header);
         printf("\n");
-        assert_eq_session_message(e_sm[i], d_sm);
+        assert_eq_transport_message(e_sm[i], d_sm);
 
         // Free
-        _zn_session_message_free(d_sm);
-        _zn_session_message_p_result_free(&r_sm);
+        _zn_transport_message_free(d_sm);
+        _zn_transport_message_p_result_free(&r_sm);
         free(e_sm[i]);
     }
 
@@ -2527,21 +2656,21 @@ void batch(void)
 }
 
 /*------------------ Fragmentation ------------------*/
-_zn_session_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
+_zn_transport_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_FRAME);
+    _zn_transport_message_t s_msg = _zn_transport_message_init(_ZN_MID_FRAME);
     s_msg.body.frame.sn = sn;
 
     if (is_reliable)
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_R);
 
     if (is_fragment)
     {
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_F);
 
         if (is_final)
-            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
+            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_E);
 
         // Do not add the payload
         s_msg.body.frame.payload.fragment.len = 0;
@@ -2576,9 +2705,9 @@ int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _zn_session_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
+        _zn_transport_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
         // Encode the frame header
-        int res = _zn_session_message_encode(dst, &f_hdr);
+        int res = _zn_transport_message_encode(dst, &f_hdr);
         if (res == 0)
         {
             size_t space_left = _z_wbuf_space_left(dst);
@@ -2657,10 +2786,10 @@ void fragmentation(void)
         // Decode the message
         _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-        _zn_session_message_p_result_t r_sm = _zn_session_message_decode(&zbf);
+        _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
 
-        z_bytes_t fragment = r_sm.value.session_message->body.frame.payload.fragment;
+        z_bytes_t fragment = r_sm.value.transport_message->body.frame.payload.fragment;
         printf("  -Decoded Fragment length: %zu\n", fragment.len);
         assert(fragment.len == written);
 
@@ -2726,6 +2855,7 @@ int main(void)
         // Session messages
         scout_message();
         hello_message();
+        join_message();
         init_message();
         open_message();
         close_message();
@@ -2734,7 +2864,7 @@ int main(void)
         keep_alive_message();
         ping_pong_message();
         frame_message();
-        session_message();
+        transport_message();
         batch();
         fragmentation();
     }

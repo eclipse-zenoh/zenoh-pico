@@ -24,8 +24,8 @@ void *_znp_read_task(void *arg)
     zn_session_t *z = (zn_session_t *)arg;
     z->read_task_running = 1;
 
-    _zn_session_message_p_result_t r;
-    _zn_session_message_p_result_init(&r);
+    _zn_transport_message_p_result_t r;
+    _zn_transport_message_p_result_init(&r);
 
     // Acquire and keep the lock
     _z_mutex_lock(&z->mutex_rx);
@@ -85,13 +85,13 @@ void *_znp_read_task(void *arg)
             z->received = 1;
 
             // Decode one session message
-            _zn_session_message_decode_na(&zbuf, &r);
+            _zn_transport_message_decode_na(&zbuf, &r);
 
             if (r.tag == _z_res_t_OK)
             {
-                int res = _zn_handle_session_message(z, r.value.session_message);
+                int res = _zn_handle_transport_message(z, r.value.transport_message);
                 if (res == _z_res_t_OK)
-                    _zn_session_message_free(r.value.session_message);
+                    _zn_transport_message_free(r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
             }
@@ -117,7 +117,7 @@ EXIT_RECV_LOOP:
     }
 
     // Free the result
-    _zn_session_message_p_result_free(&r);
+    _zn_transport_message_p_result_free(&r);
 
     return 0;
 }

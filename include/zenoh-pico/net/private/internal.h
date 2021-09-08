@@ -24,14 +24,14 @@ zn_session_t *_zn_session_init(void);
 int _zn_session_close(zn_session_t *zn, uint8_t reason);
 void _zn_session_free(zn_session_t *zn);
 
-int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *s_msg);
+int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *s_msg);
 int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
 
 /*------------------ Clone/Copy/Free helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
 
 /*------------------ Message helper ------------------*/
-_zn_session_message_t _zn_session_message_init(uint8_t header);
+_zn_transport_message_t _zn_transport_message_init(uint8_t header);
 _zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
 _zn_reply_context_t *_zn_reply_context_init(void);
 _zn_attachment_t *_zn_attachment_init(void);
@@ -40,11 +40,11 @@ _zn_attachment_t *_zn_attachment_init(void);
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
 
 /*------------------ Transmission and Reception helpers ------------------*/
-int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *m);
+int _zn_send_s_msg(zn_session_t *zn, _zn_transport_message_t *m);
 int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *m, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl);
 
-_zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *zn);
-void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r);
+_zn_transport_message_p_result_t _zn_recv_s_msg(zn_session_t *zn);
+void _zn_recv_s_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r);
 
 /*------------------ Entity ------------------*/
 z_zint_t _zn_get_entity_id(zn_session_t *zn);

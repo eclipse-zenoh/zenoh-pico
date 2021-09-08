@@ -17,6 +17,7 @@
 #include "zenoh-pico/types.h"
 #include "zenoh-pico/net/types.h"
 
+#define _ZN_PRIORITIES_NUM 8
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1
 
@@ -74,5 +75,15 @@ typedef struct
     zn_queryable_handler_t callback;
     void *arg;
 } _zn_queryable_t;
+
+typedef struct
+{
+    union
+    {
+        z_zint_t sn;
+        z_zint_t sns[_ZN_PRIORITIES_NUM];
+    } val;
+    uint8_t is_qos;
+} _zn_sns_t;
 
 #endif /* _ZENOH_PICO_PRIVATE_TYPES_H */

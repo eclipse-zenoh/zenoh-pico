@@ -218,7 +218,7 @@ _zn_socket_result_t _zn_open_tx_session(const char *locator)
 
     struct linger ling;
     ling.l_onoff = 1;
-    ling.l_linger = ZN_SESSION_LEASE / 1000;
+    ling.l_linger = ZN_TRANSPORT_LEASE / 1000;
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) == -1)
     {
         r.tag = _z_res_t_ERR;
