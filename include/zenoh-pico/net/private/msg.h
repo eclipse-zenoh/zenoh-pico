@@ -219,6 +219,18 @@ typedef struct
     uint8_t header;
 } _zn_reply_context_t;
 
+// -- Priority decorator
+//
+// The Priority is a message decorator containing
+// informations related to the priority of the frame/zenoh message.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// | ID  |  Prio   |
+// +-+-+-+---------+
+//
+// WARNING: zenoh-pico does not support priorities and QoS.
+
 /*=============================*/
 /*     Transport Messages      */
 /*=============================*/
