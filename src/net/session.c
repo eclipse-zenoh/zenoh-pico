@@ -125,17 +125,17 @@ void _zn_session_free(zn_session_t *zn)
 
 int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 {
-    _zn_session_message_t cm = _zn_session_message_init(_ZN_MID_CLOSE);
+    _zn_transport_message_t cm = _zn_transport_message_init(_ZN_MID_CLOSE);
     cm.body.close.pid = zn->local_pid;
     cm.body.close.reason = reason;
-    _ZN_SET_FLAG(cm.header, _ZN_FLAG_S_I);
+    _ZN_SET_FLAG(cm.header, _ZN_FLAG_T_I);
     if (link_only)
-        _ZN_SET_FLAG(cm.header, _ZN_FLAG_S_K);
+        _ZN_SET_FLAG(cm.header, _ZN_FLAG_T_K);
 
     int res = _zn_send_s_msg(zn, &cm);
 
     // Free the message
-    _zn_session_message_free(&cm);
+    _zn_transport_message_free(&cm);
 
     return res;
 }
@@ -207,14 +207,14 @@ zn_hello_array_t _zn_scout_loop(
         if (len <= 0)
             continue;
 
-        _zn_session_message_p_result_t r_hm = _zn_session_message_decode(&zbf);
+        _zn_transport_message_p_result_t r_hm = _zn_transport_message_decode(&zbf);
         if (r_hm.tag == _z_res_t_ERR)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
             continue;
         }
 
-        _zn_session_message_t *s_msg = r_hm.value.session_message;
+        _zn_transport_message_t *s_msg = r_hm.value.transport_message;
         switch (_ZN_MID(s_msg->header))
         {
         case _ZN_MID_HELLO:
@@ -236,17 +236,17 @@ zn_hello_array_t _zn_scout_loop(
             // Get current element to fill
             zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
 
-            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_I)
+            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_T_I)
                 _z_bytes_copy(&sc->pid, &s_msg->body.hello.pid);
             else
                 _z_bytes_reset(&sc->pid);
 
-            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_W)
+            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_T_W)
                 sc->whatami = s_msg->body.hello.whatami;
             else
                 sc->whatami = ZN_ROUTER; // Default value is from a router
 
-            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_S_L)
+            if _ZN_HAS_FLAG (s_msg->header, _ZN_FLAG_T_L)
             {
                 _z_str_array_copy(&sc->locators, &s_msg->body.hello.locators);
             }
@@ -267,8 +267,8 @@ zn_hello_array_t _zn_scout_loop(
         }
         }
 
-        _zn_session_message_free(s_msg);
-        _zn_session_message_p_result_free(&r_hm);
+        _zn_transport_message_free(s_msg);
+        _zn_transport_message_p_result_free(&r_hm);
 
         if (ls.len > 0 && exit_on_first)
             break;
@@ -299,14 +299,14 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
 
     // Create and encode the scout message
-    _zn_session_message_t scout = _zn_session_message_init(_ZN_MID_SCOUT);
+    _zn_transport_message_t scout = _zn_transport_message_init(_ZN_MID_SCOUT);
     // Ask for peer ID to be put in the scout message
-    _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_I);
+    _ZN_SET_FLAG(scout.header, _ZN_FLAG_T_I);
     scout.body.scout.what = (z_zint_t)what;
     if (what != ZN_ROUTER)
-        _ZN_SET_FLAG(scout.header, _ZN_FLAG_S_W);
+        _ZN_SET_FLAG(scout.header, _ZN_FLAG_T_W);
 
-    _zn_session_message_encode(&wbf, &scout);
+    _zn_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
     z_str_t sock_addr = strdup(zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val);
@@ -496,7 +496,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     }
 }
 
-int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
+int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
 {
     switch (_ZN_MID(msg->header))
     {
@@ -520,7 +520,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
 
     case _ZN_MID_OPEN:
     {
-        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_A))
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_A))
         {
             // The session lease
             zn->lease = msg->body.open.lease;
@@ -575,7 +575,7 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
     case _ZN_MID_FRAME:
     {
         // Check if the SN is correct
-        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R))
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_R))
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
@@ -604,17 +604,17 @@ int _zn_handle_session_message(zn_session_t *zn, _zn_session_message_t *msg)
             }
         }
 
-        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_F))
+        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_F))
         {
             int res = _z_res_t_OK;
 
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_R) ? &zn->dbuf_reliable : &zn->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_R) ? &zn->dbuf_reliable : &zn->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
             _z_wbuf_add_iosli_from(dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
 
             // Check if this is the last fragment
-            if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_S_E))
+            if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_E))
             {
                 // Convert the defragmentation buffer into a decoding buffer
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
@@ -801,7 +801,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         ((uint8_t *)pid.val)[i] = rand() % 255;
 
     // Build the open message
-    _zn_session_message_t ism = _zn_session_message_init(_ZN_MID_INIT);
+    _zn_transport_message_t ism = _zn_transport_message_init(_ZN_MID_INIT);
 
     ism.body.init.options = 0;
     ism.body.init.version = ZN_PROTO_VERSION;
@@ -810,7 +810,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     ism.body.init.sn_resolution = ZN_SN_RESOLUTION;
 
     if (ZN_SN_RESOLUTION != ZN_SN_RESOLUTION_DEFAULT)
-        _ZN_SET_FLAG(ism.header, _ZN_FLAG_S_S);
+        _ZN_SET_FLAG(ism.header, _ZN_FLAG_T_S);
 
     // Initialize the session
     zn = _zn_session_init();
@@ -829,13 +829,13 @@ zn_session_t *zn_open(zn_properties_t *config)
             free((char *)locator);
 
         // Free
-        _zn_session_message_free(&ism);
+        _zn_transport_message_free(&ism);
         _zn_session_free(zn);
 
         return zn;
     }
 
-    _zn_session_message_p_result_t r_msg = _zn_recv_s_msg(zn);
+    _zn_transport_message_p_result_t r_msg = _zn_recv_s_msg(zn);
     if (r_msg.tag == _z_res_t_ERR)
     {
         // Free the pid
@@ -846,25 +846,25 @@ zn_session_t *zn_open(zn_properties_t *config)
             free((char *)locator);
 
         // Free
-        _zn_session_message_free(&ism);
+        _zn_transport_message_free(&ism);
         _zn_session_free(zn);
 
         return zn;
     }
 
-    _zn_session_message_t *p_iam = r_msg.value.session_message;
+    _zn_transport_message_t *p_iam = r_msg.value.transport_message;
     switch (_ZN_MID(p_iam->header))
     {
     case _ZN_MID_INIT:
     {
-        if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_S_A)
+        if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_T_A)
         {
             // The announced sn resolution
             zn->sn_resolution = ism.body.init.sn_resolution;
             zn->sn_resolution_half = zn->sn_resolution / 2;
 
             // Handle SN resolution option if present
-            if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_S_S)
+            if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_T_S)
             {
                 // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
                 // otherwise the InitAck message is considered invalid and it should be treated as a
@@ -888,17 +888,17 @@ zn_session_t *zn_open(zn_properties_t *config)
             zn->sn_tx_best_effort = initial_sn;
 
             // Create the OpenSyn message
-            _zn_session_message_t osm = _zn_session_message_init(_ZN_MID_OPEN);
-            osm.body.open.lease = ZN_SESSION_LEASE;
-            if (ZN_SESSION_LEASE % 1000 == 0)
-                _ZN_SET_FLAG(osm.header, _ZN_FLAG_S_T);
+            _zn_transport_message_t osm = _zn_transport_message_init(_ZN_MID_OPEN);
+            osm.body.open.lease = ZN_TRANSPORT_LEASE;
+            if (ZN_TRANSPORT_LEASE % 1000 == 0)
+                _ZN_SET_FLAG(osm.header, _ZN_FLAG_T_T2);
             osm.body.open.initial_sn = initial_sn;
             osm.body.open.cookie = p_iam->body.init.cookie;
 
             _Z_DEBUG("Sending OpenSyn\n");
             // Encode and send the message
             int res = _zn_send_s_msg(zn, &osm);
-            _zn_session_message_free(&osm);
+            _zn_transport_message_free(&osm);
             if (res != 0)
             {
                 _z_bytes_free(&pid);
@@ -938,9 +938,9 @@ zn_session_t *zn_open(zn_properties_t *config)
     }
 
     // Free the messages and result
-    _zn_session_message_free(&ism);
-    _zn_session_message_free(p_iam);
-    _zn_session_message_p_result_free(&r_msg);
+    _zn_transport_message_free(&ism);
+    _zn_transport_message_free(p_iam);
+    _zn_transport_message_p_result_free(&r_msg);
 
     return zn;
 }
@@ -1593,17 +1593,17 @@ int zn_pull(zn_subscriber_t *sub)
 /*------------------ Read ------------------*/
 int znp_read(zn_session_t *zn)
 {
-    _zn_session_message_p_result_t r_s = _zn_recv_s_msg(zn);
+    _zn_transport_message_p_result_t r_s = _zn_recv_s_msg(zn);
     if (r_s.tag == _z_res_t_OK)
     {
-        int res = _zn_handle_session_message(zn, r_s.value.session_message);
-        _zn_session_message_free(r_s.value.session_message);
-        _zn_session_message_p_result_free(&r_s);
+        int res = _zn_handle_transport_message(zn, r_s.value.transport_message);
+        _zn_transport_message_free(r_s.value.transport_message);
+        _zn_transport_message_p_result_free(&r_s);
         return res;
     }
     else
     {
-        _zn_session_message_p_result_free(&r_s);
+        _zn_transport_message_p_result_free(&r_s);
         return _z_res_t_ERR;
     }
 }
@@ -1611,7 +1611,7 @@ int znp_read(zn_session_t *zn)
 /*------------------ Keep Alive ------------------*/
 int znp_send_keep_alive(zn_session_t *zn)
 {
-    _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_KEEP_ALIVE);
+    _zn_transport_message_t s_msg = _zn_transport_message_init(_ZN_MID_KEEP_ALIVE);
 
     return _zn_send_s_msg(zn, &s_msg);
 }

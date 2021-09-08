@@ -45,10 +45,10 @@ void _z_timestamp_reset(z_timestamp_t *tstamp)
 }
 
 /*------------------ Message helpers ------------------*/
-_zn_session_message_t _zn_session_message_init(uint8_t header)
+_zn_transport_message_t _zn_transport_message_init(uint8_t header)
 {
-    _zn_session_message_t sm;
-    memset(&sm, 0, sizeof(_zn_session_message_t));
+    _zn_transport_message_t sm;
+    memset(&sm, 0, sizeof(_zn_transport_message_t));
     sm.header = header;
     return sm;
 }
@@ -150,7 +150,7 @@ void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf)
 #endif /* ZN_TRANSPORT_TCP_IP */
 }
 
-int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
+int _zn_send_s_msg(zn_session_t *zn, _zn_transport_message_t *s_msg)
 {
     _Z_DEBUG(">> send session message\n");
 
@@ -160,7 +160,7 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_zn_prepare_wbuf(&zn->wbuf);
     // Encode the session message
-    int res = _zn_session_message_encode(&zn->wbuf, s_msg);
+    int res = _zn_transport_message_encode(&zn->wbuf, s_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
@@ -181,21 +181,21 @@ int _zn_send_s_msg(zn_session_t *zn, _zn_session_message_t *s_msg)
     return res;
 }
 
-_zn_session_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
+_zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_session_message_t s_msg = _zn_session_message_init(_ZN_MID_FRAME);
+    _zn_transport_message_t s_msg = _zn_transport_message_init(_ZN_MID_FRAME);
     s_msg.body.frame.sn = sn;
 
     if (reliability == zn_reliability_t_RELIABLE)
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_R);
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_R);
 
     if (is_fragment)
     {
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_F);
+        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_F);
 
         if (is_final)
-            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_S_E);
+            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_E);
 
         // Do not add the payload
         s_msg.body.frame.payload.fragment.len = 0;
@@ -226,9 +226,9 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _zn_session_message_t f_hdr = __zn_frame_header(reliability, 1, is_final, sn);
+        _zn_transport_message_t f_hdr = __zn_frame_header(reliability, 1, is_final, sn);
         // Encode the frame header
-        int res = _zn_session_message_encode(dst, &f_hdr);
+        int res = _zn_transport_message_encode(dst, &f_hdr);
         if (res == 0)
         {
             size_t space_left = _z_wbuf_space_left(dst);
@@ -279,10 +279,10 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     // Get the next sequence number
     z_zint_t sn = __unsafe_zn_get_sn(zn, reliability);
     // Create the frame header that carries the zenoh message
-    _zn_session_message_t s_msg = __zn_frame_header(reliability, 0, 0, sn);
+    _zn_transport_message_t s_msg = __zn_frame_header(reliability, 0, 0, sn);
 
     // Encode the frame header
-    int res = _zn_session_message_encode(&zn->wbuf, &s_msg);
+    int res = _zn_transport_message_encode(&zn->wbuf, &s_msg);
     if (res != 0)
     {
         _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded\n");
@@ -363,7 +363,7 @@ EXIT_ZSND_PROC:
     return res;
 }
 
-void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
+void _zn_recv_s_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
 {
     _Z_DEBUG(">> recv session msg\n");
     r->tag = _z_res_t_OK;
@@ -384,7 +384,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     // Read the message length
     if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
     {
-        _zn_session_message_p_result_free(r);
+        _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
         goto EXIT_SRCV_PROC;
@@ -396,7 +396,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     size_t writable = _z_zbuf_capacity(&zn->zbuf) - _z_zbuf_len(&zn->zbuf);
     if (writable < len)
     {
-        _zn_session_message_p_result_free(r);
+        _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IOBUF_NO_SPACE;
         goto EXIT_SRCV_PROC;
@@ -405,7 +405,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     // Read enough bytes to decode the message
     if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, len) < 0)
     {
-        _zn_session_message_p_result_free(r);
+        _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
         goto EXIT_SRCV_PROC;
@@ -416,7 +416,7 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {
-        _zn_session_message_p_result_free(r);
+        _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
         goto EXIT_SRCV_PROC;
@@ -426,18 +426,18 @@ void _zn_recv_s_msg_na(zn_session_t *zn, _zn_session_message_p_result_t *r)
     // Mark the session that we have received data
     zn->received = 1;
 
-    _Z_DEBUG(">> \t session_message_decode\n");
-    _zn_session_message_decode_na(&zn->zbuf, r);
+    _Z_DEBUG(">> \t transport_message_decode\n");
+    _zn_transport_message_decode_na(&zn->zbuf, r);
 
 EXIT_SRCV_PROC:
     // Release the lock
     _z_mutex_unlock(&zn->mutex_rx);
 }
 
-_zn_session_message_p_result_t _zn_recv_s_msg(zn_session_t *zn)
+_zn_transport_message_p_result_t _zn_recv_s_msg(zn_session_t *zn)
 {
-    _zn_session_message_p_result_t r;
-    _zn_session_message_p_result_init(&r);
+    _zn_transport_message_p_result_t r;
+    _zn_transport_message_p_result_init(&r);
     _zn_recv_s_msg_na(zn, &r);
     return r;
 }

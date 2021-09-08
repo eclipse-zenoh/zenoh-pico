@@ -37,6 +37,7 @@ _ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 _ZN_RESULT_DECLARE(_zn_scout_t, scout)
 _ZN_RESULT_DECLARE(_zn_hello_t, hello)
+_ZN_RESULT_DECLARE(_zn_join_t, join)
 _ZN_RESULT_DECLARE(_zn_init_t, init)
 _ZN_RESULT_DECLARE(_zn_open_t, open)
 _ZN_RESULT_DECLARE(_zn_close_t, close)
@@ -45,7 +46,7 @@ _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 _ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
-_ZN_P_RESULT_DECLARE(_zn_session_message_t, session_message)
+_ZN_P_RESULT_DECLARE(_zn_transport_message_t, transport_message)
 
 _ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
 _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
@@ -92,7 +93,7 @@ _ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
     _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *zbf); \
     void _zn_##name##_decode_na(_z_zbuf_t *zbf, _zn_##name##_p_result_t *r)
 
-/*------------------ Session Message ------------------*/
+/*------------------ Transport Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
 _ZN_DECLARE_DECODE(scout);
 
@@ -100,9 +101,9 @@ _ZN_DECLARE_ENCODE(hello);
 _ZN_DECLARE_DECODE(hello);
 _ZN_DECLARE_FREE(hello);
 
-_ZN_DECLARE_ENCODE_NOH(session_message);
-_ZN_DECLARE_P_DECODE_NOH(session_message);
-_ZN_DECLARE_FREE_NOH(session_message);
+_ZN_DECLARE_ENCODE_NOH(transport_message);
+_ZN_DECLARE_P_DECODE_NOH(transport_message);
+_ZN_DECLARE_FREE_NOH(transport_message);
 
 /*------------------ Zenoh Message ------------------*/
 _ZN_DECLARE_ENCODE_NOH(zenoh_message);
@@ -201,7 +202,11 @@ _ZN_DECLARE_ENCODE(query);
 _ZN_DECLARE_DECODE(query);
 _ZN_DECLARE_FREE_NOH(query);
 
-/*------------------ Session Message ------------------*/
+/*------------------ Transport Message ------------------*/
+_ZN_DECLARE_ENCODE(join);
+_ZN_DECLARE_DECODE(join);
+_ZN_DECLARE_FREE(join);
+
 _ZN_DECLARE_ENCODE(init);
 _ZN_DECLARE_DECODE(init);
 _ZN_DECLARE_FREE(init);

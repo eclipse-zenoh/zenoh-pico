@@ -103,7 +103,7 @@
 /**
  * Default session lease in milliseconds: 10 seconds
  */
-#define ZN_SESSION_LEASE 10000
+#define ZN_TRANSPORT_LEASE 10000
 #define ZN_KEEP_ALIVE_INTERVAL 1000
 
 /**
@@ -122,7 +122,7 @@
 #define ZN_FRAG_BUF_TX_CHUNK 128
 #define ZN_FRAG_BUF_RX_LIMIT 10000000
 
-#define ZN_BATCH_SIZE 16384
+#define ZN_BATCH_SIZE 65535
 #ifdef ZN_TRANSPORT_TCP_IP
 /**
  * NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
