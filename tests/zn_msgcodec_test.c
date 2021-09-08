@@ -1867,8 +1867,8 @@ void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
 
     if _ZN_HAS_FLAG (left->options, _ZN_OPT_JOIN_QOS)
     {
-        assert(left.next_sns.is_qos == 1);
-        assert(right.next_sns.is_qos == 1);
+        assert(left->next_sns.is_qos == 1);
+        assert(right->next_sns.is_qos == 1);
 
         printf("   Next SNs: ");
         for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
@@ -1880,8 +1880,8 @@ void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
     }
     else
     {
-        assert(left.next_sns.is_qos == 0);
-        assert(right.next_sns.is_qos == 0);
+        assert(left->next_sns.is_qos == 0);
+        assert(right->next_sns.is_qos == 0);
 
         printf("   Next SN: %zu:%zu", left->next_sns.val.sn, right->next_sns.val.sn);
         assert(left->next_sns.val.sn == right->next_sns.val.sn);
