@@ -2659,32 +2659,32 @@ void batch(void)
 _zn_transport_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_transport_message_t s_msg = _zn_transport_message_init(_ZN_MID_FRAME);
-    s_msg.body.frame.sn = sn;
+    _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_FRAME);
+    t_msg.body.frame.sn = sn;
 
     if (is_reliable)
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_R);
+        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_R);
 
     if (is_fragment)
     {
-        _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_F);
+        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_F);
 
         if (is_final)
-            _ZN_SET_FLAG(s_msg.header, _ZN_FLAG_T_E);
+            _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_E);
 
         // Do not add the payload
-        s_msg.body.frame.payload.fragment.len = 0;
-        s_msg.body.frame.payload.fragment.val = NULL;
+        t_msg.body.frame.payload.fragment.len = 0;
+        t_msg.body.frame.payload.fragment.val = NULL;
     }
     else
     {
         // Do not allocate the vector containing the messages
-        s_msg.body.frame.payload.messages._capacity = 0;
-        s_msg.body.frame.payload.messages._len = 0;
-        s_msg.body.frame.payload.messages._val = NULL;
+        t_msg.body.frame.payload.messages._capacity = 0;
+        t_msg.body.frame.payload.messages._len = 0;
+        t_msg.body.frame.payload.messages._val = NULL;
     }
 
-    return s_msg;
+    return t_msg;
 }
 
 void _zn_wbuf_prepare(_z_wbuf_t *wbf)

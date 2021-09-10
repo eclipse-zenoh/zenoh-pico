@@ -140,7 +140,7 @@ endif()
 
 
 if (UNIX)
-  file(GLOB Sources "src/*.c" "src/net/*.c" "src/net/unix/*.c")
+  file(GLOB Sources "src/*.c" "src/net/*.c" "src/net/protocol/*.c" "src/net/session/*.c" "src/net/transport/*.c" "src/net/transport/link/*.c" "src/net/transport/link/task/*.c" "src/system/*.c" "src/system/unix/*.c" "src/utils/*.c")
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
