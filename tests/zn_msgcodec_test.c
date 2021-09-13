@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,15 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#define _ZENOH_NET_PICO_MSGCODEC_H_T
+#define _ZENOH_PICO_MSGCODEC_H_T
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh-pico/private/collection.h"
-#include "zenoh-pico/private/iobuf.h"
-#include "zenoh-pico/net/private/internal.h"
-#include "zenoh-pico/net/private/msgcodec.h"
+#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/protocol/private/iobuf.h"
+#include "zenoh-pico/protocol/private/msgcodec.h"
+#include "zenoh-pico/protocol/private/utils.h"
+#include "zenoh-pico/system/private/common.h"
 
 #define RUNS 1000
 

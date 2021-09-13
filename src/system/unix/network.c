@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -20,9 +20,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include "zenoh-pico/net/private/system.h"
-#include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()

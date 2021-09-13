@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -15,6 +15,10 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#include "zenoh-pico/net.h"
+#include "zenoh-pico/protocol/encoding.h"
+#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/utils/property.h"
+#include "zenoh-pico/protocol/rname.h"
+#include "zenoh-pico/session/api.h"
 
 #endif /* ZENOH_PICO_H */

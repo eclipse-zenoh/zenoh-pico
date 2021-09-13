@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -14,8 +14,8 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "zenoh-pico/private/collection.h"
-#include "zenoh-pico/types.h"
+#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/utils/types.h"
 
 int main(void)
 {

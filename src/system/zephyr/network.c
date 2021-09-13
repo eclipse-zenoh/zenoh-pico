@@ -27,8 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "zenoh-pico/net/private/system.h"
-#include "zenoh-pico/private/logging.h"
+#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/private/iobuf.h"
 
 typedef struct

@@ -1,5 +1,5 @@
 // /*
-//  * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+//  * Copyright (c) 2017, 2021 ADLINK Technology Inc.
 //  *
 //  * This program and the accompanying materials are made available under the
 //  * terms of the Eclipse Public License 2.0 which is available at
@@ -14,7 +14,8 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include "zenoh-pico/net.h"
+#include "zenoh-pico.h"
+#include "zenoh-pico/system/private/common.h"
 
 #define MSG 1000
 #define MSG_LEN 1024

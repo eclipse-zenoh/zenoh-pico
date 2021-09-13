@@ -15,16 +15,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zenoh-pico/private/system/compat/strdup.h"
+#include "zenoh-pico/system/private/compat/strdup.h"
 
 char *strdup(const char *s)
 {
-	char *result = malloc(strlen(s) + 1);
+    char *result = malloc(strlen(s) + 1);
 
-	if (result)
-	{
-		strcpy(result, s);
-	}
+    if (result)
+    {
+        strcpy(result, s);
+    }
 
-	return result;
+    return result;
 }
