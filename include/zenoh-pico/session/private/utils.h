@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_SESSION_SCOUT_H
-#define ZENOH_PICO_SESSION_SCOUT_H
+#ifndef _ZENOH_PICO_SESSION_PRIVATE_UTILS_H
+#define _ZENOH_PICO_SESSION_PRIVATE_UTILS_H
 
 #include <stdint.h>
 #include "zenoh-pico/protocol/types.h"
@@ -32,4 +32,4 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only);
 
 int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
 
-#endif /* ZENOH_PICO_SESSION_SCOUT_H */
+#endif /* _ZENOH_PICO_SESSION_PRIVATE_UTILS_H */

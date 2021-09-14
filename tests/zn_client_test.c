@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "zenoh-pico.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -29,11 +29,11 @@ char *uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
-_z_list_t *pubs1 = NULL;
+z_list_t *pubs1 = NULL;
 unsigned long rids1[SET];
 
-_z_list_t *subs2 = NULL;
-_z_list_t *qles2 = NULL;
+z_list_t *subs2 = NULL;
+z_list_t *qles2 = NULL;
 unsigned long rids2[SET];
 
 volatile unsigned int total = 0;
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     znp_start_read_task(s1);
     znp_start_lease_task(s1);
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     zn_session_t *s2 = zn_open(config);
     assert(s2 != NULL);
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     znp_start_read_task(s2);
     znp_start_lease_task(s2);
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Declare resources on both sessions
     char s1_res[64];
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
         zn_subscriber_t *sub = zn_declare_subscriber(s2, rk, zn_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
-        subs2 = _z_list_cons(subs2, sub);
+        subs2 = z_list_cons(subs2, sub);
     }
 
     for (unsigned int i = 0; i < SET; i++)
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         zn_queryable_t *qle = zn_declare_queryable(s2, rk, ZN_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
-        qles2 = _z_list_cons(qles2, qle);
+        qles2 = z_list_cons(qles2, qle);
     }
 
     // Declare publisher on firt session
@@ -169,10 +169,10 @@ int main(int argc, char **argv)
         zn_publisher_t *pub = zn_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->id);
-        pubs1 = _z_list_cons(pubs1, pub);
+        pubs1 = z_list_cons(pubs1, pub);
     }
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Write data from firt session
     size_t len = MSG_LEN;
@@ -190,17 +190,17 @@ int main(int argc, char **argv)
     }
 
     // Wait to receive all the data
-    _z_clock_t now = _z_clock_now();
+    z_clock_t now = z_clock_now();
     while (datas < total)
     {
-        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for datas... %u/%u\n", datas, total);
-        _z_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     assert(datas == total);
     datas = 0;
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Query data from first session
     total = QRY * SET;
@@ -218,23 +218,23 @@ int main(int argc, char **argv)
     }
 
     // Wait to receive all the queries
-    now = _z_clock_now();
+    now = z_clock_now();
     while (queries < total)
     {
-        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for queries... %u/%u\n", queries, total);
-        _z_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     assert(queries == total);
     queries = 0;
 
     // Wait to receive all the replies
-    now = _z_clock_now();
+    now = z_clock_now();
     while (replies < total)
     {
-        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for replies... %u/%u\n", replies, total);
-        _z_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     assert(replies == total);
     replies = 0;
@@ -259,32 +259,32 @@ int main(int argc, char **argv)
     }
     assert(replies == total);
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Undeclare publishers on first session
     while (pubs1)
     {
-        zn_publisher_t *pub = _z_list_head(pubs1);
+        zn_publisher_t *pub = z_list_head(pubs1);
         zn_undeclare_publisher(pub);
         printf("Undeclared publisher on session 2: %zu\n", pub->id);
-        pubs1 = _z_list_pop(pubs1);
+        pubs1 = z_list_pop(pubs1);
     }
 
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        zn_subscriber_t *sub = _z_list_head(subs2);
+        zn_subscriber_t *sub = z_list_head(subs2);
         zn_undeclare_subscriber(sub);
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        subs2 = _z_list_pop(subs2);
+        subs2 = z_list_pop(subs2);
     }
 
     while (qles2)
     {
-        zn_queryable_t *qle = _z_list_head(qles2);
+        zn_queryable_t *qle = z_list_head(qles2);
         zn_undeclare_queryable(qle);
         printf("Undeclared queryable on session 2: %zu\n", qle->id);
-        qles2 = _z_list_pop(qles2);
+        qles2 = z_list_pop(qles2);
     }
 
     // Undeclare resources on both sessions
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
         printf("Undeclared resource on session 2: %lu\n", rids2[i]);
     }
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");

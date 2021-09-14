@@ -12,14 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_MSGCODEC_H
-#define _ZENOH_PICO_MSGCODEC_H
+#ifndef _ZENOH_PICO_PRIVATE_MSGCODEC_H
+#define _ZENOH_PICO_PRIVATE_MSGCODEC_H
 
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 #include <stdint.h>
 #include "zenoh-pico/utils/property.h"
-#include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/utils/private/result.h"
 #include "zenoh-pico/utils/types.h"
 #include "zenoh-pico/protocol/private/codec.h"
 #include "zenoh-pico/protocol/private/msg.h"
@@ -122,10 +122,10 @@ _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
 _ZN_DECLARE_FREE_NOH(payload);
 
-int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
-void _z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *zbf);
-void _z_timestamp_free(z_timestamp_t *ts);
+int z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
+void z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r);
+_zn_timestamp_result_t z_timestamp_decode(_z_zbuf_t *zbf);
+void z_timestamp_free(z_timestamp_t *ts);
 
 int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
 void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t *r);
@@ -239,4 +239,4 @@ _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
 _ZN_DECLARE_FREE(frame);
 
-#endif /* _ZENOH_PICO_MSGCODEC_H_T */
+#endif /* _ZENOH_PICO_PRIVATE_MSGCODEC_H */

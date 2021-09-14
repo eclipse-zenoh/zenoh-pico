@@ -12,13 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_MSG_H
-#define _ZENOH_PICO_MSG_H
+#ifndef _ZENOH_PICO_PROTOCOL_PRIVATE_MSG_H
+#define _ZENOH_PICO_PROTOCOL_PRIVATE_MSG_H
 
 #include <stdint.h>
 #include "zenoh-pico/protocol/types.h"
 #include "zenoh-pico/protocol/private/types.h"
-#include "zenoh-pico/utils/array.h"
+#include "zenoh-pico/utils/private/array.h"
 #include "zenoh-pico/utils/types.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -585,7 +585,7 @@ typedef struct
     union
     {
         _zn_payload_t fragment;
-        _z_vec_t messages;
+        z_vec_t messages;
     } payload;
 } _zn_frame_t;
 
@@ -912,4 +912,4 @@ typedef struct
     uint8_t header;
 } _zn_zenoh_message_t;
 
-#endif /* _ZENOH_PICO_MSG_H */
+#endif /* _ZENOH_PICO_PROTOCOL_PRIVATE_MSG_H */

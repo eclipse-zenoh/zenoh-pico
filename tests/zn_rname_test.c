@@ -13,7 +13,7 @@
  */
 
 #include <assert.h>
-#include "zenoh-pico/protocol/rname.h"
+#include "zenoh-pico/protocol/utils.h"
 
 int main(void)
 {

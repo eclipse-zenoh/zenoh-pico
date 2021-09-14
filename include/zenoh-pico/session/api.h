@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_SESSION_H
-#define ZENOH_PICO_SESSION_H
+#ifndef _ZENOH_PICO_SESSION_API_H
+#define _ZENOH_PICO_SESSION_API_H
 
 #include <stdint.h>
 #include "zenoh-pico/protocol/types.h"
@@ -466,4 +466,4 @@ int znp_start_lease_task(zn_session_t *z);
  */
 int znp_stop_lease_task(zn_session_t *z);
 
-#endif /* ZENOH_PICO_SESSION_H */
+#endif /* _ZENOH_PICO_SESSION_API_H */

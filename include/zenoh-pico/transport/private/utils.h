@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_TRANSPORT_UTILS_H
-#define _ZENOH_PICO_TRANSPORT_UTILS_H
+#ifndef _ZENOH_PICO_TRANSPORT_PRIVATE_UTILS_H
+#define _ZENOH_PICO_TRANSPORT_PRIVATE_UTILS_H
 
 #include "zenoh-pico/utils/types.h"
 #include "zenoh-pico/session/types.h"
@@ -34,4 +34,4 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r);
 
 int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg);
 
-#endif /* _ZENOH_PICO_TRANSPORT_UTILS_H */
+#endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_UTILS_H */

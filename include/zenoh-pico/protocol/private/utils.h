@@ -13,8 +13,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_PROTOCOL_UTILS_H
-#define _ZENOH_PICO_PROTOCOL_UTILS_H
+#ifndef _ZENOH_PICO_PROTOCOL_PRIVATE_UTILS_H
+#define _ZENOH_PICO_PROTOCOL_PRIVATE_UTILS_H
 
 #include <stdint.h>
 #include "zenoh-pico/protocol/types.h"
@@ -28,7 +28,7 @@ _zn_attachment_t *_zn_attachment_init(void);
 
 /*------------------ Clone/Copy/Free helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
-z_timestamp_t _z_timestamp_clone(const z_timestamp_t *tstamp);
-void _z_timestamp_reset(z_timestamp_t *tstamp);
+z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp);
+void z_timestamp_reset(z_timestamp_t *tstamp);
 
-#endif /* _ZENOH_PICO_PROTOCOL_UTILS_H */
+#endif /* _ZENOH_PICO_PROTOCOL_PRIVATE_UTILS_H */

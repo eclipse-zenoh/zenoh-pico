@@ -14,14 +14,13 @@
 
 #include "zenoh-pico/protocol/private/msg.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/protocol/private/utils.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/private/logging.h"
 #include "zenoh-pico/session/private/query.h"
 #include "zenoh-pico/session/private/resource.h"
 #include "zenoh-pico/session/private/types.h"
-#include "zenoh-pico/protocol/private/utils.h"
+#include "zenoh-pico/system/common.h"
 
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn)
@@ -36,15 +35,15 @@ z_zint_t _zn_get_query_id(zn_session_t *zn)
  */
 _zn_pending_query_t *__unsafe_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_list_t *queries = zn->pending_queries;
+    z_list_t *queries = zn->pending_queries;
     while (queries)
     {
-        _zn_pending_query_t *query = (_zn_pending_query_t *)_z_list_head(queries);
+        _zn_pending_query_t *query = (_zn_pending_query_t *)z_list_head(queries);
 
         if (query->id == id)
             return query;
 
-        queries = _z_list_tail(queries);
+        queries = z_list_tail(queries);
     }
 
     return NULL;
@@ -54,7 +53,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
     _Z_DEBUG_VA(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
     // Acquire the lock on the queries
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
     int res;
     _zn_pending_query_t *q = __unsafe_zn_get_pending_query_by_id(zn, pen_qry->id);
     if (q)
@@ -65,12 +64,12 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
     else
     {
         // Register the query
-        zn->pending_queries = _z_list_cons(zn->pending_queries, pen_qry);
+        zn->pending_queries = z_list_cons(zn->pending_queries, pen_qry);
         res = 0;
     }
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -110,9 +109,9 @@ void __unsafe_zn_free_pending_query(_zn_pending_query_t *pen_qry)
 
     while (pen_qry->pending_replies)
     {
-        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_qry->pending_replies);
+        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)z_list_head(pen_qry->pending_replies);
         __unsafe_zn_free_pending_reply(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies);
+        pen_qry->pending_replies = z_list_pop(pen_qry->pending_replies);
     }
 }
 
@@ -143,39 +142,39 @@ int __unsafe_zn_pending_query_predicate(void *other, void *this)
  */
 void __unsafe_zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    zn->pending_queries = _z_list_remove(zn->pending_queries, __unsafe_zn_pending_query_predicate, pen_qry);
+    zn->pending_queries = z_list_remove(zn->pending_queries, __unsafe_zn_pending_query_predicate, pen_qry);
     free(pen_qry);
 }
 
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
     __unsafe_zn_unregister_pending_query(zn, pen_qry);
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_flush_pending_queries(zn_session_t *zn)
 {
     // Lock the resources data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     while (zn->pending_queries)
     {
-        _zn_pending_query_t *pqy = (_zn_pending_query_t *)_z_list_head(zn->pending_queries);
+        _zn_pending_query_t *pqy = (_zn_pending_query_t *)z_list_head(zn->pending_queries);
         while (pqy->pending_replies)
         {
-            _zn_pending_reply_t *pre = (_zn_pending_reply_t *)_z_list_head(pqy->pending_replies);
+            _zn_pending_reply_t *pre = (_zn_pending_reply_t *)z_list_head(pqy->pending_replies);
             __unsafe_zn_free_pending_reply(pre);
             free(pre);
-            pqy->pending_replies = _z_list_pop(pqy->pending_replies);
+            pqy->pending_replies = z_list_pop(pqy->pending_replies);
         }
         __unsafe_zn_free_pending_query(pqy);
         free(pqy);
-        zn->pending_queries = _z_list_pop(zn->pending_queries);
+        zn->pending_queries = z_list_pop(zn->pending_queries);
     }
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_query_reply_partial(zn_session_t *zn,
@@ -185,7 +184,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
                                      const _zn_data_info_t data_info)
 {
     // Acquire the lock on the queries
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -211,7 +210,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
     if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
         ts = data_info.tstamp;
     else
-        _z_timestamp_reset(&ts);
+        z_timestamp_reset(&ts);
 
     // Build the reply
     zn_reply_t reply;
@@ -237,10 +236,10 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
     case zn_consolidation_mode_t_LAZY:
     {
         // Check if this is a newer reply
-        _z_list_t *pen_rps = pen_qry->pending_replies;
+        z_list_t *pen_rps = pen_qry->pending_replies;
         while (pen_rps)
         {
-            _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_rps);
+            _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)z_list_head(pen_rps);
 
             // Check if this is the same resource key
             if (strcmp(reply.data.data.key.val, pen_rep->reply.data.data.key.val) == 0)
@@ -263,7 +262,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
             }
             else
             {
-                pen_rps = _z_list_tail(pen_rps);
+                pen_rps = z_list_tail(pen_rps);
             }
         }
         break;
@@ -304,11 +303,11 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         pen_rep->reply.data.replier_kind = reply.data.replier_kind;
 
         // Make a copy of the data info timestamp if present
-        pen_rep->tstamp = _z_timestamp_clone(&ts);
+        pen_rep->tstamp = z_timestamp_clone(&ts);
 
         // Add it to the list of pending replies if new
         if (latest == NULL)
-            pen_qry->pending_replies = _z_list_cons(pen_qry->pending_replies, pen_rep);
+            pen_qry->pending_replies = z_list_cons(pen_qry->pending_replies, pen_rep);
 
         break;
     }
@@ -345,7 +344,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Add it to the list of pending replies
         if (latest == NULL)
-            pen_qry->pending_replies = _z_list_cons(pen_qry->pending_replies, pen_rep);
+            pen_qry->pending_replies = z_list_cons(pen_qry->pending_replies, pen_rep);
 
         // Trigger the handler
         pen_qry->callback(pen_rep->reply, pen_qry->arg);
@@ -374,13 +373,13 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
 EXIT_QRY_TRIG_PAR:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
 {
     // Acquire the lock on the queries
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
     {
@@ -404,7 +403,7 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
     // The reply is the final one, apply consolidation if needed
     while (pen_qry->pending_replies)
     {
-        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_qry->pending_replies);
+        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)z_list_head(pen_qry->pending_replies);
         if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL)
         {
             // Trigger the query handler
@@ -413,7 +412,7 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
         // Free the element
         __unsafe_zn_free_pending_reply(pen_rep);
         free(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies);
+        pen_qry->pending_replies = z_list_pop(pen_qry->pending_replies);
     }
 
     // Build the final reply
@@ -427,5 +426,5 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
 
 EXIT_QRY_TRIG_FIN:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }

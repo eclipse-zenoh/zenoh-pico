@@ -22,7 +22,7 @@
 #include "zenoh-pico/session/private/types.h"
 
 /*------------------ Subscription ------------------*/
-_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey);
+z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey);
 _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id);
 _zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey);
 int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub);

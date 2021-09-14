@@ -12,17 +12,21 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_COLLECTIONS_H
-#define _ZENOH_PICO_SYSTEM_COLLECTIONS_H
+#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_TYPES_H
+#define _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_TYPES_H
 
-#include "zenoh-pico/system/private/types.h"
+#include <pthread.h>
 
-/*-------- Mvar --------*/
-_z_mvar_t *_z_mvar_empty(void);
-int _z_mvar_is_empty(_z_mvar_t *mv);
+typedef int _zn_socket_t;
 
-_z_mvar_t *_z_mvar_of(void *e);
-void *_z_mvar_get(_z_mvar_t *mv);
-void _z_mvar_put(_z_mvar_t *mv, void *e);
+typedef pthread_t z_task_t;
+typedef pthread_attr_t z_task_attr_t;
+typedef pthread_mutex_t z_mutex_t;
+typedef pthread_cond_t z_condvar_t;
 
-#endif /* _ZENOH_PICO_SYSTEM_COLLECTIONS_H */
+typedef struct timespec z_clock_t;
+typedef struct timeval z_time_t;
+
+typedef clockid_t clock_t;
+
+#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_TYPES_H */

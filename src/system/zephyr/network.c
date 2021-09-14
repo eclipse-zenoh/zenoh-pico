@@ -16,10 +16,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <net/net_if.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netdb.h>
 #include <net/if.h>
 #include <stdint.h>
@@ -27,9 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/private/iobuf.h"
+#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/protocol/private/iobuf.h"
 
 typedef struct
 {

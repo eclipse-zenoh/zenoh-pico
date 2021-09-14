@@ -15,10 +15,10 @@
 #include "zenoh-pico/protocol/private/msg.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/session/types.h"
 #include "zenoh-pico/session/private/resource.h"
 #include "zenoh-pico/session/private/subscription.h"
@@ -36,7 +36,7 @@ zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
     return rk;
 }
 
-z_timestamp_t _z_timestamp_clone(const z_timestamp_t *tstamp)
+z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp)
 {
     z_timestamp_t ts;
     _z_bytes_copy(&ts.id, &tstamp->id);
@@ -44,7 +44,7 @@ z_timestamp_t _z_timestamp_clone(const z_timestamp_t *tstamp)
     return ts;
 }
 
-void _z_timestamp_reset(z_timestamp_t *tstamp)
+void z_timestamp_reset(z_timestamp_t *tstamp)
 {
     _z_bytes_reset(&tstamp->id);
     tstamp->time = 0;
@@ -56,7 +56,7 @@ void _zn_default_on_disconnect(void *vz)
     zn_session_t *zn = (zn_session_t *)vz;
     for (int i = 0; i < 3; i++)
     {
-        _z_sleep_s(3);
+        z_sleep_s(3);
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
@@ -82,9 +82,9 @@ zn_session_t *_zn_session_init()
     zn->dbuf_best_effort = _z_wbuf_make(0, 1);
 
     // Initialize the mutexes
-    _z_mutex_init(&zn->mutex_rx);
-    _z_mutex_init(&zn->mutex_tx);
-    _z_mutex_init(&zn->mutex_inner);
+    z_mutex_init(&zn->mutex_rx);
+    z_mutex_init(&zn->mutex_tx);
+    z_mutex_init(&zn->mutex_inner);
 
     // The initial SN at RX side
     zn->lease = 0;
@@ -105,17 +105,17 @@ zn_session_t *_zn_session_init()
     zn->pull_id = 1;
 
     // Initialize the data structs
-    zn->local_resources = _z_list_empty;
-    zn->remote_resources = _z_list_empty;
+    zn->local_resources = z_list_empty;
+    zn->remote_resources = z_list_empty;
 
-    zn->local_subscriptions = _z_list_empty;
-    zn->remote_subscriptions = _z_list_empty;
-    zn->rem_res_loc_sub_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->local_subscriptions = z_list_empty;
+    zn->remote_subscriptions = z_list_empty;
+    zn->rem_res_loc_sub_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    zn->local_queryables = _z_list_empty;
-    zn->rem_res_loc_qle_map = _z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->local_queryables = z_list_empty;
+    zn->rem_res_loc_qle_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    zn->pending_queries = _z_list_empty;
+    zn->pending_queries = z_list_empty;
 
     zn->read_task_running = 0;
     zn->read_task = NULL;
@@ -142,9 +142,9 @@ void _zn_session_free(zn_session_t *zn)
     _zn_flush_pending_queries(zn);
 
     // Clean up the mutexes
-    _z_mutex_free(&zn->mutex_inner);
-    _z_mutex_free(&zn->mutex_tx);
-    _z_mutex_free(&zn->mutex_rx);
+    z_mutex_free(&zn->mutex_inner);
+    z_mutex_free(&zn->mutex_tx);
+    z_mutex_free(&zn->mutex_rx);
 
     // Clean up the buffers
     _z_wbuf_free(&zn->wbuf);

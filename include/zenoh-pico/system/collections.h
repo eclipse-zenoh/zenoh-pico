@@ -12,19 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdlib.h>
-#include <string.h>
+#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H
+#define _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H
 
-#include "zenoh-pico/system/private/compat/strdup.h"
+#include "zenoh-pico/system/types.h"
 
-char *strdup(const char *s)
-{
-    char *result = malloc(strlen(s) + 1);
+/*-------- Mvar --------*/
+z_mvar_t *z_mvar_empty(void);
+int z_mvar_is_empty(z_mvar_t *mv);
 
-    if (result)
-    {
-        strcpy(result, s);
-    }
+z_mvar_t *z_mvar_of(void *e);
+void *z_mvar_get(z_mvar_t *mv);
+void z_mvar_put(z_mvar_t *mv, void *e);
 
-    return result;
-}
+#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H */

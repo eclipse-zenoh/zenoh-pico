@@ -11,8 +11,8 @@
  * Contributors:
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
-#ifndef _ZENOH_PICO_TRANSPORT_TYPES_H
-#define _ZENOH_PICO_TRANSPORT_TYPES_H
+#ifndef _ZENOH_PICO_SESSION_PRIVATE_TYPES_H
+#define _ZENOH_PICO_SESSION_PRIVATE_TYPES_H
 
 #include "zenoh-pico/protocol/types.h"
 #include "zenoh-pico/session/types.h"
@@ -56,16 +56,16 @@ typedef struct
     const char *predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    _z_list_t *pending_replies;
+    z_list_t *pending_replies;
     zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
 
 typedef struct
 {
-    _z_mutex_t mutex;
-    _z_condvar_t cond_var;
-    _z_vec_t replies;
+    z_mutex_t mutex;
+    z_condvar_t cond_var;
+    z_vec_t replies;
 } _zn_pending_query_collect_t;
 
 typedef struct
@@ -77,4 +77,4 @@ typedef struct
     void *arg;
 } _zn_queryable_t;
 
-#endif /* _ZENOH_PICO_TRANSPORT_TYPES_H */
+#endif /* _ZENOH_PICO_SESSION_PRIVATE_TYPES_H */

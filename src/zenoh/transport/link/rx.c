@@ -12,12 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/transport/private/utils.h"
 
 /*------------------ Reception helper ------------------*/
@@ -27,7 +23,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Acquire the lock
-    _z_mutex_lock(&zn->mutex_rx);
+    z_mutex_lock(&zn->mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_clear(&zn->zbuf);
@@ -89,7 +85,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
 
 EXIT_SRCV_PROC:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_rx);
+    z_mutex_unlock(&zn->mutex_rx);
 }
 
 _zn_transport_message_p_result_t _zn_recv_t_msg(zn_session_t *zn)

@@ -16,8 +16,8 @@
 #include "zenoh-pico/session/types.h"
 #include "zenoh-pico/session/private/utils.h"
 #include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/system/common.h"
 
 void *_znp_lease_task(void *arg)
 {
@@ -48,7 +48,7 @@ void *_znp_lease_task(void *arg)
         }
 
         // The keep alive and lease intervals are expressed in milliseconds
-        _z_sleep_ms(interval);
+        z_sleep_ms(interval);
 
         // Decrement the interval
         if (zn->lease > 0)
@@ -91,10 +91,10 @@ void *_znp_lease_task(void *arg)
 
 int znp_start_lease_task(zn_session_t *zn)
 {
-    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
     memset(task, 0, sizeof(pthread_t));
     zn->lease_task = task;
-    if (_z_task_init(task, NULL, _znp_lease_task, zn) != 0)
+    if (z_task_init(task, NULL, _znp_lease_task, zn) != 0)
     {
         return -1;
     }

@@ -12,16 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/rname.h"
+#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/protocol/private/msg.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/session/types.h"
 #include "zenoh-pico/session/private/types.h"
 #include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/utils/private/logging.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
 
 /*------------------ Pull ------------------*/
 z_zint_t _zn_get_pull_id(zn_session_t *zn)
@@ -35,19 +35,19 @@ z_zint_t _zn_get_pull_id(zn_session_t *zn)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-_z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
-    _z_list_t *xs = _z_list_empty;
+    z_list_t *xs = z_list_empty;
 
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        _z_list_t *subs = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_sub_map, reskey->rid);
+        z_list_t *subs = (z_list_t *)z_i_map_get(zn->rem_res_loc_sub_map, reskey->rid);
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-            xs = _z_list_cons(xs, sub);
-            subs = _z_list_tail(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
+            xs = z_list_cons(xs, sub);
+            subs = z_list_tail(subs);
         }
     }
     // Case 2) -> string only reskey
@@ -56,10 +56,10 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
         // The complete resource name of the remote key
         z_str_t rname = reskey->rname;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        z_list_t *subs = zn->local_subscriptions;
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
             // The complete resource name of the subscribed key
             z_str_t lname;
@@ -74,19 +74,19 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(xs);
+                    z_list_free(xs);
                     xs = NULL;
                     return xs;
                 }
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, sub);
+                xs = z_list_cons(xs, sub);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = z_list_tail(subs);
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -99,10 +99,10 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
         // Compute the complete remote resource name starting from the key
         z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
-        _z_list_t *subs = zn->local_subscriptions;
+        z_list_t *subs = zn->local_subscriptions;
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -120,12 +120,12 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, sub);
+                xs = z_list_cons(xs, sub);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = z_list_tail(subs);
         }
 
         free(rname);
@@ -142,18 +142,18 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
 void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
 {
     // Check if there is a matching local subscription
-    _z_list_t *subs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
+    z_list_t *subs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
     if (subs)
     {
         // Update the list
-        _z_list_t *sl = _z_i_map_get(zn->rem_res_loc_sub_map, id);
+        z_list_t *sl = z_i_map_get(zn->rem_res_loc_sub_map, id);
         if (sl)
         {
             // Free any ancient list
-            _z_list_free(sl);
+            z_list_free(sl);
         }
         // Update the list of active subscriptions
-        _z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
+        z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
     }
 }
 
@@ -164,15 +164,15 @@ void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_re
  */
 _zn_subscriber_t *__unsafe_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
     while (subs)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
         if (sub->id == id)
             return sub;
 
-        subs = _z_list_tail(subs);
+        subs = z_list_tail(subs);
     }
 
     return NULL;
@@ -185,15 +185,15 @@ _zn_subscriber_t *__unsafe_zn_get_subscription_by_id(zn_session_t *zn, int is_lo
  */
 _zn_subscriber_t *__unsafe_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
     while (subs)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
         if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
             return sub;
 
-        subs = _z_list_tail(subs);
+        subs = z_list_tail(subs);
     }
 
     return NULL;
@@ -202,20 +202,20 @@ _zn_subscriber_t *__unsafe_zn_get_subscription_by_key(zn_session_t *zn, int is_l
 _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
     // Acquire the lock on the subscriptions data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
     _zn_subscriber_t *sub = __unsafe_zn_get_subscription_by_id(zn, is_local, id);
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
     return sub;
 }
 
 _zn_subscriber_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
     // Acquire the lock on the subscriptions data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
     _zn_subscriber_t *sub = __unsafe_zn_get_subscription_by_key(zn, is_local, reskey);
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
     return sub;
 }
 
@@ -238,22 +238,22 @@ void __unsafe_zn_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *
     if (rem_res)
     {
         // Update the list of active subscriptions
-        _z_list_t *subs = _z_i_map_get(zn->rem_res_loc_sub_map, rem_res->id);
-        subs = _z_list_cons(subs, sub);
-        _z_i_map_set(zn->rem_res_loc_sub_map, rem_res->id, subs);
+        z_list_t *subs = z_i_map_get(zn->rem_res_loc_sub_map, rem_res->id);
+        subs = z_list_cons(subs, sub);
+        z_i_map_set(zn->rem_res_loc_sub_map, rem_res->id, subs);
     }
 
     if (sub->key.rid != ZN_RESOURCE_ID_NONE)
         free(loc_key.rname);
 }
 
-_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
     // Acquire the lock on the subscriptions data struct
-    _z_mutex_lock(&zn->mutex_inner);
-    _z_list_t *xs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
+    z_mutex_lock(&zn->mutex_inner);
+    z_list_t *xs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
     return xs;
 }
 
@@ -262,7 +262,7 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     _Z_DEBUG_VA(">>> Allocating sub decl for (%lu,%s)\n", sub->key.rid, sub->key.rname);
 
     // Acquire the lock on the subscriptions data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     int res;
     _zn_subscriber_t *s = __unsafe_zn_get_subscription_by_key(zn, is_local, &sub->key);
@@ -277,17 +277,17 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
         if (is_local)
         {
             __unsafe_zn_add_loc_sub_to_rem_res_map(zn, sub);
-            zn->local_subscriptions = _z_list_cons(zn->local_subscriptions, sub);
+            zn->local_subscriptions = z_list_cons(zn->local_subscriptions, sub);
         }
         else
         {
-            zn->remote_subscriptions = _z_list_cons(zn->remote_subscriptions, sub);
+            zn->remote_subscriptions = z_list_cons(zn->remote_subscriptions, sub);
         }
         res = 0;
     }
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -327,48 +327,48 @@ int __unsafe_zn_subscription_predicate(void *other, void *this)
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
 {
     // Acquire the lock on the subscription list
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_subscriptions = _z_list_remove(zn->local_subscriptions, __unsafe_zn_subscription_predicate, s);
+        zn->local_subscriptions = z_list_remove(zn->local_subscriptions, __unsafe_zn_subscription_predicate, s);
     else
-        zn->remote_subscriptions = _z_list_remove(zn->remote_subscriptions, __unsafe_zn_subscription_predicate, s);
+        zn->remote_subscriptions = z_list_remove(zn->remote_subscriptions, __unsafe_zn_subscription_predicate, s);
     free(s);
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_flush_subscriptions(zn_session_t *zn)
 {
     // Lock the resources data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     while (zn->local_subscriptions)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->local_subscriptions);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(zn->local_subscriptions);
         __unsafe_zn_free_subscription(sub);
         free(sub);
-        zn->local_subscriptions = _z_list_pop(zn->local_subscriptions);
+        zn->local_subscriptions = z_list_pop(zn->local_subscriptions);
     }
 
     while (zn->remote_subscriptions)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->remote_subscriptions);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(zn->remote_subscriptions);
         __unsafe_zn_free_subscription(sub);
         free(sub);
-        zn->remote_subscriptions = _z_list_pop(zn->remote_subscriptions);
+        zn->remote_subscriptions = z_list_pop(zn->remote_subscriptions);
     }
-    _z_i_map_free(zn->rem_res_loc_sub_map);
+    z_i_map_free(zn->rem_res_loc_sub_map);
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload)
 {
     // Acquire the lock on the subscription list
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (reskey.rname == NULL)
@@ -400,12 +400,12 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.value = payload;
 
         // Iterate over the matching subscriptions
-        _z_list_t *subs = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_sub_map, reskey.rid);
+        z_list_t *subs = (z_list_t *)z_i_map_get(zn->rem_res_loc_sub_map, reskey.rid);
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
             sub->callback(&s, sub->arg);
-            subs = _z_list_tail(subs);
+            subs = z_list_tail(subs);
         }
 
         if (res->key.rid != ZN_RESOURCE_ID_NONE)
@@ -420,10 +420,10 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.key.len = strlen(s.key.val);
         s.value = payload;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        z_list_t *subs = zn->local_subscriptions;
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t rname;
@@ -446,7 +446,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(rname);
 
-            subs = _z_list_tail(subs);
+            subs = z_list_tail(subs);
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -463,10 +463,10 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.key.len = strlen(s.key.val);
         s.value = payload;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        z_list_t *subs = zn->local_subscriptions;
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -489,7 +489,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = z_list_tail(subs);
         }
 
         free(rname);
@@ -497,5 +497,5 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
 
 EXIT_SUB_TRIG:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }

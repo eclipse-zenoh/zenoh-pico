@@ -12,14 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_SESSION_TYPES_H
-#define ZENOH_PICO_SESSION_TYPES_H
+#ifndef _ZENOH_PICO_SESSION_TYPES_H
+#define _ZENOH_PICO_SESSION_TYPES_H
 
 #include <stdint.h>
 #include <string.h>
 #include "zenoh-pico/protocol/types.h"
 #include "zenoh-pico/protocol/private/types.h"
-#include "zenoh-pico/system/private/types.h"
+#include "zenoh-pico/system/types.h"
 #include "zenoh-pico/utils/types.h"
 
 /**
@@ -34,9 +34,9 @@ typedef struct
 {
     // Socket and internal buffers
     _zn_socket_t sock;
-    _z_mutex_t mutex_rx;
-    _z_mutex_t mutex_tx;
-    _z_mutex_t mutex_inner;
+    z_mutex_t mutex_rx;
+    z_mutex_t mutex_tx;
+    z_mutex_t mutex_inner;
 
     _z_wbuf_t wbuf;
     _z_zbuf_t zbuf;
@@ -67,28 +67,28 @@ typedef struct
     z_zint_t query_id;
 
     // Declarations
-    _z_list_t *local_resources;
-    _z_list_t *remote_resources;
+    z_list_t *local_resources;
+    z_list_t *remote_resources;
 
-    _z_list_t *local_subscriptions;
-    _z_list_t *remote_subscriptions;
-    _z_i_map_t *rem_res_loc_sub_map;
+    z_list_t *local_subscriptions;
+    z_list_t *remote_subscriptions;
+    z_i_map_t *rem_res_loc_sub_map;
 
-    _z_list_t *local_queryables;
-    _z_i_map_t *rem_res_loc_qle_map;
+    z_list_t *local_queryables;
+    z_i_map_t *rem_res_loc_qle_map;
 
-    _z_list_t *pending_queries;
+    z_list_t *pending_queries;
 
     // Runtime
     zn_on_disconnect_t on_disconnect;
 
     volatile int read_task_running;
-    _z_task_t *read_task;
+    z_task_t *read_task;
 
     volatile int lease_task_running;
     volatile int received;
     volatile int transmitted;
-    _z_task_t *lease_task;
+    z_task_t *lease_task;
 } zn_session_t;
 
 /**
@@ -201,4 +201,4 @@ typedef void (*zn_query_handler_t)(zn_reply_t reply, const void *arg);
  */
 typedef void (*zn_queryable_handler_t)(zn_query_t *query, const void *arg);
 
-#endif /* ZENOH_PICO_SESSION_TYPES_H */
+#endif /* _ZENOH_PICO_SESSION_TYPES_H */

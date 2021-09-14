@@ -12,13 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/private/logging.h"
 #include "zenoh-pico/transport/private/utils.h"
 #include "zenoh-pico/session/private/utils.h"
 
@@ -172,10 +166,10 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
         else
         {
             // Handle all the zenoh message, one by one
-            unsigned int len = _z_vec_len(&msg->body.frame.payload.messages);
+            unsigned int len = z_vec_len(&msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; ++i)
             {
-                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
+                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
                     return res;
             }

@@ -14,15 +14,14 @@
 
 #include "zenoh-pico/protocol/private/msg.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/private/queryable.h"
 #include "zenoh-pico/session/private/resource.h"
 #include "zenoh-pico/session/private/types.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/utils/private/logging.h"
 
 /*------------------ Queryable ------------------*/
 /**
@@ -32,15 +31,15 @@
  */
 _zn_queryable_t *__unsafe_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_list_t *queryables = zn->local_queryables;
+    z_list_t *queryables = zn->local_queryables;
     while (queryables)
     {
-        _zn_queryable_t *queryable = (_zn_queryable_t *)_z_list_head(queryables);
+        _zn_queryable_t *queryable = (_zn_queryable_t *)z_list_head(queryables);
 
         if (queryable->id == id)
             return queryable;
 
-        queryables = _z_list_tail(queryables);
+        queryables = z_list_tail(queryables);
     }
 
     return NULL;
@@ -51,18 +50,18 @@ _zn_queryable_t *__unsafe_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-_z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
-    _z_list_t *xs = _z_list_empty;
+    z_list_t *xs = z_list_empty;
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        _z_list_t *qles = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_qle_map, reskey->rid);
+        z_list_t *qles = (z_list_t *)z_i_map_get(zn->rem_res_loc_qle_map, reskey->rid);
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
-            xs = _z_list_cons(xs, qle);
-            qles = _z_list_tail(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
+            xs = z_list_cons(xs, qle);
+            qles = z_list_tail(qles);
         }
     }
     // Case 2) -> string only reskey
@@ -71,10 +70,10 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
         // The complete resource name of the remote key
         z_str_t rname = reskey->rname;
 
-        _z_list_t *qles = zn->local_queryables;
+        z_list_t *qles = zn->local_queryables;
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
 
             // The complete resource name of the subscribed key
             z_str_t lname;
@@ -89,19 +88,19 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(xs);
+                    z_list_free(xs);
                     xs = NULL;
                     return xs;
                 }
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, qle);
+                xs = z_list_cons(xs, qle);
 
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            qles = _z_list_tail(qles);
+            qles = z_list_tail(qles);
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -114,10 +113,10 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
         // Compute the complete remote resource name starting from the key
         z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
-        _z_list_t *qles = zn->local_queryables;
+        z_list_t *qles = zn->local_queryables;
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -135,12 +134,12 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, qle);
+                xs = z_list_cons(xs, qle);
 
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            qles = _z_list_tail(qles);
+            qles = z_list_tail(qles);
         }
 
         free(rname);
@@ -168,9 +167,9 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
     if (rem_res)
     {
         // Update the list of active subscriptions
-        _z_list_t *qles = _z_i_map_get(zn->rem_res_loc_qle_map, rem_res->id);
-        qles = _z_list_cons(qles, qle);
-        _z_i_map_set(zn->rem_res_loc_qle_map, rem_res->id, qles);
+        z_list_t *qles = z_i_map_get(zn->rem_res_loc_qle_map, rem_res->id);
+        qles = z_list_cons(qles, qle);
+        z_i_map_set(zn->rem_res_loc_qle_map, rem_res->id, qles);
     }
 
     if (qle->key.rid != ZN_RESOURCE_ID_NONE)
@@ -185,26 +184,26 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
 void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
 {
     // Check if there is a matching local subscription
-    _z_list_t *qles = __unsafe_zn_get_queryables_from_remote_key(zn, reskey);
+    z_list_t *qles = __unsafe_zn_get_queryables_from_remote_key(zn, reskey);
     if (qles)
     {
         // Update the list
-        _z_list_t *ql = _z_i_map_get(zn->rem_res_loc_qle_map, id);
+        z_list_t *ql = z_i_map_get(zn->rem_res_loc_qle_map, id);
         if (ql)
         {
             // Free any ancient list
-            _z_list_free(ql);
+            z_list_free(ql);
         }
         // Update the list of active subscriptions
-        _z_i_map_set(zn->rem_res_loc_qle_map, id, qles);
+        z_i_map_set(zn->rem_res_loc_qle_map, id, qles);
     }
 }
 
 _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
     _zn_queryable_t *qle = __unsafe_zn_get_queryable_by_id(zn, id);
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
     return qle;
 }
 
@@ -213,7 +212,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     _Z_DEBUG_VA(">>> Allocating queryable for (%lu,%s,%u)\n", qle->key.rid, qle->key.rname, qle->kind);
 
     // Acquire the lock on the queryables
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     int res;
     _zn_queryable_t *q = __unsafe_zn_get_queryable_by_id(zn, qle->id);
@@ -226,12 +225,12 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     {
         // Register the queryable
         __unsafe_zn_add_loc_qle_to_rem_res_map(zn, qle);
-        zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
+        zn->local_queryables = z_list_cons(zn->local_queryables, qle);
         res = 0;
     }
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 
     return res;
 }
@@ -269,37 +268,37 @@ int __unsafe_zn_queryable_predicate(void *other, void *this)
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     // Acquire the lock on the queryables
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
-    zn->local_queryables = _z_list_remove(zn->local_queryables, __unsafe_zn_queryable_predicate, qle);
+    zn->local_queryables = z_list_remove(zn->local_queryables, __unsafe_zn_queryable_predicate, qle);
     free(qle);
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_flush_queryables(zn_session_t *zn)
 {
     // Lock the resources data struct
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     while (zn->local_queryables)
     {
-        _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(zn->local_queryables);
+        _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(zn->local_queryables);
         __unsafe_zn_free_queryable(qle);
         free(qle);
-        zn->local_queryables = _z_list_pop(zn->local_queryables);
+        zn->local_queryables = z_list_pop(zn->local_queryables);
     }
-    _z_i_map_free(zn->rem_res_loc_qle_map);
+    z_i_map_free(zn->rem_res_loc_qle_map);
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }
 
 void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 {
     // Acquire the lock on the queryables
-    _z_mutex_lock(&zn->mutex_inner);
+    z_mutex_lock(&zn->mutex_inner);
 
     // Case 1) -> numeric only reskey
     if (query->key.rname == NULL)
@@ -332,17 +331,17 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.predicate = query->predicate;
 
         // Iterate over the matching queryables
-        _z_list_t *qles = (_z_list_t *)_z_i_map_get(zn->rem_res_loc_qle_map, query->key.rid);
+        z_list_t *qles = (z_list_t *)z_i_map_get(zn->rem_res_loc_qle_map, query->key.rid);
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
             {
                 q.kind = qle->kind;
                 qle->callback(&q, qle->arg);
             }
-            qles = _z_list_tail(qles);
+            qles = z_list_tail(qles);
         }
 
         if (res->key.rid != ZN_RESOURCE_ID_NONE)
@@ -359,10 +358,10 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.predicate = query->predicate;
 
         // Iterate over the matching queryables
-        _z_list_t *qles = zn->local_queryables;
+        z_list_t *qles = zn->local_queryables;
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
 
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
@@ -392,7 +391,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                     free(rname);
             }
 
-            qles = _z_list_tail(qles);
+            qles = z_list_tail(qles);
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -410,10 +409,10 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.rname = query->key.rname;
         q.predicate = query->predicate;
 
-        _z_list_t *qles = zn->local_queryables;
+        z_list_t *qles = zn->local_queryables;
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
 
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
@@ -443,7 +442,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                     free(lname);
             }
 
-            qles = _z_list_tail(qles);
+            qles = z_list_tail(qles);
         }
 
         free(rname);
@@ -467,5 +466,5 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
 EXIT_QLE_TRIG:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_inner);
+    z_mutex_unlock(&zn->mutex_inner);
 }

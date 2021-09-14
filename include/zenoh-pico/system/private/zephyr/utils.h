@@ -12,19 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_UNIX_TYPES_H
-#define _ZENOH_PICO_UNIX_TYPES_H
+#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H
+#define _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H
 
-#include <pthread.h>
+char *strdup(const char *s);
 
-typedef int _zn_socket_t;
-
-typedef pthread_t _z_task_t;
-typedef pthread_attr_t _z_task_attr_t;
-typedef pthread_mutex_t _z_mutex_t;
-typedef pthread_cond_t _z_condvar_t;
-
-typedef struct timespec _z_clock_t;
-typedef struct timeval _z_time_t;
-
-#endif /* _ZENOH_PICO_UNIX_TYPES_H_ */
+#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H */

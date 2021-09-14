@@ -12,13 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/protocol/rname.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/transport/private/utils.h"
 
 /*------------------ SN helper ------------------*/
@@ -99,7 +95,7 @@ int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
     _Z_DEBUG(">> send session message\n");
 
     // Acquire the lock
-    _z_mutex_lock(&zn->mutex_tx);
+    z_mutex_lock(&zn->mutex_tx);
 
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_zn_prepare_wbuf(&zn->wbuf);
@@ -120,7 +116,7 @@ int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
     }
 
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_tx);
+    z_mutex_unlock(&zn->mutex_tx);
 
     return res;
 }
@@ -204,11 +200,11 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     // Acquire the lock and drop the message if needed
     if (cong_ctrl == zn_congestion_control_t_BLOCK)
     {
-        _z_mutex_lock(&zn->mutex_tx);
+        z_mutex_lock(&zn->mutex_tx);
     }
     else
     {
-        int locked = _z_mutex_trylock(&zn->mutex_tx);
+        int locked = z_mutex_trylock(&zn->mutex_tx);
         if (locked != 0)
         {
             _Z_DEBUG("Dropping zenoh message because of congestion control\n");
@@ -302,7 +298,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
 
 EXIT_ZSND_PROC:
     // Release the lock
-    _z_mutex_unlock(&zn->mutex_tx);
+    z_mutex_unlock(&zn->mutex_tx);
 
     return res;
 }

@@ -12,49 +12,49 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_H
-#define _ZENOH_PICO_SYSTEM_H
+#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
+#define _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
 
 // @TODO: remove the platform-specific include and data types
 #include <netinet/in.h>
-#include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/protocol/private/iobuf.h"
-#include "zenoh-pico/system/private/types.h"
+#include "zenoh-pico/system/types.h"
+#include "zenoh-pico/utils/private/result.h"
 
 /*------------------ Thread ------------------*/
-int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 
 /*------------------ Mutex ------------------*/
-int _z_mutex_init(_z_mutex_t *m);
-int _z_mutex_free(_z_mutex_t *m);
+int z_mutex_init(z_mutex_t *m);
+int z_mutex_free(z_mutex_t *m);
 
-int _z_mutex_lock(_z_mutex_t *m);
-int _z_mutex_trylock(_z_mutex_t *m);
-int _z_mutex_unlock(_z_mutex_t *m);
+int z_mutex_lock(z_mutex_t *m);
+int z_mutex_trylock(z_mutex_t *m);
+int z_mutex_unlock(z_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
-int _z_condvar_init(_z_condvar_t *cv);
-int _z_condvar_free(_z_condvar_t *cv);
+int z_condvar_init(z_condvar_t *cv);
+int z_condvar_free(z_condvar_t *cv);
 
-int _z_condvar_signal(_z_condvar_t *cv);
-int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
+int z_condvar_signal(z_condvar_t *cv);
+int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m);
 
 /*------------------ Sleep ------------------*/
-int _z_sleep_us(unsigned int time);
-int _z_sleep_ms(unsigned int time);
-int _z_sleep_s(unsigned int time);
+int z_sleep_us(unsigned int time);
+int z_sleep_ms(unsigned int time);
+int z_sleep_s(unsigned int time);
 
 /*------------------ Clock ------------------*/
-_z_clock_t _z_clock_now(void);
-clock_t _z_clock_elapsed_us(_z_clock_t *time);
-clock_t _z_clock_elapsed_ms(_z_clock_t *time);
-clock_t _z_clock_elapsed_s(_z_clock_t *time);
+z_clock_t z_clock_now(void);
+clock_t z_clock_elapsed_us(z_clock_t *time);
+clock_t z_clock_elapsed_ms(z_clock_t *time);
+clock_t z_clock_elapsed_s(z_clock_t *time);
 
 /*------------------ Time ------------------*/
-_z_time_t _z_time_now(void);
-time_t _z_time_elapsed_us(_z_time_t *time);
-time_t _z_time_elapsed_ms(_z_time_t *time);
-time_t _z_time_elapsed_s(_z_time_t *time);
+z_time_t z_time_now(void);
+time_t z_time_elapsed_us(z_time_t *time);
+time_t z_time_elapsed_ms(z_time_t *time);
+time_t z_time_elapsed_s(z_time_t *time);
 
 /*------------------ Network ------------------*/
 _ZN_RESULT_DECLARE(_zn_socket_t, socket)
@@ -73,4 +73,4 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
 int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf);
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
 
-#endif /* _ZENOH_PICO_SYSTEM_H */
+#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H */

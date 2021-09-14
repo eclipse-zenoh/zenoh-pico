@@ -17,11 +17,11 @@
 #define _ZENOH_PICO_SYSTEM_TYPES_H
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS)
-#include "zenoh-pico/system/private/unix.h"
+#include "zenoh-pico/system/private/unix/types.h"
 #elif defined(ZENOH_ZEPHYR)
-#include "zenoh-pico/system/private/zephyr.h"
+#include "zenoh-pico/system/private/zephyr/types.h"
 #else
-#include "zenoh-pico/system/private/void.h"
+#include "zenoh-pico/system/private/void/types.h"
 #error "Unknown platform"
 #endif
 
@@ -29,9 +29,9 @@ typedef struct
 {
     void *elem;
     int full;
-    _z_mutex_t mtx;
-    _z_condvar_t can_put;
-    _z_condvar_t can_get;
-} _z_mvar_t;
+    z_mutex_t mtx;
+    z_condvar_t can_put;
+    z_condvar_t can_get;
+} z_mvar_t;
 
 #endif /* _ZENOH_PICO_SYSTEM_TYPES_H */

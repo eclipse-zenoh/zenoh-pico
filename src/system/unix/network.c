@@ -17,15 +17,9 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <net/if.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include "zenoh-pico/config.h"
-#include "zenoh-pico/utils/result.h"
-#include "zenoh-pico/system/private/common.h"
-#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/utils/private/logging.h"
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()

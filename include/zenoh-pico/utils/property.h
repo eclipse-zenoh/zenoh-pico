@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_PROPERTY_H
-#define ZENOH_PICO_PROPERTY_H
+#ifndef _ZENOH_PICO_UTILS_PROPERTY_H
+#define _ZENOH_PICO_UTILS_PROPERTY_H
 
 #include <stdint.h>
 #include "zenoh-pico/utils/types.h"
@@ -73,4 +73,4 @@ unsigned int zn_properties_len(zn_properties_t *ps);
  */
 void zn_properties_free(zn_properties_t *ps);
 
-#endif /* ZENOH_PICO_PROPERTY_H */
+#endif /* _ZENOH_PICO_UTILS_PROPERTY_H */

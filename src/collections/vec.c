@@ -14,30 +14,28 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/system/private/common.h"
 #include "zenoh-pico/utils/types.h"
 
 /*-------- vec --------*/
-inline _z_vec_t _z_vec_make(size_t capacity)
+inline z_vec_t z_vec_make(size_t capacity)
 {
-    _z_vec_t v;
+    z_vec_t v;
     v._capacity = capacity;
     v._len = 0;
     v._val = (void **)malloc(sizeof(void *) * capacity);
     return v;
 }
 
-_z_vec_t _z_vec_clone(const _z_vec_t *v)
+z_vec_t z_vec_clone(const z_vec_t *v)
 {
-    _z_vec_t u = _z_vec_make(v->_capacity);
+    z_vec_t u = z_vec_make(v->_capacity);
     for (size_t i = 0; i < v->_len; ++i)
-        _z_vec_append(&u, v->_val[i]);
+        z_vec_append(&u, v->_val[i]);
     return u;
 }
 
-void _z_vec_free_inner(_z_vec_t *v)
+void z_vec_free_inner(z_vec_t *v)
 {
     free(v->_val);
     v->_len = 0;
@@ -45,19 +43,19 @@ void _z_vec_free_inner(_z_vec_t *v)
     v->_val = NULL;
 }
 
-void _z_vec_free(_z_vec_t *v)
+void z_vec_free(z_vec_t *v)
 {
     for (size_t i = 0; i < v->_len; ++i)
         free(v->_val[i]);
-    _z_vec_free_inner(v);
+    z_vec_free_inner(v);
 }
 
-inline size_t _z_vec_len(const _z_vec_t *v)
+inline size_t z_vec_len(const z_vec_t *v)
 {
     return v->_len;
 }
 
-void _z_vec_append(_z_vec_t *v, void *e)
+void z_vec_append(z_vec_t *v, void *e)
 {
     if (v->_len == v->_capacity)
     {
@@ -76,13 +74,13 @@ void _z_vec_append(_z_vec_t *v, void *e)
     v->_len++;
 }
 
-const void *_z_vec_get(const _z_vec_t *v, size_t i)
+const void *z_vec_get(const z_vec_t *v, size_t i)
 {
     assert(i < v->_len);
     return v->_val[i];
 }
 
-void _z_vec_set(_z_vec_t *v, size_t i, void *e)
+void z_vec_set(z_vec_t *v, size_t i, void *e)
 {
     assert(i < v->_capacity);
     v->_val[i] = e;

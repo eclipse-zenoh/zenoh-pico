@@ -18,8 +18,7 @@
 
 int main(int argc, char **argv)
 {
-    // char *uri = "/demo/example/zenoh-pico-write";
-    char *uri = "/demo/example/0";
+    char *uri = "/demo/example/zenoh-pico-write";
 
     if (argc > 1)
     {

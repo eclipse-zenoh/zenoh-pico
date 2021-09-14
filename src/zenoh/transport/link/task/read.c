@@ -12,14 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/session/api.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/session/private/utils.h"
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/utils/private/logging.h"
 
 void *_znp_read_task(void *arg)
 {
@@ -30,7 +26,7 @@ void *_znp_read_task(void *arg)
     _zn_transport_message_p_result_init(&r);
 
     // Acquire and keep the lock
-    _z_mutex_lock(&z->mutex_rx);
+    z_mutex_lock(&z->mutex_rx);
     // Prepare the buffer
     _z_zbuf_clear(&z->zbuf);
     while (z->read_task_running)
@@ -115,7 +111,7 @@ EXIT_RECV_LOOP:
     {
         z->read_task_running = 0;
         // Release the lock
-        _z_mutex_unlock(&z->mutex_rx);
+        z_mutex_unlock(&z->mutex_rx);
     }
 
     // Free the result
@@ -126,10 +122,10 @@ EXIT_RECV_LOOP:
 
 int znp_start_read_task(zn_session_t *z)
 {
-    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
     memset(task, 0, sizeof(pthread_t));
     z->read_task = task;
-    if (_z_task_init(task, NULL, _znp_read_task, z) != 0)
+    if (z_task_init(task, NULL, _znp_read_task, z) != 0)
     {
         return -1;
     }

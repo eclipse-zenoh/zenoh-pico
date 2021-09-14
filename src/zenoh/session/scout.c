@@ -16,10 +16,10 @@
 #include <stdio.h>
 #include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/types.h"
-#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/private/logging.h"
 
 zn_hello_array_t _zn_scout_loop(
     _zn_socket_t socket,
@@ -49,8 +49,8 @@ zn_hello_array_t _zn_scout_loop(
     // The receiving buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
 
-    _z_clock_t start = _z_clock_now();
-    while (_z_clock_elapsed_ms(&start) < period)
+    z_clock_t start = z_clock_now();
+    while (z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
         _z_zbuf_clear(&zbf);

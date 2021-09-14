@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_PROTOCOL_TYPES_H
-#define ZENOH_PICO_PROTOCOL_TYPES_H
+#ifndef _ZENOH_PICO_PROTOCOL_TYPES_H
+#define _ZENOH_PICO_PROTOCOL_TYPES_H
 
 #include <stdint.h>
 #include <string.h>
@@ -249,4 +249,4 @@ typedef struct
     zn_period_t *period;
 } zn_subinfo_t;
 
-#endif /* ZENOH_PICO_PROTOCOL_TYPES_H */
+#endif /* _ZENOH_PICO_PROTOCOL_TYPES_H */

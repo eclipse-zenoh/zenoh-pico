@@ -12,64 +12,60 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_COLLECTION_H
-#define _ZENOH_PICO_COLLECTION_H
+#ifndef _ZENOH_PICO_UTILS_COLLECTION_H
+#define _ZENOH_PICO_UTILS_COLLECTION_H
 
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh-pico/utils/types.h"
-
-#if defined(ZENOH_NEEDS_STRDUP)
-#include "zenoh-pico/system/private/compat/strdup.h"
-#endif
 
 /*-------- String --------*/
 z_string_t z_string_make(const char *value);
 void z_string_free(z_string_t *s);
 
 /*-------- Dynamically allocated vector --------*/
-_z_vec_t _z_vec_make(size_t capacity);
-_z_vec_t _z_vec_clone(const _z_vec_t *v);
+z_vec_t z_vec_make(size_t capacity);
+z_vec_t z_vec_clone(const z_vec_t *v);
 
-size_t _z_vec_len(const _z_vec_t *v);
-void _z_vec_append(_z_vec_t *v, void *e);
-const void *_z_vec_get(const _z_vec_t *v, size_t i);
-void _z_vec_set(_z_vec_t *sv, size_t i, void *e);
+size_t z_vec_len(const z_vec_t *v);
+void z_vec_append(z_vec_t *v, void *e);
+const void *z_vec_get(const z_vec_t *v, size_t i);
+void z_vec_set(z_vec_t *sv, size_t i, void *e);
 
-void _z_vec_free_inner(_z_vec_t *v);
-void _z_vec_free(_z_vec_t *v);
+void z_vec_free_inner(z_vec_t *v);
+void z_vec_free(z_vec_t *v);
 
 /*-------- Linked List --------*/
-extern _z_list_t *_z_list_empty;
+extern z_list_t *z_list_empty;
 
-_z_list_t *_z_list_of(void *x);
-_z_list_t *_z_list_cons(_z_list_t *xs, void *x);
+z_list_t *z_list_of(void *x);
+z_list_t *z_list_cons(z_list_t *xs, void *x);
 
-void *_z_list_head(_z_list_t *xs);
-_z_list_t *_z_list_tail(_z_list_t *xs);
+void *z_list_head(z_list_t *xs);
+z_list_t *z_list_tail(z_list_t *xs);
 
-size_t _z_list_len(_z_list_t *xs);
-_z_list_t *_z_list_remove(_z_list_t *xs, _z_list_predicate p, void *arg);
+size_t z_list_len(z_list_t *xs);
+z_list_t *z_list_remove(z_list_t *xs, z_list_predicate p, void *arg);
 
-_z_list_t *_z_list_pop(_z_list_t *xs);
-_z_list_t *_z_list_drop_val(_z_list_t *xs, size_t position);
-void _z_list_free(_z_list_t *xs);
-void _z_list_free_deep(_z_list_t *xs);
+z_list_t *z_list_pop(z_list_t *xs);
+z_list_t *z_list_drop_val(z_list_t *xs, size_t position);
+void z_list_free(z_list_t *xs);
+void z_list_free_deep(z_list_t *xs);
 
 /*-------- Int Map --------*/
 #define _Z_DEFAULT_I_MAP_CAPACITY 64
 
-extern _z_i_map_t *_z_i_map_empty;
-_z_i_map_t *_z_i_map_make(size_t capacity);
+extern z_i_map_t *z_i_map_empty;
+z_i_map_t *z_i_map_make(size_t capacity);
 
-size_t _z_i_map_capacity(_z_i_map_t *map);
-size_t _z_i_map_len(_z_i_map_t *map);
+size_t z_i_map_capacity(z_i_map_t *map);
+size_t z_i_map_len(z_i_map_t *map);
 
-void _z_i_map_set(_z_i_map_t *map, size_t k, void *v);
-void *_z_i_map_get(_z_i_map_t *map, size_t k);
-void _z_i_map_remove(_z_i_map_t *map, size_t k);
+void z_i_map_set(z_i_map_t *map, size_t k, void *v);
+void *z_i_map_get(z_i_map_t *map, size_t k);
+void z_i_map_remove(z_i_map_t *map, size_t k);
 
-void _z_i_map_free(_z_i_map_t *map);
+void z_i_map_free(z_i_map_t *map);
 
 /*-------- Operations on Bytes --------*/
 z_bytes_t _z_bytes_make(size_t capacity);
@@ -93,4 +89,4 @@ void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src);
 void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);
 void _z_str_array_free(z_str_array_t *sa);
 
-#endif /* _ZENOH_PICO_COLLECTION_H */
+#endif /* _ZENOH_PICO_UTILS_COLLECTION_H */

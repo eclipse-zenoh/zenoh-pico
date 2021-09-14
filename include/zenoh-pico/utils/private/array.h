@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_ARRAY_H
-#define _ZENOH_PICO_ARRAY_H
+#ifndef _ZENOH_PICO_UTILS_ARRAY_H
+#define _ZENOH_PICO_UTILS_ARRAY_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -77,4 +77,4 @@
     arr->val = 0;          \
     arr->len = 0
 
-#endif /* _ZENOH_PICO_ARRAY_H */
+#endif /* _ZENOH_PICO_UTILS_ARRAY_H */

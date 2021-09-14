@@ -20,32 +20,57 @@
 #include <string.h>
 
 /*------------------ Collection ------------------*/
+/**
+ * A dynamically allocate vector.
+ */
 typedef struct
 {
     size_t _capacity;
     size_t _len;
     void **_val;
-} _z_vec_t;
+} z_vec_t;
 
-typedef int (*_z_list_predicate)(void *, void *);
-typedef struct z_list
+/**
+ * A single-linked list.
+ *
+ *  Members:
+ *   void *val: The pointer to the inner value.
+ *   struct z_list *tail: A pointer to the next element in the list.
+ */
+typedef int (*z_list_predicate)(void *, void *);
+typedef struct _z_list
 {
     void *val;
-    struct z_list *tail;
-} _z_list_t;
+    struct _z_list *tail;
+} z_list_t;
 
+/**
+ * An entry of an hashmap with integer keys.
+ *
+ * Members:
+ *   size_t key: the hashed key of the value
+ *   void *value: the value
+ */
 typedef struct
 {
     size_t key;
     void *value;
-} _z_i_map_entry_t;
+} z_i_map_entry_t;
 
+/**
+ * An hashmap with integer keys.
+ *
+ * Members:
+ *   z_list_t **vals: the linked list containing the values
+ *   size_t capacity: the capacity of the hashmap
+ *   size_t len: the actual length of the hashmap
+ */
 typedef struct
 {
-    _z_list_t **vals;
+    z_list_t **vals;
     size_t capacity;
     size_t len;
-} _z_i_map_t;
+} z_i_map_t;
 
 /*------------------ Zenoh ------------------*/
 /**
@@ -108,6 +133,6 @@ typedef struct
 /**
  * Zenoh-net properties are represented as int-string map.
  */
-typedef _z_i_map_t zn_properties_t;
+typedef z_i_map_t zn_properties_t;
 
 #endif /* _ZENOH_PICO_UTILS_TYPES_H */

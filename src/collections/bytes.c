@@ -12,11 +12,7 @@
  *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <assert.h>
 #include <stdlib.h>
-#include <string.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/system/private/common.h"
 #include "zenoh-pico/utils/types.h"
 
 /*-------- bytes --------*/

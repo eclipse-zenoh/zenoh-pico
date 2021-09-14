@@ -12,13 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/protocol/private/codec.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
+#include "zenoh-pico/utils/private/logging.h"
 
 /*=============================*/
 /*           Fields            */
@@ -55,7 +51,7 @@ void _zn_payload_free(_zn_payload_t *p)
 }
 
 /*------------------ Timestamp Field ------------------*/
-int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
+int z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
 {
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
@@ -64,7 +60,7 @@ int _z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts)
     return _z_bytes_encode(wbf, &ts->id);
 }
 
-void _z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r)
+void z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r)
 {
     _Z_DEBUG("Decoding _TIMESTAMP\n");
     r->tag = _z_res_t_OK;
@@ -79,14 +75,14 @@ void _z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r)
     r->value.timestamp.id = r_arr.value.bytes;
 }
 
-_zn_timestamp_result_t _z_timestamp_decode(_z_zbuf_t *zbf)
+_zn_timestamp_result_t z_timestamp_decode(_z_zbuf_t *zbf)
 {
     _zn_timestamp_result_t r;
-    _z_timestamp_decode_na(zbf, &r);
+    z_timestamp_decode_na(zbf, &r);
     return r;
 }
 
-void _z_timestamp_free(z_timestamp_t *ts)
+void z_timestamp_free(z_timestamp_t *ts)
 {
     (void)(&ts->id);
 }
@@ -890,7 +886,7 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
         _ZN_EC(_z_zint_encode(wbf, fld->encoding))
 
     if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_TSTAMP))
-        _ZN_EC(_z_timestamp_encode(wbf, &fld->tstamp))
+        _ZN_EC(z_timestamp_encode(wbf, &fld->tstamp))
 
     if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_SRC_ID))
         _ZN_EC(_z_bytes_encode(wbf, &fld->source_id))
@@ -943,7 +939,7 @@ void _zn_data_info_decode_na(_z_zbuf_t *zbf, _zn_data_info_result_t *r)
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP))
     {
-        _zn_timestamp_result_t r_tsp = _z_timestamp_decode(zbf);
+        _zn_timestamp_result_t r_tsp = z_timestamp_decode(zbf);
         _ASSURE_P_RESULT(r_tsp, r, _zn_err_t_PARSE_TIMESTAMP)
         r->value.data_info.tstamp = r_tsp.value.timestamp;
     }
@@ -999,7 +995,7 @@ void _zn_data_info_free(_zn_data_info_t *di)
         (void)(&di->first_router_id);
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_TSTAMP))
-        _z_timestamp_free(&di->tstamp);
+        z_timestamp_free(&di->tstamp);
 }
 
 /*------------------ Data Message ------------------*/
@@ -2021,9 +2017,9 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        size_t len = _z_vec_len(&msg->payload.messages);
+        size_t len = z_vec_len(&msg->payload.messages);
         for (size_t i = 0; i < len; ++i)
-            _ZN_EC(_zn_zenoh_message_encode(wbf, _z_vec_get(&msg->payload.messages, i)))
+            _ZN_EC(_zn_zenoh_message_encode(wbf, z_vec_get(&msg->payload.messages, i)))
 
         return 0;
     }
@@ -2051,7 +2047,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
     }
     else
     {
-        r->value.frame.payload.messages = _z_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
+        r->value.frame.payload.messages = z_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
         while (_z_zbuf_len(zbf))
         {
             // Mark the reading position of the iobfer
@@ -2059,7 +2055,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
             _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(zbf);
             if (r_zm.tag == _z_res_t_OK)
             {
-                _z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
+                z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
             }
             else
             {
@@ -2086,9 +2082,9 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
     }
     else
     {
-        for (size_t i = 0; i < _z_vec_len(&msg->payload.messages); ++i)
-            _zn_zenoh_message_free((_zn_zenoh_message_t *)_z_vec_get(&msg->payload.messages, i));
-        _z_vec_free(&msg->payload.messages);
+        for (size_t i = 0; i < z_vec_len(&msg->payload.messages); ++i)
+            _zn_zenoh_message_free((_zn_zenoh_message_t *)z_vec_get(&msg->payload.messages, i));
+        z_vec_free(&msg->payload.messages);
     }
 }
 

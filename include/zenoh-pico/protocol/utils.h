@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_RNAME_H
-#define ZENOH_PICO_RNAME_H
+#ifndef _ZENOH_PICO_PROTOCOL_UTILS_H
+#define _ZENOH_PICO_PROTOCOL_UTILS_H
 
 /**
  * Intersects two resource names. This function compares two resource names
@@ -28,4 +28,4 @@
  */
 int zn_rname_intersect(const char *left, const char *right);
 
-#endif /* ZENOH_PICO_RNAME_H */
+#endif /* _ZENOH_PICO_PROTOCOL_UTILS_H */

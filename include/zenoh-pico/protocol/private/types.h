@@ -13,8 +13,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_PROTOCOL_TYPES_H
-#define _ZENOH_PICO_PROTOCOL_TYPES_H
+#ifndef _ZENOH_PICO_PROTOCOL_PRIVATE_TYPES_H
+#define _ZENOH_PICO_PROTOCOL_PRIVATE_TYPES_H
 
 #include "zenoh-pico/protocol/types.h"
 #include "zenoh-pico/utils/types.h"
@@ -52,8 +52,8 @@ typedef struct
     size_t r_idx;
     size_t w_idx;
     size_t capacity;
-    _z_vec_t ioss;
+    z_vec_t ioss;
     int is_expandable;
 } _z_wbuf_t;
 
-#endif /* _ZENOH_PICO_PROTOCOL_TYPES_H */
+#endif /* _ZENOH_PICO_PROTOCOL_PRIVATE_TYPES_H */

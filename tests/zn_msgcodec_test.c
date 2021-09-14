@@ -21,7 +21,7 @@
 #include "zenoh-pico/protocol/private/iobuf.h"
 #include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/private/common.h"
+#include "zenoh-pico/system/common.h"
 
 #define RUNS 1000
 
@@ -316,14 +316,14 @@ void timestamp_field(void)
     z_timestamp_t e_ts = gen_timestamp();
 
     // Encode
-    int res = _z_timestamp_encode(&wbf, &e_ts);
+    int res = z_timestamp_encode(&wbf, &e_ts);
     assert(res == 0);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     print_wbuf(&wbf);
     print_iosli(&zbf.ios);
-    _zn_timestamp_result_t r_ts = _z_timestamp_decode(&zbf);
+    _zn_timestamp_result_t r_ts = z_timestamp_decode(&zbf);
     assert(r_ts.tag == _z_res_t_OK);
 
     z_timestamp_t d_ts = r_ts.value.timestamp;
@@ -332,7 +332,7 @@ void timestamp_field(void)
     printf("\n");
 
     // Free
-    _z_timestamp_free(&d_ts);
+    z_timestamp_free(&d_ts);
     _z_zbuf_free(&zbf);
     _z_wbuf_free(&wbf);
 }
@@ -2363,11 +2363,11 @@ _zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
     else
     {
         z_zint_t num = (gen_zint() % 4) + 1;
-        e_fr.payload.messages = _z_vec_make(num);
+        e_fr.payload.messages = z_vec_make(num);
         for (z_zint_t i = 0; i < num; ++i)
         {
             _zn_zenoh_message_t *p_zm = gen_zenoh_message();
-            _z_vec_append(&e_fr.payload.messages, p_zm);
+            z_vec_append(&e_fr.payload.messages, p_zm);
         }
     }
 
@@ -2388,13 +2388,13 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
     }
     else
     {
-        size_t l_len = _z_vec_len(&left->payload.messages);
-        size_t r_len = _z_vec_len(&right->payload.messages);
+        size_t l_len = z_vec_len(&left->payload.messages);
+        size_t r_len = z_vec_len(&right->payload.messages);
         printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 
         for (size_t i = 0; i < l_len; ++i)
-            assert_eq_zenoh_message((_zn_zenoh_message_t *)_z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)_z_vec_get(&right->payload.messages, i));
+            assert_eq_zenoh_message((_zn_zenoh_message_t *)z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)z_vec_get(&right->payload.messages, i));
     }
 }
 
