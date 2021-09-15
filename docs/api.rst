@@ -100,7 +100,7 @@ Arrays
 Vectors
 ~~~~~~~
 
-.. c:type:: struct _z_vec_t
+.. c:type:: struct z_vec_t
 
   A sequence container that encapsulates a dynamic size array of pointers.
 
@@ -116,25 +116,25 @@ Vectors
 
     The pointers to the values.
 
-.. c:function:: _z_vec_t _z_vec_make(unsigned int capacity)
+.. c:function:: z_vec_t z_vec_make(unsigned int capacity)
 
-  Initialize a :c:type:`_z_vec_t` with a :c:member:`_z_vec_t._capacity` of **capacity**,
-  a :c:member:`_z_vec_t._length` of **0** and a :c:member:`_z_vec_t._elem` pointing to a
+  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t._capacity` of **capacity**,
+  a :c:member:`z_vec_t._length` of **0** and a :c:member:`z_vec_t._elem` pointing to a
   newly allocated array of **capacity** pointers.
 
-.. c:function:: unsigned int _z_vec_len(const _z_vec_t* v)
+.. c:function:: unsigned int z_vec_len(const z_vec_t* v)
 
-  Return the current length of the given :c:type:_z_vec_t.
+  Return the current length of the given :c:type:z_vec_t.
 
-.. c:function:: void _z_vec_append(_z_vec_t* v, void* e)
+.. c:function:: void z_vec_append(z_vec_t* v, void* e)
 
   Append the element **e** to the vector **v** and take ownership of the appended element.
 
-.. c:function:: void _z_vec_set(_z_vec_t* sv, unsigned int i, void* e)
+.. c:function:: void z_vec_set(z_vec_t* sv, unsigned int i, void* e)
 
   Set the element **e** in the vector **v** at index **i** and take ownership of the element.
 
-.. c:function:: const void* _z_vec_get(const _z_vec_t* v, unsigned int i)
+.. c:function:: const void* z_vec_get(const z_vec_t* v, unsigned int i)
 
   Return the element at index **i** in vector **v**.
 
@@ -301,22 +301,22 @@ Data Structures
 Functions
 ---------
 
-.. c:function:: zn_session_p_result_t zn_open(char* locator, zn_on_disconnect_t on_disconnect, const _z_vec_t *ps)
+.. c:function:: zn_session_p_result_t zn_open(char* locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
 
   Open a zenoh-net session.
 
   | **locator** is a string representing the network endpoint to which establish the session. A typical locator looks like this : ``tcp/127.0.0.1:7447``.
     If ``NULL``, :c:func:`zn_open` will scout and try to establish the session automatically.
   | **on_disconnect** is a function that will be called each time the client API is disconnected from the infrastructure. It can be set to ``NULL``.
-  | **ps** is a :c:type:`vector<_z_vec_t>` of :c:type:`zn_property_t` that will be used to establish and configure the zenoh-net session.
+  | **ps** is a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` that will be used to establish and configure the zenoh-net session.
     **ps** will typically contain the ``username`` and ``password`` informations needed to establish the zenoh-net session with a secured infrastructure.
     It can be set to ``NULL``.
 
   Return a handle to the zenoh-net session.
 
-.. c:function:: _z_vec_t zn_info(zn_session_t *z)
+.. c:function:: z_vec_t zn_info(zn_session_t *z)
 
-  Return a :c:type:`vector<_z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session
+  Return a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session
   represented by **z**.
 
 .. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_subinfo_t *sm, zn_data_handler_t data_handler, void *arg)
