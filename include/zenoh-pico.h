@@ -21,4 +21,8 @@
 #include "zenoh-pico/utils/property.h"
 #include "zenoh-pico/utils/types.h"
 
+#if defined(ZENOH_ZEPHYR)
+#include <zephyr.h>
+#endif
+
 #endif /* _ZENOH_PICO_H */

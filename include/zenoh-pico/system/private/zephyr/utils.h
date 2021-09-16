@@ -15,6 +15,8 @@
 #ifndef _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H
 #define _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H
 
+#include <zephyr.h>
+
 char *strdup(const char *s);
 
 #endif /* _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_UTILS_H */

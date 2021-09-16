@@ -31,22 +31,7 @@ jobs:
 
     - name: Install requirements
       run: |
-        sudo apt-get install -y --no-install-recommends git cmake ninja-build gperf \
-          ccache dfu-util device-tree-compiler wget \
-          python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
-          make gcc gcc-multilib g++-multilib libsdl2-dev
-
-        pip3 install --user -U west
-        echo 'export PATH=~/.local/bin:"$PATH"' >> ~/.bashrc
-        source ~/.bashrc
-
-        west init ~/zephyrproject
-        cd ~/zephyrproject
-        west update
-
-        west zephyr-export
-
-        pip3 install --user -r ~/zephyrproject/zephyr/scripts/requirements.txt
+        echo "No requirements need to be installed"
 
     - name: Install PlatformIO
       run: |
@@ -56,11 +41,12 @@ jobs:
 
     - name: Set up project
       run: |
-        export ZEPHYR_BASE=~/zephyrproject/zephyr
+        cd $HOME
+        export ZEPHYR_BASE=$HOME/work/zephyrproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
         . $HOME/.platformio/penv/bin/activate
-        cd ..
-        mkdir -p zenoh-pico-zephyr/zephyr
-        cat << EOF > zenoh-pico-zephyr/zephyr/CMakeLists.txt
+        mkdir -p $ZEPHYR_BASE/zephyr
+        cat << EOF > $ZEPHYR_BASE/zephyr/CMakeLists.txt
         cmake_minimum_required(VERSION 3.13.1)
         include(\$ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
         project(zenoh-pico-zephyr)
@@ -68,20 +54,19 @@ jobs:
         target_sources(app PRIVATE ../lib/zenoh-pico/examples/net/zn_pub.c)
         EOF
 
-        mkdir -p zenoh-pico-zephyr/lib
-        cd zenoh-pico-zephyr/lib
-        ln -s ../../zenoh-pico
-        cd ..
+        mkdir -p $ZEPHYR_BASE/lib
+        cd $ZEPHYR_BASE/lib
+        ln -s $ZENOH_PICO_BASE
 
-        cd zephyr
-        ln -s ../example-prj.conf prj.conf
-        cd ..
+        cd $ZEPHYR_BASE/zephyr
+        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
 
-        ln -s lib/zenoh-pico/example-platformio.ini platformio.ini
+        cd $ZEPHYR_BASE
+        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
 
     - name: Build
       run: |
-        export ZEPHYR_BASE=~/zephyrproject/zephyr
+        export ZEPHYR_BASE=$HOME/work/zephyrproject/
         . $HOME/.platformio/penv/bin/activate
-        cd ../zenoh-pico-zephyr
-        platformio run --environment nucleo_f767zi
+        cd $ZEPHYR_BASE
+        platformio run
