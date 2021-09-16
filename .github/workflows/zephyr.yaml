@@ -58,13 +58,13 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE/lib
         cd $ZEPHYR_BASE/lib
-        ln -s ../../zenoh-pico
+        ln -s $HOME/zenoh-pico
 
         cd $ZEPHYR_BASE/zephyr
-        ln -s ../../zenoh-pico/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
+        ln -s $HOME/zenoh-pico/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
 
         cd $ZEPHYR_BASE
-        ln -s ../zenoh-pico/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
+        ln -s $HOME/zenoh-pico/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
 
     - name: Build
       run: |
