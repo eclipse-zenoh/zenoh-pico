@@ -15,6 +15,7 @@
 #ifndef _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_TYPES_H
 #define _ZENOH_PICO_SYSTEM_PRIVATE_ZEPHYR_TYPES_H
 
+#include <zephyr.h>
 #include <pthread.h>
 
 typedef int _zn_socket_t;
