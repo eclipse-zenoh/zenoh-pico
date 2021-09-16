@@ -74,10 +74,10 @@ jobs:
         cd ..
 
         cd zephyr
-        ln -s ../example-prj.conf prj.conf
+        ln -s ../docs/zephyr/nucleo_f767zi/prj.conf prj.conf
         cd ..
 
-        ln -s lib/zenoh-pico/example-platformio.ini platformio.ini
+        ln -s ../docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
 
     - name: Build
       run: |
