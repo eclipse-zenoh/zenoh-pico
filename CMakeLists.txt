@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2020 ADLINK Technology Inc.
+# Copyright (c) 2017, 2021 ADLINK Technology Inc.
 #
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License 2.0 which is available at
@@ -24,31 +24,23 @@ endif()
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
+# Use cmake .. -DCMAKE_BUILD_TYPE=DEBUG for debug
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE RELEASE)
 endif()
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
-if(NOT BUILD_SHARED_LIBS)
-  set(BUILD_SHARED_LIBS ON)
-endif()
+option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
-if(NOT BUILD_TESTING)
-  set(BUILD_TESTING ON)
-endif()
-
 option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-option (EXAMPLES "Use this to also build the examples." ON)
-option (SWIG_JAVA "Use this to build the zenohpico_java library, assuming the Swig generated C files in zenoh-pico/src/ ." OFF)
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
 
-# Configure the transport to use with the following variables
-set (ZENOH_TRANSPORT_TCP "ON")
-set (ZENOH_TRANSPORT_UDP "OFF")
-set (ZENOH_TRANSPORT_BLE "OFF")
-set (ZENOH_TRANSPORT_I2C "OFF")
+option (BUILD_EXAMPLES "Use this to also build the examples." ON)
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 
-# Use cmake .. -DCMAKE_BUILD_TYPE=Debug for debug / Release
+option (BUILD_TESTING "Use this to also build tests." ON)
+message(STATUS "Build tests: ${BUILD_TESTING}")
 
 # Configure the debug level
 #
@@ -56,7 +48,6 @@ set (ZENOH_TRANSPORT_I2C "OFF")
 #   - 2 : ERROR + DEBUG
 #   - 1 : ERROR
 #   - 0 : NOTHING
-
 if (DEFINED ZENOH_DEBUG)
   set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
 else()
@@ -73,8 +64,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   set(JNI_PLATFORM_NAME "darwin")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
-  # add_definitions(-DZENOH_WIN)
-  # set(JNI_PLATFORM_NAME "win32")
+  add_definitions(-DZENOH_WIN)
+  set(JNI_PLATFORM_NAME "win32")
 endif()
 
 if (SKBUILD)
@@ -83,64 +74,48 @@ if (SKBUILD)
   set(INSTALL_INCLUDE_NAME_DIR "zenoh/include")
 endif()
 
-if (ZENOH_TRANSPORT_TCP STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "-DZENOH_TRANSPORT_TCP_IP")
-endif()
-if (ZENOH_TRANSPORT_UDP STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_UDP_IP")
-endif()
-if (ZENOH_TRANSPORT_BLE STREQUAL "ON")
-  set (ZENOH_TRANSPORT_OPT "${ZENOH_TRANSPORT_OPT} -DZENOH_TRANSPORT_BLE")
-endif()
-
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     add_definitions(-DNDEBUG)
   else()
     add_definitions(${ZENOH_DEBUG_OPT} -DZENOH_DEBUG=1)
   endif()
 
   add_compile_options(
-      $<$<CONFIG:RELEASE>:-pipe -O3>
-      $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
+    $<$<CONFIG:RELEASE>:-pipe -O3>
+    $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
   )
 endif()
 
-if (NOT SWIG_JAVA)
-  set(Libname "zenohpico")
+set(Libname "zenohpico")
 
-  file(GLOB PublicHeaders "include/*.h" "include/zenoh/*.h" "include/zenoh/net/*.h")
-  include_directories(
-      ${PROJECT_SOURCE_DIR}/include
-      ${PROJECT_SOURCE_DIR}/include/net
-    )
-else()
-  set(Libname "zenohpico_java")
-
-  if (NOT JNI_INCLUDE_HOME)
-    message(STATUS "Looking for local JDK with JNI")
-    find_package(JNI REQUIRED)
-  else()
-    message(STATUS "Using JNI headers from ${JNI_INCLUDE_HOME}")
-    get_filename_component(JNI_INCL_PATH1 "${JNI_INCLUDE_HOME}" ABSOLUTE)
-    get_filename_component(JNI_INCL_PATH2 "${JNI_INCLUDE_HOME}/${JNI_PLATFORM_NAME}" ABSOLUTE)
-    set(JNI_INCLUDE_DIRS "${JNI_INCL_PATH1};${JNI_INCL_PATH2}")
-  endif()
-  message(STATUS "Using JNI include paths: ${JNI_INCLUDE_DIRS}")
-
-  include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/include/net
-    ${JNI_INCLUDE_DIRS}
-  )
-endif()
-
+file(GLOB PublicHeaders "include/*.h"
+                        "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/protocol/*.h"
+                        "include/zenoh-pico/session/*.h"
+                        "include/zenoh-pico/system/*.h"
+                        "include/zenoh-pico/transport/*.h"
+                        "include/zenoh-pico/utils/*.h"
+)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+)
 
 if (UNIX)
-  file(GLOB Sources "src/*.c" "src/collections/*.c" "src/zenoh/*.c" "src/zenoh/protocol/*.c" "src/zenoh/session/*.c" "src/zenoh/transport/*.c" "src/zenoh/transport/link/*.c" "src/zenoh/transport/link/task/*.c" "src/system/*.c" "src/system/unix/*.c")
+  file(GLOB Sources "src/*.c"
+                    "src/collections/*.c"
+                    "src/zenoh/*.c"
+                    "src/zenoh/protocol/*.c"
+                    "src/zenoh/session/*.c"
+                    "src/zenoh/transport/*.c"
+                    "src/zenoh/transport/link/*.c"
+                    "src/zenoh/transport/link/task/*.c"
+                    "src/system/*.c"
+                    "src/system/unix/*.c"
+  )
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
@@ -154,23 +129,21 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   target_link_libraries(${Libname} rt)
 endif()
 
-if (NOT SWIG_JAVA)
-  install(TARGETS ${Libname}
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            COMPONENT Library
-          )
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-            DESTINATION include
-            COMPONENT Headers
-          )
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
-            DESTINATION include
-            COMPONENT Headers
-          )
-endif()
+install(TARGETS ${Libname}
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib
+          COMPONENT Library
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+          DESTINATION include
+          COMPONENT Headers
+)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
+          DESTINATION include
+          COMPONENT Headers
+)
 
-if (EXAMPLES)
+if (BUILD_EXAMPLES)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
 
   add_executable(zn_write ${PROJECT_SOURCE_DIR}/examples/net/zn_write.c)
@@ -194,7 +167,7 @@ if (EXAMPLES)
   target_link_libraries(zn_pub_thr ${Libname})
   target_link_libraries(zn_sub_thr ${Libname})
   target_link_libraries(zn_scout ${Libname})
-endif(EXAMPLES)
+endif()
 
 if(BUILD_TESTING)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
