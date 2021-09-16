@@ -42,7 +42,8 @@ jobs:
     - name: Set up project
       run: |
         cd $HOME
-        export ZEPHYR_BASE=$HOME/zephyrproject/
+        export ZEPHYR_BASE=$HOME/work/zephyrproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
         . $HOME/.platformio/penv/bin/activate
         mkdir -p $ZEPHYR_BASE/zephyr
         cat << EOF > $ZEPHYR_BASE/zephyr/CMakeLists.txt
@@ -55,17 +56,17 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE/lib
         cd $ZEPHYR_BASE/lib
-        ln -s $HOME/zenoh-pico
+        ln -s $ZENOH_PICO_BASE
 
         cd $ZEPHYR_BASE/zephyr
-        ln -s $HOME/zenoh-pico/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
+        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
 
         cd $ZEPHYR_BASE
-        ln -s $HOME/zenoh-pico/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
+        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
 
     - name: Build
       run: |
-        export ZEPHYR_BASE=$HOME/zephyrproject/
+        export ZEPHYR_BASE=$HOME/work/zephyrproject/
         . $HOME/.platformio/penv/bin/activate
         cd $ZEPHYR_BASE
         platformio run
