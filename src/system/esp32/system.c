@@ -67,7 +67,7 @@ int z_condvar_signal(z_condvar_t *cv)
 
 int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
 {
-    return pthread_cond_wait(cv, NULL);
+    return pthread_cond_wait(cv, m);
 }
 
 /*------------------ Sleep ------------------*/
