@@ -72,7 +72,7 @@ Once the PlatformIO dependency is satisfied, follow the steps below for the
 tested micro controllers.
 
 #### Zephyr
-Note: tested with reel board
+Note: tested with reel_board
 
 A typical PlatformIO project for Zephyr framework must have the following
 structure:
@@ -102,13 +102,54 @@ Include the CMakelist.txt and prj.conf in the <project_dir>/zephyr folder as
 shown in the structure above, and add zenoh-pico as a library by doing:
 
   ```bash
-  $ cp ../../docs/zephyr/reel-board/CMakelists.txt zephyr/
-  $ cp ../../docs/zephyr/reel-board/prj.conf zephyr/
+  $ cp ../../docs/zephyr/reel_board/CMakelists.txt zephyr/
+  $ cp ../../docs/zephyr/reel_board/prj.conf zephyr/
   $ ln -s ../../../. lib/zenoh-pico
   ```
 
 Finally, your code should go into <project_dir>/src/main.c (examples provided
 with zenoh-pico work out of the box with Zephyr).
+
+To build and upload the code into the board, run the following command:
+
+  ```bash
+  platformio run
+  platformio run -t upload
+  ```
+
+#### ESP32
+Note: tested with az-delivery-devkit-v4 board
+
+A typical PlatformIO project for ESP32 framework must have the following
+structure:
+
+  ```bash
+  project_dir
+  ├── include
+  ├── src
+  │    └── main.ino
+  └── platformio.ini
+  ```
+
+To initialize this project structure, execute the following commands:
+
+  ```bash
+  $ cd /path/to/zenoh-pico
+  $ mkdir -p build/esp32
+  $ cd build/esp32
+  $ platformio init -b az-delivery-devkit-v4
+  $ platformio run
+  ```
+
+Add zenoh-pico as a library by doing:
+
+  ```bash
+  $ ln -s ../../../. lib/zenoh-pico
+  ```
+
+Finally, your code should go into <project_dir>/src/main.c (examples provided
+with zenoh-pico needed to be adapted to work with ESP32.
+Check the example of a publisher in ./examples/docs/esp32/zn_pub.ino.
 
 To build and upload the code into the board, run the following command:
 
