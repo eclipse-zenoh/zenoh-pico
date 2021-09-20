@@ -65,8 +65,8 @@ For those that still have **CMake** version 2.8, do the following commands:
 ### How to build for embedded development
 
 In order to manage and ease the process of building and deploying into a
-a variety of embedded devices [PlatformIO](https://platformio.org) might be
-used as supporting platform.
+a variety of embedded devicesi, [PlatformIO](https://platformio.org) can be
+used as a supporting platform.
 
 Once the PlatformIO dependency is satisfied, follow the steps below for the
 tested micro controllers.
@@ -147,9 +147,9 @@ Add zenoh-pico as a library by doing:
   $ ln -s ../../../. lib/zenoh-pico
   ```
 
-Finally, your code should go into <project_dir>/src/main.c (examples provided
+Finally, your code should go into <project_dir>/src/main.ino (examples provided
 with zenoh-pico needed to be adapted to work with ESP32.
-Check the example of a publisher in ./examples/docs/esp32/zn_pub.ino.
+Check the example of a publisher in ./docs/esp32/zn_pub.ino.
 
 To build and upload the code into the board, run the following command:
 

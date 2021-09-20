@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+ */
+
+#include <Arduino.h>
+#include <WiFi.h>
+
+extern "C" {
+  #include "zenoh-pico.h"
+}
+
+#define SSID "SSID"
+#define PASS "PASSWORD"
+
+// Zenoh-specific parameters
+#define MODE "client"
+#define PEER "tcp/10.0.0.1:7447"
+#define URI "/demo/example/zenoh-pico-pub"
+
+void setup() {
+  // Set WiFi in STA mode and trigger attachment
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SSID, PASS);
+
+  // Keep trying until connected
+  while (WiFi.status() != WL_CONNECTED) {
+  }
+}
+
+void loop()
+{
+    delay(5000);
+    zn_properties_t *config = zn_config_default();
+    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
+    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+
+    zn_session_t *s = zn_open(config);
+    if (s == 0) {
+      return;
+    }
+
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
+
+    unsigned long rid = zn_declare_resource(s, zn_rname(URI));
+    zn_reskey_t reskey = zn_rid(rid);
+
+    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
+    if (pub == 0) {
+      return;
+    }
+
+    char* buf = "Publishing data from ESP-32";
+    while(true)
+    {
+        zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
+        delay(5000);
+    }
+
+    zn_undeclare_publisher(pub);
+    zn_close(s);
+}
