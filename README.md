@@ -62,10 +62,10 @@ For those that still have **CMake** version 2.8, do the following commands:
   $ make install # on Linux use **sudo**
   ```
 
-### How to build for embedded development
+### How to build for microcontrollers
 
 In order to manage and ease the process of building and deploying into a
-a variety of embedded devicesi, [PlatformIO](https://platformio.org) can be
+a variety of microcontrollers, [PlatformIO](https://platformio.org) can be
 used as a supporting platform.
 
 Once the PlatformIO dependency is satisfied, follow the steps below for the
