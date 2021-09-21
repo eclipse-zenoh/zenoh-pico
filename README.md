@@ -147,9 +147,8 @@ Add zenoh-pico as a library by doing:
   $ ln -s ../../../. lib/zenoh-pico
   ```
 
-Finally, your code should go into <project_dir>/src/main.ino (examples provided
-with zenoh-pico needed to be adapted to work with ESP32.
-Check the example of a publisher in ./docs/esp32/zn_pub.ino.
+Finally, your code should go into <project_dir>/src/main.ino.
+Check the examples provided in ./examples/net/esp32 directory.
 
 To build and upload the code into the board, run the following command:
 

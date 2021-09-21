@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ADLINK Technology Inc.
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -16,7 +16,7 @@
 #include <WiFi.h>
 
 extern "C" {
-  #include "zenoh-pico.h"
+    #include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -25,48 +25,43 @@ extern "C" {
 // Zenoh-specific parameters
 #define MODE "client"
 #define PEER "tcp/10.0.0.1:7447"
-#define URI "/demo/example/zenoh-pico-pub"
+#define URI "/demo/example/zenoh-pico-esp32-query"
 
-void setup() {
-  // Set WiFi in STA mode and trigger attachment
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID, PASS);
+zn_session_t *s = NULL;
 
-  // Keep trying until connected
-  while (WiFi.status() != WL_CONNECTED) {
-  }
+void setup()
+{
+    // Set WiFi in STA mode and trigger attachment
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, PASS);
+
+    // Keep trying until connected
+    while (WiFi.status() != WL_CONNECTED)
+    { }
+    delay(1000);
+
+    zn_properties_t *config = zn_config_default();
+    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
+    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+
+    s = zn_open(config);
+    if (s == NULL)
+    {
+        return;
+    }
+
+    znp_start_read_task(s);
+    znp_start_lease_task(s);
 }
 
 void loop()
 {
     delay(5000);
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    if (s == NULL)
+        return;
 
-    zn_session_t *s = zn_open(config);
-    if (s == 0) {
-      return;
-    }
-
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
-
-    unsigned long rid = zn_declare_resource(s, zn_rname(URI));
-    zn_reskey_t reskey = zn_rid(rid);
-
-    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
-    if (pub == 0) {
-      return;
-    }
-
-    char* buf = "Publishing data from ESP-32";
-    while(true)
-    {
-        zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
-        delay(5000);
-    }
-
-    zn_undeclare_publisher(pub);
-    zn_close(s);
+    zn_reply_data_array_t replies = zn_query_collect(s, zn_rname(URI), "", zn_query_target_default(), zn_query_consolidation_default());
+    for (unsigned int i = 0; i < replies.len; ++i)
+    { }
+    zn_reply_data_array_free(replies);
 }
