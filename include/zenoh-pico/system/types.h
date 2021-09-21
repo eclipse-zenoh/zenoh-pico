@@ -20,6 +20,8 @@
 #include "zenoh-pico/system/private/unix/types.h"
 #elif defined(ZENOH_ZEPHYR)
 #include "zenoh-pico/system/private/zephyr/types.h"
+#elif defined(ZENOH_ESP32)
+#include "zenoh-pico/system/private/esp32/types.h"
 #else
 #include "zenoh-pico/system/private/void/types.h"
 #error "Unknown platform"
