@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_UNIX_TYPES_H
-#define _ZENOH_PICO_SYSTEM_PRIVATE_UNIX_TYPES_H
+#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_ESP32_TYPES_H
+#define _ZENOH_PICO_SYSTEM_PRIVATE_ESP32_TYPES_H
 
 #include <lwip/sockets.h>
 #include <pthread.h>
@@ -28,4 +28,4 @@ typedef pthread_cond_t z_condvar_t;
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
-#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_UNIX_TYPES_H */
+#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_ESP32_TYPES_H */
