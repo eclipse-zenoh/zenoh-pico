@@ -754,8 +754,10 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 
     // Issue the query
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
-    // Wait to be notified...pqc.mutex is unlock at the time of the signal
-    z_condvar_wait(&pqc.cond_var, NULL);
+
+    // Wait to be notified
+    z_mutex_lock(&pqc.mutex);
+    z_condvar_wait(&pqc.cond_var, &pqc.mutex);
 
     zn_reply_data_array_t rda;
     rda.len = z_vec_len(&pqc.replies);
