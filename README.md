@@ -91,23 +91,22 @@ structure:
 To initialize this project structure, execute the following commands:
 
   ```bash
-  $ cd /path/to/zenoh-pico
-  $ mkdir -p build/zephyr
-  $ cd build/zephyr
+  $ mkdir -p /path/to/project_dir
+  $ cd /path/to/project_dir
   $ platformio init -b reel_board
   $ platformio run
   ```
 
-Include the CMakelist.txt and prj.conf in the <project_dir>/zephyr folder as
+Include the CMakelist.txt and prj.conf in the project_dir/zephyr folder as
 shown in the structure above, and add zenoh-pico as a library by doing:
 
   ```bash
-  $ cp ../../docs/zephyr/reel_board/CMakelists.txt zephyr/
-  $ cp ../../docs/zephyr/reel_board/prj.conf zephyr/
-  $ ln -s ../../../. lib/zenoh-pico
+  $ cp /path/to/zenoh-pico/docs/zephyr/reel_board/CMakelists.txt /path/to/project_dir/zephyr/
+  $ cp /path/to/zenoh-pico/docs/zephyr/reel_board/prj.conf /path/to/project_dir/zephyr/
+  $ ln -s /path/to/zenoh-pico /path/to/project_dir/lib/zenoh-pico
   ```
 
-Finally, your code should go into <project_dir>/src/main.c (examples provided
+Finally, your code should go into project_dir/src/main.c (examples provided
 with zenoh-pico work out of the box with Zephyr).
 
 To build and upload the code into the board, run the following command:
@@ -134,9 +133,8 @@ structure:
 To initialize this project structure, execute the following commands:
 
   ```bash
-  $ cd /path/to/zenoh-pico
-  $ mkdir -p build/esp32
-  $ cd build/esp32
+  $ mkdir -p /path/to/project_dir
+  $ cd /path/to/project_dir
   $ platformio init -b az-delivery-devkit-v4
   $ platformio run
   ```
@@ -144,10 +142,10 @@ To initialize this project structure, execute the following commands:
 Add zenoh-pico as a library by doing:
 
   ```bash
-  $ ln -s ../../../. lib/zenoh-pico
+  $ ln -s /path/to/zenoh-pico /path/to/project_dir/lib/zenoh-pico
   ```
 
-Finally, your code should go into <project_dir>/src/main.ino.
+Finally, your code should go into project_dir/src/main.ino.
 Check the examples provided in ./examples/net/esp32 directory.
 
 To build and upload the code into the board, run the following command:
