@@ -243,7 +243,7 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
         ptr = ptr + (len - n);
     } while (n > 0);
 
-    return 0;
+    return len;
 }
 
 int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf)

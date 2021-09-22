@@ -36,7 +36,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     //       In any case, the length of a message must not exceed 65_535 bytes.
 
     // Read the message length
-    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) < 0)
+    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
     {
         _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
@@ -57,7 +57,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     }
 
     // Read enough bytes to decode the message
-    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, len) < 0)
+    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, len) != len)
     {
         _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
