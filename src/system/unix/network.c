@@ -289,12 +289,17 @@ int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *zbf, struct sockaddr *from
 /*------------------ Receive ------------------*/
 int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
+    return recv(sock, ptr, len, 0);
+}
+
+int _zn_recv_exact_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
+{
     int n = len;
     int rb;
 
     do
     {
-        rb = recv(sock, ptr, n, 0);
+        rb = _zn_recv_bytes(sock, ptr, n);
         if (rb == 0)
             return -1;
         n -= rb;
@@ -304,42 +309,13 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf)
+int _zn_send_bytes(_zn_socket_t sock, const uint8_t *ptr, size_t len)
 {
-    int rb = recv(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), 0);
-    if (rb > 0)
-        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
-    return rb;
-}
-
-/*------------------ Send ------------------*/
-int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
-{
-    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
-    {
-        z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int n = bs.len;
-        int wb;
-        do
-        {
-            _Z_DEBUG("Sending wbuf on socket...");
 #if defined(ZENOH_LINUX)
-            wb = send(sock, bs.val, n, MSG_NOSIGNAL);
+    return send(sock, ptr, len, MSG_NOSIGNAL);
 #else
-            wb = send(sock, bs.val, n, 0);
+    return send(sock, ptr, len, 0);
 #endif
-            _Z_DEBUG_VA(" sent %d bytes\n", wb);
-            if (wb <= 0)
-            {
-                _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-                return -1;
-            }
-            n -= wb;
-            bs.val += bs.len - n;
-        } while (n > 0);
-    }
-
-    return 0;
 }
 
 // size_t _zn_iovs_len(struct iovec *iov, int iovcnt)

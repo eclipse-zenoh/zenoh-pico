@@ -36,14 +36,13 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     //       In any case, the length of a message must not exceed 65_535 bytes.
 
     // Read the message length
-    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
+    if (_zn_recv_exact_zbuf(zn->sock, &zn->zbuf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
     {
         _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_IO_GENERIC;
         goto EXIT_SRCV_PROC;
     }
-    _z_zbuf_set_wpos(&zn->zbuf, _ZN_MSG_LEN_ENC_SIZE);
 
     uint16_t len = _z_zbuf_read(&zn->zbuf) | (_z_zbuf_read(&zn->zbuf) << 8);
     _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
@@ -57,7 +56,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     }
 
     // Read enough bytes to decode the message
-    if (_zn_recv_bytes(zn->sock, zn->zbuf.ios.buf, len) != len)
+    if (_zn_recv_exact_zbuf(zn->sock, &zn->zbuf, len) != len)
     {
         _zn_transport_message_p_result_free(r);
         r->tag = _z_res_t_ERR;
@@ -65,8 +64,6 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
         goto EXIT_SRCV_PROC;
     }
 
-    _z_zbuf_set_rpos(&zn->zbuf, 0);
-    _z_zbuf_set_wpos(&zn->zbuf, len);
 #else
     if (_zn_recv_buf(sock, buf) < 0)
     {
