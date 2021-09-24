@@ -60,10 +60,11 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
-        if (r_sock.tag == _z_res_t_OK)
+//        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
+//        if (r_sock.tag == _z_res_t_OK)
+        if (zn->link->o_func(zn->link) < 0)
         {
-            zn->sock = r_sock.value.socket;
+        //    zn->sock = r_sock.value.socket;
             return;
         }
     }
@@ -132,8 +133,8 @@ zn_session_t *_zn_session_init()
 
 void _zn_session_free(zn_session_t *zn)
 {
-    // Close the socket
-    _zn_close_tx_session(zn->sock);
+    // Clean up link
+    zn->link->c_func(zn->link); 
 
     // Clean up the entities
     _zn_flush_resources(zn);

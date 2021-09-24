@@ -14,26 +14,27 @@
 
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/transport/private/link.h"
 
 /*------------------ Socket Receive ------------------*/
-int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf)
+int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf)
 {
-    int rb = _zn_recv_bytes(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
+    int rb = link->r_func(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
     if (rb > 0)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
 
-int _zn_recv_exact_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf, size_t len)
+int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len)
 {
-    int rb = _zn_recv_exact_bytes(sock, _z_zbuf_get_wptr(zbf), len);
+    int rb = link->re_func(link, _z_zbuf_get_wptr(zbf), len);
     if (rb > 0)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
 
 /*------------------ Socket Send ------------------*/
-int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
+int _zn_send_wbuf(_zn_link_t *link, const _z_wbuf_t *wbf)
 {
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
@@ -43,7 +44,7 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
         do
         {
             _Z_DEBUG("Sending wbuf on socket...");
-            wb = _zn_send_bytes(sock, bs.val, n);
+            wb = link->w_func(link, bs.val, n);
             _Z_DEBUG_VA(" sent %d bytes\n", wb);
             if (wb <= 0)
             {

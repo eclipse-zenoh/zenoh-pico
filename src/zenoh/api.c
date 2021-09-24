@@ -139,9 +139,11 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Initialize the PRNG
     srand(time(NULL));
 
-    // Attempt to open a socket
-    _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
-    if (r_sock.tag == _z_res_t_ERR)
+    // Attempt to configure the link
+    _zn_link_t *link = _zn_new_link(locator);
+    // TODO: turn this in a result_t
+//    if (r_sock.tag == _z_res_t_ERR)
+    if (link == NULL)
     {
         if (locator_is_scouted)
             free((char *)locator);
@@ -168,7 +170,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Initialize the session
     zn = _zn_session_init();
-    zn->sock = r_sock.value.socket;
+    zn->link = link;
 
     _Z_DEBUG("Sending InitSyn\n");
     // Encode and send the message

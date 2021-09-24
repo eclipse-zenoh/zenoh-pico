@@ -106,7 +106,7 @@ int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
         // Write the message legnth in the reserved space if needed
         __unsafe_zn_finalize_wbuf(&zn->wbuf);
         // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+        res = _zn_send_wbuf(zn->link, &zn->wbuf);
         // Mark the session that we have transmitted data
         zn->transmitted = 1;
     }
@@ -237,7 +237,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
         __unsafe_zn_finalize_wbuf(&zn->wbuf);
 
         // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+        res = _zn_send_wbuf(zn->link, &zn->wbuf);
         if (res == 0)
             // Mark the session that we have transmitted data
             zn->transmitted = 1;
@@ -280,7 +280,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             __unsafe_zn_finalize_wbuf(&zn->wbuf);
 
             // Send the wbuf on the socket
-            res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+            res = _zn_send_wbuf(zn->link, &zn->wbuf);
             if (res != 0)
             {
                 _Z_DEBUG("Dropping zenoh message because it can not sent\n");
