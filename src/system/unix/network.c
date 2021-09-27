@@ -192,3 +192,101 @@ int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len)
     return send(sock, ptr, len, 0);
 #endif
 }
+
+/*------------------ UDP sockets ------------------*/
+_zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
+{
+    _zn_socket_result_t r;
+
+    r.tag = _z_res_t_OK;
+    r.value.socket = socket(PF_INET, SOCK_DGRAM, 0);
+
+    if (r.value.socket < 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = r.value.socket;
+        return r;
+    }
+
+    struct sockaddr_in laddr;
+    memset(&laddr, 0, sizeof(s_addr));
+    laddr.sin_family = AF_INET;
+    if (inet_pton(AF_INET, s_addr, &laddr.sin_addr) <= 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        return r;
+    }
+
+    // FIXME: get value from configuration file
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = errno;
+        close(r.value.socket);
+        return r;
+    }
+
+    if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = errno;
+        close(r.value.socket);
+        return r;
+    }
+
+    if (bind(r.value.socket, (struct sockaddr *)&laddr, sizeof(laddr)) < 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        return r;
+    }
+
+    // Using connect for UDP is just binding the socket the dst address
+    // Only dgrams to and from ip/port will be received using recv and send
+    laddr.sin_port = htons(port);
+    if (connect(r.value.socket, (struct sockaddr *)&laddr, sizeof(laddr)) < 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_TX_CONNECTION;
+        return r;
+    }
+
+    return r;
+}
+
+int _zn_udp_close(_zn_socket_t sock)
+{
+    return close(sock);
+}
+
+int _zn_udp_read(_zn_socket_t sock, uint8_t *ptr, size_t len)
+{
+    return recv(sock, ptr, len, 0);
+}
+
+int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
+{
+    int n = len;
+    int rb;
+
+    do
+    {
+        rb = _zn_udp_read(sock, ptr, n);
+        if (rb < 0)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
+}
+
+int _zn_udp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len)
+{
+    return send(sock, ptr, len, 0);
+}

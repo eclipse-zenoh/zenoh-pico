@@ -70,9 +70,8 @@ void *_znp_read_task(void *arg)
 
             // Read bytes from the socket
             to_read = _zn_recv_zbuf(z->link, &z->zbuf);
-            if (to_read <= 0)
-                goto EXIT_RECV_LOOP;
-
+            if (to_read == -1)
+                continue;
         }
 
         // Wrap the main buffer for to_read bytes
@@ -101,9 +100,8 @@ void *_znp_read_task(void *arg)
             }
         }
 
-        if (z->link->is_streamed == 1)
-            // Move the read position of the read buffer
-            _z_zbuf_set_rpos(&z->zbuf, _z_zbuf_get_rpos(&z->zbuf) + to_read);
+        // Move the read position of the read buffer
+        _z_zbuf_set_rpos(&z->zbuf, _z_zbuf_get_rpos(&z->zbuf) + to_read);
     }
 
 EXIT_RECV_LOOP:

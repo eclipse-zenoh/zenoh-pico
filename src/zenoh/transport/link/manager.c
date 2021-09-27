@@ -33,9 +33,14 @@ _zn_link_t *_zn_new_link(const char* locator)
     if (strcmp(protocol, TCP_SCHEMA) == 0)
     {
         link = _zn_new_tcp_link(s_addr, port);
-        if (link->o_func(link) < 0)
-            link = NULL;
     }
+    else if (strcmp(protocol, UDP_SCHEMA) == 0)
+    {
+        link = _zn_new_udp_link(s_addr, port);
+    }
+
+    if (link->o_func(link) < 0)
+        link = NULL;
 
     free(l);
     return link;

@@ -73,5 +73,11 @@ int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_tcp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len);
 
+// UDP
+_zn_socket_result_t _zn_udp_open(const char* s_addr, int port);
+int _zn_udp_close(_zn_socket_t sock);
+int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_udp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_udp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len);
 
 #endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H */
