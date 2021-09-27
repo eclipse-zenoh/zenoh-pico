@@ -103,7 +103,7 @@ _zn_socket_result_t _zn_tcp_open(const char* s_addr, int port)
     struct sockaddr_in serv_addr;
 
     r.tag = _z_res_t_OK;
-    r.value.socket = socket(PF_INET, SOCK_STREAM, 0);
+    r.value.socket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (r.value.socket < 0)
     {
@@ -200,7 +200,7 @@ _zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
     _zn_socket_result_t r;
 
     r.tag = _z_res_t_OK;
-    r.value.socket = socket(PF_INET, SOCK_DGRAM, 0);
+    r.value.socket = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (r.value.socket < 0)
     {
