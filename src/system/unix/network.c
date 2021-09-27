@@ -175,8 +175,9 @@ int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_tcp_read(sock, ptr, n);
-        if (rb == 0)
-            return -1;
+        if (rb < 0)
+            return rb;
+
         n -= rb;
         ptr = ptr + (len - n);
     } while (n > 0);
