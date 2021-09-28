@@ -12,7 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+#include <netdb.h>
+
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/utils/private/logging.h"
@@ -21,7 +26,7 @@ int _zn_f_link_udp_open(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_socket_result_t r_sock = _zn_udp_open(self->s_addr, self->port);
+    _zn_socket_result_t r_sock = _zn_udp_open(self->endpoint);
     if (r_sock.tag != _z_res_t_OK)
         return -1;
 
@@ -40,14 +45,14 @@ size_t _zn_f_link_udp_write(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_udp_send(self->sock, ptr, len);
+    return _zn_udp_send(self->sock, ptr, len, self->endpoint);
 }
 
 size_t _zn_f_link_udp_write_all(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_udp_send(self->sock, ptr, len);
+    return _zn_udp_send(self->sock, ptr, len, self->endpoint);
 }
 
 size_t _zn_f_link_udp_read(void *arg, uint8_t *ptr, size_t len)
@@ -77,8 +82,7 @@ _zn_link_t *_zn_new_udp_link(char* s_addr, int port)
     lt->is_reliable = 0;
     lt->is_streamed = 0;
 
-    lt->s_addr = s_addr;
-    lt->port = port;
+    lt->endpoint = _zn_create_udp_endpoint(s_addr, port);
     lt->mtu = _zn_get_link_udp_mtu();
 
     lt->o_func = _zn_f_link_udp_open;

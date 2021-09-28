@@ -21,7 +21,7 @@ int _zn_f_link_tcp_open(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_socket_result_t r_sock = _zn_tcp_open(self->s_addr, self->port);
+    _zn_socket_result_t r_sock = _zn_tcp_open(self->endpoint);
     if (r_sock.tag != _z_res_t_OK)
         return -1;
 
@@ -77,8 +77,7 @@ _zn_link_t *_zn_new_tcp_link(char* s_addr, int port)
     lt->is_reliable = 1;
     lt->is_streamed = 1;
 
-    lt->s_addr = s_addr;
-    lt->port = port;
+    lt->endpoint = _zn_create_tcp_endpoint(s_addr, port);
     lt->mtu = _zn_get_link_tcp_mtu();
 
     lt->o_func = _zn_f_link_tcp_open;

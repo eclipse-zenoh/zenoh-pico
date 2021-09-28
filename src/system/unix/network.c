@@ -12,14 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <arpa/inet.h>
 #include <errno.h>
-//#include <ifaddrs.h>
-#include <netdb.h>
-//#include <net/if.h>
 #include <unistd.h>
+
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
+
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface()
@@ -79,28 +81,22 @@ char *_zn_select_scout_iface()
     return NULL;
 }
 
-
 /*------------------ TCP sockets ------------------*/
-_zn_socket_result_t _zn_tcp_open(const char* s_addr, int port)
+void* _zn_create_tcp_endpoint(const char* s_addr, int port)
 {
+    struct sockaddr_in *addr = (struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
+    memset(addr, 0, sizeof(*addr));
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = inet_addr(s_addr);
+    addr->sin_port = htons(port);
+
+    return addr;
+}
+
+_zn_socket_result_t _zn_tcp_open(void *arg)
+{
+    struct sockaddr_in *raddr = (struct sockaddr_in*)arg;
     _zn_socket_result_t r;
-    char ip_addr[INET6_ADDRSTRLEN];
-    struct sockaddr_in *remote;
-    struct addrinfo *res;
-    int status;
-
-    status = getaddrinfo(s_addr, NULL, NULL, &res);
-    if (status == 0 && res != NULL)
-    {
-        void *addr;
-        remote = (struct sockaddr_in *)res->ai_addr;
-        addr = &(remote->sin_addr);
-        inet_ntop(res->ai_family, addr, ip_addr, sizeof(ip_addr));
-    }
-    freeaddrinfo(res);
-
-    _Z_DEBUG_VA("Connecting to: %s:%d\n", s_name, port);
-    struct sockaddr_in serv_addr;
 
     r.tag = _z_res_t_OK;
     r.value.socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -136,18 +132,7 @@ _zn_socket_result_t _zn_tcp_open(const char* s_addr, int port)
     setsockopt(r.value.socket, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
 #endif
 
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, ip_addr, &serv_addr.sin_addr) <= 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
-        return r;
-    }
-
-    if (connect(r.value.socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    if (connect(r.value.socket, (struct sockaddr *)raddr, sizeof(*raddr)) < 0)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_TX_CONNECTION;
@@ -195,8 +180,20 @@ int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len)
 }
 
 /*------------------ UDP sockets ------------------*/
-_zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
+void* _zn_create_udp_endpoint(const char* s_addr, int port)
 {
+    struct sockaddr_in *addr = (struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
+    memset(addr, 0, sizeof(*addr));
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = inet_addr(s_addr);
+    addr->sin_port = htons(port);
+
+    return addr;
+}
+
+_zn_socket_result_t _zn_udp_open(void* arg)
+{
+    struct sockaddr_in *raddr = (struct sockaddr_in*)arg;
     _zn_socket_result_t r;
 
     r.tag = _z_res_t_OK;
@@ -206,16 +203,6 @@ _zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = r.value.socket;
-        return r;
-    }
-
-    struct sockaddr_in laddr;
-    memset(&laddr, 0, sizeof(s_addr));
-    laddr.sin_family = AF_INET;
-    if (inet_pton(AF_INET, s_addr, &laddr.sin_addr) <= 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
         return r;
     }
 
@@ -239,6 +226,10 @@ _zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
         return r;
     }
 
+    struct sockaddr_in laddr;
+    memset(&laddr, 0, sizeof(laddr));
+    laddr.sin_family = AF_INET;
+    laddr.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(r.value.socket, (struct sockaddr *)&laddr, sizeof(laddr)) < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -246,15 +237,11 @@ _zn_socket_result_t _zn_udp_open(const char* s_addr, int port)
         return r;
     }
 
-    // Using connect for UDP is just binding the socket the dst address
-    // Only dgrams to and from ip/port will be received using recv and send
-    laddr.sin_port = htons(port);
-    if (connect(r.value.socket, (struct sockaddr *)&laddr, sizeof(laddr)) < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_TX_CONNECTION;
-        return r;
-    }
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = raddr->sin_addr.s_addr;
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    if (setsockopt(r.value.socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+        printf("setsockopt mreq");
 
     return r;
 }
@@ -287,7 +274,9 @@ int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_udp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len)
+int _zn_udp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len, void *arg)
 {
-    return send(sock, ptr, len, 0);
+    struct sockaddr_in *raddr = (struct sockaddr_in*) arg;
+
+    return sendto(sock, ptr, len, 0, (struct sockaddr *) raddr, sizeof(*raddr));
 }

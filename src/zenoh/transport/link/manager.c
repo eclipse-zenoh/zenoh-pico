@@ -49,6 +49,6 @@ _zn_link_t *_zn_new_link(const char* locator)
 void _zn_destroy_link(_zn_link_t *link)
 {
     link->c_func(link);
-    free(link->s_addr);
+    free(link->endpoint);
     free(link);
 }

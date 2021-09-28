@@ -31,8 +31,7 @@ typedef struct {
     uint8_t is_reliable;
     uint8_t is_streamed;
 
-    char* s_addr;
-    int port;
+    void* endpoint;
     uint16_t mtu;
 
     // Function pointers
