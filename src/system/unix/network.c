@@ -22,65 +22,6 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
 
-
-/*------------------ Interfaces and sockets ------------------*/
-char *_zn_select_scout_iface()
-{
-//    // @TODO: improve network interface selection
-//    char *eth_prefix = "en";
-//    char *lo_prefix = "lo";
-//    size_t len = 2;
-//    char *loopback = 0;
-//    char *iface = 0;
-//    struct ifaddrs *ifap;
-//    struct ifaddrs *current;
-//    char host[NI_MAXHOST];
-//
-//    if (getifaddrs(&ifap) == -1)
-//    {
-//        return 0;
-//    }
-//    else
-//    {
-//        current = ifap;
-//        do
-//        {
-//            if (current->ifa_addr != 0 && current->ifa_addr->sa_family == AF_INET)
-//            {
-//                if (memcmp(current->ifa_name, eth_prefix, len) == 0)
-//                {
-//                    if ((current->ifa_flags & (IFF_MULTICAST | IFF_UP | IFF_RUNNING)) && !(current->ifa_flags & IFF_PROMISC))
-//                    {
-//                        getnameinfo(current->ifa_addr,
-//                                    sizeof(struct sockaddr_in),
-//                                    host, NI_MAXHOST,
-//                                    NULL, 0, NI_NUMERICHOST);
-//                        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
-//                        iface = host;
-//                    }
-//                }
-//                else if (memcmp(current->ifa_name, lo_prefix, len) == 0)
-//                {
-//                    if ((current->ifa_flags & (IFF_UP | IFF_RUNNING)) && !(current->ifa_flags & IFF_PROMISC))
-//                    {
-//                        getnameinfo(current->ifa_addr,
-//                                    sizeof(struct sockaddr_in),
-//                                    host, NI_MAXHOST,
-//                                    NULL, 0, NI_NUMERICHOST);
-//                        _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n", current->ifa_name, host);
-//                        loopback = host;
-//                    }
-//                }
-//            }
-//            current = current->ifa_next;
-//        } while ((iface == 0) && (current != 0));
-//    }
-//    char *result = strdup((iface != 0) ? iface : loopback);
-//    freeifaddrs(ifap);
-//    return result;
-    return NULL;
-}
-
 /*------------------ TCP sockets ------------------*/
 void* _zn_create_tcp_endpoint(const char* s_addr, int port)
 {

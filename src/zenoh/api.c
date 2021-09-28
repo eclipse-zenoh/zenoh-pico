@@ -104,14 +104,15 @@ zn_session_t *zn_open(zn_properties_t *config)
             return zn;
         }
 
+        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
+        // scout loop timeout uses milliseconds granularity
         const char *to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
         if (to == NULL)
         {
             to = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
-        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
-        // scout loop timeout uses milliseconds granularity
         clock_t timeout = (clock_t)1000 * strtof(to, NULL);
+
         // Scout and return upon the first result
         zn_hello_array_t locs = _zn_scout(what, config, timeout, 1);
         if (locs.len > 0)
