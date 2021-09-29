@@ -17,7 +17,7 @@
 #include <string.h>
 #include "zenoh-pico/transport/private/manager.h"
 
-_zn_link_t *_zn_new_link(const char* locator)
+_zn_link_t *_zn_open_link(const char* locator)
 {
     // Parse locator
     char *l = strdup(locator);
@@ -46,7 +46,7 @@ _zn_link_t *_zn_new_link(const char* locator)
     return link;
 }
 
-void _zn_destroy_link(_zn_link_t *link)
+void _zn_close_link(_zn_link_t *link)
 {
     link->c_func(link);
     free(link->endpoint);
