@@ -190,6 +190,7 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
     int res = _zn_send_close(zn, reason, 0);
+    _zn_close_link(zn->link);
     // Free the session
     _zn_session_free(zn);
 
