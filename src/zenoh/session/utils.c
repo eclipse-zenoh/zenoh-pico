@@ -60,11 +60,8 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-//        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
-//        if (r_sock.tag == _z_res_t_OK)
         if (zn->link->o_func(zn->link) < 0)
         {
-        //    zn->sock = r_sock.value.socket;
             return;
         }
     }
@@ -190,8 +187,9 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
     int res = _zn_send_close(zn, reason, 0);
-    _zn_close_link(zn->link);
+
     // Free the session
+    _zn_close_link(zn->link);
     _zn_session_free(zn);
 
     return res;

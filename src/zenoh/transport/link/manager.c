@@ -28,7 +28,6 @@ _zn_link_t *_zn_open_link(const char* locator)
     sscanf(s_port, "%d", &port);
 
     _zn_link_t *link = NULL;
-
     // TODO optimization: hash the scheme
     if (strcmp(protocol, TCP_SCHEMA) == 0)
     {
