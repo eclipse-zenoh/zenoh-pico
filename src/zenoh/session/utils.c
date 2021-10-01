@@ -130,7 +130,7 @@ zn_session_t *_zn_session_init()
 void _zn_session_free(zn_session_t *zn)
 {
     // Clean up link
-    zn->link->c_func(zn->link); 
+    _zn_close_link(zn->link);
 
     // Clean up the entities
     _zn_flush_resources(zn);
