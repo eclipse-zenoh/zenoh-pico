@@ -37,12 +37,12 @@ typedef struct {
     uint16_t mtu;
 
     // Function pointers
-    _zn_f_link_open o_func;
-    _zn_f_link_close c_func;
-    _zn_f_link_write w_func;
-    _zn_f_link_write_all wa_func;
-    _zn_f_link_read r_func;
-    _zn_f_link_read_exact re_func;
+    _zn_f_link_open open_f;
+    _zn_f_link_close close_f;
+    _zn_f_link_write write_f;
+    _zn_f_link_write_all write_all_f;
+    _zn_f_link_read read_f;
+    _zn_f_link_read_exact read_exact_f;
 } _zn_link_t;
 
 #endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H */

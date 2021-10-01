@@ -75,12 +75,12 @@ _zn_link_t *_zn_new_tcp_link(char* s_addr, int port)
     lt->endpoint = _zn_create_tcp_endpoint(s_addr, port);
     lt->mtu = _zn_get_link_tcp_mtu();
 
-    lt->o_func = _zn_f_link_tcp_open;
-    lt->c_func = _zn_f_link_tcp_close;
-    lt->w_func = _zn_f_link_tcp_write;
-    lt->wa_func = _zn_f_link_tcp_write_all;
-    lt->r_func = _zn_f_link_tcp_read;
-    lt->re_func = _zn_f_link_tcp_read_exact;
+    lt->open_f = _zn_f_link_tcp_open;
+    lt->close_f = _zn_f_link_tcp_close;
+    lt->write_f = _zn_f_link_tcp_write;
+    lt->write_all_f = _zn_f_link_tcp_write_all;
+    lt->read_f = _zn_f_link_tcp_read;
+    lt->read_exact_f = _zn_f_link_tcp_read_exact;
 
     return lt;
 }

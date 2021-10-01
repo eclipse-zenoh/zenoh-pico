@@ -60,7 +60,7 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        _zn_socket_result_t r_sock = zn->link->o_func(zn->link, 0);
+        _zn_socket_result_t r_sock = zn->link->open_f(zn->link, 0);
         if (r_sock.tag == _z_res_t_OK)
             break;
     }

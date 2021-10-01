@@ -80,12 +80,12 @@ _zn_link_t *_zn_new_udp_link(char* s_addr, int port, clock_t tout)
     lt->endpoint = _zn_create_udp_endpoint(s_addr, port);
     lt->mtu = _zn_get_link_udp_mtu();
 
-    lt->o_func = _zn_f_link_udp_open;
-    lt->c_func = _zn_f_link_udp_close;
-    lt->w_func = _zn_f_link_udp_write;
-    lt->wa_func = _zn_f_link_udp_write_all;
-    lt->r_func = _zn_f_link_udp_read;
-    lt->re_func = _zn_f_link_udp_read_exact;
+    lt->open_f = _zn_f_link_udp_open;
+    lt->close_f = _zn_f_link_udp_close;
+    lt->write_f = _zn_f_link_udp_write;
+    lt->write_all_f = _zn_f_link_udp_write_all;
+    lt->read_f = _zn_f_link_udp_read;
+    lt->read_exact_f = _zn_f_link_udp_read_exact;
 
     return lt;
 }
