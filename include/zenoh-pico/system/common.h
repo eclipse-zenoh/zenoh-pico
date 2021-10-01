@@ -15,8 +15,6 @@
 #ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
 #define _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
 
-// @TODO: remove the platform-specific include and data types
-#include <netinet/in.h>
 #include "zenoh-pico/protocol/private/iobuf.h"
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/system/result.h"
