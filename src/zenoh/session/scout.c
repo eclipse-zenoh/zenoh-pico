@@ -33,14 +33,15 @@ zn_hello_array_t _zn_scout_loop(
     ls.len = 0;
     ls.val = NULL;
 
-    _zn_link_t *scout_link = _zn_open_link(locator, period);
+    _zn_link_p_result_t r_scout = _zn_open_link(locator, period);
+    if (r_scout.tag == _z_res_t_ERR)
+        return ls;
 
     // Send the scout message
-    int res = _zn_send_wbuf(scout_link, wbf);
+    int res = _zn_send_wbuf(r_scout.value.link, wbf);
     if (res < 0)
     {
         _Z_DEBUG("Unable to send scout message\n");
-        printf("Return here\n");
         return ls;
     }
 
@@ -54,7 +55,7 @@ zn_hello_array_t _zn_scout_loop(
         _z_zbuf_clear(&zbf);
 
         // Read bytes from the socket
-        int len = _zn_recv_zbuf(scout_link, &zbf);
+        int len = _zn_recv_zbuf(r_scout.value.link, &zbf);
         if (len == -1)
             continue;
 
@@ -124,7 +125,7 @@ zn_hello_array_t _zn_scout_loop(
             break;
     }
 
-    _zn_close_link(scout_link);
+    _zn_close_link(r_scout.value.link);
     _z_zbuf_free(&zbf);
 
     return ls;

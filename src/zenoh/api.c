@@ -141,10 +141,8 @@ zn_session_t *zn_open(zn_properties_t *config)
     srand(time(NULL));
 
     // Attempt to configure the link
-    _zn_link_t *link = _zn_open_link(locator, 0);
-    // TODO: turn this in a result_t
-//    if (r_sock.tag == _z_res_t_ERR)
-    if (link == NULL)
+    _zn_link_p_result_t r_link = _zn_open_link(locator, 0);
+    if (r_link.tag == _z_res_t_ERR)
     {
         if (locator_is_scouted)
             free((char *)locator);
@@ -171,7 +169,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Initialize the session
     zn = _zn_session_init();
-    zn->link = link;
+    zn->link = r_link.value.link;
 
     _Z_DEBUG("Sending InitSyn\n");
     // Encode and send the message
