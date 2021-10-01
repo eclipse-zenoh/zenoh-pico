@@ -33,7 +33,7 @@ zn_hello_array_t _zn_scout_loop(
     ls.len = 0;
     ls.val = NULL;
 
-    _zn_link_t *scout_link = _zn_open_link(locator);
+    _zn_link_t *scout_link = _zn_open_link(locator, period);
 
     // Send the scout message
     int res = _zn_send_wbuf(scout_link, wbf);

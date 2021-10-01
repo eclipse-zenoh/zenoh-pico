@@ -60,7 +60,7 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        if (zn->link->o_func(zn->link) < 0)
+        if (zn->link->o_func(zn->link, 0) < 0)
         {
             return;
         }

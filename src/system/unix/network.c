@@ -132,7 +132,7 @@ void* _zn_create_udp_endpoint(const char* s_addr, int port)
     return addr;
 }
 
-_zn_socket_result_t _zn_udp_open(void* arg)
+_zn_socket_result_t _zn_udp_open(void* arg, clock_t tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in*)arg;
     _zn_socket_result_t r;
@@ -149,8 +149,8 @@ _zn_socket_result_t _zn_udp_open(void* arg)
 
     // FIXME: get value from configuration file
     struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = tout; // tout is passed in milliseconds
     if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
     {
         r.tag = _z_res_t_ERR;

@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include "zenoh-pico/system/private/unix/types.h"
 
-typedef int (*_zn_f_link_open)(void *arg);
+typedef int (*_zn_f_link_open)(void *arg, clock_t tout);
 typedef int (*_zn_f_link_close)(void *arg);
 typedef size_t (*_zn_f_link_write)(void *arg, const uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_write_all)(void *arg, const uint8_t *ptr, size_t len);

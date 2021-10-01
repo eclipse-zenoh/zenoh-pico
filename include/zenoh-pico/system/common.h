@@ -76,7 +76,7 @@ int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len);
 
 // UDP
 void* _zn_create_udp_endpoint(const char* s_addr, int port);
-_zn_socket_result_t _zn_udp_open(void *arg);
+_zn_socket_result_t _zn_udp_open(void *arg, clock_t tout);
 int _zn_udp_close(_zn_socket_t sock);
 int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_udp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);

@@ -17,7 +17,7 @@
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/utils/private/logging.h"
 
-int _zn_f_link_tcp_open(void *arg)
+int _zn_f_link_tcp_open(void *arg, clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 

@@ -141,7 +141,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     srand(time(NULL));
 
     // Attempt to configure the link
-    _zn_link_t *link = _zn_open_link(locator);
+    _zn_link_t *link = _zn_open_link(locator, 0);
     // TODO: turn this in a result_t
 //    if (r_sock.tag == _z_res_t_ERR)
     if (link == NULL)

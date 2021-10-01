@@ -22,11 +22,11 @@
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/utils/private/logging.h"
 
-int _zn_f_link_udp_open(void *arg)
+int _zn_f_link_udp_open(void *arg, clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_socket_result_t r_sock = _zn_udp_open(self->endpoint);
+    _zn_socket_result_t r_sock = _zn_udp_open(self->endpoint, tout);
     if (r_sock.tag != _z_res_t_OK)
         return -1;
 
@@ -76,7 +76,7 @@ size_t _zn_get_link_udp_mtu()
 }
 
 //FIXME: do proper return with _zn_*_result_t
-_zn_link_t *_zn_new_udp_link(char* s_addr, int port)
+_zn_link_t *_zn_new_udp_link(char* s_addr, int port, clock_t tout)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 0;

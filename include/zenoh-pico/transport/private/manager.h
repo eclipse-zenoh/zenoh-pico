@@ -21,10 +21,10 @@
 
 #include "zenoh-pico/transport/private/link.h"
 
-_zn_link_t *_zn_open_link(const char* locator);
+_zn_link_t *_zn_open_link(const char* locator, clock_t tout);
 void _zn_close_link(_zn_link_t *link);
 
 _zn_link_t *_zn_new_tcp_link(char* s_addr, int port);
-_zn_link_t *_zn_new_udp_link(char* s_addr, int port);
+_zn_link_t *_zn_new_udp_link(char* s_addr, int port, clock_t tout);
 
 #endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_MANAGER_H */

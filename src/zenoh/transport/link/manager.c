@@ -17,7 +17,7 @@
 #include <string.h>
 #include "zenoh-pico/transport/private/manager.h"
 
-_zn_link_t *_zn_open_link(const char* locator)
+_zn_link_t *_zn_open_link(const char* locator, clock_t tout)
 {
     // Parse locator
     char *l = strdup(locator);
@@ -35,10 +35,10 @@ _zn_link_t *_zn_open_link(const char* locator)
     }
     else if (strcmp(protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_udp_link(s_addr, port);
+        link = _zn_new_udp_link(s_addr, port, tout);
     }
 
-    if (link->o_func(link) < 0)
+    if (link->o_func(link, tout) < 0)
         link = NULL;
 
     free(l);
