@@ -22,6 +22,12 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
 
+/*------------------ IP helpers ------------------*/
+int _zn_is_multicast_v4(struct sockaddr_in *addr)
+{
+    return IN_MULTICAST(addr->sin_addr.s_addr);
+}
+
 /*------------------ TCP sockets ------------------*/
 void* _zn_create_tcp_endpoint(const char* s_addr, int port)
 {
@@ -178,11 +184,18 @@ _zn_socket_result_t _zn_udp_open(void* arg, clock_t tout)
         return r;
     }
 
-    struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = raddr->sin_addr.s_addr;
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(r.value.socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
-        printf("setsockopt mreq");
+    if (_zn_is_multicast_v4(raddr) == 1)
+    {
+        struct ip_mreq mreq;
+        mreq.imr_multiaddr.s_addr = raddr->sin_addr.s_addr;
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (setsockopt(r.value.socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+        {
+            r.tag = _z_res_t_ERR;
+            r.value.error = _zn_err_t_MULTICAST_JOIN_FAILED;
+            return r;
+        }
+    }
 
     return r;
 }
