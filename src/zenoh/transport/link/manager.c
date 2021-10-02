@@ -60,6 +60,4 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
 void _zn_close_link(_zn_link_t *link)
 {
     link->close_f(link);
-    free(link->endpoint);
-    free(link);
 }
