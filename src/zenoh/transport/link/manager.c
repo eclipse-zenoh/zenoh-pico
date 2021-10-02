@@ -23,23 +23,23 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
 
+    // FIXME: IPv6 fail to be parsed due to :
+    //        Other locators might not have a port
     // Parse locator
     char *l = strdup(locator);
     char *protocol = strtok(l, "/");
     char *s_addr = strdup(strtok(NULL, ":"));
     char *s_port = strtok(NULL, ":");
-    int port;
-    sscanf(s_port, "%d", &port);
 
     _zn_link_t *link = NULL;
     // TODO optimization: hash the scheme
     if (strcmp(protocol, TCP_SCHEMA) == 0)
     {
-        link = _zn_new_tcp_link(s_addr, port);
+        link = _zn_new_tcp_link(s_addr, s_port);
     }
     else if (strcmp(protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_udp_link(s_addr, port, tout);
+        link = _zn_new_udp_link(s_addr, s_port);
     }
 
     _zn_socket_result_t r_sock = link->open_f(link, tout);

@@ -17,7 +17,7 @@
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/utils/private/logging.h"
 
-_zn_socket_result_t _zn_f_link_tcp_open(void *arg, clock_t tout)
+_zn_socket_result_t _zn_f_link_tcp_open(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
@@ -66,7 +66,7 @@ size_t _zn_get_link_tcp_mtu()
     return -1;
 }
 
-_zn_link_t *_zn_new_tcp_link(char* s_addr, int port)
+_zn_link_t *_zn_new_tcp_link(const char *s_addr, const char *port)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 1;

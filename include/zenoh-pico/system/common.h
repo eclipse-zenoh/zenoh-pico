@@ -64,7 +64,7 @@ int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len);
 char *_zn_select_scout_iface(void);
 
 // TCP
-void* _zn_create_tcp_endpoint(const char* s_addr, int port);
+void* _zn_create_tcp_endpoint(const char *s_addr, const char *port);
 _zn_socket_result_t _zn_tcp_open(void* arg);
 int _zn_tcp_close(_zn_socket_t sock);
 int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
@@ -72,8 +72,8 @@ int _zn_tcp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len);
 
 // UDP
-void* _zn_create_udp_endpoint(const char* s_addr, int port);
-_zn_socket_result_t _zn_udp_open(void *arg, clock_t tout);
+void* _zn_create_udp_endpoint(const char *s_addr, const char *port);
+_zn_socket_result_t _zn_udp_open(void *arg, const clock_t tout);
 int _zn_udp_close(_zn_socket_t sock);
 int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_udp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);

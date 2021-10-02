@@ -25,10 +25,10 @@
 /*------------------ Result declarations ------------------*/
 _ZN_P_RESULT_DECLARE(_zn_link_t, link)
 
-_zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout);
+_zn_link_p_result_t _zn_open_link(const char* locator, const clock_t tout);
 void _zn_close_link(_zn_link_t *link);
 
-_zn_link_t *_zn_new_tcp_link(char* s_addr, int port);
-_zn_link_t *_zn_new_udp_link(char* s_addr, int port, clock_t tout);
+_zn_link_t *_zn_new_tcp_link(const char* s_addr, const char *port);
+_zn_link_t *_zn_new_udp_link(const char* s_addr, const char *port);
 
 #endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_MANAGER_H */
