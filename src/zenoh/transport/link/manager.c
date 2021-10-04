@@ -18,21 +18,69 @@
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/system/common.h"
 
+char* _zn_parse_protocol_segment(const char* locator)
+{
+    char *pos = strpbrk(locator, "/");
+    if (pos == NULL)
+        return NULL;
+
+    int len = pos - locator;
+    char *protocol = (char*)malloc(len * sizeof(char));
+    return strncpy(protocol, locator, len);
+}
+
+char* _zn_parse_port_segment(const char* locator)
+{
+    char *pos = strrchr(locator, ':');
+    if (pos == NULL)
+        return NULL;
+
+    int len = strlen(locator) - (pos - locator + 1);
+    char *port = (char*)malloc(len * sizeof(char));
+    return strncpy(port, ++pos, len);
+}
+
+char* _zn_parse_address_segment(const char* locator)
+{
+    char* p = _zn_parse_protocol_segment(locator);
+    char* a = _zn_parse_port_segment(locator);
+    if (p == NULL || a == NULL)
+        return NULL;
+
+    if (*(locator + strlen(p) + 1) == '[' && *(locator + strlen(locator) - strlen(a) - 2) == ']')
+    {
+       int len = strlen(locator) - strlen(a) - strlen(p) - 4;
+       char* ip6_addr = (char*)malloc(len * sizeof(char));
+       return strncpy(ip6_addr, locator + strlen(p) + 2, len);
+    }
+    else
+    {
+       int len = strlen(locator) - strlen(a) - strlen(p) - 3;
+       char* ip4_addr_or_domain = (char*)malloc(len * sizeof(char));
+       return strncpy(ip4_addr_or_domain, locator + strlen(p) + 2, len);
+    }
+
+    return NULL;
+}
+
 _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
 {
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
 
-    // FIXME: IPv6 fail to be parsed due to :
-    //        Other locators might not have a port
     // Parse locator
-    char *l = strdup(locator);
-    char *protocol = strtok(l, "/");
-    char *s_addr = strdup(strtok(NULL, ":"));
-    char *s_port = strtok(NULL, ":");
+    char *protocol = _zn_parse_protocol_segment(locator);
+    char *s_port = _zn_parse_port_segment(locator);
+    char *s_addr = _zn_parse_address_segment(locator);
+    if (protocol == NULL || s_port == NULL || s_addr == NULL)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        goto EXIT_OPEN_LINK;
+    }
 
+    // Create transport link
     _zn_link_t *link = NULL;
-    // TODO optimization: hash the scheme
     if (strcmp(protocol, TCP_SCHEMA) == 0)
     {
         link = _zn_new_tcp_link(s_addr, s_port);
@@ -42,6 +90,7 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
         link = _zn_new_udp_link(s_addr, s_port);
     }
 
+    // Open transport link for communication
     _zn_socket_result_t r_sock = link->open_f(link, tout);
     if (r_sock.tag == _z_res_t_ERR)
     {
@@ -53,8 +102,11 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
     link->sock = r_sock.value.socket;
     r.value.link = link;
 
-    free(l);
+EXIT_OPEN_LINK:
+    free(protocol);
+    free(s_port);
     free(s_addr);
+
     return r;
 }
 
