@@ -14,10 +14,7 @@
 
 #include <errno.h>
 #include <unistd.h>
-
-#include <arpa/inet.h>
 #include <netdb.h>
-#include <stdio.h>
 
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
