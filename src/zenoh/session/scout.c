@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include "zenoh-pico/protocol/private/msgcodec.h"
 #include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/transport/private/manager.h"
+#include "zenoh-pico/link/private/manager.h"
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/types.h"

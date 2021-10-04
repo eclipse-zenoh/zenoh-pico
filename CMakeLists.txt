@@ -98,6 +98,7 @@ file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/session/*.h"
                         "include/zenoh-pico/system/*.h"
                         "include/zenoh-pico/transport/*.h"
+                        "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/utils/*.h"
 )
 include_directories(
@@ -113,6 +114,7 @@ if (UNIX)
                     "src/zenoh/transport/*.c"
                     "src/zenoh/transport/link/*.c"
                     "src/zenoh/transport/link/task/*.c"
+                    "src/zenoh/link/*.c"
                     "src/system/*.c"
                     "src/system/unix/*.c"
   )

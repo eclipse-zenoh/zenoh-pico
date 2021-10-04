@@ -21,6 +21,8 @@
 #include "zenoh-pico/session/private/queryable.h"
 #include "zenoh-pico/session/private/utils.h"
 #include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/link/result.h"
+#include "zenoh-pico/link/private/manager.h"
 
 /*------------------ Init/Config ------------------*/
 void z_init_logger()

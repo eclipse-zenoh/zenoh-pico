@@ -21,10 +21,7 @@
 #include "zenoh-pico/protocol/private/types.h"
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/utils/types.h"
-
-// FIXME: create types.h in transport
-#include "zenoh-pico/transport/private/link.h"
-#include "zenoh-pico/transport/private/manager.h"
+#include "zenoh-pico/link/types.h"
 
 /**
  * The callback signature of the functions handling session discionnection.

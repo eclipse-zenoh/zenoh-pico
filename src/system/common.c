@@ -14,7 +14,6 @@
 
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/transport/private/link.h"
 
 /*------------------ Socket Receive ------------------*/
 int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf)

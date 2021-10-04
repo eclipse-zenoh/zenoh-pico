@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/transport/private/manager.h"
+#include "zenoh-pico/link/private/manager.h"
 #include "zenoh-pico/system/common.h"
 
 char* _zn_parse_protocol_segment(const char* locator)

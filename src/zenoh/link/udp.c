@@ -12,15 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <errno.h>
-#include <unistd.h>
-
-#include <arpa/inet.h>
-#include <netdb.h>
-
 #include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/manager.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/link/private/manager.h"
 
 _zn_socket_result_t _zn_f_link_udp_open(void *arg, const clock_t tout)
 {

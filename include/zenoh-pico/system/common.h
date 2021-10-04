@@ -18,8 +18,8 @@
 #include "zenoh-pico/protocol/private/iobuf.h"
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/system/result.h"
+#include "zenoh-pico/link/types.h"
 #include "zenoh-pico/utils/private/result.h"
-#include "zenoh-pico/transport/private/link.h"
 
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
