@@ -52,9 +52,9 @@ char* _zn_parse_address_segment(const char* locator)
     }
     else
     {
-       int len = strlen(locator) - strlen(a) - strlen(p) - 3;
+       int len = strlen(locator) - strlen(a) - strlen(p) - 2;
        char* ip4_addr_or_domain = (char*)malloc(len * sizeof(char));
-       return strncpy(ip4_addr_or_domain, locator + strlen(p) + 2, len);
+       return strncpy(ip4_addr_or_domain, locator + strlen(p) + 1, len);
     }
 
     return NULL;
