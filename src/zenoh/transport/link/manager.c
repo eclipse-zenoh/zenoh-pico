@@ -12,9 +12,6 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "zenoh-pico/transport/private/manager.h"
 #include "zenoh-pico/system/common.h"
 
