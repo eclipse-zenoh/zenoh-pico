@@ -54,6 +54,7 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
     r.value.link = link;
 
     free(l);
+    free(s_addr);
     return r;
 }
 
