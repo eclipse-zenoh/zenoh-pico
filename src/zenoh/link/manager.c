@@ -43,27 +43,22 @@ char* _zn_parse_port_segment(const char* locator)
     return port;
 }
 
-char* _zn_parse_address_segment(const char* locator)
+char* _zn_parse_address_segment(const char* locator, size_t skip_l, size_t skip_r)
 {
-    char* p = _zn_parse_protocol_segment(locator);
-    char* a = _zn_parse_port_segment(locator);
-    if (p == NULL || a == NULL)
-        return NULL;
-
-    if (*(locator + strlen(p) + 1) == '[' && *(locator + strlen(locator) - strlen(a) - 2) == ']')
+    if (*(locator + skip_l + 1) == '[' && *(locator + strlen(locator) - skip_r - 2) == ']')
     {
-       int len = strlen(locator) - strlen(a) - strlen(p) - 4;
+       int len = strlen(locator) - skip_l - skip_r - 4;
        char* ip6_addr = (char*)malloc((len + 1) * sizeof(char));
-       strncpy(ip6_addr, locator + strlen(p) + 2, len);
+       strncpy(ip6_addr, locator + skip_l + 2, len);
        ip6_addr[len] = '\0';
 
        return ip6_addr;
     }
     else
     {
-       int len = strlen(locator) - strlen(a) - strlen(p) - 2;
+       int len = strlen(locator) - skip_l - skip_r - 2;
        char* ip4_addr_or_domain = (char*)malloc((len + 1) * sizeof(char));
-       strncpy(ip4_addr_or_domain, locator + strlen(p) + 1, len);
+       strncpy(ip4_addr_or_domain, locator + skip_l + 1, len);
        ip4_addr_or_domain[len] = '\0';
 
        return ip4_addr_or_domain;
@@ -80,8 +75,15 @@ _zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
     // Parse locator
     char *protocol = _zn_parse_protocol_segment(locator);
     char *s_port = _zn_parse_port_segment(locator);
-    char *s_addr = _zn_parse_address_segment(locator);
-    if (protocol == NULL || s_port == NULL || s_addr == NULL)
+    if (protocol == NULL || s_port == NULL)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        goto EXIT_OPEN_LINK;
+    }
+
+    char *s_addr = _zn_parse_address_segment(locator, strlen(protocol), strlen(s_port));
+    if (s_addr == NULL)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
