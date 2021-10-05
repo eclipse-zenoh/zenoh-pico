@@ -22,8 +22,11 @@ char* _zn_parse_protocol_segment(const char* locator)
         return NULL;
 
     int len = pos - locator;
-    char *protocol = (char*)malloc(len * sizeof(char));
-    return strncpy(protocol, locator, len);
+    char *protocol = (char*)malloc((len + 1) * sizeof(char));
+    strncpy(protocol, locator, len);
+    protocol[len] = '\0';
+
+    return protocol;
 }
 
 char* _zn_parse_port_segment(const char* locator)
@@ -33,8 +36,11 @@ char* _zn_parse_port_segment(const char* locator)
         return NULL;
 
     int len = strlen(locator) - (pos - locator + 1);
-    char *port = (char*)malloc(len * sizeof(char));
-    return strncpy(port, ++pos, len);
+    char *port = (char*)malloc((len + 1) * sizeof(char));
+    strncpy(port, ++pos, len);
+    port[len] = '\0';
+
+    return port;
 }
 
 char* _zn_parse_address_segment(const char* locator)
@@ -47,14 +53,20 @@ char* _zn_parse_address_segment(const char* locator)
     if (*(locator + strlen(p) + 1) == '[' && *(locator + strlen(locator) - strlen(a) - 2) == ']')
     {
        int len = strlen(locator) - strlen(a) - strlen(p) - 4;
-       char* ip6_addr = (char*)malloc(len * sizeof(char));
-       return strncpy(ip6_addr, locator + strlen(p) + 2, len);
+       char* ip6_addr = (char*)malloc((len + 1) * sizeof(char));
+       strncpy(ip6_addr, locator + strlen(p) + 2, len);
+       ip6_addr[len] = '\0';
+
+       return ip6_addr;
     }
     else
     {
        int len = strlen(locator) - strlen(a) - strlen(p) - 2;
-       char* ip4_addr_or_domain = (char*)malloc(len * sizeof(char));
-       return strncpy(ip4_addr_or_domain, locator + strlen(p) + 1, len);
+       char* ip4_addr_or_domain = (char*)malloc((len + 1) * sizeof(char));
+       strncpy(ip4_addr_or_domain, locator + strlen(p) + 1, len);
+       ip4_addr_or_domain[len] = '\0';
+
+       return ip4_addr_or_domain;
     }
 
     return NULL;
