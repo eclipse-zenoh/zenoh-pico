@@ -15,10 +15,6 @@
 #ifndef _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_MANAGER_H
 #define _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_MANAGER_H
 
-// TODO: to be moved somewhere
-#define TCP_SCHEMA "tcp"
-#define UDP_SCHEMA "udp"
-
 #include "zenoh-pico/link/result.h"
 #include "zenoh-pico/link/types.h"
 

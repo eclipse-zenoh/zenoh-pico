@@ -20,6 +20,9 @@
 #include "zenoh-pico/system/result.h"
 #include "zenoh-pico/system/private/unix/types.h"
 
+#define TCP_SCHEMA "tcp"
+#define UDP_SCHEMA "udp"
+
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
 typedef int (*_zn_f_link_close)(void *arg);
 typedef void (*_zn_f_link_release)(void *arg);
