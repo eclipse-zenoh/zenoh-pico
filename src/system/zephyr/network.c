@@ -18,6 +18,19 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/private/logging.h"
 
+/*------------------ Endpoint ------------------*/
+void _zn_release_tcp_endpoint(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo*)arg;
+    freeaddrinfo(self);
+}
+
+void _zn_release_udp_endpoint(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo*)arg;
+    freeaddrinfo(self);
+}
+
 /*------------------ TCP sockets ------------------*/
 void* _zn_create_tcp_endpoint(const char *s_addr, const char *port)
 {

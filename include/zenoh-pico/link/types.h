@@ -22,6 +22,7 @@
 
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
 typedef int (*_zn_f_link_close)(void *arg);
+typedef void (*_zn_f_link_release)(void *arg);
 typedef size_t (*_zn_f_link_write)(void *arg, const uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_write_all)(void *arg, const uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_read)(void *arg, uint8_t *ptr, size_t len);
@@ -39,6 +40,7 @@ typedef struct {
     // Function pointers
     _zn_f_link_open open_f;
     _zn_f_link_close close_f;
+    _zn_f_link_release release_f;
     _zn_f_link_write write_f;
     _zn_f_link_write_all write_all_f;
     _zn_f_link_read read_f;

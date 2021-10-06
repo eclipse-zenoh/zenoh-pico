@@ -30,6 +30,13 @@ int _zn_f_link_udp_close(void *arg)
     return _zn_udp_close(self->sock);
 }
 
+void _zn_f_link_udp_release(void *arg)
+{
+    _zn_link_t *self = (_zn_link_t*)arg;
+
+    _zn_release_udp_endpoint(self->endpoint);
+}
+
 size_t _zn_f_link_udp_write(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
@@ -75,6 +82,8 @@ _zn_link_t *_zn_new_udp_link(const char *s_addr, const char *port)
 
     lt->open_f = _zn_f_link_udp_open;
     lt->close_f = _zn_f_link_udp_close;
+    lt->release_f = _zn_f_link_udp_release;
+
     lt->write_f = _zn_f_link_udp_write;
     lt->write_all_f = _zn_f_link_udp_write_all;
     lt->read_f = _zn_f_link_udp_read;
