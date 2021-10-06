@@ -165,7 +165,7 @@ void* _zn_create_udp_endpoint(const char *s_addr, const char *port)
     return addr;
 }
 
-_zn_socket_result_t _zn_udp_open(void* arg, const clock_t tout)
+_zn_socket_result_t _zn_udp_open(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
     _zn_socket_result_t r;

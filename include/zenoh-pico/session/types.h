@@ -34,7 +34,7 @@ typedef void (*zn_on_disconnect_t)(void *zn);
 typedef struct
 {
     // Socket and internal buffers
-    _zn_link_t* link;
+    _zn_link_t *link;
     z_mutex_t mutex_rx;
     z_mutex_t mutex_tx;
     z_mutex_t mutex_inner;

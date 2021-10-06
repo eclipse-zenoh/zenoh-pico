@@ -52,7 +52,6 @@ typedef enum
     _zn_err_t_PARSE_ZENOH_MESSAGE,
     _zn_err_t_RESOURCE_DECLARATION,
     _zn_err_t_TX_CONNECTION,
-    _zn_err_t_MULTICAST_JOIN_FAILED,
     _zn_err_t_UNEXPECTED_MESSAGE
 } _zn_err_t;
 

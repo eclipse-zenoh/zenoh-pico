@@ -66,7 +66,7 @@ char *_zn_select_scout_iface(void);
 // TCP
 void* _zn_create_tcp_endpoint(const char *s_addr, const char *port);
 void _zn_release_tcp_endpoint(void *arg);
-_zn_socket_result_t _zn_tcp_open(void* arg);
+_zn_socket_result_t _zn_tcp_open(void *arg);
 int _zn_tcp_close(_zn_socket_t sock);
 int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len);
 int _zn_tcp_read(_zn_socket_t sock, uint8_t *ptr, size_t len);

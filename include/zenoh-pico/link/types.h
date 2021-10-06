@@ -15,7 +15,6 @@
 #ifndef _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H
 #define _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H
 
-#include <stdint.h>
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/system/result.h"
 #include "zenoh-pico/system/private/unix/types.h"

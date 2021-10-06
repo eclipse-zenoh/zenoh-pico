@@ -44,7 +44,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
             r->value.error = _zn_err_t_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
- 
+
         uint16_t len = _z_zbuf_read(&zn->zbuf) | (_z_zbuf_read(&zn->zbuf) << 8);
         _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
         size_t writable = _z_zbuf_capacity(&zn->zbuf) - _z_zbuf_len(&zn->zbuf);

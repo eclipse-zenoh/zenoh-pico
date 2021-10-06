@@ -15,7 +15,7 @@
 #include "zenoh-pico/link/private/manager.h"
 #include "zenoh-pico/system/common.h"
 
-char* _zn_parse_protocol_segment(const char* locator)
+char* _zn_parse_protocol_segment(const char *locator)
 {
     char *pos = strpbrk(locator, "/");
     if (pos == NULL)
@@ -29,7 +29,7 @@ char* _zn_parse_protocol_segment(const char* locator)
     return protocol;
 }
 
-char* _zn_parse_port_segment(const char* locator)
+char* _zn_parse_port_segment(const char *locator)
 {
     char *pos = strrchr(locator, ':');
     if (pos == NULL)
@@ -43,12 +43,12 @@ char* _zn_parse_port_segment(const char* locator)
     return port;
 }
 
-char* _zn_parse_address_segment(const char* locator, size_t skip_l, size_t skip_r)
+char* _zn_parse_address_segment(const char *locator, size_t skip_l, size_t skip_r)
 {
     if (*(locator + skip_l + 1) == '[' && *(locator + strlen(locator) - skip_r - 2) == ']')
     {
        int len = strlen(locator) - skip_l - skip_r - 4;
-       char* ip6_addr = (char*)malloc((len + 1) * sizeof(char));
+       char *ip6_addr = (char*)malloc((len + 1) * sizeof(char));
        strncpy(ip6_addr, locator + skip_l + 2, len);
        ip6_addr[len] = '\0';
 
@@ -57,7 +57,7 @@ char* _zn_parse_address_segment(const char* locator, size_t skip_l, size_t skip_
     else
     {
        int len = strlen(locator) - skip_l - skip_r - 2;
-       char* ip4_addr_or_domain = (char*)malloc((len + 1) * sizeof(char));
+       char *ip4_addr_or_domain = (char*)malloc((len + 1) * sizeof(char));
        strncpy(ip4_addr_or_domain, locator + skip_l + 1, len);
        ip4_addr_or_domain[len] = '\0';
 
@@ -67,7 +67,7 @@ char* _zn_parse_address_segment(const char* locator, size_t skip_l, size_t skip_
     return NULL;
 }
 
-_zn_link_p_result_t _zn_open_link(const char* locator, clock_t tout)
+_zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
 {
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
