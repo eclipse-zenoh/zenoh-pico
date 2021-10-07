@@ -54,11 +54,11 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_tx
  */
-void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_stream)
+void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
     _z_wbuf_clear(buf);
 
-    if (is_stream == 1)
+    if (is_streamed == 1)
     {
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -76,9 +76,9 @@ void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_stream)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_tx
  */
-void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_stream)
+void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
-    if (is_stream == 1)
+    if (is_streamed == 1)
     {
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.

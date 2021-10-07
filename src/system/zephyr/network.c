@@ -19,20 +19,20 @@
 #include "zenoh-pico/utils/private/logging.h"
 
 /*------------------ Endpoint ------------------*/
-void _zn_release_tcp_endpoint(void *arg)
+void _zn_release_endpoint_tcp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo*)arg;
     freeaddrinfo(self);
 }
 
-void _zn_release_udp_endpoint(void *arg)
+void _zn_release_endpoint_udp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo*)arg;
     freeaddrinfo(self);
 }
 
 /*------------------ TCP sockets ------------------*/
-void* _zn_create_tcp_endpoint(const char *s_addr, const char *port)
+void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
     struct addrinfo *addr;
@@ -51,7 +51,7 @@ void* _zn_create_tcp_endpoint(const char *s_addr, const char *port)
     return addr;
 }
 
-_zn_socket_result_t _zn_tcp_open(void *arg)
+_zn_socket_result_t _zn_open_tcp(void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
     _zn_socket_result_t r;
@@ -99,24 +99,24 @@ _zn_socket_result_t _zn_tcp_open(void *arg)
     return r;
 }
 
-int _zn_tcp_close(_zn_socket_t sock)
+int _zn_close_tcp(_zn_socket_t sock)
 {
     return shutdown(sock, SHUT_RDWR);
 }
 
-int _zn_tcp_read(_zn_socket_t sock, uint8_t *ptr, size_t len)
+int _zn_read_tcp(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
     return recv(sock, ptr, len, 0);
 }
 
-int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
+int _zn_read_exact_tcp(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
     int n = len;
     int rb;
 
     do
     {
-        rb = _zn_tcp_read(sock, ptr, n);
+        rb = _zn_read_tcp(sock, ptr, n);
         if (rb < 0)
             return rb;
 
@@ -127,13 +127,13 @@ int _zn_tcp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_tcp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len)
+int _zn_send_tcp(_zn_socket_t sock, const uint8_t *ptr, size_t len)
 {
     return send(sock, ptr, len, 0);
 }
 
 /*------------------ UDP sockets ------------------*/
-void* _zn_create_udp_endpoint(const char *s_addr, const char *port)
+void* _zn_create_endpoint_udp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
     struct addrinfo *addr;
@@ -151,7 +151,7 @@ void* _zn_create_udp_endpoint(const char *s_addr, const char *port)
     return addr;
 }
 
-_zn_socket_result_t _zn_udp_open(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
     _zn_socket_result_t r;
@@ -203,24 +203,24 @@ _zn_socket_result_t _zn_udp_open(void *arg, const clock_t tout)
     return r;
 }
 
-int _zn_udp_close(_zn_socket_t sock)
+int _zn_close_udp(_zn_socket_t sock)
 {
     return close(sock);
 }
 
-int _zn_udp_read(_zn_socket_t sock, uint8_t *ptr, size_t len)
+int _zn_read_udp(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
     return recv(sock, ptr, len, 0);
 }
 
-int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
+int _zn_read_exact_udp(_zn_socket_t sock, uint8_t *ptr, size_t len)
 {
     int n = len;
     int rb;
 
     do
     {
-        rb = _zn_udp_read(sock, ptr, n);
+        rb = _zn_read_udp(sock, ptr, n);
         if (rb < 0)
             return rb;
 
@@ -231,7 +231,7 @@ int _zn_udp_read_exact(_zn_socket_t sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_udp_send(_zn_socket_t sock, const uint8_t *ptr, size_t len, void *arg)
+int _zn_send_udp(_zn_socket_t sock, const uint8_t *ptr, size_t len, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*) arg;
 

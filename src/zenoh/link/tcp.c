@@ -15,79 +15,79 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/link/private/manager.h"
 
-_zn_socket_result_t _zn_f_link_tcp_open(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_socket_result_t r_sock = _zn_tcp_open(self->endpoint);
+    _zn_socket_result_t r_sock = _zn_open_tcp(self->endpoint);
     return r_sock;
 }
 
-int _zn_f_link_tcp_close(void *arg)
+int _zn_f_link_close_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_tcp_close(self->sock);
+    return _zn_close_tcp(self->sock);
 }
 
-void _zn_f_link_tcp_release(void *arg)
+void _zn_f_link_release_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_release_tcp_endpoint(self->endpoint);
+    _zn_release_endpoint_tcp(self->endpoint);
 }
 
-size_t _zn_f_link_tcp_write(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_tcp(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_tcp_send(self->sock, ptr, len);
+    return _zn_send_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_tcp_write_all(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_all_tcp(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_tcp_send(self->sock, ptr, len);
+    return _zn_send_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_tcp_read(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_tcp(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_tcp_read(self->sock, ptr, len);
+    return _zn_read_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_tcp_read_exact(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_exact_tcp(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_tcp_read_exact(self->sock, ptr, len);
+    return _zn_read_exact_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_get_link_tcp_mtu()
+size_t _zn_get_link_mtu_tcp()
 {
     // TODO
     return -1;
 }
 
-_zn_link_t *_zn_new_tcp_link(const char *s_addr, const char *port)
+_zn_link_t *_zn_new_link_tcp(const char *s_addr, const char *port)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 1;
     lt->is_streamed = 1;
 
-    lt->endpoint = _zn_create_tcp_endpoint(s_addr, port);
-    lt->mtu = _zn_get_link_tcp_mtu();
+    lt->endpoint = _zn_create_endpoint_tcp(s_addr, port);
+    lt->mtu = _zn_get_link_mtu_tcp();
 
-    lt->open_f = _zn_f_link_tcp_open;
-    lt->close_f = _zn_f_link_tcp_close;
-    lt->release_f = _zn_f_link_tcp_release;
+    lt->open_f = _zn_f_link_open_tcp;
+    lt->close_f = _zn_f_link_close_tcp;
+    lt->release_f = _zn_f_link_release_tcp;
 
-    lt->write_f = _zn_f_link_tcp_write;
-    lt->write_all_f = _zn_f_link_tcp_write_all;
-    lt->read_f = _zn_f_link_tcp_read;
-    lt->read_exact_f = _zn_f_link_tcp_read_exact;
+    lt->write_f = _zn_f_link_write_tcp;
+    lt->write_all_f = _zn_f_link_write_all_tcp;
+    lt->read_f = _zn_f_link_read_tcp;
+    lt->read_exact_f = _zn_f_link_read_exact_tcp;
 
     return lt;
 }
