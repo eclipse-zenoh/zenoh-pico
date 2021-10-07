@@ -114,9 +114,14 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     r.value.link = link;
 
 EXIT_OPEN_LINK:
-    free(protocol);
-    free(s_port);
-    free(s_addr);
+    if(protocol != NULL)
+        free(protocol);
+
+    if(s_port != NULL)
+        free(s_port);
+
+    if(s_addr != NULL)
+        free(s_addr);
 
     return r;
 }
