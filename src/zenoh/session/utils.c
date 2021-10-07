@@ -25,6 +25,7 @@
 #include "zenoh-pico/session/private/queryable.h"
 #include "zenoh-pico/session/private/query.h"
 #include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/link/private/manager.h"
 #include "zenoh-pico/utils/types.h"
 
 /*------------------ Clone helpers ------------------*/
@@ -60,12 +61,9 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
+        _zn_socket_result_t r_sock = zn->link->open_f(zn->link, 0);
         if (r_sock.tag == _z_res_t_OK)
-        {
-            zn->sock = r_sock.value.socket;
-            return;
-        }
+            break;
     }
 }
 
@@ -132,8 +130,9 @@ zn_session_t *_zn_session_init()
 
 void _zn_session_free(zn_session_t *zn)
 {
-    // Close the socket
-    _zn_close_tx_session(zn->sock);
+    // Clean up link
+    zn->link->release_f(zn->link);
+    free(zn->link);
 
     // Clean up the entities
     _zn_flush_resources(zn);
@@ -189,7 +188,9 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
     int res = _zn_send_close(zn, reason, 0);
+
     // Free the session
+    _zn_close_link(zn->link);
     _zn_session_free(zn);
 
     return res;

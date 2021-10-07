@@ -15,10 +15,10 @@
 #ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
 #define _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
 
-// @TODO: remove the platform-specific include and data types
-#include <netinet/in.h>
 #include "zenoh-pico/protocol/private/iobuf.h"
 #include "zenoh-pico/system/types.h"
+#include "zenoh-pico/system/result.h"
+#include "zenoh-pico/link/types.h"
 #include "zenoh-pico/utils/private/result.h"
 
 /*------------------ Thread ------------------*/
@@ -57,20 +57,28 @@ time_t z_time_elapsed_ms(z_time_t *time);
 time_t z_time_elapsed_s(z_time_t *time);
 
 /*------------------ Network ------------------*/
-_ZN_RESULT_DECLARE(_zn_socket_t, socket)
+int _zn_send_wbuf(_zn_link_t *link, const _z_wbuf_t *wbf);
+int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf);
+int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len);
 
 char *_zn_select_scout_iface(void);
-_zn_socket_result_t _zn_open_tx_session(const char *locator);
-void _zn_close_tx_session(_zn_socket_t sock);
 
-struct sockaddr_in *_zn_make_socket_address(const char *addr, int port);
-_zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int recv_timeout);
+// TCP
+void* _zn_create_endpoint_tcp(const char *s_addr, const char *port);
+void _zn_release_endpoint_tcp(void *arg);
+_zn_socket_result_t _zn_open_tcp(void *arg);
+int _zn_close_tcp(_zn_socket_t sock);
+int _zn_read_exact_tcp(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_read_tcp(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_send_tcp(_zn_socket_t sock, const uint8_t *ptr, size_t len);
 
-int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen);
-int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *zbf, struct sockaddr *from, socklen_t *salen);
-
-int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf);
-int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf);
-int _zn_recv_bytes(_zn_socket_t sock, uint8_t *buf, size_t len);
+// UDP
+void* _zn_create_endpoint_udp(const char *s_addr, const char *port);
+void _zn_release_endpoint_udp(void *arg);
+_zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout);
+int _zn_close_udp(_zn_socket_t sock);
+int _zn_read_exact_udp(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_read_udp(_zn_socket_t sock, uint8_t *ptr, size_t len);
+int _zn_send_udp(_zn_socket_t sock, const uint8_t *ptr, size_t len, void *arg);
 
 #endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H */

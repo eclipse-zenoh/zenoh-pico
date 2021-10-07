@@ -21,6 +21,7 @@
 #include "zenoh-pico/protocol/private/types.h"
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/link/types.h"
 
 /**
  * The callback signature of the functions handling session discionnection.
@@ -33,7 +34,7 @@ typedef void (*zn_on_disconnect_t)(void *zn);
 typedef struct
 {
     // Socket and internal buffers
-    _zn_socket_t sock;
+    _zn_link_t *link;
     z_mutex_t mutex_rx;
     z_mutex_t mutex_tx;
     z_mutex_t mutex_inner;

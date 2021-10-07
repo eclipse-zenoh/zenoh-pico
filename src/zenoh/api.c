@@ -21,6 +21,8 @@
 #include "zenoh-pico/session/private/queryable.h"
 #include "zenoh-pico/session/private/utils.h"
 #include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/link/private/result.h"
+#include "zenoh-pico/link/private/manager.h"
 
 /*------------------ Init/Config ------------------*/
 void z_init_logger()
@@ -104,14 +106,15 @@ zn_session_t *zn_open(zn_properties_t *config)
             return zn;
         }
 
+        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
+        // scout loop timeout uses milliseconds granularity
         const char *to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
         if (to == NULL)
         {
             to = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
-        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
-        // scout loop timeout uses milliseconds granularity
         clock_t timeout = (clock_t)1000 * strtof(to, NULL);
+
         // Scout and return upon the first result
         zn_hello_array_t locs = _zn_scout(what, config, timeout, 1);
         if (locs.len > 0)
@@ -139,9 +142,9 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Initialize the PRNG
     srand(time(NULL));
 
-    // Attempt to open a socket
-    _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
-    if (r_sock.tag == _z_res_t_ERR)
+    // Attempt to configure the link
+    _zn_link_p_result_t r_link = _zn_open_link(locator, 0);
+    if (r_link.tag == _z_res_t_ERR)
     {
         if (locator_is_scouted)
             free((char *)locator);
@@ -168,7 +171,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Initialize the session
     zn = _zn_session_init();
-    zn->sock = r_sock.value.socket;
+    zn->link = r_link.value.link;
 
     _Z_DEBUG("Sending InitSyn\n");
     // Encode and send the message

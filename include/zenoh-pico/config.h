@@ -75,7 +75,7 @@
  * Default value : `"224.0.0.224:7447"`.
  */
 #define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
-#define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "224.0.0.224:7447"
+#define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "udp/224.0.0.224:7447"
 
 /**
  * In client mode, the period dedicated to scouting a router before failing.
