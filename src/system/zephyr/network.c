@@ -19,19 +19,6 @@
 #include "zenoh-pico/utils/private/logging.h"
 
 /*------------------ Endpoint ------------------*/
-void _zn_release_endpoint_tcp(void *arg)
-{
-    struct addrinfo *self = (struct addrinfo*)arg;
-    freeaddrinfo(self);
-}
-
-void _zn_release_endpoint_udp(void *arg)
-{
-    struct addrinfo *self = (struct addrinfo*)arg;
-    freeaddrinfo(self);
-}
-
-/*------------------ TCP sockets ------------------*/
 void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
@@ -51,6 +38,37 @@ void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
     return addr;
 }
 
+void* _zn_create_endpoint_udp(const char *s_addr, const char *port)
+{
+    struct addrinfo hints;
+    struct addrinfo *addr;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;       // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
+        return NULL;
+
+    freeaddrinfo(addr->ai_next);
+    return addr;
+}
+
+void _zn_release_endpoint_tcp(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo*)arg;
+    freeaddrinfo(self);
+}
+
+void _zn_release_endpoint_udp(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo*)arg;
+    freeaddrinfo(self);
+}
+
+/*------------------ TCP sockets ------------------*/
 _zn_socket_result_t _zn_open_tcp(void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
@@ -133,24 +151,6 @@ int _zn_send_tcp(_zn_socket_t sock, const uint8_t *ptr, size_t len)
 }
 
 /*------------------ UDP sockets ------------------*/
-void* _zn_create_endpoint_udp(const char *s_addr, const char *port)
-{
-    struct addrinfo hints;
-    struct addrinfo *addr;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC;       // Allow IPv4 or IPv6
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_UDP;
-
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
-        return NULL;
-
-    freeaddrinfo(addr->ai_next);
-    return addr;
-}
-
 _zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
