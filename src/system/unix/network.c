@@ -31,7 +31,7 @@ void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, port, &hints, &addr) != 0)
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
         return NULL;
 
     freeaddrinfo(addr->ai_next);
