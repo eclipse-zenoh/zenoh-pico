@@ -21,7 +21,7 @@
 void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
-    struct addrinfo *addr;
+    struct addrinfo *addr = NULL;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;       // Allow IPv4 or IPv6
@@ -40,7 +40,7 @@ void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
 void* _zn_create_endpoint_udp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
-    struct addrinfo *addr;
+    struct addrinfo *addr = NULL;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;       // Allow IPv4 or IPv6
@@ -104,7 +104,7 @@ _zn_socket_result_t _zn_open_tcp(void *arg)
     }
 #endif
 
-    struct addrinfo *it;
+    struct addrinfo *it = NULL;
     for (it = raddr; it != NULL; it = it->ai_next)
     {
         if (connect(r.value.socket, it->ai_addr, it->ai_addrlen) < 0)
@@ -172,7 +172,7 @@ _zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
     hints.ai_flags = AI_PASSIVE;
     hints.ai_protocol = raddr->ai_protocol;
 
-    struct addrinfo *laddr;
+    struct addrinfo *laddr = NULL;
     if (getaddrinfo(NULL, "0", &hints, &laddr) != 0)  // port 0 --> random
     {
         r.tag = _z_res_t_ERR;
