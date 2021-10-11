@@ -71,10 +71,13 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
 {
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
+    char *protocol = NULL;
+    char *s_addr = NULL;
+    char *s_port = NULL;
 
     // Parse locator
-    char *protocol = _zn_parse_protocol_segment(locator);
-    char *s_port = _zn_parse_port_segment(locator);
+    protocol = _zn_parse_protocol_segment(locator);
+    s_port = _zn_parse_port_segment(locator);
     if (protocol == NULL || s_port == NULL)
     {
         r.tag = _z_res_t_ERR;
@@ -82,7 +85,7 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
         goto EXIT_OPEN_LINK;
     }
 
-    char *s_addr = _zn_parse_address_segment(locator, strlen(protocol), strlen(s_port));
+    s_addr = _zn_parse_address_segment(locator, strlen(protocol), strlen(s_port));
     if (s_addr == NULL)
     {
         r.tag = _z_res_t_ERR;
@@ -114,14 +117,9 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     r.value.link = link;
 
 EXIT_OPEN_LINK:
-    if(protocol != NULL)
-        free(protocol);
-
-    if(s_port != NULL)
-        free(s_port);
-
-    if(s_addr != NULL)
-        free(s_addr);
+    free(protocol);
+    free(s_port);
+    free(s_addr);
 
     return r;
 }
