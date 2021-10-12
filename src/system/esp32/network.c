@@ -33,7 +33,6 @@ void* _zn_create_endpoint_tcp(const char *s_addr, const char *port)
         return NULL;
 
     freeaddrinfo(addr->ai_next);
-
     return addr;
 }
 
@@ -165,22 +164,7 @@ _zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = raddr->ai_family;
-    hints.ai_socktype = raddr->ai_socktype;
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_protocol = raddr->ai_protocol;
-
-    struct addrinfo *laddr = NULL;
-    if (getaddrinfo(NULL, "0", &hints, &laddr) != 0)  // port 0 --> random
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
-        return r;
-    }
-
-    r.value.socket = socket(laddr->ai_family, laddr->ai_socktype, laddr->ai_protocol);
+    r.value.socket = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -188,26 +172,6 @@ _zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
         return r;
     }
 
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = tout; // tout is passed in milliseconds
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        return r;
-    }
-
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        return r;
-    }
-
-    freeaddrinfo(laddr);
     return r;
 }
 
