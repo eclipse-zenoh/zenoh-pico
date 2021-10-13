@@ -17,6 +17,11 @@
 #include <unistd.h>
 #include "zenoh-pico/system/common.h"
 
+#define Z_THREADS_NUM 2
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE
+K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
+static int thread_index = 0;
+
 /*------------------ String ------------------*/
 char *strdup(const char *s)
 {
@@ -35,6 +40,15 @@ char *strdup(const char *s)
 typedef pthread_t z_task_t;
 int z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg)
 {
+    if (attr == NULL)
+    {
+       pthread_attr_t tmp;
+       (void)pthread_attr_init(&tmp);
+       (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++],
+                                   Z_PTHREAD_STACK_SIZE_DEFAULT);
+       attr = &tmp;
+    }
+
     return pthread_create(task, attr, fun, arg);
 }
 
