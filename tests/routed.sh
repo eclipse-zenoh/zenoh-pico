@@ -32,22 +32,29 @@ fi
 
 chmod +x zenohd
 
-echo "> Running zenohd ..."
-RUST_LOG=debug ./zenohd &> zenohd.$TESTBIN.log &
-ZPID=$!
+LOCATORS="tcp/127.0.0.1:7447 udp/127.0.0.1:7447 tcp/[::1]:7447 udp/[::1]:7447"
 
-sleep 5
+for LOCATOR in $(echo $LOCATORS | xargs); do
+    sleep 1
 
-LOCATOR="tcp/127.0.0.1:7447"
-echo "> Running $TESTBIN ..."
-./$TESTBIN $LOCATOR
-RETCODE=$?
+    echo "> Running zenohd ..."
+    RUST_LOG=debug ./zenohd -l $LOCATOR &> zenohd.$TESTBIN.log &
+    ZPID=$!
 
-echo "> Stopping zenohd ..."
-kill -9 $ZPID
+    sleep 5
 
-echo "> Logs of zenohd ..."
-cat zenohd.$TESTBIN.log
+    echo "> Running $TESTBIN ..."
+    ./$TESTBIN $LOCATOR
+    RETCODE=$?
+
+    echo "> Stopping zenohd ..."
+    kill -9 $ZPID
+
+    echo "> Logs of zenohd ..."
+    cat zenohd.$TESTBIN.log
+
+    [ $RETCODE -lt 0 ] && exit $RETCODE
+done
 
 echo "> Done ($RETCODE)."
 exit $RETCODE
