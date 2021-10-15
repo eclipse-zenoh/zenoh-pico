@@ -115,6 +115,7 @@ if (UNIX)
                     "src/zenoh/transport/link/*.c"
                     "src/zenoh/transport/link/task/*.c"
                     "src/zenoh/link/*.c"
+                    "src/zenoh/link/unicast/*.c"
                     "src/system/*.c"
                     "src/system/unix/*.c"
   )
