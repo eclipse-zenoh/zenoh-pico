@@ -21,7 +21,7 @@
 _zn_link_p_result_t _zn_open_link(const char *locator, const clock_t tout);
 void _zn_close_link(_zn_link_t *link);
 
-_zn_link_t *_zn_new_link_tcp(const char *s_addr, const char *port);
-_zn_link_t *_zn_new_link_udp(const char *s_addr, const char *port);
+_zn_link_t *_zn_new_link_unicast_tcp(const char *s_addr, const char *port);
+_zn_link_t *_zn_new_link_unicast_udp(const char *s_addr, const char *port);
 
 #endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_MANAGER_H */

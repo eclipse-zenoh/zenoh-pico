@@ -97,11 +97,11 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     _zn_link_t *link = NULL;
     if (strcmp(protocol, TCP_SCHEMA) == 0)
     {
-        link = _zn_new_link_tcp(s_addr, s_port);
+        link = _zn_new_link_unicast_tcp(s_addr, s_port);
     }
     else if (strcmp(protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_udp(s_addr, s_port);
+        link = _zn_new_link_unicast_udp(s_addr, s_port);
     }
 
     // Open transport link for communication

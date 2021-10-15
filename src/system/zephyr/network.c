@@ -68,7 +68,7 @@ void _zn_release_endpoint_udp(void *arg)
 }
 
 /*------------------ TCP sockets ------------------*/
-_zn_socket_result_t _zn_open_tcp(void *arg)
+_zn_socket_result_t _zn_open_unicast_tcp(void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
     _zn_socket_result_t r;
@@ -150,7 +150,7 @@ int _zn_send_tcp(_zn_socket_t sock, const uint8_t *ptr, size_t len)
 }
 
 /*------------------ UDP sockets ------------------*/
-_zn_socket_result_t _zn_open_udp(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_open_unicast_udp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
     _zn_socket_result_t r;
