@@ -19,7 +19,6 @@
 
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/system/result.h"
-#include "zenoh-pico/system/private/unix/types.h"
 
 #define TCP_SCHEMA "tcp"
 #define UDP_SCHEMA "udp"
