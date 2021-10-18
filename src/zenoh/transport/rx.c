@@ -65,7 +65,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
         return _z_res_t_ERR;
     }
 

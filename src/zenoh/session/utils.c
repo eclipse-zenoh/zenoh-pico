@@ -128,44 +128,45 @@ zn_session_t *_zn_session_init()
     return zn;
 }
 
-void _zn_session_free(zn_session_t *zn)
+void _zn_session_free(zn_session_t **zn)
 {
+    zn_session_t *ptr = *zn;
+
     // Clean up link
-    zn->link->release_f(zn->link);
-    free(zn->link);
+    ptr->link->release_f(ptr->link);
+    free(ptr->link);
 
     // Clean up the entities
-    _zn_flush_resources(zn);
-    _zn_flush_subscriptions(zn);
-    _zn_flush_queryables(zn);
-    _zn_flush_pending_queries(zn);
+    _zn_flush_resources(ptr);
+    _zn_flush_subscriptions(ptr);
+    _zn_flush_queryables(ptr);
+    _zn_flush_pending_queries(ptr);
 
     // Clean up the mutexes
-    z_mutex_free(&zn->mutex_inner);
-    z_mutex_free(&zn->mutex_tx);
-    z_mutex_free(&zn->mutex_rx);
+    z_mutex_free(&ptr->mutex_inner);
+    z_mutex_free(&ptr->mutex_tx);
+    z_mutex_free(&ptr->mutex_rx);
 
     // Clean up the buffers
-    _z_wbuf_free(&zn->wbuf);
-    _z_zbuf_free(&zn->zbuf);
+    _z_wbuf_free(&ptr->wbuf);
+    _z_zbuf_free(&ptr->zbuf);
 
-    _z_wbuf_free(&zn->dbuf_reliable);
-    _z_wbuf_free(&zn->dbuf_best_effort);
+    _z_wbuf_free(&ptr->dbuf_reliable);
+    _z_wbuf_free(&ptr->dbuf_best_effort);
 
     // Clean up the PIDs
-    _z_bytes_free(&zn->local_pid);
-    _z_bytes_free(&zn->remote_pid);
+    _z_bytes_free(&ptr->local_pid);
+    _z_bytes_free(&ptr->remote_pid);
 
     // Clean up the locator
-    free(zn->locator);
+    free(ptr->locator);
 
     // Clean up the tasks
-    free(zn->read_task);
-    free(zn->lease_task);
+    free(ptr->read_task);
+    free(ptr->lease_task);
 
-    free(zn);
-
-    zn = NULL;
+    free(ptr);
+    *zn = NULL;
 }
 
 int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
@@ -191,7 +192,7 @@ int _zn_session_close(zn_session_t *zn, uint8_t reason)
 
     // Free the session
     _zn_close_link(zn->link);
-    _zn_session_free(zn);
+    _zn_session_free(&zn);
 
     return res;
 }

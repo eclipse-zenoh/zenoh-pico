@@ -26,7 +26,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
 
 zn_session_t *_zn_session_init(void);
 int _zn_session_close(zn_session_t *zn, uint8_t reason);
-void _zn_session_free(zn_session_t *zn);
+void _zn_session_free(zn_session_t **zn);
 
 int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only);
 

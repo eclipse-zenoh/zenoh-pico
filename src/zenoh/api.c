@@ -187,7 +187,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free
         _zn_transport_message_free(&ism);
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
 
         return zn;
     }
@@ -204,7 +204,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free
         _zn_transport_message_free(&ism);
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
 
         return zn;
     }
@@ -261,7 +261,7 @@ zn_session_t *zn_open(zn_properties_t *config)
                 _z_bytes_free(&pid);
                 if (locator_is_scouted)
                     free((char *)locator);
-                _zn_session_free(zn);
+                _zn_session_free(&zn);
                 break;
             }
 
