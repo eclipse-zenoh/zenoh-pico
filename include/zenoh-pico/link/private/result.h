@@ -12,12 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_LINK_RESULT_H
-#define _ZENOH_PICO_LINK_RESULT_H
+#ifndef _ZENOH_PICO_LINK_PRIVATE_RESULT_H
+#define _ZENOH_PICO_LINK_PRIVATE_RESULT_H
 
 #include "zenoh-pico/utils/private/result.h"
 #include "zenoh-pico/link/types.h"
 
 _ZN_P_RESULT_DECLARE(_zn_link_t, link)
 
-#endif /* _ZENOH_PICO_LINK_RESULT_H */
+#endif /* _ZENOH_PICO_LINK_PRIVATE_RESULT_H */

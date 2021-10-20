@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H
-#define _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H
+#ifndef _ZENOH_PICO_LINK_H
+#define _ZENOH_PICO_LINK_H
 
 #include <stdint.h>
 
@@ -50,4 +50,4 @@ typedef struct {
     _zn_f_link_read_exact read_exact_f;
 } _zn_link_t;
 
-#endif /* _ZENOH_PICO_TRANSPORT_PRIVATE_LINK_H */
+#endif /* _ZENOH_PICO_LINK_H */
