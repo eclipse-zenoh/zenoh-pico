@@ -133,10 +133,7 @@ void _zn_session_free(zn_session_t **zn)
     zn_session_t *ptr = *zn;
 
     // Clean up link
-    // FIXME: move this to a function that handles all link releases
-    ptr->link->release_f(ptr->link);
-    _zn_endpoint_free(ptr->link->endpoint);
-    free(ptr->link);
+    _zn_link_free(&ptr->link);
 
     // Clean up the entities
     _zn_flush_resources(ptr);
@@ -193,7 +190,6 @@ int _zn_session_close(zn_session_t *zn, uint8_t reason)
     int res = _zn_send_close(zn, reason, 0);
 
     // Free the session
-    _zn_close_link(zn->link);
     _zn_session_free(&zn);
 
     return res;

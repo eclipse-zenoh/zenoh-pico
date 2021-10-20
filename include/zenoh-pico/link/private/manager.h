@@ -19,9 +19,10 @@
 #include "zenoh-pico/link/types.h"
 
 _zn_link_p_result_t _zn_open_link(const char *locator, const clock_t tout);
-void _zn_close_link(_zn_link_t *link);
 
-_zn_link_t *_zn_new_link_unicast_tcp(const char *s_addr, const char *port);
-_zn_link_t *_zn_new_link_unicast_udp(const char *s_addr, const char *port);
+_zn_link_t *_zn_new_link_unicast_tcp(_zn_endpoint_t *endpoint);
+_zn_link_t *_zn_new_link_unicast_udp(_zn_endpoint_t *endpoint);
+
+void _zn_link_free(_zn_link_t **zn);
 
 #endif /* _ZENOH_PICO_LINK_PRIVATE_MANAGER_H */

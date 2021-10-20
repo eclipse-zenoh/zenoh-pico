@@ -125,7 +125,7 @@ zn_hello_array_t _zn_scout_loop(
             break;
     }
 
-    _zn_close_link(r_scout.value.link);
+    _zn_link_free(&r_scout.value.link);
     _z_zbuf_free(&zbf);
 
     return ls;

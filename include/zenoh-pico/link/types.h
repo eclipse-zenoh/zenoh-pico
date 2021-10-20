@@ -54,9 +54,10 @@ typedef struct {
 
     uint8_t is_reliable;
     uint8_t is_streamed;
-
-    void* endpoint;
     uint16_t mtu;
+
+    _zn_endpoint_t *endpoint;
+    void *endpoint_syscall;
 
     // Function pointers
     _zn_f_link_open open_f;
