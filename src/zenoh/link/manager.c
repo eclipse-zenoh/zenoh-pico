@@ -15,50 +15,42 @@
 #include "zenoh-pico/link/private/manager.h"
 #include "zenoh-pico/system/common.h"
 
-char* _zn_parse_protocol_segment(const char *locator)
+char* _zn_parse_port_segment(const char *address)
 {
-    char *pos = strpbrk(locator, "/");
-    if (pos == NULL)
+    const char *p_init = strrchr(address, ':');
+    if (p_init == NULL)
         return NULL;
+    ++p_init;
 
-    int len = pos - locator;
-    char *protocol = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(protocol, locator, len);
-    protocol[len] = '\0';
+    const char *p_end = &address[strlen(address)];
 
-    return protocol;
-}
-
-char* _zn_parse_port_segment(const char *locator)
-{
-    char *pos = strrchr(locator, ':');
-    if (pos == NULL)
-        return NULL;
-
-    int len = strlen(locator) - (pos - locator + 1);
+    int len = p_end - p_init;
     char *port = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(port, ++pos, len);
+    strncpy(port, p_init, len);
     port[len] = '\0';
 
     return port;
 }
 
-char* _zn_parse_address_segment(const char *locator, size_t skip_l, size_t skip_r)
+char* _zn_parse_address_segment(const char *address)
 {
-    if (*(locator + skip_l + 1) == '[' && *(locator + strlen(locator) - skip_r - 2) == ']')
+    const char *p_init = &address[0];
+    const char *p_end = strrchr(address, ':');
+
+    if (*p_init == '[' && *(--p_end) == ']')
     {
-       int len = strlen(locator) - skip_l - skip_r - 4;
+       int len = p_end - ++p_init;
        char *ip6_addr = (char*)malloc((len + 1) * sizeof(char));
-       strncpy(ip6_addr, locator + skip_l + 2, len);
+       strncpy(ip6_addr, p_init, len);
        ip6_addr[len] = '\0';
 
        return ip6_addr;
     }
     else
     {
-       int len = strlen(locator) - skip_l - skip_r - 2;
+       int len = p_end - p_init;
        char *ip4_addr_or_domain = (char*)malloc((len + 1) * sizeof(char));
-       strncpy(ip4_addr_or_domain, locator + skip_l + 1, len);
+       strncpy(ip4_addr_or_domain, p_init, len);
        ip4_addr_or_domain[len] = '\0';
 
        return ip4_addr_or_domain;
@@ -71,21 +63,26 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
 {
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
-    char *protocol = NULL;
+
     char *s_addr = NULL;
     char *s_port = NULL;
 
-    // Parse locator
-    protocol = _zn_parse_protocol_segment(locator);
-    s_port = _zn_parse_port_segment(locator);
-    if (protocol == NULL || s_port == NULL)
+    _zn_endpoint_t *endpoint = _zn_endpoint_from_string(locator);
+    if (endpoint == NULL)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
         goto EXIT_OPEN_LINK;
     }
 
-    s_addr = _zn_parse_address_segment(locator, strlen(protocol), strlen(s_port));
+    s_port = _zn_parse_port_segment(endpoint->address);
+    if (s_port == NULL)
+    {
+        s_port = (char*)malloc(sizeof(char) * strlen("7447"));
+        strcpy(s_port, "7447");
+    }
+
+    s_addr = _zn_parse_address_segment(endpoint->address);
     if (s_addr == NULL)
     {
         r.tag = _z_res_t_ERR;
@@ -95,13 +92,19 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
 
     // Create transport link
     _zn_link_t *link = NULL;
-    if (strcmp(protocol, TCP_SCHEMA) == 0)
+    if (strcmp(endpoint->protocol, TCP_SCHEMA) == 0)
     {
         link = _zn_new_link_unicast_tcp(s_addr, s_port);
     }
-    else if (strcmp(protocol, UDP_SCHEMA) == 0)
+    else if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
     {
         link = _zn_new_link_unicast_udp(s_addr, s_port);
+    }
+    else
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        goto EXIT_OPEN_LINK;
     }
 
     // Open transport link for communication
@@ -109,15 +112,17 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     if (r_sock.tag == _z_res_t_ERR)
     {
         _zn_close_link(link);
+        free(link);
+
         r.tag = _z_res_t_ERR;
         r.value.error = r_sock.value.error;
+        goto EXIT_OPEN_LINK;
     }
 
     link->sock = r_sock.value.socket;
     r.value.link = link;
 
 EXIT_OPEN_LINK:
-    free(protocol);
     free(s_port);
     free(s_addr);
 

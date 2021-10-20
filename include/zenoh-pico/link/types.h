@@ -23,6 +23,24 @@
 #define TCP_SCHEMA "tcp"
 #define UDP_SCHEMA "udp"
 
+/*------------------ Endpoint ------------------*/
+#define ENDPOINT_PROTO_SEPARATOR "/"
+#define ENDPOINT_METADATA_SEPARATOR "?"
+#define ENDPOINT_CONFIG_SEPARATOR "#"
+#define ENDPOINT_LIST_SEPARATOR ";"
+#define ENDPOINT_FIELD_SEPARATOR "="
+
+typedef struct {
+    const char *protocol;
+    const char *address;
+    const char *metadata;
+    const char *config;
+} _zn_endpoint_t;
+
+_zn_endpoint_t *_zn_endpoint_from_string(const char *s_locator);
+void _zn_endpoint_free(_zn_endpoint_t **zn);
+
+/*------------------ Link ------------------*/
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
 typedef int (*_zn_f_link_close)(void *arg);
 typedef void (*_zn_f_link_release)(void *arg);
