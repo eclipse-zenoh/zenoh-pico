@@ -65,6 +65,70 @@ EXIT_OPEN_LINK:
     return r;
 }
 
+_zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
+{
+    _zn_link_p_result_t r;
+    r.tag = _z_res_t_OK;
+
+    _zn_endpoint_t *endpoint = _zn_endpoint_from_string(locator);
+    if (endpoint == NULL)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        goto EXIT_OPEN_LINK;
+    }
+
+    // Create transport link
+    _zn_link_t *link = NULL;
+    if (strcmp(endpoint->protocol, TCP_SCHEMA) == 0)
+    {
+    }
+    else if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
+    {
+        link = _zn_new_link_multicast_udp(endpoint);
+    }
+    else
+    {
+        _zn_endpoint_free(&endpoint);
+
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_INVALID_LOCATOR;
+        goto EXIT_OPEN_LINK;
+    }
+
+    // Open transport link for listening
+    _zn_socket_result_t r_sock = link->listen_f(link, tout);
+    if (r_sock.tag == _z_res_t_ERR)
+    {
+        _zn_link_free(&link);
+
+        r.tag = _z_res_t_ERR;
+        r.value.error = r_sock.value.error;
+        goto EXIT_OPEN_LINK;
+    }
+    link->sock = r_sock.value.socket;
+
+    // If multicast make use of the extra socket for sending packets
+    if (link->is_multicast == 1)
+    {
+        _zn_socket_result_t r_sock = link->open_f(link, tout);
+        if (r_sock.tag == _z_res_t_ERR)
+        {
+            _zn_link_free(&link);
+
+            r.tag = _z_res_t_ERR;
+            r.value.error = r_sock.value.error;
+            goto EXIT_OPEN_LINK;
+        }
+        link->extra_sock = r_sock.value.socket;
+    }
+
+    r.value.link = link;
+
+EXIT_OPEN_LINK:
+    return r;
+}
+
 void _zn_link_free(_zn_link_t **zn)
 {
     _zn_link_t *ptr = *zn;
