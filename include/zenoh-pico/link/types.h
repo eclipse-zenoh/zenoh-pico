@@ -42,6 +42,7 @@ void _zn_endpoint_free(_zn_endpoint_t **zn);
 
 /*------------------ Link ------------------*/
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
+typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, clock_t tout);
 typedef int (*_zn_f_link_close)(void *arg);
 typedef void (*_zn_f_link_release)(void *arg);
 typedef size_t (*_zn_f_link_write)(void *arg, const uint8_t *ptr, size_t len);
@@ -51,16 +52,19 @@ typedef size_t (*_zn_f_link_read_exact)(void *arg, uint8_t *ptr, size_t len);
 
 typedef struct {
     _zn_socket_t sock;
+    _zn_socket_t extra_sock;
 
     uint8_t is_reliable;
     uint8_t is_streamed;
+    uint8_t is_multicast;
     uint16_t mtu;
 
     _zn_endpoint_t *endpoint;
     void *endpoint_syscall;
 
     // Function pointers
-    _zn_f_link_open open_f;
+    _zn_f_link_open open_f; // TODO: rename this method (e.g. connect)
+    _zn_f_link_listen listen_f;
     _zn_f_link_close close_f;
     _zn_f_link_release release_f;
     _zn_f_link_write write_f;

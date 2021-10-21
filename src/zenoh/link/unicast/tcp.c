@@ -15,7 +15,7 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/link/private/manager.h"
 
-char* _zn_parse_port_segment_tcp(const char *address)
+char* _zn_parse_port_segment_unicast_tcp(const char *address)
 {
     const char *p_init = strrchr(address, ':');
     if (p_init == NULL)
@@ -32,7 +32,7 @@ char* _zn_parse_port_segment_tcp(const char *address)
     return port;
 }
 
-char* _zn_parse_address_segment_tcp(const char *address)
+char* _zn_parse_address_segment_unicast_tcp(const char *address)
 {
     const char *p_init = &address[0];
     const char *p_end = strrchr(address, ':');
@@ -64,6 +64,13 @@ _zn_socket_result_t _zn_f_link_open_unicast_tcp(void *arg, const clock_t tout)
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_open_unicast_tcp(self->endpoint_syscall);
+}
+
+_zn_socket_result_t _zn_f_link_listen_unicast_tcp(void *arg, const clock_t tout)
+{
+    _zn_link_t *self = (_zn_link_t*)arg;
+
+    return _zn_listen_unicast_tcp(self->endpoint_syscall);
 }
 
 int _zn_f_link_close_unicast_tcp(void *arg)
@@ -119,14 +126,16 @@ _zn_link_t *_zn_new_link_unicast_tcp(_zn_endpoint_t *endpoint)
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 1;
     lt->is_streamed = 1;
+    lt->is_multicast = 0;
     lt->mtu = _zn_get_link_mtu_unicast_tcp();
 
-    char *s_addr = _zn_parse_address_segment_tcp(endpoint->address);
-    char *s_port = _zn_parse_port_segment_tcp(endpoint->address);
+    char *s_addr = _zn_parse_address_segment_unicast_tcp(endpoint->address);
+    char *s_port = _zn_parse_port_segment_unicast_tcp(endpoint->address);
     lt->endpoint_syscall = _zn_create_endpoint_tcp(s_addr, s_port);
     lt->endpoint = endpoint;
 
     lt->open_f = _zn_f_link_open_unicast_tcp;
+    lt->listen_f = _zn_f_link_listen_unicast_tcp;
     lt->close_f = _zn_f_link_close_unicast_tcp;
     lt->release_f = _zn_f_link_release_unicast_tcp;
 
