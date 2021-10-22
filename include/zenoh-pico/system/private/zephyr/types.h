@@ -17,6 +17,7 @@
 
 #include <zephyr.h>
 #include <pthread.h>
+#include "utils.h"
 
 typedef int _zn_socket_t;
 
