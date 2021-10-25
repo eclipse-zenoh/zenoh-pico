@@ -62,15 +62,33 @@ char* _zn_parse_address_segment_multicast_udp(const char *address)
 _zn_socket_result_t _zn_f_link_open_multicast_udp(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
+    _zn_socket_result_t r;
+    r.tag = _z_res_t_OK;
 
-    return _zn_open_multicast_udp(self->endpoint_syscall, tout);
+    r.value.socket = _zn_open_multicast_udp(self->endpoint_syscall, tout);
+    if (r.value.socket < 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
+    }
+
+    return r;
 }
 
 _zn_socket_result_t _zn_f_link_listen_multicast_udp(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
+    _zn_socket_result_t r;
+    r.tag = _z_res_t_OK;
 
-    return _zn_listen_multicast_udp(self->endpoint_syscall, tout);
+    r.value.socket = _zn_listen_multicast_udp(self->endpoint_syscall, tout);
+    if (r.value.socket < 0)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
+    }
+
+    return r;
 }
 
 int _zn_f_link_close_multicast_udp(void *arg)
