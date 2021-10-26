@@ -200,65 +200,65 @@ int _zn_open_multicast_udp(void *arg, const clock_t tout, const char *iface)
 
 int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
 {
-    struct addrinfo *laddr = (struct addrinfo*)arg;
+    struct addrinfo *raddr = (struct addrinfo*)arg;
 
-    int sock = socket(laddr->ai_family, laddr->ai_socktype, laddr->ai_protocol);
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
-    {
         goto EXIT_MULTICAST_LISTEN_ERROR;
-    }
 
     int optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)
-    {
         goto EXIT_MULTICAST_LISTEN_ERROR;
-    }
 
     // Set the interface to bind to
     unsigned int ifindex = if_nametoindex(iface);
-    if (laddr->ai_family == AF_INET)
+    if (raddr->ai_family == AF_INET)
     {
         if (setsockopt(sock, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex)) < 0)
             goto EXIT_MULTICAST_LISTEN_ERROR;
     }
-    else if (laddr->ai_family == AF_INET6)
+    else if (raddr->ai_family == AF_INET6)
     {
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_BOUND_IF, &ifindex, sizeof(ifindex)) < 0)
             goto EXIT_MULTICAST_LISTEN_ERROR;
     }
     else
-    {
         goto EXIT_MULTICAST_LISTEN_ERROR;
-    }
+
+    char s_port[6]; // String representation of a port has maximum 5 characters
+    if (raddr->ai_family == AF_INET)
+        sprintf(s_port, "%d", ntohs(((struct sockaddr_in*)raddr->ai_addr)->sin_port));
+    else if (raddr->ai_family == AF_INET6)
+        sprintf(s_port, "%d", ntohs(((struct sockaddr_in6*)raddr->ai_addr)->sin6_port));
+    else
+        goto EXIT_MULTICAST_LISTEN_ERROR;
 
     // Bind socket
     struct addrinfo hints;
-    struct addrinfo *result = NULL;
+    struct addrinfo *laddr = NULL;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = laddr->ai_family;
-    hints.ai_socktype = laddr->ai_socktype;
+    hints.ai_family = raddr->ai_family;
+    hints.ai_socktype = raddr->ai_socktype;
     hints.ai_flags = AI_PASSIVE;
-    hints.ai_protocol = laddr->ai_protocol;
-    if (getaddrinfo(NULL, "7447", &hints, &result) == 0)
+    hints.ai_protocol = raddr->ai_protocol;
+    if (getaddrinfo(NULL, s_port, &hints, &laddr) == 0)
     {
-        if (bind(sock, result->ai_addr, result->ai_addrlen) < 0)
+        if (bind(sock, laddr->ai_addr, laddr->ai_addrlen) < 0)
         {
-            freeaddrinfo(result);
+            freeaddrinfo(laddr);
             goto EXIT_MULTICAST_LISTEN_ERROR;
         }
     }
     else
-    {
         goto EXIT_MULTICAST_LISTEN_ERROR;
-    }
-    freeaddrinfo(result);
+    freeaddrinfo(laddr);
 
     // Join the multicast group
-    if (laddr->ai_family == AF_INET)
+    if (raddr->ai_family == AF_INET)
     {
         struct ip_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
-        mreq.imr_multiaddr.s_addr = ((struct sockaddr_in*)laddr->ai_addr)->sin_addr.s_addr;
+        mreq.imr_multiaddr.s_addr = ((struct sockaddr_in*)raddr->ai_addr)->sin_addr.s_addr;
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
         if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                        &mreq, sizeof(mreq)) < 0)
@@ -270,12 +270,12 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
 //        if(setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &local_iface, sizeof(local_iface)) < 0)
 //            goto EXIT_MULTICAST_LISTEN_ERROR;
     }
-    else if(laddr->ai_family == AF_INET6)
+    else if(raddr->ai_family == AF_INET6)
     {
         struct ipv6_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         memcpy(&mreq.ipv6mr_multiaddr,
-                   &((struct sockaddr_in6 *)laddr->ai_addr)->sin6_addr,
+                   &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
                    sizeof(struct in6_addr));
         mreq.ipv6mr_interface = ifindex;
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
