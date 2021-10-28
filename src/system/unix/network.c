@@ -251,11 +251,22 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
     }
     else
         goto EXIT_MULTICAST_LISTEN_ERROR;
-    freeaddrinfo(laddr);
 
     // Join the multicast group
     if (raddr->ai_family == AF_INET)
     {
+//        // This option has no effect, since we use two sockets:
+//        // one to send and another to receive the multicast packets
+//        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
+//            goto EXIT_MULTICAST_LISTEN_ERROR;
+
+        if(setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in*)laddr->ai_addr)->sin_addr, sizeof(struct in_addr)) < 0)
+        {
+            freeaddrinfo(laddr);
+            goto EXIT_MULTICAST_LISTEN_ERROR;
+        }
+        freeaddrinfo(laddr);
+
         struct ip_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = ((struct sockaddr_in*)raddr->ai_addr)->sin_addr.s_addr;
@@ -263,15 +274,19 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
         if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                        &mreq, sizeof(mreq)) < 0)
             goto EXIT_MULTICAST_LISTEN_ERROR;
-
-//        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
-//            goto EXIT_MULTICAST_LISTEN_ERROR;
-
-//        if(setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &local_iface, sizeof(local_iface)) < 0)
-//            goto EXIT_MULTICAST_LISTEN_ERROR;
     }
     else if(raddr->ai_family == AF_INET6)
     {
+        freeaddrinfo(laddr);
+
+//        // This option has no effect, since we use two sockets:
+//        // one to send and another to receive the multicast packets
+//        if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
+//            goto EXIT_MULTICAST_LISTEN_ERROR;
+
+        if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
+            goto EXIT_MULTICAST_LISTEN_ERROR;
+
         struct ipv6_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         memcpy(&mreq.ipv6mr_multiaddr,
@@ -280,15 +295,12 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
         mreq.ipv6mr_interface = ifindex;
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
             goto EXIT_MULTICAST_LISTEN_ERROR;
-
-//        if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
-//            goto EXIT_MULTICAST_LISTEN_ERROR;
-
-//        if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
-//            goto EXIT_MULTICAST_LISTEN_ERROR;
     }
     else
+    {
+        freeaddrinfo(laddr);
         goto EXIT_MULTICAST_LISTEN_ERROR;
+    }
 
     return sock;
 
