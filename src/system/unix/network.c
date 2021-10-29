@@ -181,7 +181,7 @@ int _zn_listen_unicast_udp(void *arg, const clock_t tout)
     return -1;
 }
 
-int _zn_open_multicast_udp(void *arg, const clock_t tout)
+int _zn_open_multicast_udp(void *arg, const clock_t tout, const char *iface)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
 
@@ -189,13 +189,18 @@ int _zn_open_multicast_udp(void *arg, const clock_t tout)
     if (sock < 0)
         return -1;
 
+    if (raddr->ai_family == AF_INET6)
+    {
+       int ifindex = if_nametoindex(iface);
+       ((struct sockaddr_in6*)raddr->ai_addr)->sin6_scope_id = ifindex;
+    }
+
     return sock;
 }
 
-int _zn_listen_multicast_udp(void *arg, const clock_t tout)
+int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface)
 {
     struct addrinfo *laddr = (struct addrinfo*)arg;
-    unsigned int ifindex = if_nametoindex("en0");
 
     int sock = socket(laddr->ai_family, laddr->ai_socktype, laddr->ai_protocol);
     if (sock < 0)
@@ -210,6 +215,7 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout)
     }
 
     // Set the interface to bind to
+    unsigned int ifindex = if_nametoindex(iface);
     if (laddr->ai_family == AF_INET)
     {
         if (setsockopt(sock, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex)) < 0)
@@ -275,11 +281,11 @@ int _zn_listen_multicast_udp(void *arg, const clock_t tout)
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
             goto EXIT_MULTICAST_LISTEN_ERROR;
 
-        if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
-            goto EXIT_MULTICAST_LISTEN_ERROR;
+//        if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &optflag, sizeof(optflag)) < 0)
+//            goto EXIT_MULTICAST_LISTEN_ERROR;
 
-        if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
-            goto EXIT_MULTICAST_LISTEN_ERROR;
+//        if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
+//            goto EXIT_MULTICAST_LISTEN_ERROR;
     }
     else
         goto EXIT_MULTICAST_LISTEN_ERROR;

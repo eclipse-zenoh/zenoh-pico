@@ -17,6 +17,29 @@
 
 #include "zenoh-pico/link/types.h"
 
+const char *_zn_endpoint_property_from_key(const char *str, const char *key)
+{
+    if (str == NULL)
+        return NULL;
+
+    const char *p_init = strpbrk(str, key);
+    if (p_init == NULL)
+        return NULL;
+    p_init += strlen(key) + 1;
+
+    const char *p_end = strpbrk(p_init, "&");
+    if (p_end == NULL)
+        p_end = &str[strlen(str)];
+
+    int len = p_end - p_init;
+    char *segment = (char*)malloc((len + 1) * sizeof(char));
+    strncpy(segment, p_init, len);
+    segment[len] = '\0';
+
+    return segment;
+
+}
+
 const char *_zn_get_protocol_segment(const char *locator)
 {
     const char *p_init = &locator[0];

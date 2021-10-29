@@ -40,6 +40,8 @@ typedef struct {
 _zn_endpoint_t *_zn_endpoint_from_string(const char *s_locator);
 void _zn_endpoint_free(_zn_endpoint_t **zn);
 
+const char *_zn_endpoint_property_from_key(const char* str, const char* key);
+
 /*------------------ Link ------------------*/
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
 typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, clock_t tout);

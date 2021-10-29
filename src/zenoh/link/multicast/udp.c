@@ -65,13 +65,22 @@ _zn_socket_result_t _zn_f_link_open_multicast_udp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_open_multicast_udp(self->endpoint_syscall, tout);
+    const char *iface = _zn_endpoint_property_from_key(self->endpoint->metadata, "iface");
+    if (iface == NULL)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
+        return r;
+    }
+
+    r.value.socket = _zn_open_multicast_udp(self->endpoint_syscall, tout, iface);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     }
 
+    free((char *)iface);
     return r;
 }
 
@@ -81,13 +90,22 @@ _zn_socket_result_t _zn_f_link_listen_multicast_udp(void *arg, const clock_t tou
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_multicast_udp(self->endpoint_syscall, tout);
+    const char *iface = _zn_endpoint_property_from_key(self->endpoint->metadata, "iface");
+    if (iface == NULL)
+    {
+        r.tag = _z_res_t_ERR;
+        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
+        return r;
+    }
+
+    r.value.socket = _zn_listen_multicast_udp(self->endpoint_syscall, tout, iface);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     }
 
+    free((char *)iface);
     return r;
 }
 
