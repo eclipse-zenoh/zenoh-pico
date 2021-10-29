@@ -66,23 +66,29 @@ char *_zn_select_scout_iface(void);
 // TCP
 void* _zn_create_endpoint_tcp(const char *s_addr, const char *port);
 void _zn_release_endpoint_tcp(void *arg);
-int _zn_open_unicast_tcp(void *arg);
-int _zn_listen_unicast_tcp(void *arg);
+int _zn_open_tcp(void *arg);
+int _zn_listen_tcp(void *arg);
 int _zn_close_tcp(int sock);
 int _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len);
 int _zn_read_tcp(int sock, uint8_t *ptr, size_t len);
 int _zn_send_tcp(int sock, const uint8_t *ptr, size_t len);
 
-// UDP
+// Generic UDP
 void* _zn_create_endpoint_udp(const char *s_addr, const char *port);
 void _zn_release_endpoint_udp(void *arg);
-int _zn_open_unicast_udp(void *arg, const clock_t tout);
-int _zn_open_multicast_udp(void *arg, const clock_t tout, const char *iface);
-int _zn_listen_unicast_udp(void *arg, const clock_t tout);
-int _zn_listen_multicast_udp(void *arg, const clock_t tout, const char *iface);
-int _zn_close_udp(int sock);
-int _zn_read_exact_udp(int sock, uint8_t *ptr, size_t len);
-int _zn_read_udp(int sock, uint8_t *ptr, size_t len);
-int _zn_send_udp(int sock, const uint8_t *ptr, size_t len, void *arg);
+// Unicast UDP
+int _zn_open_udp_unicast(void *arg, const clock_t tout);
+int _zn_listen_udp_unicast(void *arg, const clock_t tout);
+int _zn_close_udp_unicast(int sock);
+int _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len);
+int _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len);
+int _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg);
+// Multicast UDP
+int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const char *iface);
+int _zn_listen_udp_multicast(void *arg, const clock_t tout, const char *iface);
+int _zn_close_udp_multicast(int sock, void *arg);
+int _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg);
+int _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg);
+int _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg);
 
 #endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H */

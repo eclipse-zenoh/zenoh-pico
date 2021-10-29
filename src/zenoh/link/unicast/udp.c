@@ -15,7 +15,7 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/link/private/manager.h"
 
-char* _zn_parse_port_segment_unicast_udp(const char *address)
+char* _zn_parse_port_segment_udp_unicast(const char *address)
 {
     const char *p_init = strrchr(address, ':');
     if (p_init == NULL)
@@ -32,7 +32,7 @@ char* _zn_parse_port_segment_unicast_udp(const char *address)
     return port;
 }
 
-char* _zn_parse_address_segment_unicast_udp(const char *address)
+char* _zn_parse_address_segment_udp_unicast(const char *address)
 {
     const char *p_init = &address[0];
     const char *p_end = strrchr(address, ':');
@@ -59,13 +59,13 @@ char* _zn_parse_address_segment_unicast_udp(const char *address)
     return NULL;
 }
 
-_zn_socket_result_t _zn_f_link_open_unicast_udp(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_f_link_open_udp_unicast(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_open_unicast_udp(self->endpoint_syscall, tout);
+    r.value.socket = _zn_open_udp_unicast(self->endpoint_syscall, tout);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -75,13 +75,13 @@ _zn_socket_result_t _zn_f_link_open_unicast_udp(void *arg, const clock_t tout)
     return r;
 }
 
-_zn_socket_result_t _zn_f_link_listen_unicast_udp(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_f_link_listen_udp_unicast(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_unicast_udp(self->endpoint_syscall, tout);
+    r.value.socket = _zn_listen_udp_unicast(self->endpoint_syscall, tout);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -91,77 +91,77 @@ _zn_socket_result_t _zn_f_link_listen_unicast_udp(void *arg, const clock_t tout)
     return r;
 }
 
-int _zn_f_link_close_unicast_udp(void *arg)
+int _zn_f_link_close_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_close_udp(self->sock);
+    return _zn_close_udp_unicast(self->sock);
 }
 
-void _zn_f_link_release_unicast_udp(void *arg)
+void _zn_f_link_release_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     _zn_release_endpoint_udp(self->endpoint_syscall);
 }
 
-size_t _zn_f_link_write_unicast_udp(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_udp_unicast(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_send_udp(self->sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_unicast(self->sock, ptr, len, self->endpoint_syscall);
 }
 
-size_t _zn_f_link_write_all_unicast_udp(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_all_udp_unicast(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_send_udp(self->sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_unicast(self->sock, ptr, len, self->endpoint_syscall);
 }
 
-size_t _zn_f_link_read_unicast_udp(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_udp_unicast(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_read_udp(self->sock, ptr, len);
+    return _zn_read_udp_unicast(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_read_exact_unicast_udp(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_exact_udp_unicast(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_read_exact_udp(self->sock, ptr, len);
+    return _zn_read_exact_udp_unicast(self->sock, ptr, len);
 }
 
-size_t _zn_get_link_mtu_unicast_udp()
+size_t _zn_get_link_mtu_udp_unicast()
 {
     // TODO
     return -1;
 }
 
-_zn_link_t *_zn_new_link_unicast_udp(_zn_endpoint_t *endpoint)
+_zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t *endpoint)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
 
     lt->is_reliable = 0;
     lt->is_streamed = 0;
     lt->is_multicast = 0;
-    lt->mtu = _zn_get_link_mtu_unicast_udp();
+    lt->mtu = _zn_get_link_mtu_udp_unicast();
 
-    char *s_addr = _zn_parse_address_segment_unicast_udp(endpoint->address);
-    char *s_port = _zn_parse_port_segment_unicast_udp(endpoint->address);
+    char *s_addr = _zn_parse_address_segment_udp_unicast(endpoint->address);
+    char *s_port = _zn_parse_port_segment_udp_unicast(endpoint->address);
     lt->endpoint_syscall = _zn_create_endpoint_udp(s_addr, s_port);
     lt->endpoint = endpoint;
 
-    lt->open_f = _zn_f_link_open_unicast_udp;
-    lt->listen_f = _zn_f_link_listen_unicast_udp;
-    lt->close_f = _zn_f_link_close_unicast_udp;
-    lt->release_f = _zn_f_link_release_unicast_udp;
+    lt->open_f = _zn_f_link_open_udp_unicast;
+    lt->listen_f = _zn_f_link_listen_udp_unicast;
+    lt->close_f = _zn_f_link_close_udp_unicast;
+    lt->release_f = _zn_f_link_release_udp_unicast;
 
-    lt->write_f = _zn_f_link_write_unicast_udp;
-    lt->write_all_f = _zn_f_link_write_all_unicast_udp;
-    lt->read_f = _zn_f_link_read_unicast_udp;
-    lt->read_exact_f = _zn_f_link_read_exact_unicast_udp;
+    lt->write_f = _zn_f_link_write_udp_unicast;
+    lt->write_all_f = _zn_f_link_write_all_udp_unicast;
+    lt->read_f = _zn_f_link_read_udp_unicast;
+    lt->read_exact_f = _zn_f_link_read_exact_udp_unicast;
 
     free(s_addr);
     free(s_port);

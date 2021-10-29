@@ -105,7 +105,16 @@ int _zn_open_unicast_tcp(void *arg)
         }
     }
 
-    return r;
+    return sock;
+}
+
+int _zn_listen_unicast_tcp(void *arg)
+{
+    struct addrinfo *laddr = (struct addrinfo*)arg;
+
+    // TODO: to be implemented
+
+    return -1;
 }
 
 int _zn_close_tcp(_zn_socket_t sock)

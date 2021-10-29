@@ -63,6 +63,7 @@ typedef struct {
 
     _zn_endpoint_t *endpoint;
     void *endpoint_syscall;
+    void *extra_endpoint_syscall;
 
     // Function pointers
     _zn_f_link_open open_f; // TODO: rename this method (e.g. connect)

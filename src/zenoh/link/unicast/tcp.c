@@ -15,7 +15,7 @@
 #include "zenoh-pico/system/common.h"
 #include "zenoh-pico/link/private/manager.h"
 
-char* _zn_parse_port_segment_unicast_tcp(const char *address)
+char* _zn_parse_port_segment_tcp(const char *address)
 {
     const char *p_init = strrchr(address, ':');
     if (p_init == NULL)
@@ -32,7 +32,7 @@ char* _zn_parse_port_segment_unicast_tcp(const char *address)
     return port;
 }
 
-char* _zn_parse_address_segment_unicast_tcp(const char *address)
+char* _zn_parse_address_segment_tcp(const char *address)
 {
     const char *p_init = &address[0];
     const char *p_end = strrchr(address, ':');
@@ -59,13 +59,13 @@ char* _zn_parse_address_segment_unicast_tcp(const char *address)
     return NULL;
 }
 
-_zn_socket_result_t _zn_f_link_open_unicast_tcp(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
     
-    r.value.socket = _zn_open_unicast_tcp(self->endpoint_syscall);
+    r.value.socket = _zn_open_tcp(self->endpoint_syscall);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -75,13 +75,13 @@ _zn_socket_result_t _zn_f_link_open_unicast_tcp(void *arg, const clock_t tout)
     return r;
 }
 
-_zn_socket_result_t _zn_f_link_listen_unicast_tcp(void *arg, const clock_t tout)
+_zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_unicast_tcp(self->endpoint_syscall);
+    r.value.socket = _zn_listen_tcp(self->endpoint_syscall);
     if (r.value.socket < 0)
     {
         r.tag = _z_res_t_ERR;
@@ -91,76 +91,76 @@ _zn_socket_result_t _zn_f_link_listen_unicast_tcp(void *arg, const clock_t tout)
     return r;
 }
 
-int _zn_f_link_close_unicast_tcp(void *arg)
+int _zn_f_link_close_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_close_tcp(self->sock);
 }
 
-void _zn_f_link_release_unicast_tcp(void *arg)
+void _zn_f_link_release_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     _zn_release_endpoint_tcp(self->endpoint_syscall);
 }
 
-size_t _zn_f_link_write_unicast_tcp(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_tcp(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_send_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_write_all_unicast_tcp(void *arg, const uint8_t *ptr, size_t len)
+size_t _zn_f_link_write_all_tcp(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_send_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_read_unicast_tcp(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_tcp(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_read_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_read_exact_unicast_tcp(void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_exact_tcp(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
     return _zn_read_exact_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_get_link_mtu_unicast_tcp()
+size_t _zn_get_link_mtu_tcp()
 {
     // TODO
     return -1;
 }
 
-_zn_link_t *_zn_new_link_unicast_tcp(_zn_endpoint_t *endpoint)
+_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t *endpoint)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 1;
     lt->is_streamed = 1;
     lt->is_multicast = 0;
-    lt->mtu = _zn_get_link_mtu_unicast_tcp();
+    lt->mtu = _zn_get_link_mtu_tcp();
 
-    char *s_addr = _zn_parse_address_segment_unicast_tcp(endpoint->address);
-    char *s_port = _zn_parse_port_segment_unicast_tcp(endpoint->address);
+    char *s_addr = _zn_parse_address_segment_tcp(endpoint->address);
+    char *s_port = _zn_parse_port_segment_tcp(endpoint->address);
     lt->endpoint_syscall = _zn_create_endpoint_tcp(s_addr, s_port);
     lt->endpoint = endpoint;
 
-    lt->open_f = _zn_f_link_open_unicast_tcp;
-    lt->listen_f = _zn_f_link_listen_unicast_tcp;
-    lt->close_f = _zn_f_link_close_unicast_tcp;
-    lt->release_f = _zn_f_link_release_unicast_tcp;
+    lt->open_f = _zn_f_link_open_tcp;
+    lt->listen_f = _zn_f_link_listen_tcp;
+    lt->close_f = _zn_f_link_close_tcp;
+    lt->release_f = _zn_f_link_release_tcp;
 
-    lt->write_f = _zn_f_link_write_unicast_tcp;
-    lt->write_all_f = _zn_f_link_write_all_unicast_tcp;
-    lt->read_f = _zn_f_link_read_unicast_tcp;
-    lt->read_exact_f = _zn_f_link_read_exact_unicast_tcp;
+    lt->write_f = _zn_f_link_write_tcp;
+    lt->write_all_f = _zn_f_link_write_all_tcp;
+    lt->read_f = _zn_f_link_read_tcp;
+    lt->read_exact_f = _zn_f_link_read_exact_tcp;
 
     free(s_addr);
     free(s_port);

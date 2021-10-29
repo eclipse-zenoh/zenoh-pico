@@ -32,11 +32,11 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     _zn_link_t *link = NULL;
     if (strcmp(endpoint->protocol, TCP_SCHEMA) == 0)
     {
-        link = _zn_new_link_unicast_tcp(endpoint);
+        link = _zn_new_link_tcp(endpoint);
     }
     else if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_unicast_udp(endpoint);
+        link = _zn_new_link_udp_unicast(endpoint);
     }
     else
     {
@@ -80,12 +80,9 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
 
     // Create transport link
     _zn_link_t *link = NULL;
-    if (strcmp(endpoint->protocol, TCP_SCHEMA) == 0)
+    if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
     {
-    }
-    else if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
-    {
-        link = _zn_new_link_multicast_udp(endpoint);
+        link = _zn_new_link_udp_multicast(endpoint);
     }
     else
     {
