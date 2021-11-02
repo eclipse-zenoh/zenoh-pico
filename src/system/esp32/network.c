@@ -122,15 +122,15 @@ int _zn_close_tcp(int sock)
     return shutdown(sock, SHUT_RDWR);
 }
 
-int _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
+size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
 {
     return recv(sock, ptr, len, 0);
 }
 
-int _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
+size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
 {
-    int n = len;
-    int rb;
+    size_t n = len;
+    size_t rb = 0;
 
     do
     {
@@ -145,7 +145,7 @@ int _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
+size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
     return send(sock, ptr, len, 0);
 }
@@ -176,15 +176,15 @@ int _zn_close_udp_unicast(int sock)
     return close(sock);
 }
 
-int _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
+size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
     return recv(sock, ptr, len, 0);
 }
 
-int _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
+size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
-    int n = len;
-    int rb;
+    size_t n = len;
+    size_t rb = 0;
 
     do
     {
@@ -199,7 +199,7 @@ int _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
     return len;
 }
 
-int _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
+size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*) arg;
 
@@ -358,43 +358,46 @@ int _zn_close_udp_multicast(int sock, void *arg)
     return close(sock);
 }
 
-int _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
 {
     struct sockaddr *laddr = (struct sockaddr*)arg;
     struct sockaddr raddr;
-    unsigned int addrlen = sizeof(struct sockaddr);;
+    unsigned int addrlen = sizeof(struct sockaddr);
 
-    size_t rb = recvfrom(sock, ptr, len, 0,
-                    (struct sockaddr *)&raddr, &addrlen);
+    size_t rb = 0;
+    int is_loop = 1;
+    do
+    {
+        rb = recvfrom(sock, ptr, len, 0,
+                 (struct sockaddr *)&raddr, &addrlen);
 
-    if (laddr->sa_family == AF_INET)
-    {
-        struct sockaddr_in *a = ((struct sockaddr_in *)laddr);
-        struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
-// FIXME:        if (a->sin_port == b->sin_port && memcmp(&a->sin_addr, &b->sin_addr, sizeof(struct in_addr)) == 0)
-        if (a->sin_port == b->sin_port)
-            return 0;
-    }
-    else if (laddr->sa_family == AF_INET6)
-    {
-        struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr);
-        struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
-// FIXME:        if (a->sin6_port == b->sin6_port && memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(struct in6_addr)) == 0)
-        if (a->sin6_port == b->sin6_port)
-            return 0;
-    }
-    else
-    {
-        return -1;
-    }
+        if (laddr->sa_family == AF_INET)
+        {
+            struct sockaddr_in *a = ((struct sockaddr_in *)laddr);
+            struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
+            if (a->sin_port != b->sin_port || memcmp(&a->sin_addr, &b->sin_addr, sizeof(struct in_addr)) != 0)
+                is_loop = 0;
+        }
+        else if (laddr->sa_family == AF_INET6)
+        {
+            struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr);
+            struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
+            if (a->sin6_port != b->sin6_port || memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(struct in6_addr)) != 0)
+                is_loop = 0;
+        }
+        else
+        {
+            return -1;
+        }
+    } while (is_loop);
 
     return rb;
 }
 
-int _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
 {
-    int n = len;
-    int rb;
+    size_t n = len;
+    size_t rb = 0;
 
     do
     {
@@ -409,7 +412,7 @@ int _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
     return len;
 }
 
-int _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg)
+size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*) arg;
 
