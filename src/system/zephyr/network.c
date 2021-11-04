@@ -203,17 +203,15 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const char *iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
+    struct sockaddr *laddr = NULL;
+    unsigned int addrlen = 0;
 
-    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
-    if (sock < 0)
-        return -1;
-
-    // Explicitly bind is needed, because we need to keep track of the addrinfo
-    // to drop looped multicast messages
-    struct sockaddr *laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr));
-    memset(laddr, 0, sizeof(struct sockaddr));
     if (raddr->ai_family == AF_INET)
     {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        memset(laddr, 0, sizeof(struct sockaddr_in));
+        addrlen = sizeof(struct sockaddr_in);
+
         struct sockaddr_in *c_laddr = (struct sockaddr_in *)laddr;
         c_laddr->sin_family = AF_INET;
         c_laddr->sin_addr.s_addr = INADDR_ANY;
@@ -221,6 +219,10 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     }
     else if (raddr->ai_family == AF_INET6)
     {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        memset(laddr, 0, sizeof(struct sockaddr_in6));
+        addrlen = sizeof(struct sockaddr_in6);
+
         struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)laddr;
         c_laddr->sin6_family = AF_INET6;
         c_laddr->sin6_addr = in6addr_any;
@@ -230,12 +232,16 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     else
         return -1;
 
-    if (bind(sock, laddr, sizeof(struct sockaddr)) < 0)
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    if (sock < 0)
         return -1;
 
-    unsigned int sockaddr_len = sizeof(struct sockaddr);
-    if (getsockname(sock, laddr, &sockaddr_len) < -1)
+    if (bind(sock, laddr, addrlen) < 0)
         return -1;
+
+    // Get the randomly assigned port used to discard loopback messages
+    if (getsockname(sock, laddr, &addrlen) < 0)
+       return -1;
 
     *arg_2 = laddr;
     return sock;
@@ -244,6 +250,35 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
 int _zn_listen_udp_multicast(void *arg, const clock_t tout, const char *iface)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
+    struct sockaddr *laddr = NULL;
+    unsigned int addrlen = 0;
+
+    if (raddr->ai_family == AF_INET)
+    {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        memset(laddr, 0, sizeof(struct sockaddr_in));
+        addrlen = sizeof(struct sockaddr_in);
+
+        struct sockaddr_in *c_laddr = (struct sockaddr_in *)laddr;
+        c_laddr->sin_family = AF_INET;
+        c_laddr->sin_addr.s_addr = INADDR_ANY;
+        c_laddr->sin_port = ((struct sockaddr_in *)raddr->ai_addr)->sin_port;
+    }
+    else if (raddr->ai_family == AF_INET6)
+    {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        memset(laddr, 0, sizeof(struct sockaddr_in6));
+        addrlen = sizeof(struct sockaddr_in6);
+
+        struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)laddr;
+        c_laddr->sin6_family = AF_INET6;
+        c_laddr->sin6_addr = in6addr_any;
+        c_laddr->sin6_port = htons(INADDR_ANY);
+        c_laddr->sin6_port = ((struct sockaddr_in6 *)raddr->ai_addr)->sin6_port;
+//        c_laddr->sin6_scope_id; // Not needed to be defined
+    }
+    else
+        return -1;
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
@@ -253,33 +288,8 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const char *iface)
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)
         goto EXIT_MULTICAST_LISTEN_ERROR;
 
-    char s_port[6]; // String representation of a port has maximum 5 characters
-    if (raddr->ai_family == AF_INET)
-        sprintf(s_port, "%d", ntohs(((struct sockaddr_in*)raddr->ai_addr)->sin_port));
-    else if (raddr->ai_family == AF_INET6)
-        sprintf(s_port, "%d", ntohs(((struct sockaddr_in6*)raddr->ai_addr)->sin6_port));
-    else
+    if (bind(sock, laddr, addrlen) < 0)
         goto EXIT_MULTICAST_LISTEN_ERROR;
-
-    // Bind socket
-    struct addrinfo hints;
-    struct addrinfo *laddr = NULL;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = raddr->ai_family;
-    hints.ai_socktype = raddr->ai_socktype;
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_protocol = raddr->ai_protocol;
-    if (getaddrinfo(NULL, s_port, &hints, &laddr) == 0)
-    {
-        if (bind(sock, laddr->ai_addr, laddr->ai_addrlen) < 0)
-        {
-            freeaddrinfo(laddr);
-            goto EXIT_MULTICAST_LISTEN_ERROR;
-        }
-    }
-    else
-        goto EXIT_MULTICAST_LISTEN_ERROR;
-    freeaddrinfo(laddr);
 
     // FIXME: iface passed into the locator is being ignored
     //        default if used instead
@@ -369,14 +379,14 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
         {
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
-            if (a->sin_port != b->sin_port || memcmp(&a->sin_addr, &b->sin_addr, sizeof(struct in_addr)) != 0)
+            if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr))
                 is_loop = 0;
         }
         else if (laddr->sa_family == AF_INET6)
         {
             struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
-            if (a->sin6_port != b->sin6_port || memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(struct in6_addr)) != 0)
+            if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, 16) == 0))
                 is_loop = 0;
         }
         else
