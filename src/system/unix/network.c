@@ -386,16 +386,10 @@ int _zn_close_udp_multicast(int sock, void *arg)
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
 {
     struct sockaddr *laddr = (struct sockaddr*)arg;
-    struct sockaddr raddr;
-
-    unsigned int addrlen = 0;
-    if (laddr->sa_family == AF_INET)
-        addrlen = sizeof(struct sockaddr_in);
-    else if (laddr->sa_family == AF_INET6)
-        addrlen = sizeof(struct sockaddr_in6);
+    struct sockaddr_storage raddr;
+    unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     size_t rb = 0;
-    int is_loop = 1;
     do
     {
         rb = recvfrom(sock, ptr, len, 0,
@@ -406,20 +400,20 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
             if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr))
-                is_loop = 0;
+                break;
         }
         else if (laddr->sa_family == AF_INET6)
         {
             struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, 16) == 0))
-                is_loop = 0;
+                break;
         }
         else
         {
             return -1;
         }
-    } while (is_loop);
+    } while (1);
 
     return rb;
 }
