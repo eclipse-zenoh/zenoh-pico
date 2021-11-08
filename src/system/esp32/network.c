@@ -55,12 +55,14 @@ void* _zn_create_endpoint_udp(const char *s_addr, const char *port)
 void _zn_release_endpoint_tcp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo*)arg;
+
     freeaddrinfo(self);
 }
 
 void _zn_release_endpoint_udp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo*)arg;
+
     freeaddrinfo(self);
 }
 
@@ -178,7 +180,13 @@ int _zn_close_udp_unicast(int sock)
 
 size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
-    return recv(sock, ptr, len, 0);
+    struct sockaddr_storage raddr;
+    unsigned int addrlen = sizeof(struct sockaddr_storage);
+
+    size_t rb = recvfrom(sock, ptr, len, 0,
+                    (struct sockaddr *)&raddr, &addrlen);
+
+    return rb;
 }
 
 size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
@@ -395,10 +403,6 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (a->sin6_port != b->sin6_port || memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(struct in6_addr)) != 0)
                 break;
-        }
-        else
-        {
-            return -1;
         }
     } while (1);
 
