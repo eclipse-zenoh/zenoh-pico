@@ -109,11 +109,11 @@ _zn_socket_result_t _zn_f_link_listen_udp_multicast(void *arg, const clock_t tou
     return r;
 }
 
-int _zn_f_link_close_udp_multicast(void *arg)
+void _zn_f_link_close_udp_multicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_close_udp_multicast(self->sock, self->endpoint_syscall);
+    _zn_close_udp_multicast(self->sock, self->endpoint_syscall);
 }
 
 void _zn_f_link_release_udp_multicast(void *arg)

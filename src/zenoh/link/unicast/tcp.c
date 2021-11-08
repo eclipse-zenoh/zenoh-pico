@@ -91,11 +91,11 @@ _zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
     return r;
 }
 
-int _zn_f_link_close_tcp(void *arg)
+void _zn_f_link_close_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_close_tcp(self->sock);
+    _zn_close_tcp(self->sock);
 }
 
 void _zn_f_link_release_tcp(void *arg)
