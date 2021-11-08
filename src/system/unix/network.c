@@ -370,7 +370,7 @@ _ZN_LISTEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-void _zn_close_udp_multicast(int sock, void *arg)
+void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
@@ -380,7 +380,7 @@ void _zn_close_udp_multicast(int sock, void *arg)
         memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-        setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+        setsockopt(sock_recv, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
     }
     else if (raddr->ai_family == AF_INET6)
     {
@@ -390,10 +390,11 @@ void _zn_close_udp_multicast(int sock, void *arg)
                    &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
                    sizeof(struct in6_addr));
         //mreq.ipv6mr_interface = ifindex;
-        setsockopt(sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 
-    close(sock);
+    close(sock_recv);
+    close(sock_send);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)

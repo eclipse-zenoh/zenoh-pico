@@ -54,7 +54,7 @@ typedef size_t (*_zn_f_link_read_exact)(void *arg, uint8_t *ptr, size_t len);
 
 typedef struct {
     _zn_socket_t sock;
-    _zn_socket_t extra_sock;
+    _zn_socket_t mcast_send_sock;
 
     uint8_t is_reliable;
     uint8_t is_streamed;
@@ -62,8 +62,8 @@ typedef struct {
     uint16_t mtu;
 
     _zn_endpoint_t *endpoint;
-    void *endpoint_syscall;
-    void *extra_endpoint_syscall;
+    void *raddr; // This is system specific and only used in its implementation
+    void *laddr; // This is system specific and only used in its implementation
 
     // Function pointers
     _zn_f_link_open open_f; // TODO: rename this method (e.g. connect)

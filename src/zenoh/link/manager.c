@@ -20,12 +20,12 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     _zn_link_p_result_t r;
     r.tag = _z_res_t_OK;
 
+    // Create endpoint from locator
     _zn_endpoint_t *endpoint = _zn_endpoint_from_string(locator);
     if (endpoint == NULL)
     {
-        r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_OPEN_LINK_ERROR_1;
     }
 
     // Create transport link
@@ -40,28 +40,32 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     }
     else
     {
-        _zn_endpoint_free(&endpoint);
-
-        r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_OPEN_LINK_ERROR_2;
     }
 
     // Open transport link for communication
     _zn_socket_result_t r_sock = link->open_f(link, tout);
     if (r_sock.tag == _z_res_t_ERR)
     {
-        _zn_link_free(&link);
-
-        r.tag = _z_res_t_ERR;
         r.value.error = r_sock.value.error;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_OPEN_LINK_ERROR_3;
     }
 
     link->sock = r_sock.value.socket;
     r.value.link = link;
 
-EXIT_OPEN_LINK:
+    return r;
+
+_ZN_OPEN_LINK_ERROR_3:
+    _zn_link_free(&link);
+    goto _ZN_OPEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
+
+_ZN_OPEN_LINK_ERROR_2:
+    _zn_endpoint_free(&endpoint);
+
+_ZN_OPEN_LINK_ERROR_1:
+    r.tag = _z_res_t_ERR;
     return r;
 }
 
@@ -73,9 +77,8 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
     _zn_endpoint_t *endpoint = _zn_endpoint_from_string(locator);
     if (endpoint == NULL)
     {
-        r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_LISTEN_LINK_ERROR_1;
     }
 
     // Create transport link
@@ -86,22 +89,16 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
     }
     else
     {
-        _zn_endpoint_free(&endpoint);
-
-        r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_LISTEN_LINK_ERROR_2;
     }
 
     // Open transport link for listening
     _zn_socket_result_t r_sock = link->listen_f(link, tout);
     if (r_sock.tag == _z_res_t_ERR)
     {
-        _zn_link_free(&link);
-
-        r.tag = _z_res_t_ERR;
         r.value.error = r_sock.value.error;
-        goto EXIT_OPEN_LINK;
+        goto _ZN_LISTEN_LINK_ERROR_3;
     }
     link->sock = r_sock.value.socket;
 
@@ -111,18 +108,25 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
         _zn_socket_result_t r_sock = link->open_f(link, tout);
         if (r_sock.tag == _z_res_t_ERR)
         {
-            _zn_link_free(&link);
-
-            r.tag = _z_res_t_ERR;
             r.value.error = r_sock.value.error;
-            goto EXIT_OPEN_LINK;
+            goto _ZN_LISTEN_LINK_ERROR_3;
         }
-        link->extra_sock = r_sock.value.socket;
+        link->mcast_send_sock = r_sock.value.socket;
     }
 
     r.value.link = link;
 
-EXIT_OPEN_LINK:
+    return r;
+
+_ZN_LISTEN_LINK_ERROR_3:
+    _zn_link_free(&link);
+    goto _ZN_LISTEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
+
+_ZN_LISTEN_LINK_ERROR_2:
+    _zn_endpoint_free(&endpoint);
+
+_ZN_LISTEN_LINK_ERROR_1:
+    r.tag = _z_res_t_ERR;
     return r;
 }
 

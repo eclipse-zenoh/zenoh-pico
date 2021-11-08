@@ -67,20 +67,21 @@ _zn_socket_result_t _zn_f_link_open_udp_multicast(void *arg, const clock_t tout)
 
     const char *iface = _zn_endpoint_property_from_key(self->endpoint->metadata, "iface");
     if (iface == NULL)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-        return r;
-    }
+        goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_1;
 
-    r.value.socket = _zn_open_udp_multicast(self->endpoint_syscall, &self->extra_endpoint_syscall, tout, iface);
+    r.value.socket = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
     if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+        goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_2;
 
     free((char *)iface);
+    return r;
+
+_ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_2:
+    free((char *)iface);
+
+_ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -92,20 +93,21 @@ _zn_socket_result_t _zn_f_link_listen_udp_multicast(void *arg, const clock_t tou
 
     const char *iface = _zn_endpoint_property_from_key(self->endpoint->metadata, "iface");
     if (iface == NULL)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-        return r;
-    }
+        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_1;
 
-    r.value.socket = _zn_listen_udp_multicast(self->endpoint_syscall, tout, iface);
+    r.value.socket = _zn_listen_udp_multicast(self->raddr, tout, iface);
     if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_2;
 
     free((char *)iface);
+    return r;
+
+_ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_2:
+    free((char *)iface);
+
+_ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -113,42 +115,44 @@ void _zn_f_link_close_udp_multicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_close_udp_multicast(self->sock, self->endpoint_syscall);
+    _zn_close_udp_multicast(self->sock, self->mcast_send_sock, self->raddr);
 }
 
 void _zn_f_link_release_udp_multicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    _zn_release_endpoint_udp(self->endpoint_syscall);
+    _zn_release_endpoint_udp(self->raddr);
+    // FIXME: make raddr and laddr from the same type
+    //_zn_release_endpoint_udp(self->laddr);
 }
 
 size_t _zn_f_link_write_udp_multicast(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_send_udp_multicast(self->extra_sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_multicast(self->mcast_send_sock, ptr, len, self->raddr);
 }
 
 size_t _zn_f_link_write_all_udp_multicast(void *arg, const uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_send_udp_multicast(self->extra_sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_multicast(self->mcast_send_sock, ptr, len, self->raddr);
 }
 
 size_t _zn_f_link_read_udp_multicast(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_read_udp_multicast(self->sock, ptr, len, self->extra_endpoint_syscall);
+    return _zn_read_udp_multicast(self->sock, ptr, len, self->laddr);
 }
 
 size_t _zn_f_link_read_exact_udp_multicast(void *arg, uint8_t *ptr, size_t len)
 {
     _zn_link_t *self = (_zn_link_t*)arg;
 
-    return _zn_read_exact_udp_multicast(self->sock, ptr, len, self->extra_endpoint_syscall);
+    return _zn_read_exact_udp_multicast(self->sock, ptr, len, self->laddr);
 }
 
 size_t _zn_get_link_mtu_udp_multicast()
@@ -168,8 +172,8 @@ _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t *endpoint)
 
     char *s_addr = _zn_parse_address_segment_udp_multicast(endpoint->address);
     char *s_port = _zn_parse_port_segment_udp_multicast(endpoint->address);
-    lt->endpoint_syscall = _zn_create_endpoint_udp(s_addr, s_port);
-    lt->extra_endpoint_syscall = NULL;
+    lt->raddr = _zn_create_endpoint_udp(s_addr, s_port);
+    lt->laddr = NULL;
     lt->endpoint = endpoint;
 
     lt->open_f = _zn_f_link_open_udp_multicast;

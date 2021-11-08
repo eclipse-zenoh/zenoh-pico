@@ -346,7 +346,7 @@ _ZN_LISTEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-void _zn_close_udp_multicast(int sock, void *arg)
+void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo*)arg;
 
@@ -378,8 +378,12 @@ void _zn_close_udp_multicast(int sock, void *arg)
         net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr);
     }
 
+    close(sock_recv);
+    close(sock_send);
+
 _ZN_CLOSE_UDP_MULTICAST_ERROR_1:
-    close(sock);
+    close(sock_recv);
+    close(sock_send);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
