@@ -123,8 +123,7 @@ void _zn_f_link_release_udp_multicast(void *arg)
     _zn_link_t *self = (_zn_link_t*)arg;
 
     _zn_release_endpoint_udp(self->raddr);
-    // FIXME: make raddr and laddr from the same type
-    //_zn_release_endpoint_udp(self->laddr);
+    _zn_release_endpoint_udp(self->laddr);
 }
 
 size_t _zn_f_link_write_udp_multicast(void *arg, const uint8_t *ptr, size_t len)
