@@ -53,8 +53,8 @@ typedef size_t (*_zn_f_link_read)(void *arg, uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_read_exact)(void *arg, uint8_t *ptr, size_t len);
 
 typedef struct {
-    _zn_socket_t sock;
-    _zn_socket_t mcast_send_sock;
+    _zn_socket_t sock; // FIXME: move this to the abstraction
+    _zn_socket_t mcast_send_sock; // FIXME: move this to the abstraction
 
     uint8_t is_reliable;
     uint8_t is_streamed;

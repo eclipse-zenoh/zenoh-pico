@@ -29,14 +29,13 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     }
 
     // Create transport link
-    _zn_link_t *link = NULL;
     if (strcmp(endpoint->protocol, TCP_SCHEMA) == 0)
     {
-        link = _zn_new_link_tcp(endpoint);
+        r.value.link = _zn_new_link_tcp(endpoint);
     }
     else if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_udp_unicast(endpoint);
+        r.value.link = _zn_new_link_udp_unicast(endpoint);
     }
     else
     {
@@ -45,20 +44,17 @@ _zn_link_p_result_t _zn_open_link(const char *locator, clock_t tout)
     }
 
     // Open transport link for communication
-    _zn_socket_result_t r_sock = link->open_f(link, tout);
+    _zn_socket_result_t r_sock = r.value.link->open_f(r.value.link, tout);
     if (r_sock.tag == _z_res_t_ERR)
     {
         r.value.error = r_sock.value.error;
         goto _ZN_OPEN_LINK_ERROR_3;
     }
 
-    link->sock = r_sock.value.socket;
-    r.value.link = link;
-
     return r;
 
 _ZN_OPEN_LINK_ERROR_3:
-    _zn_link_free(&link);
+    _zn_link_free(&r.value.link);
     goto _ZN_OPEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
 
 _ZN_OPEN_LINK_ERROR_2:
@@ -81,11 +77,11 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
         goto _ZN_LISTEN_LINK_ERROR_1;
     }
 
+    // TODO: for now listening is only supported for UDP multicast
     // Create transport link
-    _zn_link_t *link = NULL;
     if (strcmp(endpoint->protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_udp_multicast(endpoint);
+        r.value.link = _zn_new_link_udp_multicast(endpoint);
     }
     else
     {
@@ -94,32 +90,17 @@ _zn_link_p_result_t _zn_listen_link(const char *locator, clock_t tout)
     }
 
     // Open transport link for listening
-    _zn_socket_result_t r_sock = link->listen_f(link, tout);
+    _zn_socket_result_t r_sock = r.value.link->listen_f(r.value.link, tout);
     if (r_sock.tag == _z_res_t_ERR)
     {
         r.value.error = r_sock.value.error;
         goto _ZN_LISTEN_LINK_ERROR_3;
     }
-    link->sock = r_sock.value.socket;
-
-    // If multicast make use of the extra socket for sending packets
-    if (link->is_multicast == 1)
-    {
-        _zn_socket_result_t r_sock = link->open_f(link, tout);
-        if (r_sock.tag == _z_res_t_ERR)
-        {
-            r.value.error = r_sock.value.error;
-            goto _ZN_LISTEN_LINK_ERROR_3;
-        }
-        link->mcast_send_sock = r_sock.value.socket;
-    }
-
-    r.value.link = link;
 
     return r;
 
 _ZN_LISTEN_LINK_ERROR_3:
-    _zn_link_free(&link);
+    _zn_link_free(&r.value.link);
     goto _ZN_LISTEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
 
 _ZN_LISTEN_LINK_ERROR_2:

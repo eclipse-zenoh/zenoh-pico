@@ -65,10 +65,11 @@ _zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
     
-    r.value.socket = _zn_open_tcp(self->raddr);
-    if (r.value.socket < 0)
+    self->sock = _zn_open_tcp(self->raddr);
+    if (self->sock < 0)
         goto _ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
     return r;
 
 _ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1:
@@ -83,10 +84,11 @@ _zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_tcp(self->raddr);
-    if (r.value.socket < 0)
+    self->sock = _zn_listen_tcp(self->raddr);
+    if (self->sock < 0)
         goto _ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
     return r;
 
 _ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1:

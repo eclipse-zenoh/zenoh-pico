@@ -69,11 +69,12 @@ _zn_socket_result_t _zn_f_link_open_udp_multicast(void *arg, const clock_t tout)
     if (iface == NULL)
         goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_1;
 
-    r.value.socket = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
-    if (r.value.socket < 0)
+    self->sock = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
+    if (self->sock < 0)
         goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_2;
 
     free((char *)iface);
+    r.value.socket = self->sock;
     return r;
 
 _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR_2:
@@ -95,11 +96,16 @@ _zn_socket_result_t _zn_f_link_listen_udp_multicast(void *arg, const clock_t tou
     if (iface == NULL)
         goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_1;
 
-    r.value.socket = _zn_listen_udp_multicast(self->raddr, tout, iface);
-    if (r.value.socket < 0)
+    self->sock = _zn_listen_udp_multicast(self->raddr, tout, iface);
+    if (self->sock < 0)
+        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_2;
+
+    self->mcast_send_sock = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
+    if (self->mcast_send_sock < 0)
         goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_2;
 
     free((char *)iface);
+    r.value.socket = self->sock; // FIXME: we do not need to return it anymore
     return r;
 
 _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR_2:
