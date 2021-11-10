@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "zenoh-pico/system/common.h"
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/types.h"
 
