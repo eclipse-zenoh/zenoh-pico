@@ -15,9 +15,9 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_TCP_H
 #define ZENOH_PICO_LINK_CONFIG_TCP_H
 
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/properties.h"
 
-zn_properties_result_t _zn_tcp_config_from_str(const z_str_t s);
+_zn_state_result_t _zn_tcp_config_from_str(const z_str_t s);
 
 #endif /* ZENOH_PICO_LINK_CONFIG_TCP_H */

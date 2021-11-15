@@ -47,7 +47,7 @@ void *consume(void *m)
     {
         printf("<< Consuming (%u/%u)\n", consumed + 1, RUN);
         // z_sleep_us(250000);
-        char *m = (char *)z_mvar_get(mv);
+        z_str_t m = (z_str_t)z_mvar_get(mv);
         printf("<< Consumed (%u:%u): %s\n", consumed + 1, RUN, m);
     }
     return 0;

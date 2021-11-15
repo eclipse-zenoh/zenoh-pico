@@ -148,7 +148,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     if (r_link.tag == _z_res_t_ERR)
     {
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         return zn;
     }
@@ -184,7 +184,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free the locator
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         // Free
         _zn_transport_message_free(&ism);
@@ -201,7 +201,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free the locator
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         // Free
         _zn_transport_message_free(&ism);
@@ -261,7 +261,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             {
                 _z_bytes_free(&pid);
                 if (locator_is_scouted)
-                    free((char *)locator);
+                    free((z_str_t)locator);
                 _zn_session_free(&zn);
                 break;
             }
@@ -271,7 +271,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             _z_bytes_copy(&zn->remote_pid, &p_iam->body.init.pid);
 
             if (locator_is_scouted)
-                zn->locator = (char *)locator;
+                zn->locator = (z_str_t)locator;
             else
                 zn->locator = strdup(locator);
 
@@ -576,7 +576,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 }
 
 /*------------------ Write ------------------*/
-int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.

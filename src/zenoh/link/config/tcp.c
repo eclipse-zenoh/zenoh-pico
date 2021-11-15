@@ -16,15 +16,15 @@
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/properties.h"
 
-zn_properties_result_t _zn_tcp_config_from_str(const z_str_t s)
+_zn_state_result_t _zn_tcp_config_from_str(const z_str_t s)
 {
-    zn_properties_result_t res;
+    _zn_state_result_t res;
 
     if (s != NULL)
         goto ERR;
 
     res.tag = _z_res_t_OK;
-    res.value.properties = zn_properties_make();
+    res.value.state = _zn_state_make();
 
     return res;
 

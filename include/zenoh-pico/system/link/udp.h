@@ -31,7 +31,7 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 // Multicast
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface);
 int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface);
-void _zn_close_udp_multicast(int sock, void *arg);
+void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg);
 size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg);
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg);
 size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg);

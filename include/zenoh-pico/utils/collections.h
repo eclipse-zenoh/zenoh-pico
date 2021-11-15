@@ -73,7 +73,7 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs);
  *
  * Members:
  *   size_t len: The length of the array.
- *   char *const *val: A pointer to the array.
+ *   z_str_t *val: A pointer to the array.
  */
 typedef struct
 {
@@ -172,7 +172,7 @@ typedef struct
 } z_i_map_t;
 
 z_i_map_t z_i_map_make(size_t capacity);
-int z_i_map_init(z_i_map_t *map, size_t capacity);
+int z_i_map_start(z_i_map_t *map, size_t capacity);
 
 size_t z_i_map_capacity(const z_i_map_t *map);
 size_t z_i_map_len(const z_i_map_t *map);

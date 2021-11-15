@@ -13,45 +13,47 @@
  */
 
 #include <string.h>
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/system/platform.h"
 
-char *_zn_parse_port_segment_tcp(z_str_t address)
+z_str_t _zn_parse_port_segment_tcp(z_str_t address)
 {
-    z_str_t p_init = strrchr(address, ':');
-    if (p_init == NULL)
+    z_str_t p_start = strrchr(address, ':');
+    if (p_start == NULL)
         return NULL;
-    ++p_init;
+    p_start++;
 
     z_str_t p_end = &address[strlen(address)];
 
-    int len = p_end - p_init;
-    char *port = (char *)malloc((len + 1) * sizeof(char));
-    strncpy(port, p_init, len);
+    int len = p_end - p_start;
+    z_str_t port = (z_str_t)malloc((len + 1) * sizeof(char));
+    strncpy(port, p_start, len);
     port[len] = '\0';
 
     return port;
 }
 
-char *_zn_parse_address_segment_tcp(z_str_t address)
+z_str_t _zn_parse_address_segment_tcp(z_str_t address)
 {
-    z_str_t p_init = &address[0];
+    z_str_t p_start = &address[0];
     z_str_t p_end = strrchr(address, ':');
 
-    if (*p_init == '[' && *(--p_end) == ']')
+    if (*p_start == '[' && *(p_end - 1) == ']')
     {
-        int len = p_end - ++p_init;
-        char *ip6_addr = (char *)malloc((len + 1) * sizeof(char));
-        strncpy(ip6_addr, p_init, len);
+        p_start++;
+        p_end--;
+        int len = p_end - p_start;
+        z_str_t ip6_addr = (z_str_t)malloc((len + 1) * sizeof(char));
+        strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
         return ip6_addr;
     }
     else
     {
-        int len = p_end - p_init;
-        char *ip4_addr_or_domain = (char *)malloc((len + 1) * sizeof(char));
-        strncpy(ip4_addr_or_domain, p_init, len);
+        int len = p_end - p_start;
+        z_str_t ip4_addr_or_domain = (z_str_t)malloc((len + 1) * sizeof(char));
+        strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
         return ip4_addr_or_domain;
@@ -66,13 +68,16 @@ _zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_open_tcp(self->endpoint_syscall);
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+    self->sock = _zn_open_tcp(self->raddr);
+    if (self->sock < 0)
+        goto _ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
+    return r;
+
+_ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -82,13 +87,16 @@ _zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_tcp(self->endpoint_syscall);
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+    self->sock = _zn_listen_tcp(self->raddr);
+    if (self->sock < 0)
+        goto _ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
+    return r;
+
+_ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -103,7 +111,7 @@ void _zn_f_link_free_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    _zn_free_endpoint_tcp(self->endpoint_syscall);
+    _zn_free_endpoint_tcp(self->raddr);
 }
 
 size_t _zn_f_link_write_tcp(const void *arg, const uint8_t *ptr, size_t len)
@@ -134,10 +142,10 @@ size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len)
     return _zn_read_exact_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_get_link_mtu_tcp()
+uint16_t _zn_get_link_mtu_tcp()
 {
-    // TODO
-    return -1;
+    // Maximum batch size for TCP
+    return !0;
 }
 
 _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
@@ -150,7 +158,8 @@ _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
 
     z_str_t s_addr = _zn_parse_address_segment_tcp(endpoint.locator.address);
     z_str_t s_port = _zn_parse_port_segment_tcp(endpoint.locator.address);
-    lt->endpoint_syscall = _zn_create_endpoint_tcp(s_addr, s_port);
+
+    lt->raddr = _zn_create_endpoint_tcp(s_addr, s_port);
     lt->endpoint = endpoint;
 
     lt->open_f = _zn_f_link_open_tcp;

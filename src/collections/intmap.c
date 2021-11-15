@@ -19,11 +19,11 @@
 z_i_map_t z_i_map_make(size_t capacity)
 {
     z_i_map_t map;
-    z_i_map_init(&map, capacity);
+    z_i_map_start(&map, capacity);
     return map;
 }
 
-int z_i_map_init(z_i_map_t *map, size_t capacity)
+int z_i_map_start(z_i_map_t *map, size_t capacity)
 {
     if (map == NULL || capacity == 0)
         return -1;

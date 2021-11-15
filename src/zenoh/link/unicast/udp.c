@@ -16,42 +16,44 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/link/manager.h"
 
-char *_zn_parse_port_segment_udp_unicast(z_str_t address)
+z_str_t _zn_parse_port_segment_udp_unicast(z_str_t address)
 {
-    z_str_t p_init = strrchr(address, ':');
-    if (p_init == NULL)
+    z_str_t p_start = strrchr(address, ':');
+    if (p_start == NULL)
         return NULL;
-    ++p_init;
+    p_start++;
 
     z_str_t p_end = &address[strlen(address)];
 
-    int len = p_end - p_init;
-    char *port = (char *)malloc((len + 1) * sizeof(char));
-    strncpy(port, p_init, len);
+    int len = p_end - p_start;
+    z_str_t port = (z_str_t)malloc((len + 1) * sizeof(char));
+    strncpy(port, p_start, len);
     port[len] = '\0';
 
     return port;
 }
 
-char *_zn_parse_address_segment_udp_unicast(z_str_t address)
+z_str_t _zn_parse_address_segment_udp_unicast(z_str_t address)
 {
-    z_str_t p_init = &address[0];
+    z_str_t p_start = &address[0];
     z_str_t p_end = strrchr(address, ':');
 
-    if (*p_init == '[' && *(--p_end) == ']')
+    if (*p_start == '[' && *(p_end - 1) == ']')
     {
-        int len = p_end - ++p_init;
-        char *ip6_addr = (char *)malloc((len + 1) * sizeof(char));
-        strncpy(ip6_addr, p_init, len);
+        p_start++;
+        p_end--;
+        int len = p_end - p_start;
+        z_str_t ip6_addr = (z_str_t)malloc((len + 1) * sizeof(char));
+        strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
         return ip6_addr;
     }
     else
     {
-        int len = p_end - p_init;
-        char *ip4_addr_or_domain = (char *)malloc((len + 1) * sizeof(char));
-        strncpy(ip4_addr_or_domain, p_init, len);
+        int len = p_end - p_start;
+        z_str_t ip4_addr_or_domain = (z_str_t)malloc((len + 1) * sizeof(char));
+        strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
         return ip4_addr_or_domain;
@@ -66,13 +68,16 @@ _zn_socket_result_t _zn_f_link_open_udp_unicast(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_open_udp_unicast(self->endpoint_syscall, tout);
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+    self->sock = _zn_open_udp_unicast(self->raddr, tout);
+    if (self->sock < 0)
+        goto _ZN_F_LINK_OPEN_UDP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
+    return r;
+
+_ZN_F_LINK_OPEN_UDP_UNICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -82,13 +87,16 @@ _zn_socket_result_t _zn_f_link_listen_udp_unicast(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    r.value.socket = _zn_listen_udp_unicast(self->endpoint_syscall, tout);
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    }
+    self->sock = _zn_listen_udp_unicast(self->raddr, tout);
+    if (self->sock < 0)
+        goto _ZN_F_LINK_LISTEN_UDP_UNICAST_ERROR_1;
 
+    r.value.socket = self->sock;
+    return r;
+
+_ZN_F_LINK_LISTEN_UDP_UNICAST_ERROR_1:
+    r.tag = _z_res_t_ERR;
+    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
 }
 
@@ -103,21 +111,21 @@ void _zn_f_link_free_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    _zn_free_endpoint_udp(self->endpoint_syscall);
+    _zn_free_endpoint_udp(self->raddr);
 }
 
 size_t _zn_f_link_write_udp_unicast(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    return _zn_send_udp_unicast(self->sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_unicast(self->sock, ptr, len, self->raddr);
 }
 
 size_t _zn_f_link_write_all_udp_unicast(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    return _zn_send_udp_unicast(self->sock, ptr, len, self->endpoint_syscall);
+    return _zn_send_udp_unicast(self->sock, ptr, len, self->raddr);
 }
 
 size_t _zn_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len)
@@ -149,9 +157,9 @@ _zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint)
     lt->is_multicast = 0;
     lt->mtu = _zn_get_link_mtu_udp_unicast();
 
-    char *s_addr = _zn_parse_address_segment_udp_unicast(endpoint.locator.address);
-    char *s_port = _zn_parse_port_segment_udp_unicast(endpoint.locator.address);
-    lt->endpoint_syscall = _zn_create_endpoint_udp(s_addr, s_port);
+    z_str_t s_addr = _zn_parse_address_segment_udp_unicast(endpoint.locator.address);
+    z_str_t s_port = _zn_parse_port_segment_udp_unicast(endpoint.locator.address);
+    lt->raddr = _zn_create_endpoint_udp(s_addr, s_port);
     lt->endpoint = endpoint;
 
     lt->open_f = _zn_f_link_open_udp_unicast;

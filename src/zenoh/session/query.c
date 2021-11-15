@@ -363,7 +363,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Free the resource name if allocated
         if (reskey.rid != ZN_RESOURCE_ID_NONE)
-            free((char *)reply.data.data.key.val);
+            free((z_str_t)reply.data.data.key.val);
 
         break;
     }

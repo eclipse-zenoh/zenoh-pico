@@ -16,13 +16,13 @@
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/properties.h"
 
-zn_properties_result_t _zn_udp_config_from_str(const z_str_t s)
+_zn_state_result_t _zn_udp_config_from_str(const z_str_t s)
 {
     unsigned int argc = 1;
-    zn_property_mapping_t args[argc];
+    _zn_state_mapping_t args[argc];
     // Mapping 0
     args[0].key = UDP_CONFIG_MULTICAST_IFACE_KEY;
     args[0].str = UDP_CONFIG_MULTICAST_IFACE_STR;
 
-    return zn_properties_from_str(s, argc, args);
+    return _zn_state_from_str(s, argc, args);
 }

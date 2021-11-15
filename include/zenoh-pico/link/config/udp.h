@@ -15,12 +15,12 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_UDP_H
 #define ZENOH_PICO_LINK_CONFIG_UDP_H
 
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/properties.h"
 
 #define UDP_CONFIG_MULTICAST_IFACE_KEY 0x01
 #define UDP_CONFIG_MULTICAST_IFACE_STR "iface"
 
-zn_properties_result_t _zn_udp_config_from_str(const z_str_t s);
+_zn_state_result_t _zn_udp_config_from_str(const z_str_t s);
 
 #endif /* ZENOH_PICO_LINK_CONFIG_UDP_H */

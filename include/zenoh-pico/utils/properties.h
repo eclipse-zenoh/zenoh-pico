@@ -128,8 +128,4 @@ void zn_properties_clear(zn_properties_t *ps);
  */
 void zn_properties_free(zn_properties_t **ps);
 
-ZN_RESULT_DECLARE(zn_properties_t, properties)
-
-zn_properties_result_t zn_properties_from_str(const z_str_t s, int argc, zn_property_mapping_t argv[]);
-
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

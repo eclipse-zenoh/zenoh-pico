@@ -25,7 +25,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "/demo/example/";
+z_str_t uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -87,7 +87,7 @@ void data_handler(const zn_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, char **argv)
+int main(int argc, z_str_t *argv)
 {
     setbuf(stdout, NULL);
 

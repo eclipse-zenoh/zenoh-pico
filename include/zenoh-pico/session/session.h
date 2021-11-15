@@ -48,7 +48,7 @@ typedef struct
     z_bytes_t local_pid;
     z_bytes_t remote_pid;
 
-    char *locator;
+    z_str_t locator;
 
     volatile z_zint_t lease;
     z_zint_t sn_resolution;

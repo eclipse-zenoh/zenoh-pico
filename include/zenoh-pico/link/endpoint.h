@@ -17,8 +17,35 @@
 
 #include <stdint.h>
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/properties.h"
 #include "zenoh-pico/utils/result.h"
+
+/*------------------ State  ------------------*/
+#define ENDPOINT_STATE_KEYVALUE_SEPARATOR '='
+#define ENDPOINT_STATE_LIST_SEPARATOR ';'
+
+typedef z_i_map_t _zn_state_t;
+
+typedef struct
+{
+    unsigned int key;
+    z_str_t str;
+} _zn_state_mapping_t;
+
+_zn_state_t _zn_state_make(void);
+int _zn_state_init(_zn_state_t *ps);
+
+int _zn_state_set(_zn_state_t *ps, unsigned int key, z_str_t value);
+const z_str_t _zn_state_get(const _zn_state_t *ps, unsigned int key);
+z_str_t _zn_state_del(_zn_state_t *ps, unsigned int key);
+
+size_t _zn_state_len(const _zn_state_t *ps);
+int _zn_state_is_empty(const _zn_state_t *ps);
+void _zn_state_clear(_zn_state_t *ps);
+void _zn_state_free(_zn_state_t **ps);
+
+_ZN_RESULT_DECLARE(_zn_state_t, state)
+
+_zn_state_result_t _zn_state_from_str(const z_str_t s, unsigned int argc, _zn_state_mapping_t argv[]);
 
 /*------------------ Locator ------------------*/
 #define TCP_SCHEMA "tcp"
@@ -28,7 +55,7 @@ typedef struct
 {
     z_str_t protocol;
     z_str_t address;
-    zn_properties_t metadata;
+    _zn_state_t metadata;
 } _zn_locator_t;
 
 _ZN_RESULT_DECLARE(_zn_locator_t, locator)
@@ -47,7 +74,7 @@ void _zn_locator_free(_zn_locator_t **lc);
 typedef struct
 {
     _zn_locator_t locator;
-    zn_properties_t config;
+    _zn_state_t config;
 } _zn_endpoint_t;
 
 _ZN_RESULT_DECLARE(_zn_endpoint_t, endpoint)

@@ -235,13 +235,14 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
-    struct sockaddr *laddr = NULL;
+    struct addrinfo *laddr = NULL;
     unsigned int addrlen = 0;
 
     struct ifaddrs *l_ifaddr = NULL;
     if (getifaddrs(&l_ifaddr) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
+    struct sockaddr *lsockaddr = NULL;
     struct ifaddrs *tmp = NULL;
     for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next)
     {
@@ -251,16 +252,16 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
             {
                 if (tmp->ifa_addr->sa_family == AF_INET)
                 {
-                    laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
-                    memset(laddr, 0, sizeof(struct sockaddr_in));
-                    memcpy(laddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
+                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+                    memset(lsockaddr, 0, sizeof(struct sockaddr_in));
+                    memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
                     addrlen = sizeof(struct sockaddr_in);
                 }
                 else if (tmp->ifa_addr->sa_family == AF_INET6)
                 {
-                    laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
-                    memset(laddr, 0, sizeof(struct sockaddr_in6));
-                    memcpy(laddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
+                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+                    memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
+                    memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
                     addrlen = sizeof(struct sockaddr_in6);
                 }
                 else
@@ -276,26 +277,37 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     if (sock < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
-    if (bind(sock, laddr, addrlen) < 0)
+    if (bind(sock, lsockaddr, addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
     // Get the randomly assigned port used to discard loopback messages
-    if (getsockname(sock, laddr, &addrlen) < 0)
+    if (getsockname(sock, lsockaddr, &addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
-    if (laddr->sa_family == AF_INET)
+    if (lsockaddr->sa_family == AF_INET)
     {
-        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)laddr)->sin_addr, sizeof(struct in_addr)) < 0)
+        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr, sizeof(struct in_addr)) < 0)
             goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
     }
-    else if (laddr->sa_family == AF_INET6)
+    else if (lsockaddr->sa_family == AF_INET6)
     {
         int ifindex = if_nametoindex(iface);
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
             goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
     }
 
+    // Create laddr endpoint
+    laddr = (struct addrinfo *)malloc(sizeof(struct addrinfo));
+    laddr->ai_flags = 0;
+    laddr->ai_family = raddr->ai_family;
+    laddr->ai_socktype = raddr->ai_socktype;
+    laddr->ai_protocol = raddr->ai_protocol;
+    laddr->ai_addrlen = addrlen;
+    laddr->ai_addr = lsockaddr;
+    laddr->ai_canonname = NULL;
+    laddr->ai_next = NULL;
     *arg_2 = laddr;
+
     return sock;
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
@@ -314,7 +326,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
 
     int optflag = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
 
 #if defined(ZENOH_MACOS)
@@ -372,7 +384,7 @@ _ZN_LISTEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-void _zn_close_udp_multicast(int sock, void *arg)
+void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
@@ -382,7 +394,7 @@ void _zn_close_udp_multicast(int sock, void *arg)
         memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-        setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+        setsockopt(sock_recv, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
     }
     else if (raddr->ai_family == AF_INET6)
     {
@@ -392,15 +404,16 @@ void _zn_close_udp_multicast(int sock, void *arg)
                &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
                sizeof(struct in6_addr));
         //mreq.ipv6mr_interface = ifindex;
-        setsockopt(sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 
-    close(sock);
+    close(sock_recv);
+    close(sock_send);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
 {
-    struct sockaddr *laddr = (struct sockaddr *)arg;
+    struct addrinfo *laddr = (struct addrinfo *)arg;
     struct sockaddr_storage raddr;
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
@@ -410,16 +423,16 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &addrlen);
 
-        if (laddr->sa_family == AF_INET)
+        if (laddr->ai_family == AF_INET)
         {
-            struct sockaddr_in *a = ((struct sockaddr_in *)laddr);
+            struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
             if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr))
                 break;
         }
-        else if (laddr->sa_family == AF_INET6)
+        else if (laddr->ai_family == AF_INET6)
         {
-            struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr);
+            struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr->ai_addr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, 16) == 0))
                 break;

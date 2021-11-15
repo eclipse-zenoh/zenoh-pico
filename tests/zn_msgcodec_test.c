@@ -164,10 +164,10 @@ uint64_t gen_time(void)
     return (uint64_t)time(NULL);
 }
 
-char *gen_string(size_t size)
+z_str_t gen_string(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
-    char *str = (char *)malloc((sizeof(char) * size) + 1);
+    z_str_t str = (z_str_t)malloc((sizeof(char) * size) + 1);
     for (z_zint_t i = 0; i < size; ++i)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
