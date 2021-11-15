@@ -208,7 +208,7 @@ int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locators_t *ls)
 {
     _ZN_EC(_z_zint_encode(wbf, ls->len))
     // Encode the locators
-    for (size_t i = 0; i < ls->len; ++i)
+    for (size_t i = 0; i < ls->len; i++)
     {
         _ZN_EC(_z_str_encode(wbf, (z_str_t)ls->val[i]))
     }
@@ -228,7 +228,7 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
     _z_str_array_init(&r->value.locators, len);
 
     // Decode the elements
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
     {
         _z_str_result_t r_s = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_s, r, _z_err_t_PARSE_STRING);
@@ -810,7 +810,7 @@ int _zn_declare_encode(_z_wbuf_t *wbf, const _zn_declare_t *msg)
     // Encode the body
     z_zint_t len = msg->declarations.len;
     _ZN_EC(_z_zint_encode(wbf, len))
-    for (z_zint_t i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; i++)
     {
         _ZN_EC(_zn_declaration_encode(wbf, &msg->declarations.val[i]))
     }
@@ -832,7 +832,7 @@ void _zn_declare_decode_na(_z_zbuf_t *zbf, _zn_declare_result_t *r)
     r->value.declare.declarations.len = len;
 
     _zn_declaration_result_t *r_decl = (_zn_declaration_result_t *)malloc(sizeof(_zn_declaration_result_t));
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
     {
         _zn_declaration_decode_na(zbf, r_decl);
         if (r_decl->tag == _z_res_t_OK)
@@ -863,7 +863,7 @@ _zn_declare_result_t _zn_declare_decode(_z_zbuf_t *zbf)
 
 void _zn_declare_free(_zn_declare_t *dcl)
 {
-    for (size_t i = 0; i < dcl->declarations.len; ++i)
+    for (size_t i = 0; i < dcl->declarations.len; i++)
         _zn_declaration_free(&dcl->declarations.val[i]);
     free(dcl->declarations.val);
 }
@@ -2018,7 +2018,7 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     else
     {
         size_t len = z_vec_len(&msg->payload.messages);
-        for (size_t i = 0; i < len; ++i)
+        for (size_t i = 0; i < len; i++)
             _ZN_EC(_zn_zenoh_message_encode(wbf, z_vec_get(&msg->payload.messages, i)))
 
         return 0;
@@ -2082,7 +2082,7 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
     }
     else
     {
-        for (size_t i = 0; i < z_vec_len(&msg->payload.messages); ++i)
+        for (size_t i = 0; i < z_vec_len(&msg->payload.messages); i++)
             _zn_zenoh_message_free((_zn_zenoh_message_t *)z_vec_get(&msg->payload.messages, i));
         z_vec_free(&msg->payload.messages);
     }

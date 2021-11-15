@@ -83,7 +83,7 @@ int main(void)
     zn_hello_array_t hellos = zn_scout(ZN_ROUTER, config, 1000);
     if (hellos.len > 0)
     {
-        for (size_t i = 0; i < hellos.len; ++i)
+        for (size_t i = 0; i < hellos.len; i++)
         {
             fprinthello(stdout, hellos.val[i]);
             fprintf(stdout, "\n");

@@ -361,7 +361,7 @@ uint8_t __z_wbuf_get(const _z_wbuf_t *wbf, size_t pos)
             break;
         else
             pos -= ios->capacity;
-    } while (++i);
+    } while (i++);
 
     return _z_iosli_get(ios, pos);
 }
@@ -432,7 +432,7 @@ void _z_wbuf_put(_z_wbuf_t *wbf, uint8_t b, size_t pos)
             break;
         else
             pos -= ios->capacity;
-    } while (++i);
+    } while (i++);
 
     _z_iosli_put(ios, b, pos);
     return;
@@ -482,7 +482,7 @@ void _z_wbuf_set_rpos(_z_wbuf_t *wbf, size_t pos)
 
         ios->r_pos = ios->w_pos;
         pos -= ios->capacity;
-    } while (++i);
+    } while (i++);
 }
 
 void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
@@ -501,7 +501,7 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
 
         ios->w_pos = ios->capacity;
         pos -= ios->capacity;
-    } while (++i);
+    } while (i++);
 }
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf)

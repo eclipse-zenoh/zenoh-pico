@@ -50,7 +50,7 @@
 //     zn_property_t *p;
 //     size_t len = zn_properties_len(ps);
 //     _ZN_EC(_z_zint_encode(buf, len))
-//     for (size_t i = 0; i < len; ++i)
+//     for (size_t i = 0; i < len; i++)
 //     {
 //         p = (zn_property_t *)z_vec_get(ps, i);
 //         _ZN_EC(zn_property_encode(buf, p))

@@ -63,7 +63,7 @@ void loop()
         return;
 
     zn_reply_data_array_t replies = zn_query_collect(s, zn_rname(URI), "", zn_query_target_default(), zn_query_consolidation_default());
-    for (unsigned int i = 0; i < replies.len; ++i)
+    for (unsigned int i = 0; i < replies.len; i++)
     {
     }
     zn_reply_data_array_free(replies);

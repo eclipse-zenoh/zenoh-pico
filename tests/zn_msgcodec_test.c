@@ -31,7 +31,7 @@
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->capacity; ++i)
+    for (size_t i = 0; i < ios->capacity; i++)
     {
         printf("%02x", ios->buf[i]);
         if (i < ios->capacity - 1)
@@ -54,7 +54,7 @@ void print_wbuf(_z_wbuf_t *wbf)
 void print_uint8_array(z_bytes_t *arr)
 {
     printf("Length: %zu, Buffer: [", arr->len);
-    for (size_t i = 0; i < arr->len; ++i)
+    for (size_t i = 0; i < arr->len; i++)
     {
         printf("%02x", arr->val[i]);
         if (i < arr->len - 1)
@@ -142,7 +142,7 @@ _zn_payload_t gen_payload(size_t len)
     _zn_payload_t pld;
     pld.len = len;
     pld.val = (uint8_t *)malloc(len * sizeof(uint8_t));
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
         ((uint8_t *)pld.val)[i] = 0xff;
 
     return pld;
@@ -153,7 +153,7 @@ z_bytes_t gen_bytes(size_t len)
     z_bytes_t arr;
     arr.len = len;
     arr.val = (uint8_t *)malloc(sizeof(uint8_t) * len);
-    for (z_zint_t i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; i++)
         ((uint8_t *)arr.val)[i] = gen_uint8();
 
     return arr;
@@ -168,7 +168,7 @@ z_str_t gen_string(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
     z_str_t str = (z_str_t)malloc((sizeof(char) * size) + 1);
-    for (z_zint_t i = 0; i < size; ++i)
+    for (z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
         str[i] = charset[key];
@@ -180,7 +180,7 @@ z_str_t gen_string(size_t size)
 z_str_array_t gen_str_array(size_t size)
 {
     z_str_array_t sa = _z_str_array_make(size);
-    for (size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; i++)
         ((z_str_t *)sa.val)[i] = gen_string(16);
 
     return sa;
@@ -197,7 +197,7 @@ void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right)
     assert(left->capacity == right->capacity);
 
     printf("Content (");
-    for (z_zint_t i = 0; i < left->capacity; ++i)
+    for (z_zint_t i = 0; i < left->capacity; i++)
     {
         uint8_t l = left->buf[i];
         uint8_t r = right->buf[i];
@@ -218,7 +218,7 @@ void assert_eq_uint8_array(z_bytes_t *left, z_bytes_t *right)
 
     assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->len; ++i)
+    for (size_t i = 0; i < left->len; i++)
     {
         uint8_t l = left->val[i];
         uint8_t r = right->val[i];
@@ -239,7 +239,7 @@ void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
 
     assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->len; ++i)
+    for (size_t i = 0; i < left->len; i++)
     {
         const z_str_t l = left->val[i];
         const z_str_t r = right->val[i];
@@ -1227,7 +1227,7 @@ _zn_declare_t gen_declare_message(void)
     e_dcl.declarations.len = gen_zint() % 16;
     e_dcl.declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.len);
 
-    for (z_zint_t i = 0; i < e_dcl.declarations.len; ++i)
+    for (z_zint_t i = 0; i < e_dcl.declarations.len; i++)
         e_dcl.declarations.val[i] = gen_declaration();
 
     return e_dcl;
@@ -1237,7 +1237,7 @@ void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
 {
     assert(left->declarations.len == right->declarations.len);
 
-    for (z_zint_t i = 0; i < left->declarations.len; ++i)
+    for (z_zint_t i = 0; i < left->declarations.len; i++)
     {
         printf("   ");
         assert_eq_declaration(&left->declarations.val[i], &right->declarations.val[i]);
@@ -2374,7 +2374,7 @@ _zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
     {
         z_zint_t num = (gen_zint() % 4) + 1;
         e_fr.payload.messages = z_vec_make(num);
-        for (z_zint_t i = 0; i < num; ++i)
+        for (z_zint_t i = 0; i < num; i++)
         {
             _zn_zenoh_message_t *p_zm = gen_zenoh_message();
             z_vec_append(&e_fr.payload.messages, p_zm);
@@ -2403,7 +2403,7 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
         printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 
-        for (size_t i = 0; i < l_len; ++i)
+        for (size_t i = 0; i < l_len; i++)
             assert_eq_zenoh_message((_zn_zenoh_message_t *)z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)z_vec_get(&right->payload.messages, i));
     }
 }
@@ -2614,7 +2614,7 @@ void batch(void)
 
     // Initialize
     _zn_transport_message_t **e_sm = (_zn_transport_message_t **)malloc(tot_num * sizeof(_zn_transport_message_t *));
-    for (uint8_t i = 0; i < bef_num; ++i)
+    for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2622,7 +2622,7 @@ void batch(void)
         int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
-    for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
+    for (uint8_t i = bef_num; i < bef_num + frm_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2633,7 +2633,7 @@ void batch(void)
         int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
-    for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
+    for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2644,7 +2644,7 @@ void batch(void)
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    for (uint8_t i = 0; i < tot_num; ++i)
+    for (uint8_t i = 0; i < tot_num; i++)
     {
         _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
@@ -2836,7 +2836,7 @@ int main(void)
 {
     setbuf(stdout, NULL);
 
-    for (unsigned int i = 0; i < RUNS; ++i)
+    for (unsigned int i = 0; i < RUNS; i++)
     {
         printf("\n\n== RUN %u", i);
         // Message fields

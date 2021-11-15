@@ -65,7 +65,7 @@ void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
         //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
         //       the boundary of the serialized messages. The length is encoded as little-endian.
         //       In any case, the length of a message must not exceed 65_535 bytes.
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(buf, 0, i);
         _z_wbuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
     }
@@ -86,7 +86,7 @@ void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
         //       the boundary of the serialized messages. The length is encoded as little-endian.
         //       In any case, the length of a message must not exceed 65_535 bytes.
         size_t len = _z_wbuf_len(buf) - _ZN_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
     }
 }

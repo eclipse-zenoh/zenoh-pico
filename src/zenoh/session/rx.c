@@ -52,7 +52,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     case _ZN_MID_DECLARE:
     {
         _Z_DEBUG("Received _ZN_DECLARE message\n");
-        for (unsigned int i = 0; i < msg->body.declare.declarations.len; ++i)
+        for (unsigned int i = 0; i < msg->body.declare.declarations.len; i++)
         {
             _zn_declaration_t decl = msg->body.declare.declarations.val[i];
             switch (_ZN_MID(decl.header))
