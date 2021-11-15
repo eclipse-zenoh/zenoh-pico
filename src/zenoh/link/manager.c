@@ -32,11 +32,11 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
 
     if (strcmp(endpoint.locator.protocol, TCP_SCHEMA) == 0)
     {
-        link = _zn_new_link_tcp(&endpoint);
+        link = _zn_new_link_tcp(endpoint);
     }
     else if (strcmp(endpoint.locator.protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_udp_unicast(&endpoint);
+        link = _zn_new_link_udp_unicast(endpoint);
     }
     else
     {
@@ -78,7 +78,7 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
     _zn_link_t *link = NULL;
     if (strcmp(endpoint.locator.protocol, UDP_SCHEMA) == 0)
     {
-        link = _zn_new_link_udp_multicast(&endpoint);
+        link = _zn_new_link_udp_multicast(endpoint);
     }
     else
     {
@@ -128,7 +128,7 @@ void _zn_link_free(_zn_link_t **zn)
 
     ptr->close_f(ptr);
     ptr->free_f(ptr);
-    _zn_endpoint_free(&ptr->endpoint);
+    _zn_endpoint_clear(&ptr->endpoint);
 
     *zn = NULL;
 }

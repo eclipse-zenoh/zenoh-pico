@@ -38,12 +38,13 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-    - name: Compile release
+    - name: Compile debug
       run: make all
       env:
-        BUILD_TYPE: Release
+        BUILD_TYPE: Debug
 
-    - name: Test release
+    - name: Test debug
       run: make test
       env:
+        BUILD_TYPE: Debug
         ARGS: -V

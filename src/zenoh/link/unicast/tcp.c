@@ -140,7 +140,7 @@ size_t _zn_get_link_mtu_tcp()
     return -1;
 }
 
-_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t *endpoint)
+_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
     lt->is_reliable = 1;
@@ -148,8 +148,8 @@ _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t *endpoint)
     lt->is_multicast = 0;
     lt->mtu = _zn_get_link_mtu_tcp();
 
-    z_str_t s_addr = _zn_parse_address_segment_tcp(endpoint->locator.address);
-    z_str_t s_port = _zn_parse_port_segment_tcp(endpoint->locator.address);
+    z_str_t s_addr = _zn_parse_address_segment_tcp(endpoint.locator.address);
+    z_str_t s_port = _zn_parse_port_segment_tcp(endpoint.locator.address);
     lt->endpoint_syscall = _zn_create_endpoint_tcp(s_addr, s_port);
     lt->endpoint = endpoint;
 

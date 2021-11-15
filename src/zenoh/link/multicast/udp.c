@@ -162,7 +162,7 @@ size_t _zn_get_link_mtu_udp_multicast()
     return -1;
 }
 
-_zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t *endpoint)
+_zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)
 {
     _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
 
@@ -171,8 +171,8 @@ _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t *endpoint)
     lt->is_multicast = 1;
     lt->mtu = _zn_get_link_mtu_udp_multicast();
 
-    char *s_addr = _zn_parse_address_segment_udp_multicast(endpoint->locator.address);
-    char *s_port = _zn_parse_port_segment_udp_multicast(endpoint->locator.address);
+    char *s_addr = _zn_parse_address_segment_udp_multicast(endpoint.locator.address);
+    char *s_port = _zn_parse_port_segment_udp_multicast(endpoint.locator.address);
     lt->endpoint_syscall = _zn_create_endpoint_udp(s_addr, s_port);
     lt->extra_endpoint_syscall = NULL;
     lt->endpoint = endpoint;

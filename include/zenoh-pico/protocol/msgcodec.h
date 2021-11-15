@@ -32,7 +32,7 @@ _ZN_RESULT_DECLARE(zn_query_target_t, query_target)
 _ZN_RESULT_DECLARE(zn_query_consolidation_t, query_consolidation)
 
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
-_ZN_RESULT_DECLARE(__zn_locators_t, locators)
+_ZN_RESULT_DECLARE(_zn_locators_t, locators)
 _ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 _ZN_RESULT_DECLARE(_zn_scout_t, scout)

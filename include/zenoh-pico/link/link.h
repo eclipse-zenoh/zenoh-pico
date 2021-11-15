@@ -41,7 +41,7 @@ typedef struct
     _zn_socket_t sock;
     _zn_socket_t extra_sock;
 
-    _zn_endpoint_t *endpoint;
+    _zn_endpoint_t endpoint;
     void *endpoint_syscall;
     void *extra_endpoint_syscall;
 

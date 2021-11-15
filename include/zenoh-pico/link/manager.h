@@ -21,9 +21,9 @@
 _zn_link_p_result_t _zn_open_link(const z_str_t locator, const clock_t tout);
 _zn_link_p_result_t _zn_listen_link(const z_str_t locator, const clock_t tout);
 
-_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t *endpoint);
-_zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t *endpoint);
-_zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t *endpoint);
+_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint);
+_zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint);
+_zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint);
 
 void _zn_link_free(_zn_link_t **zn);
 

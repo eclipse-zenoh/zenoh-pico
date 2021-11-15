@@ -17,11 +17,11 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/collections.h"
 
 #define RUNS 1000
 
@@ -72,6 +72,9 @@ void print_transport_message_type(uint8_t header)
         break;
     case _ZN_MID_HELLO:
         printf("Hello message");
+        break;
+    case _ZN_MID_JOIN:
+        printf("Join message");
         break;
     case _ZN_MID_INIT:
         printf("Init message");
@@ -618,7 +621,7 @@ _zn_attachment_t *gen_attachment(void)
     _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
 
     p_at->header = _ZN_MID_ATTACHMENT;
-    _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
+    // _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
     p_at->payload = gen_payload(64);
 
     return p_at;
@@ -1810,7 +1813,10 @@ _zn_join_t gen_join_message(uint8_t *header)
     e_jn.pid = gen_bytes(16);
     e_jn.lease = gen_zint();
     if (gen_bool())
+    {
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_T1);
+        e_jn.lease *= 1000;
+    }
 
     if (gen_bool())
     {
@@ -1926,6 +1932,9 @@ _zn_init_t gen_init_message(uint8_t *header)
     if (gen_bool())
         _ZN_SET_FLAG(e_it.options, _ZN_OPT_INIT_QOS);
 
+    if (e_it.options != 0)
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_O);
+
     e_it.whatami = gen_zint();
     e_it.pid = gen_bytes(16);
     if (gen_bool())
@@ -1933,6 +1942,7 @@ _zn_init_t gen_init_message(uint8_t *header)
         e_it.sn_resolution = gen_zint();
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_S);
     }
+
     if (gen_bool())
     {
         e_it.cookie = gen_payload(64);
@@ -2835,9 +2845,11 @@ int main(void)
         subinfo_field();
         res_key_field();
         data_info_field();
+
         // Message decorators
         attachment_decorator();
         reply_contex_decorator();
+
         // Zenoh declarations
         resource_declaration();
         publisher_declaration();
@@ -2847,12 +2859,14 @@ int main(void)
         forget_publisher_declaration();
         forget_subscriber_declaration();
         forget_queryable_declaration();
+
         // Zenoh messages
         declare_message();
         data_message();
         pull_message();
         query_message();
         zenoh_message();
+
         // Session messages
         scout_message();
         hello_message();
