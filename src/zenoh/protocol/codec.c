@@ -14,9 +14,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/codec.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/utils/property.h"
+#include "zenoh-pico/protocol/codec.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/properties.h"
 
 // @TODO: property and properties
 // int _zn_property_encode(_z_wbuf_t *buf, const zn_property_t *m)

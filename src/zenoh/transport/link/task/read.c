@@ -12,10 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/utils/logging.h"
 
 void *_znp_read_task(void *arg)
 {

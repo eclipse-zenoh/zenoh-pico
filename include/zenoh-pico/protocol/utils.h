@@ -12,8 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_PROTOCOL_UTILS_H
-#define _ZENOH_PICO_PROTOCOL_UTILS_H
+#ifndef ZENOH_PICO_PROTOCOL_UTILS_H
+#define ZENOH_PICO_PROTOCOL_UTILS_H
+
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/utils/collections.h"
 
 /**
  * Intersects two resource names. This function compares two resource names
@@ -26,6 +30,17 @@
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int zn_rname_intersect(const char *left, const char *right);
+int zn_rname_intersect(const z_str_t left, const z_str_t right);
 
-#endif /* _ZENOH_PICO_PROTOCOL_UTILS_H */
+/*------------------ Message helper ------------------*/
+_zn_transport_message_t _zn_transport_message_init(uint8_t header);
+_zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
+_zn_reply_context_t *_zn_reply_context_init(void);
+_zn_attachment_t *_zn_attachment_init(void);
+
+/*------------------ Clone/Copy/Free helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
+z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp);
+void z_timestamp_reset(z_timestamp_t *tstamp);
+
+#endif /* ZENOH_PICO_PROTOCOL_UTILS_H */

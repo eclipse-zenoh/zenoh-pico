@@ -12,11 +12,13 @@
  *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include <stdlib.h>
+#include "zenoh-pico/link/link.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Socket Receive ------------------*/
-int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf)
+int _zn_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf)
 {
     int rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
     if (rb > 0)
@@ -24,7 +26,7 @@ int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf)
     return rb;
 }
 
-int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len)
+int _zn_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len)
 {
     int rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len);
     if (rb > 0)
@@ -33,7 +35,7 @@ int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len)
 }
 
 /*------------------ Socket Send ------------------*/
-int _zn_send_wbuf(_zn_link_t *link, const _z_wbuf_t *wbf)
+int _zn_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf)
 {
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {

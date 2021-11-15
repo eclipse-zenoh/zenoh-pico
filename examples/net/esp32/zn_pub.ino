@@ -15,8 +15,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-extern "C" {
-    #include "zenoh-pico.h"
+extern "C"
+{
+#include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -38,7 +39,8 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    { }
+    {
+    }
     delay(1000);
 
     zn_properties_t *config = zn_config_default();
@@ -55,11 +57,12 @@ void setup()
     znp_start_lease_task(s);
 
     unsigned long rid = zn_declare_resource(s, zn_rname(URI));
-    reskey = (zn_reskey_t*)malloc(sizeof(zn_reskey_t));
+    reskey = (zn_reskey_t *)malloc(sizeof(zn_reskey_t));
     *reskey = zn_rid(rid);
 
     zn_publisher_t *pub = zn_declare_publisher(s, *reskey);
-    if (pub == NULL) {
+    if (pub == NULL)
+    {
         return;
     }
 }

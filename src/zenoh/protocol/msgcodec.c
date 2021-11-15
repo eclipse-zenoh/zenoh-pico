@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/codec.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/protocol/codec.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*=============================*/
 /*           Fields            */
@@ -204,7 +204,7 @@ void _zn_reskey_free(zn_reskey_t *rk)
 }
 
 /*------------------ Locators Field ------------------*/
-int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locators_t *ls)
+int __zn_locators_encode(_z_wbuf_t *wbf, const __zn_locators_t *ls)
 {
     _ZN_EC(_z_zint_encode(wbf, ls->len))
     // Encode the locators
@@ -216,7 +216,7 @@ int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locators_t *ls)
     return 0;
 }
 
-void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
+void __zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
@@ -236,14 +236,14 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
     }
 }
 
-_zn_locators_result_t _zn_locators_decode(_z_zbuf_t *zbf)
+_zn_locators_result_t __zn_locators_decode(_z_zbuf_t *zbf)
 {
     _zn_locators_result_t r;
-    _zn_locators_decode_na(zbf, &r);
+    __zn_locators_decode_na(zbf, &r);
     return r;
 }
 
-void _zn_locators_free(_zn_locators_t *ls)
+void __zn_locators_free(__zn_locators_t *ls)
 {
     _z_str_array_free(ls);
 }
@@ -1486,7 +1486,7 @@ int _zn_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_hello_t *msg)
         _ZN_EC(_z_zint_encode(wbf, msg->whatami))
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
-        _ZN_EC(_zn_locators_encode(wbf, &msg->locators))
+        _ZN_EC(__zn_locators_encode(wbf, &msg->locators))
 
     return 0;
 }
@@ -1513,7 +1513,7 @@ void _zn_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_hello_result_t *r)
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
     {
-        _zn_locators_result_t r_locs = _zn_locators_decode(zbf);
+        _zn_locators_result_t r_locs = __zn_locators_decode(zbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
         _z_str_array_move(&r->value.hello.locators, &r_locs.value.locators);
     }
@@ -1532,7 +1532,7 @@ void _zn_hello_free(_zn_hello_t *msg, uint8_t header)
         (void)(&msg->pid);
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
-        _zn_locators_free(&msg->locators);
+        __zn_locators_free(&msg->locators);
 }
 
 /*------------------ Join Message ------------------*/
@@ -1565,7 +1565,7 @@ int _zn_join_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_join_t *msg)
         if (!msg->next_sns.is_qos)
             return -1;
 
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.sns[i]))
         }
@@ -1626,7 +1626,7 @@ void _zn_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_join_result_t *r)
     if (_ZN_HAS_FLAG(r->value.join.options, _ZN_OPT_JOIN_QOS))
     {
         r->value.join.next_sns.is_qos = 1;
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             _z_zint_result_t r_zint = _z_zint_decode(zbf);
             _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)

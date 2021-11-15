@@ -15,8 +15,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-extern "C" {
-    #include "zenoh-pico.h"
+extern "C"
+{
+#include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -34,7 +35,6 @@ void data_handler(const zn_sample_t *sample, const void *arg)
     (void)(arg); // Unused argument
 }
 
-
 void setup()
 {
     // Set WiFi in STA mode and trigger attachment
@@ -43,7 +43,8 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    { }
+    {
+    }
     delay(1000);
 
     zn_properties_t *config = zn_config_default();

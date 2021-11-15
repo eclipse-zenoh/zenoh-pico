@@ -15,10 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
 
 /*-------- string --------*/
-z_string_t z_string_make(const char *value)
+z_string_t z_string_make(const z_str_t value)
 {
     z_string_t s;
     s.val = strdup(value);
@@ -47,6 +46,12 @@ void _z_string_move(z_string_t *dst, z_string_t *src)
 
     src->val = NULL;
     src->len = 0;
+}
+
+void _z_string_move_str(z_string_t *dst, z_str_t src)
+{
+    dst->val = src;
+    dst->len = strlen(src);
 }
 
 void _z_string_free(z_string_t *str)

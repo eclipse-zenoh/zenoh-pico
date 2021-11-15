@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/utils.h"
 
 /*------------------ Reception helper ------------------*/
 void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
@@ -28,7 +28,7 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     // Prepare the buffer
     _z_zbuf_clear(&zn->zbuf);
 
-    if(zn->link->is_streamed == 1)
+    if (zn->link->is_streamed == 1)
     {
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
         //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.

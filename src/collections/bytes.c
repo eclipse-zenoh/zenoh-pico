@@ -13,7 +13,8 @@
  */
 
 #include <stdlib.h>
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/utils/collections.h"
 
 /*-------- bytes --------*/
 void _z_bytes_init(z_bytes_t *bs, size_t capacity)

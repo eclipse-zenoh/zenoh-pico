@@ -12,16 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#define _ZENOH_PICO_MSGCODEC_H_T
+#define ZENOH_PICO_MSGCODEC_H_T
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/protocol/private/iobuf.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/system/platform.h"
 
 #define RUNS 1000
 
@@ -238,8 +238,8 @@ void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
     printf("Content (");
     for (size_t i = 0; i < left->len; ++i)
     {
-        const char *l = left->val[i];
-        const char *r = right->val[i];
+        const z_str_t l = left->val[i];
+        const z_str_t r = right->val[i];
 
         printf("%s:%s", l, r);
         if (i < left->len - 1)
@@ -1821,7 +1821,7 @@ _zn_join_t gen_join_message(uint8_t *header)
     if (gen_bool())
     {
         e_jn.next_sns.is_qos = 1;
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             e_jn.next_sns.val.sns[i] = gen_zint();
         }
@@ -1872,7 +1872,7 @@ void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
         assert(right->next_sns.is_qos == 1);
 
         printf("   Next SNs: ");
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             printf("%zu:%zu ", left->next_sns.val.sns[i], right->next_sns.val.sns[i]);
             assert(left->next_sns.val.sns[i] == right->next_sns.val.sns[i]);

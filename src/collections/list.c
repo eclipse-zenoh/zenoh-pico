@@ -14,7 +14,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/utils/collections.h"
 
 /*-------- linked list --------*/
 z_list_t *z_list_empty = NULL;

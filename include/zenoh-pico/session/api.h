@@ -12,13 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SESSION_API_H
-#define _ZENOH_PICO_SESSION_API_H
+#ifndef ZENOH_PICO_SESSION_API_H
+#define ZENOH_PICO_SESSION_API_H
 
 #include <stdint.h>
-#include "zenoh-pico/protocol/types.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/utils/collections.h"
 
 /*------------------ Init/Config ------------------*/
 /**
@@ -38,7 +38,7 @@ zn_properties_t *zn_config_empty(void);
  * Parameters:
  *   peer: An optional peer locator.
  */
-zn_properties_t *zn_config_client(const char *locator);
+zn_properties_t *zn_config_client(const z_str_t locator);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
@@ -236,7 +236,7 @@ zn_reskey_t zn_rid(unsigned long rid);
  * Returns:
  *     Return a new resource key.
  */
-zn_reskey_t zn_rname(const char *rname);
+zn_reskey_t zn_rname(const z_str_t rname);
 
 /**
  * Create a resource key from a resource id and a suffix.
@@ -248,7 +248,7 @@ zn_reskey_t zn_rname(const char *rname);
  * Returns:
  *     A new resource key.
  */
-zn_reskey_t zn_rid_with_suffix(unsigned long id, const char *suffix);
+zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix);
 
 /**
  * Free a :c:type:`zn_sample_t` contained key and value.
@@ -310,7 +310,7 @@ int zn_pull(zn_subscriber_t *sub);
  */
 void zn_query(zn_session_t *session,
               zn_reskey_t reskey,
-              const char *predicate,
+              const z_str_t predicate,
               zn_query_target_t target,
               zn_query_consolidation_t consolidation,
               zn_query_handler_t callback,
@@ -332,7 +332,7 @@ void zn_query(zn_session_t *session,
  */
 zn_reply_data_array_t zn_query_collect(zn_session_t *session,
                                        zn_reskey_t reskey,
-                                       const char *predicate,
+                                       const z_str_t predicate,
                                        zn_query_target_t target,
                                        zn_query_consolidation_t consolidation);
 
@@ -395,7 +395,7 @@ zn_query_target_t zn_query_target_default(void);
  *     payload: The value of this reply.
  *     len: The length of the value of this reply.
  */
-void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, size_t len);
+void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
 
 /*------------------ Zenoh-pico operations ------------------*/
 /**
@@ -466,4 +466,4 @@ int znp_start_lease_task(zn_session_t *z);
  */
 int znp_stop_lease_task(zn_session_t *z);
 
-#endif /* _ZENOH_PICO_SESSION_API_H */
+#endif /* ZENOH_PICO_SESSION_API_H */

@@ -28,7 +28,7 @@ typedef struct {
     // Function pointers
     _zn_f_link_open open_f;
     _zn_f_link_close close_f;
-    _zn_f_link_release release_f;
+    _zn_f_link_release free_f;
     _zn_f_link_write write_f;
     _zn_f_link_write_all write_all_f;
     _zn_f_link_read read_f;

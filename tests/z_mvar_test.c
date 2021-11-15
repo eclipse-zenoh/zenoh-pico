@@ -16,10 +16,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
 #include "zenoh-pico/system/collections.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/system/types.h"
+#include "zenoh-pico/system/platform.h"
 
 #define RUN 1000000
 #define TIMEOUT 60

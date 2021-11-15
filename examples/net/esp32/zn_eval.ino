@@ -15,8 +15,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-extern "C" {
-    #include "zenoh-pico.h"
+extern "C"
+{
+#include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -31,7 +32,7 @@ void query_handler(zn_query_t *query, const void *arg)
 {
     (void)(arg); // Unused paramater
 
-    char* value = "Reply eval from ESP32";
+    char *value = "Reply eval from ESP32";
 
     z_string_t res = zn_query_res_name(query);
     z_string_t pred = zn_query_predicate(query);
@@ -46,7 +47,8 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    { }
+    {
+    }
     delay(1000);
 
     zn_properties_t *config = zn_config_default();

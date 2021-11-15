@@ -14,7 +14,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/iobuf.h"
+#include <string.h>
+#include "zenoh-pico/protocol/iobuf.h"
 
 /*------------------ IOSli ------------------*/
 _z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos)

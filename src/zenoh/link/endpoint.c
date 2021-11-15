@@ -15,126 +15,240 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "zenoh-pico/link/types.h"
+#include "zenoh-pico/link/config/tcp.h"
+#include "zenoh-pico/link/config/udp.h"
+#include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/utils/collections.h"
 
-const char *_zn_endpoint_property_from_key(const char *str, const char *key)
+/*------------------ Locator ------------------*/
+void __zn_locator_init(_zn_locator_t *locator)
 {
-    if (str == NULL)
-        return NULL;
+    locator->protocol = NULL;
+    locator->address = NULL;
+    locator->metadata = zn_properties_make();
+}
 
-    const char *p_init = strpbrk(str, key);
-    if (p_init == NULL)
-        return NULL;
-    p_init += strlen(key) + 1;
+void _zn_locator_clear(_zn_locator_t *lc)
+{
+    free((z_str_t)lc->protocol);
+    free((z_str_t)lc->address);
+    zn_properties_clear(&lc->metadata);
+}
 
-    const char *p_end = strpbrk(p_init, "&");
+void _zn_locator_free(_zn_locator_t **lc)
+{
+    _zn_locator_t *ptr = *lc;
+    _zn_locator_clear(ptr);
+    *lc = NULL;
+}
+
+z_str_t _zn_locator_protocol_from_str(const z_str_t s)
+{
+    z_str_t p_start = &s[0];
+    if (p_start == NULL)
+        goto ERR;
+
+    z_str_t p_end = strchr(s, ENDPOINT_PROTO_SEPARATOR);
     if (p_end == NULL)
-        p_end = &str[strlen(str)];
+        goto ERR;
 
-    int len = p_end - p_init;
-    char *segment = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(segment, p_init, len);
-    segment[len] = '\0';
+    if (p_start == p_end)
+        goto ERR;
 
-    return segment;
+    size_t p_len = p_end - p_start;
+    z_str_t protocol = (z_str_t)malloc((p_len + 1) * sizeof(char));
+    strncpy(protocol, p_start, p_len);
+    protocol[p_len] = '\0';
 
+    return protocol;
+
+ERR:
+    return NULL;
 }
 
-const char *_zn_get_protocol_segment(const char *locator)
+z_str_t _zn_locator_address_from_str(const z_str_t s)
 {
-    const char *p_init = &locator[0];
-    if (p_init == NULL)
-        return NULL;
+    z_str_t p_start = strchr(s, ENDPOINT_PROTO_SEPARATOR);
+    if (p_start == NULL)
+        goto ERR;
+    p_start++;
 
-    const char *p_end = strpbrk(locator, ENDPOINT_PROTO_SEPARATOR);
+    z_str_t p_end = strchr(s, ENDPOINT_METADATA_SEPARATOR);
     if (p_end == NULL)
-        return NULL;
-
-    int len = p_end - p_init;
-    char *segment = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(segment, p_init, len);
-    segment[len] = '\0';
-
-    return segment;
-}
-
-const char *_zn_get_address_segment(const char *locator)
-{
-    const char *p_init = strpbrk(locator, ENDPOINT_PROTO_SEPARATOR);
-    if (p_init == NULL)
-        return NULL;
-    ++p_init;
-
-    const char *p_end = strpbrk(locator, ENDPOINT_METADATA_SEPARATOR);
+        p_end = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
     if (p_end == NULL)
-        p_end = strpbrk(locator, ENDPOINT_CONFIG_SEPARATOR);
-        if (p_end == NULL)
-            p_end = &locator[strlen(locator)];
+        p_end = &s[strlen(s)];
 
-    int len = p_end - p_init;
-    char *segment = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(segment, p_init, len);
-    segment[len] = '\0';
+    if (p_start == p_end)
+        goto ERR;
 
-    return segment;
+    size_t p_len = p_end - p_start;
+    z_str_t address = (z_str_t)malloc((p_len + 1) * sizeof(char));
+    strncpy(address, p_start, p_len);
+    address[p_len] = '\0';
+
+    return address;
+
+ERR:
+    return NULL;
 }
 
-const char *_zn_get_metadata_segment(const char *locator)
+zn_properties_result_t _zn_locator_metadata_from_str(const z_str_t s)
 {
-    const char *p_init = strpbrk(locator, ENDPOINT_METADATA_SEPARATOR);
-    if (p_init == NULL)
-        return NULL;
-    ++p_init;
+    zn_properties_result_t res;
 
-    const char *p_end = strpbrk(locator, ENDPOINT_CONFIG_SEPARATOR);
+    res.tag = _z_res_t_OK;
+    res.value.properties = zn_properties_make();
+
+    z_str_t p_start = strchr(s, ENDPOINT_METADATA_SEPARATOR);
+    if (p_start == NULL)
+        return res;
+    p_start++;
+
+    z_str_t p_end = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
     if (p_end == NULL)
-        p_end = &locator[strlen(locator)];
+        p_end = &s[strlen(s)];
 
-    int len = p_end - p_init;
-    char *segment = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(segment, p_init, len);
-    segment[len] = '\0';
+    if (p_start == p_end)
+        goto ERR;
 
-    return segment;
+    size_t p_len = p_end - p_start;
+    z_str_t metadata = (z_str_t)malloc((p_len + 1) * sizeof(char));
+    strncpy(metadata, p_start, p_len);
+    metadata[p_len] = '\0';
+
+    // @TODO: define protocol-level metadata
+    res = zn_properties_from_str(metadata, 0, NULL);
+    free(metadata);
+
+    return res;
+
+ERR:
+    res.tag = _z_res_t_ERR;
+    res.value.error = _z_err_t_PARSE_STRING;
+    return res;
 }
 
-const char *_zn_get_config_segment(const char *locator)
+_zn_locator_result_t _zn_locator_from_str(const z_str_t s)
 {
-    const char *p_init = strpbrk(locator, ENDPOINT_CONFIG_SEPARATOR);
-    if (p_init == NULL)
-        return NULL;
-    ++p_init;
+    _zn_locator_result_t res;
 
-    const char *p_end = &locator[strlen(locator)];
+    if (s == NULL)
+        goto ERR;
 
-    int len = p_end - p_init;
-    char *segment = (char*)malloc((len + 1) * sizeof(char));
-    strncpy(segment, p_init, len);
-    segment[len] = '\0';
+    res.tag = _z_res_t_OK;
+    __zn_locator_init(&res.value.locator);
 
-    return segment;
+    // Parse protocol
+    res.value.locator.protocol = _zn_locator_protocol_from_str(s);
+    if (res.value.locator.protocol == NULL)
+        goto ERR;
+
+    // Parse address
+    res.value.locator.address = _zn_locator_address_from_str(s);
+    if (res.value.locator.address == NULL)
+        goto ERR;
+
+    // Parse metadata
+    zn_properties_result_t tmp_res;
+    tmp_res = _zn_locator_metadata_from_str(s);
+    if (tmp_res.tag == _z_res_t_ERR)
+        goto ERR;
+    res.value.locator.metadata = tmp_res.value.properties;
+
+    return res;
+
+ERR:
+    _zn_locator_clear(&res.value.locator);
+    res.tag = _z_res_t_ERR;
+    res.value.error = _z_err_t_PARSE_STRING;
+    return res;
 }
 
-_zn_endpoint_t *_zn_endpoint_from_string(const char *s_locator)
+/*------------------ Endpoint ------------------*/
+void __zn_endpoint_init(_zn_endpoint_t *endpoint)
 {
-    _zn_endpoint_t *zn = (_zn_endpoint_t *)malloc(sizeof(_zn_endpoint_t));
-
-    zn->protocol = _zn_get_protocol_segment(s_locator);
-    zn->address = _zn_get_address_segment(s_locator);
-    zn->metadata = _zn_get_metadata_segment(s_locator);
-    zn->config = _zn_get_config_segment(s_locator);
-
-    return zn;
+    __zn_locator_init(&endpoint->locator);
+    endpoint->config = zn_properties_make();
 }
 
-void _zn_endpoint_free(_zn_endpoint_t **zn)
+// @TODO: remove
+z_str_t _zn_endpoint_property_from_key(const z_str_t str, const z_str_t key)
 {
-    _zn_endpoint_t *ptr = *zn;
+    return NULL;
+}
 
-    free((char*)ptr->protocol);
-    free((char*)ptr->address);
-    free((char*)ptr->metadata);
-    free((char*)ptr->config);
+void _zn_endpoint_clear(_zn_endpoint_t *ep)
+{
+    _zn_locator_clear(&ep->locator);
+    zn_properties_clear(&ep->config);
+}
 
-    *zn = NULL;
+void _zn_endpoint_free(_zn_endpoint_t **ep)
+{
+    _zn_endpoint_t *ptr = *ep;
+    _zn_locator_clear(&ptr->locator);
+    zn_properties_clear(&ptr->config);
+    free(ptr);
+    *ep = NULL;
+}
+
+zn_properties_result_t _zn_endpoint_config_from_str(const z_str_t s, const z_str_t proto)
+{
+    zn_properties_result_t res;
+
+    res.tag = _z_res_t_OK;
+    res.value.properties = zn_properties_make();
+
+    z_str_t p_start = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
+    if (p_start == NULL)
+        return res;
+    p_start++;
+
+    // Call the right configuration parser depending on the protocol
+    if (strcmp(proto, TCP_SCHEMA) == 0)
+    {
+        res = _zn_tcp_config_from_str(p_start);
+    }
+    else if (strcmp(proto, UDP_SCHEMA) == 0)
+    {
+        res = _zn_udp_config_from_str(p_start);
+    }
+    else
+    {
+        goto ERR;
+    }
+
+    return res;
+
+ERR:
+    res.tag = _z_res_t_ERR;
+    res.value.error = _z_err_t_PARSE_STRING;
+    return res;
+}
+
+_zn_endpoint_result_t _zn_endpoint_from_str(const z_str_t s)
+{
+    _zn_endpoint_result_t res;
+
+    res.tag = _z_res_t_OK;
+    __zn_endpoint_init(&res.value.endpoint);
+
+    _zn_locator_result_t loc_res = _zn_locator_from_str(s);
+    if (loc_res.tag == _z_res_t_ERR)
+        goto ERR;
+    res.value.endpoint.locator = loc_res.value.locator;
+
+    zn_properties_result_t conf_res = _zn_endpoint_config_from_str(s, res.value.endpoint.locator.protocol);
+    if (conf_res.tag == _z_res_t_ERR)
+        goto ERR;
+    res.value.endpoint.config = conf_res.value.properties;
+
+    return res;
+
+ERR:
+    _zn_endpoint_clear(&res.value.endpoint);
+    res.tag = _z_res_t_ERR;
+    res.value.error = _z_err_t_PARSE_STRING;
+    return res;
 }

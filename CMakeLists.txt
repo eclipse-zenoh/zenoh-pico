@@ -94,11 +94,13 @@ set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/link/*.h"
+                        "include/zenoh-pico/link/config/*.h"
                         "include/zenoh-pico/protocol/*.h"
                         "include/zenoh-pico/session/*.h"
                         "include/zenoh-pico/system/*.h"
+                        "include/zenoh-pico/system/link/*.h"
                         "include/zenoh-pico/transport/*.h"
-                        "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/utils/*.h"
 )
 include_directories(
@@ -108,17 +110,20 @@ include_directories(
 if (UNIX)
   file(GLOB Sources "src/*.c"
                     "src/collections/*.c"
+                    "src/system/*.c"
+                    # "src/system/esp32/*.c"
+                    "src/system/unix/*.c"
+                    # "src/system/zephyr/*.c"
                     "src/zenoh/*.c"
+                    "src/zenoh/link/*.c"
+                    "src/zenoh/link/config/*.c"                    
+                    "src/zenoh/link/multicast/*.c"
+                    "src/zenoh/link/unicast/*.c"
                     "src/zenoh/protocol/*.c"
                     "src/zenoh/session/*.c"
                     "src/zenoh/transport/*.c"
                     "src/zenoh/transport/link/*.c"
                     "src/zenoh/transport/link/task/*.c"
-                    "src/zenoh/link/*.c"
-                    "src/zenoh/link/unicast/*.c"
-                    "src/zenoh/link/multicast/*.c"
-                    "src/system/*.c"
-                    "src/system/unix/*.c"
   )
 endif()
 
@@ -176,8 +181,9 @@ endif()
 if(BUILD_TESTING)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
-  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
+  add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
+  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)
   add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
   add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
@@ -185,6 +191,7 @@ if(BUILD_TESTING)
 
   target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(z_data_struct_test ${Libname})
+  target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_mvar_test ${Libname})
   target_link_libraries(zn_rname_test ${Libname})
   target_link_libraries(zn_client_test ${Libname})
@@ -196,6 +203,7 @@ if(BUILD_TESTING)
   add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
   add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
+  add_test(z_dendpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
   add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
 endif()

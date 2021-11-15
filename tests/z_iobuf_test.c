@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/iobuf.h"
+#include "zenoh-pico/protocol/iobuf.h"
 
 #define RUNS 1000
 

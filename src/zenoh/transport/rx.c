@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/transport/private/utils.h"
-#include "zenoh-pico/session/private/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/session/utils.h"
 
 int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
 {

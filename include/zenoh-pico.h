@@ -12,17 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_H
-#define _ZENOH_PICO_H
+#ifndef ZENOH_PICO_H
+#define ZENOH_PICO_H
 
 #include "zenoh-pico/protocol/encoding.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/api.h"
-#include "zenoh-pico/utils/property.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/collections.h"
 
 #if defined(ZENOH_ZEPHYR)
 #include <zephyr.h>
 #endif
 
-#endif /* _ZENOH_PICO_H */
+#endif /* ZENOH_PICO_H */

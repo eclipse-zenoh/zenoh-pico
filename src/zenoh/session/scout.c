@@ -14,17 +14,16 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/link/private/manager.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/utils/logging.h"
 
 zn_hello_array_t _zn_scout_loop(
     const _z_wbuf_t *wbf,
-    const char *locator,
+    const z_str_t locator,
     clock_t period,
     int exit_on_first)
 {
@@ -152,7 +151,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     _zn_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
-    const char *locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
+    const z_str_t locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
     locs = _zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
     _z_wbuf_free(&wbf);

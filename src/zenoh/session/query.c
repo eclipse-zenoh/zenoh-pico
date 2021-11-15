@@ -12,15 +12,15 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/session/private/query.h"
-#include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/session/private/types.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/system/platform.h"
 
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn)

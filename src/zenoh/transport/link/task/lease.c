@@ -13,11 +13,11 @@
  */
 
 #include "zenoh-pico/session/api.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/session/private/utils.h"
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/platform.h"
 
 void *_znp_lease_task(void *arg)
 {

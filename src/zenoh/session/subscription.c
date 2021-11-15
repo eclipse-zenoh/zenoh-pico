@@ -13,15 +13,15 @@
  */
 
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/session/private/types.h"
-#include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/system/platform.h"
 
 /*------------------ Pull ------------------*/
 z_zint_t _zn_get_pull_id(zn_session_t *zn)
@@ -42,7 +42,7 @@ z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const 
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        z_list_t *subs = (z_list_t *)z_i_map_get(zn->rem_res_loc_sub_map, reskey->rid);
+        z_list_t *subs = (z_list_t *)z_i_map_get(&zn->rem_res_loc_sub_map, reskey->rid);
         while (subs)
         {
             _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
@@ -146,14 +146,14 @@ void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_re
     if (subs)
     {
         // Update the list
-        z_list_t *sl = z_i_map_get(zn->rem_res_loc_sub_map, id);
+        z_list_t *sl = z_i_map_get(&zn->rem_res_loc_sub_map, id);
         if (sl)
         {
             // Free any ancient list
             z_list_free(sl);
         }
         // Update the list of active subscriptions
-        z_i_map_set(zn->rem_res_loc_sub_map, id, subs);
+        z_i_map_set(&zn->rem_res_loc_sub_map, id, subs);
     }
 }
 
@@ -238,9 +238,9 @@ void __unsafe_zn_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *
     if (rem_res)
     {
         // Update the list of active subscriptions
-        z_list_t *subs = z_i_map_get(zn->rem_res_loc_sub_map, rem_res->id);
+        z_list_t *subs = z_i_map_get(&zn->rem_res_loc_sub_map, rem_res->id);
         subs = z_list_cons(subs, sub);
-        z_i_map_set(zn->rem_res_loc_sub_map, rem_res->id, subs);
+        z_i_map_set(&zn->rem_res_loc_sub_map, rem_res->id, subs);
     }
 
     if (sub->key.rid != ZN_RESOURCE_ID_NONE)
@@ -359,7 +359,7 @@ void _zn_flush_subscriptions(zn_session_t *zn)
         free(sub);
         zn->remote_subscriptions = z_list_pop(zn->remote_subscriptions);
     }
-    z_i_map_free(zn->rem_res_loc_sub_map);
+    z_i_map_clear(&zn->rem_res_loc_sub_map);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
@@ -400,7 +400,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.value = payload;
 
         // Iterate over the matching subscriptions
-        z_list_t *subs = (z_list_t *)z_i_map_get(zn->rem_res_loc_sub_map, reskey.rid);
+        z_list_t *subs = (z_list_t *)z_i_map_get(&zn->rem_res_loc_sub_map, reskey.rid);
         while (subs)
         {
             _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
