@@ -42,6 +42,9 @@ message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 option (BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
+option (BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
+
 # Configure the debug level
 #
 # ZENOH_DEBUG :
@@ -186,7 +189,6 @@ if(BUILD_TESTING)
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)
   add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
-  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
 
   target_link_libraries(z_iobuf_test ${Libname})
@@ -194,18 +196,27 @@ if(BUILD_TESTING)
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_mvar_test ${Libname})
   target_link_libraries(zn_rname_test ${Libname})
-  target_link_libraries(zn_client_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
+
+  enable_testing()
+  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
+  add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
+  add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
+  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
+  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
+endif()
+
+if(BUILD_INTEGRATION)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+
+  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
+
+  target_link_libraries(zn_client_test ${Libname})
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
   enable_testing()
   add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
-  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
-  add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
-  add_test(z_dendpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
-  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
-  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
 endif()
 
 # For packaging

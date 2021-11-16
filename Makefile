@@ -17,6 +17,14 @@
 # Accepted values: Release, Debug, GCov
 BUILD_TYPE?=Release
 
+# Build type. This sets the BUILD_TESTING variable.
+# Accepted values: ON, OFF
+BUILD_TESTING?=ON
+
+# Build type. This sets the BUILD_INTEGRATION variable.
+# Accepted values: ON, OFF
+BUILD_INTEGRATION?=OFF
+
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -35,14 +43,6 @@ ifneq ($(ZENOH_DEBUG),)
 endif
 
 CMAKE_OPT=$(ZENOH_DEBUG_OPT) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -H.
-
-# ZENOH_JAVA: when building zenoh-pico for zenoh-java:
-ifneq ($(ZENOH_JAVA),)
-	CMAKE_OPT += -DSWIG_JAVA=ON -DTESTS=OFF -DEXAMPLES=OFF
-endif
-ifneq ($(JNI_INCLUDE_HOME),)
-	CMAKE_OPT += -DJNI_INCLUDE_HOME=$(JNI_INCLUDE_HOME)
-endif
 
 all: make
 
