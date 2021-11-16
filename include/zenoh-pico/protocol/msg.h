@@ -16,6 +16,7 @@
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
 #include <stdint.h>
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/array.h"
 #include "zenoh-pico/utils/collections.h"
@@ -161,9 +162,7 @@ typedef z_bytes_t _zn_payload_t;
 // ~   [Locator]   ~
 // +---------------+
 //
-// NOTE: Locators is a vector of strings and are encoded as such
-//
-typedef z_str_array_t _zn_locators_t;
+// NOTE: Locators is an array of strings and are encoded as such
 
 /*=============================*/
 /*     Message decorators      */
@@ -294,7 +293,7 @@ typedef struct
 {
     z_zint_t whatami;
     z_bytes_t pid;
-    _zn_locators_t locators;
+    _zn_locator_array_t locators;
 } _zn_hello_t;
 
 /*------------------ Join Message ------------------*/

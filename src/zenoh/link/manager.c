@@ -44,7 +44,7 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
 
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto _ZN_OPEN_LINK_ERROR_2;
+        goto ERR2;
     }
 
     // Open transport link for communication
@@ -52,19 +52,19 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
     if (r_sock.tag == _z_res_t_ERR)
     {
         r.value.error = r_sock.value.error;
-        goto _ZN_OPEN_LINK_ERROR_3;
+        goto ERR3;
     }
 
     return r;
 
-_ZN_OPEN_LINK_ERROR_3:
+ERR3:
     _zn_link_free(&r.value.link);
-    goto _ZN_OPEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
+    goto ERR1; // _zn_link_free is releasing the endpoint
 
-_ZN_OPEN_LINK_ERROR_2:
+ERR2:
     _zn_endpoint_clear(&endpoint);
 
-_ZN_OPEN_LINK_ERROR_1:
+ERR1:
     r.tag = _z_res_t_ERR;
     return r;
 }
@@ -91,7 +91,7 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
 
         r.tag = _z_res_t_ERR;
         r.value.error = _zn_err_t_INVALID_LOCATOR;
-        goto _ZN_LISTEN_LINK_ERROR_2;
+        goto ERR2;
     }
 
     // Open transport link for listening
@@ -99,19 +99,19 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
     if (r_sock.tag == _z_res_t_ERR)
     {
         r.value.error = r_sock.value.error;
-        goto _ZN_LISTEN_LINK_ERROR_3;
+        goto ERR3;
     }
 
     return r;
 
-_ZN_LISTEN_LINK_ERROR_3:
+ERR3:
     _zn_link_free(&r.value.link);
-    goto _ZN_LISTEN_LINK_ERROR_1; // _zn_link_free is releasing the endpoint
+    goto ERR1; // _zn_link_free is releasing the endpoint
 
-_ZN_LISTEN_LINK_ERROR_2:
+ERR2:
     _zn_endpoint_clear(&endpoint);
 
-_ZN_LISTEN_LINK_ERROR_1:
+ERR1:
     r.tag = _z_res_t_ERR;
     return r;
 }

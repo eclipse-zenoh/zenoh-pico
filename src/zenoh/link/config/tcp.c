@@ -12,24 +12,42 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <string.h>
 #include "zenoh-pico/link/config/tcp.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/properties.h"
+
+size_t _zn_tcp_config_strlen(const _zn_state_t *s)
+{
+    TCP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_strlen(s, argc, args);
+}
+
+void _zn_tcp_config_onto_str(z_str_t dst, const _zn_state_t *s)
+{
+    TCP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_onto_str(dst, s, argc, args);
+}
+
+z_str_t _zn_tcp_config_to_str(const _zn_state_t *s)
+{
+    TCP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_to_str(s, argc, args);
+}
+
+_zn_state_result_t _zn_tcp_config_from_strn(const z_str_t s, size_t n)
+{
+    TCP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_from_strn(s, argc, args, n);
+}
 
 _zn_state_result_t _zn_tcp_config_from_str(const z_str_t s)
 {
-    _zn_state_result_t res;
+    TCP_CONFIG_MAPPING_BUILD
 
-    if (s != NULL)
-        goto ERR;
-
-    res.tag = _z_res_t_OK;
-    res.value.state = _zn_state_make();
-
-    return res;
-
-ERR:
-    res.tag = _z_res_t_ERR;
-    res.value.error = _z_err_t_PARSE_STRING;
-    return res;
+    return _zn_tcp_config_from_strn(s, strlen(s));
 }

@@ -210,6 +210,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
     _z_zint_result_t vr = _z_zint_decode(zbf);
     _ASSURE_RESULT(vr, r, _z_err_t_PARSE_ZINT);
     size_t len = vr.value.zint;
+
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len)
     {
@@ -218,10 +219,12 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
         _Z_ERROR("WARNING: Not enough bytes to read\n");
         return r;
     }
+
     // Allocate space for the string terminator
     z_str_t s = (z_str_t)malloc(len + 1);
     s[len] = '\0';
     _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
     r.value.str = s;
+
     return r;
 }

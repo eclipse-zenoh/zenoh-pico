@@ -18,11 +18,12 @@
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 #include <stdint.h>
+#include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/protocol/codec.h"
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/utils/properties.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/protocol/codec.h"
-#include "zenoh-pico/protocol/msg.h"
 
 /*------------------ Result declarations ------------------*/
 _ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
@@ -32,7 +33,6 @@ _ZN_RESULT_DECLARE(zn_query_target_t, query_target)
 _ZN_RESULT_DECLARE(zn_query_consolidation_t, query_consolidation)
 
 _ZN_RESULT_DECLARE(_zn_payload_t, payload)
-_ZN_RESULT_DECLARE(_zn_locators_t, locators)
 _ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
 _ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
 _ZN_RESULT_DECLARE(_zn_scout_t, scout)

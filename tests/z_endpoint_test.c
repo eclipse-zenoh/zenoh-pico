@@ -24,7 +24,7 @@ int main(void)
     char s[64];
 
     // Locator
-    printf("\nTesting locators...\n");
+    printf(">>> Testing locators...\n");
 
     _zn_locator_result_t lres;
 
@@ -81,7 +81,7 @@ int main(void)
     assert(lres.value.error == _z_err_t_PARSE_STRING);
 
     // Endpoint
-    printf("\nTesting endpoints...\n");
+    printf(">>> Testing endpoints...\n");
 
     _zn_endpoint_result_t eres;
 

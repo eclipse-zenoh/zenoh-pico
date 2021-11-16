@@ -164,10 +164,10 @@ uint64_t gen_time(void)
     return (uint64_t)time(NULL);
 }
 
-z_str_t gen_string(size_t size)
+z_str_t gen_str(size_t size)
 {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
-    z_str_t str = (z_str_t)malloc((sizeof(char) * size) + 1);
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    z_str_t str = (z_str_t)malloc((size * sizeof(char)) + 1);
     for (z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
@@ -181,9 +181,22 @@ z_str_array_t gen_str_array(size_t size)
 {
     z_str_array_t sa = _z_str_array_make(size);
     for (size_t i = 0; i < size; i++)
-        ((z_str_t *)sa.val)[i] = gen_string(16);
+        ((z_str_t *)sa.val)[i] = gen_str(16);
 
     return sa;
+}
+
+_zn_locator_array_t gen_locator_array(size_t size)
+{
+    _zn_locator_array_t la = _zn_locator_array_make(size);
+    for (size_t i = 0; i < size; i++)
+    {
+        la.val[i].protocol = gen_str(3);
+        la.val[i].address = gen_str(12);
+        // @TODO: generate metadata
+    }
+
+    return la;
 }
 
 /*=============================*/
@@ -249,6 +262,33 @@ void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
             printf(" ");
 
         assert(strcmp(l, r) == 0);
+    }
+    printf(")");
+}
+
+void assert_eq_locator_array(_zn_locator_array_t *left, _zn_locator_array_t *right)
+{
+    printf("Locators -> ");
+    printf("Length (%zu:%zu), ", left->len, right->len);
+
+    assert(left->len == right->len);
+    printf("Content (");
+    for (size_t i = 0; i < left->len; i++)
+    {
+        const _zn_locator_t *l = &left->val[i];
+        const _zn_locator_t *r = &right->val[i];
+
+        z_str_t ls = _zn_locator_to_str(l);
+        z_str_t rs = _zn_locator_to_str(r);
+
+        printf("%s:%s", ls, rs);
+        if (i < left->len - 1)
+            printf(" ");
+
+        free(ls);
+        free(rs);
+
+        assert(_zn_locator_cmp(l, r) == 0);
     }
     printf(")");
 }
@@ -427,7 +467,7 @@ zn_reskey_t gen_res_key(void)
     if (is_numerical)
         key.rname = NULL;
     else
-        key.rname = gen_string((gen_zint() % 16) + 1);
+        key.rname = gen_str((gen_zint() % 16) + 1);
 
     return key;
 }
@@ -1402,7 +1442,7 @@ _zn_query_t gen_query_message(uint8_t *header)
 
     e_qy.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_qy.key.rname) ? _ZN_FLAG_Z_K : 0);
-    e_qy.predicate = gen_string(gen_uint8() % 16);
+    e_qy.predicate = gen_str(gen_uint8() % 16);
     e_qy.qid = gen_zint();
 
     if (gen_bool())
@@ -1746,7 +1786,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_he.locators = gen_str_array((gen_uint8() % 4) + 1);
+        e_he.locators = gen_locator_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_L);
     }
 
@@ -1770,7 +1810,7 @@ void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t head
     if _ZN_HAS_FLAG (header, _ZN_FLAG_T_L)
     {
         printf("   ");
-        assert_eq_str_array(&left->locators, &right->locators);
+        assert_eq_locator_array(&left->locators, &right->locators);
         printf("\n");
     }
 }

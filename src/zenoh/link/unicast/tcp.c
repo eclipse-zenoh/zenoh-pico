@@ -38,6 +38,7 @@ z_str_t _zn_parse_address_segment_tcp(z_str_t address)
     z_str_t p_start = &address[0];
     z_str_t p_end = strrchr(address, ':');
 
+    // IPv6
     if (*p_start == '[' && *(p_end - 1) == ']')
     {
         p_start++;
@@ -49,6 +50,7 @@ z_str_t _zn_parse_address_segment_tcp(z_str_t address)
 
         return ip6_addr;
     }
+    // IPv4
     else
     {
         int len = p_end - p_start;
@@ -70,12 +72,12 @@ _zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
 
     self->sock = _zn_open_tcp(self->raddr);
     if (self->sock < 0)
-        goto _ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1;
+        goto ERR;
 
     r.value.socket = self->sock;
     return r;
 
-_ZN_F_LINK_OPEN_TCP_UNICAST_ERROR_1:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
@@ -89,12 +91,12 @@ _zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
 
     self->sock = _zn_listen_tcp(self->raddr);
     if (self->sock < 0)
-        goto _ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1;
+        goto ERR;
 
     r.value.socket = self->sock;
     return r;
 
-_ZN_F_LINK_LISTEN_TCP_UNICAST_ERROR_1:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;

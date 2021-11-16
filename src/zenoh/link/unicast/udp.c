@@ -70,12 +70,12 @@ _zn_socket_result_t _zn_f_link_open_udp_unicast(void *arg, const clock_t tout)
 
     self->sock = _zn_open_udp_unicast(self->raddr, tout);
     if (self->sock < 0)
-        goto _ZN_F_LINK_OPEN_UDP_UNICAST_ERROR_1;
+        goto ERR;
 
     r.value.socket = self->sock;
     return r;
 
-_ZN_F_LINK_OPEN_UDP_UNICAST_ERROR_1:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
@@ -89,12 +89,12 @@ _zn_socket_result_t _zn_f_link_listen_udp_unicast(void *arg, const clock_t tout)
 
     self->sock = _zn_listen_udp_unicast(self->raddr, tout);
     if (self->sock < 0)
-        goto _ZN_F_LINK_LISTEN_UDP_UNICAST_ERROR_1;
+        goto ERR;
 
     r.value.socket = self->sock;
     return r;
 
-_ZN_F_LINK_LISTEN_UDP_UNICAST_ERROR_1:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;

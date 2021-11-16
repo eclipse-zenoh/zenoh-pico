@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     }
 
     char buf[256];
-    for (int idx = 0; 1; i++ dx)
+    for (int idx = 0; 1; ++idx)
     {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);

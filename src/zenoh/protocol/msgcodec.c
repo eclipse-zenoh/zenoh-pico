@@ -204,19 +204,21 @@ void _zn_reskey_free(zn_reskey_t *rk)
 }
 
 /*------------------ Locators Field ------------------*/
-int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locators_t *ls)
+int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locator_array_t *la)
 {
-    _ZN_EC(_z_zint_encode(wbf, ls->len))
+    _ZN_EC(_z_zint_encode(wbf, la->len))
     // Encode the locators
-    for (size_t i = 0; i < ls->len; i++)
+    for (size_t i = 0; i < la->len; i++)
     {
-        _ZN_EC(_z_str_encode(wbf, (z_str_t)ls->val[i]))
+        z_str_t s = _zn_locator_to_str(&la->val[i]);
+        _ZN_EC(_z_str_encode(wbf, s))
+        free(s);
     }
 
     return 0;
 }
 
-void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
+void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locator_array_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
@@ -225,27 +227,32 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locators_result_t *r)
     _ASSURE_P_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
     size_t len = (size_t)r_n.value.zint;
 
-    _z_str_array_init(&r->value.locators, len);
+    _zn_locator_array_init(&r->value.locator_array, len);
 
     // Decode the elements
     for (size_t i = 0; i < len; i++)
     {
         _z_str_result_t r_s = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_s, r, _z_err_t_PARSE_STRING);
-        ((z_str_t *)r->value.locators.val)[i] = r_s.value.str;
+
+        _zn_locator_result_t r_l = _zn_locator_from_str(r_s.value.str);
+        free(r_s.value.str);
+        _ASSURE_P_RESULT(r_l, r, _zn_err_t_INVALID_LOCATOR);
+
+        r->value.locator_array.val[i] = r_l.value.locator;
     }
 }
 
-_zn_locators_result_t _zn_locators_decode(_z_zbuf_t *zbf)
+_zn_locator_array_result_t _zn_locators_decode(_z_zbuf_t *zbf)
 {
-    _zn_locators_result_t r;
+    _zn_locator_array_result_t r;
     _zn_locators_decode_na(zbf, &r);
     return r;
 }
 
-void _zn_locators_free(_zn_locators_t *ls)
+void _zn_locators_free(_zn_locator_array_t *ls)
 {
-    _z_str_array_free(ls);
+    _zn_locator_array_clear(ls);
 }
 
 /*=============================*/
@@ -1513,9 +1520,9 @@ void _zn_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_hello_result_t *r)
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
     {
-        _zn_locators_result_t r_locs = _zn_locators_decode(zbf);
+        _zn_locator_array_result_t r_locs = _zn_locators_decode(zbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
-        _z_str_array_move(&r->value.hello.locators, &r_locs.value.locators);
+        _zn_locator_array_move(&r->value.hello.locators, &r_locs.value.locator_array);
     }
 }
 

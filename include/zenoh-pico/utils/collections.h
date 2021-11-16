@@ -39,12 +39,15 @@ void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_free(z_bytes_t *bs);
 void _z_bytes_reset(z_bytes_t *bs);
 
-/*-------- String --------*/
+/*-------- str --------*/
 /**
  * A string with null terminator.
  */
 typedef char *z_str_t;
 
+z_str_t _z_str_dup(const z_str_t src);
+
+/*-------- string --------*/
 /**
  * A string with no terminator.
  *
@@ -67,7 +70,7 @@ void _z_string_free(z_string_t *str);
 void _z_string_reset(z_string_t *str);
 z_string_t _z_string_from_bytes(z_bytes_t *bs);
 
-/*-------- StrArray --------*/
+/*-------- str_array --------*/
 /**
  * An array of NULL terminated strings.
  *

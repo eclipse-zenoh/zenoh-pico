@@ -73,15 +73,15 @@ _zn_socket_result_t _zn_f_link_open_udp_multicast(void *arg, const clock_t tout)
 
     const z_str_t iface = _zn_state_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     if (iface == NULL)
-        goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR;
+        goto ERR;
 
     self->sock = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
     if (self->sock < 0)
-        goto _ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR;
+        goto ERR;
     r.value.socket = self->sock;
     return r;
 
-_ZN_F_LINK_OPEN_UDP_MULTICAST_ERROR:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;
@@ -95,20 +95,20 @@ _zn_socket_result_t _zn_f_link_listen_udp_multicast(void *arg, const clock_t tou
 
     const z_str_t iface = _zn_state_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     if (iface == NULL)
-        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR;
+        goto ERR;
 
     self->sock = _zn_listen_udp_multicast(self->raddr, tout, iface);
     if (self->sock < 0)
-        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR;
+        goto ERR;
 
     self->mcast_send_sock = _zn_open_udp_multicast(self->raddr, &self->laddr, tout, iface);
     if (self->mcast_send_sock < 0)
-        goto _ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR;
+        goto ERR;
 
     r.value.socket = self->sock; // FIXME: we do not need to return it anymore
     return r;
 
-_ZN_F_LINK_LISTEN_UDP_MULTICAST_ERROR:
+ERR:
     r.tag = _z_res_t_ERR;
     r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
     return r;

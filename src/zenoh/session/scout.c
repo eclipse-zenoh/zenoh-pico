@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/collections.h"
@@ -99,7 +100,12 @@ zn_hello_array_t _zn_scout_loop(
 
             if _ZN_HAS_FLAG (t_msg->header, _ZN_FLAG_T_L)
             {
-                _z_str_array_copy(&sc->locators, &t_msg->body.hello.locators);
+                z_str_array_t la = _z_str_array_make(t_msg->body.hello.locators.len);
+                for (size_t i = 0; i < la.len; i++)
+                {
+                    la.val[i] = _zn_locator_to_str(&t_msg->body.hello.locators.val[i]);
+                }
+                _z_str_array_move(&sc->locators, &la);
             }
             else
             {

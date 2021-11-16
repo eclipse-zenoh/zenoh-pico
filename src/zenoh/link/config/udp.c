@@ -12,17 +12,42 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include <string.h>
 #include "zenoh-pico/link/config/udp.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/properties.h"
+
+size_t _zn_udp_config_strlen(const _zn_state_t *s)
+{
+    UDP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_strlen(s, argc, args);
+}
+
+void _zn_udp_config_onto_str(z_str_t dst, const _zn_state_t *s)
+{
+    UDP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_onto_str(dst, s, argc, args);
+}
+
+z_str_t _zn_udp_config_to_str(const _zn_state_t *s)
+{
+    UDP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_to_str(s, argc, args);
+}
+
+_zn_state_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n)
+{
+    UDP_CONFIG_MAPPING_BUILD
+
+    return _zn_state_from_strn(s, argc, args, n);
+}
 
 _zn_state_result_t _zn_udp_config_from_str(const z_str_t s)
 {
-    unsigned int argc = 1;
-    _zn_state_mapping_t args[argc];
-    // Mapping 0
-    args[0].key = UDP_CONFIG_MULTICAST_IFACE_KEY;
-    args[0].str = UDP_CONFIG_MULTICAST_IFACE_STR;
+    UDP_CONFIG_MAPPING_BUILD
 
     return _zn_state_from_str(s, argc, args);
 }
