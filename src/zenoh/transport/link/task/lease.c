@@ -12,12 +12,18 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/session/api.h"
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/platform.h"
+
+int _znp_send_keep_alive(zn_session_t *zn)
+{
+    _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_KEEP_ALIVE);
+
+    return _zn_send_t_msg(zn, &t_msg);
+}
 
 void *_znp_lease_task(void *arg)
 {
@@ -77,7 +83,7 @@ void *_znp_lease_task(void *arg)
             // Check if need to send a keep alive
             if (zn->transmitted == 0)
             {
-                znp_send_keep_alive(zn);
+                _znp_send_keep_alive(zn);
             }
 
             // Reset the keep alive parameters
@@ -86,23 +92,5 @@ void *_znp_lease_task(void *arg)
         }
     }
 
-    return 0;
-}
-
-int znp_start_lease_task(zn_session_t *zn)
-{
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(pthread_t));
-    zn->lease_task = task;
-    if (z_task_init(task, NULL, _znp_lease_task, zn) != 0)
-    {
-        return -1;
-    }
-    return 0;
-}
-
-int znp_stop_lease_task(zn_session_t *zn)
-{
-    zn->lease_task_running = 0;
     return 0;
 }

@@ -15,11 +15,11 @@
 #ifndef ZENOH_PICO_SESSION_UTILS_H
 #define ZENOH_PICO_SESSION_UTILS_H
 
-#include <stdint.h>
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/utils/properties.h"
 
 /*------------------ Session ------------------*/
 zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period, int exit_on_first);

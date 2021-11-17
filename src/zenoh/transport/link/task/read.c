@@ -12,10 +12,28 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/logging.h"
+
+int _znp_read(zn_session_t *zn)
+{
+    _zn_transport_message_p_result_t r_s = _zn_recv_t_msg(zn);
+    if (r_s.tag == _z_res_t_OK)
+    {
+        int res = _zn_handle_transport_message(zn, r_s.value.transport_message);
+        _zn_transport_message_free(r_s.value.transport_message);
+        _zn_transport_message_p_result_free(&r_s);
+        return res;
+    }
+    else
+    {
+        _zn_transport_message_p_result_free(&r_s);
+        return _z_res_t_ERR;
+    }
+}
 
 void *_znp_read_task(void *arg)
 {
@@ -115,23 +133,5 @@ EXIT_RECV_LOOP:
     // Free the result
     _zn_transport_message_p_result_free(&r);
 
-    return 0;
-}
-
-int znp_start_read_task(zn_session_t *z)
-{
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(pthread_t));
-    z->read_task = task;
-    if (z_task_init(task, NULL, _znp_read_task, z) != 0)
-    {
-        return -1;
-    }
-    return 0;
-}
-
-int znp_stop_read_task(zn_session_t *z)
-{
-    z->read_task_running = 0;
     return 0;
 }

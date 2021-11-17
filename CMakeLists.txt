@@ -97,6 +97,7 @@ set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/api/*.h"
                         "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/link/config/*.h"
                         "include/zenoh-pico/protocol/*.h"
@@ -112,11 +113,10 @@ include_directories(
 
 if (UNIX)
   file(GLOB Sources "src/*.c"
+                    "src/api/*.c"
                     "src/collections/*.c"
                     "src/system/*.c"
-                    # "src/system/esp32/*.c"
                     "src/system/unix/*.c"
-                    # "src/system/zephyr/*.c"
                     "src/zenoh/*.c"
                     "src/zenoh/link/*.c"
                     "src/zenoh/link/config/*.c"                    

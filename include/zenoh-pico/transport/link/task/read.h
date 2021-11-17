@@ -12,20 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_H
-#define ZENOH_PICO_H
+#ifndef ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
+#define ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
 
-#include "zenoh-pico/api/logger.h"
-#include "zenoh-pico/api/config.h"
-#include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/resource.h"
-#include "zenoh-pico/api/query.h"
-#include "zenoh-pico/api/subscribe.h"
-#include "zenoh-pico/api/memory.h"
+#include "zenoh-pico/session/session.h"
 
-#if defined(ZENOH_ZEPHYR)
-#include <zephyr.h>
-#endif
+int _znp_read(zn_session_t *zn);
 
-#endif /* ZENOH_PICO_H */
+void *_znp_read_task(void *arg);
+
+#endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H */

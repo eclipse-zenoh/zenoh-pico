@@ -12,20 +12,28 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_H
-#define ZENOH_PICO_H
-
-#include "zenoh-pico/api/logger.h"
-#include "zenoh-pico/api/config.h"
-#include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/resource.h"
-#include "zenoh-pico/api/query.h"
-#include "zenoh-pico/api/subscribe.h"
-#include "zenoh-pico/api/memory.h"
 
-#if defined(ZENOH_ZEPHYR)
-#include <zephyr.h>
-#endif
+zn_reskey_t zn_rid(unsigned long rid)
+{
+    zn_reskey_t rk;
+    rk.rid = rid;
+    rk.rname = NULL;
+    return rk;
+}
 
-#endif /* ZENOH_PICO_H */
+zn_reskey_t zn_rname(const z_str_t rname)
+{
+    zn_reskey_t rk;
+    rk.rid = ZN_RESOURCE_ID_NONE;
+    rk.rname = strdup(rname);
+    return rk;
+}
+
+zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix)
+{
+    zn_reskey_t rk;
+    rk.rid = id;
+    rk.rname = strdup(suffix);
+    return rk;
+}
