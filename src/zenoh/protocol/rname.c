@@ -13,6 +13,7 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/collections/string.h"
 
 #define CEND(str) (str[0] == 0 || str[0] == '/')
 #define CWILD(str) (str[0] == '*')
@@ -24,7 +25,7 @@
 #define NEXT(str) next_chunk(str)
 
 #define DEFINE_INTERSECT(name, end, wild, next, _elemintersect) \
-    int name(const char *c1, const char *c2)                    \
+    int name(const z_str_t c1, const z_str_t c2)                \
     {                                                           \
         if (end(c1) && end(c2))                                 \
             return 1;                                           \
@@ -48,16 +49,16 @@
 
 DEFINE_INTERSECT(sub_chunk_intersect, CEND, CWILD, CNEXT, CEQUAL)
 
-int chunk_intersect(const char *c1, const char *c2)
+int chunk_intersect(const z_str_t c1, const z_str_t c2)
 {
     if ((CEND(c1) && !CEND(c2)) || (!CEND(c1) && CEND(c2)))
         return 0;
     return sub_chunk_intersect(c1, c2);
 }
 
-const char *next(const char *str)
+const z_str_t next(const z_str_t str)
 {
-    char *res = strchr(str, '/');
+    z_str_t res = strchr(str, '/');
     if (res != NULL)
         return res + 1;
     return strchr(str, 0);

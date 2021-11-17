@@ -14,7 +14,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/collections/list.h"
 
 /*-------- linked list --------*/
 z_list_t *z_list_empty = NULL;
@@ -123,6 +124,7 @@ z_list_t *z_list_remove(z_list_t *xs, z_list_predicate predicate, void *arg)
         prev = current;
         current = current->tail;
     }
+
     return xs;
 }
 

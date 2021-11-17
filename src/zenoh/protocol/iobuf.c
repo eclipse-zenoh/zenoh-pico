@@ -14,7 +14,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/iobuf.h"
+#include <string.h>
+#include "zenoh-pico/protocol/iobuf.h"
 
 /*------------------ IOSli ------------------*/
 _z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos)
@@ -360,7 +361,9 @@ uint8_t __z_wbuf_get(const _z_wbuf_t *wbf, size_t pos)
             break;
         else
             pos -= ios->capacity;
-    } while (++i);
+
+        i++;
+    } while (1);
 
     return _z_iosli_get(ios, pos);
 }
@@ -431,7 +434,9 @@ void _z_wbuf_put(_z_wbuf_t *wbf, uint8_t b, size_t pos)
             break;
         else
             pos -= ios->capacity;
-    } while (++i);
+
+        i++;
+    } while (1);
 
     _z_iosli_put(ios, b, pos);
     return;
@@ -481,7 +486,9 @@ void _z_wbuf_set_rpos(_z_wbuf_t *wbf, size_t pos)
 
         ios->r_pos = ios->w_pos;
         pos -= ios->capacity;
-    } while (++i);
+
+        i++;
+    } while (1);
 }
 
 void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
@@ -490,6 +497,7 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
     do
     {
         assert(i <= z_vec_len(&wbf->ioss));
+
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         if (pos <= ios->capacity && pos >= ios->r_pos)
         {
@@ -500,7 +508,9 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos)
 
         ios->w_pos = ios->capacity;
         pos -= ios->capacity;
-    } while (++i);
+
+        i++;
+    } while (1);
 }
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf)

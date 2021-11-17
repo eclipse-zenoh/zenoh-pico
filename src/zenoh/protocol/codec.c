@@ -14,9 +14,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/codec.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/utils/property.h"
+#include "zenoh-pico/protocol/codec.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/properties.h"
 
 // @TODO: property and properties
 // int _zn_property_encode(_z_wbuf_t *buf, const zn_property_t *m)
@@ -50,7 +50,7 @@
 //     zn_property_t *p;
 //     size_t len = zn_properties_len(ps);
 //     _ZN_EC(_z_zint_encode(buf, len))
-//     for (size_t i = 0; i < len; ++i)
+//     for (size_t i = 0; i < len; i++)
 //     {
 //         p = (zn_property_t *)z_vec_get(ps, i);
 //         _ZN_EC(zn_property_encode(buf, p))
@@ -210,6 +210,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
     _z_zint_result_t vr = _z_zint_decode(zbf);
     _ASSURE_RESULT(vr, r, _z_err_t_PARSE_ZINT);
     size_t len = vr.value.zint;
+
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len)
     {
@@ -218,10 +219,12 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
         _Z_ERROR("WARNING: Not enough bytes to read\n");
         return r;
     }
+
     // Allocate space for the string terminator
     z_str_t s = (z_str_t)malloc(len + 1);
     s[len] = '\0';
     _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
     r.value.str = s;
+
     return r;
 }

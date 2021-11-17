@@ -19,7 +19,7 @@
 /**
  * The library mode.
  * String key : `"mode"`.
- * Accepted values : `"client"`.
+ * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
 #define ZN_CONFIG_MODE_KEY 0x40
@@ -33,6 +33,15 @@
  * Multiple values are not accepted in zenoh-pico.
  */
 #define ZN_CONFIG_PEER_KEY 0x41
+
+/**
+ * A locator to listen on.
+ * String key : `"listener"`.
+ * Accepted values : `<locator>` (ex: `"tcp/10.10.10.10:7447"`).
+ * Default value : None.
+ * Multiple values accepted.
+ */
+#define ZN_CONFIG_LISTENER_KEY 0x42
 
 /**
  * The user name to use for authentication.
@@ -75,7 +84,7 @@
  * Default value : `"224.0.0.224:7447"`.
  */
 #define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
-#define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "224.0.0.224:7447"
+#define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "udp/224.0.0.224:7447"
 
 /**
  * In client mode, the period dedicated to scouting a router before failing.

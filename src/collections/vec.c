@@ -14,8 +14,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/collections/vec.h"
 
 /*-------- vec --------*/
 inline z_vec_t z_vec_make(size_t capacity)
@@ -30,12 +30,12 @@ inline z_vec_t z_vec_make(size_t capacity)
 z_vec_t z_vec_clone(const z_vec_t *v)
 {
     z_vec_t u = z_vec_make(v->_capacity);
-    for (size_t i = 0; i < v->_len; ++i)
+    for (size_t i = 0; i < v->_len; i++)
         z_vec_append(&u, v->_val[i]);
     return u;
 }
 
-void z_vec_free_inner(z_vec_t *v)
+void z_vec_clear(z_vec_t *v)
 {
     free(v->_val);
     v->_len = 0;
@@ -45,9 +45,9 @@ void z_vec_free_inner(z_vec_t *v)
 
 void z_vec_free(z_vec_t *v)
 {
-    for (size_t i = 0; i < v->_len; ++i)
+    for (size_t i = 0; i < v->_len; i++)
         free(v->_val[i]);
-    z_vec_free_inner(v);
+    z_vec_clear(v);
 }
 
 inline size_t z_vec_len(const z_vec_t *v)

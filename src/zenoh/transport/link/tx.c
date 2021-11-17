@@ -12,10 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/utils.h"
 
 /*------------------ SN helper ------------------*/
 /**
@@ -54,21 +54,21 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_tx
  */
-void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf)
+void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
     _z_wbuf_clear(buf);
 
-#ifdef ZN_TRANSPORT_TCP_IP
-    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-    //       the boundary of the serialized messages. The length is encoded as little-endian.
-    //       In any case, the length of a message must not exceed 65_535 bytes.
-    for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        _z_wbuf_put(buf, 0, i);
-
-    _z_wbuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
-#endif /* ZN_TRANSPORT_TCP_IP */
+    if (is_streamed == 1)
+    {
+        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+        //       the boundary of the serialized messages. The length is encoded as little-endian.
+        //       In any case, the length of a message must not exceed 65_535 bytes.
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(buf, 0, i);
+        _z_wbuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
+    }
 }
 
 /**
@@ -76,18 +76,19 @@ void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_tx
  */
-void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf)
+void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
-#ifdef ZN_TRANSPORT_TCP_IP
-    // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-    //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-    //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-    //       the boundary of the serialized messages. The length is encoded as little-endian.
-    //       In any case, the length of a message must not exceed 65_535 bytes.
-    size_t len = _z_wbuf_len(buf) - _ZN_MSG_LEN_ENC_SIZE;
-    for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; ++i)
-        _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
-#endif /* ZN_TRANSPORT_TCP_IP */
+    if (is_streamed == 1)
+    {
+        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+        //       the boundary of the serialized messages. The length is encoded as little-endian.
+        //       In any case, the length of a message must not exceed 65_535 bytes.
+        size_t len = _z_wbuf_len(buf) - _ZN_MSG_LEN_ENC_SIZE;
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+    }
 }
 
 int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
@@ -98,15 +99,16 @@ int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
     z_mutex_lock(&zn->mutex_tx);
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_zn_prepare_wbuf(&zn->wbuf);
+    __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
+
     // Encode the session message
     int res = _zn_transport_message_encode(&zn->wbuf, t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_zn_finalize_wbuf(&zn->wbuf);
+        __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
         // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+        res = _zn_send_wbuf(zn->link, &zn->wbuf);
         // Mark the session that we have transmitted data
         zn->transmitted = 1;
     }
@@ -214,7 +216,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     }
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_zn_prepare_wbuf(&zn->wbuf);
+    __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
 
     // Get the next sequence number
     z_zint_t sn = __unsafe_zn_get_sn(zn, reliability);
@@ -234,10 +236,10 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_zn_finalize_wbuf(&zn->wbuf);
+        __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
 
         // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+        res = _zn_send_wbuf(zn->link, &zn->wbuf);
         if (res == 0)
             // Mark the session that we have transmitted data
             zn->transmitted = 1;
@@ -266,7 +268,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             is_first = 0;
 
             // Clear the buffer for serialization
-            __unsafe_zn_prepare_wbuf(&zn->wbuf);
+            __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
 
             // Serialize one fragment
             res = __unsafe_zn_serialize_zenoh_fragment(&zn->wbuf, &fbf, reliability, sn);
@@ -277,10 +279,10 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             }
 
             // Write the message length in the reserved space if needed
-            __unsafe_zn_finalize_wbuf(&zn->wbuf);
+            __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
 
             // Send the wbuf on the socket
-            res = _zn_send_wbuf(zn->sock, &zn->wbuf);
+            res = _zn_send_wbuf(zn->link, &zn->wbuf);
             if (res != 0)
             {
                 _Z_DEBUG("Dropping zenoh message because it can not sent\n");

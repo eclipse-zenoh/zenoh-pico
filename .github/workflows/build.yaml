@@ -12,9 +12,9 @@ name: build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ master ]
+    branches: [ '**' ]
 
 jobs:
   build:
@@ -33,3 +33,10 @@ jobs:
       run: make all
       env:
         BUILD_TYPE: Debug
+        BUILD_TESTING: ON
+        BUILD_INTEGRATION: OFF
+
+    - name: Run tests
+      run: make test
+      env:
+        ARGS: -V 

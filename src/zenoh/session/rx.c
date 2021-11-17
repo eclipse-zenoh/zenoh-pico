@@ -15,18 +15,18 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/session/private/query.h"
-#include "zenoh-pico/session/private/queryable.h"
-#include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/session/private/subscription.h"
-#include "zenoh-pico/session/private/types.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/utils.h"
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
 int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
@@ -52,7 +52,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     case _ZN_MID_DECLARE:
     {
         _Z_DEBUG("Received _ZN_DECLARE message\n");
-        for (unsigned int i = 0; i < msg->body.declare.declarations.len; ++i)
+        for (unsigned int i = 0; i < msg->body.declare.declarations.len; i++)
         {
             _zn_declaration_t decl = msg->body.declare.declarations.val[i];
             switch (_ZN_MID(decl.header))

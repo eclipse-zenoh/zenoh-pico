@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/transport/private/utils.h"
-#include "zenoh-pico/session/private/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/session/utils.h"
 
 int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
 {
@@ -65,7 +65,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
         return _z_res_t_ERR;
     }
 
@@ -167,7 +167,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
         {
             // Handle all the zenoh message, one by one
             unsigned int len = z_vec_len(&msg->body.frame.payload.messages);
-            for (unsigned int i = 0; i < len; ++i)
+            for (unsigned int i = 0; i < len; i++)
             {
                 int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)

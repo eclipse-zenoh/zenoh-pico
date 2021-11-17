@@ -14,13 +14,13 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/collections/intmap.h"
+#include "zenoh-pico/collections/list.h"
 
 int main(void)
 {
     z_list_t *xs = z_list_of("one");
-    z_i_map_t *map = z_i_map_make(5);
+    zn_int_str_map_t map = zn_int_str_map_make();
 
     xs = z_list_cons(xs, "two");
     xs = z_list_cons(xs, "three");
@@ -29,35 +29,35 @@ int main(void)
     printf("list len = %zu\n", z_list_len(xs));
     z_list_free(xs);
 
-    z_i_map_set(map, 0, "0");
-    z_i_map_set(map, 1, "1");
-    z_i_map_set(map, 2, "2");
-    z_i_map_set(map, 3, "3");
-    z_i_map_set(map, 4, "4");
-    z_i_map_set(map, 5, "5");
-    z_i_map_set(map, 6, "6");
-    z_i_map_set(map, 7, "7");
-    z_i_map_set(map, 8, "8");
-    z_i_map_set(map, 9, "9");
-    z_i_map_set(map, 10, "10");
+    zn_int_str_map_insert(&map, 0, "0");
+    zn_int_str_map_insert(&map, 1, "1");
+    zn_int_str_map_insert(&map, 2, "2");
+    zn_int_str_map_insert(&map, 3, "3");
+    zn_int_str_map_insert(&map, 4, "4");
+    zn_int_str_map_insert(&map, 5, "5");
+    zn_int_str_map_insert(&map, 6, "6");
+    zn_int_str_map_insert(&map, 7, "7");
+    zn_int_str_map_insert(&map, 8, "8");
+    zn_int_str_map_insert(&map, 9, "9");
+    zn_int_str_map_insert(&map, 10, "10");
 
-    printf("Map size: %zu\n", z_i_map_len(map));
-    printf("get(0) = %s\n", (char *)z_i_map_get(map, 0));
-    printf("get(1) = %s\n", (char *)z_i_map_get(map, 1));
-    printf("get(2) = %s\n", (char *)z_i_map_get(map, 2));
-    printf("get(3) = %s\n", (char *)z_i_map_get(map, 3));
-    printf("get(4) = %s\n", (char *)z_i_map_get(map, 4));
-    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
-    printf("get(6) = %s\n", (char *)z_i_map_get(map, 6));
-    printf("get(7) = %s\n", (char *)z_i_map_get(map, 7));
-    printf("get(8) = %s\n", (char *)z_i_map_get(map, 8));
-    printf("get(9) = %s\n", (char *)z_i_map_get(map, 9));
-    printf("get(10) = %s\n", (char *)z_i_map_get(map, 10));
+    printf("Map size: %zu\n", zn_int_str_map_len(&map));
+    printf("get(0) = %s\n", zn_int_str_map_get(&map, 0));
+    printf("get(1) = %s\n", zn_int_str_map_get(&map, 1));
+    printf("get(2) = %s\n", zn_int_str_map_get(&map, 2));
+    printf("get(3) = %s\n", zn_int_str_map_get(&map, 3));
+    printf("get(4) = %s\n", zn_int_str_map_get(&map, 4));
+    printf("get(5) = %s\n", zn_int_str_map_get(&map, 5));
+    printf("get(6) = %s\n", zn_int_str_map_get(&map, 6));
+    printf("get(7) = %s\n", zn_int_str_map_get(&map, 7));
+    printf("get(8) = %s\n", zn_int_str_map_get(&map, 8));
+    printf("get(9) = %s\n", zn_int_str_map_get(&map, 9));
+    printf("get(10) = %s\n", zn_int_str_map_get(&map, 10));
 
-    z_i_map_remove(map, 7);
-    assert(0 == z_i_map_get(map, 7));
-    z_i_map_remove(map, 0);
-    assert(0 == z_i_map_get(map, 0));
-    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
+    zn_int_str_map_remove(&map, 7);
+    assert(zn_int_str_map_get(&map, 7) == NULL);
+    zn_int_str_map_remove(&map, 0);
+    assert(zn_int_str_map_get(&map, 0) == NULL);
+    printf("get(5) = %s\n", zn_int_str_map_get(&map, 5));
     return 0;
 }

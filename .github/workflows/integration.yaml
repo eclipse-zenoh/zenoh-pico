@@ -34,16 +34,18 @@ jobs:
     - name: Install latest stable
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
 
-    - name: Compile release
+    - name: Compile debug
       run: make all
       env:
-        BUILD_TYPE: Release
+        BUILD_TYPE: Debug
+        BUILD_TESTING: OFF
+        BUILD_INTEGRATION: ON
 
-    - name: Test release
+    - name: Test debug
       run: make test
       env:
         ARGS: -V

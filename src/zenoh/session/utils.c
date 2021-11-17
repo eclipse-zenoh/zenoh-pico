@@ -12,20 +12,21 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/collections/intmap.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/session/types.h"
-#include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/session/private/subscription.h"
-#include "zenoh-pico/session/private/queryable.h"
-#include "zenoh-pico/session/private/query.h"
-#include "zenoh-pico/transport/private/utils.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/link/manager.h"
 
 /*------------------ Clone helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
@@ -60,12 +61,9 @@ void _zn_default_on_disconnect(void *vz)
         // Try to reconnect -- eventually we should scout here.
         // We should also re-do declarations.
         _Z_DEBUG("Tring to reconnect...\n");
-        _zn_socket_result_t r_sock = _zn_open_tx_session(zn->locator);
+        _zn_socket_result_t r_sock = zn->link->open_f(zn->link, 0);
         if (r_sock.tag == _z_res_t_OK)
-        {
-            zn->sock = r_sock.value.socket;
-            return;
-        }
+            break;
     }
 }
 
@@ -110,10 +108,10 @@ zn_session_t *_zn_session_init()
 
     zn->local_subscriptions = z_list_empty;
     zn->remote_subscriptions = z_list_empty;
-    zn->rem_res_loc_sub_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_sub_map = zn_int_list_map_make();
 
     zn->local_queryables = z_list_empty;
-    zn->rem_res_loc_qle_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_qle_map = zn_int_list_map_make();
 
     zn->pending_queries = z_list_empty;
 
@@ -130,43 +128,44 @@ zn_session_t *_zn_session_init()
     return zn;
 }
 
-void _zn_session_free(zn_session_t *zn)
+void _zn_session_free(zn_session_t **zn)
 {
-    // Close the socket
-    _zn_close_tx_session(zn->sock);
+    zn_session_t *ptr = *zn;
+
+    // Clean up link
+    _zn_link_free(&ptr->link);
 
     // Clean up the entities
-    _zn_flush_resources(zn);
-    _zn_flush_subscriptions(zn);
-    _zn_flush_queryables(zn);
-    _zn_flush_pending_queries(zn);
+    _zn_flush_resources(ptr);
+    _zn_flush_subscriptions(ptr);
+    _zn_flush_queryables(ptr);
+    _zn_flush_pending_queries(ptr);
 
     // Clean up the mutexes
-    z_mutex_free(&zn->mutex_inner);
-    z_mutex_free(&zn->mutex_tx);
-    z_mutex_free(&zn->mutex_rx);
+    z_mutex_free(&ptr->mutex_inner);
+    z_mutex_free(&ptr->mutex_tx);
+    z_mutex_free(&ptr->mutex_rx);
 
     // Clean up the buffers
-    _z_wbuf_free(&zn->wbuf);
-    _z_zbuf_free(&zn->zbuf);
+    _z_wbuf_free(&ptr->wbuf);
+    _z_zbuf_free(&ptr->zbuf);
 
-    _z_wbuf_free(&zn->dbuf_reliable);
-    _z_wbuf_free(&zn->dbuf_best_effort);
+    _z_wbuf_free(&ptr->dbuf_reliable);
+    _z_wbuf_free(&ptr->dbuf_best_effort);
 
     // Clean up the PIDs
-    _z_bytes_free(&zn->local_pid);
-    _z_bytes_free(&zn->remote_pid);
+    _z_bytes_free(&ptr->local_pid);
+    _z_bytes_free(&ptr->remote_pid);
 
     // Clean up the locator
-    free(zn->locator);
+    free(ptr->locator);
 
     // Clean up the tasks
-    free(zn->read_task);
-    free(zn->lease_task);
+    free(ptr->read_task);
+    free(ptr->lease_task);
 
-    free(zn);
-
-    zn = NULL;
+    free(ptr);
+    *zn = NULL;
 }
 
 int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
@@ -189,8 +188,9 @@ int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only)
 int _zn_session_close(zn_session_t *zn, uint8_t reason)
 {
     int res = _zn_send_close(zn, reason, 0);
+
     // Free the session
-    _zn_session_free(zn);
+    _zn_session_free(&zn);
 
     return res;
 }

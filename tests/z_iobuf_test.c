@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "zenoh-pico/protocol/private/iobuf.h"
+#include "zenoh-pico/protocol/iobuf.h"
 
 #define RUNS 1000
 
@@ -35,7 +35,7 @@ void print_wbuf_overview(_z_wbuf_t *wbf)
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [ ", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->capacity; ++i)
+    for (size_t i = 0; i < ios->capacity; i++)
     {
         printf("%02x", ios->buf[i]);
         if (i < ios->capacity - 1)
@@ -440,7 +440,7 @@ void wbuf_add_iosli(void)
 /*=============================*/
 int main(void)
 {
-    for (unsigned int i = 0; i < RUNS; ++i)
+    for (unsigned int i = 0; i < RUNS; i++)
     {
         printf("\n\n== RUN %u\n", i);
         // ZBuf

@@ -12,293 +12,444 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <sys/time.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <net/net_if.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <net/if.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/protocol/private/iobuf.h"
+#include <sys/socket.h>
 
-typedef struct
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
+
+/*------------------ Endpoint ------------------*/
+void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
-    struct net_if *iface;
-} iface_info_t;
+    struct addrinfo hints;
+    struct addrinfo *addr = NULL;
 
-void net_if_iterator_func(struct net_if *iface, void *user_data)
-{
-    iface_info_t *iface_info = user_data;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    if (iface_info->iface == NULL)
-    {
-        iface_info->iface = iface;
-    }
-}
-
-/*------------------ Interfaces and sockets ------------------*/
-char *_zn_select_scout_iface()
-{
-    // @TODO: improve network interface selection
-    char host[NI_MAXHOST];
-
-    iface_info_t iface_info;
-    iface_info.iface = NULL;
-
-    net_if_foreach(net_if_iterator_func, &iface_info);
-
-    if (iface_info.iface != NULL)
-    {
-        struct net_addr addr = iface_info.iface->config.ip.ipv4->unicast->address;
-        struct sockaddr_in sa = {.sin_family = addr.family, .sin_addr = addr.in_addr};
-
-        getnameinfo((const struct sockaddr *)&sa,
-                    sizeof(struct sockaddr_in),
-                    host, NI_MAXHOST,
-                    NULL, 0, NI_NUMERICHOST);
-        _Z_DEBUG_VA("\tAddress: <%s>\n", host);
-
-        char *result = strdup(host);
-        return result;
-    }
-
-    return 0;
-}
-
-struct sockaddr_in *_zn_make_socket_address(const char *addr, int port)
-{
-    struct sockaddr_in *saddr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-    memset(saddr, 0, sizeof(struct sockaddr_in));
-    saddr->sin_family = AF_INET;
-    saddr->sin_port = htons(port);
-
-    if (inet_pton(AF_INET, addr, &(saddr->sin_addr)) <= 0)
-    {
-        free(saddr);
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
         return NULL;
-    }
 
-    return saddr;
+    return addr;
 }
 
-_zn_socket_result_t _zn_create_udp_socket(const char *addr, int port, int timeout_usec)
+void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
 {
-    _zn_socket_result_t r;
-    r.tag = _z_res_t_OK;
+    struct addrinfo hints;
+    struct addrinfo *addr = NULL;
 
-    _Z_DEBUG_VA("Binding UDP Socket to: %s:%d\n", addr, port);
-    struct sockaddr_in saddr;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;
 
-    r.value.socket = socket(PF_INET, SOCK_DGRAM, 0);
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
+        return NULL;
 
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = r.value.socket;
-        r.value.socket = 0;
-        return r;
-    }
-
-    memset(&saddr, 0, sizeof(saddr));
-    saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, addr, &saddr.sin_addr) <= 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
-        r.value.socket = 0;
-        return r;
-    }
-
-    if (bind(r.value.socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
-        r.value.socket = 0;
-        return r;
-    }
-
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = timeout_usec;
-    if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(struct timeval)) == -1)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = errno;
-        close(r.value.socket);
-        r.value.socket = 0;
-        return r;
-    }
-
-    // NOTE: SO_SNDTIMEO socket option is not supported in Zephyr
-    return r;
+    return addr;
 }
 
-_zn_socket_result_t _zn_open_tx_session(const char *locator)
+void _zn_free_endpoint_tcp(void *arg)
 {
-    _zn_socket_result_t r;
-    r.tag = _z_res_t_OK;
-    char *l = strdup(locator);
-    _Z_DEBUG_VA("Connecting to: %s:\n", locator);
-    char *tx = strtok(l, "/");
-    if (strcmp(tx, "tcp") != 0)
-    {
-        fprintf(stderr, "Locator provided is not for TCP\n");
-        _exit(-1);
-    }
-    char *addr_name = strdup(strtok(NULL, ":"));
-    char *s_port = strtok(NULL, ":");
+    struct addrinfo *self = (struct addrinfo *)arg;
 
-    int status;
-    char ip_addr[INET6_ADDRSTRLEN];
-    struct sockaddr_in *remote;
-    struct addrinfo *res;
-    status = getaddrinfo(addr_name, s_port, NULL, &res);
-    if (status == 0 && res != NULL)
-    {
-        void *addr;
-        remote = (struct sockaddr_in *)res->ai_addr;
-        addr = &(remote->sin_addr);
-        inet_ntop(res->ai_family, addr, ip_addr, sizeof(ip_addr));
-    }
-    freeaddrinfo(res);
-
-    int port;
-    sscanf(s_port, "%d", &port);
-
-    _Z_DEBUG_VA("Connecting to: %s:%d\n", addr_name, port);
-    free(addr_name);
-    free(l);
-    struct sockaddr_in serv_addr;
-
-    r.value.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    if (r.value.socket < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = r.value.socket;
-        r.value.socket = 0;
-        return r;
-    }
-
-    // NOTE: SO_KEEPALIVE and SO_LINGER socket options are not supported in Zephyr
-
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, ip_addr, &serv_addr.sin_addr) <= 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
-        r.value.socket = 0;
-        return r;
-    }
-
-    if (connect(r.value.socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        r.tag = _z_res_t_ERR;
-        r.value.error = _zn_err_t_TX_CONNECTION;
-        r.value.socket = 0;
-        return r;
-    }
-
-    return r;
+    freeaddrinfo(self);
 }
 
-void _zn_close_tx_session(_zn_socket_t sock)
+void _zn_free_endpoint_udp(void *arg)
 {
-    shutdown(sock, 2);
+    struct addrinfo *self = (struct addrinfo *)arg;
+
+    freeaddrinfo(self);
 }
 
-/*------------------ Datagram ------------------*/
-int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf, const struct sockaddr *dest, socklen_t salen)
+/*------------------ TCP sockets ------------------*/
+int _zn_open_tcp(void *arg)
 {
-    _Z_DEBUG("Sending data on socket....\n");
-    int wb = 0;
-    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    if (sock < 0)
+        goto _ZN_OPEN_TCP_ERROR_1;
+
+#if LWIP_SO_LINGER == 1
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = ZN_TRANSPORT_LEASE / 1000;
+    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)
+        goto _ZN_OPEN_TCP_ERROR_2;
+#endif
+
+    struct addrinfo *it = NULL;
+    for (it = raddr; it != NULL; it = it->ai_next)
     {
-        z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int res = sendto(sock, a.val, a.len, 0, dest, salen);
-        _Z_DEBUG_VA("Socket returned: %d\n", wb);
-        if (res <= 0)
+        if (connect(sock, it->ai_addr, it->ai_addrlen) < 0)
         {
-            _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-            return -1;
+            if (it->ai_next == NULL)
+                goto _ZN_OPEN_TCP_ERROR_2;
         }
-        wb += res;
+        else
+            break;
     }
-    return wb;
+
+    return sock;
+
+_ZN_OPEN_TCP_ERROR_2:
+    close(sock);
+
+_ZN_OPEN_TCP_ERROR_1:
+    return -1;
 }
 
-int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *zbf, struct sockaddr *from, socklen_t *salen)
+int _zn_listen_tcp(void *arg)
 {
-    int rb = recvfrom(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), 0, from, salen);
-    if (rb > 0)
-        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    struct addrinfo *laddr = (struct addrinfo *)arg;
 
-    return rb;
+    // TODO: To be implemented
+
+    return -1;
 }
 
-/*------------------ Receive ------------------*/
-int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len)
+void _zn_close_tcp(int sock)
 {
-    int n = len;
-    int rb;
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
+}
+
+size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
+{
+    return recv(sock, ptr, len, 0);
+}
+
+size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
+{
+    size_t n = len;
+    size_t rb = 0;
 
     do
     {
-        rb = recv(sock, ptr, n, 0);
-        if (rb == 0)
-            return -1;
+        rb = _zn_read_tcp(sock, ptr, n);
+        if (rb < 0)
+            return rb;
+
         n -= rb;
         ptr = ptr + (len - n);
     } while (n > 0);
 
-    return 0;
+    return len;
 }
 
-int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *zbf)
+size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
-    int rb = recv(sock, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), 0);
-    if (rb > 0)
-        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    return send(sock, ptr, len, 0);
+}
+
+/*------------------ UDP sockets ------------------*/
+int _zn_open_udp_unicast(void *arg, const clock_t tout)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    if (sock < 0)
+        goto _ZN_OPEN_UDP_UNICAST_ERROR_1;
+
+    return sock;
+
+_ZN_OPEN_UDP_UNICAST_ERROR_1:
+    return -1;
+}
+
+int _zn_listen_udp_unicast(void *arg, const clock_t tout)
+{
+    struct addrinfo *laddr = (struct addrinfo *)arg;
+
+    // TODO: To be implemented
+
+    return -1;
+}
+
+void _zn_close_udp_unicast(int sock)
+{
+    close(sock);
+}
+
+size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
+{
+    struct sockaddr_storage raddr;
+    unsigned int addrlen = sizeof(struct sockaddr_storage);
+
+    size_t rb = recvfrom(sock, ptr, len, 0,
+                         (struct sockaddr *)&raddr, &addrlen);
+
     return rb;
 }
 
-/*------------------ Send ------------------*/
-int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf)
+size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
-    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
-    {
-        z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int n = bs.len;
-        int wb;
-        do
-        {
-            _Z_DEBUG("Sending wbuf on socket...");
-            wb = send(sock, bs.val, n, 0);
-            _Z_DEBUG_VA(" sent %d bytes\n", wb);
-            if (wb <= 0)
-            {
-                _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-                return -1;
-            }
-            n -= wb;
-            bs.val += bs.len - n;
-        } while (n > 0);
-    }
+    size_t n = len;
+    size_t rb = 0;
 
-    return 0;
+    do
+    {
+        rb = _zn_read_udp_unicast(sock, ptr, n);
+        if (rb < 0)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
 }
 
-// NOTE: iovec operations are not supported in Zephyr
+size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+
+    return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
+}
+
+int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg_1;
+    struct addrinfo *laddr = NULL;
+    unsigned int addrlen = 0;
+
+    struct sockaddr *lsockaddr = NULL;
+    if (raddr->ai_family == AF_INET)
+    {
+        lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        memset(lsockaddr, 0, sizeof(struct sockaddr_in));
+        addrlen = sizeof(struct sockaddr_in);
+
+        struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
+        c_laddr->sin_family = AF_INET;
+        c_laddr->sin_addr.s_addr = INADDR_ANY;
+        c_laddr->sin_port = htons(INADDR_ANY);
+    }
+    else if (raddr->ai_family == AF_INET6)
+    {
+        lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
+        addrlen = sizeof(struct sockaddr_in6);
+
+        struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
+        c_laddr->sin6_family = AF_INET6;
+        c_laddr->sin6_addr = in6addr_any;
+        c_laddr->sin6_port = htons(INADDR_ANY);
+        //        c_laddr->sin6_scope_id; // Not needed to be defined
+    }
+    else
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
+
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    if (sock < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
+
+    if (bind(sock, lsockaddr, addrlen) < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+
+    // Get the randomly assigned port used to discard loopback messages
+    if (getsockname(sock, lsockaddr, &addrlen) < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+
+    // Create laddr endpoint
+    laddr = (struct addrinfo *)malloc(sizeof(struct addrinfo));
+    laddr->ai_flags = 0;
+    laddr->ai_family = raddr->ai_family;
+    laddr->ai_socktype = raddr->ai_socktype;
+    laddr->ai_protocol = raddr->ai_protocol;
+    laddr->ai_addrlen = addrlen;
+    laddr->ai_addr = lsockaddr;
+    laddr->ai_canonname = NULL;
+    laddr->ai_next = NULL;
+    *arg_2 = laddr;
+
+    return sock;
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_2:
+    close(sock);
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_1:
+    return -1;
+}
+
+int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+    struct sockaddr *laddr = NULL;
+    unsigned int addrlen = 0;
+
+    if (raddr->ai_family == AF_INET)
+    {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        memset(laddr, 0, sizeof(struct sockaddr_in));
+        addrlen = sizeof(struct sockaddr_in);
+
+        struct sockaddr_in *c_laddr = (struct sockaddr_in *)laddr;
+        c_laddr->sin_family = AF_INET;
+        c_laddr->sin_addr.s_addr = INADDR_ANY;
+        c_laddr->sin_port = ((struct sockaddr_in *)raddr->ai_addr)->sin_port;
+    }
+    else if (raddr->ai_family == AF_INET6)
+    {
+        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        memset(laddr, 0, sizeof(struct sockaddr_in6));
+        addrlen = sizeof(struct sockaddr_in6);
+
+        struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)laddr;
+        c_laddr->sin6_family = AF_INET6;
+        c_laddr->sin6_addr = in6addr_any;
+        c_laddr->sin6_port = htons(INADDR_ANY);
+        c_laddr->sin6_port = ((struct sockaddr_in6 *)raddr->ai_addr)->sin6_port;
+        //        c_laddr->sin6_scope_id; // Not needed to be defined
+    }
+    else
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
+
+    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    if (sock < 0)
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
+
+    int optflag = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+
+    if (bind(sock, laddr, addrlen) < 0)
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+
+    // FIXME: iface passed into the locator is being ignored
+    //        default if used instead
+    struct net_if *ifa = NULL;
+    ifa = net_if_get_default();
+    if (!ifa)
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+
+    // Join the multicast group
+    if (raddr->ai_family == AF_INET)
+    {
+        struct net_if_mcast_addr *mcast = NULL;
+        mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)raddr->ai_addr)->sin_addr);
+        if (!mcast)
+            goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+        net_if_ipv4_maddr_join(mcast);
+    }
+    else if (raddr->ai_family == AF_INET6)
+    {
+        struct net_if_mcast_addr *mcast = NULL;
+        mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr);
+        if (!mcast)
+            goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+        net_if_ipv6_maddr_join(mcast);
+    }
+    else
+        goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+
+    return sock;
+
+_ZN_LISTEN_UDP_MULTICAST_ERROR_2:
+    close(sock);
+
+_ZN_LISTEN_UDP_MULTICAST_ERROR_1:
+    return -1;
+}
+
+void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+
+    // FIXME: iface passed into the locator is being ignored
+    //        default if used instead
+    struct net_if *ifa = NULL;
+    ifa = net_if_get_default();
+    if (!ifa)
+        goto _ZN_CLOSE_UDP_MULTICAST_ERROR_1;
+
+    if (raddr->ai_family == AF_INET)
+    {
+        struct net_if_mcast_addr *mcast = NULL;
+        mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)raddr->ai_addr)->sin_addr);
+        if (!mcast)
+            goto _ZN_CLOSE_UDP_MULTICAST_ERROR_1;
+
+        net_if_ipv4_maddr_leave(mcast);
+        net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)raddr->ai_addr)->sin_addr);
+    }
+    else if (raddr->ai_family == AF_INET6)
+    {
+        struct net_if_mcast_addr *mcast = NULL;
+        mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr);
+        if (!mcast)
+            goto _ZN_CLOSE_UDP_MULTICAST_ERROR_1;
+
+        net_if_ipv6_maddr_leave(mcast);
+        net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr);
+    }
+
+    close(sock_recv);
+    close(sock_send);
+
+_ZN_CLOSE_UDP_MULTICAST_ERROR_1:
+    close(sock_recv);
+    close(sock_send);
+}
+
+size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+{
+    struct addrinfo *laddr = (struct addrinfo *)arg;
+    struct sockaddr_storage raddr;
+    unsigned int addrlen = sizeof(struct sockaddr_storage);
+
+    size_t rb = 0;
+    do
+    {
+        rb = recvfrom(sock, ptr, len, 0,
+                      (struct sockaddr *)&raddr, &addrlen);
+
+        if (laddr->ai_family == AF_INET)
+        {
+            struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
+            struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
+            if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr))
+                break;
+        }
+        else if (laddr->ai_family == AF_INET6)
+        {
+            struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr->ai_addr);
+            struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
+            if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, 16) == 0))
+                break;
+        }
+    } while (1);
+
+    return rb;
+}
+
+size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+{
+    size_t n = len;
+    size_t rb = 0;
+
+    do
+    {
+        rb = _zn_read_udp_multicast(sock, ptr, n, arg);
+        if (rb < 0)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
+}
+
+size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg)
+{
+    struct addrinfo *raddr = (struct addrinfo *)arg;
+
+    return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
+}

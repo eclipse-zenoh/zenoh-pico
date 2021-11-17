@@ -14,11 +14,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
 
 /*-------- string --------*/
-z_string_t z_string_make(const char *value)
+z_string_t z_string_make(const z_str_t value)
 {
     z_string_t s;
     s.val = strdup(value);
@@ -28,7 +28,7 @@ z_string_t z_string_make(const char *value)
 
 void z_string_free(z_string_t *s)
 {
-    free((char *)s->val);
+    free((z_str_t)s->val);
 }
 
 void _z_string_copy(z_string_t *dst, const z_string_t *src)
@@ -49,6 +49,12 @@ void _z_string_move(z_string_t *dst, z_string_t *src)
     src->len = 0;
 }
 
+void _z_string_move_str(z_string_t *dst, z_str_t src)
+{
+    dst->val = src;
+    dst->len = strlen(src);
+}
+
 void _z_string_free(z_string_t *str)
 {
     free((z_str_t)str->val);
@@ -64,7 +70,7 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
 {
     z_string_t s;
     s.len = 2 * bs->len;
-    char *s_val = (char *)malloc(s.len * sizeof(char) + 1);
+    z_str_t s_val = (z_str_t)malloc(s.len * sizeof(char) + 1);
 
     char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++)
@@ -76,6 +82,13 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
     s.val = s_val;
 
     return s;
+}
+
+/*-------- str_array --------*/
+z_str_t _z_str_dup(const z_str_t src)
+{
+    z_str_t dst = (z_str_t)malloc(strlen(src) + 1);
+    return strcpy(dst, src);
 }
 
 /*-------- str_array --------*/

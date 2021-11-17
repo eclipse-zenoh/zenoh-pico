@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/msg.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
+#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 
 /*------------------ Message helpers ------------------*/
 _zn_transport_message_t _zn_transport_message_init(uint8_t header)

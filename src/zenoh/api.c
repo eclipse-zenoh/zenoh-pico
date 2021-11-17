@@ -12,15 +12,16 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/utils/private/logging.h"
-#include "zenoh-pico/session/private/resource.h"
-#include "zenoh-pico/session/private/subscription.h"
-#include "zenoh-pico/session/private/query.h"
-#include "zenoh-pico/session/private/queryable.h"
-#include "zenoh-pico/session/private/utils.h"
-#include "zenoh-pico/transport/private/utils.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/link/manager.h"
 
 /*------------------ Init/Config ------------------*/
 void z_init_logger()
@@ -30,10 +31,12 @@ void z_init_logger()
 
 zn_properties_t *zn_config_empty()
 {
-    return zn_properties_make();
+    zn_properties_t *config = (zn_properties_t *)malloc(sizeof(zn_properties_t));
+    zn_properties_init(config);
+    return config;
 }
 
-zn_properties_t *zn_config_client(const char *locator)
+zn_properties_t *zn_config_client(const z_str_t locator)
 {
     zn_properties_t *ps = zn_config_empty();
     zn_properties_insert(ps, ZN_CONFIG_MODE_KEY, z_string_make("client"));
@@ -92,26 +95,27 @@ zn_session_t *zn_open(zn_properties_t *config)
     zn_session_t *zn = NULL;
 
     int locator_is_scouted = 0;
-    const char *locator = zn_properties_get(config, ZN_CONFIG_PEER_KEY).val;
+    z_str_t locator = zn_properties_get(config, ZN_CONFIG_PEER_KEY).val;
 
     if (locator == NULL)
     {
         // Scout for routers
         unsigned int what = ZN_ROUTER;
-        const char *mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
+        z_str_t mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
         if (mode == NULL)
         {
             return zn;
         }
 
-        const char *to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
+        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
+        // scout loop timeout uses milliseconds granularity
+        z_str_t to = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
         if (to == NULL)
         {
             to = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
-        // The ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float while the
-        // scout loop timeout uses milliseconds granularity
         clock_t timeout = (clock_t)1000 * strtof(to, NULL);
+
         // Scout and return upon the first result
         zn_hello_array_t locs = _zn_scout(what, config, timeout, 1);
         if (locs.len > 0)
@@ -139,12 +143,12 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Initialize the PRNG
     srand(time(NULL));
 
-    // Attempt to open a socket
-    _zn_socket_result_t r_sock = _zn_open_tx_session(locator);
-    if (r_sock.tag == _z_res_t_ERR)
+    // Attempt to configure the link
+    _zn_link_p_result_t r_link = _zn_open_link(locator, 0);
+    if (r_link.tag == _z_res_t_ERR)
     {
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         return zn;
     }
@@ -168,7 +172,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Initialize the session
     zn = _zn_session_init();
-    zn->sock = r_sock.value.socket;
+    zn->link = r_link.value.link;
 
     _Z_DEBUG("Sending InitSyn\n");
     // Encode and send the message
@@ -180,11 +184,11 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free the locator
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         // Free
         _zn_transport_message_free(&ism);
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
 
         return zn;
     }
@@ -197,11 +201,11 @@ zn_session_t *zn_open(zn_properties_t *config)
 
         // Free the locator
         if (locator_is_scouted)
-            free((char *)locator);
+            free((z_str_t)locator);
 
         // Free
         _zn_transport_message_free(&ism);
-        _zn_session_free(zn);
+        _zn_session_free(&zn);
 
         return zn;
     }
@@ -257,8 +261,8 @@ zn_session_t *zn_open(zn_properties_t *config)
             {
                 _z_bytes_free(&pid);
                 if (locator_is_scouted)
-                    free((char *)locator);
-                _zn_session_free(zn);
+                    free((z_str_t)locator);
+                _zn_session_free(&zn);
                 break;
             }
 
@@ -267,7 +271,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             _z_bytes_copy(&zn->remote_pid, &p_iam->body.init.pid);
 
             if (locator_is_scouted)
-                zn->locator = (char *)locator;
+                zn->locator = (z_str_t)locator;
             else
                 zn->locator = strdup(locator);
 
@@ -299,7 +303,8 @@ zn_session_t *zn_open(zn_properties_t *config)
 
 zn_properties_t *zn_info(zn_session_t *zn)
 {
-    zn_properties_t *ps = zn_properties_make();
+    zn_properties_t *ps = (zn_properties_t *)malloc(sizeof(zn_properties_t));
+    zn_properties_init(ps);
     zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->local_pid));
     zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->remote_pid));
     return ps;
@@ -314,7 +319,7 @@ void zn_sample_free(zn_sample_t sample)
 }
 
 /*------------------ Resource Keys operations ------------------*/
-zn_reskey_t zn_rname(const char *rname)
+zn_reskey_t zn_rname(const z_str_t rname)
 {
     zn_reskey_t rk;
     rk.rid = ZN_RESOURCE_ID_NONE;
@@ -330,7 +335,7 @@ zn_reskey_t zn_rid(unsigned long rid)
     return rk;
 }
 
-zn_reskey_t zn_rid_with_suffix(unsigned long id, const char *suffix)
+zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix)
 {
     zn_reskey_t rk;
     rk.rid = id;
@@ -571,7 +576,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 }
 
 /*------------------ Write ------------------*/
-int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -683,7 +688,7 @@ int zn_query_consolidation_equal(zn_query_consolidation_t *left, zn_query_consol
     return memcmp(left, right, sizeof(zn_query_consolidation_t));
 }
 
-void zn_query(zn_session_t *zn, zn_reskey_t reskey, const char *predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
+void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
     // Create the pending query object
     _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
@@ -742,7 +747,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
 
 zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
                                        zn_reskey_t reskey,
-                                       const char *predicate,
+                                       const z_str_t predicate,
                                        zn_query_target_t target,
                                        zn_query_consolidation_t consolidation)
 {
@@ -754,7 +759,9 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 
     // Issue the query
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
+
     // Wait to be notified
+    z_mutex_lock(&pqc.mutex);
     z_condvar_wait(&pqc.cond_var, &pqc.mutex);
 
     zn_reply_data_array_t rda;
@@ -876,7 +883,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     free(qle);
 }
 
-void zn_send_reply(zn_query_t *query, const char *key, const uint8_t *payload, size_t len)
+void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
 {
     _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DATA);
 

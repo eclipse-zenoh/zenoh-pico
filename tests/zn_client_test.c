@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "zenoh-pico.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/system/platform.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -25,7 +25,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "/demo/example/";
+z_str_t uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -62,7 +62,7 @@ void reply_handler(const zn_reply_t reply, const void *arg)
     {
         printf(">> Received reply data: %s %s %s\t(%u/%u)\n", res, reply.data.data.key.val, reply.data.data.key.val, replies, total);
         assert(reply.data.data.value.len == strlen(res));
-        assert(strncmp(res, (const char *)reply.data.data.value.val, reply.data.data.value.len) == 0);
+        assert(strncmp(res, (const z_str_t)reply.data.data.value.val, reply.data.data.value.len) == 0);
         assert(reply.data.data.key.len == strlen(res));
         assert(strncmp(res, reply.data.data.key.val, reply.data.data.value.len) == 0);
     }
@@ -87,7 +87,7 @@ void data_handler(const zn_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, char **argv)
+int main(int argc, z_str_t *argv)
 {
     setbuf(stdout, NULL);
 
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
     zn_close(s2);
 
     // Cleanup properties
-    zn_properties_free(config);
+    zn_properties_free(&config);
 
     return 0;
 }

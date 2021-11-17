@@ -12,10 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/transport/private/utils.h"
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/private/logging.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/utils/logging.h"
 
 void *_znp_read_task(void *arg)
 {
@@ -31,51 +30,51 @@ void *_znp_read_task(void *arg)
     _z_zbuf_clear(&z->zbuf);
     while (z->read_task_running)
     {
-#ifdef ZN_TRANSPORT_TCP_IP
-        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-        //       the boundary of the serialized messages. The length is encoded as little-endian.
-        //       In any case, the length of a message must not exceed 65_535 bytes.
-        if (_z_zbuf_len(&z->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
+        size_t to_read = 0;
+        if (z->link->is_streamed == 1)
         {
-            _z_zbuf_compact(&z->zbuf);
-            // Read number of bytes to read
-            while (_z_zbuf_len(&z->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
+            // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+            //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+            //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+            //       the boundary of the serialized messages. The length is encoded as little-endian.
+            //       In any case, the length of a message must not exceed 65_535 bytes.
+            if (_z_zbuf_len(&z->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
             {
-                if (_zn_recv_zbuf(z->sock, &z->zbuf) <= 0)
-                    goto EXIT_RECV_LOOP;
+                _z_zbuf_compact(&z->zbuf);
+                // Read number of bytes to read
+                while (_z_zbuf_len(&z->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
+                {
+                    if (_zn_recv_zbuf(z->link, &z->zbuf) <= 0)
+                        goto EXIT_RECV_LOOP;
+                }
+            }
+
+            // Decode the message length
+            to_read = (size_t)((uint16_t)_z_zbuf_read(&z->zbuf) | ((uint16_t)_z_zbuf_read(&z->zbuf) << 8));
+
+            if (_z_zbuf_len(&z->zbuf) < to_read)
+            {
+                _z_zbuf_compact(&z->zbuf);
+                // Read the rest of bytes to decode one or more session messages
+                while (_z_zbuf_len(&z->zbuf) < to_read)
+                {
+                    if (_zn_recv_zbuf(z->link, &z->zbuf) <= 0)
+                        goto EXIT_RECV_LOOP;
+                }
             }
         }
-
-        // Decode the message length
-        size_t to_read = (size_t)((uint16_t)_z_zbuf_read(&z->zbuf) | ((uint16_t)_z_zbuf_read(&z->zbuf) << 8));
-
-        if (_z_zbuf_len(&z->zbuf) < to_read)
+        else
         {
             _z_zbuf_compact(&z->zbuf);
-            // Read the rest of bytes to decode one or more session messages
-            while (_z_zbuf_len(&z->zbuf) < to_read)
-            {
-                if (_zn_recv_zbuf(z->sock, &z->zbuf) <= 0)
-                    goto EXIT_RECV_LOOP;
-            }
+
+            // Read bytes from the socket
+            to_read = _zn_recv_zbuf(z->link, &z->zbuf);
+            if (to_read == -1)
+                continue;
         }
 
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&z->zbuf, to_read);
-#else
-        _z_zbuf_compact(&z->zbuf);
-
-        // Read bytes from the socket.
-        while (_z_zbuf_len(&z->zbuf) == 0)
-        {
-            if (_zn_recv_zbuf(z->sock, &z->zbuf) <= 0)
-                goto EXIT_RECV_LOOP;
-        }
-
-        z_iobuf_t zbuf = z->zbuf;
-#endif
 
         while (_z_zbuf_len(&zbuf) > 0)
         {
@@ -100,10 +99,8 @@ void *_znp_read_task(void *arg)
             }
         }
 
-#ifdef ZN_TRANSPORT_TCP_IP
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&z->zbuf, _z_zbuf_get_rpos(&z->zbuf) + to_read);
-#endif
     }
 
 EXIT_RECV_LOOP:

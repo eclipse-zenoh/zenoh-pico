@@ -12,16 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#define _ZENOH_PICO_MSGCODEC_H_T
+#define ZENOH_PICO_MSGCODEC_H_T
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/protocol/private/iobuf.h"
-#include "zenoh-pico/protocol/private/msgcodec.h"
-#include "zenoh-pico/protocol/private/utils.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/system/platform.h"
 
 #define RUNS 1000
 
@@ -31,7 +32,7 @@
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->capacity; ++i)
+    for (size_t i = 0; i < ios->capacity; i++)
     {
         printf("%02x", ios->buf[i]);
         if (i < ios->capacity - 1)
@@ -54,7 +55,7 @@ void print_wbuf(_z_wbuf_t *wbf)
 void print_uint8_array(z_bytes_t *arr)
 {
     printf("Length: %zu, Buffer: [", arr->len);
-    for (size_t i = 0; i < arr->len; ++i)
+    for (size_t i = 0; i < arr->len; i++)
     {
         printf("%02x", arr->val[i]);
         if (i < arr->len - 1)
@@ -72,6 +73,9 @@ void print_transport_message_type(uint8_t header)
         break;
     case _ZN_MID_HELLO:
         printf("Hello message");
+        break;
+    case _ZN_MID_JOIN:
+        printf("Join message");
         break;
     case _ZN_MID_INIT:
         printf("Init message");
@@ -139,7 +143,7 @@ _zn_payload_t gen_payload(size_t len)
     _zn_payload_t pld;
     pld.len = len;
     pld.val = (uint8_t *)malloc(len * sizeof(uint8_t));
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
         ((uint8_t *)pld.val)[i] = 0xff;
 
     return pld;
@@ -150,7 +154,7 @@ z_bytes_t gen_bytes(size_t len)
     z_bytes_t arr;
     arr.len = len;
     arr.val = (uint8_t *)malloc(sizeof(uint8_t) * len);
-    for (z_zint_t i = 0; i < len; ++i)
+    for (z_zint_t i = 0; i < len; i++)
         ((uint8_t *)arr.val)[i] = gen_uint8();
 
     return arr;
@@ -161,11 +165,11 @@ uint64_t gen_time(void)
     return (uint64_t)time(NULL);
 }
 
-char *gen_string(size_t size)
+z_str_t gen_str(size_t size)
 {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/";
-    char *str = (char *)malloc((sizeof(char) * size) + 1);
-    for (z_zint_t i = 0; i < size; ++i)
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    z_str_t str = (z_str_t)malloc((size * sizeof(char)) + 1);
+    for (z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
         str[i] = charset[key];
@@ -177,10 +181,23 @@ char *gen_string(size_t size)
 z_str_array_t gen_str_array(size_t size)
 {
     z_str_array_t sa = _z_str_array_make(size);
-    for (size_t i = 0; i < size; ++i)
-        ((z_str_t *)sa.val)[i] = gen_string(16);
+    for (size_t i = 0; i < size; i++)
+        ((z_str_t *)sa.val)[i] = gen_str(16);
 
     return sa;
+}
+
+_zn_locator_array_t gen_locator_array(size_t size)
+{
+    _zn_locator_array_t la = _zn_locator_array_make(size);
+    for (size_t i = 0; i < size; i++)
+    {
+        la.val[i].protocol = gen_str(3);
+        la.val[i].address = gen_str(12);
+        // @TODO: generate metadata
+    }
+
+    return la;
 }
 
 /*=============================*/
@@ -194,7 +211,7 @@ void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right)
     assert(left->capacity == right->capacity);
 
     printf("Content (");
-    for (z_zint_t i = 0; i < left->capacity; ++i)
+    for (z_zint_t i = 0; i < left->capacity; i++)
     {
         uint8_t l = left->buf[i];
         uint8_t r = right->buf[i];
@@ -215,7 +232,7 @@ void assert_eq_uint8_array(z_bytes_t *left, z_bytes_t *right)
 
     assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->len; ++i)
+    for (size_t i = 0; i < left->len; i++)
     {
         uint8_t l = left->val[i];
         uint8_t r = right->val[i];
@@ -236,16 +253,43 @@ void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
 
     assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->len; ++i)
+    for (size_t i = 0; i < left->len; i++)
     {
-        const char *l = left->val[i];
-        const char *r = right->val[i];
+        const z_str_t l = left->val[i];
+        const z_str_t r = right->val[i];
 
         printf("%s:%s", l, r);
         if (i < left->len - 1)
             printf(" ");
 
         assert(strcmp(l, r) == 0);
+    }
+    printf(")");
+}
+
+void assert_eq_locator_array(_zn_locator_array_t *left, _zn_locator_array_t *right)
+{
+    printf("Locators -> ");
+    printf("Length (%zu:%zu), ", left->len, right->len);
+
+    assert(left->len == right->len);
+    printf("Content (");
+    for (size_t i = 0; i < left->len; i++)
+    {
+        const _zn_locator_t *l = &left->val[i];
+        const _zn_locator_t *r = &right->val[i];
+
+        z_str_t ls = _zn_locator_to_str(l);
+        z_str_t rs = _zn_locator_to_str(r);
+
+        printf("%s:%s", ls, rs);
+        if (i < left->len - 1)
+            printf(" ");
+
+        free(ls);
+        free(rs);
+
+        assert(_zn_locator_cmp(l, r) == 0);
     }
     printf(")");
 }
@@ -424,7 +468,7 @@ zn_reskey_t gen_res_key(void)
     if (is_numerical)
         key.rname = NULL;
     else
-        key.rname = gen_string((gen_zint() % 16) + 1);
+        key.rname = gen_str((gen_zint() % 16) + 1);
 
     return key;
 }
@@ -618,7 +662,7 @@ _zn_attachment_t *gen_attachment(void)
     _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
 
     p_at->header = _ZN_MID_ATTACHMENT;
-    _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
+    // _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
     p_at->payload = gen_payload(64);
 
     return p_at;
@@ -1224,7 +1268,7 @@ _zn_declare_t gen_declare_message(void)
     e_dcl.declarations.len = gen_zint() % 16;
     e_dcl.declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.len);
 
-    for (z_zint_t i = 0; i < e_dcl.declarations.len; ++i)
+    for (z_zint_t i = 0; i < e_dcl.declarations.len; i++)
         e_dcl.declarations.val[i] = gen_declaration();
 
     return e_dcl;
@@ -1234,7 +1278,7 @@ void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
 {
     assert(left->declarations.len == right->declarations.len);
 
-    for (z_zint_t i = 0; i < left->declarations.len; ++i)
+    for (z_zint_t i = 0; i < left->declarations.len; i++)
     {
         printf("   ");
         assert_eq_declaration(&left->declarations.val[i], &right->declarations.val[i]);
@@ -1399,7 +1443,7 @@ _zn_query_t gen_query_message(uint8_t *header)
 
     e_qy.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_qy.key.rname) ? _ZN_FLAG_Z_K : 0);
-    e_qy.predicate = gen_string(gen_uint8() % 16);
+    e_qy.predicate = gen_str(gen_uint8() % 16);
     e_qy.qid = gen_zint();
 
     if (gen_bool())
@@ -1743,7 +1787,7 @@ _zn_hello_t gen_hello_message(uint8_t *header)
     }
     if (gen_bool())
     {
-        e_he.locators = gen_str_array((gen_uint8() % 4) + 1);
+        e_he.locators = gen_locator_array((gen_uint8() % 4) + 1);
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_L);
     }
 
@@ -1767,7 +1811,7 @@ void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t head
     if _ZN_HAS_FLAG (header, _ZN_FLAG_T_L)
     {
         printf("   ");
-        assert_eq_str_array(&left->locators, &right->locators);
+        assert_eq_locator_array(&left->locators, &right->locators);
         printf("\n");
     }
 }
@@ -1810,7 +1854,10 @@ _zn_join_t gen_join_message(uint8_t *header)
     e_jn.pid = gen_bytes(16);
     e_jn.lease = gen_zint();
     if (gen_bool())
+    {
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_T1);
+        e_jn.lease *= 1000;
+    }
 
     if (gen_bool())
     {
@@ -1821,7 +1868,7 @@ _zn_join_t gen_join_message(uint8_t *header)
     if (gen_bool())
     {
         e_jn.next_sns.is_qos = 1;
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             e_jn.next_sns.val.sns[i] = gen_zint();
         }
@@ -1872,7 +1919,7 @@ void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
         assert(right->next_sns.is_qos == 1);
 
         printf("   Next SNs: ");
-        for (int i = 0; i < _ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             printf("%zu:%zu ", left->next_sns.val.sns[i], right->next_sns.val.sns[i]);
             assert(left->next_sns.val.sns[i] == right->next_sns.val.sns[i]);
@@ -1926,6 +1973,9 @@ _zn_init_t gen_init_message(uint8_t *header)
     if (gen_bool())
         _ZN_SET_FLAG(e_it.options, _ZN_OPT_INIT_QOS);
 
+    if (e_it.options != 0)
+        _ZN_SET_FLAG(*header, _ZN_FLAG_T_O);
+
     e_it.whatami = gen_zint();
     e_it.pid = gen_bytes(16);
     if (gen_bool())
@@ -1933,6 +1983,7 @@ _zn_init_t gen_init_message(uint8_t *header)
         e_it.sn_resolution = gen_zint();
         _ZN_SET_FLAG(*header, _ZN_FLAG_T_S);
     }
+
     if (gen_bool())
     {
         e_it.cookie = gen_payload(64);
@@ -2364,7 +2415,7 @@ _zn_frame_t gen_frame_message(uint8_t *header, int can_be_fragment)
     {
         z_zint_t num = (gen_zint() % 4) + 1;
         e_fr.payload.messages = z_vec_make(num);
-        for (z_zint_t i = 0; i < num; ++i)
+        for (z_zint_t i = 0; i < num; i++)
         {
             _zn_zenoh_message_t *p_zm = gen_zenoh_message();
             z_vec_append(&e_fr.payload.messages, p_zm);
@@ -2393,7 +2444,7 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
         printf("   Lenght (%zu:%zu)", l_len, r_len);
         assert(r_len == r_len);
 
-        for (size_t i = 0; i < l_len; ++i)
+        for (size_t i = 0; i < l_len; i++)
             assert_eq_zenoh_message((_zn_zenoh_message_t *)z_vec_get(&left->payload.messages, i), (_zn_zenoh_message_t *)z_vec_get(&right->payload.messages, i));
     }
 }
@@ -2604,7 +2655,7 @@ void batch(void)
 
     // Initialize
     _zn_transport_message_t **e_sm = (_zn_transport_message_t **)malloc(tot_num * sizeof(_zn_transport_message_t *));
-    for (uint8_t i = 0; i < bef_num; ++i)
+    for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2612,7 +2663,7 @@ void batch(void)
         int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
-    for (uint8_t i = bef_num; i < bef_num + frm_num; ++i)
+    for (uint8_t i = bef_num; i < bef_num + frm_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2623,7 +2674,7 @@ void batch(void)
         int res = _zn_transport_message_encode(&wbf, e_sm[i]);
         assert(res == 0);
     }
-    for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; ++i)
+    for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++)
     {
         // Initialize random session message
         e_sm[i] = gen_transport_message(0);
@@ -2634,7 +2685,7 @@ void batch(void)
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    for (uint8_t i = 0; i < tot_num; ++i)
+    for (uint8_t i = 0; i < tot_num; i++)
     {
         _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
@@ -2826,7 +2877,7 @@ int main(void)
 {
     setbuf(stdout, NULL);
 
-    for (unsigned int i = 0; i < RUNS; ++i)
+    for (unsigned int i = 0; i < RUNS; i++)
     {
         printf("\n\n== RUN %u", i);
         // Message fields
@@ -2835,9 +2886,11 @@ int main(void)
         subinfo_field();
         res_key_field();
         data_info_field();
+
         // Message decorators
         attachment_decorator();
         reply_contex_decorator();
+
         // Zenoh declarations
         resource_declaration();
         publisher_declaration();
@@ -2847,12 +2900,14 @@ int main(void)
         forget_publisher_declaration();
         forget_subscriber_declaration();
         forget_queryable_declaration();
+
         // Zenoh messages
         declare_message();
         data_message();
         pull_message();
         query_message();
         zenoh_message();
+
         // Session messages
         scout_message();
         hello_message();
