@@ -14,185 +14,25 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include "zenoh-pico/collections/intmap.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/link/config/udp.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/utils/collections.h"
-
-/*------------------ State ------------------*/
-_zn_state_t _zn_state_make()
-{
-    return z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
-}
-
-int _zn_state_init(_zn_state_t *ps)
-{
-    return z_i_map_start(ps, _Z_DEFAULT_I_MAP_CAPACITY);
-}
-
-int _zn_state_insert(_zn_state_t *ps, unsigned int key, z_str_t value)
-{
-    return z_i_map_set(ps, key, value);
-}
-
-const z_str_t _zn_state_get(const _zn_state_t *ps, unsigned int key)
-{
-    return (const z_str_t)z_i_map_get(ps, key);
-}
-
-size_t _zn_state_len(const _zn_state_t *ps)
-{
-    return z_i_map_len(ps);
-}
-
-int _zn_state_is_empty(const _zn_state_t *ps)
-{
-    return z_i_map_is_empty(ps);
-}
-
-void _zn_state_clear(_zn_state_t *ps)
-{
-    z_i_map_clear(ps);
-}
-
-void _zn_state_free(_zn_state_t **ps)
-{
-    z_i_map_free(ps);
-}
-
-_zn_state_result_t _zn_state_from_strn(const z_str_t s, unsigned int argc, _zn_state_mapping_t argv[], size_t n)
-{
-    _zn_state_result_t res;
-
-    res.tag = _z_res_t_OK;
-    res.value.state = _zn_state_make();
-
-    // Check the string contains only the right
-    z_str_t start = s;
-    z_str_t end = &s[n];
-    while (start < end)
-    {
-        z_str_t p_key_start = start;
-        z_str_t p_key_end = strchr(p_key_start, ENDPOINT_STATE_KEYVALUE_SEPARATOR);
-
-        if (p_key_end == NULL)
-            goto ERR;
-
-        // Verify the key is valid based on the provided mapping
-        size_t p_key_len = p_key_end - p_key_start;
-        int found = 0;
-        unsigned int key;
-        for (unsigned int i = 0; i < argc; i++)
-        {
-            if (p_key_len != strlen(argv[i].str))
-                continue;
-            if (strncmp(p_key_start, argv[i].str, p_key_len) != 0)
-                continue;
-
-            found = 1;
-            key = argv[i].key;
-            break;
-        }
-
-        if (!found)
-            goto ERR;
-
-        // Read and populate the value
-        z_str_t p_value_start = p_key_end + 1;
-        z_str_t p_value_end = strchr(p_key_end, ENDPOINT_STATE_LIST_SEPARATOR);
-        if (p_value_end == NULL)
-            p_value_end = end;
-
-        size_t p_value_len = p_value_end - p_value_start;
-        z_str_t p_value = (z_str_t)malloc((p_value_len + 1) * sizeof(char));
-        strncpy(p_value, p_value_start, p_value_len);
-        p_value[p_value_len] = '\0';
-
-        _zn_state_insert(&res.value.state, key, p_value);
-
-        // Process next key value
-        start = p_value_end + 1;
-    }
-
-    return res;
-
-ERR:
-    _zn_state_clear(&res.value.state);
-    res.tag = _z_res_t_ERR;
-    res.value.error = _z_err_t_PARSE_STRING;
-    return res;
-}
-
-_zn_state_result_t _zn_state_from_str(const z_str_t s, unsigned int argc, _zn_state_mapping_t argv[])
-{
-    return _zn_state_from_strn(s, argc, argv, strlen(s));
-}
-
-size_t _zn_state_strlen(const _zn_state_t *s, unsigned int argc, _zn_state_mapping_t argv[])
-{
-    // Calculate the string length to allocate
-    size_t len = 0;
-    for (size_t i = 0; i < argc; i++)
-    {
-        z_str_t v = _zn_state_get(s, argv[i].key);
-        if (v != NULL)
-        {
-            if (len != 0)
-                len += 1;               // List separator
-            len += strlen(argv[i].str); // Key
-            len += 1;                   // KeyValue separator
-            len += strlen(v);           // Value
-        }
-    }
-
-    return len;
-}
-
-void _zn_state_onto_str(z_str_t dst, const _zn_state_t *s, unsigned int argc, _zn_state_mapping_t argv[])
-{
-    // Build the string
-    dst[0] = '\0';
-
-    const char lsep = ENDPOINT_STATE_LIST_SEPARATOR;
-    const char ksep = ENDPOINT_STATE_KEYVALUE_SEPARATOR;
-    for (size_t i = 0; i < argc; i++)
-    {
-        z_str_t v = _zn_state_get(s, argv[i].key);
-        if (v != NULL)
-        {
-            if (strlen(dst) != 0)
-                strncat(dst, &lsep, 1); // List separator
-            strcat(dst, argv[i].str);   // Key
-            strncat(dst, &ksep, 1);     // KeyValue separator
-            strcat(dst, v);             // Value
-        }
-    }
-}
-
-z_str_t _zn_state_to_str(const _zn_state_t *s, unsigned int argc, _zn_state_mapping_t argv[])
-{
-    // Calculate the string length to allocate
-    size_t len = _zn_state_strlen(s, argc, argv);
-    // Build the string
-    z_str_t dst = (z_str_t)malloc(len + 1);
-    _zn_state_onto_str(dst, s, argc, argv);
-    return dst;
-}
 
 /*------------------ Locator ------------------*/
 void _zn_locator_init(_zn_locator_t *locator)
 {
     locator->protocol = NULL;
     locator->address = NULL;
-    locator->metadata = _zn_state_make();
+    locator->metadata = zn_int_str_map_make();
 }
 
 void _zn_locator_clear(_zn_locator_t *lc)
 {
     free((z_str_t)lc->protocol);
     free((z_str_t)lc->address);
-    _zn_state_clear(&lc->metadata);
+    zn_int_str_map_clear(&lc->metadata);
 }
 
 void _zn_locator_free(_zn_locator_t **lc)
@@ -208,7 +48,7 @@ void _zn_locator_copy(_zn_locator_t *dst, const _zn_locator_t *src)
     dst->address = _z_str_dup(src->address);
 
     // @TODO: implement copy for metadata
-    dst->metadata = _zn_state_make();
+    dst->metadata = zn_int_str_map_make();
 }
 
 int _zn_locator_cmp(const _zn_locator_t *left, const _zn_locator_t *right)
@@ -279,12 +119,12 @@ ERR:
     return NULL;
 }
 
-_zn_state_result_t _zn_locator_metadata_from_str(const z_str_t s)
+zn_int_str_map_result_t _zn_locator_metadata_from_str(const z_str_t s)
 {
-    _zn_state_result_t res;
+    zn_int_str_map_result_t res;
 
     res.tag = _z_res_t_OK;
-    res.value.state = _zn_state_make();
+    res.value.int_str_map = zn_int_str_map_make();
 
     z_str_t p_start = strchr(s, LOCATOR_METADATA_SEPARATOR);
     if (p_start == NULL)
@@ -301,7 +141,7 @@ _zn_state_result_t _zn_locator_metadata_from_str(const z_str_t s)
     size_t p_len = p_end - p_start;
 
     // @TODO: define protocol-level metadata
-    return _zn_state_from_strn(p_start, 0, NULL, p_len);
+    return zn_int_str_map_from_strn(p_start, 0, NULL, p_len);
 
 ERR:
     res.tag = _z_res_t_ERR;
@@ -309,16 +149,16 @@ ERR:
     return res;
 }
 
-size_t _zn_locator_metadata_strlen(const _zn_state_t *s)
+size_t _zn_locator_metadata_strlen(const zn_int_str_map_t *s)
 {
     // @TODO: define protocol-level metadata
-    return _zn_state_strlen(s, 0, NULL);
+    return zn_int_str_map_strlen(s, 0, NULL);
 }
 
-void _zn_locator_metadata_onto_str(z_str_t dst, const _zn_state_t *s)
+void _zn_locator_metadata_onto_str(z_str_t dst, const zn_int_str_map_t *s)
 {
     // @TODO: define protocol-level metadata
-    _zn_state_onto_str(dst, s, 0, NULL);
+    zn_int_str_map_onto_str(dst, s, 0, NULL);
 }
 
 _zn_locator_result_t _zn_locator_from_str(const z_str_t s)
@@ -342,11 +182,11 @@ _zn_locator_result_t _zn_locator_from_str(const z_str_t s)
         goto ERR;
 
     // Parse metadata
-    _zn_state_result_t tmp_res;
+    zn_int_str_map_result_t tmp_res;
     tmp_res = _zn_locator_metadata_from_str(s);
     if (tmp_res.tag == _z_res_t_ERR)
         goto ERR;
-    res.value.locator.metadata = tmp_res.value.state;
+    res.value.locator.metadata = tmp_res.value.int_str_map;
 
     return res;
 
@@ -464,30 +304,30 @@ void _zn_locator_array_copy(_zn_locator_array_t *dst, const _zn_locator_array_t 
 void __zn_endpoint_init(_zn_endpoint_t *endpoint)
 {
     _zn_locator_init(&endpoint->locator);
-    endpoint->config = _zn_state_make();
+    endpoint->config = zn_int_str_map_make();
 }
 
 void _zn_endpoint_clear(_zn_endpoint_t *ep)
 {
     _zn_locator_clear(&ep->locator);
-    _zn_state_clear(&ep->config);
+    zn_int_str_map_clear(&ep->config);
 }
 
 void _zn_endpoint_free(_zn_endpoint_t **ep)
 {
     _zn_endpoint_t *ptr = *ep;
     _zn_locator_clear(&ptr->locator);
-    _zn_state_clear(&ptr->config);
+    zn_int_str_map_clear(&ptr->config);
     free(ptr);
     *ep = NULL;
 }
 
-_zn_state_result_t _zn_endpoint_config_from_str(const z_str_t s, const z_str_t proto)
+zn_int_str_map_result_t _zn_endpoint_config_from_str(const z_str_t s, const z_str_t proto)
 {
-    _zn_state_result_t res;
+    zn_int_str_map_result_t res;
 
     res.tag = _z_res_t_OK;
-    res.value.state = _zn_state_make();
+    res.value.int_str_map = zn_int_str_map_make();
 
     z_str_t p_start = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
     if (p_start == NULL)
@@ -510,7 +350,7 @@ ERR:
     return res;
 }
 
-size_t _zn_endpoint_config_strlen(const _zn_state_t *s, const z_str_t proto)
+size_t _zn_endpoint_config_strlen(const zn_int_str_map_t *s, const z_str_t proto)
 {
     size_t len;
 
@@ -529,7 +369,7 @@ ERR:
     return len;
 }
 
-z_str_t _zn_endpoint_config_to_str(const _zn_state_t *s, const z_str_t proto)
+z_str_t _zn_endpoint_config_to_str(const zn_int_str_map_t *s, const z_str_t proto)
 {
     z_str_t res;
 
@@ -566,10 +406,10 @@ _zn_endpoint_result_t _zn_endpoint_from_str(const z_str_t s)
         goto ERR;
     res.value.endpoint.locator = loc_res.value.locator;
 
-    _zn_state_result_t conf_res = _zn_endpoint_config_from_str(s, res.value.endpoint.locator.protocol);
+    zn_int_str_map_result_t conf_res = _zn_endpoint_config_from_str(s, res.value.endpoint.locator.protocol);
     if (conf_res.tag == _z_res_t_ERR)
         goto ERR;
-    res.value.endpoint.config = conf_res.value.state;
+    res.value.endpoint.config = conf_res.value.int_str_map;
 
     return res;
 

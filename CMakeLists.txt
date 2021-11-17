@@ -113,6 +113,7 @@ include_directories(
 if (UNIX)
   file(GLOB Sources "src/*.c"
                     "src/collections/*.c"
+                    "src/collections/intmap/*.c"
                     "src/system/*.c"
                     # "src/system/esp32/*.c"
                     "src/system/unix/*.c"

@@ -16,9 +16,9 @@
 #define ZENOH_PICO_SESSION_API_H
 
 #include <stdint.h>
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/properties.h"
 
 /*------------------ Init/Config ------------------*/

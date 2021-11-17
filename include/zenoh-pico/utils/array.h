@@ -15,10 +15,6 @@
 #ifndef ZENOH_PICO_UTILS_ARRAY_H
 #define ZENOH_PICO_UTILS_ARRAY_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
-
 /*------------------ Internal Array Macros ------------------*/
 #define _ARRAY_DECLARE(type, name, prefix) \
     typedef struct                         \

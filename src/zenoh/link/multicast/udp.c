@@ -71,7 +71,7 @@ _zn_socket_result_t _zn_f_link_open_udp_multicast(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    const z_str_t iface = _zn_state_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
+    const z_str_t iface = zn_int_str_map_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     if (iface == NULL)
         goto ERR;
 
@@ -93,7 +93,7 @@ _zn_socket_result_t _zn_f_link_listen_udp_multicast(void *arg, const clock_t tou
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    const z_str_t iface = _zn_state_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
+    const z_str_t iface = zn_int_str_map_get(&self->endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     if (iface == NULL)
         goto ERR;
 

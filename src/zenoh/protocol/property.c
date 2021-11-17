@@ -13,28 +13,32 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/utils/properties.h"
-#include "zenoh-pico/utils/collections.h"
-
-zn_properties_t zn_properties_make()
-{
-    return z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
-}
 
 int zn_properties_init(zn_properties_t *ps)
 {
-    return z_i_map_start(ps, _Z_DEFAULT_I_MAP_CAPACITY);
+    zn_int_str_map_init(ps);
+    return 0;
+}
+
+zn_properties_t zn_properties_make()
+{
+    zn_properties_t ps;
+    zn_properties_init(&ps);
+    return ps;
 }
 
 int zn_properties_insert(zn_properties_t *ps, unsigned int key, z_string_t value)
 {
-    return z_i_map_set(ps, key, (z_str_t)value.val);
+    z_str_t res = zn_int_str_map_insert(ps, key, (z_str_t)value.val);
+    return res == value.val ? 0 : -1;
 }
 
 z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key)
 {
     z_string_t s;
-    z_str_t p = z_i_map_get(ps, key);
+    z_str_t p = zn_int_str_map_get(ps, key);
     if (p == NULL)
     {
         s.val = NULL;
@@ -46,24 +50,4 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key)
         s.len = strlen(p);
     }
     return s;
-}
-
-size_t zn_properties_len(const zn_properties_t *ps)
-{
-    return z_i_map_len(ps);
-}
-
-int zn_properties_is_empty(const zn_properties_t *ps)
-{
-    return z_i_map_is_empty(ps);
-}
-
-void zn_properties_clear(zn_properties_t *ps)
-{
-    z_i_map_clear(ps);
-}
-
-void zn_properties_free(zn_properties_t **ps)
-{
-    z_i_map_free(ps);
 }

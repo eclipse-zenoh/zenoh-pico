@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_TRANSPORT_UTILS_H
 #define ZENOH_PICO_TRANSPORT_UTILS_H
 
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"

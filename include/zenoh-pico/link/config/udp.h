@@ -15,24 +15,24 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_UDP_H
 #define ZENOH_PICO_LINK_CONFIG_UDP_H
 
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/utils/collections.h"
 
 #define UDP_CONFIG_MULTICAST_IFACE_KEY 0x01
 #define UDP_CONFIG_MULTICAST_IFACE_STR "iface"
 
 #define UDP_CONFIG_MAPPING_BUILD                  \
     int argc = 1;                                 \
-    _zn_state_mapping_t args[argc];               \
+    zn_int_str_mapping_t args[argc];              \
     args[0].key = UDP_CONFIG_MULTICAST_IFACE_KEY; \
     args[0].str = UDP_CONFIG_MULTICAST_IFACE_STR;
 
-size_t _zn_udp_config_strlen(const _zn_state_t *s);
+size_t _zn_udp_config_strlen(const zn_int_str_map_t *s);
 
-void _zn_udp_config_onto_str(z_str_t dst, const _zn_state_t *s);
-z_str_t _zn_udp_config_to_str(const _zn_state_t *s);
+void _zn_udp_config_onto_str(z_str_t dst, const zn_int_str_map_t *s);
+z_str_t _zn_udp_config_to_str(const zn_int_str_map_t *s);
 
-_zn_state_result_t _zn_udp_config_from_str(const z_str_t s);
-_zn_state_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n);
+zn_int_str_map_result_t _zn_udp_config_from_str(const z_str_t s);
+zn_int_str_map_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n);
 
 #endif /* ZENOH_PICO_LINK_CONFIG_UDP_H */

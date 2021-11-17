@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_QUERY_H
 #define ZENOH_PICO_SESSION_QUERY_H
 
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/protocol/core.h"

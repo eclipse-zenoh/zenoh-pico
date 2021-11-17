@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_LINK_MANAGER_H
 #define ZENOH_PICO_LINK_MANAGER_H
 
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/link.h"
 
 _zn_link_p_result_t _zn_open_link(const z_str_t locator, const clock_t tout);

@@ -17,10 +17,11 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/collections.h"
 
 /**
  * The callback signature of the functions handling session discionnection.
@@ -72,10 +73,10 @@ typedef struct
 
     z_list_t *local_subscriptions;
     z_list_t *remote_subscriptions;
-    z_i_map_t rem_res_loc_sub_map;
+    zn_int_list_map_t rem_res_loc_sub_map;
 
     z_list_t *local_queryables;
-    z_i_map_t rem_res_loc_qle_map;
+    zn_int_list_map_t rem_res_loc_qle_map;
 
     z_list_t *pending_queries;
 

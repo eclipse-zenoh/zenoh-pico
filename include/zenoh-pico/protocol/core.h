@@ -17,8 +17,9 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/utils/collections.h"
 
 /**
  * Whatami values.

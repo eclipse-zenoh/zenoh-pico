@@ -16,10 +16,11 @@
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
 #include <stdint.h>
+#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/collections/vec.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/array.h"
-#include "zenoh-pico/utils/collections.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.

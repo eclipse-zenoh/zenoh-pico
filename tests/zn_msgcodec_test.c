@@ -17,11 +17,12 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/collections.h"
 
 #define RUNS 1000
 

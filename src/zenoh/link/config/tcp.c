@@ -15,37 +15,37 @@
 #include <string.h>
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/intmap.h"
 
-size_t _zn_tcp_config_strlen(const _zn_state_t *s)
+size_t _zn_tcp_config_strlen(const zn_int_str_map_t *s)
 {
     TCP_CONFIG_MAPPING_BUILD
 
-    return _zn_state_strlen(s, argc, args);
+    return zn_int_str_map_strlen(s, argc, args);
 }
 
-void _zn_tcp_config_onto_str(z_str_t dst, const _zn_state_t *s)
+void _zn_tcp_config_onto_str(z_str_t dst, const zn_int_str_map_t *s)
 {
     TCP_CONFIG_MAPPING_BUILD
 
-    return _zn_state_onto_str(dst, s, argc, args);
+    return zn_int_str_map_onto_str(dst, s, argc, args);
 }
 
-z_str_t _zn_tcp_config_to_str(const _zn_state_t *s)
+z_str_t _zn_tcp_config_to_str(const zn_int_str_map_t *s)
 {
     TCP_CONFIG_MAPPING_BUILD
 
-    return _zn_state_to_str(s, argc, args);
+    return zn_int_str_map_to_str(s, argc, args);
 }
 
-_zn_state_result_t _zn_tcp_config_from_strn(const z_str_t s, size_t n)
+zn_int_str_map_result_t _zn_tcp_config_from_strn(const z_str_t s, size_t n)
 {
     TCP_CONFIG_MAPPING_BUILD
 
-    return _zn_state_from_strn(s, argc, args, n);
+    return zn_int_str_map_from_strn(s, argc, args, n);
 }
 
-_zn_state_result_t _zn_tcp_config_from_str(const z_str_t s)
+zn_int_str_map_result_t _zn_tcp_config_from_str(const z_str_t s)
 {
     TCP_CONFIG_MAPPING_BUILD
 

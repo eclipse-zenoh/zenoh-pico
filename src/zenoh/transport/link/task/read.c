@@ -14,7 +14,6 @@
 
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/logging.h"
 
 void *_znp_read_task(void *arg)

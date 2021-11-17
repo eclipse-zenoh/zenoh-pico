@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/vec.h"
 
 /*-------- vec --------*/
 inline z_vec_t z_vec_make(size_t capacity)

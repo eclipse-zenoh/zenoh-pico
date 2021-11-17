@@ -12,14 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
-#define _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H
+#ifndef _ZENOH_PICO_SYSTEM_COMMON_H
+#define _ZENOH_PICO_SYSTEM_COMMON_H
 
 #include "zenoh-pico/protocol/private/iobuf.h"
 #include "zenoh-pico/system/types.h"
 #include "zenoh-pico/system/result.h"
 #include "zenoh-pico/link/types.h"
-#include "zenoh-pico/utils/private/result.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
@@ -61,4 +61,4 @@ int _zn_send_wbuf(_zn_link_t *link, const _z_wbuf_t *wbf);
 int _zn_recv_zbuf(_zn_link_t *link, _z_zbuf_t *zbf);
 int _zn_recv_exact_zbuf(_zn_link_t *link, _z_zbuf_t *zbf, size_t len);
 
-#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COMMON_H */
+#endif /* _ZENOH_PICO_SYSTEM_COMMON_H */

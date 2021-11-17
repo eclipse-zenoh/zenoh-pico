@@ -19,7 +19,6 @@
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/api.h"
 #include "zenoh-pico/utils/properties.h"
-#include "zenoh-pico/utils/collections.h"
 
 #if defined(ZENOH_ZEPHYR)
 #include <zephyr.h>

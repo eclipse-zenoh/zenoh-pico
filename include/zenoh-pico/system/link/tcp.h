@@ -15,6 +15,9 @@
 #ifndef ZENOH_PICO_SYSTEM_LINK_TCP_H
 #define ZENOH_PICO_SYSTEM_LINK_TCP_H
 
+#include <stdint.h>
+#include "zenoh-pico/collections/string.h"
+
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port);
 void _zn_free_endpoint_tcp(void *arg);
 
