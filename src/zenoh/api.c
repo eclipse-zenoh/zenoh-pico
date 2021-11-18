@@ -698,7 +698,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_
     pq->target = target;
     pq->consolidation = consolidation;
     pq->callback = callback;
-    pq->pending_replies = z_list_empty;
+    pq->pending_replies = NULL;
     pq->arg = arg;
 
     // Add the pending query to the current session

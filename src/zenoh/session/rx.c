@@ -83,8 +83,8 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             case _ZN_DECL_PUBLISHER:
             {
                 // Check if there are matching local subscriptions
-                z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key);
-                unsigned int len = z_list_len(subs);
+                _z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key);
+                size_t len = _z_list_len(subs);
                 if (len > 0)
                 {
                     // Need to reply with a declare subscriber
@@ -94,13 +94,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
                     while (subs)
                     {
-                        _zn_subscriber_t *sub = (_zn_subscriber_t *)z_list_head(subs);
+                        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
                         z_msg.body.declare.declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
                         z_msg.body.declare.declarations.val[len].body.sub.key = sub->key;
                         z_msg.body.declare.declarations.val[len].body.sub.subinfo = sub->info;
 
-                        subs = z_list_pop(subs);
+                        subs = _z_list_pop(subs);
                     }
 
                     // Send the message

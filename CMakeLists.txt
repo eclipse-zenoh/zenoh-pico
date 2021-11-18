@@ -97,6 +97,7 @@ set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/collections/*.h"
                         "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/link/config/*.h"
                         "include/zenoh-pico/protocol/*.h"

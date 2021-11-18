@@ -196,7 +196,7 @@ _zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header)
 void _zn_reskey_free(zn_reskey_t *rk)
 {
     rk->rid = 0;
-    if (rk->rname)
+    if (rk->rname != NULL)
     {
         free(rk->rname);
         rk->rname = NULL;

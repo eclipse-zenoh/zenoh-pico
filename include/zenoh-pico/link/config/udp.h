@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_UDP_H
 #define ZENOH_PICO_LINK_CONFIG_UDP_H
 
+#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
 

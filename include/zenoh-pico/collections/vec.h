@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "zenoh-pico/collections/element.h"
 
 /*-------- Dynamically allocated vector --------*/
 /**
@@ -29,6 +30,7 @@ typedef struct
     void **_val;
 } z_vec_t;
 
+// @TODO: use element also for vector
 z_vec_t z_vec_make(size_t capacity);
 z_vec_t z_vec_clone(const z_vec_t *v);
 

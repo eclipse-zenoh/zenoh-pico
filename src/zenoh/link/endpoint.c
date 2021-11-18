@@ -44,8 +44,8 @@ void _zn_locator_free(_zn_locator_t **lc)
 
 void _zn_locator_copy(_zn_locator_t *dst, const _zn_locator_t *src)
 {
-    dst->protocol = _z_str_dup(src->protocol);
-    dst->address = _z_str_dup(src->address);
+    dst->protocol = _z_str_clone(src->protocol);
+    dst->address = _z_str_clone(src->address);
 
     // @TODO: implement copy for metadata
     dst->metadata = zn_int_str_map_make();

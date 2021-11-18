@@ -103,17 +103,17 @@ zn_session_t *_zn_session_init()
     zn->pull_id = 1;
 
     // Initialize the data structs
-    zn->local_resources = z_list_empty;
-    zn->remote_resources = z_list_empty;
+    zn->local_resources = NULL;
+    zn->remote_resources = NULL;
 
-    zn->local_subscriptions = z_list_empty;
-    zn->remote_subscriptions = z_list_empty;
-    zn->rem_res_loc_sub_map = zn_int_list_map_make();
+    zn->local_subscriptions = NULL;
+    zn->remote_subscriptions = NULL;
+    zn->rem_res_loc_sub_map = _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    zn->local_queryables = z_list_empty;
-    zn->rem_res_loc_qle_map = zn_int_list_map_make();
+    zn->local_queryables = NULL;
+    zn->rem_res_loc_qle_map = _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
 
-    zn->pending_queries = z_list_empty;
+    zn->pending_queries = NULL;
 
     zn->read_task_running = 0;
     zn->read_task = NULL;

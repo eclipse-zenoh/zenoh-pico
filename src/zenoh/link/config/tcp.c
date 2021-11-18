@@ -13,9 +13,9 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/collections/intmap.h"
 
 size_t _zn_tcp_config_strlen(const zn_int_str_map_t *s)
 {
