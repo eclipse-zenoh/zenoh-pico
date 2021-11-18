@@ -85,15 +85,15 @@ void __unsafe_zn_free_pending_reply(_zn_pending_reply_t *pr)
     if (pr->reply.data.data.key.val)
         free((z_str_t)pr->reply.data.data.key.val);
     if (pr->reply.data.data.value.val)
-        _z_bytes_free(&pr->reply.data.data.value);
+        _z_bytes_clear(&pr->reply.data.data.value);
 
     // Free the source info
     if (pr->reply.data.replier_id.val)
-        _z_bytes_free(&pr->reply.data.replier_id);
+        _z_bytes_clear(&pr->reply.data.replier_id);
 
     // Free the timestamp
     if (pr->tstamp.id.val)
-        _z_bytes_free(&pr->tstamp.id);
+        _z_bytes_clear(&pr->tstamp.id);
 }
 
 /**

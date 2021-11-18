@@ -30,9 +30,18 @@ z_bytes_t _z_bytes_make(size_t capacity)
     return bs;
 }
 
-void _z_bytes_free(z_bytes_t *bs)
+void _z_bytes_clear(z_bytes_t *bs)
 {
     free((uint8_t *)bs->val);
+    bs->val = NULL;
+    bs->len = 0;
+}
+
+void _z_bytes_free(z_bytes_t **bs)
+{
+    z_bytes_t *ptr = (z_bytes_t *)*bs;
+    _z_bytes_clear(ptr);
+    *bs = NULL;
 }
 
 void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src)

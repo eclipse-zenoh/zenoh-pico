@@ -70,7 +70,7 @@ void zn_hello_array_free(zn_hello_array_t hellos)
         for (unsigned int i = 0; i < hellos.len; i++)
         {
             if (h[i].pid.len > 0)
-                _z_bytes_free(&h[i].pid);
+                _z_bytes_clear(&h[i].pid);
             if (h[i].locators.len > 0)
                 _z_str_array_free(&h[i].locators);
         }
@@ -180,7 +180,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     if (res != 0)
     {
         // Free the pid
-        _z_bytes_free(&pid);
+        _z_bytes_clear(&pid);
 
         // Free the locator
         if (locator_is_scouted)
@@ -197,7 +197,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     if (r_msg.tag == _z_res_t_ERR)
     {
         // Free the pid
-        _z_bytes_free(&pid);
+        _z_bytes_clear(&pid);
 
         // Free the locator
         if (locator_is_scouted)
@@ -259,7 +259,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             _zn_transport_message_free(&osm);
             if (res != 0)
             {
-                _z_bytes_free(&pid);
+                _z_bytes_clear(&pid);
                 if (locator_is_scouted)
                     free((z_str_t)locator);
                 _zn_session_free(&zn);
@@ -315,7 +315,7 @@ void zn_sample_free(zn_sample_t sample)
     if (sample.key.val)
         _z_string_free(&sample.key);
     if (sample.value.val)
-        _z_bytes_free(&sample.value);
+        _z_bytes_clear(&sample.value);
 }
 
 /*------------------ Resource Keys operations ------------------*/
@@ -736,7 +736,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
         _z_string_copy(&rd->data.key, &reply.data.data.key);
         _z_bytes_copy(&rd->data.value, &reply.data.data.value);
 
-        z_vec_append(&pqc->replies, rd);
+        _z_vec_append(&pqc->replies, rd);
     }
     else
     {
@@ -755,7 +755,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     _zn_pending_query_collect_t pqc;
     z_mutex_init(&pqc.mutex);
     z_condvar_init(&pqc.cond_var);
-    pqc.replies = z_vec_make(1);
+    pqc.replies = _z_vec_make(1);
 
     // Issue the query
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
@@ -765,11 +765,11 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     z_condvar_wait(&pqc.cond_var, &pqc.mutex);
 
     zn_reply_data_array_t rda;
-    rda.len = z_vec_len(&pqc.replies);
+    rda.len = _z_vec_len(&pqc.replies);
     zn_reply_data_t *replies = (zn_reply_data_t *)malloc(rda.len * sizeof(zn_reply_data_t));
     for (unsigned int i = 0; i < rda.len; i++)
     {
-        zn_reply_data_t *reply = (zn_reply_data_t *)z_vec_get(&pqc.replies, i);
+        zn_reply_data_t *reply = (zn_reply_data_t *)_z_vec_get(&pqc.replies, i);
         replies[i].replier_kind = reply->replier_kind;
         _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
         _z_string_move(&replies[i].data.key, &reply->data.key);
@@ -777,7 +777,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     }
     rda.val = replies;
 
-    z_vec_free(&pqc.replies);
+    _z_vec_clear(&pqc.replies, _zn_element_free_noop);
     z_condvar_free(&pqc.cond_var);
     z_mutex_free(&pqc.mutex);
 
@@ -789,9 +789,9 @@ void zn_reply_data_array_free(zn_reply_data_array_t replies)
     for (unsigned int i = 0; i < replies.len; i++)
     {
         if (replies.val[i].replier_id.val)
-            _z_bytes_free((z_bytes_t *)&replies.val[i].replier_id);
+            _z_bytes_clear((z_bytes_t *)&replies.val[i].replier_id);
         if (replies.val[i].data.value.val)
-            _z_bytes_free((z_bytes_t *)&replies.val[i].data.value);
+            _z_bytes_clear((z_bytes_t *)&replies.val[i].data.value);
         if (replies.val[i].data.key.val)
             _z_string_free((z_string_t *)&replies.val[i].data.key);
     }

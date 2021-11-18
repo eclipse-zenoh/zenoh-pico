@@ -39,7 +39,6 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *buf);
 _Z_RESULT_DECLARE(z_bytes_t, bytes)
 int _z_bytes_encode(_z_wbuf_t *buf, const z_bytes_t *bs);
 _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *buf);
-void _z_bytes_free(z_bytes_t *bs);
 
 _Z_RESULT_DECLARE(z_str_t, str)
 int _z_str_encode(_z_wbuf_t *buf, const z_str_t s);

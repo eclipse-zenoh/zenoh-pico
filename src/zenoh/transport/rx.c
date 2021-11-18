@@ -105,7 +105,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
             }
             else
             {
-                _z_wbuf_reset(&zn->dbuf_reliable);
+                _z_wbuf_clear(&zn->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -118,7 +118,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
             }
             else
             {
-                _z_wbuf_reset(&zn->dbuf_best_effort);
+                _z_wbuf_clear(&zn->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -156,7 +156,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
                 // Free the result
                 _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
-                _z_zbuf_free(&zbf);
+                _z_zbuf_clear(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
@@ -166,10 +166,10 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
         else
         {
             // Handle all the zenoh message, one by one
-            unsigned int len = z_vec_len(&msg->body.frame.payload.messages);
+            unsigned int len = _z_vec_len(&msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; i++)
             {
-                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
+                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)_z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
                     return res;
             }

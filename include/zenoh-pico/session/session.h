@@ -249,7 +249,7 @@ typedef struct
 {
     z_mutex_t mutex;
     z_condvar_t cond_var;
-    z_vec_t replies;
+    _z_vec_t replies;
 } _zn_pending_query_collect_t;
 
 typedef struct

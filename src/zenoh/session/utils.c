@@ -147,15 +147,15 @@ void _zn_session_free(zn_session_t **zn)
     z_mutex_free(&ptr->mutex_rx);
 
     // Clean up the buffers
-    _z_wbuf_free(&ptr->wbuf);
-    _z_zbuf_free(&ptr->zbuf);
+    _z_wbuf_clear(&ptr->wbuf);
+    _z_zbuf_clear(&ptr->zbuf);
 
-    _z_wbuf_free(&ptr->dbuf_reliable);
-    _z_wbuf_free(&ptr->dbuf_best_effort);
+    _z_wbuf_clear(&ptr->dbuf_reliable);
+    _z_wbuf_clear(&ptr->dbuf_best_effort);
 
     // Clean up the PIDs
-    _z_bytes_free(&ptr->local_pid);
-    _z_bytes_free(&ptr->remote_pid);
+    _z_bytes_clear(&ptr->local_pid);
+    _z_bytes_clear(&ptr->remote_pid);
 
     // Clean up the locator
     free(ptr->locator);

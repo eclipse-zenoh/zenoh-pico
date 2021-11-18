@@ -2024,9 +2024,9 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     }
     else
     {
-        size_t len = z_vec_len(&msg->payload.messages);
+        size_t len = _z_vec_len(&msg->payload.messages);
         for (size_t i = 0; i < len; i++)
-            _ZN_EC(_zn_zenoh_message_encode(wbf, z_vec_get(&msg->payload.messages, i)))
+            _ZN_EC(_zn_zenoh_message_encode(wbf, _z_vec_get(&msg->payload.messages, i)))
 
         return 0;
     }
@@ -2054,7 +2054,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
     }
     else
     {
-        r->value.frame.payload.messages = z_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
+        r->value.frame.payload.messages = _z_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
         while (_z_zbuf_len(zbf))
         {
             // Mark the reading position of the iobfer
@@ -2062,7 +2062,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
             _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(zbf);
             if (r_zm.tag == _z_res_t_OK)
             {
-                z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
+                _z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
             }
             else
             {
@@ -2089,9 +2089,10 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
     }
     else
     {
-        for (size_t i = 0; i < z_vec_len(&msg->payload.messages); i++)
-            _zn_zenoh_message_free((_zn_zenoh_message_t *)z_vec_get(&msg->payload.messages, i));
-        z_vec_free(&msg->payload.messages);
+        for (size_t i = 0; i < _z_vec_len(&msg->payload.messages); i++)
+            _zn_zenoh_message_free((_zn_zenoh_message_t *)_z_vec_get(&msg->payload.messages, i));
+        _z_vec_t *ptr = &msg->payload.messages;
+        _z_vec_free(&ptr, _zn_element_free_noop);
     }
 }
 

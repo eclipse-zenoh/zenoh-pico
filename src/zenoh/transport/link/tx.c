@@ -56,7 +56,7 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
  */
 void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
-    _z_wbuf_clear(buf);
+    _z_wbuf_reset(buf);
 
     if (is_streamed == 1)
     {
@@ -146,9 +146,9 @@ _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_f
     else
     {
         // Do not allocate the vector containing the messages
-        t_msg.body.frame.payload.messages._capacity = 0;
-        t_msg.body.frame.payload.messages._len = 0;
-        t_msg.body.frame.payload.messages._val = NULL;
+        t_msg.body.frame.payload.messages.capacity = 0;
+        t_msg.body.frame.payload.messages.len = 0;
+        t_msg.body.frame.payload.messages.val = NULL;
     }
 
     return t_msg;
@@ -295,7 +295,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
 
     EXIT_FRAG_PROC:
         // Free the fragmentation buffer memory
-        _z_wbuf_free(&fbf);
+        _z_wbuf_clear(&fbf);
     }
 
 EXIT_ZSND_PROC:

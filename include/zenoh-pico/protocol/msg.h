@@ -594,7 +594,7 @@ typedef struct
     union
     {
         _zn_payload_t fragment;
-        z_vec_t messages;
+        _z_vec_t messages;
     } payload;
 } _zn_frame_t;
 

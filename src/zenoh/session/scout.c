@@ -131,7 +131,7 @@ zn_hello_array_t _zn_scout_loop(
     }
 
     _zn_link_free(&r_scout.value.link);
-    _z_zbuf_free(&zbf);
+    _z_zbuf_clear(&zbf);
 
     return ls;
 }
@@ -160,7 +160,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     const z_str_t locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
     locs = _zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
-    _z_wbuf_free(&wbf);
+    _z_wbuf_clear(&wbf);
 
     return locs;
 }

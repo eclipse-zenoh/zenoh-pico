@@ -25,21 +25,21 @@
  */
 typedef struct
 {
-    size_t _capacity;
-    size_t _len;
-    void **_val;
-} z_vec_t;
+    size_t capacity;
+    size_t len;
+    void **val;
+} _z_vec_t;
 
-// @TODO: use element also for vector
-z_vec_t z_vec_make(size_t capacity);
-z_vec_t z_vec_clone(const z_vec_t *v);
+_z_vec_t _z_vec_make(size_t capacity);
+_z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f f);
 
-size_t z_vec_len(const z_vec_t *v);
-void z_vec_append(z_vec_t *v, void *e);
-const void *z_vec_get(const z_vec_t *v, size_t i);
-void z_vec_set(z_vec_t *sv, size_t i, void *e);
+size_t _z_vec_len(const _z_vec_t *v);
+void _z_vec_append(_z_vec_t *v, void *e);
+void *_z_vec_get(const _z_vec_t *v, size_t i);
+void _z_vec_set(_z_vec_t *sv, size_t i, void *e, z_element_free_f f);
 
-void z_vec_clear(z_vec_t *v);
-void z_vec_free(z_vec_t *v);
+void _z_vec_reset(_z_vec_t *v, z_element_free_f f);
+void _z_vec_clear(_z_vec_t *v, z_element_free_f f);
+void _z_vec_free(_z_vec_t **v, z_element_free_f f);
 
 #endif /* ZENOH_PICO_UTILS_COLLECTION_VECTOR_H */
