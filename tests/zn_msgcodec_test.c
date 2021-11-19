@@ -1698,16 +1698,15 @@ void zenoh_message(void)
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&zbf);
+    _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(&zbf);
     assert(r_zm.tag == _z_res_t_OK);
 
-    _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
-    assert_eq_zenoh_message(e_zm, d_zm);
+    _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
+    assert_eq_zenoh_message(e_zm, &d_zm);
 
     // Free
     free(e_zm);
-    _zn_zenoh_message_free(d_zm);
-    _zn_zenoh_message_p_result_free(&r_zm);
+    _zn_zenoh_message_free(&d_zm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -2629,16 +2628,15 @@ void transport_message(void)
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_transport_message_p_result_t r_zm = _zn_transport_message_decode(&zbf);
+    _zn_transport_message_result_t r_zm = _zn_transport_message_decode(&zbf);
     assert(r_zm.tag == _z_res_t_OK);
 
-    _zn_transport_message_t *d_sm = r_zm.value.transport_message;
-    assert_eq_transport_message(e_sm, d_sm);
+    _zn_transport_message_t d_sm = r_zm.value.transport_message;
+    assert_eq_transport_message(e_sm, &d_sm);
 
     // Free
     free(e_sm);
-    _zn_transport_message_free(d_sm);
-    _zn_transport_message_p_result_free(&r_zm);
+    _zn_transport_message_free(&d_sm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -2687,18 +2685,17 @@ void batch(void)
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     for (uint8_t i = 0; i < tot_num; i++)
     {
-        _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
+        _zn_transport_message_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
 
-        _zn_transport_message_t *d_sm = r_sm.value.transport_message;
+        _zn_transport_message_t d_sm = r_sm.value.transport_message;
         printf(" - ");
-        print_transport_message_type(d_sm->header);
+        print_transport_message_type(d_sm.header);
         printf("\n");
-        assert_eq_transport_message(e_sm[i], d_sm);
+        assert_eq_transport_message(e_sm[i], &d_sm);
 
         // Free
-        _zn_transport_message_free(d_sm);
-        _zn_transport_message_p_result_free(&r_sm);
+        _zn_transport_message_free(&d_sm);
         free(e_sm[i]);
     }
 
@@ -2838,10 +2835,10 @@ void fragmentation(void)
         // Decode the message
         _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-        _zn_transport_message_p_result_t r_sm = _zn_transport_message_decode(&zbf);
+        _zn_transport_message_result_t r_sm = _zn_transport_message_decode(&zbf);
         assert(r_sm.tag == _z_res_t_OK);
 
-        z_bytes_t fragment = r_sm.value.transport_message->body.frame.payload.fragment;
+        z_bytes_t fragment = r_sm.value.transport_message.body.frame.payload.fragment;
         printf("  -Decoded Fragment length: %zu\n", fragment.len);
         assert(fragment.len == written);
 
@@ -2860,10 +2857,10 @@ void fragmentation(void)
     printf("   Defragmented: ");
     print_iosli(&zbf.ios);
     printf("\n");
-    _zn_zenoh_message_p_result_t r_sm = _zn_zenoh_message_decode(&zbf);
+    _zn_zenoh_message_result_t r_sm = _zn_zenoh_message_decode(&zbf);
     assert(r_sm.tag == _z_res_t_OK);
-    _zn_zenoh_message_t *d_zm = r_sm.value.zenoh_message;
-    assert_eq_zenoh_message(e_zm, d_zm);
+    _zn_zenoh_message_t d_zm = r_sm.value.zenoh_message;
+    assert_eq_zenoh_message(e_zm, &d_zm);
 
     _z_wbuf_clear(&dbf);
     _z_wbuf_clear(&wbf);

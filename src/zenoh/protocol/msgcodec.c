@@ -763,6 +763,8 @@ void _zn_declaration_decode_na(_z_zbuf_t *zbf, _zn_declaration_result_t *r)
         break;
     default:
         _Z_ERROR("WARNING: Trying to decode declaration with unknown ID(%d)\n", mid);
+        r->tag = _z_res_t_ERR;
+        r->value.error = _zn_err_t_PARSE_DECLARATION;
         break;
     }
 }
@@ -1304,62 +1306,61 @@ int _zn_zenoh_message_encode(_z_wbuf_t *wbf, const _zn_zenoh_message_t *msg)
     }
 }
 
-void _zn_zenoh_message_decode_na(_z_zbuf_t *zbf, _zn_zenoh_message_p_result_t *r)
+void _zn_zenoh_message_decode_na(_z_zbuf_t *zbf, _zn_zenoh_message_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
-    r->value.zenoh_message->attachment = NULL;
-    r->value.zenoh_message->reply_context = NULL;
+    r->value.zenoh_message.attachment = NULL;
+    r->value.zenoh_message.reply_context = NULL;
     do
     {
         _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
         _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-        r->value.zenoh_message->header = r_uint8.value.uint8;
+        r->value.zenoh_message.header = r_uint8.value.uint8;
 
-        uint8_t mid = _ZN_MID(r->value.zenoh_message->header);
+        uint8_t mid = _ZN_MID(r->value.zenoh_message.header);
         switch (mid)
         {
         case _ZN_MID_DATA:
         {
-            _zn_data_result_t r_da = _zn_data_decode(zbf, r->value.zenoh_message->header);
+            _zn_data_result_t r_da = _zn_data_decode(zbf, r->value.zenoh_message.header);
             _ASSURE_P_RESULT(r_da, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->body.data = r_da.value.data;
+            r->value.zenoh_message.body.data = r_da.value.data;
             return;
         }
         case _ZN_MID_ATTACHMENT:
         {
-            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.zenoh_message->header);
+            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.zenoh_message.header);
             _ASSURE_P_RESULT(r_at, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->attachment = r_at.value.attachment;
+            r->value.zenoh_message.attachment = r_at.value.attachment;
             break;
         }
         case _ZN_MID_REPLY_CONTEXT:
         {
-            _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(zbf, r->value.zenoh_message->header);
+            _zn_reply_context_p_result_t r_rc = _zn_reply_context_decode(zbf, r->value.zenoh_message.header);
             _ASSURE_P_RESULT(r_rc, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->reply_context = r_rc.value.reply_context;
+            r->value.zenoh_message.reply_context = r_rc.value.reply_context;
             break;
         }
         case _ZN_MID_DECLARE:
         {
             _zn_declare_result_t r_de = _zn_declare_decode(zbf);
             _ASSURE_P_RESULT(r_de, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->body.declare = r_de.value.declare;
+            r->value.zenoh_message.body.declare = r_de.value.declare;
             return;
         }
         case _ZN_MID_QUERY:
         {
-
-            _zn_query_result_t r_qu = _zn_query_decode(zbf, r->value.zenoh_message->header);
+            _zn_query_result_t r_qu = _zn_query_decode(zbf, r->value.zenoh_message.header);
             _ASSURE_P_RESULT(r_qu, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->body.query = r_qu.value.query;
+            r->value.zenoh_message.body.query = r_qu.value.query;
             return;
         }
         case _ZN_MID_PULL:
         {
-            _zn_pull_result_t r_pu = _zn_pull_decode(zbf, r->value.zenoh_message->header);
+            _zn_pull_result_t r_pu = _zn_pull_decode(zbf, r->value.zenoh_message.header);
             _ASSURE_P_RESULT(r_pu, r, _zn_err_t_PARSE_ZENOH_MESSAGE)
-            r->value.zenoh_message->body.pull = r_pu.value.pull;
+            r->value.zenoh_message.body.pull = r_pu.value.pull;
             return;
         }
         case _ZN_MID_UNIT:
@@ -1375,28 +1376,25 @@ void _zn_zenoh_message_decode_na(_z_zbuf_t *zbf, _zn_zenoh_message_p_result_t *r
         }
         case _ZN_MID_LINK_STATE_LIST:
         {
-            _zn_zenoh_message_p_result_free(r);
+            _Z_ERROR("WARNING: Link state not supported in zenoh-pico\n");
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
-            _Z_ERROR("WARNING: Link state not supported in zenoh-pico\n");
             return;
         }
         default:
         {
-            _zn_zenoh_message_p_result_free(r);
+            _Z_ERROR("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
-            _Z_ERROR("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
             return;
         }
         }
     } while (1);
 }
 
-_zn_zenoh_message_p_result_t _zn_zenoh_message_decode(_z_zbuf_t *zbf)
+_zn_zenoh_message_result_t _zn_zenoh_message_decode(_z_zbuf_t *zbf)
 {
-    _zn_zenoh_message_p_result_t r;
-    _zn_zenoh_message_p_result_init(&r);
+    _zn_zenoh_message_result_t r;
     _zn_zenoh_message_decode_na(zbf, &r);
     return r;
 }
@@ -2059,10 +2057,12 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
         {
             // Mark the reading position of the iobfer
             size_t r_pos = _z_zbuf_get_rpos(zbf);
-            _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(zbf);
+            _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(zbf);
             if (r_zm.tag == _z_res_t_OK)
             {
-                _z_vec_append(&r->value.frame.payload.messages, r_zm.value.zenoh_message);
+                _zn_zenoh_message_t *zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+                memcpy(zm, &r_zm.value.zenoh_message, sizeof(_zn_zenoh_message_t));
+                _z_vec_append(&r->value.frame.payload.messages, zm);
             }
             else
             {
@@ -2137,128 +2137,127 @@ int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *
     }
 }
 
-void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_p_result_t *r)
+void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_result_t *r)
 {
     r->tag = _z_res_t_OK;
 
-    r->value.transport_message->attachment = NULL;
+    r->value.transport_message.attachment = NULL;
     do
     {
         // Decode the header
         _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
         _ASSURE_P_RESULT(r_uint8, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-        r->value.transport_message->header = r_uint8.value.uint8;
+        r->value.transport_message.header = r_uint8.value.uint8;
 
         // Decode the body
-        uint8_t mid = _ZN_MID(r->value.transport_message->header);
+        uint8_t mid = _ZN_MID(r->value.transport_message.header);
         switch (mid)
         {
         case _ZN_MID_FRAME:
         {
-            _zn_frame_result_t r_fr = _zn_frame_decode(zbf, r->value.transport_message->header);
+            _zn_frame_result_t r_fr = _zn_frame_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_fr, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.frame = r_fr.value.frame;
+            r->value.transport_message.body.frame = r_fr.value.frame;
             return;
         }
         case _ZN_MID_ATTACHMENT:
         {
-            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.transport_message->header);
+            _zn_attachment_p_result_t r_at = _zn_attachment_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_at, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->attachment = r_at.value.attachment;
+            r->value.transport_message.attachment = r_at.value.attachment;
             break;
         }
         case _ZN_MID_SCOUT:
         {
-            _zn_scout_result_t r_sc = _zn_scout_decode(zbf, r->value.transport_message->header);
+            _zn_scout_result_t r_sc = _zn_scout_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_sc, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.scout = r_sc.value.scout;
+            r->value.transport_message.body.scout = r_sc.value.scout;
             return;
         }
         case _ZN_MID_HELLO:
         {
-            _zn_hello_result_t r_he = _zn_hello_decode(zbf, r->value.transport_message->header);
+            _zn_hello_result_t r_he = _zn_hello_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_he, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.hello = r_he.value.hello;
+            r->value.transport_message.body.hello = r_he.value.hello;
             return;
         }
         case _ZN_MID_JOIN:
         {
-            _zn_join_result_t r_jo = _zn_join_decode(zbf, r->value.transport_message->header);
+            _zn_join_result_t r_jo = _zn_join_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_jo, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.join = r_jo.value.join;
+            r->value.transport_message.body.join = r_jo.value.join;
             return;
         }
         case _ZN_MID_INIT:
         {
-            _zn_init_result_t r_in = _zn_init_decode(zbf, r->value.transport_message->header);
+            _zn_init_result_t r_in = _zn_init_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_in, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.init = r_in.value.init;
+            r->value.transport_message.body.init = r_in.value.init;
             return;
         }
         case _ZN_MID_OPEN:
         {
-            _zn_open_result_t r_op = _zn_open_decode(zbf, r->value.transport_message->header);
+            _zn_open_result_t r_op = _zn_open_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_op, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.open = r_op.value.open;
+            r->value.transport_message.body.open = r_op.value.open;
             return;
         }
         case _ZN_MID_CLOSE:
         {
-            _zn_close_result_t r_cl = _zn_close_decode(zbf, r->value.transport_message->header);
+            _zn_close_result_t r_cl = _zn_close_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_cl, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.close = r_cl.value.close;
+            r->value.transport_message.body.close = r_cl.value.close;
             return;
         }
         case _ZN_MID_SYNC:
         {
-            _zn_sync_result_t r_sy = _zn_sync_decode(zbf, r->value.transport_message->header);
+            _zn_sync_result_t r_sy = _zn_sync_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_sy, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.sync = r_sy.value.sync;
+            r->value.transport_message.body.sync = r_sy.value.sync;
             return;
         }
         case _ZN_MID_ACK_NACK:
         {
-            _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(zbf, r->value.transport_message->header);
+            _zn_ack_nack_result_t r_an = _zn_ack_nack_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_an, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.ack_nack = r_an.value.ack_nack;
+            r->value.transport_message.body.ack_nack = r_an.value.ack_nack;
             return;
         }
         case _ZN_MID_KEEP_ALIVE:
         {
-            _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(zbf, r->value.transport_message->header);
+            _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_ka, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.keep_alive = r_ka.value.keep_alive;
+            r->value.transport_message.body.keep_alive = r_ka.value.keep_alive;
             return;
         }
         case _ZN_MID_PING_PONG:
         {
             _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(zbf);
             _ASSURE_P_RESULT(r_pp, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message->body.ping_pong = r_pp.value.ping_pong;
+            r->value.transport_message.body.ping_pong = r_pp.value.ping_pong;
             return;
         }
         case _ZN_MID_PRIORITY:
         {
+            _Z_ERROR("WARNING: Priorities are not supported in zenoh-pico\n");
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_TRANSPORT_MESSAGE;
-            _Z_ERROR("WARNING: Priorities are not supported in zenoh-pico\n");
             return;
         }
         default:
         {
+            _Z_ERROR("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_TRANSPORT_MESSAGE;
-            _Z_ERROR("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
             return;
         }
         }
     } while (1);
 }
 
-_zn_transport_message_p_result_t _zn_transport_message_decode(_z_zbuf_t *zbf)
+_zn_transport_message_result_t _zn_transport_message_decode(_z_zbuf_t *zbf)
 {
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
     _zn_transport_message_decode_na(zbf, &r);
     return r;
 }

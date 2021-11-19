@@ -140,21 +140,19 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
                 // Decode the zenoh message
-                _zn_zenoh_message_p_result_t r_zm = _zn_zenoh_message_decode(&zbf);
+                _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(&zbf);
                 if (r_zm.tag == _z_res_t_OK)
                 {
-                    _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(zn, d_zm);
+                    _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
+                    res = _zn_handle_zenoh_message(zn, &d_zm);
                     // Free the decoded message
-                    _zn_zenoh_message_free(d_zm);
+                    _zn_zenoh_message_free(&d_zm);
                 }
                 else
                 {
                     res = _z_res_t_ERR;
                 }
 
-                // Free the result
-                _zn_zenoh_message_p_result_free(&r_zm);
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
                 // Reset the defragmentation buffer

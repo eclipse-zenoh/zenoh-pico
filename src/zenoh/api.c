@@ -193,7 +193,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         return zn;
     }
 
-    _zn_transport_message_p_result_t r_msg = _zn_recv_t_msg(zn);
+    _zn_transport_message_result_t r_msg = _zn_recv_t_msg(zn);
     if (r_msg.tag == _z_res_t_ERR)
     {
         // Free the pid
@@ -210,26 +210,26 @@ zn_session_t *zn_open(zn_properties_t *config)
         return zn;
     }
 
-    _zn_transport_message_t *p_iam = r_msg.value.transport_message;
-    switch (_ZN_MID(p_iam->header))
+    _zn_transport_message_t p_iam = r_msg.value.transport_message;
+    switch (_ZN_MID(p_iam.header))
     {
     case _ZN_MID_INIT:
     {
-        if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_T_A)
+        if _ZN_HAS_FLAG (p_iam.header, _ZN_FLAG_T_A)
         {
             // The announced sn resolution
             zn->sn_resolution = ism.body.init.sn_resolution;
             zn->sn_resolution_half = zn->sn_resolution / 2;
 
             // Handle SN resolution option if present
-            if _ZN_HAS_FLAG (p_iam->header, _ZN_FLAG_T_S)
+            if _ZN_HAS_FLAG (p_iam.header, _ZN_FLAG_T_S)
             {
                 // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
                 // otherwise the InitAck message is considered invalid and it should be treated as a
                 // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                if (p_iam->body.init.sn_resolution <= ism.body.init.sn_resolution)
+                if (p_iam.body.init.sn_resolution <= ism.body.init.sn_resolution)
                 {
-                    zn->sn_resolution = p_iam->body.init.sn_resolution;
+                    zn->sn_resolution = p_iam.body.init.sn_resolution;
                     zn->sn_resolution_half = zn->sn_resolution / 2;
                 }
                 else
@@ -251,7 +251,7 @@ zn_session_t *zn_open(zn_properties_t *config)
             if (ZN_TRANSPORT_LEASE % 1000 == 0)
                 _ZN_SET_FLAG(osm.header, _ZN_FLAG_T_T2);
             osm.body.open.initial_sn = initial_sn;
-            osm.body.open.cookie = p_iam->body.init.cookie;
+            osm.body.open.cookie = p_iam.body.init.cookie;
 
             _Z_DEBUG("Sending OpenSyn\n");
             // Encode and send the message
@@ -268,7 +268,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
             // Initialize the Local and Remote Peer IDs
             _z_bytes_move(&zn->local_pid, &pid);
-            _z_bytes_copy(&zn->remote_pid, &p_iam->body.init.pid);
+            _z_bytes_copy(&zn->remote_pid, &p_iam.body.init.pid);
 
             if (locator_is_scouted)
                 zn->locator = (z_str_t)locator;
@@ -295,8 +295,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Free the messages and result
     _zn_transport_message_free(&ism);
-    _zn_transport_message_free(p_iam);
-    _zn_transport_message_p_result_free(&r_msg);
+    _zn_transport_message_free(&p_iam);
 
     return zn;
 }
@@ -952,17 +951,15 @@ int zn_pull(zn_subscriber_t *sub)
 /*------------------ Read ------------------*/
 int znp_read(zn_session_t *zn)
 {
-    _zn_transport_message_p_result_t r_s = _zn_recv_t_msg(zn);
+    _zn_transport_message_result_t r_s = _zn_recv_t_msg(zn);
     if (r_s.tag == _z_res_t_OK)
     {
-        int res = _zn_handle_transport_message(zn, r_s.value.transport_message);
-        _zn_transport_message_free(r_s.value.transport_message);
-        _zn_transport_message_p_result_free(&r_s);
+        int res = _zn_handle_transport_message(zn, &r_s.value.transport_message);
+        _zn_transport_message_free(&r_s.value.transport_message);
         return res;
     }
     else
     {
-        _zn_transport_message_p_result_free(&r_s);
         return _z_res_t_ERR;
     }
 }

@@ -17,7 +17,7 @@
 #include "zenoh-pico/transport/utils.h"
 
 /*------------------ Reception helper ------------------*/
-void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
+void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_result_t *r)
 {
     _Z_DEBUG(">> recv session msg\n");
     r->tag = _z_res_t_OK;
@@ -39,7 +39,6 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
         // Read the message length
         if (_zn_recv_exact_zbuf(zn->link, &zn->zbuf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
         {
-            _zn_transport_message_p_result_free(r);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
             goto EXIT_SRCV_PROC;
@@ -50,7 +49,6 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
         size_t writable = _z_zbuf_capacity(&zn->zbuf) - _z_zbuf_len(&zn->zbuf);
         if (writable < len)
         {
-            _zn_transport_message_p_result_free(r);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IOBUF_NO_SPACE;
             goto EXIT_SRCV_PROC;
@@ -59,7 +57,6 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
         // Read enough bytes to decode the message
         if (_zn_recv_exact_zbuf(zn->link, &zn->zbuf, len) != len)
         {
-            _zn_transport_message_p_result_free(r);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
             goto EXIT_SRCV_PROC;
@@ -69,7 +66,6 @@ void _zn_recv_t_msg_na(zn_session_t *zn, _zn_transport_message_p_result_t *r)
     {
         if (_zn_recv_zbuf(zn->link, &zn->zbuf) < 0)
         {
-            _zn_transport_message_p_result_free(r);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
             goto EXIT_SRCV_PROC;
@@ -87,10 +83,9 @@ EXIT_SRCV_PROC:
     z_mutex_unlock(&zn->mutex_rx);
 }
 
-_zn_transport_message_p_result_t _zn_recv_t_msg(zn_session_t *zn)
+_zn_transport_message_result_t _zn_recv_t_msg(zn_session_t *zn)
 {
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
     _zn_recv_t_msg_na(zn, &r);
     return r;
 }

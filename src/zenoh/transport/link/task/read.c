@@ -16,13 +16,24 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
+void print_iosli(_z_iosli_t *ios)
+{
+    printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
+    for (size_t i = 0; i < ios->capacity; i++)
+    {
+        printf("%02x", ios->buf[i]);
+        if (i < ios->capacity - 1)
+            printf(" ");
+    }
+    printf("]");
+}
+
 void *_znp_read_task(void *arg)
 {
     zn_session_t *z = (zn_session_t *)arg;
     z->read_task_running = 1;
 
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
 
     // Acquire and keep the lock
     z_mutex_lock(&z->mutex_rx);
@@ -86,12 +97,12 @@ void *_znp_read_task(void *arg)
 
             if (r.tag == _z_res_t_OK)
             {
-                int res = _zn_handle_transport_message(z, r.value.transport_message);
+                int res = _zn_handle_transport_message(z, &r.value.transport_message);
                 if (res == _z_res_t_OK)
-                    _zn_transport_message_free(r.value.transport_message);
+                    _zn_transport_message_free(&r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
-            }
+                        }
             else
             {
                 _Z_DEBUG("Connection closed due to malformed message");
@@ -110,9 +121,6 @@ EXIT_RECV_LOOP:
         // Release the lock
         z_mutex_unlock(&z->mutex_rx);
     }
-
-    // Free the result
-    _zn_transport_message_p_result_free(&r);
 
     return 0;
 }
