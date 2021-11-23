@@ -12,23 +12,23 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <string.h>
-#include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/utils/logging.h"
 
-_zn_link_manager_t *_zn_link_manager_init()
+int _znp_multicast_send_keep_alive(_zn_transport_multicast_t *ztm)
 {
-    _zn_link_manager_t *zlm = (_zn_link_manager_t *)malloc(sizeof(_zn_link_manager_t));
+    // TODO: to be implemented
 
-    return zlm;
+    return -1;
 }
 
-void _zn_link_manager_free(_zn_link_manager_t **zlm)
+void *_znp_multicast_lease_task(void *arg)
 {
-    _zn_link_manager_t *ptr = *zlm;
+    // TODO: to be implemented
 
-    free(ptr);
-    *zlm = NULL;
+    return 0;
 }

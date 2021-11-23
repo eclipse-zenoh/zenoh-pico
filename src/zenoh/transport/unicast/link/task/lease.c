@@ -15,31 +15,32 @@
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _znp_send_keep_alive(zn_session_t *zn)
+int _znp_unicast_send_keep_alive(_zn_transport_unicast_t *ztu)
 {
     _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_KEEP_ALIVE);
 
-    return _zn_send_t_msg(zn, &t_msg);
+    return _zn_unicast_send_t_msg(ztu, &t_msg);
 }
 
-void *_znp_lease_task(void *arg)
+void *_znp_unicast_lease_task(void *arg)
 {
-    zn_session_t *zn = (zn_session_t *)arg;
-    zn->lease_task_running = 1;
+    _zn_transport_unicast_t *ztu = (_zn_transport_unicast_t *)arg;
 
-    zn->received = 0;
-    zn->transmitted = 0;
+    ztu->lease_task_running = 1;
+    ztu->received = 0;
+    ztu->transmitted = 0;
 
-    unsigned int next_lease = zn->lease;
+    unsigned int next_lease = ztu->lease;
     unsigned int next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
-    while (zn->lease_task_running)
+    while (ztu->lease_task_running)
     {
         // Compute the target interval
         unsigned int interval;
-        if (zn->lease > 0)
+        if (ztu->lease > 0)
         {
             if (next_lease < next_keep_alive)
                 interval = next_lease;
@@ -57,37 +58,37 @@ void *_znp_lease_task(void *arg)
         z_sleep_ms(interval);
 
         // Decrement the interval
-        if (zn->lease > 0)
+        if (ztu->lease > 0)
         {
             next_lease -= interval;
         }
         next_keep_alive -= interval;
 
-        if (zn->lease > 0 && next_lease == 0)
+        if (ztu->lease > 0 && next_lease == 0)
         {
             // Check if received data
-            if (zn->received == 0)
+            if (ztu->received == 0)
             {
-                _Z_DEBUG_VA("Closing session because it has expired after %zums", zn->lease);
-                _zn_session_close(zn, _ZN_CLOSE_EXPIRED);
+                _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
+                _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
                 return 0;
             }
 
             // Reset the lease parameters
-            zn->received = 0;
-            next_lease = zn->lease;
+            ztu->received = 0;
+            next_lease = ztu->lease;
         }
 
         if (next_keep_alive == 0)
         {
             // Check if need to send a keep alive
-            if (zn->transmitted == 0)
+            if (ztu->transmitted == 0)
             {
-                _znp_send_keep_alive(zn);
+                _znp_unicast_send_keep_alive(ztu);
             }
 
             // Reset the keep alive parameters
-            zn->transmitted = 0;
+            ztu->transmitted = 0;
             next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
         }
     }

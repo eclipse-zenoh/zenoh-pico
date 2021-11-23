@@ -12,23 +12,18 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <string.h>
-#include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/transport/link/tx.h"
 
-_zn_link_manager_t *_zn_link_manager_init()
+int _zn_send_t_msg(_zn_transport_t *zt, _zn_transport_message_t *t_msg)
 {
-    _zn_link_manager_t *zlm = (_zn_link_manager_t *)malloc(sizeof(_zn_link_manager_t));
-
-    return zlm;
-}
-
-void _zn_link_manager_free(_zn_link_manager_t **zlm)
-{
-    _zn_link_manager_t *ptr = *zlm;
-
-    free(ptr);
-    *zlm = NULL;
+    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
+        return _zn_unicast_send_t_msg(&zt->transport.unicast, t_msg);
+    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+        return _zn_multicast_send_t_msg(&zt->transport.multicast, t_msg);
+    else
+        return -1;
 }

@@ -17,8 +17,12 @@
 
 #include "zenoh-pico/session/session.h"
 
-int _znp_read(zn_session_t *zn);
+int _znp_read(_zn_transport_t *zt);
+int _znp_unicast_read(_zn_transport_unicast_t *ztu);
+int _znp_multicast_read(_zn_transport_multicast_t *ztm);
 
 void *_znp_read_task(void *arg);
+void *_znp_unicast_read_task(void *arg);
+void *_znp_multicast_read_task(void *arg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H */

@@ -12,11 +12,94 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
-int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
+
+/*------------------ Reception helper ------------------*/
+void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_message_p_result_t *r)
+{
+    _Z_DEBUG(">> recv session msg\n");
+    r->tag = _z_res_t_OK;
+
+    // Acquire the lock
+    z_mutex_lock(&ztu->mutex_rx);
+
+    // Prepare the buffer
+    _z_zbuf_clear(&ztu->zbuf);
+
+    if (ztu->link->is_streamed == 1)
+    {
+        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+        //       the boundary of the serialized messages. The length is encoded as little-endian.
+        //       In any case, the length of a message must not exceed 65_535 bytes.
+
+        // Read the message length
+        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
+        {
+            _zn_transport_message_p_result_free(r);
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_IO_GENERIC;
+            goto EXIT_SRCV_PROC;
+        }
+
+        uint16_t len = _z_zbuf_read(&ztu->zbuf) | (_z_zbuf_read(&ztu->zbuf) << 8);
+        _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
+        size_t writable = _z_zbuf_capacity(&ztu->zbuf) - _z_zbuf_len(&ztu->zbuf);
+        if (writable < len)
+        {
+            _zn_transport_message_p_result_free(r);
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_IOBUF_NO_SPACE;
+            goto EXIT_SRCV_PROC;
+        }
+
+        // Read enough bytes to decode the message
+        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, len) != len)
+        {
+            _zn_transport_message_p_result_free(r);
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_IO_GENERIC;
+            goto EXIT_SRCV_PROC;
+        }
+    }
+    else
+    {
+        if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf) < 0)
+        {
+            _zn_transport_message_p_result_free(r);
+            r->tag = _z_res_t_ERR;
+            r->value.error = _zn_err_t_IO_GENERIC;
+            goto EXIT_SRCV_PROC;
+        }
+    }
+
+    // Mark the session that we have received data
+    ztu->received = 1;
+
+    _Z_DEBUG(">> \t transport_message_decode\n");
+    _zn_transport_message_decode_na(&ztu->zbuf, r);
+
+EXIT_SRCV_PROC:
+    // Release the lock
+    z_mutex_unlock(&ztu->mutex_rx);
+}
+
+_zn_transport_message_p_result_t _zn_unicast_recv_t_msg(_zn_transport_unicast_t *ztu)
+{
+    _zn_transport_message_p_result_t r;
+    _zn_transport_message_p_result_init(&r);
+
+    _zn_unicast_recv_t_msg_na(ztu, &r);
+    return r;
+}
+
+int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_transport_message_t *msg)
 {
     switch (_ZN_MID(msg->header))
     {
@@ -43,19 +126,19 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
         if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_A))
         {
             // The session lease
-            zn->lease = msg->body.open.lease;
+            ztu->lease = msg->body.open.lease;
 
             // The initial SN at RX side. Initialize the session as we had already received
             // a message with a SN equal to initial_sn - 1.
             if (msg->body.open.initial_sn > 0)
             {
-                zn->sn_rx_reliable = msg->body.open.initial_sn - 1;
-                zn->sn_rx_best_effort = msg->body.open.initial_sn - 1;
+                ztu->sn_rx_reliable = msg->body.open.initial_sn - 1;
+                ztu->sn_rx_best_effort = msg->body.open.initial_sn - 1;
             }
             else
             {
-                zn->sn_rx_reliable = zn->sn_resolution - 1;
-                zn->sn_rx_best_effort = zn->sn_resolution - 1;
+                ztu->sn_rx_reliable = ztu->sn_resolution - 1;
+                ztu->sn_rx_best_effort = ztu->sn_resolution - 1;
             }
         }
 
@@ -65,8 +148,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
-        _zn_session_free(&zn);
-        return _z_res_t_ERR;
+        return _z_res_t_OK;
     }
 
     case _ZN_MID_SYNC:
@@ -99,26 +181,26 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_zn_sn_precedes(zn->sn_resolution_half, zn->sn_rx_reliable, msg->body.frame.sn))
+            if (_zn_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_reliable, msg->body.frame.sn))
             {
-                zn->sn_rx_reliable = msg->body.frame.sn;
+                ztu->sn_rx_reliable = msg->body.frame.sn;
             }
             else
             {
-                _z_wbuf_reset(&zn->dbuf_reliable);
+                _z_wbuf_reset(&ztu->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
         }
         else
         {
-            if (_zn_sn_precedes(zn->sn_resolution_half, zn->sn_rx_best_effort, msg->body.frame.sn))
+            if (_zn_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_best_effort, msg->body.frame.sn))
             {
-                zn->sn_rx_best_effort = msg->body.frame.sn;
+                ztu->sn_rx_best_effort = msg->body.frame.sn;
             }
             else
             {
-                _z_wbuf_reset(&zn->dbuf_best_effort);
+                _z_wbuf_reset(&ztu->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -129,7 +211,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
             int res = _z_res_t_OK;
 
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_R) ? &zn->dbuf_reliable : &zn->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
             _z_wbuf_add_iosli_from(dbuf, msg->body.frame.payload.fragment.val, msg->body.frame.payload.fragment.len);
 
@@ -144,7 +226,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t *d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(zn, d_zm);
+                    res = _zn_handle_zenoh_message(ztu->session, d_zm);
                     // Free the decoded message
                     _zn_zenoh_message_free(d_zm);
                 }
@@ -169,7 +251,7 @@ int _zn_handle_transport_message(zn_session_t *zn, _zn_transport_message_t *msg)
             unsigned int len = z_vec_len(&msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; i++)
             {
-                int res = _zn_handle_zenoh_message(zn, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
+                int res = _zn_handle_zenoh_message(ztu->session, (_zn_zenoh_message_t *)z_vec_get(&msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
                     return res;
             }

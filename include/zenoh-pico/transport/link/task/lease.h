@@ -15,10 +15,14 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_TASK_LEASE_H
 #define ZENOH_PICO_TRANSPORT_LINK_TASK_LEASE_H
 
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/transport/transport.h"
 
-int _znp_send_keep_alive(zn_session_t *zn);
+int _znp_send_keep_alive(_zn_transport_t *zt);
+int _znp_unicast_send_keep_alive(_zn_transport_unicast_t *ztu);
+int _znp_multicast_send_keep_alive(_zn_transport_multicast_t *ztm);
 
 void *_znp_lease_task(void *arg);
+void *_znp_unicast_lease_task(void *arg);
+void *_znp_multicast_lease_task(void *arg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_LEASE_H */

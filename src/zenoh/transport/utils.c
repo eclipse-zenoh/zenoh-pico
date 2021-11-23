@@ -12,23 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <string.h>
-#include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/transport/utils.h"
 
-_zn_link_manager_t *_zn_link_manager_init()
+int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right)
 {
-    _zn_link_manager_t *zlm = (_zn_link_manager_t *)malloc(sizeof(_zn_link_manager_t));
-
-    return zlm;
-}
-
-void _zn_link_manager_free(_zn_link_manager_t **zlm)
-{
-    _zn_link_manager_t *ptr = *zlm;
-
-    free(ptr);
-    *zlm = NULL;
+    if (sn_right > sn_left)
+        return (sn_right - sn_left <= sn_resolution_half);
+    else
+        return (sn_left - sn_right > sn_resolution_half);
 }

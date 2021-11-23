@@ -61,10 +61,15 @@ typedef struct
     uint8_t is_multicast;
 } _zn_link_t;
 
+_ZN_RESULT_DECLARE(_zn_link_t, link)
 _ZN_P_RESULT_DECLARE(_zn_link_t, link)
 
-int _zn_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf);
-int _zn_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf);
-int _zn_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len);
+void _zn_link_free(_zn_link_t **zn);
+_zn_link_p_result_t _zn_open_link(const z_str_t locator, const clock_t tout);
+_zn_link_p_result_t _zn_listen_link(const z_str_t locator, const clock_t tout);
+
+int _zn_link_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf);
+int _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf);
+int _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len);
 
 #endif /* ZENOH_PICO_LINK_H */

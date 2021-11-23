@@ -23,7 +23,9 @@
  * Default value : `"client"`.
  */
 #define ZN_CONFIG_MODE_KEY 0x40
-#define ZN_CONFIG_MODE_DEFAULT "client"
+#define ZN_CONFIG_MODE_CLIENT "client"
+#define ZN_CONFIG_MODE_PEER "peer"
+#define ZN_CONFIG_MODE_DEFAULT ZN_CONFIG_MODE_CLIENT
 
 /**
  * The locator of a peer to connect to.

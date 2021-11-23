@@ -120,13 +120,18 @@ if (UNIX)
                     "src/zenoh/*.c"
                     "src/zenoh/link/*.c"
                     "src/zenoh/link/config/*.c"                    
-                    "src/zenoh/link/multicast/*.c"
                     "src/zenoh/link/unicast/*.c"
+                    "src/zenoh/link/multicast/*.c"
                     "src/zenoh/protocol/*.c"
                     "src/zenoh/session/*.c"
                     "src/zenoh/transport/*.c"
-                    "src/zenoh/transport/link/*.c"
-                    "src/zenoh/transport/link/task/*.c"
+                    "src/zenoh/transport/common/*.c"
+                    "src/zenoh/transport/unicast/*.c"
+                    "src/zenoh/transport/unicast/link/*.c"
+                    "src/zenoh/transport/unicast/link/task/*.c"
+                    "src/zenoh/transport/multicast/*.c"
+                    "src/zenoh/transport/multicast/link/*.c"
+                    "src/zenoh/transport/multicast/link/task/*.c"
   )
 endif()
 

@@ -22,6 +22,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/transport/link/tx.h"
 
 zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long timeout)
 {
@@ -59,9 +60,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect...\n");
-        zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -87,9 +86,7 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
 
         if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
-            _Z_DEBUG("Trying to reconnect...\n");
-            zn->on_disconnect(zn);
-            _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+            // TODO: retransmission
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -123,9 +120,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect...\n");
-        zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -151,9 +146,7 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
 
     if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect...\n");
-        pub->zn->on_disconnect(pub->zn);
-        _zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -203,9 +196,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect....\n");
-        zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -238,9 +229,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
         if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
-            _Z_DEBUG("Trying to reconnect....\n");
-            sub->zn->on_disconnect(sub->zn);
-            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+            // TODO: retransmission
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -289,9 +278,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect....\n");
-        zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);
@@ -324,9 +311,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 
         if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
-            _Z_DEBUG("Trying to reconnect....\n");
-            qle->zn->on_disconnect(qle->zn);
-            _zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+            // TODO: retransmission
         }
 
         _zn_zenoh_message_free(&z_msg);
@@ -345,7 +330,7 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
     z_msg.reply_context = _zn_reply_context_init();
     z_msg.reply_context->qid = query->qid;
     z_msg.reply_context->replier_kind = query->kind;
-    z_msg.reply_context->replier_id = query->zn->local_pid;
+    z_msg.reply_context->replier_id = query->zn->tp_manager->local_pid;
 
     // Build the data payload
     z_msg.body.data.payload.val = payload;
@@ -359,9 +344,7 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
 
     if (_zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect....\n");
-        query->zn->on_disconnect(query->zn);
-        _zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     free(z_msg.reply_context);
@@ -536,9 +519,7 @@ int zn_pull(zn_subscriber_t *sub)
 
         if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {
-            _Z_DEBUG("Trying to reconnect....\n");
-            sub->zn->on_disconnect(sub->zn);
-            _zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+            // TODO: retransmission
         }
 
         _zn_zenoh_message_free(&z_msg);

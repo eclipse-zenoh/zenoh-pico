@@ -144,7 +144,7 @@ size_t _zn_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t l
 
 size_t _zn_get_link_mtu_udp_unicast()
 {
-    // TODO
+    // TODO: not implemented
     return -1;
 }
 

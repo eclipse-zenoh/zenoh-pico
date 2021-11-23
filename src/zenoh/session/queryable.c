@@ -19,8 +19,10 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Queryable ------------------*/
@@ -457,9 +459,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _Z_DEBUG("Trying to reconnect...\n");
-        zn->on_disconnect(zn);
-        _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
+        // TODO: retransmission
     }
 
     _zn_zenoh_message_free(&z_msg);

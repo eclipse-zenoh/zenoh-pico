@@ -30,7 +30,7 @@ zn_properties_t *zn_config_default()
 zn_properties_t *zn_config_client(const z_str_t locator)
 {
     zn_properties_t *ps = zn_config_empty();
-    zn_properties_insert(ps, ZN_CONFIG_MODE_KEY, z_string_make("client"));
+    zn_properties_insert(ps, ZN_CONFIG_MODE_KEY, z_string_make(ZN_CONFIG_MODE_CLIENT));
     if (locator)
     {
         // Connect only to the provided locator

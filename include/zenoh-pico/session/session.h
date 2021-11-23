@@ -19,76 +19,43 @@
 #include <string.h>
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/manager.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/collections.h"
-
-/**
- * The callback signature of the functions handling session discionnection.
- */
-typedef void (*zn_on_disconnect_t)(void *zn);
 
 /**
  * A zenoh-net session.
  */
 typedef struct
 {
-    // Socket and internal buffers
-    _zn_link_t *link;
-    z_mutex_t mutex_rx;
-    z_mutex_t mutex_tx;
     z_mutex_t mutex_inner;
 
-    _z_wbuf_t wbuf;
-    _z_zbuf_t zbuf;
-
-    _z_wbuf_t dbuf_reliable;
-    _z_wbuf_t dbuf_best_effort;
-
-    // Connection state
-    z_bytes_t local_pid;
-    z_bytes_t remote_pid;
-
-    z_str_t locator;
-
-    volatile z_zint_t lease;
-    z_zint_t sn_resolution;
-    z_zint_t sn_resolution_half;
-
-    // SN numbers
-    z_zint_t sn_tx_reliable;
-    z_zint_t sn_tx_best_effort;
-    z_zint_t sn_rx_reliable;
-    z_zint_t sn_rx_best_effort;
-
-    // Counters
+    // Session counters // FIXME: move to transport check
     z_zint_t resource_id;
     z_zint_t entity_id;
     z_zint_t pull_id;
     z_zint_t query_id;
 
-    // Declarations
+    // Session declarations
     z_list_t *local_resources;
     z_list_t *remote_resources;
 
+    // Session subscriptions
     z_list_t *local_subscriptions;
     z_list_t *remote_subscriptions;
     z_i_map_t rem_res_loc_sub_map;
 
+    // Session queryables
     z_list_t *local_queryables;
     z_i_map_t rem_res_loc_qle_map;
 
     z_list_t *pending_queries;
 
-    // Runtime
-    zn_on_disconnect_t on_disconnect;
-
-    volatile int read_task_running;
-    z_task_t *read_task;
-
-    volatile int lease_task_running;
-    volatile int received;
-    volatile int transmitted;
-    z_task_t *lease_task;
+    // Session transport.
+    // Zenoh-pico is considering a single transport per session.
+    _zn_transport_t *tp;
+    _zn_transport_manager_t *tp_manager;
 } zn_session_t;
 
 /**
