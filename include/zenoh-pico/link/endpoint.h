@@ -54,6 +54,7 @@ void _zn_locator_array_clear(_zn_locator_array_t *la);
 void _zn_locator_array_free(_zn_locator_array_t **la);
 void _zn_locator_array_move(_zn_locator_array_t *dst, _zn_locator_array_t *src);
 void _zn_locator_array_copy(_zn_locator_array_t *dst, const _zn_locator_array_t *src);
+int _zn_locator_array_is_empty(const _zn_locator_array_t *la);
 
 /*------------------ Endpoint ------------------*/
 #define ENDPOINT_CONFIG_SEPARATOR '#'

@@ -300,6 +300,11 @@ void _zn_locator_array_copy(_zn_locator_array_t *dst, const _zn_locator_array_t 
     dst->len = src->len;
 }
 
+int _zn_locator_array_is_empty(const _zn_locator_array_t *la)
+{
+    return la->len == 0;
+}
+
 /*------------------ Endpoint ------------------*/
 void __zn_endpoint_init(_zn_endpoint_t *endpoint)
 {

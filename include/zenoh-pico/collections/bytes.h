@@ -39,5 +39,6 @@ void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_clear(z_bytes_t *bs);
 void _z_bytes_free(z_bytes_t **bs);
 void _z_bytes_reset(z_bytes_t *bs);
+int _z_bytes_is_empty(const z_bytes_t *bs);
 
 #endif /* ZENOH_PICO_UTILS_COLLECTION_BYTES_H */

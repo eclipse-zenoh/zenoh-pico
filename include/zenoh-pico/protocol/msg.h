@@ -588,14 +588,15 @@ typedef struct
 //       de-serialize the payload in one single pass when F==0 since no re-ordering needs to take
 //       place at this stage. Then, the F bit is used to detect the last fragment during re-ordering.
 //
+typedef union
+{
+    _zn_payload_t fragment;
+    _z_vec_t messages;
+} _zn_frame_payload_t;
 typedef struct
 {
     z_zint_t sn;
-    union
-    {
-        _zn_payload_t fragment;
-        _z_vec_t messages;
-    } payload;
+    _zn_frame_payload_t payload;
 } _zn_frame_t;
 
 /*------------------ Transport Message ------------------*/
@@ -618,6 +619,22 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_transport_message_t;
+
+/*------------------ Builders ------------------*/
+_zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid);
+_zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators);
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_sns_t next_sns);
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid);
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie);
+_zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);
+_zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial_sn);
+_zn_transport_message_t _zn_t_msg_make_close(z_bytes_t pid, uint8_t reason);
+_zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
+_zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
+_zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid);
+_zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
+_zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
+_zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -860,7 +877,9 @@ typedef struct
 //
 // - if D==1 then the message can be dropped for congestion control reasons.
 //
-// NOTE: Unit messages have no body
+typedef struct
+{
+} _zn_unit_t;
 
 /*------------------ Pull Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -920,5 +939,12 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_zenoh_message_t;
+
+/*------------------ Builders ------------------*/
+_zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
+_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload);
+_zn_zenoh_message_t _zn_z_msg_make_unit();
+_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples);
+_zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

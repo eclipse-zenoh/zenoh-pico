@@ -64,3 +64,8 @@ void _z_bytes_reset(z_bytes_t *bs)
     bs->val = NULL;
     bs->len = 0;
 }
+
+int _z_bytes_is_empty(const z_bytes_t *bs)
+{
+    return bs->len == 0;
+}
