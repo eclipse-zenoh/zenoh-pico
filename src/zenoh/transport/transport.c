@@ -176,8 +176,22 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
             _zn_transport_message_p_result_t r_oam = _zn_recv_t_msg_nt(zl);
             if (r_oam.tag == _z_res_t_ERR)
                 goto ERR_3;
+            _zn_transport_message_t *p_oam = r_oam.value.transport_message;
 
-            // TODO: decode openack
+            if (_ZN_HAS_FLAG(p_oam->header, _ZN_FLAG_T_A))
+            {
+                // The session lease
+                param.lease = p_oam->body.open.lease;
+
+                // The initial SN at RX side. Initialize the session as we had already received
+                // a message with a SN equal to initial_sn - 1.
+                if (p_oam->body.open.initial_sn > 0)
+                    param.initial_sn_rx = p_oam->body.open.initial_sn - 1;
+                else
+                    param.initial_sn_rx = param.sn_resolution - 1;
+
+            } else
+                goto ERR_3;
 
             _zn_transport_message_p_result_free(&r_oam);
 

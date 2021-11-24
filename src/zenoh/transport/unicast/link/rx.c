@@ -123,25 +123,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
 
     case _ZN_MID_OPEN:
     {
-        if (_ZN_HAS_FLAG(msg->header, _ZN_FLAG_T_A))
-        {
-            // The session lease
-            ztu->lease = msg->body.open.lease;
-
-            // The initial SN at RX side. Initialize the session as we had already received
-            // a message with a SN equal to initial_sn - 1.
-            if (msg->body.open.initial_sn > 0)
-            {
-                ztu->sn_rx_reliable = msg->body.open.initial_sn - 1;
-                ztu->sn_rx_best_effort = msg->body.open.initial_sn - 1;
-            }
-            else
-            {
-                ztu->sn_rx_reliable = ztu->sn_resolution - 1;
-                ztu->sn_rx_best_effort = ztu->sn_resolution - 1;
-            }
-        }
-
+        // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
         return _z_res_t_OK;
     }
 

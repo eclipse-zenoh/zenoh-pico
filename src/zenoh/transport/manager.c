@@ -36,6 +36,9 @@ _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t loc
         zt->transport.unicast.sn_resolution_half = zt->transport.unicast.sn_resolution / 2;
         zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_establish_param.initial_sn_tx;
         zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_establish_param.initial_sn_rx;
+        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_rx;
+        zt->transport.unicast.lease = res_tp_param.value.transport_establish_param.lease;
         zt->transport.unicast.remote_pid = res_tp_param.value.transport_establish_param.remote_pid;
 
         zt->transport.unicast.link = res_zl.value.link;
@@ -86,8 +89,10 @@ _zn_transport_p_result_t _zn_new_transport_peer(z_str_t locator, z_bytes_t local
         zt->transport.unicast.sn_resolution_half = zt->transport.unicast.sn_resolution / 2;
         zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_establish_param.initial_sn_tx;
         zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_establish_param.initial_sn_rx;
+        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_rx;
+        zt->transport.unicast.lease = res_tp_param.value.transport_establish_param.lease;
         zt->transport.unicast.remote_pid = res_tp_param.value.transport_establish_param.remote_pid;
-
 
         zt->transport.unicast.link = res_zl.value.link;
     }
