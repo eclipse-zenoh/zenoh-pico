@@ -106,9 +106,6 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 {
     _zn_transport_establish_param_result_t ret;
     _zn_transport_establish_param_t param;
-    _zn_transport_t *dummy_zt; // This transport is required to handled (un)streamed sessions
-    dummy_zt = _zn_transport_unicast_init();
-    dummy_zt->transport.unicast.link = zl;
 
     // Build the open message
     _zn_transport_message_t ism = _zn_transport_message_init(_ZN_MID_INIT);
@@ -124,7 +121,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 
     // Encode and send the message
     _Z_DEBUG("Sending InitSyn\n");
-    int res = _zn_send_t_msg(dummy_zt, &ism);
+    int res = _zn_send_t_msg_nt(zl, &ism);
     if (res != 0)
         goto ERR_1;
     
@@ -132,7 +129,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
     param.sn_resolution = ism.body.init.sn_resolution;
     _zn_transport_message_free(&ism);
 
-    _zn_transport_message_p_result_t r_iam = _zn_recv_t_msg(dummy_zt);
+    _zn_transport_message_p_result_t r_iam = _zn_recv_t_msg_nt(zl);
     if (r_iam.tag == _z_res_t_ERR)
         goto ERR_1;
 
@@ -171,12 +168,12 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 
             // Encode and send the message
             _Z_DEBUG("Sending OpenSyn\n");
-            res = _zn_send_t_msg(dummy_zt, &osm);
+            res = _zn_send_t_msg_nt(zl, &osm);
             
             if (res != 0)
                 goto ERR_3;
 
-            _zn_transport_message_p_result_t r_oam = _zn_recv_t_msg(dummy_zt);
+            _zn_transport_message_p_result_t r_oam = _zn_recv_t_msg_nt(zl);
             if (r_oam.tag == _z_res_t_ERR)
                 goto ERR_3;
 
@@ -198,8 +195,6 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 
     _zn_transport_message_free(p_iam);
     _zn_transport_message_p_result_free(&r_iam);
-    dummy_zt->transport.unicast.link = NULL;
-    _zn_transport_free(&dummy_zt);
 
     ret.tag = _z_res_t_OK;
     ret.value.transport_establish_param = param;
@@ -211,8 +206,6 @@ ERR_2:
     _zn_transport_message_free(p_iam);
     _zn_transport_message_p_result_free(&r_iam);
 ERR_1:
-    _zn_transport_free(&dummy_zt);
-
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
     return ret;

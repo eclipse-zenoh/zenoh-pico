@@ -12,11 +12,11 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 int _zn_send_t_msg(_zn_transport_t *zt, _zn_transport_message_t *t_msg)
 {
@@ -26,4 +26,46 @@ int _zn_send_t_msg(_zn_transport_t *zt, _zn_transport_message_t *t_msg)
         return _zn_multicast_send_t_msg(&zt->transport.multicast, t_msg);
     else
         return -1;
+}
+
+int _zn_send_t_msg_nt(const _zn_link_t *zl, _zn_transport_message_t *t_msg)
+{
+    // Create and prepare the buffer to serialize the message on
+    _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
+    _z_wbuf_clear(&wbf);
+    if (zl->is_streamed == 1)
+    {
+        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
+        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
+        //       the boundary of the serialized messages. The length is encoded as little-endian.
+        //       In any case, the length of a message must not exceed 65_535 bytes.
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(&wbf, 0, i);
+        _z_wbuf_set_wpos(&wbf, _ZN_MSG_LEN_ENC_SIZE);
+    }
+
+    // Encode the session message
+    if (_zn_transport_message_encode(&wbf, t_msg) != 0)
+        goto ERR;
+
+    // Write the message legnth in the reserved space if needed
+    if (zl->is_streamed == 1)
+    {
+        size_t len = _z_wbuf_len(&wbf) - _ZN_MSG_LEN_ENC_SIZE;
+        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(&wbf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+    }
+
+    // Send the wbuf on the socket
+    int res = _zn_link_send_wbuf(zl, &wbf);
+
+    // Release the buffer
+    _z_wbuf_free(&wbf);
+
+    return res;
+
+ERR:
+    _z_wbuf_free(&wbf);
+    return -1;
 }
