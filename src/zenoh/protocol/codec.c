@@ -52,7 +52,7 @@
 //     _ZN_EC(_z_zint_encode(buf, len))
 //     for (size_t i = 0; i < len; i++)
 //     {
-//         p = (zn_property_t *)z_vec_get(ps, i);
+//         p = (zn_property_t *)_z_vec_get(ps, i);
 //         _ZN_EC(zn_property_encode(buf, p))
 //     }
 //     return 0;

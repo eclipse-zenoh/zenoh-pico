@@ -59,15 +59,15 @@ zn_hello_array_t _zn_scout_loop(
         if (len < 0)
             continue;
 
-        _zn_transport_message_p_result_t r_hm = _zn_transport_message_decode(&zbf);
+        _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);
         if (r_hm.tag == _z_res_t_ERR)
         {
             _Z_DEBUG("Scouting loop received malformed message\n");
             continue;
         }
 
-        _zn_transport_message_t *t_msg = r_hm.value.transport_message;
-        switch (_ZN_MID(t_msg->header))
+        _zn_transport_message_t t_msg = r_hm.value.transport_message;
+        switch (_ZN_MID(t_msg.header))
         {
         case _ZN_MID_HELLO:
         {
@@ -88,22 +88,22 @@ zn_hello_array_t _zn_scout_loop(
             // Get current element to fill
             zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
 
-            if _ZN_HAS_FLAG (t_msg->header, _ZN_FLAG_T_I)
-                _z_bytes_copy(&sc->pid, &t_msg->body.hello.pid);
+            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_I)
+                _z_bytes_copy(&sc->pid, &t_msg.body.hello.pid);
             else
                 _z_bytes_reset(&sc->pid);
 
-            if _ZN_HAS_FLAG (t_msg->header, _ZN_FLAG_T_W)
-                sc->whatami = t_msg->body.hello.whatami;
+            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_W)
+                sc->whatami = t_msg.body.hello.whatami;
             else
                 sc->whatami = ZN_ROUTER; // Default value is from a router
 
-            if _ZN_HAS_FLAG (t_msg->header, _ZN_FLAG_T_L)
+            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_L)
             {
-                z_str_array_t la = _z_str_array_make(t_msg->body.hello.locators.len);
+                z_str_array_t la = _z_str_array_make(t_msg.body.hello.locators.len);
                 for (size_t i = 0; i < la.len; i++)
                 {
-                    la.val[i] = _zn_locator_to_str(&t_msg->body.hello.locators.val[i]);
+                    la.val[i] = _zn_locator_to_str(&t_msg.body.hello.locators.val[i]);
                 }
                 _z_str_array_move(&sc->locators, &la);
             }
@@ -123,15 +123,14 @@ zn_hello_array_t _zn_scout_loop(
         }
         }
 
-        _zn_transport_message_free(t_msg);
-        _zn_transport_message_p_result_free(&r_hm);
+        _zn_transport_message_free(&t_msg);
 
         if (ls.len > 0 && exit_on_first)
             break;
     }
 
     _zn_link_free(&r_scout.value.link);
-    _z_zbuf_free(&zbf);
+    _z_zbuf_clear(&zbf);
 
     return ls;
 }
@@ -160,7 +159,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     const z_str_t locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
     locs = _zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
-    _z_wbuf_free(&wbf);
+    _z_wbuf_clear(&wbf);
 
     return locs;
 }

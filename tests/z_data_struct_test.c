@@ -19,27 +19,28 @@
 
 int main(void)
 {
-    z_list_t *xs = z_list_of("one");
+    z_str_list_t *xs = z_str_list_make();
+    z_str_list_push(xs, _z_str_clone("one"));
     zn_int_str_map_t map = zn_int_str_map_make();
 
-    xs = z_list_cons(xs, "two");
-    xs = z_list_cons(xs, "three");
-    printf("list len = %zu\n", z_list_len(xs));
-    xs = z_list_drop_val(xs, 1);
-    printf("list len = %zu\n", z_list_len(xs));
-    z_list_free(xs);
+    xs = z_str_list_push(xs, _z_str_clone("two"));
+    xs = z_str_list_push(xs, _z_str_clone("three"));
+    printf("list len = %zu\n", z_str_list_len(xs));
+    xs = z_str_list_drop_pos(xs, 1);
+    printf("list len = %zu\n", z_str_list_len(xs));
+    z_str_list_free(&xs);
 
-    zn_int_str_map_insert(&map, 0, "0");
-    zn_int_str_map_insert(&map, 1, "1");
-    zn_int_str_map_insert(&map, 2, "2");
-    zn_int_str_map_insert(&map, 3, "3");
-    zn_int_str_map_insert(&map, 4, "4");
-    zn_int_str_map_insert(&map, 5, "5");
-    zn_int_str_map_insert(&map, 6, "6");
-    zn_int_str_map_insert(&map, 7, "7");
-    zn_int_str_map_insert(&map, 8, "8");
-    zn_int_str_map_insert(&map, 9, "9");
-    zn_int_str_map_insert(&map, 10, "10");
+    zn_int_str_map_insert(&map, 0, _z_str_clone("0"));
+    zn_int_str_map_insert(&map, 1, _z_str_clone("1"));
+    zn_int_str_map_insert(&map, 2, _z_str_clone("2"));
+    zn_int_str_map_insert(&map, 3, _z_str_clone("3"));
+    zn_int_str_map_insert(&map, 4, _z_str_clone("4"));
+    zn_int_str_map_insert(&map, 5, _z_str_clone("5"));
+    zn_int_str_map_insert(&map, 6, _z_str_clone("6"));
+    zn_int_str_map_insert(&map, 7, _z_str_clone("7"));
+    zn_int_str_map_insert(&map, 8, _z_str_clone("8"));
+    zn_int_str_map_insert(&map, 9, _z_str_clone("9"));
+    zn_int_str_map_insert(&map, 10, _z_str_clone("10"));
 
     printf("Map size: %zu\n", zn_int_str_map_len(&map));
     printf("get(0) = %s\n", zn_int_str_map_get(&map, 0));
@@ -59,5 +60,6 @@ int main(void)
     zn_int_str_map_remove(&map, 0);
     assert(zn_int_str_map_get(&map, 0) == NULL);
     printf("get(5) = %s\n", zn_int_str_map_get(&map, 5));
+
     return 0;
 }

@@ -48,7 +48,7 @@ z_zint_t __unsafe_zn_unicast_get_sn(_zn_transport_unicast_t *zt, zn_reliability_
  */
 void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
-    _z_wbuf_clear(buf);
+    _z_wbuf_reset(buf);
 
     if (is_streamed == 1)
     {
@@ -106,9 +106,9 @@ _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_f
     else
     {
         // Do not allocate the vector containing the messages
-        t_msg.body.frame.payload.messages._capacity = 0;
-        t_msg.body.frame.payload.messages._len = 0;
-        t_msg.body.frame.payload.messages._val = NULL;
+        t_msg.body.frame.payload.messages.capacity = 0;
+        t_msg.body.frame.payload.messages.len = 0;
+        t_msg.body.frame.payload.messages.val = NULL;
     }
 
     return t_msg;
@@ -155,7 +155,7 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t *t_msg)
+int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t t_msg)
 {
     _Z_DEBUG(">> send session message\n");
 
@@ -166,7 +166,7 @@ int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t
     __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
     // Encode the session message
-    int res = _zn_transport_message_encode(&ztu->wbuf, t_msg);
+    int res = _zn_transport_message_encode(&ztu->wbuf, &t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
@@ -288,7 +288,7 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
 
     EXIT_FRAG_PROC:
         // Free the fragmentation buffer memory
-        _z_wbuf_free(&fbf);
+        _z_wbuf_clear(&fbf);
     }
 
 EXIT_ZSND_PROC:

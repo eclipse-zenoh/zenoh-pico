@@ -253,8 +253,8 @@ void wbuf_write_zbuf_read(void)
     }
     printf("]\n");
 
-    _z_zbuf_free(&zbf);
-    _z_wbuf_free(&wbf);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_write_zbuf_read_bytes(void)
@@ -288,8 +288,8 @@ void wbuf_write_zbuf_read_bytes(void)
     printf(" ]\n");
 
     free(buf01);
-    _z_zbuf_free(&zbf);
-    _z_wbuf_free(&wbf);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_put_zbuf_get(void)
@@ -324,8 +324,8 @@ void wbuf_put_zbuf_get(void)
     }
     printf(" ]\n");
 
-    _z_zbuf_free(&zbf);
-    _z_wbuf_free(&wbf);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_set_pos_wbuf_get_pos(void)
@@ -345,7 +345,7 @@ void wbuf_set_pos_wbuf_get_pos(void)
 
     for (size_t i = 0; i < 10; i++)
     {
-        _z_wbuf_clear(&wbf);
+        _z_wbuf_reset(&wbf);
         assert(_z_wbuf_get_rpos(&wbf) == 0);
         assert(_z_wbuf_get_wpos(&wbf) == 0);
 
@@ -366,7 +366,7 @@ void wbuf_set_pos_wbuf_get_pos(void)
         assert(lr_pos == rr_pos);
     }
 
-    _z_wbuf_free(&wbf);
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_add_iosli(void)
@@ -431,8 +431,8 @@ void wbuf_add_iosli(void)
     }
     printf(" ]\n");
 
-    _z_zbuf_free(&zbf);
-    _z_wbuf_free(&wbf);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 /*=============================*/

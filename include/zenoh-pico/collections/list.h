@@ -17,8 +17,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "zenoh-pico/collections/element.h"
 
-/*-------- Linked List --------*/
+/*-------- Single-linked List --------*/
 /**
  * A single-linked list.
  *
@@ -27,26 +28,43 @@
  *   struct z_list *tail: A pointer to the next element in the list.
  */
 typedef int (*z_list_predicate)(void *, void *);
-typedef struct _z_list
+
+typedef struct _z_l_t
 {
     void *val;
-    struct _z_list *tail;
-} z_list_t;
+    struct _z_l_t *tail;
+} _z_list_t;
 
-extern z_list_t *z_list_empty;
+_z_list_t *_z_list_of(void *x);
+_z_list_t *_z_list_cons(_z_list_t *xs, void *x);
 
-z_list_t *z_list_of(void *x);
-z_list_t *z_list_cons(z_list_t *xs, void *x);
+void *_z_list_head(_z_list_t *xs);
+_z_list_t *_z_list_tail(_z_list_t *xs);
 
-void *z_list_head(z_list_t *xs);
-z_list_t *z_list_tail(z_list_t *xs);
+size_t _z_list_len(_z_list_t *xs);
 
-size_t z_list_len(z_list_t *xs);
-z_list_t *z_list_remove(z_list_t *xs, z_list_predicate p, void *arg);
+_z_list_t *_z_list_pop(_z_list_t *xs);
 
-z_list_t *z_list_pop(z_list_t *xs);
-z_list_t *z_list_drop_val(z_list_t *xs, size_t position);
-void z_list_free(z_list_t *xs);
-void z_list_free_deep(z_list_t *xs);
+_z_list_t *_z_list_drop_head(_z_list_t *xs, z_element_free_f f);
+_z_list_t *_z_list_drop_pos(_z_list_t *xs, size_t pos, z_element_free_f f);
+_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate p, void *arg, z_element_free_f f);
+
+int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f f);
+_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f f);
+void _z_list_free(_z_list_t **xs, z_element_free_f f);
+
+/*-------- String list --------*/
+typedef _z_list_t z_str_list_t;
+
+#define z_str_list_make() NULL
+#define z_str_list_push(list, elem) _z_list_cons(list, elem)
+#define z_str_list_pop(list, elem) _z_list_pop(list, elem)
+#define z_str_list_len(list) _z_list_len(list)
+#define z_str_list_drop_head(list) (z_str_t) _z_list_drop_head(list, z_element_free_str)
+#define z_str_list_drop_pos(list, pos) _z_list_drop_pos(list, pos, z_element_free_str)
+#define z_str_list_drop_filter(list, pos) _z_list_drop_head(list, pos, z_element_free_str)
+#define z_str_list_cmp(left, right) _z_list_cmp(left, right, z_element_cmp_str)
+#define z_str_list_clone(list) _z_list_clone(list, z_element_clone_str)
+#define z_str_list_free(list) _z_list_free(list, z_element_free_str)
 
 #endif /* ZENOH_PICO_UTILS_COLLECTION_LIST_H */

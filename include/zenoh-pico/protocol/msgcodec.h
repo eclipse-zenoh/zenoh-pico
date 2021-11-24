@@ -46,7 +46,7 @@ _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 _ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
-_ZN_P_RESULT_DECLARE(_zn_transport_message_t, transport_message)
+_ZN_RESULT_DECLARE(_zn_transport_message_t, transport_message)
 
 _ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
 _ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
@@ -62,7 +62,7 @@ _ZN_RESULT_DECLARE(_zn_data_info_t, data_info)
 _ZN_RESULT_DECLARE(_zn_data_t, data)
 _ZN_RESULT_DECLARE(_zn_pull_t, pull)
 _ZN_RESULT_DECLARE(_zn_query_t, query)
-_ZN_P_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
+_ZN_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
 #define _ZN_DECLARE_FREE(name) \
@@ -102,12 +102,12 @@ _ZN_DECLARE_DECODE(hello);
 _ZN_DECLARE_FREE(hello);
 
 _ZN_DECLARE_ENCODE_NOH(transport_message);
-_ZN_DECLARE_P_DECODE_NOH(transport_message);
+_ZN_DECLARE_DECODE_NOH(transport_message);
 _ZN_DECLARE_FREE_NOH(transport_message);
 
 /*------------------ Zenoh Message ------------------*/
 _ZN_DECLARE_ENCODE_NOH(zenoh_message);
-_ZN_DECLARE_P_DECODE_NOH(zenoh_message);
+_ZN_DECLARE_DECODE_NOH(zenoh_message);
 _ZN_DECLARE_FREE_NOH(zenoh_message);
 
 /*------------------ Free Helpers ------------------*/

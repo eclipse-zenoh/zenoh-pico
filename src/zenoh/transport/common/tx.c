@@ -32,7 +32,6 @@ int _zn_send_t_msg_nt(const _zn_link_t *zl, _zn_transport_message_t *t_msg)
 {
     // Create and prepare the buffer to serialize the message on
     _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
-    _z_wbuf_clear(&wbf);
     if (zl->is_streamed == 1)
     {
         // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -61,11 +60,11 @@ int _zn_send_t_msg_nt(const _zn_link_t *zl, _zn_transport_message_t *t_msg)
     int res = _zn_link_send_wbuf(zl, &wbf);
 
     // Release the buffer
-    _z_wbuf_free(&wbf);
+    _z_wbuf_clear(&wbf);
 
     return res;
 
 ERR:
-    _z_wbuf_free(&wbf);
+    _z_wbuf_clear(&wbf);
     return -1;
 }

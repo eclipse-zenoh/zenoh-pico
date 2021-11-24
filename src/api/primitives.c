@@ -415,7 +415,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_
     pq->target = target;
     pq->consolidation = consolidation;
     pq->callback = callback;
-    pq->pending_replies = z_list_empty;
+    pq->pending_replies = NULL;
     pq->arg = arg;
 
     // Add the pending query to the current session
@@ -453,7 +453,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
         _z_string_copy(&rd->data.key, &reply.data.data.key);
         _z_bytes_copy(&rd->data.value, &reply.data.data.value);
 
-        z_vec_append(&pqc->replies, rd);
+        _z_vec_append(&pqc->replies, rd);
     }
     else
     {
@@ -472,7 +472,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     _zn_pending_query_collect_t pqc;
     z_mutex_init(&pqc.mutex);
     z_condvar_init(&pqc.cond_var);
-    pqc.replies = z_vec_make(1);
+    pqc.replies = _z_vec_make(1);
 
     // Issue the query
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
@@ -482,11 +482,11 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     z_condvar_wait(&pqc.cond_var, &pqc.mutex);
 
     zn_reply_data_array_t rda;
-    rda.len = z_vec_len(&pqc.replies);
+    rda.len = _z_vec_len(&pqc.replies);
     zn_reply_data_t *replies = (zn_reply_data_t *)malloc(rda.len * sizeof(zn_reply_data_t));
     for (unsigned int i = 0; i < rda.len; i++)
     {
-        zn_reply_data_t *reply = (zn_reply_data_t *)z_vec_get(&pqc.replies, i);
+        zn_reply_data_t *reply = (zn_reply_data_t *)_z_vec_get(&pqc.replies, i);
         replies[i].replier_kind = reply->replier_kind;
         _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
         _z_string_move(&replies[i].data.key, &reply->data.key);
@@ -494,7 +494,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     }
     rda.val = replies;
 
-    z_vec_free(&pqc.replies);
+    _z_vec_clear(&pqc.replies, _zn_element_free_noop);
     z_condvar_free(&pqc.cond_var);
     z_mutex_free(&pqc.mutex);
 

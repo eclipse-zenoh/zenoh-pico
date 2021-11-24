@@ -15,141 +15,176 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 
-/*-------- linked list --------*/
-z_list_t *z_list_empty = NULL;
-
-z_list_t *z_list_of(void *x)
+/*-------- Inner single-linked list --------*/
+_z_list_t *_z_list_of(void *x)
 {
-    z_list_t *xs = (z_list_t *)malloc(sizeof(z_list_t));
-    memset(xs, 0, sizeof(z_list_t));
+    _z_list_t *xs = (_z_list_t *)malloc(sizeof(_z_list_t));
     xs->val = x;
+    xs->tail = NULL;
     return xs;
 }
 
-z_list_t *z_list_cons(z_list_t *xs, void *x)
+_z_list_t *_z_list_cons(_z_list_t *xs, void *x)
 {
-    z_list_t *lst = z_list_of(x);
+    _z_list_t *lst = _z_list_of(x);
     lst->tail = xs;
     return lst;
 }
 
-void *z_list_head(z_list_t *xs)
+void *_z_list_head(_z_list_t *xs)
 {
     return xs->val;
 }
 
-z_list_t *z_list_tail(z_list_t *xs)
+_z_list_t *_z_list_tail(_z_list_t *xs)
 {
     return xs->tail;
 }
 
-size_t z_list_len(z_list_t *xs)
+size_t _z_list_len(_z_list_t *xs)
 {
     size_t len = 0;
-    while (xs != z_list_empty)
+    while (xs != NULL)
     {
         len += 1;
-        xs = z_list_tail(xs);
+        xs = _z_list_tail(xs);
     }
     return len;
 }
 
-z_list_t *z_list_pop(z_list_t *xs)
+_z_list_t *_z_list_pop(_z_list_t *xs)
 {
-    z_list_t *head = xs;
+    _z_list_t *head = xs;
     xs = head->tail;
     free(head);
     return xs;
 }
 
-z_list_t *z_list_drop_val(z_list_t *xs, size_t position)
+_z_list_t *_z_list_drop_head(_z_list_t *xs, z_element_free_f f)
 {
-    assert(position < z_list_len(xs));
-    z_list_t *head = xs;
-    z_list_t *previous = 0;
-    if (position == 0)
-    {
-        xs = head->tail;
-        free(head);
-        return xs;
-    }
+    _z_list_t *head = xs;
+    xs = head->tail;
+    f(head->val);
+    free(head);
 
-    size_t idx = 0;
-    while (idx < position)
-    {
-        previous = xs;
-        xs = xs->tail;
-        idx++;
-    }
-
-    previous->tail = xs->tail;
-    free(xs);
-    return head;
+    return xs;
 }
 
-z_list_t *z_list_remove(z_list_t *xs, z_list_predicate predicate, void *arg)
+_z_list_t *_z_list_drop_pos(_z_list_t *xs, size_t pos, z_element_free_f f)
 {
-    z_list_t *prev = xs;
-    z_list_t *current = xs;
-    if (xs == z_list_empty)
-        return xs;
+    _z_list_t *head = xs;
 
-    while (current != z_list_empty)
+    if (pos == 0)
     {
-        // head removal
+        return _z_list_drop_head(xs, f);
+    }
+    else
+    {
+        _z_list_t *previous = NULL;
+
+        size_t idx = 0;
+        while (idx < pos)
+        {
+            previous = xs;
+            xs = xs->tail;
+            idx++;
+        }
+
+        previous->tail = xs->tail;
+        f(xs->val);
+        free(xs);
+
+        return head;
+    }
+}
+
+_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate predicate, void *arg, z_element_free_f f)
+{
+    _z_list_t *previous = xs;
+    _z_list_t *current = xs;
+
+    while (current != NULL)
+    {
         if (predicate(current->val, arg) == 1)
         {
-            if (xs == current)
+            // head removal
+            if (current == xs)
             {
                 xs = xs->tail;
+                f(current->val);
                 free(current);
-                return xs;
             }
             // tail removal
-            else if (current->val == z_list_empty)
+            else if (current->tail == NULL)
             {
-                prev->tail = z_list_empty;
+                previous->tail = NULL;
+                f(current->val);
                 free(current);
             }
             // middle removal
             else
             {
-                prev->tail = current->tail;
+                previous->tail = current->tail;
+                f(current->val);
                 free(current);
             }
             break;
         }
-        prev = current;
+
+        previous = current;
         current = current->tail;
     }
 
     return xs;
 }
 
-/**
- * Free the list. This function does not free
- * the inner void * to the element of the list.
- */
-void z_list_free(z_list_t *xs)
+int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f f)
 {
-    while (xs)
+    _z_list_t *l = (_z_list_t *)left;
+    _z_list_t *r = (_z_list_t *)right;
+
+    while (l != NULL && r != NULL)
     {
-        xs = z_list_pop(xs);
+        int res = f(_z_list_head(l), _z_list_head(r));
+        if (res != 0)
+            return res;
+
+        l = _z_list_pop(l);
+        r = _z_list_pop(r);
     }
+
+    // l and r should be both NULL
+    return (l == r) ? 0 : -1;
+}
+
+_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f f)
+{
+    _z_list_t *new = NULL;
+
+    _z_list_t *head = (_z_list_t *)xs;
+    while (head != NULL)
+    {
+        void *x = f(_z_list_head(head));
+        new = _z_list_cons(new, x);
+        head = _z_list_pop(head);
+    }
+
+    return new;
 }
 
 /**
  * Free the list in deep. This function frees
  * the inner void * to the element of the list.
  */
-void z_list_free_deep(z_list_t *xs)
+void _z_list_free(_z_list_t **xs, z_element_free_f f)
 {
-    while (xs)
+    _z_list_t *ptr = (_z_list_t *)*xs;
+    while (ptr != NULL)
     {
-        void *x = z_list_head(xs);
-        free(x);
-        xs = z_list_pop(xs);
+        ptr = _z_list_drop_head(ptr, f);
     }
+    *xs = NULL;
 }
