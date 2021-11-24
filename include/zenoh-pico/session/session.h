@@ -39,19 +39,19 @@ typedef struct
     z_zint_t query_id;
 
     // Session declarations
-    z_list_t *local_resources;
-    z_list_t *remote_resources;
+    _z_list_t *local_resources;
+    _z_list_t *remote_resources;
 
     // Session subscriptions
-    z_list_t *local_subscriptions;
-    z_list_t *remote_subscriptions;
-    zn_int_list_map_t rem_res_loc_sub_map;
+    _z_list_t *local_subscriptions;
+    _z_list_t *remote_subscriptions;
+    _z_int_void_map_t rem_res_loc_sub_map;
 
     // Session queryables
-    z_list_t *local_queryables;
-    zn_int_list_map_t rem_res_loc_qle_map;
+    _z_list_t *local_queryables;
+    _z_int_void_map_t rem_res_loc_qle_map;
 
-    z_list_t *pending_queries;
+    _z_list_t *pending_queries;
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
@@ -207,7 +207,7 @@ typedef struct
     z_str_t predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    z_list_t *pending_replies;
+    _z_list_t *pending_replies;
     zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
@@ -216,7 +216,7 @@ typedef struct
 {
     z_mutex_t mutex;
     z_condvar_t cond_var;
-    z_vec_t replies;
+    _z_vec_t replies;
 } _zn_pending_query_collect_t;
 
 typedef struct

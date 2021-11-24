@@ -98,7 +98,6 @@ zn_session_t *zn_open(zn_properties_t *config)
 void zn_close(zn_session_t *zn)
 {
     _zn_session_close(zn, _ZN_CLOSE_GENERIC);
-    return;
 }
 
 zn_properties_t *zn_info(zn_session_t *zn)

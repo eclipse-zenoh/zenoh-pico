@@ -17,7 +17,7 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
 
-int _zn_multicast_send_t_msg(_zn_transport_multicast_t *ztm, _zn_transport_message_t *t_msg)
+int _zn_multicast_send_t_msg(_zn_transport_multicast_t *ztm, _zn_transport_message_t t_msg)
 {
     // TODO: to be implemented
 

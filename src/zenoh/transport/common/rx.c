@@ -18,10 +18,9 @@
 #include "zenoh-pico/transport/link/rx.h"
 
 /*------------------ Reception helper ------------------*/
-_zn_transport_message_p_result_t _zn_recv_t_msg(_zn_transport_t *zt)
+_zn_transport_message_result_t _zn_recv_t_msg(_zn_transport_t *zt)
 {
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
 
     if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
         _zn_unicast_recv_t_msg_na(&zt->transport.unicast, &r);
@@ -31,9 +30,9 @@ _zn_transport_message_p_result_t _zn_recv_t_msg(_zn_transport_t *zt)
     return r;
 }
 
-_zn_transport_message_p_result_t _zn_recv_t_msg_nt(const _zn_link_t *zl)
+_zn_transport_message_result_t _zn_recv_t_msg_nt(const _zn_link_t *zl)
 {
-    _zn_transport_message_p_result_t ret;
+    _zn_transport_message_result_t ret;
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
@@ -68,18 +67,18 @@ _zn_transport_message_p_result_t _zn_recv_t_msg_nt(const _zn_link_t *zl)
 
     ret = _zn_transport_message_decode(&zbf);
 
-    _z_zbuf_free(&zbf);
+    _z_zbuf_clear(&zbf);
 
     return ret;
 
 ERR:
-    _z_zbuf_free(&zbf);
+    _z_zbuf_clear(&zbf);
 
     ret.tag = _z_res_t_ERR;
     return ret;
 }
 
-void _zn_recv_t_msg_na(_zn_transport_t *zt, _zn_transport_message_p_result_t *r)
+void _zn_recv_t_msg_na(_zn_transport_t *zt, _zn_transport_message_result_t *r)
 {
     if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
         _zn_unicast_recv_t_msg_na(&zt->transport.unicast, r);
@@ -87,12 +86,12 @@ void _zn_recv_t_msg_na(_zn_transport_t *zt, _zn_transport_message_p_result_t *r)
         _zn_multicast_recv_t_msg_na(&zt->transport.multicast, r);
 }
 
-int _zn_handle_transport_message(_zn_transport_t *zt, _zn_transport_message_t *msg)
+int _zn_handle_transport_message(_zn_transport_t *zt, _zn_transport_message_t *t_msg)
 {
     if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _zn_unicast_handle_transport_message(&zt->transport.unicast, msg);
+        return _zn_unicast_handle_transport_message(&zt->transport.unicast, t_msg);
     else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _zn_multicast_handle_transport_message(&zt->transport.multicast, msg);
+        return _zn_multicast_handle_transport_message(&zt->transport.multicast, t_msg);
     else
         return -1;
 }

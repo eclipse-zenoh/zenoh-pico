@@ -20,19 +20,16 @@
 
 int _znp_unicast_read(_zn_transport_unicast_t *ztu)
 {
-    _zn_transport_message_p_result_t r_s = _zn_unicast_recv_t_msg(ztu);
+    _zn_transport_message_result_t r_s = _zn_unicast_recv_t_msg(ztu);
     if (r_s.tag == _z_res_t_OK)
     {
-        int res = _zn_unicast_handle_transport_message(ztu, r_s.value.transport_message);
-        _zn_transport_message_free(r_s.value.transport_message);
-        _zn_transport_message_p_result_free(&r_s);
+        int res = _zn_unicast_handle_transport_message(ztu, &r_s.value.transport_message);
+        _zn_transport_message_free(&r_s.value.transport_message);
+        
         return res;
     }
     else
-    {
-        _zn_transport_message_p_result_free(&r_s);
         return _z_res_t_ERR;
-    }
 }
 
 void *_znp_unicast_read_task(void *arg)
@@ -41,8 +38,7 @@ void *_znp_unicast_read_task(void *arg)
 
     ztu->read_task_running = 1;
 
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
 
     // Acquire and keep the lock
     z_mutex_lock(&ztu->mutex_rx);
@@ -106,12 +102,12 @@ void *_znp_unicast_read_task(void *arg)
 
             if (r.tag == _z_res_t_OK)
             {
-                int res = _zn_unicast_handle_transport_message(ztu, r.value.transport_message);
+                int res = _zn_unicast_handle_transport_message(ztu, &r.value.transport_message);
                 if (res == _z_res_t_OK)
-                    _zn_transport_message_free(r.value.transport_message);
+                    _zn_transport_message_free(&r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
-            }
+                        }
             else
             {
                 _Z_DEBUG("Connection closed due to malformed message");
@@ -130,9 +126,6 @@ EXIT_RECV_LOOP:
         // Release the lock
         z_mutex_unlock(&ztu->mutex_rx);
     }
-
-    // Free the result
-    _zn_transport_message_p_result_free(&r);
 
     return 0;
 }

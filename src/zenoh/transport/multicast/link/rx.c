@@ -20,21 +20,20 @@
 
 
 /*------------------ Reception helper ------------------*/
-void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_message_p_result_t *r)
+void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_message_result_t *r)
 {
     // TODO: to be implemented
 }
 
-_zn_transport_message_p_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_t *ztm)
+_zn_transport_message_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_t *ztm)
 {
-    _zn_transport_message_p_result_t r;
-    _zn_transport_message_p_result_init(&r);
+    _zn_transport_message_result_t r;
 
     // TODO: to be implemented
     return r;
 }
 
-int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_transport_message_t *msg)
+int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_transport_message_t *t_msg)
 {
     // TODO: to be implemented
     return -1;

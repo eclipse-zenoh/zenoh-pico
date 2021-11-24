@@ -139,7 +139,7 @@ void _zn_transport_manager_free(_zn_transport_manager_t **ztm)
     _zn_transport_manager_t *ptr = *ztm;
 
     // Clean up PIDs
-    _z_bytes_free(&ptr->local_pid);
+    _z_bytes_clear(&ptr->local_pid);
 
     // Clean up managers
     _zn_link_manager_free(&ptr->link_manager);

@@ -18,55 +18,6 @@
 #include "zenoh-pico/collections/string.h"
 
 /*------------------ int-string map ------------------*/
-void zn_int_str_map_entry_free(void **s)
-{
-    z_str_t ptr = (z_str_t)*s;
-    free(ptr);
-    s = NULL;
-}
-
-void *zn_int_str_map_entry_dup(const void *s)
-{
-    return (void *)_z_str_dup((const z_str_t)s);
-}
-
-int zn_int_str_map_entry_cmp(const void *left, const void *right)
-{
-    return strcmp((const z_str_t)left, (const z_str_t)right);
-}
-
-void zn_int_str_map_init(zn_int_str_map_t *ps)
-{
-    _z_int_void_map_entry_f f;
-    f.free = zn_int_str_map_entry_free;
-    f.dup = zn_int_str_map_entry_dup;
-    f.cmp = zn_int_str_map_entry_cmp;
-
-    _z_int_void_map_init(ps, _Z_DEFAULT_I_MAP_CAPACITY, f);
-}
-
-zn_int_str_map_t zn_int_str_map_make()
-{
-    zn_int_str_map_t ism;
-    zn_int_str_map_init(&ism);
-    return ism;
-}
-
-z_str_t zn_int_str_map_insert(zn_int_str_map_t *ps, unsigned int key, z_str_t value)
-{
-    return (z_str_t)_z_int_void_map_insert(ps, key, (void *)value);
-}
-
-const z_str_t zn_int_str_map_get(const zn_int_str_map_t *ps, unsigned int key)
-{
-    return (const z_str_t)_z_int_void_map_get(ps, key);
-}
-
-z_str_t zn_int_str_map_remove(zn_int_str_map_t *ps, unsigned int key)
-{
-    return (z_str_t)_z_int_void_map_remove(ps, key);
-}
-
 zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int argc, zn_int_str_mapping_t argv[], size_t n)
 {
     zn_int_str_map_result_t res;
@@ -114,6 +65,8 @@ zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int a
         z_str_t p_value = (z_str_t)malloc((p_value_len + 1) * sizeof(char));
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
+
+        printf("\nInserting: %s\n", p_value);
 
         zn_int_str_map_insert(&res.value.int_str_map, key, p_value);
 
