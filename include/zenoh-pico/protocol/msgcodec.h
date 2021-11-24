@@ -18,12 +18,12 @@
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 #include <stdint.h>
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/utils/properties.h"
 #include "zenoh-pico/utils/result.h"
-#include "zenoh-pico/utils/collections.h"
 
 /*------------------ Result declarations ------------------*/
 _ZN_RESULT_DECLARE(z_timestamp_t, timestamp)

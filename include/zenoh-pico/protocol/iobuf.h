@@ -16,7 +16,8 @@
 #define ZENOH_PICO_PROTOCOL_IOBUF_H
 
 #include <stdint.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/vec.h"
 
 /*------------------ IOSli ------------------*/
 

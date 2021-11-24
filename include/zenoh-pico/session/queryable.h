@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_SESSION_QUERYABLE_H
 #define ZENOH_PICO_SESSION_QUERYABLE_H
 
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"

@@ -18,7 +18,6 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/properties.h"
 
 /*------------------ Session ------------------*/

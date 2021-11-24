@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/session.h"
@@ -27,7 +28,6 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/

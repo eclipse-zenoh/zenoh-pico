@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_TRANSPORT_TYPES_H
 #define ZENOH_PICO_TRANSPORT_TYPES_H
 
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/core.h"

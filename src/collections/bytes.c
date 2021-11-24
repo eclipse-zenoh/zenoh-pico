@@ -14,7 +14,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/bytes.h"
 
 /*-------- bytes --------*/
 void _z_bytes_init(z_bytes_t *bs, size_t capacity)

@@ -16,7 +16,6 @@
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _znp_unicast_read(_zn_transport_unicast_t *ztu)

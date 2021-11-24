@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_RESOURCE_H
 #define ZENOH_PICO_SESSION_RESOURCE_H
 
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/session/session.h"
 
 /*------------------ Entity ------------------*/

@@ -15,7 +15,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/system/collections.h"
 #include "zenoh-pico/system/platform.h"
 

@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_LINK_MANAGER_H
 #define ZENOH_PICO_LINK_MANAGER_H
 
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/link.h"
 
 typedef struct

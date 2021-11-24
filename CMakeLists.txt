@@ -115,6 +115,7 @@ if (UNIX)
   file(GLOB Sources "src/*.c"
                     "src/api/*.c"
                     "src/collections/*.c"
+                    "src/collections/intmap/*.c"
                     "src/system/*.c"
                     "src/system/unix/*.c"
                     "src/zenoh/*.c"

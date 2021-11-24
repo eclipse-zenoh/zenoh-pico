@@ -13,7 +13,7 @@
  */
 
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/string.h"
 
 #define CEND(str) (str[0] == 0 || str[0] == '/')
 #define CWILD(str) (str[0] == '*')

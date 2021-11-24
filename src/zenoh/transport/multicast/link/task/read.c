@@ -16,7 +16,6 @@
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/collections.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _znp_multicast_read(_zn_transport_multicast_t *ztm)

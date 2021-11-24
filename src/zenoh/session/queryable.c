@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
@@ -58,7 +59,7 @@ z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn_
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        z_list_t *qles = (z_list_t *)z_i_map_get(&zn->rem_res_loc_qle_map, reskey->rid);
+        z_list_t *qles = (z_list_t *)zn_int_list_map_get(&zn->rem_res_loc_qle_map, reskey->rid);
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);
@@ -169,9 +170,9 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
     if (rem_res)
     {
         // Update the list of active subscriptions
-        z_list_t *qles = z_i_map_get(&zn->rem_res_loc_qle_map, rem_res->id);
+        z_list_t *qles = (z_list_t *)zn_int_list_map_get(&zn->rem_res_loc_qle_map, rem_res->id);
         qles = z_list_cons(qles, qle);
-        z_i_map_set(&zn->rem_res_loc_qle_map, rem_res->id, qles);
+        zn_int_list_map_insert(&zn->rem_res_loc_qle_map, rem_res->id, qles);
     }
 
     if (qle->key.rid != ZN_RESOURCE_ID_NONE)
@@ -190,14 +191,14 @@ void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_re
     if (qles)
     {
         // Update the list
-        z_list_t *ql = z_i_map_get(&zn->rem_res_loc_qle_map, id);
+        z_list_t *ql = (z_list_t *)zn_int_list_map_get(&zn->rem_res_loc_qle_map, id);
         if (ql)
         {
             // Free any ancient list
             z_list_free(ql);
         }
         // Update the list of active subscriptions
-        z_i_map_set(&zn->rem_res_loc_qle_map, id, qles);
+        zn_int_list_map_insert(&zn->rem_res_loc_qle_map, id, qles);
     }
 }
 
@@ -291,7 +292,7 @@ void _zn_flush_queryables(zn_session_t *zn)
         free(qle);
         zn->local_queryables = z_list_pop(zn->local_queryables);
     }
-    z_i_map_clear(&zn->rem_res_loc_qle_map);
+    zn_int_list_map_clear(&zn->rem_res_loc_qle_map);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
@@ -333,7 +334,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.predicate = query->predicate;
 
         // Iterate over the matching queryables
-        z_list_t *qles = (z_list_t *)z_i_map_get(&zn->rem_res_loc_qle_map, query->key.rid);
+        z_list_t *qles = (z_list_t *)zn_int_list_map_get(&zn->rem_res_loc_qle_map, query->key.rid);
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)z_list_head(qles);

@@ -16,8 +16,8 @@
 #define ZENOH_PICO_UTILS_PROPERTY_H
 
 #include <stdint.h>
-
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/intmap.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
 
 // Properties returned by zn_info()
@@ -48,13 +48,13 @@ typedef struct
 typedef struct
 {
     unsigned int key;
-    z_str_t str;
+    z_string_t str;
 } zn_property_mapping_t;
 
 /**
  * Zenoh-net properties are represented as int-string map.
  */
-typedef z_i_map_t zn_properties_t;
+typedef zn_int_str_map_t zn_properties_t;
 
 /**
  * Returns a new empty map of properties.
@@ -98,7 +98,8 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key);
  * Returns:
  *     The length of the given properties map.
  */
-size_t zn_properties_len(const zn_properties_t *ps);
+// size_t zn_properties_len(const zn_properties_t *ps);
+#define zn_properties_len zn_int_str_map_len
 
 /**
  * Get the length of the given properties map.
@@ -109,7 +110,8 @@ size_t zn_properties_len(const zn_properties_t *ps);
  * Returns:
  *     A boolean to indicate if properties are present.
  */
-int zn_properties_is_empty(const zn_properties_t *ps);
+// int zn_properties_is_empty(const zn_properties_t *ps);
+#define zn_properties_is_empty zn_int_str_map_is_empty
 
 /**
  * Clear a set of properties.
@@ -117,7 +119,8 @@ int zn_properties_is_empty(const zn_properties_t *ps);
  * Parameters:
  *   ps: A pointer to the properties map.
  */
-void zn_properties_clear(zn_properties_t *ps);
+// void zn_properties_clear(zn_properties_t *ps);
+#define zn_properties_clear zn_int_str_map_clear
 
 /**
  * Free a set of properties.
@@ -126,6 +129,7 @@ void zn_properties_clear(zn_properties_t *ps);
  *   ps: A pointer to a pointer of properties.
  *
  */
-void zn_properties_free(zn_properties_t **ps);
+// void zn_properties_free(zn_properties_t **ps);
+#define zn_properties_free zn_int_str_map_free
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

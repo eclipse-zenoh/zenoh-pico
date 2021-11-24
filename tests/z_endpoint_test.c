@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/config/udp.h"
 
@@ -91,8 +91,8 @@ int main(void)
     assert(eres.tag == _z_res_t_OK);
     assert(strcmp(eres.value.endpoint.locator.protocol, "tcp") == 0);
     assert(strcmp(eres.value.endpoint.locator.address, "127.0.0.1:7447") == 0);
-    assert(_zn_state_is_empty(&eres.value.endpoint.locator.metadata));
-    assert(_zn_state_is_empty(&eres.value.endpoint.config));
+    assert(zn_int_str_map_is_empty(&eres.value.endpoint.locator.metadata));
+    assert(zn_int_str_map_is_empty(&eres.value.endpoint.config));
     _zn_endpoint_clear(&eres.value.endpoint);
 
     sprintf(s, "");
@@ -144,9 +144,9 @@ int main(void)
     assert(eres.tag == _z_res_t_OK);
     assert(strcmp(eres.value.endpoint.locator.protocol, "udp") == 0);
     assert(strcmp(eres.value.endpoint.locator.address, "127.0.0.1:7447") == 0);
-    assert(_zn_state_is_empty(&eres.value.endpoint.locator.metadata));
-    assert(_zn_state_len(&eres.value.endpoint.config) == 1);
-    z_str_t p = _zn_state_get(&eres.value.endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
+    assert(zn_int_str_map_is_empty(&eres.value.endpoint.locator.metadata));
+    assert(zn_int_str_map_len(&eres.value.endpoint.config) == 1);
+    z_str_t p = zn_int_str_map_get(&eres.value.endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     assert(strcmp(p, "eth0") == 0);
     _zn_endpoint_clear(&eres.value.endpoint);
 

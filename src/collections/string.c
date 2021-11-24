@@ -14,7 +14,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/utils/collections.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
 
 /*-------- string --------*/
 z_string_t z_string_make(const z_str_t value)

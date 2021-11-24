@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
@@ -27,7 +28,6 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/utils/collections.h"
 
 /*------------------ Clone helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
@@ -68,9 +68,9 @@ zn_session_t *_zn_session_init()
     zn->remote_resources = z_list_empty;
     zn->local_subscriptions = z_list_empty;
     zn->remote_subscriptions = z_list_empty;
-    zn->rem_res_loc_sub_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_sub_map = zn_int_list_map_make();
     zn->local_queryables = z_list_empty;
-    zn->rem_res_loc_qle_map = z_i_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_qle_map = zn_int_list_map_make();
     zn->pending_queries = z_list_empty;
 
     // Associate a transport with the session
