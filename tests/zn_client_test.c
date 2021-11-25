@@ -100,7 +100,7 @@ int main(int argc, z_str_t *argv)
 
     zn_session_t *s1 = zn_open(config);
     assert(s1 != NULL);
-    z_string_t pid1 = _z_string_from_bytes(&s1->local_pid);
+    z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     z_string_free(&pid1);
 
@@ -112,7 +112,7 @@ int main(int argc, z_str_t *argv)
 
     zn_session_t *s2 = zn_open(config);
     assert(s2 != NULL);
-    z_string_t pid2 = _z_string_from_bytes(&s2->local_pid);
+    z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     z_string_free(&pid2);
 

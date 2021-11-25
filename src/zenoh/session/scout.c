@@ -38,7 +38,7 @@ zn_hello_array_t _zn_scout_loop(
         return ls;
 
     // Send the scout message
-    int res = _zn_send_wbuf(r_scout.value.link, wbf);
+    int res = _zn_link_send_wbuf(r_scout.value.link, wbf);
     if (res < 0)
     {
         _Z_DEBUG("Unable to send scout message\n");
@@ -55,8 +55,8 @@ zn_hello_array_t _zn_scout_loop(
         _z_zbuf_clear(&zbf);
 
         // Read bytes from the socket
-        int len = _zn_recv_zbuf(r_scout.value.link, &zbf);
-        if (len == -1)
+        int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf);
+        if (len < 0)
             continue;
 
         _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);

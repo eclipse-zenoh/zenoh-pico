@@ -12,19 +12,14 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_TRANSPORT_TYPES_H
-#define ZENOH_PICO_TRANSPORT_TYPES_H
+#ifndef ZENOH_PICO_SUBSCRIBE_API_H
+#define ZENOH_PICO_SUBSCRIBE_API_H
 
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/session/session.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 
-struct
-{
+/**
+ * Create a default subscription info.
+ */
+zn_subinfo_t zn_subinfo_default(void);
 
-} _zn_transport_manager_t;
-
-#endif /* ZENOH_PICO_TRANSPORT_TYPES_H */
+#endif /* ZENOH_PICO_SUBSCRIBE_API_H */

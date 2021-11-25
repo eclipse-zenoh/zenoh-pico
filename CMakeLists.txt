@@ -97,6 +97,7 @@ set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/api/*.h"
                         "include/zenoh-pico/collections/*.h"
                         "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/link/config/*.h"
@@ -113,22 +114,26 @@ include_directories(
 
 if (UNIX)
   file(GLOB Sources "src/*.c"
+                    "src/api/*.c"
                     "src/collections/*.c"
                     "src/collections/intmap/*.c"
                     "src/system/*.c"
-                    # "src/system/esp32/*.c"
                     "src/system/unix/*.c"
-                    # "src/system/zephyr/*.c"
                     "src/zenoh/*.c"
                     "src/zenoh/link/*.c"
                     "src/zenoh/link/config/*.c"                    
-                    "src/zenoh/link/multicast/*.c"
                     "src/zenoh/link/unicast/*.c"
+                    "src/zenoh/link/multicast/*.c"
                     "src/zenoh/protocol/*.c"
                     "src/zenoh/session/*.c"
                     "src/zenoh/transport/*.c"
-                    "src/zenoh/transport/link/*.c"
-                    "src/zenoh/transport/link/task/*.c"
+                    "src/zenoh/transport/common/*.c"
+                    "src/zenoh/transport/unicast/*.c"
+                    "src/zenoh/transport/unicast/link/*.c"
+                    "src/zenoh/transport/unicast/link/task/*.c"
+                    "src/zenoh/transport/multicast/*.c"
+                    "src/zenoh/transport/multicast/link/*.c"
+                    "src/zenoh/transport/multicast/link/task/*.c"
   )
 endif()
 

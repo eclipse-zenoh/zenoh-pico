@@ -12,51 +12,18 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_SESSION_API_H
-#define ZENOH_PICO_SESSION_API_H
+#ifndef ZENOH_PICO_PRIMITIVES_API_H
+#define ZENOH_PICO_PRIMITIVES_API_H
 
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/encoding.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/properties.h"
 
-/*------------------ Init/Config ------------------*/
-/**
- * Initialise the zenoh runtime logger
- */
-void z_init_logger(void);
+/*------------------ Discovery ------------------*/
 
-/**
- * Create an empty set of properties for zenoh-net session configuration.
- */
-zn_properties_t *zn_config_empty(void);
-
-/**
- * Create a default set of properties for client mode zenoh-net session configuration.
- * If peer is not null, it is added to the configuration as remote peer.
- *
- * Parameters:
- *   peer: An optional peer locator.
- */
-zn_properties_t *zn_config_client(const z_str_t locator);
-
-/**
- * Create a default set of properties for zenoh-net session configuration.
- */
-zn_properties_t *zn_config_default(void);
-
-/**
- * Create a default subscription info.
- */
-zn_subinfo_t zn_subinfo_default(void);
-
-/**
- * Create a default :c:type:`zn_target_t`.
- */
-zn_target_t zn_target_default(void);
-
-/*------------------ Scout/Open/Close ------------------*/
 /**
  * Scout for routers and/or peers.
  *
@@ -70,45 +37,9 @@ zn_target_t zn_target_default(void);
  */
 zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period);
 
-/**
- * Free an array of :c:struct:`zn_hello_t` messages and it's contained :c:struct:`zn_hello_t` messages recursively.
- *
- * Parameters:
- *     strs: The array of :c:struct:`zn_hello_t` messages to free.
- */
-void zn_hello_array_free(zn_hello_array_t hellos);
-
-/**
- * Open a zenoh-net session
- *
- * Parameters:
- *     config: A set of properties.
- *
- * Returns:
- *     The created zenoh-net session or null if the creation did not succeed.
- */
-zn_session_t *zn_open(zn_properties_t *config);
-
-/**
- * Close a zenoh-net session.
- *
- * Parameters:
- *     session: A zenoh-net session.
- */
-void zn_close(zn_session_t *session);
-
-/**
- * Get informations about an zenoh-net session.
- *
- * Parameters:
- *     session: A zenoh-net session.
- *
- * Returns:
- *     A :c:type:`zn_properties_t` map containing informations on the given zenoh-net session.
- */
-zn_properties_t *zn_info(zn_session_t *session);
 
 /*------------------ Declarations ------------------*/
+
 /**
  * Associate a numerical id with the given resource key.
  *
@@ -216,48 +147,8 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *session,
  */
 void zn_undeclare_queryable(zn_queryable_t *qle);
 
+
 /*------------------ Operations ------------------*/
-/**
- * Create a resource key from a resource id.
- *
- * Parameters:
- *     rid: The resource id.
- *
- * Returns:
- *     Return a new resource key.
- */
-zn_reskey_t zn_rid(unsigned long rid);
-
-/**
- * Create a resource key from a resource name.
- *
- * Parameters:
- *     rname: The resource name.
- *
- * Returns:
- *     Return a new resource key.
- */
-zn_reskey_t zn_rname(const z_str_t rname);
-
-/**
- * Create a resource key from a resource id and a suffix.
- *
- * Parameters:
- *     id: The resource id.
- *     suffix: The suffix.
- *
- * Returns:
- *     A new resource key.
- */
-zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix);
-
-/**
- * Free a :c:type:`zn_sample_t` contained key and value.
- *
- * Parameters:
- *     sample: The :c:type:`zn_sample_t` to free.
- */
-void zn_sample_free(zn_sample_t sample);
 
 /**
  * Write data.
@@ -338,51 +229,6 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *session,
                                        zn_query_consolidation_t consolidation);
 
 /**
- * Free a :c:type:`zn_reply_data_array_t` and it's contained replies.
- *
- * Parameters:
- *     replies: The :c:type:`zn_reply_data_array_t` to free.
- */
-void zn_reply_data_array_free(zn_reply_data_array_t replies);
-
-/**
- * Create a default :c:type:`zn_query_consolidation_t`.
- */
-zn_query_consolidation_t zn_query_consolidation_default(void);
-
-/**
- * Create a none :c:type:`zn_query_consolidation_t`.
- */
-zn_query_consolidation_t zn_query_consolidation_none(void);
-
-/**
- * Get the predicate of a received query.
- *
- * Parameters:
- *     query: The query.
- *
- * Returns:
- *     The predicate of the query.
- */
-z_string_t zn_query_predicate(zn_query_t *query);
-
-/**
- * Get the resource name of a received query.
- *
- * Parameters:
- *     query: The query.
- *
- * Returns:
- *     The resource name of the query.
- */
-z_string_t zn_query_res_name(zn_query_t *query);
-
-/**
- * Create a default :c:type:`zn_query_target_t`.
- */
-zn_query_target_t zn_query_target_default(void);
-
-/**
  * Send a reply to a query.
  *
  * This function must be called inside of a Queryable callback passing the
@@ -398,73 +244,4 @@ zn_query_target_t zn_query_target_default(void);
  */
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
 
-/*------------------ Zenoh-pico operations ------------------*/
-/**
- * Read from the network. This function should be called manually called when
- * the read loop has not been started, e.g., when running in a single thread.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_read(zn_session_t *z);
-
-/**
- * Send a KeepAlive message.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_send_keep_alive(zn_session_t *z);
-
-/**
- * Start a separate task to read from the network and process the messages
- * as soon as they are received. Note that the task can be implemented in
- * form of thread, process, etc. and its implementation is platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_start_read_task(zn_session_t *z);
-
-/**
- * Stop the read task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_stop_read_task(zn_session_t *z);
-
-/**
- * Start a separate task to handle the session lease. This task will send ``KeepAlive``
- * messages when needed and will close the session when the lease is expired. Note that
- * the task can be implemented in form of thread, process, etc. and its implementation
- * is platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_start_lease_task(zn_session_t *z);
-
-/**
- * Stop the lease task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int znp_stop_lease_task(zn_session_t *z);
-
-#endif /* ZENOH_PICO_SESSION_API_H */
+#endif /* ZENOH_PICO_PRIMITIVES_API_H */

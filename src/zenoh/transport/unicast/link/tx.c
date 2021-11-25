@@ -21,38 +21,30 @@
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zt->mutex_inner
  */
-z_zint_t __unsafe_zn_get_sn(zn_session_t *zn, zn_reliability_t reliability)
+z_zint_t __unsafe_zn_unicast_get_sn(_zn_transport_unicast_t *zt, zn_reliability_t reliability)
 {
     z_zint_t sn;
     // Get the sequence number and update it in modulo operation
     if (reliability == zn_reliability_t_RELIABLE)
     {
-        sn = zn->sn_tx_reliable;
-        zn->sn_tx_reliable = (zn->sn_tx_reliable + 1) % zn->sn_resolution;
+        sn = zt->sn_tx_reliable;
+        zt->sn_tx_reliable = (zt->sn_tx_reliable + 1) % zt->sn_resolution;
     }
     else
     {
-        sn = zn->sn_tx_best_effort;
-        zn->sn_tx_best_effort = (zn->sn_tx_best_effort + 1) % zn->sn_resolution;
+        sn = zt->sn_tx_best_effort;
+        zt->sn_tx_best_effort = (zt->sn_tx_best_effort + 1) % zt->sn_resolution;
     }
     return sn;
-}
-
-int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right)
-{
-    if (sn_right > sn_left)
-        return (sn_right - sn_left <= sn_resolution_half);
-    else
-        return (sn_left - sn_right > sn_resolution_half);
 }
 
 /*------------------ Transmission helper ------------------*/
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_tx
+ *  - ztu->mutex_tx
  */
 void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
@@ -74,7 +66,7 @@ void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_tx
+ *  - ztu->mutex_tx
  */
 void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
@@ -89,38 +81,6 @@ void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
         for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
     }
-}
-
-int _zn_send_t_msg(zn_session_t *zn, _zn_transport_message_t *t_msg)
-{
-    _Z_DEBUG(">> send session message\n");
-
-    // Acquire the lock
-    z_mutex_lock(&zn->mutex_tx);
-
-    // Prepare the buffer eventually reserving space for the message length
-    __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
-
-    // Encode the session message
-    int res = _zn_transport_message_encode(&zn->wbuf, t_msg);
-    if (res == 0)
-    {
-        // Write the message legnth in the reserved space if needed
-        __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
-        // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->link, &zn->wbuf);
-        // Mark the session that we have transmitted data
-        zn->transmitted = 1;
-    }
-    else
-    {
-        _Z_DEBUG("Dropping session message because it is too large");
-    }
-
-    // Release the lock
-    z_mutex_unlock(&zn->mutex_tx);
-
-    return res;
 }
 
 _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
@@ -157,7 +117,7 @@ _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_f
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_tx
+ *  - ztu->mutex_tx
  */
 int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
 {
@@ -195,18 +155,52 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl)
+int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t t_msg)
+{
+    _Z_DEBUG(">> send session message\n");
+
+    // Acquire the lock
+    z_mutex_lock(&ztu->mutex_tx);
+
+    // Prepare the buffer eventually reserving space for the message length
+    __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
+
+    // Encode the session message
+    int res = _zn_transport_message_encode(&ztu->wbuf, &t_msg);
+    if (res == 0)
+    {
+        // Write the message legnth in the reserved space if needed
+        __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
+        // Send the wbuf on the socket
+        res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
+        // Mark the session that we have transmitted data
+        ztu->transmitted = 1;
+    }
+    else
+    {
+        _Z_DEBUG("Dropping session message because it is too large");
+    }
+
+    // Release the lock
+    z_mutex_unlock(&ztu->mutex_tx);
+
+    return res;
+}
+
+int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl)
 {
     _Z_DEBUG(">> send zenoh message\n");
+
+    _zn_transport_unicast_t *ztu = &zn->tp->transport.unicast;
 
     // Acquire the lock and drop the message if needed
     if (cong_ctrl == zn_congestion_control_t_BLOCK)
     {
-        z_mutex_lock(&zn->mutex_tx);
+        z_mutex_lock(&ztu->mutex_tx);
     }
     else
     {
-        int locked = z_mutex_trylock(&zn->mutex_tx);
+        int locked = z_mutex_trylock(&ztu->mutex_tx);
         if (locked != 0)
         {
             _Z_DEBUG("Dropping zenoh message because of congestion control\n");
@@ -216,15 +210,15 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     }
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
+    __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
     // Get the next sequence number
-    z_zint_t sn = __unsafe_zn_get_sn(zn, reliability);
+    z_zint_t sn = __unsafe_zn_unicast_get_sn(ztu, reliability);
     // Create the frame header that carries the zenoh message
     _zn_transport_message_t t_msg = __zn_frame_header(reliability, 0, 0, sn);
 
     // Encode the frame header
-    int res = _zn_transport_message_encode(&zn->wbuf, &t_msg);
+    int res = _zn_transport_message_encode(&ztu->wbuf, &t_msg);
     if (res != 0)
     {
         _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded\n");
@@ -232,17 +226,16 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
     }
 
     // Encode the zenoh message
-    res = _zn_zenoh_message_encode(&zn->wbuf, z_msg);
+    res = _zn_zenoh_message_encode(&ztu->wbuf, z_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
+        __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
         // Send the wbuf on the socket
-        res = _zn_send_wbuf(zn->link, &zn->wbuf);
+        res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
         if (res == 0)
-            // Mark the session that we have transmitted data
-            zn->transmitted = 1;
+            ztu->transmitted = 1; 
     }
     else
     {
@@ -264,14 +257,14 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
         {
             // Get the fragment sequence number
             if (!is_first)
-                sn = __unsafe_zn_get_sn(zn, reliability);
+                sn = __unsafe_zn_unicast_get_sn(ztu, reliability);
             is_first = 0;
 
             // Clear the buffer for serialization
-            __unsafe_zn_prepare_wbuf(&zn->wbuf, zn->link->is_streamed);
+            __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
             // Serialize one fragment
-            res = __unsafe_zn_serialize_zenoh_fragment(&zn->wbuf, &fbf, reliability, sn);
+            res = __unsafe_zn_serialize_zenoh_fragment(&ztu->wbuf, &fbf, reliability, sn);
             if (res != 0)
             {
                 _Z_DEBUG("Dropping zenoh message because it can not be fragmented\n");
@@ -279,10 +272,10 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             }
 
             // Write the message length in the reserved space if needed
-            __unsafe_zn_finalize_wbuf(&zn->wbuf, zn->link->is_streamed);
+            __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
             // Send the wbuf on the socket
-            res = _zn_send_wbuf(zn->link, &zn->wbuf);
+            res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
             if (res != 0)
             {
                 _Z_DEBUG("Dropping zenoh message because it can not sent\n");
@@ -290,7 +283,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
             }
 
             // Mark the session that we have transmitted data
-            zn->transmitted = 1;
+            ztu->transmitted = 1;
         }
 
     EXIT_FRAG_PROC:
@@ -300,7 +293,7 @@ int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_
 
 EXIT_ZSND_PROC:
     // Release the lock
-    z_mutex_unlock(&zn->mutex_tx);
+    z_mutex_unlock(&ztu->mutex_tx);
 
     return res;
 }

@@ -12,15 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_TRANSPORT_UTILS_H
-#define ZENOH_PICO_TRANSPORT_UTILS_H
+#include "zenoh-pico/transport/utils.h"
 
-#include "zenoh-pico/session/session.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
-
-/*------------------ SN helpers ------------------*/
-int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
-
-#endif /* ZENOH_PICO_TRANSPORT_UTILS_H */
+int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right)
+{
+    if (sn_right > sn_left)
+        return (sn_right - sn_left <= sn_resolution_half);
+    else
+        return (sn_left - sn_right > sn_resolution_half);
+}

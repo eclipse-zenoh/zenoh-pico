@@ -15,4 +15,21 @@
 #ifndef ZENOH_PICO_TRANSPORT_MANAGER_H
 #define ZENOH_PICO_TRANSPORT_MANAGER_H
 
+#include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/link/link.h"
+
+typedef struct
+{
+    z_bytes_t local_pid;
+    // FIXME: remote_pids
+
+    _zn_link_manager_t *link_manager;
+} _zn_transport_manager_t;
+
+_zn_transport_manager_t *_zn_transport_manager_init();
+void _zn_transport_manager_free(_zn_transport_manager_t **ztm);
+
+_zn_transport_p_result_t _zn_new_transport(_zn_transport_manager_t *ztm, z_str_t locator, uint8_t mode);
+void _zn_free_transport(_zn_transport_manager_t *ztm, _zn_transport_t **zt);
+
 #endif /* ZENOH_PICO_TRANSPORT_MANAGER_H */

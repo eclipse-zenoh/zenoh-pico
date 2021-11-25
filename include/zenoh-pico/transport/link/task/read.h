@@ -12,15 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_TRANSPORT_UTILS_H
-#define ZENOH_PICO_TRANSPORT_UTILS_H
+#ifndef ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
+#define ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
 
 #include "zenoh-pico/session/session.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 
-/*------------------ SN helpers ------------------*/
-int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
+int _znp_read(_zn_transport_t *zt);
+int _znp_unicast_read(_zn_transport_unicast_t *ztu);
+int _znp_multicast_read(_zn_transport_multicast_t *ztm);
 
-#endif /* ZENOH_PICO_TRANSPORT_UTILS_H */
+void *_znp_read_task(void *arg);
+void *_znp_unicast_read_task(void *arg);
+void *_znp_multicast_read_task(void *arg);
+
+#endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H */

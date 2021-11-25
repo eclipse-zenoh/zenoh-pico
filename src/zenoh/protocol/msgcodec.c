@@ -2140,8 +2140,8 @@ int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *
 void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_result_t *r)
 {
     r->tag = _z_res_t_OK;
-
     r->value.transport_message.attachment = NULL;
+
     do
     {
         // Decode the header

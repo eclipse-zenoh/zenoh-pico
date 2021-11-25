@@ -12,15 +12,28 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_TRANSPORT_UTILS_H
-#define ZENOH_PICO_TRANSPORT_UTILS_H
+#include "zenoh-pico/api/resource.h"
 
-#include "zenoh-pico/session/session.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
+zn_reskey_t zn_rid(unsigned long rid)
+{
+    zn_reskey_t rk;
+    rk.rid = rid;
+    rk.rname = NULL;
+    return rk;
+}
 
-/*------------------ SN helpers ------------------*/
-int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
+zn_reskey_t zn_rname(const z_str_t rname)
+{
+    zn_reskey_t rk;
+    rk.rid = ZN_RESOURCE_ID_NONE;
+    rk.rname = strdup(rname);
+    return rk;
+}
 
-#endif /* ZENOH_PICO_TRANSPORT_UTILS_H */
+zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix)
+{
+    zn_reskey_t rk;
+    rk.rid = id;
+    rk.rname = strdup(suffix);
+    return rk;
+}

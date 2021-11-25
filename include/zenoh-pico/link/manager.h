@@ -18,13 +18,16 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/link.h"
 
-_zn_link_p_result_t _zn_open_link(const z_str_t locator, const clock_t tout);
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator, const clock_t tout);
+typedef struct
+{
+    // Placeholder for future extensions
+} _zn_link_manager_t;
+
+_zn_link_manager_t *_zn_link_manager_init();
+void _zn_link_manager_free(_zn_link_manager_t **ztm);
 
 _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint);
 _zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint);
 _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint);
-
-void _zn_link_free(_zn_link_t **zn);
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

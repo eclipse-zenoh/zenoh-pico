@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_SESSION_UTILS_H
 #define ZENOH_PICO_SESSION_UTILS_H
 
-#include <stdint.h>
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
@@ -24,12 +23,11 @@
 /*------------------ Session ------------------*/
 zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period, int exit_on_first);
 
-zn_session_t *_zn_session_init(void);
+zn_session_t *_zn_session_init();
 int _zn_session_close(zn_session_t *zn, uint8_t reason);
 void _zn_session_free(zn_session_t **zn);
 
-int _zn_send_close(zn_session_t *zn, uint8_t reason, int link_only);
-
 int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
+int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl);
 
 #endif /* ZENOH_PICO_SESSION_UTILS_H */
