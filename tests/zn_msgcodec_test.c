@@ -1262,16 +1262,16 @@ void assert_eq_declaration(_zn_declaration_t *left, _zn_declaration_t *right)
 /*        Zenoh Messages       */
 /*=============================*/
 /*------------------ Declare message ------------------*/
-_zn_declare_t gen_declare_message(void)
+_zn_zenoh_message_t gen_declare_message(void)
 {
-    _zn_declare_t e_dcl;
-    e_dcl.declarations.len = gen_zint() % 16;
-    e_dcl.declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * e_dcl.declarations.len);
+    _zn_declaration_array_t declarations;
+    declarations.len = gen_zint() % 16;
+    declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * declarations.len);
 
-    for (z_zint_t i = 0; i < e_dcl.declarations.len; i++)
-        e_dcl.declarations.val[i] = gen_declaration();
+    for (z_zint_t i = 0; i < declarations.len; i++)
+        declarations.val[i] = gen_declaration();
 
-    return e_dcl;
+    return _zn_z_msg_make_declare(declarations);
 }
 
 void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
@@ -1292,7 +1292,10 @@ void declare_message(void)
     _z_wbuf_t wbf = gen_wbuf(512);
 
     // Initialize
-    _zn_declare_t e_dcl = gen_declare_message();
+    _zn_zenoh_message_t z_msg = gen_declare_message();
+    assert(_ZN_MID(z_msg.header) == _ZN_MID_DECLARE);
+
+    _zn_declare_t e_dcl = z_msg.body.declare;
 
     // Encode
     int res = _zn_declare_encode(&wbf, &e_dcl);
@@ -1308,26 +1311,26 @@ void declare_message(void)
 
     // Free
     _zn_declare_free(&d_dcl);
+    _zn_zenoh_message_free(&z_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Data message ------------------*/
-_zn_data_t gen_data_message(uint8_t *header)
+_zn_zenoh_message_t gen_data_message(void)
 {
-    _zn_data_t e_da;
+    zn_reskey_t key = gen_res_key();
 
-    e_da.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_da.key.rname) ? _ZN_FLAG_Z_K : 0);
+    _zn_data_info_t info;
     if (gen_bool())
-    {
-        e_da.info = gen_data_info();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_I);
-    }
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-    e_da.payload = gen_payload(1 + gen_zint() % 64);
+        info = gen_data_info();
+    else
+        info.flags = 0;
 
-    return e_da;
+    int can_be_dropped = gen_bool();
+    _zn_payload_t payload = gen_payload(1 + gen_zint() % 64);
+
+    return _zn_z_msg_make_data(key, info, payload, can_be_dropped);
 }
 
 void assert_eq_data_message(_zn_data_t *left, _zn_data_t *right, uint8_t header)
@@ -1352,43 +1355,41 @@ void data_message(void)
     _z_wbuf_t wbf = gen_wbuf(256);
 
     // Initialize
-    uint8_t e_hdr = 0;
-    _zn_data_t e_da = gen_data_message(&e_hdr);
+    _zn_zenoh_message_t z_msg = gen_data_message();
+    assert(_ZN_MID(z_msg.header) == _ZN_MID_DATA);
+
+    _zn_data_t e_da = z_msg.body.data;
 
     // Encode
-    int res = _zn_data_encode(&wbf, e_hdr, &e_da);
+    int res = _zn_data_encode(&wbf, z_msg.header, &e_da);
     assert(res == 0);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_data_result_t r_da = _zn_data_decode(&zbf, e_hdr);
+    _zn_data_result_t r_da = _zn_data_decode(&zbf, z_msg.header);
     assert(r_da.tag == _z_res_t_OK);
 
     _zn_data_t d_da = r_da.value.data;
-    assert_eq_data_message(&e_da, &d_da, e_hdr);
+    assert_eq_data_message(&e_da, &d_da, z_msg.header);
 
     // Free
     _zn_data_free(&d_da);
+    _zn_zenoh_message_free(&z_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Pull message ------------------*/
-_zn_pull_t gen_pull_message(uint8_t *header)
+_zn_zenoh_message_t gen_pull_message(void)
 {
     _zn_pull_t e_pu;
 
-    e_pu.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_pu.key.rname) ? _ZN_FLAG_Z_K : 0);
-    e_pu.pull_id = gen_zint();
-    if (gen_bool())
-    {
-        e_pu.max_samples = gen_zint();
-        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_N);
-    }
-    _ZN_SET_FLAG(*header, (gen_bool()) ? _ZN_FLAG_Z_F : 0);
+    zn_reskey_t key = gen_res_key();
+    z_zint_t pull_id = gen_zint();
+    z_zint_t max_samples = gen_bool() ? gen_zint() : 0;
+    int is_final = gen_bool();
 
-    return e_pu;
+    return _zn_z_msg_make_pull(key, pull_id, max_samples, is_final);
 }
 
 void assert_eq_pull_message(_zn_pull_t *left, _zn_pull_t *right, uint8_t header)
@@ -1415,62 +1416,66 @@ void pull_message(void)
     _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
-    uint8_t e_hdr = 0;
-    _zn_pull_t e_pu = gen_pull_message(&e_hdr);
+    _zn_zenoh_message_t z_msg = gen_pull_message();
+    assert(_ZN_MID(z_msg.header) == _ZN_MID_PULL);
+
+    _zn_pull_t e_pu = z_msg.body.pull;
 
     // Encode
-    int res = _zn_pull_encode(&wbf, e_hdr, &e_pu);
+    int res = _zn_pull_encode(&wbf, z_msg.header, &e_pu);
     assert(res == 0);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_pull_result_t r_pu = _zn_pull_decode(&zbf, e_hdr);
+    _zn_pull_result_t r_pu = _zn_pull_decode(&zbf, z_msg.header);
     assert(r_pu.tag == _z_res_t_OK);
 
     _zn_pull_t d_pu = r_pu.value.pull;
-    assert_eq_pull_message(&e_pu, &d_pu, e_hdr);
+    assert_eq_pull_message(&e_pu, &d_pu, z_msg.header);
 
     // Free
     _zn_pull_free(&d_pu);
+    _zn_zenoh_message_free(&z_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Query message ------------------*/
-_zn_query_t gen_query_message(uint8_t *header)
+_zn_zenoh_message_t gen_query_message(void)
 {
-    _zn_query_t e_qy;
+    zn_reskey_t key = gen_res_key();
+    z_str_t predicate = gen_str(gen_uint8() % 16);
+    z_zint_t qid = gen_zint();
 
-    e_qy.key = gen_res_key();
-    _ZN_SET_FLAG(*header, (e_qy.key.rname) ? _ZN_FLAG_Z_K : 0);
-    e_qy.predicate = gen_str(gen_uint8() % 16);
-    e_qy.qid = gen_zint();
-
+    zn_query_target_t target;
     if (gen_bool())
     {
-        e_qy.target.kind = gen_uint8();
+        target.kind = gen_uint8();
 
         uint8_t tgt[] = {
             zn_target_t_BEST_MATCHING,
             zn_target_t_COMPLETE,
             zn_target_t_ALL,
             zn_target_t_NONE};
-        e_qy.target.target.tag = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
-        if (e_qy.target.target.tag == zn_target_t_COMPLETE)
-            e_qy.target.target.type.complete.n = gen_uint8();
-
-        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_T);
+        target.target.tag = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
+        if (target.target.tag == zn_target_t_COMPLETE)
+            target.target.type.complete.n = gen_uint8();
+    }
+    else
+    {
+        target.kind = ZN_QUERYABLE_ALL_KINDS;
     }
 
     uint8_t con[] = {
         zn_consolidation_mode_t_FULL,
         zn_consolidation_mode_t_LAZY,
         zn_consolidation_mode_t_NONE};
-    e_qy.consolidation.first_routers = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
-    e_qy.consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
-    e_qy.consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    zn_query_consolidation_t consolidation;
+    consolidation.first_routers = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    return e_qy;
+    return _zn_z_msg_make_query(key, predicate, qid, target, consolidation);
 }
 
 void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t header)
@@ -1522,7 +1527,10 @@ void query_message(void)
 
     // Initialize
     uint8_t e_hdr = 0;
-    _zn_query_t e_qy = gen_query_message(&e_hdr);
+    _zn_zenoh_message_t z_msg = gen_query_message();
+    assert(_ZN_MID(z_msg.header) == _ZN_MID_QUERY);
+
+    _zn_query_t e_qy = z_msg.body.query;
 
     // Encode
     int res = _zn_query_encode(&wbf, e_hdr, &e_qy);
@@ -1538,22 +1546,21 @@ void query_message(void)
 
     // Free
     _zn_query_free(&d_qy);
+    _zn_zenoh_message_free(&z_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
+/*------------------ Unit message ------------------*/
+_zn_zenoh_message_t gen_unit_message(void)
+{
+    int can_be_dropped = gen_bool();
+    return _zn_z_msg_make_unit(can_be_dropped);
+}
 
 /*------------------ Zenoh message ------------------*/
-_zn_zenoh_message_t *gen_zenoh_message(void)
+_zn_zenoh_message_t gen_zenoh_message(void)
 {
-    _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
-    if (gen_bool())
-        p_zm->attachment = gen_attachment();
-    else
-        p_zm->attachment = NULL;
-    if (gen_bool())
-        p_zm->reply_context = gen_reply_context();
-    else
-        p_zm->reply_context = NULL;
+    _zn_zenoh_message_t p_zm;
 
     uint8_t mids[] = {
         _ZN_MID_DECLARE,
@@ -1562,33 +1569,38 @@ _zn_zenoh_message_t *gen_zenoh_message(void)
         _ZN_MID_QUERY,
         _ZN_MID_UNIT};
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
+
     switch (mids[i])
     {
     case _ZN_MID_DECLARE:
-        p_zm->header = _ZN_MID_DECLARE;
-        p_zm->body.declare = gen_declare_message();
+        p_zm = gen_declare_message();
         break;
     case _ZN_MID_DATA:
-        p_zm->header = _ZN_MID_DATA;
-        p_zm->body.data = gen_data_message(&p_zm->header);
+        p_zm = gen_data_message();
         break;
     case _ZN_MID_PULL:
-        p_zm->header = _ZN_MID_PULL;
-        p_zm->body.pull = gen_pull_message(&p_zm->header);
+        p_zm = gen_pull_message();
         break;
     case _ZN_MID_QUERY:
-        p_zm->header = _ZN_MID_QUERY;
-        p_zm->body.query = gen_query_message(&p_zm->header);
+        p_zm = gen_query_message();
         break;
     case _ZN_MID_UNIT:
-        p_zm->header = _ZN_MID_UNIT;
-        _ZN_SET_FLAG(p_zm->header, (gen_bool()) ? _ZN_FLAG_Z_D : 0);
-        // Unit messages have no body
+        p_zm = gen_unit_message();
         break;
     default:
         assert(0);
         break;
     }
+
+    if (gen_bool())
+        p_zm.attachment = gen_attachment();
+    else
+        p_zm.attachment = NULL;
+
+    if (gen_bool())
+        p_zm.reply_context = gen_reply_context();
+    else
+        p_zm.reply_context = NULL;
 
     return p_zm;
 }
@@ -1654,10 +1666,10 @@ void zenoh_message(void)
     _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
-    _zn_zenoh_message_t *e_zm = gen_zenoh_message();
+    _zn_zenoh_message_t e_zm = gen_zenoh_message();
 
     printf(" - ");
-    switch (_ZN_MID(e_zm->header))
+    switch (_ZN_MID(e_zm.header))
     {
     case _ZN_MID_DECLARE:
         printf("Declare message");
@@ -1678,22 +1690,22 @@ void zenoh_message(void)
         assert(0);
         break;
     }
-    if (e_zm->attachment)
+    if (e_zm.attachment)
     {
         printf("   Attachment\n");
-        print_attachment(e_zm->attachment);
+        print_attachment(e_zm.attachment);
         printf("\n");
     }
-    if (e_zm->reply_context)
+    if (e_zm.reply_context)
     {
         printf("   Reply Context\n");
-        print_reply_context(e_zm->reply_context);
+        print_reply_context(e_zm.reply_context);
         printf("\n");
     }
     printf("\n");
 
     // Encode
-    int res = _zn_zenoh_message_encode(&wbf, e_zm);
+    int res = _zn_zenoh_message_encode(&wbf, &e_zm);
     assert(res == 0);
 
     // Decode
@@ -1702,10 +1714,10 @@ void zenoh_message(void)
     assert(r_zm.tag == _z_res_t_OK);
 
     _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-    assert_eq_zenoh_message(e_zm, &d_zm);
+    assert_eq_zenoh_message(&e_zm, &d_zm);
 
     // Free
-    free(e_zm);
+    _zn_zenoh_message_free(&e_zm);
     _zn_zenoh_message_free(&d_zm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -2366,7 +2378,9 @@ _zn_transport_message_t gen_frame_message(int can_be_fragment)
         payload.messages = _z_vec_make(num);
         for (z_zint_t i = 0; i < num; i++)
         {
-            _zn_zenoh_message_t *p_zm = gen_zenoh_message();
+            _zn_zenoh_message_t e_zm = gen_zenoh_message();
+            _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+            *p_zm = e_zm;
             _z_vec_append(&payload.messages, p_zm);
         }
     }
@@ -2730,17 +2744,17 @@ void fragmentation(void)
     _z_wbuf_t fbf = _z_wbuf_make(len, 1);
     _z_wbuf_t dbf = _z_wbuf_make(0, 1);
 
-    _zn_zenoh_message_t *e_zm;
+    _zn_zenoh_message_t e_zm;
 
     do
     {
         _z_wbuf_reset(&fbf);
         // Generate and serialize the message
         e_zm = gen_zenoh_message();
-        _zn_zenoh_message_encode(&fbf, e_zm);
+        _zn_zenoh_message_encode(&fbf, &e_zm);
         // Check that the message actually requires fragmentation
         if (_z_wbuf_len(&fbf) <= len)
-            _zn_zenoh_message_free(e_zm);
+            _zn_zenoh_message_free(&e_zm);
         else
             break;
     } while (1);
@@ -2800,7 +2814,7 @@ void fragmentation(void)
     _zn_zenoh_message_result_t r_sm = _zn_zenoh_message_decode(&zbf);
     assert(r_sm.tag == _z_res_t_OK);
     _zn_zenoh_message_t d_zm = r_sm.value.zenoh_message;
-    assert_eq_zenoh_message(e_zm, &d_zm);
+    assert_eq_zenoh_message(&e_zm, &d_zm);
 
     _z_wbuf_clear(&dbf);
     _z_wbuf_clear(&wbf);

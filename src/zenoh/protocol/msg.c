@@ -18,13 +18,108 @@
 #include "zenoh-pico/protocol/msg.h"
 
 /*=============================*/
+/*       Zenoh Messages        */
+/*=============================*/
+_zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations)
+{
+    _zn_zenoh_message_t msg;
+
+    msg.body.declare.declarations = declarations;
+
+    msg.header = _ZN_MID_DECLARE;
+
+    msg.attachment = NULL;
+    msg.reply_context = NULL;
+
+    return msg;
+}
+_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped)
+{
+    _zn_zenoh_message_t msg;
+
+    msg.body.data.key = key;
+    msg.body.data.info = info;
+    msg.body.data.payload = payload;
+
+    msg.header = _ZN_MID_DATA;
+    if (msg.body.data.info.flags != 0)
+        msg.header |= _ZN_FLAG_Z_I;
+    if (msg.body.data.key.rname != NULL)
+        msg.header |= _ZN_FLAG_Z_K;
+    if (can_be_dropped)
+        msg.header |= _ZN_FLAG_Z_D;
+
+    msg.attachment = NULL;
+    msg.reply_context = NULL;
+
+    return msg;
+}
+_zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped)
+{
+    _zn_zenoh_message_t msg;
+
+    msg.header = _ZN_MID_UNIT;
+    if (can_be_dropped)
+        msg.header |= _ZN_FLAG_Z_D;
+
+    msg.attachment = NULL;
+    msg.reply_context = NULL;
+
+    return msg;
+}
+
+_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final)
+{
+    _zn_zenoh_message_t msg;
+
+    msg.body.pull.key = key;
+    msg.body.pull.pull_id = pull_id;
+    msg.body.pull.max_samples = max_samples;
+
+    msg.header = _ZN_MID_PULL;
+    if (is_final)
+        msg.header |= _ZN_FLAG_Z_F;
+    if (max_samples != 0)
+        msg.header |= _ZN_FLAG_Z_N;
+    if (msg.body.pull.key.rname != NULL)
+        msg.header |= _ZN_FLAG_Z_K;
+
+    msg.attachment = NULL;
+    msg.reply_context = NULL;
+
+    return msg;
+}
+
+_zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation)
+{
+    _zn_zenoh_message_t msg;
+
+    msg.body.query.key = key;
+    msg.body.query.predicate = predicate;
+    msg.body.query.qid = qid;
+    msg.body.query.target = target;
+    msg.body.query.consolidation = consolidation;
+
+    msg.header = _ZN_MID_QUERY;
+    if (msg.body.query.target.kind != ZN_QUERYABLE_ALL_KINDS)
+        msg.header |= _ZN_FLAG_Z_T;
+    if (msg.body.query.key.rname != NULL)
+        msg.header |= _ZN_FLAG_Z_K;
+
+    msg.attachment = NULL;
+    msg.reply_context = NULL;
+
+    return msg;
+}
+
+/*=============================*/
 /*     Transport Messages      */
 /*=============================*/
 _zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.scout.what = what;
 
     msg.header = _ZN_MID_SCOUT;
     if (request_pid)
@@ -32,7 +127,7 @@ _zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid)
     if (what != ZN_ROUTER)
         msg.header |= _ZN_FLAG_T_W;
 
-    msg.body.scout.what = what;
+    msg.attachment = NULL;
 
     return msg;
 }

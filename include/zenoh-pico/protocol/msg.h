@@ -596,7 +596,7 @@ typedef struct
 typedef union
 {
     _zn_payload_t fragment;
-    _z_vec_t messages;
+    _z_vec_t messages; // @TODO: convert it into a typed vec
 } _zn_frame_payload_t;
 typedef struct
 {
@@ -908,7 +908,7 @@ typedef struct
 /*------------------ Query Message ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|C|T|  QUERY  |
+// |K|X|T|  QUERY  |
 // +-+-+-+---------+
 // ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
@@ -947,9 +947,9 @@ typedef struct
 
 /*------------------ Builders ------------------*/
 _zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
-_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload);
-_zn_zenoh_message_t _zn_z_msg_make_unit();
-_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples);
+_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final);
 _zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */
