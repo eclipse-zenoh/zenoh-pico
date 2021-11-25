@@ -96,6 +96,7 @@ _ZN_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 /*------------------ Transport Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
 _ZN_DECLARE_DECODE(scout);
+_ZN_DECLARE_FREE(scout);
 
 _ZN_DECLARE_ENCODE(hello);
 _ZN_DECLARE_DECODE(hello);
@@ -221,11 +222,11 @@ _ZN_DECLARE_FREE(close);
 
 _ZN_DECLARE_ENCODE(sync);
 _ZN_DECLARE_DECODE(sync);
-_ZN_DECLARE_FREE_NOH(sync);
+_ZN_DECLARE_FREE(sync);
 
 _ZN_DECLARE_ENCODE(ack_nack);
 _ZN_DECLARE_DECODE(ack_nack);
-_ZN_DECLARE_FREE_NOH(ack_nack);
+_ZN_DECLARE_FREE(ack_nack);
 
 _ZN_DECLARE_ENCODE(keep_alive);
 _ZN_DECLARE_DECODE(keep_alive);

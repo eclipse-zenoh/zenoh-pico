@@ -336,13 +336,18 @@ typedef struct
 //
 typedef struct
 {
+    z_zint_t reliable;
+    z_zint_t best_effort;
+} _zn_coundit_sn_t;
+typedef struct
+{
     union
     {
-        z_zint_t sn;
-        z_zint_t sns[ZN_PRIORITIES_NUM];
+        _zn_coundit_sn_t plain;
+        _zn_coundit_sn_t qos[ZN_PRIORITIES_NUM];
     } val;
     uint8_t is_qos;
-} _zn_sns_t;
+} _zn_conduit_sn_list_t;
 typedef struct
 {
     z_zint_t options;
@@ -350,7 +355,7 @@ typedef struct
     z_zint_t lease;
     z_zint_t sn_resolution;
     z_bytes_t pid;
-    _zn_sns_t next_sns;
+    _zn_conduit_sn_list_t next_sns;
     uint8_t version;
 } _zn_join_t;
 
@@ -623,12 +628,12 @@ typedef struct
 /*------------------ Builders ------------------*/
 _zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid);
 _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators);
-_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_sns_t next_sns);
-_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid);
-_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie);
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos);
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos);
 _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial_sn);
-_zn_transport_message_t _zn_t_msg_make_close(z_bytes_t pid, uint8_t reason);
+_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only);
 _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid);

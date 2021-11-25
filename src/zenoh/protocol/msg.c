@@ -41,36 +41,30 @@ _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _z
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
-
-    msg.header = _ZN_MID_HELLO;
-    if (!_z_bytes_is_empty(&pid))
-        msg.header |= _ZN_FLAG_T_I;
-    if (whatami != ZN_ROUTER)
-        msg.header |= _ZN_FLAG_T_W;
-    if (_zn_locator_array_is_empty(&locators))
-        msg.header |= _ZN_FLAG_T_L;
-
     msg.body.hello.whatami = whatami;
     _z_bytes_move(&msg.body.hello.pid, &pid);
     _zn_locator_array_move(&msg.body.hello.locators, &locators);
 
-    return msg;
-}
-
-_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_sns_t next_sns)
-{
-    _zn_transport_message_t msg;
+    msg.header = _ZN_MID_HELLO;
+    if (whatami != ZN_ROUTER)
+        msg.header |= _ZN_FLAG_T_W;
+    if (!_z_bytes_is_empty(&pid))
+        msg.header |= _ZN_FLAG_T_I;
+    if (!_zn_locator_array_is_empty(&locators))
+        msg.header |= _ZN_FLAG_T_L;
 
     msg.attachment = NULL;
 
-    msg.header = _ZN_MID_JOIN;
-    if (lease % 1000 == 0)
-        msg.header |= _ZN_FLAG_T_T1;
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
-        msg.header |= _ZN_FLAG_T_S;
+    return msg;
+}
 
-    msg.body.join.options = 0; // No QoS support in zenoh-pico
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns)
+{
+    _zn_transport_message_t msg;
+
+    msg.body.join.options = 0;
+    if (next_sns.is_qos)
+        msg.body.join.options |= _ZN_OPT_JOIN_QOS;
     msg.body.join.version = version;
     msg.body.join.whatami = whatami;
     msg.body.join.lease = lease;
@@ -78,45 +72,63 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
     msg.body.join.next_sns = next_sns;
     _z_bytes_move(&msg.body.join.pid, &pid);
 
-    return msg;
-}
-
-_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid)
-{
-    _zn_transport_message_t msg;
+    msg.header = _ZN_MID_JOIN;
+    if (lease % 1000 == 0)
+        msg.header |= _ZN_FLAG_T_T1;
+    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
+        msg.header |= _ZN_FLAG_T_S;
+    if (msg.body.join.options != 0)
+        msg.header |= _ZN_FLAG_T_O;
 
     msg.attachment = NULL;
 
-    msg.header = _ZN_MID_INIT;
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
-        msg.header |= _ZN_FLAG_T_S;
+    return msg;
+}
 
-    msg.body.init.options = 0; // No QoS support in zenoh-pico
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos)
+{
+    _zn_transport_message_t msg;
+
+    msg.body.init.options = 0;
+    if (is_qos)
+        msg.body.init.options |= _ZN_OPT_INIT_QOS;
     msg.body.init.version = version;
     msg.body.init.whatami = whatami;
     msg.body.init.sn_resolution = sn_resolution;
     _z_bytes_move(&msg.body.init.pid, &pid);
     _z_bytes_reset(&msg.body.init.cookie);
 
-    return msg;
-}
-
-_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie)
-{
-    _zn_transport_message_t msg;
+    msg.header = _ZN_MID_INIT;
+    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
+        msg.header |= _ZN_FLAG_T_S;
+    if (msg.body.init.options != 0)
+        msg.header |= _ZN_FLAG_T_O;
 
     msg.attachment = NULL;
 
-    msg.header = _ZN_MID_INIT | _ZN_FLAG_T_A;
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
-        msg.header |= _ZN_FLAG_T_S;
+    return msg;
+}
 
-    msg.body.init.options = 0; // No QoS support in zenoh-pico
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos)
+{
+    _zn_transport_message_t msg;
+
+    msg.body.init.options = 0;
+    if (is_qos)
+        msg.body.init.options |= _ZN_OPT_INIT_QOS;
     msg.body.init.version = version;
     msg.body.init.whatami = whatami;
     msg.body.init.sn_resolution = sn_resolution;
     _z_bytes_move(&msg.body.init.pid, &pid);
     _z_bytes_move(&msg.body.init.cookie, &cookie);
+
+    msg.header = _ZN_MID_INIT | _ZN_FLAG_T_A;
+    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
+        msg.header |= _ZN_FLAG_T_S;
+    if (msg.body.init.options != 0)
+        msg.header |= _ZN_FLAG_T_O;
+
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -125,15 +137,15 @@ _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.open.lease = lease;
+    msg.body.open.initial_sn = initial_sn;
+    _z_bytes_move(&msg.body.open.cookie, &cookie);
 
     msg.header = _ZN_MID_OPEN;
     if (lease % 1000 == 0)
         msg.header |= _ZN_FLAG_T_T2;
 
-    msg.body.open.lease = lease;
-    msg.body.open.initial_sn = initial_sn;
-    _z_bytes_move(&msg.body.open.cookie, &cookie);
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -142,31 +154,33 @@ _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.open.lease = lease;
+    msg.body.open.initial_sn = initial_sn;
+    _z_bytes_reset(&msg.body.open.cookie);
 
     msg.header = _ZN_MID_OPEN | _ZN_FLAG_T_A;
     if (lease % 1000 == 0)
         msg.header |= _ZN_FLAG_T_T2;
 
-    msg.body.open.lease = lease;
-    msg.body.open.initial_sn = initial_sn;
-    _z_bytes_reset(&msg.body.open.cookie);
+    msg.attachment = NULL;
 
     return msg;
 }
 
-_zn_transport_message_t _zn_t_msg_make_close(z_bytes_t pid, uint8_t reason)
+_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.close.reason = reason;
+    _z_bytes_move(&msg.body.close.pid, &pid);
 
     msg.header = _ZN_MID_CLOSE;
     if (!_z_bytes_is_empty(&pid))
         msg.header |= _ZN_FLAG_T_I;
+    if (link_only)
+        msg.header |= _ZN_FLAG_T_K;
 
-    msg.body.close.reason = reason;
-    _z_bytes_move(&msg.body.close.pid, &pid);
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -175,7 +189,8 @@ _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.sync.sn = sn;
+    msg.body.sync.count = count;
 
     msg.header = _ZN_MID_SYNC;
     if (is_reliable)
@@ -185,8 +200,7 @@ _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint
             msg.header |= _ZN_FLAG_T_C;
     }
 
-    msg.body.sync.sn = sn;
-    msg.body.sync.count = count;
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -195,14 +209,14 @@ _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.ack_nack.sn = sn;
+    msg.body.ack_nack.mask = mask;
 
     msg.header = _ZN_MID_ACK_NACK;
     if (mask != 0)
         msg.header |= _ZN_FLAG_T_M;
 
-    msg.body.ack_nack.sn = sn;
-    msg.body.ack_nack.mask = mask;
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -211,13 +225,13 @@ _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    _z_bytes_move(&msg.body.keep_alive.pid, &pid);
 
     msg.header = _ZN_MID_KEEP_ALIVE;
     if (!_z_bytes_is_empty(&pid))
         msg.header |= _ZN_FLAG_T_I;
 
-    _z_bytes_move(&msg.body.keep_alive.pid, &pid);
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -226,11 +240,11 @@ _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.ping_pong.hash = hash;
 
     msg.header = _ZN_MID_PING_PONG;
 
-    msg.body.ping_pong.hash = hash;
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -239,11 +253,11 @@ _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash)
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.ping_pong.hash = hash;
 
     msg.header = _ZN_MID_PING_PONG | _ZN_FLAG_T_P;
 
-    msg.body.ping_pong.hash = hash;
+    msg.attachment = NULL;
 
     return msg;
 }
@@ -252,7 +266,8 @@ _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t pa
 {
     _zn_transport_message_t msg;
 
-    msg.attachment = NULL;
+    msg.body.frame.sn = sn;
+    msg.body.frame.payload = payload;
 
     msg.header = _ZN_MID_FRAME;
     if (is_reliable)
@@ -264,8 +279,7 @@ _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t pa
             msg.header |= _ZN_FLAG_T_E;
     }
 
-    msg.body.frame.sn = sn;
-    msg.body.frame.payload = payload;
+    msg.attachment = NULL;
 
     return msg;
 }
