@@ -120,7 +120,7 @@ if (UNIX)
   )
 endif()
 
-set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/libs)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} ${Sources})
