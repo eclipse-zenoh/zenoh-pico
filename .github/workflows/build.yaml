@@ -12,24 +12,31 @@ name: build
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
-
+        os: [ubuntu-latest, macOS-latest]
     steps:
-    - uses: actions/checkout@v2      
+      - uses: actions/checkout@v2
+      - name: Compile debug
+        run: make all
+        env:
+          BUILD_TYPE: Debug
 
-    - name: Compile debug
-      run: make all
-      env:
-        BUILD_TYPE: Debug
+  crossbuilds:
+    name: Build on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Crosscompile debug
+        run: make crossbuilds
+        env:
+          BUILD_TYPE: Debug
