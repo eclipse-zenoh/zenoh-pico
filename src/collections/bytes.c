@@ -59,6 +59,13 @@ void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src)
     src->len = 0;
 }
 
+z_bytes_t _z_bytes_dup(const z_bytes_t *src)
+{
+    z_bytes_t dst;
+    _z_bytes_copy(&dst, src);
+    return dst;
+}
+
 void _z_bytes_reset(z_bytes_t *bs)
 {
     bs->val = NULL;

@@ -35,6 +35,7 @@ typedef struct z_bytes_t
 z_bytes_t _z_bytes_make(size_t capacity);
 void _z_bytes_init(z_bytes_t *bs, size_t capacity);
 void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src);
+z_bytes_t _z_bytes_dup(const z_bytes_t *src);
 void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_clear(z_bytes_t *bs);
 void _z_bytes_free(z_bytes_t **bs);

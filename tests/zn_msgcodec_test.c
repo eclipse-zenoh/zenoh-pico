@@ -1550,6 +1550,7 @@ void query_message(void)
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
+
 /*------------------ Unit message ------------------*/
 _zn_zenoh_message_t gen_unit_message(void)
 {

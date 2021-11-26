@@ -13,6 +13,8 @@
  */
 
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"
@@ -22,13 +24,8 @@
 
 int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
-    _zn_transport_message_t cm = _zn_transport_message_init(_ZN_MID_CLOSE);
-
-    cm.body.close.pid = ((zn_session_t*)ztu->session)->tp_manager->local_pid;
-    cm.body.close.reason = reason;
-    _ZN_SET_FLAG(cm.header, _ZN_FLAG_T_I);
-    if (link_only)
-        _ZN_SET_FLAG(cm.header, _ZN_FLAG_T_K);
+    z_bytes_t pid = _z_bytes_dup(&((zn_session_t *)ztu->session)->tp_manager->local_pid);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
 
     int res = _zn_unicast_send_t_msg(ztu, &cm);
 
@@ -94,7 +91,7 @@ _zn_transport_t *_zn_transport_unicast_init()
     zt->transport.unicast.transmitted = 0;
 
     // Remote peer PID
-    //zt->transport.unicast.remote_pid;
+    zt->transport.unicast.remote_pid = _z_bytes_make(0);
 
     // Transport link for unicast
     zt->transport.unicast.link = NULL;
@@ -124,7 +121,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
     int res = _zn_send_t_msg_nt(zl, &ism);
     if (res != 0)
         goto ERR_1;
-    
+
     // The announced sn resolution
     param.sn_resolution = ism.body.init.sn_resolution;
     _zn_transport_message_free(&ism);
@@ -169,7 +166,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
             // Encode and send the message
             _Z_DEBUG("Sending OpenSyn\n");
             res = _zn_send_t_msg_nt(zl, &osm);
-            
+
             if (res != 0)
                 goto ERR_3;
 
@@ -189,8 +186,8 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
                     param.initial_sn_rx = oam.body.open.initial_sn - 1;
                 else
                     param.initial_sn_rx = param.sn_resolution - 1;
-
-            } else
+            }
+            else
                 goto ERR_3;
 
             _zn_transport_message_free(&oam);

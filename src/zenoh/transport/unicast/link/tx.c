@@ -155,7 +155,7 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t t_msg)
+int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, const _zn_transport_message_t *t_msg)
 {
     _Z_DEBUG(">> send session message\n");
 
@@ -166,7 +166,7 @@ int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t
     __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
     // Encode the session message
-    int res = _zn_transport_message_encode(&ztu->wbuf, &t_msg);
+    int res = _zn_transport_message_encode(&ztu->wbuf, t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
@@ -235,7 +235,7 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
         // Send the wbuf on the socket
         res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
         if (res == 0)
-            ztu->transmitted = 1; 
+            ztu->transmitted = 1;
     }
     else
     {
