@@ -20,6 +20,7 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
@@ -43,20 +44,17 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
         return ZN_RESOURCE_ID_NONE;
     }
 
-    // Build the declare message to send on the wire
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
     // We need to declare the resource
+    _zn_declaration_array_t declarations;
     unsigned int len = 1;
-    z_msg.body.declare.declarations.len = len;
-    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Resource declaration
-    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_RESOURCE;
-    z_msg.body.declare.declarations.val[0].body.res.id = r->id;
-    z_msg.body.declare.declarations.val[0].body.res.key = _zn_reskey_clone(&r->key);
-    if (r->key.rname)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
+    declarations.val[0] = _zn_z_msg_make_declaration_resource(r->id, _zn_reskey_clone(&r->key));
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -71,28 +69,29 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
 {
     _zn_resource_t *r = _zn_get_resource_by_id(zn, _ZN_IS_LOCAL, rid);
-    if (r)
+    if (r == NULL)
+        return;
+
+    // We need to undeclare the resource and the publisher
+    _zn_declaration_array_t declarations;
+    unsigned int len = 1;
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+
+    // Resource declaration
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_resource(rid);
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
+
+    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
-        // We need to undeclare the resource and the publisher
-        unsigned int len = 1;
-        z_msg.body.declare.declarations.len = len;
-        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
-
-        // Resource declaration
-        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_RESOURCE;
-        z_msg.body.declare.declarations.val[0].body.forget_res.rid = rid;
-
-        if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-        {
-            // TODO: retransmission
-        }
-
-        _zn_zenoh_message_free(&z_msg);
-
-        _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
+        // TODO: retransmission
     }
+
+    _zn_zenoh_message_free(&z_msg);
+
+    _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
 }
 
 /*------------------  Publisher Declaration ------------------*/
@@ -103,20 +102,17 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
     pub->key = reskey;
     pub->id = _zn_get_entity_id(zn);
 
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
     // We need to declare the resource and the publisher
+    _zn_declaration_array_t declarations;
     unsigned int len = 1;
-    z_msg.body.declare.declarations.len = len;
-    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Publisher declaration
-    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_PUBLISHER;
-    z_msg.body.declare.declarations.val[0].body.pub.key = _zn_reskey_clone(&reskey);
-    ;
-    // Mark the key as string if the key has resource name
-    if (pub->key.rname)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
+    declarations.val[0] = _zn_z_msg_make_declaration_publisher(_zn_reskey_clone(&reskey));
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -130,19 +126,17 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 
 void zn_undeclare_publisher(zn_publisher_t *pub)
 {
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
     // We need to undeclare the publisher
+    _zn_declaration_array_t declarations;
     unsigned int len = 1;
-    z_msg.body.declare.declarations.len = len;
-    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Forget publisher declaration
-    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_PUBLISHER;
-    z_msg.body.declare.declarations.val[0].body.forget_pub.key = _zn_reskey_clone(&pub->key);
-    // Mark the key as string if the key has resource name
-    if (pub->key.rname)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_publisher(_zn_reskey_clone(&pub->key));
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
     if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -171,28 +165,17 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
         return NULL;
     }
 
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
     // We need to declare the subscriber
+    _zn_declaration_array_t declarations;
     unsigned int len = 1;
-    z_msg.body.declare.declarations.len = len;
-    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Subscriber declaration
-    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_SUBSCRIBER;
-    if (reskey.rname)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-    if (sub_info.mode != zn_submode_t_PUSH || sub_info.period)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_S);
-    if (sub_info.reliability == zn_reliability_t_RELIABLE)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_R);
+    declarations.val[0] = _zn_z_msg_make_declaration_subscriber(_zn_reskey_clone(&reskey), sub_info);
 
-    z_msg.body.declare.declarations.val[0].body.sub.key = _zn_reskey_clone(&reskey);
-
-    // SubMode
-    z_msg.body.declare.declarations.val[0].body.sub.subinfo.mode = sub_info.mode;
-    z_msg.body.declare.declarations.val[0].body.sub.subinfo.reliability = sub_info.reliability;
-    z_msg.body.declare.declarations.val[0].body.sub.subinfo.period = sub_info.period;
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -211,31 +194,29 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 void zn_undeclare_subscriber(zn_subscriber_t *sub)
 {
     _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
-    if (s)
+    if (s == NULL)
+        return;
+
+    // We need to undeclare the subscriber
+    _zn_declaration_array_t declarations;
+    unsigned int len = 1;
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+
+    // Forget Subscriber declaration
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_subscriber(_zn_reskey_clone(&s->key));
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
+
+    if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
-        // We need to undeclare the subscriber
-        unsigned int len = 1;
-        z_msg.body.declare.declarations.len = len;
-        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
-
-        // Forget Subscriber declaration
-        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_SUBSCRIBER;
-        if (s->key.rname)
-            _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-
-        z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&s->key);
-
-        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-        {
-            // TODO: retransmission
-        }
-
-        _zn_zenoh_message_free(&z_msg);
-
-        _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
+        // TODO: retransmission
     }
+
+    _zn_zenoh_message_free(&z_msg);
+
+    _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
 
     free(sub);
 }
@@ -257,24 +238,17 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
         return NULL;
     }
 
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
     // We need to declare the queryable
+    _zn_declaration_array_t declarations;
     unsigned int len = 1;
-    z_msg.body.declare.declarations.len = len;
-    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
     // Queryable declaration
-    z_msg.body.declare.declarations.val[0].header = _ZN_DECL_QUERYABLE;
-    if (reskey.rname)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-    if (kind != ZN_QUERYABLE_STORAGE)
-        _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_Q);
+    declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_clone(&reskey), (z_zint_t)kind);
 
-    z_msg.body.declare.declarations.val[0]
-        .body.qle.key = _zn_reskey_clone(&reskey);
-    z_msg.body.declare.declarations.val[0]
-        .body.qle.kind = (z_zint_t)kind;
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -293,54 +267,61 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 void zn_undeclare_queryable(zn_queryable_t *qle)
 {
     _zn_queryable_t *q = _zn_get_queryable_by_id(qle->zn, qle->id);
-    if (q)
+    if (q == NULL)
+        return;
+
+    // We need to undeclare the subscriber
+    _zn_declaration_array_t declarations;
+    unsigned int len = 1;
+    declarations.len = len;
+    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+
+    // Forget Subscriber declaration
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(_zn_reskey_clone(&q->key));
+
+    // Build the declare message to send on the wire
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
+
+    if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-
-        // We need to undeclare the subscriber
-        unsigned int len = 1;
-        z_msg.body.declare.declarations.len = len;
-        z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
-
-        // Forget Subscriber declaration
-        z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_QUERYABLE;
-        if (q->key.rname)
-            _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-
-        z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
-
-        if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-        {
-            // TODO: retransmission
-        }
-
-        _zn_zenoh_message_free(&z_msg);
-
-        _zn_unregister_queryable(qle->zn, q);
+        // TODO: retransmission
     }
+
+    _zn_zenoh_message_free(&z_msg);
+
+    _zn_unregister_queryable(qle->zn, q);
 
     free(qle);
 }
 
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
 {
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DATA);
-
     // Build the reply context decorator. This is NOT the final reply.
-    z_msg.reply_context = _zn_reply_context_init();
-    z_msg.reply_context->qid = query->qid;
-    z_msg.reply_context->replier_kind = query->kind;
-    z_msg.reply_context->replier_id = query->zn->tp_manager->local_pid;
+    z_bytes_t pid;
+    pid.len = query->zn->tp_manager->local_pid.len;
+    pid.val = query->zn->tp_manager->local_pid.val;
 
-    // Build the data payload
-    z_msg.body.data.payload.val = payload;
-    z_msg.body.data.payload.len = len;
+    _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
+
     // @TODO: use numerical resources if possible
-    z_msg.body.data.key.rid = ZN_RESOURCE_ID_NONE;
-    z_msg.body.data.key.rname = (z_str_t)key;
-    if (z_msg.body.data.key.rname)
-        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_K);
-    // Do not set any data_info
+    // ResKey
+    zn_reskey_t reskey;
+    reskey.rid = ZN_RESOURCE_ID_NONE;
+    reskey.rname = (z_str_t)key;
+
+    // Empty data info
+    _zn_data_info_t di;
+    di.flags = 0;
+
+    // Payload
+    _zn_payload_t pld;
+    pld.len = len;
+    pld.val = payload;
+
+    // Congestion control
+    int can_be_dropped = 0;
+
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_reply(reskey, di, pld, can_be_dropped, rctx);
 
     if (_zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -350,56 +331,53 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
     free(z_msg.reply_context);
 }
 
-
 /*------------------ Write ------------------*/
-int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length)
+int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
     // @TODO: Need to check subscriptions to determine the right reliability value.
 
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DATA);
-    // Eventually mark the message for congestion control
-    if (ZN_CONGESTION_CONTROL_DEFAULT == zn_congestion_control_t_DROP)
-        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
-    // Set the resource key
-    z_msg.body.data.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
+    // Empty data info
+    _zn_data_info_t info;
+    info.flags = 0;
 
-    // Set the payload
-    z_msg.body.data.payload.len = length;
-    z_msg.body.data.payload.val = (uint8_t *)payload;
+    // Payload
+    _zn_payload_t pld;
+    pld.len = len;
+    pld.val = payload;
+
+    // Congestion control
+    int can_be_dropped = ZN_CONGESTION_CONTROL_DEFAULT == zn_congestion_control_t_DROP;
+
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_data(reskey, info, pld, can_be_dropped);
 
     return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, ZN_CONGESTION_CONTROL_DEFAULT);
 }
 
-int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t length, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
     // @TODO: Need to check subscriptions to determine the right reliability value.
 
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DATA);
-    // Eventually mark the message for congestion control
-    if (cong_ctrl == zn_congestion_control_t_DROP)
-        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_D);
-    // Set the resource key
-    z_msg.body.data.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
-
-    // Set the data info
-    _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_I);
+    // Data info
     _zn_data_info_t info;
     info.flags = 0;
     info.encoding = encoding;
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_ENC);
     info.kind = kind;
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_KIND);
-    z_msg.body.data.info = info;
 
-    // Set the payload
-    z_msg.body.data.payload.len = length;
-    z_msg.body.data.payload.val = (uint8_t *)payload;
+    // Payload
+    _zn_payload_t pld;
+    pld.len = len;
+    pld.val = payload;
+
+    // Congestion control
+    int can_be_dropped = cong_ctrl == zn_congestion_control_t_DROP;
+
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_data(reskey, info, pld, can_be_dropped);
 
     return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, cong_ctrl);
 }
@@ -411,7 +389,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_
     _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
     pq->id = _zn_get_query_id(zn);
     pq->key = reskey;
-    pq->predicate = strdup(predicate);
+    pq->predicate = _z_str_clone(predicate);
     pq->target = target;
     pq->consolidation = consolidation;
     pq->callback = callback;
@@ -421,21 +399,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_
     // Add the pending query to the current session
     _zn_register_pending_query(zn, pq);
 
-    // Send the query
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_QUERY);
-    z_msg.body.query.qid = pq->id;
-    z_msg.body.query.key = reskey;
-    _ZN_SET_FLAG(z_msg.header, reskey.rname ? _ZN_FLAG_Z_K : 0);
-    z_msg.body.query.predicate = (z_str_t)predicate;
-
-    zn_query_target_t qtd = zn_query_target_default();
-    if (!zn_query_target_equal(&target, &qtd))
-    {
-        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_T);
-        z_msg.body.query.target = target;
-    }
-
-    z_msg.body.query.consolidation = consolidation;
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_query(pq->key, pq->predicate, pq->id, pq->target, pq->consolidation);
 
     int res = _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
     if (res != 0)
@@ -505,29 +469,21 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 int zn_pull(zn_subscriber_t *sub)
 {
     _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
-    if (s)
-    {
-        _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_PULL);
-        z_msg.body.pull.key = _zn_reskey_clone(&s->key);
-        _ZN_SET_FLAG(z_msg.header, s->key.rname ? _ZN_FLAG_Z_K : 0);
-        _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_F);
-
-        z_msg.body.pull.pull_id = _zn_get_pull_id(sub->zn);
-        // @TODO: get the correct value for max_sample
-        z_msg.body.pull.max_samples = 0;
-        // _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_N);
-
-        if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-        {
-            // TODO: retransmission
-        }
-
-        _zn_zenoh_message_free(&z_msg);
-
-        return 0;
-    }
-    else
-    {
+    if (s == NULL)
         return -1;
+
+    z_zint_t pull_id = _zn_get_pull_id(sub->zn);
+    z_zint_t max_samples = 0; // @TODO: get the correct value for max_sample
+    int is_final = 1;
+
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_pull(s->key, pull_id, max_samples, is_final);
+
+    if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
+    {
+        // TODO: retransmission
     }
+
+    _zn_zenoh_message_free(&z_msg);
+
+    return 0;
 }

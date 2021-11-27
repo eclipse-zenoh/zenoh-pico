@@ -453,11 +453,20 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     }
 
     // Send the final reply
-    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_UNIT);
-    z_msg.reply_context = _zn_reply_context_init();
-    _ZN_SET_FLAG(z_msg.reply_context->header, _ZN_FLAG_Z_F);
-    z_msg.reply_context->qid = query->qid;
-    z_msg.reply_context->replier_kind = 0;
+    z_bytes_t pid;
+    _z_bytes_reset(&pid);
+
+    z_zint_t kind = 0;
+    int is_final = 1;
+
+    _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, kind, is_final);
+
+    // Congestion control
+    int can_be_dropped = 0;
+
+    // Create the final reply
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_unit(can_be_dropped);
+    z_msg.reply_context = rctx;
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {

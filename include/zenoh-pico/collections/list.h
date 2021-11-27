@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_LIST_H
-#define ZENOH_PICO_UTILS_COLLECTION_LIST_H
+#ifndef ZENOH_PICO_COLLECTIONS_LIST_H
+#define ZENOH_PICO_COLLECTIONS_LIST_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -67,4 +67,4 @@ typedef _z_list_t z_str_list_t;
 #define z_str_list_clone(list) _z_list_clone(list, z_element_clone_str)
 #define z_str_list_free(list) _z_list_free(list, z_element_free_str)
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_LIST_H */
+#endif /* ZENOH_PICO_COLLECTIONS_LIST_H */

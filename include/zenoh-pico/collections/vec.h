@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_VECTOR_H
-#define ZENOH_PICO_UTILS_COLLECTION_VECTOR_H
+#ifndef ZENOH_PICO_COLLECTIONS_VECTOR_H
+#define ZENOH_PICO_COLLECTIONS_VECTOR_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -42,4 +42,4 @@ void _z_vec_reset(_z_vec_t *v, z_element_free_f f);
 void _z_vec_clear(_z_vec_t *v, z_element_free_f f);
 void _z_vec_free(_z_vec_t **v, z_element_free_f f);
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_VECTOR_H */
+#endif /* ZENOH_PICO_COLLECTIONS_VECTOR_H */

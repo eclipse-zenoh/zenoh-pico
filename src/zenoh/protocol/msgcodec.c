@@ -348,7 +348,7 @@ void _zn_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reply_conte
 
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
-        r->value.reply_context->replier_id = r_arr.value.bytes;
+        r->value.reply_context->replier_id = _z_bytes_dup(&r_arr.value.bytes);
     }
 }
 
@@ -363,7 +363,7 @@ _zn_reply_context_p_result_t _zn_reply_context_decode(_z_zbuf_t *zbf, uint8_t he
 void _zn_reply_context_free(_zn_reply_context_t *rc)
 {
     if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
-        (void)(&rc->replier_id);
+        _z_bytes_clear(&rc->replier_id);
 }
 
 /*=============================*/
@@ -1401,12 +1401,12 @@ _zn_zenoh_message_result_t _zn_zenoh_message_decode(_z_zbuf_t *zbf)
 
 void _zn_zenoh_message_free(_zn_zenoh_message_t *msg)
 {
-    if (msg->attachment)
+    if (msg->attachment != NULL)
     {
         _zn_attachment_free(msg->attachment);
         free(msg->attachment);
     }
-    if (msg->reply_context)
+    if (msg->reply_context != NULL)
     {
         _zn_reply_context_free(msg->reply_context);
         free(msg->reply_context);

@@ -724,20 +724,12 @@ _zn_reply_context_t *gen_reply_context(void)
 {
     _zn_reply_context_t *p_rc = (_zn_reply_context_t *)malloc(sizeof(_zn_reply_context_t));
 
-    p_rc->header = _ZN_MID_REPLY_CONTEXT;
-    p_rc->qid = gen_zint();
-    if (gen_bool())
-    {
-        p_rc->replier_kind = gen_zint();
-        z_bytes_t id = gen_bytes(16);
-        p_rc->replier_id = id;
-    }
-    else
-    {
-        _ZN_SET_FLAG(p_rc->header, _ZN_FLAG_Z_F);
-    }
+    z_zint_t qid = gen_zint();
+    z_bytes_t replier_id = gen_bytes(16);
+    z_zint_t replier_kind = gen_zint();
+    int is_final = gen_bool();
 
-    return p_rc;
+    return _zn_z_msg_make_reply_context(qid, replier_id, replier_kind, is_final);
 }
 
 void assert_eq_reply_context(_zn_reply_context_t *left, _zn_reply_context_t *right)
@@ -2663,7 +2655,9 @@ void batch(void)
 _zn_transport_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_FRAME);
+    _zn_transport_message_t t_msg;
+    t_msg.attachment = NULL;
+    t_msg.header = _ZN_MID_FRAME;
     t_msg.body.frame.sn = sn;
 
     if (is_reliable)

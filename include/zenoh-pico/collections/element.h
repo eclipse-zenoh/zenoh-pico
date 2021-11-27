@@ -12,10 +12,11 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_ELEMENT_H
-#define ZENOH_PICO_UTILS_COLLECTION_ELEMENT_H
+#ifndef ZENOH_PICO_COLLECTIONS_ELEMENT_H
+#define ZENOH_PICO_COLLECTIONS_ELEMENT_H
 
 /*-------- element functions --------*/
+typedef void (*z_element_clear_f)(void *me);
 typedef void (*z_element_free_f)(void **me);
 typedef void *(*z_element_clone_f)(const void *me);
 typedef int (*z_element_cmp_f)(const void *left, const void *right);
@@ -35,4 +36,4 @@ void z_element_free_list_str(void **s);
 void *z_element_clone_list_str(const void *s);
 int z_element_cmp_list_str(const void *left, const void *right);
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_ELEMENT_H */
+#endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

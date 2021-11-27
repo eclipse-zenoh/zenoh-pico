@@ -28,7 +28,7 @@ int _zn_send_t_msg(_zn_transport_t *zt, const _zn_transport_message_t *t_msg)
         return -1;
 }
 
-int _zn_send_t_msg_nt(const _zn_link_t *zl, const _zn_transport_message_t *t_msg)
+int _zn_link_send_t_msg(const _zn_link_t *zl, const _zn_transport_message_t *t_msg)
 {
     // Create and prepare the buffer to serialize the message on
     _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);

@@ -32,12 +32,6 @@
  */
 int zn_rname_intersect(const z_str_t left, const z_str_t right);
 
-/*------------------ Message helper ------------------*/
-_zn_transport_message_t _zn_transport_message_init(uint8_t header);
-_zn_zenoh_message_t _zn_zenoh_message_init(uint8_t header);
-_zn_reply_context_t *_zn_reply_context_init(void);
-_zn_attachment_t *_zn_attachment_init(void);
-
 /*------------------ Clone/Copy/Free helpers ------------------*/
 zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
 z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp);

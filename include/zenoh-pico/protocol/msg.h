@@ -20,7 +20,6 @@
 #include "zenoh-pico/collections/vec.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/utils/array.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -640,6 +639,7 @@ _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid);
 _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
+_zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final);
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -946,10 +946,19 @@ typedef struct
 } _zn_zenoh_message_t;
 
 /*------------------ Builders ------------------*/
+_zn_reply_context_t *_zn_z_msg_make_reply_context(z_zint_t qid, z_bytes_t replier_id, z_zint_t replier_kind, int is_final);
+_zn_declaration_t _zn_z_msg_make_declaration_resource(z_zint_t id, zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_resource(z_zint_t rid);
+_zn_declaration_t _zn_z_msg_make_declaration_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
 _zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
 _zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
 _zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);
 _zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final);
 _zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
-
+_zn_zenoh_message_t _zn_z_msg_make_reply(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped, _zn_reply_context_t *rctx);
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

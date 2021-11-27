@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_INTMAP_H
-#define ZENOH_PICO_UTILS_COLLECTION_INTMAP_H
+#ifndef ZENOH_PICO_COLLECTIONS_INTMAP_H
+#define ZENOH_PICO_COLLECTIONS_INTMAP_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -111,4 +111,4 @@ typedef _z_int_void_map_t zn_int_list_str_map_t;
 #define zn_int_list_str_map_clear(ism) _z_int_void_map_clear(ism, z_element_free_list_str)
 #define zn_int_list_str_map_free(ism) _z_int_void_map_free(ism, z_element_free_list_str)
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_INTMAP_H */
+#endif /* ZENOH_PICO_COLLECTIONS_INTMAP_H */

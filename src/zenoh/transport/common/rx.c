@@ -30,7 +30,7 @@ _zn_transport_message_result_t _zn_recv_t_msg(_zn_transport_t *zt)
     return r;
 }
 
-_zn_transport_message_result_t _zn_recv_t_msg_nt(const _zn_link_t *zl)
+_zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 {
     _zn_transport_message_result_t ret;
 

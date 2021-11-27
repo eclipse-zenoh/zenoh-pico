@@ -27,6 +27,6 @@ int _zn_send_t_msg(_zn_transport_t *zt, const _zn_transport_message_t *t_msg);
 int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, const _zn_transport_message_t *t_msg);
 int _zn_multicast_send_t_msg(_zn_transport_multicast_t *ztu, const _zn_transport_message_t *t_msg);
 
-int _zn_send_t_msg_nt(const _zn_link_t *zl, const _zn_transport_message_t *t_msg);
+int _zn_link_send_t_msg(const _zn_link_t *zl, const _zn_transport_message_t *t_msg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TX_H */
