@@ -26,7 +26,7 @@ There are 2 kind of packages:
  - **libzenohpico**: only contains the library file (.so)
  - **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
 
-For other platforms, you will need to clone and build the sources.
+For other platforms, you will need to dup and build the sources.
 
 WARNING: Note that zenoh-pico has not been ported on Windows yet!
 

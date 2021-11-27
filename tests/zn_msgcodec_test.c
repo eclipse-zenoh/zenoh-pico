@@ -1256,9 +1256,7 @@ void assert_eq_declaration(_zn_declaration_t *left, _zn_declaration_t *right)
 /*------------------ Declare message ------------------*/
 _zn_zenoh_message_t gen_declare_message(void)
 {
-    _zn_declaration_array_t declarations;
-    declarations.len = gen_zint() % 16;
-    declarations.val = (_zn_declaration_t *)malloc(sizeof(_zn_declaration_t) * declarations.len);
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(gen_zint() % 16);
 
     for (z_zint_t i = 0; i < declarations.len; i++)
         declarations.val[i] = gen_declaration();

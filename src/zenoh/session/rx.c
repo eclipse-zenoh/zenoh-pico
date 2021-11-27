@@ -89,9 +89,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 size_t len = _z_list_len(subs);
                 if (len > 0)
                 {
-                    _zn_declaration_array_t declarations;
-                    declarations.len = len;
-                    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+                    _zn_declaration_array_t declarations = _zn_declaration_array_make(len);
 
                     // Need to reply with a declare subscriber
                     while (subs)

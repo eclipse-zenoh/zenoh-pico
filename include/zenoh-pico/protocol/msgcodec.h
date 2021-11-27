@@ -181,7 +181,6 @@ _ZN_DECLARE_FREE_NOH(forget_qle_decl);
 
 _ZN_DECLARE_ENCODE_NOH(declaration);
 _ZN_DECLARE_DECODE_NOH(declaration);
-_ZN_DECLARE_FREE_NOH(declaration);
 
 _ZN_DECLARE_ENCODE_NOH(declare);
 _ZN_DECLARE_DECODE_NOH(declare);

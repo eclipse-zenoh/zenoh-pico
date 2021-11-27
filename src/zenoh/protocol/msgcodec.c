@@ -227,7 +227,7 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locator_array_result_t *r)
     _ASSURE_P_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
     size_t len = (size_t)r_n.value.zint;
 
-    _zn_locator_array_init(&r->value.locator_array, len);
+    r->value.locator_array = _zn_locator_array_make(len);
 
     // Decode the elements
     for (size_t i = 0; i < len; i++)

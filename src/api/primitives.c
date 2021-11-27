@@ -45,13 +45,9 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     }
 
     // We need to declare the resource
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
-
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
     // Resource declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_resource(r->id, _zn_reskey_clone(&r->key));
+    declarations.val[0] = _zn_z_msg_make_declaration_resource(r->id, _zn_reskey_dup(&r->key));
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -73,10 +69,7 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
         return;
 
     // We need to undeclare the resource and the publisher
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Resource declaration
     declarations.val[0] = _zn_z_msg_make_declaration_forget_resource(rid);
@@ -103,13 +96,10 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
     pub->id = _zn_get_entity_id(zn);
 
     // We need to declare the resource and the publisher
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Publisher declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_publisher(_zn_reskey_clone(&reskey));
+    declarations.val[0] = _zn_z_msg_make_declaration_publisher(_zn_reskey_dup(&reskey));
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -127,13 +117,10 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 void zn_undeclare_publisher(zn_publisher_t *pub)
 {
     // We need to undeclare the publisher
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Forget publisher declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_publisher(_zn_reskey_clone(&pub->key));
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_publisher(_zn_reskey_dup(&pub->key));
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -166,13 +153,10 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     }
 
     // We need to declare the subscriber
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Subscriber declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_subscriber(_zn_reskey_clone(&reskey), sub_info);
+    declarations.val[0] = _zn_z_msg_make_declaration_subscriber(_zn_reskey_dup(&reskey), sub_info);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -198,13 +182,10 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
         return;
 
     // We need to undeclare the subscriber
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Forget Subscriber declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_subscriber(_zn_reskey_clone(&s->key));
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_subscriber(_zn_reskey_dup(&s->key));
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -239,13 +220,10 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     }
 
     // We need to declare the queryable
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Queryable declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_clone(&reskey), (z_zint_t)kind);
+    declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_dup(&reskey), (z_zint_t)kind);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -271,13 +249,10 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
         return;
 
     // We need to undeclare the subscriber
-    _zn_declaration_array_t declarations;
-    unsigned int len = 1;
-    declarations.len = len;
-    declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+    _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Forget Subscriber declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(_zn_reskey_clone(&q->key));
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(_zn_reskey_dup(&q->key));
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -389,7 +364,7 @@ void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_
     _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
     pq->id = _zn_get_query_id(zn);
     pq->key = reskey;
-    pq->predicate = _z_str_clone(predicate);
+    pq->predicate = _z_str_dup(predicate);
     pq->target = target;
     pq->consolidation = consolidation;
     pq->callback = callback;

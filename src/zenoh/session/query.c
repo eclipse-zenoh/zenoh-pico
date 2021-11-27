@@ -303,7 +303,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         pen_rep->reply.data.replier_kind = reply.data.replier_kind;
 
         // Make a copy of the data info timestamp if present
-        pen_rep->tstamp = z_timestamp_clone(&ts);
+        pen_rep->tstamp = z_timestamp_dup(&ts);
 
         // Add it to the list of pending replies if new
         if (latest == NULL)

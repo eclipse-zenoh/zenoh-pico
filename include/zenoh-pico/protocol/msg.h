@@ -804,7 +804,9 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_declaration_t;
-_ARRAY_DECLARE(_zn_declaration_t, declaration, _zn_)
+
+void _zn_declaration_free(_zn_declaration_t *dcl);
+_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_free)
 
 typedef struct
 {

@@ -28,11 +28,11 @@ inline _z_vec_t _z_vec_make(size_t capacity)
     return v;
 }
 
-_z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f clone_f)
+_z_vec_t _z_vec_dup(const _z_vec_t *v, z_element_dup_f dup_f)
 {
     _z_vec_t u = _z_vec_make(v->capacity);
     for (size_t i = 0; i < v->len; i++)
-        _z_vec_append(&u, clone_f(v->val[i]));
+        _z_vec_append(&u, dup_f(v->val[i]));
     return u;
 }
 
@@ -40,6 +40,7 @@ void _z_vec_reset(_z_vec_t *v, z_element_free_f free_f)
 {
     for (size_t i = 0; i < v->len; i++)
         free_f(&v->val[i]);
+
     v->len = 0;
 }
 
@@ -48,7 +49,10 @@ void _z_vec_clear(_z_vec_t *v, z_element_free_f free_f)
     for (size_t i = 0; i < v->len; i++)
         free_f(&v->val[i]);
     free(v->val);
-    memset(v, 0, sizeof(_z_vec_t));
+
+    v->capacity = 0;
+    v->len = 0;
+    v->val = NULL;
 }
 
 void _z_vec_free(_z_vec_t **v, z_element_free_f free_f)

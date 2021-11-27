@@ -32,9 +32,9 @@
  */
 int zn_rname_intersect(const z_str_t left, const z_str_t right);
 
-/*------------------ Clone/Copy/Free helpers ------------------*/
-zn_reskey_t _zn_reskey_clone(const zn_reskey_t *resky);
-z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp);
+/*------------------ dup/Copy/Free helpers ------------------*/
+zn_reskey_t _zn_reskey_dup(const zn_reskey_t *resky);
+z_timestamp_t z_timestamp_dup(const z_timestamp_t *tstamp);
 void z_timestamp_reset(z_timestamp_t *tstamp);
 
 #endif /* ZENOH_PICO_PROTOCOL_UTILS_H */
