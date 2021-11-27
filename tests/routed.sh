@@ -23,7 +23,7 @@ echo "------------------ Running test $TESTBIN -------------------"
 sleep 5
 
 if [ ! -f zenohd ]; then
-    git dup https://github.com/eclipse-zenoh/zenoh.git zenoh-git
+    git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
     cd zenoh-git
     cargo build
     cp ./target/debug/zenohd $TESTDIR/
