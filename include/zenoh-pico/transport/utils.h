@@ -22,5 +22,7 @@
 
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right);
+z_zint_t _zn_sn_increment(z_zint_t sn_resolution, z_zint_t sn);
+z_zint_t _zn_sn_decrement(z_zint_t sn_resolution, z_zint_t sn);
 
 #endif /* ZENOH_PICO_TRANSPORT_UTILS_H */

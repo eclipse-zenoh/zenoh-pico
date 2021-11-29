@@ -101,8 +101,6 @@ zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int a
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
-        printf("\nInserting: %s\n", p_value);
-
         zn_int_str_map_insert(&res.value.int_str_map, key, p_value);
 
         // Process next key value

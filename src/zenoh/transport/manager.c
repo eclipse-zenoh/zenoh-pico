@@ -24,28 +24,27 @@ _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t loc
     if (res_zl.tag == _z_res_t_ERR)
         goto ERR_1;
 
-    _zn_transport_establish_param_result_t res_tp_param;
     if (res_zl.value.link->is_multicast == 0)
     {
-        res_tp_param = _zn_transport_unicast_open_client(res_zl.value.link, local_pid);
+        _zn_transport_unicast_establish_param_result_t res_tp_param = _zn_transport_unicast_open_client(res_zl.value.link, local_pid);
         if (res_tp_param.tag == _z_res_t_ERR)
             goto ERR_2;
 
         zt = _zn_transport_unicast_init();
-        zt->transport.unicast.sn_resolution = res_tp_param.value.transport_establish_param.sn_resolution;
+        zt->transport.unicast.sn_resolution = res_tp_param.value.transport_unicast_establish_param.sn_resolution;
         zt->transport.unicast.sn_resolution_half = zt->transport.unicast.sn_resolution / 2;
-        zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_establish_param.initial_sn_tx;
-        zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_tx;
-        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_establish_param.initial_sn_rx;
-        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_rx;
-        zt->transport.unicast.lease = res_tp_param.value.transport_establish_param.lease;
-        zt->transport.unicast.remote_pid = res_tp_param.value.transport_establish_param.remote_pid;
+        zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_unicast_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_unicast_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_unicast_establish_param.initial_sn_rx;
+        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_unicast_establish_param.initial_sn_rx;
+        zt->transport.unicast.lease = res_tp_param.value.transport_unicast_establish_param.lease;
+        zt->transport.unicast.remote_pid = res_tp_param.value.transport_unicast_establish_param.remote_pid;
 
         zt->transport.unicast.link = res_zl.value.link;
     }
     else
     {
-        res_tp_param = _zn_transport_multicast_open_client(res_zl.value.link, local_pid);
+        _zn_transport_multicast_establish_param_result_t res_tp_param = _zn_transport_multicast_open_client(res_zl.value.link, local_pid);
         if (res_tp_param.tag == _z_res_t_ERR)
             goto ERR_2;
 
@@ -73,36 +72,42 @@ _zn_transport_p_result_t _zn_new_transport_peer(z_str_t locator, z_bytes_t local
     _zn_transport_p_result_t ret;
     _zn_transport_t *zt = NULL;
 
-    _zn_link_p_result_t res_zl = _zn_open_link(locator, 0);
+    _zn_link_p_result_t res_zl = _zn_listen_link(locator, 0);
     if (res_zl.tag == _z_res_t_ERR)
         goto ERR_1;
 
-    _zn_transport_establish_param_result_t res_tp_param;
     if (res_zl.value.link->is_multicast == 0)
     {
-        res_tp_param = _zn_transport_unicast_open_peer(res_zl.value.link, local_pid);
+        _zn_transport_unicast_establish_param_result_t res_tp_param = _zn_transport_unicast_open_peer(res_zl.value.link, local_pid);
         if (res_tp_param.tag == _z_res_t_ERR)
             goto ERR_2;
 
         zt = _zn_transport_unicast_init();
-        zt->transport.unicast.sn_resolution = res_tp_param.value.transport_establish_param.sn_resolution;
+        zt->transport.unicast.sn_resolution = res_tp_param.value.transport_unicast_establish_param.sn_resolution;
         zt->transport.unicast.sn_resolution_half = zt->transport.unicast.sn_resolution / 2;
-        zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_establish_param.initial_sn_tx;
-        zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_tx;
-        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_establish_param.initial_sn_rx;
-        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_establish_param.initial_sn_rx;
-        zt->transport.unicast.lease = res_tp_param.value.transport_establish_param.lease;
-        zt->transport.unicast.remote_pid = res_tp_param.value.transport_establish_param.remote_pid;
+        zt->transport.unicast.sn_tx_reliable = res_tp_param.value.transport_unicast_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_tx_best_effort = res_tp_param.value.transport_unicast_establish_param.initial_sn_tx;
+        zt->transport.unicast.sn_rx_reliable = res_tp_param.value.transport_unicast_establish_param.initial_sn_rx;
+        zt->transport.unicast.sn_rx_best_effort = res_tp_param.value.transport_unicast_establish_param.initial_sn_rx;
+        zt->transport.unicast.lease = res_tp_param.value.transport_unicast_establish_param.lease;
+        zt->transport.unicast.remote_pid = res_tp_param.value.transport_unicast_establish_param.remote_pid;
 
         zt->transport.unicast.link = res_zl.value.link;
     }
     else
     {
-        res_tp_param = _zn_transport_multicast_open_peer(res_zl.value.link, local_pid);
+        _zn_transport_multicast_establish_param_result_t res_tp_param = _zn_transport_multicast_open_peer(res_zl.value.link, local_pid);
         if (res_tp_param.tag == _z_res_t_ERR)
             goto ERR_2;
 
-        // TODO: not implemented
+        zt = _zn_transport_multicast_init();
+        zt->transport.multicast.sn_resolution = res_tp_param.value.transport_multicast_establish_param.sn_resolution;
+        zt->transport.multicast.sn_resolution_half = zt->transport.multicast.sn_resolution / 2;
+        zt->transport.multicast.sn_rx_reliable = res_tp_param.value.transport_multicast_establish_param.initial_sn_rx;
+        zt->transport.multicast.sn_rx_best_effort = res_tp_param.value.transport_multicast_establish_param.initial_sn_rx;
+        zt->transport.multicast.lease = ZN_KEEP_ALIVE_INTERVAL; // FIXME
+
+        zt->transport.multicast.link = res_zl.value.link;
     }
 
     ret.tag = _z_res_t_OK;

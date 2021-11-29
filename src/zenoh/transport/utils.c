@@ -21,3 +21,16 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
     else
         return (sn_left - sn_right > sn_resolution_half);
 }
+
+z_zint_t _zn_sn_increment(z_zint_t sn_resolution, z_zint_t sn)
+{
+    return (sn + 1) % sn_resolution;
+}
+
+z_zint_t _zn_sn_decrement(z_zint_t sn_resolution, z_zint_t sn)
+{
+    if (sn == 0)
+        return sn_resolution - 1;
+    else
+        return sn - 1;
+}

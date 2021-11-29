@@ -21,21 +21,21 @@
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zt->mutex_inner
+ *  - ztu->mutex_inner
  */
-z_zint_t __unsafe_zn_unicast_get_sn(_zn_transport_unicast_t *zt, zn_reliability_t reliability)
+z_zint_t __unsafe_zn_unicast_get_sn(_zn_transport_unicast_t *ztu, zn_reliability_t reliability)
 {
     z_zint_t sn;
     // Get the sequence number and update it in modulo operation
     if (reliability == zn_reliability_t_RELIABLE)
     {
-        sn = zt->sn_tx_reliable;
-        zt->sn_tx_reliable = (zt->sn_tx_reliable + 1) % zt->sn_resolution;
+        sn = ztu->sn_tx_reliable;
+        ztu->sn_tx_reliable = (ztu->sn_tx_reliable + 1) % ztu->sn_resolution;
     }
     else
     {
-        sn = zt->sn_tx_best_effort;
-        zt->sn_tx_best_effort = (zt->sn_tx_best_effort + 1) % zt->sn_resolution;
+        sn = ztu->sn_tx_best_effort;
+        ztu->sn_tx_best_effort = (ztu->sn_tx_best_effort + 1) % ztu->sn_resolution;
     }
     return sn;
 }

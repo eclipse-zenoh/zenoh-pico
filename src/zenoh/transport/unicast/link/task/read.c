@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
@@ -25,7 +25,7 @@ int _znp_unicast_read(_zn_transport_unicast_t *ztu)
     {
         int res = _zn_unicast_handle_transport_message(ztu, &r_s.value.transport_message);
         _zn_transport_message_free(&r_s.value.transport_message);
-        
+
         return res;
     }
     else
@@ -107,7 +107,7 @@ void *_znp_unicast_read_task(void *arg)
                     _zn_transport_message_free(&r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
-                        }
+            }
             else
             {
                 _Z_DEBUG("Connection closed due to malformed message");
