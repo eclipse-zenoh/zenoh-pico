@@ -194,7 +194,7 @@ _zn_locator_array_t gen_locator_array(size_t size)
     {
         la.val[i].protocol = gen_str(3);
         la.val[i].address = gen_str(12);
-        // @TODO: generate metadata
+        la.val[i].metadata = zn_int_str_map_make(); // @TODO: generate metadata
     }
 
     return la;
