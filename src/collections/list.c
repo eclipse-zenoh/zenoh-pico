@@ -67,7 +67,7 @@ _z_list_t *_z_list_drop_head(_z_list_t *xs, z_element_free_f f)
 {
     _z_list_t *head = xs;
     xs = head->tail;
-    f(head->val);
+    f(&head->val);
     free(head);
 
     return xs;
@@ -94,7 +94,7 @@ _z_list_t *_z_list_drop_pos(_z_list_t *xs, size_t pos, z_element_free_f f)
         }
 
         previous->tail = xs->tail;
-        f(xs->val);
+        f(&xs->val);
         free(xs);
 
         return head;
@@ -114,7 +114,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate predicate, void *
             if (current == xs)
             {
                 xs = xs->tail;
-                f(current->val);
+                f(&current->val);
                 free(current);
             }
             // tail removal
@@ -128,7 +128,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate predicate, void *
             else
             {
                 previous->tail = current->tail;
-                f(current->val);
+                f(&current->val);
                 free(current);
             }
             break;

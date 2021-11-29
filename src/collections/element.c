@@ -36,9 +36,9 @@ int _zn_element_cmp_noop(const void *left, const void *right)
 /*------------------ string ----------------*/
 void z_element_free_str(void **s)
 {
-    z_str_t ptr = (z_str_t)s;
+    z_str_t ptr = (z_str_t)*s;
     free(ptr);
-    s = NULL;
+    *s = NULL;
 }
 
 void *z_element_dup_str(const void *s)

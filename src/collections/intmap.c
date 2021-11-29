@@ -28,7 +28,7 @@ _z_int_void_map_entry_t *_z_int_void_map_entry_make(unsigned int key, void *valu
 void _z_int_void_map_entry_free(_z_int_void_map_entry_t **e, z_element_free_f f)
 {
     _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)*e;
-    f(entry->value);
+    f(&entry->value);
     free(entry);
     *e = NULL;
 }
