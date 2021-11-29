@@ -18,17 +18,22 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _z_vec_find_peer_id(_z_vec_t *v, void *e)
+int _z_vec_find_z_bytes_t(_z_vec_t *v, z_bytes_t *e)
 {
     for (size_t i = 0; i < v->len; i++)
-        if (memcmp(v->val[i], e, ZN_PID_LENGTH) == 0)
+    {
+        if (((z_bytes_t *)v->val[i])->len != e->len)
+            return -1;
+
+        if (memcmp(((z_bytes_t *)v->val[i])->val, e->val, e->len) == 0)
             return i;
+    }
 
     return -1;
 }
 
 /*------------------ Reception helper ------------------*/
-void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_message_result_t *r)
+void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_message_result_t *r, z_bytes_t *addr)
 {
     _Z_DEBUG(">> recv session msg\n");
     r->tag = _z_res_t_OK;
@@ -48,7 +53,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read the message length
-        if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
+        if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _ZN_MSG_LEN_ENC_SIZE, addr) != _ZN_MSG_LEN_ENC_SIZE)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
@@ -66,7 +71,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
         }
 
         // Read enough bytes to decode the message
-        if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, len) != len)
+        if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, len, addr) != len)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
@@ -75,7 +80,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
     }
     else
     {
-        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf) < 0)
+        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) < 0)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
@@ -94,15 +99,15 @@ EXIT_SRCV_PROC:
     z_mutex_unlock(&ztm->mutex_rx);
 }
 
-_zn_transport_message_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_t *ztm)
+_zn_transport_message_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_t *ztm, z_bytes_t *addr)
 {
     _zn_transport_message_result_t r;
 
-    _zn_multicast_recv_t_msg_na(ztm, &r);
+    _zn_multicast_recv_t_msg_na(ztm, &r, addr);
     return r;
 }
 
-int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_transport_message_t *t_msg)
+int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_transport_message_t *t_msg, z_bytes_t *addr)
 {
     switch (_ZN_MID(t_msg->header))
     {
@@ -139,12 +144,14 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         }
 
         // Lookup for peer_id in internal struct
-        int pos = _z_vec_find_peer_id(&ztm->remote_pid, &t_msg->body.join.pid);
+        int pos = _z_vec_find_z_bytes_t(&ztm->remote_addr_peers, addr);
         if (pos == -1) // New peer
         {
-            z_bytes_t *pid = (z_bytes_t *)malloc(sizeof(z_bytes_t));
+            _z_vec_append(&ztm->remote_addr_peers, addr);
 
+            z_bytes_t *pid = (z_bytes_t *)malloc(sizeof(z_bytes_t));
             _z_bytes_copy(pid, &t_msg->body.join.pid);
+            _z_vec_append(&ztm->remote_pid_peers, pid);
 
             z_zint_t *sn_resolution = (z_zint_t *)malloc(sizeof(z_zint_t));
             if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S)) {
@@ -236,7 +243,10 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
     case _ZN_MID_FRAME:
     {
         // Get peer transport params
-        size_t pos = 0;
+        int pos = _z_vec_find_z_bytes_t(&ztm->remote_addr_peers, addr);
+        if (pos == -1)
+            return _z_res_t_OK;
+
         z_zint_t *sn_resolution = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_peers, pos);
         z_zint_t *sn_resolution_half = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_half_peers, pos);
         z_zint_t *sn_rx_reliable = (z_zint_t *) _z_vec_get(&ztm->sn_rx_reliable_peers, pos);
@@ -316,7 +326,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 if (res != _z_res_t_OK)
                     return res;
             }
-             return _z_res_t_OK;
+            return _z_res_t_OK;
         }
     }
 

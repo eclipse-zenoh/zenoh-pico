@@ -21,15 +21,16 @@
 int _znp_unicast_read(_zn_transport_unicast_t *ztu)
 {
     _zn_transport_message_result_t r_s = _zn_unicast_recv_t_msg(ztu);
-    if (r_s.tag == _z_res_t_OK)
-    {
-        int res = _zn_unicast_handle_transport_message(ztu, &r_s.value.transport_message);
-        _zn_transport_message_free(&r_s.value.transport_message);
+    if (r_s.tag == _z_res_t_ERR)
+        goto ERR;
 
-        return res;
-    }
-    else
-        return _z_res_t_ERR;
+    int res = _zn_unicast_handle_transport_message(ztu, &r_s.value.transport_message);
+    _zn_transport_message_free(&r_s.value.transport_message);
+
+    return res;
+
+ERR:
+    return _z_res_t_ERR;
 }
 
 void *_znp_unicast_read_task(void *arg)
@@ -60,7 +61,7 @@ void *_znp_unicast_read_task(void *arg)
                 // Read number of bytes to read
                 while (_z_zbuf_len(&ztu->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
                 {
-                    if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf) <= 0)
+                    if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) <= 0)
                         goto EXIT_RECV_LOOP;
                 }
             }
@@ -74,7 +75,7 @@ void *_znp_unicast_read_task(void *arg)
                 // Read the rest of bytes to decode one or more session messages
                 while (_z_zbuf_len(&ztu->zbuf) < to_read)
                 {
-                    if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf) <= 0)
+                    if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) <= 0)
                         goto EXIT_RECV_LOOP;
                 }
             }
@@ -84,7 +85,7 @@ void *_znp_unicast_read_task(void *arg)
             _z_zbuf_compact(&ztu->zbuf);
 
             // Read bytes from the socket
-            to_read = _zn_link_recv_zbuf(ztu->link, &ztu->zbuf);
+            to_read = _zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL);
             if (to_read == -1)
                 continue;
         }

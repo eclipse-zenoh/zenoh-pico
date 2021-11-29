@@ -89,7 +89,8 @@ typedef struct
     _z_vec_t/*<z_zint_t>*/ sn_rx_reliable_peers;
     _z_vec_t/*<z_zint_t>*/ sn_rx_best_effort_peers;
 
-    _z_vec_t/*<z_bytes_t>*/ remote_pid;
+    _z_vec_t/*<void *>*/ remote_addr_peers;
+    _z_vec_t/*<z_bytes_t>*/ remote_pid_peers;
 
     // ----------- Link related -----------
     // TX and RX buffers

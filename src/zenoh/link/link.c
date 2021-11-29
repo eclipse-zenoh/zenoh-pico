@@ -122,17 +122,17 @@ void _zn_link_free(_zn_link_t **zn)
     *zn = NULL;
 }
 
-int _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf)
+int _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr)
 {
-    int rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
+    int rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
     if (rb > 0)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
 
-int _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len)
+int _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len, z_bytes_t *addr)
 {
-    int rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len);
+    int rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
     if (rb > 0)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;

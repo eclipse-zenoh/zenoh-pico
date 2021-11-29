@@ -152,8 +152,9 @@ _zn_transport_t *_zn_transport_multicast_init()
     zt->transport.multicast.received = 0;
     zt->transport.multicast.transmitted = 0;
 
-    // List of remote peer PIDs
-    zt->transport.multicast.remote_pid = _z_vec_make(0);
+    // List of remote peer PIDs and their addresses
+    zt->transport.multicast.remote_addr_peers = _z_vec_make(0);
+    zt->transport.multicast.remote_pid_peers = _z_vec_make(0);
 
     // Transport link for unicast
     zt->transport.multicast.link = NULL;
