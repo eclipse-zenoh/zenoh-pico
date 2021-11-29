@@ -23,7 +23,7 @@ K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SI
 static int thread_index = 0;
 
 /*------------------ String ------------------*/
-z_str_t strdup(const z_str_t s)
+z_str_t _z_str_clone(const z_str_t s)
 {
     z_str_t result = (z_str_t)malloc(strlen(s) + 1);
 

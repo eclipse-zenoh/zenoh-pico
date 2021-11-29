@@ -61,7 +61,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         if (locs.len > 0)
         {
             if (locs.val[0].locators.len > 0)
-                locator = strdup(locs.val[0].locators.val[0]);
+                locator = _z_str_clone(locs.val[0].locators.val[0]);
             else
             {
                 zn_hello_array_free(locs);
@@ -79,7 +79,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         }
     }
     else
-        locator = strdup(zn_properties_get(config, ZN_CONFIG_PEER_KEY).val);
+        locator = _z_str_clone(zn_properties_get(config, ZN_CONFIG_PEER_KEY).val);
 
     // TODO: check invalid configurations
     // For example, client mode in multicast links

@@ -84,10 +84,10 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
 {
     z_str_t rname = NULL;
 
-    // Case 2) -> string only reskey, duplicate the rname
+    // Case 2) -> string only reskey, clonelicate the rname
     if (reskey->rid == ZN_RESOURCE_ID_NONE)
     {
-        rname = strdup(reskey->rname);
+        rname = _z_str_clone(reskey->rname);
         return rname;
     }
 

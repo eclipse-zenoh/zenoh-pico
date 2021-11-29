@@ -160,7 +160,7 @@ int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f f
     return (l == r) ? 0 : -1;
 }
 
-_z_list_t *_z_list_dup(const _z_list_t *xs, z_element_dup_f f)
+_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f f)
 {
     _z_list_t *new = NULL;
 

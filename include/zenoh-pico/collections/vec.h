@@ -31,7 +31,7 @@ typedef struct
 } _z_vec_t;
 
 _z_vec_t _z_vec_make(size_t capacity);
-_z_vec_t _z_vec_dup(const _z_vec_t *v, z_element_dup_f f);
+_z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f f);
 
 size_t _z_vec_len(const _z_vec_t *v);
 void _z_vec_append(_z_vec_t *v, void *e);

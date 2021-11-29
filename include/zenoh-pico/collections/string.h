@@ -25,7 +25,7 @@
  */
 typedef char *z_str_t;
 
-z_str_t _z_str_dup(const z_str_t src);
+z_str_t _z_str_clone(const z_str_t src);
 
 /*-------- string --------*/
 /**

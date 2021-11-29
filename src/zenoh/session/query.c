@@ -293,7 +293,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         // Make a copy of the sample if needed
         _z_bytes_copy((z_bytes_t *)&pen_rep->reply.data.data.value, (z_bytes_t *)&reply.data.data.value);
         if (reskey.rid == ZN_RESOURCE_ID_NONE)
-            pen_rep->reply.data.data.key.val = strdup(reply.data.data.key.val);
+            pen_rep->reply.data.data.key.val = _z_str_clone(reply.data.data.key.val);
         else
             pen_rep->reply.data.data.key.val = reply.data.data.key.val;
         pen_rep->reply.data.data.key.len = reply.data.data.key.len;
@@ -303,7 +303,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         pen_rep->reply.data.replier_kind = reply.data.replier_kind;
 
         // Make a copy of the data info timestamp if present
-        pen_rep->tstamp = z_timestamp_dup(&ts);
+        pen_rep->tstamp = z_timestamp_clone(&ts);
 
         // Add it to the list of pending replies if new
         if (latest == NULL)
@@ -328,7 +328,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
         // Copy the resource key
         pen_rep->reply.data.data.value = payload;
         if (reskey.rid == ZN_RESOURCE_ID_NONE)
-            pen_rep->reply.data.data.key.val = strdup(reply.data.data.key.val);
+            pen_rep->reply.data.data.key.val = _z_str_clone(reply.data.data.key.val);
         else
             pen_rep->reply.data.data.key.val = reply.data.data.key.val;
         pen_rep->reply.data.data.key.len = reply.data.data.key.len;

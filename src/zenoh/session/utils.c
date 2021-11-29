@@ -29,16 +29,16 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/link/manager.h"
 
-/*------------------ dup helpers ------------------*/
-zn_reskey_t _zn_reskey_dup(const zn_reskey_t *reskey)
+/*------------------ clone helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
 {
     zn_reskey_t rk;
     rk.rid = reskey->rid,
-    rk.rname = reskey->rname ? strdup(reskey->rname) : NULL;
+    rk.rname = reskey->rname ? _z_str_clone(reskey->rname) : NULL;
     return rk;
 }
 
-z_timestamp_t z_timestamp_dup(const z_timestamp_t *tstamp)
+z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp)
 {
     z_timestamp_t ts;
     _z_bytes_copy(&ts.id, &tstamp->id);
