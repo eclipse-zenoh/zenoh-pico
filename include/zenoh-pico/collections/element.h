@@ -21,23 +21,22 @@ typedef void (*z_element_free_f)(void **e);
 typedef void *(*z_element_clone_f)(const void *e);
 typedef int (*z_element_cmp_f)(const void *left, const void *right);
 
-#define _Z_ELEMENT(name, type, elem_clear_f)             \
-    static inline void z_element_free_##name##(void *e)  \
-    {                                                    \
-        return elem_clear_f((type *)e);                  \
-    }                                                    \
-    static inline void z_element_free_##name##(void **e) \
-    {                                                    \
-        return elem_free_f((type **)e);                  \
-    }
-
-#define _Z_ELEMENT_clone(name, type, elem_clone_f)              \
-    static inline void *z_element_clone_##name##(const void *e) \
-    {                                                           \
-        return (void *)elem_clone_f((const type *)e);           \
-    }
-
-#define _Z_ELEMENT_CMP(name, type, elem_cmp_f)                                    \
+#define _Z_ELEMENT_DEFINE(name, type, elem_clear_f, elem_clone_f, elem_cmp_f)     \
+    static inline void name##_elem_clear(void *e)                                 \
+    {                                                                             \
+        elem_clear_f((type *)e);                                                  \
+    }                                                                             \
+    static inline void name##_elem_free(void **e)                                 \
+    {                                                                             \
+        type *ptr = (type *)*e;                                                   \
+        elem_clear_f(ptr);                                                        \
+        free(ptr);                                                                \
+        *e = NULL;                                                                \
+    }                                                                             \
+    static inline void *z_element_clone_##name##(const void *e)                   \
+    {                                                                             \
+        return (void *)elem_clone_f((const type *)e);                             \
+    }                                                                             \
     static inline int z_element_cmp_##name##(const void *left, const void *right) \
     {                                                                             \
         return elem_cmp_f((const type *)left, (const type *)right);               \

@@ -26,7 +26,7 @@ int main(void)
     xs = z_str_list_push(xs, _z_str_clone("two"));
     xs = z_str_list_push(xs, _z_str_clone("three"));
     printf("list len = %zu\n", z_str_list_len(xs));
-    xs = z_str_list_drop_pos(xs, 1);
+    xs = z_str_list_pop(xs);
     printf("list len = %zu\n", z_str_list_len(xs));
     z_str_list_free(&xs);
 

@@ -88,7 +88,8 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
 z_str_t _z_str_clone(const z_str_t src)
 {
     z_str_t dst = (z_str_t)malloc(strlen(src) + 1);
-    return strcpy(dst, src);
+    strcpy(dst, src);
+    return dst;
 }
 
 /*-------- str_array --------*/

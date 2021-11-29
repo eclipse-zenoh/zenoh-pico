@@ -149,7 +149,7 @@ int main(int argc, z_str_t *argv)
         zn_subscriber_t *sub = zn_declare_subscriber(s2, rk, zn_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
-        subs2 = _z_list_cons(subs2, sub);
+        subs2 = _z_list_push(subs2, sub);
     }
 
     for (unsigned int i = 0; i < SET; i++)
@@ -159,7 +159,7 @@ int main(int argc, z_str_t *argv)
         zn_queryable_t *qle = zn_declare_queryable(s2, rk, ZN_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
-        qles2 = _z_list_cons(qles2, qle);
+        qles2 = _z_list_push(qles2, qle);
     }
 
     // Declare publisher on firt session
@@ -169,7 +169,7 @@ int main(int argc, z_str_t *argv)
         zn_publisher_t *pub = zn_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->id);
-        pubs1 = _z_list_cons(pubs1, pub);
+        pubs1 = _z_list_push(pubs1, pub);
     }
 
     z_sleep_s(SLEEP);
@@ -267,7 +267,7 @@ int main(int argc, z_str_t *argv)
         zn_publisher_t *pub = _z_list_head(pubs1);
         zn_undeclare_publisher(pub);
         printf("Undeclared publisher on session 2: %zu\n", pub->id);
-        pubs1 = _z_list_pop(pubs1);
+        pubs1 = _z_list_pop(pubs1, _zn_element_free_noop);
     }
 
     // Undeclare subscribers and queryables on second session
@@ -276,7 +276,7 @@ int main(int argc, z_str_t *argv)
         zn_subscriber_t *sub = _z_list_head(subs2);
         zn_undeclare_subscriber(sub);
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        subs2 = _z_list_pop(subs2);
+        subs2 = _z_list_pop(subs2, _zn_element_free_noop);
     }
 
     while (qles2)
@@ -284,7 +284,7 @@ int main(int argc, z_str_t *argv)
         zn_queryable_t *qle = _z_list_head(qles2);
         zn_undeclare_queryable(qle);
         printf("Undeclared queryable on session 2: %zu\n", qle->id);
-        qles2 = _z_list_pop(qles2);
+        qles2 = _z_list_pop(qles2, _zn_element_free_noop);
     }
 
     // Undeclare resources on both sessions

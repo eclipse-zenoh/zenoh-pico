@@ -102,7 +102,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     if (xs == NULL)
     {
         _z_int_void_map_entry_t *entry = _z_int_void_map_entry_make(k, v);
-        map->vals[idx] = _z_list_cons(map->vals[idx], entry);
+        map->vals[idx] = _z_list_push(map->vals[idx], entry);
         map->len++;
     }
 
@@ -128,13 +128,11 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k)
     return NULL;
 }
 
-int _z_int_void_map_key_predicate(void *current, void *desired)
+int _z_int_void_map_key_cmp(const void *left, const void *right)
 {
-    _z_int_void_map_entry_t *c = (_z_int_void_map_entry_t *)current;
-    _z_int_void_map_entry_t *d = (_z_int_void_map_entry_t *)desired;
-    if (c->key == d->key)
-        return 1;
-    return 0;
+    _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
+    _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
+    return l->key == r->key;
 }
 
 void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f)
@@ -148,7 +146,7 @@ void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f
 
     size_t l = _z_list_len(map->vals[idx]);
 
-    map->vals[idx] = _z_list_drop_filter(map->vals[idx], _z_int_void_map_key_predicate, &e, f);
+    map->vals[idx] = _z_list_drop_filter(map->vals[idx], f, _z_int_void_map_key_cmp, &e);
     map->len -= l - _z_list_len(map->vals[idx]);
 }
 
