@@ -32,7 +32,7 @@ typedef struct
 {
     z_str_t protocol;
     z_str_t address;
-    zn_int_str_map_t metadata;
+    _z_str_intmap_t metadata;
 } _zn_locator_t;
 
 _ZN_RESULT_DECLARE(_zn_locator_t, locator)
@@ -56,7 +56,7 @@ _ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
 typedef struct
 {
     _zn_locator_t locator;
-    zn_int_str_map_t config;
+    _z_str_intmap_t config;
 } _zn_endpoint_t;
 _ZN_RESULT_DECLARE(_zn_endpoint_t, endpoint)
 

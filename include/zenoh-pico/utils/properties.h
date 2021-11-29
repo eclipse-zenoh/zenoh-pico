@@ -54,7 +54,7 @@ typedef struct
 /**
  * Zenoh-net properties are represented as int-string map.
  */
-typedef zn_int_str_map_t zn_properties_t;
+typedef _z_str_intmap_t zn_properties_t;
 
 /**
  * Returns a new empty map of properties.
@@ -99,7 +99,7 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key);
  *     The length of the given properties map.
  */
 // size_t zn_properties_len(const zn_properties_t *ps);
-#define zn_properties_len zn_int_str_map_len
+#define zn_properties_len _z_str_intmap_len
 
 /**
  * Get the length of the given properties map.
@@ -111,7 +111,7 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key);
  *     A boolean to indicate if properties are present.
  */
 // int zn_properties_is_empty(const zn_properties_t *ps);
-#define zn_properties_is_empty zn_int_str_map_is_empty
+#define zn_properties_is_empty _z_str_intmap_is_empty
 
 /**
  * Clear a set of properties.
@@ -120,7 +120,7 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key);
  *   ps: A pointer to the properties map.
  */
 // void zn_properties_clear(zn_properties_t *ps);
-#define zn_properties_clear zn_int_str_map_clear
+#define zn_properties_clear _z_str_intmap_clear
 
 /**
  * Free a set of properties.
@@ -130,6 +130,6 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key);
  *
  */
 // void zn_properties_free(zn_properties_t **ps);
-#define zn_properties_free zn_int_str_map_free
+#define zn_properties_free _z_str_intmap_free
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

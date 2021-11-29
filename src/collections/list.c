@@ -34,12 +34,12 @@ _z_list_t *_z_list_push(_z_list_t *xs, void *x)
     return lst;
 }
 
-void *_z_list_head(_z_list_t *xs)
+void *_z_list_head(const _z_list_t *xs)
 {
     return xs->val;
 }
 
-_z_list_t *_z_list_tail(_z_list_t *xs)
+_z_list_t *_z_list_tail(const _z_list_t *xs)
 {
     return xs->tail;
 }
@@ -47,11 +47,11 @@ _z_list_t *_z_list_tail(_z_list_t *xs)
 size_t _z_list_len(const _z_list_t *xs)
 {
     size_t len = 0;
-    _z_list_t *head = (_z_list_t *)xs;
-    while (head != NULL)
+    _z_list_t *l = (_z_list_t *)xs;
+    while (l != NULL)
     {
         len += 1;
-        head = _z_list_tail(head);
+        l = _z_list_tail(l);
     }
     return len;
 }
@@ -64,6 +64,19 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f)
     free(head);
 
     return xs;
+}
+
+_z_list_t *_z_list_find(const _z_list_t *xs, z_element_cmp_f c_f, void *e)
+{
+    _z_list_t *l = (_z_list_t *)xs;
+    while (l != NULL)
+    {
+        void *head = _z_list_head(l);
+        if (c_f(e, head))
+            return l;
+        l = _z_list_tail(l);
+    }
+    return NULL;
 }
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_cmp_f c_f, void *left)
@@ -128,14 +141,14 @@ int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f c
     return l == r;
 }
 
-_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f f)
+_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f)
 {
     _z_list_t *new = NULL;
 
     _z_list_t *head = (_z_list_t *)xs;
     while (head != NULL)
     {
-        void *x = f(_z_list_head(head));
+        void *x = d_f(_z_list_head(head));
         new = _z_list_push(new, x);
         head = _z_list_tail(head);
     }

@@ -21,7 +21,6 @@ int main(void)
 {
     _z_str_list_t *xs = _z_str_list_make();
     _z_str_list_push(xs, _z_str_clone("one"));
-    zn_int_str_map_t map = zn_int_str_map_make();
 
     xs = _z_str_list_push(xs, _z_str_clone("two"));
     xs = _z_str_list_push(xs, _z_str_clone("three"));
@@ -30,36 +29,38 @@ int main(void)
     printf("list len = %zu\n", _z_str_list_len(xs));
     _z_str_list_free(&xs);
 
-    zn_int_str_map_insert(&map, 0, _z_str_clone("0"));
-    zn_int_str_map_insert(&map, 1, _z_str_clone("1"));
-    zn_int_str_map_insert(&map, 2, _z_str_clone("2"));
-    zn_int_str_map_insert(&map, 3, _z_str_clone("3"));
-    zn_int_str_map_insert(&map, 4, _z_str_clone("4"));
-    zn_int_str_map_insert(&map, 5, _z_str_clone("5"));
-    zn_int_str_map_insert(&map, 6, _z_str_clone("6"));
-    zn_int_str_map_insert(&map, 7, _z_str_clone("7"));
-    zn_int_str_map_insert(&map, 8, _z_str_clone("8"));
-    zn_int_str_map_insert(&map, 9, _z_str_clone("9"));
-    zn_int_str_map_insert(&map, 10, _z_str_clone("10"));
+    // str-intmap
+    _z_str_intmap_t map = _z_str_intmap_make();
+    assert(_z_str_intmap_is_empty(&map));
 
-    printf("Map size: %zu\n", zn_int_str_map_len(&map));
-    printf("get(0) = %s\n", zn_int_str_map_get(&map, 0));
-    printf("get(1) = %s\n", zn_int_str_map_get(&map, 1));
-    printf("get(2) = %s\n", zn_int_str_map_get(&map, 2));
-    printf("get(3) = %s\n", zn_int_str_map_get(&map, 3));
-    printf("get(4) = %s\n", zn_int_str_map_get(&map, 4));
-    printf("get(5) = %s\n", zn_int_str_map_get(&map, 5));
-    printf("get(6) = %s\n", zn_int_str_map_get(&map, 6));
-    printf("get(7) = %s\n", zn_int_str_map_get(&map, 7));
-    printf("get(8) = %s\n", zn_int_str_map_get(&map, 8));
-    printf("get(9) = %s\n", zn_int_str_map_get(&map, 9));
-    printf("get(10) = %s\n", zn_int_str_map_get(&map, 10));
+    char s[64];
+    int len = 128;
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        _z_str_intmap_insert(&map, i, _z_str_clone(s));
+    }
 
-    zn_int_str_map_remove(&map, 7);
-    assert(zn_int_str_map_get(&map, 7) == NULL);
-    zn_int_str_map_remove(&map, 0);
-    assert(zn_int_str_map_get(&map, 0) == NULL);
-    printf("get(5) = %s\n", zn_int_str_map_get(&map, 5));
+    printf("Map size: %zu\n", _z_str_intmap_len(&map));
+    assert(_z_str_intmap_len(&map) == len);
+
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        z_str_t e = _z_str_intmap_get(&map, i);
+        printf("get(%d) = %s\n", i, e);
+        assert(e != NULL);
+        assert(_z_str_cmp(s, e));
+    }
+
+    for (int i = 0; i < len; i++)
+    {
+        _z_str_intmap_remove(&map, i);
+        assert(_z_str_intmap_get(&map, i) == NULL);
+        assert(_z_str_intmap_len(&map) == (len - 1) - i);
+    }
+
+    assert(_z_str_intmap_is_empty(&map));
 
     return 0;
 }
