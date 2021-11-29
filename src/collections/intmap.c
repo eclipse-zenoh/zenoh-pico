@@ -25,10 +25,10 @@ _z_int_void_map_entry_t *_z_int_void_map_entry_make(unsigned int key, void *valu
     return entry;
 }
 
-void _z_int_void_map_entry_free(_z_int_void_map_entry_t **e, z_element_free_f f)
+void _z_int_void_map_entry_free(_z_int_void_map_entry_t **e, z_element_free_f f_f)
 {
     _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)*e;
-    f(entry->value);
+    f_f(&entry->value);
     free(entry);
     *e = NULL;
 }
@@ -63,7 +63,7 @@ int _z_int_void_map_is_empty(const _z_int_void_map_t *map)
     return _z_int_void_map_len(map) == 0;
 }
 
-void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f)
+void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f_f)
 {
     if (map->vals == NULL)
     {
@@ -87,7 +87,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
         if (entry->key == k)
         {
             // Free the pointer to the old value
-            f(&entry->value);
+            f_f(&entry->value);
             // Update the pointer to current value
             entry->value = v;
 

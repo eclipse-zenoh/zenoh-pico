@@ -109,7 +109,7 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
         _zn_resource_t *res = __unsafe_zn_get_resource_by_id(zn, is_local, id);
         if (res == NULL)
         {
-            _z_list_free(&strs, _zn_element_free_noop);
+            _z_list_free(&strs, _zn_noop_elem_free);
             return rname;
         }
 
@@ -300,9 +300,9 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
     z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_resources = _z_list_drop_filter(zn->local_resources, _zn_element_free_noop, __unsafe_zn_resource_predicate, res);
+        zn->local_resources = _z_list_drop_filter(zn->local_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
     else
-        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, _zn_element_free_noop, __unsafe_zn_resource_predicate, res);
+        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
     free(res);
 
     // Release the lock
@@ -319,7 +319,7 @@ void _zn_flush_resources(zn_session_t *zn)
         _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->local_resources);
         __unsafe_zn_free_resource(res);
         free(res);
-        zn->local_resources = _z_list_pop(zn->local_resources, _zn_element_free_noop);
+        zn->local_resources = _z_list_pop(zn->local_resources, _zn_noop_elem_free);
     }
 
     while (zn->remote_resources)
@@ -327,7 +327,7 @@ void _zn_flush_resources(zn_session_t *zn)
         _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->remote_resources);
         __unsafe_zn_free_resource(res);
         free(res);
-        zn->remote_resources = _z_list_pop(zn->remote_resources, _zn_element_free_noop);
+        zn->remote_resources = _z_list_pop(zn->remote_resources, _zn_noop_elem_free);
     }
 
     // Release the lock

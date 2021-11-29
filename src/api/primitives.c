@@ -433,7 +433,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     }
     rda.val = replies;
 
-    _z_vec_clear(&pqc.replies, _zn_element_free_noop);
+    _z_vec_clear(&pqc.replies, _zn_noop_elem_free);
     z_condvar_free(&pqc.cond_var);
     z_mutex_free(&pqc.mutex);
 

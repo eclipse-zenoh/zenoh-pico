@@ -106,18 +106,6 @@ void _z_iosli_clear(_z_iosli_t *ios)
     memset(ios, 0, sizeof(_z_iosli_t));
 }
 
-void _z_iosli_free(_z_iosli_t **ios)
-{
-    _z_iosli_t *ptr = (_z_iosli_t *)*ios;
-    _z_iosli_clear(ptr);
-    *ios = NULL;
-}
-
-void z_element_free_iosli(void **ios)
-{
-    _z_iosli_free((_z_iosli_t **)ios);
-}
-
 /*------------------ ZBuf ------------------*/
 _z_zbuf_t _z_zbuf_make(size_t capacity)
 {

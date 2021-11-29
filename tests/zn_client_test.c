@@ -102,7 +102,7 @@ int main(int argc, z_str_t *argv)
     assert(s1 != NULL);
     z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
-    z_string_free(&pid1);
+    _z_string_clear(&pid1);
 
     // Start the read session session lease loops
     znp_start_read_task(s1);
@@ -114,7 +114,7 @@ int main(int argc, z_str_t *argv)
     assert(s2 != NULL);
     z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
-    z_string_free(&pid2);
+    _z_string_clear(&pid2);
 
     // Start the read session session lease loops
     znp_start_read_task(s2);
@@ -267,7 +267,7 @@ int main(int argc, z_str_t *argv)
         zn_publisher_t *pub = _z_list_head(pubs1);
         zn_undeclare_publisher(pub);
         printf("Undeclared publisher on session 2: %zu\n", pub->id);
-        pubs1 = _z_list_pop(pubs1, _zn_element_free_noop);
+        pubs1 = _z_list_pop(pubs1, _zn_noop_elem_free);
     }
 
     // Undeclare subscribers and queryables on second session
@@ -276,7 +276,7 @@ int main(int argc, z_str_t *argv)
         zn_subscriber_t *sub = _z_list_head(subs2);
         zn_undeclare_subscriber(sub);
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        subs2 = _z_list_pop(subs2, _zn_element_free_noop);
+        subs2 = _z_list_pop(subs2, _zn_noop_elem_free);
     }
 
     while (qles2)
@@ -284,7 +284,7 @@ int main(int argc, z_str_t *argv)
         zn_queryable_t *qle = _z_list_head(qles2);
         zn_undeclare_queryable(qle);
         printf("Undeclared queryable on session 2: %zu\n", qle->id);
-        qles2 = _z_list_pop(qles2, _zn_element_free_noop);
+        qles2 = _z_list_pop(qles2, _zn_noop_elem_free);
     }
 
     // Undeclare resources on both sessions
@@ -318,6 +318,7 @@ int main(int argc, z_str_t *argv)
     zn_close(s2);
 
     // Cleanup properties
+    // @TODO: fix properties free
     zn_properties_free(&config);
 
     return 0;

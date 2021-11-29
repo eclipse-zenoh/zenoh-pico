@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/list.h"
 
 /*-------- str --------*/
 /**
@@ -25,7 +27,12 @@
  */
 typedef char *z_str_t;
 
+void _z_str_clear(z_str_t src);
 z_str_t _z_str_clone(const z_str_t src);
+int _z_str_cmp(const z_str_t left, const z_str_t right);
+
+_Z_ELEM_DEFINE(_z_str, char, _z_str_clear, _z_str_clone, _z_str_cmp)
+_Z_LIST_DEFINE(_z_str, char)
 
 /*-------- string --------*/
 /**
@@ -42,12 +49,12 @@ typedef struct
 } z_string_t;
 
 z_string_t z_string_make(const z_str_t value);
-void z_string_free(z_string_t *s);
 void _z_string_copy(z_string_t *dst, const z_string_t *src);
 void _z_string_move(z_string_t *dst, z_string_t *src);
 void _z_string_move_str(z_string_t *dst, z_str_t src);
-void _z_string_free(z_string_t *str);
-void _z_string_reset(z_string_t *str);
+void _z_string_clear(z_string_t *s);
+void _z_string_free(z_string_t **s);
+void _z_string_reset(z_string_t *s);
 z_string_t _z_string_from_bytes(z_bytes_t *bs);
 
 /*-------- str_array --------*/

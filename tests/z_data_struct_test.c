@@ -19,16 +19,16 @@
 
 int main(void)
 {
-    z_str_list_t *xs = z_str_list_make();
-    z_str_list_push(xs, _z_str_clone("one"));
+    _z_str_list_t *xs = _z_str_list_make();
+    _z_str_list_push(xs, _z_str_clone("one"));
     zn_int_str_map_t map = zn_int_str_map_make();
 
-    xs = z_str_list_push(xs, _z_str_clone("two"));
-    xs = z_str_list_push(xs, _z_str_clone("three"));
-    printf("list len = %zu\n", z_str_list_len(xs));
-    xs = z_str_list_pop(xs);
-    printf("list len = %zu\n", z_str_list_len(xs));
-    z_str_list_free(&xs);
+    xs = _z_str_list_push(xs, _z_str_clone("two"));
+    xs = _z_str_list_push(xs, _z_str_clone("three"));
+    printf("list len = %zu\n", _z_str_list_len(xs));
+    xs = _z_str_list_pop(xs);
+    printf("list len = %zu\n", _z_str_list_len(xs));
+    _z_str_list_free(&xs);
 
     zn_int_str_map_insert(&map, 0, _z_str_clone("0"));
     zn_int_str_map_insert(&map, 1, _z_str_clone("1"));

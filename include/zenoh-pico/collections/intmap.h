@@ -72,13 +72,13 @@ typedef _z_int_void_map_t zn_int_str_map_t;
 
 #define zn_int_str_map_make() (zn_int_str_map_t) _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY)
 #define zn_int_str_map_init(ism) _z_int_void_map_init(ism, _Z_DEFAULT_I_MAP_CAPACITY)
-#define zn_int_str_map_insert(ism, key, value) (z_str_t) _z_int_void_map_insert(ism, key, value, z_element_free_str)
+#define zn_int_str_map_insert(ism, key, value) (z_str_t) _z_int_void_map_insert(ism, key, value, _z_str_elem_free)
 #define zn_int_str_map_get(ism, key) (z_str_t) _z_int_void_map_get(ism, key)
-#define zn_int_str_map_remove(ism, key) _z_int_void_map_remove(ism, key, z_element_free_str)
+#define zn_int_str_map_remove(ism, key) _z_int_void_map_remove(ism, key, _z_str_elem_free)
 #define zn_int_str_map_len(ism) _z_int_void_map_len(ism)
 #define zn_int_str_map_is_empty(ism) _z_int_void_map_is_empty(ism)
-#define zn_int_str_map_clear(ism) _z_int_void_map_clear(ism, z_element_free_str)
-#define zn_int_str_map_free(ism) _z_int_void_map_free(ism, z_element_free_str)
+#define zn_int_str_map_clear(ism) _z_int_void_map_clear(ism, _z_str_elem_free)
+#define zn_int_str_map_free(ism) _z_int_void_map_free(ism, _z_str_elem_free)
 
 #define INT_STR_MAP_KEYVALUE_SEPARATOR '='
 #define INT_STR_MAP_LIST_SEPARATOR ';'
@@ -97,18 +97,5 @@ z_str_t zn_int_str_map_to_str(const zn_int_str_map_t *s, unsigned int argc, zn_i
 
 zn_int_str_map_result_t zn_int_str_map_from_str(const z_str_t s, unsigned int argc, zn_int_str_mapping_t argv[]);
 zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int argc, zn_int_str_mapping_t argv[], size_t n);
-
-/*------------------ int-str_list map ----------------*/
-typedef _z_int_void_map_t zn_int_list_str_map_t;
-
-#define zn_int_list_str_map_make() (zn_int_list_str_map_t) _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY)
-#define zn_int_list_str_map_init(ism) _z_int_void_map_init(ism, _Z_DEFAULT_I_MAP_CAPACITY)
-#define zn_int_list_str_map_insert(ism, key, value) (z_list_t) _z_int_void_map_insert(ism, key, value, z_element_free_list_str)
-#define zn_int_list_str_map_get(ism, key) (z_list_t) _z_int_void_map_get(ism, key)
-#define zn_int_list_str_map_remove(ism, key) _z_int_void_map_remove(ism, key, z_element_free_list_str)
-#define zn_int_list_str_map_len(ism) _z_int_void_map_len(ism)
-#define zn_int_list_str_map_is_empty(ism) _z_int_void_map_is_empty(ism)
-#define zn_int_list_str_map_clear(ism) _z_int_void_map_clear(ism, z_element_free_list_str)
-#define zn_int_list_str_map_free(ism) _z_int_void_map_free(ism, z_element_free_list_str)
 
 #endif /* ZENOH_PICO_COLLECTIONS_INTMAP_H */

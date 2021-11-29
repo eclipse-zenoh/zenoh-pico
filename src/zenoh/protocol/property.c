@@ -31,6 +31,7 @@ zn_properties_t zn_properties_make()
 
 int zn_properties_insert(zn_properties_t *ps, unsigned int key, z_string_t value)
 {
+
     z_str_t res = zn_int_str_map_insert(ps, key, (z_str_t)value.val);
     return res == value.val ? 0 : -1;
 }

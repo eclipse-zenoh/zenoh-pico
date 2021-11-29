@@ -111,7 +111,7 @@ void __unsafe_zn_free_pending_query(_zn_pending_query_t *pen_qry)
     {
         _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_qry->pending_replies);
         __unsafe_zn_free_pending_reply(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_element_free_noop);
+        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_noop_elem_free);
     }
 }
 
@@ -170,11 +170,11 @@ void _zn_flush_pending_queries(zn_session_t *zn)
             _zn_pending_reply_t *pre = (_zn_pending_reply_t *)_z_list_head(pqy->pending_replies);
             __unsafe_zn_free_pending_reply(pre);
             free(pre);
-            pqy->pending_replies = _z_list_pop(pqy->pending_replies, _zn_element_free_noop);
+            pqy->pending_replies = _z_list_pop(pqy->pending_replies, _zn_noop_elem_free);
         }
         __unsafe_zn_free_pending_query(pqy);
         free(pqy);
-        zn->pending_queries = _z_list_pop(zn->pending_queries, _zn_element_free_noop);
+        zn->pending_queries = _z_list_pop(zn->pending_queries, _zn_noop_elem_free);
     }
 
     // Release the lock
@@ -416,7 +416,7 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
         // Free the element
         __unsafe_zn_free_pending_reply(pen_rep);
         free(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_element_free_noop);
+        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_noop_elem_free);
     }
 
     // Build the final reply

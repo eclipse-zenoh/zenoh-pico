@@ -44,13 +44,14 @@ _z_list_t *_z_list_tail(_z_list_t *xs)
     return xs->tail;
 }
 
-size_t _z_list_len(_z_list_t *xs)
+size_t _z_list_len(const _z_list_t *xs)
 {
     size_t len = 0;
-    while (xs != NULL)
+    _z_list_t *head = (_z_list_t *)xs;
+    while (head != NULL)
     {
         len += 1;
-        xs = _z_list_tail(xs);
+        head = _z_list_tail(head);
     }
     return len;
 }
