@@ -89,21 +89,21 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 size_t len = _z_list_len(subs);
                 if (len > 0)
                 {
-                    // Need to reply with a declare subscriber
-                    _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
-                    z_msg.body.declare.declarations.len = len;
-                    z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
+                    _zn_declaration_array_t declarations = _zn_declaration_array_make(len);
 
+                    // Need to reply with a declare subscriber
                     while (subs)
                     {
                         _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
-                        z_msg.body.declare.declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
-                        z_msg.body.declare.declarations.val[len].body.sub.key = sub->key;
-                        z_msg.body.declare.declarations.val[len].body.sub.subinfo = sub->info;
+                        declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
+                        declarations.val[len].body.sub.key = sub->key;
+                        declarations.val[len].body.sub.subinfo = sub->info;
 
-                        subs = _z_list_pop(subs);
+                        subs = _z_list_tail(subs);
                     }
+
+                    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
 
                     // Send the message
                     _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);

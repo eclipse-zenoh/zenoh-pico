@@ -30,8 +30,6 @@ typedef struct
     uint8_t is_alloc;
 } _z_iosli_t;
 
-void z_element_free_iosli(void **s);
-
 _z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 _z_iosli_t _z_iosli_make(size_t capacity);
 
@@ -49,6 +47,7 @@ z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 void _z_iosli_clear(_z_iosli_t *ios);
 void _z_iosli_free(_z_iosli_t **ios);
+void z_element_free_iosli(void **ios);
 
 /*------------------ ZBuf ------------------*/
 typedef struct
@@ -81,18 +80,11 @@ void _z_zbuf_clear(_z_zbuf_t *zbf);
 void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
-typedef _z_vec_t _z_ios_vec_t;
-
-#define _z_ios_vec_make(capacity) _z_vec_make(capacity)
-#define _z_ios_vec_len(vec) _z_vec_len(vec)
-#define _z_ios_vec_append(vec, elem) _z_vec_append(vec, elem)
-#define _z_ios_vec_get(vec, pos) _z_vec_get(vec, pos)
-#define _z_ios_vec_clear(vec) _z_vec_clear(vec, z_element_free_iosli)
-#define _z_ios_vec_free(vec) _z_vec_free(vec, z_element_free_iosli)
+_Z_VEC_DEFINE(_z_iosli, _z_iosli_t, z_element_free_iosli)
 
 typedef struct
 {
-    _z_ios_vec_t ioss;
+    _z_iosli_vec_t ioss;
     size_t r_idx;
     size_t w_idx;
     size_t capacity;

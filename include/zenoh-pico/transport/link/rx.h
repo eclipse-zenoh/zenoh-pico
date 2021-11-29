@@ -24,7 +24,7 @@ _zn_transport_message_result_t _zn_recv_t_msg(_zn_transport_t *zt);
 _zn_transport_message_result_t _zn_unicast_recv_t_msg(_zn_transport_unicast_t *ztu);
 _zn_transport_message_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_t *ztm);
 
-_zn_transport_message_result_t _zn_recv_t_msg_nt(const _zn_link_t *zl);
+_zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl);
 
 void _zn_recv_t_msg_na(_zn_transport_t *zt, _zn_transport_message_result_t *r);
 void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_message_result_t *r);

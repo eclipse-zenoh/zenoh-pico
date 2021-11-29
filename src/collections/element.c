@@ -23,7 +23,7 @@ void _zn_element_free_noop(void **s)
     *s = NULL;
 }
 
-void *_zn_element_clone_noop(const void *s)
+void *_zn_element_dup_noop(const void *s)
 {
     return NULL;
 }
@@ -41,9 +41,9 @@ void z_element_free_str(void **s)
     s = NULL;
 }
 
-void *z_element_clone_str(const void *s)
+void *z_element_dup_str(const void *s)
 {
-    return (void *)_z_str_clone((const z_str_t)s);
+    return (void *)_z_str_dup((const z_str_t)s);
 }
 
 int z_element_cmp_str(const void *left, const void *right)
@@ -57,9 +57,9 @@ void z_element_free_str_list(void **s)
     z_str_list_free((z_str_list_t **)s);
 }
 
-void *z_element_clone_str_list(const void *s)
+void *z_element_dup_str_list(const void *s)
 {
-    return (void *)z_str_list_clone((const z_str_list_t *)s);
+    return (void *)z_str_list_dup((const z_str_list_t *)s);
 }
 
 int z_element_cmp_str_list(const void *left, const void *right)

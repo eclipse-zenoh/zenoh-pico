@@ -20,7 +20,6 @@
 #include "zenoh-pico/collections/vec.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/utils/array.h"
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -336,13 +335,18 @@ typedef struct
 //
 typedef struct
 {
+    z_zint_t reliable;
+    z_zint_t best_effort;
+} _zn_coundit_sn_t;
+typedef struct
+{
     union
     {
-        z_zint_t sn;
-        z_zint_t sns[ZN_PRIORITIES_NUM];
+        _zn_coundit_sn_t plain;
+        _zn_coundit_sn_t qos[ZN_PRIORITIES_NUM];
     } val;
     uint8_t is_qos;
-} _zn_sns_t;
+} _zn_conduit_sn_list_t;
 typedef struct
 {
     z_zint_t options;
@@ -350,7 +354,7 @@ typedef struct
     z_zint_t lease;
     z_zint_t sn_resolution;
     z_bytes_t pid;
-    _zn_sns_t next_sns;
+    _zn_conduit_sn_list_t next_sns;
     uint8_t version;
 } _zn_join_t;
 
@@ -591,7 +595,7 @@ typedef struct
 typedef union
 {
     _zn_payload_t fragment;
-    _z_vec_t messages;
+    _z_vec_t messages; // @TODO: convert it into a typed vec
 } _zn_frame_payload_t;
 typedef struct
 {
@@ -623,18 +627,19 @@ typedef struct
 /*------------------ Builders ------------------*/
 _zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid);
 _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators);
-_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_sns_t next_sns);
-_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid);
-_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie);
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos);
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos);
 _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial_sn);
-_zn_transport_message_t _zn_t_msg_make_close(z_bytes_t pid, uint8_t reason);
+_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only);
 _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid);
 _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
+_zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final);
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -799,7 +804,9 @@ typedef struct
     } body;
     uint8_t header;
 } _zn_declaration_t;
-_ARRAY_DECLARE(_zn_declaration_t, declaration, _zn_)
+
+void _zn_declaration_free(_zn_declaration_t *dcl);
+_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_free)
 
 typedef struct
 {
@@ -903,7 +910,7 @@ typedef struct
 /*------------------ Query Message ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|C|T|  QUERY  |
+// |K|X|T|  QUERY  |
 // +-+-+-+---------+
 // ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
@@ -941,10 +948,19 @@ typedef struct
 } _zn_zenoh_message_t;
 
 /*------------------ Builders ------------------*/
+_zn_reply_context_t *_zn_z_msg_make_reply_context(z_zint_t qid, z_bytes_t replier_id, z_zint_t replier_kind, int is_final);
+_zn_declaration_t _zn_z_msg_make_declaration_resource(z_zint_t id, zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_resource(z_zint_t rid);
+_zn_declaration_t _zn_z_msg_make_declaration_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
 _zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
-_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload);
-_zn_zenoh_message_t _zn_z_msg_make_unit();
-_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples);
+_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final);
 _zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
-
+_zn_zenoh_message_t _zn_z_msg_make_reply(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped, _zn_reply_context_t *rctx);
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

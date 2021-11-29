@@ -44,8 +44,8 @@ void _zn_locator_free(_zn_locator_t **lc)
 
 void _zn_locator_copy(_zn_locator_t *dst, const _zn_locator_t *src)
 {
-    dst->protocol = _z_str_clone(src->protocol);
-    dst->address = _z_str_clone(src->address);
+    dst->protocol = _z_str_dup(src->protocol);
+    dst->address = _z_str_dup(src->address);
 
     // @TODO: implement copy for metadata
     dst->metadata = zn_int_str_map_make();
@@ -249,60 +249,6 @@ z_str_t _zn_locator_to_str(const _zn_locator_t *l)
     z_str_t dst = (z_str_t)malloc(len + 1);
     _zn_locator_onto_str(dst, l);
     return dst;
-}
-
-/*------------------ Locator array ------------------*/
-void _zn_locator_array_init(_zn_locator_array_t *la, size_t len)
-{
-    _zn_locator_t **val = (_zn_locator_t **)&la->val;
-    *val = (_zn_locator_t *)malloc(len * sizeof(_zn_locator_t));
-    la->len = len;
-
-    for (size_t i = 0; i < len; i++)
-        _zn_locator_init(&la->val[i]);
-}
-
-_zn_locator_array_t _zn_locator_array_make(size_t len)
-{
-    _zn_locator_array_t la;
-    _zn_locator_array_init(&la, len);
-    return la;
-}
-
-void _zn_locator_array_clear(_zn_locator_array_t *la)
-{
-    for (size_t i = 0; i < la->len; i++)
-        _zn_locator_clear(&la->val[i]);
-}
-
-void _zn_locator_array_free(_zn_locator_array_t **la)
-{
-    _zn_locator_array_t *ptr = *la;
-    _zn_locator_array_clear(ptr);
-    free((_zn_locator_t *)ptr->val);
-    *la = NULL;
-}
-
-void _zn_locator_array_move(_zn_locator_array_t *dst, _zn_locator_array_t *src)
-{
-    dst->val = src->val;
-    dst->len = src->len;
-
-    src->val = NULL;
-    src->len = 0;
-}
-
-void _zn_locator_array_copy(_zn_locator_array_t *dst, const _zn_locator_array_t *src)
-{
-    _zn_locator_array_init(dst, src->len);
-    for (size_t i = 0; i < src->len; i++)
-        _zn_locator_copy(&dst->val[i], &src->val[i]);
-    dst->len = src->len;
-}
-
-int _zn_locator_array_is_empty(const _zn_locator_array_t *la)
-{
-    return la->len == 0;
 }
 
 /*------------------ Endpoint ------------------*/

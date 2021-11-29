@@ -86,30 +86,9 @@ void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
 _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_FRAME);
-    t_msg.body.frame.sn = sn;
+    int is_reliable = reliability == zn_reliability_t_RELIABLE;
 
-    if (reliability == zn_reliability_t_RELIABLE)
-        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_R);
-
-    if (is_fragment)
-    {
-        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_F);
-
-        if (is_final)
-            _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_E);
-
-        // Do not add the payload
-        t_msg.body.frame.payload.fragment.len = 0;
-        t_msg.body.frame.payload.fragment.val = NULL;
-    }
-    else
-    {
-        // Do not allocate the vector containing the messages
-        t_msg.body.frame.payload.messages.capacity = 0;
-        t_msg.body.frame.payload.messages.len = 0;
-        t_msg.body.frame.payload.messages.val = NULL;
-    }
+    _zn_transport_message_t t_msg = _zn_t_msg_make_frame_header(sn, is_reliable, is_fragment, is_final);
 
     return t_msg;
 }
@@ -155,7 +134,7 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t t_msg)
+int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, const _zn_transport_message_t *t_msg)
 {
     _Z_DEBUG(">> send session message\n");
 
@@ -166,7 +145,7 @@ int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, _zn_transport_message_t
     __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
     // Encode the session message
-    int res = _zn_transport_message_encode(&ztu->wbuf, &t_msg);
+    int res = _zn_transport_message_encode(&ztu->wbuf, t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
@@ -235,7 +214,7 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
         // Send the wbuf on the socket
         res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
         if (res == 0)
-            ztu->transmitted = 1; 
+            ztu->transmitted = 1;
     }
     else
     {

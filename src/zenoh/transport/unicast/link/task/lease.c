@@ -21,7 +21,11 @@
 
 int _znp_unicast_send_keep_alive(_zn_transport_unicast_t *ztu)
 {
-    _zn_transport_message_t t_msg = _zn_transport_message_init(_ZN_MID_KEEP_ALIVE);
+    // Do not send the PID on unicast links
+    z_bytes_t pid;
+    _z_bytes_reset(&pid);
+
+    _zn_transport_message_t t_msg = _zn_t_msg_make_keep_alive(pid);
 
     return _zn_unicast_send_t_msg(ztu, &t_msg);
 }

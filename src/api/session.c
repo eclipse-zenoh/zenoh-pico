@@ -35,7 +35,7 @@ zn_session_t *_zn_open(z_str_t locator, int mode)
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.session = zn;
     else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-       ; // TODO: to be implemented
+        ; // TODO: to be implemented
 
     return zn;
 }
@@ -86,7 +86,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     // Check operation mode
     z_str_t s_mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
-    int mode = 0;  // By default, zenoh-pico will operate as a client
+    int mode = 0; // By default, zenoh-pico will operate as a client
     if (strcmp(s_mode, ZN_CONFIG_MODE_CLIENT) == 0)
         mode = 0;
     else if (strcmp(s_mode, ZN_CONFIG_MODE_PEER) == 0)
@@ -145,7 +145,7 @@ int znp_stop_read_task(zn_session_t *zn)
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.read_task_running = 0;
     else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-       ; // TODO: to be implemented
+        ; // TODO: to be implemented
 
     return 0;
 }
@@ -176,7 +176,7 @@ int znp_stop_lease_task(zn_session_t *zn)
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.lease_task_running = 0;
     else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-       ; // TODO: to be implemented
+        ; // TODO: to be implemented
 
     return 0;
 }

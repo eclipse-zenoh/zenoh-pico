@@ -227,7 +227,7 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locator_array_result_t *r)
     _ASSURE_P_RESULT(r_n, r, _z_err_t_PARSE_ZINT)
     size_t len = (size_t)r_n.value.zint;
 
-    _zn_locator_array_init(&r->value.locator_array, len);
+    r->value.locator_array = _zn_locator_array_make(len);
 
     // Decode the elements
     for (size_t i = 0; i < len; i++)
@@ -348,7 +348,7 @@ void _zn_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reply_conte
 
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
-        r->value.reply_context->replier_id = r_arr.value.bytes;
+        r->value.reply_context->replier_id = _z_bytes_dup(&r_arr.value.bytes);
     }
 }
 
@@ -363,7 +363,7 @@ _zn_reply_context_p_result_t _zn_reply_context_decode(_z_zbuf_t *zbf, uint8_t he
 void _zn_reply_context_free(_zn_reply_context_t *rc)
 {
     if (!_ZN_HAS_FLAG(rc->header, _ZN_FLAG_Z_F))
-        (void)(&rc->replier_id);
+        _z_bytes_clear(&rc->replier_id);
 }
 
 /*=============================*/
@@ -1401,12 +1401,12 @@ _zn_zenoh_message_result_t _zn_zenoh_message_decode(_z_zbuf_t *zbf)
 
 void _zn_zenoh_message_free(_zn_zenoh_message_t *msg)
 {
-    if (msg->attachment)
+    if (msg->attachment != NULL)
     {
         _zn_attachment_free(msg->attachment);
         free(msg->attachment);
     }
-    if (msg->reply_context)
+    if (msg->reply_context != NULL)
     {
         _zn_reply_context_free(msg->reply_context);
         free(msg->reply_context);
@@ -1472,10 +1472,11 @@ _zn_scout_result_t _zn_scout_decode(_z_zbuf_t *zbf, uint8_t header)
     return r;
 }
 
-void _zn_scout_free(_zn_scout_t *msg)
+void _zn_scout_free(_zn_scout_t *msg, uint8_t header)
 {
     // NOTE: scout does not involve any heap allocation
     (void)(msg);
+    (void)(header);
 }
 
 /*------------------ Hello Message ------------------*/
@@ -1567,20 +1568,16 @@ int _zn_join_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_join_t *msg)
 
     if (_ZN_HAS_FLAG(msg->options, _ZN_OPT_JOIN_QOS))
     {
-        if (!msg->next_sns.is_qos)
-            return -1;
-
         for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
-            _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.sns[i]))
+            _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.qos[i].reliable))
+            _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.qos[i].best_effort))
         }
     }
     else
     {
-        if (msg->next_sns.is_qos)
-            return -1;
-
-        _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.sn))
+        _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.plain.reliable))
+        _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.plain.best_effort))
     }
 
     return 0;
@@ -1631,19 +1628,29 @@ void _zn_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_join_result_t *r)
     if (_ZN_HAS_FLAG(r->value.join.options, _ZN_OPT_JOIN_QOS))
     {
         r->value.join.next_sns.is_qos = 1;
+
         for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
         {
             _z_zint_result_t r_zint = _z_zint_decode(zbf);
             _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-            r->value.join.next_sns.val.sns[i] = r_zint.value.zint;
+            r->value.join.next_sns.val.qos[i].reliable = r_zint.value.zint;
+
+            r_zint = _z_zint_decode(zbf);
+            _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+            r->value.join.next_sns.val.qos[i].best_effort = r_zint.value.zint;
         }
     }
     else
     {
         r->value.join.next_sns.is_qos = 0;
+
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.join.next_sns.val.sn = r_zint.value.zint;
+        r->value.join.next_sns.val.plain.reliable = r_zint.value.zint;
+
+        r_zint = _z_zint_decode(zbf);
+        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+        r->value.join.next_sns.val.plain.best_effort = r_zint.value.zint;
     }
 }
 
@@ -1883,10 +1890,11 @@ _zn_sync_result_t _zn_sync_decode(_z_zbuf_t *zbf, uint8_t header)
     return r;
 }
 
-void _zn_sync_free(_zn_sync_t *msg)
+void _zn_sync_free(_zn_sync_t *msg, uint8_t header)
 {
     // NOTE: sync does not involve any heap allocation
     (void)(msg);
+    (void)(header);
 }
 
 /*------------------ AckNack Message ------------------*/
@@ -1928,10 +1936,11 @@ _zn_ack_nack_result_t _zn_ack_nack_decode(_z_zbuf_t *zbf, uint8_t header)
     return r;
 }
 
-void _zn_ack_nack_free(_zn_ack_nack_t *msg)
+void _zn_ack_nack_free(_zn_ack_nack_t *msg, uint8_t header)
 {
     // NOTE: ack_nack does not involve any heap allocation
     (void)(msg);
+    (void)(header);
 }
 
 /*------------------ Keep Alive Message ------------------*/
@@ -2274,7 +2283,7 @@ void _zn_transport_message_free(_zn_transport_message_t *msg)
     switch (mid)
     {
     case _ZN_MID_SCOUT:
-        _zn_scout_free(&msg->body.scout);
+        _zn_scout_free(&msg->body.scout, msg->header);
         break;
     case _ZN_MID_HELLO:
         _zn_hello_free(&msg->body.hello, msg->header);
@@ -2292,10 +2301,10 @@ void _zn_transport_message_free(_zn_transport_message_t *msg)
         _zn_close_free(&msg->body.close, msg->header);
         break;
     case _ZN_MID_SYNC:
-        _zn_sync_free(&msg->body.sync);
+        _zn_sync_free(&msg->body.sync, msg->header);
         break;
     case _ZN_MID_ACK_NACK:
-        _zn_ack_nack_free(&msg->body.ack_nack);
+        _zn_ack_nack_free(&msg->body.ack_nack, msg->header);
         break;
     case _ZN_MID_KEEP_ALIVE:
         _zn_keep_alive_free(&msg->body.keep_alive, msg->header);

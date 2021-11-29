@@ -16,7 +16,7 @@
 #define ZENOH_PICO_LINK_ENDPOINT_H
 
 #include <stdint.h>
-#include "zenoh-pico/utils/array.h"
+#include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
@@ -45,16 +45,8 @@ void _zn_locator_clear(_zn_locator_t *lc);
 void _zn_locator_free(_zn_locator_t **lc);
 
 /*------------------ Locator array ------------------*/
-_ARRAY_DECLARE(_zn_locator_t, locator, _zn_)
+_Z_ARRAY_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_clear)
 _ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
-
-void _zn_locator_array_init(_zn_locator_array_t *la, size_t len);
-_zn_locator_array_t _zn_locator_array_make(size_t len);
-void _zn_locator_array_clear(_zn_locator_array_t *la);
-void _zn_locator_array_free(_zn_locator_array_t **la);
-void _zn_locator_array_move(_zn_locator_array_t *dst, _zn_locator_array_t *src);
-void _zn_locator_array_copy(_zn_locator_array_t *dst, const _zn_locator_array_t *src);
-int _zn_locator_array_is_empty(const _zn_locator_array_t *la);
 
 /*------------------ Endpoint ------------------*/
 #define ENDPOINT_CONFIG_SEPARATOR '#'

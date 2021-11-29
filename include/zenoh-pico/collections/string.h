@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_STRING_H
-#define ZENOH_PICO_UTILS_COLLECTION_STRING_H
+#ifndef ZENOH_PICO_COLLECTIONS_STRING_H
+#define ZENOH_PICO_COLLECTIONS_STRING_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -25,7 +25,7 @@
  */
 typedef char *z_str_t;
 
-z_str_t _z_str_clone(const z_str_t src);
+z_str_t _z_str_dup(const z_str_t src);
 
 /*-------- string --------*/
 /**
@@ -70,4 +70,4 @@ void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src);
 void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);
 void _z_str_array_free(z_str_array_t *sa);
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_STRING_H */
+#endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

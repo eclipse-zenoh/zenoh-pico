@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_BYTES_H
-#define ZENOH_PICO_UTILS_COLLECTION_BYTES_H
+#ifndef ZENOH_PICO_COLLECTIONS_BYTES_H
+#define ZENOH_PICO_COLLECTIONS_BYTES_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -35,10 +35,11 @@ typedef struct z_bytes_t
 z_bytes_t _z_bytes_make(size_t capacity);
 void _z_bytes_init(z_bytes_t *bs, size_t capacity);
 void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src);
+z_bytes_t _z_bytes_dup(const z_bytes_t *src);
 void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);
 void _z_bytes_clear(z_bytes_t *bs);
 void _z_bytes_free(z_bytes_t **bs);
 void _z_bytes_reset(z_bytes_t *bs);
 int _z_bytes_is_empty(const z_bytes_t *bs);
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_BYTES_H */
+#endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

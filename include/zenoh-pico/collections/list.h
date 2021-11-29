@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_UTILS_COLLECTION_LIST_H
-#define ZENOH_PICO_UTILS_COLLECTION_LIST_H
+#ifndef ZENOH_PICO_COLLECTIONS_LIST_H
+#define ZENOH_PICO_COLLECTIONS_LIST_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -50,7 +50,7 @@ _z_list_t *_z_list_drop_pos(_z_list_t *xs, size_t pos, z_element_free_f f);
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate p, void *arg, z_element_free_f f);
 
 int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f f);
-_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f f);
+_z_list_t *_z_list_dup(const _z_list_t *xs, z_element_dup_f f);
 void _z_list_free(_z_list_t **xs, z_element_free_f f);
 
 /*-------- String list --------*/
@@ -64,7 +64,7 @@ typedef _z_list_t z_str_list_t;
 #define z_str_list_drop_pos(list, pos) _z_list_drop_pos(list, pos, z_element_free_str)
 #define z_str_list_drop_filter(list, pos) _z_list_drop_head(list, pos, z_element_free_str)
 #define z_str_list_cmp(left, right) _z_list_cmp(left, right, z_element_cmp_str)
-#define z_str_list_clone(list) _z_list_clone(list, z_element_clone_str)
+#define z_str_list_dup(list) _z_list_dup(list, z_element_dup_str)
 #define z_str_list_free(list) _z_list_free(list, z_element_free_str)
 
-#endif /* ZENOH_PICO_UTILS_COLLECTION_LIST_H */
+#endif /* ZENOH_PICO_COLLECTIONS_LIST_H */

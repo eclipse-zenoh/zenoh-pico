@@ -145,13 +145,8 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
 
     // Create and encode the scout message
-    _zn_transport_message_t scout = _zn_transport_message_init(_ZN_MID_SCOUT);
-
-    // Ask for peer ID to be put in the scout message
-    _ZN_SET_FLAG(scout.header, _ZN_FLAG_T_I);
-    scout.body.scout.what = (z_zint_t)what;
-    if (what != ZN_ROUTER)
-        _ZN_SET_FLAG(scout.header, _ZN_FLAG_T_W);
+    int request_id = 1;
+    _zn_transport_message_t scout = _zn_t_msg_make_scout((z_zint_t)what, request_id);
 
     _zn_transport_message_encode(&wbf, &scout);
 

@@ -37,7 +37,7 @@ int main(void)
     assert(lres.value.locator.metadata.len == 0);
     _zn_locator_clear(&lres.value.locator);
 
-    sprintf(s, "");
+    s[0] = '\0'; // sprintf(s, "");
     printf("- %s\n", s);
     lres = _zn_locator_from_str(s);
     assert(lres.tag == _z_res_t_ERR);
@@ -95,7 +95,7 @@ int main(void)
     assert(zn_int_str_map_is_empty(&eres.value.endpoint.config));
     _zn_endpoint_clear(&eres.value.endpoint);
 
-    sprintf(s, "");
+    s[0] = '\0'; // sprintf(s, "");
     printf("- %s\n", s);
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_ERR);
