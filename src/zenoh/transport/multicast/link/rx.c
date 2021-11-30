@@ -147,7 +147,9 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         int pos = _z_vec_find_z_bytes_t(&ztm->remote_addr_peers, addr);
         if (pos == -1) // New peer
         {
-            _z_vec_append(&ztm->remote_addr_peers, addr);
+            z_bytes_t *raddr = (z_bytes_t *)malloc(sizeof(z_bytes_t));
+            _z_bytes_copy(raddr, addr);
+            _z_vec_append(&ztm->remote_addr_peers, raddr);
 
             z_bytes_t *pid = (z_bytes_t *)malloc(sizeof(z_bytes_t));
             _z_bytes_copy(pid, &t_msg->body.join.pid);
