@@ -16,7 +16,7 @@
 #define ZENOH_PICO_COLLECTIONS_ARRAY_H
 
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_ARRAY_DEFINE(name, type, elem_clear_f)                                  \
+#define _Z_ARRAY_DEFINE(name, type)                                                \
     typedef struct                                                                 \
     {                                                                              \
         size_t len;                                                                \
@@ -43,7 +43,7 @@
     static inline void name##_array_clear(name##_array_t *a)                       \
     {                                                                              \
         for (size_t i = 0; i < a->len; i++)                                        \
-            elem_clear_f(&a->val[i]);                                              \
+            name##_elem_clear(&a->val[i]);                                         \
         free(a->val);                                                              \
     }                                                                              \
     static inline void name##_array_free(name##_array_t **a)                       \

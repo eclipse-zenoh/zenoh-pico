@@ -65,7 +65,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
-            xs = _z_list_cons(xs, qle);
+            xs = _z_list_push(xs, qle);
             qles = _z_list_tail(qles);
         }
     }
@@ -93,13 +93,13 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(&xs, _zn_element_free_noop);
+                    _z_list_free(&xs, _zn_noop_elem_free);
                     return xs;
                 }
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, qle);
+                xs = _z_list_push(xs, qle);
 
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
@@ -138,7 +138,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, qle);
+                xs = _z_list_push(xs, qle);
 
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
@@ -172,8 +172,8 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
     {
         // Update the list of active subscriptions
         _z_list_t *qles = _z_int_void_map_get(&zn->rem_res_loc_qle_map, rem_res->id);
-        qles = _z_list_cons(qles, qle);
-        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, rem_res->id, qles, _zn_element_free_noop);
+        qles = _z_list_push(qles, qle);
+        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, rem_res->id, qles, _zn_noop_elem_free);
     }
 
     if (qle->key.rid != ZN_RESOURCE_ID_NONE)
@@ -196,10 +196,10 @@ void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_re
         if (ql)
         {
             // Free any ancient list
-            _z_list_free(&ql, _zn_element_free_noop);
+            _z_list_free(&ql, _zn_noop_elem_free);
         }
         // Update the list of active subscriptions
-        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, id, qles, _zn_element_free_noop);
+        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, id, qles, _zn_noop_elem_free);
     }
 }
 
@@ -229,7 +229,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     {
         // Register the queryable
         __unsafe_zn_add_loc_qle_to_rem_res_map(zn, qle);
-        zn->local_queryables = _z_list_cons(zn->local_queryables, qle);
+        zn->local_queryables = _z_list_push(zn->local_queryables, qle);
         res = 0;
     }
 
@@ -254,19 +254,23 @@ void __unsafe_zn_free_queryable(_zn_queryable_t *qle)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-int __unsafe_zn_queryable_predicate(void *other, void *this)
+void __unsafe_zn_free_queryable_element(void **qle)
 {
-    _zn_queryable_t *o = (_zn_queryable_t *)other;
+    _zn_queryable_t *ptr = (_zn_queryable_t *)*qle;
+    __unsafe_zn_free_queryable(ptr);
+    *qle = NULL;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+int __unsafe_zn_queryable_cmp(const void *this, const void *other)
+{
     _zn_queryable_t *t = (_zn_queryable_t *)this;
-    if (t->id == o->id)
-    {
-        __unsafe_zn_free_queryable(t);
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
+    _zn_queryable_t *o = (_zn_queryable_t *)other;
+    return t->id == o->id;
 }
 
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
@@ -274,7 +278,7 @@ void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     // Acquire the lock on the queryables
     z_mutex_lock(&zn->mutex_inner);
 
-    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_queryable_predicate, qle, _zn_element_free_noop);
+    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_cmp, qle);
     free(qle);
 
     // Release the lock
@@ -291,9 +295,9 @@ void _zn_flush_queryables(zn_session_t *zn)
         _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(zn->local_queryables);
         __unsafe_zn_free_queryable(qle);
         free(qle);
-        zn->local_queryables = _z_list_pop(zn->local_queryables);
+        zn->local_queryables = _z_list_pop(zn->local_queryables, _zn_noop_elem_free);
     }
-    _z_int_void_map_clear(&zn->rem_res_loc_qle_map, _zn_element_free_noop);
+    _z_int_void_map_clear(&zn->rem_res_loc_qle_map, _zn_noop_elem_free);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);

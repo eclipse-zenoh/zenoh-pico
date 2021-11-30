@@ -70,7 +70,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
                 r->id = id;
                 r->key.rid = key.rid;
-                r->key.rname = strdup(key.rname);
+                r->key.rname = _z_str_clone(key.rname);
 
                 int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
                 if (res != 0)

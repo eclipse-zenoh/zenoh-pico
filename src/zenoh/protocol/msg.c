@@ -275,8 +275,8 @@ _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _z
     _zn_transport_message_t msg;
 
     msg.body.hello.whatami = whatami;
-    _z_bytes_move(&msg.body.hello.pid, &pid);
-    _zn_locator_array_move(&msg.body.hello.locators, &locators);
+    msg.body.hello.pid = pid;
+    msg.body.hello.locators = locators;
 
     msg.header = _ZN_MID_HELLO;
     if (whatami != ZN_ROUTER)
@@ -303,7 +303,7 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
     msg.body.join.lease = lease;
     msg.body.join.sn_resolution = sn_resolution;
     msg.body.join.next_sns = next_sns;
-    _z_bytes_move(&msg.body.join.pid, &pid);
+    msg.body.join.pid = pid;
 
     msg.header = _ZN_MID_JOIN;
     if (lease % 1000 == 0)
@@ -328,7 +328,7 @@ _zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatam
     msg.body.init.version = version;
     msg.body.init.whatami = whatami;
     msg.body.init.sn_resolution = sn_resolution;
-    _z_bytes_move(&msg.body.init.pid, &pid);
+    msg.body.init.pid = pid;
     _z_bytes_reset(&msg.body.init.cookie);
 
     msg.header = _ZN_MID_INIT;
@@ -352,8 +352,8 @@ _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatam
     msg.body.init.version = version;
     msg.body.init.whatami = whatami;
     msg.body.init.sn_resolution = sn_resolution;
-    _z_bytes_move(&msg.body.init.pid, &pid);
-    _z_bytes_move(&msg.body.init.cookie, &cookie);
+    msg.body.init.pid = pid;
+    msg.body.init.cookie = cookie;
 
     msg.header = _ZN_MID_INIT;
     _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_A);
@@ -373,7 +373,7 @@ _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial
 
     msg.body.open.lease = lease;
     msg.body.open.initial_sn = initial_sn;
-    _z_bytes_move(&msg.body.open.cookie, &cookie);
+    msg.body.open.cookie = cookie;
 
     msg.header = _ZN_MID_OPEN;
     if (lease % 1000 == 0)
@@ -407,7 +407,7 @@ _zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int 
     _zn_transport_message_t msg;
 
     msg.body.close.reason = reason;
-    _z_bytes_move(&msg.body.close.pid, &pid);
+    msg.body.close.pid = pid;
 
     msg.header = _ZN_MID_CLOSE;
     if (!_z_bytes_is_empty(&pid))
@@ -460,7 +460,7 @@ _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid)
 {
     _zn_transport_message_t msg;
 
-    _z_bytes_move(&msg.body.keep_alive.pid, &pid);
+    msg.body.keep_alive.pid = pid;
 
     msg.header = _ZN_MID_KEEP_ALIVE;
     if (!_z_bytes_is_empty(&pid))

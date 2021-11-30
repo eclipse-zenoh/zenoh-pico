@@ -15,47 +15,57 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ELEMENT_H
 #define ZENOH_PICO_COLLECTIONS_ELEMENT_H
 
+#include <stdlib.h>
+
 /*-------- element functions --------*/
 typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
-typedef void *(*z_element_dup_f)(const void *e);
+typedef void *(*z_element_clone_f)(const void *e);
 typedef int (*z_element_cmp_f)(const void *left, const void *right);
 
-#define _Z_ELEMENT(name, type, elem_clear_f)             \
-    static inline void z_element_free_##name##(void *e)  \
-    {                                                    \
-        return elem_clear_f((type *)e);                  \
-    }                                                    \
-    static inline void z_element_free_##name##(void **e) \
-    {                                                    \
-        return elem_free_f((type **)e);                  \
+#define _Z_ELEM_DEFINE(name, type, elem_clear_f, elem_clone_f, elem_cmp_f) \
+    typedef int (*name##_cmp_f)(const type *left, const type *right);      \
+    static inline void name##_elem_clear(void *e)                          \
+    {                                                                      \
+        elem_clear_f((type *)e);                                           \
+    }                                                                      \
+    static inline void name##_elem_free(void **e)                          \
+    {                                                                      \
+        type *ptr = (type *)*e;                                            \
+        elem_clear_f(ptr);                                                 \
+        *e = NULL;                                                         \
+    }                                                                      \
+    static inline void *name##_elem_clone(const void *e)                   \
+    {                                                                      \
+        return (void *)elem_clone_f((type *)e);                            \
+    }                                                                      \
+    static inline int name##_elem_cmp(const void *left, const void *right) \
+    {                                                                      \
+        return elem_cmp_f((type *)left, (type *)right);                    \
     }
 
-#define _Z_ELEMENT_DUP(name, type, elem_dup_f)                \
-    static inline void *z_element_dup_##name##(const void *e) \
-    {                                                         \
-        return (void *)elem_dup_f((const type *)e);           \
-    }
+/*------------------ void ----------------*/
+static inline void _zn_noop_elem_clear(void *s)
+{
+    (void)(s);
+}
 
-#define _Z_ELEMENT_CMP(name, type, elem_cmp_f)                                    \
-    static inline int z_element_cmp_##name##(const void *left, const void *right) \
-    {                                                                             \
-        return elem_cmp_f((const type *)left, (const type *)right);               \
-    }
+static inline void _zn_noop_elem_free(void **s)
+{
+    (void)(s);
+}
 
-/*-------- noop --------*/
-void _zn_element_free_noop(void **s);
-void *_zn_element_dup_noop(const void *s);
-int _zn_element_cmp_noop(const void *left, const void *right);
+static inline void *_zn_noop_elem_clone(const void *s)
+{
+    (void)(s);
+    return NULL;
+}
 
-/*-------- string --------*/
-void z_element_free_str(void **s);
-void *z_element_dup_str(const void *s);
-int z_element_cmp_str(const void *left, const void *right);
-
-/*-------- list of string --------*/
-void z_element_free_list_str(void **s);
-void *z_element_dup_list_str(const void *s);
-int z_element_cmp_list_str(const void *left, const void *right);
+static inline int _zn_noop_elem_cmp(const void *left, const void *right)
+{
+    (void)(left);
+    (void)(right);
+    return 0;
+}
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

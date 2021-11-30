@@ -21,7 +21,7 @@
 z_string_t z_string_make(const z_str_t value)
 {
     z_string_t s;
-    s.val = strdup(value);
+    s.val = _z_str_clone(value);
     s.len = strlen(value);
     return s;
 }
@@ -34,7 +34,7 @@ void z_string_free(z_string_t *s)
 void _z_string_copy(z_string_t *dst, const z_string_t *src)
 {
     if (src->val)
-        dst->val = strdup(src->val);
+        dst->val = _z_str_clone(src->val);
     else
         dst->val = NULL;
     dst->len = src->len;
@@ -55,15 +55,23 @@ void _z_string_move_str(z_string_t *dst, z_str_t src)
     dst->len = strlen(src);
 }
 
-void _z_string_free(z_string_t *str)
-{
-    free((z_str_t)str->val);
-}
-
 void _z_string_reset(z_string_t *str)
 {
     str->val = NULL;
     str->len = 0;
+}
+
+void _z_string_clear(z_string_t *str)
+{
+    free((z_str_t)str->val);
+    _z_string_reset(str);
+}
+
+void _z_string_free(z_string_t **str)
+{
+    z_string_t *ptr = (z_string_t *)*str;
+    _z_string_clear(ptr);
+    *str = NULL;
 }
 
 z_string_t _z_string_from_bytes(z_bytes_t *bs)
@@ -84,11 +92,22 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
     return s;
 }
 
-/*-------- str_array --------*/
-z_str_t _z_str_dup(const z_str_t src)
+/*-------- str --------*/
+void _z_str_clear(z_str_t src)
+{
+    free(src);
+}
+
+z_str_t _z_str_clone(const z_str_t src)
 {
     z_str_t dst = (z_str_t)malloc(strlen(src) + 1);
-    return strcpy(dst, src);
+    strcpy(dst, src);
+    return dst;
+}
+
+int _z_str_cmp(const z_str_t left, const z_str_t right)
+{
+    return strcmp(left, right) == 0;
 }
 
 /*-------- str_array --------*/
@@ -117,7 +136,7 @@ void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src)
 {
     _z_str_array_init(dst, src->len);
     for (size_t i = 0; i < src->len; i++)
-        ((z_str_t *)dst->val)[i] = strdup(src->val[i]);
+        ((z_str_t *)dst->val)[i] = _z_str_clone(src->val[i]);
     dst->len = src->len;
 }
 

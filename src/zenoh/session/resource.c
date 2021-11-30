@@ -84,10 +84,10 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
 {
     z_str_t rname = NULL;
 
-    // Case 2) -> string only reskey, duplicate the rname
+    // Case 2) -> string only reskey, clonelicate the rname
     if (reskey->rid == ZN_RESOURCE_ID_NONE)
     {
-        rname = strdup(reskey->rname);
+        rname = _z_str_clone(reskey->rname);
         return rname;
     }
 
@@ -99,7 +99,7 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
     {
         // Case 3) -> numerical reskey with suffix, same as Case 1) but we first append the suffix
         len += strlen(reskey->rname);
-        strs = _z_list_cons(strs, (void *)reskey->rname);
+        strs = _z_list_push(strs, (void *)reskey->rname);
     }
 
     // Case 1) -> numerical only reskey
@@ -109,14 +109,14 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
         _zn_resource_t *res = __unsafe_zn_get_resource_by_id(zn, is_local, id);
         if (res == NULL)
         {
-            _z_list_free(&strs, _zn_element_free_noop);
+            _z_list_free(&strs, _zn_noop_elem_free);
             return rname;
         }
 
         if (res->key.rname)
         {
             len += strlen(res->key.rname);
-            strs = _z_list_cons(strs, (void *)res->key.rname);
+            strs = _z_list_push(strs, (void *)res->key.rname);
         }
 
         id = res->key.rid;
@@ -130,7 +130,7 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
     {
         z_str_t s = (z_str_t)_z_list_head(strs);
         strcat(rname, s);
-        strs = _z_list_pop(strs);
+        strs = _z_list_tail(strs);
     }
 
     return rname;
@@ -246,13 +246,13 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
         // No resource declaration has been found, add the new one
         if (is_local)
         {
-            zn->local_resources = _z_list_cons(zn->local_resources, res);
+            zn->local_resources = _z_list_push(zn->local_resources, res);
         }
         else
         {
             __unsafe_zn_add_rem_res_to_loc_sub_map(zn, res->id, &res->key);
             __unsafe_zn_add_rem_res_to_loc_qle_map(zn, res->id, &res->key);
-            zn->remote_resources = _z_list_cons(zn->remote_resources, res);
+            zn->remote_resources = _z_list_push(zn->remote_resources, res);
         }
 
         r = 0;
@@ -279,7 +279,7 @@ void __unsafe_zn_free_resource(_zn_resource_t *res)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-int __unsafe_zn_resource_predicate(void *other, void *this)
+int __unsafe_zn_resource_predicate(const void *other, const void *this)
 {
     _zn_resource_t *o = (_zn_resource_t *)other;
     _zn_resource_t *t = (_zn_resource_t *)this;
@@ -300,9 +300,9 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
     z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_resources = _z_list_drop_filter(zn->local_resources, __unsafe_zn_resource_predicate, res, _zn_element_free_noop);
+        zn->local_resources = _z_list_drop_filter(zn->local_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
     else
-        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, __unsafe_zn_resource_predicate, res, _zn_element_free_noop);
+        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
     free(res);
 
     // Release the lock
@@ -319,7 +319,7 @@ void _zn_flush_resources(zn_session_t *zn)
         _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->local_resources);
         __unsafe_zn_free_resource(res);
         free(res);
-        zn->local_resources = _z_list_pop(zn->local_resources);
+        zn->local_resources = _z_list_pop(zn->local_resources, _zn_noop_elem_free);
     }
 
     while (zn->remote_resources)
@@ -327,7 +327,7 @@ void _zn_flush_resources(zn_session_t *zn)
         _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->remote_resources);
         __unsafe_zn_free_resource(res);
         free(res);
-        zn->remote_resources = _z_list_pop(zn->remote_resources);
+        zn->remote_resources = _z_list_pop(zn->remote_resources, _zn_noop_elem_free);
     }
 
     // Release the lock

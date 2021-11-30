@@ -49,7 +49,7 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
         while (subs)
         {
             _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-            xs = _z_list_cons(xs, sub);
+            xs = _z_list_push(xs, sub);
             subs = _z_list_tail(subs);
         }
     }
@@ -77,13 +77,13 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(&xs, _zn_element_free_noop);
+                    _z_list_free(&xs, _zn_noop_elem_free);
                     return xs;
                 }
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, sub);
+                xs = _z_list_push(xs, sub);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
@@ -122,7 +122,7 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_cons(xs, sub);
+                xs = _z_list_push(xs, sub);
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
@@ -152,10 +152,10 @@ void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_re
         if (sl)
         {
             // Free any ancient list
-            _z_list_free(&sl, _zn_element_free_noop);
+            _z_list_free(&sl, _zn_noop_elem_free);
         }
         // Update the list of active subscriptions
-        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, id, subs, _zn_element_free_noop);
+        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, id, subs, _zn_noop_elem_free);
     }
 }
 
@@ -241,8 +241,8 @@ void __unsafe_zn_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *
     {
         // Update the list of active subscriptions
         _z_list_t *subs = _z_int_void_map_get(&zn->rem_res_loc_sub_map, rem_res->id);
-        subs = _z_list_cons(subs, sub);
-        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, rem_res->id, subs, _zn_element_free_noop);
+        subs = _z_list_push(subs, sub);
+        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, rem_res->id, subs, _zn_noop_elem_free);
     }
 
     if (sub->key.rid != ZN_RESOURCE_ID_NONE)
@@ -279,11 +279,11 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
         if (is_local)
         {
             __unsafe_zn_add_loc_sub_to_rem_res_map(zn, sub);
-            zn->local_subscriptions = _z_list_cons(zn->local_subscriptions, sub);
+            zn->local_subscriptions = _z_list_push(zn->local_subscriptions, sub);
         }
         else
         {
-            zn->remote_subscriptions = _z_list_cons(zn->remote_subscriptions, sub);
+            zn->remote_subscriptions = _z_list_push(zn->remote_subscriptions, sub);
         }
         res = 0;
     }
@@ -311,7 +311,7 @@ void __unsafe_zn_free_subscription(_zn_subscriber_t *sub)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-int __unsafe_zn_subscription_predicate(void *other, void *this)
+int __unsafe_zn_subscription_predicate(const void *other, const void *this)
 {
     _zn_subscriber_t *o = (_zn_subscriber_t *)other;
     _zn_subscriber_t *t = (_zn_subscriber_t *)this;
@@ -332,9 +332,9 @@ void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_
     z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_subscriptions = _z_list_drop_filter(zn->local_subscriptions, __unsafe_zn_subscription_predicate, s, _zn_element_free_noop);
+        zn->local_subscriptions = _z_list_drop_filter(zn->local_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s);
     else
-        zn->remote_subscriptions = _z_list_drop_filter(zn->remote_subscriptions, __unsafe_zn_subscription_predicate, s, _zn_element_free_noop);
+        zn->remote_subscriptions = _z_list_drop_filter(zn->remote_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s);
     free(s);
 
     // Release the lock
@@ -351,7 +351,7 @@ void _zn_flush_subscriptions(zn_session_t *zn)
         _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->local_subscriptions);
         __unsafe_zn_free_subscription(sub);
         free(sub);
-        zn->local_subscriptions = _z_list_pop(zn->local_subscriptions);
+        zn->local_subscriptions = _z_list_pop(zn->local_subscriptions, _zn_noop_elem_free);
     }
 
     while (zn->remote_subscriptions)
@@ -359,9 +359,9 @@ void _zn_flush_subscriptions(zn_session_t *zn)
         _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->remote_subscriptions);
         __unsafe_zn_free_subscription(sub);
         free(sub);
-        zn->remote_subscriptions = _z_list_pop(zn->remote_subscriptions);
+        zn->remote_subscriptions = _z_list_pop(zn->remote_subscriptions, _zn_noop_elem_free);
     }
-    _z_int_void_map_clear(&zn->rem_res_loc_sub_map, _zn_element_free_noop);
+    _z_int_void_map_clear(&zn->rem_res_loc_sub_map, _zn_noop_elem_free);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);

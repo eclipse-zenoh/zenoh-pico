@@ -805,8 +805,10 @@ typedef struct
     uint8_t header;
 } _zn_declaration_t;
 
-void _zn_declaration_free(_zn_declaration_t *dcl);
-_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_free)
+void _zn_declaration_clear(_zn_declaration_t *dcl);
+
+_Z_ELEM_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_clear, _zn_noop_elem_clone, _zn_noop_elem_cmp)
+_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t)
 
 typedef struct
 {

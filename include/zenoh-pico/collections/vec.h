@@ -31,7 +31,7 @@ typedef struct
 } _z_vec_t;
 
 _z_vec_t _z_vec_make(size_t capacity);
-_z_vec_t _z_vec_dup(const _z_vec_t *v, z_element_dup_f f);
+_z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f f);
 
 size_t _z_vec_len(const _z_vec_t *v);
 void _z_vec_append(_z_vec_t *v, void *e);
@@ -42,7 +42,7 @@ void _z_vec_reset(_z_vec_t *v, z_element_free_f f);
 void _z_vec_clear(_z_vec_t *v, z_element_free_f f);
 void _z_vec_free(_z_vec_t **v, z_element_free_f f);
 
-#define _Z_VEC_DEFINE(name, type, elem_free_f)                              \
+#define _Z_VEC_DEFINE(name, type)                                           \
     typedef _z_vec_t name##_vec_t;                                          \
     static inline name##_vec_t name##_vec_make(size_t capacity)             \
     {                                                                       \
@@ -62,19 +62,19 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f f);
     }                                                                       \
     static inline void name##_vec_set(name##_vec_t *v, size_t pos, type *e) \
     {                                                                       \
-        return _z_vec_set(v, pos, e, elem_free_f);                          \
+        return _z_vec_set(v, pos, e, name##_elem_free);                     \
     }                                                                       \
     static inline void name##_vec_reset(name##_vec_t *v)                    \
     {                                                                       \
-        return _z_vec_reset(v, elem_free_f);                                \
+        return _z_vec_reset(v, name##_elem_free);                           \
     }                                                                       \
     static inline void name##_vec_clear(name##_vec_t *v)                    \
     {                                                                       \
-        return _z_vec_clear(v, elem_free_f);                                \
+        return _z_vec_clear(v, name##_elem_free);                           \
     }                                                                       \
     static inline void name##_vec_free(name##_vec_t **v)                    \
     {                                                                       \
-        return _z_vec_free(v, elem_free_f);                                 \
+        return _z_vec_free(v, name##_elem_free);                            \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_VECTOR_H */

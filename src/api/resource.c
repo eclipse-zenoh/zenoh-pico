@@ -26,7 +26,7 @@ zn_reskey_t zn_rname(const z_str_t rname)
 {
     zn_reskey_t rk;
     rk.rid = ZN_RESOURCE_ID_NONE;
-    rk.rname = strdup(rname);
+    rk.rname = _z_str_clone(rname);
     return rk;
 }
 
@@ -34,6 +34,6 @@ zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix)
 {
     zn_reskey_t rk;
     rk.rid = id;
-    rk.rname = strdup(suffix);
+    rk.rname = _z_str_clone(suffix);
     return rk;
 }
