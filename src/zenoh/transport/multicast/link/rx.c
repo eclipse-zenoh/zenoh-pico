@@ -18,18 +18,19 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _z_vec_find_z_bytes_t(_z_vec_t *v, z_bytes_t *e)
+_zn_transport_peer_entry_t *_zn_find_peer_entry(_zn_transport_peer_entry_list_t *l, z_bytes_t *remote_addr)
 {
-    for (size_t i = 0; i < v->len; i++)
+    int i = 0;
+    for (; l != NULL; l = l->tail)
     {
-        if (((z_bytes_t *)v->val[i])->len != e->len)
-            return -1;
+        if (((_zn_transport_peer_entry_t *)l->val)->remote_addr.len != remote_addr->len)
+            continue;
 
-        if (memcmp(((z_bytes_t *)v->val[i])->val, e->val, e->len) == 0)
-            return i;
+        if (memcmp(((_zn_transport_peer_entry_t *)l->val)->remote_addr.val, remote_addr->val, remote_addr->len) == 0)
+            return l->val;
     }
 
-    return -1;
+    return NULL;
 }
 
 /*------------------ Reception helper ------------------*/
@@ -144,70 +145,48 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         }
 
         // Lookup for peer_id in internal struct
-        int pos = _z_vec_find_z_bytes_t(&ztm->remote_addr_peers, addr);
-        if (pos == -1) // New peer
+        _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
+        if (entry == NULL) // New peer
         {
-            z_bytes_t *raddr = (z_bytes_t *)malloc(sizeof(z_bytes_t));
-            _z_bytes_copy(raddr, addr);
-            _z_vec_append(&ztm->remote_addr_peers, raddr);
-
-            z_bytes_t *pid = (z_bytes_t *)malloc(sizeof(z_bytes_t));
-            _z_bytes_copy(pid, &t_msg->body.join.pid);
-            _z_vec_append(&ztm->remote_pid_peers, pid);
-
-            z_zint_t *sn_resolution = (z_zint_t *)malloc(sizeof(z_zint_t));
+            entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
+            entry->remote_addr = _z_bytes_clone(addr);
+            entry->remote_pid = _z_bytes_clone(&t_msg->body.join.pid);
             if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
-                *sn_resolution = t_msg->body.join.sn_resolution;
+                entry->sn_resolution = t_msg->body.join.sn_resolution;
             else
-                *sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
+                entry->sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
+            entry->sn_resolution_half = entry->sn_resolution / 2;
 
-            z_zint_t *sn_resolution_half = (z_zint_t *)malloc(sizeof(z_zint_t));
-            *sn_resolution_half = *sn_resolution / 2;
-            _z_vec_append(&ztm->sn_resolution_peers, sn_resolution);
-            _z_vec_append(&ztm->sn_resolution_half_peers, sn_resolution_half);
-
-            if(t_msg->body.join.next_sns.is_qos == 0) // This shouls check on the flag as well
+            if(t_msg->body.join.next_sns.is_qos == 0) // TODO: This shouls check on the flag as well
             {
-                z_zint_t *sn_rx_best_effort = (z_zint_t *)malloc(sizeof(z_zint_t));
-                z_zint_t *sn_rx_reliable = (z_zint_t *)malloc(sizeof(z_zint_t));
-                *sn_rx_best_effort = _zn_sn_decrement(*sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
-                *sn_rx_reliable = _zn_sn_decrement(*sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
-
-                _z_vec_append(&ztm->sn_rx_best_effort_peers, sn_rx_best_effort);
-                _z_vec_append(&ztm->sn_rx_reliable_peers, sn_rx_reliable);
+                entry->sn_rx_best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
+                entry->sn_rx_reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
             }
             else
             {
                 // FIXME: QoS is not assume to be supported for the moment
             }
 
-            _z_wbuf_t *dbuf_best_effort = (_z_wbuf_t *)malloc(sizeof(_z_wbuf_t));
-            *dbuf_best_effort = _z_wbuf_make(0, 1);
-            _z_vec_append(&ztm->dbuf_best_effort_peers, dbuf_best_effort);
+            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
+            entry->dbuf_reliable = _z_wbuf_make(0, 1);
 
-            _z_wbuf_t *dbuf_reliable = (_z_wbuf_t *)malloc(sizeof(_z_wbuf_t));
-            *dbuf_reliable = _z_wbuf_make(0, 1);
-            _z_vec_append(&ztm->dbuf_reliable_peers, dbuf_reliable);
+            ztm->peers = _zn_transport_peer_entry_list_push(ztm->peers, entry);
 
             // TODO: Create peer-specific lease time
         }
         else // Existing peer
         {
-            z_zint_t *sn_resolution = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_peers, pos);
-            z_zint_t *sn_resolution_half = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_half_peers, pos);
-            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
-            {
-                z_zint_t *sn_resolution_half = _z_vec_get(&ztm->sn_resolution_peers, pos);
-                *sn_resolution = t_msg->body.join.sn_resolution;
-                *sn_resolution_half = *sn_resolution / 2;
-            }
+            // Check if the sn resolution remains the same
+            z_zint_t sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
+            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
+                sn_resolution = t_msg->body.join.sn_resolution;
+            if (entry->sn_resolution != t_msg->body.join.sn_resolution)
+                return _z_res_t_OK;
 
-            if(t_msg->body.join.next_sns.is_qos == 0)
+            if(t_msg->body.join.next_sns.is_qos == 0) // TODO: This shouls check on the flag as well
             {
-                z_zint_t *sn_rx_best_effort = _z_vec_get(&ztm->sn_rx_best_effort_peers, pos);
-                z_zint_t *sn_rx_reliable = _z_vec_get(&ztm->sn_rx_reliable_peers, pos);
-                *sn_rx_best_effort = _zn_sn_decrement(*sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
-                *sn_rx_reliable = _zn_sn_decrement(*sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
+                entry->sn_rx_best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
+                entry->sn_rx_reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
             }
             else
             {
@@ -251,40 +230,31 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_FRAME:
     {
-        // Get peer transport params
-        int pos = _z_vec_find_z_bytes_t(&ztm->remote_addr_peers, addr);
-        if (pos == -1)
+        _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
+        if (entry == NULL)
             return _z_res_t_OK;
-
-        z_zint_t *sn_resolution = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_peers, pos);
-        z_zint_t *sn_resolution_half = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_half_peers, pos);
-        z_zint_t *sn_rx_reliable = (z_zint_t *) _z_vec_get(&ztm->sn_rx_reliable_peers, pos);
-        z_zint_t *sn_rx_best_effort = (z_zint_t *) _z_vec_get(&ztm->sn_rx_best_effort_peers, pos);
-
-        _z_wbuf_t *dbuf_reliable = (_z_wbuf_t *) _z_vec_get(&ztm->dbuf_best_effort_peers, pos);
-        _z_wbuf_t *dbuf_best_effort = (_z_wbuf_t *) _z_vec_get(&ztm->dbuf_reliable_peers, pos);
 
         // Check if the SN is correct
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R))
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_zn_sn_precedes(*sn_resolution_half, *sn_rx_reliable, t_msg->body.frame.sn))
-                *sn_rx_reliable = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_reliable, t_msg->body.frame.sn))
+                entry->sn_rx_reliable = t_msg->body.frame.sn;
             else
             {
-                _z_wbuf_clear(dbuf_reliable);
+                _z_wbuf_clear(&entry->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
         }
         else
         {
-            if (_zn_sn_precedes(*sn_resolution_half, *sn_rx_best_effort, t_msg->body.frame.sn))
-                *sn_rx_best_effort = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_best_effort, t_msg->body.frame.sn))
+                entry->sn_rx_best_effort = t_msg->body.frame.sn;
             else
             {
-                _z_wbuf_clear(dbuf_best_effort);
+                _z_wbuf_clear(&entry->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -295,7 +265,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             int res = _z_res_t_OK;
 
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? dbuf_reliable : dbuf_best_effort;
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &entry->dbuf_reliable : &entry->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
             _z_wbuf_add_iosli_from(dbuf, t_msg->body.frame.payload.fragment.val, t_msg->body.frame.payload.fragment.len);
 

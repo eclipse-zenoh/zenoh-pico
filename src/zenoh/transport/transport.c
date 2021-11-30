@@ -112,9 +112,6 @@ _zn_transport_t *_zn_transport_multicast_init()
     // Initialize the read and write buffers
     zt->transport.multicast.wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
     zt->transport.multicast.zbuf = _z_zbuf_make(ZN_READ_BUF_LEN);
-    // Initialize the defragmentation buffers
-    zt->transport.multicast.dbuf_reliable_peers = _z_vec_make(1);
-    zt->transport.multicast.dbuf_best_effort_peers = _z_vec_make(1);
 
     // Set default SN resolution
     zt->transport.multicast.sn_resolution = 0;
@@ -123,13 +120,8 @@ _zn_transport_t *_zn_transport_multicast_init()
     zt->transport.multicast.sn_tx_reliable = 0;
     zt->transport.multicast.sn_tx_best_effort = 0;
 
-    // Set default SN resolution
-    zt->transport.multicast.sn_resolution_peers = _z_vec_make(1);
-    zt->transport.multicast.sn_resolution_half_peers = _z_vec_make(1);
-
-    // List of initial SN at RX side
-    zt->transport.multicast.sn_rx_reliable_peers = _z_vec_make(1);
-    zt->transport.multicast.sn_rx_best_effort_peers = _z_vec_make(1);
+    // Initialize peer list
+    zt->transport.multicast.peers = _zn_transport_peer_entry_list_make();
 
     // Tasks
     zt->transport.multicast.join_task_running = 0;
@@ -142,10 +134,6 @@ _zn_transport_t *_zn_transport_multicast_init()
     // Notifiers
     zt->transport.multicast.received = 0;
     zt->transport.multicast.transmitted = 0;
-
-    // List of remote peer PIDs and their addresses
-    zt->transport.multicast.remote_addr_peers = _z_vec_make(1);
-    zt->transport.multicast.remote_pid_peers = _z_vec_make(1);
 
     // Transport link for unicast
     zt->transport.multicast.link = NULL;
@@ -293,7 +281,7 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     _zn_transport_multicast_establish_param_result_t ret;
     _zn_transport_multicast_establish_param_t param;
     param.is_qos = 0; // FIXME: make transport aware of qos configuration
-    param.initial_sn_rx = 0;
+    param.initial_sn_tx = 0;
     param.sn_resolution = ZN_SN_RESOLUTION;
     param.lease = ZN_TRANSPORT_LEASE;
 
@@ -301,8 +289,8 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     // FIXME: make transport aware of qos configuration
     _zn_conduit_sn_list_t next_sns;
     next_sns.is_qos = 0;
-    next_sns.val.plain.best_effort = param.initial_sn_rx;
-    next_sns.val.plain.reliable = param.initial_sn_rx;
+    next_sns.val.plain.best_effort = param.initial_sn_tx;
+    next_sns.val.plain.reliable = param.initial_sn_tx;
 
     _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, param.lease, param.sn_resolution, local_pid, next_sns);
 

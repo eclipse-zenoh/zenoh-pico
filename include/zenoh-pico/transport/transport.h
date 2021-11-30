@@ -23,6 +23,28 @@
 
 typedef struct
 {
+    // Defragmentation buffers
+    _z_wbuf_t dbuf_reliable;
+    _z_wbuf_t dbuf_best_effort;
+
+    // SN numbers
+    z_zint_t sn_resolution;
+    z_zint_t sn_resolution_half;
+    z_zint_t sn_rx_reliable;
+    z_zint_t sn_rx_best_effort;
+
+    z_bytes_t remote_pid;
+    z_bytes_t remote_addr;
+} _zn_transport_peer_entry_t;
+
+void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src);
+_zn_transport_peer_entry_t *_zn_transport_peer_entry_clone(const _zn_transport_peer_entry_t *src);
+int _zn_transport_peer_entry_cmp(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right);
+_Z_ELEM_DEFINE(_zn_transport_peer_entry, _zn_transport_peer_entry_t, _zn_transport_peer_entry_clear, _zn_transport_peer_entry_clone, _zn_transport_peer_entry_cmp)
+_Z_LIST_DEFINE(_zn_transport_peer_entry, _zn_transport_peer_entry_t)
+
+typedef struct
+{
     // Session associated to the transport
     void *session;
 
@@ -52,6 +74,7 @@ typedef struct
 
     volatile int received;
     volatile int transmitted;
+
     volatile int read_task_running;
     z_task_t *read_task;
 
@@ -69,26 +92,33 @@ typedef struct
     z_mutex_t mutex_rx;
     z_mutex_t mutex_tx;
 
-    // Defragmentation buffers
-    _z_vec_t/*<_z_wbuf_t>*/ dbuf_reliable_peers;
-    _z_vec_t/*<_z_wbuf_t>*/ dbuf_best_effort_peers;
+    // Known valid peers
+    _zn_transport_peer_entry_list_t/*<_zn_transport_peer_entry_t>*/ *peers;
+
+    // // Defragmentation buffers
+    // _z_vec_t/*<_z_wbuf_t>*/ dbuf_reliable_peers;
+    // _z_vec_t/*<_z_wbuf_t>*/ dbuf_best_effort_peers;
 
     // SN initial numbers
     z_zint_t sn_resolution;
     z_zint_t sn_resolution_half;
-    z_zint_t sn_rx_reliable;
-    z_zint_t sn_rx_best_effort;
     z_zint_t sn_tx_reliable;
     z_zint_t sn_tx_best_effort;
+    // z_zint_t sn_resolution;
+    // z_zint_t sn_resolution_half;
+    // z_zint_t sn_rx_reliable;
+    // z_zint_t sn_rx_best_effort;
+    // z_zint_t sn_tx_reliable;
+    // z_zint_t sn_tx_best_effort;
 
-    // SN numbers
-    _z_vec_t/*<z_zint_t>*/ sn_resolution_peers;
-    _z_vec_t/*<z_zint_t>*/ sn_resolution_half_peers;
-    _z_vec_t/*<z_zint_t>*/ sn_rx_reliable_peers;
-    _z_vec_t/*<z_zint_t>*/ sn_rx_best_effort_peers;
+    // // SN numbers
+    // _z_vec_t/*<z_zint_t>*/ sn_resolution_peers;
+    // _z_vec_t/*<z_zint_t>*/ sn_resolution_half_peers;
+    // _z_vec_t/*<z_zint_t>*/ sn_rx_reliable_peers;
+    // _z_vec_t/*<z_zint_t>*/ sn_rx_best_effort_peers;
 
-    _z_vec_t/*<void *>*/ remote_addr_peers;
-    _z_vec_t/*<z_bytes_t>*/ remote_pid_peers;
+    // _z_vec_t/*<void *>*/ remote_addr_peers;
+    // _z_vec_t/*<z_bytes_t>*/ remote_pid_peers;
 
     // ----------- Link related -----------
     // TX and RX buffers
@@ -142,7 +172,7 @@ _ZN_RESULT_DECLARE(_zn_transport_unicast_establish_param_t, transport_unicast_es
 
 typedef struct {
     z_zint_t sn_resolution;
-    z_zint_t initial_sn_rx;
+    z_zint_t initial_sn_tx;
     uint8_t is_qos;
     z_zint_t lease;
 } _zn_transport_multicast_establish_param_t;

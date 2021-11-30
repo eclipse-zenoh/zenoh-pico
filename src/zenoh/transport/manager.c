@@ -103,8 +103,8 @@ _zn_transport_p_result_t _zn_new_transport_peer(z_str_t locator, z_bytes_t local
         zt = _zn_transport_multicast_init();
         zt->transport.multicast.sn_resolution = res_tp_param.value.transport_multicast_establish_param.sn_resolution;
         zt->transport.multicast.sn_resolution_half = zt->transport.multicast.sn_resolution / 2;
-        zt->transport.multicast.sn_rx_reliable = res_tp_param.value.transport_multicast_establish_param.initial_sn_rx;
-        zt->transport.multicast.sn_rx_best_effort = res_tp_param.value.transport_multicast_establish_param.initial_sn_rx;
+        zt->transport.multicast.sn_tx_reliable = res_tp_param.value.transport_multicast_establish_param.initial_sn_tx;
+        zt->transport.multicast.sn_tx_best_effort = res_tp_param.value.transport_multicast_establish_param.initial_sn_tx;
         zt->transport.multicast.lease = ZN_KEEP_ALIVE_INTERVAL; // FIXME
 
         zt->transport.multicast.link = res_zl.value.link;
