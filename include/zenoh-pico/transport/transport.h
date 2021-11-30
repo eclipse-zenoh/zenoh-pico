@@ -72,8 +72,6 @@ typedef struct
     // Defragmentation buffers
     _z_vec_t/*<_z_wbuf_t>*/ dbuf_reliable_peers;
     _z_vec_t/*<_z_wbuf_t>*/ dbuf_best_effort_peers;
-    _z_wbuf_t dbuf_reliable; // TODO: to delete
-    _z_wbuf_t dbuf_best_effort; // TODO: to delete
 
     // SN initial numbers
     z_zint_t sn_resolution;

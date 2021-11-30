@@ -181,6 +181,14 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 // FIXME: QoS is not assume to be supported for the moment
             }
 
+            _z_wbuf_t *dbuf_best_effort = (_z_wbuf_t *)malloc(sizeof(_z_wbuf_t));
+            *dbuf_best_effort = _z_wbuf_make(0, 1);
+            _z_vec_append(&ztm->dbuf_best_effort_peers, dbuf_best_effort);
+
+            _z_wbuf_t *dbuf_reliable = (_z_wbuf_t *)malloc(sizeof(_z_wbuf_t));
+            *dbuf_reliable = _z_wbuf_make(0, 1);
+            _z_vec_append(&ztm->dbuf_reliable_peers, dbuf_reliable);
+
             // TODO: Create peer-specific lease time
         }
         else // Existing peer
@@ -252,6 +260,9 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         z_zint_t *sn_rx_reliable = (z_zint_t *) _z_vec_get(&ztm->sn_rx_reliable_peers, pos);
         z_zint_t *sn_rx_best_effort = (z_zint_t *) _z_vec_get(&ztm->sn_rx_best_effort_peers, pos);
 
+        _z_wbuf_t *dbuf_reliable = (_z_wbuf_t *) _z_vec_get(&ztm->dbuf_best_effort_peers, pos);
+        _z_wbuf_t *dbuf_best_effort = (_z_wbuf_t *) _z_vec_get(&ztm->dbuf_reliable_peers, pos);
+
         // Check if the SN is correct
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R))
         {
@@ -261,7 +272,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 *sn_rx_reliable = t_msg->body.frame.sn;
             else
             {
-                _z_wbuf_clear(&ztm->dbuf_reliable);
+                _z_wbuf_clear(dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -272,7 +283,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 *sn_rx_best_effort = t_msg->body.frame.sn;
             else
             {
-                _z_wbuf_clear(&ztm->dbuf_best_effort);
+                _z_wbuf_clear(dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
                 return _z_res_t_OK;
             }
@@ -283,7 +294,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             int res = _z_res_t_OK;
 
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &ztm->dbuf_reliable : &ztm->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? dbuf_reliable : dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
             _z_wbuf_add_iosli_from(dbuf, t_msg->body.frame.payload.fragment.val, t_msg->body.frame.payload.fragment.len);
 

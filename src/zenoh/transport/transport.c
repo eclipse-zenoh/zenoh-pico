@@ -116,9 +116,6 @@ _zn_transport_t *_zn_transport_multicast_init()
     zt->transport.multicast.dbuf_reliable_peers = _z_vec_make(1);
     zt->transport.multicast.dbuf_best_effort_peers = _z_vec_make(1);
 
-    zt->transport.multicast.dbuf_reliable = _z_wbuf_make(0, 1);
-    zt->transport.multicast.dbuf_best_effort = _z_wbuf_make(0, 1);
-
     // Set default SN resolution
     zt->transport.multicast.sn_resolution = 0;
     zt->transport.multicast.sn_resolution_half = zt->transport.multicast.sn_resolution / 2;
