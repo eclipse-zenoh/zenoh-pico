@@ -125,7 +125,7 @@ _zn_transport_t *_zn_transport_multicast_init()
 
     // Set default SN resolution
     zt->transport.multicast.sn_resolution_peers = _z_vec_make(1);
-    zt->transport.multicast.sn_resolution_peers = _z_vec_make(1);
+    zt->transport.multicast.sn_resolution_half_peers = _z_vec_make(1);
 
     // List of initial SN at RX side
     zt->transport.multicast.sn_rx_reliable_peers = _z_vec_make(1);

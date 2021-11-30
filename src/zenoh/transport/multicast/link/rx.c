@@ -156,13 +156,11 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             _z_vec_append(&ztm->remote_pid_peers, pid);
 
             z_zint_t *sn_resolution = (z_zint_t *)malloc(sizeof(z_zint_t));
-            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S)) {
+            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
                 *sn_resolution = t_msg->body.join.sn_resolution;
-            }
             else
-            {
                 *sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
-            }
+
             z_zint_t *sn_resolution_half = (z_zint_t *)malloc(sizeof(z_zint_t));
             *sn_resolution_half = *sn_resolution / 2;
             _z_vec_append(&ztm->sn_resolution_peers, sn_resolution);
@@ -195,7 +193,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         }
         else // Existing peer
         {
-            z_zint_t *sn_resolution = _z_vec_get(&ztm->sn_resolution_peers, pos);
+            z_zint_t *sn_resolution = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_peers, pos);
+            z_zint_t *sn_resolution_half = (z_zint_t *) _z_vec_get(&ztm->sn_resolution_half_peers, pos);
             if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
             {
                 z_zint_t *sn_resolution_half = _z_vec_get(&ztm->sn_resolution_peers, pos);
