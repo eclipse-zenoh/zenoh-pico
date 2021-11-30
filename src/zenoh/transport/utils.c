@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/transport/utils.h"
 
-int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_right)
+int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right)
 {
     if (sn_right > sn_left)
         return (sn_right - sn_left <= sn_resolution_half);
@@ -22,12 +22,12 @@ int _zn_sn_precedes(z_zint_t sn_resolution_half, z_zint_t sn_left, z_zint_t sn_r
         return (sn_left - sn_right > sn_resolution_half);
 }
 
-z_zint_t _zn_sn_increment(z_zint_t sn_resolution, z_zint_t sn)
+z_zint_t _zn_sn_increment(const z_zint_t sn_resolution, const z_zint_t sn)
 {
     return (sn + 1) % sn_resolution;
 }
 
-z_zint_t _zn_sn_decrement(z_zint_t sn_resolution, z_zint_t sn)
+z_zint_t _zn_sn_decrement(const z_zint_t sn_resolution, const z_zint_t sn)
 {
     if (sn == 0)
         return sn_resolution - 1;
