@@ -16,28 +16,17 @@
 #include <string.h>
 #include "zenoh-pico/collections/intmap.h"
 
-/*-------- int-void entry --------*/
-_z_int_void_map_entry_t *_z_int_void_map_entry_make(unsigned int key, void *value)
-{
-    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)malloc(sizeof(_z_int_void_map_entry_t));
-    entry->key = key;
-    entry->value = value;
-    return entry;
-}
-
-void _z_int_void_map_entry_free(_z_int_void_map_entry_t **e, z_element_free_f f)
-{
-    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)*e;
-    f(&entry->value);
-    free(entry);
-    *e = NULL;
-}
-
 /*-------- int-void map --------*/
+int _z_int_void_map_entry_key_cmp(const void *left, const void *right)
+{
+    _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
+    _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
+    return l->key == r->key;
+}
+
 void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity)
 {
     map->capacity = capacity;
-    map->len = 0;
     map->vals = NULL;
 }
 
@@ -55,7 +44,15 @@ size_t _z_int_void_map_capacity(const _z_int_void_map_t *map)
 
 size_t _z_int_void_map_len(const _z_int_void_map_t *map)
 {
-    return map->len;
+    size_t len = 0;
+
+    if (map->vals == NULL)
+        return len;
+
+    for (size_t idx = 0; idx < map->capacity; idx++)
+        len += _z_list_len(map->vals[idx]);
+
+    return len;
 }
 
 int _z_int_void_map_is_empty(const _z_int_void_map_t *map)
@@ -63,7 +60,20 @@ int _z_int_void_map_is_empty(const _z_int_void_map_t *map)
     return _z_int_void_map_len(map) == 0;
 }
 
-void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f)
+void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f)
+{
+    if (map->vals == NULL)
+        return;
+
+    size_t idx = k % map->capacity;
+    _z_int_void_map_entry_t e;
+    e.key = k;
+    e.val = NULL;
+
+    map->vals[idx] = _z_list_drop_filter(map->vals[idx], f, _z_int_void_map_entry_key_cmp, &e);
+}
+
+void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f_f)
 {
     if (map->vals == NULL)
     {
@@ -75,36 +85,16 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
             map->vals[idx] = NULL;
     }
 
-    // Compute the hash
+    // Free any old value
+    _z_int_void_map_remove(map, k, f_f);
+
+    // Insert the element
+    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)malloc(sizeof(_z_int_void_map_entry_t));
+    entry->key = k;
+    entry->val = v;
+
     size_t idx = k % map->capacity;
-
-    // Get the list associated to the hash
-    _z_list_t *xs = map->vals[idx];
-
-    while (xs != NULL)
-    {
-        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_head(xs);
-        if (entry->key == k)
-        {
-            // Free the pointer to the old value
-            f(&entry->value);
-            // Update the pointer to current value
-            entry->value = v;
-
-            return v;
-        }
-        else
-        {
-            xs = _z_list_tail(xs);
-        }
-    }
-
-    if (xs == NULL)
-    {
-        _z_int_void_map_entry_t *entry = _z_int_void_map_entry_make(k, v);
-        map->vals[idx] = _z_list_cons(map->vals[idx], entry);
-        map->len++;
-    }
+    map->vals[idx] = _z_list_push(map->vals[idx], entry);
 
     return v;
 }
@@ -115,59 +105,28 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k)
         return NULL;
 
     size_t idx = k % map->capacity;
-    _z_list_t *xs = map->vals[idx];
 
-    while (xs != NULL)
+    _z_int_void_map_entry_t e;
+    e.key = k;
+    e.val = NULL;
+
+    _z_list_t *xs = _z_list_find(map->vals[idx], _z_int_void_map_entry_key_cmp, &e);
+    if (xs != NULL)
     {
-        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_head(xs);
-        if (entry->key == k)
-            return entry->value;
-        xs = _z_list_tail(xs);
+        _z_int_void_map_entry_t *h = (_z_int_void_map_entry_t *)_z_list_head(xs);
+        return h->val;
     }
 
     return NULL;
 }
 
-int _z_int_void_map_key_predicate(void *current, void *desired)
-{
-    _z_int_void_map_entry_t *c = (_z_int_void_map_entry_t *)current;
-    _z_int_void_map_entry_t *d = (_z_int_void_map_entry_t *)desired;
-    if (c->key == d->key)
-        return 1;
-    return 0;
-}
-
-void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f)
-{
-    if (map->vals == NULL)
-        return;
-
-    size_t idx = k % map->capacity;
-    _z_int_void_map_entry_t e;
-    e.key = k;
-
-    size_t l = _z_list_len(map->vals[idx]);
-
-    map->vals[idx] = _z_list_drop_filter(map->vals[idx], _z_int_void_map_key_predicate, &e, f);
-    map->len -= l - _z_list_len(map->vals[idx]);
-}
-
-void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f)
+void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f)
 {
     if (map->vals == NULL)
         return;
 
     for (size_t idx = 0; idx < map->capacity; idx++)
-    {
-        _z_list_t *xs = map->vals[idx];
-        while (xs != NULL)
-        {
-            _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_head(xs);
-            _z_int_void_map_entry_free(&entry, f);
-            xs = _z_list_tail(xs);
-        }
-        map->vals[idx] = NULL;
-    }
+        _z_list_free(&map->vals[idx], f_f);
 }
 
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f)

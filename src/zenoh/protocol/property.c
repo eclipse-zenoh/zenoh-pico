@@ -18,7 +18,7 @@
 
 int zn_properties_init(zn_properties_t *ps)
 {
-    zn_int_str_map_init(ps);
+    _z_str_intmap_init(ps);
     return 0;
 }
 
@@ -31,14 +31,15 @@ zn_properties_t zn_properties_make()
 
 int zn_properties_insert(zn_properties_t *ps, unsigned int key, z_string_t value)
 {
-    z_str_t res = zn_int_str_map_insert(ps, key, (z_str_t)value.val);
+
+    z_str_t res = _z_str_intmap_insert(ps, key, (z_str_t)value.val);
     return res == value.val ? 0 : -1;
 }
 
 z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key)
 {
     z_string_t s;
-    z_str_t p = zn_int_str_map_get(ps, key);
+    z_str_t p = _z_str_intmap_get(ps, key);
     if (p == NULL)
     {
         s.val = NULL;
@@ -53,12 +54,12 @@ z_string_t zn_properties_get(const zn_properties_t *ps, unsigned int key)
 }
 
 /*------------------ int-string map ------------------*/
-zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int argc, zn_int_str_mapping_t argv[], size_t n)
+_z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[], size_t n)
 {
-    zn_int_str_map_result_t res;
+    _z_str_intmap_result_t res;
 
     res.tag = _z_res_t_OK;
-    res.value.int_str_map = zn_int_str_map_make();
+    res.value.str_intmap = _z_str_intmap_make();
 
     // Check the string contains only the right
     z_str_t start = s;
@@ -101,7 +102,7 @@ zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int a
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
-        zn_int_str_map_insert(&res.value.int_str_map, key, p_value);
+        _z_str_intmap_insert(&res.value.str_intmap, key, p_value);
 
         // Process next key value
         start = p_value_end + 1;
@@ -110,24 +111,24 @@ zn_int_str_map_result_t zn_int_str_map_from_strn(const z_str_t s, unsigned int a
     return res;
 
 ERR:
-    zn_int_str_map_clear(&res.value.int_str_map);
+    _z_str_intmap_clear(&res.value.str_intmap);
     res.tag = _z_res_t_ERR;
     res.value.error = _z_err_t_PARSE_STRING;
     return res;
 }
 
-zn_int_str_map_result_t zn_int_str_map_from_str(const z_str_t s, unsigned int argc, zn_int_str_mapping_t argv[])
+_z_str_intmap_result_t _z_str_intmap_from_str(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[])
 {
-    return zn_int_str_map_from_strn(s, argc, argv, strlen(s));
+    return _z_str_intmap_from_strn(s, argc, argv, strlen(s));
 }
 
-size_t zn_int_str_map_strlen(const zn_int_str_map_t *s, unsigned int argc, zn_int_str_mapping_t argv[])
+size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
 {
     // Calculate the string length to allocate
     size_t len = 0;
     for (size_t i = 0; i < argc; i++)
     {
-        z_str_t v = zn_int_str_map_get(s, argv[i].key);
+        z_str_t v = _z_str_intmap_get(s, argv[i].key);
         if (v != NULL)
         {
             if (len != 0)
@@ -141,7 +142,7 @@ size_t zn_int_str_map_strlen(const zn_int_str_map_t *s, unsigned int argc, zn_in
     return len;
 }
 
-void zn_int_str_map_onto_str(z_str_t dst, const zn_int_str_map_t *s, unsigned int argc, zn_int_str_mapping_t argv[])
+void _z_str_intmap_onto_str(z_str_t dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
 {
     // Build the string
     dst[0] = '\0';
@@ -150,7 +151,7 @@ void zn_int_str_map_onto_str(z_str_t dst, const zn_int_str_map_t *s, unsigned in
     const char ksep = INT_STR_MAP_KEYVALUE_SEPARATOR;
     for (size_t i = 0; i < argc; i++)
     {
-        z_str_t v = zn_int_str_map_get(s, argv[i].key);
+        z_str_t v = _z_str_intmap_get(s, argv[i].key);
         if (v != NULL)
         {
             if (strlen(dst) != 0)
@@ -162,12 +163,12 @@ void zn_int_str_map_onto_str(z_str_t dst, const zn_int_str_map_t *s, unsigned in
     }
 }
 
-z_str_t zn_int_str_map_to_str(const zn_int_str_map_t *s, unsigned int argc, zn_int_str_mapping_t argv[])
+z_str_t _z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
 {
     // Calculate the string length to allocate
-    size_t len = zn_int_str_map_strlen(s, argc, argv);
+    size_t len = _z_str_intmap_strlen(s, argc, argv);
     // Build the string
     z_str_t dst = (z_str_t)malloc(len + 1);
-    zn_int_str_map_onto_str(dst, s, argc, argv);
+    _z_str_intmap_onto_str(dst, s, argc, argv);
     return dst;
 }

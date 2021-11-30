@@ -24,11 +24,9 @@
  * A single-linked list.
  *
  *  Members:
- *   void *val: The pointer to the inner value.
+ *   void *lal: The pointer to the inner value.
  *   struct z_list *tail: A pointer to the next element in the list.
  */
-typedef int (*z_list_predicate)(void *, void *);
-
 typedef struct _z_l_t
 {
     void *val;
@@ -36,35 +34,68 @@ typedef struct _z_l_t
 } _z_list_t;
 
 _z_list_t *_z_list_of(void *x);
-_z_list_t *_z_list_cons(_z_list_t *xs, void *x);
 
-void *_z_list_head(_z_list_t *xs);
-_z_list_t *_z_list_tail(_z_list_t *xs);
+size_t _z_list_len(const _z_list_t *xs);
 
-size_t _z_list_len(_z_list_t *xs);
+void *_z_list_head(const _z_list_t *xs);
+_z_list_t *_z_list_tail(const _z_list_t *xs);
 
-_z_list_t *_z_list_pop(_z_list_t *xs);
+_z_list_t *_z_list_push(_z_list_t *xs, void *x);
+_z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f);
 
-_z_list_t *_z_list_drop_head(_z_list_t *xs, z_element_free_f f);
-_z_list_t *_z_list_drop_pos(_z_list_t *xs, size_t pos, z_element_free_f f);
-_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_list_predicate p, void *arg, z_element_free_f f);
+_z_list_t *_z_list_find(const _z_list_t *xs, z_element_cmp_f f_f, void *e);
 
-int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f f);
-_z_list_t *_z_list_dup(const _z_list_t *xs, z_element_dup_f f);
-void _z_list_free(_z_list_t **xs, z_element_free_f f);
+_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_cmp_f c_f, void *left);
 
-/*-------- String list --------*/
-typedef _z_list_t z_str_list_t;
+int _z_list_cmp(const _z_list_t *left, const _z_list_t *right, z_element_cmp_f c_f);
+_z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f);
+void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
 
-#define z_str_list_make() NULL
-#define z_str_list_push(list, elem) _z_list_cons(list, elem)
-#define z_str_list_pop(list, elem) _z_list_pop(list, elem)
-#define z_str_list_len(list) _z_list_len(list)
-#define z_str_list_drop_head(list) (z_str_t) _z_list_drop_head(list, z_element_free_str)
-#define z_str_list_drop_pos(list, pos) _z_list_drop_pos(list, pos, z_element_free_str)
-#define z_str_list_drop_filter(list, pos) _z_list_drop_head(list, pos, z_element_free_str)
-#define z_str_list_cmp(left, right) _z_list_cmp(left, right, z_element_cmp_str)
-#define z_str_list_dup(list) _z_list_dup(list, z_element_dup_str)
-#define z_str_list_free(list) _z_list_free(list, z_element_free_str)
+#define _Z_LIST_DEFINE(name, type)                                                                    \
+    typedef _z_list_t name##_list_t;                                                                  \
+    static inline name##_list_t *name##_list_make()                                                   \
+    {                                                                                                 \
+        return NULL;                                                                                  \
+    }                                                                                                 \
+    static inline size_t name##_list_len(const name##_list_t *l)                                      \
+    {                                                                                                 \
+        return _z_list_len(l);                                                                        \
+    }                                                                                                 \
+    static inline type *name##_list_head(const name##_list_t *l)                                      \
+    {                                                                                                 \
+        return (type *)_z_list_head(l);                                                               \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_tail(const name##_list_t *l)                             \
+    {                                                                                                 \
+        return _z_list_tail(l);                                                                       \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_push(name##_list_t *l, type *e)                          \
+    {                                                                                                 \
+        return _z_list_push(l, e);                                                                    \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_pop(name##_list_t *l)                                    \
+    {                                                                                                 \
+        return _z_list_pop(l, name##_elem_free);                                                      \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_find(const name##_list_t *l, name##_cmp_f c_f, type *e)  \
+    {                                                                                                 \
+        return _z_list_find(l, (z_element_cmp_f)c_f, e);                                              \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_drop_filter(name##_list_t *l, name##_cmp_f c_f, type *e) \
+    {                                                                                                 \
+        return _z_list_drop_filter(l, name##_elem_free, (z_element_cmp_f)c_f, e);                     \
+    }                                                                                                 \
+    static inline name##_list_t *name##_list_clone(name##_list_t *l)                                  \
+    {                                                                                                 \
+        return _z_list_clone(l, name##_elem_clone);                                                   \
+    }                                                                                                 \
+    static inline int name##_list_cmp(const name##_list_t *l, const name##_list_t *r)                 \
+    {                                                                                                 \
+        return _z_list_cmp(l, r, name##_elem_cmp);                                                    \
+    }                                                                                                 \
+    static inline void name##_list_free(name##_list_t **l)                                            \
+    {                                                                                                 \
+        _z_list_free(l, name##_elem_free);                                                            \
+    }
 
 #endif /* ZENOH_PICO_COLLECTIONS_LIST_H */

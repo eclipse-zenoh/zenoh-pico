@@ -29,16 +29,16 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/link/manager.h"
 
-/*------------------ dup helpers ------------------*/
-zn_reskey_t _zn_reskey_dup(const zn_reskey_t *reskey)
+/*------------------ clone helpers ------------------*/
+zn_reskey_t _zn_reskey_clone(const zn_reskey_t *reskey)
 {
     zn_reskey_t rk;
     rk.rid = reskey->rid,
-    rk.rname = reskey->rname ? strdup(reskey->rname) : NULL;
+    rk.rname = reskey->rname ? _z_str_clone(reskey->rname) : NULL;
     return rk;
 }
 
-z_timestamp_t z_timestamp_dup(const z_timestamp_t *tstamp)
+z_timestamp_t z_timestamp_clone(const z_timestamp_t *tstamp)
 {
     z_timestamp_t ts;
     _z_bytes_copy(&ts.id, &tstamp->id);
@@ -68,9 +68,9 @@ zn_session_t *_zn_session_init()
     zn->remote_resources = NULL;
     zn->local_subscriptions = NULL;
     zn->remote_subscriptions = NULL;
-    zn->rem_res_loc_sub_map = _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_sub_map = _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);
     zn->local_queryables = NULL;
-    zn->rem_res_loc_qle_map = _z_int_void_map_make(_Z_DEFAULT_I_MAP_CAPACITY);
+    zn->rem_res_loc_qle_map = _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);
     zn->pending_queries = NULL;
 
     // Associate a transport with the session

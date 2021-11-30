@@ -17,7 +17,7 @@
 void zn_sample_free(zn_sample_t sample)
 {
     if (sample.key.val)
-        _z_string_free(&sample.key);
+        _z_string_clear(&sample.key);
     if (sample.value.val)
         _z_bytes_clear(&sample.value);
 }
@@ -48,7 +48,7 @@ void zn_reply_data_array_free(zn_reply_data_array_t replies)
         if (replies.val[i].data.value.val)
             _z_bytes_clear((z_bytes_t *)&replies.val[i].data.value);
         if (replies.val[i].data.key.val)
-            _z_string_free((z_string_t *)&replies.val[i].data.key);
+            _z_string_clear((z_string_t *)&replies.val[i].data.key);
     }
     free((zn_reply_data_t *)replies.val);
 }

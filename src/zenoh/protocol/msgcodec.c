@@ -348,7 +348,7 @@ void _zn_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reply_conte
 
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
-        r->value.reply_context->replier_id = _z_bytes_dup(&r_arr.value.bytes);
+        r->value.reply_context->replier_id = _z_bytes_clone(&r_arr.value.bytes);
     }
 }
 
@@ -776,7 +776,7 @@ _zn_declaration_result_t _zn_declaration_decode(_z_zbuf_t *zbf)
     return r;
 }
 
-void _zn_declaration_free(_zn_declaration_t *dcl)
+void _zn_declaration_clear(_zn_declaration_t *dcl)
 {
     uint8_t did = _ZN_MID(dcl->header);
     switch (did)
@@ -854,7 +854,7 @@ void _zn_declare_decode_na(_z_zbuf_t *zbf, _zn_declare_result_t *r)
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
 
             for (size_t j = 0; j < i; ++j)
-                _zn_declaration_free(&r->value.declare.declarations.val[j]);
+                _zn_declaration_clear(&r->value.declare.declarations.val[j]);
             free(r->value.declare.declarations.val);
 
             break;
@@ -873,7 +873,7 @@ _zn_declare_result_t _zn_declare_decode(_z_zbuf_t *zbf)
 void _zn_declare_free(_zn_declare_t *dcl)
 {
     for (size_t i = 0; i < dcl->declarations.len; i++)
-        _zn_declaration_free(&dcl->declarations.val[i]);
+        _zn_declaration_clear(&dcl->declarations.val[i]);
     free(dcl->declarations.val);
 }
 
@@ -2101,7 +2101,7 @@ void _zn_frame_free(_zn_frame_t *msg, uint8_t header)
         for (size_t i = 0; i < _z_vec_len(&msg->payload.messages); i++)
             _zn_zenoh_message_free((_zn_zenoh_message_t *)_z_vec_get(&msg->payload.messages, i));
         _z_vec_t *ptr = &msg->payload.messages;
-        _z_vec_free(&ptr, _zn_element_free_noop);
+        _z_vec_free(&ptr, _zn_noop_elem_free);
     }
 }
 

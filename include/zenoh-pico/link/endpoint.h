@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include "zenoh-pico/collections/array.h"
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
@@ -31,7 +32,7 @@ typedef struct
 {
     z_str_t protocol;
     z_str_t address;
-    zn_int_str_map_t metadata;
+    _z_str_intmap_t metadata;
 } _zn_locator_t;
 
 _ZN_RESULT_DECLARE(_zn_locator_t, locator)
@@ -45,7 +46,8 @@ void _zn_locator_clear(_zn_locator_t *lc);
 void _zn_locator_free(_zn_locator_t **lc);
 
 /*------------------ Locator array ------------------*/
-_Z_ARRAY_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_clear)
+_Z_ELEM_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_clear, _zn_noop_elem_clone, _zn_locator_cmp)
+_Z_ARRAY_DEFINE(_zn_locator, _zn_locator_t)
 _ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
 
 /*------------------ Endpoint ------------------*/
@@ -54,7 +56,7 @@ _ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
 typedef struct
 {
     _zn_locator_t locator;
-    zn_int_str_map_t config;
+    _z_str_intmap_t config;
 } _zn_endpoint_t;
 _ZN_RESULT_DECLARE(_zn_endpoint_t, endpoint)
 

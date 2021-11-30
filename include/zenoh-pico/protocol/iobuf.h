@@ -16,6 +16,7 @@
 #define ZENOH_PICO_PROTOCOL_IOBUF_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/vec.h"
 
@@ -46,8 +47,9 @@ void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
 z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 void _z_iosli_clear(_z_iosli_t *ios);
-void _z_iosli_free(_z_iosli_t **ios);
-void z_element_free_iosli(void **ios);
+
+_Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_clear, _zn_noop_elem_clone, _zn_noop_elem_cmp)
+_Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/
 typedef struct
@@ -80,8 +82,6 @@ void _z_zbuf_clear(_z_zbuf_t *zbf);
 void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
-_Z_VEC_DEFINE(_z_iosli, _z_iosli_t, z_element_free_iosli)
-
 typedef struct
 {
     _z_iosli_vec_t ioss;

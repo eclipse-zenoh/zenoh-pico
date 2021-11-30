@@ -30,6 +30,4 @@ typedef struct timeval z_time_t;
 
 typedef clockid_t clock_t;
 
-char *strdup(const z_str_t s);
-
 #endif /* ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H */
