@@ -62,9 +62,14 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f free_f)
     *v = NULL;
 }
 
-inline size_t _z_vec_len(const _z_vec_t *v)
+size_t _z_vec_len(const _z_vec_t *v)
 {
     return v->len;
+}
+
+int _z_vec_is_empty(const _z_vec_t *v)
+{
+    return _z_vec_len(v) == 0;
 }
 
 void _z_vec_append(_z_vec_t *v, void *e)

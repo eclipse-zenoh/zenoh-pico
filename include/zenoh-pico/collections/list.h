@@ -36,6 +36,7 @@ typedef struct _z_l_t
 _z_list_t *_z_list_of(void *x);
 
 size_t _z_list_len(const _z_list_t *xs);
+int _z_list_is_empty(const _z_list_t *xs);
 
 void *_z_list_head(const _z_list_t *xs);
 _z_list_t *_z_list_tail(const _z_list_t *xs);
@@ -60,6 +61,10 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline size_t name##_list_len(const name##_list_t *l)                                      \
     {                                                                                                 \
         return _z_list_len(l);                                                                        \
+    }                                                                                                 \
+    static inline int name##_list_is_empty(const name##_list_t *l)                                    \
+    {                                                                                                 \
+        return _z_list_is_empty(l);                                                                   \
     }                                                                                                 \
     static inline type *name##_list_head(const name##_list_t *l)                                      \
     {                                                                                                 \

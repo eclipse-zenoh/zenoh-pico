@@ -34,6 +34,8 @@ _z_vec_t _z_vec_make(size_t capacity);
 _z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f f);
 
 size_t _z_vec_len(const _z_vec_t *v);
+int _z_vec_is_empty(const _z_vec_t *v);
+
 void _z_vec_append(_z_vec_t *v, void *e);
 void *_z_vec_get(const _z_vec_t *v, size_t pos);
 void _z_vec_set(_z_vec_t *sv, size_t pos, void *e, z_element_free_f f);
@@ -51,6 +53,10 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f f);
     static inline size_t name##_vec_len(const name##_vec_t *v)              \
     {                                                                       \
         return _z_vec_len(v);                                               \
+    }                                                                       \
+    static inline int name##_vec_is_empty(const name##_vec_t *v)            \
+    {                                                                       \
+        return _z_vec_is_empty(v);                                          \
     }                                                                       \
     static inline void name##_vec_append(name##_vec_t *v, type *e)          \
     {                                                                       \
