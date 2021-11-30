@@ -25,27 +25,21 @@
 
 int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
-    z_bytes_t pid = _z_bytes_clone(&((zn_session_t *)ztu->session)->tp_manager->local_pid);
-    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, ((zn_session_t *)ztu->session)->tp_manager->local_pid, link_only);
 
     int res = _zn_unicast_send_t_msg(ztu, &cm);
 
-    // Free the message
     _zn_transport_message_free(&cm);
-
     return res;
 }
 
 int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
-    z_bytes_t pid = _z_bytes_dup(&((zn_session_t *)ztm->session)->tp_manager->local_pid);
-    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, ((zn_session_t *)ztm->session)->tp_manager->local_pid, link_only);
 
     int res = _zn_multicast_send_t_msg(ztm, &cm);
 
-    // Free the message
     _zn_transport_message_free(&cm);
-
     return res;
 }
 
@@ -153,8 +147,8 @@ _zn_transport_t *_zn_transport_multicast_init()
     zt->transport.multicast.transmitted = 0;
 
     // List of remote peer PIDs and their addresses
-    zt->transport.multicast.remote_addr_peers = _z_vec_make(0);
-    zt->transport.multicast.remote_pid_peers = _z_vec_make(0);
+    zt->transport.multicast.remote_addr_peers = _z_vec_make(1);
+    zt->transport.multicast.remote_pid_peers = _z_vec_make(1);
 
     // Transport link for unicast
     zt->transport.multicast.link = NULL;
@@ -171,10 +165,9 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     uint8_t version = ZN_PROTO_VERSION;
     z_zint_t whatami = ZN_CLIENT;
     z_zint_t sn_resolution = ZN_SN_RESOLUTION;
-    z_bytes_t pid = local_pid;
     int is_qos = 0;
 
-    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, local_pid, is_qos);
 
     // Encode and send the message
     _Z_DEBUG("Sending InitSyn\n");
