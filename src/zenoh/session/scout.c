@@ -123,7 +123,7 @@ zn_hello_array_t _zn_scout_loop(
         }
         }
 
-        _zn_transport_message_free(&t_msg);
+        _zn_transport_message_clear(&t_msg);
 
         if (ls.len > 0 && exit_on_first)
             break;

@@ -271,7 +271,7 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
  */
 void __unsafe_zn_free_resource(_zn_resource_t *res)
 {
-    _zn_reskey_free(&res->key);
+    _zn_reskey_clear(&res->key);
 }
 
 /**

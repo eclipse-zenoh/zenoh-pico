@@ -100,7 +100,7 @@ int main(void)
         printf("get(%d) = %s\n", i, e);
         assert(_z_str_cmp(s, e));
 
-        assert(_z_str_intmap_len(list) == i + 1);
+        assert(_z_str_intmap_len(&map) == i + 1);
     }
     assert(_z_str_intmap_len(&map) == len);
 

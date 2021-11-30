@@ -65,11 +65,11 @@ _ZN_RESULT_DECLARE(_zn_query_t, query)
 _ZN_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-#define _ZN_DECLARE_FREE(name) \
-    void _zn_##name##_free(_zn_##name##_t *m, uint8_t header)
+#define _ZN_DECLARE_CLEAR(name) \
+    void _zn_##name##_clear(_zn_##name##_t *m, uint8_t header)
 
-#define _ZN_DECLARE_FREE_NOH(name) \
-    void _zn_##name##_free(_zn_##name##_t *m)
+#define _ZN_DECLARE_CLEAR_NOH(name) \
+    void _zn_##name##_clear(_zn_##name##_t *m)
 
 #define _ZN_DECLARE_ENCODE(name) \
     int _zn_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_##name##_t *m)
@@ -96,23 +96,23 @@ _ZN_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
 /*------------------ Transport Message ------------------*/
 _ZN_DECLARE_ENCODE(scout);
 _ZN_DECLARE_DECODE(scout);
-_ZN_DECLARE_FREE(scout);
+_ZN_DECLARE_CLEAR(scout);
 
 _ZN_DECLARE_ENCODE(hello);
 _ZN_DECLARE_DECODE(hello);
-_ZN_DECLARE_FREE(hello);
+_ZN_DECLARE_CLEAR(hello);
 
 _ZN_DECLARE_ENCODE_NOH(transport_message);
 _ZN_DECLARE_DECODE_NOH(transport_message);
-_ZN_DECLARE_FREE_NOH(transport_message);
+_ZN_DECLARE_CLEAR_NOH(transport_message);
 
 /*------------------ Zenoh Message ------------------*/
 _ZN_DECLARE_ENCODE_NOH(zenoh_message);
 _ZN_DECLARE_DECODE_NOH(zenoh_message);
-_ZN_DECLARE_FREE_NOH(zenoh_message);
+_ZN_DECLARE_CLEAR_NOH(zenoh_message);
 
 /*------------------ Free Helpers ------------------*/
-void _zn_reskey_free(zn_reskey_t *rk);
+void _zn_reskey_clear(zn_reskey_t *rk);
 
 #endif /* ZENOH_PICO_MSGCODEC_H */
 
@@ -121,12 +121,12 @@ void _zn_reskey_free(zn_reskey_t *rk);
 /*------------------ Message Fields ------------------*/
 _ZN_DECLARE_ENCODE_NOH(payload);
 _ZN_DECLARE_DECODE_NOH(payload);
-_ZN_DECLARE_FREE_NOH(payload);
+_ZN_DECLARE_CLEAR_NOH(payload);
 
 int z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
 void z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r);
 _zn_timestamp_result_t z_timestamp_decode(_z_zbuf_t *zbf);
-void z_timestamp_free(z_timestamp_t *ts);
+void z_timestamp_clear(z_timestamp_t *ts);
 
 int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
 void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t *r);
@@ -140,103 +140,103 @@ _zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header);
 /*------------------ Message Decorators ------------------*/
 _ZN_DECLARE_ENCODE_NOH(attachment);
 _ZN_DECLARE_P_DECODE(attachment);
-_ZN_DECLARE_FREE_NOH(attachment);
+_ZN_DECLARE_CLEAR_NOH(attachment);
 
 _ZN_DECLARE_ENCODE_NOH(reply_context);
 _ZN_DECLARE_P_DECODE(reply_context);
-_ZN_DECLARE_FREE_NOH(reply_context);
+_ZN_DECLARE_CLEAR_NOH(reply_context);
 
 /*------------------ Zenoh Message ------------------*/
 _ZN_DECLARE_ENCODE(res_decl);
 _ZN_DECLARE_DECODE(res_decl);
-_ZN_DECLARE_FREE_NOH(res_decl);
+_ZN_DECLARE_CLEAR_NOH(res_decl);
 
 _ZN_DECLARE_ENCODE(pub_decl);
 _ZN_DECLARE_DECODE(pub_decl);
-_ZN_DECLARE_FREE_NOH(pub_decl);
+_ZN_DECLARE_CLEAR_NOH(pub_decl);
 
 _ZN_DECLARE_ENCODE(sub_decl);
 _ZN_DECLARE_DECODE(sub_decl);
-_ZN_DECLARE_FREE_NOH(sub_decl);
+_ZN_DECLARE_CLEAR_NOH(sub_decl);
 
 _ZN_DECLARE_ENCODE(qle_decl);
 _ZN_DECLARE_DECODE(qle_decl);
-_ZN_DECLARE_FREE_NOH(qle_decl);
+_ZN_DECLARE_CLEAR_NOH(qle_decl);
 
 _ZN_DECLARE_ENCODE_NOH(forget_res_decl);
 _ZN_DECLARE_DECODE_NOH(forget_res_decl);
-_ZN_DECLARE_FREE_NOH(forget_res_decl);
+_ZN_DECLARE_CLEAR_NOH(forget_res_decl);
 
 _ZN_DECLARE_ENCODE(forget_pub_decl);
 _ZN_DECLARE_DECODE(forget_pub_decl);
-_ZN_DECLARE_FREE_NOH(forget_pub_decl);
+_ZN_DECLARE_CLEAR_NOH(forget_pub_decl);
 
 _ZN_DECLARE_ENCODE(forget_sub_decl);
 _ZN_DECLARE_DECODE(forget_sub_decl);
-_ZN_DECLARE_FREE_NOH(forget_sub_decl);
+_ZN_DECLARE_CLEAR_NOH(forget_sub_decl);
 
 _ZN_DECLARE_ENCODE(forget_qle_decl);
 _ZN_DECLARE_DECODE(forget_qle_decl);
-_ZN_DECLARE_FREE_NOH(forget_qle_decl);
+_ZN_DECLARE_CLEAR_NOH(forget_qle_decl);
 
 _ZN_DECLARE_ENCODE_NOH(declaration);
 _ZN_DECLARE_DECODE_NOH(declaration);
 
 _ZN_DECLARE_ENCODE_NOH(declare);
 _ZN_DECLARE_DECODE_NOH(declare);
-_ZN_DECLARE_FREE_NOH(declare);
+_ZN_DECLARE_CLEAR_NOH(declare);
 
 _ZN_DECLARE_ENCODE_NOH(data_info);
 _ZN_DECLARE_DECODE_NOH(data_info);
-_ZN_DECLARE_FREE_NOH(data_info);
+_ZN_DECLARE_CLEAR_NOH(data_info);
 
 _ZN_DECLARE_ENCODE(data);
 _ZN_DECLARE_DECODE(data);
-_ZN_DECLARE_FREE_NOH(data);
+_ZN_DECLARE_CLEAR_NOH(data);
 
 _ZN_DECLARE_ENCODE(pull);
 _ZN_DECLARE_DECODE(pull);
-_ZN_DECLARE_FREE_NOH(pull);
+_ZN_DECLARE_CLEAR_NOH(pull);
 
 _ZN_DECLARE_ENCODE(query);
 _ZN_DECLARE_DECODE(query);
-_ZN_DECLARE_FREE_NOH(query);
+_ZN_DECLARE_CLEAR_NOH(query);
 
 /*------------------ Transport Message ------------------*/
 _ZN_DECLARE_ENCODE(join);
 _ZN_DECLARE_DECODE(join);
-_ZN_DECLARE_FREE(join);
+_ZN_DECLARE_CLEAR(join);
 
 _ZN_DECLARE_ENCODE(init);
 _ZN_DECLARE_DECODE(init);
-_ZN_DECLARE_FREE(init);
+_ZN_DECLARE_CLEAR(init);
 
 _ZN_DECLARE_ENCODE(open);
 _ZN_DECLARE_DECODE(open);
-_ZN_DECLARE_FREE(open);
+_ZN_DECLARE_CLEAR(open);
 
 _ZN_DECLARE_ENCODE(close);
 _ZN_DECLARE_DECODE(close);
-_ZN_DECLARE_FREE(close);
+_ZN_DECLARE_CLEAR(close);
 
 _ZN_DECLARE_ENCODE(sync);
 _ZN_DECLARE_DECODE(sync);
-_ZN_DECLARE_FREE(sync);
+_ZN_DECLARE_CLEAR(sync);
 
 _ZN_DECLARE_ENCODE(ack_nack);
 _ZN_DECLARE_DECODE(ack_nack);
-_ZN_DECLARE_FREE(ack_nack);
+_ZN_DECLARE_CLEAR(ack_nack);
 
 _ZN_DECLARE_ENCODE(keep_alive);
 _ZN_DECLARE_DECODE(keep_alive);
-_ZN_DECLARE_FREE(keep_alive);
+_ZN_DECLARE_CLEAR(keep_alive);
 
 _ZN_DECLARE_ENCODE_NOH(ping_pong);
 _ZN_DECLARE_DECODE_NOH(ping_pong);
-_ZN_DECLARE_FREE_NOH(ping_pong);
+_ZN_DECLARE_CLEAR_NOH(ping_pong);
 
 _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
-_ZN_DECLARE_FREE(frame);
+_ZN_DECLARE_CLEAR(frame);
 
 #endif /* ZENOH_PICO_MSGCODEC_H */

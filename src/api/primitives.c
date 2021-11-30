@@ -57,7 +57,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     return r->id;
 }
@@ -82,7 +82,7 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
 }
@@ -109,7 +109,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     return pub;
 }
@@ -130,7 +130,7 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     free(pub);
 }
@@ -166,7 +166,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
     subscriber->zn = zn;
@@ -195,7 +195,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
 
@@ -233,7 +233,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     zn_queryable_t *queryable = (zn_queryable_t *)malloc(sizeof(zn_queryable_t));
     queryable->zn = zn;
@@ -262,7 +262,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     _zn_unregister_queryable(qle->zn, q);
 
@@ -458,7 +458,7 @@ int zn_pull(zn_subscriber_t *sub)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
     return 0;
 }

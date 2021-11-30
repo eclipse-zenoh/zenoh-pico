@@ -246,7 +246,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
  */
 void __unsafe_zn_free_queryable(_zn_queryable_t *qle)
 {
-    _zn_reskey_free(&qle->key);
+    _zn_reskey_clear(&qle->key);
 }
 
 /**
@@ -477,7 +477,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
 EXIT_QLE_TRIG:
     // Release the lock

@@ -103,7 +103,7 @@ void __unsafe_zn_free_pending_reply(_zn_pending_reply_t *pr)
  */
 void __unsafe_zn_free_pending_query(_zn_pending_query_t *pen_qry)
 {
-    _zn_reskey_free(&pen_qry->key);
+    _zn_reskey_clear(&pen_qry->key);
     if (pen_qry->predicate)
         free((z_str_t)pen_qry->predicate);
 

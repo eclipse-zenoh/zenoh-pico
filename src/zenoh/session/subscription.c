@@ -301,7 +301,7 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
  */
 void __unsafe_zn_free_subscription(_zn_subscriber_t *sub)
 {
-    _zn_reskey_free(&sub->key);
+    _zn_reskey_clear(&sub->key);
     if (sub->info.period)
         free(sub->info.period);
 }

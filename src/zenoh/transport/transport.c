@@ -30,7 +30,7 @@ int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int lin
     int res = _zn_unicast_send_t_msg(ztu, &cm);
 
     // Free the message
-    _zn_transport_message_free(&cm);
+    _zn_transport_message_clear(&cm);
 
     return res;
 }
@@ -121,7 +121,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 
     // The announced sn resolution
     param.sn_resolution = ism.body.init.sn_resolution;
-    _zn_transport_message_free(&ism);
+    _zn_transport_message_clear(&ism);
 
     _zn_transport_message_result_t r_iam = _zn_link_recv_t_msg(zl);
     if (r_iam.tag == _z_res_t_ERR)
@@ -186,7 +186,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
             else
                 goto ERR_3;
 
-            _zn_transport_message_free(&oam);
+            _zn_transport_message_clear(&oam);
 
             break;
         }
@@ -200,7 +200,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
     }
     }
 
-    _zn_transport_message_free(&iam);
+    _zn_transport_message_clear(&iam);
 
     ret.tag = _z_res_t_OK;
     ret.value.transport_establish_param = param;
@@ -209,7 +209,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 ERR_3:
     _z_bytes_clear(&param.remote_pid);
 ERR_2:
-    _zn_transport_message_free(&iam);
+    _zn_transport_message_clear(&iam);
 ERR_1:
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
