@@ -157,22 +157,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 entry->sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
             entry->sn_resolution_half = entry->sn_resolution / 2;
 
-            // Check if the flags are in accordance with the value union
-            if(!(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // With QoS
-                    && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
-                    && t_msg->body.join.next_sns.is_qos == 1)
-              && !(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // Without QoS and O flag set
-                      && !_ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
-                    && t_msg->body.join.next_sns.is_qos == 0)
-              && !(!_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // Without QoS and O flag not set
-                    && t_msg->body.join.next_sns.is_qos == 0))
-            {
-                _z_bytes_clear(&entry->remote_addr);
-                _z_bytes_clear(&entry->remote_pid);
-                free(entry);
-                return _z_res_t_OK;
-            }
-
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
             _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
@@ -192,18 +176,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
             {
                 _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
-                return _z_res_t_OK;
-            }
-
-            // Check if the flags are in accordance with the value union
-            if(!(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O)
-                    && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
-                    && t_msg->body.join.next_sns.is_qos == 1)
-              || !(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O)
-                      && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
-                    && t_msg->body.join.next_sns.is_qos == 0))
-            {
-                // Invalid message: ignore and drop message
                 return _z_res_t_OK;
             }
 
