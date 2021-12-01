@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/utils.h"
 
 void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src)
 {
@@ -32,8 +33,7 @@ _zn_transport_peer_entry_t *_zn_transport_peer_entry_clone(const _zn_transport_p
 
     ret->sn_resolution = src->sn_resolution;
     ret->sn_resolution_half = src->sn_resolution_half;
-    ret->sn_rx_reliable = src->sn_rx_reliable;
-    ret->sn_rx_best_effort = src->sn_rx_best_effort;
+    _zn_conduit_sn_list_copy(&ret->sn_rx_sns, &src->sn_rx_sns);
 
     _z_bytes_copy(&ret->remote_pid, &src->remote_pid);
     _z_bytes_copy(&ret->remote_addr, &src->remote_addr);
@@ -43,6 +43,11 @@ _zn_transport_peer_entry_t *_zn_transport_peer_entry_clone(const _zn_transport_p
 
 int _zn_transport_peer_entry_cmp(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right)
 {
-    // TODO: to be implemented
-    return -1;
+    if (left->remote_pid.len != right->remote_pid.len)
+        return 0; // False
+
+    if (memcmp(left->remote_pid.val, right->remote_pid.val, left->remote_pid.len) != 0)
+        return 0; // False
+
+    return 1; // True
 }

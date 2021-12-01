@@ -24,5 +24,7 @@
 int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right);
 z_zint_t _zn_sn_increment(const z_zint_t sn_resolution, const z_zint_t sn);
 z_zint_t _zn_sn_decrement(const z_zint_t sn_resolution, const z_zint_t sn);
+void _zn_conduit_sn_list_copy(_zn_conduit_sn_list_t *dst, const _zn_conduit_sn_list_t *src);
+void _zn_conduit_sn_list_decrement(const z_zint_t sn_resolution, _zn_conduit_sn_list_t *sns);
 
 #endif /* ZENOH_PICO_TRANSPORT_UTILS_H */

@@ -157,43 +157,64 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 entry->sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
             entry->sn_resolution_half = entry->sn_resolution / 2;
 
-            if(t_msg->body.join.next_sns.is_qos == 0) // TODO: This shouls check on the flag as well
+            // Check if the flags are in accordance with the value union
+            if(!(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // With QoS
+                    && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
+                    && t_msg->body.join.next_sns.is_qos == 1)
+              && !(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // Without QoS and O flag set
+                      && !_ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
+                    && t_msg->body.join.next_sns.is_qos == 0)
+              && !(!_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O) // Without QoS and O flag not set
+                    && t_msg->body.join.next_sns.is_qos == 0))
             {
-                entry->sn_rx_best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
-                entry->sn_rx_reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
+                _z_bytes_clear(&entry->remote_addr);
+                _z_bytes_clear(&entry->remote_pid);
+                free(entry);
+                return _z_res_t_OK;
             }
-            else
-            {
-                // FIXME: QoS is not assume to be supported for the moment
-            }
+
+            _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
+            _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
             entry->dbuf_best_effort = _z_wbuf_make(0, 1);
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
 
-            ztm->peers = _zn_transport_peer_entry_list_push(ztm->peers, entry);
+            entry->lease = t_msg->body.join.lease;
+            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_T1))
+                entry->lease = entry->lease * 1000;
 
-            // TODO: Create peer-specific lease time
+            ztm->peers = _zn_transport_peer_entry_list_push(ztm->peers, entry);
         }
         else // Existing peer
         {
             // Check if the sn resolution remains the same
             z_zint_t sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
-            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
-                sn_resolution = t_msg->body.join.sn_resolution;
-            if (entry->sn_resolution != t_msg->body.join.sn_resolution)
+            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
+            {
+                _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
                 return _z_res_t_OK;
-
-            if(t_msg->body.join.next_sns.is_qos == 0) // TODO: This shouls check on the flag as well
-            {
-                entry->sn_rx_best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.best_effort);
-                entry->sn_rx_reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sns.val.plain.reliable);
-            }
-            else
-            {
-                // FIXME: QoS is not assume to be supported for the moment
             }
 
-            // TODO: Update lease time
+            // Check if the flags are in accordance with the value union
+            if(!(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O)
+                    && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
+                    && t_msg->body.join.next_sns.is_qos == 1)
+              || !(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_O)
+                      && _ZN_HAS_FLAG(t_msg->body.join.options, _ZN_OPT_JOIN_QOS)
+                    && t_msg->body.join.next_sns.is_qos == 0))
+            {
+                // Invalid message: ignore and drop message
+                return _z_res_t_OK;
+            }
+
+            // Update SNs
+            _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
+            _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
+
+            // Update lease time
+            entry->lease = t_msg->body.join.lease;
+            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_T1))
+                entry->lease = entry->lease * 1000;
         }
 
         return _z_res_t_OK;
@@ -239,8 +260,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_reliable, t_msg->body.frame.sn))
-                entry->sn_rx_reliable = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.reliable, t_msg->body.frame.sn))
+                entry->sn_rx_sns.val.plain.reliable = t_msg->body.frame.sn;
             else
             {
                 _z_wbuf_clear(&entry->dbuf_reliable);
@@ -250,8 +271,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         }
         else
         {
-            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_best_effort, t_msg->body.frame.sn))
-                entry->sn_rx_best_effort = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.best_effort, t_msg->body.frame.sn))
+                entry->sn_rx_sns.val.plain.best_effort = t_msg->body.frame.sn;
             else
             {
                 _z_wbuf_clear(&entry->dbuf_best_effort);

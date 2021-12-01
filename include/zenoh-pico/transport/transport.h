@@ -30,11 +30,12 @@ typedef struct
     // SN numbers
     z_zint_t sn_resolution;
     z_zint_t sn_resolution_half;
-    z_zint_t sn_rx_reliable;
-    z_zint_t sn_rx_best_effort;
+    _zn_conduit_sn_list_t sn_rx_sns;
 
     z_bytes_t remote_pid;
     z_bytes_t remote_addr;
+
+    volatile z_zint_t lease;
 } _zn_transport_peer_entry_t;
 
 void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src);
