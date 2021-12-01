@@ -42,11 +42,11 @@ int _zn_locator_cmp(const _zn_locator_t *left, const _zn_locator_t *right);
 z_str_t _zn_locator_to_str(const _zn_locator_t *l);
 _zn_locator_result_t _zn_locator_from_str(const z_str_t s);
 
+size_t _zn_locator_size(_zn_locator_t *lc);
 void _zn_locator_clear(_zn_locator_t *lc);
-void _zn_locator_free(_zn_locator_t **lc);
+_Z_ELEM_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_size, _zn_locator_clear, _zn_noop_elem_copy)
 
 /*------------------ Locator array ------------------*/
-_Z_ELEM_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_clear, _zn_noop_elem_clone, _zn_locator_cmp)
 _Z_ARRAY_DEFINE(_zn_locator, _zn_locator_t)
 _ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
 

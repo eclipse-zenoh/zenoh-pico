@@ -127,25 +127,6 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_cm
     return xs;
 }
 
-int _z_list_cmp(const _z_list_t *right, const _z_list_t *left, z_element_cmp_f c_f)
-{
-    _z_list_t *l = (_z_list_t *)left;
-    _z_list_t *r = (_z_list_t *)right;
-
-    while (l != NULL && r != NULL)
-    {
-        int res = c_f(_z_list_head(l), _z_list_head(r));
-        if (res != 0)
-            return res;
-
-        l = _z_list_tail(l);
-        r = _z_list_tail(r);
-    }
-
-    // l and r should be both NULL
-    return l == r;
-}
-
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f)
 {
     _z_list_t *new = NULL;

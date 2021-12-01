@@ -48,13 +48,12 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_cmp_f f_f, void *e);
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_cmp_f c_f, void *left);
 
-int _z_list_cmp(const _z_list_t *left, const _z_list_t *right, z_element_cmp_f c_f);
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f);
 void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
 
 #define _Z_LIST_DEFINE(name, type)                                                                    \
     typedef _z_list_t name##_list_t;                                                                  \
-    static inline name##_list_t *name##_list_make()                                                   \
+    static inline name##_list_t *name##_list_new()                                                    \
     {                                                                                                 \
         return NULL;                                                                                  \
     }                                                                                                 \
@@ -93,10 +92,6 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline name##_list_t *name##_list_clone(name##_list_t *l)                                  \
     {                                                                                                 \
         return _z_list_clone(l, name##_elem_clone);                                                   \
-    }                                                                                                 \
-    static inline int name##_list_cmp(const name##_list_t *l, const name##_list_t *r)                 \
-    {                                                                                                 \
-        return _z_list_cmp(l, r, name##_elem_cmp);                                                    \
     }                                                                                                 \
     static inline void name##_list_free(name##_list_t **l)                                            \
     {                                                                                                 \

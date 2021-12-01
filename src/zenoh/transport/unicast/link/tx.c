@@ -125,7 +125,7 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
             }
             // Write the fragment
             size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
-            return _z_wbuf_copy_into(dst, src, to_copy);
+            return _z_wbuf_siphon(dst, src, to_copy);
         }
         else
         {

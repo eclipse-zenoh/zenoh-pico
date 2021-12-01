@@ -24,7 +24,7 @@
 
 int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
-    z_bytes_t pid = _z_bytes_clone(&((zn_session_t *)ztu->session)->tp_manager->local_pid);
+    z_bytes_t pid = _z_bytes_duplicate(&((zn_session_t *)ztu->session)->tp_manager->local_pid);
     _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
 
     int res = _zn_unicast_send_t_msg(ztu, &cm);

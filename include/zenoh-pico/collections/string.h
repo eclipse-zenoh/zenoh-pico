@@ -29,11 +29,13 @@
  */
 typedef char *z_str_t;
 
-void _z_str_clear(z_str_t src);
 z_str_t _z_str_clone(const z_str_t src);
+void _z_str_clear(z_str_t src);
 int _z_str_cmp(const z_str_t left, const z_str_t right);
 
-_Z_ELEM_DEFINE(_z_str, char, _z_str_clear, _z_str_clone, _z_str_cmp)
+size_t __z_str_size(const z_str_t src);
+void __z_str_copy(z_str_t dst, const z_str_t src);
+_Z_ELEM_DEFINE(_z_str, char, __z_str_size, _z_str_clear, __z_str_copy)
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)

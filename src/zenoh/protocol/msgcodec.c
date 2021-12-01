@@ -348,7 +348,7 @@ void _zn_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reply_conte
 
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES, reply_context)
-        r->value.reply_context->replier_id = _z_bytes_clone(&r_arr.value.bytes);
+        r->value.reply_context->replier_id = _z_bytes_duplicate(&r_arr.value.bytes);
     }
 }
 

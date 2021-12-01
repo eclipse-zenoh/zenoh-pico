@@ -28,12 +28,13 @@ inline _z_vec_t _z_vec_make(size_t capacity)
     return v;
 }
 
-_z_vec_t _z_vec_clone(const _z_vec_t *v, z_element_clone_f d_f)
+void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f)
 {
-    _z_vec_t u = _z_vec_make(v->capacity);
-    for (size_t i = 0; i < v->len; i++)
-        _z_vec_append(&u, d_f(v->val[i]));
-    return u;
+    dst->capacity = src->capacity;
+    dst->len = src->len;
+    dst->val = (void **)malloc(sizeof(void *) * src->capacity);
+    for (size_t i = 0; i < src->len; i++)
+        _z_vec_append(dst, d_f(src->val[i]));
 }
 
 void _z_vec_reset(_z_vec_t *v, z_element_free_f free_f)

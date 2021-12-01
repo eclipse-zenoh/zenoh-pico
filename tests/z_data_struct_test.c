@@ -51,7 +51,7 @@ int main(void)
     // str-list
     printf(">>> str-list\n");
 
-    _z_str_list_t *list = _z_str_list_make();
+    _z_str_list_t *list = _z_str_list_new();
     assert(_z_str_list_is_empty(list));
 
     for (int i = 0; i < len; i++)
