@@ -196,6 +196,9 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
 
+        if (entry == NULL)
+            break;
+
         if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_I))
         {
             // Check if the Peer ID matches the remote address in the knonw peer list
