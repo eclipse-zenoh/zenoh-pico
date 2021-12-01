@@ -95,30 +95,11 @@ typedef struct
     // Known valid peers
     _zn_transport_peer_entry_list_t/*<_zn_transport_peer_entry_t>*/ *peers;
 
-    // // Defragmentation buffers
-    // _z_vec_t/*<_z_wbuf_t>*/ dbuf_reliable_peers;
-    // _z_vec_t/*<_z_wbuf_t>*/ dbuf_best_effort_peers;
-
     // SN initial numbers
     z_zint_t sn_resolution;
     z_zint_t sn_resolution_half;
     z_zint_t sn_tx_reliable;
     z_zint_t sn_tx_best_effort;
-    // z_zint_t sn_resolution;
-    // z_zint_t sn_resolution_half;
-    // z_zint_t sn_rx_reliable;
-    // z_zint_t sn_rx_best_effort;
-    // z_zint_t sn_tx_reliable;
-    // z_zint_t sn_tx_best_effort;
-
-    // // SN numbers
-    // _z_vec_t/*<z_zint_t>*/ sn_resolution_peers;
-    // _z_vec_t/*<z_zint_t>*/ sn_resolution_half_peers;
-    // _z_vec_t/*<z_zint_t>*/ sn_rx_reliable_peers;
-    // _z_vec_t/*<z_zint_t>*/ sn_rx_best_effort_peers;
-
-    // _z_vec_t/*<void *>*/ remote_addr_peers;
-    // _z_vec_t/*<z_bytes_t>*/ remote_pid_peers;
 
     // ----------- Link related -----------
     // TX and RX buffers
