@@ -89,9 +89,6 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
         }
     }
 
-    // Mark the session that we have received data
-    ztm->received = 1;
-
     _Z_DEBUG(">> \t transport_message_decode\n");
     _zn_transport_message_decode_na(&ztm->zbuf, r);
 
@@ -110,30 +107,35 @@ _zn_transport_message_result_t _zn_multicast_recv_t_msg(_zn_transport_multicast_
 
 int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_transport_message_t *t_msg, z_bytes_t *addr)
 {
+    // Acquire and keep the lock
+    z_mutex_lock(&ztm->mutex_peer);
+
+    // Mark the session that we have received data from this peer
+    _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
     switch (_ZN_MID(t_msg->header))
     {
     case _ZN_MID_SCOUT:
     {
         // Do nothing, multicast transports are not expected to handle SCOUT messages on established sessions
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_HELLO:
     {
         // Do nothing, multicast transports are not expected to handle HELLO messages on established sessions
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_INIT:
     {
         // Do nothing, multicas transports are not expected to handle INIT messages
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_OPEN:
     {
         // Do nothing, multicas transports are not expected to handle OPEN messages
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_JOIN:
@@ -141,11 +143,9 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_A))
         {
             if (t_msg->body.join.version != ZN_PROTO_VERSION)
-                return _z_res_t_OK;
+                break;
         }
 
-        // Lookup for peer_id in internal struct
-        _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
         if (entry == NULL) // New peer
         {
             entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
@@ -163,80 +163,83 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             entry->dbuf_best_effort = _z_wbuf_make(0, 1);
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
 
+            // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
-            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_T1))
-                entry->lease = entry->lease * 1000;
+            entry->lease_expires = entry->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
+            entry->received = 1;
 
             ztm->peers = _zn_transport_peer_entry_list_push(ztm->peers, entry);
         }
         else // Existing peer
         {
+            entry->received = 1;
+
             // Check if the sn resolution remains the same
             z_zint_t sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
             {
                 _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
-                return _z_res_t_OK;
+                break;
             }
 
             // Update SNs
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
             _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
-            // Update lease time
+            // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
-            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_T1))
-                entry->lease = entry->lease * 1000;
         }
-
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_CLOSE:
     {
         _Z_DEBUG("Closing session as requested by the remote peer");
 
-        _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
         if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_I))
         {
             // Check if the Peer ID matches the remote address in the knonw peer list
             if (entry->remote_pid.len != t_msg->body.close.pid.len
               || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
-                return _z_res_t_OK;
+                break;
         }
         ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
 
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_SYNC:
     {
         _Z_DEBUG("Handling of Sync messages not implemented");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_ACK_NACK:
     {
         _Z_DEBUG("Handling of AckNack messages not implemented");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_KEEP_ALIVE:
     {
-        return _z_res_t_OK;
+        if (entry == NULL)
+            break;
+        entry->received = 1;
+
+        break;
     }
 
     case _ZN_MID_PING_PONG:
     {
         _Z_DEBUG("Handling of PingPong messages not implemented");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_FRAME:
     {
-        _zn_transport_peer_entry_t *entry = _zn_find_peer_entry(ztm->peers, addr);
         if (entry == NULL)
-            return _z_res_t_OK;
+            break;
+        entry->received = 1;
 
         // Check if the SN is correct
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R))
@@ -249,7 +252,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             {
                 _z_wbuf_clear(&entry->dbuf_reliable);
                 _Z_DEBUG("Reliable message dropped because it is out of order");
-                return _z_res_t_OK;
+                break;
             }
         }
         else
@@ -260,7 +263,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             {
                 _z_wbuf_clear(&entry->dbuf_best_effort);
                 _Z_DEBUG("Best effort message dropped because it is out of order");
-                return _z_res_t_OK;
+                break;
             }
         }
 
@@ -289,10 +292,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                     // Free the decoded message
                     _zn_zenoh_message_free(&d_zm);
                 }
-                else
-                {
-                    res = _z_res_t_ERR;
-                }
 
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
@@ -300,7 +299,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 _z_wbuf_reset(dbuf);
             }
 
-            return res;
+            if (res != _z_res_t_OK)
+                break;
         }
         else
         {
@@ -310,16 +310,19 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             {
                 int res = _zn_handle_zenoh_message(ztm->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
                 if (res != _z_res_t_OK)
-                    return res;
+                    break;
             }
-            return _z_res_t_OK;
+            break;
         }
     }
 
     default:
     {
         _Z_DEBUG("Unknown session message ID");
-        return _z_res_t_ERR;
+        break;
     }
     }
+
+    z_mutex_unlock(&ztm->mutex_peer);
+    return _z_res_t_OK;
 }

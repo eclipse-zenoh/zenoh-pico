@@ -108,6 +108,7 @@ _zn_transport_t *_zn_transport_multicast_init()
     // Initialize the mutexes
     z_mutex_init(&zt->transport.multicast.mutex_tx);
     z_mutex_init(&zt->transport.multicast.mutex_rx);
+    z_mutex_init(&zt->transport.multicast.mutex_peer);
 
     // Initialize the read and write buffers
     zt->transport.multicast.wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
@@ -130,9 +131,9 @@ _zn_transport_t *_zn_transport_multicast_init()
     zt->transport.multicast.read_task = NULL;
     zt->transport.multicast.lease_task_running = 0;
     zt->transport.multicast.lease_task = NULL;
+    zt->transport.multicast.keep_alive = ZN_KEEP_ALIVE_INTERVAL;
 
     // Notifiers
-    zt->transport.multicast.received = 0;
     zt->transport.multicast.transmitted = 0;
 
     // Transport link for unicast

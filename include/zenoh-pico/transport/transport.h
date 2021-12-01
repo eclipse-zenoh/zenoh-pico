@@ -36,6 +36,8 @@ typedef struct
     z_bytes_t remote_addr;
 
     volatile z_zint_t lease;
+    volatile z_zint_t lease_expires;
+    volatile int received;
 } _zn_transport_peer_entry_t;
 
 void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src);
@@ -93,6 +95,9 @@ typedef struct
     z_mutex_t mutex_rx;
     z_mutex_t mutex_tx;
 
+    // Peer list mutex
+    z_mutex_t mutex_peer;
+
     // Known valid peers
     _zn_transport_peer_entry_list_t/*<_zn_transport_peer_entry_t>*/ *peers;
 
@@ -108,7 +113,6 @@ typedef struct
     _z_wbuf_t wbuf;
     _z_zbuf_t zbuf;
 
-    volatile int received;
     volatile int transmitted;
 
     volatile int join_task_running;
@@ -119,7 +123,7 @@ typedef struct
 
     volatile int lease_task_running;
     z_task_t *lease_task;
-    volatile z_zint_t lease;
+    volatile z_zint_t keep_alive;
 } _zn_transport_multicast_t;
 
 typedef struct

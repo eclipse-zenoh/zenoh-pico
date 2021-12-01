@@ -24,7 +24,7 @@ int _znp_multicast_read(_zn_transport_multicast_t *ztm)
     _zn_transport_message_result_t r_s = _zn_multicast_recv_t_msg(ztm, &addr);
     if (r_s.tag == _z_res_t_ERR)
         goto ERR;
-    
+
     int res = _zn_multicast_handle_transport_message(ztm, &r_s.value.transport_message, &addr);
     _zn_transport_message_free(&r_s.value.transport_message);
 
@@ -98,15 +98,13 @@ void *_znp_multicast_read_task(void *arg)
 
         while (_z_zbuf_len(&zbuf) > 0)
         {
-            // Mark the session that we have received data
-            ztm->received = 1;
-
             // Decode one session message
             _zn_transport_message_decode_na(&zbuf, &r);
 
             if (r.tag == _z_res_t_OK)
             {
                 int res = _zn_multicast_handle_transport_message(ztm, &r.value.transport_message, &addr);
+
                 if (res == _z_res_t_OK)
                     _zn_transport_message_free(&r.value.transport_message);
                 else

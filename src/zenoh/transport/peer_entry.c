@@ -35,6 +35,10 @@ _zn_transport_peer_entry_t *_zn_transport_peer_entry_clone(const _zn_transport_p
     ret->sn_resolution_half = src->sn_resolution_half;
     _zn_conduit_sn_list_copy(&ret->sn_rx_sns, &src->sn_rx_sns);
 
+    ret->lease = src->lease;
+    ret->lease_expires = src->lease_expires;
+    ret->received = src->received;
+
     _z_bytes_copy(&ret->remote_pid, &src->remote_pid);
     _z_bytes_copy(&ret->remote_addr, &src->remote_addr);
     
