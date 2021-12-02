@@ -82,13 +82,13 @@ jobs:
         id: package
         shell: bash
         run: |
-          LIB_PKG_NAME=${PWD}/macos-x64-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}.zip
+          LIB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-macos-x64.zip
           echo "Packaging ${LIB_PKG_NAME}:"
           cd build && zip -r ${LIB_PKG_NAME} lib && cd -
           zip -r ${LIB_PKG_NAME} include
           echo ::set-output name=LIB_PKG_NAME::"${LIB_PKG_NAME}"
 
-          EXP_PKG_NAME=${PWD}/macos-x64-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-examples.zip
+          EXP_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-macos-x64-examples.zip
           echo "Packaging ${EXP_PKG_NAME}:"
           cd build/examples && zip ${EXP_PKG_NAME} * && cd -
           echo ::set-output name=EXP_PKG_NAME::"${EXP_PKG_NAME}"
@@ -118,10 +118,10 @@ jobs:
         shell: bash
         run: |
           TARGET=${{ matrix.target }}
-          LIB_PKG_NAME=${PWD}/${TARGET}-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}.zip
-          DEB_PKG_NAME=${PWD}/${TARGET}-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-deb-pkgs.zip
-          RPM_PKG_NAME=${PWD}/${TARGET}-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-rpm-pkgs.zip
-          EXP_PKG_NAME=${PWD}/${TARGET}-zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-examples.zip
+          LIB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}.zip
+          DEB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-deb-pkgs.zip
+          RPM_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-rpm-pkgs.zip
+          EXP_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-examples.zip
 
           echo "Packaging ${LIB_PKG_NAME}:"
           cd crossbuilds/${TARGET} && zip -r ${LIB_PKG_NAME} lib && cd -
