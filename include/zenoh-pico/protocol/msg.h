@@ -773,10 +773,13 @@ typedef struct
 // +---------------+
 // ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
+// ~     Kind      ~
+// +---------------+
 //
 typedef struct
 {
     zn_reskey_t key;
+    z_zint_t kind;
 } _zn_forget_qle_decl_t;
 
 /*------------------ Declaration  Message ------------------*/

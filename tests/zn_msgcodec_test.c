@@ -1143,6 +1143,8 @@ _zn_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
     e_fqd.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_fqd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
+    e_fqd.kind = gen_uint8();
+
     return e_fqd;
 }
 
