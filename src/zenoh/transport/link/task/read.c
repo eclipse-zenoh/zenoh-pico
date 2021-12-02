@@ -91,7 +91,7 @@ void *_znp_read_task(void *arg)
                 if (res == _z_res_t_OK)
                     _zn_transport_message_free(r.value.transport_message);
                 else
-                    goto EXIT_RECV_LOOP;
+                    goto EXIT_RECV_LOOP_RELEASE;
             }
             else
             {
@@ -104,6 +104,10 @@ void *_znp_read_task(void *arg)
         _z_zbuf_set_rpos(&z->zbuf, _z_zbuf_get_rpos(&z->zbuf) + to_read);
     }
 
+EXIT_RECV_LOOP_RELEASE:
+    // Free the result
+    _zn_transport_message_p_result_free(&r);
+
 EXIT_RECV_LOOP:
     if (z)
     {
@@ -111,9 +115,6 @@ EXIT_RECV_LOOP:
         // Release the lock
         z_mutex_unlock(&z->mutex_rx);
     }
-
-    // Free the result
-    _zn_transport_message_p_result_free(&r);
 
     return 0;
 }

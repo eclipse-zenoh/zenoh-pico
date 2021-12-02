@@ -491,7 +491,12 @@ _zn_data_info_t gen_data_info(void)
     }
     if (gen_bool())
     {
-        di.encoding = gen_zint();
+        di.encoding.prefix = gen_zint();
+        if (gen_bool())
+            di.encoding.suffix = gen_string(8);
+        else
+            di.encoding.suffix = "";
+
         _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
     }
     if (gen_bool())
@@ -539,8 +544,9 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
     }
     if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
     {
-        printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
-        assert(left->encoding == right->encoding);
+        printf("Encoding (%zu %s:%zu %s), ", left->encoding.prefix, left->encoding.suffix, right->encoding.prefix, right->encoding.suffix);
+        assert(left->encoding.prefix == right->encoding.prefix);
+        assert(!strcmp(left->encoding.suffix, right->encoding.suffix));
     }
     if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
     {
@@ -916,12 +922,31 @@ _zn_qle_decl_t gen_queryable_declaration(uint8_t *header)
     e_qd.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_qd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
+    e_qd.kind = gen_uint8();
+
+    if (gen_bool())
+    {
+        e_qd.complete = gen_zint();
+        e_qd.distance = gen_zint();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_Q);
+    }
+
     return e_qd;
 }
 
 void assert_eq_queryable_declaration(_zn_qle_decl_t *left, _zn_qle_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
+
+    printf("Kind (%zu:%zu), ", left->kind, right->kind);
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
+    {
+        printf("Complete (%zu:%zu), ", left->kind, right->kind);
+        assert(left->complete == right->complete);
+        printf("Distance (%zu:%zu), ", left->kind, right->kind);
+        assert(left->distance == right->distance);
+    }
 }
 
 void queryable_declaration(void)
@@ -1094,6 +1119,8 @@ _zn_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
 
     e_fqd.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_fqd.key.rname) ? _ZN_FLAG_Z_K : 0);
+
+    e_fqd.kind = gen_uint8();
 
     return e_fqd;
 }

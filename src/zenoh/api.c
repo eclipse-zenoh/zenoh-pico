@@ -592,7 +592,8 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const unsigned char *payl
     _ZN_SET_FLAG(z_msg.header, _ZN_FLAG_Z_I);
     _zn_data_info_t info;
     info.flags = 0;
-    info.encoding = encoding;
+    info.encoding.prefix = encoding;
+    info.encoding.suffix = ""; // TODO: empty for now, but expose this in the function signature
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_ENC);
     info.kind = kind;
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_KIND);
@@ -823,13 +824,20 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_QUERYABLE;
     if (reskey.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-    if (kind != ZN_QUERYABLE_STORAGE)
+
+    z_zint_t complete = _ZN_QUERYABLE_COMPLETE_DEFAULT;
+    z_zint_t distance = _ZN_QUERYABLE_DISTANCE_DEFAULT;
+    if (complete != _ZN_QUERYABLE_COMPLETE_DEFAULT || distance != _ZN_QUERYABLE_DISTANCE_DEFAULT)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_Q);
 
     z_msg.body.declare.declarations.val[0]
         .body.qle.key = _zn_reskey_clone(&reskey);
     z_msg.body.declare.declarations.val[0]
         .body.qle.kind = (z_zint_t)kind;
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.complete = complete;
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.distance = distance;
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
@@ -854,17 +862,18 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
-        // We need to undeclare the subscriber
+        // We need to undeclare the queryable
         unsigned int len = 1;
         z_msg.body.declare.declarations.len = len;
         z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
-        // Forget Subscriber declaration
+        // Forget Queryable declaration
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_QUERYABLE;
         if (q->key.rname)
             _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-        z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
+        z_msg.body.declare.declarations.val[0].body.forget_qle.key = _zn_reskey_clone(&q->key);
+        z_msg.body.declare.declarations.val[0].body.forget_qle.kind = q->kind;
 
         if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {

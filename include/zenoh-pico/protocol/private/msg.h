@@ -687,13 +687,17 @@ typedef struct
 // +---------------+
 // ~     ResKey    ~ if K==1 then reskey is string
 // +---------------+
-// ~     Kind      ~ if Q==1. Otherwise: STORAGE (0x02)
+// ~     Kind      ~
+// +---------------+
+// ~   QablInfo    ~ if Q==1
 // +---------------+
 //
 typedef struct
 {
     zn_reskey_t key;
     z_zint_t kind;
+    z_zint_t complete;
+    z_zint_t distance;
 } _zn_qle_decl_t;
 
 /*------------------ Forget Resource Declaration ------------------*/
@@ -742,10 +746,13 @@ typedef struct
 // +---------------+
 // ~    ResKey     ~ if K==1 then reskey is string
 // +---------------+
+// ~     Kind      ~
+// +---------------+
 //
 typedef struct
 {
     zn_reskey_t key;
+    z_zint_t kind;
 } _zn_forget_qle_decl_t;
 
 /*------------------ Declaration  Message ------------------*/
@@ -792,29 +799,30 @@ typedef struct
 
 /*------------------ Data Info Field ------------------*/
 //  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// ~     flags     ~ -- encoded as z_zint_t
+// +-+-+-+-+-+-+-+-+
+// ~    options    ~
 // +---------------+
-// ~   source_id   ~ if _ZN_DATA_INFO_SRC_ID==1
+// ~      kind     ~ if options & (1 << 0)
 // +---------------+
-// ~   source_sn   ~ if _ZN_DATA_INFO_SRC_SN==1
+// ~   encoding    ~ if options & (1 << 1)
 // +---------------+
-// ~first_router_id~ if _ZN_DATA_INFO_RTR_ID==1
+// ~   timestamp   ~ if options & (1 << 2)
 // +---------------+
-// ~first_router_sn~ if _ZN_DATA_INFO_RTR_SN==1
+// ~   source_id   ~ if options & (1 << 7)
 // +---------------+
-// ~   timestamp   ~ if _ZN_DATA_INFO_TSTAMP==1
+// ~   source_sn   ~ if options & (1 << 8)
 // +---------------+
-// ~      kind     ~ if _ZN_DATA_INFO_KIND==1
+// ~first_router_id~ if options & (1 << 9)
 // +---------------+
-// ~   encoding    ~ if _ZN_DATA_INFO_ENC==1
+// ~first_router_sn~ if options & (1 << 10)
 // +---------------+
 //
+// - if options & (1 << 5) then the payload is sliced
 typedef struct
 {
     z_zint_t flags;
     z_zint_t kind;
-    z_zint_t encoding;
+    z_encoding_t encoding;
     z_timestamp_t tstamp;
     z_bytes_t source_id;
     z_zint_t source_sn;

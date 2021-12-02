@@ -22,6 +22,9 @@
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1
 
+#define _ZN_QUERYABLE_COMPLETE_DEFAULT 1
+#define _ZN_QUERYABLE_DISTANCE_DEFAULT 0
+
 typedef struct
 {
     z_zint_t id;
