@@ -44,12 +44,14 @@ size_t _z_iosli_writable(const _z_iosli_t *ios);
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b);
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
+void _z_iosli_reset(_z_iosli_t *ios);
 
 z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
+_z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
 _Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_copy)
 _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)

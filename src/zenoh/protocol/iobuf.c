@@ -30,7 +30,7 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t capacity, size_t r_pos, size
     return ios;
 }
 
-void _z_iosli_init(_z_iosli_t *ios, size_t capacity)
+void __z_iosli_init(_z_iosli_t *ios, size_t capacity)
 {
     ios->r_pos = 0;
     ios->w_pos = 0;
@@ -42,14 +42,14 @@ void _z_iosli_init(_z_iosli_t *ios, size_t capacity)
 _z_iosli_t _z_iosli_make(size_t capacity)
 {
     _z_iosli_t ios;
-    _z_iosli_init(&ios, capacity);
+    __z_iosli_init(&ios, capacity);
     return ios;
 }
 
 _z_iosli_t *_z_iosli_new(size_t capacity)
 {
     _z_iosli_t *pios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
-    _z_iosli_init(pios, capacity);
+    __z_iosli_init(pios, capacity);
     return pios;
 }
 
@@ -125,13 +125,13 @@ void _z_iosli_clear(_z_iosli_t *ios)
 {
     if (ios->is_alloc)
         free(ios->buf);
-    memset(ios, 0, sizeof(_z_iosli_t));
+    memset(ios, 0, _z_iosli_size(ios));
 }
 
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src)
 {
     dst->r_pos = src->r_pos;
-    dst->w_pos = dst->w_pos;
+    dst->w_pos = src->w_pos;
     dst->capacity = src->capacity;
     dst->is_alloc = 1;
     dst->buf = (uint8_t *)malloc(src->capacity);
@@ -275,7 +275,7 @@ void _z_wbuf_add_iosli_from(_z_wbuf_t *wbf, const uint8_t *buf, size_t capacity)
 void __z_wbuf_new_iosli(_z_wbuf_t *wbf, size_t capacity)
 {
     _z_iosli_t *pios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
-    _z_iosli_init(pios, capacity);
+    __z_iosli_init(pios, capacity);
     _z_wbuf_add_iosli(wbf, pios);
 }
 

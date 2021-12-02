@@ -52,6 +52,11 @@ void print_wbuf(_z_wbuf_t *wbf)
     }
 }
 
+void print_zbuf(_z_zbuf_t *zbf)
+{
+    print_iosli(&zbf->ios);
+}
+
 void print_uint8_array(z_bytes_t *arr)
 {
     printf("Length: %zu, Buffer: [", arr->len);
@@ -317,6 +322,7 @@ void payload_field(void)
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+
     _zn_payload_result_t r_pld = _zn_payload_decode(&zbf);
     assert(r_pld.tag == _z_res_t_OK);
     _zn_payload_t d_pld = r_pld.value.payload;
