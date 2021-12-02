@@ -339,7 +339,8 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, s
     // Data info
     _zn_data_info_t info;
     info.flags = 0;
-    info.encoding = encoding;
+    info.encoding.prefix = encoding;
+    info.encoding.suffix = ""; // TODO: empty for now, but expose this in the function signature
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_ENC);
     info.kind = kind;
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_KIND);

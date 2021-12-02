@@ -543,9 +543,9 @@ _zn_data_info_t gen_data_info(void)
     {
         di.encoding.prefix = gen_zint();
         if (gen_bool())
-            di.encoding.suffix = gen_string(8);
+            di.encoding.suffix = gen_str(8);
         else
-            di.encoding.suffix = "";
+            di.encoding.suffix = gen_str(0);
 
         _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
     }
@@ -964,12 +964,31 @@ _zn_qle_decl_t gen_queryable_declaration(uint8_t *header)
     e_qd.key = gen_res_key();
     _ZN_SET_FLAG(*header, (e_qd.key.rname) ? _ZN_FLAG_Z_K : 0);
 
+    e_qd.kind = gen_uint8();
+
+    if (gen_bool())
+    {
+        e_qd.complete = gen_zint();
+        e_qd.distance = gen_zint();
+        _ZN_SET_FLAG(*header, _ZN_FLAG_Z_Q);
+    }
+
     return e_qd;
 }
 
 void assert_eq_queryable_declaration(_zn_qle_decl_t *left, _zn_qle_decl_t *right, uint8_t header)
 {
     assert_eq_res_key(&left->key, &right->key, header);
+
+    printf("Kind (%zu:%zu), ", left->kind, right->kind);
+
+    if _ZN_HAS_FLAG (header, _ZN_FLAG_Z_I)
+    {
+        printf("Complete (%zu:%zu), ", left->kind, right->kind);
+        assert(left->complete == right->complete);
+        printf("Distance (%zu:%zu), ", left->kind, right->kind);
+        assert(left->distance == right->distance);
+    }
 }
 
 void queryable_declaration(void)

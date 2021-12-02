@@ -499,8 +499,13 @@ int _zn_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_qle_decl_t *dc
 
     // Encode the body
     _ZN_EC(_zn_reskey_encode(wbf, header, &dcl->key));
+    _ZN_EC(_z_zint_encode(wbf, dcl->kind));
+
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_Q))
-        _ZN_EC(_z_zint_encode(wbf, dcl->kind));
+    {
+        _ZN_EC(_z_zint_encode(wbf, dcl->complete));
+        _ZN_EC(_z_zint_encode(wbf, dcl->distance));
+    }
 
     return 0;
 }
@@ -514,15 +519,20 @@ void _zn_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_qle_decl_result_
     _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.qle_decl.key = r_res.value.reskey;
+
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.qle_decl.kind = r_zint.value.zint;
+
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_Q))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
+        r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.qle_decl.kind = r_zint.value.zint;
-    }
-    else
-    {
-        r->value.qle_decl.kind = ZN_QUERYABLE_STORAGE;
+        r->value.qle_decl.complete = r_zint.value.zint;
+
+        r_zint = _z_zint_decode(zbf);
+        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+        r->value.qle_decl.distance = r_zint.value.zint;
     }
 }
 
