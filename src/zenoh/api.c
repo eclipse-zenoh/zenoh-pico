@@ -861,17 +861,18 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     {
         _zn_zenoh_message_t z_msg = _zn_zenoh_message_init(_ZN_MID_DECLARE);
 
-        // We need to undeclare the subscriber
+        // We need to undeclare the queryable
         unsigned int len = 1;
         z_msg.body.declare.declarations.len = len;
         z_msg.body.declare.declarations.val = (_zn_declaration_t *)malloc(len * sizeof(_zn_declaration_t));
 
-        // Forget Subscriber declaration
+        // Forget Queryable declaration
         z_msg.body.declare.declarations.val[0].header = _ZN_DECL_FORGET_QUERYABLE;
         if (q->key.rname)
             _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
 
-        z_msg.body.declare.declarations.val[0].body.forget_sub.key = _zn_reskey_clone(&q->key);
+        z_msg.body.declare.declarations.val[0].body.forget_qle.key = _zn_reskey_clone(&q->key);
+        z_msg.body.declare.declarations.val[0].body.forget_qle.kind = q->kind;
 
         if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
         {

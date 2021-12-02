@@ -644,7 +644,10 @@ int _zn_forget_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_forget_
     _Z_DEBUG("Encoding _ZN_DECL_FORGET_QUERYABLE\n");
 
     // Encode the body
-    return _zn_reskey_encode(wbf, header, &dcl->key);
+    _ZN_EC(_zn_reskey_encode(wbf, header, &dcl->key));
+    _ZN_EC(_z_zint_encode(wbf, dcl->kind));
+
+    return 0;
 }
 
 void _zn_forget_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_forget_qle_decl_result_t *r)
@@ -656,6 +659,10 @@ void _zn_forget_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_forget_ql
     _zn_reskey_result_t r_res = _zn_reskey_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _zn_err_t_PARSE_RESKEY)
     r->value.forget_qle_decl.key = r_res.value.reskey;
+
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.forget_qle_decl.kind = r_zint.value.zint;
 }
 
 _zn_forget_qle_decl_result_t _zn_forget_qle_decl_decode(_z_zbuf_t *zbf, uint8_t header)
