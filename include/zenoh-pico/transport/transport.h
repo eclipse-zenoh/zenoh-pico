@@ -80,10 +80,14 @@ typedef struct
     } type;
 } _zn_transport_t;
 
+_Z_ELEM_DEFINE(_zn_transport, _zn_transport_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_transport, _zn_transport_t)
+
 _ZN_RESULT_DECLARE(_zn_transport_t, transport)
 _ZN_P_RESULT_DECLARE(_zn_transport_t, transport)
 
-typedef struct {
+typedef struct
+{
     z_bytes_t remote_pid;
     unsigned int whatami;
     z_zint_t sn_resolution;

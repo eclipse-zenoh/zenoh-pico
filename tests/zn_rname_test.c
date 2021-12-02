@@ -32,6 +32,8 @@ int main(void)
     assert(zn_rname_intersect("/ab*", "/ab"));
     assert(!zn_rname_intersect("/ab/*", "/ab"));
     assert(zn_rname_intersect("/a/*/c/*/e", "/a/b/c/d/e"));
+    assert(zn_rname_intersect("/a/**/d/**/l", "/a/b/c/d/e/f/g/h/i/l"));
+    assert(zn_rname_intersect("/a/**/d/**/l", "/a/d/foo/l"));
     assert(zn_rname_intersect("/a/*b/c/*d/e", "/a/xb/c/xd/e"));
     assert(!zn_rname_intersect("/a/*/c/*/e", "/a/c/e"));
     assert(!zn_rname_intersect("/a/*/c/*/e", "/a/b/c/d/x/e"));

@@ -102,6 +102,7 @@ file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/link/config/*.h"
                         "include/zenoh-pico/protocol/*.h"
+                        "include/zenoh-pico/routing/*.h"
                         "include/zenoh-pico/session/*.h"
                         "include/zenoh-pico/system/*.h"
                         "include/zenoh-pico/system/link/*.h"
@@ -124,6 +125,7 @@ if (UNIX)
                     "src/zenoh/link/unicast/*.c"
                     "src/zenoh/link/multicast/*.c"
                     "src/zenoh/protocol/*.c"
+                    "src/zenoh/routing/*.c"
                     "src/zenoh/session/*.c"
                     "src/zenoh/transport/*.c"
                     "src/zenoh/transport/common/*.c"
@@ -194,6 +196,7 @@ if(BUILD_TESTING)
   add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)
+  add_executable(z_routing_test ${PROJECT_SOURCE_DIR}/tests/z_routing_test.c)
   add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
 
@@ -201,6 +204,7 @@ if(BUILD_TESTING)
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_mvar_test ${Libname})
+  target_link_libraries(z_routing_test ${Libname})
   target_link_libraries(zn_rname_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
 
@@ -208,6 +212,7 @@ if(BUILD_TESTING)
   add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
   add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
+  add_test(z_routing_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_routing_test)
   add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
 endif()
