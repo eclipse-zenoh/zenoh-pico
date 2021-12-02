@@ -23,10 +23,10 @@ typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void *(*z_element_clone_f)(const void *e);
-typedef int (*z_element_cmp_f)(const void *left, const void *right);
+typedef int (*z_element_eq_f)(const void *left, const void *right);
 
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f) \
-    typedef int (*name##_cmp_f)(const type *left, const type *right);      \
+    typedef int (*name##_eq_f)(const type *left, const type *right);       \
     static inline void name##_elem_clear(void *e)                          \
     {                                                                      \
         elem_clear_f((type *)e);                                           \

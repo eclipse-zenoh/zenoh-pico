@@ -71,7 +71,7 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f)
     return xs;
 }
 
-_z_list_t *_z_list_find(const _z_list_t *xs, z_element_cmp_f c_f, void *e)
+_z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e)
 {
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL)
@@ -84,7 +84,7 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_cmp_f c_f, void *e)
     return NULL;
 }
 
-_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_cmp_f c_f, void *left)
+_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, void *left)
 {
     _z_list_t *previous = xs;
     _z_list_t *current = xs;
