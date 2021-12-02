@@ -132,7 +132,7 @@ void __unsafe_zn_free_pending_query_element(void **pen_qry)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-int _zn_pending_query_cmp(const void *this, const void *other)
+int _zn_pending_query_eq(const void *this, const void *other)
 {
     _zn_pending_query_t *t = (_zn_pending_query_t *)this;
     _zn_pending_query_t *o = (_zn_pending_query_t *)other;
@@ -146,7 +146,7 @@ int _zn_pending_query_cmp(const void *this, const void *other)
  */
 void __unsafe_zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    zn->pending_queries = _z_list_drop_filter(zn->pending_queries, __unsafe_zn_free_pending_query_element, _zn_pending_query_cmp, pen_qry);
+    zn->pending_queries = _z_list_drop_filter(zn->pending_queries, __unsafe_zn_free_pending_query_element, _zn_pending_query_eq, pen_qry);
     free(pen_qry);
 }
 
@@ -246,7 +246,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
             _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (strcmp(reply.data.data.key.val, pen_rep->reply.data.data.key.val) == 0)
+            if (_z_str_eq(reply.data.data.key.val, pen_rep->reply.data.data.key.val))
             {
                 if (ts.time <= pen_rep->tstamp.time)
                 {

@@ -267,7 +267,7 @@ void assert_eq_str_array(z_str_array_t *left, z_str_array_t *right)
         if (i < left->len - 1)
             printf(" ");
 
-        assert(strcmp(l, r) == 0);
+        assert(_z_str_eq(l, r));
     }
     printf(")");
 }
@@ -294,7 +294,7 @@ void assert_eq_locator_array(_zn_locator_array_t *left, _zn_locator_array_t *rig
         free(ls);
         free(rs);
 
-        assert(_zn_locator_cmp(l, r) == 0);
+        assert(_zn_locator_eq(l, r));
     }
     printf(")");
 }
@@ -489,7 +489,7 @@ void assert_eq_res_key(zn_reskey_t *left, zn_reskey_t *right, uint8_t header)
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
     {
         printf("%s:%s", left->rname, right->rname);
-        assert(!strcmp(left->rname, right->rname));
+        assert(_z_str_eq(left->rname, right->rname));
     }
     else
     {
@@ -1481,7 +1481,7 @@ void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t head
     printf("\n");
 
     printf("   Predicate (%s:%s)", left->predicate, right->predicate);
-    assert(!strcmp(left->predicate, right->predicate));
+    assert(_z_str_eq(left->predicate, right->predicate));
     printf("\n");
 
     printf("   Query ID (%zu:%zu)", left->qid, right->qid);

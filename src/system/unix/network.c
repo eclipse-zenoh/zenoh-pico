@@ -246,7 +246,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct ifaddrs *tmp = NULL;
     for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next)
     {
-        if (strcmp(tmp->ifa_name, iface) == 0)
+        if (_z_str_eq(tmp->ifa_name, iface))
         {
             if (tmp->ifa_addr->sa_family == raddr->ai_family)
             {
@@ -403,7 +403,7 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
         memcpy(&mreq.ipv6mr_multiaddr,
                &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
                sizeof(struct in6_addr));
-        //mreq.ipv6mr_interface = ifindex;
+        // mreq.ipv6mr_interface = ifindex;
         setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 

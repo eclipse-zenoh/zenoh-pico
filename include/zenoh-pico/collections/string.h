@@ -31,7 +31,7 @@ typedef char *z_str_t;
 
 z_str_t _z_str_clone(const z_str_t src);
 void _z_str_clear(z_str_t src);
-int _z_str_cmp(const z_str_t left, const z_str_t right);
+int _z_str_eq(const z_str_t left, const z_str_t right);
 
 size_t __z_str_size(const z_str_t src);
 void __z_str_copy(z_str_t dst, const z_str_t src);

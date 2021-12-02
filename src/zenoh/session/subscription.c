@@ -192,7 +192,7 @@ _zn_subscriber_t *__unsafe_zn_get_subscription_by_key(zn_session_t *zn, int is_l
     {
         _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
 
-        if (sub->key.rid == reskey->rid && strcmp(sub->key.rname, reskey->rname) == 0)
+        if (sub->key.rid == reskey->rid && _z_str_eq(sub->key.rname, reskey->rname))
             return sub;
 
         subs = _z_list_tail(subs);

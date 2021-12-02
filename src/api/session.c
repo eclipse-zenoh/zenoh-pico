@@ -87,9 +87,9 @@ zn_session_t *zn_open(zn_properties_t *config)
     // Check operation mode
     z_str_t s_mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
     int mode = 0; // By default, zenoh-pico will operate as a client
-    if (strcmp(s_mode, ZN_CONFIG_MODE_CLIENT) == 0)
+    if (_z_str_eq(s_mode, ZN_CONFIG_MODE_CLIENT))
         mode = 0;
-    else if (strcmp(s_mode, ZN_CONFIG_MODE_PEER) == 0)
+    else if (_z_str_eq(s_mode, ZN_CONFIG_MODE_PEER))
         mode = 1;
 
     return _zn_open(locator, mode);
@@ -105,7 +105,7 @@ zn_properties_t *zn_info(zn_session_t *zn)
     zn_properties_t *ps = (zn_properties_t *)malloc(sizeof(zn_properties_t));
     zn_properties_init(ps);
     zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
-    //zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->remote_pid));
+    // zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->remote_pid));
     return ps;
 }
 

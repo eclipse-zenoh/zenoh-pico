@@ -115,7 +115,7 @@ z_str_t _z_str_clone(const z_str_t src)
     return dst;
 }
 
-int _z_str_cmp(const z_str_t left, const z_str_t right)
+int _z_str_eq(const z_str_t left, const z_str_t right)
 {
     return strcmp(left, right) == 0;
 }

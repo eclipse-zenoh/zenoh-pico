@@ -44,8 +44,8 @@ void query_handler(zn_query_t *query, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(strcmp(query->rname, res) == 0);
-    assert(strcmp(query->predicate, "") == 0);
+    assert(_z_str_eq(query->rname, res));
+    assert(_z_str_eq(query->predicate, ""));
 
     zn_send_reply(query, res, (const uint8_t *)res, strlen(res));
 

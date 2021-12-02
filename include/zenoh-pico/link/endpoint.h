@@ -37,7 +37,7 @@ typedef struct
 
 _ZN_RESULT_DECLARE(_zn_locator_t, locator)
 
-int _zn_locator_cmp(const _zn_locator_t *left, const _zn_locator_t *right);
+int _zn_locator_eq(const _zn_locator_t *left, const _zn_locator_t *right);
 
 z_str_t _zn_locator_to_str(const _zn_locator_t *l);
 _zn_locator_result_t _zn_locator_from_str(const z_str_t s);
