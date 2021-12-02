@@ -687,13 +687,17 @@ typedef struct
 // +---------------+
 // ~     ResKey    ~ if K==1 then reskey is string
 // +---------------+
-// ~     Kind      ~ if Q==1. Otherwise: STORAGE (0x02)
+// ~     Kind      ~
+// +---------------+
+// ~   QablInfo    ~ if Q==1
 // +---------------+
 //
 typedef struct
 {
     zn_reskey_t key;
     z_zint_t kind;
+    z_zint_t complete;
+    z_zint_t distance;
 } _zn_qle_decl_t;
 
 /*------------------ Forget Resource Declaration ------------------*/

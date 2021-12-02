@@ -823,13 +823,20 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     z_msg.body.declare.declarations.val[0].header = _ZN_DECL_QUERYABLE;
     if (reskey.rname)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_K);
-    if (kind != ZN_QUERYABLE_STORAGE)
+
+    z_zint_t complete = _ZN_QUERYABLE_COMPLETE_DEFAULT;
+    z_zint_t distance = _ZN_QUERYABLE_DISTANCE_DEFAULT;
+    if (complete != _ZN_QUERYABLE_COMPLETE_DEFAULT || distance != _ZN_QUERYABLE_DISTANCE_DEFAULT)
         _ZN_SET_FLAG(z_msg.body.declare.declarations.val[0].header, _ZN_FLAG_Z_Q);
 
     z_msg.body.declare.declarations.val[0]
         .body.qle.key = _zn_reskey_clone(&reskey);
     z_msg.body.declare.declarations.val[0]
         .body.qle.kind = (z_zint_t)kind;
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.complete = complete;
+    z_msg.body.declare.declarations.val[0]
+        .body.qle.distance = distance;
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
