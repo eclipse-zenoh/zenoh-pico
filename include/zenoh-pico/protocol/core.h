@@ -51,6 +51,15 @@
 typedef size_t z_zint_t;
 
 /**
+ * A zenoh encoding.
+ */
+typedef struct
+{
+    z_zint_t prefix;
+    z_str_t suffix;
+} z_encoding_t;
+
+/**
  * A zenoh timestamp.
  */
 typedef struct

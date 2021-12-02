@@ -892,7 +892,10 @@ int _zn_data_info_encode(_z_wbuf_t *wbf, const _zn_data_info_t *fld)
         _ZN_EC(_z_zint_encode(wbf, fld->kind))
 
     if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_ENC))
-        _ZN_EC(_z_zint_encode(wbf, fld->encoding))
+    {
+        _ZN_EC(_z_zint_encode(wbf, fld->encoding.prefix))
+        _ZN_EC(_z_str_encode(wbf, fld->encoding.suffix))
+    }
 
     if (_ZN_HAS_FLAG(fld->flags, _ZN_DATA_INFO_TSTAMP))
         _ZN_EC(z_timestamp_encode(wbf, &fld->tstamp))
@@ -943,7 +946,11 @@ void _zn_data_info_decode_na(_z_zbuf_t *zbf, _zn_data_info_result_t *r)
     {
         _z_zint_result_t r_enc = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_enc, r, _z_err_t_PARSE_ZINT)
-        r->value.data_info.encoding = r_enc.value.zint;
+        r->value.data_info.encoding.prefix = r_enc.value.zint;
+
+        _z_str_result_t r_str = _z_str_decode(zbf);
+        _ASSURE_P_RESULT(r_str, r, _z_err_t_PARSE_STRING)
+        r->value.data_info.encoding.suffix = r_str.value.str;
     }
 
     if (_ZN_HAS_FLAG(r->value.data_info.flags, _ZN_DATA_INFO_TSTAMP))
@@ -995,7 +1002,9 @@ void _zn_data_info_clear(_zn_data_info_t *di)
     //   - source_sn
     //   - first_router_sn
     //   - kind
-    //   - encoding
+
+    if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_ENC))
+        free(di->encoding.suffix);
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_SRC_ID))
         (void)(&di->source_id);

@@ -541,7 +541,12 @@ _zn_data_info_t gen_data_info(void)
     }
     if (gen_bool())
     {
-        di.encoding = gen_zint();
+        di.encoding.prefix = gen_zint();
+        if (gen_bool())
+            di.encoding.suffix = gen_string(8);
+        else
+            di.encoding.suffix = "";
+
         _ZN_SET_FLAG(di.flags, _ZN_DATA_INFO_ENC);
     }
     if (gen_bool())
@@ -589,8 +594,9 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
     }
     if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_ENC)
     {
-        printf("Encoding (%zu:%zu), ", left->encoding, right->encoding);
-        assert(left->encoding == right->encoding);
+        printf("Encoding (%zu %s:%zu %s), ", left->encoding.prefix, left->encoding.suffix, right->encoding.prefix, right->encoding.suffix);
+        assert(left->encoding.prefix == right->encoding.prefix);
+        assert(!strcmp(left->encoding.suffix, right->encoding.suffix));
     }
     if _ZN_HAS_FLAG (left->flags, _ZN_DATA_INFO_TSTAMP)
     {
