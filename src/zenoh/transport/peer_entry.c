@@ -26,8 +26,8 @@ void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src)
 
 void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_transport_peer_entry_t *src)
 {
-    _z_wbuf_siphon(&dst->dbuf_reliable, &src->dbuf_reliable, src->dbuf_reliable.capacity);
-    _z_wbuf_siphon(&dst->dbuf_best_effort, &src->dbuf_best_effort, src->dbuf_best_effort.capacity);
+    _z_wbuf_copy(&dst->dbuf_reliable, &src->dbuf_reliable);
+    _z_wbuf_copy(&dst->dbuf_best_effort, &src->dbuf_best_effort);
 
     dst->sn_resolution = src->sn_resolution;
     dst->sn_resolution_half = src->sn_resolution_half;
