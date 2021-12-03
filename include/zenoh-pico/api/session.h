@@ -119,5 +119,28 @@ int znp_start_lease_task(zn_session_t *z);
  */
 int znp_stop_lease_task(zn_session_t *z);
 
+/**
+ * Start a separate task to handle the join lease. This task will send ``Join``
+ * messages when needed. This task only applies to multicast transports.
+ * Note that the task can be implemented in form of thread, process, etc. and
+ * its implementation is platform-dependent.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int znp_start_join_task(zn_session_t *z);
+
+/**
+ * Stop the join task. This may result in stopping a thread or a process depending
+ * on the target platform.
+ *
+ * Parameters:
+ *     session: The zenoh-net session.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int znp_stop_join_task(zn_session_t *z);
 
 #endif /* ZENOH_PICO_SESSION_API_H */

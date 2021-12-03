@@ -102,8 +102,6 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int arg
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
-        printf("\nInserting: %s\n", p_value);
-
         _z_str_intmap_insert(&res.value.str_intmap, key, p_value);
 
         // Process next key value

@@ -39,7 +39,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read the message length
-        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
+        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, _ZN_MSG_LEN_ENC_SIZE, NULL) != _ZN_MSG_LEN_ENC_SIZE)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
@@ -57,7 +57,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
         }
 
         // Read enough bytes to decode the message
-        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, len) != len)
+        if (_zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, len, NULL) != len)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
@@ -66,7 +66,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
     }
     else
     {
-        if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf) < 0)
+        if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) < 0)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;

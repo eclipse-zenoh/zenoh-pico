@@ -55,7 +55,7 @@ zn_hello_array_t _zn_scout_loop(
         _z_zbuf_clear(&zbf);
 
         // Read bytes from the socket
-        int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf);
+        int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
         if (len < 0)
             continue;
 

@@ -18,18 +18,6 @@
 #include "zenoh-pico/transport/link/rx.h"
 
 /*------------------ Reception helper ------------------*/
-_zn_transport_message_result_t _zn_recv_t_msg(_zn_transport_t *zt)
-{
-    _zn_transport_message_result_t r;
-
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        _zn_unicast_recv_t_msg_na(&zt->transport.unicast, &r);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        _zn_multicast_recv_t_msg_na(&zt->transport.multicast, &r);
-
-    return r;
-}
-
 _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 {
     _zn_transport_message_result_t ret;
@@ -47,7 +35,7 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
         //       In any case, the length of a message must not exceed 65_535 bytes.
 
         // Read the message length
-        if (_zn_link_recv_exact_zbuf(zl, &zbf, _ZN_MSG_LEN_ENC_SIZE) != _ZN_MSG_LEN_ENC_SIZE)
+        if (_zn_link_recv_exact_zbuf(zl, &zbf, _ZN_MSG_LEN_ENC_SIZE, NULL) != _ZN_MSG_LEN_ENC_SIZE)
             goto ERR;
 
         uint16_t len = _z_zbuf_read(&zbf) | (_z_zbuf_read(&zbf) << 8);
@@ -56,12 +44,12 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
             goto ERR;
 
         // Read enough bytes to decode the message
-        if (_zn_link_recv_exact_zbuf(zl, &zbf, len) != len)
+        if (_zn_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len)
             goto ERR;
     }
     else
     {
-        if (_zn_link_recv_zbuf(zl, &zbf) < 0)
+        if (_zn_link_recv_zbuf(zl, &zbf, NULL) < 0)
             goto ERR;
     }
 
@@ -76,22 +64,4 @@ ERR:
 
     ret.tag = _z_res_t_ERR;
     return ret;
-}
-
-void _zn_recv_t_msg_na(_zn_transport_t *zt, _zn_transport_message_result_t *r)
-{
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        _zn_unicast_recv_t_msg_na(&zt->transport.unicast, r);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        _zn_multicast_recv_t_msg_na(&zt->transport.multicast, r);
-}
-
-int _zn_handle_transport_message(_zn_transport_t *zt, _zn_transport_message_t *t_msg)
-{
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _zn_unicast_handle_transport_message(&zt->transport.unicast, t_msg);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _zn_multicast_handle_transport_message(&zt->transport.multicast, t_msg);
-    else
-        return -1;
 }

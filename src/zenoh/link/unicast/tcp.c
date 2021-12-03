@@ -130,14 +130,14 @@ size_t _zn_f_link_write_all_tcp(const void *arg, const uint8_t *ptr, size_t len)
     return _zn_send_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_tcp(self->sock, ptr, len);
 }
 
-size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len)
+size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 

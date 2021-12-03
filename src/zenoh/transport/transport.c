@@ -14,11 +14,12 @@
 
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/collections/bytes.h"
-#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -37,9 +38,12 @@ int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int lin
 
 int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
-    // TODO: to be implemented
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, ((zn_session_t *)ztm->session)->tp_manager->local_pid, link_only);
 
-    return -1;
+    int res = _zn_multicast_send_t_msg(ztm, &cm);
+
+    _zn_transport_message_clear(&cm);
+    return res;
 }
 
 int _zn_send_close(_zn_transport_t *zt, uint8_t reason, int link_only)
@@ -99,19 +103,60 @@ _zn_transport_t *_zn_transport_unicast_init()
     return zt;
 }
 
-_zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
+_zn_transport_t *_zn_transport_multicast_init()
 {
-    _zn_transport_establish_param_result_t ret;
-    _zn_transport_establish_param_t param;
+    _zn_transport_t *zt = (_zn_transport_t *)malloc(sizeof(_zn_transport_t));
+    zt->type = _ZN_TRANSPORT_MULTICAST_TYPE;
+
+    // Initialize the mutexes
+    z_mutex_init(&zt->transport.multicast.mutex_tx);
+    z_mutex_init(&zt->transport.multicast.mutex_rx);
+    z_mutex_init(&zt->transport.multicast.mutex_peer);
+
+    // Initialize the read and write buffers
+    zt->transport.multicast.wbuf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
+    zt->transport.multicast.zbuf = _z_zbuf_make(ZN_READ_BUF_LEN);
+
+    // Set default SN resolution
+    zt->transport.multicast.sn_resolution = 0;
+    zt->transport.multicast.sn_resolution_half = zt->transport.multicast.sn_resolution / 2;
+    // The initial SN at TX side
+    zt->transport.multicast.sn_tx_reliable = 0;
+    zt->transport.multicast.sn_tx_best_effort = 0;
+
+    // Initialize peer list
+    zt->transport.multicast.peers = _zn_transport_peer_entry_list_new();
+
+    // Tasks
+    zt->transport.multicast.join_task_running = 0;
+    zt->transport.multicast.join_task = NULL;
+    zt->transport.multicast.read_task_running = 0;
+    zt->transport.multicast.read_task = NULL;
+    zt->transport.multicast.lease_task_running = 0;
+    zt->transport.multicast.lease_task = NULL;
+    zt->transport.multicast.keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+
+    // Notifiers
+    zt->transport.multicast.transmitted = 0;
+
+    // Transport link for unicast
+    zt->transport.multicast.link = NULL;
+
+    return zt;
+}
+
+_zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
+{
+    _zn_transport_unicast_establish_param_result_t ret;
+    _zn_transport_unicast_establish_param_t param;
 
     // Build the open message
     uint8_t version = ZN_PROTO_VERSION;
     z_zint_t whatami = ZN_CLIENT;
     z_zint_t sn_resolution = ZN_SN_RESOLUTION;
-    z_bytes_t pid = local_pid;
     int is_qos = 0;
 
-    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, local_pid, is_qos);
 
     // Encode and send the message
     _Z_DEBUG("Sending InitSyn\n");
@@ -178,10 +223,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
 
                 // The initial SN at RX side. Initialize the session as we had already received
                 // a message with a SN equal to initial_sn - 1.
-                if (oam.body.open.initial_sn > 0)
-                    param.initial_sn_rx = oam.body.open.initial_sn - 1;
-                else
-                    param.initial_sn_rx = param.sn_resolution - 1;
+                param.initial_sn_rx = _zn_sn_decrement(param.sn_resolution, oam.body.open.initial_sn);
             }
             else
                 goto ERR_3;
@@ -203,7 +245,7 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_client(const _
     _zn_transport_message_clear(&iam);
 
     ret.tag = _z_res_t_OK;
-    ret.value.transport_establish_param = param;
+    ret.value.transport_unicast_establish_param = param;
     return ret;
 
 ERR_3:
@@ -216,9 +258,9 @@ ERR_1:
     return ret;
 }
 
-_zn_transport_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zt, const z_bytes_t local_pid)
+_zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    _zn_transport_establish_param_result_t ret;
+    _zn_transport_multicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
 
@@ -227,9 +269,9 @@ _zn_transport_establish_param_result_t _zn_transport_multicast_open_client(const
     return ret;
 }
 
-_zn_transport_establish_param_result_t _zn_transport_unicast_open_peer(const _zn_link_t *zt, const z_bytes_t local_pid)
+_zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_peer(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    _zn_transport_establish_param_result_t ret;
+    _zn_transport_unicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
 
@@ -238,14 +280,37 @@ _zn_transport_establish_param_result_t _zn_transport_unicast_open_peer(const _zn
     return ret;
 }
 
-_zn_transport_establish_param_result_t _zn_transport_multicast_open_peer(const _zn_link_t *zt, const z_bytes_t local_pid)
+_zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_peer(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    _zn_transport_establish_param_result_t ret;
+    _zn_transport_multicast_establish_param_result_t ret;
+    _zn_transport_multicast_establish_param_t param;
+    param.is_qos = 0; // FIXME: make transport aware of qos configuration
+    param.initial_sn_tx = 0;
+    param.sn_resolution = ZN_SN_RESOLUTION;
+    param.lease = ZN_TRANSPORT_LEASE;
+
+    // Explicitly send a JOIN message upon startup
+    // FIXME: make transport aware of qos configuration
+    _zn_conduit_sn_list_t next_sns;
+    next_sns.is_qos = 0;
+    next_sns.val.plain.best_effort = param.initial_sn_tx;
+    next_sns.val.plain.reliable = param.initial_sn_tx;
+
+    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, param.lease, param.sn_resolution, local_pid, next_sns);
+
+    // Encode and send the message
+    _Z_DEBUG("Sending Join\n");
+    int res = _zn_link_send_t_msg(zl, &jsm);
+    if (res != 0)
+        goto ERR_1;
+
+    ret.tag = _z_res_t_OK;
+    ret.value.transport_multicast_establish_param = param;
+    return ret;
+
+ERR_1:
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
-
-    // TODO: not implemented
-
     return ret;
 }
 
@@ -256,8 +321,7 @@ int _zn_transport_unicast_close(_zn_transport_unicast_t *ztu, uint8_t reason)
 
 int _zn_transport_multicast_close(_zn_transport_multicast_t *ztm, uint8_t reason)
 {
-    // TODO: to be implemented
-    return -1;
+    return _zn_multicast_send_close(ztm, reason, 0);
 }
 
 int _zn_transport_close(_zn_transport_t *zt, uint8_t reason)
