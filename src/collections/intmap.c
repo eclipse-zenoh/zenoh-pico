@@ -17,7 +17,7 @@
 #include "zenoh-pico/collections/intmap.h"
 
 /*-------- int-void map --------*/
-int _z_int_void_map_entry_key_cmp(const void *left, const void *right)
+int _z_int_void_map_entry_key_eq(const void *left, const void *right)
 {
     _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
     _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
@@ -70,7 +70,7 @@ void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f
     e.key = k;
     e.val = NULL;
 
-    map->vals[idx] = _z_list_drop_filter(map->vals[idx], f, _z_int_void_map_entry_key_cmp, &e);
+    map->vals[idx] = _z_list_drop_filter(map->vals[idx], f, _z_int_void_map_entry_key_eq, &e);
 }
 
 void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f_f)
@@ -110,7 +110,7 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k)
     e.key = k;
     e.val = NULL;
 
-    _z_list_t *xs = _z_list_find(map->vals[idx], _z_int_void_map_entry_key_cmp, &e);
+    _z_list_t *xs = _z_list_find(map->vals[idx], _z_int_void_map_entry_key_eq, &e);
     if (xs != NULL)
     {
         _z_int_void_map_entry_t *h = (_z_int_void_map_entry_t *)_z_list_head(xs);

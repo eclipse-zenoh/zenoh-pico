@@ -93,19 +93,29 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
 }
 
 /*-------- str --------*/
+size_t __z_str_size(const z_str_t src)
+{
+    return strlen(src) + 1;
+}
+
 void _z_str_clear(z_str_t src)
 {
     free(src);
 }
 
+void __z_str_copy(z_str_t dst, const z_str_t src)
+{
+    strcpy(dst, src);
+}
+
 z_str_t _z_str_clone(const z_str_t src)
 {
-    z_str_t dst = (z_str_t)malloc(strlen(src) + 1);
-    strcpy(dst, src);
+    z_str_t dst = (z_str_t)malloc(__z_str_size(src));
+    __z_str_copy(dst, src);
     return dst;
 }
 
-int _z_str_cmp(const z_str_t left, const z_str_t right)
+int _z_str_eq(const z_str_t left, const z_str_t right)
 {
     return strcmp(left, right) == 0;
 }

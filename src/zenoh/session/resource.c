@@ -66,7 +66,7 @@ _zn_resource_t *__unsafe_zn_get_resource_by_key(zn_session_t *zn, int is_local, 
     {
         _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
 
-        if (decl->key.rid == reskey->rid && strcmp(decl->key.rname, reskey->rname) == 0)
+        if (decl->key.rid == reskey->rid && _z_str_eq(decl->key.rname, reskey->rname))
             return decl;
 
         decls = _z_list_tail(decls);
@@ -271,7 +271,7 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
  */
 void __unsafe_zn_free_resource(_zn_resource_t *res)
 {
-    _zn_reskey_free(&res->key);
+    _zn_reskey_clear(&res->key);
 }
 
 /**

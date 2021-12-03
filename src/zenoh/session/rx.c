@@ -75,7 +75,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
                 if (res != 0)
                 {
-                    _zn_reskey_free(&r->key);
+                    _zn_reskey_clear(&r->key);
                     free(r);
                 }
 
@@ -109,7 +109,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                     _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
 
                     // Free the message
-                    _zn_zenoh_message_free(&z_msg);
+                    _zn_zenoh_message_clear(&z_msg);
                 }
                 break;
             }

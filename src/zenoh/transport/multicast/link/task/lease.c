@@ -95,7 +95,7 @@ void *_znp_multicast_lease_task(void *arg)
                 if (entry->lease_expires == 0 && entry->received == 0)
                 {
                     _Z_DEBUG_VA("Remove peer from know list because it has expired after %zums", ztu->lease);
-                    ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
+                    ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
                     it = ztm->peers;
                 }
                 else if (entry->received == 1)

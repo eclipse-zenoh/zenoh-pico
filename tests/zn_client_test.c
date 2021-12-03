@@ -1,16 +1,16 @@
-// /*
-//  * Copyright (c) 2017, 2021 ADLINK Technology Inc.
-//  *
-//  * This program and the accompanying materials are made available under the
-//  * terms of the Eclipse Public License 2.0 which is available at
-//  * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-//  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
-//  *
-//  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-//  *
-//  * Contributors:
-//  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
-//  */
+/*
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -44,8 +44,8 @@ void query_handler(zn_query_t *query, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(strcmp(query->rname, res) == 0);
-    assert(strcmp(query->predicate, "") == 0);
+    assert(_z_str_eq(query->rname, res));
+    assert(_z_str_eq(query->predicate, ""));
 
     zn_send_reply(query, res, (const uint8_t *)res, strlen(res));
 

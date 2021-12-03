@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"
-#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/utils/result.h"
 
 /*-------- int-void map --------*/
@@ -116,26 +116,5 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     {                                                                                  \
         _z_int_void_map_free(m, name##_intmap_entry_elem_free);                        \
     }
-
-/*------------------ int-str map ----------------*/
-_Z_INT_MAP_DEFINE(_z_str, char)
-
-#define INT_STR_MAP_KEYVALUE_SEPARATOR '='
-#define INT_STR_MAP_LIST_SEPARATOR ';'
-
-typedef struct
-{
-    unsigned int key;
-    z_str_t str;
-} _z_str_intmapping_t;
-_Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
-
-size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
-
-void _z_str_intmap_onto_str(z_str_t dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
-z_str_t _z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
-
-_z_str_intmap_result_t _z_str_intmap_from_str(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[]);
-_z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[], size_t n);
 
 #endif /* ZENOH_PICO_COLLECTIONS_INTMAP_H */

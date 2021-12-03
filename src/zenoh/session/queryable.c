@@ -246,7 +246,7 @@ int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
  */
 void __unsafe_zn_free_queryable(_zn_queryable_t *qle)
 {
-    _zn_reskey_free(&qle->key);
+    _zn_reskey_clear(&qle->key);
 }
 
 /**
@@ -266,7 +266,7 @@ void __unsafe_zn_free_queryable_element(void **qle)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-int __unsafe_zn_queryable_cmp(const void *this, const void *other)
+int __unsafe_zn_queryable_eq(const void *this, const void *other)
 {
     _zn_queryable_t *t = (_zn_queryable_t *)this;
     _zn_queryable_t *o = (_zn_queryable_t *)other;
@@ -278,7 +278,7 @@ void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     // Acquire the lock on the queryables
     z_mutex_lock(&zn->mutex_inner);
 
-    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_cmp, qle);
+    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_eq, qle);
     free(qle);
 
     // Release the lock
@@ -477,7 +477,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_free(&z_msg);
+    _zn_zenoh_message_clear(&z_msg);
 
 EXIT_QLE_TRIG:
     // Release the lock

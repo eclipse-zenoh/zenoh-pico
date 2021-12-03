@@ -805,9 +805,9 @@ typedef struct
     uint8_t header;
 } _zn_declaration_t;
 
+size_t _zn_declaration_size(const _zn_declaration_t *dcl);
 void _zn_declaration_clear(_zn_declaration_t *dcl);
-
-_Z_ELEM_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_clear, _zn_noop_elem_clone, _zn_noop_elem_cmp)
+_Z_ELEM_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_size, _zn_declaration_clear, _zn_noop_copy)
 _Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t)
 
 typedef struct

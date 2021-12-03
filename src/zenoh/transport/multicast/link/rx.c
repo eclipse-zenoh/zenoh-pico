@@ -149,8 +149,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         if (entry == NULL) // New peer
         {
             entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
-            entry->remote_addr = _z_bytes_clone(addr);
-            entry->remote_pid = _z_bytes_clone(&t_msg->body.join.pid);
+            entry->remote_addr = _z_bytes_duplicate(addr);
+            entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.pid);
             if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
                 entry->sn_resolution = t_msg->body.join.sn_resolution;
             else
@@ -178,7 +178,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             z_zint_t sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
             {
-                _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
+                _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
                 break;
             }
 
@@ -206,7 +206,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
               || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
                 break;
         }
-        ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_cmp, entry);
+        ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
 
         break;
     }
@@ -293,7 +293,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                     res = _zn_handle_zenoh_message(ztm->session, &d_zm);
 
                     // Free the decoded message
-                    _zn_zenoh_message_free(&d_zm);
+                    _zn_zenoh_message_clear(&d_zm);
                 }
 
                 // Free the decoding buffer

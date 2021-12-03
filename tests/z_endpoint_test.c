@@ -32,8 +32,8 @@ int main(void)
     printf("- %s\n", s);
     lres = _zn_locator_from_str(s);
     assert(lres.tag == _z_res_t_OK);
-    assert(strcmp(lres.value.locator.protocol, "tcp") == 0);
-    assert(strcmp(lres.value.locator.address, "127.0.0.1:7447") == 0);
+    assert(_z_str_eq(lres.value.locator.protocol, "tcp"));
+    assert(_z_str_eq(lres.value.locator.address, "127.0.0.1:7447"));
     assert(_z_str_intmap_is_empty(&lres.value.locator.metadata));
     _zn_locator_clear(&lres.value.locator);
 
@@ -89,8 +89,8 @@ int main(void)
     printf("- %s\n", s);
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_OK);
-    assert(strcmp(eres.value.endpoint.locator.protocol, "tcp") == 0);
-    assert(strcmp(eres.value.endpoint.locator.address, "127.0.0.1:7447") == 0);
+    assert(_z_str_eq(eres.value.endpoint.locator.protocol, "tcp"));
+    assert(_z_str_eq(eres.value.endpoint.locator.address, "127.0.0.1:7447"));
     assert(_z_str_intmap_is_empty(&eres.value.endpoint.locator.metadata));
     assert(_z_str_intmap_is_empty(&eres.value.endpoint.config));
     _zn_endpoint_clear(&eres.value.endpoint);
@@ -142,12 +142,12 @@ int main(void)
     printf("- %s\n", s);
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_OK);
-    assert(strcmp(eres.value.endpoint.locator.protocol, "udp") == 0);
-    assert(strcmp(eres.value.endpoint.locator.address, "127.0.0.1:7447") == 0);
+    assert(_z_str_eq(eres.value.endpoint.locator.protocol, "udp"));
+    assert(_z_str_eq(eres.value.endpoint.locator.address, "127.0.0.1:7447"));
     assert(_z_str_intmap_is_empty(&eres.value.endpoint.locator.metadata));
     assert(_z_str_intmap_len(&eres.value.endpoint.config) == 1);
     z_str_t p = _z_str_intmap_get(&eres.value.endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
-    assert(strcmp(p, "eth0") == 0);
+    assert(_z_str_eq(p, "eth0"));
     _zn_endpoint_clear(&eres.value.endpoint);
 
     sprintf(s, "udp/127.0.0.1:7447#invalid=eth0");
