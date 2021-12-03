@@ -40,10 +40,11 @@ typedef struct
     volatile int received;
 } _zn_transport_peer_entry_t;
 
+size_t _zn_transport_peer_entry_size(const _zn_transport_peer_entry_t *src);
 void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src);
-_zn_transport_peer_entry_t *_zn_transport_peer_entry_clone(const _zn_transport_peer_entry_t *src);
-int _zn_transport_peer_entry_cmp(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right);
-_Z_ELEM_DEFINE(_zn_transport_peer_entry, _zn_transport_peer_entry_t, _zn_transport_peer_entry_clear, _zn_transport_peer_entry_clone, _zn_transport_peer_entry_cmp)
+void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_transport_peer_entry_t *src);
+int _zn_transport_peer_entry_eq(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right);
+_Z_ELEM_DEFINE(_zn_transport_peer_entry, _zn_transport_peer_entry_t, _zn_transport_peer_entry_size, _zn_transport_peer_entry_clear, _zn_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_zn_transport_peer_entry, _zn_transport_peer_entry_t)
 
 typedef struct
@@ -141,10 +142,14 @@ typedef struct
     } type;
 } _zn_transport_t;
 
+_Z_ELEM_DEFINE(_zn_transport, _zn_transport_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_transport, _zn_transport_t)
+
 _ZN_RESULT_DECLARE(_zn_transport_t, transport)
 _ZN_P_RESULT_DECLARE(_zn_transport_t, transport)
 
-typedef struct {
+typedef struct
+{
     z_bytes_t remote_pid;
     unsigned int whatami;
     z_zint_t sn_resolution;

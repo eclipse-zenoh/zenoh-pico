@@ -31,8 +31,9 @@ typedef struct
     uint8_t is_alloc;
 } _z_iosli_t;
 
-_z_iosli_t _z_iosli_wrap(uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 _z_iosli_t _z_iosli_make(size_t capacity);
+_z_iosli_t *_z_iosli_new(size_t capacity);
+_z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
 
 size_t _z_iosli_readable(const _z_iosli_t *ios);
 uint8_t _z_iosli_read(_z_iosli_t *ios);
@@ -43,12 +44,16 @@ size_t _z_iosli_writable(const _z_iosli_t *ios);
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b);
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
+void _z_iosli_reset(_z_iosli_t *ios);
 
 z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
+size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
+void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
+_z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
-_Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_clear, _zn_noop_elem_clone, _zn_noop_elem_cmp)
+_Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_copy)
 _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/
@@ -112,8 +117,9 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);
-int _z_wbuf_copy_into(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
+int _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
 
+void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src);
 void _z_wbuf_reset(_z_wbuf_t *wbf);
 void _z_wbuf_clear(_z_wbuf_t *wbf);
 void _z_wbuf_free(_z_wbuf_t **wbf);

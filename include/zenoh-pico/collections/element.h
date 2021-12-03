@@ -18,13 +18,15 @@
 #include <stdlib.h>
 
 /*-------- element functions --------*/
+typedef size_t (*z_element_size_f)(void *e);
 typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
+typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void *(*z_element_clone_f)(const void *e);
-typedef int (*z_element_cmp_f)(const void *left, const void *right);
+typedef int (*z_element_eq_f)(const void *left, const void *right);
 
-#define _Z_ELEM_DEFINE(name, type, elem_clear_f, elem_clone_f, elem_cmp_f) \
-    typedef int (*name##_cmp_f)(const type *left, const type *right);      \
+#define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f) \
+    typedef int (*name##_eq_f)(const type *left, const type *right);       \
     static inline void name##_elem_clear(void *e)                          \
     {                                                                      \
         elem_clear_f((type *)e);                                           \
@@ -35,37 +37,36 @@ typedef int (*z_element_cmp_f)(const void *left, const void *right);
         elem_clear_f(ptr);                                                 \
         *e = NULL;                                                         \
     }                                                                      \
-    static inline void *name##_elem_clone(const void *e)                   \
+    static inline void name##_elem_copy(void *dst, const void *src)        \
     {                                                                      \
-        return (void *)elem_clone_f((type *)e);                            \
+        elem_copy_f((type *)dst, (type *)src);                             \
     }                                                                      \
-    static inline int name##_elem_cmp(const void *left, const void *right) \
+    static inline void *name##_elem_clone(const void *src)                 \
     {                                                                      \
-        return elem_cmp_f((type *)left, (type *)right);                    \
+        type *dst = (type *)malloc(elem_size_f((type *)src));              \
+        elem_copy_f(dst, (type *)src);                                     \
+        return dst;                                                        \
     }
 
 /*------------------ void ----------------*/
-static inline void _zn_noop_elem_clear(void *s)
+typedef void _zn_noop_t;
+static inline size_t _zn_noop_size(void *s)
 {
     (void)(s);
-}
-
-static inline void _zn_noop_elem_free(void **s)
-{
-    (void)(s);
-}
-
-static inline void *_zn_noop_elem_clone(const void *s)
-{
-    (void)(s);
-    return NULL;
-}
-
-static inline int _zn_noop_elem_cmp(const void *left, const void *right)
-{
-    (void)(left);
-    (void)(right);
     return 0;
 }
+
+static inline void _zn_noop_clear(void *s)
+{
+    (void)(s);
+}
+
+static inline void _zn_noop_copy(void *dst, const void *src)
+{
+    (void)(dst);
+    (void)(src);
+}
+
+_Z_ELEM_DEFINE(_zn_noop, _zn_noop_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

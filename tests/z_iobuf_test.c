@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "zenoh-pico/protocol/iobuf.h"
 
 #define RUNS 1000
@@ -83,6 +84,134 @@ _z_wbuf_t gen_wbuf(size_t len)
 /*=============================*/
 /*           Tests             */
 /*=============================*/
+void iosli_writable_readable(void)
+{
+    size_t len = 128;
+    _z_iosli_t ios = _z_iosli_make(len);
+    _z_iosli_t *pios = _z_iosli_new(len);
+
+    printf("\n>>> IOSli => Writable and Readable\n");
+
+    printf("  - IOSli write\n");
+    assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios));
+    assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios));
+
+    size_t writable = _z_iosli_writable(&ios);
+    size_t readable = _z_iosli_readable(&ios);
+
+    printf("    Writable: %zu\tReadable: %zu\n", writable, readable);
+    assert(writable == len);
+    assert(readable == 0);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        uint8_t byte = gen_uint8();
+        _z_iosli_write(&ios, byte);
+        _z_iosli_write(pios, byte);
+
+        assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios));
+        assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios));
+
+        writable = _z_iosli_writable(&ios);
+        readable = _z_iosli_readable(&ios);
+
+        printf("    Writable: %zu\tReadable: %zu\n", writable, readable);
+        assert(writable == len - (i + 1));
+        assert(readable == i + 1);
+
+        uint8_t b1 = _z_iosli_get(&ios, i);
+        uint8_t b2 = _z_iosli_get(pios, i);
+
+        assert(b1 == b2);
+    }
+
+    _z_iosli_t *cios = _z_iosli_clone(pios);
+    assert(_z_iosli_writable(pios) == _z_iosli_writable(cios));
+    assert(_z_iosli_readable(pios) == _z_iosli_readable(cios));
+
+    printf("  - IOSli read\n");
+    for (size_t i = 0; i < len; i++)
+    {
+        uint8_t b1 = _z_iosli_read(&ios);
+        uint8_t b2 = _z_iosli_read(pios);
+        uint8_t b3 = _z_iosli_read(cios);
+
+        assert(b1 == b2 && b2 == b3);
+
+        assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios) && _z_iosli_writable(pios) == _z_iosli_writable(cios));
+        assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios) && _z_iosli_readable(pios) == _z_iosli_readable(cios));
+
+        writable = _z_iosli_writable(&ios);
+        readable = _z_iosli_readable(&ios);
+
+        printf("    Writable: %zu\tReadable: %zu\n", writable, readable);
+        assert(writable == 0);
+        assert(readable == len - (i + 1));
+    }
+
+    _z_iosli_reset(&ios);
+    assert(_z_iosli_writable(&ios) == len);
+    assert(_z_iosli_readable(&ios) == 0);
+
+    _z_iosli_reset(pios);
+    assert(_z_iosli_writable(pios) == len);
+    assert(_z_iosli_readable(pios) == 0);
+
+    _z_iosli_clear(cios);
+    assert(_z_iosli_writable(cios) == 0);
+    assert(_z_iosli_readable(cios) == 0);
+
+    printf("  - IOSli bytes\n");
+    uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    for (size_t i = 0; i < len; i++)
+    {
+        payload[i] = gen_uint8();
+        _z_iosli_put(pios, payload[i], i);
+
+        assert(payload[i] == _z_iosli_get(pios, i));
+        pios->w_pos++;
+
+        writable = _z_iosli_writable(pios);
+        readable = _z_iosli_readable(pios);
+
+        printf("    Writable: %zu\tReadable: %zu\n", writable, readable);
+        assert(writable == len - (i + 1));
+        assert(readable == i + 1);
+    }
+
+    uint8_t *buffer = (uint8_t *)malloc(len * sizeof(uint8_t));
+
+    _z_iosli_write_bytes(&ios, payload, 0, len);
+    _z_iosli_read_bytes(&ios, buffer, 0, len);
+    assert(memcmp(payload, buffer, len) == 0);
+
+    memset(buffer, 0, len);
+
+    _z_iosli_read_bytes(pios, buffer, 0, len);
+    assert(memcmp(payload, buffer, len) == 0);
+
+    memset(buffer, 0, len);
+
+    _z_iosli_t wios = _z_iosli_wrap(payload, len, 0, len);
+    _z_iosli_read_bytes(&wios, buffer, 0, len);
+    assert(memcmp(payload, buffer, len) == 0);
+
+    _z_iosli_clear(&ios);
+    assert(_z_iosli_writable(&ios) == 0);
+    assert(_z_iosli_readable(&ios) == 0);
+
+    _z_iosli_clear(pios);
+    assert(_z_iosli_writable(pios) == 0);
+    assert(_z_iosli_readable(pios) == 0);
+
+    _z_iosli_clear(&wios);
+    assert(_z_iosli_writable(&wios) == 0);
+    assert(_z_iosli_readable(&wios) == 0);
+
+    free(buffer);
+    free(payload);
+}
+
 void zbuf_writable_readable(void)
 {
     size_t len = 128;
@@ -119,7 +248,7 @@ void zbuf_writable_readable(void)
     }
 }
 
-void zbuf_comapct(void)
+void zbuf_compact(void)
 {
     uint8_t len = 128;
     _z_zbuf_t zbf = _z_zbuf_make(len);
@@ -233,15 +362,14 @@ void wbuf_write_zbuf_read(void)
     print_wbuf_overview(&wbf);
     printf("    Writing %zu bytes\n", len);
     for (size_t i = 0; i < len; i++)
-    {
         _z_wbuf_write(&wbf, (uint8_t)i % 255);
-    }
 
     printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
     printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
     assert(_z_wbuf_len(&wbf) == len);
 
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    assert(_z_zbuf_len(&zbf) == len);
     printf("    Reading %zu bytes\n", len);
     printf("    [");
     for (uint8_t i = 0; i < len; i++)
@@ -443,9 +571,11 @@ int main(void)
     for (unsigned int i = 0; i < RUNS; i++)
     {
         printf("\n\n== RUN %u\n", i);
+        // IOsli
+        iosli_writable_readable();
         // ZBuf
         zbuf_writable_readable();
-        zbuf_comapct();
+        zbuf_compact();
         zbuf_view();
         // WBuf
         wbuf_writable_readable();
