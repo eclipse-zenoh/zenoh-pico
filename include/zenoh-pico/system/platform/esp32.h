@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 
-#include <lwip/sockets.h>
 #include <pthread.h>
 
 typedef int _zn_socket_t;
