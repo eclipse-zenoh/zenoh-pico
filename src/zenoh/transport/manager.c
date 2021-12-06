@@ -55,13 +55,9 @@ _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t loc
     ret.value.transport = zt;
     return ret;
 
-ERR_3:
-    _zn_transport_free(&zt);
 ERR_2:
     _zn_link_free(&res_zl.value.link);
 ERR_1:
-    _zn_transport_free(&zt);
-
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
     return ret;
@@ -114,8 +110,6 @@ _zn_transport_p_result_t _zn_new_transport_peer(z_str_t locator, z_bytes_t local
     ret.value.transport = zt;
     return ret;
 
-ERR_3:
-    _zn_transport_free(&zt);
 ERR_2:
     _zn_link_free(&res_zl.value.link);
 ERR_1:

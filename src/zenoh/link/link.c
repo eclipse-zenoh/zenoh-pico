@@ -28,8 +28,6 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
     _zn_endpoint_t endpoint = ep_res.value.endpoint;
 
     // Create transport link
-    _zn_link_t *link = NULL;
-
     if (_z_str_eq(endpoint.locator.protocol, TCP_SCHEMA))
     {
         r.value.link = _zn_new_link_tcp(endpoint);
@@ -77,7 +75,6 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
 
     // TODO: for now listening is only supported for UDP multicast
     // Create transport link
-    _zn_link_t *link = NULL;
     if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
     {
         r.value.link = _zn_new_link_udp_multicast(endpoint);

@@ -20,7 +20,6 @@
 
 _zn_transport_peer_entry_t *_zn_find_peer_entry(_zn_transport_peer_entry_list_t *l, z_bytes_t *remote_addr)
 {
-    int i = 0;
     for (; l != NULL; l = l->tail)
     {
         if (((_zn_transport_peer_entry_t *)l->val)->remote_addr.len != remote_addr->len)
@@ -175,7 +174,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             entry->received = 1;
 
             // Check if the sn resolution remains the same
-            z_zint_t sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
             {
                 _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
