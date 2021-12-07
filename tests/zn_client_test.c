@@ -29,11 +29,11 @@ z_str_t uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
-_z_list_t *pubs1 = NULL;
+_z_list_t *pubs1 = NULL; // @TODO: use type-safe list
 unsigned long rids1[SET];
 
-_z_list_t *subs2 = NULL;
-_z_list_t *qles2 = NULL;
+_z_list_t *subs2 = NULL; // @TODO: use type-safe list
+_z_list_t *qles2 = NULL; // @TODO: use type-safe list
 unsigned long rids2[SET];
 
 volatile unsigned int total = 0;
@@ -149,7 +149,7 @@ int main(int argc, z_str_t *argv)
         zn_subscriber_t *sub = zn_declare_subscriber(s2, rk, zn_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
-        subs2 = _z_list_push(subs2, sub);
+        subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
     for (unsigned int i = 0; i < SET; i++)
@@ -159,7 +159,7 @@ int main(int argc, z_str_t *argv)
         zn_queryable_t *qle = zn_declare_queryable(s2, rk, ZN_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
-        qles2 = _z_list_push(qles2, qle);
+        qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
     }
 
     // Declare publisher on firt session
@@ -169,7 +169,7 @@ int main(int argc, z_str_t *argv)
         zn_publisher_t *pub = zn_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->id);
-        pubs1 = _z_list_push(pubs1, pub);
+        pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
     }
 
     z_sleep_s(SLEEP);
@@ -264,27 +264,27 @@ int main(int argc, z_str_t *argv)
     // Undeclare publishers on first session
     while (pubs1)
     {
-        zn_publisher_t *pub = _z_list_head(pubs1);
+        zn_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         zn_undeclare_publisher(pub);
         printf("Undeclared publisher on session 2: %zu\n", pub->id);
-        pubs1 = _z_list_pop(pubs1, _zn_noop_elem_free);
+        pubs1 = _z_list_pop(pubs1, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        zn_subscriber_t *sub = _z_list_head(subs2);
+        zn_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         zn_undeclare_subscriber(sub);
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        subs2 = _z_list_pop(subs2, _zn_noop_elem_free);
+        subs2 = _z_list_pop(subs2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     while (qles2)
     {
-        zn_queryable_t *qle = _z_list_head(qles2);
+        zn_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
         zn_undeclare_queryable(qle);
         printf("Undeclared queryable on session 2: %zu\n", qle->id);
-        qles2 = _z_list_pop(qles2, _zn_noop_elem_free);
+        qles2 = _z_list_pop(qles2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     // Undeclare resources on both sessions
@@ -318,7 +318,6 @@ int main(int argc, z_str_t *argv)
     zn_close(s2);
 
     // Cleanup properties
-    // @TODO: fix properties free
     zn_properties_free(&config);
 
     return 0;

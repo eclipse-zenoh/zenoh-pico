@@ -207,7 +207,7 @@ typedef struct
     z_str_t predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    _z_list_t *pending_replies;
+    _z_list_t *pending_replies; // @TODO: use type-safe list
     zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
@@ -216,7 +216,7 @@ typedef struct
 {
     z_mutex_t mutex;
     z_condvar_t cond_var;
-    _z_vec_t replies;
+    _z_vec_t replies; // @TODO: use type-safe list
 } _zn_pending_query_collect_t;
 
 typedef struct

@@ -38,19 +38,19 @@ z_zint_t _zn_get_pull_id(zn_session_t *zn)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-_z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+_z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey) // @TODO: use type-safe list
 {
-    _z_list_t *xs = NULL;
+    _z_list_t *xs = NULL; // @TODO: use type-safe list
 
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        _z_list_t *subs = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, reskey->rid);
+        _z_list_t *subs = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, reskey->rid); // @TODO: use type-safe list and intmap
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
-            xs = _z_list_push(xs, sub);
-            subs = _z_list_tail(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
+            xs = _z_list_push(xs, sub);                                     // @TODO: use type-safe list
+            subs = _z_list_tail(subs);                                      // @TODO: use type-safe list
         }
     }
     // Case 2) -> string only reskey
@@ -59,10 +59,10 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
         // The complete resource name of the remote key
         z_str_t rname = reskey->rname;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        _z_list_t *subs = zn->local_subscriptions; // @TODO: use type-safe list
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
             // The complete resource name of the subscribed key
             z_str_t lname;
@@ -77,18 +77,18 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &sub->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(&xs, _zn_noop_elem_free);
+                    _z_list_free(&xs, _zn_noop_elem_free); // @TODO: use type-safe list
                     return xs;
                 }
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_push(xs, sub);
+                xs = _z_list_push(xs, sub); // @TODO: use type-safe list
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = _z_list_tail(subs); // @TODO: use type-safe list
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -101,10 +101,10 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
         // Compute the complete remote resource name starting from the key
         z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
-        _z_list_t *subs = zn->local_subscriptions;
+        _z_list_t *subs = zn->local_subscriptions; // @TODO: use type-safe list
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -122,12 +122,12 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
             }
 
             if (zn_rname_intersect(lname, rname))
-                xs = _z_list_push(xs, sub);
+                xs = _z_list_push(xs, sub); // @TODO: use type-safe list
 
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = _z_list_tail(subs); // @TODO: use type-safe list
         }
 
         free(rname);
@@ -144,15 +144,15 @@ _z_list_t *__unsafe_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const
 void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
 {
     // Check if there is a matching local subscription
-    _z_list_t *subs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
+    _z_list_t *subs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey); // @TODO: use type-safe list
     if (subs != NULL)
     {
         // Update the list
-        _z_list_t *sl = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, id);
+        _z_list_t *sl = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, id); // @TODO: use type-safe list
         if (sl)
         {
             // Free any ancient list
-            _z_list_free(&sl, _zn_noop_elem_free);
+            _z_list_free(&sl, _zn_noop_elem_free); // @TODO: use type-safe list
         }
         // Update the list of active subscriptions
         _z_int_void_map_insert(&zn->rem_res_loc_sub_map, id, subs, _zn_noop_elem_free);
@@ -166,15 +166,15 @@ void __unsafe_zn_add_rem_res_to_loc_sub_map(zn_session_t *zn, z_zint_t id, zn_re
  */
 _zn_subscriber_t *__unsafe_zn_get_subscription_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions; // @TODO: use type-safe list
     while (subs)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
         if (sub->id == id)
             return sub;
 
-        subs = _z_list_tail(subs);
+        subs = _z_list_tail(subs); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -187,15 +187,15 @@ _zn_subscriber_t *__unsafe_zn_get_subscription_by_id(zn_session_t *zn, int is_lo
  */
 _zn_subscriber_t *__unsafe_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    _z_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions; // @TODO: use type-safe list
     while (subs)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
         if (sub->key.rid == reskey->rid && _z_str_eq(sub->key.rname, reskey->rname))
             return sub;
 
-        subs = _z_list_tail(subs);
+        subs = _z_list_tail(subs); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -240,20 +240,20 @@ void __unsafe_zn_add_loc_sub_to_rem_res_map(zn_session_t *zn, _zn_subscriber_t *
     if (rem_res)
     {
         // Update the list of active subscriptions
-        _z_list_t *subs = _z_int_void_map_get(&zn->rem_res_loc_sub_map, rem_res->id);
-        subs = _z_list_push(subs, sub);
-        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, rem_res->id, subs, _zn_noop_elem_free);
+        _z_list_t *subs = _z_int_void_map_get(&zn->rem_res_loc_sub_map, rem_res->id);            // @TODO: use type-safe list and intmap
+        subs = _z_list_push(subs, sub);                                                          // @TODO: use type-safe list
+        _z_int_void_map_insert(&zn->rem_res_loc_sub_map, rem_res->id, subs, _zn_noop_elem_free); // @TODO: use type-safe intmap
     }
 
     if (sub->key.rid != ZN_RESOURCE_ID_NONE)
         free(loc_key.rname);
 }
 
-_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+_z_list_t *_zn_get_subscriptions_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey) // @TODO: use type-safe list
 {
     // Acquire the lock on the subscriptions data struct
     z_mutex_lock(&zn->mutex_inner);
-    _z_list_t *xs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey);
+    _z_list_t *xs = __unsafe_zn_get_subscriptions_from_remote_key(zn, reskey); // @TODO: use type-safe list
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
     return xs;
@@ -279,11 +279,11 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
         if (is_local)
         {
             __unsafe_zn_add_loc_sub_to_rem_res_map(zn, sub);
-            zn->local_subscriptions = _z_list_push(zn->local_subscriptions, sub);
+            zn->local_subscriptions = _z_list_push(zn->local_subscriptions, sub); // @TODO: use type-safe list
         }
         else
         {
-            zn->remote_subscriptions = _z_list_push(zn->remote_subscriptions, sub);
+            zn->remote_subscriptions = _z_list_push(zn->remote_subscriptions, sub); // @TODO: use type-safe list
         }
         res = 0;
     }
@@ -332,9 +332,9 @@ void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_
     z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_subscriptions = _z_list_drop_filter(zn->local_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s);
+        zn->local_subscriptions = _z_list_drop_filter(zn->local_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s); // @TODO: use type-safe list
     else
-        zn->remote_subscriptions = _z_list_drop_filter(zn->remote_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s);
+        zn->remote_subscriptions = _z_list_drop_filter(zn->remote_subscriptions, _zn_noop_elem_free, __unsafe_zn_subscription_predicate, s); // @TODO: use type-safe list
     free(s);
 
     // Release the lock
@@ -348,20 +348,20 @@ void _zn_flush_subscriptions(zn_session_t *zn)
 
     while (zn->local_subscriptions)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->local_subscriptions);
-        __unsafe_zn_free_subscription(sub);
-        free(sub);
-        zn->local_subscriptions = _z_list_pop(zn->local_subscriptions, _zn_noop_elem_free);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->local_subscriptions);  // @TODO: use type-safe list
+        __unsafe_zn_free_subscription(sub);                                                 // @TODO: use type-safe list
+        free(sub);                                                                          // @TODO: use type-safe list
+        zn->local_subscriptions = _z_list_pop(zn->local_subscriptions, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     while (zn->remote_subscriptions)
     {
-        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->remote_subscriptions);
-        __unsafe_zn_free_subscription(sub);
-        free(sub);
-        zn->remote_subscriptions = _z_list_pop(zn->remote_subscriptions, _zn_noop_elem_free);
+        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(zn->remote_subscriptions);   // @TODO: use type-safe list
+        __unsafe_zn_free_subscription(sub);                                                   // @TODO: use type-safe list
+        free(sub);                                                                            // @TODO: use type-safe list
+        zn->remote_subscriptions = _z_list_pop(zn->remote_subscriptions, _zn_noop_elem_free); // @TODO: use type-safe list
     }
-    _z_int_void_map_clear(&zn->rem_res_loc_sub_map, _zn_noop_elem_free);
+    _z_int_void_map_clear(&zn->rem_res_loc_sub_map, _zn_noop_elem_free); // @TODO: use type-safe intmap
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
@@ -402,12 +402,12 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.value = payload;
 
         // Iterate over the matching subscriptions
-        _z_list_t *subs = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, reskey.rid);
+        _z_list_t *subs = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_sub_map, reskey.rid); // @TODO: use type-safe list
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
             sub->callback(&s, sub->arg);
-            subs = _z_list_tail(subs);
+            subs = _z_list_tail(subs); // @TODO: use type-safe list
         }
 
         if (res->key.rid != ZN_RESOURCE_ID_NONE)
@@ -422,10 +422,10 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.key.len = strlen(s.key.val);
         s.value = payload;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        _z_list_t *subs = zn->local_subscriptions; // @TODO: use type-safe list
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t rname;
@@ -448,7 +448,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(rname);
 
-            subs = _z_list_tail(subs);
+            subs = _z_list_tail(subs); // @TODO: use type-safe list
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -465,10 +465,10 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
         s.key.len = strlen(s.key.val);
         s.value = payload;
 
-        _z_list_t *subs = zn->local_subscriptions;
+        _z_list_t *subs = zn->local_subscriptions; // @TODO: use type-safe list
         while (subs)
         {
-            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs);
+            _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
 
             // Get the complete resource name to be passed to the subscription callback
             z_str_t lname;
@@ -491,7 +491,7 @@ void _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const
             if (sub->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            subs = _z_list_tail(subs);
+            subs = _z_list_tail(subs); // @TODO: use type-safe list
         }
 
         free(rname);

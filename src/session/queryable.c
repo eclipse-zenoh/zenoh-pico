@@ -36,15 +36,15 @@
  */
 _zn_queryable_t *__unsafe_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_list_t *queryables = zn->local_queryables;
+    _z_list_t *queryables = zn->local_queryables; // @TODO: use type-safe list
     while (queryables)
     {
-        _zn_queryable_t *queryable = (_zn_queryable_t *)_z_list_head(queryables);
+        _zn_queryable_t *queryable = (_zn_queryable_t *)_z_list_head(queryables); // @TODO: use type-safe list
 
         if (queryable->id == id)
             return queryable;
 
-        queryables = _z_list_tail(queryables);
+        queryables = _z_list_tail(queryables); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -55,18 +55,18 @@ _zn_queryable_t *__unsafe_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->mutex_inner
  */
-_z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey)
+_z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn_reskey_t *reskey) // @TODO: use type-safe list
 {
-    _z_list_t *xs = NULL;
+    _z_list_t *xs = NULL; // @TODO: use type-safe list
     // Case 1) -> numerical only reskey
     if (reskey->rname == NULL)
     {
-        _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, reskey->rid);
+        _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, reskey->rid); // @TODO: use type-safe list and intmap
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
-            xs = _z_list_push(xs, qle);
-            qles = _z_list_tail(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
+            xs = _z_list_push(xs, qle);                                   // @TODO: use type-safe list
+            qles = _z_list_tail(qles);                                    // @TODO: use type-safe list
         }
     }
     // Case 2) -> string only reskey
@@ -75,7 +75,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
         // The complete resource name of the remote key
         z_str_t rname = reskey->rname;
 
-        _z_list_t *qles = zn->local_queryables;
+        _z_list_t *qles = zn->local_queryables; // @TODO: use type-safe list
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
@@ -93,7 +93,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
                 lname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &qle->key);
                 if (lname == NULL)
                 {
-                    _z_list_free(&xs, _zn_noop_elem_free);
+                    _z_list_free(&xs, _zn_noop_elem_free); // @TODO: use type-safe list
                     return xs;
                 }
             }
@@ -104,7 +104,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            qles = _z_list_tail(qles);
+            qles = _z_list_tail(qles); // @TODO: use type-safe list
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -117,7 +117,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
         // Compute the complete remote resource name starting from the key
         z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, reskey);
 
-        _z_list_t *qles = zn->local_queryables;
+        _z_list_t *qles = zn->local_queryables; // @TODO: use type-safe list
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
@@ -143,7 +143,7 @@ _z_list_t *__unsafe_zn_get_queryables_from_remote_key(zn_session_t *zn, const zn
             if (qle->key.rid != ZN_RESOURCE_ID_NONE)
                 free(lname);
 
-            qles = _z_list_tail(qles);
+            qles = _z_list_tail(qles); // @TODO: use type-safe list
         }
 
         free(rname);
@@ -171,9 +171,9 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
     if (rem_res)
     {
         // Update the list of active subscriptions
-        _z_list_t *qles = _z_int_void_map_get(&zn->rem_res_loc_qle_map, rem_res->id);
-        qles = _z_list_push(qles, qle);
-        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, rem_res->id, qles, _zn_noop_elem_free);
+        _z_list_t *qles = _z_int_void_map_get(&zn->rem_res_loc_qle_map, rem_res->id);            // @TODO: use type-safe list and intmap
+        qles = _z_list_push(qles, qle);                                                          // @TODO: use type-safe list
+        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, rem_res->id, qles, _zn_noop_elem_free); // @TODO: use type-safe intmap
     }
 
     if (qle->key.rid != ZN_RESOURCE_ID_NONE)
@@ -188,18 +188,18 @@ void __unsafe_zn_add_loc_qle_to_rem_res_map(zn_session_t *zn, _zn_queryable_t *q
 void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_reskey_t *reskey)
 {
     // Check if there is a matching local subscription
-    _z_list_t *qles = __unsafe_zn_get_queryables_from_remote_key(zn, reskey);
+    _z_list_t *qles = __unsafe_zn_get_queryables_from_remote_key(zn, reskey); // @TODO: use type-safe list
     if (qles)
     {
         // Update the list
-        _z_list_t *ql = _z_int_void_map_get(&zn->rem_res_loc_qle_map, id);
+        _z_list_t *ql = _z_int_void_map_get(&zn->rem_res_loc_qle_map, id); // @TODO: use type-safe list
         if (ql)
         {
             // Free any ancient list
-            _z_list_free(&ql, _zn_noop_elem_free);
+            _z_list_free(&ql, _zn_noop_elem_free); // @TODO: use type-safe list
         }
         // Update the list of active subscriptions
-        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, id, qles, _zn_noop_elem_free);
+        _z_int_void_map_insert(&zn->rem_res_loc_qle_map, id, qles, _zn_noop_elem_free); // @TODO: use type-safe intmap
     }
 }
 
@@ -339,17 +339,17 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.predicate = query->predicate;
 
         // Iterate over the matching queryables
-        _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, query->key.rid);
+        _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, query->key.rid); // @TODO: use type-safe list
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
             {
                 q.kind = qle->kind;
                 qle->callback(&q, qle->arg);
             }
-            qles = _z_list_tail(qles);
+            qles = _z_list_tail(qles); // @TODO: use type-safe list
         }
 
         if (res->key.rid != ZN_RESOURCE_ID_NONE)
@@ -366,10 +366,10 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.predicate = query->predicate;
 
         // Iterate over the matching queryables
-        _z_list_t *qles = zn->local_queryables;
+        _z_list_t *qles = zn->local_queryables; // @TODO: use type-safe list
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
 
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
@@ -399,7 +399,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                     free(rname);
             }
 
-            qles = _z_list_tail(qles);
+            qles = _z_list_tail(qles); // @TODO: use type-safe list
         }
     }
     // Case 3) -> numerical reskey with suffix
@@ -417,10 +417,10 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         q.rname = query->key.rname;
         q.predicate = query->predicate;
 
-        _z_list_t *qles = zn->local_queryables;
+        _z_list_t *qles = zn->local_queryables; // @TODO: use type-safe list
         while (qles)
         {
-            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles);
+            _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
 
             unsigned int target = (query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind);
             if (target != 0)
@@ -450,7 +450,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
                     free(lname);
             }
 
-            qles = _z_list_tail(qles);
+            qles = _z_list_tail(qles); // @TODO: use type-safe list
         }
 
         free(rname);
