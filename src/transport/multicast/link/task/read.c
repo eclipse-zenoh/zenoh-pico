@@ -26,10 +26,10 @@ int _znp_multicast_read(_zn_transport_multicast_t *ztm)
         goto ERR;
 
     int res = _zn_multicast_handle_transport_message(ztm, &r_s.value.transport_message, &addr);
-    _zn_transport_message_clear(&r_s.value.transport_message);
+    _zn_t_msg_clear(&r_s.value.transport_message);
 
     return res;
-    
+
 ERR:
     return _z_res_t_ERR;
 }
@@ -106,7 +106,7 @@ void *_znp_multicast_read_task(void *arg)
                 int res = _zn_multicast_handle_transport_message(ztm, &r.value.transport_message, &addr);
 
                 if (res == _z_res_t_OK)
-                    _zn_transport_message_clear(&r.value.transport_message);
+                    _zn_t_msg_clear(&r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
             }

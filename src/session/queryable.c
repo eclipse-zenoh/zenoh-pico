@@ -477,7 +477,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         // TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
 EXIT_QLE_TRIG:
     // Release the lock

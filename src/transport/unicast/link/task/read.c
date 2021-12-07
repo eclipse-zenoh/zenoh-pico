@@ -25,7 +25,7 @@ int _znp_unicast_read(_zn_transport_unicast_t *ztu)
         goto ERR;
 
     int res = _zn_unicast_handle_transport_message(ztu, &r_s.value.transport_message);
-    _zn_transport_message_clear(&r_s.value.transport_message);
+    _zn_t_msg_clear(&r_s.value.transport_message);
 
     return res;
 
@@ -105,7 +105,7 @@ void *_znp_unicast_read_task(void *arg)
             {
                 int res = _zn_unicast_handle_transport_message(ztu, &r.value.transport_message);
                 if (res == _z_res_t_OK)
-                    _zn_transport_message_clear(&r.value.transport_message);
+                    _zn_t_msg_clear(&r.value.transport_message);
                 else
                     goto EXIT_RECV_LOOP;
             }

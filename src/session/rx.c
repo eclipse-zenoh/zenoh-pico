@@ -109,7 +109,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                     _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
 
                     // Free the message
-                    _zn_zenoh_message_clear(&z_msg);
+                    _zn_z_msg_clear(&z_msg);
                 }
                 break;
             }

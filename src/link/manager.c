@@ -28,7 +28,6 @@ _zn_link_manager_t *_zn_link_manager_init()
 void _zn_link_manager_free(_zn_link_manager_t **zlm)
 {
     _zn_link_manager_t *ptr = *zlm;
-
     free(ptr);
     *zlm = NULL;
 }

@@ -21,6 +21,12 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
 
+#define _ZN_DECLARE_CLEAR(layer, name) \
+    void _zn_##layer##_msg_clear_##name(_zn_##name##_t *m, uint8_t header)
+
+#define _ZN_DECLARE_CLEAR_NOH(layer, name) \
+    void _zn_##layer##_msg_clear_##name(_zn_##name##_t *m)
+
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
@@ -153,6 +159,7 @@
 // +---------------+
 //
 typedef z_bytes_t _zn_payload_t;
+void _zn_payload_clear(_zn_payload_t *p);
 
 /*------------------ Locators Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -193,6 +200,7 @@ typedef struct
     _zn_payload_t payload;
     uint8_t header;
 } _zn_attachment_t;
+void _zn_t_msg_clear_attachment(_zn_attachment_t *a);
 
 /*------------------ ReplyContext Decorator ------------------*/
 // The ReplyContext is a message decorator for either:
@@ -220,6 +228,7 @@ typedef struct
     z_bytes_t replier_id;
     uint8_t header;
 } _zn_reply_context_t;
+void _zn_z_msg_clear_reply_context(_zn_reply_context_t *rc);
 
 // -- Priority decorator
 //
@@ -232,6 +241,360 @@ typedef struct
 // +-+-+-+---------+
 //
 // WARNING: zenoh-pico does not support priorities and QoS.
+
+/*=============================*/
+/*       Zenoh Messages        */
+/*=============================*/
+/*------------------ ResKey Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// ~      RID      ~
+// +---------------+
+// ~    Suffix     ~ if K==1
+// +---------------+
+//
+// typdef struct { ... } zn_reskey_t; is defined in zenoh/net/types.h
+void _zn_reskey_clear(zn_reskey_t *rk);
+
+/*------------------ Resource Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|X|   RES   |
+// +---------------+
+// ~      RID      ~
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+//
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+} _zn_res_decl_t;
+void _zn_z_msg_clear_declaration_resource(_zn_res_decl_t *dcl);
+
+/*------------------ Forget Resource Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |X|X|X|  F_RES  |
+// +---------------+
+// ~      RID      ~
+// +---------------+
+//
+typedef struct
+{
+    z_zint_t rid;
+} _zn_forget_res_decl_t;
+void _zn_z_msg_clear_declaration_forget_resource(_zn_forget_res_decl_t *dcl);
+
+/*------------------ Publisher Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|X|   PUB   |
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+} _zn_pub_decl_t;
+void _zn_z_msg_clear_declaration_publisher(_zn_pub_decl_t *dcl);
+
+/*------------------ Forget Publisher Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|X|  F_PUB  |
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+} _zn_forget_pub_decl_t;
+void _zn_z_msg_clear_declaration_forget_publisher(_zn_forget_pub_decl_t *dcl);
+
+/*------------------ SubInfo Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+---------+
+// |P|X|X|  SM_ID  |
+// +---------------+
+// ~    Period     ~ if P==1
+// +---------------+
+//
+// typdef struct { ... } zn_subinfo_t; is defined in net/types.h
+void _zn_subinfo_clear(zn_subinfo_t *si);
+
+/*------------------ Subscriber Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|S|R|   SUB   |
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+// ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
+// +---------------+
+//
+// - if R==1 then the subscription is reliable, best-effort otherwise.
+//
+typedef struct
+{
+    zn_reskey_t key;
+    zn_subinfo_t subinfo;
+} _zn_sub_decl_t;
+void _zn_z_msg_clear_declaration_subscriber(_zn_sub_decl_t *dcl);
+
+/*------------------ Forget Subscriber Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|X|  F_SUB  |
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+} _zn_forget_sub_decl_t;
+void _zn_z_msg_clear_declaration_forget_subscriber(_zn_forget_sub_decl_t *dcl);
+
+/*------------------ Queryable Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|Q|X|  QABLE  |
+// +---------------+
+// ~     ResKey    ~ if K==1 then reskey is string
+// +---------------+
+// ~     Kind      ~
+// +---------------+
+// ~   QablInfo    ~ if Q==1
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+    z_zint_t kind;
+    z_zint_t complete;
+    z_zint_t distance;
+} _zn_qle_decl_t;
+void _zn_z_msg_clear_declaration_queryable(_zn_qle_decl_t *dcl);
+
+/*------------------ Forget Queryable Declaration ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|X| F_QABLE |
+// +---------------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+// ~     Kind      ~
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+    z_zint_t kind;
+} _zn_forget_qle_decl_t;
+void _zn_z_msg_clear_declaration_forget_queryable(_zn_forget_qle_decl_t *dcl);
+
+/*------------------ Declaration  Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |X|X|X| DECLARE |
+// +-+-+-+---------+
+// ~  Num of Decl  ~
+// +---------------+
+// ~ [Declaration] ~
+// +---------------+
+//
+typedef struct
+{
+    union
+    {
+        _zn_res_decl_t res;
+        _zn_forget_res_decl_t forget_res;
+        _zn_pub_decl_t pub;
+        _zn_forget_pub_decl_t forget_pub;
+        _zn_sub_decl_t sub;
+        _zn_forget_sub_decl_t forget_sub;
+        _zn_qle_decl_t qle;
+        _zn_forget_qle_decl_t forget_qle;
+    } body;
+    uint8_t header;
+} _zn_declaration_t;
+
+void _zn_z_msg_clear_declaration(_zn_declaration_t *dcl);
+_Z_ELEM_DEFINE(_zn_declaration, _zn_declaration_t, _zn_noop_size, _zn_z_msg_clear_declaration, _zn_noop_copy)
+_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t)
+
+typedef struct
+{
+    _zn_declaration_array_t declarations;
+} _zn_declare_t;
+void _zn_z_msg_clear_declare(_zn_declare_t *dcl);
+
+/*------------------ Timestamp Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+---------+
+// ~     Time      ~  Encoded as z_zint_t
+// +---------------+
+// ~      ID       ~
+// +---------------+
+//
+// typdef struct { ... } z_timestamp_t; is defined in zenoh/types.h
+void z_timestamp_clear(z_timestamp_t *ts);
+
+/*------------------ Data Info Field ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// ~    options    ~
+// +---------------+
+// ~      kind     ~ if options & (1 << 0)
+// +---------------+
+// ~   encoding    ~ if options & (1 << 1)
+// +---------------+
+// ~   timestamp   ~ if options & (1 << 2)
+// +---------------+
+// ~   source_id   ~ if options & (1 << 7)
+// +---------------+
+// ~   source_sn   ~ if options & (1 << 8)
+// +---------------+
+// ~first_router_id~ if options & (1 << 9)
+// +---------------+
+// ~first_router_sn~ if options & (1 << 10)
+// +---------------+
+//
+// - if options & (1 << 5) then the payload is sliced
+typedef struct
+{
+    z_zint_t flags;
+    z_zint_t kind;
+    z_encoding_t encoding;
+    z_timestamp_t tstamp;
+    z_bytes_t source_id;
+    z_zint_t source_sn;
+    z_bytes_t first_router_id;
+    z_zint_t first_router_sn;
+} _zn_data_info_t;
+void _zn_data_info_clear(_zn_data_info_t *di);
+
+/*------------------ Data Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|I|D|  DATA   |
+// +-+-+-+---------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+// ~    DataInfo   ~ if I==1
+// +---------------+
+// ~    Payload    ~
+// +---------------+
+//
+// - if D==1 then the message can be dropped for congestion control reasons.
+//
+typedef struct
+{
+    zn_reskey_t key;
+    _zn_data_info_t info;
+    _zn_payload_t payload;
+} _zn_data_t;
+void _zn_z_msg_clear_data(_zn_data_t *msg);
+
+/*------------------ Unit Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |X|X|D|  UNIT   |
+// +-+-+-+---------+
+//
+// - if D==1 then the message can be dropped for congestion control reasons.
+//
+typedef struct
+{
+} _zn_unit_t;
+void _zn_z_msg_clear_unit(_zn_unit_t *unt);
+
+/*------------------ Pull Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|N|F|  PULL   |
+// +-+-+-+---------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+// ~    pullid     ~
+// +---------------+
+// ~  max_samples  ~ if N==1
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+    z_zint_t pull_id;
+    z_zint_t max_samples;
+} _zn_pull_t;
+void _zn_z_msg_clear_pull(_zn_pull_t *msg);
+
+/*------------------ Query Message ------------------*/
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |K|X|T|  QUERY  |
+// +-+-+-+---------+
+// ~    ResKey     ~ if K==1 then reskey is string
+// +---------------+
+// ~   predicate   ~
+// +---------------+
+// ~      qid      ~
+// +---------------+
+// ~     target    ~ if T==1. Otherwise target.kind = ZN_QUERYABLE_ALL_KINDS, target.tag = zn_target_t_BEST_MATCHING
+// +---------------+
+// ~ consolidation ~
+// +---------------+
+//
+typedef struct
+{
+    zn_reskey_t key;
+    z_str_t predicate;
+    z_zint_t qid;
+    zn_query_target_t target;
+    zn_query_consolidation_t consolidation;
+} _zn_query_t;
+void _zn_z_msg_clear_query(_zn_query_t *msg);
+
+/*------------------ Zenoh Message ------------------*/
+typedef union
+{
+    _zn_declare_t declare;
+    _zn_data_t data;
+    _zn_query_t query;
+    _zn_pull_t pull;
+    _zn_unit_t unit;
+} _zn_zenoh_body_t;
+typedef struct
+{
+    _zn_attachment_t *attachment;
+    _zn_reply_context_t *reply_context;
+    _zn_zenoh_body_t body;
+    uint8_t header;
+} _zn_zenoh_message_t;
+void _zn_z_msg_clear(_zn_zenoh_message_t *m);
+_Z_ELEM_DEFINE(_zn_zenoh_message, _zn_zenoh_message_t, _zn_noop_size, _zn_z_msg_clear, _zn_noop_copy)
+_Z_VEC_DEFINE(_zn_zenoh_message, _zn_zenoh_message_t)
+
+/*------------------ Builders ------------------*/
+_zn_reply_context_t *_zn_z_msg_make_reply_context(z_zint_t qid, z_bytes_t replier_id, z_zint_t replier_kind, int is_final);
+_zn_declaration_t _zn_z_msg_make_declaration_resource(z_zint_t id, zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_resource(z_zint_t rid);
+_zn_declaration_t _zn_z_msg_make_declaration_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
+_zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
+_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);
+_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final);
+_zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
+_zn_zenoh_message_t _zn_z_msg_make_reply(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped, _zn_reply_context_t *rctx);
 
 /*=============================*/
 /*     Transport Messages      */
@@ -258,6 +621,7 @@ typedef struct
 {
     z_zint_t what;
 } _zn_scout_t;
+void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header);
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -295,6 +659,7 @@ typedef struct
     z_bytes_t pid;
     _zn_locator_array_t locators;
 } _zn_hello_t;
+void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header);
 
 /*------------------ Join Message ------------------*/
 // # Join message
@@ -357,6 +722,7 @@ typedef struct
     _zn_conduit_sn_list_t next_sns;
     uint8_t version;
 } _zn_join_t;
+void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header);
 
 /*------------------ Init Message ------------------*/
 // # Init message
@@ -403,6 +769,7 @@ typedef struct
     z_bytes_t cookie;
     uint8_t version;
 } _zn_init_t;
+void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -433,6 +800,7 @@ typedef struct
     z_zint_t initial_sn;
     z_bytes_t cookie;
 } _zn_open_t;
+void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -463,6 +831,7 @@ typedef struct
     z_bytes_t pid;
     uint8_t reason;
 } _zn_close_t;
+void _zn_t_msg_clear_close(_zn_close_t *msg, uint8_t header);
 
 /*------------------ Sync Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -492,6 +861,7 @@ typedef struct
     z_zint_t sn;
     z_zint_t count;
 } _zn_sync_t;
+void _zn_t_msg_clear_sync(_zn_sync_t *msg, uint8_t header);
 
 /*------------------ AckNack Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -517,6 +887,7 @@ typedef struct
     z_zint_t sn;
     z_zint_t mask;
 } _zn_ack_nack_t;
+void _zn_t_msg_clear_ack_nack(_zn_ack_nack_t *msg, uint8_t header);
 
 /*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -539,6 +910,7 @@ typedef struct
 {
     z_bytes_t pid;
 } _zn_keep_alive_t;
+void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header);
 
 /*------------------ PingPong Messages ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -560,6 +932,7 @@ typedef struct
 {
     z_zint_t hash;
 } _zn_ping_pong_t;
+void _zn_t_msg_clear_ping_pong(_zn_ping_pong_t *msg, uint8_t header);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -595,34 +968,37 @@ typedef struct
 typedef union
 {
     _zn_payload_t fragment;
-    _z_vec_t messages; // @TODO: convert it into a typed vec
+    _zn_zenoh_message_vec_t messages;
 } _zn_frame_payload_t;
 typedef struct
 {
     z_zint_t sn;
     _zn_frame_payload_t payload;
 } _zn_frame_t;
+void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header);
 
 /*------------------ Transport Message ------------------*/
+typedef union
+{
+    _zn_scout_t scout;
+    _zn_hello_t hello;
+    _zn_join_t join;
+    _zn_init_t init;
+    _zn_open_t open;
+    _zn_close_t close;
+    _zn_sync_t sync;
+    _zn_ack_nack_t ack_nack;
+    _zn_keep_alive_t keep_alive;
+    _zn_ping_pong_t ping_pong;
+    _zn_frame_t frame;
+} _zn_transport_body_t;
 typedef struct
 {
     _zn_attachment_t *attachment;
-    union
-    {
-        _zn_scout_t scout;
-        _zn_hello_t hello;
-        _zn_join_t join;
-        _zn_init_t init;
-        _zn_open_t open;
-        _zn_close_t close;
-        _zn_sync_t sync;
-        _zn_ack_nack_t ack_nack;
-        _zn_keep_alive_t keep_alive;
-        _zn_ping_pong_t ping_pong;
-        _zn_frame_t frame;
-    } body;
+    _zn_transport_body_t body;
     uint8_t header;
 } _zn_transport_message_t;
+void _zn_t_msg_clear(_zn_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
 _zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid);
@@ -640,337 +1016,4 @@ _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
 _zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final);
-
-/*=============================*/
-/*       Zenoh Messages        */
-/*=============================*/
-/*------------------ ResKey Field ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// ~      RID      ~
-// +---------------+
-// ~    Suffix     ~ if K==1
-// +---------------+
-//
-// typdef struct { ... } zn_reskey_t; is defined in zenoh/net/types.h
-
-/*------------------ Resource Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X|   RES   |
-// +---------------+
-// ~      RID      ~
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-//
-typedef struct
-{
-    z_zint_t id;
-    zn_reskey_t key;
-} _zn_res_decl_t;
-
-/*------------------ Publisher Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X|   PUB   |
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-} _zn_pub_decl_t;
-
-/*------------------ SubInfo Field ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// |P|X|X|  SM_ID  |
-// +---------------+
-// ~    Period     ~ if P==1
-// +---------------+
-//
-// typdef struct { ... } zn_subinfo_t; is defined in net/types.h
-
-/*------------------ Subscriber Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|S|R|   SUB   |
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-// ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
-// +---------------+
-//
-// - if R==1 then the subscription is reliable, best-effort otherwise.
-//
-typedef struct
-{
-    zn_reskey_t key;
-    zn_subinfo_t subinfo;
-} _zn_sub_decl_t;
-
-/*------------------ Queryable Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|Q|X|  QABLE  |
-// +---------------+
-// ~     ResKey    ~ if K==1 then reskey is string
-// +---------------+
-// ~     Kind      ~
-// +---------------+
-// ~   QablInfo    ~ if Q==1
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-    z_zint_t kind;
-    z_zint_t complete;
-    z_zint_t distance;
-} _zn_qle_decl_t;
-
-/*------------------ Forget Resource Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|X|  F_RES  |
-// +---------------+
-// ~      RID      ~
-// +---------------+
-//
-typedef struct
-{
-    z_zint_t rid;
-} _zn_forget_res_decl_t;
-
-/*------------------ Forget Publisher Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X|  F_PUB  |
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-} _zn_forget_pub_decl_t;
-
-/*------------------ Forget Subscriber Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X|  F_SUB  |
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-} _zn_forget_sub_decl_t;
-
-/*------------------ Forget Queryable Declaration ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|X| F_QABLE |
-// +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-// ~     Kind      ~
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-    z_zint_t kind;
-} _zn_forget_qle_decl_t;
-
-/*------------------ Declaration  Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|X| DECLARE |
-// +-+-+-+---------+
-// ~  Num of Decl  ~
-// +---------------+
-// ~ [Declaration] ~
-// +---------------+
-//
-typedef struct
-{
-    union
-    {
-        _zn_res_decl_t res;
-        _zn_forget_res_decl_t forget_res;
-        _zn_pub_decl_t pub;
-        _zn_forget_pub_decl_t forget_pub;
-        _zn_sub_decl_t sub;
-        _zn_forget_sub_decl_t forget_sub;
-        _zn_qle_decl_t qle;
-        _zn_forget_qle_decl_t forget_qle;
-    } body;
-    uint8_t header;
-} _zn_declaration_t;
-
-size_t _zn_declaration_size(const _zn_declaration_t *dcl);
-void _zn_declaration_clear(_zn_declaration_t *dcl);
-_Z_ELEM_DEFINE(_zn_declaration, _zn_declaration_t, _zn_declaration_size, _zn_declaration_clear, _zn_noop_copy)
-_Z_ARRAY_DEFINE(_zn_declaration, _zn_declaration_t)
-
-typedef struct
-{
-    _zn_declaration_array_t declarations;
-} _zn_declare_t;
-
-/*------------------ Timestamp Field ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// ~     Time      ~  Encoded as z_zint_t
-// +---------------+
-// ~      ID       ~
-// +---------------+
-//
-// typdef struct { ... } z_timestamp_t; is defined in zenoh/types.h
-
-/*------------------ Data Info Field ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// ~    options    ~
-// +---------------+
-// ~      kind     ~ if options & (1 << 0)
-// +---------------+
-// ~   encoding    ~ if options & (1 << 1)
-// +---------------+
-// ~   timestamp   ~ if options & (1 << 2)
-// +---------------+
-// ~   source_id   ~ if options & (1 << 7)
-// +---------------+
-// ~   source_sn   ~ if options & (1 << 8)
-// +---------------+
-// ~first_router_id~ if options & (1 << 9)
-// +---------------+
-// ~first_router_sn~ if options & (1 << 10)
-// +---------------+
-//
-// - if options & (1 << 5) then the payload is sliced
-typedef struct
-{
-    z_zint_t flags;
-    z_zint_t kind;
-    z_encoding_t encoding;
-    z_timestamp_t tstamp;
-    z_bytes_t source_id;
-    z_zint_t source_sn;
-    z_bytes_t first_router_id;
-    z_zint_t first_router_sn;
-} _zn_data_info_t;
-
-/*------------------ Data Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|I|D|  DATA   |
-// +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-// ~    DataInfo   ~ if I==1
-// +---------------+
-// ~    Payload    ~
-// +---------------+
-//
-// - if D==1 then the message can be dropped for congestion control reasons.
-//
-typedef struct
-{
-    zn_reskey_t key;
-    _zn_data_info_t info;
-    _zn_payload_t payload;
-} _zn_data_t;
-
-/*------------------ Unit Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|D|  UNIT   |
-// +-+-+-+---------+
-//
-// - if D==1 then the message can be dropped for congestion control reasons.
-//
-typedef struct
-{
-} _zn_unit_t;
-
-/*------------------ Pull Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|N|F|  PULL   |
-// +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-// ~    pullid     ~
-// +---------------+
-// ~  max_samples  ~ if N==1
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-    z_zint_t pull_id;
-    z_zint_t max_samples;
-} _zn_pull_t;
-
-/*------------------ Query Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|X|T|  QUERY  |
-// +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
-// +---------------+
-// ~   predicate   ~
-// +---------------+
-// ~      qid      ~
-// +---------------+
-// ~     target    ~ if T==1. Otherwise target.kind = ZN_QUERYABLE_ALL_KINDS, target.tag = zn_target_t_BEST_MATCHING
-// +---------------+
-// ~ consolidation ~
-// +---------------+
-//
-typedef struct
-{
-    zn_reskey_t key;
-    z_str_t predicate;
-    z_zint_t qid;
-    zn_query_target_t target;
-    zn_query_consolidation_t consolidation;
-} _zn_query_t;
-
-/*------------------ Zenoh Message ------------------*/
-typedef struct
-{
-    _zn_attachment_t *attachment;
-    _zn_reply_context_t *reply_context;
-    union
-    {
-        _zn_declare_t declare;
-        _zn_data_t data;
-        _zn_query_t query;
-        _zn_pull_t pull;
-    } body;
-    uint8_t header;
-} _zn_zenoh_message_t;
-
-/*------------------ Builders ------------------*/
-_zn_reply_context_t *_zn_z_msg_make_reply_context(z_zint_t qid, z_bytes_t replier_id, z_zint_t replier_kind, int is_final);
-_zn_declaration_t _zn_z_msg_make_declaration_resource(z_zint_t id, zn_reskey_t key);
-_zn_declaration_t _zn_z_msg_make_declaration_forget_resource(z_zint_t rid);
-_zn_declaration_t _zn_z_msg_make_declaration_publisher(zn_reskey_t key);
-_zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
-_zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
-_zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
-_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind);
-_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
-_zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
-_zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
-_zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);
-_zn_zenoh_message_t _zn_z_msg_make_pull(zn_reskey_t key, z_zint_t pull_id, z_zint_t max_samples, int is_final);
-_zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_zint_t qid, zn_query_target_t target, zn_query_consolidation_t consolidation);
-_zn_zenoh_message_t _zn_z_msg_make_reply(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped, _zn_reply_context_t *rctx);
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */
