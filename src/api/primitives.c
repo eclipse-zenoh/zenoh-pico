@@ -272,9 +272,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
-    z_bytes_t pid;
-    pid.len = query->zn->tp_manager->local_pid.len;
-    pid.val = query->zn->tp_manager->local_pid.val;
+    z_bytes_t pid = _z_bytes_wrap(query->zn->tp_manager->local_pid.val, query->zn->tp_manager->local_pid.len);
 
     _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
 
@@ -303,7 +301,7 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
         // TODO: retransmission
     }
 
-    free(z_msg.reply_context);
+    free(rctx);
 }
 
 /*------------------ Write ------------------*/

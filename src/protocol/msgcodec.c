@@ -1806,8 +1806,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_F))
     {
         // Read all the remaining bytes in the buffer as the fragment
-        r->value.frame.payload.fragment.len = _z_zbuf_len(zbf);
-        r->value.frame.payload.fragment.val = _z_zbuf_get_rptr(zbf);
+        r->value.frame.payload.fragment = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), _z_zbuf_len(zbf));
 
         // We need to manually move the r_pos to w_pos, we have read it all
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));

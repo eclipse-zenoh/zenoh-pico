@@ -252,7 +252,7 @@ int main(int argc, z_str_t *argv)
             zn_query_consolidation_t qry_con = zn_query_consolidation_default();
             zn_reply_data_array_t ra = zn_query_collect(s1, myrk, "", qry_tgt, qry_con);
             printf("Queried and collected data from session 1: %lu %s\n", rk.rid, rk.rname);
-            free(rk.rname);
+            _zn_reskey_clear(&rk);
             replies += ra.len;
             zn_reply_data_array_free(ra);
         }
