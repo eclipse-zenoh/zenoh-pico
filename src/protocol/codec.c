@@ -171,9 +171,8 @@ void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)
     r->tag = _z_res_t_OK;
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT);
-    r->value.bytes.len = r_zint.value.zint;
     // Check if we have enought bytes to read
-    if (_z_zbuf_len(zbf) < r->value.bytes.len)
+    if (_z_zbuf_len(zbf) < r_zint.value.zint)
     {
         r->tag = _z_res_t_ERR;
         r->value.error = _z_err_t_PARSE_BYTES;
@@ -182,7 +181,7 @@ void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)
     }
 
     // Decode without allocating
-    r->value.bytes.val = _z_zbuf_get_rptr(zbf);
+    r->value.bytes = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint.value.zint);
     // Move the read position
     _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->value.bytes.len);
 }

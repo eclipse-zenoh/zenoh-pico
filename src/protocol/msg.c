@@ -24,13 +24,13 @@
 /*------------------ Payload field ------------------*/
 void _zn_payload_clear(_zn_payload_t *p)
 {
-    (void)(p);
+    _z_bytes_clear(p);
 }
 
 /*------------------ Timestamp Field ------------------*/
 void z_timestamp_clear(z_timestamp_t *ts)
 {
-    (void)(&ts->id);
+    _z_bytes_clear(&ts->id);
 }
 
 /*------------------ ResKey Field ------------------*/
@@ -316,13 +316,13 @@ void _zn_data_info_clear(_zn_data_info_t *di)
     //   - kind
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_ENC))
-        free(di->encoding.suffix);
+        _z_str_clear(di->encoding.suffix);
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_SRC_ID))
-        (void)(&di->source_id);
+        _z_bytes_clear(&di->source_id);
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_RTR_ID))
-        (void)(&di->first_router_id);
+        _z_bytes_clear(&di->first_router_id);
 
     if (_ZN_HAS_FLAG(di->flags, _ZN_DATA_INFO_TSTAMP))
         z_timestamp_clear(&di->tstamp);
@@ -432,7 +432,7 @@ _zn_zenoh_message_t _zn_z_msg_make_query(zn_reskey_t key, z_str_t predicate, z_z
 void _zn_z_msg_clear_query(_zn_query_t *msg)
 {
     _zn_reskey_clear(&msg->key);
-    free(msg->predicate);
+    _z_str_clear(msg->predicate);
 }
 
 /*------------------ Reply Message ------------------*/
@@ -535,7 +535,7 @@ _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _z
 void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header)
 {
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        (void)(&msg->pid);
+        _z_bytes_clear(&msg->pid);
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
         _zn_locators_clear(&msg->locators);
@@ -571,7 +571,7 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
 
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header)
 {
-    (void)(&msg);
+    _z_bytes_clear(&msg->pid);
 }
 
 /*------------------ Init Message ------------------*/
@@ -626,9 +626,9 @@ _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatam
 
 void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header)
 {
-    (void)(&msg->pid);
+    _z_bytes_clear(&msg->pid);
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
-        (void)(&msg->cookie);
+        _z_bytes_clear(&msg->cookie);
 }
 
 /*------------------ Open Message ------------------*/
@@ -670,7 +670,7 @@ _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial
 void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header)
 {
     if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
-        (void)(&msg->cookie);
+        _z_bytes_clear(&msg->cookie);
 }
 
 /*------------------ Close Message ------------------*/
@@ -695,7 +695,7 @@ _zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int 
 void _zn_t_msg_clear_close(_zn_close_t *msg, uint8_t header)
 {
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        (void)(&msg->pid);
+        _z_bytes_clear(&msg->pid);
 }
 
 /*------------------ Sync Message ------------------*/
@@ -769,7 +769,7 @@ _zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid)
 void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header)
 {
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        (void)(&msg->pid);
+        _z_bytes_clear(&msg->pid);
 }
 
 /*------------------ PingPong Messages ------------------*/

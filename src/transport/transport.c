@@ -38,11 +38,14 @@ int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int lin
 
 int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
-    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, ((zn_session_t *)ztm->session)->tp_manager->local_pid, link_only);
+    z_bytes_t pid = _z_bytes_duplicate(&((zn_session_t *)ztm->session)->tp_manager->local_pid);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
 
     int res = _zn_multicast_send_t_msg(ztm, &cm);
 
+    // Free the message
     _zn_t_msg_clear(&cm);
+
     return res;
 }
 
@@ -95,7 +98,7 @@ _zn_transport_t *_zn_transport_unicast_init()
     zt->transport.unicast.transmitted = 0;
 
     // Remote peer PID
-    zt->transport.unicast.remote_pid = _z_bytes_make(0);
+    _z_bytes_reset(&zt->transport.unicast.remote_pid);
 
     // Transport link for unicast
     zt->transport.unicast.link = NULL;
@@ -156,7 +159,8 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     z_zint_t sn_resolution = ZN_SN_RESOLUTION;
     int is_qos = 0;
 
-    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, local_pid, is_qos);
+    z_bytes_t pid = _z_bytes_duplicate(&local_pid);
+    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
 
     // Encode and send the message
     _Z_DEBUG("Sending InitSyn\n");
@@ -296,11 +300,15 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     next_sns.val.plain.best_effort = param.initial_sn_tx;
     next_sns.val.plain.reliable = param.initial_sn_tx;
 
-    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, param.lease, param.sn_resolution, local_pid, next_sns);
+    z_bytes_t pid = _z_bytes_duplicate(&local_pid);
+    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, param.lease, param.sn_resolution, pid, next_sns);
 
     // Encode and send the message
     _Z_DEBUG("Sending Join\n");
     int res = _zn_link_send_t_msg(zl, &jsm);
+
+    _zn_t_msg_clear(&jsm);
+
     if (res != 0)
         goto ERR_1;
 
