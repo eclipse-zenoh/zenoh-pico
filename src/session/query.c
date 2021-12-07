@@ -35,15 +35,15 @@ z_zint_t _zn_get_query_id(zn_session_t *zn)
  */
 _zn_pending_query_t *__unsafe_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_list_t *queries = zn->pending_queries;
+    _z_list_t *queries = zn->pending_queries; // @TODO: use type-safe list
     while (queries)
     {
-        _zn_pending_query_t *query = (_zn_pending_query_t *)_z_list_head(queries);
+        _zn_pending_query_t *query = (_zn_pending_query_t *)_z_list_head(queries); // @TODO: use type-safe list
 
         if (query->id == id)
             return query;
 
-        queries = _z_list_tail(queries);
+        queries = _z_list_tail(queries); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -64,7 +64,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
     else
     {
         // Register the query
-        zn->pending_queries = _z_list_push(zn->pending_queries, pen_qry);
+        zn->pending_queries = _z_list_push(zn->pending_queries, pen_qry); // @TODO: use type-safe list
         res = 0;
     }
 
@@ -240,7 +240,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
     case zn_consolidation_mode_t_LAZY:
     {
         // Check if this is a newer reply
-        _z_list_t *pen_rps = pen_qry->pending_replies;
+        _z_list_t *pen_rps = pen_qry->pending_replies; // @TODO: use type-safe list
         while (pen_rps)
         {
             _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_rps);
@@ -266,7 +266,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
             }
             else
             {
-                pen_rps = _z_list_tail(pen_rps);
+                pen_rps = _z_list_tail(pen_rps); // @TODO: use type-safe list
             }
         }
         break;

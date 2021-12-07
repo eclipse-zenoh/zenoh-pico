@@ -40,15 +40,15 @@ z_zint_t _zn_get_entity_id(zn_session_t *zn)
  */
 _zn_resource_t *__unsafe_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t id)
 {
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources; // @TODO: use type-safe list
     while (decls)
     {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls); // @TODO: use type-safe list
 
         if (decl->id == id)
             return decl;
 
-        decls = _z_list_tail(decls);
+        decls = _z_list_tail(decls); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -61,15 +61,15 @@ _zn_resource_t *__unsafe_zn_get_resource_by_id(zn_session_t *zn, int is_local, z
  */
 _zn_resource_t *__unsafe_zn_get_resource_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources; // @TODO: use type-safe list
     while (decls)
     {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls); // @TODO: use type-safe list
 
         if (decl->key.rid == reskey->rid && _z_str_eq(decl->key.rname, reskey->rname))
             return decl;
 
-        decls = _z_list_tail(decls);
+        decls = _z_list_tail(decls); // @TODO: use type-safe list
     }
 
     return NULL;
@@ -92,14 +92,14 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
     }
 
     // Need to build the complete resource name
-    _z_list_t *strs = NULL;
+    _z_list_t *strs = NULL; // @TODO: use type-safe list
     size_t len = 0;
 
     if (reskey->rname)
     {
         // Case 3) -> numerical reskey with suffix, same as Case 1) but we first append the suffix
         len += strlen(reskey->rname);
-        strs = _z_list_push(strs, (void *)reskey->rname);
+        strs = _z_list_push(strs, (void *)reskey->rname); // @TODO: use type-safe list
     }
 
     // Case 1) -> numerical only reskey
@@ -109,14 +109,14 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
         _zn_resource_t *res = __unsafe_zn_get_resource_by_id(zn, is_local, id);
         if (res == NULL)
         {
-            _z_list_free(&strs, _zn_noop_elem_free);
+            _z_list_free(&strs, _zn_noop_elem_free); // @TODO: use type-safe list
             return rname;
         }
 
         if (res->key.rname)
         {
             len += strlen(res->key.rname);
-            strs = _z_list_push(strs, (void *)res->key.rname);
+            strs = _z_list_push(strs, (void *)res->key.rname); // @TODO: use type-safe list
         }
 
         id = res->key.rid;
@@ -128,9 +128,9 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
     rname[0] = '\0';
     while (strs)
     {
-        z_str_t s = (z_str_t)_z_list_head(strs);
+        z_str_t s = (z_str_t)_z_list_head(strs); // @TODO: use type-safe list
         strcat(rname, s);
-        strs = _z_list_tail(strs);
+        strs = _z_list_tail(strs); // @TODO: use type-safe list
     }
 
     return rname;
@@ -143,7 +143,7 @@ z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, c
  */
 _zn_resource_t *__unsafe_zn_get_resource_matching_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey)
 {
-    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_list_t *decls = is_local ? zn->local_resources : zn->remote_resources; // @TODO: use type-safe list
 
     z_str_t rname;
     if (reskey->rid == ZN_RESOURCE_ID_NONE)
@@ -153,7 +153,7 @@ _zn_resource_t *__unsafe_zn_get_resource_matching_key(zn_session_t *zn, int is_l
 
     while (decls)
     {
-        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls);
+        _zn_resource_t *decl = (_zn_resource_t *)_z_list_head(decls); // @TODO: use type-safe list
 
         z_str_t lname;
         if (decl->key.rid == ZN_RESOURCE_ID_NONE)
@@ -176,7 +176,7 @@ _zn_resource_t *__unsafe_zn_get_resource_matching_key(zn_session_t *zn, int is_l
             return decl;
         }
 
-        decls = _z_list_tail(decls);
+        decls = _z_list_tail(decls); // @TODO: use type-safe list
     }
 
     if (reskey->rid != ZN_RESOURCE_ID_NONE)
@@ -246,13 +246,13 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
         // No resource declaration has been found, add the new one
         if (is_local)
         {
-            zn->local_resources = _z_list_push(zn->local_resources, res);
+            zn->local_resources = _z_list_push(zn->local_resources, res); // @TODO: use type-safe list
         }
         else
         {
             __unsafe_zn_add_rem_res_to_loc_sub_map(zn, res->id, &res->key);
             __unsafe_zn_add_rem_res_to_loc_qle_map(zn, res->id, &res->key);
-            zn->remote_resources = _z_list_push(zn->remote_resources, res);
+            zn->remote_resources = _z_list_push(zn->remote_resources, res); // @TODO: use type-safe list
         }
 
         r = 0;
@@ -300,9 +300,9 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
     z_mutex_lock(&zn->mutex_inner);
 
     if (is_local)
-        zn->local_resources = _z_list_drop_filter(zn->local_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
+        zn->local_resources = _z_list_drop_filter(zn->local_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res); // @TODO: use type-safe list
     else
-        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res);
+        zn->remote_resources = _z_list_drop_filter(zn->remote_resources, _zn_noop_elem_free, __unsafe_zn_resource_predicate, res); // @TODO: use type-safe list
     free(res);
 
     // Release the lock
@@ -316,18 +316,18 @@ void _zn_flush_resources(zn_session_t *zn)
 
     while (zn->local_resources)
     {
-        _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->local_resources);
+        _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->local_resources); // @TODO: use type-safe list
         __unsafe_zn_free_resource(res);
         free(res);
-        zn->local_resources = _z_list_pop(zn->local_resources, _zn_noop_elem_free);
+        zn->local_resources = _z_list_pop(zn->local_resources, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     while (zn->remote_resources)
     {
-        _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->remote_resources);
-        __unsafe_zn_free_resource(res);
-        free(res);
-        zn->remote_resources = _z_list_pop(zn->remote_resources, _zn_noop_elem_free);
+        _zn_resource_t *res = (_zn_resource_t *)_z_list_head(zn->remote_resources);   // @TODO: use type-safe list
+        __unsafe_zn_free_resource(res);                                               // @TODO: use type-safe list
+        free(res);                                                                    // @TODO: use type-safe list
+        zn->remote_resources = _z_list_pop(zn->remote_resources, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
     // Release the lock
