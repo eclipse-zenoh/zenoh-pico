@@ -474,7 +474,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
     _zn_z_msg_clear(&z_msg);

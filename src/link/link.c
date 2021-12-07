@@ -73,7 +73,7 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
     _ASSURE_RESULT(ep_res, r, _zn_err_t_INVALID_LOCATOR)
     _zn_endpoint_t endpoint = ep_res.value.endpoint;
 
-    // TODO: for now listening is only supported for UDP multicast
+    // @TODO: for now listening is only supported for UDP multicast
     // Create transport link
     if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
     {

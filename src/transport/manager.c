@@ -48,7 +48,7 @@ _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t loc
         if (res_tp_param.tag == _z_res_t_ERR)
             goto ERR_2;
 
-        // TODO: not implemented
+        // @TODO: not implemented
     }
 
     ret.tag = _z_res_t_OK;
