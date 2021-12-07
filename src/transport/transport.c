@@ -268,7 +268,7 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_cl
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
 
-    // TODO: not implemented
+    // @TODO: not implemented
 
     return ret;
 }
@@ -279,7 +279,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_peer(c
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
 
-    // TODO: not implemented
+    // @TODO: not implemented
 
     return ret;
 }
@@ -358,7 +358,7 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 
 void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
 {
-    // TODO: to be implemented
+    // @TODO: to be implemented
 }
 
 void _zn_transport_free(_zn_transport_t **zt)

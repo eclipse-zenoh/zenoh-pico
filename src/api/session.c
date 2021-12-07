@@ -82,7 +82,7 @@ zn_session_t *zn_open(zn_properties_t *config)
     else
         locator = _z_str_clone(zn_properties_get(config, ZN_CONFIG_PEER_KEY).val);
 
-    // TODO: check invalid configurations
+    // @TODO: check invalid configurations
     // For example, client mode in multicast links
 
     // Check operation mode

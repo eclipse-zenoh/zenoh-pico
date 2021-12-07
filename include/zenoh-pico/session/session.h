@@ -39,19 +39,19 @@ typedef struct
     z_zint_t query_id;
 
     // Session declarations
-    _z_list_t *local_resources;
-    _z_list_t *remote_resources;
+    _z_list_t *local_resources;  // @TODO: use type-safe list
+    _z_list_t *remote_resources; // @TODO: use type-safe list
 
     // Session subscriptions
-    _z_list_t *local_subscriptions;
-    _z_list_t *remote_subscriptions;
-    _z_int_void_map_t rem_res_loc_sub_map;
+    _z_list_t *local_subscriptions;        // @TODO: use type-safe list
+    _z_list_t *remote_subscriptions;       // @TODO: use type-safe list
+    _z_int_void_map_t rem_res_loc_sub_map; // @TODO: use type-safe intmap
 
     // Session queryables
-    _z_list_t *local_queryables;
-    _z_int_void_map_t rem_res_loc_qle_map;
+    _z_list_t *local_queryables;           // @TODO: use type-safe list
+    _z_int_void_map_t rem_res_loc_qle_map; // @TODO: use type-safe intmap
 
-    _z_list_t *pending_queries;
+    _z_list_t *pending_queries; // @TODO: use type-safe list
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
