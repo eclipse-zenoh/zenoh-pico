@@ -140,7 +140,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_JOIN:
     {
-        if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_A))
+        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_A))
         {
             if (t_msg->body.join.version != ZN_PROTO_VERSION)
                 break;
@@ -151,7 +151,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
             entry->remote_addr = _z_bytes_duplicate(addr);
             entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.pid);
-            if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
+            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
                 entry->sn_resolution = t_msg->body.join.sn_resolution;
             else
                 entry->sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
@@ -199,11 +199,10 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         if (entry == NULL)
             break;
 
-        if(_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_I))
+        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_I))
         {
             // Check if the Peer ID matches the remote address in the knonw peer list
-            if (entry->remote_pid.len != t_msg->body.close.pid.len
-              || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
+            if (entry->remote_pid.len != t_msg->body.close.pid.len || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
                 break;
         }
         ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
@@ -293,7 +292,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                     res = _zn_handle_zenoh_message(ztm->session, &d_zm);
 
                     // Free the decoded message
-                    _zn_zenoh_message_clear(&d_zm);
+                    _zn_z_msg_clear(&d_zm);
                 }
 
                 // Free the decoding buffer

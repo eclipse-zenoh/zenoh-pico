@@ -205,7 +205,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
                     res = _zn_handle_zenoh_message(ztu->session, &d_zm);
 
                     // Free the decoded message
-                    _zn_zenoh_message_clear(&d_zm);
+                    _zn_z_msg_clear(&d_zm);
                 }
                 else
                 {
