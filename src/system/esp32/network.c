@@ -435,9 +435,9 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL)
                 {
-                    *addr = _z_bytes_make(sizeof(in_addr_t) + sizeof(in_port_t));
-                    memcpy((void *)addr->val, &b->sin6_addr.s6_addr, sizeof(in_addr_t));
-                    memcpy((void *)(addr->val + sizeof(in_addr_t)), &b->sin6_port, sizeof(in_port_t));
+                    *addr = _z_bytes_make(sizeof(struct in6_addr) + sizeof(in_port_t));
+                    memcpy((void *)addr->val, &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
+                    memcpy((void *)(addr->val + sizeof(struct in6_addr)), &b->sin6_port, sizeof(in_port_t));
                 }
                 break;
             }
