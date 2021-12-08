@@ -398,7 +398,7 @@ _ZN_CLOSE_UDP_MULTICAST_ERROR_1:
     close(sock_send);
 }
 
-size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
     struct sockaddr_storage raddr;
@@ -415,28 +415,46 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
             if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr))
+            {
+                // If addr is not NULL, it means that the raddr was requested by the upper-layers
+                if (addr != NULL)
+                {
+                    *addr = _z_bytes_make(sizeof(uint32_t) + sizeof(uint16_t));
+                    memcpy((void *)addr->val, &b->sin_addr.s_addr, sizeof(uint32_t));
+                    memcpy((void *)(addr->val + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
+                }
                 break;
+            }
         }
         else if (laddr->ai_family == AF_INET6)
         {
             struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr->ai_addr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
-            if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, 16) == 0))
+            if (!(a->sin6_port == b->sin6_port && memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4) == 0))
+            {
+                // If addr is not NULL, it means that the raddr was requested by the upper-layers
+                if (addr != NULL)
+                {
+                    *addr = _z_bytes_make((sizeof(uint32_t) * 4) + sizeof(uint16_t));
+                    memcpy((void *)addr->val, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
+                    memcpy((void *)(addr->val + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
+                }
                 break;
+            }
         }
     } while (1);
 
     return rb;
 }
 
-size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg)
+size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
     size_t n = len;
     size_t rb = 0;
 
     do
     {
-        rb = _zn_read_udp_multicast(sock, ptr, n, arg);
+        rb = _zn_read_udp_multicast(sock, ptr, n, arg, addr);
         if (rb < 0)
             return rb;
 

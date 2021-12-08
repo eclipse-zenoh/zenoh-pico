@@ -17,8 +17,8 @@
 #include <unistd.h>
 #include "zenoh-pico/system/platform.h"
 
-#define Z_THREADS_NUM 2
-#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE
+#define Z_THREADS_NUM 4
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
 K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
 static int thread_index = 0;
 
