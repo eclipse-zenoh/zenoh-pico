@@ -278,7 +278,20 @@ void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     // Acquire the lock on the queryables
     z_mutex_lock(&zn->mutex_inner);
 
-    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_eq, qle);
+    zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_eq, qle); // @TODO: use type-safe list
+
+    // @TODO: use type-safe intmap. Add support function in intmap and don't access internal fields.
+    for (unsigned int i = 0; i < zn->rem_res_loc_qle_map.capacity; i++)
+    {
+        _z_list_t *t = zn->rem_res_loc_qle_map.vals[i];
+        while (t)
+        {
+            _z_int_void_map_entry_t *e = (_z_int_void_map_entry_t *)_z_list_head(t);
+            e->val = _z_list_drop_filter(e->val, _zn_noop_elem_free, __unsafe_zn_queryable_eq, qle); // @TODO: use type-safe list
+            t = _z_list_tail(t);
+        }
+    }
+
     free(qle);
 
     // Release the lock
@@ -340,6 +353,17 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 
         // Iterate over the matching queryables
         _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, query->key.rid); // @TODO: use type-safe list
+
+        printf("List queryable %zu %p\t", query->key.rid, qles);
+        _z_list_t *t = qles;
+        while (t)
+        {
+            _zn_queryable_t *q = (_zn_queryable_t *)_z_list_head(t);
+            printf(" %zu", q->id);
+            t = _z_list_tail(t);
+        }
+        printf("\n");
+
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
@@ -347,6 +371,7 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
             if (target != 0)
             {
                 q.kind = qle->kind;
+                printf("Callback queryable %zu %p\n", qle->id, qle->callback);
                 qle->callback(&q, qle->arg);
             }
             qles = _z_list_tail(qles); // @TODO: use type-safe list
