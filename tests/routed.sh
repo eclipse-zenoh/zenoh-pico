@@ -32,8 +32,8 @@ fi
 
 chmod +x zenohd
 
-RELIABLE_LOCATORS="tcp/127.0.0.1:7447 tcp/\[::1\]:7447 udp/127.0.0.1:7447 udp/\[::1\]:7447"
-for LOCATOR in $(echo $RELIABLE_LOCATORS | xargs); do
+LOCATORS="tcp/127.0.0.1:7447 tcp/\[::1\]:7447 udp/127.0.0.1:7447 udp/\[::1\]:7447"
+for LOCATOR in $(echo $LOCATORS | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"

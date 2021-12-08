@@ -203,6 +203,38 @@ void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_re
     }
 }
 
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+int __unsafe_zn_queryable_eq(const void *this, const void *other)
+{
+    _zn_queryable_t *t = (_zn_queryable_t *)this;
+    _zn_queryable_t *o = (_zn_queryable_t *)other;
+    return t->id == o->id;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->mutex_inner
+ */
+void __unsafe_zn_del_rem_res_to_loc_qle_map(zn_session_t *zn, _zn_queryable_t *qle)
+{
+    // @TODO: use type-safe intmap. Add support function in intmap and don't access internal fields.
+    for (unsigned int i = 0; i < zn->rem_res_loc_qle_map.capacity; i++)
+    {
+        _z_list_t *t = zn->rem_res_loc_qle_map.vals[i];
+        while (t)
+        {
+            _z_int_void_map_entry_t *e = (_z_int_void_map_entry_t *)_z_list_head(t);
+            e->val = _z_list_drop_filter(e->val, _zn_noop_elem_free, __unsafe_zn_queryable_eq, qle); // @TODO: use type-safe list
+            t = _z_list_tail(t);
+        }
+    }
+}
+
 _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id)
 {
     z_mutex_lock(&zn->mutex_inner);
@@ -261,37 +293,13 @@ void __unsafe_zn_free_queryable_element(void **qle)
     *qle = NULL;
 }
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-int __unsafe_zn_queryable_eq(const void *this, const void *other)
-{
-    _zn_queryable_t *t = (_zn_queryable_t *)this;
-    _zn_queryable_t *o = (_zn_queryable_t *)other;
-    return t->id == o->id;
-}
-
 void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
     // Acquire the lock on the queryables
     z_mutex_lock(&zn->mutex_inner);
 
     zn->local_queryables = _z_list_drop_filter(zn->local_queryables, __unsafe_zn_free_queryable_element, __unsafe_zn_queryable_eq, qle); // @TODO: use type-safe list
-
-    // @TODO: use type-safe intmap. Add support function in intmap and don't access internal fields.
-    for (unsigned int i = 0; i < zn->rem_res_loc_qle_map.capacity; i++)
-    {
-        _z_list_t *t = zn->rem_res_loc_qle_map.vals[i];
-        while (t)
-        {
-            _z_int_void_map_entry_t *e = (_z_int_void_map_entry_t *)_z_list_head(t);
-            e->val = _z_list_drop_filter(e->val, _zn_noop_elem_free, __unsafe_zn_queryable_eq, qle); // @TODO: use type-safe list
-            t = _z_list_tail(t);
-        }
-    }
-
+    __unsafe_zn_del_rem_res_to_loc_qle_map(zn, qle);
     free(qle);
 
     // Release the lock
@@ -354,16 +362,6 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         // Iterate over the matching queryables
         _z_list_t *qles = (_z_list_t *)_z_int_void_map_get(&zn->rem_res_loc_qle_map, query->key.rid); // @TODO: use type-safe list
 
-        printf("List queryable %zu %p\t", query->key.rid, qles);
-        _z_list_t *t = qles;
-        while (t)
-        {
-            _zn_queryable_t *q = (_zn_queryable_t *)_z_list_head(t);
-            printf(" %zu", q->id);
-            t = _z_list_tail(t);
-        }
-        printf("\n");
-
         while (qles)
         {
             _zn_queryable_t *qle = (_zn_queryable_t *)_z_list_head(qles); // @TODO: use type-safe list
@@ -371,7 +369,6 @@ void _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
             if (target != 0)
             {
                 q.kind = qle->kind;
-                printf("Callback queryable %zu %p\n", qle->id, qle->callback);
                 qle->callback(&q, qle->arg);
             }
             qles = _z_list_tail(qles); // @TODO: use type-safe list
