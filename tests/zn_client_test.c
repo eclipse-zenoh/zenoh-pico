@@ -135,6 +135,8 @@ int main(int argc, z_str_t *argv)
         rids1[i] = rid;
     }
 
+    z_sleep_s(SLEEP);
+
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
@@ -143,6 +145,8 @@ int main(int argc, z_str_t *argv)
         printf("Declared resource on session 2: %lu %lu %s\n", rid, rk.rid, rk.rname);
         rids2[i] = rid;
     }
+
+    z_sleep_s(SLEEP);
 
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++)
@@ -154,6 +158,8 @@ int main(int argc, z_str_t *argv)
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
+    z_sleep_s(SLEEP);
+
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
@@ -163,6 +169,8 @@ int main(int argc, z_str_t *argv)
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
     }
+
+    z_sleep_s(SLEEP);
 
     // Declare publisher on firt session
     for (unsigned int i = 0; i < SET; i++)
@@ -254,6 +262,8 @@ int main(int argc, z_str_t *argv)
 
     if (is_reliable)
     {
+        z_sleep_s(SLEEP);
+
         // Query and collect from first session
         total = QRY_CLT * SET;
         for (unsigned int n = 0; n < QRY_CLT; n++)
@@ -286,6 +296,8 @@ int main(int argc, z_str_t *argv)
         pubs1 = _z_list_pop(pubs1, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
+    z_sleep_s(SLEEP);
+
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
@@ -295,6 +307,8 @@ int main(int argc, z_str_t *argv)
         subs2 = _z_list_pop(subs2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
+    z_sleep_s(SLEEP);
+
     while (qles2)
     {
         zn_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
@@ -303,12 +317,16 @@ int main(int argc, z_str_t *argv)
         qles2 = _z_list_pop(qles2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
 
+    z_sleep_s(SLEEP);
+
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++)
     {
         printf("Undeclared resource on session 1: %lu\n", rids1[i]);
         zn_undeclare_resource(s1, rids1[i]);
     }
+
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++)
     {
@@ -330,6 +348,9 @@ int main(int argc, z_str_t *argv)
     // Close both sessions
     printf("Closing session 1\n");
     zn_close(s1);
+
+    z_sleep_s(SLEEP);
+
     printf("Closing session 2\n");
     zn_close(s2);
 
