@@ -89,16 +89,13 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 
 int main(int argc, z_str_t *argv)
 {
+    assert(argc == 2);
+
     setbuf(stdout, NULL);
 
-    int is_reliable = 1;
-
     zn_properties_t *config = zn_config_default();
-    if (argc > 1)
-    {
-        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
-        is_reliable = strncmp(argv[1], "tcp", 3) == 0;
-    }
+    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
