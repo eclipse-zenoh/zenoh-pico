@@ -157,10 +157,10 @@ size_t _zn_f_link_read_exact_udp_multicast(const void *arg, uint8_t *ptr, size_t
     return _zn_read_exact_udp_multicast(self->sock, ptr, len, self->laddr, addr);
 }
 
-size_t _zn_get_link_mtu_udp_multicast()
+uint16_t _zn_get_link_mtu_udp_multicast()
 {
-    // @TODO: not implemented
-    return -1;
+    // @TODO: the return value should change depending on the target platform.
+    return 1450;
 }
 
 _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)

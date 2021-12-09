@@ -142,10 +142,10 @@ size_t _zn_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t l
     return _zn_read_exact_udp_unicast(self->sock, ptr, len);
 }
 
-size_t _zn_get_link_mtu_udp_unicast()
+uint16_t _zn_get_link_mtu_udp_unicast()
 {
-    // @TODO: not implemented
-    return -1;
+    // @TODO: the return value should change depending on the target platform.
+    return 1450;
 }
 
 _zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint)

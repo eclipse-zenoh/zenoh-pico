@@ -46,7 +46,7 @@ zn_hello_array_t _zn_scout_loop(
     }
 
     // The receiving buffer
-    _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
+    _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
 
     z_clock_t start = z_clock_now();
     while (z_clock_elapsed_ms(&start) < period)
@@ -142,7 +142,7 @@ zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned 
     locs.val = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(ZN_WRITE_BUF_LEN, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(ZN_BATCH_SIZE, 0);
 
     // Create and encode the scout message
     int request_id = 1;
