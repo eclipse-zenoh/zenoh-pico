@@ -23,7 +23,7 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
     _zn_transport_message_result_t ret;
 
     // Create and prepare the buffer
-    _z_zbuf_t zbf = _z_zbuf_make(ZN_READ_BUF_LEN);
+    _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
     _z_zbuf_clear(&zbf);
 
     if (zl->is_streamed == 1)

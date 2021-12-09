@@ -140,19 +140,5 @@
 #define ZN_FRAG_BUF_RX_LIMIT 10000000
 
 #define ZN_BATCH_SIZE 65535
-#ifdef ZN_TRANSPORT_TCP_IP
-/**
- * NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
- *       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
- *       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
- *       the boundary of the serialized messages. The length is encoded as little-endian.
- *       In any case, the length of a message must not exceed 65_535 bytes.
- */
-#define ZN_READ_BUF_LEN 65535 + _ZN_MSG_LEN_ENC_SIZE
-#define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE + _ZN_MSG_LEN_ENC_SIZE
-#else
-#define ZN_READ_BUF_LEN 65535
-#define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE
-#endif
 
 #endif /* ZENOH_PICO_CONFIG_H */

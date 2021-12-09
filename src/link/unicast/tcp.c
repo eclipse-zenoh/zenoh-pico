@@ -146,9 +146,8 @@ size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len, z_by
 
 uint16_t _zn_get_link_mtu_tcp()
 {
-    // Maximum batch size for TCP
-    // @TODO: not implemented
-    return -1;
+    // Maximum MTU for TCP
+    return 65535;
 }
 
 _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
