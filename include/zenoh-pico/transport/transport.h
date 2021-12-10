@@ -100,7 +100,7 @@ typedef struct
     z_mutex_t mutex_peer;
 
     // Known valid peers
-    _zn_transport_peer_entry_list_t/*<_zn_transport_peer_entry_t>*/ *peers;
+    _zn_transport_peer_entry_list_t /*<_zn_transport_peer_entry_t>*/ *peers;
 
     // SN initial numbers
     z_zint_t sn_resolution;
@@ -161,17 +161,17 @@ typedef struct
 
 _ZN_RESULT_DECLARE(_zn_transport_unicast_establish_param_t, transport_unicast_establish_param)
 
-typedef struct {
+typedef struct
+{
     z_zint_t sn_resolution;
     z_zint_t initial_sn_tx;
     uint8_t is_qos;
-    z_zint_t lease;
 } _zn_transport_multicast_establish_param_t;
 
 _ZN_RESULT_DECLARE(_zn_transport_multicast_establish_param_t, transport_multicast_establish_param)
 
-_zn_transport_t *_zn_transport_unicast_init();
-_zn_transport_t *_zn_transport_multicast_init();
+_zn_transport_t *_zn_transport_unicast_new();
+_zn_transport_t *_zn_transport_multicast_new();
 
 _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid);
 _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid);

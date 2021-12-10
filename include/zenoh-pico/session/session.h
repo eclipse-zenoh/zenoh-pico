@@ -39,19 +39,19 @@ typedef struct
     z_zint_t query_id;
 
     // Session declarations
-    _z_list_t *local_resources;
-    _z_list_t *remote_resources;
+    _z_list_t *local_resources;  // @TODO: use type-safe list
+    _z_list_t *remote_resources; // @TODO: use type-safe list
 
     // Session subscriptions
-    _z_list_t *local_subscriptions;
-    _z_list_t *remote_subscriptions;
-    _z_int_void_map_t rem_res_loc_sub_map;
+    _z_list_t *local_subscriptions;        // @TODO: use type-safe list
+    _z_list_t *remote_subscriptions;       // @TODO: use type-safe list
+    _z_int_void_map_t rem_res_loc_sub_map; // @TODO: use type-safe intmap
 
     // Session queryables
-    _z_list_t *local_queryables;
-    _z_int_void_map_t rem_res_loc_qle_map;
+    _z_list_t *local_queryables;           // @TODO: use type-safe list
+    _z_int_void_map_t rem_res_loc_qle_map; // @TODO: use type-safe intmap
 
-    _z_list_t *pending_queries;
+    _z_list_t *pending_queries; // @TODO: use type-safe list
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
@@ -207,7 +207,7 @@ typedef struct
     z_str_t predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    _z_list_t *pending_replies;
+    _z_list_t *pending_replies; // @TODO: use type-safe list
     zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
@@ -216,7 +216,7 @@ typedef struct
 {
     z_mutex_t mutex;
     z_condvar_t cond_var;
-    _z_vec_t replies;
+    _z_vec_t replies; // @TODO: use type-safe list
 } _zn_pending_query_collect_t;
 
 typedef struct

@@ -32,8 +32,7 @@ fi
 
 chmod +x zenohd
 
-LOCATORS="tcp/127.0.0.1:7447 tcp/\[::1\]:7447"
-
+LOCATORS="tcp/127.0.0.1:7447 tcp/\[::1\]:7447 udp/127.0.0.1:7447 udp/\[::1\]:7447"
 for LOCATOR in $(echo $LOCATORS | xargs); do
     sleep 1
 
