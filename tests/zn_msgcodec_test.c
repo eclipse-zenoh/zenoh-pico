@@ -290,7 +290,7 @@ void payload_field(void)
 z_timestamp_t gen_timestamp(void)
 {
     z_timestamp_t ts;
-    ts.time = (u_int64_t)time(NULL);
+    ts.time = (uint64_t)time(NULL);
     ts.id = gen_bytes(16);
 
     return ts;
