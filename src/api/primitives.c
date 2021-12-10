@@ -54,10 +54,10 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     return r->id;
 }
@@ -79,10 +79,10 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
 }
@@ -106,10 +106,10 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     return pub;
 }
@@ -127,10 +127,10 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
 
     if (_zn_send_z_msg(pub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     free(pub);
 }
@@ -163,10 +163,10 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
     subscriber->zn = zn;
@@ -192,10 +192,10 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 
     if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
 
@@ -230,10 +230,10 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     zn_queryable_t *queryable = (zn_queryable_t *)malloc(sizeof(zn_queryable_t));
     queryable->zn = zn;
@@ -259,10 +259,10 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 
     if (_zn_send_z_msg(qle->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     _zn_unregister_queryable(qle->zn, q);
 
@@ -272,9 +272,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
-    z_bytes_t pid;
-    pid.len = query->zn->tp_manager->local_pid.len;
-    pid.val = query->zn->tp_manager->local_pid.val;
+    z_bytes_t pid = _z_bytes_wrap(query->zn->tp_manager->local_pid.val, query->zn->tp_manager->local_pid.len);
 
     _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
 
@@ -300,10 +298,10 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
 
     if (_zn_send_z_msg(query->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    free(z_msg.reply_context);
+    free(rctx);
 }
 
 /*------------------ Write ------------------*/
@@ -340,7 +338,7 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, s
     _zn_data_info_t info;
     info.flags = 0;
     info.encoding.prefix = encoding;
-    info.encoding.suffix = ""; // TODO: empty for now, but expose this in the function signature
+    info.encoding.suffix = ""; // @TODO: empty for now, but expose this in the function signature
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_ENC);
     info.kind = kind;
     _ZN_SET_FLAG(info.flags, _ZN_DATA_INFO_KIND);
@@ -456,10 +454,10 @@ int zn_pull(zn_subscriber_t *sub)
 
     if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
     {
-        // TODO: retransmission
+        // @TODO: retransmission
     }
 
-    _zn_zenoh_message_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     return 0;
 }

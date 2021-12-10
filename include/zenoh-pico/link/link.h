@@ -46,7 +46,7 @@ typedef struct
     void *laddr; // This is system specific and only used in its implementation
 
     // Function pointers
-    _zn_f_link_open open_f; // TODO: rename this method (e.g. connect)
+    _zn_f_link_open open_f; // @TODO: rename this method (e.g. connect)
     _zn_f_link_listen listen_f;
     _zn_f_link_close close_f;
     _zn_f_link_write write_f;

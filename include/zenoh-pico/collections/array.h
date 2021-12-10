@@ -45,6 +45,8 @@
         for (size_t i = 0; i < a->len; i++)                                        \
             name##_elem_clear(&a->val[i]);                                         \
         free(a->val);                                                              \
+        a->len = 0;                                                                \
+        a->val = NULL;                                                             \
     }                                                                              \
     static inline void name##_array_free(name##_array_t **a)                       \
     {                                                                              \

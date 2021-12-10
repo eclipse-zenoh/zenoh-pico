@@ -28,12 +28,15 @@
  */
 typedef struct z_bytes_t
 {
-    size_t len;
     const uint8_t *val;
+    size_t len;
+    uint8_t is_alloc;
 } z_bytes_t;
 
-z_bytes_t _z_bytes_make(size_t capacity);
 void _z_bytes_init(z_bytes_t *bs, size_t capacity);
+z_bytes_t _z_bytes_make(size_t capacity);
+z_bytes_t _z_bytes_wrap(const uint8_t *bs, size_t len);
+
 void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src);
 z_bytes_t _z_bytes_duplicate(const z_bytes_t *src);
 void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src);

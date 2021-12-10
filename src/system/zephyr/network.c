@@ -109,7 +109,7 @@ int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
 
-    // TODO: To be implemented
+    // @TODO: To be implemented
 
     return -1;
 }
@@ -167,7 +167,7 @@ int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
 
-    // TODO: To be implemented
+    // @TODO: To be implemented
 
     return -1;
 }
