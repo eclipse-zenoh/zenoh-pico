@@ -25,46 +25,15 @@
 #include "zenoh-pico/transport/manager.h"
 #include "zenoh-pico/system/platform.h"
 
-/**
- * A zenoh-net session.
- */
-typedef struct
-{
-    z_mutex_t mutex_inner;
-
-    // Session counters // FIXME: move to transport check
-    z_zint_t resource_id;
-    z_zint_t entity_id;
-    z_zint_t pull_id;
-    z_zint_t query_id;
-
-    // Session declarations
-    _z_list_t *local_resources;  // @TODO: use type-safe list
-    _z_list_t *remote_resources; // @TODO: use type-safe list
-
-    // Session subscriptions
-    _z_list_t *local_subscriptions;        // @TODO: use type-safe list
-    _z_list_t *remote_subscriptions;       // @TODO: use type-safe list
-    _z_int_void_map_t rem_res_loc_sub_map; // @TODO: use type-safe intmap
-
-    // Session queryables
-    _z_list_t *local_queryables;           // @TODO: use type-safe list
-    _z_int_void_map_t rem_res_loc_qle_map; // @TODO: use type-safe intmap
-
-    _z_list_t *pending_queries; // @TODO: use type-safe list
-
-    // Session transport.
-    // Zenoh-pico is considering a single transport per session.
-    _zn_transport_t *tp;
-    _zn_transport_manager_t *tp_manager;
-} zn_session_t;
+#define _ZN_IS_REMOTE 0
+#define _ZN_IS_LOCAL 1
 
 /**
  * Return type when declaring a publisher.
  */
 typedef struct
 {
-    zn_session_t *zn;
+    void *zn;  // FIXME: zn_session_t *zn;
     z_zint_t id;
     zn_reskey_t key;
 } zn_publisher_t;
@@ -74,7 +43,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *zn;
+    void *zn;  // FIXME: zn_session_t *zn;
     z_zint_t id;
 } zn_subscriber_t;
 
@@ -83,7 +52,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *zn;
+    void *zn;  // FIXME: zn_session_t *zn;
     z_zint_t id;
 } zn_queryable_t;
 
@@ -92,7 +61,7 @@ typedef struct
  */
 typedef struct
 {
-    zn_session_t *zn;
+    void *zn;  // FIXME: zn_session_t *zn;
     z_zint_t qid;
     unsigned int kind;
     z_str_t rname;
@@ -127,6 +96,12 @@ typedef struct
     z_bytes_t replier_id;
 } zn_reply_data_t;
 
+int _zn_reply_data_eq(const zn_reply_data_t *this, const zn_reply_data_t *other);
+void _zn_reply_data_clear(zn_reply_data_t *res);
+
+_Z_ELEM_DEFINE(_zn_reply_data, zn_reply_data_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_reply_data, zn_reply_data_t)
+
 /**
  * An reply to a :c:func:`zn_query`.
  *
@@ -156,28 +131,22 @@ typedef struct
     size_t len;
 } zn_reply_data_array_t;
 
-/**
- * The callback signature of the functions handling data messages.
- */
-typedef void (*zn_data_handler_t)(const zn_sample_t *sample, const void *arg);
-/**
- * The callback signature of the functions handling query replies.
- */
-typedef void (*zn_query_handler_t)(zn_reply_t reply, const void *arg);
-/**
- * The callback signature of the functions handling query messages.
- */
-typedef void (*zn_queryable_handler_t)(zn_query_t *query, const void *arg);
-
-/* private */
-#define _ZN_IS_REMOTE 0
-#define _ZN_IS_LOCAL 1
-
 typedef struct
 {
     z_zint_t id;
     zn_reskey_t key;
 } _zn_resource_t;
+
+int _zn_resource_eq(const _zn_resource_t *this, const _zn_resource_t *other);
+void _zn_resource_clear(_zn_resource_t *res);
+
+_Z_ELEM_DEFINE(_zn_resource, _zn_resource_t, _zn_noop_size, _zn_resource_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_resource, _zn_resource_t)
+
+/**
+ * The callback signature of the functions handling data messages.
+ */
+typedef void (*zn_data_handler_t)(const zn_sample_t *sample, const void *arg);
 
 typedef struct
 {
@@ -187,6 +156,38 @@ typedef struct
     zn_data_handler_t callback;
     void *arg;
 } _zn_subscriber_t;
+
+int _zn_subscriber_eq(const _zn_subscriber_t *this, const _zn_subscriber_t *other);
+void _zn_subscriber_clear(_zn_subscriber_t *res);
+
+_Z_ELEM_DEFINE(_zn_subscriber, _zn_subscriber_t, _zn_noop_size, _zn_subscriber_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_subscriber, _zn_subscriber_t)
+
+_Z_ELEM_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_INT_MAP_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t)
+
+/**
+ * The callback signature of the functions handling query messages.
+ */
+typedef void (*zn_queryable_handler_t)(zn_query_t *query, const void *arg);
+
+typedef struct
+{
+    z_zint_t id;
+    zn_reskey_t key;
+    unsigned int kind;
+    zn_queryable_handler_t callback;
+    void *arg;
+} _zn_queryable_t;
+
+int _zn_queryable_eq(const _zn_queryable_t *this, const _zn_queryable_t *other);
+void _zn_queryable_clear(_zn_queryable_t *res);
+
+_Z_ELEM_DEFINE(_zn_queryable, _zn_queryable_t, _zn_noop_size, _zn_queryable_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_queryable, _zn_queryable_t)
+
+_Z_ELEM_DEFINE(_zn_queryable_list, _zn_queryable_list_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_INT_MAP_DEFINE(_zn_queryable_list, _zn_queryable_list_t)
 
 typedef struct
 {
@@ -200,6 +201,17 @@ typedef struct
     z_timestamp_t tstamp;
 } _zn_pending_reply_t;
 
+int _zn_pending_reply_eq(const _zn_pending_reply_t *this, const _zn_pending_reply_t *other);
+void _zn_pending_reply_clear(_zn_pending_reply_t *res);
+
+_Z_ELEM_DEFINE(_zn_pending_reply, _zn_pending_reply_t, _zn_noop_size, _zn_pending_reply_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_pending_reply, _zn_pending_reply_t)
+
+/**
+ * The callback signature of the functions handling query replies.
+ */
+typedef void (*zn_query_handler_t)(zn_reply_t reply, const void *arg);
+
 typedef struct
 {
     z_zint_t id;
@@ -207,25 +219,55 @@ typedef struct
     z_str_t predicate;
     zn_query_target_t target;
     zn_query_consolidation_t consolidation;
-    _z_list_t *pending_replies; // @TODO: use type-safe list
+    _zn_pending_reply_list_t *pending_replies;
     zn_query_handler_t callback;
     void *arg;
 } _zn_pending_query_t;
+
+int _zn_pending_query_eq(const _zn_pending_query_t *this, const _zn_pending_query_t *other);
+void _zn_pending_query_clear(_zn_pending_query_t *res); // TODO: CARLOS
+
+_Z_ELEM_DEFINE(_zn_pending_query, _zn_pending_query_t, _zn_noop_size, _zn_pending_query_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(_zn_pending_query, _zn_pending_query_t)
 
 typedef struct
 {
     z_mutex_t mutex;
     z_condvar_t cond_var;
-    _z_vec_t replies; // @TODO: use type-safe list
+    _zn_reply_data_list_t *replies;
 } _zn_pending_query_collect_t;
 
+/**
+ * A zenoh-net session.
+ */
 typedef struct
 {
-    z_zint_t id;
-    zn_reskey_t key;
-    unsigned int kind;
-    zn_queryable_handler_t callback;
-    void *arg;
-} _zn_queryable_t;
+    z_mutex_t mutex_inner;
+
+    // Session counters // FIXME: move to transport check
+    z_zint_t resource_id;
+    z_zint_t entity_id;
+    z_zint_t pull_id;
+    z_zint_t query_id;
+
+    // Session declarations
+    _zn_resource_list_t *local_resources;
+    _zn_resource_list_t *remote_resources;
+
+    // Session subscriptions
+    _zn_subscriber_list_t *local_subscriptions;
+    _zn_subscriber_list_t *remote_subscriptions;
+    _zn_subscriber_list_intmap_t rem_res_loc_sub_map;
+
+    // Session queryables
+    _zn_queryable_list_t *local_queryables;
+    _zn_queryable_list_intmap_t rem_res_loc_qle_map;
+    _zn_pending_query_list_t *pending_queries;
+
+    // Session transport.
+    // Zenoh-pico is considering a single transport per session.
+    _zn_transport_t *tp;
+    _zn_transport_manager_t *tp_manager;
+} zn_session_t;
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

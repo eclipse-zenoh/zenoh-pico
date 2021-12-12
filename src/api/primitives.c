@@ -272,7 +272,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
-    z_bytes_t pid = _z_bytes_wrap(query->zn->tp_manager->local_pid.val, query->zn->tp_manager->local_pid.len);
+    z_bytes_t pid = _z_bytes_wrap(((zn_session_t*)query->zn)->tp_manager->local_pid.val, ((zn_session_t*)query->zn)->tp_manager->local_pid.len);
 
     _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
 
@@ -391,7 +391,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
         _z_string_copy(&rd->data.key, &reply.data.data.key);
         _z_bytes_copy(&rd->data.value, &reply.data.data.value);
 
-        _z_vec_append(&pqc->replies, rd);
+        pqc->replies = _zn_reply_data_list_push(pqc->replies, rd);
     }
     else
     {
@@ -410,7 +410,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     _zn_pending_query_collect_t pqc;
     z_mutex_init(&pqc.mutex);
     z_condvar_init(&pqc.cond_var);
-    pqc.replies = _z_vec_make(1);
+    pqc.replies = NULL;
 
     // Issue the query
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
@@ -420,19 +420,21 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
     z_condvar_wait(&pqc.cond_var, &pqc.mutex);
 
     zn_reply_data_array_t rda;
-    rda.len = _z_vec_len(&pqc.replies);
+    rda.len = _zn_reply_data_list_len(pqc.replies);
     zn_reply_data_t *replies = (zn_reply_data_t *)malloc(rda.len * sizeof(zn_reply_data_t));
     for (unsigned int i = 0; i < rda.len; i++)
     {
-        zn_reply_data_t *reply = (zn_reply_data_t *)_z_vec_get(&pqc.replies, i);
+        zn_reply_data_t *reply = _zn_reply_data_list_head(pqc.replies);
+
         replies[i].replier_kind = reply->replier_kind;
         _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
         _z_string_move(&replies[i].data.key, &reply->data.key);
         _z_bytes_move(&replies[i].data.value, &reply->data.value);
+
+        pqc.replies = _zn_reply_data_list_pop(pqc.replies);
     }
     rda.val = replies;
 
-    _z_vec_clear(&pqc.replies, _zn_noop_elem_free);
     z_condvar_free(&pqc.cond_var);
     z_mutex_free(&pqc.mutex);
 

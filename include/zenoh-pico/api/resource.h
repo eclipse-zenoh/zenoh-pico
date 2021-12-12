@@ -16,6 +16,7 @@
 #define ZENOH_PICO_RESOURCE_API_H
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/collections/list.h"
 
 /**
  * Create a resource key from a resource id.

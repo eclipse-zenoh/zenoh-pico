@@ -85,8 +85,8 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             case _ZN_DECL_PUBLISHER:
             {
                 // Check if there are matching local subscriptions
-                _z_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key); // @TODO: use type-safe list
-                size_t len = _z_list_len(subs);                                                   // @TODO: use type-safe list
+                _zn_subscriber_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key);
+                size_t len = _zn_subscriber_list_len(subs);
                 if (len > 0)
                 {
                     _zn_declaration_array_t declarations = _zn_declaration_array_make(len);
@@ -94,13 +94,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                     // Need to reply with a declare subscriber
                     while (subs)
                     {
-                        _zn_subscriber_t *sub = (_zn_subscriber_t *)_z_list_head(subs); // @TODO: use type-safe list
+                        _zn_subscriber_t *sub = _zn_subscriber_list_head(subs);
 
                         declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
                         declarations.val[len].body.sub.key = sub->key;
                         declarations.val[len].body.sub.subinfo = sub->info;
 
-                        subs = _z_list_tail(subs); // @TODO: use type-safe list
+                        subs = _zn_subscriber_list_tail(subs);
                     }
 
                     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);

@@ -68,9 +68,9 @@ zn_session_t *_zn_session_init()
     zn->remote_resources = NULL;
     zn->local_subscriptions = NULL;
     zn->remote_subscriptions = NULL;
-    zn->rem_res_loc_sub_map = _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);
+    zn->rem_res_loc_sub_map = _zn_subscriber_list_intmap_make();
     zn->local_queryables = NULL;
-    zn->rem_res_loc_qle_map = _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);
+    zn->rem_res_loc_qle_map = _zn_subscriber_list_intmap_make();
     zn->pending_queries = NULL;
 
     // Associate a transport with the session

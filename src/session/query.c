@@ -35,15 +35,15 @@ z_zint_t _zn_get_query_id(zn_session_t *zn)
  */
 _zn_pending_query_t *__unsafe_zn_get_pending_query_by_id(zn_session_t *zn, z_zint_t id)
 {
-    _z_list_t *queries = zn->pending_queries; // @TODO: use type-safe list
+    _zn_pending_query_list_t *queries = zn->pending_queries;
     while (queries)
     {
-        _zn_pending_query_t *query = (_zn_pending_query_t *)_z_list_head(queries); // @TODO: use type-safe list
+        _zn_pending_query_t *query = _zn_pending_query_list_head(queries);
 
         if (query->id == id)
             return query;
 
-        queries = _z_list_tail(queries); // @TODO: use type-safe list
+        queries = _zn_pending_query_list_tail(queries);
     }
 
     return NULL;
@@ -64,7 +64,7 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
     else
     {
         // Register the query
-        zn->pending_queries = _z_list_push(zn->pending_queries, pen_qry); // @TODO: use type-safe list
+        zn->pending_queries = _zn_pending_query_list_push(zn->pending_queries, pen_qry);
         res = 0;
     }
 
@@ -74,12 +74,12 @@ int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
     return res;
 }
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-void __unsafe_zn_free_pending_reply(_zn_pending_reply_t *pr)
+int _zn_pending_reply_eq(const _zn_pending_reply_t *this, const _zn_pending_reply_t *other)
+{
+    return this->tstamp.time == other->tstamp.time; // FIXME: pending reply comparison
+}
+
+void _zn_pending_reply_clear(_zn_pending_reply_t *pr)
 {
     // Free the sample
     if (pr->reply.data.data.key.val)
@@ -96,47 +96,18 @@ void __unsafe_zn_free_pending_reply(_zn_pending_reply_t *pr)
         _z_bytes_clear(&pr->tstamp.id);
 }
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-void __unsafe_zn_free_pending_query(_zn_pending_query_t *pen_qry)
+void _zn_pending_query_clear(_zn_pending_query_t *pen_qry)
 {
     _zn_reskey_clear(&pen_qry->key);
     if (pen_qry->predicate)
         free((z_str_t)pen_qry->predicate);
 
-    while (pen_qry->pending_replies)
-    {
-        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_qry->pending_replies);
-        __unsafe_zn_free_pending_reply(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_noop_elem_free);
-    }
+    _zn_pending_reply_list_free(&pen_qry->pending_replies);
 }
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-void __unsafe_zn_free_pending_query_element(void **pen_qry)
+int _zn_pending_query_eq(const _zn_pending_query_t *this, const _zn_pending_query_t *other)
 {
-    _zn_pending_query_t *ptr = (_zn_pending_query_t *)*pen_qry;
-    __unsafe_zn_free_pending_query(ptr);
-    *pen_qry = NULL;
-}
-
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-int _zn_pending_query_eq(const void *this, const void *other)
-{
-    _zn_pending_query_t *t = (_zn_pending_query_t *)this;
-    _zn_pending_query_t *o = (_zn_pending_query_t *)other;
-    return t->id == o->id;
+    return this->id == other->id;
 }
 
 /**
@@ -146,7 +117,7 @@ int _zn_pending_query_eq(const void *this, const void *other)
  */
 void __unsafe_zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    zn->pending_queries = _z_list_drop_filter(zn->pending_queries, __unsafe_zn_free_pending_query_element, _zn_pending_query_eq, pen_qry);
+    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
     free(pen_qry);
 }
 
@@ -162,20 +133,7 @@ void _zn_flush_pending_queries(zn_session_t *zn)
     // Lock the resources data struct
     z_mutex_lock(&zn->mutex_inner);
 
-    while (zn->pending_queries)
-    {
-        _zn_pending_query_t *pqy = (_zn_pending_query_t *)_z_list_head(zn->pending_queries);
-        while (pqy->pending_replies)
-        {
-            _zn_pending_reply_t *pre = (_zn_pending_reply_t *)_z_list_head(pqy->pending_replies);
-            __unsafe_zn_free_pending_reply(pre);
-            free(pre);
-            pqy->pending_replies = _z_list_pop(pqy->pending_replies, _zn_noop_elem_free);
-        }
-        __unsafe_zn_free_pending_query(pqy);
-        free(pqy);
-        zn->pending_queries = _z_list_pop(zn->pending_queries, _zn_noop_elem_free);
-    }
+    _zn_pending_query_list_free(&zn->pending_queries);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
@@ -240,10 +198,10 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
     case zn_consolidation_mode_t_LAZY:
     {
         // Check if this is a newer reply
-        _z_list_t *pen_rps = pen_qry->pending_replies; // @TODO: use type-safe list
+        _zn_pending_reply_list_t *pen_rps = pen_qry->pending_replies;
         while (pen_rps)
         {
-            _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_rps);
+            _zn_pending_reply_t *pen_rep = _zn_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
             if (_z_str_eq(reply.data.data.key.val, pen_rep->reply.data.data.key.val))
@@ -258,15 +216,14 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
                 else
                 {
                     // We are going to have a more recent reply, free the old one
-                    __unsafe_zn_free_pending_reply(pen_rep);
-                    // We are going to reuse the allocated memory in the list
-                    latest = pen_rep;
+                    pen_qry->pending_replies = _zn_pending_reply_list_pop(pen_qry->pending_replies);
+                    latest = _zn_pending_reply_list_head(pen_qry->pending_replies);
                     break;
                 }
             }
             else
             {
-                pen_rps = _z_list_tail(pen_rps); // @TODO: use type-safe list
+                pen_rps = _zn_pending_reply_list_tail(pen_rps);
             }
         }
         break;
@@ -311,7 +268,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Add it to the list of pending replies if new
         if (latest == NULL)
-            pen_qry->pending_replies = _z_list_push(pen_qry->pending_replies, pen_rep);
+            pen_qry->pending_replies = _zn_pending_reply_list_push(pen_qry->pending_replies, pen_rep);
 
         break;
     }
@@ -348,7 +305,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
 
         // Add it to the list of pending replies
         if (latest == NULL)
-            pen_qry->pending_replies = _z_list_push(pen_qry->pending_replies, pen_rep);
+            pen_qry->pending_replies = _zn_pending_reply_list_push(pen_qry->pending_replies, pen_rep);
 
         // Trigger the handler
         pen_qry->callback(pen_rep->reply, pen_qry->arg);
@@ -407,16 +364,15 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
     // The reply is the final one, apply consolidation if needed
     while (pen_qry->pending_replies)
     {
-        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_z_list_head(pen_qry->pending_replies);
+        _zn_pending_reply_t *pen_rep = (_zn_pending_reply_t *)_zn_pending_reply_list_head(pen_qry->pending_replies);
         if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL)
         {
             // Trigger the query handler
             pen_qry->callback(pen_rep->reply, pen_qry->arg);
         }
+
         // Free the element
-        __unsafe_zn_free_pending_reply(pen_rep);
-        free(pen_rep);
-        pen_qry->pending_replies = _z_list_pop(pen_qry->pending_replies, _zn_noop_elem_free);
+        pen_qry->pending_replies = _zn_pending_reply_list_pop(pen_qry->pending_replies);
     }
 
     // Build the final reply

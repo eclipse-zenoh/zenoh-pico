@@ -100,7 +100,7 @@ typedef struct
     z_mutex_t mutex_peer;
 
     // Known valid peers
-    _zn_transport_peer_entry_list_t /*<_zn_transport_peer_entry_t>*/ *peers;
+    _zn_transport_peer_entry_list_t *peers;
 
     // SN initial numbers
     z_zint_t sn_resolution;
