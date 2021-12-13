@@ -112,5 +112,8 @@ int main(void)
     }
     assert(_z_str_intmap_is_empty(&map));
 
+    _z_str_intmap_clear(&map);
+    assert(_z_str_intmap_is_empty(&map));
+
     return 0;
 }
