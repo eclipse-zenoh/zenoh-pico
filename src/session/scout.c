@@ -52,7 +52,7 @@ zn_hello_array_t _zn_scout_loop(
     while (z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
-        _z_zbuf_clear(&zbf);
+        _z_zbuf_reset(&zbf);
 
         // Read bytes from the socket
         int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);

@@ -116,6 +116,7 @@ void _zn_link_free(_zn_link_t **zn)
     ptr->free_f(ptr);
     _zn_endpoint_clear(&ptr->endpoint);
 
+    free(ptr);
     *zn = NULL;
 }
 

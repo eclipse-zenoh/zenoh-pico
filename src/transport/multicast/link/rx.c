@@ -42,7 +42,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
     z_mutex_lock(&ztm->mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_clear(&ztm->zbuf);
+    _z_zbuf_reset(&ztm->zbuf);
 
     if (ztm->link->is_streamed == 1)
     {
@@ -294,7 +294,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 }
 
                 // Free the decoding buffer
-                _z_zbuf_clear(&zbf);
+                _z_zbuf_reset(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }

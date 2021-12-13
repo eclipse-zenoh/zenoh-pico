@@ -163,6 +163,14 @@ void _zn_queryable_clear(_zn_queryable_t *qle)
     _zn_reskey_clear(&qle->key);
 }
 
+void _zn_queryable_list_clear(_zn_queryable_list_t *xs)
+{
+    _zn_queryable_list_t *l = xs;
+
+    while (l != NULL)
+        l = _zn_queryable_list_pop(l);
+}
+
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
@@ -221,7 +229,6 @@ void __unsafe_zn_add_rem_res_to_loc_qle_map(zn_session_t *zn, z_zint_t id, zn_re
  */
 void __unsafe_zn_del_rem_res_to_loc_qle_map(zn_session_t *zn, _zn_queryable_t *qle)
 {
-    //printf("Capacity: %d:%d", _zn_queryable_list_intmap_capacity(&zn->rem_res_loc_qle_map), _zn_queryable_list_intmap_len(&zn->rem_res_loc_qle_map));
     for (unsigned int i = 0; i < _zn_queryable_list_intmap_capacity(&zn->rem_res_loc_qle_map); i++)
     {
         _zn_queryable_list_t *t = _zn_queryable_list_intmap_get(&zn->rem_res_loc_qle_map, i);
@@ -274,8 +281,7 @@ void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
     z_mutex_lock(&zn->mutex_inner);
 
     zn->local_queryables = _zn_queryable_list_drop_filter(zn->local_queryables, _zn_queryable_eq, qle);
-    //__unsafe_zn_del_rem_res_to_loc_qle_map(zn, qle);
-    //free(qle);
+    //__unsafe_zn_del_rem_res_to_loc_qle_map(zn, qle); // FIXME: merge local_queryables with map
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);
@@ -287,7 +293,7 @@ void _zn_flush_queryables(zn_session_t *zn)
     z_mutex_lock(&zn->mutex_inner);
 
     _zn_queryable_list_free(&zn->local_queryables);
-    _zn_queryable_list_intmap_clear(&zn->rem_res_loc_qle_map);
+    //_zn_queryable_list_intmap_clear(&zn->rem_res_loc_qle_map); // FIXME: merge local_queryables with map
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);

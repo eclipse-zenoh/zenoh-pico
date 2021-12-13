@@ -39,10 +39,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 
     int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
     if (res != 0)
-    {
-        free(r);
-        return ZN_RESOURCE_ID_NONE;
-    }
+        goto ERR;
 
     // We need to declare the resource
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
@@ -60,6 +57,10 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     _zn_z_msg_clear(&z_msg);
 
     return r->id;
+
+ERR:
+    free(r);
+    return ZN_RESOURCE_ID_NONE;
 }
 
 void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
@@ -131,8 +132,6 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
     }
 
     _zn_z_msg_clear(&z_msg);
-
-    free(pub);
 }
 
 /*------------------ Subscriber Declaration ------------------*/
@@ -147,10 +146,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
     int res = _zn_register_subscription(zn, _ZN_IS_LOCAL, rs);
     if (res != 0)
-    {
-        free(rs);
-        return NULL;
-    }
+        goto ERR;
 
     // We need to declare the subscriber
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
@@ -173,6 +169,10 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     subscriber->id = rs->id;
 
     return subscriber;
+
+ERR:
+    free(rs);
+    return NULL;
 }
 
 void zn_undeclare_subscriber(zn_subscriber_t *sub)
@@ -198,8 +198,6 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
     _zn_z_msg_clear(&z_msg);
 
     _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
-
-    free(sub);
 }
 
 /*------------------ Queryable Declaration ------------------*/
@@ -214,16 +212,13 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     int res = _zn_register_queryable(zn, rq);
     if (res != 0)
-    {
-        free(rq);
-        return NULL;
-    }
+        goto ERR;
 
     // We need to declare the queryable
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
 
     // Queryable declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_duplicate(&reskey), (z_zint_t)kind);
+    declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_duplicate(&reskey), kind, _ZN_QUERYABLE_COMPLETE_DEFAULT, _ZN_QUERYABLE_DISTANCE_DEFAULT);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -240,6 +235,10 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     queryable->id = rq->id;
 
     return queryable;
+
+ERR:
+    free(rq);
+    return NULL;
 }
 
 void zn_undeclare_queryable(zn_queryable_t *qle)
@@ -265,8 +264,6 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     _zn_z_msg_clear(&z_msg);
 
     _zn_unregister_queryable(qle->zn, q);
-
-    free(qle);
 }
 
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)

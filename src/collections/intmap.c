@@ -127,12 +127,16 @@ void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f)
 
     for (size_t idx = 0; idx < map->capacity; idx++)
         _z_list_free(&map->vals[idx], f_f);
+
+    free(map->vals);
+    map->vals = NULL;
 }
 
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f)
 {
     _z_int_void_map_t *ptr = *map;
     _z_int_void_map_clear(ptr, f);
-    free(ptr->vals);
+
+    free(ptr);
     *map = NULL;
 }

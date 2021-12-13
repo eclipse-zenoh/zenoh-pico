@@ -24,7 +24,7 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
-    _z_zbuf_clear(&zbf);
+    _z_zbuf_reset(&zbf);
 
     if (zl->is_streamed == 1)
     {
@@ -53,10 +53,14 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
             goto ERR;
     }
 
-    ret = _zn_transport_message_decode(&zbf);
+    _zn_transport_message_result_t res = _zn_transport_message_decode(&zbf);
+    if (res.tag == _z_res_t_ERR)
+        return ret;
+
+    _zn_t_msg_copy(&ret.value.transport_message, &res.value.transport_message);
 
     _z_zbuf_clear(&zbf);
-
+    ret.tag = _z_res_t_OK;
     return ret;
 
 ERR:

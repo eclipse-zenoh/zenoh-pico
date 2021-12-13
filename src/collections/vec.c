@@ -49,17 +49,20 @@ void _z_vec_clear(_z_vec_t *v, z_element_free_f free_f)
 {
     for (size_t i = 0; i < v->len; i++)
         free_f(&v->val[i]);
+
     free(v->val);
+    v->val = NULL;
 
     v->capacity = 0;
     v->len = 0;
-    v->val = NULL;
 }
 
 void _z_vec_free(_z_vec_t **v, z_element_free_f free_f)
 {
     _z_vec_t *ptr = (_z_vec_t *)*v;
     _z_vec_clear(ptr, free_f);
+
+    free(ptr);
     *v = NULL;
 }
 

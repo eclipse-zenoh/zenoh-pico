@@ -28,7 +28,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
     z_mutex_lock(&ztu->mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_clear(&ztu->zbuf);
+    _z_zbuf_reset(&ztu->zbuf);
 
     if (ztu->link->is_streamed == 1)
     {
@@ -213,9 +213,9 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
                 }
 
                 // Free the decoding buffer
-                _z_zbuf_clear(&zbf);
+                _z_zbuf_reset(&zbf);
                 // Reset the defragmentation buffer
-                _z_wbuf_reset(dbuf);
+                _z_wbuf_clear(dbuf);
             }
 
             return res;

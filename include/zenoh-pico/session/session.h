@@ -158,12 +158,13 @@ typedef struct
 } _zn_subscriber_t;
 
 int _zn_subscriber_eq(const _zn_subscriber_t *this, const _zn_subscriber_t *other);
-void _zn_subscriber_clear(_zn_subscriber_t *res);
+void _zn_subscriber_clear(_zn_subscriber_t *sub);
 
 _Z_ELEM_DEFINE(_zn_subscriber, _zn_subscriber_t, _zn_noop_size, _zn_subscriber_clear, _zn_noop_copy)
 _Z_LIST_DEFINE(_zn_subscriber, _zn_subscriber_t)
 
-_Z_ELEM_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+void _zn_subscriber_list_clear(_zn_subscriber_list_t *xs);
+_Z_ELEM_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t, _zn_noop_size, _zn_subscriber_list_clear, _zn_noop_copy)
 _Z_INT_MAP_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t)
 
 /**
@@ -186,7 +187,8 @@ void _zn_queryable_clear(_zn_queryable_t *res);
 _Z_ELEM_DEFINE(_zn_queryable, _zn_queryable_t, _zn_noop_size, _zn_queryable_clear, _zn_noop_copy)
 _Z_LIST_DEFINE(_zn_queryable, _zn_queryable_t)
 
-_Z_ELEM_DEFINE(_zn_queryable_list, _zn_queryable_list_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+void _zn_queryable_list_clear(_zn_queryable_list_t *xs);
+_Z_ELEM_DEFINE(_zn_queryable_list, _zn_queryable_list_t, _zn_noop_size, _zn_queryable_list_clear, _zn_noop_copy)
 _Z_INT_MAP_DEFINE(_zn_queryable_list, _zn_queryable_list_t)
 
 typedef struct

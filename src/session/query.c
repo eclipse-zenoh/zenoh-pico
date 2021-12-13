@@ -83,7 +83,7 @@ void _zn_pending_reply_clear(_zn_pending_reply_t *pr)
 {
     // Free the sample
     if (pr->reply.data.data.key.val)
-        free((z_str_t)pr->reply.data.data.key.val);
+        free(pr->reply.data.data.key.val);
     if (pr->reply.data.data.value.val)
         _z_bytes_clear(&pr->reply.data.data.value);
 
@@ -110,21 +110,10 @@ int _zn_pending_query_eq(const _zn_pending_query_t *this, const _zn_pending_quer
     return this->id == other->id;
 }
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
- */
-void __unsafe_zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
-{
-    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
-    free(pen_qry);
-}
-
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
     z_mutex_lock(&zn->mutex_inner);
-    __unsafe_zn_unregister_pending_query(zn, pen_qry);
+    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
     z_mutex_unlock(&zn->mutex_inner);
 }
 
@@ -242,7 +231,7 @@ void _zn_trigger_query_reply_partial(zn_session_t *zn,
     case zn_consolidation_mode_t_FULL:
     {
         // Allocate a pending reply if needed
-        _zn_pending_reply_t *pen_rep;
+        _zn_pending_reply_t *pen_rep = NULL;
         if (latest == NULL)
             pen_rep = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
         else
@@ -382,7 +371,7 @@ void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *
     // Trigger the final query handler
     pen_qry->callback(fin_rep, pen_qry->arg);
 
-    __unsafe_zn_unregister_pending_query(zn, pen_qry);
+    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
 
 EXIT_QRY_TRIG_FIN:
     // Release the lock

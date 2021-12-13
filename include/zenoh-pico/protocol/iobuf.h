@@ -83,6 +83,7 @@ uint8_t *_z_zbuf_get_rptr(const _z_zbuf_t *zbf);
 uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf);
 
 void _z_zbuf_compact(_z_zbuf_t *zbf);
+void _z_zbuf_reset(_z_zbuf_t *zbf);
 void _z_zbuf_clear(_z_zbuf_t *zbf);
 void _z_zbuf_free(_z_zbuf_t **zbf);
 

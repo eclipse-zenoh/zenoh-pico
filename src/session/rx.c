@@ -23,11 +23,9 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
@@ -201,14 +199,3 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     }
 }
 
-int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl)
-{
-    _Z_DEBUG(">> send zenoh message\n");
-
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _zn_unicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _zn_multicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
-    else
-        return -1;
-}

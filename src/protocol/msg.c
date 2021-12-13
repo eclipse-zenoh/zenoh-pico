@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/utils/logging.h"
@@ -210,7 +211,7 @@ void _zn_z_msg_clear_declaration_forget_subscriber(_zn_forget_sub_decl_t *dcl)
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind)
+_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind, z_zint_t complete, z_zint_t distance)
 {
     _zn_declaration_t decl;
 
@@ -220,7 +221,10 @@ _zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t
     decl.header = _ZN_DECL_QUERYABLE;
     if (key.rname != NULL)
         _ZN_SET_FLAG(decl.header, _ZN_FLAG_Z_K);
-    if (kind != ZN_QUERYABLE_STORAGE)
+
+    decl.body.qle.complete = complete;
+    decl.body.qle.distance = distance;
+    if (decl.body.qle.complete != _ZN_QUERYABLE_COMPLETE_DEFAULT || decl.body.qle.distance != _ZN_QUERYABLE_DISTANCE_DEFAULT)
         _ZN_SET_FLAG(decl.header, _ZN_FLAG_Z_Q);
 
     return decl;
@@ -569,6 +573,17 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
     return msg;
 }
 
+void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *msg)
+{
+    clone->options = msg->options;
+    clone->version = msg->version;
+    clone->whatami = msg->whatami;
+    clone->lease = msg->lease;
+    clone->sn_resolution = msg->sn_resolution;
+    clone->next_sns = msg->next_sns;
+    _z_bytes_copy(&clone->pid, &msg->pid);
+}
+
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header)
 {
     _z_bytes_clear(&msg->pid);
@@ -624,6 +639,16 @@ _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatam
     return msg;
 }
 
+void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *msg)
+{
+    clone->options = msg->options;
+    clone->version = msg->version;
+    clone->whatami = msg->whatami;
+    clone->sn_resolution = msg->sn_resolution;
+    _z_bytes_copy(&clone->pid, &msg->pid);
+    _z_bytes_copy(&clone->cookie, &msg->cookie);
+}
+
 void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header)
 {
     _z_bytes_clear(&msg->pid);
@@ -665,6 +690,13 @@ _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial
     msg.attachment = NULL;
 
     return msg;
+}
+
+void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *msg)
+{
+    clone->lease = msg->lease;
+    clone->initial_sn = msg->initial_sn;
+    _z_bytes_reset(&clone->cookie);
 }
 
 void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header)
@@ -863,6 +895,53 @@ void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header)
 }
 
 /*------------------ Transport Message ------------------*/
+void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg)
+{
+    clone->header = msg->header;
+    clone->attachment = msg->attachment;
+
+    uint8_t mid = _ZN_MID(msg->header);
+    switch (mid)
+    {
+    case _ZN_MID_SCOUT:
+        // _zn_t_msg_copy_scout(&clone->body.scout, &msg->body.scout);
+        break;
+    case _ZN_MID_HELLO:
+        // _zn_t_msg_copy_hello(&clone->body.hello, &msg->body.hello);
+        break;
+    case _ZN_MID_JOIN:
+        _zn_t_msg_copy_join(&clone->body.join, &msg->body.join);
+        break;
+    case _ZN_MID_INIT:
+        _zn_t_msg_copy_init(&clone->body.init, &msg->body.init);
+        break;
+    case _ZN_MID_OPEN:
+        _zn_t_msg_copy_open(&clone->body.open, &msg->body.open);
+        break;
+    case _ZN_MID_CLOSE:
+        // _zn_t_msg_copy_close(&clone->body.close, &msg->body.close);
+        break;
+    case _ZN_MID_SYNC:
+        // _zn_t_msg_copy_sync(&clone->body.sync, (&msg->body.sync);
+        break;
+    case _ZN_MID_ACK_NACK:
+        // _zn_t_msg_copy_ack_nack(&clone->body.ack_nack, g->body.ack_nack);
+        break;
+    case _ZN_MID_KEEP_ALIVE:
+        // _zn_t_msg_copy_keep_alive(&clone->body.keep_alive, >body.keep_alive);
+        break;
+    case _ZN_MID_PING_PONG:
+        // _zn_t_msg_copy_ping_pong(&clone->body.ping_pong, ->body.ping_pong);
+        break;
+    case _ZN_MID_FRAME:
+        // _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
+        break;
+    default:
+        _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+        break;
+    }
+}
+
 void _zn_t_msg_clear(_zn_transport_message_t *msg)
 {
     if (msg->attachment)

@@ -19,6 +19,9 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 
+#define _ZN_QUERYABLE_COMPLETE_DEFAULT 1
+#define _ZN_QUERYABLE_DISTANCE_DEFAULT 0
+
 /*------------------ Queryable ------------------*/
 _zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, z_zint_t id);
 int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *q);

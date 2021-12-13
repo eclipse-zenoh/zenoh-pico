@@ -587,7 +587,7 @@ _zn_declaration_t _zn_z_msg_make_declaration_publisher(zn_reskey_t key);
 _zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
 _zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
 _zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
-_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind);
+_zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind, z_zint_t complete, z_zint_t distance);
 _zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
 _zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
 _zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
@@ -1016,4 +1016,21 @@ _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
 _zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final);
+
+/*------------------ Copy ------------------*/
+// @TODO: implement the remaining copyers
+void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg);
+//void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
+//void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
+void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *join);
+void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *init);
+void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *open);
+//void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
+//void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
+//void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
+//void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
+//void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
+//void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
+//void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
+
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

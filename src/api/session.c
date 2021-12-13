@@ -93,7 +93,10 @@ zn_session_t *zn_open(zn_properties_t *config)
     else if (_z_str_eq(s_mode, ZN_CONFIG_MODE_PEER))
         mode = 1;
 
-    return _zn_open(locator, mode);
+    zn_session_t *zn = _zn_open(locator, mode);
+    
+    free(locator);
+    return zn;
 }
 
 void zn_close(zn_session_t *zn)

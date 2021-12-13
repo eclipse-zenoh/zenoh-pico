@@ -44,8 +44,9 @@ void *_znp_multicast_read_task(void *arg)
 
     // Acquire and keep the lock
     z_mutex_lock(&ztm->mutex_rx);
+
     // Prepare the buffer
-    _z_zbuf_clear(&ztm->zbuf);
+    _z_zbuf_reset(&ztm->zbuf);
 
     z_bytes_t addr;
     while (ztm->read_task_running)

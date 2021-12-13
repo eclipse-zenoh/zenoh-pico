@@ -35,6 +35,7 @@ typedef int (*z_element_eq_f)(const void *left, const void *right);
     {                                                                      \
         type *ptr = (type *)*e;                                            \
         elem_clear_f(ptr);                                                 \
+        free(ptr);                                                         \
         *e = NULL;                                                         \
     }                                                                      \
     static inline void name##_elem_copy(void *dst, const void *src)        \

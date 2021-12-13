@@ -273,7 +273,6 @@ void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res
         zn->local_resources = _zn_resource_list_drop_filter(zn->local_resources, _zn_resource_eq, res);
     else
         zn->remote_resources = _zn_resource_list_drop_filter(zn->remote_resources, _zn_resource_eq, res);
-    free(res);
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);

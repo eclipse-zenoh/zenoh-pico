@@ -124,7 +124,10 @@ size_t _z_iosli_size(const _z_iosli_t *ios)
 void _z_iosli_clear(_z_iosli_t *ios)
 {
     if (ios->is_alloc)
+    {
         free(ios->buf);
+	ios->buf = NULL;
+    }
     memset(ios, 0, _z_iosli_size(ios));
 }
 
@@ -228,9 +231,14 @@ uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf)
     return zbf->ios.buf + zbf->ios.w_pos;
 }
 
-void _z_zbuf_clear(_z_zbuf_t *zbf)
+void _z_zbuf_reset(_z_zbuf_t *zbf)
 {
     _z_iosli_reset(&zbf->ios);
+}
+
+void _z_zbuf_clear(_z_zbuf_t *zbf)
+{
+    _z_iosli_clear(&zbf->ios);
 }
 
 void _z_zbuf_compact(_z_zbuf_t *zbf)
@@ -583,9 +591,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf)
     wbf->r_idx = 0;
     wbf->w_idx = 0;
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
-    {
         _z_iosli_reset(_z_wbuf_get_iosli(wbf, i));
-    }
 }
 
 void _z_wbuf_clear(_z_wbuf_t *wbf)

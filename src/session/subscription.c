@@ -294,6 +294,11 @@ int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *
     return res;
 }
 
+int _zn_subscriber_eq(const _zn_subscriber_t *other, const _zn_subscriber_t *this)
+{
+    return this->id == other->id;
+}
+
 void _zn_subscriber_clear(_zn_subscriber_t *sub)
 {
     _zn_reskey_clear(&sub->key);
@@ -301,12 +306,12 @@ void _zn_subscriber_clear(_zn_subscriber_t *sub)
         free(sub->info.period);
 }
 
-int _zn_subscriber_eq(const _zn_subscriber_t *other, const _zn_subscriber_t *this)
+void _zn_subscriber_list_clear(_zn_subscriber_list_t *xs)
 {
-    if (this->id == other->id)
-        return 1;
+    _zn_subscriber_list_t *l = xs;
 
-    return 0;
+    while (l != NULL)
+        l = _zn_subscriber_list_pop(l);
 }
 
 void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *s)
@@ -331,7 +336,7 @@ void _zn_flush_subscriptions(zn_session_t *zn)
     _zn_subscriber_list_free(&zn->local_subscriptions);
     _zn_subscriber_list_free(&zn->remote_subscriptions);
 
-    _zn_subscriber_list_intmap_clear(&zn->rem_res_loc_sub_map);
+    //_zn_subscriber_list_intmap_clear(&zn->rem_res_loc_sub_map);  // FIXME: merge local_queryables with map
 
     // Release the lock
     z_mutex_unlock(&zn->mutex_inner);

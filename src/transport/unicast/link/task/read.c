@@ -43,8 +43,10 @@ void *_znp_unicast_read_task(void *arg)
 
     // Acquire and keep the lock
     z_mutex_lock(&ztu->mutex_rx);
+
     // Prepare the buffer
-    _z_zbuf_clear(&ztu->zbuf);
+    _z_zbuf_reset(&ztu->zbuf);
+
     while (ztu->read_task_running)
     {
         size_t to_read = 0;

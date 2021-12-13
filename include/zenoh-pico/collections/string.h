@@ -35,7 +35,7 @@ int _z_str_eq(const z_str_t left, const z_str_t right);
 
 size_t __z_str_size(const z_str_t src);
 void __z_str_copy(z_str_t dst, const z_str_t src);
-_Z_ELEM_DEFINE(_z_str, char, __z_str_size, _z_str_clear, __z_str_copy)
+_Z_ELEM_DEFINE(_z_str, char, __z_str_size, _zn_noop_clear, __z_str_copy)
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
