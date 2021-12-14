@@ -25,7 +25,7 @@ sleep 5
 if [ ! -f zenohd ]; then
     git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
     cd zenoh-git
-    git checkout de6ff1f290a4bb988f9d8e1913c9b0370d840490
+    git checkout ac2294400d8b6360572e320435f53954927e29f3
     cargo build
     cp ./target/debug/zenohd $TESTDIR/
     cd $TESTDIR
