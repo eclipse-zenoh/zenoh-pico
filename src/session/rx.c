@@ -36,16 +36,11 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     case _ZN_MID_DATA:
     {
         _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", msg->header);
-        if (msg->reply_context)
-        {
-            // This is some data from a query
+        if (msg->reply_context) // This is some data from a query
             _zn_trigger_query_reply_partial(zn, msg->reply_context, msg->body.data.key, msg->body.data.payload, msg->body.data.info);
-        }
-        else
-        {
-            // This is pure data
+        else // This is pure data
             _zn_trigger_subscriptions(zn, msg->body.data.key, msg->body.data.payload);
-        }
+
         return _z_res_t_OK;
     }
 
@@ -73,7 +68,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
                 if (res != 0)
                 {
-                    _zn_reskey_clear(&r->key);
+                    _zn_resource_clear(r);
                     free(r);
                 }
 
@@ -82,81 +77,64 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
             case _ZN_DECL_PUBLISHER:
             {
-                // Check if there are matching local subscriptions
-                _zn_subscriber_list_t *subs = _zn_get_subscriptions_from_remote_key(zn, &msg->body.data.key);
-                size_t len = _zn_subscriber_list_len(subs);
-                if (len > 0)
-                {
-                    _zn_declaration_array_t declarations = _zn_declaration_array_make(len);
-
-                    // Need to reply with a declare subscriber
-                    while (subs)
-                    {
-                        _zn_subscriber_t *sub = _zn_subscriber_list_head(subs);
-
-                        declarations.val[len].header = _ZN_DECL_SUBSCRIBER;
-                        declarations.val[len].body.sub.key = sub->key;
-                        declarations.val[len].body.sub.subinfo = sub->info;
-
-                        subs = _zn_subscriber_list_tail(subs);
-                    }
-
-                    _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
-
-                    // Send the message
-                    _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK);
-
-                    // Free the message
-                    _zn_z_msg_clear(&z_msg);
-                }
+                // TODO: not supported yet
                 break;
             }
 
             case _ZN_DECL_SUBSCRIBER:
             {
-                _zn_subscriber_t *sub = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.sub.key);
-                if (sub)
+                z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &decl.body.sub.key);
+
+                _zn_subscriber_list_t *subs = _zn_get_subscriptions_by_name(zn, _ZN_IS_REMOTE, rname);
+                if (subs != NULL)
                 {
-                    _zn_subscriber_t rs;
-                    rs.id = _zn_get_entity_id(zn);
-                    rs.key = decl.body.sub.key;
-                    rs.info = decl.body.sub.subinfo;
-                    rs.callback = NULL;
-                    rs.arg = NULL;
-                    _zn_register_subscription(zn, _ZN_IS_REMOTE, &rs);
+                    _z_str_clear(rname);
+                    break;
                 }
+
+                _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
+                rs->id = _zn_get_entity_id(zn);
+                rs->rname = rname;
+                rs->info = decl.body.sub.subinfo;
+                rs->callback = NULL;
+                rs->arg = NULL;
+                _zn_register_subscription(zn, _ZN_IS_REMOTE, rs);
 
                 break;
             }
             case _ZN_DECL_QUERYABLE:
             {
-                // Do nothing, zenoh clients are not expected to handle remote queryable declarations
+                // TODO: not supported yet
                 break;
             }
             case _ZN_DECL_FORGET_RESOURCE:
             {
                 _zn_resource_t *rd = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, decl.body.forget_res.rid);
-                if (rd)
+                if (rd != NULL)
                     _zn_unregister_resource(zn, _ZN_IS_REMOTE, rd);
 
                 break;
             }
             case _ZN_DECL_FORGET_PUBLISHER:
             {
-                // Do nothing, remote publishers are not stored in the session
+                // TODO: not supported yet
                 break;
             }
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
-                _zn_subscriber_t *sub = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
-                if (sub)
+                _zn_subscriber_list_t *subs = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
+                while (subs != NULL)
+                {
+                    _zn_subscriber_t *sub = _zn_subscriber_list_head(subs);
                     _zn_unregister_subscription(zn, _ZN_IS_REMOTE, sub);
+                    subs = _zn_subscriber_list_tail(subs);
+                }
 
                 break;
             }
             case _ZN_DECL_FORGET_QUERYABLE:
             {
-                // Do nothing, zenoh clients are not expected to handle remote queryable declarations
+                // TODO: not supported yet
                 break;
             }
             default:
@@ -171,7 +149,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     case _ZN_MID_PULL:
     {
-        // Do nothing, zenoh clients are not expected to handle pull messages
+        // TODO: not supported yet
         return _z_res_t_OK;
     }
 
@@ -183,11 +161,10 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     case _ZN_MID_UNIT:
     {
+        // This might be the final reply
         if (msg->reply_context)
-        {
-            // This might be the final reply
             _zn_trigger_query_reply_final(zn, msg->reply_context);
-        }
+
         return _z_res_t_OK;
     }
 
@@ -198,4 +175,3 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     }
     }
 }
-

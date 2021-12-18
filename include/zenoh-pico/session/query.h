@@ -23,10 +23,13 @@
 
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn);
+
+_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, const z_zint_t id);
+
 int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
+int _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info);
+int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context);
 void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
 void _zn_flush_pending_queries(zn_session_t *zn);
-void _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info);
-void _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context);
 
 #endif /* ZENOH_PICO_SESSION_QUERY_H */

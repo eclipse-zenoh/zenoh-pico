@@ -30,8 +30,6 @@ int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res);
 void _zn_unregister_resource(zn_session_t *zn, int is_local, _zn_resource_t *res);
 void _zn_flush_resources(zn_session_t *zn);
 
-
-
 z_str_t __unsafe_zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey);
 _zn_resource_t *__unsafe_zn_get_resource_by_id(zn_session_t *zn, int is_local, z_zint_t id);
 _zn_resource_t *__unsafe_zn_get_resource_matching_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey);

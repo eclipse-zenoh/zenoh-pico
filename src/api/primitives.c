@@ -41,9 +41,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     if (res != 0)
         goto ERR;
 
-    // We need to declare the resource
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-    // Resource declaration
     declarations.val[0] = _zn_z_msg_make_declaration_resource(r->id, _zn_reskey_duplicate(&r->key));
 
     // Build the declare message to send on the wire
@@ -69,10 +67,7 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
     if (r == NULL)
         return;
 
-    // We need to undeclare the resource and the publisher
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Resource declaration
     declarations.val[0] = _zn_z_msg_make_declaration_forget_resource(rid);
 
     // Build the declare message to send on the wire
@@ -84,7 +79,6 @@ void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
     }
 
     _zn_z_msg_clear(&z_msg);
-
     _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
 }
 
@@ -96,10 +90,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
     pub->key = reskey;
     pub->id = _zn_get_entity_id(zn);
 
-    // We need to declare the resource and the publisher
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Publisher declaration
     declarations.val[0] = _zn_z_msg_make_declaration_publisher(_zn_reskey_duplicate(&reskey));
 
     // Build the declare message to send on the wire
@@ -117,10 +108,7 @@ zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 
 void zn_undeclare_publisher(zn_publisher_t *pub)
 {
-    // We need to undeclare the publisher
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Forget publisher declaration
     declarations.val[0] = _zn_z_msg_make_declaration_forget_publisher(_zn_reskey_duplicate(&pub->key));
 
     // Build the declare message to send on the wire
@@ -139,7 +127,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 {
     _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
     rs->id = _zn_get_entity_id(zn);
-    rs->key = reskey;
+    rs->rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);;
     rs->info = sub_info;
     rs->callback = callback;
     rs->arg = arg;
@@ -148,10 +136,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     if (res != 0)
         goto ERR;
 
-    // We need to declare the subscriber
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Subscriber declaration
     declarations.val[0] = _zn_z_msg_make_declaration_subscriber(_zn_reskey_duplicate(&reskey), sub_info);
 
     // Build the declare message to send on the wire
@@ -181,11 +166,11 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
     if (s == NULL)
         return;
 
-    // We need to undeclare the subscriber
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Forget Subscriber declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_subscriber(_zn_reskey_duplicate(&s->key));
+    zn_reskey_t key;
+    key.rid = ZN_RESOURCE_ID_NONE;
+    key.rname = _z_str_clone(s->rname);
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_subscriber(key);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -196,7 +181,6 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
     }
 
     _zn_z_msg_clear(&z_msg);
-
     _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
 }
 
@@ -205,7 +189,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 {
     _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
     rq->id = _zn_get_entity_id(zn);
-    rq->key = reskey;
+    rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);;
     rq->kind = kind;
     rq->callback = callback;
     rq->arg = arg;
@@ -214,10 +198,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     if (res != 0)
         goto ERR;
 
-    // We need to declare the queryable
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Queryable declaration
     declarations.val[0] = _zn_z_msg_make_declaration_queryable(_zn_reskey_duplicate(&reskey), kind, _ZN_QUERYABLE_COMPLETE_DEFAULT, _ZN_QUERYABLE_DISTANCE_DEFAULT);
 
     // Build the declare message to send on the wire
@@ -247,11 +228,11 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     if (q == NULL)
         return;
 
-    // We need to undeclare the subscriber
     _zn_declaration_array_t declarations = _zn_declaration_array_make(1);
-
-    // Forget Subscriber declaration
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(_zn_reskey_duplicate(&q->key));
+    zn_reskey_t key;
+    key.rid = ZN_RESOURCE_ID_NONE;
+    key.rname = _z_str_clone(q->rname);
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(key);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
@@ -449,14 +430,15 @@ int zn_pull(zn_subscriber_t *sub)
     z_zint_t max_samples = 0; // @TODO: get the correct value for max_sample
     int is_final = 1;
 
-    _zn_zenoh_message_t z_msg = _zn_z_msg_make_pull(s->key, pull_id, max_samples, is_final);
+    // TODO: fix pull
+    // _zn_zenoh_message_t z_msg = _zn_z_msg_make_pull(s->key, pull_id, max_samples, is_final);
 
-    if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-    {
-        // @TODO: retransmission
-    }
+    // if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
+    // {
+    //     // @TODO: retransmission
+    // }
 
-    _zn_z_msg_clear(&z_msg);
+    // _zn_z_msg_clear(&z_msg);
 
     return 0;
 }

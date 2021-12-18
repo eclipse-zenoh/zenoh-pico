@@ -151,7 +151,7 @@ typedef void (*zn_data_handler_t)(const zn_sample_t *sample, const void *arg);
 typedef struct
 {
     z_zint_t id;
-    zn_reskey_t key;
+    z_str_t rname;
     zn_subinfo_t info;
     zn_data_handler_t callback;
     void *arg;
@@ -163,10 +163,6 @@ void _zn_subscriber_clear(_zn_subscriber_t *sub);
 _Z_ELEM_DEFINE(_zn_subscriber, _zn_subscriber_t, _zn_noop_size, _zn_subscriber_clear, _zn_noop_copy)
 _Z_LIST_DEFINE(_zn_subscriber, _zn_subscriber_t)
 
-void _zn_subscriber_list_clear(_zn_subscriber_list_t *xs);
-_Z_ELEM_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t, _zn_noop_size, _zn_subscriber_list_clear, _zn_noop_copy)
-_Z_INT_MAP_DEFINE(_zn_subscriber_list, _zn_subscriber_list_t)
-
 /**
  * The callback signature of the functions handling query messages.
  */
@@ -175,7 +171,7 @@ typedef void (*zn_queryable_handler_t)(zn_query_t *query, const void *arg);
 typedef struct
 {
     z_zint_t id;
-    zn_reskey_t key;
+    z_str_t rname;
     unsigned int kind;
     zn_queryable_handler_t callback;
     void *arg;
@@ -187,10 +183,6 @@ void _zn_queryable_clear(_zn_queryable_t *res);
 _Z_ELEM_DEFINE(_zn_queryable, _zn_queryable_t, _zn_noop_size, _zn_queryable_clear, _zn_noop_copy)
 _Z_LIST_DEFINE(_zn_queryable, _zn_queryable_t)
 
-void _zn_queryable_list_clear(_zn_queryable_list_t *xs);
-_Z_ELEM_DEFINE(_zn_queryable_list, _zn_queryable_list_t, _zn_noop_size, _zn_queryable_list_clear, _zn_noop_copy)
-_Z_INT_MAP_DEFINE(_zn_queryable_list, _zn_queryable_list_t)
-
 typedef struct
 {
     z_zint_t id;
@@ -199,7 +191,7 @@ typedef struct
 
 typedef struct
 {
-    zn_reply_t reply;
+    zn_reply_t *reply;
     z_timestamp_t tstamp;
 } _zn_pending_reply_t;
 
@@ -259,11 +251,9 @@ typedef struct
     // Session subscriptions
     _zn_subscriber_list_t *local_subscriptions;
     _zn_subscriber_list_t *remote_subscriptions;
-    _zn_subscriber_list_intmap_t rem_res_loc_sub_map;
 
     // Session queryables
     _zn_queryable_list_t *local_queryables;
-    _zn_queryable_list_intmap_t rem_res_loc_qle_map;
     _zn_pending_query_list_t *pending_queries;
 
     // Session transport.
