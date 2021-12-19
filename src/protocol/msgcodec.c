@@ -1829,6 +1829,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
             {
                 // Restore the reading position of the iobfer
                 _z_zbuf_set_rpos(zbf, r_pos);
+                return;
             }
         }
     }
