@@ -28,9 +28,9 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _zn_queryable_eq(const _zn_queryable_t *this, const _zn_queryable_t *other)
+int _zn_queryable_eq(const _zn_queryable_t *one, const _zn_queryable_t *two)
 {
-    return this->id == other->id;
+    return one->id == two->id;
 }
 
 void _zn_queryable_clear(_zn_queryable_t *qle)

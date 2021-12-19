@@ -96,7 +96,7 @@ typedef struct
     z_bytes_t replier_id;
 } zn_reply_data_t;
 
-int _zn_reply_data_eq(const zn_reply_data_t *this, const zn_reply_data_t *other);
+int _zn_reply_data_eq(const zn_reply_data_t *one, const zn_reply_data_t *two);
 void _zn_reply_data_clear(zn_reply_data_t *res);
 
 _Z_ELEM_DEFINE(_zn_reply_data, zn_reply_data_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
@@ -137,7 +137,7 @@ typedef struct
     zn_reskey_t key;
 } _zn_resource_t;
 
-int _zn_resource_eq(const _zn_resource_t *this, const _zn_resource_t *other);
+int _zn_resource_eq(const _zn_resource_t *one, const _zn_resource_t *two);
 void _zn_resource_clear(_zn_resource_t *res);
 
 _Z_ELEM_DEFINE(_zn_resource, _zn_resource_t, _zn_noop_size, _zn_resource_clear, _zn_noop_copy)
@@ -157,7 +157,7 @@ typedef struct
     void *arg;
 } _zn_subscriber_t;
 
-int _zn_subscriber_eq(const _zn_subscriber_t *this, const _zn_subscriber_t *other);
+int _zn_subscriber_eq(const _zn_subscriber_t *one, const _zn_subscriber_t *two);
 void _zn_subscriber_clear(_zn_subscriber_t *sub);
 
 _Z_ELEM_DEFINE(_zn_subscriber, _zn_subscriber_t, _zn_noop_size, _zn_subscriber_clear, _zn_noop_copy)
@@ -177,7 +177,7 @@ typedef struct
     void *arg;
 } _zn_queryable_t;
 
-int _zn_queryable_eq(const _zn_queryable_t *this, const _zn_queryable_t *other);
+int _zn_queryable_eq(const _zn_queryable_t *one, const _zn_queryable_t *two);
 void _zn_queryable_clear(_zn_queryable_t *res);
 
 _Z_ELEM_DEFINE(_zn_queryable, _zn_queryable_t, _zn_noop_size, _zn_queryable_clear, _zn_noop_copy)
@@ -195,7 +195,7 @@ typedef struct
     z_timestamp_t tstamp;
 } _zn_pending_reply_t;
 
-int _zn_pending_reply_eq(const _zn_pending_reply_t *this, const _zn_pending_reply_t *other);
+int _zn_pending_reply_eq(const _zn_pending_reply_t *one, const _zn_pending_reply_t *two);
 void _zn_pending_reply_clear(_zn_pending_reply_t *res);
 
 _Z_ELEM_DEFINE(_zn_pending_reply, _zn_pending_reply_t, _zn_noop_size, _zn_pending_reply_clear, _zn_noop_copy)
@@ -218,8 +218,8 @@ typedef struct
     void *arg;
 } _zn_pending_query_t;
 
-int _zn_pending_query_eq(const _zn_pending_query_t *this, const _zn_pending_query_t *other);
-void _zn_pending_query_clear(_zn_pending_query_t *res); // TODO: CARLOS
+int _zn_pending_query_eq(const _zn_pending_query_t *one, const _zn_pending_query_t *two);
+void _zn_pending_query_clear(_zn_pending_query_t *res);
 
 _Z_ELEM_DEFINE(_zn_pending_query, _zn_pending_query_t, _zn_noop_size, _zn_pending_query_clear, _zn_noop_copy)
 _Z_LIST_DEFINE(_zn_pending_query, _zn_pending_query_t)

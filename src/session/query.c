@@ -38,9 +38,9 @@ void _zn_reply_free(zn_reply_t **reply)
     *reply = NULL;
 }
 
-int _zn_pending_reply_eq(const _zn_pending_reply_t *this, const _zn_pending_reply_t *other)
+int _zn_pending_reply_eq(const _zn_pending_reply_t *one, const _zn_pending_reply_t *two)
 {
-    return this->tstamp.time == other->tstamp.time; // FIXME: better comparison
+    return one->tstamp.time == two->tstamp.time; // FIXME: better comparison
 }
 
 void _zn_pending_reply_clear(_zn_pending_reply_t *pr)
@@ -60,9 +60,9 @@ void _zn_pending_query_clear(_zn_pending_query_t *pen_qry)
     _zn_pending_reply_list_free(&pen_qry->pending_replies);
 }
 
-int _zn_pending_query_eq(const _zn_pending_query_t *this, const _zn_pending_query_t *other)
+int _zn_pending_query_eq(const _zn_pending_query_t *one, const _zn_pending_query_t *two)
 {
-    return this->id == other->id; // FIXME: better comparison
+    return one->id == two->id; // FIXME: better comparison
 }
 
 /*------------------ Query ------------------*/
