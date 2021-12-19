@@ -35,6 +35,7 @@ int _zn_subscriber_eq(const _zn_subscriber_t *other, const _zn_subscriber_t *thi
 void _zn_subscriber_clear(_zn_subscriber_t *sub)
 {
     _z_str_clear(sub->rname);
+    _zn_reskey_clear(&sub->key);
     if (sub->info.period)
         free(sub->info.period);
 }

@@ -128,6 +128,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
     rs->id = _zn_get_entity_id(zn);
     rs->rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);;
+    rs->key = reskey;
     rs->info = sub_info;
     rs->callback = callback;
     rs->arg = arg;
@@ -430,15 +431,14 @@ int zn_pull(zn_subscriber_t *sub)
     z_zint_t max_samples = 0; // @TODO: get the correct value for max_sample
     int is_final = 1;
 
-    // TODO: fix pull
-    // _zn_zenoh_message_t z_msg = _zn_z_msg_make_pull(s->key, pull_id, max_samples, is_final);
+    _zn_zenoh_message_t z_msg = _zn_z_msg_make_pull(s->key, pull_id, max_samples, is_final);
 
-    // if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-    // {
-    //     // @TODO: retransmission
-    // }
+    if (_zn_send_z_msg(sub->zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
+    {
+        // @TODO: retransmission
+    }
 
-    // _zn_z_msg_clear(&z_msg);
+    _zn_z_msg_clear(&z_msg);
 
     return 0;
 }

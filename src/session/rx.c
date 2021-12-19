@@ -95,6 +95,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
                 rs->id = _zn_get_entity_id(zn);
                 rs->rname = rname;
+                rs->key = _zn_reskey_duplicate(&decl.body.sub.key);
                 rs->info = decl.body.sub.subinfo;
                 rs->callback = NULL;
                 rs->arg = NULL;

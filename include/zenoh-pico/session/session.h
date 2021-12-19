@@ -152,6 +152,7 @@ typedef struct
 {
     z_zint_t id;
     z_str_t rname;
+    zn_reskey_t key;
     zn_subinfo_t info;
     zn_data_handler_t callback;
     void *arg;
