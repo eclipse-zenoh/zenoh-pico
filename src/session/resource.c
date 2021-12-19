@@ -110,18 +110,20 @@ z_str_t __zn_get_resource_name_from_key(_zn_resource_list_t *xs, const zn_reskey
     // Concatenate all the partial resource names
     z_str_t rname = (z_str_t)malloc(len + 1);
     rname[0] = '\0'; // NULL terminator must be set (required to strcat)
-    while (strs != NULL)
+
+    _z_str_list_t *xstr = strs;
+    while (xstr != NULL)
     {
-        z_str_t s = _z_str_list_head(strs);
+        z_str_t s = _z_str_list_head(xstr);
         strcat(rname, s);
-        strs = _z_str_list_tail(strs);
+        xstr = _z_str_list_tail(xstr);
     }
 
-    _z_str_list_free(&strs);
+    _z_list_free(&strs, _zn_noop_free);
     return rname;
 
 ERR:
-    _z_str_list_free(&strs);
+    _z_list_free(&strs, _zn_noop_free);
     return NULL;
 }
 

@@ -145,9 +145,10 @@ int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     q.predicate = query->predicate;
 
     _zn_queryable_list_t *qles = __unsafe_zn_get_queryables_by_name(zn, rname);
-    while (qles != NULL)
+    _zn_queryable_list_t *xs = qles;
+    while (xs != NULL)
     {
-        _zn_queryable_t *qle = _zn_queryable_list_head(qles);
+        _zn_queryable_t *qle = _zn_queryable_list_head(xs);
         qle->callback(&q, qle->arg);
 
         // Send the final reply
@@ -172,15 +173,15 @@ int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
         }
 
         _zn_z_msg_clear(&z_msg);
-        qles = _zn_queryable_list_tail(qles);
+        xs = _zn_queryable_list_tail(xs);
     }
 
     _z_str_clear(rname);
+    _z_list_free(&qles, _zn_noop_free);
     z_mutex_unlock(&zn->mutex_inner);
     return 0;
 
 ERR:
-    _z_str_clear(rname);
     z_mutex_unlock(&zn->mutex_inner);
     return -1;
 }

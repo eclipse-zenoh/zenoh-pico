@@ -100,6 +100,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 rs->arg = NULL;
                 _zn_register_subscription(zn, _ZN_IS_REMOTE, rs);
 
+                _z_list_free(&subs, _zn_noop_free);
                 break;
             }
             case _ZN_DECL_QUERYABLE:
@@ -123,13 +124,15 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
                 _zn_subscriber_list_t *subs = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
-                while (subs != NULL)
-                {
-                    _zn_subscriber_t *sub = _zn_subscriber_list_head(subs);
-                    _zn_unregister_subscription(zn, _ZN_IS_REMOTE, sub);
-                    subs = _zn_subscriber_list_tail(subs);
-                }
 
+                _zn_subscriber_list_t *xs = subs;
+                while (xs != NULL)
+                {
+                    _zn_subscriber_t *sub = _zn_subscriber_list_head(xs);
+                    _zn_unregister_subscription(zn, _ZN_IS_REMOTE, sub);
+                    xs = _zn_subscriber_list_tail(xs);
+                }
+                _z_list_free(&subs, _zn_noop_free);
                 break;
             }
             case _ZN_DECL_FORGET_QUERYABLE:

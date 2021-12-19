@@ -152,7 +152,7 @@ int _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const 
     z_mutex_lock(&zn->mutex_inner);
 
     z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
-    if(rname == NULL)
+    if (rname == NULL)
         goto ERR;
 
     // Build the sample
@@ -162,14 +162,16 @@ int _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const 
     s.value = payload;
 
     _zn_subscriber_list_t *subs = __unsafe_zn_get_subscriptions_by_name(zn, _ZN_IS_LOCAL, rname);
-    while (subs != NULL)
+    _zn_subscriber_list_t *xs = subs;
+    while (xs != NULL)
     {
-        _zn_subscriber_t *sub = _zn_subscriber_list_head(subs);
+        _zn_subscriber_t *sub = _zn_subscriber_list_head(xs);
         sub->callback(&s, sub->arg);
-        subs = _zn_subscriber_list_tail(subs);
+        xs = _zn_subscriber_list_tail(xs);
     }
 
     _z_str_clear(rname);
+    _z_list_free(&subs, _zn_noop_free);
     z_mutex_unlock(&zn->mutex_inner);
     return 0;
 

@@ -23,6 +23,18 @@ int z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), voi
     return pthread_create(task, attr, fun, arg);
 }
 
+int z_task_join(pthread_t *task)
+{
+    return pthread_join(*task, NULL);
+}
+
+void z_task_free(pthread_t **task)
+{
+    pthread_t *ptr = *task;
+    free(ptr);
+    *task = NULL;
+}
+
 /*------------------ Mutex ------------------*/
 int z_mutex_init(pthread_mutex_t *m)
 {

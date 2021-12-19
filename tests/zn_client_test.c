@@ -168,6 +168,7 @@ int main(int argc, z_str_t *argv)
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
+	_zn_reskey_clear(&rk);
     }
 
     z_sleep_s(SLEEP);

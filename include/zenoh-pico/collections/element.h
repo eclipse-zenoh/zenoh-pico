@@ -62,6 +62,11 @@ static inline void _zn_noop_clear(void *s)
     (void)(s);
 }
 
+static inline void _zn_noop_free(void **s)
+{
+    (void)(s);
+}
+
 static inline void _zn_noop_copy(void *dst, const void *src)
 {
     (void)(dst);

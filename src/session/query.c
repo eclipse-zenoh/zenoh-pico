@@ -233,6 +233,7 @@ int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *r
     if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL)
     {
         z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &pen_qry->key);
+
         _zn_pending_reply_list_t *pen_rps = pen_qry->pending_replies;
         _zn_pending_reply_t *pen_rep = NULL;
         while (pen_rps != NULL)
@@ -245,6 +246,8 @@ int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *r
             {
                 pen_qry->callback(*pen_rep->reply, pen_qry->arg);
                 pen_qry->pending_replies = _zn_pending_reply_list_drop_filter(pen_qry->pending_replies, _zn_pending_reply_eq, pen_rep);
+
+                _z_str_clear(rname);
                 break;
             }
 
