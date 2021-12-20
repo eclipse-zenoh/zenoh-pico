@@ -131,7 +131,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 {
     _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
     rs->id = _zn_get_entity_id(zn);
-    rs->rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);;
+    rs->rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);
     rs->key = reskey;
     rs->info = sub_info;
     rs->callback = callback;
@@ -161,6 +161,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
     return subscriber;
 
 ERR:
+    _z_str_clear(rs->rname);
     free(rs);
     return NULL;
 }
@@ -194,7 +195,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 {
     _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
     rq->id = _zn_get_entity_id(zn);
-    rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);;
+    rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);
     rq->kind = kind;
     rq->callback = callback;
     rq->arg = arg;
@@ -223,6 +224,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
     return queryable;
 
 ERR:
+    _z_str_clear(rq->rname);
     free(rq);
     return NULL;
 }
