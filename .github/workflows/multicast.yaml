@@ -8,36 +8,38 @@
 # Contributors:
 #   ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
-name: build
+name: multicast
 
 on:
   push:
     branches: [ '**' ]
   pull_request:
     branches: [ '**' ]
+  schedule:
+    - cron: '0 6 * * 1-5'
 
 jobs:
   build:
 
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build on macOS-latest
+    runs-on: macOS-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ macOS-latest ]
 
     steps:
-    - uses: actions/checkout@v2      
+    - uses: actions/checkout@v2
 
     - name: Compile debug
       run: make all
       env:
         BUILD_TYPE: Debug
-        BUILD_TESTING: ON
-        BUILD_MULTICAST: OFF
+        BUILD_TESTING: OFF
+        BUILD_MULTICAST: ON
         BUILD_INTEGRATION: OFF
 
-    - name: Run tests
+    - name: Test debug
       run: make test
       env:
-        ARGS: -V 
+        ARGS: -V
