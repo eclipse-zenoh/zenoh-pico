@@ -215,13 +215,16 @@ if(BUILD_INTEGRATION)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
   add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
+  add_executable(zn_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/zn_peer_multicast_test.c)
 
   target_link_libraries(zn_client_test ${Libname})
+  target_link_libraries(zn_peer_multicast_test ${Libname})
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
   enable_testing()
   add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
+  add_test(zn_peer_multicast_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_peer_multicast_test "udp/224.0.0.225:7447#iface=en0")
 endif()
 
 # For packaging
