@@ -33,6 +33,7 @@
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 int z_task_join(z_task_t *task);
+int z_task_cancel(z_task_t *task);
 void z_task_free(z_task_t **task);
 
 /*------------------ Mutex ------------------*/

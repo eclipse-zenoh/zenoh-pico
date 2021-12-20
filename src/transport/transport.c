@@ -344,6 +344,12 @@ int _zn_transport_close(_zn_transport_t *zt, uint8_t reason)
 
 void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 {
+    // Clean up tasks
+    z_task_cancel(ztu->read_task);
+    z_task_cancel(ztu->lease_task);
+    z_task_free(&ztu->read_task);
+    z_task_free(&ztu->lease_task);
+
     // Clean up the mutexes
     z_mutex_free(&ztu->mutex_tx);
     z_mutex_free(&ztu->mutex_rx);
@@ -354,12 +360,6 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
     _z_wbuf_clear(&ztu->dbuf_reliable);
     _z_wbuf_clear(&ztu->dbuf_best_effort);
 
-    // Clean up tasks
-    z_task_join(ztu->read_task);
-    z_task_join(ztu->lease_task);
-    z_task_free(&ztu->read_task);
-    z_task_free(&ztu->lease_task);
-
     // Clean up PIDs
     _z_bytes_clear(&ztu->remote_pid);
 
@@ -369,6 +369,14 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 
 void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
 {
+    // Clean up tasks
+    z_task_cancel(ztm->read_task);
+    z_task_cancel(ztm->lease_task);
+    z_task_cancel(ztm->join_task);
+    z_task_free(&ztm->read_task);
+    z_task_free(&ztm->lease_task);
+    z_task_free(&ztm->join_task);
+
     // Clean up the mutexes
     z_mutex_free(&ztm->mutex_tx);
     z_mutex_free(&ztm->mutex_rx);
@@ -380,14 +388,6 @@ void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
 
     // Clean up peer list
     _zn_transport_peer_entry_list_free(&ztm->peers);
-
-    // Clean up tasks
-    z_task_join(ztm->read_task);
-    z_task_join(ztm->lease_task);
-    z_task_join(ztm->join_task);
-    z_task_free(&ztm->read_task);
-    z_task_free(&ztm->lease_task);
-    z_task_free(&ztm->join_task);
 
     if (ztm->link != NULL)
         _zn_link_free((_zn_link_t **)&ztm->link);

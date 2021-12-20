@@ -28,6 +28,11 @@ int z_task_join(pthread_t *task)
     return pthread_join(*task, NULL);
 }
 
+int z_task_cancel(pthread_t *task)
+{
+    return pthread_cancel(*task);
+}
+
 void z_task_free(pthread_t **task)
 {
     pthread_t *ptr = *task;
