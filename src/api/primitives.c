@@ -37,6 +37,10 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     r->id = _zn_get_resource_id(zn);
     r->key = reskey;
 
+    // FIXME: remove when resource declaration is implemented for multicast transport
+    if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+        goto ERR;
+
     int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
     if (res != 0)
         goto ERR;
