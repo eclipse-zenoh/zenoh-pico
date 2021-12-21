@@ -37,27 +37,23 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
         r.value.link = _zn_new_link_udp_unicast(endpoint);
     }
     else
-    {
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
         goto ERR2;
-    }
 
     // Open transport link for communication
     _zn_socket_result_t r_sock = r.value.link->open_f(r.value.link, tout);
     if (r_sock.tag == _z_res_t_ERR)
-    {
-        r.value.error = r_sock.value.error;
         goto ERR3;
-    }
 
     r.tag = _z_res_t_OK;
     return r;
 
 ERR3:
     _zn_link_free(&r.value.link);
+    r.value.error = -1;
     goto ERR1; // _zn_link_free is releasing the endpoint
 
 ERR2:
+    r.value.error = _zn_err_t_INVALID_LOCATOR;
     _zn_endpoint_clear(&endpoint);
 
 ERR1:
@@ -80,24 +76,19 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
         r.value.link = _zn_new_link_udp_multicast(endpoint);
     }
     else
-    {
-        r.value.error = _zn_err_t_INVALID_LOCATOR;
         goto ERR2;
-    }
 
     // Open transport link for listening
     _zn_socket_result_t r_sock = r.value.link->listen_f(r.value.link, tout);
     if (r_sock.tag == _z_res_t_ERR)
-    {
-        r.value.error = r_sock.value.error;
         goto ERR3;
-    }
 
     r.tag = _z_res_t_OK;
     return r;
 
 ERR3:
     _zn_link_free(&r.value.link);
+    r.value.error = _zn_err_t_INVALID_LOCATOR;
     goto ERR1; // _zn_link_free is releasing the endpoint
 
 ERR2:
@@ -105,6 +96,8 @@ ERR2:
 
 ERR1:
     r.tag = _z_res_t_ERR;
+    r.value.error = -1;
+
     return r;
 }
 
