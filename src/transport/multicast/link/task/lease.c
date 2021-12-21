@@ -57,34 +57,7 @@ void *_znp_multicast_lease_task(void *arg)
     _zn_transport_peer_entry_list_t *it = NULL;
     while (ztm->lease_task_running)
     {
-        // Compute the target interval to sleep
-        z_zint_t interval;
-        if (next_lease > 0)
-        {
-            if (next_lease < next_keep_alive)
-                interval = next_lease;
-            else
-                interval = next_keep_alive;
-        }
-        else
-            interval = next_keep_alive;
-
-        // The keep alive and lease intervals are expressed in milliseconds
-        z_sleep_ms(interval);
-
-        // Get the peer lock
         z_mutex_lock(&ztm->mutex_peer);
-
-        // Decrement all intervals
-        it = ztm->peers;
-        while (it != NULL)
-        {
-            ((_zn_transport_peer_entry_t *)it->val)->lease_expires -= interval;
-            it = it->tail;
-        }
-
-        next_lease -= interval;
-        next_keep_alive -= interval;
 
         if (next_lease <= 0)
         {
@@ -92,7 +65,7 @@ void *_znp_multicast_lease_task(void *arg)
             while (it != NULL)
             {
                 _zn_transport_peer_entry_t *entry = it->val;
-                if (entry->lease_expires == 0 && entry->received == 0)
+                if (entry->lease_expires <= 0 && entry->received == 0)
                 {
                     _Z_DEBUG_VA("Remove peer from know list because it has expired after %zums", ztu->lease);
                     ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
@@ -121,8 +94,35 @@ void *_znp_multicast_lease_task(void *arg)
             next_keep_alive = ztm->keep_alive;
         }
 
-        next_lease = _zn_get_minimum_lease(ztm->peers);
+        // Compute the target interval to sleep
+        z_zint_t interval;
+        if (next_lease > 0)
+        {
+            if (next_lease < next_keep_alive)
+                interval = next_lease;
+            else
+                interval = next_keep_alive;
+        }
+        else
+            interval = next_keep_alive;
 
+        z_mutex_unlock(&ztm->mutex_peer);
+
+        // The keep alive and lease intervals are expressed in milliseconds
+        z_sleep_ms(interval);
+
+        // Decrement all intervals
+        z_mutex_lock(&ztm->mutex_peer);
+        it = ztm->peers;
+        while (it != NULL)
+        {
+            ((_zn_transport_peer_entry_t *)it->val)->lease_expires -= interval;
+            it = it->tail;
+        }
+
+        next_lease -= interval;
+        next_keep_alive -= interval;
+        next_lease = _zn_get_minimum_lease(ztm->peers);
         z_mutex_unlock(&ztm->mutex_peer);
     }
 

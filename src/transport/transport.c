@@ -345,8 +345,8 @@ int _zn_transport_close(_zn_transport_t *zt, uint8_t reason)
 void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 {
     // Clean up tasks
-    z_task_cancel(ztu->read_task);
-    z_task_cancel(ztu->lease_task);
+    z_task_join(ztu->read_task);
+    z_task_join(ztu->lease_task);
     z_task_free(&ztu->read_task);
     z_task_free(&ztu->lease_task);
 
@@ -370,9 +370,9 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
 {
     // Clean up tasks
-    z_task_cancel(ztm->read_task);
-    z_task_cancel(ztm->lease_task);
-    z_task_cancel(ztm->join_task);
+    z_task_join(ztm->read_task);
+    z_task_join(ztm->lease_task);
+    z_task_join(ztm->join_task);
     z_task_free(&ztm->read_task);
     z_task_free(&ztm->lease_task);
     z_task_free(&ztm->join_task);

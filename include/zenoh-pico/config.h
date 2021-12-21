@@ -91,11 +91,11 @@
 /**
  * In client mode, the period dedicated to scouting a router before failing.
  * String key : `"scouting_timeout"`.
- * Accepted values : `<float in seconds>`.
- * Default value : `"3.0"`.
+ * Accepted values : `<int in seconds>`.
+ * Default value : `"3"`.
  */
 #define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
-#define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3.0"
+#define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3"
 
 /**
  * Indicates if data messages should be timestamped.
@@ -122,6 +122,11 @@
  * Default multicast session join interval in milliseconds: 10 seconds
  */
 #define ZN_JOIN_INTERVAL 1000
+
+/**
+ * Default socket timeout: 30 seconds
+ */
+#define ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT 30
 
 /**
  * The default sequence number resolution takes 4 bytes on the wire.

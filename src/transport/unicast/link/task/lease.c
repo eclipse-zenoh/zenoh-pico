@@ -39,9 +39,39 @@ void *_znp_unicast_lease_task(void *arg)
     ztu->transmitted = 0;
 
     unsigned int next_lease = ztu->lease;
+    unsigned int lease_expires = ztu->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
     unsigned int next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
     while (ztu->lease_task_running)
     {
+        if (next_lease <= 0)
+        {
+            // Check if received data
+            if (lease_expires <= 0)
+            {
+                _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
+                _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
+                return 0;
+            }
+
+            // Reset the lease parameters
+            ztu->received = 0;
+            next_lease = ztu->lease;
+            lease_expires = ztu->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
+        }
+
+        if (next_keep_alive == 0)
+        {
+            // Check if need to send a keep alive
+            if (ztu->transmitted == 0)
+            {
+                _znp_unicast_send_keep_alive(ztu);
+            }
+
+            // Reset the keep alive parameters
+            ztu->transmitted = 0;
+            next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+        }
+
         // Compute the target interval
         unsigned int interval;
         if (ztu->lease > 0)
@@ -61,40 +91,9 @@ void *_znp_unicast_lease_task(void *arg)
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);
 
-        // Decrement the interval
-        if (ztu->lease > 0)
-        {
-            next_lease -= interval;
-        }
+        next_lease -= interval;
         next_keep_alive -= interval;
-
-        if (ztu->lease > 0 && next_lease == 0)
-        {
-            // Check if received data
-            if (ztu->received == 0)
-            {
-                _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
-                _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
-                return 0;
-            }
-
-            // Reset the lease parameters
-            ztu->received = 0;
-            next_lease = ztu->lease;
-        }
-
-        if (next_keep_alive == 0)
-        {
-            // Check if need to send a keep alive
-            if (ztu->transmitted == 0)
-            {
-                _znp_unicast_send_keep_alive(ztu);
-            }
-
-            // Reset the keep alive parameters
-            ztu->transmitted = 0;
-            next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
-        }
+        lease_expires -= interval;
     }
 
     return 0;
