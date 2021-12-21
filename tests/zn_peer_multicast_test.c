@@ -96,7 +96,6 @@ int main(int argc, z_str_t *argv)
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
-	_zn_reskey_clear(&rk);
     }
 
     // Write data from firt session
@@ -112,7 +111,7 @@ int main(int argc, z_str_t *argv)
             zn_reskey_t rk = zn_rname(s1_res);
             zn_write_ext(s1, rk, payload, len, Z_ENCODING_DEFAULT, Z_DATA_KIND_DEFAULT, zn_congestion_control_t_BLOCK);
             printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.rid, len, n * SET + (i + 1), total);
-	    _zn_reskey_clear(&rk);
+            _zn_reskey_clear(&rk);
         }
     }
 

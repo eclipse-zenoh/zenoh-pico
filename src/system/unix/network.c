@@ -308,13 +308,17 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     laddr->ai_next = NULL;
     *arg_2 = laddr;
 
+#if defined(ZENOH_LINUX)
     free(lsockaddr);
+#endif
+
     return sock;
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
     close(sock);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
+    free(lsockaddr);
     return -1;
 }
 
