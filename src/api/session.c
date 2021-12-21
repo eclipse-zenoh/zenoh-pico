@@ -55,7 +55,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         z_str_t tout = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
         if (tout == NULL)
             tout = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
-        unsigned long timeout = 1000 * strtof(tout, NULL); // FIXME: make it clock_t
+        clock_t timeout = strtof(tout, NULL);
 
         // Scout and return upon the first result
         zn_hello_array_t locs = _zn_scout(ZN_ROUTER, config, timeout, 1);
