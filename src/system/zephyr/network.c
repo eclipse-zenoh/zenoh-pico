@@ -157,6 +157,11 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     if (sock < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_1;
 
+    struct timeval tv;
+    tv.tv_sec = tout;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+
     return sock;
 
 _ZN_OPEN_UDP_UNICAST_ERROR_1:
@@ -250,6 +255,11 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     if (sock < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
+    struct timeval tv;
+    tv.tv_sec = tout;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+
     if (bind(sock, lsockaddr, addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
@@ -269,12 +279,15 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     laddr->ai_next = NULL;
     *arg_2 = laddr;
 
+    free(lsockaddr);
+
     return sock;
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
     close(sock);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
+    free(lsockaddr);
     return -1;
 }
 
