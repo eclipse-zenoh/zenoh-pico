@@ -16,11 +16,11 @@
 #include <assert.h>
 #include "zenoh-pico.h"
 
-#define MSG 1000
+#define MSG 10
 #define MSG_LEN 1024
-#define QRY 100
+#define QRY 10
 #define QRY_CLT 10
-#define SET 100
+#define SET 10
 #define SLEEP 1
 #define TIMEOUT 60
 
