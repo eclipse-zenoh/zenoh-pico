@@ -340,6 +340,11 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     if (sock < 0)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
 
+    struct timeval tv;
+    tv.tv_sec = tout;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+
     int optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
