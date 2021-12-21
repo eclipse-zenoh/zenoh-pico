@@ -39,24 +39,24 @@ for LOCATOR in $(echo $LOCATORS | xargs); do
     [ $RETCODE -lt 0 ] && exit $RETCODE
 done
 
-#INTERFACES=$(ifconfig -l)
-#for INTERFACE in $(echo $INTERFACES | xargs); do
-#    INET=$(ifconfig $INTERFACE | awk '$1 == "inet6" {print $2}')
-#    if [ "$INET" != "::1" ] && [ "$INET" != "" ]; then
-#        break
-#    fi
-#done
-#
-#LOCATORS="udp/\[ff10::1234\]:7447#iface=$INTERFACE"
-#for LOCATOR in $(echo $LOCATORS | xargs); do
-#    sleep 1
-#
-#    echo "> Running $TESTBIN $LOCATOR..."
-#    ./$TESTBIN $LOCATOR
-#    RETCODE=$?
-#
-#    [ $RETCODE -lt 0 ] && exit $RETCODE
-#done
+INTERFACES=$(ifconfig -l)
+for INTERFACE in $(echo $INTERFACES | xargs); do
+    INET=$(ifconfig $INTERFACE | awk '$1 == "inet6" {print $2}')
+    if [ "$INET" != "::1" ] && [ "$INET" != "" ]; then
+        break
+    fi
+done
+
+LOCATORS="udp/[ff10::1234]:7447#iface=$INTERFACE"
+for LOCATOR in $(echo $LOCATORS | xargs); do
+    sleep 1
+
+    echo "> Running $TESTBIN $LOCATOR..."
+    ./$TESTBIN $LOCATOR
+    RETCODE=$?
+
+    [ $RETCODE -lt 0 ] && exit $RETCODE
+done
 
 echo "> Done ($RETCODE)."
 exit $RETCODE
