@@ -28,13 +28,16 @@ for INTERFACE in $(echo $INTERFACES | xargs); do
     fi
 done
 
-LOCATOR="udp/224.0.0.225:7447#iface=$INTERFACE"
+LOCATORS="udp/224.0.0.225:7447#iface=$INTERFACE udp/\[ff10::1234\]:7447#iface=$INTERFACE"
+for LOCATOR in $(echo $LOCATORS | xargs); do
+    sleep 1
 
-echo "> Running $TESTBIN $LOCATOR..."
-./$TESTBIN $LOCATOR
-RETCODE=$?
+    echo "> Running $TESTBIN $LOCATOR..."
+    ./$TESTBIN $LOCATOR
+    RETCODE=$?
 
-[ $RETCODE -lt 0 ] && exit $RETCODE
+    [ $RETCODE -lt 0 ] && exit $RETCODE
+done
 
 echo "> Done ($RETCODE)."
 exit $RETCODE
