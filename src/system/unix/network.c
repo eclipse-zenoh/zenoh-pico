@@ -443,6 +443,9 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &raddrlen);
 
+        if(rb == -1) // If timeout return -1
+            return rb;
+
         if (laddr->ai_family == AF_INET)
         {
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
