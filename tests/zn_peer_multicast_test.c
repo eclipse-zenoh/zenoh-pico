@@ -69,7 +69,6 @@ int main(int argc, z_str_t *argv)
     // Start the read session session lease loops
     znp_start_read_task(s1);
     znp_start_lease_task(s1);
-    znp_start_join_task(s1);
 
     z_sleep_s(SLEEP);
 
@@ -82,7 +81,6 @@ int main(int argc, z_str_t *argv)
     // Start the read session session lease loops
     znp_start_read_task(s2);
     znp_start_lease_task(s2);
-    znp_start_join_task(s2);
 
     z_sleep_s(SLEEP);
 

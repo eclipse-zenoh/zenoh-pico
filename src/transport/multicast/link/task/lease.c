@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
@@ -53,6 +54,7 @@ void *_znp_multicast_lease_task(void *arg)
     // From all peers, get the next lease time (minimum)
     z_zint_t next_lease = _zn_get_minimum_lease(ztm->peers);
     z_zint_t next_keep_alive = ztm->keep_alive;
+    z_zint_t next_join = ZN_JOIN_INTERVAL;
 
     _zn_transport_peer_entry_list_t *it = NULL;
     while (ztm->lease_task_running)
@@ -88,6 +90,15 @@ void *_znp_multicast_lease_task(void *arg)
             }
         }
 
+        if (next_join <= 0)
+        {
+            _znp_multicast_send_join(ztm);
+            ztm->transmitted = 1;
+
+            // Reset the join parameters
+            next_join = ZN_JOIN_INTERVAL;
+        }
+
         if (next_keep_alive <= 0)
         {
             // Check if need to send a keep alive
@@ -103,13 +114,18 @@ void *_znp_multicast_lease_task(void *arg)
         z_zint_t interval;
         if (next_lease > 0)
         {
-            if (next_lease < next_keep_alive)
-                interval = next_lease;
-            else
+            interval = next_lease;
+            if (next_keep_alive < interval)
                 interval = next_keep_alive;
+            if (next_join < interval)
+                interval = next_join;
         }
         else
+        {
             interval = next_keep_alive;
+            if (next_join < interval)
+                interval = next_join;
+        }
 
         z_mutex_unlock(&ztm->mutex_peer);
 
@@ -127,6 +143,7 @@ void *_znp_multicast_lease_task(void *arg)
         }
         next_lease = _zn_get_minimum_lease(ztm->peers);
         next_keep_alive -= interval;
+        next_join -= interval;
         z_mutex_unlock(&ztm->mutex_peer);
     }
 
