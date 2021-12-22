@@ -38,28 +38,35 @@ void *_znp_unicast_lease_task(void *arg)
     ztu->received = 0;
     ztu->transmitted = 0;
 
-    unsigned int next_lease = ztu->lease;
-    unsigned int lease_expires = ztu->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
-    unsigned int next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+    z_zint_t next_lease = ztu->lease;
+    z_zint_t next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+    float skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
     while (ztu->lease_task_running)
     {
         if (next_lease <= 0)
         {
             // Check if received data
-            if (lease_expires <= 0)
+            if (ztu->received == 1)
             {
-                _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
-                _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
-                return 0;
+                // Reset the lease parameters
+                ztu->received = 0;
+                skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
+            }
+            else
+            {
+                skiped_leases -= 1;
+                if (skiped_leases <= 0)
+                {
+                    _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
+                    _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
+                    return 0;
+                }
             }
 
-            // Reset the lease parameters
-            ztu->received = 0;
             next_lease = ztu->lease;
-            lease_expires = ztu->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
         }
 
-        if (next_keep_alive == 0)
+        if (next_keep_alive <= 0)
         {
             // Check if need to send a keep alive
             if (ztu->transmitted == 0)
@@ -73,8 +80,8 @@ void *_znp_unicast_lease_task(void *arg)
         }
 
         // Compute the target interval
-        unsigned int interval;
-        if (ztu->lease > 0)
+        z_zint_t interval;
+        if (next_lease > 0)
         {
             if (next_lease < next_keep_alive)
                 interval = next_lease;
@@ -93,7 +100,6 @@ void *_znp_unicast_lease_task(void *arg)
 
         next_lease -= interval;
         next_keep_alive -= interval;
-        lease_expires -= interval;
     }
 
     return 0;

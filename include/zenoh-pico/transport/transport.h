@@ -36,7 +36,8 @@ typedef struct
     z_bytes_t remote_addr;
 
     volatile z_zint_t lease;
-    volatile z_zint_t lease_expires;
+    volatile z_zint_t next_lease;
+    volatile float skiped_leases;
     volatile int received;
 } _zn_transport_peer_entry_t;
 

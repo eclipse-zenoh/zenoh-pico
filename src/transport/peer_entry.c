@@ -34,7 +34,8 @@ void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_tr
     _zn_conduit_sn_list_copy(&dst->sn_rx_sns, &src->sn_rx_sns);
 
     dst->lease = src->lease;
-    dst->lease_expires = src->lease_expires;
+    dst->next_lease = src->next_lease;
+    dst->skiped_leases = src->skiped_leases;
     dst->received = src->received;
 
     _z_bytes_copy(&dst->remote_pid, &src->remote_pid);

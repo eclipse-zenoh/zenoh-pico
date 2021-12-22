@@ -26,9 +26,9 @@ z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers)
     _zn_transport_peer_entry_list_t *it = peers;
     while (it != NULL)
     {
-        z_zint_t lease_expires = ((_zn_transport_peer_entry_t *)it->val)->lease_expires;
-        if (lease_expires < ret)
-            ret = lease_expires;
+        z_zint_t next_lease = ((_zn_transport_peer_entry_t *)it->val)->next_lease;
+        if (next_lease < ret)
+            ret = next_lease;
 
         it = it->tail;
     }
@@ -58,36 +58,41 @@ void *_znp_multicast_lease_task(void *arg)
     while (ztm->lease_task_running)
     {
         z_mutex_lock(&ztm->mutex_peer);
-
         if (next_lease <= 0)
         {
             it = ztm->peers;
             while (it != NULL)
             {
                 _zn_transport_peer_entry_t *entry = it->val;
-                if (entry->lease_expires <= 0 && entry->received == 0)
-                {
-                    _Z_DEBUG_VA("Remove peer from know list because it has expired after %zums", ztu->lease);
-                    ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
-                    it = ztm->peers;
-                }
-                else if (entry->received == 1)
+                if (entry->received == 1)
                 {
                     // Reset the lease parameters
                     entry->received = 0;
-                    entry->lease_expires = entry->lease * ZN_LEASE_EXPIRE_FACTOR; // FIXME: might overflow
+                    entry->skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
                     it = it->tail;
-                } else
-                    it = it->tail;
+                }
+                else
+                {
+                    entry->skiped_leases -= 1;
+                    if (entry->skiped_leases <= 0)
+                    {
+                        _Z_DEBUG_VA("Remove peer from know list because it has expired after %zums", ztu->lease);
+                        ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
+                        it = ztm->peers;
+                    }
+                    else
+                        it = it->tail;
+                }
+
+                entry->next_lease = entry->lease;
             }
         }
-        else if (next_keep_alive == 0)
+
+        if (next_keep_alive <= 0)
         {
             // Check if need to send a keep alive
             if (ztm->transmitted == 0)
-            {
                 _znp_multicast_send_keep_alive(ztm);
-            }
 
             // Reset the keep alive parameters
             ztm->transmitted = 0;
@@ -116,13 +121,12 @@ void *_znp_multicast_lease_task(void *arg)
         it = ztm->peers;
         while (it != NULL)
         {
-            ((_zn_transport_peer_entry_t *)it->val)->lease_expires -= interval;
+            _zn_transport_peer_entry_t *entry = it->val;
+            entry->next_lease -= interval;
             it = it->tail;
         }
-
-        next_lease -= interval;
-        next_keep_alive -= interval;
         next_lease = _zn_get_minimum_lease(ztm->peers);
+        next_keep_alive -= interval;
         z_mutex_unlock(&ztm->mutex_peer);
     }
 
