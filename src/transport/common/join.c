@@ -27,14 +27,3 @@ int _znp_send_join(_zn_transport_t *zt)
     else
         return -1;
 }
-
-void *_znp_join_task(void *arg)
-{
-    _zn_transport_t *zt = (_zn_transport_t *)arg;
-
-    // Join task only applies to multicast transports
-    if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_join_task(&zt->transport.multicast);
-    else
-        return NULL;
-}

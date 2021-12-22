@@ -20,7 +20,5 @@
 int _znp_send_join(_zn_transport_t *zt);
 int _znp_multicast_send_join(_zn_transport_multicast_t *ztm);
 
-void *_znp_join_task(void *arg);
-void *_znp_multicast_join_task(void *arg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_JOIN_H */

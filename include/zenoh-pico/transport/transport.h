@@ -117,9 +117,6 @@ typedef struct
 
     volatile int transmitted;
 
-    volatile int join_task_running;
-    z_task_t *join_task;
-
     volatile int read_task_running;
     z_task_t *read_task;
 

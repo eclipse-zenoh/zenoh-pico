@@ -137,8 +137,6 @@ _zn_transport_t *_zn_transport_multicast_new(_zn_link_t *link, _zn_transport_mul
     zt->transport.multicast.peers = _zn_transport_peer_entry_list_new();
 
     // Tasks
-    zt->transport.multicast.join_task_running = 0;
-    zt->transport.multicast.join_task = NULL;
     zt->transport.multicast.read_task_running = 0;
     zt->transport.multicast.read_task = NULL;
     zt->transport.multicast.lease_task_running = 0;
@@ -372,10 +370,8 @@ void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
     // Clean up tasks
     z_task_join(ztm->read_task);
     z_task_join(ztm->lease_task);
-    z_task_join(ztm->join_task);
     z_task_free(&ztm->read_task);
     z_task_free(&ztm->lease_task);
-    z_task_free(&ztm->join_task);
 
     // Clean up the mutexes
     z_mutex_free(&ztm->mutex_tx);

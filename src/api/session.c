@@ -188,32 +188,3 @@ int znp_stop_lease_task(zn_session_t *zn)
 
     return 0;
 }
-
-int znp_start_join_task(zn_session_t *zn)
-{
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(pthread_t));
-
-    // Only applies to multicast transports
-    if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-    {
-        zn->tp->transport.multicast.join_task = task;
-        if (z_task_init(task, NULL, _znp_multicast_join_task, &zn->tp->transport.multicast) != 0)
-            return -1;
-    }
-    else
-        return -1;
-
-    return 0;
-}
-
-int znp_stop_join_task(zn_session_t *zn)
-{
-    // Only applies to multicast transports
-    if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        zn->tp->transport.multicast.join_task_running = 0;
-    else
-        return -1;
-
-    return 0;
-}

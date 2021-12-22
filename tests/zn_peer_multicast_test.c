@@ -143,12 +143,10 @@ int main(int argc, z_str_t *argv)
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
-    znp_stop_join_task(s1);
     znp_stop_lease_task(s1);
     znp_stop_read_task(s1);
 
     printf("Stopping threads on session 2\n");
-    znp_stop_join_task(s2);
     znp_stop_lease_task(s2);
     znp_stop_read_task(s2);
 

@@ -33,20 +33,3 @@ int _znp_multicast_send_join(_zn_transport_multicast_t *ztm)
 
     return _zn_multicast_send_t_msg(ztm, &jsm);
 }
-
-void *_znp_multicast_join_task(void *arg)
-{
-    _zn_transport_multicast_t *ztm = (_zn_transport_multicast_t *)arg;
-
-    ztm->join_task_running = 1;
-    while (ztm->join_task_running)
-    {
-        _znp_multicast_send_join(ztm);
-        ztm->transmitted = 1;
-
-        // The join intervals are expressed in milliseconds
-        z_sleep_ms(ZN_JOIN_INTERVAL);
-    }
-
-    return 0;
-}
