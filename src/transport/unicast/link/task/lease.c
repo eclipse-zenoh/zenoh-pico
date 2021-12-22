@@ -83,17 +83,12 @@ void *_znp_unicast_lease_task(void *arg)
         z_zint_t interval;
         if (next_lease > 0)
         {
-            if (next_lease < next_keep_alive)
-                interval = next_lease;
-            else if (next_keep_alive < ZN_KEEP_ALIVE_INTERVAL)
+            interval = next_lease;
+            if (next_keep_alive < interval)
                 interval = next_keep_alive;
-            else
-                interval = ZN_KEEP_ALIVE_INTERVAL;
         }
         else
-        {
             interval = ZN_KEEP_ALIVE_INTERVAL;
-        }
 
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);
