@@ -37,7 +37,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
         goto ERR;
 
-    int res = _zn_register_resource(zn, _ZN_IS_LOCAL, r);
+    int res = _zn_register_resource(zn, _ZN_RESOURCE_IS_LOCAL, r);
     if (res != 0)
         goto ERR;
 
@@ -63,7 +63,7 @@ ERR:
 
 void zn_undeclare_resource(zn_session_t *zn, const z_zint_t rid)
 {
-    _zn_resource_t *r = _zn_get_resource_by_id(zn, _ZN_IS_LOCAL, rid);
+    _zn_resource_t *r = _zn_get_resource_by_id(zn, _ZN_RESOURCE_IS_LOCAL, rid);
     if (r == NULL)
         return;
 
@@ -79,7 +79,7 @@ void zn_undeclare_resource(zn_session_t *zn, const z_zint_t rid)
     }
 
     _zn_z_msg_clear(&z_msg);
-    _zn_unregister_resource(zn, _ZN_IS_LOCAL, r);
+    _zn_unregister_resource(zn, _ZN_RESOURCE_IS_LOCAL, r);
 }
 
 /*------------------  Publisher Declaration ------------------*/
@@ -127,13 +127,13 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 {
     _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
     rs->id = _zn_get_entity_id(zn);
-    rs->rname = _zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);
+    rs->rname = _zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, &reskey);
     rs->key = reskey;
     rs->info = sub_info;
     rs->callback = callback;
     rs->arg = arg;
 
-    int res = _zn_register_subscription(zn, _ZN_IS_LOCAL, rs);
+    int res = _zn_register_subscription(zn, _ZN_RESOURCE_IS_LOCAL, rs);
     if (res != 0)
         goto ERR;
 
@@ -164,7 +164,7 @@ ERR:
 
 void zn_undeclare_subscriber(zn_subscriber_t *sub)
 {
-    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
+    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_RESOURCE_IS_LOCAL, sub->id);
     if (s == NULL)
         return;
 
@@ -183,7 +183,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
     }
 
     _zn_z_msg_clear(&z_msg);
-    _zn_unregister_subscription(sub->zn, _ZN_IS_LOCAL, s);
+    _zn_unregister_subscription(sub->zn, _ZN_RESOURCE_IS_LOCAL, s);
 }
 
 /*------------------ Queryable Declaration ------------------*/
@@ -191,7 +191,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 {
     _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
     rq->id = _zn_get_entity_id(zn);
-    rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, &reskey);
+    rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, &reskey);
     rq->kind = kind;
     rq->callback = callback;
     rq->arg = arg;
@@ -425,7 +425,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 /*------------------ Pull ------------------*/
 int zn_pull(const zn_subscriber_t *sub)
 {
-    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
+    _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_RESOURCE_IS_LOCAL, sub->id);
     if (s == NULL)
         return -1;
 

@@ -152,7 +152,7 @@ int _zn_trigger_query_reply_partial(zn_session_t *zn,
     if (reskey.rid == ZN_RESOURCE_ID_NONE)
         reply->data.data.key.val = _z_str_clone(reskey.rname);
     else
-        reply->data.data.key.val = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &reskey);
+        reply->data.data.key.val = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &reskey);
     reply->data.data.key.len = strlen(reply->data.data.key.val);
     _z_bytes_copy(&reply->data.replier_id, &reply_context->replier_id);
     reply->data.replier_kind = reply_context->replier_kind;
@@ -227,7 +227,7 @@ int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *r
     // The reply is the final one, apply consolidation if needed
     if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL)
     {
-        z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &pen_qry->key);
+        z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &pen_qry->key);
 
         _zn_pending_reply_list_t *pen_rps = pen_qry->pending_replies;
         _zn_pending_reply_t *pen_rep = NULL;

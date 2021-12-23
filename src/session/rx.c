@@ -57,7 +57,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 r->key.rid = key.rid;
                 r->key.rname = _z_str_clone(key.rname);
 
-                int res = _zn_register_resource(zn, _ZN_IS_REMOTE, r);
+                int res = _zn_register_resource(zn, _ZN_RESOURCE_REMOTE, r);
                 if (res != 0)
                 {
                     _zn_resource_clear(r);
@@ -75,9 +75,9 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
             case _ZN_DECL_SUBSCRIBER:
             {
-                z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &decl.body.sub.key);
+                z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &decl.body.sub.key);
 
-                _zn_subscriber_list_t *subs = _zn_get_subscriptions_by_name(zn, _ZN_IS_REMOTE, rname);
+                _zn_subscriber_list_t *subs = _zn_get_subscriptions_by_name(zn, _ZN_RESOURCE_REMOTE, rname);
                 if (subs != NULL)
                 {
                     _z_str_clear(rname);
@@ -91,7 +91,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 rs->info = decl.body.sub.subinfo;
                 rs->callback = NULL;
                 rs->arg = NULL;
-                _zn_register_subscription(zn, _ZN_IS_REMOTE, rs);
+                _zn_register_subscription(zn, _ZN_RESOURCE_REMOTE, rs);
 
                 _z_list_free(&subs, _zn_noop_free);
                 break;
@@ -103,9 +103,9 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_RESOURCE:
             {
-                _zn_resource_t *rd = _zn_get_resource_by_id(zn, _ZN_IS_REMOTE, decl.body.forget_res.rid);
+                _zn_resource_t *rd = _zn_get_resource_by_id(zn, _ZN_RESOURCE_REMOTE, decl.body.forget_res.rid);
                 if (rd != NULL)
-                    _zn_unregister_resource(zn, _ZN_IS_REMOTE, rd);
+                    _zn_unregister_resource(zn, _ZN_RESOURCE_REMOTE, rd);
 
                 break;
             }
@@ -116,13 +116,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
-                _zn_subscriber_list_t *subs = _zn_get_subscription_by_key(zn, _ZN_IS_REMOTE, &decl.body.forget_sub.key);
+                _zn_subscriber_list_t *subs = _zn_get_subscription_by_key(zn, _ZN_RESOURCE_REMOTE, &decl.body.forget_sub.key);
 
                 _zn_subscriber_list_t *xs = subs;
                 while (xs != NULL)
                 {
                     _zn_subscriber_t *sub = _zn_subscriber_list_head(xs);
-                    _zn_unregister_subscription(zn, _ZN_IS_REMOTE, sub);
+                    _zn_unregister_subscription(zn, _ZN_RESOURCE_REMOTE, sub);
                     xs = _zn_subscriber_list_tail(xs);
                 }
                 _z_list_free(&subs, _zn_noop_free);

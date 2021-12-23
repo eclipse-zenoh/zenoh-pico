@@ -99,7 +99,7 @@ _zn_queryable_list_t *_zn_get_queryables_by_name(zn_session_t *zn, const z_str_t
 _zn_queryable_list_t *_zn_get_queryables_by_key(zn_session_t *zn, const zn_reskey_t *reskey)
 {
     z_mutex_lock(&zn->mutex_inner);
-    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_LOCAL, reskey);
+    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, reskey);
     _zn_queryable_list_t *qles = __unsafe_zn_get_queryables_by_name(zn, rname);
     z_mutex_unlock(&zn->mutex_inner);
 
@@ -122,7 +122,7 @@ int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
 {
     z_mutex_lock(&zn->mutex_inner);
 
-    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_IS_REMOTE, &query->key);
+    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &query->key);
     if(rname == NULL)
         goto ERR;
 

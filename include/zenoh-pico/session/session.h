@@ -20,8 +20,8 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/string.h"
 
-#define _ZN_IS_REMOTE 0
-#define _ZN_IS_LOCAL 1
+#define _ZN_RESOURCE_REMOTE 0
+#define _ZN_RESOURCE_IS_LOCAL 1
 
 /**
  * The query to be answered by a queryable.
