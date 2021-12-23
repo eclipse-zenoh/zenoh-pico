@@ -18,7 +18,7 @@
 project = 'zenoh-pico'
 copyright = '2017, 2020 ADLINK Technology Inc'
 author = 'ADLINK zenoh team'
-release = '0.4.0'
+release = '0.6.0'
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'

@@ -1,0 +1,189 @@
+#
+# Copyright (c) 2017, 2020 ADLINK Technology Inc.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+#
+name: Release
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "0 0 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  preps:
+    name: Preparation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environment setup
+        id: env
+        shell: bash
+        run: |
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_SHA=${GITHUB_SHA:0:8}"
+          GIT_BRANCH=`[[ $GITHUB_REF =~ ^refs/heads/.* ]] && echo ${GITHUB_REF/refs\/heads\//} || true`
+          echo "GIT_BRANCH=${GIT_BRANCH}"
+          echo ::set-output name=GIT_BRANCH::"${GIT_BRANCH}"
+          GIT_TAG=`[[ $GITHUB_REF =~ ^refs/tags/.* ]] && echo ${GITHUB_REF/refs\/tags\//} || true`
+          echo "GIT_TAG=${GIT_TAG}"
+          echo ::set-output name=GIT_TAG::"${GIT_TAG}"
+
+          ZENOH_VERSION=$(sed -n 's/^project(libzenohpico VERSION \(.*\) LANGUAGES C)/\1/p' CMakeLists.txt | head -n1)
+          echo "ZENOH_VERSION=${ZENOH_VERSION}"
+          echo ::set-output name=ZENOH_VERSION::"${ZENOH_VERSION}"
+          if [ -n "${GIT_TAG}" ]; then
+            IS_RELEASE="true"
+            echo "IS_RELEASE=${IS_RELEASE}"
+            echo ::set-output name=IS_RELEASE::"${IS_RELEASE}"
+            PKG_VERSION=${ZENOH_VERSION}
+          elif [ -n "${GIT_BRANCH}" ]; then
+            PKG_VERSION=${GIT_BRANCH}-${GITHUB_SHA:0:8}
+          else
+            PKG_VERSION=${ZENOH_VERSION}-${GITHUB_SHA:0:8}
+          fi
+          echo "PKG_VERSION=${PKG_VERSION}"
+          echo ::set-output name=PKG_VERSION::"${PKG_VERSION}"
+
+          CROSSBUILD_TARGETS=$(sed -n 's/^CROSSBUILD_TARGETS=\(.*\)/\1/p' Makefile | head -n1)
+          echo "CROSSBUILD_TARGETS=$CROSSBUILD_TARGETS"
+          TARGET_MATRIX="{\"target\": [\"${CROSSBUILD_TARGETS// /\",\"}\"]}"
+          echo "TARGET_MATRIX=$TARGET_MATRIX"
+          echo ::set-output name=TARGET_MATRIX::"${TARGET_MATRIX}"
+    outputs:
+      GIT_BRANCH: ${{ steps.env.outputs.GIT_BRANCH }}
+      GIT_TAG: ${{ steps.env.outputs.GIT_TAG }}
+      IS_RELEASE: ${{ steps.env.outputs.IS_RELEASE }}
+      ZENOH_VERSION: ${{ steps.env.outputs.ZENOH_VERSION }}
+      PKG_VERSION: ${{ steps.env.outputs.PKG_VERSION }}
+      TARGET_MATRIX: ${{ steps.env.outputs.TARGET_MATRIX }}
+
+  macos-build:
+    name: Build on macos-x64
+    needs: preps
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - name: MacOS build
+        run: make
+        env:
+          BUILD_TYPE: RELEASE
+      - name: Packaging
+        id: package
+        shell: bash
+        run: |
+          LIB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-macos-x64.zip
+          echo "Packaging ${LIB_PKG_NAME}:"
+          cd build && zip -r ${LIB_PKG_NAME} lib && cd -
+          zip -r ${LIB_PKG_NAME} include
+          echo ::set-output name=LIB_PKG_NAME::"${LIB_PKG_NAME}"
+
+          EXP_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-macos-x64-examples.zip
+          echo "Packaging ${EXP_PKG_NAME}:"
+          cd build/examples && zip ${EXP_PKG_NAME} * && cd -
+          echo ::set-output name=EXP_PKG_NAME::"${EXP_PKG_NAME}"
+      - name: "Upload x86_64 macos package"
+        uses: actions/upload-artifact@master
+        with:
+          name: macos-x64
+          path: |
+            ${{ steps.package.outputs.LIB_PKG_NAME }}
+            ${{ steps.package.outputs.EXP_PKG_NAME }}
+
+  linux-builds:
+    name: Crossbuild for ${{ matrix.target }}
+    needs: preps
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.preps.outputs.TARGET_MATRIX)}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: make for ${{ matrix.target }}
+        env:
+          BUILD_TYPE: RELEASE
+        run: make ${{ matrix.target }}
+      - name: Packaging
+        id: package
+        shell: bash
+        run: |
+          TARGET=${{ matrix.target }}
+          LIB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}.zip
+          DEB_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-deb-pkgs.zip
+          RPM_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-rpm-pkgs.zip
+          EXP_PKG_NAME=${PWD}/zenoh-pico-${{ needs.preps.outputs.PKG_VERSION }}-${TARGET}-examples.zip
+
+          echo "Packaging ${LIB_PKG_NAME}:"
+          cd crossbuilds/${TARGET} && zip -r ${LIB_PKG_NAME} lib && cd -
+          zip -r ${LIB_PKG_NAME} include
+          echo ::set-output name=LIB_PKG_NAME::"${LIB_PKG_NAME}"
+
+          cd crossbuilds/${TARGET}/packages
+          echo "Packaging ${DEB_PKG_NAME}:"
+          zip ${DEB_PKG_NAME} *.deb
+          echo ::set-output name=DEB_PKG_NAME::"${DEB_PKG_NAME}"
+          echo "Packaging ${RPM_PKG_NAME}:"
+          zip ${RPM_PKG_NAME} *.rpm
+          echo ::set-output name=RPM_PKG_NAME::"${RPM_PKG_NAME}"
+          cd -
+
+          echo "Packaging ${EXP_PKG_NAME}:"
+          cd crossbuilds/${TARGET}/examples && zip ${EXP_PKG_NAME} * && cd -
+          echo ::set-output name=EXP_PKG_NAME::"${EXP_PKG_NAME}"
+      - name: "Upload packages"
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            ${{ steps.package.outputs.LIB_PKG_NAME }}
+            ${{ steps.package.outputs.DEB_PKG_NAME }}
+            ${{ steps.package.outputs.RPM_PKG_NAME }}
+            ${{ steps.package.outputs.EXP_PKG_NAME }}
+
+  publication:
+    name: Publish the release
+    if: needs.preps.outputs.IS_RELEASE == 'true'
+    needs: [preps, macos-build, linux-builds]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download result of previous builds
+        uses: actions/download-artifact@v2
+        with:
+          path: ARTIFACTS
+      - name: Publish as github release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ARTIFACTS/*/*.*
+      - name: Publish to download.eclipse.org/zenoh
+        env:
+          SSH_TARGET: genie.zenoh@projects-storage.eclipse.org
+          ECLIPSE_BASE_DIR: /home/data/httpd/download.eclipse.org/zenoh/zenoh-pico
+        shell: bash
+        run: |
+          echo "--- setup ssh-agent"
+          eval "$(ssh-agent -s)"
+          echo 'echo "${{ secrets.SSH_PASSPHRASE }}"' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | DISPLAY=NONE SSH_ASKPASS=~/.ssh_askpass ssh-add - > /dev/null 2>&1
+          rm -f ~/.ssh_askpass
+          echo "--- test ssh:"
+          ssh -o "StrictHostKeyChecking=no" ${SSH_TARGET} ls -al
+          echo "---- list artifacts to upload:"
+          ls -R ARTIFACTS || true
+          DOWNLOAD_DIR=${ECLIPSE_BASE_DIR}/${{ needs.preps.outputs.ZENOH_VERSION }}
+          echo "---- copy artifacts into ${DOWNLOAD_DIR}"
+          ssh -o "StrictHostKeyChecking=no" ${SSH_TARGET} mkdir -p ${DOWNLOAD_DIR}
+          cd ARTIFACTS
+          sha256sum */* > sha256sums.txt
+          scp -o "StrictHostKeyChecking=no" -r * ${SSH_TARGET}:${DOWNLOAD_DIR}/
+          echo "---- cleanup identity"
+          ssh-add -D
