@@ -135,7 +135,7 @@ zn_hello_array_t _zn_scout_loop(
     return ls;
 }
 
-zn_hello_array_t _zn_scout(unsigned int what, zn_properties_t *config, unsigned long scout_period, int exit_on_first)
+zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period, const int exit_on_first)
 {
     zn_hello_array_t locs;
     locs.len = 0;

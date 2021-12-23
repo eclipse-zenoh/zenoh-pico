@@ -41,12 +41,12 @@ zn_query_consolidation_t zn_query_consolidation_none(void)
     return qc;
 }
 
-int zn_query_consolidation_equal(zn_query_consolidation_t *left, zn_query_consolidation_t *right)
+int zn_query_consolidation_equal(const zn_query_consolidation_t *left, const zn_query_consolidation_t *right)
 {
     return memcmp(left, right, sizeof(zn_query_consolidation_t));
 }
 
-z_string_t zn_query_predicate(zn_query_t *query)
+const z_string_t zn_query_predicate(const zn_query_t *query)
 {
     z_string_t s;
     s.len = strlen(query->predicate);
@@ -54,7 +54,7 @@ z_string_t zn_query_predicate(zn_query_t *query)
     return s;
 }
 
-z_string_t zn_query_res_name(zn_query_t *query)
+const z_string_t zn_query_res_name(const zn_query_t *query)
 {
     z_string_t s;
     s.len = strlen(query->rname);
@@ -77,7 +77,7 @@ zn_query_target_t zn_query_target_default(void)
     return qt;
 }
 
-int zn_query_target_equal(zn_query_target_t *left, zn_query_target_t *right)
+int zn_query_target_equal(const zn_query_target_t *left, const zn_query_target_t *right)
 {
     return memcmp(left, right, sizeof(zn_query_target_t));
 }

@@ -25,7 +25,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 
-zn_hello_array_t zn_scout(unsigned int what, zn_properties_t *config, unsigned long timeout)
+zn_hello_array_t zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long timeout)
 {
     return _zn_scout(what, config, timeout, 0);
 }
@@ -65,7 +65,7 @@ ERR:
     return ZN_RESOURCE_ID_NONE;
 }
 
-void zn_undeclare_resource(zn_session_t *zn, z_zint_t rid)
+void zn_undeclare_resource(zn_session_t *zn, const z_zint_t rid)
 {
     _zn_resource_t *r = _zn_get_resource_by_id(zn, _ZN_IS_LOCAL, rid);
     if (r == NULL)
@@ -254,7 +254,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     _zn_unregister_queryable(qle->zn, q);
 }
 
-void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, size_t len)
+void zn_send_reply(zn_query_t *query, z_str_t key, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
     z_bytes_t pid = _z_bytes_wrap(((zn_session_t*)query->zn)->tp_manager->local_pid.val, ((zn_session_t*)query->zn)->tp_manager->local_pid.len);
@@ -290,7 +290,7 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
 }
 
 /*------------------ Write ------------------*/
-int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len)
+int zn_write(zn_session_t *zn, const zn_reskey_t reskey, const uint8_t *payload, const size_t len)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -313,7 +313,7 @@ int zn_write(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_
     return _zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, ZN_CONGESTION_CONTROL_DEFAULT);
 }
 
-int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, size_t len, uint8_t encoding, uint8_t kind, zn_congestion_control_t cong_ctrl)
+int zn_write_ext(zn_session_t *zn, const zn_reskey_t reskey, const uint8_t *payload, const size_t len, uint8_t encoding, const uint8_t kind, const zn_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -342,7 +342,7 @@ int zn_write_ext(zn_session_t *zn, zn_reskey_t reskey, const uint8_t *payload, s
 }
 
 /*------------------ Query ------------------*/
-void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, zn_query_target_t target, zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
+void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, const zn_query_target_t target, const zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
     // Create the pending query object
     _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
@@ -388,8 +388,8 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
 zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
                                        zn_reskey_t reskey,
                                        const z_str_t predicate,
-                                       zn_query_target_t target,
-                                       zn_query_consolidation_t consolidation)
+                                       const zn_query_target_t target,
+                                       const zn_query_consolidation_t consolidation)
 {
     // Create the synchronization variables
     _zn_pending_query_collect_t pqc;
@@ -427,7 +427,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 }
 
 /*------------------ Pull ------------------*/
-int zn_pull(zn_subscriber_t *sub)
+int zn_pull(const zn_subscriber_t *sub)
 {
     _zn_subscriber_t *s = _zn_get_subscription_by_id(sub->zn, _ZN_IS_LOCAL, sub->id);
     if (s == NULL)

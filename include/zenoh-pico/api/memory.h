@@ -27,10 +27,10 @@
 void zn_sample_free(zn_sample_t sample);
 
 /**
- * Free an array of :c:struct:`zn_hello_t` messages and it's contained :c:struct:`zn_hello_t` messages recursively.
+ * Free an array of :c:type:`zn_hello_t` messages and it's contained :c:type:`zn_hello_t` messages recursively.
  *
  * Parameters:
- *     strs: The array of :c:struct:`zn_hello_t` messages to free.
+ *     strs: The array of :c:type:`zn_hello_t` messages to free.
  */
 void zn_hello_array_free(zn_hello_array_t hellos);
 

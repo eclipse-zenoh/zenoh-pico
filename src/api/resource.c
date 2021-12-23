@@ -30,10 +30,10 @@ zn_reskey_t zn_rname(const z_str_t rname)
     return rk;
 }
 
-zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix)
+zn_reskey_t zn_rid_with_suffix(unsigned long rid, const z_str_t suffix)
 {
     zn_reskey_t rk;
-    rk.rid = id;
+    rk.rid = rid;
     rk.rname = _z_str_clone(suffix);
     return rk;
 }

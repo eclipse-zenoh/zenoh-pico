@@ -19,11 +19,17 @@
 
 /**
  * Create an empty set of properties for zenoh-net session configuration.
+ *
+ * Returns:
+ *     A :c:type:`zn_properties_t` containing an empty configuration.
  */
 zn_properties_t *zn_config_empty(void);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
+ *
+ * Returns:
+ *     A :c:type:`zn_properties_t` containing a default configuration.
  */
 zn_properties_t *zn_config_default(void);
 
@@ -32,7 +38,9 @@ zn_properties_t *zn_config_default(void);
  * If peer is not null, it is added to the configuration as remote peer.
  *
  * Parameters:
- *   peer: An optional peer locator.
+ *   locator: An optional peer locator. The caller keeps its ownership.
+ * Returns:
+ *     A :c:type:`zn_properties_t` containing a default configuration for client mode.
  */
 zn_properties_t *zn_config_client(const z_str_t locator);
 

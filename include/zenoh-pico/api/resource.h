@@ -25,7 +25,7 @@
  *     rid: The resource id.
  *
  * Returns:
- *     Return a new resource key.
+ *     A :c:type:`zn_reskey_t` containing a new resource key.
  */
 zn_reskey_t zn_rid(unsigned long rid);
 
@@ -33,10 +33,10 @@ zn_reskey_t zn_rid(unsigned long rid);
  * Create a resource key from a resource name.
  *
  * Parameters:
- *     rname: The resource name.
+ *     rname: The resource name. The caller keeps its ownership.
  *
  * Returns:
- *     Return a new resource key.
+ *     A :c:type:`zn_reskey_t` containing a new resource key.
  */
 zn_reskey_t zn_rname(const z_str_t rname);
 
@@ -48,8 +48,8 @@ zn_reskey_t zn_rname(const z_str_t rname);
  *     suffix: The suffix.
  *
  * Returns:
- *     A new resource key.
+ *     A :c:type:`zn_reskey_t` containing a new resource key.
  */
-zn_reskey_t zn_rid_with_suffix(unsigned long id, const z_str_t suffix);
+zn_reskey_t zn_rid_with_suffix(unsigned long rid, const z_str_t suffix);
 
 #endif /* ZENOH_PICO_RESOURCE_API_H */

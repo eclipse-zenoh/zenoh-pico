@@ -19,6 +19,9 @@
 
 /**
  * Create a default subscription info.
+ *
+ * Returns:
+ *     A :c:type:`zn_subinfo_t` containing the created subscription info.
  */
 zn_subinfo_t zn_subinfo_default(void);
 
