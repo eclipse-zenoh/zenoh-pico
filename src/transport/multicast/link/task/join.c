@@ -12,14 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/transport/link/task/join.h"
 
 int _znp_multicast_send_join(_zn_transport_multicast_t *ztm)
 {

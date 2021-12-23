@@ -18,6 +18,15 @@
 #include "zenoh-pico/protocol/core.h"
 
 /**
+ * Return type when declaring a subscriber.
+ */
+typedef struct
+{
+    void *zn;  // FIXME: zn_session_t *zn;
+    z_zint_t id;
+} zn_subscriber_t;
+
+/**
  * Create a default subscription info.
  *
  * Returns:

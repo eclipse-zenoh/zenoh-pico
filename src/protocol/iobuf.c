@@ -13,7 +13,6 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/protocol/iobuf.h"
 

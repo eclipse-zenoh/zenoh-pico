@@ -12,10 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
 _zn_transport_peer_entry_t *_zn_find_peer_entry(_zn_transport_peer_entry_list_t *l, z_bytes_t *remote_addr)

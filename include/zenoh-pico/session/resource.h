@@ -15,8 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_RESOURCE_H
 #define ZENOH_PICO_SESSION_RESOURCE_H
 
-#include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/api/session.h"
 
 /*------------------ Entity ------------------*/
 z_zint_t _zn_get_entity_id(zn_session_t *zn);

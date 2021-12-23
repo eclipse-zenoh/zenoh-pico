@@ -12,11 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <string.h>
-#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/result.h"
 
 _zn_link_manager_t *_zn_link_manager_init()
 {

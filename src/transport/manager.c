@@ -13,7 +13,6 @@
  */
 
 #include "zenoh-pico/transport/manager.h"
-#include "zenoh-pico/session/session.h"
 
 _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t local_pid)
 {

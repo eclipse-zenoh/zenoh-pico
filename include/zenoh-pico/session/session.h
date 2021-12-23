@@ -15,46 +15,13 @@
 #ifndef ZENOH_PICO_SESSION_TYPES_H
 #define ZENOH_PICO_SESSION_TYPES_H
 
-#include <stdint.h>
-#include <string.h>
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/transport/manager.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/link/link.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/transport/manager.h"
-#include "zenoh-pico/system/platform.h"
 
 #define _ZN_IS_REMOTE 0
 #define _ZN_IS_LOCAL 1
-
-/**
- * Return type when declaring a publisher.
- */
-typedef struct
-{
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-    zn_reskey_t key;
-} zn_publisher_t;
-
-/**
- * Return type when declaring a subscriber.
- */
-typedef struct
-{
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-} zn_subscriber_t;
-
-/**
- * Return type when declaring a queryable.
- */
-typedef struct
-{
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-} zn_queryable_t;
 
 /**
  * The query to be answered by a queryable.
@@ -231,36 +198,5 @@ typedef struct
     z_condvar_t cond_var;
     _zn_reply_data_list_t *replies;
 } _zn_pending_query_collect_t;
-
-/**
- * A zenoh-net session.
- */
-typedef struct
-{
-    z_mutex_t mutex_inner;
-
-    // Session counters // FIXME: move to transport check
-    z_zint_t resource_id;
-    z_zint_t entity_id;
-    z_zint_t pull_id;
-    z_zint_t query_id;
-
-    // Session declarations
-    _zn_resource_list_t *local_resources;
-    _zn_resource_list_t *remote_resources;
-
-    // Session subscriptions
-    _zn_subscriber_list_t *local_subscriptions;
-    _zn_subscriber_list_t *remote_subscriptions;
-
-    // Session queryables
-    _zn_queryable_list_t *local_queryables;
-    _zn_pending_query_list_t *pending_queries;
-
-    // Session transport.
-    // Zenoh-pico is considering a single transport per session.
-    _zn_transport_t *tp;
-    _zn_transport_manager_t *tp_manager;
-} zn_session_t;
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

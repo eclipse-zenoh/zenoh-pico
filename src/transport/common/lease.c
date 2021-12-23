@@ -13,11 +13,6 @@
  */
 
 #include "zenoh-pico/transport/link/task/lease.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/logging.h"
 
 int _znp_send_keep_alive(_zn_transport_t *zt)
 {   

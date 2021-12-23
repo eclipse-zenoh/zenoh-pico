@@ -13,15 +13,9 @@
  */
 
 #include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/collections/bytes.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)

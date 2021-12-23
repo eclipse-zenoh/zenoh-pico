@@ -15,9 +15,8 @@
 #ifndef ZENOH_PICO_PROTOCOL_UTILS_H
 #define ZENOH_PICO_PROTOCOL_UTILS_H
 
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/collections/string.h"
 
 /**
  * Intersects two resource names. This function compares two resource names

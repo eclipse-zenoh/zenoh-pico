@@ -19,6 +19,37 @@
 #include "zenoh-pico/utils/properties.h"
 
 /**
+ * A zenoh-net session.
+ */
+typedef struct
+{
+    z_mutex_t mutex_inner;
+
+    // Session counters // FIXME: move to transport check
+    z_zint_t resource_id;
+    z_zint_t entity_id;
+    z_zint_t pull_id;
+    z_zint_t query_id;
+
+    // Session declarations
+    _zn_resource_list_t *local_resources;
+    _zn_resource_list_t *remote_resources;
+
+    // Session subscriptions
+    _zn_subscriber_list_t *local_subscriptions;
+    _zn_subscriber_list_t *remote_subscriptions;
+
+    // Session queryables
+    _zn_queryable_list_t *local_queryables;
+    _zn_pending_query_list_t *pending_queries;
+
+    // Session transport.
+    // Zenoh-pico is considering a single transport per session.
+    _zn_transport_t *tp;
+    _zn_transport_manager_t *tp_manager;
+} zn_session_t;
+
+/**
  * Open a zenoh-net session
  *
  * Parameters:

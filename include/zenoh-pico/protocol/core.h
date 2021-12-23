@@ -15,11 +15,10 @@
 #ifndef ZENOH_PICO_PROTOCOL_CORE_H
 #define ZENOH_PICO_PROTOCOL_CORE_H
 
-#include <stdint.h>
 #include <string.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/config.h"
 
 /**
  * Whatami values.

@@ -12,14 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdint.h>
-#include <stdio.h>
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/msgcodec.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
 zn_hello_array_t _zn_scout_loop(

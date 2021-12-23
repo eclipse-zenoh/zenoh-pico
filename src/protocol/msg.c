@@ -12,11 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/config.h"
-#include "zenoh-pico/collections/bytes.h"
-#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*=============================*/

@@ -12,16 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/query.h"
-#include "zenoh-pico/session/queryable.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/link/manager.h"
 
 zn_query_consolidation_t zn_query_consolidation_default(void)
 {

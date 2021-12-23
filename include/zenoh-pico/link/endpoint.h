@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_LINK_ENDPOINT_H
 #define ZENOH_PICO_LINK_ENDPOINT_H
 
-#include <stdint.h>
 #include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"

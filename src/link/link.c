@@ -12,11 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <string.h>
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/logging.h"
 
 _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)

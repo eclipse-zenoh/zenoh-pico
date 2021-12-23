@@ -12,12 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/transport/link/task/lease.h"
-#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/utils.h"
+#include "zenoh-pico/transport/link/task/join.h"
+#include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/utils/logging.h"
 
 z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers)

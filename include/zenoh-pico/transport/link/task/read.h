@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
 #define ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H
 
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/transport/transport.h"
 
 int _znp_read(_zn_transport_t *zt);
 int _znp_unicast_read(_zn_transport_unicast_t *ztu);

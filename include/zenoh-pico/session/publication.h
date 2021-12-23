@@ -12,21 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_H
-#define ZENOH_PICO_H
+#ifndef ZENOH_PICO_SESSION_PUBLICATION_H
+#define ZENOH_PICO_SESSION_PUBLICATION_H
 
-#include "zenoh-pico/api/logger.h"
-#include "zenoh-pico/api/config.h"
-#include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/resource.h"
-#include "zenoh-pico/api/query.h"
-#include "zenoh-pico/api/subscribe.h"
-#include "zenoh-pico/api/publish.h"
-#include "zenoh-pico/api/memory.h"
+#include "zenoh-pico/protocol/core.h"
 
-#if defined(ZENOH_ZEPHYR)
-#include <zephyr.h>
-#endif
-
-#endif /* ZENOH_PICO_H */
+#endif /* ZENOH_PICO_SESSION_PUBLICATION_H */

@@ -12,7 +12,6 @@
  *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/system/collections.h"
 

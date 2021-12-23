@@ -12,10 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Reception helper ------------------*/
 _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)

@@ -12,20 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/collections/element.h"
-#include "zenoh-pico/collections/intmap.h"
-#include "zenoh-pico/collections/list.h"
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/platform.h"
 
 int _zn_subscriber_eq(const _zn_subscriber_t *other, const _zn_subscriber_t *this)
 {

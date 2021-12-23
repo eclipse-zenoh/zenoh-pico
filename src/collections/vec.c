@@ -13,9 +13,7 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/vec.h"
 
 /*-------- vec --------*/

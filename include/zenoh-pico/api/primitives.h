@@ -15,11 +15,13 @@
 #ifndef ZENOH_PICO_PRIMITIVES_API_H
 #define ZENOH_PICO_PRIMITIVES_API_H
 
-#include <stdint.h>
-#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/api/session.h"
+#include "zenoh-pico/api/subscribe.h"
+#include "zenoh-pico/api/publish.h"
+#include "zenoh-pico/api/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/encoding.h"
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/properties.h"
 
 /*------------------ Discovery ------------------*/

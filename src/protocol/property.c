@@ -13,7 +13,6 @@
  */
 
 #include <string.h>
-#include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/utils/properties.h"
 
 int zn_properties_init(zn_properties_t *ps)

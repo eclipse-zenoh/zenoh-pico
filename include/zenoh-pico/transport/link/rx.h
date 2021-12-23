@@ -15,9 +15,10 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_RX_H
 #define ZENOH_PICO_TRANSPORT_LINK_RX_H
 
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/link/link.h"
+
 
 /*------------------ Transmission and Reception helpers ------------------*/
 _zn_transport_message_result_t _zn_unicast_recv_t_msg(_zn_transport_unicast_t *ztu);

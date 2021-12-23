@@ -13,11 +13,9 @@
  */
 
 #include <string.h>
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/config/udp.h"
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/system/link/udp.h"
 
 z_str_t _zn_parse_port_segment_udp_multicast(const z_str_t address)
 {

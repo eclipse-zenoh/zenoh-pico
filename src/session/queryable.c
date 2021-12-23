@@ -12,20 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/collections/element.h"
-#include "zenoh-pico/collections/intmap.h"
-#include "zenoh-pico/collections/list.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _zn_queryable_eq(const _zn_queryable_t *one, const _zn_queryable_t *two)

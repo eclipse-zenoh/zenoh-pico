@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_TX_H
 #define ZENOH_PICO_TRANSPORT_LINK_TX_H
 
-#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/api/session.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/link/link.h"
 

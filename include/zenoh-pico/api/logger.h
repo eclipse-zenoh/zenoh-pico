@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_LOGGER_API_H
 #define ZENOH_PICO_LOGGER_API_H
 
-#include "zenoh-pico/utils/logging.h"
-
 /**
  * Initialise the zenoh runtime logger
  */

@@ -15,10 +15,8 @@
 #ifndef ZENOH_PICO_TRANSPORT_UTILS_H
 #define ZENOH_PICO_TRANSPORT_UTILS_H
 
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 
 /*------------------ SN helpers ------------------*/
 int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right);

@@ -27,8 +27,6 @@
 #endif
 
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/system/link/tcp.h"
-#include "zenoh-pico/system/link/udp.h"
 
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);

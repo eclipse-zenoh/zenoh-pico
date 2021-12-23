@@ -15,11 +15,10 @@
 #ifndef ZENOH_PICO_PROTOCOL_MSG_H
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
-#include <stdint.h>
-#include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/collections/vec.h"
-#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/collections/array.h"
+#include "zenoh-pico/collections/string.h"
 
 #define _ZN_DECLARE_CLEAR(layer, name) \
     void _zn_##layer##_msg_clear_##name(_zn_##name##_t *m, uint8_t header)

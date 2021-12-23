@@ -12,15 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/session.h"
-#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 void _zn_reply_clear(zn_reply_t *reply)
 {

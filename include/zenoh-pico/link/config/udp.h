@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/link/endpoint.h"
 
 #define UDP_CONFIG_MULTICAST_IFACE_KEY 0x01
 #define UDP_CONFIG_MULTICAST_IFACE_STR "iface"

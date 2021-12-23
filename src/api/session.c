@@ -13,15 +13,11 @@
  */
 
 #include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/logger.h"
 #include "zenoh-pico/api/memory.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
-#include "zenoh-pico/transport/link/task/join.h"
+#include "zenoh-pico/utils/logging.h"
 
 zn_session_t *_zn_open(z_str_t locator, int mode)
 {

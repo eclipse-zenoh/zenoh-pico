@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_LINK_H
 #define ZENOH_PICO_LINK_H
 
-#include <stdint.h>
-
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"

@@ -15,9 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_QUERYABLE_H
 #define ZENOH_PICO_SESSION_QUERYABLE_H
 
-#include "zenoh-pico/session/session.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/api/session.h"
 
 #define _ZN_QUERYABLE_COMPLETE_DEFAULT 1
 #define _ZN_QUERYABLE_DISTANCE_DEFAULT 0

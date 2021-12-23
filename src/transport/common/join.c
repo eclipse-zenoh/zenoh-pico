@@ -13,11 +13,6 @@
  */
 
 #include "zenoh-pico/transport/link/task/join.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/logging.h"
 
 int _znp_send_join(_zn_transport_t *zt)
 {

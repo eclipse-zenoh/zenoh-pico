@@ -12,11 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+
 
 /*------------------ Transmission helper ------------------*/
 /**

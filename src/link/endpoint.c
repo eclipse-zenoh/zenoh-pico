@@ -12,13 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdio.h>
 #include <string.h>
-#include "zenoh-pico/collections/intmap.h"
-#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/link/config/udp.h"
-#include "zenoh-pico/link/endpoint.h"
 
 /*------------------ Locator ------------------*/
 void _zn_locator_init(_zn_locator_t *locator)

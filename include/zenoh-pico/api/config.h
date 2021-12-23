@@ -16,6 +16,7 @@
 #define ZENOH_PICO_CONFIG_API_H
 
 #include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/collections/string.h"
 
 /**
  * Create an empty set of properties for zenoh-net session configuration.

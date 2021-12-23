@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/config.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/api/config.h"
 
 zn_properties_t *zn_config_empty()
 {

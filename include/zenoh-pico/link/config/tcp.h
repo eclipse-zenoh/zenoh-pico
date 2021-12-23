@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/link/endpoint.h"
 
 #define TCP_CONFIG_MAPPING_BUILD \
     int argc = 0;                \

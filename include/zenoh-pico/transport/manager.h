@@ -16,7 +16,8 @@
 #define ZENOH_PICO_TRANSPORT_MANAGER_H
 
 #include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/link/link.h"
+#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/collections/bytes.h"
 
 typedef struct
 {

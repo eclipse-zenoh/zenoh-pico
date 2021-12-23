@@ -15,11 +15,10 @@
 #ifndef ZENOH_PICO_TRANSPORT_TYPES_H
 #define ZENOH_PICO_TRANSPORT_TYPES_H
 
-#include "zenoh-pico/link/link.h"
-#include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/link/link.h"
+#include "zenoh-pico/collections/bytes.h"
 
 typedef struct
 {

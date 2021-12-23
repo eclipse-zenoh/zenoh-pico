@@ -12,22 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/collections/intmap.h"
-#include "zenoh-pico/protocol/msg.h"
-#include "zenoh-pico/protocol/msgcodec.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/query.h"
-#include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/link/manager.h"
 
 /*------------------ clone helpers ------------------*/
 zn_reskey_t _zn_reskey_duplicate(const zn_reskey_t *reskey)

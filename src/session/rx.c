@@ -12,20 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/

@@ -13,17 +13,13 @@
  */
 
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/query.h"
 #include "zenoh-pico/api/logger.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/utils.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
 
 zn_hello_array_t zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long timeout)
 {

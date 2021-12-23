@@ -18,6 +18,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/collections/string.h"
 
 /*------------------ Endpoint ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)

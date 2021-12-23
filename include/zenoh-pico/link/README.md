@@ -5,6 +5,7 @@ For example, zenoh-pico, currently, see transport link in terms of which
 properties they support such as:
  - if it implements a streamed protocol or not;
  - if it implements a reliable link;
+ - if it implements a unicast or multicast link;
 
 Other properties are planned in the future, such as if the transport link can
 support multicast communications or not.
@@ -18,21 +19,26 @@ New transport links must implement the following structure:
 ```
 typedef struct {
     _zn_socket_t sock;
+    _zn_socket_t mcast_send_sock;
 
-    uint8_t is_reliable;
-    uint8_t is_streamed;
-
-    void* endpoint;
-    uint16_t mtu;
+    _zn_endpoint_t endpoint;
+    void *raddr;
+    void *laddr;
 
     // Function pointers
     _zn_f_link_open open_f;
+    _zn_f_link_listen listen_f;
     _zn_f_link_close close_f;
-    _zn_f_link_free free_f;
     _zn_f_link_write write_f;
     _zn_f_link_write_all write_all_f;
     _zn_f_link_read read_f;
     _zn_f_link_read_exact read_exact_f;
+    _zn_f_link_free free_f;
+
+    uint16_t mtu;
+    uint8_t is_reliable;
+    uint8_t is_streamed;
+    uint8_t is_multicast;
 } _zn_link_t;
 ```
 
@@ -40,12 +46,13 @@ It includes a set of function pointers that implement the high-level behavior
 of the transport link. All these must be implemented:
 ```
 typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
-typedef int (*_zn_f_link_close)(void *arg);
+typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, clock_t tout);
+typedef void (*_zn_f_link_close)(void *arg);
+typedef size_t (*_zn_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_zn_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_zn_f_link_read)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
+typedef size_t (*_zn_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
 typedef void (*_zn_f_link_free)(void *arg);
-typedef size_t (*_zn_f_link_write)(void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_write_all)(void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_read)(void *arg, uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_read_exact)(void *arg, uint8_t *ptr, size_t len);
 ```
 
 (see ```udp.c``` and ```tcp.c``` as examples).
@@ -56,4 +63,3 @@ abstraction already implemented in zenoh-pico.
 Finally, the corresponding entry must be added in the link manager, namely
 in the ```_zn_open_link``` function, in order to map the new link protocol
 scheme.
-

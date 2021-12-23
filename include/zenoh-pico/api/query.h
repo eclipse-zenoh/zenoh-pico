@@ -18,6 +18,15 @@
 #include "zenoh-pico/protocol/core.h"
 
 /**
+ * Return type when declaring a queryable.
+ */
+typedef struct
+{
+    void *zn;  // FIXME: zn_session_t *zn;
+    z_zint_t id;
+} zn_queryable_t;
+
+/**
  * Create a default :c:type:`zn_query_consolidation_t`.
  *
  * Returns:

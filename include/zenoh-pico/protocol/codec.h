@@ -15,11 +15,9 @@
 #ifndef ZENOH_PICO_PROTOCOL_CODEC_H
 #define ZENOH_PICO_PROTOCOL_CODEC_H
 
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/properties.h"
-#include "zenoh-pico/utils/result.h"
 
 #define _ZN_EC(fn) \
     if (fn != 0)   \
