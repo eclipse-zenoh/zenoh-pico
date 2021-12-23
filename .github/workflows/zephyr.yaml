@@ -45,21 +45,19 @@ jobs:
         export ZEPHYR_BASE=$HOME/work/zephyrproject/
         export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
         . $HOME/.platformio/penv/bin/activate
-        mkdir -p $ZEPHYR_BASE/zephyr
-        cat << EOF > $ZEPHYR_BASE/zephyr/CMakeLists.txt
-        cmake_minimum_required(VERSION 3.13.1)
-        include(\$ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
-        project(zenoh-pico-zephyr)
-
-        target_sources(app PRIVATE ../lib/zenoh-pico/examples/net/zn_pub.c)
-        EOF
 
         mkdir -p $ZEPHYR_BASE/lib
         cd $ZEPHYR_BASE/lib
         ln -s $ZENOH_PICO_BASE
 
+        mkdir -p $ZEPHYR_BASE/zephyr
         cd $ZEPHYR_BASE/zephyr
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
+        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt CMakeLists.txt
+
+        mkdir -p $ZEPHYR_BASE/src
+        cd $ZEPHYR_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/net/zn_pub.c zn_pub.c
 
         cd $ZEPHYR_BASE
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
