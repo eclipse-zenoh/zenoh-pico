@@ -1,0 +1,66 @@
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+#
+name: arduino_esp32
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install requirements
+      run: |
+        echo "No requirements need to be installed"
+
+    - name: Install PlatformIO
+      run: |
+        python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+        . $HOME/.platformio/penv/bin/activate
+        platformio update
+
+    - name: Set up project
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        mkdir -p $ARDUINO_BASE
+        cd $ARDUINO_BASE
+        platformio init -b az-delivery-devkit-v4
+
+        cd $ARDUINO_BASE/lib
+        ln -s $ZENOH_PICO_BASE
+
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/net/esp32/zn_pub.ino zn_pub.ino
+
+        cd $ARDUINO_BASE
+
+    - name: Build
+      run: |
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        . $HOME/.platformio/penv/bin/activate
+        cd $ARDUINO_BASE
+        platformio run
