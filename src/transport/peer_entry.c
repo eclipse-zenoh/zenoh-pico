@@ -44,7 +44,7 @@ void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_tr
 
 size_t _zn_transport_peer_entry_size(const _zn_transport_peer_entry_t *src)
 {
-    return sizeof(_zn_transport_peer_entry_size);
+    return sizeof(_zn_transport_peer_entry_t);
 }
 
 int _zn_transport_peer_entry_eq(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right)
