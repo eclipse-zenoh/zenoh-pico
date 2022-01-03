@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _zn_queryable_eq(const _zn_queryable_t *one, const _zn_queryable_t *two)
@@ -138,30 +138,32 @@ int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
     while (xs != NULL)
     {
         _zn_queryable_t *qle = _zn_queryable_list_head(xs);
-        qle->callback(&q, qle->arg);
-
-        // Send the final reply
-        z_bytes_t pid;
-        _z_bytes_reset(&pid);
-
-        z_zint_t kind = 0;
-        int is_final = 1;
-
-        _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, kind, is_final);
-
-        // Congestion control
-        int can_be_dropped = 0;
-
-        // Create the final reply
-        _zn_zenoh_message_t z_msg = _zn_z_msg_make_unit(can_be_dropped);
-        z_msg.reply_context = rctx;
-
-        if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
+        if (((query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind)) != 0)
         {
-            // @TODO: retransmission
+            q.kind = qle->kind;
+            qle->callback(&q, qle->arg);
+
+            // Send the final reply
+            z_bytes_t pid = _z_bytes_wrap(zn->tp_manager->local_pid.val, zn->tp_manager->local_pid.len);
+            z_zint_t replier_kind = qle->kind;
+            int is_final = 1;
+            _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, replier_kind, is_final);
+
+            // Congestion control
+            int can_be_dropped = 0;
+
+            // Create the final reply
+            _zn_zenoh_message_t z_msg = _zn_z_msg_make_unit(can_be_dropped);
+            z_msg.reply_context = rctx;
+
+            if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
+            {
+                // @TODO: retransmission
+            }
+
+            _zn_z_msg_clear(&z_msg);
         }
 
-        _zn_z_msg_clear(&z_msg);
         xs = _zn_queryable_list_tail(xs);
     }
 
