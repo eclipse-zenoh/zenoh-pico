@@ -253,10 +253,10 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
  *
  * Parameters:
  *     query: The query to reply to. The caller keeps its ownership.
- *     key: The resource key of this reply. The callee gets the ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply.
  *     len: The length of the value of this reply.
  */
-void zn_send_reply(zn_query_t *query, z_str_t key, const uint8_t *payload, const size_t len);
+void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, const size_t len);
 
 #endif /* ZENOH_PICO_PRIMITIVES_API_H */

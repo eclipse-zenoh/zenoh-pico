@@ -250,7 +250,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     _zn_unregister_queryable(qle->zn, q);
 }
 
-void zn_send_reply(zn_query_t *query, z_str_t key, const uint8_t *payload, const size_t len)
+void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
     z_bytes_t pid = _z_bytes_wrap(((zn_session_t*)query->zn)->tp_manager->local_pid.val, ((zn_session_t*)query->zn)->tp_manager->local_pid.len);
@@ -261,7 +261,7 @@ void zn_send_reply(zn_query_t *query, z_str_t key, const uint8_t *payload, const
     // ResKey
     zn_reskey_t reskey;
     reskey.rid = ZN_RESOURCE_ID_NONE;
-    reskey.rname = (z_str_t)key;
+    reskey.rname = key;
 
     // Empty data info
     _zn_data_info_t di;
