@@ -587,7 +587,7 @@ _zn_declaration_t _zn_z_msg_make_declaration_forget_publisher(zn_reskey_t key);
 _zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subinfo_t subinfo);
 _zn_declaration_t _zn_z_msg_make_declaration_forget_subscriber(zn_reskey_t key);
 _zn_declaration_t _zn_z_msg_make_declaration_queryable(zn_reskey_t key, z_zint_t kind, z_zint_t complete, z_zint_t distance);
-_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key);
+_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key, z_zint_t kind);
 _zn_zenoh_message_t _zn_z_msg_make_declare(_zn_declaration_array_t declarations);
 _zn_zenoh_message_t _zn_z_msg_make_data(zn_reskey_t key, _zn_data_info_t info, _zn_payload_t payload, int can_be_dropped);
 _zn_zenoh_message_t _zn_z_msg_make_unit(int can_be_dropped);

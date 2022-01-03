@@ -234,11 +234,12 @@ void _zn_z_msg_clear_declaration_queryable(_zn_qle_decl_t *dcl)
 }
 
 /*------------------ Forget Queryable Declaration ------------------*/
-_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key)
+_zn_declaration_t _zn_z_msg_make_declaration_forget_queryable(zn_reskey_t key, z_zint_t kind)
 {
     _zn_declaration_t decl;
 
     decl.body.forget_qle.key = key;
+    decl.body.forget_qle.kind = kind;
 
     decl.header = _ZN_DECL_FORGET_QUERYABLE;
     if (key.rname != NULL)

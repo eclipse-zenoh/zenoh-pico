@@ -235,7 +235,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
     zn_reskey_t key;
     key.rid = ZN_RESOURCE_ID_NONE;
     key.rname = _z_str_clone(q->rname);
-    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(key);
+    declarations.val[0] = _zn_z_msg_make_declaration_forget_queryable(key, q->kind);
 
     // Build the declare message to send on the wire
     _zn_zenoh_message_t z_msg = _zn_z_msg_make_declare(declarations);
