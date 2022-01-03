@@ -124,9 +124,9 @@
 #define ZN_JOIN_INTERVAL 1000
 
 /**
- * Default socket timeout: 30 seconds
+ * Default socket timeout: 2 seconds
  */
-#define ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT 30
+#define ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT 2
 
 /**
  * The default sequence number resolution takes 4 bytes on the wire.
