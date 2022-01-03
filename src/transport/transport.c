@@ -20,7 +20,7 @@
 
 int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
-    z_bytes_t pid = _z_bytes_duplicate(&((zn_session_t *)ztu->session)->tp_manager->local_pid);
+    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztu->session)->tp_manager->local_pid.val, ((zn_session_t *)ztu->session)->tp_manager->local_pid.len);
     _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
 
     int res = _zn_unicast_send_t_msg(ztu, &cm);
@@ -33,7 +33,7 @@ int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int lin
 
 int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
-    z_bytes_t pid = _z_bytes_duplicate(&((zn_session_t *)ztm->session)->tp_manager->local_pid);
+    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
     _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
 
     int res = _zn_multicast_send_t_msg(ztm, &cm);
@@ -157,7 +157,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     z_zint_t sn_resolution = ZN_SN_RESOLUTION;
     int is_qos = 0;
 
-    z_bytes_t pid = _z_bytes_duplicate(&local_pid);
+    z_bytes_t pid = _z_bytes_wrap(local_pid.val, local_pid.len);
     _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
 
     // Encode and send the message
@@ -297,7 +297,7 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     next_sns.val.plain.best_effort = param.initial_sn_tx;
     next_sns.val.plain.reliable = param.initial_sn_tx;
 
-    z_bytes_t pid = _z_bytes_duplicate(&local_pid);
+    z_bytes_t pid = _z_bytes_wrap(local_pid.val, local_pid.len);
     _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, param.sn_resolution, pid, next_sns);
 
     // Encode and send the message

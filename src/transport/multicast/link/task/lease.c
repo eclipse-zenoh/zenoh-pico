@@ -37,7 +37,8 @@ z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers)
 
 int _znp_multicast_send_keep_alive(_zn_transport_multicast_t *ztm)
 {
-    _zn_transport_message_t t_msg = _zn_t_msg_make_keep_alive(((zn_session_t *)ztm->session)->tp_manager->local_pid);
+    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
+    _zn_transport_message_t t_msg = _zn_t_msg_make_keep_alive(pid);
 
     return _zn_multicast_send_t_msg(ztm, &t_msg);
 }
