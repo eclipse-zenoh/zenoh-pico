@@ -140,9 +140,7 @@ int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld)
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, fld->rid))
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_K))
-    {
-        return _z_str_encode(wbf, fld->rname);
-    }
+        _ZN_EC(_z_str_encode(wbf, fld->rname))
 
     return 0;
 }
@@ -891,7 +889,9 @@ int _zn_data_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_data_t *msg)
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_Z_I))
         _ZN_EC(_zn_data_info_encode(wbf, &msg->info))
 
-    return _zn_payload_encode(wbf, &msg->payload);
+    _ZN_EC(_zn_payload_encode(wbf, &msg->payload))
+
+    return 0;
 }
 
 void _zn_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_data_result_t *r)
