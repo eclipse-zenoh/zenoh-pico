@@ -337,10 +337,16 @@ int _zn_transport_close(_zn_transport_t *zt, uint8_t reason)
 void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 {
     // Clean up tasks
-    z_task_join(ztu->read_task);
-    z_task_join(ztu->lease_task);
-    z_task_free(&ztu->read_task);
-    z_task_free(&ztu->lease_task);
+    if (ztu->read_task != NULL)
+    {
+        z_task_join(ztu->read_task);
+        z_task_free(&ztu->read_task);
+    }
+    if (ztu->lease_task != NULL)
+    {
+        z_task_join(ztu->lease_task);
+        z_task_free(&ztu->lease_task);
+    }
 
     // Clean up the mutexes
     z_mutex_free(&ztu->mutex_tx);
@@ -362,10 +368,16 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
 void _zn_transport_multicast_clear(_zn_transport_multicast_t *ztm)
 {
     // Clean up tasks
-    z_task_join(ztm->read_task);
-    z_task_join(ztm->lease_task);
-    z_task_free(&ztm->read_task);
-    z_task_free(&ztm->lease_task);
+    if (ztm->read_task != NULL)
+    {
+        z_task_join(ztm->read_task);
+        z_task_free(&ztm->read_task);
+    }
+    if (ztm->lease_task != NULL)
+    {
+        z_task_join(ztm->lease_task);
+        z_task_free(&ztm->lease_task);
+    }
 
     // Clean up the mutexes
     z_mutex_free(&ztm->mutex_tx);
