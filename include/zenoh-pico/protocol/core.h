@@ -134,9 +134,10 @@ typedef struct zn_hello_array_t
 typedef enum
 {
     zn_target_t_BEST_MATCHING = 0,
-    zn_target_t_COMPLETE = 1,
-    zn_target_t_ALL = 2,
+    zn_target_t_ALL = 1,
+    zn_target_t_ALLCOMPLETE = 2,
     zn_target_t_NONE = 3,
+    zn_target_t_COMPLETE = 4,
 } zn_target_t_Tag;
 
 typedef struct
