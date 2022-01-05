@@ -25,12 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v2
-      - name: Compile debug
-        run: make all
-        env:
-          BUILD_TYPE: Debug
-
+    - uses: actions/checkout@v2
     - name: Compile debug
       run: make all
       env:
@@ -39,17 +34,12 @@ jobs:
         BUILD_MULTICAST: OFF
         BUILD_INTEGRATION: OFF
 
-    - name: Run tests
-      run: make test
-      env:
-        ARGS: -V
-
   crossbuilds:
     name: Build on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Crosscompile debug
-        run: make crossbuilds
-        env:
-          BUILD_TYPE: Debug
+    - uses: actions/checkout@v2
+    - name: Crosscompile debug
+      run: make crossbuilds
+      env:
+        BUILD_TYPE: Debug
