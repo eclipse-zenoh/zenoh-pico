@@ -26,7 +26,7 @@ extern "C"
 // Zenoh-specific parameters
 #define MODE "client"
 #define PEER "tcp/10.0.0.1:7447"
-#define URI "/demo/example/zenoh-pico-esp32/**"
+#define URI "/demo/example/**"
 
 void data_handler(const zn_sample_t *sample, const void *arg)
 {
@@ -45,9 +45,7 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    {
-    }
-    delay(1000);
+        delay(1000);
 
     zn_properties_t *config = zn_config_default();
     zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
@@ -55,18 +53,15 @@ void setup()
 
     zn_session_t *s = zn_open(config);
     if (s == NULL)
-    {
         return;
-    }
 
     znp_start_read_task(s);
     znp_start_lease_task(s);
 
-    zn_subscriber_t *sub = zn_declare_subscriber(s, zn_rname(URI), zn_subinfo_default(), data_handler, NULL);
+    zn_reskey_t reskey = zn_rname(URI);
+    zn_subscriber_t *sub = zn_declare_subscriber(s, reskey, zn_subinfo_default(), data_handler, NULL);
     if (sub == 0)
-    {
         return;
-    }
 }
 
 void loop()

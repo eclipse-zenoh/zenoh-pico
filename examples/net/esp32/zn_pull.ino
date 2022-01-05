@@ -26,7 +26,7 @@ extern "C"
 // Zenoh-specific parameters
 #define MODE "client"
 #define PEER "tcp/10.0.0.1:7447"
-#define URI "/demo/example/zenoh-pico-esp32/**"
+#define URI "/demo/example/**"
 
 zn_subscriber_t *sub = NULL;
 
