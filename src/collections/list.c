@@ -112,6 +112,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
             f_f(&this->val);
             free(this);
+            return xs;
         }
         else
         {
