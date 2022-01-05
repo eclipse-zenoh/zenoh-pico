@@ -144,8 +144,10 @@ int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
             qle->callback(&q, qle->arg);
 
             // Send the final reply
-            z_bytes_t pid = _z_bytes_wrap(zn->tp_manager->local_pid.val, zn->tp_manager->local_pid.len);
-            z_zint_t replier_kind = qle->kind;
+            // Final flagged reply context does not encode the PID or replier kind
+            z_bytes_t pid;
+            _z_bytes_reset(&pid);
+            z_zint_t replier_kind = 0;
             int is_final = 1;
             _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, replier_kind, is_final);
 

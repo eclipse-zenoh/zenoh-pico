@@ -254,7 +254,6 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
 {
     // Build the reply context decorator. This is NOT the final reply.
     z_bytes_t pid = _z_bytes_wrap(((zn_session_t*)query->zn)->tp_manager->local_pid.val, ((zn_session_t*)query->zn)->tp_manager->local_pid.len);
-
     _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
 
     // @TODO: use numerical resources if possible
@@ -283,6 +282,9 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
     }
 
     free(rctx);
+    // FIXME: Provide wrap for all allocated values, so that clear can be executed
+    //        Still, currently it is not leaking, since all values are owned by the user
+    //_zn_z_msg_clear(&z_msg);
 }
 
 /*------------------ Write ------------------*/
