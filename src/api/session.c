@@ -105,7 +105,21 @@ zn_properties_t *zn_info(zn_session_t *zn)
     zn_properties_t *ps = (zn_properties_t *)malloc(sizeof(zn_properties_t));
     zn_properties_init(ps);
     zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
-    // zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->remote_pid));
+    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    {
+        zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->tp->transport.unicast.remote_pid));
+    }
+    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    {
+        _zn_transport_peer_entry_list_t *xs = zn->tp->transport.multicast.peers;
+        while (xs != NULL)
+        {
+            _zn_transport_peer_entry_t *peer = _zn_transport_peer_entry_list_head(xs);
+            zn_properties_insert(ps, ZN_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->remote_pid));
+
+            xs = _zn_transport_peer_entry_list_tail(xs);
+        }
+    }
     return ps;
 }
 
