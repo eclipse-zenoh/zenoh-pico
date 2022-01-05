@@ -442,7 +442,9 @@ int zn_pull(const zn_subscriber_t *sub)
         // @TODO: retransmission
     }
 
-    _zn_z_msg_clear(&z_msg);
+    // FIXME: Provide wrap for all allocated values, so that clear can be executed
+    //        Still, currently it is not leaking, since owned by the subscription
+    //_zn_z_msg_clear(&z_msg);
 
     return 0;
 }
