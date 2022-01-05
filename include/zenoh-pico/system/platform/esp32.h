@@ -16,11 +16,13 @@
 #define ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 
 #include <pthread.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 typedef int _zn_socket_t;
 
-typedef pthread_t z_task_t;
-typedef pthread_attr_t z_task_attr_t;
+typedef TaskHandle_t z_task_t;
+typedef void *z_task_attr_t; // Not used in ESP32
 typedef pthread_mutex_t z_mutex_t;
 typedef pthread_cond_t z_condvar_t;
 

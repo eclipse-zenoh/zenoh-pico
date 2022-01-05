@@ -12,30 +12,53 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <sys/time.h>
-#include <unistd.h>
 #include "zenoh-pico/system/platform.h"
-//#include "esp_pthread.h"
+#include <sys/time.h>
+
+// This wrapper is only used for ESP32.
+// In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
+// A task function should __not__ simply return.
+typedef struct
+{
+    void *(*fun)(void *);
+    void *arg;
+} _zn_task_arg;
+
+void z_task_wrapper(void *arg)
+{
+    _zn_task_arg *zn_arg = (_zn_task_arg*)arg;
+    zn_arg->fun(zn_arg->arg);
+    vTaskDelete(NULL);
+}
+
 
 /*------------------ Task ------------------*/
-int z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg)
+int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    return pthread_create(task, attr, fun, arg);
+    _zn_task_arg zn_arg;
+    zn_arg.fun = fun;
+    zn_arg.arg = arg;
+    if (xTaskCreate(z_task_wrapper, "", 5120, &zn_arg, 2, task) != pdPASS)
+        return -1;
+
+    return 0;
 }
 
-int z_task_join(pthread_t *task)
+int z_task_join(z_task_t *task)
 {
-    return pthread_join(*task, NULL);
+    // Note: join not supported using FreeRTOS API
+    return 0;
 }
 
-int z_task_cancel(pthread_t *task)
+int z_task_cancel(z_task_t *task)
 {
-    return pthread_cancel(*task);
+    vTaskDelete(task);
+    return 0;
 }
 
-void z_task_free(pthread_t **task)
+void z_task_free(z_task_t **task)
 {
-    pthread_t *ptr = *task;
+    z_task_t *ptr = *task;
     free(ptr);
     *task = NULL;
 }
