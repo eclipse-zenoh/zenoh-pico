@@ -29,16 +29,17 @@ void z_task_wrapper(void *arg)
     _zn_task_arg *zn_arg = (_zn_task_arg*)arg;
     zn_arg->fun(zn_arg->arg);
     vTaskDelete(NULL);
+    free(zn_arg);
 }
 
 
 /*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _zn_task_arg zn_arg;
-    zn_arg.fun = fun;
-    zn_arg.arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 5120, &zn_arg, 2, task) != pdPASS)
+    _zn_task_arg *zn_arg = (_zn_task_arg *)malloc(sizeof(_zn_task_arg));
+    zn_arg->fun = fun;
+    zn_arg->arg = arg;
+    if (xTaskCreate(z_task_wrapper, "", 5120, zn_arg, 15, task) != pdPASS)
         return -1;
 
     return 0;

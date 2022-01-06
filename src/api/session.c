@@ -136,7 +136,7 @@ int znp_send_keep_alive(zn_session_t *zn)
 int znp_start_read_task(zn_session_t *zn)
 {
     z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(pthread_t));
+    memset(task, 0, sizeof(z_task_t));
 
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
     {
@@ -169,7 +169,7 @@ int znp_stop_read_task(zn_session_t *zn)
 int znp_start_lease_task(zn_session_t *zn)
 {
     z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(pthread_t));
+    memset(task, 0, sizeof(z_task_t));
 
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
     {
