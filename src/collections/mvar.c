@@ -12,7 +12,8 @@
  *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/system/common.h"
+#include <string.h>
+#include "zenoh-pico/system/collections.h"
 
 /*-------- mvar --------*/
 z_mvar_t *z_mvar_empty()

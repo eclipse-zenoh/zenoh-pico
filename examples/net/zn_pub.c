@@ -53,16 +53,8 @@ int main(int argc, char **argv)
     printf(" => RId %lu\n", rid);
     zn_reskey_t reskey = zn_rid(rid);
 
-    printf("Declaring Publisher on %lu\n", rid);
-    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
-    if (pub == 0)
-    {
-        printf("Unable to declare publisher.\n");
-        exit(-1);
-    }
-
     char buf[256];
-    for (int idx = 0; 1; ++idx)
+    for (int idx = 0; idx < 5; ++idx)
     {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
@@ -70,7 +62,8 @@ int main(int argc, char **argv)
         zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
     }
 
-    zn_undeclare_publisher(pub);
+    znp_stop_read_task(s);
+    znp_stop_lease_task(s);
     zn_close(s);
 
     return 0;

@@ -15,8 +15,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-extern "C" {
-    #include "zenoh-pico.h"
+extern "C"
+{
+#include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -25,17 +26,15 @@ extern "C" {
 // Zenoh-specific parameters
 #define MODE "client"
 #define PEER "tcp/10.0.0.1:7447"
-#define URI "/demo/example/zenoh-pico-esp32-eval"
+#define URI "/demo/example/zenoh-pico-eval"
+#define VALUE "Eval from pico (ESP32)!"
 
 void query_handler(zn_query_t *query, const void *arg)
 {
     (void)(arg); // Unused paramater
-
-    char* value = "Reply eval from ESP32";
-
     z_string_t res = zn_query_res_name(query);
     z_string_t pred = zn_query_predicate(query);
-    zn_send_reply(query, URI, (const unsigned char *)value, strlen(value));
+    zn_send_reply(query, query->rname, (const unsigned char *)VALUE, strlen(VALUE));
 }
 
 void setup()
@@ -46,8 +45,7 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    { }
-    delay(1000);
+        delay(1000);
 
     zn_properties_t *config = zn_config_default();
     zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
@@ -55,18 +53,15 @@ void setup()
 
     zn_session_t *s = zn_open(config);
     if (s == NULL)
-    {
         return;
-    }
+
+    zn_reskey_t reskey = zn_rname(URI);
+    zn_queryable_t *qable = zn_declare_queryable(s, reskey, ZN_QUERYABLE_EVAL, query_handler, NULL);
+    if (qable == 0)
+        return;
 
     znp_start_read_task(s);
     znp_start_lease_task(s);
-
-    zn_queryable_t *qable = zn_declare_queryable(s, zn_rname(URI), ZN_QUERYABLE_EVAL, query_handler, NULL);
-    if (qable == 0)
-    {
-        return;
-    }
 }
 
 void loop()

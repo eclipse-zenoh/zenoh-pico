@@ -12,30 +12,27 @@
  *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include <stdlib.h>
 #include <string.h>
-#include "zenoh-pico/system/common.h"
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/collections/string.h"
 
 /*-------- string --------*/
-z_string_t z_string_make(const char *value)
+z_string_t z_string_make(const z_str_t value)
 {
     z_string_t s;
-    s.val = strdup(value);
+    s.val = _z_str_clone(value);
     s.len = strlen(value);
     return s;
 }
 
 void z_string_free(z_string_t *s)
 {
-    free((char *)s->val);
+    free((z_str_t)s->val);
 }
 
 void _z_string_copy(z_string_t *dst, const z_string_t *src)
 {
     if (src->val)
-        dst->val = strdup(src->val);
+        dst->val = _z_str_clone(src->val);
     else
         dst->val = NULL;
     dst->len = src->len;
@@ -50,9 +47,10 @@ void _z_string_move(z_string_t *dst, z_string_t *src)
     src->len = 0;
 }
 
-void _z_string_free(z_string_t *str)
+void _z_string_move_str(z_string_t *dst, z_str_t src)
 {
-    free((z_str_t)str->val);
+    dst->val = src;
+    dst->len = strlen(src);
 }
 
 void _z_string_reset(z_string_t *str)
@@ -61,11 +59,24 @@ void _z_string_reset(z_string_t *str)
     str->len = 0;
 }
 
+void _z_string_clear(z_string_t *str)
+{
+    free((z_str_t)str->val);
+    _z_string_reset(str);
+}
+
+void _z_string_free(z_string_t **str)
+{
+    z_string_t *ptr = (z_string_t *)*str;
+    _z_string_clear(ptr);
+    *str = NULL;
+}
+
 z_string_t _z_string_from_bytes(z_bytes_t *bs)
 {
     z_string_t s;
     s.len = 2 * bs->len;
-    char *s_val = (char *)malloc(s.len * sizeof(char) + 1);
+    z_str_t s_val = (z_str_t)malloc(s.len * sizeof(char) + 1);
 
     char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++)
@@ -77,6 +88,34 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs)
     s.val = s_val;
 
     return s;
+}
+
+/*-------- str --------*/
+size_t _z_str_size(const z_str_t src)
+{
+    return strlen(src) + 1;
+}
+
+void _z_str_clear(z_str_t src)
+{
+    free(src);
+}
+
+void _z_str_copy(z_str_t dst, const z_str_t src)
+{
+    strcpy(dst, src);
+}
+
+z_str_t _z_str_clone(const z_str_t src)
+{
+    z_str_t dst = (z_str_t)malloc(_z_str_size(src));
+    _z_str_copy(dst, src);
+    return dst;
+}
+
+int _z_str_eq(const z_str_t left, const z_str_t right)
+{
+    return strcmp(left, right) == 0;
 }
 
 /*-------- str_array --------*/
@@ -105,7 +144,7 @@ void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src)
 {
     _z_str_array_init(dst, src->len);
     for (size_t i = 0; i < src->len; i++)
-        ((z_str_t *)dst->val)[i] = strdup(src->val[i]);
+        ((z_str_t *)dst->val)[i] = _z_str_clone(src->val[i]);
     dst->len = src->len;
 }
 

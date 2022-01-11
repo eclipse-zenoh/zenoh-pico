@@ -15,8 +15,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-extern "C" {
-    #include "zenoh-pico.h"
+extern "C"
+{
+#include "zenoh-pico.h"
 }
 
 #define SSID "SSID"
@@ -25,7 +26,7 @@ extern "C" {
 // Zenoh-specific parameters
 #define MODE "client"
 #define PEER "tcp/10.0.0.1:7447"
-#define URI "/demo/example/zenoh-pico-esp32/**"
+#define URI "/demo/example/**"
 
 zn_subscriber_t *sub = NULL;
 
@@ -33,7 +34,6 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 {
     (void)(arg); // Unused argument
 }
-
 
 void setup()
 {
@@ -43,7 +43,8 @@ void setup()
 
     // Keep trying until connected
     while (WiFi.status() != WL_CONNECTED)
-    { }
+    {
+    }
     delay(1000);
 
     zn_properties_t *config = zn_config_default();

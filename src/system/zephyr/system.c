@@ -15,45 +15,49 @@
 #include <zephyr.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/system/platform.h"
 
-#define Z_THREADS_NUM 2
-#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE
+#define Z_THREADS_NUM 4
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
 K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
 static int thread_index = 0;
 
-/*------------------ String ------------------*/
-char *strdup(const char *s)
-{
-    char *result = malloc(strlen(s) + 1);
-
-    if (result)
-    {
-        strcpy(result, s);
-    }
-
-    return result;
-}
-
 /*------------------ Task ------------------*/
-// As defined in "zenoh/private/system.h"
+// As defined in "zenoh/system.h"
 typedef pthread_t z_task_t;
 int z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg)
 {
     if (attr == NULL)
     {
-       pthread_attr_t tmp;
-       (void)pthread_attr_init(&tmp);
-       (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++],
-                                   Z_PTHREAD_STACK_SIZE_DEFAULT);
-       attr = &tmp;
+        pthread_attr_t tmp;
+        (void)pthread_attr_init(&tmp);
+        (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++],
+                                    Z_PTHREAD_STACK_SIZE_DEFAULT);
+        attr = &tmp;
     }
 
     return pthread_create(task, attr, fun, arg);
 }
 
+int z_task_join(pthread_t *task)
+{
+    return pthread_join(*task, NULL);
+}
+
+int z_task_cancel(pthread_t *task)
+{
+    return pthread_cancel(*task);
+}
+
+void z_task_free(pthread_t **task)
+{
+    pthread_t *ptr = *task;
+    free(ptr);
+    *task = NULL;
+}
+
 /*------------------ Mutex ------------------*/
-// As defined in "zenoh/private/system.h"
+// As defined in "zenoh/system.h"
 typedef pthread_mutex_t z_mutex_t;
 int z_mutex_init(pthread_mutex_t *m)
 {
@@ -81,7 +85,7 @@ int z_mutex_unlock(pthread_mutex_t *m)
 }
 
 /*------------------ Condvar ------------------*/
-// As defined in "zenoh/private/system.h"
+// As defined in "zenoh/system.h"
 typedef pthread_cond_t z_condvar_t;
 int z_condvar_init(pthread_cond_t *cv)
 {
@@ -120,7 +124,7 @@ int z_sleep_s(unsigned int time)
 }
 
 /*------------------ Instant ------------------*/
-// As defined in "zenoh/private/system.h"
+// As defined in "zenoh/system.h"
 typedef struct timespec z_clock_t;
 struct timespec z_clock_now()
 {
@@ -157,7 +161,7 @@ clock_t z_clock_elapsed_s(struct timespec *instant)
 }
 
 /*------------------ Time ------------------*/
-// As defined in "zenoh/private/system.h"
+// As defined in "zenoh/system.h"
 typedef struct timeval z_time_t;
 struct timeval z_time_now()
 {

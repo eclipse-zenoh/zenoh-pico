@@ -42,6 +42,9 @@ message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 option (BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
+option (BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
+
 # Configure the debug level
 #
 # ZENOH_DEBUG :
@@ -94,11 +97,15 @@ set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
+                        "include/zenoh-pico/api/*.h"
+                        "include/zenoh-pico/collections/*.h"
+                        "include/zenoh-pico/link/*.h"
+                        "include/zenoh-pico/link/config/*.h"
                         "include/zenoh-pico/protocol/*.h"
                         "include/zenoh-pico/session/*.h"
                         "include/zenoh-pico/system/*.h"
+                        "include/zenoh-pico/system/link/*.h"
                         "include/zenoh-pico/transport/*.h"
-                        "include/zenoh-pico/link/*.h"
                         "include/zenoh-pico/utils/*.h"
 )
 include_directories(
@@ -107,16 +114,24 @@ include_directories(
 
 if (UNIX)
   file(GLOB Sources "src/*.c"
+                    "src/api/*.c"
                     "src/collections/*.c"
-                    "src/zenoh/*.c"
-                    "src/zenoh/protocol/*.c"
-                    "src/zenoh/session/*.c"
-                    "src/zenoh/transport/*.c"
-                    "src/zenoh/transport/link/*.c"
-                    "src/zenoh/transport/link/task/*.c"
-                    "src/zenoh/link/*.c"
+                    "src/link/*.c"
+                    "src/link/config/*.c"
+                    "src/link/unicast/*.c"
+                    "src/link/multicast/*.c"
+                    "src/protocol/*.c"
+                    "src/session/*.c"
                     "src/system/*.c"
                     "src/system/unix/*.c"
+                    "src/transport/*.c"
+                    "src/transport/common/*.c"
+                    "src/transport/unicast/*.c"
+                    "src/transport/unicast/link/*.c"
+                    "src/transport/unicast/link/task/*.c"
+                    "src/transport/multicast/*.c"
+                    "src/transport/multicast/link/*.c"
+                    "src/transport/multicast/link/task/*.c"
   )
 endif()
 
@@ -174,28 +189,52 @@ endif()
 if(BUILD_TESTING)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
-  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
-  add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)
-  add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
-  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
+  add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
+  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)  
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
-
-  target_link_libraries(z_iobuf_test ${Libname})
+  add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)  
+  add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
+  
   target_link_libraries(z_data_struct_test ${Libname})
-  target_link_libraries(z_mvar_test ${Libname})
-  target_link_libraries(zn_rname_test ${Libname})
-  target_link_libraries(zn_client_test ${Libname})
+  target_link_libraries(z_endpoint_test ${Libname})
+  target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
+  target_link_libraries(z_mvar_test ${Libname})
+  target_link_libraries(zn_rname_test ${Libname})  
+
+  enable_testing()
+  add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
+  add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
+  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)    
+  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
+  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
+endif()
+
+if(BUILD_MULTICAST)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+
+  add_executable(zn_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/zn_peer_multicast_test.c)
+
+  target_link_libraries(zn_peer_multicast_test ${Libname})
+
+  configure_file(${PROJECT_SOURCE_DIR}/tests/multicast.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh COPYONLY)
+
+  enable_testing()
+  add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh zn_peer_multicast_test)
+endif()
+
+if(BUILD_INTEGRATION)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+
+  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
+
+  target_link_libraries(zn_client_test ${Libname})
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
   enable_testing()
   add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
-  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
-  add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
-  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
-  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
 endif()
 
 # For packaging

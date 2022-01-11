@@ -70,6 +70,9 @@ int main(int argc, char **argv)
     }
 
     zn_undeclare_subscriber(sub);
+
+    znp_stop_read_task(s);
+    znp_stop_lease_task(s);
     zn_close(s);
 
     return 0;

@@ -13,13 +13,15 @@
  */
 
 #include <stdlib.h>
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/collections/bytes.h"
 
 /*-------- bytes --------*/
 void _z_bytes_init(z_bytes_t *bs, size_t capacity)
 {
     bs->val = (uint8_t *)malloc(capacity * sizeof(uint8_t));
     bs->len = capacity;
+    bs->is_alloc = 1;
 }
 
 z_bytes_t _z_bytes_make(size_t capacity)
@@ -29,9 +31,36 @@ z_bytes_t _z_bytes_make(size_t capacity)
     return bs;
 }
 
-void _z_bytes_free(z_bytes_t *bs)
+z_bytes_t _z_bytes_wrap(const uint8_t *p, size_t len)
 {
+    z_bytes_t bs;
+    bs.val = p;
+    bs.len = len;
+    bs.is_alloc = 0;
+    return bs;
+}
+
+void _z_bytes_reset(z_bytes_t *bs)
+{
+    bs->val = NULL;
+    bs->len = 0;
+    bs->is_alloc = 0;
+}
+
+void _z_bytes_clear(z_bytes_t *bs)
+{
+    if (!bs->is_alloc)
+        return;
+
     free((uint8_t *)bs->val);
+    _z_bytes_reset(bs);
+}
+
+void _z_bytes_free(z_bytes_t **bs)
+{
+    z_bytes_t *ptr = (z_bytes_t *)*bs;
+    _z_bytes_clear(ptr);
+    *bs = NULL;
 }
 
 void _z_bytes_copy(z_bytes_t *dst, const z_bytes_t *src)
@@ -44,13 +73,19 @@ void _z_bytes_move(z_bytes_t *dst, z_bytes_t *src)
 {
     dst->val = src->val;
     dst->len = src->len;
+    dst->is_alloc = src->is_alloc;
 
-    src->val = NULL;
-    src->len = 0;
+    _z_bytes_reset(src);
 }
 
-void _z_bytes_reset(z_bytes_t *bs)
+z_bytes_t _z_bytes_duplicate(const z_bytes_t *src)
 {
-    bs->val = NULL;
-    bs->len = 0;
+    z_bytes_t dst;
+    _z_bytes_copy(&dst, src);
+    return dst;
+}
+
+int _z_bytes_is_empty(const z_bytes_t *bs)
+{
+    return bs->len == 0;
 }

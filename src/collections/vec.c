@@ -13,75 +13,98 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include <string.h>
+#include "zenoh-pico/collections/vec.h"
 
 /*-------- vec --------*/
-inline z_vec_t z_vec_make(size_t capacity)
+inline _z_vec_t _z_vec_make(size_t capacity)
 {
-    z_vec_t v;
-    v._capacity = capacity;
-    v._len = 0;
-    v._val = (void **)malloc(sizeof(void *) * capacity);
+    _z_vec_t v;
+    v.capacity = capacity;
+    v.len = 0;
+    v.val = (void **)malloc(sizeof(void *) * capacity);
     return v;
 }
 
-z_vec_t z_vec_clone(const z_vec_t *v)
+void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f)
 {
-    z_vec_t u = z_vec_make(v->_capacity);
-    for (size_t i = 0; i < v->_len; ++i)
-        z_vec_append(&u, v->_val[i]);
-    return u;
+    dst->capacity = src->capacity;
+    dst->len = src->len;
+    dst->val = (void **)malloc(sizeof(void *) * src->capacity);
+    for (size_t i = 0; i < src->len; i++)
+        _z_vec_append(dst, d_f(src->val[i]));
 }
 
-void z_vec_free_inner(z_vec_t *v)
+void _z_vec_reset(_z_vec_t *v, z_element_free_f free_f)
 {
-    free(v->_val);
-    v->_len = 0;
-    v->_capacity = 0;
-    v->_val = NULL;
+    for (size_t i = 0; i < v->len; i++)
+        free_f(&v->val[i]);
+
+    v->len = 0;
 }
 
-void z_vec_free(z_vec_t *v)
+void _z_vec_clear(_z_vec_t *v, z_element_free_f free_f)
 {
-    for (size_t i = 0; i < v->_len; ++i)
-        free(v->_val[i]);
-    z_vec_free_inner(v);
+    for (size_t i = 0; i < v->len; i++)
+        free_f(&v->val[i]);
+
+    free(v->val);
+    v->val = NULL;
+
+    v->capacity = 0;
+    v->len = 0;
 }
 
-inline size_t z_vec_len(const z_vec_t *v)
+void _z_vec_free(_z_vec_t **v, z_element_free_f free_f)
 {
-    return v->_len;
+    _z_vec_t *ptr = (_z_vec_t *)*v;
+    _z_vec_clear(ptr, free_f);
+
+    free(ptr);
+    *v = NULL;
 }
 
-void z_vec_append(z_vec_t *v, void *e)
+size_t _z_vec_len(const _z_vec_t *v)
 {
-    if (v->_len == v->_capacity)
+    return v->len;
+}
+
+int _z_vec_is_empty(const _z_vec_t *v)
+{
+    return _z_vec_len(v) == 0;
+}
+
+void _z_vec_append(_z_vec_t *v, void *e)
+{
+    if (v->len == v->capacity)
     {
         // Allocate a new vector
-        size_t _capacity = 2 * v->_capacity;
+        size_t _capacity = 2 * v->capacity;
         void **_val = (void **)malloc(_capacity * sizeof(void *));
-        memcpy(_val, v->_val, v->_capacity * sizeof(void *));
+        memcpy(_val, v->val, v->capacity * sizeof(void *));
         // Free the old vector
-        free(v->_val);
+        free(v->val);
         // Update the current vector
-        v->_val = _val;
-        v->_capacity = _capacity;
+        v->val = _val;
+        v->capacity = _capacity;
     }
 
-    v->_val[v->_len] = e;
-    v->_len++;
+    v->val[v->len] = e;
+    v->len++;
 }
 
-const void *z_vec_get(const z_vec_t *v, size_t i)
+void *_z_vec_get(const _z_vec_t *v, size_t i)
 {
-    assert(i < v->_len);
-    return v->_val[i];
+    assert(i < v->len);
+
+    return v->val[i];
 }
 
-void z_vec_set(z_vec_t *v, size_t i, void *e)
+void _z_vec_set(_z_vec_t *v, size_t i, void *e, z_element_free_f free_f)
 {
-    assert(i < v->_capacity);
-    v->_val[i] = e;
+    assert(i < v->len);
+
+    if (v->val[i] != NULL)
+        free_f(&v->val[i]);
+    v->val[i] = e;
 }

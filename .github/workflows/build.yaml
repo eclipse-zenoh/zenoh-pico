@@ -12,9 +12,9 @@ name: build
 
 on:
   push:
-    branches: [master]
+    branches: [ '**' ]
   pull_request:
-    branches: [master]
+    branches: [ '**' ]
 
 jobs:
   build:
@@ -25,18 +25,21 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v2
-      - name: Compile debug
-        run: make all
-        env:
-          BUILD_TYPE: Debug
+    - uses: actions/checkout@v2
+    - name: Compile debug
+      run: make all
+      env:
+        BUILD_TYPE: Debug
+        BUILD_TESTING: ON
+        BUILD_MULTICAST: OFF
+        BUILD_INTEGRATION: OFF
 
   crossbuilds:
     name: Build on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Crosscompile debug
-        run: make crossbuilds
-        env:
-          BUILD_TYPE: Debug
+    - uses: actions/checkout@v2
+    - name: Crosscompile debug
+      run: make crossbuilds
+      env:
+        BUILD_TYPE: Debug

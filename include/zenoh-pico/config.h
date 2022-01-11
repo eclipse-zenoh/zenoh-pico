@@ -19,11 +19,13 @@
 /**
  * The library mode.
  * String key : `"mode"`.
- * Accepted values : `"client"`.
+ * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
 #define ZN_CONFIG_MODE_KEY 0x40
-#define ZN_CONFIG_MODE_DEFAULT "client"
+#define ZN_CONFIG_MODE_CLIENT "client"
+#define ZN_CONFIG_MODE_PEER "peer"
+#define ZN_CONFIG_MODE_DEFAULT ZN_CONFIG_MODE_CLIENT
 
 /**
  * The locator of a peer to connect to.
@@ -33,6 +35,15 @@
  * Multiple values are not accepted in zenoh-pico.
  */
 #define ZN_CONFIG_PEER_KEY 0x41
+
+/**
+ * A locator to listen on.
+ * String key : `"listener"`.
+ * Accepted values : `<locator>` (ex: `"tcp/10.10.10.10:7447"`).
+ * Default value : None.
+ * Multiple values accepted.
+ */
+#define ZN_CONFIG_LISTENER_KEY 0x42
 
 /**
  * The user name to use for authentication.
@@ -80,11 +91,11 @@
 /**
  * In client mode, the period dedicated to scouting a router before failing.
  * String key : `"scouting_timeout"`.
- * Accepted values : `<float in seconds>`.
- * Default value : `"3.0"`.
+ * Accepted values : `<int in seconds>`.
+ * Default value : `"3"`.
  */
 #define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
-#define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3.0"
+#define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3"
 
 /**
  * Indicates if data messages should be timestamped.
@@ -105,6 +116,17 @@
  */
 #define ZN_TRANSPORT_LEASE 10000
 #define ZN_KEEP_ALIVE_INTERVAL 1000
+#define ZN_LEASE_EXPIRE_FACTOR 3.5
+
+/**
+ * Default multicast session join interval in milliseconds: 10 seconds
+ */
+#define ZN_JOIN_INTERVAL 1000
+
+/**
+ * Default socket timeout: 2 seconds
+ */
+#define ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT 2
 
 /**
  * The default sequence number resolution takes 4 bytes on the wire.
@@ -123,19 +145,5 @@
 #define ZN_FRAG_BUF_RX_LIMIT 10000000
 
 #define ZN_BATCH_SIZE 65535
-#ifdef ZN_TRANSPORT_TCP_IP
-/**
- * NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
- *       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
- *       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
- *       the boundary of the serialized messages. The length is encoded as little-endian.
- *       In any case, the length of a message must not exceed 65_535 bytes.
- */
-#define ZN_READ_BUF_LEN 65535 + _ZN_MSG_LEN_ENC_SIZE
-#define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE + _ZN_MSG_LEN_ENC_SIZE
-#else
-#define ZN_READ_BUF_LEN 65535
-#define ZN_WRITE_BUF_LEN ZN_BATCH_SIZE
-#endif
 
 #endif /* ZENOH_PICO_CONFIG_H */

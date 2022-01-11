@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     printf("Sending Query '%s'...\n", uri);
     zn_reply_data_array_t replies = zn_query_collect(s, zn_rname(uri), "", zn_query_target_default(), zn_query_consolidation_default());
 
-    for (unsigned int i = 0; i < replies.len; ++i)
+    for (unsigned int i = 0; i < replies.len; i++)
     {
         printf(">> [Reply handler] received (%.*s, %.*s)\n",
                (int)replies.val[i].data.key.len, replies.val[i].data.key.val,
@@ -53,6 +53,9 @@ int main(int argc, char **argv)
     }
     zn_reply_data_array_free(replies);
 
+    znp_stop_read_task(s);
+    znp_stop_lease_task(s);
     zn_close(s);
+
     return 0;
 }

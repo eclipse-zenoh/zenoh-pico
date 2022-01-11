@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     prop = zn_properties_get(ps, ZN_INFO_ROUTER_PID_KEY);
     printf("info_router_pid : %.*s\n", (int)prop.len, prop.val);
 
-    zn_properties_free(ps);
+    zn_properties_free(&ps);
     zn_close(s);
 
     return 0;

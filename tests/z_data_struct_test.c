@@ -14,50 +14,106 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "zenoh-pico/utils/collections.h"
-#include "zenoh-pico/utils/types.h"
+#include "zenoh-pico/collections/string.h"
 
 int main(void)
 {
-    z_list_t *xs = z_list_of("one");
-    z_i_map_t *map = z_i_map_make(5);
+    char s[64];
+    int len = 128;
 
-    xs = z_list_cons(xs, "two");
-    xs = z_list_cons(xs, "three");
-    printf("list len = %zu\n", z_list_len(xs));
-    xs = z_list_drop_val(xs, 1);
-    printf("list len = %zu\n", z_list_len(xs));
-    z_list_free(xs);
+    // str-vec
+    printf(">>> str-vec\n");
 
-    z_i_map_set(map, 0, "0");
-    z_i_map_set(map, 1, "1");
-    z_i_map_set(map, 2, "2");
-    z_i_map_set(map, 3, "3");
-    z_i_map_set(map, 4, "4");
-    z_i_map_set(map, 5, "5");
-    z_i_map_set(map, 6, "6");
-    z_i_map_set(map, 7, "7");
-    z_i_map_set(map, 8, "8");
-    z_i_map_set(map, 9, "9");
-    z_i_map_set(map, 10, "10");
+    _z_str_vec_t vec = _z_str_vec_make(1);
+    assert(_z_str_vec_is_empty(&vec));
 
-    printf("Map size: %zu\n", z_i_map_len(map));
-    printf("get(0) = %s\n", (char *)z_i_map_get(map, 0));
-    printf("get(1) = %s\n", (char *)z_i_map_get(map, 1));
-    printf("get(2) = %s\n", (char *)z_i_map_get(map, 2));
-    printf("get(3) = %s\n", (char *)z_i_map_get(map, 3));
-    printf("get(4) = %s\n", (char *)z_i_map_get(map, 4));
-    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
-    printf("get(6) = %s\n", (char *)z_i_map_get(map, 6));
-    printf("get(7) = %s\n", (char *)z_i_map_get(map, 7));
-    printf("get(8) = %s\n", (char *)z_i_map_get(map, 8));
-    printf("get(9) = %s\n", (char *)z_i_map_get(map, 9));
-    printf("get(10) = %s\n", (char *)z_i_map_get(map, 10));
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
 
-    z_i_map_remove(map, 7);
-    assert(0 == z_i_map_get(map, 7));
-    z_i_map_remove(map, 0);
-    assert(0 == z_i_map_get(map, 0));
-    printf("get(5) = %s\n", (char *)z_i_map_get(map, 5));
+        _z_str_vec_append(&vec, _z_str_clone(s));
+        z_str_t e = _z_str_vec_get(&vec, i);
+        printf("append(%d) = %s\n", i, e);
+        assert(_z_str_eq(s, e));
+
+        _z_str_vec_set(&vec, i, _z_str_clone(s));
+        e = _z_str_vec_get(&vec, i);
+        printf("set(%d) = %s\n", i, e);
+        assert(_z_str_eq(s, e));
+
+        assert(_z_str_vec_len(&vec) == i + 1);
+    }
+    assert(_z_str_vec_len(&vec) == len);
+
+    _z_str_vec_clear(&vec);
+    assert(_z_str_vec_is_empty(&vec));
+
+    // str-list
+    printf(">>> str-list\n");
+
+    _z_str_list_t *list = _z_str_list_new();
+    assert(_z_str_list_is_empty(list));
+
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        list = _z_str_list_push(list, _z_str_clone(s));
+
+        z_str_t e = _z_str_list_head(list);
+        printf("push(%d) = %s\n", i, e);
+        assert(_z_str_eq(s, e));
+
+        assert(_z_str_list_len(list) == i + 1);
+    }
+    assert(_z_str_list_len(list) == len);
+
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        list = _z_str_list_pop(list);
+        assert(_z_str_list_len(list) == len - (i + 1));
+    }
+    assert(_z_str_list_is_empty(list));
+
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        list = _z_str_list_push(list, _z_str_clone(s));
+        assert(_z_str_eq(s, _z_str_list_head(list)));
+    }
+    assert(_z_str_list_len(list) == len);
+    _z_str_list_free(&list);
+    assert(_z_str_list_is_empty(list));
+
+    // str-intmap
+    printf(">>> str-intmap\n");
+
+    _z_str_intmap_t map = _z_str_intmap_make();
+    assert(_z_str_intmap_is_empty(&map));
+
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(s, "%d", i);
+        _z_str_intmap_insert(&map, i, _z_str_clone(s));
+
+        z_str_t e = _z_str_intmap_get(&map, i);
+        printf("get(%d) = %s\n", i, e);
+        assert(_z_str_eq(s, e));
+
+        assert(_z_str_intmap_len(&map) == i + 1);
+    }
+    assert(_z_str_intmap_len(&map) == len);
+
+    for (int i = 0; i < len; i++)
+    {
+        _z_str_intmap_remove(&map, i);
+        assert(_z_str_intmap_get(&map, i) == NULL);
+        assert(_z_str_intmap_len(&map) == (len - 1) - i);
+    }
+    assert(_z_str_intmap_is_empty(&map));
+
+    _z_str_intmap_clear(&map);
+    assert(_z_str_intmap_is_empty(&map));
+
     return 0;
 }

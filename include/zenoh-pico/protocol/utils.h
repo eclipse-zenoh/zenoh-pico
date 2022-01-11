@@ -12,8 +12,11 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_PROTOCOL_UTILS_H
-#define _ZENOH_PICO_PROTOCOL_UTILS_H
+#ifndef ZENOH_PICO_PROTOCOL_UTILS_H
+#define ZENOH_PICO_PROTOCOL_UTILS_H
+
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/collections/string.h"
 
 /**
  * Intersects two resource names. This function compares two resource names
@@ -24,8 +27,13 @@
  *     left: The resource name to match against.
  *     right: The resource name to be compared.
  * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
+ *     ``1`` in case of success, ``0`` in case of failure.
  */
-int zn_rname_intersect(const char *left, const char *right);
+int zn_rname_intersect(const z_str_t left, const z_str_t right);
 
-#endif /* _ZENOH_PICO_PROTOCOL_UTILS_H */
+/*------------------ clone/Copy/Free helpers ------------------*/
+zn_reskey_t _zn_reskey_duplicate(const zn_reskey_t *resky);
+z_timestamp_t z_timestamp_duplicate(const z_timestamp_t *tstamp);
+void z_timestamp_reset(z_timestamp_t *tstamp);
+
+#endif /* ZENOH_PICO_PROTOCOL_UTILS_H */

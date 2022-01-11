@@ -32,13 +32,11 @@ fi
 
 chmod +x zenohd
 
-#LOCATORS="tcp/127.0.0.1:7447 udp/127.0.0.1:7447 tcp/[::1]:7447 udp/[::1]:7447"
-LOCATORS="tcp/127.0.0.1:7447 tcp/[::1]:7447"
-
+LOCATORS="tcp/127.0.0.1:7447 tcp/[::1]:7447 udp/127.0.0.1:7447 udp/[::1]:7447"
 for LOCATOR in $(echo $LOCATORS | xargs); do
     sleep 1
 
-    echo "> Running zenohd ..."
+    echo "> Running zenohd ... $LOCATOR"
     RUST_LOG=debug ./zenohd -l $LOCATOR &> zenohd.$TESTBIN.log &
     ZPID=$!
 
@@ -50,6 +48,8 @@ for LOCATOR in $(echo $LOCATORS | xargs); do
 
     echo "> Stopping zenohd ..."
     kill -9 $ZPID
+
+    sleep 1
 
     echo "> Logs of zenohd ..."
     cat zenohd.$TESTBIN.log

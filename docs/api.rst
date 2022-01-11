@@ -118,8 +118,8 @@ Vectors
 
 .. c:function:: z_vec_t z_vec_make(unsigned int capacity)
 
-  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t._capacity` of **capacity**,
-  a :c:member:`z_vec_t._length` of **0** and a :c:member:`z_vec_t._elem` pointing to a
+  Initialize a :c:type:`z_vec_t` with a :c:member:`z_vec_t.capacity` of **capacity**,
+  a :c:member:`z_vec_t.length` of **0** and a :c:member:`z_vec_t._elem` pointing to a
   newly allocated array of **capacity** pointers.
 
 .. c:function:: unsigned int z_vec_len(const z_vec_t* v)

@@ -12,12 +12,21 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H
-#define _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H
+#ifndef ZENOH_PICO_SYSTEM_COLLECTIONS_H
+#define ZENOH_PICO_SYSTEM_COLLECTIONS_H
 
-#include "zenoh-pico/system/types.h"
+#include "zenoh-pico/system/platform.h"
 
 /*-------- Mvar --------*/
+typedef struct
+{
+    void *elem;
+    int full;
+    z_mutex_t mtx;
+    z_condvar_t can_put;
+    z_condvar_t can_get;
+} z_mvar_t;
+
 z_mvar_t *z_mvar_empty(void);
 int z_mvar_is_empty(z_mvar_t *mv);
 
@@ -25,4 +34,4 @@ z_mvar_t *z_mvar_of(void *e);
 void *z_mvar_get(z_mvar_t *mv);
 void z_mvar_put(z_mvar_t *mv, void *e);
 
-#endif /* _ZENOH_PICO_SYSTEM_PRIVATE_COLLECTIONS_H */
+#endif /* ZENOH_PICO_SYSTEM_COLLECTIONS_H */

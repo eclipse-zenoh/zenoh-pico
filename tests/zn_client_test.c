@@ -1,21 +1,21 @@
-// /*
-//  * Copyright (c) 2017, 2021 ADLINK Technology Inc.
-//  *
-//  * This program and the accompanying materials are made available under the
-//  * terms of the Eclipse Public License 2.0 which is available at
-//  * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-//  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
-//  *
-//  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-//  *
-//  * Contributors:
-//  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
-//  */
+/*
+ * Copyright (c) 2017, 2021 ADLINK Technology Inc.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+ */
 
 #include <stdio.h>
 #include <assert.h>
 #include "zenoh-pico.h"
-#include "zenoh-pico/system/common.h"
+#include "zenoh-pico/system/platform.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -25,15 +25,15 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "/demo/example/";
+z_str_t uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
-z_list_t *pubs1 = NULL;
+_z_list_t *pubs1 = NULL; // @TODO: use type-safe list
 unsigned long rids1[SET];
 
-z_list_t *subs2 = NULL;
-z_list_t *qles2 = NULL;
+_z_list_t *subs2 = NULL; // @TODO: use type-safe list
+_z_list_t *qles2 = NULL; // @TODO: use type-safe list
 unsigned long rids2[SET];
 
 volatile unsigned int total = 0;
@@ -44,8 +44,8 @@ void query_handler(zn_query_t *query, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(strcmp(query->rname, res) == 0);
-    assert(strcmp(query->predicate, "") == 0);
+    assert(_z_str_eq(query->rname, res));
+    assert(_z_str_eq(query->predicate, ""));
 
     zn_send_reply(query, res, (const uint8_t *)res, strlen(res));
 
@@ -62,7 +62,7 @@ void reply_handler(const zn_reply_t reply, const void *arg)
     {
         printf(">> Received reply data: %s %s %s\t(%u/%u)\n", res, reply.data.data.key.val, reply.data.data.key.val, replies, total);
         assert(reply.data.data.value.len == strlen(res));
-        assert(strncmp(res, (const char *)reply.data.data.value.val, reply.data.data.value.len) == 0);
+        assert(strncmp(res, (const z_str_t)reply.data.data.value.val, reply.data.data.value.len) == 0);
         assert(reply.data.data.key.len == strlen(res));
         assert(strncmp(res, reply.data.data.key.val, reply.data.data.value.len) == 0);
     }
@@ -87,22 +87,24 @@ void data_handler(const zn_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, char **argv)
+int main(int argc, z_str_t *argv)
 {
+    assert(argc == 2);
+
     setbuf(stdout, NULL);
 
     zn_properties_t *config = zn_config_default();
-    if (argc > 1)
-        zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
 
     zn_session_t *s1 = zn_open(config);
     assert(s1 != NULL);
-    z_string_t pid1 = _z_string_from_bytes(&s1->local_pid);
+    z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
-    z_string_free(&pid1);
+    _z_string_clear(&pid1);
 
     // Start the read session session lease loops
     znp_start_read_task(s1);
@@ -112,9 +114,9 @@ int main(int argc, char **argv)
 
     zn_session_t *s2 = zn_open(config);
     assert(s2 != NULL);
-    z_string_t pid2 = _z_string_from_bytes(&s2->local_pid);
+    z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
-    z_string_free(&pid2);
+    _z_string_clear(&pid2);
 
     // Start the read session session lease loops
     znp_start_read_task(s2);
@@ -133,6 +135,8 @@ int main(int argc, char **argv)
         rids1[i] = rid;
     }
 
+    z_sleep_s(SLEEP);
+
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
@@ -142,6 +146,8 @@ int main(int argc, char **argv)
         rids2[i] = rid;
     }
 
+    z_sleep_s(SLEEP);
+
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++)
     {
@@ -149,8 +155,10 @@ int main(int argc, char **argv)
         zn_subscriber_t *sub = zn_declare_subscriber(s2, rk, zn_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
-        subs2 = z_list_cons(subs2, sub);
+        subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
+
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++)
     {
@@ -159,8 +167,11 @@ int main(int argc, char **argv)
         zn_queryable_t *qle = zn_declare_queryable(s2, rk, ZN_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
-        qles2 = z_list_cons(qles2, qle);
+        qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
+	_zn_reskey_clear(&rk);
     }
+
+    z_sleep_s(SLEEP);
 
     // Declare publisher on firt session
     for (unsigned int i = 0; i < SET; i++)
@@ -169,7 +180,7 @@ int main(int argc, char **argv)
         zn_publisher_t *pub = zn_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->id);
-        pubs1 = z_list_cons(pubs1, pub);
+        pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
     }
 
     z_sleep_s(SLEEP);
@@ -191,13 +202,17 @@ int main(int argc, char **argv)
 
     // Wait to receive all the data
     z_clock_t now = z_clock_now();
-    while (datas < total)
+    unsigned int expected = is_reliable ? total : 1;
+    while (datas < expected)
     {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
-        printf("Waiting for datas... %u/%u\n", datas, total);
+        printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
-    assert(datas == total);
+    if (is_reliable)
+        assert(datas == expected);
+    else
+        assert(datas >= expected);
     datas = 0;
 
     z_sleep_s(SLEEP);
@@ -217,87 +232,107 @@ int main(int argc, char **argv)
         }
     }
 
-    // Wait to receive all the queries
+    // Wait to receive all the expected queries
     now = z_clock_now();
-    while (queries < total)
+    expected = is_reliable ? total : 1;
+    while (queries < expected)
     {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
-        printf("Waiting for queries... %u/%u\n", queries, total);
+        printf("Waiting for queries... %u/%u\n", queries, expected);
         z_sleep_s(SLEEP);
     }
-    assert(queries == total);
+    if (is_reliable)
+        assert(queries == expected);
+    else
+        assert(queries >= expected);
     queries = 0;
 
-    // Wait to receive all the replies
+    // Wait to receive all the expectred replies
     now = z_clock_now();
-    while (replies < total)
+    while (replies < expected)
     {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
-        printf("Waiting for replies... %u/%u\n", replies, total);
+        printf("Waiting for replies... %u/%u\n", replies, expected);
         z_sleep_s(SLEEP);
     }
-    assert(replies == total);
+    if (is_reliable)
+        assert(replies == expected);
+    else
+        assert(replies >= expected);
     replies = 0;
 
-    // Query and collect from first session
-    total = QRY_CLT * SET;
-    for (unsigned int n = 0; n < QRY_CLT; n++)
+    if (is_reliable)
     {
-        for (unsigned int i = 0; i < SET; i++)
+        z_sleep_s(SLEEP);
+
+        // Query and collect from first session
+        total = QRY_CLT * SET;
+        for (unsigned int n = 0; n < QRY_CLT; n++)
         {
-            sprintf(s1_res, "%s%d", uri, i);
-            zn_reskey_t rk = zn_rname(s1_res);
-            zn_reskey_t myrk = zn_rname(s1_res);
-            zn_query_target_t qry_tgt = zn_query_target_default();
-            zn_query_consolidation_t qry_con = zn_query_consolidation_default();
-            zn_reply_data_array_t ra = zn_query_collect(s1, myrk, "", qry_tgt, qry_con);
-            printf("Queried and collected data from session 1: %lu %s\n", rk.rid, rk.rname);
-            free(rk.rname);
-            replies += ra.len;
-            zn_reply_data_array_free(ra);
+            for (unsigned int i = 0; i < SET; i++)
+            {
+                sprintf(s1_res, "%s%d", uri, i);
+                zn_reskey_t rk = zn_rname(s1_res);
+                zn_reskey_t myrk = zn_rname(s1_res);
+                zn_query_target_t qry_tgt = zn_query_target_default();
+                zn_query_consolidation_t qry_con = zn_query_consolidation_default();
+                zn_reply_data_array_t ra = zn_query_collect(s1, myrk, "", qry_tgt, qry_con);
+                printf("Queried and collected data from session 1: %lu %s\n", rk.rid, rk.rname);
+                _zn_reskey_clear(&rk);
+                replies += ra.len;
+                zn_reply_data_array_free(ra);
+            }
         }
+        assert(replies == total);
     }
-    assert(replies == total);
 
     z_sleep_s(SLEEP);
 
     // Undeclare publishers on first session
     while (pubs1)
     {
-        zn_publisher_t *pub = z_list_head(pubs1);
-        zn_undeclare_publisher(pub);
+        zn_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         printf("Undeclared publisher on session 2: %zu\n", pub->id);
-        pubs1 = z_list_pop(pubs1);
+        zn_undeclare_publisher(pub);
+        pubs1 = _z_list_pop(pubs1, _zn_noop_elem_free); // @TODO: use type-safe list
     }
+
+    z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        zn_subscriber_t *sub = z_list_head(subs2);
-        zn_undeclare_subscriber(sub);
+        zn_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        subs2 = z_list_pop(subs2);
+        zn_undeclare_subscriber(sub);
+        subs2 = _z_list_pop(subs2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
+
+    z_sleep_s(SLEEP);
 
     while (qles2)
     {
-        zn_queryable_t *qle = z_list_head(qles2);
-        zn_undeclare_queryable(qle);
+        zn_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
         printf("Undeclared queryable on session 2: %zu\n", qle->id);
-        qles2 = z_list_pop(qles2);
+        zn_undeclare_queryable(qle);
+        qles2 = _z_list_pop(qles2, _zn_noop_elem_free); // @TODO: use type-safe list
     }
+
+    z_sleep_s(SLEEP);
 
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++)
     {
-        zn_undeclare_resource(s1, rids1[i]);
         printf("Undeclared resource on session 1: %lu\n", rids1[i]);
+        zn_undeclare_resource(s1, rids1[i]);
     }
+
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++)
     {
-        zn_undeclare_resource(s2, rids2[i]);
         printf("Undeclared resource on session 2: %lu\n", rids2[i]);
+        zn_undeclare_resource(s2, rids2[i]);
     }
 
     z_sleep_s(SLEEP);
@@ -314,11 +349,17 @@ int main(int argc, char **argv)
     // Close both sessions
     printf("Closing session 1\n");
     zn_close(s1);
+
+    z_sleep_s(SLEEP);
+
     printf("Closing session 2\n");
     zn_close(s2);
 
     // Cleanup properties
-    zn_properties_free(config);
+    zn_properties_free(&config);
+
+    free((uint8_t *)payload);
+    payload = NULL;
 
     return 0;
 }
