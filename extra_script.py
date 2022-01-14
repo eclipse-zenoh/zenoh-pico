@@ -10,7 +10,7 @@ if framework == 'zephyr':
               "-<tests/>",
               "-<example/>",
               "-<system/unix/>",
-              "-<system/esp32/>"]
+              "-<system/arduino/>"]
   cppdefines=["ZENOH_ZEPHYR"]
 
 elif framework == 'arduino':
