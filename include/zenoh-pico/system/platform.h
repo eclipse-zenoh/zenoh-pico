@@ -19,8 +19,10 @@
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_ZEPHYR)
 #include "zenoh-pico/system/platform/zephyr.h"
-#elif defined(ZENOH_ESP32)
-#include "zenoh-pico/system/platform/esp32.h"
+#elif defined(ZENOH_ARDUINO_ESP32)
+#include "zenoh-pico/system/platform/arduino/esp32.h"
+#elif defined(ZENOH_ARDUINO_STSTM32)
+#include "zenoh-pico/system/platform/arduino/ststm32.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"

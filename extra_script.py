@@ -19,10 +19,18 @@ elif framework == 'arduino':
     src_filter=["+<*>",
                 "-<tests/>",
                 "-<example/>",
+                "-<system/arduino/ststm32>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
-    cppdefines=["ZENOH_ESP32"]
-
+    cppdefines=["ZENOH_ARDUINO_ESP32"]
+  if platform == 'ststm32':
+    src_filter=["+<*>",
+                "-<tests/>",
+                "-<example/>",
+                "-<system/arduino/esp32>",
+                "-<system/unix/>",
+                "-<system/zephyr/>"]
+    cppdefines=["ZENOH_ARDUINO_STSTM32"]
 
 env.Append(SRC_FILTER=src_filter)
 env.Append(CPPDEFINES=cppdefines)
