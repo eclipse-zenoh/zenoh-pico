@@ -64,6 +64,20 @@
 /*=============================*/
 /*        Message flags        */
 /*=============================*/
+// Scouting message flags:
+//      I ZenohID          if I==1 then the ZenohID is present
+//      L Locators         if L==1 then Locators are present
+//      O Options          if O==1 then Options are present
+//      Z Zenoh properties if Z==1 then Zenoh properties are present
+//      U User properties  if U==1 then User properties are present
+//      X None             Non-attributed flags are set to zero
+
+#define _ZN_FLAG_HDR_SCOUT_I    0x20  // 1 << 5
+#define _ZN_FLAG_OPT_SCOUT_Z    0x80  // 1 << 7
+
+#define _ZN_FLAG_S_O            0x80  // 1 << 7
+#define _ZN_FLAG_S_X            0x00  // 0
+
 /* Transport message flags */
 #define _ZN_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
 #define _ZN_FLAG_T_C 0x40  // 1 << 6 | Count            if C==1 then number of unacknowledged messages is present
@@ -599,26 +613,24 @@ _zn_zenoh_message_t _zn_z_msg_make_reply(zn_reskey_t key, _zn_data_info_t info, 
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
 // The SCOUT message can be sent at any point in time to solicit HELLO messages from matching parties.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|W|I|  SCOUT  |
-// +-+-+-+-+-------+
-// ~      what     ~ if W==1 -- Otherwise implicitly scouting for Routers
+// |Z|X|I|  SCOUT  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-//
-// - if I==1 then the sender is asking for hello replies that contain a peer_id.
+// |X|X|X|X|X| what| (*)
+// +---+-------+---+
+// ~     <u8>      ~ if Flag(I)==1 -- ZenohID
+// +---------------+
 //
 typedef struct
 {
-    z_zint_t what;
+    uint8_t version;
+    uint8_t what;
+    z_bytes_t zid;
 } _zn_scout_t;
 void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header);
 
@@ -1000,7 +1012,7 @@ typedef struct
 void _zn_t_msg_clear(_zn_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid);
+_zn_transport_message_t _zn_t_msg_make_scout(uint8_t what, z_bytes_t zid);
 _zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators);
 _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
 _zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos);
@@ -1019,7 +1031,7 @@ _zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg);
-//void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
+void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
 //void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
 void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *join);
 void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *init);

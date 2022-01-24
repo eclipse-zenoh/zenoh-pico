@@ -489,28 +489,34 @@ void _zn_z_msg_clear(_zn_zenoh_message_t *msg)
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_scout(z_zint_t what, int request_pid)
+_zn_transport_message_t _zn_t_msg_make_scout(uint8_t what, z_bytes_t zid)
 {
     _zn_transport_message_t msg;
 
-    msg.body.scout.what = what;
-
     msg.header = _ZN_MID_SCOUT;
-    if (request_pid)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_I);
-    if (what != ZN_ROUTER)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_W);
+    msg.body.scout.version = ZN_PROTO_VERSION;
+    msg.body.scout.what = what;
+    msg.body.scout.zid = zid;
+
+    if (!_z_bytes_is_empty(&zid))
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_SCOUT_I);
 
     msg.attachment = NULL;
 
     return msg;
 }
 
+void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout)
+{
+    clone->version = scout->version;
+    clone->what = scout->what;
+    _z_bytes_copy(&clone->zid, &scout->zid);
+}
+
 void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header)
 {
-    // NOTE: scout does not involve any heap allocation
-    (void)(msg);
-    (void)(header);
+    if (!_z_bytes_is_empty(&msg->zid))
+        _z_bytes_clear(&msg->zid);
 }
 
 /*------------------ Hello Message ------------------*/

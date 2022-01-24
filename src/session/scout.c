@@ -139,8 +139,8 @@ zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *confi
     _z_wbuf_t wbf = _z_wbuf_make(ZN_BATCH_SIZE, 0);
 
     // Create and encode the scout message
-    int request_id = 1;
-    _zn_transport_message_t scout = _zn_t_msg_make_scout((z_zint_t)what, request_id);
+    z_bytes_t zid = _z_bytes_make(0);;
+    _zn_transport_message_t scout = _zn_t_msg_make_scout(what, zid);
 
     _zn_transport_message_encode(&wbf, &scout);
 

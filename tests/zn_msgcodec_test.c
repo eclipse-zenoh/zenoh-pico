@@ -1754,17 +1754,24 @@ void zenoh_message(void)
 /*------------------ Scout Message ------------------*/
 _zn_transport_message_t gen_scout_message(void)
 {
-    z_zint_t what = gen_zint();
-    int request_pid = gen_bool();
-    return _zn_t_msg_make_scout(what, request_pid);
+    uint8_t what = gen_uint8() & 0x07;
+    z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    return _zn_t_msg_make_scout(what, zid);
 }
 
 void assert_eq_scout_message(_zn_scout_t *left, _zn_scout_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_W)
+    printf("   Version (%d:%d)\n", left->version, right->version);
+    assert(left->version == right->version);
+
+    printf("   What (%d:%d)\n", left->what, right->what);
+    assert(left->what == right->what);
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_SCOUT_I))
     {
-        printf("   What (%zu:%zu)\n", left->what, right->what);
-        assert(left->what == right->what);
+        printf("   ");
+        assert_eq_uint8_array(&left->zid, &right->zid);
+        printf("\n");
     }
 }
 

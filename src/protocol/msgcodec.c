@@ -1263,8 +1263,11 @@ int _zn_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_scout_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_SCOUT\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_W))
-        _ZN_EC(_z_zint_encode(wbf, msg->what))
+    _ZN_EC(_z_wbuf_write(wbf, msg->version));
+    uint8_t e = msg->what & 0x07; // TODO: extra flags not used for now
+    _ZN_EC(_z_wbuf_write(wbf, e));
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_SCOUT_I))
+        _ZN_EC(_z_bytes_encode(wbf, &msg->zid))
 
     return 0;
 }
@@ -1275,11 +1278,23 @@ void _zn_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_scout_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_W))
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.scout.version = r_uint8.value.uint8;
+
+    r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.scout.what = r_uint8.value.uint8 & 0x07;
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_SCOUT_I))
     {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.scout.what = r_zint.value.zint;
+        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
+        _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
+        r->value.scout.zid = r_arr.value.bytes;
+    }
+    else
+    {
+        r->value.scout.zid = _z_bytes_make(0);
     }
 }
 
