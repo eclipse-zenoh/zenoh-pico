@@ -15,6 +15,27 @@
 #include <stdio.h>
 #include "zenoh-pico.h"
 
+void fprintversion(FILE *stream, uint8_t version)
+{
+    fprintf(stream, "%d", version);
+}
+
+void fprintwhatami(FILE *stream, uint8_t whatami)
+{
+    if (whatami == ZN_ROUTER)
+    {
+        fprintf(stream, "\"Router\"");
+    }
+    else if (whatami == ZN_PEER)
+    {
+        fprintf(stream, "\"Peer\"");
+    }
+    else
+    {
+        fprintf(stream, "\"Other\"");
+    }
+}
+
 void fprintpid(FILE *stream, z_bytes_t pid)
 {
     if (pid.val == NULL)
@@ -29,22 +50,6 @@ void fprintpid(FILE *stream, z_bytes_t pid)
             fprintf(stream, "%02X", pid.val[i]);
         }
         fprintf(stream, ")");
-    }
-}
-
-void fprintwhatami(FILE *stream, unsigned int whatami)
-{
-    if (whatami == ZN_ROUTER)
-    {
-        fprintf(stream, "\"Router\"");
-    }
-    else if (whatami == ZN_PEER)
-    {
-        fprintf(stream, "\"Peer\"");
-    }
-    else
-    {
-        fprintf(stream, "\"Other\"");
     }
 }
 
@@ -66,10 +71,12 @@ void fprintlocators(FILE *stream, z_str_array_t locs)
 
 void fprinthello(FILE *stream, zn_hello_t hello)
 {
-    fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello.pid);
+    fprintf(stream, "Hello { version: ");
+    fprintversion(stream, hello.version);
     fprintf(stream, ", whatami: ");
     fprintwhatami(stream, hello.whatami);
+    fprintf(stream, ", zid: ");
+    fprintpid(stream, hello.zid);
     fprintf(stream, ", locators: ");
     fprintlocators(stream, hello.locators);
     fprintf(stream, " }");

@@ -520,33 +520,38 @@ void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header)
 }
 
 /*------------------ Hello Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators)
+_zn_transport_message_t _zn_t_msg_make_hello(uint8_t whatami, z_bytes_t zid, _zn_locator_array_t locators)
 {
     _zn_transport_message_t msg;
 
+    msg.header = _ZN_MID_HELLO;
+    msg.body.hello.version = ZN_PROTO_VERSION;
     msg.body.hello.whatami = whatami;
-    msg.body.hello.pid = pid;
+    msg.body.hello.zid = zid;
     msg.body.hello.locators = locators;
 
-    msg.header = _ZN_MID_HELLO;
-    if (whatami != ZN_ROUTER)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_W);
-    if (!_z_bytes_is_empty(&pid))
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_I);
     if (!_zn_locator_array_is_empty(&locators))
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_L);
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_HELLO_L);
 
     msg.attachment = NULL;
 
     return msg;
 }
 
+void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello)
+{
+    clone->version = hello->version;
+    clone->whatami = hello->whatami;
+    _z_bytes_copy(&clone->zid, &hello->zid);
+    // clone->locators = _zn_locator_array_clone(&hello->locators); // TODO: implement clone
+    _z_bytes_copy(&clone->zid, &hello->zid);
+}
+
 void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header)
 {
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
+    _z_bytes_clear(&msg->zid);
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_HELLO_L))
         _zn_locators_clear(&msg->locators);
 }
 

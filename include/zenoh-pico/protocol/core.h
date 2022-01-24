@@ -105,8 +105,9 @@ typedef struct
  */
 typedef struct zn_hello_t
 {
-    unsigned int whatami;
-    z_bytes_t pid;
+    uint8_t version;
+    uint8_t whatami;
+    z_bytes_t zid;
     z_str_array_t locators;
 } zn_hello_t;
 

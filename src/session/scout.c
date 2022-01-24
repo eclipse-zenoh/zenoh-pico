@@ -65,6 +65,13 @@ zn_hello_array_t _zn_scout_loop(
         {
         case _ZN_MID_HELLO:
         {
+            // FIXME: check for experimental version flag if available
+            if (t_msg.body.hello.version != ZN_PROTO_VERSION)
+            {
+                _Z_DEBUG("Droping HELLO message due to mismatched version\n");
+                continue;
+            }
+
             // Allocate or expand the vector
             if (ls.val)
             {
@@ -82,17 +89,10 @@ zn_hello_array_t _zn_scout_loop(
             // Get current element to fill
             zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
 
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_I)
-                _z_bytes_copy(&sc->pid, &t_msg.body.hello.pid);
-            else
-                _z_bytes_reset(&sc->pid);
+            _z_bytes_copy(&sc->zid, &t_msg.body.hello.zid);
+            sc->whatami = t_msg.body.hello.whatami;
 
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_W)
-                sc->whatami = t_msg.body.hello.whatami;
-            else
-                sc->whatami = ZN_ROUTER; // Default value is from a router
-
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_L)
+            if (_ZN_HAS_FLAG(t_msg.header, _ZN_FLAG_HDR_HELLO_L))
             {
                 z_str_array_t la = _z_str_array_make(t_msg.body.hello.locators.len);
                 for (size_t i = 0; i < la.len; i++)
@@ -139,7 +139,7 @@ zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *confi
     _z_wbuf_t wbf = _z_wbuf_make(ZN_BATCH_SIZE, 0);
 
     // Create and encode the scout message
-    z_bytes_t zid = _z_bytes_make(0);;
+    z_bytes_t zid = _z_bytes_make(0);
     _zn_transport_message_t scout = _zn_t_msg_make_scout(what, zid);
 
     _zn_transport_message_encode(&wbf, &scout);

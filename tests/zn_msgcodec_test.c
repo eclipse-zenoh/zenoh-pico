@@ -1806,33 +1806,31 @@ void scout_message(void)
 /*------------------ Hello Message ------------------*/
 _zn_transport_message_t gen_hello_message(void)
 {
-    z_zint_t whatami = gen_bool() ? gen_zint() : ZN_ROUTER;
-    z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    uint8_t whatami = gen_uint8() & 0x02;
+    z_bytes_t zid = gen_bytes(16);
 
     _zn_locator_array_t locators;
-    if (gen_bool())
+    // if (gen_bool())
         locators = gen_locator_array((gen_uint8() % 4) + 1);
-    else
-        locators = gen_locator_array(0);
+    // else
+    //     locators = gen_locator_array(0);
 
-    return _zn_t_msg_make_hello(whatami, pid, locators);
+    return _zn_t_msg_make_hello(whatami, zid, locators);
 }
 
 void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
-    {
-        printf("   ");
-        assert_eq_uint8_array(&left->pid, &right->pid);
-        printf("\n");
-    }
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_W)
-    {
-        printf("   What (%zu:%zu)", left->whatami, right->whatami);
-        assert(left->whatami == right->whatami);
-        printf("\n");
-    }
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_L)
+    printf("   Version (%d:%d)\n", left->version, right->version);
+    assert(left->version == right->version);
+
+    printf("   What (%d:%d)\n", left->whatami, right->whatami);
+    assert(left->whatami == right->whatami);
+
+    printf("   ");
+    assert_eq_uint8_array(&left->zid, &right->zid);
+    printf("\n");
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_HELLO_L))
     {
         printf("   ");
         assert_eq_locator_array(&left->locators, &right->locators);

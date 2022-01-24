@@ -1311,14 +1311,12 @@ int _zn_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_hello_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_HELLO\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_W))
-        _ZN_EC(_z_zint_encode(wbf, msg->whatami))
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
-        _ZN_EC(_zn_locators_encode(wbf, &msg->locators))
+    _ZN_EC(_z_wbuf_write(wbf, msg->version));
+    uint8_t e = msg->whatami & 0x03; // TODO: extra flags not used for now
+    _ZN_EC(_z_wbuf_write(wbf, e));
+    _ZN_EC(_z_bytes_encode(wbf, &msg->zid))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_HELLO_L))
+        _ZN_EC(_zn_locators_encode(wbf, &msg->locators));
 
     return 0;
 }
@@ -1329,25 +1327,27 @@ void _zn_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_hello_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-    {
-        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-        r->value.hello.pid = r_arr.value.bytes;
-    }
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.hello.version = r_uint8.value.uint8;
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_W))
-    {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.hello.whatami = r_zint.value.zint;
-    }
+    r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.hello.whatami = r_uint8.value.uint8 & 0x03;
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_L))
+    _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
+    _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
+    r->value.hello.zid = r_arr.value.bytes;
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_HELLO_L))
     {
         _zn_locator_array_result_t r_locs = _zn_locators_decode(zbf);
         _ASSURE_P_RESULT(r_locs, r, _z_err_t_PARSE_BYTES)
         _zn_locator_array_move(&r->value.hello.locators, &r_locs.value.locator_array);
+    }
+    else
+    {
+        r->value.hello.locators = _zn_locator_array_make(0);
     }
 }
 

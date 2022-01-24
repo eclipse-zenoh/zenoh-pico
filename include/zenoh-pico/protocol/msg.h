@@ -75,6 +75,9 @@
 #define _ZN_FLAG_HDR_SCOUT_I    0x20  // 1 << 5
 #define _ZN_FLAG_OPT_SCOUT_Z    0x80  // 1 << 7
 
+#define _ZN_FLAG_HDR_HELLO_L    0x20  // 1 << 5
+#define _ZN_FLAG_OPT_HELLO_Z    0x80  // 1 << 7
+
 #define _ZN_FLAG_S_O            0x80  // 1 << 7
 #define _ZN_FLAG_S_X            0x00  // 0
 
@@ -635,12 +638,6 @@ typedef struct
 void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header);
 
 /*------------------ Hello Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
 // The HELLO message is sent in any of the following three cases:
 //     1) in response to a SCOUT message;
 //     2) to (periodically) advertise (e.g., on multicast) the Peer and the locators it is reachable at;
@@ -655,19 +652,22 @@ void _zn_t_msg_clear_scout(_zn_scout_t *msg, uint8_t header);
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |L|W|I|  HELLO  |
-// +-+-+-+-+-------+
-// ~    peer-id    ~ if I==1
+// |Z|X|L|  HELLO  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-// ~    whatami    ~ if W==1 -- Otherwise it is from a Router
+// |X|X|X|X|X|X|wai| (*)
+// +-+-+-+-+-+-+-+-+
+// ~     <u8>      ~ -- ZenohID
 // +---------------+
-// ~    Locators   ~ if L==1 -- Otherwise src-address is the locator
+// ~   <<utf8>>    ~ if Flag(L)==1 -- List of locators
 // +---------------+
 //
 typedef struct
 {
-    z_zint_t whatami;
-    z_bytes_t pid;
+    uint8_t version;
+    uint8_t whatami;
+    z_bytes_t zid;
     _zn_locator_array_t locators;
 } _zn_hello_t;
 void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header);
@@ -1013,7 +1013,7 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
 _zn_transport_message_t _zn_t_msg_make_scout(uint8_t what, z_bytes_t zid);
-_zn_transport_message_t _zn_t_msg_make_hello(z_zint_t whatami, z_bytes_t pid, _zn_locator_array_t locators);
+_zn_transport_message_t _zn_t_msg_make_hello(uint8_t whatami, z_bytes_t zid, _zn_locator_array_t locators);
 _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
 _zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos);
 _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos);
@@ -1032,7 +1032,7 @@ _zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable
 // @TODO: implement the remaining copyers
 void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg);
 void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
-//void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
+void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
 void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *join);
 void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *init);
 void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *open);

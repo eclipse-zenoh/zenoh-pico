@@ -29,8 +29,7 @@ void zn_hello_array_free(zn_hello_array_t hellos)
     {
         for (unsigned int i = 0; i < hellos.len; i++)
         {
-            if (h[i].pid.len > 0)
-                _z_bytes_clear(&h[i].pid);
+            _z_bytes_clear(&h[i].zid);
             if (h[i].locators.len > 0)
                 _z_str_array_free(&h[i].locators);
         }
