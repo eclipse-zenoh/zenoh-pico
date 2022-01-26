@@ -20,13 +20,12 @@
 int _znp_multicast_send_join(_zn_transport_multicast_t *ztm)
 {
     // FIXME: make transport aware of qos configuration
-    _zn_conduit_sn_list_t next_sns;
-    next_sns.is_qos = 0;
-    next_sns.val.plain.best_effort = ztm->sn_tx_best_effort;
-    next_sns.val.plain.reliable = ztm->sn_tx_reliable;
+    _zn_conduit_sn_t next_sn;
+    next_sn.best_effort = ztm->sn_tx_best_effort;
+    next_sn.reliable = ztm->sn_tx_reliable;
 
     z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
-    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES), pid, next_sns);
+    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES), pid, next_sn);
 
     return _zn_multicast_send_t_msg(ztm, &jsm);
 }

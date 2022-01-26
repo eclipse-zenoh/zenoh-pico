@@ -29,7 +29,7 @@ typedef struct
     // SN numbers
     z_zint_t sn_resolution;
     z_zint_t sn_resolution_half;
-    _zn_conduit_sn_list_t sn_rx_sns;
+    _zn_conduit_sn_t sn_rx;
 
     z_bytes_t remote_pid;
     z_bytes_t remote_addr;

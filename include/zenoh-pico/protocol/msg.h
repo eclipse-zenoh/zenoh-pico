@@ -37,11 +37,11 @@
 /*         Message IDs         */
 /*=============================*/
 /* Transport Messages */
-#define _ZN_MID_JOIN 0x00
 #define _ZN_MID_SCOUT 0x01
 #define _ZN_MID_HELLO 0x02
 #define _ZN_MID_INIT 0x01  // Note: for unicast only
 #define _ZN_MID_OPEN 0x02  // Note: for unicast only
+#define _ZN_MID_JOIN 0x03  // Note: for multicast only
 #define _ZN_MID_CLOSE 0x05
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
@@ -97,6 +97,9 @@
 #define _ZN_FLAG_HDR_OPEN_A     0x20  // 1 << 5
 #define _ZN_FLAG_HDR_OPEN_T     0x40  // 1 << 6
 #define _ZN_FLAG_HDR_OPEN_Z     0x80  // 1 << 7
+
+#define _ZN_FLAG_HDR_JOIN_T     0x40  // 1 << 6
+#define _ZN_FLAG_HDR_JOIN_Z     0x80  // 1 << 7
 
 #define _ZN_FLAG_T_O            0x80  // 1 << 7
 #define _ZN_FLAG_T_X            0x00  // 0
@@ -693,65 +696,39 @@ typedef struct
 void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header);
 
 /*------------------ Join Message ------------------*/
-// # Join message
-//
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
 // The JOIN message is sent on a multicast Locator to advertise the transport parameters.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |O|S|T|   JOIN  |
-// +-+-+-+-+-------+
-// ~             |Q~ if O==1
+// |Z|T|X|   JOIN  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-// | v_maj | v_min | -- Protocol Version VMaj.VMin
-// +-------+-------+
-// ~    whatami    ~ -- Router, Peer or a combination of them
+// |X|X|X|sn_bs|wai| (#)(*)
+// +-----+-----+---+
+// ~     <u8>      ~ -- ZenohID of the sender of the JOIN message
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the JOIN message
+// %     lease     % -- Lease period of the sender of the JOIN message
 // +---------------+
-// ~     lease     ~ -- Lease period of the sender of the JOIN message(*)
-// +---------------+
-// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
-// +---------------+
-// ~   [next_sn]   ~ (***)
+// ~    next_sn    ~  -- Next conduit sequence number
 // +---------------+
 //
-// - if Q==1 then the sender supports QoS.
-//
-// (*)   if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
-// (**)  if S==0 then 2^28 is assumed.
-// (***) if Q==1 then 8 sequence numbers are present: one for each priority.
-//       if Q==0 then only one sequence number is present.
+// (#)(*) See INIT message
 //
 typedef struct
 {
     z_zint_t reliable;
     z_zint_t best_effort;
-} _zn_coundit_sn_t;
+} _zn_conduit_sn_t;
+
 typedef struct
 {
-    union
-    {
-        _zn_coundit_sn_t plain;
-        _zn_coundit_sn_t qos[ZN_PRIORITIES_NUM];
-    } val;
-    uint8_t is_qos;
-} _zn_conduit_sn_list_t;
-typedef struct
-{
-    z_zint_t options;
-    z_zint_t whatami;
-    z_zint_t lease;
-    z_zint_t sn_resolution;
-    z_bytes_t pid;
-    _zn_conduit_sn_list_t next_sns;
     uint8_t version;
+    uint8_t whatami;
+    uint8_t sn_bs;
+    z_bytes_t zid;
+    z_zint_t lease;
+    _zn_conduit_sn_t next_sn;
 } _zn_join_t;
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header);
 
@@ -1018,7 +995,7 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg);
 /*------------------ Builders ------------------*/
 _zn_transport_message_t _zn_t_msg_make_scout(uint8_t what, z_bytes_t zid);
 _zn_transport_message_t _zn_t_msg_make_hello(uint8_t whatami, z_bytes_t zid, _zn_locator_array_t locators);
-_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, uint8_t whatami, z_zint_t lease, uint8_t sn_bs, z_bytes_t zid, _zn_conduit_sn_t next_sn);
 _zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid);
 _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);

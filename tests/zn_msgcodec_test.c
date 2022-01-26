@@ -1873,86 +1873,45 @@ void hello_message(void)
 _zn_transport_message_t gen_join_message(void)
 {
     uint8_t version = gen_uint8();
-    z_zint_t whatami = gen_bool() ? gen_zint() : ZN_ROUTER;
-    z_bytes_t pid = gen_bytes(16);
+    uint8_t whatami = gen_bool() ? gen_uint8() : ZN_ROUTER;
+    uint8_t sn_bs = gen_bool() ? gen_uint8() : ZN_SN_RESOLUTION_BYTES_DEFAULT;
+    z_bytes_t zid = gen_bytes(16);
     z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
-    z_zint_t sn_resolution = gen_bool() ? gen_zint() : _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT);
+    _zn_conduit_sn_t next_sn;
+    next_sn.reliable = gen_zint();
+    next_sn.best_effort = gen_zint();
 
-    _zn_conduit_sn_list_t next_sns;
-    if (gen_bool())
-    {
-        next_sns.is_qos = 1;
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
-        {
-            next_sns.val.qos[i].reliable = gen_zint();
-            next_sns.val.qos[i].best_effort = gen_zint();
-        }
-    }
-    else
-    {
-        next_sns.is_qos = 0;
-        next_sns.val.plain.reliable = gen_zint();
-        next_sns.val.plain.best_effort = gen_zint();
-    }
-
-    return _zn_t_msg_make_join(version, whatami, lease, sn_resolution, pid, next_sns);
+    return _zn_t_msg_make_join(version, whatami, lease, sn_bs, zid, next_sn);
 }
 
 void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
 {
-    printf("   Options (%zu:%zu)", left->options, right->options);
-    assert(left->options == right->options);
-    printf("\n");
-
-    printf("   Version (%u:%u)", left->version, right->version);
+    printf("   Version (%d:%d)", left->version, right->version);
     assert(left->version == right->version);
     printf("\n");
 
-    printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
+    printf("   WhatAmI (%d:%d)", left->whatami, right->whatami);
     assert(left->whatami == right->whatami);
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->pid, &right->pid);
+    assert_eq_uint8_array(&left->zid, &right->zid);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_S)
-    {
-        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
-        assert(left->sn_resolution == right->sn_resolution);
-        printf("\n");
-    }
+    printf("   SN BS (%d:%d)", left->sn_bs, right->sn_bs);
+    assert(left->sn_bs == right->sn_bs);
+    printf("\n");
 
     printf("   Lease (%zu:%zu)", left->lease, right->lease);
     assert(left->lease == right->lease);
     printf("\n");
 
     printf("   Next SNs: ");
-    if _ZN_HAS_FLAG (left->options, _ZN_OPT_JOIN_QOS)
-    {
-        assert(left->next_sns.is_qos == 1);
-        assert(right->next_sns.is_qos == 1);
-
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
-        {
-            printf("R:%zu:%zu ", left->next_sns.val.qos[i].reliable, right->next_sns.val.qos[i].reliable);
-            assert(left->next_sns.val.qos[i].reliable == right->next_sns.val.qos[i].reliable);
-            printf("B:%zu:%zu ", left->next_sns.val.qos[i].best_effort, right->next_sns.val.qos[i].best_effort);
-            assert(left->next_sns.val.qos[i].best_effort == right->next_sns.val.qos[i].best_effort);
-        }
-        printf("\n");
-    }
-    else
-    {
-        assert(left->next_sns.is_qos == 0);
-        assert(right->next_sns.is_qos == 0);
-
-        printf("R: %zu:%zu", left->next_sns.val.plain.reliable, right->next_sns.val.plain.reliable);
-        assert(left->next_sns.val.plain.reliable == right->next_sns.val.plain.reliable);
-        printf("B: %zu:%zu", left->next_sns.val.plain.best_effort, right->next_sns.val.plain.best_effort);
-        assert(left->next_sns.val.plain.best_effort == right->next_sns.val.plain.best_effort);
-        printf("\n");
-    }
+    printf("R: %zu:%zu", left->next_sn.reliable, right->next_sn.reliable);
+    assert(left->next_sn.reliable == right->next_sn.reliable);
+    printf("B: %zu:%zu", left->next_sn.best_effort, right->next_sn.best_effort);
+    assert(left->next_sn.best_effort == right->next_sn.best_effort);
+    printf("\n");
 }
 
 void join_message(void)

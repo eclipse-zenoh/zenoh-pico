@@ -148,15 +148,11 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         {
             entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
             entry->remote_addr = _z_bytes_duplicate(addr);
-            entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.pid);
-            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
-                entry->sn_resolution = t_msg->body.join.sn_resolution;
-            else
-                entry->sn_resolution = _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT);
+            entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.zid);
+            entry->sn_resolution = _zn_sn_max_resolution(t_msg->body.join.sn_bs);
             entry->sn_resolution_half = entry->sn_resolution / 2;
-
-            _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
-            _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
+            entry->sn_rx.best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sn.best_effort);
+            entry->sn_rx.reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sn.reliable);
 
             entry->dbuf_best_effort = _z_wbuf_make(0, 1);
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
@@ -174,15 +170,15 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             entry->received = 1;
 
             // Check if the sn resolution remains the same
-            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
+            if (entry->sn_resolution != _zn_sn_max_resolution(t_msg->body.join.sn_bs))
             {
                 _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
                 break;
             }
 
             // Update SNs
-            _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
-            _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
+            entry->sn_rx.best_effort = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sn.best_effort);
+            entry->sn_rx.reliable = _zn_sn_decrement(entry->sn_resolution, t_msg->body.join.next_sn.reliable);
 
             // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
@@ -246,8 +242,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.reliable, t_msg->body.frame.sn))
-                entry->sn_rx_sns.val.plain.reliable = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx.reliable, t_msg->body.frame.sn))
+                entry->sn_rx.reliable = t_msg->body.frame.sn;
             else
             {
                 _z_wbuf_clear(&entry->dbuf_reliable);
@@ -257,8 +253,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         }
         else
         {
-            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.best_effort, t_msg->body.frame.sn))
-                entry->sn_rx_sns.val.plain.best_effort = t_msg->body.frame.sn;
+            if (_zn_sn_precedes(entry->sn_resolution_half, entry->sn_rx.best_effort, t_msg->body.frame.sn))
+                entry->sn_rx.best_effort = t_msg->body.frame.sn;
             else
             {
                 _z_wbuf_clear(&entry->dbuf_best_effort);

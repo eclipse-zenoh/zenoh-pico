@@ -557,27 +557,19 @@ void _zn_t_msg_clear_hello(_zn_hello_t *msg, uint8_t header)
 }
 
 /*------------------ Join Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns)
+_zn_transport_message_t _zn_t_msg_make_join(uint8_t version, uint8_t whatami, z_zint_t lease, uint8_t sn_bs, z_bytes_t zid, _zn_conduit_sn_t next_sn)
 {
     _zn_transport_message_t msg;
 
-    msg.body.join.options = 0;
-    if (next_sns.is_qos)
-        _ZN_SET_FLAG(msg.body.join.options, _ZN_OPT_JOIN_QOS);
-    msg.body.join.version = version;
-    msg.body.join.whatami = whatami;
-    msg.body.join.lease = lease;
-    msg.body.join.sn_resolution = sn_resolution;
-    msg.body.join.next_sns = next_sns;
-    msg.body.join.pid = pid;
-
     msg.header = _ZN_MID_JOIN;
+    msg.body.join.version = version;
+    msg.body.join.whatami = whatami & 0x03;
+    msg.body.join.sn_bs = sn_bs & 0x07;
+    msg.body.join.lease = lease;
     if (lease % 1000 == 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_T1);
-    if (sn_resolution != _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT))
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_S);
-    if (msg.body.join.options != 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_O);
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_JOIN_T);
+    msg.body.join.next_sn = next_sn;
+    msg.body.join.zid = zid;
 
     msg.attachment = NULL;
 
@@ -586,18 +578,17 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
 
 void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *msg)
 {
-    clone->options = msg->options;
     clone->version = msg->version;
     clone->whatami = msg->whatami;
+    clone->sn_bs = msg->sn_bs;
     clone->lease = msg->lease;
-    clone->sn_resolution = msg->sn_resolution;
-    clone->next_sns = msg->next_sns;
-    _z_bytes_copy(&clone->pid, &msg->pid);
+    clone->next_sn = msg->next_sn;
+    _z_bytes_copy(&clone->zid, &msg->zid);
 }
 
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header)
 {
-    _z_bytes_clear(&msg->pid);
+    _z_bytes_clear(&msg->zid);
 }
 
 /*------------------ Init Message ------------------*/

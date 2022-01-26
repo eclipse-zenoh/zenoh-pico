@@ -1364,14 +1364,12 @@ int _zn_join_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_join_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_JOIN\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_O))
-        _ZN_EC(_z_zint_encode(wbf, msg->options))
-
-    _ZN_EC(_z_uint8_encode(wbf, msg->version))
-    _ZN_EC(_z_zint_encode(wbf, msg->whatami))
-    _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_T1))
+    _ZN_EC(_z_wbuf_write(wbf, msg->version));
+    uint8_t e = (msg->whatami & 0x03)
+                | (msg->sn_bs & 0x07) << 2; // TODO: extra flags not used for now
+    _ZN_EC(_z_wbuf_write(wbf, e));
+    _ZN_EC(_z_bytes_encode(wbf, &msg->zid));
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_JOIN_T))
     {
         _ZN_EC(_z_zint_encode(wbf, msg->lease / 1000))
     }
@@ -1379,23 +1377,8 @@ int _zn_join_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_join_t *msg)
     {
         _ZN_EC(_z_zint_encode(wbf, msg->lease))
     }
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_S))
-        _ZN_EC(_z_zint_encode(wbf, msg->sn_resolution))
-
-    if (_ZN_HAS_FLAG(msg->options, _ZN_OPT_JOIN_QOS))
-    {
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
-        {
-            _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.qos[i].reliable))
-            _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.qos[i].best_effort))
-        }
-    }
-    else
-    {
-        _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.plain.reliable))
-        _ZN_EC(_z_zint_encode(wbf, msg->next_sns.val.plain.best_effort))
-    }
+    _ZN_EC(_z_zint_encode(wbf, msg->next_sn.reliable));
+    _ZN_EC(_z_zint_encode(wbf, msg->next_sn.best_effort));
 
     return 0;
 }
@@ -1405,70 +1388,32 @@ void _zn_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_join_result_t *r)
     _Z_DEBUG("Decoding _ZN_MID_JOIN\n");
     r->tag = _z_res_t_OK;
 
-    // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_O))
-    {
-        _z_zint_result_t r_opts = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_opts, r, _z_err_t_PARSE_ZINT)
-        r->value.join.options = r_opts.value.zint;
-    }
-    else
-    {
-        r->value.join.options = 0;
-    }
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.join.version = r_uint8.value.uint8;
 
-    _z_uint8_result_t r_ver = _z_uint8_decode(zbf);
-    _ASSURE_P_RESULT(r_ver, r, _z_err_t_PARSE_UINT8)
-    r->value.join.version = r_ver.value.uint8;
+    r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.join.whatami = r_uint8.value.uint8 & 0x03;
+    r->value.join.sn_bs = (r_uint8.value.uint8 >> 2) & 0x07;
 
-    _z_zint_result_t r_wami = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_wami, r, _z_err_t_PARSE_ZINT)
-    r->value.join.whatami = r_wami.value.zint;
+    _z_bytes_result_t r_byte = _z_bytes_decode(zbf);
+    _ASSURE_P_RESULT(r_byte, r, _z_err_t_PARSE_BYTES)
+    r->value.join.zid = r_byte.value.bytes;
 
-    _z_bytes_result_t r_pid = _z_bytes_decode(zbf);
-    _ASSURE_P_RESULT(r_pid, r, _z_err_t_PARSE_BYTES)
-    r->value.join.pid = r_pid.value.bytes;
-
-    _z_zint_result_t r_lease = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_lease, r, _z_err_t_PARSE_ZINT)
-    r->value.join.lease = r_lease.value.zint;
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_T1))
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.join.lease = r_zint.value.zint;
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_JOIN_T))
         r->value.join.lease *= 1000;
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_S))
-    {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.join.sn_resolution = r_zint.value.zint;
-    }
+    r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.join.next_sn.reliable = r_zint.value.zint;
 
-    if (_ZN_HAS_FLAG(r->value.join.options, _ZN_OPT_JOIN_QOS))
-    {
-        r->value.join.next_sns.is_qos = 1;
-
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
-        {
-            _z_zint_result_t r_zint = _z_zint_decode(zbf);
-            _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-            r->value.join.next_sns.val.qos[i].reliable = r_zint.value.zint;
-
-            r_zint = _z_zint_decode(zbf);
-            _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-            r->value.join.next_sns.val.qos[i].best_effort = r_zint.value.zint;
-        }
-    }
-    else
-    {
-        r->value.join.next_sns.is_qos = 0;
-
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.join.next_sns.val.plain.reliable = r_zint.value.zint;
-
-        r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.join.next_sns.val.plain.best_effort = r_zint.value.zint;
-    }
+    r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.join.next_sn.best_effort = r_zint.value.zint;
 }
 
 _zn_join_result_t _zn_join_decode(_z_zbuf_t *zbf, uint8_t header)

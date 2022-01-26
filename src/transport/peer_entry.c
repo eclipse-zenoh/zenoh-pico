@@ -31,7 +31,7 @@ void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_tr
 
     dst->sn_resolution = src->sn_resolution;
     dst->sn_resolution_half = src->sn_resolution_half;
-    _zn_conduit_sn_list_copy(&dst->sn_rx_sns, &src->sn_rx_sns);
+    dst->sn_rx = src->sn_rx;
 
     dst->lease = src->lease;
     dst->next_lease = src->next_lease;
