@@ -87,7 +87,7 @@ int main(void)
     zn_properties_t *config = zn_config_default();
 
     printf("Scouting...\n");
-    zn_hello_array_t hellos = zn_scout(ZN_ROUTER, config, 1);
+    zn_hello_array_t hellos = zn_scout(ZN_ROUTER_FILTER, config, 1);
     if (hellos.len > 0)
     {
         for (size_t i = 0; i < hellos.len; i++)

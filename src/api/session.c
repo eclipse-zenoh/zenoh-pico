@@ -54,7 +54,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         clock_t timeout = strtof(tout, NULL);
 
         // Scout and return upon the first result
-        zn_hello_array_t locs = _zn_scout(ZN_ROUTER, config, timeout, 1);
+        zn_hello_array_t locs = _zn_scout(ZN_ROUTER_FILTER, config, timeout, 1);
         if (locs.len > 0)
         {
             if (locs.val[0].locators.len > 0)

@@ -20,12 +20,21 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 
+
+/**
+ * Bitmask filter for Whatami.
+ */
+#define ZN_ROUTER_FILTER 0x01 // 1 << 0
+#define ZN_PEER_FILTER   0x02 // 1 << 1
+#define ZN_CLIENT_FILTER 0x04 // 1 << 2
+
+
 /**
  * Whatami values.
  */
-#define ZN_ROUTER 0x01 // 1 << 0
-#define ZN_PEER 0x02   // 1 << 1
-#define ZN_CLIENT 0x04 // 1 << 2
+#define ZN_ROUTER 0x00
+#define ZN_PEER   0x01
+#define ZN_CLIENT 0x02
 
 /**
  * Query kind values.
