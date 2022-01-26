@@ -1539,7 +1539,7 @@ int _zn_open_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_open_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_OPEN\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_T2))
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_OPEN_T))
     {
         _ZN_EC(_z_zint_encode(wbf, msg->lease / 1000))
     }
@@ -1549,7 +1549,7 @@ int _zn_open_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_open_t *msg)
     }
 
     _ZN_EC(_z_zint_encode(wbf, msg->initial_sn))
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_OPEN_A))
         _ZN_EC(_z_bytes_encode(wbf, &msg->cookie))
 
     return 0;
@@ -1561,21 +1561,21 @@ void _zn_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_open_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    _z_zint_result_t r_lease = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_lease, r, _z_err_t_PARSE_ZINT)
-    r->value.open.lease = r_lease.value.zint;
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_T2))
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.open.lease = r_zint.value.zint;
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_OPEN_T))
         r->value.open.lease *= 1000;
 
-    _z_zint_result_t r_isn = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_isn, r, _z_err_t_PARSE_ZINT)
-    r->value.open.initial_sn = r_isn.value.zint;
+    r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.open.initial_sn = r_zint.value.zint;
 
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
+    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_OPEN_A))
     {
-        _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
-        r->value.open.cookie = r_cke.value.bytes;
+        _z_bytes_result_t r_zbytes = _z_bytes_decode(zbf);
+        _ASSURE_P_RESULT(r_zbytes, r, _z_err_t_PARSE_BYTES)
+        r->value.open.cookie = r_zbytes.value.bytes;
     }
     else
     {

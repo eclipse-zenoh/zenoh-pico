@@ -655,13 +655,12 @@ _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial
 {
     _zn_transport_message_t msg;
 
+    msg.header = _ZN_MID_OPEN;
     msg.body.open.lease = lease;
     msg.body.open.initial_sn = initial_sn;
     msg.body.open.cookie = cookie;
-
-    msg.header = _ZN_MID_OPEN;
     if (lease % 1000 == 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_T2);
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_OPEN_T);
 
     msg.attachment = NULL;
 
@@ -672,14 +671,14 @@ _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial
 {
     _zn_transport_message_t msg;
 
+    msg.header = _ZN_MID_OPEN;
+    _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_OPEN_A);
     msg.body.open.lease = lease;
     msg.body.open.initial_sn = initial_sn;
     _z_bytes_reset(&msg.body.open.cookie);
 
-    msg.header = _ZN_MID_OPEN;
-    _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_A);
     if (lease % 1000 == 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_T2);
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_OPEN_T);
 
     msg.attachment = NULL;
 
@@ -690,7 +689,7 @@ void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *msg)
 {
     clone->lease = msg->lease;
     clone->initial_sn = msg->initial_sn;
-    _z_bytes_reset(&clone->cookie);
+    _z_bytes_copy(&clone->cookie, &msg->cookie);
 }
 
 void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header)

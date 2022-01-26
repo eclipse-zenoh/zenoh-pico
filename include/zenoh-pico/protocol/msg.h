@@ -41,7 +41,7 @@
 #define _ZN_MID_SCOUT 0x01
 #define _ZN_MID_HELLO 0x02
 #define _ZN_MID_INIT 0x01  // Note: for unicast only
-#define _ZN_MID_OPEN 0x04
+#define _ZN_MID_OPEN 0x02  // Note: for unicast only
 #define _ZN_MID_CLOSE 0x05
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
@@ -93,6 +93,10 @@
 
 #define _ZN_FLAG_HDR_INIT_A     0x20  // 1 << 5
 #define _ZN_FLAG_HDR_INIT_Z     0x80  // 1 << 7
+
+#define _ZN_FLAG_HDR_OPEN_A     0x20  // 1 << 5
+#define _ZN_FLAG_HDR_OPEN_T     0x40  // 1 << 6
+#define _ZN_FLAG_HDR_OPEN_Z     0x80  // 1 << 7
 
 #define _ZN_FLAG_T_O            0x80  // 1 << 7
 #define _ZN_FLAG_T_X            0x00  // 0
@@ -788,27 +792,22 @@ typedef struct
 void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header);
 
 /*------------------ Open Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
-//
 // The OPEN message is sent on a link to finally open an initialized session with the peer.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|T|A|   OPEN  |
-// +-+-+-+-+-------+
-// ~ lease_period  ~ -- Lease period of the sender of the OPEN message(*)
+// |Z|T|A|   OPEN  |
+// +-+-+-+---------+
+// %     lease     % -- Lease period of the sender of the OPEN message
 // +---------------+
-// ~  initial_sn   ~ -- Initial SN proposed by the sender of the OPEN(**)
+// %  initial_sn   % -- Initial SN proposed by the sender of the OPEN(*)
 // +---------------+
-// ~    cookie     ~ if A==0(*)
+// ~     <u8>      ~ if Flag(A)==0 (**) -- Cookie
 // +---------------+
 //
-// (*) if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
-// (**) the cookie MUST be the same received in the INIT message with A==1 from the corresponding peer
+// (*)     The initial sequence number MUST be compatible with the sequence number resolution agreed in the
+//         [`super::InitSyn`]-[`super::InitAck`] message exchange
+// (**)    The cookie MUST be the same received in the [`super::InitAck`]from the corresponding zenoh node
 //
 typedef struct
 {
