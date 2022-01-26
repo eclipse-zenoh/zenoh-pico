@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/msgcodec.h"
@@ -1875,7 +1876,7 @@ _zn_transport_message_t gen_join_message(void)
     z_zint_t whatami = gen_bool() ? gen_zint() : ZN_ROUTER;
     z_bytes_t pid = gen_bytes(16);
     z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
-    z_zint_t sn_resolution = gen_bool() ? gen_zint() : ZN_SN_RESOLUTION_DEFAULT;
+    z_zint_t sn_resolution = gen_bool() ? gen_zint() : _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT);
 
     _zn_conduit_sn_list_t next_sns;
     if (gen_bool())
@@ -1988,53 +1989,44 @@ void join_message(void)
 _zn_transport_message_t gen_init_message(void)
 {
     uint8_t version = gen_uint8();
-    z_zint_t whatami = gen_bool() ? gen_zint() : ZN_ROUTER;
-    z_zint_t sn_resolution = gen_bool() ? gen_zint() : ZN_SN_RESOLUTION_DEFAULT;
+    uint8_t whatami = gen_bool() ? gen_uint8() : ZN_ROUTER;
+    uint8_t sn_bs = gen_bool() ? gen_uint8() : ZN_SN_RESOLUTION_BYTES_DEFAULT;
     z_bytes_t pid = gen_bytes(16);
     int is_qos = gen_bool();
 
     if (gen_bool())
     {
-        return _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+        return _zn_t_msg_make_init_syn(version, whatami, sn_bs, pid);
     }
     else
     {
         z_bytes_t cookie = gen_bytes(64);
-        return _zn_t_msg_make_init_ack(version, whatami, sn_resolution, pid, cookie, is_qos);
+        return _zn_t_msg_make_init_ack(version, whatami, sn_bs, pid, cookie);
     }
 }
 
 void assert_eq_init_message(_zn_init_t *left, _zn_init_t *right, uint8_t header)
 {
-    printf("   Options (%zu:%zu)", left->options, right->options);
-    assert(left->options == right->options);
+    printf("   Version (%d:%d)", left->version, right->version);
+    assert(left->version == right->version);
     printf("\n");
 
-    printf("   WhatAmI (%zu:%zu)", left->whatami, right->whatami);
+    printf("   WhatAmI (%d:%d)", left->whatami, right->whatami);
     assert(left->whatami == right->whatami);
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->pid, &right->pid);
+    assert_eq_uint8_array(&left->zid, &right->zid);
     printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_S)
-    {
-        printf("   SN Resolution (%zu:%zu)", left->sn_resolution, right->sn_resolution);
-        assert(left->sn_resolution == right->sn_resolution);
-        printf("\n");
-    }
+    printf("   SN BS (%d:%d)", left->sn_bs, right->sn_bs);
+    assert(left->sn_bs == right->sn_bs);
+    printf("\n");
 
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_A)
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_INIT_A))
     {
         printf("   ");
         assert_eq_uint8_array(&left->cookie, &right->cookie);
-        printf("\n");
-    }
-    else
-    {
-        printf("   Version (%u:%u)", left->version, right->version);
-        assert(left->version == right->version);
         printf("\n");
     }
 }

@@ -152,7 +152,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))
                 entry->sn_resolution = t_msg->body.join.sn_resolution;
             else
-                entry->sn_resolution = ZN_SN_RESOLUTION_DEFAULT;
+                entry->sn_resolution = _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT);
             entry->sn_resolution_half = entry->sn_resolution / 2;
 
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);

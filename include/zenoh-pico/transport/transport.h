@@ -68,7 +68,7 @@ typedef struct
     z_zint_t sn_rx_reliable;
     z_zint_t sn_rx_best_effort;
 
-    z_bytes_t remote_pid;
+    z_bytes_t remote_zid;
 
     // ----------- Link related -----------
     // TX and RX buffers
@@ -147,13 +147,12 @@ _ZN_P_RESULT_DECLARE(_zn_transport_t, transport)
 
 typedef struct
 {
-    z_bytes_t remote_pid;
-    unsigned int whatami;
+    z_bytes_t remote_zid;
     z_zint_t sn_resolution;
     z_zint_t initial_sn_rx;
     z_zint_t initial_sn_tx;
-    uint8_t is_qos;
     z_zint_t lease;
+    uint8_t whatami;
 } _zn_transport_unicast_establish_param_t;
 
 _ZN_RESULT_DECLARE(_zn_transport_unicast_establish_param_t, transport_unicast_establish_param)

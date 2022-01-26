@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/link/task/join.h"
 
@@ -25,7 +26,7 @@ int _znp_multicast_send_join(_zn_transport_multicast_t *ztm)
     next_sns.val.plain.reliable = ztm->sn_tx_reliable;
 
     z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
-    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, ZN_SN_RESOLUTION, pid, next_sns);
+    _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES), pid, next_sns);
 
     return _zn_multicast_send_t_msg(ztm, &jsm);
 }

@@ -12,6 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/queryable.h"
@@ -573,7 +574,7 @@ _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z
     msg.header = _ZN_MID_JOIN;
     if (lease % 1000 == 0)
         _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_T1);
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
+    if (sn_resolution != _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES_DEFAULT))
         _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_S);
     if (msg.body.join.options != 0)
         _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_O);
@@ -600,49 +601,33 @@ void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header)
 }
 
 /*------------------ Init Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos)
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid)
 {
     _zn_transport_message_t msg;
 
-    msg.body.init.options = 0;
-    if (is_qos)
-        _ZN_SET_FLAG(msg.body.init.options, _ZN_OPT_INIT_QOS);
-    msg.body.init.version = version;
-    msg.body.init.whatami = whatami;
-    msg.body.init.sn_resolution = sn_resolution;
-    msg.body.init.pid = pid;
-    _z_bytes_reset(&msg.body.init.cookie);
-
     msg.header = _ZN_MID_INIT;
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_S);
-    if (msg.body.init.options != 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_O);
+    msg.body.init.version = version;
+    msg.body.init.whatami = whatami & 0x03;
+    msg.body.init.sn_bs = sn_bs & 0x07;
+    msg.body.init.zid = zid;
+    _z_bytes_reset(&msg.body.init.cookie);
 
     msg.attachment = NULL;
 
     return msg;
 }
 
-_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos)
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid, z_bytes_t cookie)
 {
     _zn_transport_message_t msg;
 
-    msg.body.init.options = 0;
-    if (is_qos)
-        _ZN_SET_FLAG(msg.body.init.options, _ZN_OPT_INIT_QOS);
-    msg.body.init.version = version;
-    msg.body.init.whatami = whatami;
-    msg.body.init.sn_resolution = sn_resolution;
-    msg.body.init.pid = pid;
-    msg.body.init.cookie = cookie;
-
     msg.header = _ZN_MID_INIT;
-    _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_A);
-    if (sn_resolution != ZN_SN_RESOLUTION_DEFAULT)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_S);
-    if (msg.body.init.options != 0)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_O);
+    _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_INIT_A);
+    msg.body.init.version = version;
+    msg.body.init.whatami = whatami & 0x03;
+    msg.body.init.sn_bs = sn_bs & 0x07;
+    msg.body.init.zid = zid;
+    msg.body.init.cookie = cookie;
 
     msg.attachment = NULL;
 
@@ -651,17 +636,16 @@ _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatam
 
 void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *msg)
 {
-    clone->options = msg->options;
     clone->version = msg->version;
     clone->whatami = msg->whatami;
-    clone->sn_resolution = msg->sn_resolution;
-    _z_bytes_copy(&clone->pid, &msg->pid);
+    clone->sn_bs = msg->sn_bs;
+    _z_bytes_copy(&clone->zid, &msg->zid);
     _z_bytes_copy(&clone->cookie, &msg->cookie);
 }
 
 void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header)
 {
-    _z_bytes_clear(&msg->pid);
+    _z_bytes_clear(&msg->zid);
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
         _z_bytes_clear(&msg->cookie);
 }

@@ -94,7 +94,7 @@ _zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unica
     zt->transport.unicast.transmitted = 0;
 
     // Remote peer PID
-    _z_bytes_move(&zt->transport.unicast.remote_pid, &param.remote_pid);
+    _z_bytes_move(&zt->transport.unicast.remote_zid, &param.remote_zid);
 
     // Transport lease
     zt->transport.unicast.lease = param.lease;
@@ -153,12 +153,11 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
 
     // Build the open message
     uint8_t version = ZN_PROTO_VERSION;
-    z_zint_t whatami = ZN_CLIENT;
-    z_zint_t sn_resolution = ZN_SN_RESOLUTION;
-    int is_qos = 0;
+    uint8_t whatami = ZN_CLIENT;
+    uint8_t sn_bs = ZN_SN_RESOLUTION_BYTES_DEFAULT;
 
     z_bytes_t pid = _z_bytes_wrap(local_pid.val, local_pid.len);
-    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+    _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_bs, pid);
 
     // Encode and send the message
     _Z_DEBUG("Sending InitSyn\n");
@@ -167,7 +166,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
         goto ERR_1;
 
     // The announced sn resolution
-    param.sn_resolution = ism.body.init.sn_resolution;
+    param.sn_resolution = _zn_sn_max_resolution(ism.body.init.sn_bs);
     _zn_t_msg_clear(&ism);
 
     _zn_transport_message_result_t r_iam = _zn_link_recv_t_msg(zl);
@@ -179,25 +178,21 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     {
     case _ZN_MID_INIT:
     {
-        if _ZN_HAS_FLAG (iam.header, _ZN_FLAG_T_A)
+        if _ZN_HAS_FLAG (iam.header, _ZN_FLAG_HDR_INIT_A)
         {
-            // Handle SN resolution option if present
-            if _ZN_HAS_FLAG (iam.header, _ZN_FLAG_T_S)
-            {
-                // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
-                // otherwise the InitAck message is considered invalid and it should be treated as a
-                // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                if (iam.body.init.sn_resolution <= param.sn_resolution)
-                    param.sn_resolution = iam.body.init.sn_resolution;
-                else
-                    goto ERR_2;
-            }
+            // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
+            // otherwise the InitAck message is considered invalid and it should be treated as a
+            // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+            if (_zn_sn_max_resolution(iam.body.init.sn_bs) <= param.sn_resolution)
+                param.sn_resolution = _zn_sn_max_resolution(iam.body.init.sn_bs);
+            else
+                goto ERR_2;
 
             // The initial SN at TX side
             param.initial_sn_tx = (z_zint_t)rand() % param.sn_resolution;
 
             // Initialize the Local and Remote Peer IDs
-            _z_bytes_copy(&param.remote_pid, &iam.body.init.pid);
+            _z_bytes_copy(&param.remote_zid, &iam.body.init.zid);
 
             // Create the OpenSyn message
             z_zint_t lease = ZN_TRANSPORT_LEASE;
@@ -251,7 +246,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     return ret;
 
 ERR_3:
-    _z_bytes_clear(&param.remote_pid);
+    _z_bytes_clear(&param.remote_zid);
 ERR_2:
     _zn_t_msg_clear(&iam);
 ERR_1:
@@ -288,7 +283,7 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     _zn_transport_multicast_establish_param_t param;
     param.is_qos = 0; // FIXME: make transport aware of qos configuration
     param.initial_sn_tx = 0;
-    param.sn_resolution = ZN_SN_RESOLUTION;
+    param.sn_resolution = _zn_sn_max_resolution(ZN_SN_RESOLUTION_BYTES);
 
     // Explicitly send a JOIN message upon startup
     // FIXME: make transport aware of qos configuration
@@ -359,7 +354,7 @@ void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)
     _z_wbuf_clear(&ztu->dbuf_best_effort);
 
     // Clean up PIDs
-    _z_bytes_clear(&ztu->remote_pid);
+    _z_bytes_clear(&ztu->remote_zid);
 
     if (ztu->link != NULL)
         _zn_link_free((_zn_link_t **)&ztu->link);

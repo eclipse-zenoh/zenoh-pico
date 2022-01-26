@@ -107,7 +107,7 @@ zn_properties_t *zn_info(zn_session_t *zn)
     zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
     {
-        zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->tp->transport.unicast.remote_pid));
+        zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->tp->transport.unicast.remote_zid));
     }
     else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
     {

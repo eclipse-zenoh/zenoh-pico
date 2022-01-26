@@ -1288,9 +1288,9 @@ void _zn_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_scout_result_t *r)
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_SCOUT_I))
     {
-        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-        r->value.scout.zid = r_arr.value.bytes;
+        _z_bytes_result_t r_byte = _z_bytes_decode(zbf);
+        _ASSURE_P_RESULT(r_byte, r, _z_err_t_PARSE_BYTES)
+        r->value.scout.zid = r_byte.value.bytes;
     }
     else
     {
@@ -1335,9 +1335,9 @@ void _zn_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_hello_result_t *r)
     _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
     r->value.hello.whatami = r_uint8.value.uint8 & 0x03;
 
-    _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
-    _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-    r->value.hello.zid = r_arr.value.bytes;
+    _z_bytes_result_t r_byte = _z_bytes_decode(zbf);
+    _ASSURE_P_RESULT(r_byte, r, _z_err_t_PARSE_BYTES)
+    r->value.hello.zid = r_byte.value.bytes;
 
     if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_HELLO_L))
     {
@@ -1484,17 +1484,12 @@ int _zn_init_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_init_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_INIT\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_O))
-        _ZN_EC(_z_zint_encode(wbf, msg->options))
-
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
-        _ZN_EC(_z_wbuf_write(wbf, msg->version))
-
-    _ZN_EC(_z_zint_encode(wbf, msg->whatami))
-    _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_S))
-        _ZN_EC(_z_zint_encode(wbf, msg->sn_resolution))
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
+    _ZN_EC(_z_wbuf_write(wbf, msg->version));
+    uint8_t e = (msg->whatami & 0x03)
+                | (msg->sn_bs & 0x07) << 2; // TODO: extra flags not used for now
+    _ZN_EC(_z_wbuf_write(wbf, e));
+    _ZN_EC(_z_bytes_encode(wbf, &msg->zid));
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_INIT_A))
         _ZN_EC(_z_bytes_encode(wbf, &msg->cookie))
 
     return 0;
@@ -1506,44 +1501,28 @@ void _zn_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_init_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_O))
+    _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.init.version = r_uint8.value.uint8;
+
+    r_uint8 = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
+    r->value.init.whatami = r_uint8.value.uint8 & 0x03;
+    r->value.init.sn_bs = (r_uint8.value.uint8 >> 2) & 0x07;
+
+    _z_bytes_result_t r_byte = _z_bytes_decode(zbf);
+    _ASSURE_P_RESULT(r_byte, r, _z_err_t_PARSE_BYTES)
+    r->value.init.zid = r_byte.value.bytes;
+
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_INIT_A))
     {
-        _z_zint_result_t r_opts = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_opts, r, _z_err_t_PARSE_ZINT)
-        r->value.init.options = r_opts.value.zint;
+        r_byte = _z_bytes_decode(zbf);
+        _ASSURE_P_RESULT(r_byte, r, _z_err_t_PARSE_BYTES)
+        r->value.init.cookie = r_byte.value.bytes;
     }
     else
     {
-        r->value.init.options = 0;
-    }
-
-    if (!_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
-    {
-        _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
-        _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
-        r->value.init.version = r_uint8.value.uint8;
-    }
-
-    _z_zint_result_t r_wami = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_wami, r, _z_err_t_PARSE_ZINT)
-    r->value.init.whatami = r_wami.value.zint;
-
-    _z_bytes_result_t r_pid = _z_bytes_decode(zbf);
-    _ASSURE_P_RESULT(r_pid, r, _z_err_t_PARSE_BYTES)
-    r->value.init.pid = r_pid.value.bytes;
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_S))
-    {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-        r->value.init.sn_resolution = r_zint.value.zint;
-    }
-
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_A))
-    {
-        _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
-        r->value.init.cookie = r_cke.value.bytes;
+        _z_bytes_reset(&r->value.init.cookie);
     }
 }
 
@@ -1597,6 +1576,10 @@ void _zn_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_open_result_t *r)
         _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_cke, r, _z_err_t_PARSE_BYTES)
         r->value.open.cookie = r_cke.value.bytes;
+    }
+    else
+    {
+        _z_bytes_reset(&r->value.open.cookie);
     }
 }
 

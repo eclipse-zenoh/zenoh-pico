@@ -133,8 +133,8 @@
  * Given the VLE encoding of ZInt, 4 bytes result in 28 useful bits.
  * 2^28 = 268_435_456 => Max Seq Num = 268_435_455
  */
-#define ZN_SN_RESOLUTION_DEFAULT 268435455
-#define ZN_SN_RESOLUTION ZN_SN_RESOLUTION_DEFAULT
+#define ZN_SN_RESOLUTION_BYTES_DEFAULT 4
+#define ZN_SN_RESOLUTION_BYTES ZN_SN_RESOLUTION_BYTES_DEFAULT
 
 #define ZN_CONGESTION_CONTROL_DEFAULT zn_congestion_control_t_DROP
 

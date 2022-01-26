@@ -40,7 +40,7 @@
 #define _ZN_MID_JOIN 0x00
 #define _ZN_MID_SCOUT 0x01
 #define _ZN_MID_HELLO 0x02
-#define _ZN_MID_INIT 0x03
+#define _ZN_MID_INIT 0x01  // Note: for unicast only
 #define _ZN_MID_OPEN 0x04
 #define _ZN_MID_CLOSE 0x05
 #define _ZN_MID_SYNC 0x06
@@ -69,17 +69,33 @@
 //      L Locators         if L==1 then Locators are present
 //      O Options          if O==1 then Options are present
 //      Z Zenoh properties if Z==1 then Zenoh properties are present
-//      U User properties  if U==1 then User properties are present
 //      X None             Non-attributed flags are set to zero
 
 #define _ZN_FLAG_HDR_SCOUT_I    0x20  // 1 << 5
-#define _ZN_FLAG_OPT_SCOUT_Z    0x80  // 1 << 7
+#define _ZN_FLAG_HDR_SCOUT_Z    0x80  // 1 << 7
 
 #define _ZN_FLAG_HDR_HELLO_L    0x20  // 1 << 5
-#define _ZN_FLAG_OPT_HELLO_Z    0x80  // 1 << 7
+#define _ZN_FLAG_HDR_HELLO_Z    0x80  // 1 << 7
 
 #define _ZN_FLAG_S_O            0x80  // 1 << 7
 #define _ZN_FLAG_S_X            0x00  // 0
+
+// Transport message flags:
+//      A Ack              if A==1 then the message is an acknowledgment
+//      E End              if E==1 then it is the last FRAME fragment
+//      F Fragment         if F==1 then the FRAME is a fragment
+//      O Options          if O==1 then the next byte is an additional option
+//      Q QoS              if Q==1 then the sender of the message supports QoS
+//      R Reliable         if R==1 then it concerns the reliable channel, best-effort otherwise
+//      T TimeRes          if T==1 then the time resolution is in seconds
+//      Z Zenoh properties if Z==1 then Zenoh properties are present
+//      X None             Non-attributed flags are set to zero
+
+#define _ZN_FLAG_HDR_INIT_A     0x20  // 1 << 5
+#define _ZN_FLAG_HDR_INIT_Z     0x80  // 1 << 7
+
+#define _ZN_FLAG_T_O            0x80  // 1 << 7
+#define _ZN_FLAG_T_X            0x00  // 0
 
 /* Transport message flags */
 #define _ZN_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
@@ -736,49 +752,38 @@ typedef struct
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header);
 
 /*------------------ Init Message ------------------*/
-// # Init message
-//
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-// The INIT message is sent on a specific Locator to initiate a session with the peer associated
-// with that Locator. The initiator MUST send an INIT message with the A flag set to 0.  If the
-// corresponding peer deems appropriate to initialize a session with the initiator, the corresponding
+// The INIT message is sent on a specific Locator to initiate a transport with the peer associated
+// with that Locator. The initiator MUST send an INIT message with the A flag set to 0. If the
+// corresponding peer deems appropriate to initialize a transport with the initiator, the corresponding
 // peer MUST reply with an INIT message with the A flag set to 1.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |O|S|A|   INIT  |
-// +-+-+-+-+-------+
-// ~             |Q~ if O==1
+// |Z|X|A|   INIT  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-// | v_maj | v_min | if A==0 -- Protocol Version VMaj.VMin
-// +-------+-------+
-// ~    whatami    ~ -- Client, Router, Peer or a combination of them
+// |X|X|X|sn_bs|wai| (#)(*)
+// +-+-+-+-----+---+
+// ~      <u8>     ~ -- ZenohID of the sender of the INIT message
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the INIT message
-// +---------------+
-// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
-// +---------------+
-// ~     cookie    ~ if A==1
+// ~      <u8>     ~ if Flag(A)==1 -- Cookie
 // +---------------+
 //
-// (*) if A==0 and S==0 then 2^28 is assumed.
-//     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
-//
-// - if Q==1 then the initiator/responder supports QoS.
+// (*) WhatAmI. It indicates the role of the zenoh node sending the INIT message.
+//    The valid WhatAmI values are:
+//    - 0b00: Router
+//    - 0b01: Peer
+//    - 0b10: Client
+//    - 0b11: Reserved
 //
 typedef struct
 {
-    z_zint_t options;
-    z_zint_t whatami;
-    z_zint_t sn_resolution;
-    z_bytes_t pid;
-    z_bytes_t cookie;
     uint8_t version;
+    uint8_t whatami;
+    uint8_t sn_bs;
+    z_bytes_t zid;
+    z_bytes_t cookie;
 } _zn_init_t;
 void _zn_t_msg_clear_init(_zn_init_t *msg, uint8_t header);
 
@@ -1015,8 +1020,8 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg);
 _zn_transport_message_t _zn_t_msg_make_scout(uint8_t what, z_bytes_t zid);
 _zn_transport_message_t _zn_t_msg_make_hello(uint8_t whatami, z_bytes_t zid, _zn_locator_array_t locators);
 _zn_transport_message_t _zn_t_msg_make_join(uint8_t version, z_zint_t whatami, z_zint_t lease, z_zint_t sn_resolution, z_bytes_t pid, _zn_conduit_sn_list_t next_sns);
-_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, int is_qos);
-_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, z_zint_t whatami, z_zint_t sn_resolution, z_bytes_t pid, z_bytes_t cookie, int is_qos);
+_zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid);
+_zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial_sn);
 _zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only);

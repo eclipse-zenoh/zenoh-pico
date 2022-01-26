@@ -19,6 +19,7 @@
 #include "zenoh-pico/protocol/msg.h"
 
 /*------------------ SN helpers ------------------*/
+z_zint_t _zn_sn_max_resolution(const uint8_t sn_bs);
 int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right);
 z_zint_t _zn_sn_increment(const z_zint_t sn_resolution, const z_zint_t sn);
 z_zint_t _zn_sn_decrement(const z_zint_t sn_resolution, const z_zint_t sn);

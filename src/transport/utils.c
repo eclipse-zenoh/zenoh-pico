@@ -14,6 +14,11 @@
 
 #include "zenoh-pico/transport/utils.h"
 
+z_zint_t _zn_sn_max_resolution(const uint8_t sn_bs)
+{
+    return (2 << (7 * sn_bs)) + 1;
+}
+
 int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right)
 {
     if (sn_right > sn_left)
