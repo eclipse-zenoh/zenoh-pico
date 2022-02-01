@@ -54,15 +54,22 @@ int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
 }
 
 // Global variables used in the wifi handler
-int s_state = 0;
-unsigned char *s_rcv_buf = NULL;
-ssize_t s_rb = 0;
+int s_state = 0; // TODO: make enum
+unsigned char *s_buffer = NULL;
+unsigned char *s_buffer_position = NULL;
+unsigned int s_buffer_lenght = 0;
+unsigned int s_buffer_available = 0xFFFF;
 
 void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 {
     switch (ev_type)
     {
         case SOCKET_MSG_BIND:
+        {
+            s_state = 1;
+        } break;
+
+        case SOCKET_MSG_CONNECT:
         {
             s_state = 1;
         } break;
@@ -75,18 +82,19 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 //            uint16 u16port = ev_recv_msg->strRemoteAddr.sin_port;
 
             if (ev_recv_msg->s16BufferSize <= 0)
-            {
-                s_rb = -1;
                 return;
-            }
 
-            s_rb = ev_recv_msg->s16BufferSize;
-            if (hif_receive(ev_recv_msg->pu8Buffer, s_rcv_buf, s_rb, 0) != M2M_SUCCESS)
-            {
-                s_rb = -1;
+            if (s_buffer_available < ev_recv_msg->s16BufferSize)
                 return;
-            }
-            hif_receive(0, NULL, 0, 1); // Discard message from the buffer after read
+
+            unsigned int to_read = ev_recv_msg->s16BufferSize;
+            if (hif_receive(ev_recv_msg->pu8Buffer, s_buffer_position, to_read, 1) != M2M_SUCCESS)
+                return;
+
+            s_buffer_position = s_buffer + to_read;
+            s_buffer_lenght += to_read;
+            s_buffer_available -= to_read;
+
         } break;
 
         case SOCKET_MSG_SEND:
@@ -103,9 +111,14 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 /*------------------ Endpoint ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
-    // @TODO: To be implemented
+    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    memset(addr, 0, sizeof(addr));
 
-    return -1;
+    addr->sin_family = AF_INET;
+    _zn_inet_pton(s_addr, addr);
+    addr->sin_port = _htons(atoi(port));
+
+    return addr;
 }
 
 void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
@@ -116,15 +129,15 @@ void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
     addr->sin_family = AF_INET;
     _zn_inet_pton(s_addr, addr);
     addr->sin_port = _htons(atoi(port));
-    
+
     return addr;
 }
 
 void _zn_free_endpoint_tcp(void *arg)
 {
-    // @TODO: To be implemented
+    struct sockaddr_in *self = (struct sockaddr_in *)arg;
 
-    return -1;
+    free(self);
 }
 
 void _zn_free_endpoint_udp(void *arg)
@@ -137,13 +150,42 @@ void _zn_free_endpoint_udp(void *arg)
 /*------------------ TCP sockets ------------------*/
 int _zn_open_tcp(void *arg)
 {
-    // @TODO: To be implemented
+    struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
 
+    registerSocketCallback(_zn_socket_event_handler, NULL);
+
+    int sock = socket(raddr->sin_family, SOCK_STREAM, 0);
+    if (sock < 0)
+        goto _ZN_OPEN_TCP_UNICAST_ERROR_1;
+
+    if (connect(sock, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
+        goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
+
+    s_state = 0; // Global variable used in wifi handle
+    z_clock_t start = z_clock_now();
+    while (s_state != 1 && z_clock_elapsed_ms(&start) < 2000)
+        m2m_wifi_handle_events(NULL);
+    if(s_state == 0)
+        goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
+
+    // This is required after binding (just for TCP) due to WiFi101 library
+    recv(sock, NULL, 0, 0);
+
+    s_buffer = (unsigned char *)malloc(0xFFFF);
+    s_buffer_position = s_buffer;
+    return sock;
+
+_ZN_OPEN_TCP_UNICAST_ERROR_2:
+    close(sock);
+
+_ZN_OPEN_TCP_UNICAST_ERROR_1:
     return -1;
 }
 
 int _zn_listen_tcp(void *arg)
 {
+    struct sockaddr_in *laddr = (struct sockaddr_in *)arg;
+
     // @TODO: To be implemented
 
     return -1;
@@ -151,28 +193,62 @@ int _zn_listen_tcp(void *arg)
 
 void _zn_close_tcp(int sock)
 {
-    // @TODO: To be implemented
+    m2m_wifi_handle_events(NULL);
+    close(sock);
 }
 
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
 {
-    // @TODO: To be implemented
+    do
+    {
+        if (len <= s_buffer_lenght)
+        {
+            memcpy(ptr, s_buffer, len);
+            s_buffer_lenght -= len;
+            s_buffer_available += len;
 
-    return -1;
+            memmove(s_buffer, s_buffer + len, s_buffer_lenght);
+            s_buffer_position = s_buffer;
+
+            return len;
+        }
+
+        if (recv(sock, s_buffer_position, s_buffer_available, 0) < 0)
+            return -1;
+        m2m_wifi_handle_events(NULL);
+    } while (1);
+
+    return 0;
 }
 
 size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
 {
-    // @TODO: To be implemented
+    size_t n = len;
+    size_t rb = 0;
 
-    return -1;
+    do
+    {
+        rb = _zn_read_tcp(sock, ptr, n);
+        if (rb < 0)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
 }
 
 size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
-    // @TODO: To be implemented
+    m2m_wifi_handle_events(NULL);
 
-    return -1;
+    if (send(sock, (void*)ptr, len, 0) < 0)
+        return -1;
+
+    m2m_wifi_handle_events(NULL);
+
+    return len;
 }
 
 /*------------------ UDP sockets ------------------*/
@@ -202,6 +278,8 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     // This is required after binding (just for UDP) due to WiFi101 library
     recvfrom(sock, NULL, 0, 0);
 
+    s_buffer = (unsigned char *)malloc(0xFFFF);
+    s_buffer_position = s_buffer;
     return sock;
 
 _ZN_OPEN_UDP_UNICAST_ERROR_2:
@@ -228,18 +306,26 @@ void _zn_close_udp_unicast(int sock)
 
 size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
-    // Global variables used in wifi handle
-    s_rb = 0;
-    s_rcv_buf = ptr;
-
-    while (s_rb == 0)
+    do
     {
-        m2m_wifi_handle_events(NULL);
-        if (recvfrom(sock, ptr, len, 0) < 0)
-            return -1;
-    }
+        if (s_buffer_lenght > 0)
+        {
+            memcpy(ptr, s_buffer, len);
+            s_buffer_lenght = 0;
+            s_buffer_available = 0xFFFF;
 
-    return s_rb;
+            memmove(s_buffer, s_buffer + len, s_buffer_lenght);
+            s_buffer_position = s_buffer;
+
+            return len;
+        }
+
+        if (recvfrom(sock, s_buffer_position, s_buffer_available, 0) < 0)
+            return -1;
+        m2m_wifi_handle_events(NULL);
+    } while (1);
+
+    return 0;
 }
 
 size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
