@@ -19,6 +19,21 @@
 
 #include <string.h>
 #include <socket/include/socket.h>
+typedef struct
+{
+    enum {
+        __ZN_SOCKET_BRIDGE_UNINITIALIZED = 0,
+        __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED = 1,
+        __ZN_SOCKET_BRIDGE_ERROR = 255,
+    } state;
+
+    char *buffer;
+    char *buffer_current;
+    uint16_t buffer_lenght;
+    uint16_t buffer_available;
+} __zn_wifi_socket;
+
+__zn_wifi_socket g_wifi_buffer;
 
 int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
 {
@@ -53,25 +68,18 @@ int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
     return 0;
 }
 
-// Global variables used in the wifi handler
-int s_state = 0; // TODO: make enum
-unsigned char *s_buffer = NULL;
-unsigned char *s_buffer_position = NULL;
-unsigned int s_buffer_lenght = 0;
-unsigned int s_buffer_available = 0xFFFF;
-
 void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 {
     switch (ev_type)
     {
         case SOCKET_MSG_BIND:
         {
-            s_state = 1;
+            g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
         } break;
 
         case SOCKET_MSG_CONNECT:
         {
-            s_state = 1;
+            g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
         } break;
 
         case SOCKET_MSG_RECV:
@@ -84,16 +92,16 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
             if (ev_recv_msg->s16BufferSize <= 0)
                 return;
 
-            if (s_buffer_available < ev_recv_msg->s16BufferSize)
+            if (g_wifi_buffer.buffer_available < ev_recv_msg->s16BufferSize)
                 return;
 
             unsigned int to_read = ev_recv_msg->s16BufferSize;
-            if (hif_receive(ev_recv_msg->pu8Buffer, s_buffer_position, to_read, 1) != M2M_SUCCESS)
+            if (hif_receive(ev_recv_msg->pu8Buffer, (unsigned char *)g_wifi_buffer.buffer_current, to_read, 1) != M2M_SUCCESS)
                 return;
 
-            s_buffer_position = s_buffer + to_read;
-            s_buffer_lenght += to_read;
-            s_buffer_available -= to_read;
+            g_wifi_buffer.buffer_current += to_read;
+            g_wifi_buffer.buffer_lenght += to_read;
+            g_wifi_buffer.buffer_available -= to_read;
 
         } break;
 
@@ -161,20 +169,21 @@ int _zn_open_tcp(void *arg)
     if (connect(sock, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
 
-    s_state = 0; // Global variable used in wifi handle
+    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     z_clock_t start = z_clock_now();
-    while (s_state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (g_wifi_buffer.state  != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(s_state == 0)
+    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
 
     // This is required after binding (just for TCP) due to WiFi101 library
     recv(sock, NULL, 0, 0);
 
-    s_buffer = (unsigned char *)malloc(0xFFFF);
-    s_buffer_position = s_buffer;
-    s_buffer_lenght = 0;
-    s_buffer_available = 0xFFFF;
+    g_wifi_buffer.buffer_lenght = 0;
+    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
+    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
+    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
+
     return sock;
 
 _ZN_OPEN_TCP_UNICAST_ERROR_2:
@@ -199,27 +208,27 @@ void _zn_close_tcp(int sock)
     close(sock);
     m2m_wifi_handle_events(NULL);
 
-    free(s_buffer);
-    s_buffer = NULL;
+    free(g_wifi_buffer.buffer);
+    g_wifi_buffer.buffer = NULL;
 }
 
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
 {
     do
     {
-        if (len <= s_buffer_lenght)
+        if (len <= g_wifi_buffer.buffer_lenght)
         {
-            memcpy(ptr, s_buffer, len);
-            s_buffer_lenght -= len;
-            s_buffer_available += len;
+            memcpy(ptr, g_wifi_buffer.buffer, len);
+            g_wifi_buffer.buffer_lenght -= len;
+            g_wifi_buffer.buffer_available += len;
 
-            memmove(s_buffer, s_buffer + len, s_buffer_lenght);
-            s_buffer_position = s_buffer;
+            memmove(g_wifi_buffer.buffer, g_wifi_buffer.buffer + len, g_wifi_buffer.buffer_lenght);
+            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
 
             return len;
         }
 
-        if (recv(sock, s_buffer_position, s_buffer_available, 0) < 0)
+        if (recv(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
@@ -274,20 +283,20 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
 
-    s_state = 0; // Global variable used in wifi handle
+    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     z_clock_t start = z_clock_now();
-    while (s_state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (g_wifi_buffer.state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(s_state == 0)
+    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
 
     // This is required after binding (just for UDP) due to WiFi101 library
     recvfrom(sock, NULL, 0, 0);
 
-    s_buffer = (unsigned char *)malloc(0xFFFF);
-    s_buffer_position = s_buffer;
-    s_buffer_lenght = 0;
-    s_buffer_available = 0xFFFF;
+    g_wifi_buffer.buffer_lenght = 0;
+    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
+    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
+    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
     return sock;
 
 _ZN_OPEN_UDP_UNICAST_ERROR_2:
@@ -312,25 +321,25 @@ void _zn_close_udp_unicast(int sock)
     close(sock);
     m2m_wifi_handle_events(NULL);
 
-    free(s_buffer);
-    s_buffer = NULL;
+    free(g_wifi_buffer.buffer);
+    g_wifi_buffer.buffer = NULL;
 }
 
 size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
     do
     {
-        if (s_buffer_lenght > 0)
+        if (g_wifi_buffer.buffer_lenght > 0)
         {
-            memcpy(ptr, s_buffer, len);
-            s_buffer_lenght = 0;
-            s_buffer_available = 0xFFFF;
-            s_buffer_position = s_buffer;
+            memcpy(ptr, g_wifi_buffer.buffer, len);
+            g_wifi_buffer.buffer_lenght = 0;
+            g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
+            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
 
             return len;
         }
 
-        if (recvfrom(sock, s_buffer_position, s_buffer_available, 0) < 0)
+        if (recvfrom(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
@@ -387,11 +396,11 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
-    s_state = 0; // Global variable used in wifi handle
+    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     z_clock_t start = z_clock_now();
-    while (s_state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (g_wifi_buffer.state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(s_state == 0)
+    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
     // Create laddr endpoint
@@ -400,10 +409,10 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     // This is required after binding (just for UDP) due to WiFi101 library
     recvfrom(sock, NULL, 0, 0);
 
-    s_buffer = (unsigned char *)malloc(0xFFFF);
-    s_buffer_position = s_buffer;
-    s_buffer_lenght = 0;
-    s_buffer_available = 0xFFFF;
+    g_wifi_buffer.buffer_lenght = 0;
+    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
+    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
+    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
 
     return sock;
 
@@ -429,25 +438,25 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
     close(sock_send);
     m2m_wifi_handle_events(NULL);
 
-    free(s_buffer);
-    s_buffer = NULL;
+    free(g_wifi_buffer.buffer);
+    g_wifi_buffer.buffer = NULL;
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
     do
     {
-        if (s_buffer_lenght > 0)
+        if (g_wifi_buffer.buffer_lenght > 0)
         {
-            memcpy(ptr, s_buffer, len);
-            s_buffer_lenght = 0;
-            s_buffer_available = 0xFFFF;
-            s_buffer_position = s_buffer;
+            memcpy(ptr, g_wifi_buffer.buffer, len);
+            g_wifi_buffer.buffer_lenght = 0;
+            g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
+            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
 
             return len;
         }
 
-        if (recvfrom(sock, s_buffer_position, s_buffer_available, 0) < 0)
+        if (recvfrom(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
