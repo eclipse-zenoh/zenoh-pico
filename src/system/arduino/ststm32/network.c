@@ -19,6 +19,9 @@
 
 #include <string.h>
 #include <socket/include/socket.h>
+#include <driver/include/m2m_wifi.h>
+#include <driver/source/m2m_hif.h>
+
 typedef struct
 {
     enum {
