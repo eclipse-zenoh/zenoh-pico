@@ -24,7 +24,8 @@
 
 typedef struct
 {
-    enum {
+    enum
+    {
         __ZN_SOCKET_BRIDGE_UNINITIALIZED = 0,
         __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED = 1,
         __ZN_SOCKET_BRIDGE_ERROR = 255,
@@ -77,12 +78,22 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
     {
         case SOCKET_MSG_BIND:
         {
-            g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+            tstrSocketBindMsg *ev_bind_msg = (tstrSocketBindMsg *)ev_msg;
+            if (ev_bind_msg && ev_bind_msg->status == -1)
+                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+            else
+                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_ERROR;
+
         } break;
 
         case SOCKET_MSG_CONNECT:
         {
-            g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+            tstrSocketConnectMsg *ev_conn_msg = (tstrSocketConnectMsg *)ev_msg;
+            if (ev_conn_msg && ev_conn_msg->s8Error >= 0)
+                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+            else
+                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_ERROR;
+
         } break;
 
         case SOCKET_MSG_RECV:
