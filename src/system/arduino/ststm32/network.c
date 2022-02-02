@@ -371,8 +371,46 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
-    // @TODO: To be implemented
+    struct sockaddr_in *raddr = (struct sockaddr_in *)arg_1;
+    struct sockaddr_in *laddr = NULL;
+    unsigned int addrlen = 0;
 
+    registerSocketCallback(_zn_socket_event_handler, NULL);
+
+    int sock = socket(raddr->sin_family, SOCK_DGRAM, 0);
+    if (sock < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
+
+    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    memset(addr, 0, sizeof(addr));
+    addr->sin_family = AF_INET;
+    if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+
+    s_state = 0; // Global variable used in wifi handle
+    z_clock_t start = z_clock_now();
+    while (s_state != 1 && z_clock_elapsed_ms(&start) < 2000)
+        m2m_wifi_handle_events(NULL);
+    if(s_state == 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+
+    // Create laddr endpoint
+    *arg_2 = addr;
+
+    // This is required after binding (just for UDP) due to WiFi101 library
+    recvfrom(sock, NULL, 0, 0);
+
+    s_buffer = (unsigned char *)malloc(0xFFFF);
+    s_buffer_position = s_buffer;
+    s_buffer_lenght = 0;
+    s_buffer_available = 0xFFFF;
+
+    return sock;
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_2:
+    close(sock);
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
@@ -385,26 +423,65 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
 
 void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
 {
-    // @TODO: To be implemented
+    m2m_wifi_handle_events(NULL);
+    close(sock_recv);
+    m2m_wifi_handle_events(NULL);
+    close(sock_send);
+    m2m_wifi_handle_events(NULL);
+
+    free(s_buffer);
+    s_buffer = NULL;
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
-    // @TODO: To be implemented
+    do
+    {
+        if (s_buffer_lenght > 0)
+        {
+            memcpy(ptr, s_buffer, len);
+            s_buffer_lenght = 0;
+            s_buffer_available = 0xFFFF;
+            s_buffer_position = s_buffer;
 
-    return -1;
+            return len;
+        }
+
+        if (recvfrom(sock, s_buffer_position, s_buffer_available, 0) < 0)
+            return -1;
+        m2m_wifi_handle_events(NULL);
+    } while (1);
+
+    return 0;
 }
 
 size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
-    // @TODO: To be implemented
+    size_t n = len;
+    size_t rb = 0;
 
-    return -1;
+    do
+    {
+        rb = _zn_read_udp_multicast(sock, ptr, n, arg, addr);
+        if (rb < 0)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
 }
 
 size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 {
-    // @TODO: To be implemented
+    m2m_wifi_handle_events(NULL);
 
-    return -1;
+    struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
+    if (sendto(sock, (void*)ptr, len, 0, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
+        return -1;
+
+    m2m_wifi_handle_events(NULL);
+
+    return len;
 }
