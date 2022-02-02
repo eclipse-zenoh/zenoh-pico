@@ -173,6 +173,8 @@ int _zn_open_tcp(void *arg)
 
     s_buffer = (unsigned char *)malloc(0xFFFF);
     s_buffer_position = s_buffer;
+    s_buffer_lenght = 0;
+    s_buffer_available = 0xFFFF;
     return sock;
 
 _ZN_OPEN_TCP_UNICAST_ERROR_2:
@@ -195,6 +197,10 @@ void _zn_close_tcp(int sock)
 {
     m2m_wifi_handle_events(NULL);
     close(sock);
+    m2m_wifi_handle_events(NULL);
+
+    free(s_buffer);
+    s_buffer = NULL;
 }
 
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
@@ -280,6 +286,8 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
 
     s_buffer = (unsigned char *)malloc(0xFFFF);
     s_buffer_position = s_buffer;
+    s_buffer_lenght = 0;
+    s_buffer_available = 0xFFFF;
     return sock;
 
 _ZN_OPEN_UDP_UNICAST_ERROR_2:
@@ -302,6 +310,10 @@ void _zn_close_udp_unicast(int sock)
 {
     m2m_wifi_handle_events(NULL);
     close(sock);
+    m2m_wifi_handle_events(NULL);
+
+    free(s_buffer);
+    s_buffer = NULL;
 }
 
 size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
@@ -313,8 +325,6 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
             memcpy(ptr, s_buffer, len);
             s_buffer_lenght = 0;
             s_buffer_available = 0xFFFF;
-
-            memmove(s_buffer, s_buffer + len, s_buffer_lenght);
             s_buffer_position = s_buffer;
 
             return len;
