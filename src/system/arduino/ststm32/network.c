@@ -24,6 +24,7 @@
 
 typedef struct
 {
+    int sock;
     enum
     {
         __ZN_SOCKET_BRIDGE_UNINITIALIZED = 0,
@@ -35,9 +36,24 @@ typedef struct
     char *buffer_current;
     uint16_t buffer_lenght;
     uint16_t buffer_available;
-} __zn_wifi_socket;
+} __zn_wifi_socket_t;
 
-__zn_wifi_socket g_wifi_buffer;
+int __zn_wifi_socket_eq(const __zn_wifi_socket_t *one, const __zn_wifi_socket_t *two)
+{
+    return one->sock == two->sock;
+}
+
+void __zn_wifi_socket_clear(__zn_wifi_socket_t *res)
+{
+    free(res->buffer);
+    res->buffer = NULL;
+    res->buffer_current = NULL;
+}
+
+_Z_ELEM_DEFINE(__zn_wifi_socket, __zn_wifi_socket_t, _zn_noop_size, __zn_wifi_socket_clear, _zn_noop_copy)
+_Z_LIST_DEFINE(__zn_wifi_socket, __zn_wifi_socket_t)
+
+__zn_wifi_socket_list_t *g_wifi_buffers = NULL;
 
 int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
 {
@@ -74,15 +90,21 @@ int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
 
 void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 {
+    __zn_wifi_socket_t lookup = {.sock = sock};
+    __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
+    if (xs == NULL)
+        goto ERR_OR_SUCCESS;
+
+    __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     switch (ev_type)
     {
         case SOCKET_MSG_BIND:
         {
             tstrSocketBindMsg *ev_bind_msg = (tstrSocketBindMsg *)ev_msg;
             if (ev_bind_msg && ev_bind_msg->status == -1)
-                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+                ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
             else
-                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_ERROR;
+                ws->state = __ZN_SOCKET_BRIDGE_ERROR;
 
         } break;
 
@@ -90,9 +112,9 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
         {
             tstrSocketConnectMsg *ev_conn_msg = (tstrSocketConnectMsg *)ev_msg;
             if (ev_conn_msg && ev_conn_msg->s8Error >= 0)
-                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+                ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
             else
-                g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_ERROR;
+                ws->state = __ZN_SOCKET_BRIDGE_ERROR;
 
         } break;
 
@@ -104,18 +126,18 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
 //            uint16 u16port = ev_recv_msg->strRemoteAddr.sin_port;
 
             if (ev_recv_msg->s16BufferSize <= 0)
-                return;
+                goto ERR_OR_SUCCESS;
 
-            if (g_wifi_buffer.buffer_available < ev_recv_msg->s16BufferSize)
-                return;
+            if (ws->buffer_available < ev_recv_msg->s16BufferSize)
+                goto ERR_OR_SUCCESS;
 
             unsigned int to_read = ev_recv_msg->s16BufferSize;
-            if (hif_receive(ev_recv_msg->pu8Buffer, (unsigned char *)g_wifi_buffer.buffer_current, to_read, 1) != M2M_SUCCESS)
-                return;
+            if (hif_receive(ev_recv_msg->pu8Buffer, (unsigned char *)ws->buffer_current, to_read, 1) != M2M_SUCCESS)
+                goto ERR_OR_SUCCESS;
 
-            g_wifi_buffer.buffer_current += to_read;
-            g_wifi_buffer.buffer_lenght += to_read;
-            g_wifi_buffer.buffer_available -= to_read;
+            ws->buffer_current += to_read;
+            ws->buffer_lenght += to_read;
+            ws->buffer_available -= to_read;
 
         } break;
 
@@ -128,6 +150,9 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
         default:
             break;
     }
+
+ERR_OR_SUCCESS:
+    return;
 }
 
 /*------------------ Endpoint ------------------*/
@@ -183,22 +208,28 @@ int _zn_open_tcp(void *arg)
     if (connect(sock, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
 
-    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    ws->sock = sock;
+    ws->buffer_lenght = 0;
+    ws->buffer_available = ZN_BATCH_SIZE;
+    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer_current = ws->buffer;
+    g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
+
     z_clock_t start = z_clock_now();
-    while (g_wifi_buffer.state  != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
-        goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
+    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+        goto _ZN_OPEN_TCP_UNICAST_ERROR_3;
 
     // This is required after binding (just for TCP) due to WiFi101 library
     recv(sock, NULL, 0, 0);
 
-    g_wifi_buffer.buffer_lenght = 0;
-    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
-    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
-    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
-
     return sock;
+
+_ZN_OPEN_TCP_UNICAST_ERROR_3:
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, ws);
 
 _ZN_OPEN_TCP_UNICAST_ERROR_2:
     close(sock);
@@ -222,27 +253,33 @@ void _zn_close_tcp(int sock)
     close(sock);
     m2m_wifi_handle_events(NULL);
 
-    free(g_wifi_buffer.buffer);
-    g_wifi_buffer.buffer = NULL;
+    __zn_wifi_socket_t ws = {.sock = sock};
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, &ws);
 }
 
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
 {
+    __zn_wifi_socket_t lookup = {.sock = sock};
+    __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
+    if (xs == NULL)
+        return -1;
+
+    __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
     {
-        if (len <= g_wifi_buffer.buffer_lenght)
+        if (len <= ws->buffer_lenght)
         {
-            memcpy(ptr, g_wifi_buffer.buffer, len);
-            g_wifi_buffer.buffer_lenght -= len;
-            g_wifi_buffer.buffer_available += len;
+            memcpy(ptr, ws->buffer, len);
+            ws->buffer_lenght -= len;
+            ws->buffer_available += len;
 
-            memmove(g_wifi_buffer.buffer, g_wifi_buffer.buffer + len, g_wifi_buffer.buffer_lenght);
-            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
+            memmove(ws->buffer, ws->buffer + len, ws->buffer_lenght);
+            ws->buffer_current = ws->buffer;
 
             return len;
         }
 
-        if (recv(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
+        if (recv(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
@@ -297,21 +334,28 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
 
-    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    ws->sock = sock;
+    ws->buffer_lenght = 0;
+    ws->buffer_available = ZN_BATCH_SIZE;
+    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer_current = ws->buffer;
+    g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
+
     z_clock_t start = z_clock_now();
-    while (g_wifi_buffer.state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
-        goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
+    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+        goto _ZN_OPEN_UDP_UNICAST_ERROR_3;
 
     // This is required after binding (just for UDP) due to WiFi101 library
     recvfrom(sock, NULL, 0, 0);
 
-    g_wifi_buffer.buffer_lenght = 0;
-    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
-    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
-    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
     return sock;
+
+_ZN_OPEN_UDP_UNICAST_ERROR_3:
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, ws);
 
 _ZN_OPEN_UDP_UNICAST_ERROR_2:
     close(sock);
@@ -335,25 +379,31 @@ void _zn_close_udp_unicast(int sock)
     close(sock);
     m2m_wifi_handle_events(NULL);
 
-    free(g_wifi_buffer.buffer);
-    g_wifi_buffer.buffer = NULL;
+    __zn_wifi_socket_t ws = {.sock = sock};
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, &ws);
 }
 
 size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
 {
+    __zn_wifi_socket_t lookup = {.sock = sock};
+    __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
+    if (xs == NULL)
+        return -1;
+
+    __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
     {
-        if (g_wifi_buffer.buffer_lenght > 0)
+        if (ws->buffer_lenght > 0)
         {
-            memcpy(ptr, g_wifi_buffer.buffer, len);
-            g_wifi_buffer.buffer_lenght = 0;
-            g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
-            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
+            memcpy(ptr, ws->buffer, len);
+            ws->buffer_lenght = 0;
+            ws->buffer_available = ZN_BATCH_SIZE;
+            ws->buffer_current = ws->buffer;
 
             return len;
         }
 
-        if (recvfrom(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
+        if (recvfrom(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
@@ -410,12 +460,20 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
-    g_wifi_buffer.state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
+    ws->sock = sock;
+    ws->buffer_lenght = 0;
+    ws->buffer_available = ZN_BATCH_SIZE;
+    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer_current = ws->buffer;
+    g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
+
     z_clock_t start = z_clock_now();
-    while (g_wifi_buffer.state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(g_wifi_buffer.state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
-        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
 
     // Create laddr endpoint
     *arg_2 = addr;
@@ -423,12 +481,10 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     // This is required after binding (just for UDP) due to WiFi101 library
     recvfrom(sock, NULL, 0, 0);
 
-    g_wifi_buffer.buffer_lenght = 0;
-    g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
-    g_wifi_buffer.buffer = (char *)malloc(g_wifi_buffer.buffer_available);
-    g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
-
     return sock;
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_3:
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, ws);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
     close(sock);
@@ -452,25 +508,32 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
     close(sock_send);
     m2m_wifi_handle_events(NULL);
 
-    free(g_wifi_buffer.buffer);
-    g_wifi_buffer.buffer = NULL;
+    __zn_wifi_socket_t ws;
+    ws.sock = sock_recv;
+    g_wifi_buffers = __zn_wifi_socket_list_drop_filter(g_wifi_buffers, __zn_wifi_socket_eq, &ws);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
 {
+    __zn_wifi_socket_t lookup = {.sock = sock};
+    __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
+    if (xs == NULL)
+        return -1;
+
+    __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
     {
-        if (g_wifi_buffer.buffer_lenght > 0)
+        if (ws->buffer_lenght > 0)
         {
-            memcpy(ptr, g_wifi_buffer.buffer, len);
-            g_wifi_buffer.buffer_lenght = 0;
-            g_wifi_buffer.buffer_available = ZN_BATCH_SIZE;
-            g_wifi_buffer.buffer_current = g_wifi_buffer.buffer;
+            memcpy(ptr, ws->buffer, len);
+            ws->buffer_lenght = 0;
+            ws->buffer_available = ZN_BATCH_SIZE;
+            ws->buffer_current = ws->buffer;
 
             return len;
         }
 
-        if (recvfrom(sock, g_wifi_buffer.buffer_current, g_wifi_buffer.buffer_available, 0) < 0)
+        if (recvfrom(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
             return -1;
         m2m_wifi_handle_events(NULL);
     } while (1);
