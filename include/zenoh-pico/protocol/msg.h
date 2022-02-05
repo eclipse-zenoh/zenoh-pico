@@ -47,6 +47,7 @@
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
 #define _ZN_MID_FRAME 0x08
+#define _ZN_MID_FRAGMENT 0x09
 /* Zenoh Messages */
 #define _ZN_MID_DECLARE 0x0b
 #define _ZN_MID_DATA 0x0c
@@ -106,6 +107,10 @@
 
 #define _ZN_FLAG_HDR_FRAME_Z    0x80  // 1 << 7
 #define _ZN_FLAG_HDR_FRAME_R    0x20  // 1 << 5
+
+#define _ZN_FLAG_HDR_FRAGMENT_Z 0x80  // 1 << 7
+#define _ZN_FLAG_HDR_FRAGMENT_M 0x40  // 1 << 6
+#define _ZN_FLAG_HDR_FRAGMENT_R 0x20  // 1 << 5
 
 #define _ZN_FLAG_T_O            0x80  // 1 << 7
 #define _ZN_FLAG_T_X            0x00  // 0
@@ -916,6 +921,29 @@ typedef struct
 } _zn_frame_t;
 void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header);
 
+/*------------------ Fragment Message ------------------*/
+// The FRAGMENT message is used to transmit on the wire large Zenoh Message
+// that require fragmentation because they are larger thatn the maximum batch size
+// (i.e. 2^16-1) and/or the link MTU.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|R| FRAGMENT|
+// +-+-+-+---------+
+// %    seq num    %
+// +---------------+
+// ~   [FragExts]  ~ if Flag(Z)==1
+// +---------------+
+// ~      [u8]     ~
+// +---------------+
+//
+typedef struct
+{
+    z_zint_t sn;
+    _zn_payload_t payload;
+} _zn_fragment_t;
+void _zn_t_msg_clear_fragment(_zn_fragment_t *msg, uint8_t header);
+
 /*------------------ Transport Message ------------------*/
 typedef union
 {
@@ -929,6 +957,7 @@ typedef union
     _zn_ack_nack_t ack_nack;
     _zn_keep_alive_t keep_alive;
     _zn_frame_t frame;
+    _zn_fragment_t fragment;
 } _zn_transport_body_t;
 typedef struct
 {
@@ -951,6 +980,7 @@ _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive();
 _zn_transport_message_t _zn_t_msg_make_frame(int is_reliable, z_zint_t sn, _zn_zenoh_message_vec_t messages);
+_zn_transport_message_t _zn_t_msg_make_fragment(uint8_t is_reliable, uint8_t is_final, z_zint_t sn, _zn_payload_t payload);
 
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
@@ -965,5 +995,6 @@ void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
 //void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
 void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
 void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
+void _zn_t_msg_copy_fragment(_zn_fragment_t *clone, _zn_fragment_t *fragment);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

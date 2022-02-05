@@ -104,18 +104,54 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
 
     // Encode the zenoh message
     res = _zn_zenoh_message_encode(&ztu->wbuf, z_msg);
-    if (res != 0)
+    if (res == 0)
     {
-        // Fragmentation required  
+        // Write the message legnth in the reserved space if needed
+        __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
+
+        // Send the wbuf on the socket
+        res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
+        if (res != 0)
+            goto ERR_2;
+    }
+    else
+    {
+        // Fragment as it does not fit in the current batch
+        // Create an expandable wbuf for fragmentation
+        _z_wbuf_t fbf = _z_wbuf_make(ZN_FRAG_BUF_TX_CHUNK, 1);
+
+        // Encode the message on the expandable wbuf
+        res = _zn_zenoh_message_encode(&fbf, z_msg);
+        if (res != 0)
+        {
+            _Z_DEBUG("Dropping zenoh message because it can not be fragmented");
+            goto ERR_2;
+        }
+
+        // Fragment and send the message
+        do
+        {
+            // Clear the buffer for serialization
+            __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
+
+            // Serialize one fragment
+            res = _zn_serialize_zenoh_fragment(&ztu->wbuf, &fbf, reliability, sn);
+            if (res != 0)
+                goto ERR_2;
+
+            // Write the message legnth in the reserved space if needed
+            __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
+
+            // Send the wbuf on the socket
+            res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
+            if (res != 0)
+                goto ERR_2;
+
+            sn = __unsafe_zn_unicast_get_sn(ztu, reliability);
+        } while (_z_wbuf_len(&fbf) > 0);
     }
 
-    // Write the message legnth in the reserved space if needed
-    __unsafe_zn_finalize_wbuf(&ztu->wbuf, ztu->link->is_streamed);
-
-    // Send the wbuf on the socket
-    res = _zn_link_send_wbuf(ztu->link, &ztu->wbuf);
-    if (res == 0)
-        ztu->transmitted = 1;
+    ztu->transmitted = 1;
 
     z_mutex_unlock(&ztu->mutex_tx);
 
@@ -125,6 +161,5 @@ ERR_2:
     z_mutex_unlock(&ztu->mutex_tx);
 
 ERR_1:
-
     return res;
 }

@@ -60,6 +60,38 @@ void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
     }
 }
 
+int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
+{
+    uint8_t is_final = 0;
+    do
+    {
+        size_t w_pos = _z_wbuf_get_wpos(dst);
+
+        // Encode the fragment
+        _zn_transport_message_t f_hdr = _zn_t_msg_make_fragment(reliability, is_final, sn, _z_bytes_make(0));
+        int res = _zn_transport_message_encode(dst, &f_hdr);
+        if (res != 0)
+            return -1;
+
+        size_t space_left = _z_wbuf_space_left(dst);
+        size_t bytes_left = _z_wbuf_len(src);
+
+        // Check if it is really the final fragment
+        if (bytes_left <= space_left && !is_final)
+        {
+            // It is really the finally fragment, reserialize the header
+            _z_wbuf_set_wpos(dst, w_pos);
+            is_final = 1;
+            continue;
+        }
+
+        // Write the fragment
+        size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
+        return _z_wbuf_siphon(dst, src, to_copy);
+
+    } while (1);
+}
+
 int _zn_send_t_msg(_zn_transport_t *zt, const _zn_transport_message_t *t_msg)
 {
     if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)

@@ -186,6 +186,75 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
         return _z_res_t_OK;
     }
 
+    case _ZN_MID_FRAGMENT:
+    {
+        // Check if the SN is correct
+        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_HDR_FRAGMENT_R))
+        {
+            // @TODO: amend once reliability is in place. For the time being only
+            //        monothonic SNs are ensured
+            if (_zn_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_reliable, t_msg->body.fragment.sn))
+            {
+                ztu->sn_rx_reliable = t_msg->body.fragment.sn;
+            }
+            else
+            {
+                _z_wbuf_clear(&ztu->dbuf_reliable);
+                _Z_DEBUG("Reliable message dropped because it is out of order");
+                return _z_res_t_OK;
+            }
+        }
+        else
+        {
+            if (_zn_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_best_effort, t_msg->body.fragment.sn))
+            {
+                ztu->sn_rx_best_effort = t_msg->body.fragment.sn;
+            }
+            else
+            {
+                _z_wbuf_clear(&ztu->dbuf_best_effort);
+                _Z_DEBUG("Best effort message dropped because it is out of order");
+                return _z_res_t_OK;
+            }
+        }
+
+        int res = _z_res_t_OK;
+
+        // Select the right defragmentation buffer
+        _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_HDR_FRAGMENT_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
+        // Add the fragment to the defragmentation buffer
+        _z_wbuf_add_iosli_from(dbuf, t_msg->body.fragment.payload.val, t_msg->body.fragment.payload.len);
+
+        // Check if this is the last fragment
+        if (!_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_HDR_FRAGMENT_M))
+        {
+            // Convert the defragmentation buffer into a decoding buffer
+            _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
+
+            // Decode the zenoh message
+            _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(&zbf);
+            if (r_zm.tag == _z_res_t_OK)
+            {
+                _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
+                res = _zn_handle_zenoh_message(ztu->session, &d_zm);
+
+                // Free the decoded message
+                _zn_z_msg_clear(&d_zm);
+            }
+            else
+            {
+                res = _z_res_t_ERR;
+            }
+
+            // Free the decoding buffer
+            _z_zbuf_reset(&zbf);
+            // Reset the defragmentation buffer
+            _z_wbuf_clear(dbuf);
+        }
+
+        return res;
+    }
+
     default:
     {
         _Z_DEBUG("Unknown session message ID");

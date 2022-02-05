@@ -1728,6 +1728,45 @@ _zn_frame_result_t _zn_frame_decode(_z_zbuf_t *zbf, uint8_t header)
     return r;
 }
 
+/*------------------ Fragment Message ------------------*/
+int _zn_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_fragment_t *msg)
+{
+    _Z_DEBUG("Encoding _ZN_MID_FRAGMENT\n");
+
+    // Encode the body
+    _ZN_EC(_z_zint_encode(wbf, msg->sn))
+    _ZN_EC(_z_wbuf_write_bytes(wbf, msg->payload.val, 0, msg->payload.len))
+
+    return 0;
+}
+
+void _zn_fragment_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_fragment_result_t *r)
+{
+    _Z_DEBUG("Decoding _ZN_MID_FRAGMENT\n");
+    r->tag = _z_res_t_OK;
+
+    // Decode the body
+    _z_zint_result_t r_zint = _z_zint_decode(zbf);
+    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
+    r->value.fragment.sn = r_zint.value.zint;
+
+    // FIXME: Handle extensions
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_FRAGMENT_Z))
+        _zn_t_ext_skip(zbf);
+
+    // Read all the remaining bytes in the buffer as the fragment
+    r->value.fragment.payload = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), _z_zbuf_len(zbf));
+    // We need to manually move the r_pos to w_pos, we have read it all
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));
+}
+
+_zn_fragment_result_t _zn_fragment_decode(_z_zbuf_t *zbf, uint8_t header)
+{
+    _zn_fragment_result_t r;
+    _zn_fragment_decode_na(zbf, header, &r);
+    return r;
+}
+
 /*------------------ Transport Message ------------------*/
 int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *msg)
 {
@@ -1743,6 +1782,8 @@ int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *
     {
     case _ZN_MID_FRAME:
         return _zn_frame_encode(wbf, msg->header, &msg->body.frame);
+    case _ZN_MID_FRAGMENT:
+        return _zn_fragment_encode(wbf, msg->header, &msg->body.fragment);
     case _ZN_MID_SCOUT:
         return _zn_scout_encode(wbf, msg->header, &msg->body.scout);
     case _ZN_MID_HELLO:
@@ -1788,6 +1829,13 @@ void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_resul
             _zn_frame_result_t r_fr = _zn_frame_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_fr, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
             r->value.transport_message.body.frame = r_fr.value.frame;
+            return;
+        }
+        case _ZN_MID_FRAGMENT:
+        {
+            _zn_fragment_result_t r_fr = _zn_fragment_decode(zbf, r->value.transport_message.header);
+            _ASSURE_P_RESULT(r_fr, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
+            r->value.transport_message.body.fragment = r_fr.value.fragment;
             return;
         }
         case _ZN_MID_ATTACHMENT:

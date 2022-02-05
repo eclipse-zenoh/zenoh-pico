@@ -105,6 +105,9 @@ void print_transport_message_type(uint8_t header)
     case _ZN_MID_FRAME:
         printf("Frame message");
         break;
+    case _ZN_MID_FRAGMENT:
+        printf("Fragment message");
+        break;
     default:
         assert(0);
         break;
@@ -2337,8 +2340,37 @@ void frame_message(void)
     _z_wbuf_clear(&wbf);
 }
 
+/*------------------ Fragment Message ------------------*/
+_zn_transport_message_t gen_fragment_message()
+{
+    z_zint_t sn = gen_zint();
+    int is_reliable = gen_bool();
+    int is_final = gen_bool();
+    _zn_payload_t payload = gen_bytes(1024);
+
+    return _zn_t_msg_make_fragment(is_reliable, is_final, sn, payload);
+}
+
+_zn_transport_message_t gen_fragment_message_payload(_zn_payload_t payload)
+{
+    z_zint_t sn = gen_zint();
+    int is_reliable = gen_bool();
+    int is_final = gen_bool();
+
+    return _zn_t_msg_make_fragment(is_reliable, is_final, sn, payload);
+}
+
+void assert_eq_fragment_message(_zn_fragment_t *left, _zn_fragment_t *right, uint8_t header)
+{
+    printf("   SN (%zu:%zu)", left->sn, right->sn);
+    assert(left->sn == right->sn);
+    printf("\n");
+
+    assert_eq_payload(&left->payload, &right->payload);
+}
+
 /*------------------ Transport Message ------------------*/
-_zn_transport_message_t gen_transport_message(int can_be_fragment)
+_zn_transport_message_t gen_transport_message()
 {
     _zn_transport_message_t e_tm;
 
@@ -2450,6 +2482,9 @@ void assert_eq_transport_message(_zn_transport_message_t *left, _zn_transport_me
     case _ZN_MID_FRAME:
         assert_eq_frame_message(&left->body.frame, &right->body.frame, left->header);
         break;
+    case _ZN_MID_FRAGMENT:
+        assert_eq_fragment_message(&left->body.fragment, &right->body.fragment, left->header);
+        break;
     default:
         assert(0);
         break;
@@ -2462,7 +2497,7 @@ void transport_message(void)
     _z_wbuf_t wbf = gen_wbuf(1024);
 
     // Initialize
-    _zn_transport_message_t e_tm = gen_transport_message(1);
+    _zn_transport_message_t e_tm = gen_transport_message();
     printf(" - ");
     print_transport_message_type(e_tm.header);
     printf("\n");
@@ -2501,7 +2536,7 @@ void batch(void)
     for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random transport message
-        e_tm[i] = gen_transport_message(0);
+        e_tm[i] = gen_transport_message();
         // Encode
         int res = _zn_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
@@ -2517,7 +2552,7 @@ void batch(void)
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++)
     {
         // Initialize random transport message
-        e_tm[i] = gen_transport_message(0);
+        e_tm[i] = gen_transport_message();
         // Encode
         int res = _zn_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
@@ -2547,21 +2582,18 @@ void batch(void)
 }
 
 /*------------------ Fragmentation ------------------*/
-_zn_transport_message_t _zn_frame_header(int is_reliable, int is_fragment, int is_final, z_zint_t sn)
+_zn_transport_message_t _zn_fragment_header(int is_reliable, int is_final, z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
     _zn_transport_message_t t_msg;
     t_msg.attachment = NULL;
-    t_msg.header = _ZN_MID_FRAME;
-    t_msg.body.frame.sn = sn;
+    t_msg.header = _ZN_MID_FRAGMENT;
+    t_msg.body.fragment.sn = sn;
 
     if (is_reliable)
-        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_T_R);
+        _ZN_SET_FLAG(t_msg.header, _ZN_FLAG_HDR_FRAGMENT_R);
 
-    // Do not allocate the vector containing the messages
-    t_msg.body.frame.messages.capacity = 0;
-    t_msg.body.frame.messages.len = 0;
-    t_msg.body.frame.messages.val = NULL;
+    t_msg.body.fragment.payload = _z_bytes_make(0);
 
     return t_msg;
 }
@@ -2584,7 +2616,7 @@ int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _zn_transport_message_t f_hdr = _zn_frame_header(is_reliable, 1, is_final, sn);
+        _zn_transport_message_t f_hdr = _zn_t_msg_make_fragment(is_reliable, is_final, sn, _z_bytes_make(0));
         // Encode the frame header
         int res = _zn_transport_message_encode(dst, &f_hdr);
         if (res == 0)
@@ -2614,7 +2646,87 @@ int _zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable
 
 void fragmentation(void)
 {
-    // TODO
+    printf("\n>> Fragmentation\n");
+    size_t len = 16;
+    _z_wbuf_t wbf = _z_wbuf_make(len, 0);
+    _z_wbuf_t fbf = _z_wbuf_make(len, 1);
+    _z_wbuf_t dbf = _z_wbuf_make(0, 1);
+
+    _zn_zenoh_message_t e_zm;
+
+    do
+    {
+        _z_wbuf_reset(&fbf);
+        // Generate and serialize the message
+        e_zm = gen_zenoh_message();
+        _zn_zenoh_message_encode(&fbf, &e_zm);
+        // Check that the message actually requires fragmentation
+        if (_z_wbuf_len(&fbf) <= len)
+            _zn_z_msg_clear(&e_zm);
+        else
+            break;
+    } while (1);
+
+    // Fragment the message
+    int is_reliable = gen_bool();
+    // Fix the sn resoulution to 128 in such a way it requires only 1 byte for encoding
+    size_t sn_resolution = 128;
+    size_t sn = sn_resolution - 1;
+
+    printf(" - Message serialized\n");
+    print_wbuf(&fbf);
+
+    printf(" - Start fragmenting\n");
+    int res = 0;
+    while (_z_wbuf_len(&fbf) > 0)
+    {
+        // Clear the buffer for serialization
+        _zn_wbuf_prepare(&wbf);
+
+        // Get the fragment sequence number
+        sn = (sn + 1) % sn_resolution;
+
+        size_t written = _z_wbuf_len(&fbf);
+        res = _zn_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
+        assert(res == 0);
+        written -= _z_wbuf_len(&fbf);
+
+        printf("  -Encoded Fragment: ");
+        print_wbuf(&wbf);
+
+        // Decode the message
+        _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+
+        _zn_transport_message_result_t r_sm = _zn_transport_message_decode(&zbf);
+        assert(r_sm.tag == _z_res_t_OK);
+
+        z_bytes_t fragment = r_sm.value.transport_message.body.fragment.payload;
+        printf("  -Decoded Fragment length: %zu\n", fragment.len);
+        assert(fragment.len == written);
+
+        // Create an iosli for decoding
+        _z_wbuf_add_iosli_from(&dbf, fragment.val, fragment.len);
+
+        print_wbuf(&dbf);
+
+        // Free the read buffer
+        _z_zbuf_clear(&zbf);
+    }
+
+    printf(" - Start defragmenting\n");
+    print_wbuf(&dbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&dbf);
+    printf("   Defragmented: ");
+    print_iosli(&zbf.ios);
+    printf("\n");
+    _zn_zenoh_message_result_t r_sm = _zn_zenoh_message_decode(&zbf);
+    assert(r_sm.tag == _z_res_t_OK);
+    _zn_zenoh_message_t d_zm = r_sm.value.zenoh_message;
+    assert_eq_zenoh_message(&e_zm, &d_zm);
+
+    _z_wbuf_clear(&dbf);
+    _z_wbuf_clear(&wbf);
+    _z_wbuf_clear(&fbf);
 }
 
 /*=============================*/

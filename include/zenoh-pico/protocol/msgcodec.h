@@ -42,6 +42,7 @@ _ZN_RESULT_DECLARE(_zn_sync_t, sync)
 _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
+_ZN_RESULT_DECLARE(_zn_fragment_t, fragment)
 _ZN_RESULT_DECLARE(_zn_transport_message_t, transport_message)
 
 _ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
@@ -191,5 +192,8 @@ _ZN_DECLARE_DECODE(keep_alive);
 
 _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);
+
+_ZN_DECLARE_ENCODE(fragment);
+_ZN_DECLARE_DECODE(fragment);
 
 #endif /* ZENOH_PICO_TEST_H */

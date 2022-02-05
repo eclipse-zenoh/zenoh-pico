@@ -810,6 +810,34 @@ void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header)
     _zn_zenoh_message_vec_clear(&msg->messages);
 }
 
+/*------------------ Fragment Message ------------------*/
+_zn_transport_message_t _zn_t_msg_make_fragment(uint8_t is_reliable, uint8_t is_final, z_zint_t sn, _zn_payload_t payload)
+{
+    _zn_transport_message_t msg;
+
+    msg.header = _ZN_MID_FRAGMENT;
+    msg.body.fragment.sn = sn;
+    msg.body.fragment.payload = payload;
+    if (is_reliable)
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_FRAGMENT_R);
+    if (!is_final)
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_FRAGMENT_M);
+
+    msg.attachment = NULL;
+
+    return msg;
+}
+
+void _zn_t_msg_copy_fragment(_zn_fragment_t *clone, _zn_fragment_t *fragment)
+{
+    _z_bytes_copy(&clone->payload, &fragment->payload);
+}
+
+void _zn_t_msg_clear_fragment(_zn_fragment_t *msg, uint8_t header)
+{
+    _zn_payload_clear(&msg->payload);
+}
+
 /*------------------ Transport Message ------------------*/
 void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg)
 {
@@ -848,6 +876,9 @@ void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg
         break;
     case _ZN_MID_FRAME:
         _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
+        break;
+    case _ZN_MID_FRAGMENT:
+        _zn_t_msg_copy_fragment(&clone->body.fragment, &msg->body.fragment);
         break;
     default:
         _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
@@ -895,6 +926,9 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg)
         break;
     case _ZN_MID_FRAME:
         _zn_t_msg_clear_frame(&msg->body.frame, msg->header);
+        return;
+    case _ZN_MID_FRAGMENT:
+        _zn_t_msg_clear_fragment(&msg->body.fragment, msg->header);
         return;
     default:
         _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
