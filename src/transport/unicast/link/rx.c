@@ -152,7 +152,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
     case _ZN_MID_FRAME:
     {
         // Check if the SN is correct
-        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R))
+        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_HDR_FRAME_R))
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
@@ -181,56 +181,15 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             }
         }
 
-        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_F))
+        // Handle all the zenoh message, one by one
+        unsigned int len = _z_vec_len(&t_msg->body.frame.messages);
+        for (unsigned int i = 0; i < len; i++)
         {
-            int res = _z_res_t_OK;
-
-            // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
-            // Add the fragment to the defragmentation buffer
-            _z_wbuf_add_iosli_from(dbuf, t_msg->body.frame.payload.fragment.val, t_msg->body.frame.payload.fragment.len);
-
-            // Check if this is the last fragment
-            if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_E))
-            {
-                // Convert the defragmentation buffer into a decoding buffer
-                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
-
-                // Decode the zenoh message
-                _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(&zbf);
-                if (r_zm.tag == _z_res_t_OK)
-                {
-                    _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(ztu->session, &d_zm);
-
-                    // Free the decoded message
-                    _zn_z_msg_clear(&d_zm);
-                }
-                else
-                {
-                    res = _z_res_t_ERR;
-                }
-
-                // Free the decoding buffer
-                _z_zbuf_reset(&zbf);
-                // Reset the defragmentation buffer
-                _z_wbuf_clear(dbuf);
-            }
-
-            return res;
+            int res = _zn_handle_zenoh_message(ztu->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.messages, i));
+            if (res != _z_res_t_OK)
+                return res;
         }
-        else
-        {
-            // Handle all the zenoh message, one by one
-            unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
-            for (unsigned int i = 0; i < len; i++)
-            {
-                int res = _zn_handle_zenoh_message(ztu->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
-                if (res != _z_res_t_OK)
-                    return res;
-            }
-            return _z_res_t_OK;
-        }
+        return _z_res_t_OK;
     }
 
     default:

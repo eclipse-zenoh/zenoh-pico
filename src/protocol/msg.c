@@ -819,58 +819,30 @@ void _zn_t_msg_clear_ping_pong(_zn_ping_pong_t *msg, uint8_t header)
 }
 
 /*------------------ Frame Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final)
+_zn_transport_message_t _zn_t_msg_make_frame(int is_reliable, z_zint_t sn, _zn_zenoh_message_vec_t messages)
 {
     _zn_transport_message_t msg;
 
     msg.body.frame.sn = sn;
-
-    // Reset payload content
-    memset(&msg.body.frame.payload, 0, sizeof(_zn_frame_payload_t));
+    msg.body.frame.messages = messages;
 
     msg.header = _ZN_MID_FRAME;
     if (is_reliable)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_R);
-    if (is_fragment)
-    {
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_F);
-        if (is_final)
-            _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_E);
-    }
+        _ZN_SET_FLAG(msg.header, _ZN_FLAG_HDR_FRAME_R);
 
     msg.attachment = NULL;
 
     return msg;
 }
 
-_zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final)
+void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame)
 {
-    _zn_transport_message_t msg;
-
-    msg.body.frame.sn = sn;
-    msg.body.frame.payload = payload;
-
-    msg.header = _ZN_MID_FRAME;
-    if (is_reliable)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_R);
-    if (is_fragment)
-    {
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_F);
-        if (is_final)
-            _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_E);
-    }
-
-    msg.attachment = NULL;
-
-    return msg;
+    _zn_zenoh_message_vec_copy(&clone->messages, &frame->messages);
 }
 
 void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header)
 {
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_F))
-        _zn_payload_clear(&msg->payload.fragment);
-    else
-        _zn_zenoh_message_vec_clear(&msg->payload.messages);
+    _zn_zenoh_message_vec_clear(&msg->messages);
 }
 
 /*------------------ Transport Message ------------------*/
@@ -913,7 +885,7 @@ void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg
         // _zn_t_msg_copy_ping_pong(&clone->body.ping_pong, ->body.ping_pong);
         break;
     case _ZN_MID_FRAME:
-        // _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
+        _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
         break;
     default:
         _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);

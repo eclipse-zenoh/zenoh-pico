@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*=============================*/
@@ -1704,20 +1705,11 @@ int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
     // Encode the body
     _ZN_EC(_z_zint_encode(wbf, msg->sn))
 
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_F))
-    {
-        // Do not write the fragment as z_bytes_t since the total frame length
-        // is eventually prepended to the frame. There is no need to encode the fragment length.
-        return _z_wbuf_write_bytes(wbf, msg->payload.fragment.val, 0, msg->payload.fragment.len);
-    }
-    else
-    {
-        size_t len = _zn_zenoh_message_vec_len(&msg->payload.messages);
-        for (size_t i = 0; i < len; i++)
-            _ZN_EC(_zn_zenoh_message_encode(wbf, _zn_zenoh_message_vec_get(&msg->payload.messages, i)))
+    size_t len = _zn_zenoh_message_vec_len(&msg->messages);
+    for (size_t i = 0; i < len; i++)
+        _ZN_EC(_zn_zenoh_message_encode(wbf, _zn_zenoh_message_vec_get(&msg->messages, i)))
 
-        return 0;
-    }
+    return 0;
 }
 
 void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
@@ -1730,35 +1722,28 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
     _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
     r->value.frame.sn = r_zint.value.zint;
 
-    // Decode the payload
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_F))
-    {
-        // Read all the remaining bytes in the buffer as the fragment
-        r->value.frame.payload.fragment = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), _z_zbuf_len(zbf));
+    // FIXME: Handle extensions
+    if (_ZN_HAS_FLAG(header, _ZN_FLAG_HDR_FRAME_Z))
+        _zn_t_ext_skip(zbf);
 
-        // We need to manually move the r_pos to w_pos, we have read it all
-        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));
-    }
-    else
+    // Decode the payload
+    r->value.frame.messages = _zn_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
+    while (_z_zbuf_len(zbf))
     {
-        r->value.frame.payload.messages = _zn_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-        while (_z_zbuf_len(zbf))
+        // Mark the reading position of the iobfer
+        size_t r_pos = _z_zbuf_get_rpos(zbf);
+        _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(zbf);
+        if (r_zm.tag == _z_res_t_OK)
         {
-            // Mark the reading position of the iobfer
-            size_t r_pos = _z_zbuf_get_rpos(zbf);
-            _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(zbf);
-            if (r_zm.tag == _z_res_t_OK)
-            {
-                _zn_zenoh_message_t *zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
-                memcpy(zm, &r_zm.value.zenoh_message, sizeof(_zn_zenoh_message_t));
-                _zn_zenoh_message_vec_append(&r->value.frame.payload.messages, zm);
-            }
-            else
-            {
-                // Restore the reading position of the iobfer
-                _z_zbuf_set_rpos(zbf, r_pos);
-                return;
-            }
+            _zn_zenoh_message_t *zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+            memcpy(zm, &r_zm.value.zenoh_message, sizeof(_zn_zenoh_message_t));
+            _zn_zenoh_message_vec_append(&r->value.frame.messages, zm);
+        }
+        else
+        {
+            // Restore the reading position of the iobfer
+            _z_zbuf_set_rpos(zbf, r_pos);
+            return;
         }
     }
 }

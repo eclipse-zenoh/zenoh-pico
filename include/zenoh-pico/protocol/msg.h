@@ -43,11 +43,11 @@
 #define _ZN_MID_OPEN 0x02  // Note: for unicast only
 #define _ZN_MID_JOIN 0x03  // Note: for multicast only
 #define _ZN_MID_CLOSE 0x04
+#define _ZN_MID_KEEP_ALIVE 0x05
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
-#define _ZN_MID_KEEP_ALIVE 0x05
+#define _ZN_MID_FRAME 0x08
 #define _ZN_MID_PING_PONG 0x09
-#define _ZN_MID_FRAME 0x0a
 /* Zenoh Messages */
 #define _ZN_MID_DECLARE 0x0b
 #define _ZN_MID_DATA 0x0c
@@ -104,6 +104,9 @@
 #define _ZN_FLAG_HDR_CLOSE_Z    0x80  // 1 << 7
 
 #define _ZN_FLAG_HDR_KALIVE_Z   0x80  // 1 << 7
+
+#define _ZN_FLAG_HDR_FRAME_Z    0x80  // 1 << 7
+#define _ZN_FLAG_HDR_FRAME_R    0x20  // 1 << 5
 
 #define _ZN_FLAG_T_O            0x80  // 1 << 7
 #define _ZN_FLAG_T_X            0x00  // 0
@@ -910,45 +913,29 @@ typedef struct
 void _zn_t_msg_clear_ping_pong(_zn_ping_pong_t *msg, uint8_t header);
 
 /*------------------ Frame Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
+// The FRAME message is used to transmit one ore more complete serialized
+// Zenoh messages. I.e., the total length of the serialized Zenoh message(s)
+// MUST be smaller than the maximum batch size (i.e. 2^16-1) and the link MTU.
+// The FRAME message is used as means to aggreate multiple Zenoh messages
+// in a single atomic message that goes on the wire.
+// By doing so, many small messages can be batched together and share common
+// information like the sequence number.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |E|F|R|  FRAME  |
-// +-+-+-+-+-------+
-// ~      SN       ~
+// |Z|X|R|  FRAME  |
+// +-+-+-+---------+
+// %    seq num    %
 // +---------------+
-// ~  FramePayload ~ -- if F==1 then the payload is a fragment of a single Zenoh Message, a list of complete Zenoh Messages otherwise.
+// ~  [FrameExts]  ~ if Flag(Z)==1
+// +---------------+
+// ~  [NetworkMsg] ~
 // +---------------+
 //
-// - if R==1 then the FRAME is sent on the reliable channel, best-effort otherwise.
-// - if F==1 then the FRAME is a fragment.
-// - if E==1 then the FRAME is the last fragment. E==1 is valid iff F==1.
-//
-// NOTE: Only one bit would be sufficient to signal fragmentation in a IP-like fashion as follows:
-//         - if F==1 then this FRAME is a fragment and more fragment will follow;
-//         - if F==0 then the message is the last fragment if SN-1 had F==1,
-//           otherwise it's a non-fragmented message.
-//       However, this would require to always perform a two-steps de-serialization: first
-//       de-serialize the FRAME and then the Payload. This is due to the fact the F==0 is ambigous
-//       w.r.t. detecting if the FRAME is a fragment or not before SN re-ordering has occured.
-//       By using the F bit to only signal whether the FRAME is fragmented or not, it allows to
-//       de-serialize the payload in one single pass when F==0 since no re-ordering needs to take
-//       place at this stage. Then, the F bit is used to detect the last fragment during re-ordering.
-//
-typedef union
-{
-    _zn_payload_t fragment;
-    _zn_zenoh_message_vec_t messages;
-} _zn_frame_payload_t;
 typedef struct
 {
     z_zint_t sn;
-    _zn_frame_payload_t payload;
+    _zn_zenoh_message_vec_t messages;
 } _zn_frame_t;
 void _zn_t_msg_clear_frame(_zn_frame_t *msg, uint8_t header);
 
@@ -989,8 +976,7 @@ _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive();
 _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
-_zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
-_zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable, int is_fragment, int is_final);
+_zn_transport_message_t _zn_t_msg_make_frame(int is_reliable, z_zint_t sn, _zn_zenoh_message_vec_t messages);
 
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
@@ -1006,6 +992,6 @@ void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
 void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
 //void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
 //void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
-//void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
+void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */
