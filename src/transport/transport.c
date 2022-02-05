@@ -18,10 +18,9 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int link_only)
+int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason)
 {
-    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztu->session)->tp_manager->local_pid.val, ((zn_session_t *)ztu->session)->tp_manager->local_pid.len);
-    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason);
 
     int res = _zn_unicast_send_t_msg(ztu, &cm);
 
@@ -31,10 +30,9 @@ int _zn_unicast_send_close(_zn_transport_unicast_t *ztu, uint8_t reason, int lin
     return res;
 }
 
-int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int link_only)
+int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason)
 {
-    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
-    _zn_transport_message_t cm = _zn_t_msg_make_close(reason, pid, link_only);
+    _zn_transport_message_t cm = _zn_t_msg_make_close(reason);
 
     int res = _zn_multicast_send_t_msg(ztm, &cm);
 
@@ -44,12 +42,12 @@ int _zn_multicast_send_close(_zn_transport_multicast_t *ztm, uint8_t reason, int
     return res;
 }
 
-int _zn_send_close(_zn_transport_t *zt, uint8_t reason, int link_only)
+int _zn_send_close(_zn_transport_t *zt, uint8_t reason)
 {
     if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _zn_unicast_send_close(&zt->transport.unicast, reason, link_only);
+        return _zn_unicast_send_close(&zt->transport.unicast, reason);
     else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _zn_multicast_send_close(&zt->transport.multicast, reason, link_only);
+        return _zn_multicast_send_close(&zt->transport.multicast, reason);
     else
         return -1;
 }
@@ -315,17 +313,17 @@ ERR_1:
 
 int _zn_transport_unicast_close(_zn_transport_unicast_t *ztu, uint8_t reason)
 {
-    return _zn_unicast_send_close(ztu, reason, 0);
+    return _zn_unicast_send_close(ztu, reason);
 }
 
 int _zn_transport_multicast_close(_zn_transport_multicast_t *ztm, uint8_t reason)
 {
-    return _zn_multicast_send_close(ztm, reason, 0);
+    return _zn_multicast_send_close(ztm, reason);
 }
 
 int _zn_transport_close(_zn_transport_t *zt, uint8_t reason)
 {
-    return _zn_send_close(zt, reason, 0);
+    return _zn_send_close(zt, reason);
 }
 
 void _zn_transport_unicast_clear(_zn_transport_unicast_t *ztu)

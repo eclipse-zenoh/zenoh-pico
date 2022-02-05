@@ -1541,10 +1541,9 @@ int _zn_close_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_close_t *msg)
     _Z_DEBUG("Encoding _ZN_MID_CLOSE\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
+    _z_wbuf_write(wbf, msg->reason);
 
-    return _z_wbuf_write(wbf, msg->reason);
+    return 0;
 }
 
 void _zn_close_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_close_result_t *r)
@@ -1553,13 +1552,6 @@ void _zn_close_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_close_result_t *r)
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-    {
-        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-        r->value.close.pid = r_arr.value.bytes;
-    }
-
     _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
     _ASSURE_P_RESULT(r_uint8, r, _z_err_t_PARSE_UINT8)
     r->value.close.reason = r_uint8.value.uint8;

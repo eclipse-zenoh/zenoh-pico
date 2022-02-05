@@ -690,28 +690,25 @@ void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header)
 }
 
 /*------------------ Close Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only)
+_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason)
 {
     _zn_transport_message_t msg;
 
-    msg.body.close.reason = reason;
-    msg.body.close.pid = pid;
-
     msg.header = _ZN_MID_CLOSE;
-    if (!_z_bytes_is_empty(&pid))
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_I);
-    if (link_only)
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_K);
+    msg.body.close.reason = reason;
 
     msg.attachment = NULL;
 
     return msg;
 }
 
+void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close)
+{
+    clone->reason = close->reason;
+}
+
 void _zn_t_msg_clear_close(_zn_close_t *msg, uint8_t header)
 {
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
 }
 
 /*------------------ Sync Message ------------------*/

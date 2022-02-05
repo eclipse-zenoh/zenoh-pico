@@ -2089,21 +2089,12 @@ void open_message(void)
 _zn_transport_message_t gen_close_message(void)
 {
     uint8_t reason = gen_uint8();
-    z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
-    int link_only = gen_bool();
 
-    return _zn_t_msg_make_close(reason, pid, link_only);
+    return _zn_t_msg_make_close(reason);
 }
 
 void assert_eq_close_message(_zn_close_t *left, _zn_close_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
-    {
-        printf("   ");
-        assert_eq_uint8_array(&left->pid, &right->pid);
-        printf("\n");
-    }
-
     printf("   Reason (%u:%u)", left->reason, right->reason);
     assert(left->reason == right->reason);
     printf("\n");

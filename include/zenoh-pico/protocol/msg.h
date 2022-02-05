@@ -42,7 +42,7 @@
 #define _ZN_MID_INIT 0x01  // Note: for unicast only
 #define _ZN_MID_OPEN 0x02  // Note: for unicast only
 #define _ZN_MID_JOIN 0x03  // Note: for multicast only
-#define _ZN_MID_CLOSE 0x05
+#define _ZN_MID_CLOSE 0x04
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
 #define _ZN_MID_KEEP_ALIVE 0x05
@@ -100,6 +100,8 @@
 
 #define _ZN_FLAG_HDR_JOIN_T     0x40  // 1 << 6
 #define _ZN_FLAG_HDR_JOIN_Z     0x80  // 1 << 7
+
+#define _ZN_FLAG_HDR_CLOSE_Z    0x80  // 1 << 7
 
 #define _ZN_FLAG_HDR_KALIVE_Z   0x80  // 1 << 7
 
@@ -171,12 +173,12 @@
 /*=============================*/
 /*        Close reasons        */
 /*=============================*/
-#define _ZN_CLOSE_GENERIC 0x00
-#define _ZN_CLOSE_UNSUPPORTED 0x01
-#define _ZN_CLOSE_INVALID 0x02
-#define _ZN_CLOSE_MAX_TRANSPORTS 0x03
-#define _ZN_CLOSE_MAX_LINKS 0x04
-#define _ZN_CLOSE_EXPIRED 0x05
+#define _ZN_CLOSE_GENERIC 0x01
+#define _ZN_CLOSE_UNSUPPORTED 0x02
+#define _ZN_CLOSE_INVALID 0x03
+#define _ZN_CLOSE_MAX_TRANSPORTS 0x04
+#define _ZN_CLOSE_MAX_LINKS 0x05
+#define _ZN_CLOSE_EXPIRED 0x06
 
 /*=============================*/
 /*       DataInfo flags        */
@@ -797,32 +799,19 @@ typedef struct
 void _zn_t_msg_clear_open(_zn_open_t *msg, uint8_t header);
 
 /*------------------ Close Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
 // The CLOSE message is sent in any of the following two cases:
-//     1) in response to an OPEN message which is not accepted;
-//     2) at any time to arbitrarly close the session with the corresponding peer.
+//     1) in response to an INIT or OPEN message which are not accepted;
+//     2) at any time to arbitrarly close the transport with the corresponding peer.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|K|I|  CLOSE  |
+// |Z|X|X|  CLOSE  |
 // +-+-+-+-+-------+
-// ~    peer_id    ~  if I==1 -- PID of the target peer.
-// +---------------+
 // |     reason    |
 // +---------------+
 //
-// - if K==0 then close the whole zenoh session.
-// - if K==1 then close the transport link the CLOSE message was sent on (e.g., TCP socket) but
-//           keep the whole session open. NOTE: the session will be automatically closed when
-//           the session's lease period expires.
 typedef struct
 {
-    z_bytes_t pid;
     uint8_t reason;
 } _zn_close_t;
 void _zn_t_msg_clear_close(_zn_close_t *msg, uint8_t header);
@@ -994,7 +983,7 @@ _zn_transport_message_t _zn_t_msg_make_init_syn(uint8_t version, uint8_t whatami
 _zn_transport_message_t _zn_t_msg_make_init_ack(uint8_t version, uint8_t whatami, uint8_t sn_bs, z_bytes_t zid, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_syn(z_zint_t lease, z_zint_t initial_sn, z_bytes_t cookie);
 _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial_sn);
-_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only);
+_zn_transport_message_t _zn_t_msg_make_close(uint8_t reason);
 _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive();
@@ -1011,7 +1000,7 @@ void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
 void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *join);
 void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *init);
 void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *open);
-//void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
+void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
 //void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
 //void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
 void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);

@@ -193,12 +193,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         if (entry == NULL)
             break;
 
-        if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_I))
-        {
-            // Check if the Peer ID matches the remote address in the knonw peer list
-            if (entry->remote_pid.len != t_msg->body.close.pid.len || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
-                break;
-        }
         ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
 
         break;
