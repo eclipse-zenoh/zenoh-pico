@@ -2249,19 +2249,11 @@ void ack_nack_message(void)
 /*------------------ KeepAlive Message ------------------*/
 _zn_transport_message_t gen_keep_alive_message(void)
 {
-    z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
-
-    return _zn_t_msg_make_keep_alive(pid);
+    return _zn_t_msg_make_keep_alive();
 }
 
 void assert_eq_keep_alive_message(_zn_keep_alive_t *left, _zn_keep_alive_t *right, uint8_t header)
 {
-    if _ZN_HAS_FLAG (header, _ZN_FLAG_T_I)
-    {
-        printf("   ");
-        assert_eq_uint8_array(&left->pid, &right->pid);
-        printf("\n");
-    }
 }
 
 void keep_alive_message(void)

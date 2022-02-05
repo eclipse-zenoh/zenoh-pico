@@ -767,25 +767,23 @@ void _zn_t_msg_clear_ack_nack(_zn_ack_nack_t *msg, uint8_t header)
 }
 
 /*------------------ Keep Alive Message ------------------*/
-_zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid)
+_zn_transport_message_t _zn_t_msg_make_keep_alive()
 {
     _zn_transport_message_t msg;
 
-    msg.body.keep_alive.pid = pid;
-
     msg.header = _ZN_MID_KEEP_ALIVE;
-    if (!_z_bytes_is_empty(&pid))
-        _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_I);
 
     msg.attachment = NULL;
 
     return msg;
 }
 
+void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive)
+{
+}
+
 void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header)
 {
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
 }
 
 /*------------------ PingPong Messages ------------------*/
@@ -912,7 +910,7 @@ void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg
         // _zn_t_msg_copy_ack_nack(&clone->body.ack_nack, g->body.ack_nack);
         break;
     case _ZN_MID_KEEP_ALIVE:
-        // _zn_t_msg_copy_keep_alive(&clone->body.keep_alive, >body.keep_alive);
+        _zn_t_msg_copy_keep_alive(&clone->body.keep_alive, &msg->body.keep_alive);
         break;
     case _ZN_MID_PING_PONG:
         // _zn_t_msg_copy_ping_pong(&clone->body.ping_pong, ->body.ping_pong);

@@ -1656,8 +1656,7 @@ int _zn_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_keep_alive_t
     _Z_DEBUG("Encoding _ZN_MID_KEEP_ALIVE\n");
 
     // Encode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-        _ZN_EC(_z_bytes_encode(wbf, &msg->pid))
+    // Nothing to encode
 
     return 0;
 }
@@ -1668,12 +1667,7 @@ void _zn_keep_alive_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_keep_alive_res
     r->tag = _z_res_t_OK;
 
     // Decode the body
-    if (_ZN_HAS_FLAG(header, _ZN_FLAG_T_I))
-    {
-        _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
-        _ASSURE_P_RESULT(r_arr, r, _z_err_t_PARSE_BYTES)
-        r->value.keep_alive.pid = r_arr.value.bytes;
-    }
+    // Nothing to decode
 }
 
 _zn_keep_alive_result_t _zn_keep_alive_decode(_z_zbuf_t *zbf, uint8_t header)

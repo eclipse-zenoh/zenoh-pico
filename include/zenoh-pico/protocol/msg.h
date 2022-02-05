@@ -45,7 +45,7 @@
 #define _ZN_MID_CLOSE 0x05
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
-#define _ZN_MID_KEEP_ALIVE 0x08
+#define _ZN_MID_KEEP_ALIVE 0x05
 #define _ZN_MID_PING_PONG 0x09
 #define _ZN_MID_FRAME 0x0a
 /* Zenoh Messages */
@@ -100,6 +100,8 @@
 
 #define _ZN_FLAG_HDR_JOIN_T     0x40  // 1 << 6
 #define _ZN_FLAG_HDR_JOIN_Z     0x80  // 1 << 7
+
+#define _ZN_FLAG_HDR_KALIVE_Z   0x80  // 1 << 7
 
 #define _ZN_FLAG_T_O            0x80  // 1 << 7
 #define _ZN_FLAG_T_X            0x00  // 0
@@ -882,25 +884,17 @@ typedef struct
 void _zn_t_msg_clear_ack_nack(_zn_ack_nack_t *msg, uint8_t header);
 
 /*------------------ Keep Alive Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-// The KEEP_ALIVE message can be sent periodically to avoid the expiration of the session lease
-// period in case there are no messages to be sent.
+/// The KEEP_ALIVE message SHOULD be sent periodically to avoid the expiration of the
+/// link lease period. A KEEP_ALIVE message MAY NOT be sent on the link if some other
+/// data has been transmitted on the same link during the last keep alive interval.
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|X|I| K_ALIVE |
-// +-+-+-+-+-------+
-// ~    peer_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
-// +---------------+
+// |Z|X|X| KALIVE  |
+// +-+-+-+---------+
 //
 typedef struct
 {
-    z_bytes_t pid;
 } _zn_keep_alive_t;
 void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header);
 
@@ -1003,7 +997,7 @@ _zn_transport_message_t _zn_t_msg_make_open_ack(z_zint_t lease, z_zint_t initial
 _zn_transport_message_t _zn_t_msg_make_close(uint8_t reason, z_bytes_t pid, int link_only);
 _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
-_zn_transport_message_t _zn_t_msg_make_keep_alive(z_bytes_t pid);
+_zn_transport_message_t _zn_t_msg_make_keep_alive();
 _zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(z_zint_t sn, _zn_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
@@ -1020,7 +1014,7 @@ void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *open);
 //void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
 //void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
 //void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
-//void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
+void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
 //void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
 //void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
 //void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
