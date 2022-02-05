@@ -47,6 +47,7 @@ typedef enum
     _zn_err_t_PARSE_PROPERTY,
     _zn_err_t_PARSE_RESKEY,
     _zn_err_t_PARSE_TRANSPORT_MESSAGE,
+    _zn_err_t_PARSE_TRANSPORT_EXTENSION,
     _zn_err_t_PARSE_SUBMODE,
     _zn_err_t_PARSE_TIMESTAMP,
     _zn_err_t_PARSE_ZENOH_MESSAGE,
