@@ -783,41 +783,6 @@ void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header)
 {
 }
 
-/*------------------ PingPong Messages ------------------*/
-_zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash)
-{
-    _zn_transport_message_t msg;
-
-    msg.body.ping_pong.hash = hash;
-
-    msg.header = _ZN_MID_PING_PONG;
-
-    msg.attachment = NULL;
-
-    return msg;
-}
-
-_zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash)
-{
-    _zn_transport_message_t msg;
-
-    msg.body.ping_pong.hash = hash;
-
-    msg.header = _ZN_MID_PING_PONG;
-    _ZN_SET_FLAG(msg.header, _ZN_FLAG_T_P);
-
-    msg.attachment = NULL;
-
-    return msg;
-}
-
-void _zn_t_msg_clear_ping_pong(_zn_ping_pong_t *msg, uint8_t header)
-{
-    // NOTE: ping_pong does not involve any heap allocation
-    (void)(header);
-    (void)(msg);
-}
-
 /*------------------ Frame Message ------------------*/
 _zn_transport_message_t _zn_t_msg_make_frame(int is_reliable, z_zint_t sn, _zn_zenoh_message_vec_t messages)
 {
@@ -881,9 +846,6 @@ void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg
     case _ZN_MID_KEEP_ALIVE:
         _zn_t_msg_copy_keep_alive(&clone->body.keep_alive, &msg->body.keep_alive);
         break;
-    case _ZN_MID_PING_PONG:
-        // _zn_t_msg_copy_ping_pong(&clone->body.ping_pong, ->body.ping_pong);
-        break;
     case _ZN_MID_FRAME:
         _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
         break;
@@ -930,9 +892,6 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg)
         break;
     case _ZN_MID_KEEP_ALIVE:
         _zn_t_msg_clear_keep_alive(&msg->body.keep_alive, msg->header);
-        break;
-    case _ZN_MID_PING_PONG:
-        _zn_t_msg_clear_ping_pong(&msg->body.ping_pong, msg->header);
         break;
     case _ZN_MID_FRAME:
         _zn_t_msg_clear_frame(&msg->body.frame, msg->header);

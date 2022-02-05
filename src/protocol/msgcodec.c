@@ -1670,33 +1670,6 @@ _zn_keep_alive_result_t _zn_keep_alive_decode(_z_zbuf_t *zbf, uint8_t header)
     return r;
 }
 
-/*------------------ PingPong Messages ------------------*/
-int _zn_ping_pong_encode(_z_wbuf_t *wbf, const _zn_ping_pong_t *msg)
-{
-    _Z_DEBUG("Encoding _ZN_MID_PING_PONG\n");
-
-    // Encode the body
-    return _z_zint_encode(wbf, msg->hash);
-}
-
-void _zn_ping_pong_decode_na(_z_zbuf_t *zbf, _zn_ping_pong_result_t *r)
-{
-    _Z_DEBUG("Decoding _ZN_MID_PING_PONG\n");
-    r->tag = _z_res_t_OK;
-
-    // Decode the body
-    _z_zint_result_t r_zint = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_zint, r, _z_err_t_PARSE_ZINT)
-    r->value.ping_pong.hash = r_zint.value.zint;
-}
-
-_zn_ping_pong_result_t _zn_ping_pong_decode(_z_zbuf_t *zbf)
-{
-    _zn_ping_pong_result_t r;
-    _zn_ping_pong_decode_na(zbf, &r);
-    return r;
-}
-
 /*------------------ Frame Message ------------------*/
 int _zn_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_frame_t *msg)
 {
@@ -1788,8 +1761,6 @@ int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *
         return _zn_ack_nack_encode(wbf, msg->header, &msg->body.ack_nack);
     case _ZN_MID_KEEP_ALIVE:
         return _zn_keep_alive_encode(wbf, msg->header, &msg->body.keep_alive);
-    case _ZN_MID_PING_PONG:
-        return _zn_ping_pong_encode(wbf, &msg->body.ping_pong);
     default:
         _Z_ERROR("WARNING: Trying to encode session message with unknown ID(%d)\n", _ZN_MID(msg->header));
         return -1;
@@ -1887,13 +1858,6 @@ void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_resul
             _zn_keep_alive_result_t r_ka = _zn_keep_alive_decode(zbf, r->value.transport_message.header);
             _ASSURE_P_RESULT(r_ka, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
             r->value.transport_message.body.keep_alive = r_ka.value.keep_alive;
-            return;
-        }
-        case _ZN_MID_PING_PONG:
-        {
-            _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(zbf);
-            _ASSURE_P_RESULT(r_pp, r, _zn_err_t_PARSE_TRANSPORT_MESSAGE)
-            r->value.transport_message.body.ping_pong = r_pp.value.ping_pong;
             return;
         }
         case _ZN_MID_PRIORITY:

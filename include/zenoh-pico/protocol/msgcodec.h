@@ -41,7 +41,6 @@ _ZN_RESULT_DECLARE(_zn_close_t, close)
 _ZN_RESULT_DECLARE(_zn_sync_t, sync)
 _ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
 _ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
-_ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
 _ZN_RESULT_DECLARE(_zn_frame_t, frame)
 _ZN_RESULT_DECLARE(_zn_transport_message_t, transport_message)
 
@@ -189,9 +188,6 @@ _ZN_DECLARE_DECODE(ack_nack);
 
 _ZN_DECLARE_ENCODE(keep_alive);
 _ZN_DECLARE_DECODE(keep_alive);
-
-_ZN_DECLARE_ENCODE_NOH(ping_pong);
-_ZN_DECLARE_DECODE_NOH(ping_pong);
 
 _ZN_DECLARE_ENCODE(frame);
 _ZN_DECLARE_DECODE(frame);

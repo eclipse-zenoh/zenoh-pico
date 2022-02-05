@@ -47,7 +47,6 @@
 #define _ZN_MID_SYNC 0x06
 #define _ZN_MID_ACK_NACK 0x07
 #define _ZN_MID_FRAME 0x08
-#define _ZN_MID_PING_PONG 0x09
 /* Zenoh Messages */
 #define _ZN_MID_DECLARE 0x0b
 #define _ZN_MID_DATA 0x0c
@@ -890,28 +889,6 @@ typedef struct
 } _zn_keep_alive_t;
 void _zn_t_msg_clear_keep_alive(_zn_keep_alive_t *msg, uint8_t header);
 
-/*------------------ PingPong Messages ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|P|  P_PONG |
-// +-+-+-+-+-------+
-// ~     hash      ~
-// +---------------+
-//
-// - if P==1 then the message is Ping, otherwise is Pong.
-//
-typedef struct
-{
-    z_zint_t hash;
-} _zn_ping_pong_t;
-void _zn_t_msg_clear_ping_pong(_zn_ping_pong_t *msg, uint8_t header);
-
 /*------------------ Frame Message ------------------*/
 // The FRAME message is used to transmit one ore more complete serialized
 // Zenoh messages. I.e., the total length of the serialized Zenoh message(s)
@@ -951,7 +928,6 @@ typedef union
     _zn_sync_t sync;
     _zn_ack_nack_t ack_nack;
     _zn_keep_alive_t keep_alive;
-    _zn_ping_pong_t ping_pong;
     _zn_frame_t frame;
 } _zn_transport_body_t;
 typedef struct
@@ -974,8 +950,6 @@ _zn_transport_message_t _zn_t_msg_make_close(uint8_t reason);
 _zn_transport_message_t _zn_t_msg_make_sync(z_zint_t sn, int is_reliable, z_zint_t count);
 _zn_transport_message_t _zn_t_msg_make_ack_nack(z_zint_t sn, z_zint_t mask);
 _zn_transport_message_t _zn_t_msg_make_keep_alive();
-_zn_transport_message_t _zn_t_msg_make_ping(z_zint_t hash);
-_zn_transport_message_t _zn_t_msg_make_pong(z_zint_t hash);
 _zn_transport_message_t _zn_t_msg_make_frame(int is_reliable, z_zint_t sn, _zn_zenoh_message_vec_t messages);
 
 /*------------------ Copy ------------------*/
@@ -990,8 +964,6 @@ void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
 //void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
 //void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
 void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
-//void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
-//void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
 void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

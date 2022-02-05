@@ -143,12 +143,6 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
         return _z_res_t_OK;
     }
 
-    case _ZN_MID_PING_PONG:
-    {
-        _Z_DEBUG("Handling of PingPong messages not implemented");
-        return _z_res_t_OK;
-    }
-
     case _ZN_MID_FRAME:
     {
         // Check if the SN is correct

@@ -102,9 +102,6 @@ void print_transport_message_type(uint8_t header)
     case _ZN_MID_KEEP_ALIVE:
         printf("KeepAlive message");
         break;
-    case _ZN_MID_PING_PONG:
-        printf("PingPong message");
-        break;
     case _ZN_MID_FRAME:
         printf("Frame message");
         break;
@@ -2276,53 +2273,6 @@ void keep_alive_message(void)
     _z_wbuf_clear(&wbf);
 }
 
-/*------------------ PingPong Message ------------------*/
-_zn_transport_message_t gen_ping_pong_message(void)
-{
-    z_zint_t hash = gen_zint();
-    if (gen_bool())
-        return _zn_t_msg_make_ping(hash);
-    else
-        return _zn_t_msg_make_pong(hash);
-}
-
-void assert_eq_ping_pong_message(_zn_ping_pong_t *left, _zn_ping_pong_t *right)
-{
-    printf("   Hash (%zu:%zu)", left->hash, right->hash);
-    assert(left->hash == right->hash);
-    printf("\n");
-}
-
-void ping_pong_message(void)
-{
-    printf("\n>> PingPong message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
-
-    // Initialize
-    _zn_transport_message_t t_msg = gen_ping_pong_message();
-    assert(_ZN_MID(t_msg.header) == _ZN_MID_PING_PONG);
-
-    _zn_ping_pong_t e_pp = t_msg.body.ping_pong;
-
-    // Encode
-    int res = _zn_ping_pong_encode(&wbf, &e_pp);
-    assert(res == 0);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _zn_ping_pong_result_t r_pp = _zn_ping_pong_decode(&zbf);
-    assert(r_pp.tag == _z_res_t_OK);
-
-    _zn_ping_pong_t d_pp = r_pp.value.ping_pong;
-    assert_eq_ping_pong_message(&e_pp, &d_pp);
-
-    // Free
-    _zn_t_msg_clear_ping_pong(&d_pp, t_msg.header);
-    _zn_t_msg_clear(&t_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 /*------------------ Frame Message ------------------*/
 _zn_transport_message_t gen_frame_message()
 {
@@ -2402,7 +2352,6 @@ _zn_transport_message_t gen_transport_message(int can_be_fragment)
         _ZN_MID_SYNC,
         _ZN_MID_ACK_NACK,
         _ZN_MID_KEEP_ALIVE,
-        _ZN_MID_PING_PONG,
         _ZN_MID_FRAME,
     };
 
@@ -2435,9 +2384,6 @@ _zn_transport_message_t gen_transport_message(int can_be_fragment)
         break;
     case _ZN_MID_KEEP_ALIVE:
         e_tm = gen_keep_alive_message();
-        break;
-    case _ZN_MID_PING_PONG:
-        e_tm = gen_ping_pong_message();
         break;
     case _ZN_MID_FRAME:
         e_tm = gen_frame_message();
@@ -2500,9 +2446,6 @@ void assert_eq_transport_message(_zn_transport_message_t *left, _zn_transport_me
         break;
     case _ZN_MID_KEEP_ALIVE:
         assert_eq_keep_alive_message(&left->body.keep_alive, &right->body.keep_alive, left->header);
-        break;
-    case _ZN_MID_PING_PONG:
-        assert_eq_ping_pong_message(&left->body.ping_pong, &right->body.ping_pong);
         break;
     case _ZN_MID_FRAME:
         assert_eq_frame_message(&left->body.frame, &right->body.frame, left->header);
@@ -2722,7 +2665,6 @@ int main(void)
         sync_message();
         ack_nack_message();
         keep_alive_message();
-        ping_pong_message();
         frame_message();
         transport_message();
         batch();

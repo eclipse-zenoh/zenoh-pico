@@ -219,12 +219,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
         break;
     }
 
-    case _ZN_MID_PING_PONG:
-    {
-        _Z_DEBUG("Handling of PingPong messages not implemented");
-        break;
-    }
-
     case _ZN_MID_FRAME:
     {
         if (entry == NULL)
