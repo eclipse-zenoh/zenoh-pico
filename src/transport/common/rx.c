@@ -19,6 +19,7 @@
 _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 {
     _zn_transport_message_result_t ret;
+    ret.tag = _z_res_t_OK;
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
@@ -58,7 +59,6 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
     _zn_t_msg_copy(&ret.value.transport_message, &res.value.transport_message);
 
     _z_zbuf_clear(&zbf);
-    ret.tag = _z_res_t_OK;
     return ret;
 
 ERR:
