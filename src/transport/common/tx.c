@@ -107,29 +107,14 @@ int _zn_link_send_t_msg(const _zn_link_t *zl, const _zn_transport_message_t *t_m
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = zl->mtu < ZN_BATCH_SIZE ? zl->mtu : ZN_BATCH_SIZE;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
-    if (zl->is_streamed == 1)
-    {
-        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-        //       the boundary of the serialized messages. The length is encoded as little-endian.
-        //       In any case, the length of a message must not exceed 65_535 bytes.
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
-            _z_wbuf_put(&wbf, 0, i);
-        _z_wbuf_set_wpos(&wbf, _ZN_MSG_LEN_ENC_SIZE);
-    }
+    __unsafe_zn_prepare_wbuf(&wbf, zl->is_streamed);
 
     // Encode the session message
     if (_zn_transport_message_encode(&wbf, t_msg) != 0)
         goto ERR;
 
     // Write the message legnth in the reserved space if needed
-    if (zl->is_streamed == 1)
-    {
-        size_t len = _z_wbuf_len(&wbf) - _ZN_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
-            _z_wbuf_put(&wbf, (uint8_t)((len >> 8 * i) & 0xFF), i);
-    }
+    __unsafe_zn_finalize_wbuf(&wbf, zl->is_streamed);
 
     // Send the wbuf on the socket
     int res = _zn_link_send_wbuf(zl, &wbf);
