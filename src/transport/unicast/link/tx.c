@@ -14,29 +14,33 @@
 
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ SN helper ------------------*/
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - ztu->mutex_inner
- */
-z_zint_t __unsafe_zn_unicast_get_sn(_zn_transport_unicast_t *ztu, zn_reliability_t reliability)
+z_zint_t __zn_unicast_get_sn(_zn_transport_unicast_t *ztu, zn_reliability_t reliability)
 {
     z_zint_t sn;
     // Get the sequence number and update it in modulo operation
     if (reliability == zn_reliability_t_RELIABLE)
     {
         sn = ztu->sn_tx_reliable;
-        ztu->sn_tx_reliable = (ztu->sn_tx_reliable + 1) % ztu->sn_resolution;
+        ztu->sn_tx_reliable = _zn_sn_increment(ztu->sn_resolution, ztu->sn_tx_reliable);
     }
     else
     {
         sn = ztu->sn_tx_best_effort;
-        ztu->sn_tx_best_effort = (ztu->sn_tx_best_effort + 1) % ztu->sn_resolution;
+        ztu->sn_tx_best_effort = _zn_sn_increment(ztu->sn_resolution, ztu->sn_tx_best_effort);
     }
     return sn;
+}
+
+void __zn_unicast_rollback_sn(_zn_transport_unicast_t *ztu, zn_reliability_t reliability)
+{
+    if (reliability == zn_reliability_t_RELIABLE)
+        ztu->sn_tx_reliable = _zn_sn_decrement(ztu->sn_resolution, ztu->sn_tx_reliable);
+    else
+        ztu->sn_tx_best_effort = _zn_sn_decrement(ztu->sn_resolution, ztu->sn_tx_best_effort);
 }
 
 int _zn_unicast_send_t_msg(_zn_transport_unicast_t *ztu, const _zn_transport_message_t *t_msg)
@@ -94,7 +98,7 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
     __unsafe_zn_prepare_wbuf(&ztu->wbuf, ztu->link->is_streamed);
 
     // Get the next sequence number
-    z_zint_t sn = __unsafe_zn_unicast_get_sn(ztu, reliability);
+    z_zint_t sn = __zn_unicast_get_sn(ztu, reliability);
     
     // Create and encode the frame header that carries the zenoh message
     _zn_transport_message_t t_msg = _zn_t_msg_make_frame(reliability, sn, _zn_zenoh_message_vec_make(0));
@@ -147,8 +151,11 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
             if (res != 0)
                 goto ERR_2;
 
-            sn = __unsafe_zn_unicast_get_sn(ztu, reliability);
+            sn = __zn_unicast_get_sn(ztu, reliability);
         } while (_z_wbuf_len(&fbf) > 0);
+
+        // Rollback the last SN increment that is not used
+        __zn_unicast_rollback_sn(ztu, reliability);
     }
 
     ztu->transmitted = 1;
@@ -158,6 +165,8 @@ int _zn_unicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reli
     return res;
 
 ERR_2:
+    // Rollback already acquired SN and not used
+    __zn_unicast_rollback_sn(ztu, reliability);
     z_mutex_unlock(&ztu->mutex_tx);
 
 ERR_1:
