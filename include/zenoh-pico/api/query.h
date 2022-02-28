@@ -69,7 +69,7 @@ int zn_query_consolidation_equal(const zn_query_consolidation_t *left, const zn_
  *     Note that, the predicate is provided as a reference, thus should not be
  *     modified.
  */
-const z_string_t zn_query_predicate(const zn_query_t *query);
+z_string_t zn_query_predicate(const zn_query_t *query);
 
 /**
  * Get the resource name of a received query.
@@ -82,7 +82,7 @@ const z_string_t zn_query_predicate(const zn_query_t *query);
  *     Note that, the resource name is provided as a reference, thus should
  *     not be modified.
  */
-const z_string_t zn_query_res_name(const zn_query_t *query);
+z_string_t zn_query_res_name(const zn_query_t *query);
 
 /**
  * Create a default :c:type:`zn_query_target_t`.

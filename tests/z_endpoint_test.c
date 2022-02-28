@@ -148,6 +148,7 @@ int main(void)
     assert(_z_str_intmap_len(&eres.value.endpoint.config) == 1);
     z_str_t p = _z_str_intmap_get(&eres.value.endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
     assert(_z_str_eq(p, "eth0"));
+    (void) (p);
     _zn_endpoint_clear(&eres.value.endpoint);
 
     sprintf(s, "udp/127.0.0.1:7447#invalid=eth0");

@@ -77,7 +77,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     {                                                                                  \
         _z_int_void_map_init(m, _Z_DEFAULT_INT_MAP_CAPACITY);                          \
     }                                                                                  \
-    static inline name##_intmap_t name##_intmap_make()                                 \
+    static inline name##_intmap_t name##_intmap_make(void)                             \
     {                                                                                  \
         return _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);                      \
     }                                                                                  \

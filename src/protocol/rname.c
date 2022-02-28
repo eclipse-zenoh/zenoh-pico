@@ -56,7 +56,7 @@ int chunk_intersect(const z_str_t c1, const z_str_t c2)
     return sub_chunk_intersect(c1, c2);
 }
 
-const z_str_t next(const z_str_t str)
+z_str_t next(const z_str_t str)
 {
     z_str_t res = strchr(str, '/');
     if (res != NULL)

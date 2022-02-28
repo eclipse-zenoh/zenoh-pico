@@ -18,9 +18,10 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#define TCP_CONFIG_MAPPING_BUILD \
-    int argc = 0;                \
-    _z_str_intmapping_t args[argc];
+#define TCP_CONFIG_MAPPING_BUILD    \
+    int argc = 0;                   \
+    _z_str_intmapping_t args[argc]; \
+    (void) (args);
 
 size_t _zn_tcp_config_strlen(const _z_str_intmap_t *s);
 

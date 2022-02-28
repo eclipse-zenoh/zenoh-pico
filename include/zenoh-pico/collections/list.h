@@ -51,7 +51,7 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
 
 #define _Z_LIST_DEFINE(name, type)                                                                   \
     typedef _z_list_t name##_list_t;                                                                 \
-    static inline name##_list_t *name##_list_new()                                                   \
+    static inline name##_list_t *name##_list_new(void)                                               \
     {                                                                                                \
         return NULL;                                                                                 \
     }                                                                                                \

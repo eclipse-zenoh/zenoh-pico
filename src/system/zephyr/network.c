@@ -109,6 +109,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
 
     // @TODO: To be implemented
 
@@ -134,7 +135,7 @@ size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_tcp(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -172,6 +173,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
 
     // @TODO: To be implemented
 
@@ -202,7 +204,7 @@ size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_udp_unicast(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -477,7 +479,7 @@ size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *ar
     do
     {
         rb = _zn_read_udp_multicast(sock, ptr, n, arg, addr);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;

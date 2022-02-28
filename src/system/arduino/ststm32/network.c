@@ -295,7 +295,7 @@ size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_tcp(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -419,7 +419,7 @@ size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_udp_unicast(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -549,7 +549,7 @@ size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *ar
     do
     {
         rb = _zn_read_udp_multicast(sock, ptr, n, arg, addr);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;

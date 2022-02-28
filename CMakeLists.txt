@@ -25,6 +25,7 @@ string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
 # Use cmake .. -DCMAKE_BUILD_TYPE=DEBUG for debug
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
@@ -73,17 +74,11 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    add_definitions(-DNDEBUG)
-  else()
-    add_definitions(${ZENOH_DEBUG_OPT} -DZENOH_DEBUG=1)
-  endif()
 
-  add_compile_options(
-    $<$<CONFIG:RELEASE>:-pipe -O3>
-    $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
-  )
+if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+  add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pipe -g -O0)
+elseif (CMAKE_BUILD_TYPE MATCHES "RELEASE")
+  add_compile_options(-pipe -O3)
 endif()
 
 set(Libname "zenohpico")

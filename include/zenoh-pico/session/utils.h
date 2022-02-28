@@ -20,7 +20,7 @@
 /*------------------ Session ------------------*/
 zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period, const int exit_on_first);
 
-zn_session_t *_zn_session_init();
+zn_session_t *_zn_session_init(void);
 int _zn_session_close(zn_session_t *zn, uint8_t reason);
 void _zn_session_free(zn_session_t **zn);
 

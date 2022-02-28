@@ -41,7 +41,7 @@ void z_timestamp_reset(z_timestamp_t *tstamp)
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-zn_session_t *_zn_session_init()
+zn_session_t *_zn_session_init(void)
 {
     zn_session_t *zn = (zn_session_t *)malloc(sizeof(zn_session_t));
 

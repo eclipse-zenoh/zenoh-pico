@@ -123,6 +123,8 @@ void iosli_writable_readable(void)
         uint8_t b2 = _z_iosli_get(pios, i);
 
         assert(b1 == b2);
+        (void) (b1);
+        (void) (b2);
     }
 
     _z_iosli_t *cios = _z_iosli_clone(pios);
@@ -137,6 +139,9 @@ void iosli_writable_readable(void)
         uint8_t b3 = _z_iosli_read(cios);
 
         assert(b1 == b2 && b2 == b3);
+        (void) (b1);
+        (void) (b2);
+        (void) (b3);
 
         assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios) && _z_iosli_writable(pios) == _z_iosli_writable(cios));
         assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios) && _z_iosli_readable(pios) == _z_iosli_readable(cios));

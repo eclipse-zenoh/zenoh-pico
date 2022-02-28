@@ -88,7 +88,7 @@ void *_znp_multicast_read_task(void *arg)
 
             // Read bytes from the socket
             to_read = _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
-            if (to_read == -1)
+            if (to_read == SIZE_MAX) // if to_read == -1
                 continue;
         }
 
