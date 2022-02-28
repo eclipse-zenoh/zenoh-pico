@@ -85,7 +85,7 @@ int main(int argc, z_str_t *argv)
     znp_start_read_task(s2);
     znp_start_lease_task(s2);
 
-    z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
     char s1_res[64];

@@ -165,7 +165,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
             entry->next_lease = entry->lease;
-            entry->skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
             entry->received = 1;
 
             ztm->peers = _zn_transport_peer_entry_list_push(ztm->peers, entry);

@@ -115,13 +115,12 @@
  * Default session lease in milliseconds: 10 seconds
  */
 #define ZN_TRANSPORT_LEASE 10000
-#define ZN_KEEP_ALIVE_INTERVAL 1000
-#define ZN_LEASE_EXPIRE_FACTOR 3.5
+#define ZN_TRANSPORT_LEASE_EXPIRE_FACTOR 3.5
 
 /**
- * Default multicast session join interval in milliseconds: 10 seconds
+ * Default multicast session join interval in milliseconds: 2.5 seconds
  */
-#define ZN_JOIN_INTERVAL 1000
+#define ZN_JOIN_INTERVAL 2500
 
 /**
  * Default socket timeout: 2 seconds

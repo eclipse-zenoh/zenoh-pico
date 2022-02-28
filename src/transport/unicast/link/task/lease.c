@@ -36,8 +36,7 @@ void *_znp_unicast_lease_task(void *arg)
     ztu->transmitted = 0;
 
     z_zint_t next_lease = ztu->lease;
-    z_zint_t next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
-    float skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
+    z_zint_t next_keep_alive = ztu->lease / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
     while (ztu->lease_task_running)
     {
         if (next_lease <= 0)
@@ -47,17 +46,12 @@ void *_znp_unicast_lease_task(void *arg)
             {
                 // Reset the lease parameters
                 ztu->received = 0;
-                skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
             }
             else
             {
-                skiped_leases -= 1;
-                if (skiped_leases <= 0)
-                {
-                    _Z_INFO("Closing session because it has expired after %zums\n", ztu->lease);
-                    _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
-                    return 0;
-                }
+                _Z_INFO("Closing session because it has expired after %zums\n", ztu->lease);
+                _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
+                return 0;
             }
 
             next_lease = ztu->lease;
@@ -67,13 +61,11 @@ void *_znp_unicast_lease_task(void *arg)
         {
             // Check if need to send a keep alive
             if (ztu->transmitted == 0)
-            {
                 _znp_unicast_send_keep_alive(ztu);
-            }
 
             // Reset the keep alive parameters
             ztu->transmitted = 0;
-            next_keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+            next_keep_alive = ztu->lease / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
         }
 
         // Compute the target interval
@@ -85,7 +77,7 @@ void *_znp_unicast_lease_task(void *arg)
                 interval = next_keep_alive;
         }
         else
-            interval = ZN_KEEP_ALIVE_INTERVAL;
+            interval = next_keep_alive;
 
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);
