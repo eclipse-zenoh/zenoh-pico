@@ -46,7 +46,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
         }
 
         uint16_t len = _z_zbuf_read(&ztu->zbuf) | (_z_zbuf_read(&ztu->zbuf) << 8);
-        _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
+        _Z_DEBUG(">> \t msg len = %hu\n", len);
         size_t writable = _z_zbuf_capacity(&ztu->zbuf) - _z_zbuf_len(&ztu->zbuf);
         if (writable < len)
         {
@@ -98,7 +98,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
     {
     case _ZN_MID_SCOUT:
     {
-        _Z_DEBUG("Handling of Scout messages not implemented");
+        _Z_INFO("Handling of Scout messages not implemented\n");
         return _z_res_t_OK;
     }
 
@@ -122,35 +122,37 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
 
     case _ZN_MID_CLOSE:
     {
-        _Z_DEBUG("Closing session as requested by the remote peer");
+        _Z_INFO("Closing session as requested by the remote peer\n");
         return _z_res_t_OK;
     }
 
     case _ZN_MID_SYNC:
     {
-        _Z_DEBUG("Handling of Sync messages not implemented");
+        _Z_INFO("Handling of Sync messages not implemented\n");
         return _z_res_t_OK;
     }
 
     case _ZN_MID_ACK_NACK:
     {
-        _Z_DEBUG("Handling of AckNack messages not implemented");
+        _Z_INFO("Handling of AckNack messages not implemented\n");
         return _z_res_t_OK;
     }
 
     case _ZN_MID_KEEP_ALIVE:
     {
+        _Z_INFO("Received ZN_KEEP_ALIVE message\n");
         return _z_res_t_OK;
     }
 
     case _ZN_MID_PING_PONG:
     {
-        _Z_DEBUG("Handling of PingPong messages not implemented");
+        _Z_INFO("Handling of PingPong messages not implemented\n");
         return _z_res_t_OK;
     }
 
     case _ZN_MID_FRAME:
     {
+        _Z_INFO("Received ZN_FRAME message\n");
         // Check if the SN is correct
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R))
         {
@@ -163,7 +165,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             else
             {
                 _z_wbuf_clear(&ztu->dbuf_reliable);
-                _Z_DEBUG("Reliable message dropped because it is out of order");
+                _Z_INFO("Reliable message dropped because it is out of order\n");
                 return _z_res_t_OK;
             }
         }
@@ -176,7 +178,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             else
             {
                 _z_wbuf_clear(&ztu->dbuf_best_effort);
-                _Z_DEBUG("Best effort message dropped because it is out of order");
+                _Z_INFO("Best effort message dropped because it is out of order\n");
                 return _z_res_t_OK;
             }
         }
@@ -235,7 +237,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
 
     default:
     {
-        _Z_DEBUG("Unknown session message ID");
+        _Z_ERROR("Unknown session message ID\n");
         return _z_res_t_ERR;
     }
     }

@@ -102,7 +102,7 @@ _zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, const z_zint_
 
 int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
 {
-    _Z_DEBUG_VA(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
+    _Z_DEBUG(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
     z_mutex_lock(&zn->mutex_inner);
 
     _zn_pending_query_t *pql = __unsafe_zn_get_pending_query_by_id(zn, pen_qry->id);

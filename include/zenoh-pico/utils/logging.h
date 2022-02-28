@@ -15,21 +15,23 @@
 #ifndef ZENOH_PICO_UTILS_LOGGING_H
 #define ZENOH_PICO_UTILS_LOGGING_H
 
-#if (ZENOH_DEBUG == 2)
 #include <stdio.h>
 
-#define _Z_DEBUG(x) printf(x)
-#define _Z_DEBUG_VA(x, ...) printf(x, __VA_ARGS__)
-#define _Z_ERROR(x, ...) printf(x, __VA_ARGS__)
+#if (ZENOH_DEBUG == 3)
+#define _Z_DEBUG(x, ...) printf(x, ##__VA_ARGS__)
+#define _Z_INFO(x, ...) printf(x, ##__VA_ARGS__)
+#define _Z_ERROR(x, ...) printf(x, ##__VA_ARGS__)
+#elif (ZENOH_DEBUG == 2)
+#define _Z_DEBUG(x, ...) (void)(0)
+#define _Z_INFO(x, ...) printf(x, ##__VA_ARGS__)
+#define _Z_ERROR(x, ...) printf(x, ##__VA_ARGS__)
 #elif (ZENOH_DEBUG == 1)
-#include <stdio.h>
-
-#define _Z_ERROR(x, ...) printf(x, __VA_ARGS__)
-#define _Z_DEBUG_VA(x, ...) (void)(0)
-#define _Z_DEBUG(x) (void)(0)
+#define _Z_DEBUG(x, ...) (void)(0)
+#define _Z_INFO(x, ...) (void)(0)
+#define _Z_ERROR(x, ...) printf(x, ##__VA_ARGS__)
 #elif (ZENOH_DEBUG == 0)
-#define _Z_DEBUG(x) (void)(0)
-#define _Z_DEBUG_VA(x, ...) (void)(0)
+#define _Z_DEBUG(x, ...) (void)(0)
+#define _Z_INFO(x, ...) (void)(0)
 #define _Z_ERROR(x, ...) (void)(0)
 #endif
 

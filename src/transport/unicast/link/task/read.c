@@ -111,7 +111,7 @@ void *_znp_unicast_read_task(void *arg)
             }
             else
             {
-                _Z_DEBUG("Connection closed due to malformed message");
+                _Z_ERROR("Connection closed due to malformed message\n");
                 goto EXIT_RECV_LOOP;
             }
         }

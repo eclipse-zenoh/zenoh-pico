@@ -60,7 +60,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
         }
 
         uint16_t len = _z_zbuf_read(&ztm->zbuf) | (_z_zbuf_read(&ztm->zbuf) << 8);
-        _Z_DEBUG_VA(">> \t msg len = %hu\n", len);
+        _Z_DEBUG(">> \t msg len = %hu\n", len);
         size_t writable = _z_zbuf_capacity(&ztm->zbuf) - _z_zbuf_len(&ztm->zbuf);
         if (writable < len)
         {
@@ -138,6 +138,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_JOIN:
     {
+        _Z_INFO("Received _ZN_JOIN message\n");
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_A))
         {
             if (t_msg->body.join.version != ZN_PROTO_VERSION)
@@ -192,7 +193,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_CLOSE:
     {
-        _Z_DEBUG("Closing session as requested by the remote peer");
+        _Z_INFO("Closing session as requested by the remote peer\n");
 
         if (entry == NULL)
             break;
@@ -210,18 +211,19 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_SYNC:
     {
-        _Z_DEBUG("Handling of Sync messages not implemented");
+        _Z_INFO("Handling of Sync messages not implemented\n");
         break;
     }
 
     case _ZN_MID_ACK_NACK:
     {
-        _Z_DEBUG("Handling of AckNack messages not implemented");
+        _Z_INFO("Handling of AckNack messages not implemented\n");
         break;
     }
 
     case _ZN_MID_KEEP_ALIVE:
     {
+        _Z_INFO("Received _ZN_KEEP_ALIVE message\n");
         if (entry == NULL)
             break;
         entry->received = 1;
@@ -237,6 +239,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     case _ZN_MID_FRAME:
     {
+        _Z_INFO("Received _ZN_FRAME message\n");
         if (entry == NULL)
             break;
         entry->received = 1;
@@ -251,7 +254,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             else
             {
                 _z_wbuf_clear(&entry->dbuf_reliable);
-                _Z_DEBUG("Reliable message dropped because it is out of order");
+                _Z_INFO("Reliable message dropped because it is out of order");
                 break;
             }
         }
@@ -262,7 +265,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             else
             {
                 _z_wbuf_clear(&entry->dbuf_best_effort);
-                _Z_DEBUG("Best effort message dropped because it is out of order");
+                _Z_INFO("Best effort message dropped because it is out of order");
                 break;
             }
         }
@@ -318,7 +321,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
     default:
     {
-        _Z_DEBUG("Unknown session message ID");
+        _Z_ERROR("Unknown session message ID\n");
         break;
     }
     }

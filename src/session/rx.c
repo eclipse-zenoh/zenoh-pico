@@ -27,7 +27,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
     {
     case _ZN_MID_DATA:
     {
-        _Z_DEBUG_VA("Received _ZN_MID_DATA message %d\n", msg->header);
+        _Z_INFO("Received _ZN_MID_DATA message %d\n", msg->header);
         if (msg->reply_context) // This is some data from a query
             _zn_trigger_query_reply_partial(zn, msg->reply_context, msg->body.data.key, msg->body.data.payload, msg->body.data.info);
         else // This is pure data
@@ -38,7 +38,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     case _ZN_MID_DECLARE:
     {
-        _Z_DEBUG("Received _ZN_DECLARE message\n");
+        _Z_INFO("Received _ZN_DECLARE message\n");
         for (unsigned int i = 0; i < msg->body.declare.declarations.len; i++)
         {
             _zn_declaration_t decl = msg->body.declare.declarations.val[i];
@@ -46,7 +46,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             {
             case _ZN_DECL_RESOURCE:
             {
-                _Z_DEBUG("Received declare-resource message\n");
+                _Z_INFO("Received declare-resource message\n");
 
                 z_zint_t id = decl.body.res.id;
                 zn_reskey_t key = decl.body.res.key;
@@ -69,12 +69,14 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
             case _ZN_DECL_PUBLISHER:
             {
+                _Z_INFO("Received declare-publisher message\n");
                 // TODO: not supported yet
                 break;
             }
 
             case _ZN_DECL_SUBSCRIBER:
             {
+                _Z_INFO("Received declare-subscriber message\n");
                 z_str_t rname = _zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &decl.body.sub.key);
 
                 _zn_subscriber_list_t *subs = _zn_get_subscriptions_by_name(zn, _ZN_RESOURCE_REMOTE, rname);
@@ -98,11 +100,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_QUERYABLE:
             {
+                _Z_INFO("Received declare-queryable message\n");
                 // TODO: not supported yet
                 break;
             }
             case _ZN_DECL_FORGET_RESOURCE:
             {
+                _Z_INFO("Received forget-resource message\n");
                 _zn_resource_t *rd = _zn_get_resource_by_id(zn, _ZN_RESOURCE_REMOTE, decl.body.forget_res.rid);
                 if (rd != NULL)
                     _zn_unregister_resource(zn, _ZN_RESOURCE_REMOTE, rd);
@@ -111,11 +115,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_PUBLISHER:
             {
+                _Z_INFO("Received forget-publisher message\n");
                 // TODO: not supported yet
                 break;
             }
             case _ZN_DECL_FORGET_SUBSCRIBER:
             {
+                _Z_INFO("Received forget-subscriber message\n");
                 _zn_subscriber_list_t *subs = _zn_get_subscription_by_key(zn, _ZN_RESOURCE_REMOTE, &decl.body.forget_sub.key);
 
                 _zn_subscriber_list_t *xs = subs;
@@ -130,11 +136,13 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
             }
             case _ZN_DECL_FORGET_QUERYABLE:
             {
+                _Z_INFO("Received forget-queryable message\n");
                 // TODO: not supported yet
                 break;
             }
             default:
             {
+                _Z_INFO("Unknown declaration message ID");
                 return _z_res_t_ERR;
             }
             }
@@ -145,18 +153,21 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     case _ZN_MID_PULL:
     {
+        _Z_INFO("Received _ZN_PULL message\n");
         // TODO: not supported yet
         return _z_res_t_OK;
     }
 
     case _ZN_MID_QUERY:
     {
+        _Z_INFO("Received _ZN_QUERY message\n");
         _zn_trigger_queryables(zn, &msg->body.query);
         return _z_res_t_OK;
     }
 
     case _ZN_MID_UNIT:
     {
+        _Z_INFO("Received _ZN_UNIT message\n");
         // This might be the final reply
         if (msg->reply_context)
             _zn_trigger_query_reply_final(zn, msg->reply_context);
@@ -166,7 +177,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
 
     default:
     {
-        _Z_DEBUG("Unknown zenoh message ID");
+        _Z_ERROR("Unknown zenoh message ID\n");
         return _z_res_t_ERR;
     }
     }

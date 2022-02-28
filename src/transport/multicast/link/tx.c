@@ -62,7 +62,7 @@ int _zn_multicast_send_t_msg(_zn_transport_multicast_t *ztm, const _zn_transport
     }
     else
     {
-        _Z_DEBUG("Dropping session message because it is too large");
+        _Z_INFO("Dropping session message because it is too large\n");
     }
 
     // Release the lock
@@ -87,7 +87,7 @@ int _zn_multicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_re
         int locked = z_mutex_trylock(&ztm->mutex_tx);
         if (locked != 0)
         {
-            _Z_DEBUG("Dropping zenoh message because of congestion control\n");
+            _Z_INFO("Dropping zenoh message because of congestion control\n");
             // We failed to acquire the lock, drop the message
             return 0;
         }
@@ -105,7 +105,7 @@ int _zn_multicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_re
     int res = _zn_transport_message_encode(&ztm->wbuf, &t_msg);
     if (res != 0)
     {
-        _Z_DEBUG("Dropping zenoh message because the session frame can not be encoded\n");
+        _Z_INFO("Dropping zenoh message because the session frame can not be encoded\n");
         goto EXIT_ZSND_PROC;
     }
 
@@ -131,7 +131,7 @@ int _zn_multicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_re
         res = _zn_zenoh_message_encode(&fbf, z_msg);
         if (res != 0)
         {
-            _Z_DEBUG("Dropping zenoh message because it can not be fragmented");
+            _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
             goto EXIT_FRAG_PROC;
         }
 
@@ -151,7 +151,7 @@ int _zn_multicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_re
             res = __unsafe_zn_serialize_zenoh_fragment(&ztm->wbuf, &fbf, reliability, sn);
             if (res != 0)
             {
-                _Z_DEBUG("Dropping zenoh message because it can not be fragmented\n");
+                _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
                 goto EXIT_FRAG_PROC;
             }
 
@@ -162,7 +162,7 @@ int _zn_multicast_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_re
             res = _zn_link_send_wbuf(ztm->link, &ztm->wbuf);
             if (res != 0)
             {
-                _Z_DEBUG("Dropping zenoh message because it can not sent\n");
+                _Z_INFO("Dropping zenoh message because it can not sent\n");
                 goto EXIT_FRAG_PROC;
             }
 

@@ -161,7 +161,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     _zn_transport_message_t ism = _zn_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
 
     // Encode and send the message
-    _Z_DEBUG("Sending InitSyn\n");
+    _Z_INFO("Sending ZN_INIT(Syn)\n");
     int res = _zn_link_send_t_msg(zl, &ism);
     if (res != 0)
         goto ERR_1;
@@ -179,6 +179,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
     {
     case _ZN_MID_INIT:
     {
+        _Z_INFO("Received ZN_INIT(Ack)\n");
         if _ZN_HAS_FLAG (iam.header, _ZN_FLAG_T_A)
         {
             // Handle SN resolution option if present
@@ -207,7 +208,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
             _zn_transport_message_t osm = _zn_t_msg_make_open_syn(lease, initial_sn, cookie);
 
             // Encode and send the message
-            _Z_DEBUG("Sending OpenSyn\n");
+            _Z_INFO("Sending ZN_OPEN(Syn)\n");
             res = _zn_link_send_t_msg(zl, &osm);
 
             if (res != 0)
@@ -217,6 +218,7 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
             if (r_oam.tag == _z_res_t_ERR)
                 goto ERR_3;
             _zn_transport_message_t oam = r_oam.value.transport_message;
+            _Z_INFO("Received ZN_OPEN(Ack)\n");
 
             if (_ZN_HAS_FLAG(oam.header, _ZN_FLAG_T_A))
             {
@@ -301,7 +303,7 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_pe
     _zn_transport_message_t jsm = _zn_t_msg_make_join(ZN_PROTO_VERSION, ZN_PEER, ZN_TRANSPORT_LEASE, param.sn_resolution, pid, next_sns);
 
     // Encode and send the message
-    _Z_DEBUG("Sending Join\n");
+    _Z_INFO("Sending ZN_JOIN message\n");
     int res = _zn_link_send_t_msg(zl, &jsm);
 
     _zn_t_msg_clear(&jsm);

@@ -109,7 +109,7 @@ _zn_queryable_list_t *_zn_get_queryables_by_key(zn_session_t *zn, const zn_reske
 
 int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
 {
-    _Z_DEBUG_VA(">>> Allocating queryable for (%s,%u)\n", qle->rname, qle->kind);
+    _Z_DEBUG(">>> Allocating queryable for (%s,%u)\n", qle->rname, qle->kind);
     z_mutex_lock(&zn->mutex_inner);
 
     zn->local_queryables = _zn_queryable_list_push(zn->local_queryables, qle);
