@@ -177,8 +177,8 @@ _zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header)
 /*------------------ Locators Field ------------------*/
 int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locator_array_t *la)
 {
+    _Z_DEBUG("Encoding _LOCATORS\n");
     _ZN_EC(_z_zint_encode(wbf, la->len))
-    // Encode the locators
     for (size_t i = 0; i < la->len; i++)
     {
         z_str_t s = _zn_locator_to_str(&la->val[i]);
@@ -191,6 +191,7 @@ int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locator_array_t *la)
 
 void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locator_array_result_t *r)
 {
+    _Z_DEBUG("Decoding _LOCATORS\n");
     r->tag = _z_res_t_OK;
 
     // Decode the number of elements
@@ -623,7 +624,7 @@ int _zn_declaration_encode(_z_wbuf_t *wbf, _zn_declaration_t *dcl)
     case _ZN_DECL_FORGET_QUERYABLE:
         return _zn_forget_qle_decl_encode(wbf, dcl->header, &dcl->body.forget_qle);
     default:
-        _Z_ERROR("WARNING: Trying to encode declaration with unknown ID(%d)\n", did);
+        _Z_DEBUG("WARNING: Trying to encode declaration with unknown ID(%d)\n", did);
         return -1;
     }
 }
@@ -692,7 +693,7 @@ void _zn_declaration_decode_na(_z_zbuf_t *zbf, _zn_declaration_result_t *r)
         r->value.declaration.body.forget_qle = r_fqdcl.value.forget_qle_decl;
         break;
     default:
-        _Z_ERROR("WARNING: Trying to decode declaration with unknown ID(%d)\n", mid);
+        _Z_DEBUG("WARNING: Trying to decode declaration with unknown ID(%d)\n", mid);
         r->tag = _z_res_t_ERR;
         r->value.error = _zn_err_t_PARSE_DECLARATION;
         break;
@@ -975,6 +976,8 @@ _zn_pull_result_t _zn_pull_decode(_z_zbuf_t *zbf, uint8_t header)
 /*------------------ Query Message ------------------*/
 int _zn_query_target_encode(_z_wbuf_t *wbf, const zn_query_target_t *qt)
 {
+    _Z_DEBUG("Encoding _QUERY_TARGET\n");
+
     _ZN_EC(_z_zint_encode(wbf, qt->kind))
 
     _ZN_EC(_z_zint_encode(wbf, qt->target.tag))
@@ -986,6 +989,7 @@ int _zn_query_target_encode(_z_wbuf_t *wbf, const zn_query_target_t *qt)
 
 int _zn_query_consolidation_encode(_z_wbuf_t *wbf, const zn_query_consolidation_t *qc)
 {
+    _Z_DEBUG("Encoding _QUERY_CONSOLIDATION\n");
     z_zint_t consolidation = qc->reception;
     consolidation |= qc->last_router << 2;
     consolidation |= qc->first_routers << 4;
@@ -1012,6 +1016,7 @@ int _zn_query_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_query_t *msg)
 
 _zn_query_target_result_t _zn_query_target_decode(_z_zbuf_t *zbf)
 {
+    _Z_DEBUG("Decoding _QUERY_TARGET\n");
     _zn_query_target_result_t r;
     r.tag = _z_res_t_OK;
 
@@ -1035,6 +1040,7 @@ _zn_query_target_result_t _zn_query_target_decode(_z_zbuf_t *zbf)
 
 _zn_query_consolidation_result_t _zn_query_consolidation_decode(_z_zbuf_t *zbf)
 {
+    _Z_DEBUG("Decoding _QUERY_CONSOLIDATION\n");
     _zn_query_consolidation_result_t r;
     r.tag = _z_res_t_OK;
 
@@ -1156,7 +1162,7 @@ int _zn_zenoh_message_encode(_z_wbuf_t *wbf, const _zn_zenoh_message_t *msg)
         // Do nothing. Unit messages have no body
         return 0;
     default:
-        _Z_ERROR("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
+        _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
         return -1;
     }
 }
@@ -1231,14 +1237,14 @@ void _zn_zenoh_message_decode_na(_z_zbuf_t *zbf, _zn_zenoh_message_result_t *r)
         }
         case _ZN_MID_LINK_STATE_LIST:
         {
-            _Z_ERROR("WARNING: Link state not supported in zenoh-pico\n");
+            _Z_DEBUG("WARNING: Link state not supported in zenoh-pico\n");
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
             return;
         }
         default:
         {
-            _Z_ERROR("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_ZENOH_MESSAGE;
             return;
@@ -1877,7 +1883,7 @@ int _zn_transport_message_encode(_z_wbuf_t *wbf, const _zn_transport_message_t *
     case _ZN_MID_PING_PONG:
         return _zn_ping_pong_encode(wbf, &msg->body.ping_pong);
     default:
-        _Z_ERROR("WARNING: Trying to encode session message with unknown ID(%d)\n", _ZN_MID(msg->header));
+        _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _ZN_MID(msg->header));
         return -1;
     }
 }
@@ -1984,14 +1990,14 @@ void _zn_transport_message_decode_na(_z_zbuf_t *zbf, _zn_transport_message_resul
         }
         case _ZN_MID_PRIORITY:
         {
-            _Z_ERROR("WARNING: Priorities are not supported in zenoh-pico\n");
+            _Z_DEBUG("WARNING: Priorities are not supported in zenoh-pico\n");
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_TRANSPORT_MESSAGE;
             return;
         }
         default:
         {
-            _Z_ERROR("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_PARSE_TRANSPORT_MESSAGE;
             return;

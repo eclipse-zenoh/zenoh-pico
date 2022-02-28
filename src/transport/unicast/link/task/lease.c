@@ -54,7 +54,7 @@ void *_znp_unicast_lease_task(void *arg)
                 skiped_leases -= 1;
                 if (skiped_leases <= 0)
                 {
-                    _Z_DEBUG_VA("Closing session because it has expired after %zums", ztu->lease);
+                    _Z_INFO("Closing session because it has expired after %zums\n", ztu->lease);
                     _zn_transport_unicast_close(ztu, _ZN_CLOSE_EXPIRED);
                     return 0;
                 }

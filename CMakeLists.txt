@@ -45,17 +45,8 @@ message(STATUS "Build tests: ${BUILD_TESTING}")
 option (BUILD_INTEGRATION "Use this to also build integration tests." OFF)
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
-# Configure the debug level
-#
-# ZENOH_DEBUG :
-#   - 2 : ERROR + DEBUG
-#   - 1 : ERROR
-#   - 0 : NOTHING
-if (DEFINED ZENOH_DEBUG)
-  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=${ZENOH_DEBUG}")
-else()
-  set(ZENOH_DEBUG_OPT "-DZENOH_DEBUG=1")
-endif()
+option (ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
+message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -70,6 +61,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_definitions(-DZENOH_WIN)
   set(JNI_PLATFORM_NAME "win32")
 endif()
+
+add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
 
 if (SKBUILD)
   set(INSTALL_RPATH "zenoh")

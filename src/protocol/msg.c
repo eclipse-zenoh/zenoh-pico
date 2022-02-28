@@ -298,7 +298,7 @@ void _zn_z_msg_clear_declaration(_zn_declaration_t *dcl)
         _zn_z_msg_clear_declaration_forget_queryable(&dcl->body.forget_qle);
         break;
     default:
-        _Z_ERROR("WARNING: Trying to free declaration with unknown ID(%d)\n", did);
+        _Z_DEBUG("WARNING: Trying to free declaration with unknown ID(%d)\n", did);
         break;
     }
 }
@@ -480,7 +480,7 @@ void _zn_z_msg_clear(_zn_zenoh_message_t *msg)
         _zn_z_msg_clear_unit(&msg->body.unit);
         break;
     default:
-        _Z_ERROR("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
+        _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
         break;
     }
 }
@@ -936,7 +936,7 @@ void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg
         // _zn_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
         break;
     default:
-        _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+        _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
         break;
     }
 }
@@ -986,7 +986,7 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg)
         _zn_t_msg_clear_frame(&msg->body.frame, msg->header);
         return;
     default:
-        _Z_ERROR("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+        _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
         return;
     }
 }

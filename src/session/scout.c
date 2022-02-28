@@ -35,7 +35,7 @@ zn_hello_array_t _zn_scout_loop(
     int res = _zn_link_send_wbuf(r_scout.value.link, wbf);
     if (res < 0)
     {
-        _Z_DEBUG("Unable to send scout message\n");
+        _Z_INFO("Unable to send scout message\n");
         return ls;
     }
 
@@ -56,7 +56,7 @@ zn_hello_array_t _zn_scout_loop(
         _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);
         if (r_hm.tag == _z_res_t_ERR)
         {
-            _Z_DEBUG("Scouting loop received malformed message\n");
+            _Z_ERROR("Scouting loop received malformed message\n");
             continue;
         }
 
@@ -65,6 +65,7 @@ zn_hello_array_t _zn_scout_loop(
         {
         case _ZN_MID_HELLO:
         {
+            _Z_INFO("Received _ZN_HELLO message\n");
             // Allocate or expand the vector
             if (ls.val)
             {
@@ -112,7 +113,7 @@ zn_hello_array_t _zn_scout_loop(
         }
         default:
         {
-            _Z_DEBUG("Scouting loop received unexpected message\n");
+            _Z_ERROR("Scouting loop received unexpected message\n");
             break;
         }
         }

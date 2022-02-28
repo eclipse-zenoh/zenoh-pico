@@ -175,7 +175,7 @@ z_str_t _zn_get_resource_name_from_key(zn_session_t *zn, int is_local, const zn_
 
 int _zn_register_resource(zn_session_t *zn, int is_local, _zn_resource_t *res)
 {
-    _Z_DEBUG_VA(">>> Allocating res decl for (%zu,%lu,%s)\n", res->id, res->key.rid, res->key.rname);
+    _Z_DEBUG(">>> Allocating res decl for (%zu,%lu,%s)\n", res->id, res->key.rid, res->key.rname);
     z_mutex_lock(&zn->mutex_inner);
 
     _zn_resource_t *r = __unsafe_zn_get_resource_by_id(zn, is_local, res->id);

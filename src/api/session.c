@@ -69,8 +69,8 @@ zn_session_t *zn_open(zn_properties_t *config)
         }
         else
         {
-            _Z_DEBUG("Unable to scout a zenoh router\n");
-            _Z_ERROR("%sPlease make sure at least one router is running on your network!\n", "");
+            _Z_INFO("Unable to scout a zenoh router\n");
+            _Z_ERROR("Please make sure at least one router is running on your network!\n");
 
             return NULL;
         }

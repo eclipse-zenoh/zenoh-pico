@@ -105,7 +105,7 @@ _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _z_err_t_PARSE_UINT8;
-        _Z_ERROR("WARNING: Not enough bytes to read\n");
+        _Z_DEBUG("WARNING: Not enough bytes to read\n");
     }
 
     return r;
@@ -136,9 +136,7 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf)
         r_uint8 = _z_uint8_decode(zbf);
         _ASSURE_RESULT(r_uint8, r, _z_err_t_PARSE_ZINT);
 
-        _Z_DEBUG_VA("zint c = 0x%x\n", c);
         r.value.zint = r.value.zint | (((z_zint_t)r_uint8.value.uint8 & 0x7f) << i);
-        _Z_DEBUG_VA("current zint  = %zu\n", r.value.zint);
         i += 7;
     } while (r_uint8.value.uint8 > 0x7f);
 
@@ -173,7 +171,7 @@ void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)
     {
         r->tag = _z_res_t_ERR;
         r->value.error = _z_err_t_PARSE_BYTES;
-        _Z_ERROR("WARNING: Not enough bytes to read\n");
+        _Z_DEBUG("WARNING: Not enough bytes to read\n");
         return;
     }
 
@@ -212,7 +210,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
     {
         r.tag = _z_res_t_ERR;
         r.value.error = _z_err_t_PARSE_STRING;
-        _Z_ERROR("WARNING: Not enough bytes to read\n");
+        _Z_DEBUG("WARNING: Not enough bytes to read\n");
         return r;
     }
 

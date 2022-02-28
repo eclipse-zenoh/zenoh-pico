@@ -117,7 +117,7 @@ _zn_subscriber_list_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_loca
 
 int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub)
 {
-    _Z_DEBUG_VA(">>> Allocating sub decl for (%s)\n", sub->rname);
+    _Z_DEBUG(">>> Allocating sub decl for (%s)\n", sub->rname);
     z_mutex_lock(&zn->mutex_inner);
 
     _zn_subscriber_list_t *subs = __unsafe_zn_get_subscriptions_by_name(zn, is_local, sub->rname);
