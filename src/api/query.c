@@ -37,7 +37,7 @@ int zn_query_consolidation_equal(const zn_query_consolidation_t *left, const zn_
     return memcmp(left, right, sizeof(zn_query_consolidation_t));
 }
 
-const z_string_t zn_query_predicate(const zn_query_t *query)
+z_string_t zn_query_predicate(const zn_query_t *query)
 {
     z_string_t s;
     s.len = strlen(query->predicate);
@@ -45,7 +45,7 @@ const z_string_t zn_query_predicate(const zn_query_t *query)
     return s;
 }
 
-const z_string_t zn_query_res_name(const zn_query_t *query)
+z_string_t zn_query_res_name(const zn_query_t *query)
 {
     z_string_t s;
     s.len = strlen(query->rname);

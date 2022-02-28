@@ -585,6 +585,7 @@ void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *msg)
 
 void _zn_t_msg_clear_join(_zn_join_t *msg, uint8_t header)
 {
+    (void) (header);
     _z_bytes_clear(&msg->pid);
 }
 

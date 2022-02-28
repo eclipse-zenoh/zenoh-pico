@@ -53,7 +53,7 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 
     _zn_transport_message_result_t res = _zn_transport_message_decode(&zbf);
     if (res.tag == _z_res_t_ERR)
-        return ret;
+        goto ERR;
 
     _zn_t_msg_copy(&ret.value.transport_message, &res.value.transport_message);
 

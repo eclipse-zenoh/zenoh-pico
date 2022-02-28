@@ -264,6 +264,8 @@ ERR_1:
 
 _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
+    (void) (zl);
+    (void) (local_pid);
     _zn_transport_multicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
@@ -275,6 +277,8 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_cl
 
 _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_peer(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
+    (void) (zl);
+    (void) (local_pid);
     _zn_transport_unicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;

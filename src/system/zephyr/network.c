@@ -109,6 +109,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
 
     // @TODO: To be implemented
 
@@ -172,6 +173,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
 
     // @TODO: To be implemented
 

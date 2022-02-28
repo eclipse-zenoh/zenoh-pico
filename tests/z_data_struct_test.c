@@ -19,7 +19,7 @@
 int main(void)
 {
     char s[64];
-    int len = 128;
+    size_t len = 128;
 
     // str-vec
     printf(">>> str-vec\n");
@@ -27,18 +27,18 @@ int main(void)
     _z_str_vec_t vec = _z_str_vec_make(1);
     assert(_z_str_vec_is_empty(&vec));
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        sprintf(s, "%d", i);
+        sprintf(s, "%zu", i);
 
         _z_str_vec_append(&vec, _z_str_clone(s));
         z_str_t e = _z_str_vec_get(&vec, i);
-        printf("append(%d) = %s\n", i, e);
+        printf("append(%zu) = %s\n", i, e);
         assert(_z_str_eq(s, e));
 
         _z_str_vec_set(&vec, i, _z_str_clone(s));
         e = _z_str_vec_get(&vec, i);
-        printf("set(%d) = %s\n", i, e);
+        printf("set(%zu) = %s\n", i, e);
         assert(_z_str_eq(s, e));
 
         assert(_z_str_vec_len(&vec) == i + 1);
@@ -54,30 +54,30 @@ int main(void)
     _z_str_list_t *list = _z_str_list_new();
     assert(_z_str_list_is_empty(list));
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        sprintf(s, "%d", i);
+        sprintf(s, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
 
         z_str_t e = _z_str_list_head(list);
-        printf("push(%d) = %s\n", i, e);
+        printf("push(%zu) = %s\n", i, e);
         assert(_z_str_eq(s, e));
 
         assert(_z_str_list_len(list) == i + 1);
     }
     assert(_z_str_list_len(list) == len);
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        sprintf(s, "%d", i);
+        sprintf(s, "%zu", i);
         list = _z_str_list_pop(list);
         assert(_z_str_list_len(list) == len - (i + 1));
     }
     assert(_z_str_list_is_empty(list));
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        sprintf(s, "%d", i);
+        sprintf(s, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
         assert(_z_str_eq(s, _z_str_list_head(list)));
     }
@@ -91,20 +91,20 @@ int main(void)
     _z_str_intmap_t map = _z_str_intmap_make();
     assert(_z_str_intmap_is_empty(&map));
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        sprintf(s, "%d", i);
+        sprintf(s, "%zu", i);
         _z_str_intmap_insert(&map, i, _z_str_clone(s));
 
         z_str_t e = _z_str_intmap_get(&map, i);
-        printf("get(%d) = %s\n", i, e);
+        printf("get(%zu) = %s\n", i, e);
         assert(_z_str_eq(s, e));
 
         assert(_z_str_intmap_len(&map) == i + 1);
     }
     assert(_z_str_intmap_len(&map) == len);
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         _z_str_intmap_remove(&map, i);
         assert(_z_str_intmap_get(&map, i) == NULL);

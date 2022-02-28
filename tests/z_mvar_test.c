@@ -73,6 +73,7 @@ int main(void)
     while (produced < RUN && consumed < RUN)
     {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
+        (void) (now);
         z_sleep_s(1);
     }
 

@@ -78,11 +78,13 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    (void) (arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     assert(sample->value.len == MSG_LEN);
     assert(sample->key.len == strlen(res));
     assert(strncmp(res, sample->key.val, sample->key.len) == 0);
+    (void) (sample);
 
     datas++;
 }
@@ -90,6 +92,7 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 int main(int argc, z_str_t *argv)
 {
     assert(argc == 2);
+    (void) (argc);
 
     setbuf(stdout, NULL);
 

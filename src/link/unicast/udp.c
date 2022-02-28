@@ -131,6 +131,7 @@ size_t _zn_f_link_write_all_udp_unicast(const void *arg, const uint8_t *ptr, siz
 
 size_t _zn_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
+    (void) (addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_udp_unicast(self->sock, ptr, len);
@@ -138,12 +139,13 @@ size_t _zn_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len, z_
 
 size_t _zn_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
+    (void) (addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_exact_udp_unicast(self->sock, ptr, len);
 }
 
-uint16_t _zn_get_link_mtu_udp_unicast()
+uint16_t _zn_get_link_mtu_udp_unicast(void)
 {
     // @TODO: the return value should change depending on the target platform.
     return 1450;

@@ -67,6 +67,7 @@ z_str_t _zn_parse_address_segment_tcp(z_str_t address)
 
 _zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
 {
+    (void) (tout);
     _zn_link_t *self = (_zn_link_t *)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
@@ -86,6 +87,7 @@ ERR:
 
 _zn_socket_result_t _zn_f_link_listen_tcp(void *arg, const clock_t tout)
 {
+    (void) (tout);
     _zn_link_t *self = (_zn_link_t *)arg;
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
@@ -133,6 +135,7 @@ size_t _zn_f_link_write_all_tcp(const void *arg, const uint8_t *ptr, size_t len)
 
 size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
+    (void) (addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_tcp(self->sock, ptr, len);
@@ -140,12 +143,13 @@ size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t 
 
 size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
+    (void) (addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_exact_tcp(self->sock, ptr, len);
 }
 
-uint16_t _zn_get_link_mtu_tcp()
+uint16_t _zn_get_link_mtu_tcp(void)
 {
     // Maximum MTU for TCP
     return 65535;

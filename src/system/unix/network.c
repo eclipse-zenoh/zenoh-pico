@@ -125,6 +125,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
 
     // @TODO: To be implemented
 
@@ -192,6 +193,8 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
+    (void) laddr;
+    (void) tout;
 
     // @TODO: To be implemented
 
@@ -282,7 +285,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
-        goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
     struct timeval tv;
     tv.tv_sec = tout;
@@ -290,22 +293,22 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
 
     if (bind(sock, lsockaddr, addrlen) < 0)
-        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
 
     // Get the randomly assigned port used to discard loopback messages
     if (getsockname(sock, lsockaddr, &addrlen) < 0)
-        goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
 
     if (lsockaddr->sa_family == AF_INET)
     {
         if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr, sizeof(struct in_addr)) < 0)
-            goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+            goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
     }
     else if (lsockaddr->sa_family == AF_INET6)
     {
         int ifindex = if_nametoindex(iface);
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
-            goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
+            goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
     }
 
     // Create laddr endpoint
@@ -326,11 +329,13 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
 
     return sock;
 
-_ZN_OPEN_UDP_MULTICAST_ERROR_2:
+_ZN_OPEN_UDP_MULTICAST_ERROR_3:
     close(sock);
 
-_ZN_OPEN_UDP_MULTICAST_ERROR_1:
+_ZN_OPEN_UDP_MULTICAST_ERROR_2:
     free(lsockaddr);
+
+_ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
@@ -445,7 +450,7 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &raddrlen);
 
-        if(rb == -1) // If timeout return -1
+        if(rb == SIZE_MAX) // If timeout return SIZE_MAX == -1
             return rb;
 
         if (laddr->ai_family == AF_INET)

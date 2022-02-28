@@ -167,8 +167,8 @@ typedef struct
 
 _ZN_RESULT_DECLARE(_zn_transport_multicast_establish_param_t, transport_multicast_establish_param)
 
-_zn_transport_t *_zn_transport_unicast_new();
-_zn_transport_t *_zn_transport_multicast_new();
+_zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unicast_establish_param_t param);
+_zn_transport_t *_zn_transport_multicast_new(_zn_link_t *link, _zn_transport_multicast_establish_param_t param);
 
 _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid);
 _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid);

@@ -23,7 +23,7 @@ typedef struct
     // Placeholder for future extensions
 } _zn_link_manager_t;
 
-_zn_link_manager_t *_zn_link_manager_init();
+_zn_link_manager_t *_zn_link_manager_init(void);
 void _zn_link_manager_free(_zn_link_manager_t **ztm);
 
 _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint);

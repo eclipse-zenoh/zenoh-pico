@@ -27,7 +27,7 @@ typedef struct
     _zn_link_manager_t *link_manager;
 } _zn_transport_manager_t;
 
-_zn_transport_manager_t *_zn_transport_manager_init();
+_zn_transport_manager_t *_zn_transport_manager_init(void);
 void _zn_transport_manager_free(_zn_transport_manager_t **ztm);
 
 _zn_transport_p_result_t _zn_new_transport(_zn_transport_manager_t *ztm, z_str_t locator, uint8_t mode);
