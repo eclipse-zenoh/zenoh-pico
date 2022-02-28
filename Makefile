@@ -17,17 +17,29 @@
 # Accepted values: Release, Debug, GCov
 BUILD_TYPE?=Release
 
-# Build type. This sets the BUILD_TESTING variable.
+# Build examples. This sets the BUILD_EXAMPLES variable.
+# Accepted values: ON, OFF
+BUILD_EXAMPLES?=ON
+
+# Build testing. This sets the BUILD_TESTING variable.
 # Accepted values: ON, OFF
 BUILD_TESTING?=ON
 
-# Build type. This sets the BUILD_MULTICAST variable.
+# Build multicast tests. This sets the BUILD_MULTICAST variable.
 # Accepted values: ON, OFF
 BUILD_MULTICAST?=OFF
 
-# Build type. This sets the BUILD_INTEGRATION variable.
+# Build integration tests. This sets the BUILD_INTEGRATION variable.
 # Accepted values: ON, OFF
 BUILD_INTEGRATION?=OFF
+
+# Debug level. This sets the ZENOH_DEBUG variable.
+# Accepted values:
+#  0: NONE
+#  1: ERROR
+#  2: INFO + ERROR
+#  3: DEBUG + INFO + ERROR
+ZENOH_DEBUG?=0
 
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -42,11 +54,7 @@ CROSSIMG_PREFIX=zenoh-pico_
 # NOTES:
 # - ARM:   old versions of dockcross/dockcross were creating some issues since they used an old GCC (4.8.3) which lacks <stdatomic.h> (even using -std=gnu11)
 
-ifneq ($(ZENOH_DEBUG),)
-	ZENOH_DEBUG_OPT := -DZENOH_DEBUG=$(ZENOH_DEBUG)
-endif
-
-CMAKE_OPT=$(ZENOH_DEBUG_OPT) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -H.
+CMAKE_OPT=-DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -H.
 
 all: make
 
