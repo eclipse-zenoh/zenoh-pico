@@ -135,7 +135,7 @@ _zn_transport_t *_zn_transport_multicast_new(_zn_link_t *link, _zn_transport_mul
     zt->transport.multicast.read_task = NULL;
     zt->transport.multicast.lease_task_running = 0;
     zt->transport.multicast.lease_task = NULL;
-    zt->transport.multicast.keep_alive = ZN_KEEP_ALIVE_INTERVAL;
+    zt->transport.multicast.lease = ZN_TRANSPORT_LEASE;
 
     // Notifiers
     zt->transport.multicast.transmitted = 0;

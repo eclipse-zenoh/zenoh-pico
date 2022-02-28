@@ -18,9 +18,26 @@
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers)
+z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers, z_zint_t local_lease)
 {
-    z_zint_t ret = -1; // As ret is size_t, -1 sets it to the highest value
+    z_zint_t ret = local_lease;
+
+    _zn_transport_peer_entry_list_t *it = peers;
+    while (it != NULL)
+    {
+        z_zint_t lease = ((_zn_transport_peer_entry_t *)it->val)->lease;
+        if (lease < ret)
+            ret = lease;
+
+        it = it->tail;
+    }
+
+    return ret;
+}
+
+z_zint_t _zn_get_next_lease(_zn_transport_peer_entry_list_t *peers)
+{
+    z_zint_t ret = SIZE_MAX;
 
     _zn_transport_peer_entry_list_t *it = peers;
     while (it != NULL)
@@ -51,8 +68,8 @@ void *_znp_multicast_lease_task(void *arg)
     ztm->transmitted = 0;
 
     // From all peers, get the next lease time (minimum)
-    z_zint_t next_lease = _zn_get_minimum_lease(ztm->peers);
-    z_zint_t next_keep_alive = ztm->keep_alive;
+    z_zint_t next_lease = _zn_get_minimum_lease(ztm->peers, ztm->lease);
+    z_zint_t next_keep_alive = next_lease / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
     z_zint_t next_join = ZN_JOIN_INTERVAL;
 
     _zn_transport_peer_entry_list_t *it = NULL;
@@ -69,23 +86,15 @@ void *_znp_multicast_lease_task(void *arg)
                 {
                     // Reset the lease parameters
                     entry->received = 0;
-                    entry->skiped_leases = ZN_LEASE_EXPIRE_FACTOR;
+                    entry->next_lease = entry->lease;
                     it = it->tail;
                 }
                 else
                 {
-                    entry->skiped_leases -= 1;
-                    if (entry->skiped_leases <= 0)
-                    {
-                        _Z_INFO("Remove peer from know list because it has expired after %zums\n", entry->lease);
-                        ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
-                        it = ztm->peers;
-                    }
-                    else
-                        it = it->tail;
+                    _Z_INFO("Remove peer from know list because it has expired after %zums\n", entry->lease);
+                    ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
+                    it = ztm->peers;
                 }
-
-                entry->next_lease = entry->lease;
             }
         }
 
@@ -106,7 +115,7 @@ void *_znp_multicast_lease_task(void *arg)
 
             // Reset the keep alive parameters
             ztm->transmitted = 0;
-            next_keep_alive = ztm->keep_alive;
+            next_keep_alive = _zn_get_minimum_lease(ztm->peers, ztm->lease) / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
         }
 
         // Compute the target interval to sleep
@@ -140,7 +149,7 @@ void *_znp_multicast_lease_task(void *arg)
             entry->next_lease -= interval;
             it = it->tail;
         }
-        next_lease = _zn_get_minimum_lease(ztm->peers);
+        next_lease = _zn_get_next_lease(ztm->peers);
         next_keep_alive -= interval;
         next_join -= interval;
         z_mutex_unlock(&ztm->mutex_peer);

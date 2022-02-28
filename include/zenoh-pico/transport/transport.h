@@ -36,7 +36,6 @@ typedef struct
 
     volatile z_zint_t lease;
     volatile z_zint_t next_lease;
-    volatile float skiped_leases;
     volatile int received;
 } _zn_transport_peer_entry_t;
 
@@ -121,7 +120,7 @@ typedef struct
 
     volatile int lease_task_running;
     z_task_t *lease_task;
-    volatile z_zint_t keep_alive;
+    volatile z_zint_t lease;
 } _zn_transport_multicast_t;
 
 typedef struct
