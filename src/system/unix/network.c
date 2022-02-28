@@ -151,7 +151,7 @@ size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_tcp(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -225,7 +225,7 @@ size_t _zn_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len)
     do
     {
         rb = _zn_read_udp_unicast(sock, ptr, n);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
@@ -362,13 +362,13 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
 #elif defined(ZENOH_LINUX)
     if (raddr->ai_family == AF_INET)
     {
-        struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)raddr->ai_addr)->sin_port};
+        struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)raddr->ai_addr)->sin_port, {0}, {0}};
         if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0)
             goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
     }
     else if (raddr->ai_family == AF_INET6)
     {
-        struct sockaddr_in6 address = {AF_INET6, ((struct sockaddr_in6 *)raddr->ai_addr)->sin6_port};
+        struct sockaddr_in6 address = {AF_INET6, ((struct sockaddr_in6 *)raddr->ai_addr)->sin6_port, 0, {{{0}}}, 0};
         if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0)
             goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
     }
@@ -498,7 +498,7 @@ size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *ar
     do
     {
         rb = _zn_read_udp_multicast(sock, ptr, n, arg, addr);
-        if (rb < 0)
+        if (rb == SIZE_MAX)
             return rb;
 
         n -= rb;
