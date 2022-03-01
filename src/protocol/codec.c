@@ -152,7 +152,7 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
         // Do not copy, just add a slice to the expandable buffer
         // Only create a new slice if the malloc is cheaper than copying a
         // large amount of data
-        _z_wbuf_add_iosli_from(wbf, bs->val, bs->len);
+        _z_wbuf_write_bytes(wbf, bs->val, 0, bs->len);
         return 0;
     }
     else

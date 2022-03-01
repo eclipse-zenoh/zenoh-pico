@@ -2856,7 +2856,7 @@ void fragmentation(void)
         assert(fragment.len == written);
 
         // Create an iosli for decoding
-        _z_wbuf_add_iosli_from(&dbf, fragment.val, fragment.len);
+        _z_wbuf_write_bytes(&dbf, fragment.val, 0, fragment.len);
 
         print_wbuf(&dbf);
 

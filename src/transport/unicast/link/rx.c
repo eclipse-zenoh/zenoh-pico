@@ -190,7 +190,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             // Select the right defragmentation buffer
             _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
-            _z_wbuf_add_iosli_from(dbuf, t_msg->body.frame.payload.fragment.val, t_msg->body.frame.payload.fragment.len);
+            _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_E))

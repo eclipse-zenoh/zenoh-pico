@@ -49,6 +49,7 @@ z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
+void _z_iosli_free(_z_iosli_t **ios);
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
@@ -112,7 +113,6 @@ void _z_wbuf_set_rpos(_z_wbuf_t *wbf, size_t r_pos);
 void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t w_pos);
 
 void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios);
-void _z_wbuf_add_iosli_from(_z_wbuf_t *wbf, const uint8_t *buf, size_t capacity);
 _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
