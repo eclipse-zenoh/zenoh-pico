@@ -79,11 +79,13 @@ void _z_vec_append(_z_vec_t *v, void *e)
     if (v->len == v->capacity)
     {
         // Allocate a new vector
-        size_t _capacity = 2 * v->capacity;
+        size_t _capacity = (v->capacity << 1) | 0x01;
         void **_val = (void **)malloc(_capacity * sizeof(void *));
         memcpy(_val, v->val, v->capacity * sizeof(void *));
+
         // Free the old vector
         free(v->val);
+
         // Update the current vector
         v->val = _val;
         v->capacity = _capacity;
