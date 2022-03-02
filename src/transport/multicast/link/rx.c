@@ -272,8 +272,6 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_F))
         {
-            int res = _z_res_t_OK;
-
             // Select the right defragmentation buffer
             _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &entry->dbuf_reliable : &entry->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
@@ -290,33 +288,27 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(ztm->session, &d_zm);
+                    _zn_handle_zenoh_message(ztm->session, &d_zm);
 
-                    // Free the decoded message
+                    // Clear must be explicitly called for fragmented zenoh messages.
+                    // Non-fragmented zenoh messages are released when their transport message is released.
                     _zn_z_msg_clear(&d_zm);
                 }
 
                 // Free the decoding buffer
-                _z_zbuf_reset(&zbf);
+                _z_zbuf_clear(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
-
-            if (res != _z_res_t_OK)
-                break;
         }
         else
         {
             // Handle all the zenoh message, one by one
             unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; i++)
-            {
-                int res = _zn_handle_zenoh_message(ztm->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
-                if (res != _z_res_t_OK)
-                    break;
-            }
-            break;
+                _zn_handle_zenoh_message(ztm->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
         }
+        break;
     }
 
     default:

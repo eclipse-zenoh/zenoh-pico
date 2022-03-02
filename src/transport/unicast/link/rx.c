@@ -99,55 +99,55 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
     case _ZN_MID_SCOUT:
     {
         _Z_INFO("Handling of Scout messages not implemented\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_HELLO:
     {
         // Do nothing, zenoh-pico clients are not expected to handle hello messages
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_INIT:
     {
         // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_OPEN:
     {
         // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_CLOSE:
     {
         _Z_INFO("Closing session as requested by the remote peer\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_SYNC:
     {
         _Z_INFO("Handling of Sync messages not implemented\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_ACK_NACK:
     {
         _Z_INFO("Handling of AckNack messages not implemented\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_KEEP_ALIVE:
     {
         _Z_INFO("Received ZN_KEEP_ALIVE message\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_PING_PONG:
     {
         _Z_INFO("Handling of PingPong messages not implemented\n");
-        return _z_res_t_OK;
+        break;
     }
 
     case _ZN_MID_FRAME:
@@ -166,7 +166,7 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             {
                 _z_wbuf_clear(&ztu->dbuf_reliable);
                 _Z_INFO("Reliable message dropped because it is out of order\n");
-                return _z_res_t_OK;
+                break;
             }
         }
         else
@@ -179,14 +179,12 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
             {
                 _z_wbuf_clear(&ztu->dbuf_best_effort);
                 _Z_INFO("Best effort message dropped because it is out of order\n");
-                return _z_res_t_OK;
+                break;
             }
         }
 
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_F))
         {
-            int res = _z_res_t_OK;
-
             // Select the right defragmentation buffer
             _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
             // Add the fragment to the defragmentation buffer
@@ -203,42 +201,37 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(ztu->session, &d_zm);
+                    _zn_handle_zenoh_message(ztu->session, &d_zm);
 
-                    // Free the decoded message
+                    // Clear must be explicitly called for fragmented zenoh messages.
+                    // Non-fragmented zenoh messages are released when their transport message is released.
                     _zn_z_msg_clear(&d_zm);
-                }
-                else
-                {
-                    res = _z_res_t_ERR;
                 }
 
                 // Free the decoding buffer
-                _z_zbuf_reset(&zbf);
+                _z_zbuf_clear(&zbf);
                 // Reset the defragmentation buffer
-                _z_wbuf_clear(dbuf);
+                _z_wbuf_reset(dbuf);
             }
 
-            return res;
+            break;
         }
         else
         {
             // Handle all the zenoh message, one by one
             unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; i++)
-            {
-                int res = _zn_handle_zenoh_message(ztu->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
-                if (res != _z_res_t_OK)
-                    return res;
-            }
-            return _z_res_t_OK;
+                _zn_handle_zenoh_message(ztu->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
         }
+        break;
     }
 
     default:
     {
         _Z_ERROR("Unknown session message ID\n");
-        return _z_res_t_ERR;
+        break;
     }
     }
+
+    return _z_res_t_OK;
 }
