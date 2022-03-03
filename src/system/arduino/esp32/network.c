@@ -298,8 +298,6 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     laddr->ai_next = NULL;
     *arg_2 = laddr;
 
-    free(lsockaddr);
-
     return sock;
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_3:

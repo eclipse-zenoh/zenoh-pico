@@ -323,9 +323,12 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     laddr->ai_next = NULL;
     *arg_2 = laddr;
 
-#if defined(ZENOH_LINUX)
-    free(lsockaddr);
-#endif
+// This is leaking 16 bytes according to valgrind, but it is a know problem on some libc6 implementations:
+//    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
+// To avoid a fix to break zenoh-pico, we are let it leak for the moment.
+//#if defined(ZENOH_LINUX)
+//    free(lsockaddr);
+//#endif
 
     return sock;
 
