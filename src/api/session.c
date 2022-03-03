@@ -25,7 +25,7 @@ zn_session_t *_zn_open(z_str_t locator, int mode)
 
     _zn_transport_p_result_t res = _zn_new_transport(zn->tp_manager, locator, mode);
     if (res.tag == _z_res_t_ERR)
-        return NULL;
+        goto ERR;
 
     // Attach session and transport to one another
     zn->tp = res.value.transport;
@@ -35,6 +35,11 @@ zn_session_t *_zn_open(z_str_t locator, int mode)
         zn->tp->transport.multicast.session = zn;
 
     return zn;
+
+ERR:
+    _zn_session_free(&zn);
+
+    return NULL;
 }
 
 zn_session_t *zn_open(zn_properties_t *config)

@@ -74,8 +74,9 @@ void _zn_session_free(zn_session_t **zn)
     zn_session_t *ptr = *zn;
 
     // Clean up transports and manager
-    _zn_transport_free(&ptr->tp);
     _zn_transport_manager_free(&ptr->tp_manager);
+    if (ptr->tp != NULL)
+        _zn_transport_free(&ptr->tp);
 
     // Clean up the entities
     _zn_flush_resources(ptr);
