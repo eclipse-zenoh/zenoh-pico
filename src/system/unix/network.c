@@ -437,8 +437,11 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
         setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 
-    close(sock_recv);
-    close(sock_send);
+    if (sock_recv < 0)
+        close(sock_recv);
+
+    if (sock_send < 0)
+        close(sock_send);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
