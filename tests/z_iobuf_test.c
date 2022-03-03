@@ -168,6 +168,8 @@ void iosli_writable_readable(void)
 
     printf("  - IOSli bytes\n");
     uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    memset((uint8_t *)payload, 1, len * sizeof(uint8_t));
+
     for (size_t i = 0; i < len; i++)
     {
         payload[i] = gen_uint8();
@@ -185,6 +187,7 @@ void iosli_writable_readable(void)
     }
 
     uint8_t *buffer = (uint8_t *)malloc(len * sizeof(uint8_t));
+    memset((uint8_t *)buffer, 1, len * sizeof(uint8_t));
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
     _z_iosli_read_bytes(&ios, buffer, 0, len);
@@ -212,6 +215,11 @@ void iosli_writable_readable(void)
     _z_iosli_clear(&wios);
     assert(_z_iosli_writable(&wios) == 0);
     assert(_z_iosli_readable(&wios) == 0);
+
+    _z_iosli_clear(pios);
+    free(pios);
+    _z_iosli_clear(cios);
+    free(cios);
 
     free(buffer);
     free(payload);
@@ -251,6 +259,8 @@ void zbuf_writable_readable(void)
         printf("    Readable: %zu\n", readable);
         assert(readable == len - read);
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void zbuf_compact(void)
@@ -286,6 +296,8 @@ void zbuf_compact(void)
         }
         printf(" ]\n");
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void zbuf_view(void)
@@ -323,6 +335,8 @@ void zbuf_view(void)
 
         _z_zbuf_set_rpos(&zbf, _z_zbuf_get_rpos(&zbf) + vs);
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void wbuf_writable_readable(void)
@@ -357,6 +371,8 @@ void wbuf_writable_readable(void)
         printf("    Readable: %zu\n", readable);
         assert(readable == written);
     }
+
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_write_zbuf_read(void)

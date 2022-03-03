@@ -102,6 +102,7 @@ int main(int argc, z_str_t *argv)
     // Write data from firt session
     size_t len = MSG_LEN;
     const uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++)
