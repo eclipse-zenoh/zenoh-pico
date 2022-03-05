@@ -32,7 +32,7 @@ typedef struct
 
 _z_iosli_t _z_iosli_make(size_t capacity);
 _z_iosli_t *_z_iosli_new(size_t capacity);
-_z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t capacity, size_t r_pos, size_t w_pos);
+_z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos);
 
 size_t _z_iosli_readable(const _z_iosli_t *ios);
 uint8_t _z_iosli_read(_z_iosli_t *ios);
@@ -105,6 +105,7 @@ size_t _z_wbuf_space_left(const _z_wbuf_t *wbf);
 
 int _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b);
 int _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+int _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
 void _z_wbuf_put(_z_wbuf_t *wbf, uint8_t b, size_t pos);
 
 size_t _z_wbuf_get_rpos(const _z_wbuf_t *wbf);

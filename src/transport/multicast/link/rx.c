@@ -16,6 +16,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/config.h"
 
 _zn_transport_peer_entry_t *_zn_find_peer_entry(_zn_transport_peer_entry_list_t *l, z_bytes_t *remote_addr)
 {
@@ -159,8 +160,8 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
             _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
-            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
+            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
 
             // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
