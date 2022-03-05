@@ -187,12 +187,31 @@ int _zn_unicast_handle_transport_message(_zn_transport_unicast_t *ztu, _zn_trans
         {
             // Select the right defragmentation buffer
             _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
-            // Add the fragment to the defragmentation buffer
-            _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
+
+            uint8_t drop = 0;
+            if (_z_wbuf_len(dbuf) + t_msg->body.frame.payload.fragment.len > ZN_FRAG_MAX_SIZE)
+            {
+                // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
+                // Otherwise, last (smaller) fragments can be understood as a complete message
+                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, _z_wbuf_space_left(dbuf));
+                drop = 1;
+            }
+            else
+            {
+                // Add the fragment to the defragmentation buffer
+                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
+            }
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_E))
             {
+                // Drop message if it is bigger the max buffer size
+                if (drop == 1)
+                {
+                    _z_wbuf_reset(dbuf);
+                    break;
+                }
+
                 // Convert the defragmentation buffer into a decoding buffer
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
