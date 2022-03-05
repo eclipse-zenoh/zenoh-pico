@@ -160,8 +160,13 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
             _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
+#if ZN_DYNAMIC_MEMORY_ALLOCATION == 1
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
             entry->dbuf_best_effort = _z_wbuf_make(0, 1);
+#else
+            entry->dbuf_reliable = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+            entry->dbuf_best_effort = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+#endif
 
             // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
