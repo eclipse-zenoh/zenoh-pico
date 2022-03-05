@@ -37,6 +37,7 @@ int _z_vec_is_empty(const _z_vec_t *v);
 void _z_vec_append(_z_vec_t *v, void *e);
 void *_z_vec_get(const _z_vec_t *v, size_t pos);
 void _z_vec_set(_z_vec_t *sv, size_t pos, void *e, z_element_free_f f);
+void _z_vec_remove(_z_vec_t *sv, size_t pos, z_element_free_f f);
 
 void _z_vec_reset(_z_vec_t *v, z_element_free_f f);
 void _z_vec_clear(_z_vec_t *v, z_element_free_f f);
@@ -67,6 +68,10 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f f);
     static inline void name##_vec_set(name##_vec_t *v, size_t pos, type *e)        \
     {                                                                              \
         return _z_vec_set(v, pos, e, name##_elem_free);                            \
+    }                                                                              \
+    static inline void name##_vec_remove(name##_vec_t *v, size_t pos)              \
+    {                                                                              \
+        return _z_vec_remove(v, pos, name##_elem_free);                            \
     }                                                                              \
     static inline void name##_vec_copy(name##_vec_t *dst, const name##_vec_t *src) \
     {                                                                              \

@@ -609,17 +609,13 @@ void _z_wbuf_reset(_z_wbuf_t *wbf)
     wbf->w_idx = 0;
 
     // Reset to default iosli allocation
-    _z_iosli_vec_clear(&wbf->ioss);
-    if (wbf->is_expandable)
+    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
-        // Preallocate 4 slots in case of fragmentation
-        wbf->ioss = _z_iosli_vec_make(4);
-        __z_wbuf_new_iosli(wbf, ZN_IOSLICE_SIZE);
-    }
-    else
-    {
-        wbf->ioss = _z_iosli_vec_make(1);
-        __z_wbuf_new_iosli(wbf, wbf->capacity);
+        _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
+        if (ios->is_alloc == 0)
+            _z_iosli_vec_remove(&wbf->ioss, i);
+        else
+            _z_iosli_reset(ios);
     }
 }
 

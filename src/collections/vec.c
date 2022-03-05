@@ -110,3 +110,13 @@ void _z_vec_set(_z_vec_t *v, size_t i, void *e, z_element_free_f free_f)
         free_f(&v->val[i]);
     v->val[i] = e;
 }
+
+void _z_vec_remove(_z_vec_t *v, size_t pos, z_element_free_f free_f)
+{
+    free_f(&v->val[pos]);
+    for (size_t i = pos; i < v->len; i++)
+        v->val[pos] = v->val[pos + 1];
+
+    v->val[v->len] = NULL;
+    v->len--;
+}
