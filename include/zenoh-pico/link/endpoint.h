@@ -24,6 +24,7 @@
 /*------------------ Locator ------------------*/
 #define TCP_SCHEMA "tcp"
 #define UDP_SCHEMA "udp"
+#define BT_SCHEMA "bt"
 
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'

@@ -16,6 +16,7 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/link/config/udp.h"
+#include "zenoh-pico/link/config/bt.h"
 
 /*------------------ Locator ------------------*/
 void _zn_locator_init(_zn_locator_t *locator)
@@ -287,6 +288,8 @@ _z_str_intmap_result_t _zn_endpoint_config_from_str(const z_str_t s, const z_str
         res = _zn_tcp_config_from_str(p_start);
     else if (_z_str_eq(proto, UDP_SCHEMA))
         res = _zn_udp_config_from_str(p_start);
+    else if (_z_str_eq(proto, BT_SCHEMA))
+        res = _zn_bt_config_from_str(p_start);
     else
         goto ERR;
 
@@ -307,6 +310,8 @@ size_t _zn_endpoint_config_strlen(const _z_str_intmap_t *s, const z_str_t proto)
         len = _zn_tcp_config_strlen(s);
     else if (_z_str_eq(proto, UDP_SCHEMA))
         len = _zn_udp_config_strlen(s);
+    else if (_z_str_eq(proto, BT_SCHEMA))
+        len = _zn_bt_config_strlen(s);
     else
         goto ERR;
 
@@ -326,6 +331,8 @@ z_str_t _zn_endpoint_config_to_str(const _z_str_intmap_t *s, const z_str_t proto
         res = _zn_tcp_config_to_str(s);
     else if (_z_str_eq(proto, UDP_SCHEMA))
         res = _zn_udp_config_to_str(s);
+    else if (_z_str_eq(proto, BT_SCHEMA))
+        res = _zn_bt_config_to_str(s);
     else
         goto ERR;
 
