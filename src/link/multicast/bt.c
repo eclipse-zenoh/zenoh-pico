@@ -17,6 +17,8 @@
 #include "zenoh-pico/link/config/bt.h"
 #include "zenoh-pico/system/link/bt.h"
 
+#define SPP_MAXIMUM_PAYLOAD 128
+
 _zn_socket_result_t _zn_f_link_open_bt(void *arg, const clock_t tout)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
@@ -111,8 +113,7 @@ size_t _zn_f_link_read_exact_bt(const void *arg, uint8_t *ptr, size_t len, z_byt
 
 uint16_t _zn_get_link_mtu_bt(void)
 {
-    // @TODO: the return value should change depending on the target platform.
-    return 1450;
+    return SPP_MAXIMUM_PAYLOAD;
 }
 
 _zn_link_t *_zn_new_link_bt(_zn_endpoint_t endpoint)
