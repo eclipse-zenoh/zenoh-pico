@@ -79,9 +79,10 @@ void _zn_free_endpoint_udp(void *arg)
 }
 
 /*------------------ TCP sockets ------------------*/
-int _zn_open_tcp(void *arg)
+int _zn_open_tcp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
+    (void)tout;
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
@@ -140,7 +141,11 @@ void _zn_close_tcp(int sock)
 
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
 {
-    return recv(sock, ptr, len, 0);
+    ssize_t rb = recv(sock, ptr, len, 0);
+    if (rb < 0)
+        return SIZE_MAX;
+
+    return rb;
 }
 
 size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len)
@@ -211,8 +216,11 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
     struct sockaddr_storage raddr;
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
-    size_t rb = recvfrom(sock, ptr, len, 0,
+    ssize_t rb = recvfrom(sock, ptr, len, 0,
                          (struct sockaddr *)&raddr, &addrlen);
+
+    if (rb < 0)
+        return SIZE_MAX;
 
     return rb;
 }
@@ -450,14 +458,14 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
     struct sockaddr_storage raddr;
     unsigned int raddrlen = sizeof(struct sockaddr_storage);
 
-    size_t rb = 0;
+    ssize_t rb = 0;
     do
     {
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &raddrlen);
 
-        if(rb == SIZE_MAX) // If timeout return SIZE_MAX == -1
-            return rb;
+        if (rb < 0)
+            return SIZE_MAX;
 
         if (laddr->ai_family == AF_INET)
         {

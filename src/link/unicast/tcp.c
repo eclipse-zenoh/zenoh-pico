@@ -13,6 +13,7 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/system/link/tcp.h"
@@ -69,7 +70,12 @@ int _zn_f_link_open_tcp(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    self->socket.tcp.sock = _zn_open_tcp(self->socket.tcp.raddr);
+    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    z_str_t tout = _z_str_intmap_get(&self->endpoint.config, TCP_CONFIG_TOUT_KEY);
+    if (tout != NULL)
+        timeout = strtof(tout, NULL);
+
+    self->socket.tcp.sock = _zn_open_tcp(self->socket.tcp.raddr, timeout);
     if (self->socket.tcp.sock < 0)
         goto ERR;
 

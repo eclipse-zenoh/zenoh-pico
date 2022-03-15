@@ -47,7 +47,7 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
     }
     else
     {
-        if (_zn_link_recv_zbuf(zl, &zbf, NULL) < 0)
+        if (_zn_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX)
             goto ERR;
     }
 

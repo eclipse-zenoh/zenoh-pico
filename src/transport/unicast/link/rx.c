@@ -65,7 +65,7 @@ void _zn_unicast_recv_t_msg_na(_zn_transport_unicast_t *ztu, _zn_transport_messa
     }
     else
     {
-        if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) < 0)
+        if (_zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) == SIZE_MAX)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;

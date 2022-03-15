@@ -49,8 +49,8 @@ zn_hello_array_t _zn_scout_loop(
         _z_zbuf_reset(&zbf);
 
         // Read bytes from the socket
-        int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
-        if (len < 0)
+        size_t len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
+        if (len == SIZE_MAX)
             continue;
 
         _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);
