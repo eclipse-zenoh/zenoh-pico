@@ -188,8 +188,8 @@ int _zn_trigger_query_reply_partial(zn_session_t *zn,
         // Trigger the handler
         if (pen_qry->consolidation.reception == zn_consolidation_mode_t_LAZY)
             pen_qry->callback(*pen_rep->reply, pen_qry->arg);
-
-        pen_qry->pending_replies = _zn_pending_reply_list_push(pen_qry->pending_replies, pen_rep);
+        else
+            pen_qry->pending_replies = _zn_pending_reply_list_push(pen_qry->pending_replies, pen_rep);
     }
     else if (pen_qry->consolidation.reception == zn_consolidation_mode_t_NONE)
     {
@@ -238,16 +238,12 @@ int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *r
             // Check if this is the same resource key
             // Trigger the query handler
             if (zn_rname_intersect(rname, pen_rep->reply->data.data.key.val))
-            {
                 pen_qry->callback(*pen_rep->reply, pen_qry->arg);
-                pen_qry->pending_replies = _zn_pending_reply_list_drop_filter(pen_qry->pending_replies, _zn_pending_reply_eq, pen_rep);
-
-                _z_str_clear(rname);
-                break;
-            }
 
             pen_rps = _zn_pending_reply_list_tail(pen_rps);
         }
+
+        _z_str_clear(rname);
     }
 
     // Trigger the final query handler
