@@ -79,7 +79,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
     }
     else
     {
-        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) < 0)
+        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) == SIZE_MAX)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;

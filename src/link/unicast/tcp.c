@@ -72,7 +72,7 @@ _zn_socket_result_t _zn_f_link_open_tcp(void *arg, const clock_t tout)
     _zn_socket_result_t r;
     r.tag = _z_res_t_OK;
 
-    self->sock = _zn_open_tcp(self->raddr);
+    self->sock = _zn_open_tcp(self->raddr, tout);
     if (self->sock < 0)
         goto ERR;
 
