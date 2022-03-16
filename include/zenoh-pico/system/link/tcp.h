@@ -18,6 +18,12 @@
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 
+typedef struct
+{
+    int sock;
+    void *raddr;
+} _zn_tcp_socket_t;
+
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port);
 void _zn_free_endpoint_tcp(void *arg);
 

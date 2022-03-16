@@ -17,8 +17,6 @@
 
 #include <pthread.h>
 
-typedef int _zn_socket_t;
-
 typedef pthread_t z_task_t;
 typedef pthread_attr_t z_task_attr_t;
 typedef pthread_mutex_t z_mutex_t;

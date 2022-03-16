@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_SYSTEM_VOID_H
 #define ZENOH_PICO_SYSTEM_VOID_H
 
-typedef void *_zn_socket_t;
-
 typedef void *z_task_t;
 typedef void *z_task_attr_t;
 typedef void *z_mutex_t;
