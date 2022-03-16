@@ -19,7 +19,7 @@ _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t loc
     _zn_transport_p_result_t ret;
     _zn_transport_t *zt = NULL;
 
-    _zn_link_p_result_t res_zl = _zn_open_link(locator, ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT);
+    _zn_link_p_result_t res_zl = _zn_open_link(locator);
     if (res_zl.tag == _z_res_t_ERR)
         goto ERR_1;
 
@@ -57,7 +57,7 @@ _zn_transport_p_result_t _zn_new_transport_peer(z_str_t locator, z_bytes_t local
     _zn_transport_p_result_t ret;
     _zn_transport_t *zt = NULL;
 
-    _zn_link_p_result_t res_zl = _zn_listen_link(locator, ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT);
+    _zn_link_p_result_t res_zl = _zn_listen_link(locator);
     if (res_zl.tag == _z_res_t_ERR)
         goto ERR_1;
 

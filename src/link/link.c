@@ -16,7 +16,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
+_zn_link_p_result_t _zn_open_link(const z_str_t locator)
 {
     _zn_link_p_result_t r;
 
@@ -41,8 +41,7 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
         goto ERR2;
 
     // Open transport link for communication
-    _zn_socket_result_t r_sock = r.value.link->open_f(r.value.link, tout);
-    if (r_sock.tag == _z_res_t_ERR)
+    if (r.value.link->open_f(r.value.link) < 0)
         goto ERR3;
 
     r.tag = _z_res_t_OK;
@@ -62,7 +61,7 @@ ERR1:
     return r;
 }
 
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
+_zn_link_p_result_t _zn_listen_link(const z_str_t locator)
 {
     _zn_link_p_result_t r;
 
@@ -84,8 +83,7 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
         goto ERR2;
 
     // Open transport link for listening
-    _zn_socket_result_t r_sock = r.value.link->listen_f(r.value.link, tout);
-    if (r_sock.tag == _z_res_t_ERR)
+    if (r.value.link->listen_f(r.value.link) < 0)
         goto ERR3;
 
     r.tag = _z_res_t_OK;
