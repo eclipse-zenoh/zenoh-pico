@@ -26,17 +26,14 @@ _zn_transport_message_result_t _zn_link_recv_t_msg(const _zn_link_t *zl)
 
     if (zl->is_streamed == 1)
     {
-        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-        //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-        //       the boundary of the serialized messages. The length is encoded as little-endian.
-        //       In any case, the length of a message must not exceed 65_535 bytes.
-
         // Read the message length
         if (_zn_link_recv_exact_zbuf(zl, &zbf, _ZN_MSG_LEN_ENC_SIZE, NULL) != _ZN_MSG_LEN_ENC_SIZE)
             goto ERR;
 
-        uint16_t len = _z_zbuf_read(&zbf) | (_z_zbuf_read(&zbf) << 8);
+        size_t len = 0;
+        for (int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            len |= _z_zbuf_read(&zbf) << (i * 8);
+
         size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);
         if (writable < len)
             goto ERR;
