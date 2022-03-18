@@ -195,7 +195,7 @@ void _zn_free_endpoint_udp(void *arg)
 }
 
 /*------------------ TCP sockets ------------------*/
-int _zn_open_tcp(void *arg)
+int _zn_open_tcp(void *arg, const clock_t tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
 
@@ -262,7 +262,7 @@ size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
     __zn_wifi_socket_t lookup = {.sock = sock};
     __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
     if (xs == NULL)
-        return -1;
+        return SIZE_MAX;
 
     __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
@@ -280,7 +280,7 @@ size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len)
         }
 
         if (recv(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
-            return -1;
+            return SIZE_MAX;
         m2m_wifi_handle_events(NULL);
     } while (1);
 
@@ -310,7 +310,7 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
     m2m_wifi_handle_events(NULL);
 
     if (send(sock, (void*)ptr, len, 0) < 0)
-        return -1;
+        return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
 
@@ -388,7 +388,7 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
     __zn_wifi_socket_t lookup = {.sock = sock};
     __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
     if (xs == NULL)
-        return -1;
+        return SIZE_MAX;
 
     __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
@@ -404,7 +404,7 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
         }
 
         if (recvfrom(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
-            return -1;
+            return SIZE_MAX;
         m2m_wifi_handle_events(NULL);
     } while (1);
 
@@ -435,7 +435,7 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
     if (sendto(sock, (void*)ptr, len, 0, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
-        return -1;
+        return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
 
@@ -518,7 +518,7 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
     __zn_wifi_socket_t lookup = {.sock = sock};
     __zn_wifi_socket_list_t *xs = __zn_wifi_socket_list_find(g_wifi_buffers, __zn_wifi_socket_eq, &lookup);
     if (xs == NULL)
-        return -1;
+        return SIZE_MAX;
 
     __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     do
@@ -534,7 +534,7 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
         }
 
         if (recvfrom(sock, ws->buffer_current, ws->buffer_available, 0) < 0)
-            return -1;
+            return SIZE_MAX;
         m2m_wifi_handle_events(NULL);
     } while (1);
 
@@ -565,7 +565,7 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
     if (sendto(sock, (void*)ptr, len, 0, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
-        return -1;
+        return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
 

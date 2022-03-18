@@ -69,7 +69,7 @@ void _zn_free_endpoint_udp(void *arg)
 }
 
 /*------------------ TCP sockets ------------------*/
-int _zn_open_tcp(void *arg)
+int _zn_open_tcp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
@@ -431,7 +431,7 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &addrlen);
 
-        if(rb == -1) // If timeout return -1
+        if(rb == SIZE_MAX)
             return rb;
 
         if (laddr->ai_family == AF_INET)
