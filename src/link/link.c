@@ -16,7 +16,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
+_zn_link_p_result_t _zn_open_link(const z_str_t locator)
 {
     _zn_link_p_result_t r;
 
@@ -37,8 +37,7 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator, clock_t tout)
         goto ERR2;
 
     // Open transport link for communication
-    _zn_socket_result_t r_sock = r.value.link->open_f(r.value.link, tout);
-    if (r_sock.tag == _z_res_t_ERR)
+    if (r.value.link->open_f(r.value.link) < 0)
         goto ERR3;
 
     r.tag = _z_res_t_OK;
@@ -58,7 +57,7 @@ ERR1:
     return r;
 }
 
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
+_zn_link_p_result_t _zn_listen_link(const z_str_t locator)
 {
     _zn_link_p_result_t r;
 
@@ -76,8 +75,7 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator, clock_t tout)
         goto ERR2;
 
     // Open transport link for listening
-    _zn_socket_result_t r_sock = r.value.link->listen_f(r.value.link, tout);
-    if (r_sock.tag == _z_res_t_ERR)
+    if (r.value.link->listen_f(r.value.link) < 0)
         goto ERR3;
 
     r.tag = _z_res_t_OK;
@@ -110,18 +108,18 @@ void _zn_link_free(_zn_link_t **zn)
     *zn = NULL;
 }
 
-int _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr)
+size_t _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr)
 {
-    int rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
-    if (rb > 0)
+    size_t rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
+    if (rb != SIZE_MAX)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
 
-int _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len, z_bytes_t *addr)
+size_t _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len, z_bytes_t *addr)
 {
-    int rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
-    if (rb > 0)
+    size_t rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
+    if (rb != SIZE_MAX)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
 }
@@ -131,14 +129,14 @@ int _zn_link_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf)
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++)
     {
         z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-        int n = bs.len;
-        int wb;
+        size_t n = bs.len;
+        size_t wb;
         do
         {
             _Z_DEBUG("Sending wbuf on socket...");
             wb = link->write_f(link, bs.val, n);
             _Z_DEBUG(" sent %d bytes\n", wb);
-            if (wb <= 0)
+            if (wb == SIZE_MAX)
             {
                 _Z_DEBUG("Error while sending data over socket [%d]\n", wb);
                 return -1;

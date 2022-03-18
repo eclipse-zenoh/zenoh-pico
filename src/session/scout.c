@@ -27,7 +27,7 @@ zn_hello_array_t _zn_scout_loop(
     ls.len = 0;
     ls.val = NULL;
 
-    _zn_link_p_result_t r_scout = _zn_open_link(locator, period);
+    _zn_link_p_result_t r_scout = _zn_open_link(locator);
     if (r_scout.tag == _z_res_t_ERR)
         return ls;
 
@@ -49,8 +49,8 @@ zn_hello_array_t _zn_scout_loop(
         _z_zbuf_reset(&zbf);
 
         // Read bytes from the socket
-        int len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
-        if (len < 0)
+        size_t len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
+        if (len == SIZE_MAX)
             continue;
 
         _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);

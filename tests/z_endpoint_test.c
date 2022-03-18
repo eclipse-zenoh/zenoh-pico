@@ -138,7 +138,7 @@ int main(void)
     assert(eres.tag == _z_res_t_ERR);
     assert(eres.value.error == _z_err_t_PARSE_STRING);
 
-    sprintf(s, "udp/127.0.0.1:7447#%s=eth0", UDP_CONFIG_MULTICAST_IFACE_STR);
+    sprintf(s, "udp/127.0.0.1:7447#%s=eth0", UDP_CONFIG_IFACE_STR);
     printf("- %s\n", s);
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_OK);
@@ -146,7 +146,7 @@ int main(void)
     assert(_z_str_eq(eres.value.endpoint.locator.address, "127.0.0.1:7447"));
     assert(_z_str_intmap_is_empty(&eres.value.endpoint.locator.metadata));
     assert(_z_str_intmap_len(&eres.value.endpoint.config) == 1);
-    z_str_t p = _z_str_intmap_get(&eres.value.endpoint.config, UDP_CONFIG_MULTICAST_IFACE_KEY);
+    z_str_t p = _z_str_intmap_get(&eres.value.endpoint.config, UDP_CONFIG_IFACE_KEY);
     assert(_z_str_eq(p, "eth0"));
     (void) (p);
     _zn_endpoint_clear(&eres.value.endpoint);
@@ -157,7 +157,7 @@ int main(void)
     assert(eres.tag == _z_res_t_ERR);
     assert(eres.value.error == _z_err_t_PARSE_STRING);
 
-    sprintf(s, "udp/127.0.0.1:7447?invalid=ctrl#%s=eth0", UDP_CONFIG_MULTICAST_IFACE_STR);
+    sprintf(s, "udp/127.0.0.1:7447?invalid=ctrl#%s=eth0", UDP_CONFIG_IFACE_STR);
     printf("- %s\n", s);
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_ERR);

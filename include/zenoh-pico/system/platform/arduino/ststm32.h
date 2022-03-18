@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
 
-typedef void * _zn_socket_t;
-
 typedef void * z_task_t;
 typedef void * z_task_attr_t;
 typedef void * z_mutex_t;

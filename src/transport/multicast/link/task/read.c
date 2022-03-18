@@ -49,46 +49,34 @@ void *_znp_multicast_read_task(void *arg)
     z_bytes_t addr;
     while (ztm->read_task_running)
     {
+        // Read bytes from socket to the main buffer
         size_t to_read = 0;
         if (ztm->link->is_streamed == 1)
         {
-            // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-            //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-            //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-            //       the boundary of the serialized messages. The length is encoded as little-endian.
-            //       In any case, the length of a message must not exceed 65_535 bytes.
             if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
             {
-                _z_zbuf_compact(&ztm->zbuf);
-                // Read number of bytes to read
-                while (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
-                {
-                    if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL) <= 0)
-                        goto EXIT_RECV_LOOP;
-                }
+                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
+                if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
+                    continue;
             }
 
-            // Decode the message length
-            to_read = (size_t)((uint16_t)_z_zbuf_read(&ztm->zbuf) | ((uint16_t)_z_zbuf_read(&ztm->zbuf) << 8));
+            for (int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+                to_read |= _z_zbuf_read(&ztm->zbuf) << (i * 8);
 
             if (_z_zbuf_len(&ztm->zbuf) < to_read)
             {
-                _z_zbuf_compact(&ztm->zbuf);
-                // Read the rest of bytes to decode one or more session messages
-                while (_z_zbuf_len(&ztm->zbuf) < to_read)
+                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
+                if (_z_zbuf_len(&ztm->zbuf) < to_read)
                 {
-                    if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr) <= 0)
-                        goto EXIT_RECV_LOOP;
+                    _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) - _ZN_MSG_LEN_ENC_SIZE);
+                    continue;
                 }
             }
         }
         else
         {
-            _z_zbuf_compact(&ztm->zbuf);
-
-            // Read bytes from the socket
             to_read = _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
-            if (to_read == SIZE_MAX) // if to_read == -1
+            if (to_read == SIZE_MAX)
                 continue;
         }
 
@@ -121,6 +109,7 @@ void *_znp_multicast_read_task(void *arg)
 
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) + to_read);
+        _z_zbuf_compact(&ztm->zbuf);
     }
 
 EXIT_RECV_LOOP:

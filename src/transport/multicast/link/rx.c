@@ -46,12 +46,6 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
 
     if (ztm->link->is_streamed == 1)
     {
-        // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-        //       in bytes of the message, resulting in the maximum len gth of a message being 65_535 bytes.
-        //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-        //       the boundary of the serialized messages. The length is encoded as little-endian.
-        //       In any case, the length of a message must not exceed 65_535 bytes.
-
         // Read the message length
         if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _ZN_MSG_LEN_ENC_SIZE, addr) != _ZN_MSG_LEN_ENC_SIZE)
         {
@@ -60,7 +54,10 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
             goto EXIT_SRCV_PROC;
         }
 
-        uint16_t len = _z_zbuf_read(&ztm->zbuf) | (_z_zbuf_read(&ztm->zbuf) << 8);
+        size_t len = 0;
+        for (int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+            len |= _z_zbuf_read(&ztm->zbuf) << (i * 8);
+
         _Z_DEBUG(">> \t msg len = %hu\n", len);
         size_t writable = _z_zbuf_capacity(&ztm->zbuf) - _z_zbuf_len(&ztm->zbuf);
         if (writable < len)
@@ -80,7 +77,7 @@ void _zn_multicast_recv_t_msg_na(_zn_transport_multicast_t *ztm, _zn_transport_m
     }
     else
     {
-        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) < 0)
+        if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) == SIZE_MAX)
         {
             r->tag = _z_res_t_ERR;
             r->value.error = _zn_err_t_IO_GENERIC;
