@@ -17,6 +17,8 @@
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS)
 #include "zenoh-pico/system/platform/unix.h"
+#elif defined(ZENOH_ESPIDF)
+#include "zenoh-pico/system/platform/espidf.h"
 #elif defined(ZENOH_ZEPHYR)
 #include "zenoh-pico/system/platform/zephyr.h"
 #elif defined(ZENOH_ARDUINO_ESP32)
