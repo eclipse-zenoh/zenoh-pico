@@ -18,6 +18,14 @@
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 
+typedef struct
+{
+    int sock;
+    int msock;
+    void *raddr;
+    void *laddr;
+} _zn_udp_socket_t;
+
 void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port);
 void _zn_free_endpoint_udp(void *arg);
 

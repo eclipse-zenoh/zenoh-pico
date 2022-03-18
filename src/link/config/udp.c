@@ -45,7 +45,5 @@ _z_str_intmap_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n)
 
 _z_str_intmap_result_t _zn_udp_config_from_str(const z_str_t s)
 {
-    UDP_CONFIG_MAPPING_BUILD
-
-    return _z_str_intmap_from_str(s, argc, args);
+    return _zn_udp_config_from_strn(s, strlen(s));
 }

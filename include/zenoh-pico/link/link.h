@@ -17,15 +17,13 @@
 
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/system/link/tcp.h"
+#include "zenoh-pico/system/link/udp.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Link ------------------*/
-// @TODO: abstract the socket abstraction
-_ZN_RESULT_DECLARE(_zn_socket_t, socket)
-
-// @TODO: open and listen shouldn't return socket but rather an abstract link state
-typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
-typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, clock_t tout);
+typedef int (*_zn_f_link_open)(void *arg);
+typedef int (*_zn_f_link_listen)(void *arg);
 typedef void (*_zn_f_link_close)(void *arg);
 typedef size_t (*_zn_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
@@ -35,16 +33,15 @@ typedef void (*_zn_f_link_free)(void *arg);
 
 typedef struct
 {
-    // @TODO: uniform sockets into an opaque struct
-    _zn_socket_t sock;            // FIXME: move this to the abstraction
-    _zn_socket_t mcast_send_sock; // FIXME: move this to the abstraction
-
     _zn_endpoint_t endpoint;
-    void *raddr; // This is system specific and only used in its implementation
-    void *laddr; // This is system specific and only used in its implementation
 
-    // Function pointers
-    _zn_f_link_open open_f; // @TODO: rename this method (e.g. connect)
+    union
+    {
+        _zn_tcp_socket_t tcp;
+        _zn_udp_socket_t udp;
+    } socket;
+
+    _zn_f_link_open open_f;
     _zn_f_link_listen listen_f;
     _zn_f_link_close close_f;
     _zn_f_link_write write_f;
@@ -63,8 +60,8 @@ _ZN_RESULT_DECLARE(_zn_link_t, link)
 _ZN_P_RESULT_DECLARE(_zn_link_t, link)
 
 void _zn_link_free(_zn_link_t **zn);
-_zn_link_p_result_t _zn_open_link(const z_str_t locator, const clock_t tout);
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator, const clock_t tout);
+_zn_link_p_result_t _zn_open_link(const z_str_t locator);
+_zn_link_p_result_t _zn_listen_link(const z_str_t locator);
 
 int _zn_link_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf);
 size_t _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr);

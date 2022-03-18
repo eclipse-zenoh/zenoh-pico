@@ -18,14 +18,19 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#define UDP_CONFIG_MULTICAST_IFACE_KEY 0x01
-#define UDP_CONFIG_MULTICAST_IFACE_STR "iface"
+#define UDP_CONFIG_IFACE_KEY 0x01
+#define UDP_CONFIG_IFACE_STR "iface"
 
-#define UDP_CONFIG_MAPPING_BUILD                  \
-    int argc = 1;                                 \
-    _z_str_intmapping_t args[argc];               \
-    args[0].key = UDP_CONFIG_MULTICAST_IFACE_KEY; \
-    args[0].str = UDP_CONFIG_MULTICAST_IFACE_STR;
+#define UDP_CONFIG_TOUT_KEY  0x02
+#define UDP_CONFIG_TOUT_STR  "tout"
+
+#define UDP_CONFIG_MAPPING_BUILD        \
+    int argc = 2;                       \
+    _z_str_intmapping_t args[argc];     \
+    args[0].key = UDP_CONFIG_IFACE_KEY; \
+    args[0].str = UDP_CONFIG_IFACE_STR; \
+    args[1].key = UDP_CONFIG_TOUT_KEY;  \
+    args[1].str = UDP_CONFIG_TOUT_STR;
 
 size_t _zn_udp_config_strlen(const _z_str_intmap_t *s);
 

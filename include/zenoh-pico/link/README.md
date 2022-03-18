@@ -18,14 +18,14 @@ of transport links based on the provided locator.
 New transport links must implement the following structure:
 ```
 typedef struct {
-    _zn_socket_t sock;
-    _zn_socket_t mcast_send_sock;
-
     _zn_endpoint_t endpoint;
-    void *raddr;
-    void *laddr;
 
-    // Function pointers
+    union
+    {
+        _zn_tcp_socket_t tcp;
+        _zn_udp_socket_t udp;
+    } socket;
+
     _zn_f_link_open open_f;
     _zn_f_link_listen listen_f;
     _zn_f_link_close close_f;

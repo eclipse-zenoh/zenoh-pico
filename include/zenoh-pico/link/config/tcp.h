@@ -18,10 +18,14 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#define TCP_CONFIG_MAPPING_BUILD    \
-    int argc = 0;                   \
-    _z_str_intmapping_t args[argc]; \
-    (void) (args);
+#define TCP_CONFIG_TOUT_KEY  0x01
+#define TCP_CONFIG_TOUT_STR  "tout"
+
+#define TCP_CONFIG_MAPPING_BUILD       \
+    int argc = 1;                      \
+    _z_str_intmapping_t args[argc];    \
+    args[0].key = TCP_CONFIG_TOUT_KEY; \
+    args[0].str = TCP_CONFIG_TOUT_STR;
 
 size_t _zn_tcp_config_strlen(const _z_str_intmap_t *s);
 
