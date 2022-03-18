@@ -577,9 +577,11 @@ size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)
     for (int i = 0; i < len; i++)
     {
         c = sbt->read();
-        delay(1); // FIXME: without this, the read task is blocking the rest of the execution
         if (c == -1)
+        {
+            delay(1); // FIXME: without this, the read task is blocking the other tasks
             return i;
+        }
         ptr[i] = c;
     }
 
