@@ -101,6 +101,13 @@ void _z_str_clear(z_str_t src)
     free(src);
 }
 
+void _z_str_free(z_str_t *src)
+{
+    z_str_t ptr = *src;
+    _z_str_clear(ptr);
+    *src = NULL;
+}
+
 void _z_str_copy(z_str_t dst, const z_str_t src)
 {
     strcpy(dst, src);

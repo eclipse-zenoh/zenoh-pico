@@ -520,3 +520,68 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+
+/*------------------ Bluetooth sockets ------------------*/
+void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+{
+    (void) mode;
+    (void) lname;
+    (void) rname;
+    (void) profile;
+
+    // @TODO: To be implemented
+
+    return NULL;
+}
+
+void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+{
+    (void) mode;
+    (void) lname;
+    (void) rname;
+    (void) profile;
+
+    // @TODO: To be implemented
+
+    return NULL;
+}
+
+void _zn_close_bt(void *arg)
+{
+    (void) arg;
+
+    // @TODO: To be implemented
+}
+
+size_t _zn_read_exact_bt(void *arg, uint8_t *ptr, size_t len)
+{
+    (void) arg;
+    (void) ptr;
+    (void) len;
+
+    // @TODO: To be implemented
+
+    return SIZE_MAX;
+}
+
+size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)
+{
+    (void) arg;
+    (void) ptr;
+    (void) len;
+
+    // @TODO: To be implemented
+
+    return SIZE_MAX;
+}
+
+size_t _zn_send_bt(void *arg, const uint8_t *ptr, size_t len)
+{
+    (void) arg;
+    (void) ptr;
+    (void) len;
+
+    // @TODO: To be implemented
+
+    return SIZE_MAX;
+}

@@ -20,8 +20,8 @@ extern "C"
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/config/bt.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/system/link/bt.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
@@ -504,7 +504,7 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 }
 
 /*------------------ Bluetooth sockets ------------------*/
-BluetoothSerial *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
 {
     switch (profile)
     {
@@ -534,33 +534,61 @@ BluetoothSerial *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t
     }
 }
 
-BluetoothSerial *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
 {
-    // @TODO: To be implemented
+    switch (profile)
+    {
+    case _ZN_BT_PROFILE_SPP:
+    {
+        BluetoothSerial *sbt = new BluetoothSerial();
+        if (mode == _ZN_BT_MODE_SLAVE)
+        {
+            sbt->begin(lname, false);
+        }
+        else if (mode == _ZN_BT_MODE_MASTER)
+        {
+            sbt->begin(lname, true);
+            uint8_t connected = sbt->connect(rname);
+            if(!connected)
+                while(!sbt->connected(10000));
+        }
+        else
+            return NULL;
 
-    return NULL;
+        return sbt;
+    } break;
+
+    case _ZN_BT_PROFILE_UNSUPPORTED:
+    default:
+        return NULL;
+    }
 }
 
-void _zn_close_bt(BluetoothSerial *sbt)
+void _zn_close_bt(void *arg)
 {
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
     sbt->end();
 }
 
-size_t _zn_read_bt(BluetoothSerial *sbt, uint8_t *ptr, size_t len)
+size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)
 {
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    int c = 0;
     for (int i = 0; i < len; i++)
     {
-        ptr[i] = sbt->read();
+        c = sbt->read();
         delay(1); // FIXME: without this, the read task is blocking the rest of the execution
-        if(ptr[i] == 255)
+        if (c == -1)
             return i;
+        ptr[i] = c;
     }
 
     return len;
 }
 
-size_t _zn_read_exact_bt(BluetoothSerial *sbt, uint8_t *ptr, size_t len)
+size_t _zn_read_exact_bt(void *arg, uint8_t *ptr, size_t len)
 {
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
     size_t n = len;
     size_t rb = 0;
 
@@ -577,10 +605,10 @@ size_t _zn_read_exact_bt(BluetoothSerial *sbt, uint8_t *ptr, size_t len)
     return len;
 }
 
-size_t _zn_send_bt(BluetoothSerial *sbt, const uint8_t *ptr, size_t len)
+size_t _zn_send_bt(void *arg, const uint8_t *ptr, size_t len)
 {
-    for (int i = 0; i < len; i++)
-        sbt->write(ptr[i]);
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    sbt->write(ptr, len);
 
     return len;
 }

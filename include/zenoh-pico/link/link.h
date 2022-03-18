@@ -19,6 +19,7 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/system/link/tcp.h"
 #include "zenoh-pico/system/link/udp.h"
+#include "zenoh-pico/system/link/bt.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Link ------------------*/
@@ -39,6 +40,7 @@ typedef struct
     {
         _zn_tcp_socket_t tcp;
         _zn_udp_socket_t udp;
+        _zn_bt_socket_t bt;
     } socket;
 
     _zn_f_link_open open_f;

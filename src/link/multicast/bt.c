@@ -19,96 +19,100 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-_zn_socket_result_t _zn_f_link_open_bt(void *arg, const clock_t tout)
+int _zn_f_link_open_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
-    _zn_socket_result_t r;
-    r.tag = _z_res_t_OK;
 
-    // FIXME: The listen and open procedures
-    self->sock = _zn_open_bt(self->endpoint.locator.address, _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), tout);
-    if (self->sock < 0)
+    self->socket.bt.sock = _zn_open_bt(strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
+                                       _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY),
+                                       _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY),
+                                       strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_PROFILE_KEY), "spp") == 0 ? _ZN_BT_PROFILE_SPP : _ZN_BT_PROFILE_UNSUPPORTED);
+    if (self->socket.bt.sock == NULL)
         goto ERR;
 
-    r.value.socket = self->sock;
-    return r;
+    self->socket.bt.lname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY));
+    self->socket.bt.rname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY));
+
+    return 0;
 
 ERR:
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    return r;
+    return -1;
 }
 
-_zn_socket_result_t _zn_f_link_listen_bt(void *arg, const clock_t tout)
+int _zn_f_link_listen_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
-    _zn_socket_result_t r;
-    r.tag = _z_res_t_OK;
 
-    // FIXME: The listen and open procedures
-    self->sock = _zn_listen_bt(self->endpoint.locator.address, _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), tout);
-    if (self->sock < 0)
+    self->socket.bt.sock = _zn_listen_bt(strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
+                                         _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY),
+                                         _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY),
+                                         strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_PROFILE_KEY), "spp") == 0 ? _ZN_BT_PROFILE_SPP : _ZN_BT_PROFILE_UNSUPPORTED);
+    if (self->socket.bt.sock == NULL)
         goto ERR;
 
-    // FIXME: The listen and open procedures
-    self->mcast_send_sock = _zn_open_bt(self->endpoint.locator.address, _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), tout);
-    if (self->mcast_send_sock < 0)
-        goto ERR;
+    self->socket.bt.lname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY));
+    self->socket.bt.rname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY));
 
-    r.value.socket = self->sock; // FIXME: we do not need to return it anymore
-    return r;
+    return 0;
 
 ERR:
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_OPEN_TRANSPORT_FAILED;
-    return r;
+    return -1;
 }
 
 void _zn_f_link_close_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    _zn_close_bt(self->sock);
+    _zn_close_bt(self->socket.bt.sock);
 }
 
 void _zn_f_link_free_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
-
-    _zn_free_endpoint_bt(self->raddr);
-    _zn_free_endpoint_bt(self->laddr);
+    _z_str_free(&self->socket.bt.lname);
+    _z_str_free(&self->socket.bt.rname);
 }
 
 size_t _zn_f_link_write_bt(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    return _zn_send_bt(self->mcast_send_sock, ptr, len, self->raddr);
+    return _zn_send_bt(self->socket.bt.sock, ptr, len);
 }
 
 size_t _zn_f_link_write_all_bt(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    return _zn_send_bt(self->mcast_send_sock, ptr, len, self->raddr);
+    return _zn_send_bt(self->socket.bt.sock, ptr, len);
 }
 
 size_t _zn_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    // FIXME: get the sender address
+    size_t rb  = _zn_read_bt(self->socket.bt.sock, ptr, len);
+    if (rb > 0 && addr != NULL)
+    {
+        *addr = _z_bytes_make(strlen(self->socket.bt.rname));
+        memcpy((void *)addr->val, self->socket.bt.rname, addr->len);
+    }
 
-    return _zn_read_bt(self->sock, ptr, len);
+    return rb;
 }
 
 size_t _zn_f_link_read_exact_bt(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
-    // FIXME: get the sender address
+    size_t rb  = _zn_read_exact_bt(self->socket.bt.sock, ptr, len);
+    if (rb == len && addr != NULL)
+    {
+        *addr = _z_bytes_make(strlen(self->socket.bt.rname));
+        memcpy((void *)addr->val, self->socket.bt.rname, addr->len);
+    }
 
-    return _zn_read_exact_bt(self->sock, ptr, len);
+    return rb;
 }
 
 uint16_t _zn_get_link_mtu_bt(void)
@@ -125,9 +129,9 @@ _zn_link_t *_zn_new_link_bt(_zn_endpoint_t endpoint)
     lt->is_multicast = 1;
     lt->mtu = _zn_get_link_mtu_bt();
 
-    lt->raddr = NULL;
-    lt->laddr = NULL;
     lt->endpoint = endpoint;
+
+    lt->socket.bt.sock = NULL;
 
     lt->open_f = _zn_f_link_open_bt;
     lt->listen_f = _zn_f_link_listen_bt;

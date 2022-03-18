@@ -63,7 +63,7 @@ void *_znp_multicast_read_task(void *arg)
                 // Read number of bytes to read
                 while (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
                 {
-                    if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL) <= 0)
+                    if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _ZN_MSG_LEN_ENC_SIZE, &addr) < 0)
                         goto EXIT_RECV_LOOP;
                 }
             }
@@ -77,7 +77,7 @@ void *_znp_multicast_read_task(void *arg)
                 // Read the rest of bytes to decode one or more session messages
                 while (_z_zbuf_len(&ztm->zbuf) < to_read)
                 {
-                    if (_zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr) <= 0)
+                    if (_zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, to_read, NULL) < 0)
                         goto EXIT_RECV_LOOP;
                 }
             }

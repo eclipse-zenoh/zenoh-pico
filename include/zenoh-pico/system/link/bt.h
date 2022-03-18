@@ -18,15 +18,32 @@
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 
-void *_zn_create_endpoint_bt(const z_str_t s_addr);
-void _zn_free_endpoint_bt(void *arg);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Unicast
-int _zn_open_bt(void *arg, z_str_t mode, const clock_t tout);
-int _zn_listen_bt(void *arg, z_str_t mode, const clock_t tout);
-void _zn_close_bt(int sock);
-size_t _zn_read_exact_bt(int sock, uint8_t *ptr, size_t len);
-size_t _zn_read_bt(int sock, uint8_t *ptr, size_t len);
-size_t _zn_send_bt(int sock, const uint8_t *ptr, size_t len, void *arg);
+#define _ZN_BT_MODE_MASTER 0
+#define _ZN_BT_MODE_SLAVE  1
+
+#define _ZN_BT_PROFILE_UNSUPPORTED 255
+#define _ZN_BT_PROFILE_SPP 0
+
+typedef struct
+{
+    void *sock;
+    z_str_t rname; // FIXME: To be replaced by its addr
+    z_str_t lname; // FIXME: To be replaced by its addr
+} _zn_bt_socket_t;
+
+void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile);
+void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile);
+void _zn_close_bt(void *);
+size_t _zn_read_exact_bt(void *, uint8_t *ptr, size_t len);
+size_t _zn_read_bt(void *, uint8_t *ptr, size_t len);
+size_t _zn_send_bt(void *, const uint8_t *ptr, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_BT_H */
