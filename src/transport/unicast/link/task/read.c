@@ -53,7 +53,7 @@ void *_znp_unicast_read_task(void *arg)
         {
             if (_z_zbuf_len(&ztu->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
             {
-                _zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, _ZN_MSG_LEN_ENC_SIZE, NULL);
+                _zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL);
                 if (_z_zbuf_len(&ztu->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
                     continue;
             }
@@ -63,7 +63,7 @@ void *_znp_unicast_read_task(void *arg)
 
             if (_z_zbuf_len(&ztu->zbuf) < to_read)
             {
-                _zn_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, to_read, NULL);
+                _zn_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL);
                 if (_z_zbuf_len(&ztu->zbuf) < to_read)
                 {
                     _z_zbuf_set_rpos(&ztu->zbuf, _z_zbuf_get_rpos(&ztu->zbuf) - _ZN_MSG_LEN_ENC_SIZE);
