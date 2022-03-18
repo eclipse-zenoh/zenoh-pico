@@ -55,7 +55,7 @@ void *_znp_multicast_read_task(void *arg)
         {
             if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
             {
-                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
+                _zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _ZN_MSG_LEN_ENC_SIZE, &addr);
                 if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
                     continue;
             }
@@ -65,7 +65,7 @@ void *_znp_multicast_read_task(void *arg)
 
             if (_z_zbuf_len(&ztm->zbuf) < to_read)
             {
-                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
+                _zn_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, to_read, NULL);
                 if (_z_zbuf_len(&ztm->zbuf) < to_read)
                 {
                     _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) - _ZN_MSG_LEN_ENC_SIZE);
