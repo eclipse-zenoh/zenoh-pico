@@ -110,7 +110,7 @@
 #define ZN_ATTACHMENT_BUF_LEN 16384
 #define ZN_PID_LENGTH 8
 #define ZN_TSID_LENGTH 16
-#define ZN_PROTO_VERSION 0x00
+#define ZN_PROTO_VERSION 0x06
 /**
  * Default session lease in milliseconds: 10 seconds
  */
