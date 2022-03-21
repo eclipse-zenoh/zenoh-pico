@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_CONFIG_API_H
-#define ZENOH_PICO_CONFIG_API_H
+#ifndef ZENOH_PICO_CONFIG_NETAPI_H
+#define ZENOH_PICO_CONFIG_NETAPI_H
 
 #include "zenoh-pico/utils/properties.h"
 #include "zenoh-pico/collections/string.h"
@@ -45,4 +45,4 @@ zn_properties_t *zn_config_default(void);
  */
 zn_properties_t *zn_config_client(const z_str_t locator);
 
-#endif /* ZENOH_PICO_CONFIG_API_H */
+#endif /* ZENOH_PICO_CONFIG_NETAPI_H */

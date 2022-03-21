@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_QUERY_H
 #define ZENOH_PICO_SESSION_QUERY_H
 
-#include "zenoh-pico/api/session.h"
+#include "zenoh-pico/net/session.h"
 
 /*------------------ Query ------------------*/
 z_zint_t _zn_get_query_id(zn_session_t *zn);

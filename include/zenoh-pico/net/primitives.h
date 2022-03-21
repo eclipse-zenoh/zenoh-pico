@@ -12,13 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_PRIMITIVES_API_H
-#define ZENOH_PICO_PRIMITIVES_API_H
+#ifndef ZENOH_PICO_PRIMITIVES_NETAPI_H
+#define ZENOH_PICO_PRIMITIVES_NETAPI_H
 
-#include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/subscribe.h"
-#include "zenoh-pico/api/publish.h"
-#include "zenoh-pico/api/query.h"
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/net/subscribe.h"
+#include "zenoh-pico/net/publish.h"
+#include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/encoding.h"
 #include "zenoh-pico/collections/string.h"
@@ -259,4 +259,4 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
  */
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, const size_t len);
 
-#endif /* ZENOH_PICO_PRIMITIVES_API_H */
+#endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

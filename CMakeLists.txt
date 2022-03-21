@@ -103,6 +103,7 @@ include_directories(
 if (UNIX)
   file(GLOB Sources "src/*.c"
                     "src/api/*.c"
+                    "src/net/*.c"
                     "src/collections/*.c"
                     "src/link/*.c"
                     "src/link/config/*.c"

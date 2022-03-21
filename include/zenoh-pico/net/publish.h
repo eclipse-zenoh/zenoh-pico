@@ -12,13 +12,19 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/subscribe.h"
+#ifndef ZENOH_PICO_PUBLISH_NETAPI_H
+#define ZENOH_PICO_PUBLISH_NETAPI_H
 
-zn_subinfo_t zn_subinfo_default()
+#include "zenoh-pico/protocol/core.h"
+
+/**
+ * Return type when declaring a publisher.
+ */
+typedef struct
 {
-    zn_subinfo_t si;
-    si.reliability = zn_reliability_t_RELIABLE;
-    si.mode = zn_submode_t_PUSH;
-    si.period = NULL;
-    return si;
-}
+    void *zn;  // FIXME: zn_session_t *zn;
+    z_zint_t id;
+    zn_reskey_t key;
+} zn_publisher_t;
+
+#endif /* ZENOH_PICO_PUBLISH_NETAPI_H */

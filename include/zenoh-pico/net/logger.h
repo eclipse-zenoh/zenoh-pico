@@ -12,28 +12,12 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/resource.h"
+#ifndef ZENOH_PICO_LOGGER_NETAPI_H
+#define ZENOH_PICO_LOGGER_NETAPI_H
 
-zn_reskey_t zn_rid(unsigned long rid)
-{
-    zn_reskey_t rk;
-    rk.rid = rid;
-    rk.rname = NULL;
-    return rk;
-}
+/**
+ * Initialise the zenoh runtime logger
+ */
+void z_init_logger(void);
 
-zn_reskey_t zn_rname(const z_str_t rname)
-{
-    zn_reskey_t rk;
-    rk.rid = ZN_RESOURCE_ID_NONE;
-    rk.rname = _z_str_clone(rname);
-    return rk;
-}
-
-zn_reskey_t zn_rid_with_suffix(unsigned long rid, const z_str_t suffix)
-{
-    zn_reskey_t rk;
-    rk.rid = rid;
-    rk.rname = _z_str_clone(suffix);
-    return rk;
-}
+#endif /* ZENOH_PICO_LOGGER_NETAPI_H */

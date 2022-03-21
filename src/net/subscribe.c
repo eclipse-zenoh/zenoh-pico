@@ -12,10 +12,13 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/logger.h"
+#include "zenoh-pico/net/subscribe.h"
 
-/*------------------ Init/Config ------------------*/
-void z_init_logger()
+zn_subinfo_t zn_subinfo_default()
 {
-    // @TODO
+    zn_subinfo_t si;
+    si.reliability = zn_reliability_t_RELIABLE;
+    si.mode = zn_submode_t_PUSH;
+    si.period = NULL;
+    return si;
 }

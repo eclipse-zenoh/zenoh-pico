@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/session.h"
-#include "zenoh-pico/api/memory.h"
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"

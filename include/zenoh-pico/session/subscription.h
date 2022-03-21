@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_SUBSCRIPTION_H
 #define ZENOH_PICO_SESSION_SUBSCRIPTION_H
 
-#include "zenoh-pico/api/session.h"
+#include "zenoh-pico/net/session.h"
 
 /*------------------ Subscription ------------------*/
 _zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, const z_zint_t id);

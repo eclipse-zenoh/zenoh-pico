@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_UTILS_H
 #define ZENOH_PICO_SESSION_UTILS_H
 
-#include "zenoh-pico/api/session.h"
+#include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
 zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period, const int exit_on_first);

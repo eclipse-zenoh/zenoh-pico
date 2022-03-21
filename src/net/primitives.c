@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/logger.h"
+#include "zenoh-pico/net/primitives.h"
+#include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/query.h"

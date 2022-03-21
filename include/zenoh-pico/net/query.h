@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_QUERY_API_H
-#define ZENOH_PICO_QUERY_API_H
+#ifndef ZENOH_PICO_QUERY_NETAPI_H
+#define ZENOH_PICO_QUERY_NETAPI_H
 
 #include "zenoh-pico/protocol/core.h"
 
@@ -107,4 +107,4 @@ zn_query_target_t zn_query_target_default(void);
  */
 int zn_query_target_equal(const zn_query_target_t *left, const zn_query_target_t *right);
 
-#endif /* ZENOH_PICO_QUERY_API_H */
+#endif /* ZENOH_PICO_QUERY_NETAPI_H */

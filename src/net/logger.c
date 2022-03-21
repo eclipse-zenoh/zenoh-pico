@@ -12,19 +12,10 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_PUBLISH_API_H
-#define ZENOH_PICO_PUBLISH_API_H
+#include "zenoh-pico/net/logger.h"
 
-#include "zenoh-pico/protocol/core.h"
-
-/**
- * Return type when declaring a publisher.
- */
-typedef struct
+/*------------------ Init/Config ------------------*/
+void z_init_logger()
 {
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-    zn_reskey_t key;
-} zn_publisher_t;
-
-#endif /* ZENOH_PICO_PUBLISH_API_H */
+    // @TODO
+}

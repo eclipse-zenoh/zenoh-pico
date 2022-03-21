@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_RESOURCE_API_H
-#define ZENOH_PICO_RESOURCE_API_H
+#ifndef ZENOH_PICO_RESOURCE_NETAPI_H
+#define ZENOH_PICO_RESOURCE_NETAPI_H
 
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/collections/string.h"
@@ -52,4 +52,4 @@ zn_reskey_t zn_rname(const z_str_t rname);
  */
 zn_reskey_t zn_rid_with_suffix(unsigned long rid, const z_str_t suffix);
 
-#endif /* ZENOH_PICO_RESOURCE_API_H */
+#endif /* ZENOH_PICO_RESOURCE_NETAPI_H */

@@ -12,7 +12,7 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/api/memory.h"
+#include "zenoh-pico/net/memory.h"
 
 void zn_sample_free(zn_sample_t sample)
 {

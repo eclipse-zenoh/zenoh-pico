@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_MEMORY_API_H
-#define ZENOH_PICO_MEMORY_API_H
+#ifndef ZENOH_PICO_MEMORY_NETAPI_H
+#define ZENOH_PICO_MEMORY_NETAPI_H
 
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -42,4 +42,4 @@ void zn_hello_array_free(zn_hello_array_t hellos);
  */
 void zn_reply_data_array_free(zn_reply_data_array_t replies);
 
-#endif /* ZENOH_PICO_MEMORY_API_H */
+#endif /* ZENOH_PICO_MEMORY_NETAPI_H */

@@ -12,12 +12,26 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_LOGGER_API_H
-#define ZENOH_PICO_LOGGER_API_H
+#ifndef ZENOH_PICO_SUBSCRIBE_NETAPI_H
+#define ZENOH_PICO_SUBSCRIBE_NETAPI_H
+
+#include "zenoh-pico/protocol/core.h"
 
 /**
- * Initialise the zenoh runtime logger
+ * Return type when declaring a subscriber.
  */
-void z_init_logger(void);
+typedef struct
+{
+    void *zn;  // FIXME: zn_session_t *zn;
+    z_zint_t id;
+} zn_subscriber_t;
 
-#endif /* ZENOH_PICO_LOGGER_API_H */
+/**
+ * Create a default subscription info.
+ *
+ * Returns:
+ *     A :c:type:`zn_subinfo_t` containing the created subscription info.
+ */
+zn_subinfo_t zn_subinfo_default(void);
+
+#endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */
