@@ -22,9 +22,15 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Locator ------------------*/
+#if ZN_LINK_TCP == 1
 #define TCP_SCHEMA "tcp"
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 #define UDP_SCHEMA "udp"
+#endif
+#if ZN_LINK_BLUETOOTH == 1
 #define BT_SCHEMA "bt"
+#endif
 
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'

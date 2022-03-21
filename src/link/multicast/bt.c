@@ -13,9 +13,12 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/config/bt.h"
 #include "zenoh-pico/system/link/bt.h"
+
+#if ZN_LINK_BLUETOOTH == 1
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
@@ -145,3 +148,4 @@ _zn_link_t *_zn_new_link_bt(_zn_endpoint_t endpoint)
 
     return lt;
 }
+#endif

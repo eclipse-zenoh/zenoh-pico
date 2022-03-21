@@ -137,8 +137,12 @@
 
 #define ZN_CONGESTION_CONTROL_DEFAULT zn_congestion_control_t_DROP
 
-#define ZN_TRANSPORT_TCP_IP 1
-//#define ZN_TRANSPORT_BLE 1
+#define ZN_LINK_TCP 1
+#define ZN_LINK_UDP_MULTICAST 1
+#define ZN_LINK_UDP_UNICAST 1
+#define ZN_LINK_BLUETOOTH 0
+
+#define ZN_SCOUTING_UDP 1
 
 #define ZN_IOSLICE_SIZE 128
 #define ZN_BATCH_SIZE 65535

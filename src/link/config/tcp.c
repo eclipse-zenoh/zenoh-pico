@@ -13,7 +13,10 @@
  */
 
 #include <string.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/config/tcp.h"
+
+#if ZN_LINK_TCP == 1
 
 size_t _zn_tcp_config_strlen(const _z_str_intmap_t *s)
 {
@@ -47,3 +50,4 @@ _z_str_intmap_result_t _zn_tcp_config_from_str(const z_str_t s)
 {
     return _zn_tcp_config_from_strn(s, strlen(s));
 }
+#endif

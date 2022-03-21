@@ -16,6 +16,10 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if ZN_SCOUTING_UDP == 1 && ZN_LINK_UDP_UNICAST == 0
+    #error "Scouting UDP requires UDP unicast links to be enabled (ZN_LINK_UDP_UNICAST = 1 in config.h)"
+#endif
+
 zn_hello_array_t _zn_scout_loop(
     const _z_wbuf_t *wbf,
     const z_str_t locator,
@@ -26,6 +30,21 @@ zn_hello_array_t _zn_scout_loop(
     zn_hello_array_t ls;
     ls.len = 0;
     ls.val = NULL;
+
+    _zn_endpoint_result_t ep_res = _zn_endpoint_from_str(locator);
+    if (ep_res.tag == _z_res_t_ERR)
+        goto ERR_1;
+    _zn_endpoint_t endpoint = ep_res.value.endpoint;
+
+#if ZN_SCOUTING_UDP == 1
+    if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
+    {
+        // Do nothing
+    }
+    else
+#endif
+        goto ERR_2;
+    _zn_endpoint_clear(&endpoint);
 
     _zn_link_p_result_t r_scout = _zn_open_link(locator);
     if (r_scout.tag == _z_res_t_ERR)
@@ -127,6 +146,11 @@ zn_hello_array_t _zn_scout_loop(
     _zn_link_free(&r_scout.value.link);
     _z_zbuf_clear(&zbf);
 
+    return ls;
+
+ERR_2:
+    _zn_endpoint_clear(&endpoint);
+ERR_1:
     return ls;
 }
 

@@ -21,11 +21,11 @@ extern "C"
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/system/link/bt.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 
+#if ZN_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
@@ -134,7 +134,9 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
     return send(sock, ptr, len, 0);
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
 void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
 {
@@ -159,7 +161,9 @@ void _zn_free_endpoint_udp(void *arg)
 
     freeaddrinfo(self);
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -229,7 +233,9 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
 
+#if ZN_LINK_UDP_MULTICAST == 1
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
@@ -502,7 +508,10 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
 
+#if ZN_LINK_BLUETOOTH == 1
+#include "zenoh-pico/system/link/bt.h"
 /*------------------ Bluetooth sockets ------------------*/
 void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
 {
@@ -614,5 +623,6 @@ size_t _zn_send_bt(void *arg, const uint8_t *ptr, size_t len)
 
     return len;
 }
+#endif
 
 } // extern "C"

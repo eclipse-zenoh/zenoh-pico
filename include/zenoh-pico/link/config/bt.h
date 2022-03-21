@@ -15,9 +15,12 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_BT_H
 #define ZENOH_PICO_LINK_CONFIG_BT_H
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/system/platform.h"
+
+#if ZN_LINK_BLUETOOTH == 1
 
 #define BT_CONFIG_MODE_KEY     0x01
 #define BT_CONFIG_MODE_STR     "mode"
@@ -55,5 +58,6 @@ z_str_t _zn_bt_config_to_str(const _z_str_intmap_t *s);
 
 _z_str_intmap_result_t _zn_bt_config_from_str(const z_str_t s);
 _z_str_intmap_result_t _zn_bt_config_from_strn(const z_str_t s, size_t n);
+#endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_BT_H */

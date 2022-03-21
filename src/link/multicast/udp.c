@@ -18,6 +18,8 @@
 #include "zenoh-pico/link/config/udp.h"
 #include "zenoh-pico/system/link/udp.h"
 
+#if ZN_LINK_UDP_MULTICAST == 1
+
 z_str_t _zn_parse_port_segment_udp_multicast(const z_str_t address)
 {
     z_str_t p_start = strrchr(address, ':');
@@ -192,3 +194,5 @@ _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)
 
     return lt;
 }
+
+#endif

@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+
 typedef struct
 {
     int sock;
@@ -44,5 +46,6 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg);
 size_t _zn_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr);
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr);
 size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg);
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_UDP_H */

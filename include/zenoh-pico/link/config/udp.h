@@ -18,6 +18,8 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+
 #define UDP_CONFIG_IFACE_KEY 0x01
 #define UDP_CONFIG_IFACE_STR "iface"
 
@@ -39,5 +41,6 @@ z_str_t _zn_udp_config_to_str(const _z_str_intmap_t *s);
 
 _z_str_intmap_result_t _zn_udp_config_from_str(const z_str_t s);
 _z_str_intmap_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n);
+#endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_UDP_H */

@@ -15,6 +15,8 @@
 #include <string.h>
 #include "zenoh-pico/link/config/bt.h"
 
+#if ZN_LINK_BLUETOOTH == 1
+
 size_t _zn_bt_config_strlen(const _z_str_intmap_t *s)
 {
     BT_CONFIG_MAPPING_BUILD
@@ -49,3 +51,4 @@ _z_str_intmap_result_t _zn_bt_config_from_str(const z_str_t s)
 
     return _z_str_intmap_from_str(s, argc, args);
 }
+#endif

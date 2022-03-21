@@ -22,6 +22,8 @@
 #include <driver/include/m2m_wifi.h>
 #include <driver/source/m2m_hif.h>
 
+#if ZN_LINK_TCP == 1 || ZN_LINK_UDP_UNICAST == 1
+
 typedef struct
 {
     int sock;
@@ -155,20 +157,9 @@ ERR_OR_SUCCESS:
     return;
 }
 
-/*------------------ Endpoint ------------------*/
+#if ZN_LINK_TCP == 1
+/*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
-{
-    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-    memset(addr, 0, sizeof(addr));
-
-    addr->sin_family = AF_INET;
-    _zn_inet_pton(s_addr, addr);
-    addr->sin_port = _htons(atoi(port));
-
-    return addr;
-}
-
-void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
 {
     struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
@@ -187,14 +178,6 @@ void _zn_free_endpoint_tcp(void *arg)
     free(self);
 }
 
-void _zn_free_endpoint_udp(void *arg)
-{
-    struct sockaddr_in *self = (struct sockaddr_in *)arg;
-
-    free(self);
-}
-
-/*------------------ TCP sockets ------------------*/
 int _zn_open_tcp(void *arg, const clock_t tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
@@ -316,8 +299,29 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 
     return len;
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1
 /*------------------ UDP sockets ------------------*/
+void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
+{
+    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    memset(addr, 0, sizeof(addr));
+
+    addr->sin_family = AF_INET;
+    _zn_inet_pton(s_addr, addr);
+    addr->sin_port = _htons(atoi(port));
+
+    return addr;
+}
+
+void _zn_free_endpoint_udp(void *arg)
+{
+    struct sockaddr_in *self = (struct sockaddr_in *)arg;
+
+    free(self);
+}
+
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
@@ -441,7 +445,9 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     return len;
 }
+#endif
 
+#if ZN_LINK_UDP_MULTICAST == 1
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg_1;
@@ -571,68 +577,8 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return len;
 }
+#endif
 
-/*------------------ Bluetooth sockets ------------------*/
-void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
-{
-    (void) mode;
-    (void) lname;
-    (void) rname;
-    (void) profile;
-
-    // @TODO: To be implemented
-
-    return NULL;
-}
-
-void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
-{
-    (void) mode;
-    (void) lname;
-    (void) rname;
-    (void) profile;
-
-    // @TODO: To be implemented
-
-    return NULL;
-}
-
-void _zn_close_bt(void *arg)
-{
-    (void) arg;
-
-    // @TODO: To be implemented
-}
-
-size_t _zn_read_exact_bt(void *arg, uint8_t *ptr, size_t len)
-{
-    (void) arg;
-    (void) ptr;
-    (void) len;
-
-    // @TODO: To be implemented
-
-    return SIZE_MAX;
-}
-
-size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)
-{
-    (void) arg;
-    (void) ptr;
-    (void) len;
-
-    // @TODO: To be implemented
-
-    return SIZE_MAX;
-}
-
-size_t _zn_send_bt(void *arg, const uint8_t *ptr, size_t len)
-{
-    (void) arg;
-    (void) ptr;
-    (void) len;
-
-    // @TODO: To be implemented
-
-    return SIZE_MAX;
-}
+#if ZN_LINK_BLUETOOTH == 1
+    #error "Bluetooth not supported yet on STSTM32 port of Zenoh-Pico"
+#endif

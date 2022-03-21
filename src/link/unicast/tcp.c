@@ -18,6 +18,8 @@
 #include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/system/link/tcp.h"
 
+#if ZN_LINK_TCP == 1
+
 z_str_t _zn_parse_port_segment_tcp(z_str_t address)
 {
     z_str_t p_start = strrchr(address, ':');
@@ -179,3 +181,4 @@ _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
 
     return lt;
 }
+#endif

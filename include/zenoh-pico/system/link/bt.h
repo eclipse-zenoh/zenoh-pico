@@ -16,7 +16,10 @@
 #define ZENOH_PICO_SYSTEM_LINK_BT_H
 
 #include <stdint.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/string.h"
+
+#if ZN_LINK_BLUETOOTH == 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +47,8 @@ size_t _zn_send_bt(void *, const uint8_t *ptr, size_t len);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_BT_H */
