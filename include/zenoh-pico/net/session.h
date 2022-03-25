@@ -23,31 +23,31 @@
  */
 typedef struct
 {
-    z_mutex_t mutex_inner;
+    _z_mutex_t mutex_inner;
 
     // Session counters // FIXME: move to transport check
-    z_zint_t resource_id;
-    z_zint_t entity_id;
-    z_zint_t pull_id;
-    z_zint_t query_id;
+    _z_zint_t resource_id;
+    _z_zint_t entity_id;
+    _z_zint_t pull_id;
+    _z_zint_t query_id;
 
     // Session declarations
-    _zn_resource_list_t *local_resources;
-    _zn_resource_list_t *remote_resources;
+    _z_resource_list_t *local_resources;
+    _z_resource_list_t *remote_resources;
 
     // Session subscriptions
-    _zn_subscriber_list_t *local_subscriptions;
-    _zn_subscriber_list_t *remote_subscriptions;
+    _z_subscriber_list_t *local_subscriptions;
+    _z_subscriber_list_t *remote_subscriptions;
 
     // Session queryables
-    _zn_queryable_list_t *local_queryables;
-    _zn_pending_query_list_t *pending_queries;
+    _z_queryable_list_t *local_queryables;
+    _z_pending_query_list_t *pending_queries;
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
-    _zn_transport_t *tp;
-    _zn_transport_manager_t *tp_manager;
-} zn_session_t;
+    _z_transport_t *tp;
+    _z_transport_manager_t *tp_manager;
+} _z_session_t;
 
 /**
  * Open a zenoh-net session
@@ -56,10 +56,10 @@ typedef struct
  *     config: A set of properties. The caller keeps its ownership.
  *
  * Returns:
- *     A pointer of A :c:type:`zn_session_t` containing the created zenoh-net
+ *     A pointer of A :c:type:`_z_session_t` containing the created zenoh-net
  *     session or null if the creation did not succeed.
  */
-zn_session_t *zn_open(zn_properties_t *config);
+_z_session_t *_z_open(_z_properties_t *config);
 
 /**
  * Close a zenoh-net session.
@@ -67,7 +67,7 @@ zn_session_t *zn_open(zn_properties_t *config);
  * Parameters:
  *     session: A zenoh-net session. The callee releases session upon successful return.
  */
-void zn_close(zn_session_t *session);
+void _z_close(_z_session_t *session);
 
 /**
  * Get informations about an zenoh-net session.
@@ -76,9 +76,9 @@ void zn_close(zn_session_t *session);
  *     session: A zenoh-net session. The caller keeps its ownership.
  *
  * Returns:
- *     A :c:type:`zn_properties_t` map containing informations on the given zenoh-net session.
+ *     A :c:type:`_z_properties_t` map containing informations on the given zenoh-net session.
  */
-zn_properties_t *zn_info(zn_session_t *session);
+_z_properties_t *_z_info(const _z_session_t *session);
 
 
 /*------------------ Zenoh-Pico Session Management Auxiliar------------------*/
@@ -92,7 +92,7 @@ zn_properties_t *zn_info(zn_session_t *session);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_read(zn_session_t *z);
+int _zp_read(_z_session_t *z);
 
 /**
  * Send a KeepAlive message.
@@ -102,7 +102,7 @@ int znp_read(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_send_keep_alive(zn_session_t *z);
+int _zp_send_keep_alive(_z_session_t *z);
 
 /**
  * Start a separate task to read from the network and process the messages
@@ -114,7 +114,7 @@ int znp_send_keep_alive(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_start_read_task(zn_session_t *z);
+int _zp_start_read_task(_z_session_t *z);
 
 /**
  * Stop the read task. This may result in stopping a thread or a process depending
@@ -125,7 +125,7 @@ int znp_start_read_task(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_stop_read_task(zn_session_t *z);
+int _zp_stop_read_task(_z_session_t *z);
 
 /**
  * Start a separate task to handle the session lease. This task will send ``KeepAlive``
@@ -141,7 +141,7 @@ int znp_stop_read_task(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_start_lease_task(zn_session_t *z);
+int _zp_start_lease_task(_z_session_t *z);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending
@@ -152,6 +152,6 @@ int znp_start_lease_task(zn_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int znp_stop_lease_task(zn_session_t *z);
+int _zp_stop_lease_task(_z_session_t *z);
 
 #endif /* ZENOH_PICO_SESSION_NETAPI_H */

@@ -18,32 +18,32 @@
 #include "zenoh-pico/session/query.h"
 
 /*------------------ clone helpers ------------------*/
-zn_reskey_t _zn_reskey_duplicate(const zn_reskey_t *reskey)
+_z_reskey_t _z_reskey_duplicate(const _z_reskey_t *reskey)
 {
-    zn_reskey_t rk;
+    _z_reskey_t rk;
     rk.rid = reskey->rid,
     rk.rname = reskey->rname ? _z_str_clone(reskey->rname) : NULL;
     return rk;
 }
 
-z_timestamp_t z_timestamp_duplicate(const z_timestamp_t *tstamp)
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp)
 {
-    z_timestamp_t ts;
+    _z_timestamp_t ts;
     _z_bytes_copy(&ts.id, &tstamp->id);
     ts.time = tstamp->time;
     return ts;
 }
 
-void z_timestamp_reset(z_timestamp_t *tstamp)
+void _z_timestamp_reset(_z_timestamp_t *tstamp)
 {
     _z_bytes_reset(&tstamp->id);
     tstamp->time = 0;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-zn_session_t *_zn_session_init(void)
+_z_session_t *_z_session_init(void)
 {
-    zn_session_t *zn = (zn_session_t *)malloc(sizeof(zn_session_t));
+    _z_session_t *zn = (_z_session_t *)malloc(sizeof(_z_session_t));
 
     // Initialize the counters to 1
     zn->entity_id = 1;
@@ -61,42 +61,42 @@ zn_session_t *_zn_session_init(void)
 
     // Associate a transport with the session
     zn->tp = NULL;
-    zn->tp_manager = _zn_transport_manager_init();
+    zn->tp_manager = _z_transport_manager_init();
 
     // Initialize the mutexes
-    z_mutex_init(&zn->mutex_inner);
+    _z_mutex_init(&zn->mutex_inner);
 
     return zn;
 }
 
-void _zn_session_free(zn_session_t **zn)
+void _z_session_free(_z_session_t **zn)
 {
-    zn_session_t *ptr = *zn;
+    _z_session_t *ptr = *zn;
 
     // Clean up transports and manager
-    _zn_transport_manager_free(&ptr->tp_manager);
+    _z_transport_manager_free(&ptr->tp_manager);
     if (ptr->tp != NULL)
-        _zn_transport_free(&ptr->tp);
+        _z_transport_free(&ptr->tp);
 
     // Clean up the entities
-    _zn_flush_resources(ptr);
-    _zn_flush_subscriptions(ptr);
-    _zn_flush_queryables(ptr);
-    _zn_flush_pending_queries(ptr);
+    _z_flush_resources(ptr);
+    _z_flush_subscriptions(ptr);
+    _z_flush_queryables(ptr);
+    _z_flush_pending_queries(ptr);
 
     // Clean up the mutexes
-    z_mutex_free(&ptr->mutex_inner);
+    _z_mutex_free(&ptr->mutex_inner);
 
     free(ptr);
     *zn = NULL;
 }
 
-int _zn_session_close(zn_session_t *zn, uint8_t reason)
+int _z_session_close(_z_session_t *zn, uint8_t reason)
 {
-    int res = _zn_transport_close(zn->tp, reason);
+    int res = _z_transport_close(zn->tp, reason);
 
     // Free the session
-    _zn_session_free(&zn);
+    _z_session_free(&zn);
 
     return res;
 }

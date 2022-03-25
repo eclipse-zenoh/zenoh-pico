@@ -45,7 +45,7 @@ void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, siz
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
 void _z_iosli_reset(_z_iosli_t *ios);
 
-z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
+_z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);

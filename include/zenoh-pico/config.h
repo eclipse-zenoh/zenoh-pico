@@ -22,10 +22,10 @@
  * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
-#define ZN_CONFIG_MODE_KEY 0x40
-#define ZN_CONFIG_MODE_CLIENT "client"
-#define ZN_CONFIG_MODE_PEER "peer"
-#define ZN_CONFIG_MODE_DEFAULT ZN_CONFIG_MODE_CLIENT
+#define Z_CONFIG_MODE_KEY 0x40
+#define Z_CONFIG_MODE_CLIENT "client"
+#define Z_CONFIG_MODE_PEER "peer"
+#define Z_CONFIG_MODE_DEFAULT Z_CONFIG_MODE_CLIENT
 
 /**
  * The locator of a peer to connect to.
@@ -34,7 +34,7 @@
  * Default value : None.
  * Multiple values are not accepted in zenoh-pico.
  */
-#define ZN_CONFIG_PEER_KEY 0x41
+#define Z_CONFIG_PEER_KEY 0x41
 
 /**
  * A locator to listen on.
@@ -43,7 +43,7 @@
  * Default value : None.
  * Multiple values accepted.
  */
-#define ZN_CONFIG_LISTENER_KEY 0x42
+#define Z_CONFIG_LISTENER_KEY 0x42
 
 /**
  * The user name to use for authentication.
@@ -51,7 +51,7 @@
  * Accepted values : `<string>`.
  * Default value : None.
  */
-#define ZN_CONFIG_USER_KEY 0x43
+#define Z_CONFIG_USER_KEY 0x43
 
 /**
  * The password to use for authentication.
@@ -59,7 +59,7 @@
  * Accepted values : `<string>`.
  * Default value : None.
  */
-#define ZN_CONFIG_PASSWORD_KEY 0x44
+#define Z_CONFIG_PASSWORD_KEY 0x44
 
 /**
  * Activates/Desactivates multicast scouting.
@@ -67,8 +67,8 @@
  * Accepted values : `0`, `1`.
  * Default value : `1`.
  */
-#define ZN_CONFIG_MULTICAST_SCOUTING_KEY 0x45
-#define ZN_CONFIG_MULTICAST_SCOUTING_DEFAULT "true"
+#define Z_CONFIG_MULTICAST_SCOUTING_KEY 0x45
+#define Z_CONFIG_MULTICAST_SCOUTING_DEFAULT "true"
 
 /**
  * The network interface to use for multicast scouting.
@@ -76,8 +76,8 @@
  * Accepted values : `"auto"`, `<ip address>`, `<interface name>`.
  * Default value : `"auto"`.
  */
-#define ZN_CONFIG_MULTICAST_INTERFACE_KEY 0x46
-#define ZN_CONFIG_MULTICAST_INTERFACE_DEFAULT "auto"
+#define Z_CONFIG_MULTICAST_INTERFACE_KEY 0x46
+#define Z_CONFIG_MULTICAST_INTERFACE_DEFAULT "auto"
 
 /**
  * The multicast address and ports to use for multicast scouting.
@@ -85,8 +85,8 @@
  * Accepted values : `<ip address>:<port>`.
  * Default value : `"224.0.0.224:7447"`.
  */
-#define ZN_CONFIG_MULTICAST_ADDRESS_KEY 0x47
-#define ZN_CONFIG_MULTICAST_ADDRESS_DEFAULT "udp/224.0.0.224:7447"
+#define Z_CONFIG_MULTICAST_ADDRESS_KEY 0x47
+#define Z_CONFIG_MULTICAST_ADDRESS_DEFAULT "udp/224.0.0.224:7447"
 
 /**
  * In client mode, the period dedicated to scouting a router before failing.
@@ -94,8 +94,8 @@
  * Accepted values : `<int in seconds>`.
  * Default value : `"3"`.
  */
-#define ZN_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
-#define ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3"
+#define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
+#define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3"
 
 /**
  * Indicates if data messages should be timestamped.
@@ -103,50 +103,50 @@
  * Accepted values : `0`, `1`.
  * Default value : `0`.
  */
-#define ZN_CONFIG_ADD_TIMESTAMP_KEY 0x4A
-#define ZN_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
+#define Z_CONFIG_ADD_TIMESTAMP_KEY 0x4A
+#define Z_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
 
 /*------------------ Configuration properties ------------------*/
-#define ZN_ATTACHMENT_BUF_LEN 16384
-#define ZN_PID_LENGTH 8
-#define ZN_TSID_LENGTH 16
-#define ZN_PROTO_VERSION 0x06
+#define Z_ATTACHMENT_BUF_LEN 16384
+#define Z_PID_LENGTH 8
+#define Z_TSID_LENGTH 16
+#define Z_PROTO_VERSION 0x06
 /**
  * Default session lease in milliseconds: 10 seconds
  */
-#define ZN_TRANSPORT_LEASE 10000
-#define ZN_TRANSPORT_LEASE_EXPIRE_FACTOR 3.5
+#define Z_TRANSPORT_LEASE 10000
+#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3.5
 
 /**
  * Default multicast session join interval in milliseconds: 2.5 seconds
  */
-#define ZN_JOIN_INTERVAL 2500
+#define Z_JOIN_INTERVAL 2500
 
 /**
  * Default socket timeout: 2 seconds
  */
-#define ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT 2
+#define Z_CONFIG_SOCKET_TIMEOUT_DEFAULT 2
 
 /**
  * The default sequence number resolution takes 4 bytes on the wire.
  * Given the VLE encoding of ZInt, 4 bytes result in 28 useful bits.
  * 2^28 = 268_435_456 => Max Seq Num = 268_435_455
  */
-#define ZN_SN_RESOLUTION_DEFAULT 268435455
-#define ZN_SN_RESOLUTION ZN_SN_RESOLUTION_DEFAULT
+#define Z_SN_RESOLUTION_DEFAULT 268435455
+#define Z_SN_RESOLUTION Z_SN_RESOLUTION_DEFAULT
 
-#define ZN_CONGESTION_CONTROL_DEFAULT zn_congestion_control_t_DROP
+#define Z_CONGESTION_CONTROL_DEFAULT Z_CONGESTION_CONTROL_DROP
 
-#define ZN_LINK_TCP 1
-#define ZN_LINK_UDP_MULTICAST 1
-#define ZN_LINK_UDP_UNICAST 1
-#define ZN_LINK_BLUETOOTH 0
+#define Z_LINK_TCP 1
+#define Z_LINK_UDP_MULTICAST 1
+#define Z_LINK_UDP_UNICAST 1
+#define Z_LINK_BLUETOOTH 0
 
-#define ZN_SCOUTING_UDP 1
+#define Z_SCOUTING_UDP 1
 
-#define ZN_IOSLICE_SIZE 128
-#define ZN_BATCH_SIZE 65535
-#define ZN_FRAG_MAX_SIZE 300000
-#define ZN_DYNAMIC_MEMORY_ALLOCATION 1
+#define Z_IOSLICE_SIZE 128
+#define Z_BATCH_SIZE 65535
+#define Z_FRAG_MAX_SIZE 300000
+#define Z_DYNAMIC_MEMORY_ALLOCATION 1
 
 #endif /* ZENOH_PICO_CONFIG_H */

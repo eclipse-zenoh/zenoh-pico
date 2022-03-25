@@ -30,7 +30,7 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t
     return ios;
 }
 
-void __z_iosli_init(_z_iosli_t *ios, size_t capacity)
+void _z_iosli_init(_z_iosli_t *ios, size_t capacity)
 {
     ios->r_pos = 0;
     ios->w_pos = 0;
@@ -42,14 +42,14 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity)
 _z_iosli_t _z_iosli_make(size_t capacity)
 {
     _z_iosli_t ios;
-    __z_iosli_init(&ios, capacity);
+    _z_iosli_init(&ios, capacity);
     return ios;
 }
 
 _z_iosli_t *_z_iosli_new(size_t capacity)
 {
     _z_iosli_t *pios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
-    __z_iosli_init(pios, capacity);
+    _z_iosli_init(pios, capacity);
     return pios;
 }
 
@@ -101,9 +101,9 @@ void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos)
     ios->buf[pos] = b;
 }
 
-z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios)
+_z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios)
 {
-    z_bytes_t a;
+    _z_bytes_t a;
     a.len = _z_iosli_readable(ios);
     a.val = ios->buf + ios->r_pos;
     return a;
@@ -134,6 +134,8 @@ void _z_iosli_free(_z_iosli_t **ios)
 {
     _z_iosli_t *ptr = *ios;
     _z_iosli_clear(ptr);
+
+    free(ptr);
     *ios = NULL;
 }
 
@@ -269,6 +271,8 @@ void _z_zbuf_free(_z_zbuf_t **zbf)
 {
     _z_zbuf_t *ptr = *zbf;
     _z_iosli_clear(&ptr->ios);
+
+    free(ptr);
     *zbf = NULL;
 }
 
@@ -278,10 +282,10 @@ void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios)
     _z_iosli_vec_append(&wbf->ioss, ios);
 }
 
-void __z_wbuf_new_iosli(_z_wbuf_t *wbf, size_t capacity)
+void _z_wbuf_new_iosli(_z_wbuf_t *wbf, size_t capacity)
 {
     _z_iosli_t *pios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
-    __z_iosli_init(pios, capacity);
+    _z_iosli_init(pios, capacity);
     _z_wbuf_add_iosli(wbf, pios);
 }
 
@@ -305,12 +309,12 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable)
         // Preallocate 4 slots, this is usually what we expect
         // when fragmenting a zenoh data message with attachment
         wbf.ioss = _z_iosli_vec_make(4);
-        __z_wbuf_new_iosli(&wbf, ZN_IOSLICE_SIZE);
+        _z_wbuf_new_iosli(&wbf, Z_IOSLICE_SIZE);
     }
     else
     {
         wbf.ioss = _z_iosli_vec_make(1);
-        __z_wbuf_new_iosli(&wbf, capacity);
+        _z_wbuf_new_iosli(&wbf, capacity);
     }
     wbf.is_expandable = is_expandable;
     wbf.capacity = capacity;
@@ -346,7 +350,7 @@ size_t _z_wbuf_space_left(const _z_wbuf_t *wbf)
     return _z_iosli_writable(ios);
 }
 
-uint8_t __z_wbuf_read(_z_wbuf_t *wbf)
+uint8_t _z_wbuf_read(_z_wbuf_t *wbf)
 {
     do
     {
@@ -364,7 +368,7 @@ uint8_t __z_wbuf_read(_z_wbuf_t *wbf)
     } while (1);
 }
 
-void __z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t length)
+void _z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t length)
 {
     do
     {
@@ -385,7 +389,7 @@ void __z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t le
     } while (length > 0);
 }
 
-uint8_t __z_wbuf_get(const _z_wbuf_t *wbf, size_t pos)
+uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos)
 {
     size_t i = 0;
     _z_iosli_t *ios;
@@ -416,7 +420,7 @@ int _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b)
 
     if (wbf->is_expandable)
     {
-        __z_wbuf_new_iosli(wbf, ZN_IOSLICE_SIZE);
+        _z_wbuf_new_iosli(wbf, Z_IOSLICE_SIZE);
         wbf->w_idx++;
 
         ios = _z_wbuf_get_iosli(wbf, wbf->w_idx);
@@ -444,7 +448,7 @@ int _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t
         offset += writable;
         while (length > 0)
         {
-            __z_wbuf_new_iosli(wbf, ZN_IOSLICE_SIZE);
+            _z_wbuf_new_iosli(wbf, Z_IOSLICE_SIZE);
 
             wbf->w_idx++;
             ios = _z_wbuf_get_iosli(wbf, wbf->w_idx);
@@ -475,7 +479,7 @@ int _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t 
     _z_wbuf_add_iosli(wbf, _z_iosli_clone(&wios));
 
     wbf->w_idx++;
-    __z_wbuf_new_iosli(wbf, writable);
+    _z_wbuf_new_iosli(wbf, writable);
 
     return 0;
 }
@@ -587,7 +591,7 @@ int _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length)
 {
     for (size_t i = 0; i < length; i++)
     {
-        int res = _z_wbuf_write(dst, __z_wbuf_read(src));
+        int res = _z_wbuf_write(dst, _z_wbuf_read(src));
         if (res != 0)
             return -1;
     }
@@ -628,5 +632,7 @@ void _z_wbuf_free(_z_wbuf_t **wbf)
 {
     _z_wbuf_t *ptr = *wbf;
     _z_wbuf_clear(ptr);
+
+    free(ptr);
     *wbf = NULL;
 }

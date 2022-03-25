@@ -17,12 +17,12 @@
 
 #include <pthread.h>
 
-typedef pthread_t z_task_t;
-typedef pthread_attr_t z_task_attr_t;
-typedef pthread_mutex_t z_mutex_t;
-typedef pthread_cond_t z_condvar_t;
+typedef pthread_t _z_task_t;
+typedef pthread_attr_t _z_task_attr_t;
+typedef pthread_mutex_t _z_mutex_t;
+typedef pthread_cond_t _z_condvar_t;
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef struct timespec _z_clock_t;
+typedef struct timeval _z_time_t;
 
 #endif /* ZENOH_PICO_SYSTEM_UNIX_TYPES_H */

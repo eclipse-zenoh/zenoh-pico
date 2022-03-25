@@ -16,142 +16,142 @@
 #include <hw/driver/delay.h>
 
 /*------------------ Task ------------------*/
-int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
+int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
     return 0;
 }
 
-int z_task_join(z_task_t *task)
+int _z_task_join(_z_task_t *task)
 {
     return 0;
 }
 
-int z_task_cancel(z_task_t *task)
+int _z_task_cancel(_z_task_t *task)
 {
     return 0;
 }
 
-void z_task_free(z_task_t **task)
+void _z_task_free(_z_task_t **task)
 {
-    z_task_t *ptr = *task;
+    _z_task_t *ptr = *task;
     free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int z_mutex_init(z_mutex_t *m)
+int _z_mutex_init(_z_mutex_t *m)
 {
     return 0;
 }
 
-int z_mutex_free(z_mutex_t *m)
+int _z_mutex_free(_z_mutex_t *m)
 {
     return 0;
 }
 
-int z_mutex_lock(z_mutex_t *m)
+int _z_mutex_lock(_z_mutex_t *m)
 {
     return 0;
 }
 
-int z_mutex_trylock(z_mutex_t *m)
+int _z_mutex_trylock(_z_mutex_t *m)
 {
     return 0;
 }
 
-int z_mutex_unlock(z_mutex_t *m)
+int _z_mutex_unlock(_z_mutex_t *m)
 {
     return 0;
 }
 
 /*------------------ Condvar ------------------*/
-int z_condvar_init(z_condvar_t *cv)
+int _z_condvar_init(_z_condvar_t *cv)
 {
     return 0;
 }
 
-int z_condvar_free(z_condvar_t *cv)
+int _z_condvar_free(_z_condvar_t *cv)
 {
     return 0;
 }
 
-int z_condvar_signal(z_condvar_t *cv)
+int _z_condvar_signal(_z_condvar_t *cv)
 {
     return 0;
 }
 
-int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
+int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
     return 0;
 }
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time)
+int _z_sleep_us(unsigned int time)
 {
     return usleep(time);
 }
 
-int z_sleep_ms(unsigned int time)
+int _z_sleep_ms(unsigned int time)
 {
     return usleep(1000 * time);
 }
 
-int z_sleep_s(unsigned int time)
+int _z_sleep_s(unsigned int time)
 {
     return sleep(time);
 }
 
 /*------------------ Instant ------------------*/
-void _zn_clock_gettime(clockid_t clk_id, z_clock_t *ts)
+void _z_clock_gettime(clockid_t clk_id, _z_clock_t *ts)
 {
     uint64_t m = millis();
     ts->tv_sec = m / 1000000;
     ts->tv_nsec = (m % 1000000) * 1000;
 }
 
-z_clock_t z_clock_now()
+_z_clock_t _z_clock_now()
 {
-    z_clock_t now;
-    _zn_clock_gettime(NULL, &now);
+    _z_clock_t now;
+    _z_clock_gettime(NULL, &now);
     return now;
 }
 
-clock_t z_clock_elapsed_us(z_clock_t *instant)
+clock_t _z_clock_elapsed_us(_z_clock_t *instant)
 {
-    z_clock_t now;
-    _zn_clock_gettime(NULL, &now);
+    _z_clock_t now;
+    _z_clock_gettime(NULL, &now);
 
     clock_t elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(z_clock_t *instant)
+clock_t _z_clock_elapsed_ms(_z_clock_t *instant)
 {
-    z_clock_t now;
-    _zn_clock_gettime(NULL, &now);
+    _z_clock_t now;
+    _z_clock_gettime(NULL, &now);
 
     clock_t elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(z_clock_t *instant)
+clock_t _z_clock_elapsed_s(_z_clock_t *instant)
 {
-    z_clock_t now;
-    _zn_clock_gettime(NULL, &now);
+    _z_clock_t now;
+    _z_clock_gettime(NULL, &now);
 
     clock_t elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
 }
 
 /*------------------ Time ------------------*/
-struct timeval z_time_now()
+struct timeval _z_time_now()
 {
     struct timeval now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-time_t z_time_elapsed_us(struct timeval *time)
+time_t _z_time_elapsed_us(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -160,7 +160,7 @@ time_t z_time_elapsed_us(struct timeval *time)
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(struct timeval *time)
+time_t _z_time_elapsed_ms(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -169,7 +169,7 @@ time_t z_time_elapsed_ms(struct timeval *time)
     return elapsed;
 }
 
-time_t z_time_elapsed_s(struct timeval *time)
+time_t _z_time_elapsed_s(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);

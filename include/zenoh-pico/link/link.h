@@ -19,71 +19,71 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/system/platform.h"
 
-#if ZN_LINK_TCP == 1
+#if Z_LINK_TCP == 1
 #include "zenoh-pico/system/link/tcp.h"
 #endif
 
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/system/link/udp.h"
 #endif
 
-#if ZN_LINK_BLUETOOTH == 1
+#if Z_LINK_BLUETOOTH == 1
 #include "zenoh-pico/system/link/bt.h"
 #endif
 
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Link ------------------*/
-typedef int (*_zn_f_link_open)(void *arg);
-typedef int (*_zn_f_link_listen)(void *arg);
-typedef void (*_zn_f_link_close)(void *arg);
-typedef size_t (*_zn_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_read)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
-typedef size_t (*_zn_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
-typedef void (*_zn_f_link_free)(void *arg);
+typedef int (*_z_f_link_open)(void *arg);
+typedef int (*_z_f_link_listen)(void *arg);
+typedef void (*_z_f_link_close)(void *arg);
+typedef size_t (*_z_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_read)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef size_t (*_z_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef void (*_z_f_link_free)(void *arg);
 
 typedef struct
 {
-    _zn_endpoint_t endpoint;
+    _z_endpoint_t endpoint;
 
     union
     {
-#if ZN_LINK_TCP == 1
-        _zn_tcp_socket_t tcp;
+#if Z_LINK_TCP == 1
+        _z_tcp_socket_t tcp;
 #endif
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
-        _zn_udp_socket_t udp;
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+        _z_udp_socket_t udp;
 #endif
-#if ZN_LINK_BLUETOOTH == 1
-        _zn_bt_socket_t bt;
+#if Z_LINK_BLUETOOTH == 1
+        _z_bt_socket_t bt;
 #endif
     } socket;
 
-    _zn_f_link_open open_f;
-    _zn_f_link_listen listen_f;
-    _zn_f_link_close close_f;
-    _zn_f_link_write write_f;
-    _zn_f_link_write_all write_all_f;
-    _zn_f_link_read read_f;
-    _zn_f_link_read_exact read_exact_f;
-    _zn_f_link_free free_f;
+    _z_f_link_open open_f;
+    _z_f_link_listen listen_f;
+    _z_f_link_close close_f;
+    _z_f_link_write write_f;
+    _z_f_link_write_all write_all_f;
+    _z_f_link_read read_f;
+    _z_f_link_read_exact read_exact_f;
+    _z_f_link_free free_f;
 
     uint16_t mtu;
     uint8_t is_reliable;
     uint8_t is_streamed;
     uint8_t is_multicast;
-} _zn_link_t;
+} _z_link_t;
 
-_ZN_RESULT_DECLARE(_zn_link_t, link)
-_ZN_P_RESULT_DECLARE(_zn_link_t, link)
+_Z_RESULT_DECLARE(_z_link_t, link)
+_Z_P_RESULT_DECLARE(_z_link_t, link)
 
-void _zn_link_free(_zn_link_t **zn);
-_zn_link_p_result_t _zn_open_link(const z_str_t locator);
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator);
+void _z_link_free(_z_link_t **zn);
+_z_link_p_result_t _z_open_link(const _z_str_t locator);
+_z_link_p_result_t _z_listen_link(const _z_str_t locator);
 
-int _zn_link_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf);
-size_t _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr);
-size_t _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len, z_bytes_t *addr);
+int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf);
+size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr);
+size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_bytes_t *addr);
 
 #endif /* ZENOH_PICO_LINK_H */

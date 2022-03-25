@@ -19,7 +19,7 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#if ZN_LINK_TCP == 1
+#if Z_LINK_TCP == 1
 
 #define TCP_CONFIG_TOUT_KEY  0x01
 #define TCP_CONFIG_TOUT_STR  "tout"
@@ -30,13 +30,13 @@
     args[0].key = TCP_CONFIG_TOUT_KEY; \
     args[0].str = TCP_CONFIG_TOUT_STR;
 
-size_t _zn_tcp_config_strlen(const _z_str_intmap_t *s);
+size_t _z_tcp_config_strlen(const _z_str_intmap_t *s);
 
-void _zn_tcp_config_onto_str(z_str_t dst, const _z_str_intmap_t *s);
-z_str_t _zn_tcp_config_to_str(const _z_str_intmap_t *s);
+void _z_tcp_config_onto_str(_z_str_t dst, const _z_str_intmap_t *s);
+_z_str_t _z_tcp_config_to_str(const _z_str_intmap_t *s);
 
-_z_str_intmap_result_t _zn_tcp_config_from_str(const z_str_t s);
-_z_str_intmap_result_t _zn_tcp_config_from_strn(const z_str_t s, size_t n);
+_z_str_intmap_result_t _z_tcp_config_from_str(const _z_str_t s);
+_z_str_intmap_result_t _z_tcp_config_from_strn(const _z_str_t s, size_t n);
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_TCP_H */

@@ -25,16 +25,16 @@
 /**
  * A string with null terminator.
  */
-typedef char *z_str_t;
+typedef char *_z_str_t;
 
-z_str_t _z_str_clone(const z_str_t src);
-void _z_str_clear(z_str_t src);
-void _z_str_free(z_str_t *src);
-int _z_str_eq(const z_str_t left, const z_str_t right);
+_z_str_t _z_str_clone(const _z_str_t src);
+void _z_str_clear(_z_str_t src);
+void _z_str_free(_z_str_t *src);
+int _z_str_eq(const _z_str_t left, const _z_str_t right);
 
-size_t _z_str_size(const z_str_t src);
-void _z_str_copy(z_str_t dst, const z_str_t src);
-_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _zn_noop_clear, _z_str_copy)
+size_t _z_str_size(const _z_str_t src);
+void _z_str_copy(_z_str_t dst, const _z_str_t src);
+_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -45,17 +45,17 @@ _Z_INT_MAP_DEFINE(_z_str, char)
 typedef struct
 {
     unsigned int key;
-    z_str_t str;
+    _z_str_t str;
 } _z_str_intmapping_t;
 _Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
 
 size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
-void _z_str_intmap_onto_str(z_str_t dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
-z_str_t _z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+void _z_str_intmap_onto_str(_z_str_t dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+_z_str_t _z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
-_z_str_intmap_result_t _z_str_intmap_from_str(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[]);
-_z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int argc, _z_str_intmapping_t argv[], size_t n);
+_z_str_intmap_result_t _z_str_intmap_from_str(const _z_str_t s, unsigned int argc, _z_str_intmapping_t argv[]);
+_z_str_intmap_result_t _z_str_intmap_from_strn(const _z_str_t s, unsigned int argc, _z_str_intmapping_t argv[], size_t n);
 
 /*-------- string --------*/
 /**
@@ -63,22 +63,23 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int arg
  *
  * Members:
  *   size_t len: The length of the string.
- *   const z_str_t val: A pointer to the string.
+ *   const _z_str_t val: A pointer to the string.
  */
 typedef struct
 {
-    z_str_t val;
+    _z_str_t val;
     size_t len;
-} z_string_t;
+} _z_string_t;
 
-z_string_t z_string_make(const z_str_t value);
-void _z_string_copy(z_string_t *dst, const z_string_t *src);
-void _z_string_move(z_string_t *dst, z_string_t *src);
-void _z_string_move_str(z_string_t *dst, z_str_t src);
-void _z_string_clear(z_string_t *s);
-void _z_string_free(z_string_t **s);
-void _z_string_reset(z_string_t *s);
-z_string_t _z_string_from_bytes(z_bytes_t *bs);
+_z_string_t z_string_make(const _z_str_t value);
+void _z_string_append(_z_string_t *dst, const _z_string_t *src);
+void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
+void _z_string_move(_z_string_t *dst, _z_string_t *src);
+void _z_string_move_str(_z_string_t *dst, _z_str_t src);
+void _z_string_clear(_z_string_t *s);
+void _z_string_free(_z_string_t **s);
+void _z_string_reset(_z_string_t *s);
+_z_string_t _z_string_from_bytes(_z_bytes_t *bs);
 
 /*-------- str_array --------*/
 /**
@@ -86,18 +87,18 @@ z_string_t _z_string_from_bytes(z_bytes_t *bs);
  *
  * Members:
  *   size_t len: The length of the array.
- *   z_str_t *val: A pointer to the array.
+ *   _z_str_t *val: A pointer to the array.
  */
 typedef struct
 {
-    z_str_t *val;
+    _z_str_t *val;
     size_t len;
-} z_str_array_t;
+} _z_str_array_t;
 
-z_str_array_t _z_str_array_make(size_t len);
-void _z_str_array_init(z_str_array_t *sa, size_t len);
-void _z_str_array_copy(z_str_array_t *dst, const z_str_array_t *src);
-void _z_str_array_move(z_str_array_t *dst, z_str_array_t *src);
-void _z_str_array_free(z_str_array_t *sa);
+_z_str_array_t _z_str_array_make(size_t len);
+void _z_str_array_init(_z_str_array_t *sa, size_t len);
+void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
+void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
+void _z_str_array_free(_z_str_array_t *sa);
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

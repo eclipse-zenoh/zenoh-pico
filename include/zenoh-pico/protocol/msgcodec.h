@@ -23,177 +23,191 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Result declarations ------------------*/
-_ZN_RESULT_DECLARE(z_timestamp_t, timestamp)
-_ZN_RESULT_DECLARE(zn_reskey_t, reskey)
-_ZN_RESULT_DECLARE(zn_subinfo_t, subinfo)
-_ZN_RESULT_DECLARE(zn_query_target_t, query_target)
-_ZN_RESULT_DECLARE(zn_query_consolidation_t, query_consolidation)
+_Z_RESULT_DECLARE(_z_timestamp_t, timestamp)
+_Z_RESULT_DECLARE(_z_reskey_t, reskey)
+_Z_RESULT_DECLARE(_z_subinfo_t, subinfo)
+_Z_RESULT_DECLARE(_z_query_target_t, query_target)
+_Z_RESULT_DECLARE(_z_consolidation_strategy_t, query_consolidation)
 
-_ZN_RESULT_DECLARE(_zn_payload_t, payload)
-_ZN_P_RESULT_DECLARE(_zn_attachment_t, attachment)
-_ZN_P_RESULT_DECLARE(_zn_reply_context_t, reply_context)
-_ZN_RESULT_DECLARE(_zn_scout_t, scout)
-_ZN_RESULT_DECLARE(_zn_hello_t, hello)
-_ZN_RESULT_DECLARE(_zn_join_t, join)
-_ZN_RESULT_DECLARE(_zn_init_t, init)
-_ZN_RESULT_DECLARE(_zn_open_t, open)
-_ZN_RESULT_DECLARE(_zn_close_t, close)
-_ZN_RESULT_DECLARE(_zn_sync_t, sync)
-_ZN_RESULT_DECLARE(_zn_ack_nack_t, ack_nack)
-_ZN_RESULT_DECLARE(_zn_keep_alive_t, keep_alive)
-_ZN_RESULT_DECLARE(_zn_ping_pong_t, ping_pong)
-_ZN_RESULT_DECLARE(_zn_frame_t, frame)
-_ZN_RESULT_DECLARE(_zn_transport_message_t, transport_message)
+_Z_RESULT_DECLARE(_z_data_info_t, data_info)
+_Z_RESULT_DECLARE(_z_payload_t, payload)
+_Z_P_RESULT_DECLARE(_z_attachment_t, attachment)
+_Z_P_RESULT_DECLARE(_z_reply_context_t, reply_context)
 
-_ZN_RESULT_DECLARE(_zn_res_decl_t, res_decl)
-_ZN_RESULT_DECLARE(_zn_pub_decl_t, pub_decl)
-_ZN_RESULT_DECLARE(_zn_sub_decl_t, sub_decl)
-_ZN_RESULT_DECLARE(_zn_qle_decl_t, qle_decl)
-_ZN_RESULT_DECLARE(_zn_forget_res_decl_t, forget_res_decl)
-_ZN_RESULT_DECLARE(_zn_forget_pub_decl_t, forget_pub_decl)
-_ZN_RESULT_DECLARE(_zn_forget_sub_decl_t, forget_sub_decl)
-_ZN_RESULT_DECLARE(_zn_forget_qle_decl_t, forget_qle_decl)
-_ZN_RESULT_DECLARE(_zn_declaration_t, declaration)
-_ZN_RESULT_DECLARE(_zn_declare_t, declare)
-_ZN_RESULT_DECLARE(_zn_data_info_t, data_info)
-_ZN_RESULT_DECLARE(_zn_data_t, data)
-_ZN_RESULT_DECLARE(_zn_pull_t, pull)
-_ZN_RESULT_DECLARE(_zn_query_t, query)
-_ZN_RESULT_DECLARE(_zn_zenoh_message_t, zenoh_message)
+_Z_RESULT_DECLARE(_z_t_msg_scout_t, scout)
+_Z_RESULT_DECLARE(_z_t_msg_hello_t, hello)
+_Z_RESULT_DECLARE(_z_t_msg_join_t, join)
+_Z_RESULT_DECLARE(_z_t_msg_init_t, init)
+_Z_RESULT_DECLARE(_z_t_msg_open_t, open)
+_Z_RESULT_DECLARE(_z_t_msg_close_t, close)
+_Z_RESULT_DECLARE(_z_t_msg_sync_t, sync)
+_Z_RESULT_DECLARE(_z_t_msg_ack_nack_t, ack_nack)
+_Z_RESULT_DECLARE(_z_t_msg_keep_alive_t, keep_alive)
+_Z_RESULT_DECLARE(_z_t_msg_ping_pong_t, ping_pong)
+_Z_RESULT_DECLARE(_z_t_msg_frame_t, frame)
+_Z_RESULT_DECLARE(_z_transport_message_t, transport_message)
+
+_Z_RESULT_DECLARE(_z_res_decl_t, res_decl)
+_Z_RESULT_DECLARE(_z_pub_decl_t, pub_decl)
+_Z_RESULT_DECLARE(_z_sub_decl_t, sub_decl)
+_Z_RESULT_DECLARE(_z_qle_decl_t, qle_decl)
+_Z_RESULT_DECLARE(_z_forget_res_decl_t, forget_res_decl)
+_Z_RESULT_DECLARE(_z_forget_pub_decl_t, forget_pub_decl)
+_Z_RESULT_DECLARE(_z_forget_sub_decl_t, forget_sub_decl)
+_Z_RESULT_DECLARE(_z_forget_qle_decl_t, forget_qle_decl)
+_Z_RESULT_DECLARE(_z_declaration_t, declaration)
+_Z_RESULT_DECLARE(_z_msg_declare_t, declare)
+_Z_RESULT_DECLARE(_z_msg_data_t, data)
+_Z_RESULT_DECLARE(_z_msg_pull_t, pull)
+_Z_RESULT_DECLARE(_z_msg_query_t, query)
+_Z_RESULT_DECLARE(_z_zenoh_message_t, zenoh_message)
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-#define _ZN_DECLARE_ENCODE(name) \
-    int _zn_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _zn_##name##_t *m)
+#define _Z_DECLARE_ENCODE(name) \
+    int _z_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _z_##name##_t *m)
 
-#define _ZN_DECLARE_ENCODE_NOH(name) \
-    int _zn_##name##_encode(_z_wbuf_t *wbf, const _zn_##name##_t *m)
+#define _Z_DECLARE_ENCODE_NOH(name) \
+    int _z_##name##_encode(_z_wbuf_t *wbf, const _z_##name##_t *m)
 
-#define _ZN_DECLARE_DECODE(name)                                               \
-    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_##name##_result_t *r)
+#define _Z_DECLARE_DECODE(name)                                              \
+    _z_##name##_result_t _z_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
+    void _z_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_##name##_result_t *r)
 
-#define _ZN_DECLARE_DECODE_NOH(name)                           \
-    _zn_##name##_result_t _zn_##name##_decode(_z_zbuf_t *zbf); \
-    void _zn_##name##_decode_na(_z_zbuf_t *zbf, _zn_##name##_result_t *r)
+#define _Z_DECLARE_DECODE_NOH(name)                          \
+    _z_##name##_result_t _z_##name##_decode(_z_zbuf_t *zbf); \
+    void _z_##name##_decode_na(_z_zbuf_t *zbf, _z_##name##_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE(name)                                               \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
-    void _zn_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_##name##_p_result_t *r)
+#define _Z_DECLARE_P_DECODE(name)                                              \
+    _z_##name##_p_result_t _z_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
+    void _z_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_##name##_p_result_t *r)
 
-#define _ZN_DECLARE_P_DECODE_NOH(name)                           \
-    _zn_##name##_p_result_t _zn_##name##_decode(_z_zbuf_t *zbf); \
-    void _zn_##name##_decode_na(_z_zbuf_t *zbf, _zn_##name##_p_result_t *r)
+#define _Z_DECLARE_P_DECODE_NOH(name)                          \
+    _z_##name##_p_result_t _z_##name##_decode(_z_zbuf_t *zbf); \
+    void _z_##name##_decode_na(_z_zbuf_t *zbf, _z_##name##_p_result_t *r)
 
 /*------------------ Transport Message ------------------*/
-_ZN_DECLARE_ENCODE(scout);
-_ZN_DECLARE_DECODE(scout);
-
-_ZN_DECLARE_ENCODE(hello);
-_ZN_DECLARE_DECODE(hello);
-
-_ZN_DECLARE_ENCODE_NOH(transport_message);
-_ZN_DECLARE_DECODE_NOH(transport_message);
+_Z_DECLARE_ENCODE_NOH(transport_message);
+_Z_DECLARE_DECODE_NOH(transport_message);
 
 /*------------------ Zenoh Message ------------------*/
-_ZN_DECLARE_ENCODE_NOH(zenoh_message);
-_ZN_DECLARE_DECODE_NOH(zenoh_message);
+_Z_DECLARE_ENCODE_NOH(zenoh_message);
+_Z_DECLARE_DECODE_NOH(zenoh_message);
 
 #endif /* ZENOH_PICO_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
 #ifdef ZENOH_PICO_TEST_H
-/*------------------ Message Fields ------------------*/
-_ZN_DECLARE_ENCODE_NOH(payload);
-_ZN_DECLARE_DECODE_NOH(payload);
+// /*------------------ Message Fields ------------------*/
+_Z_DECLARE_ENCODE_NOH(payload);
+_Z_DECLARE_DECODE_NOH(payload);
 
-int z_timestamp_encode(_z_wbuf_t *wbf, const z_timestamp_t *ts);
-void z_timestamp_decode_na(_z_zbuf_t *zbf, _zn_timestamp_result_t *r);
-_zn_timestamp_result_t z_timestamp_decode(_z_zbuf_t *zbf);
+_Z_DECLARE_ENCODE_NOH(timestamp);
+_Z_DECLARE_DECODE_NOH(timestamp);
 
-int _zn_subinfo_encode(_z_wbuf_t *wbf, const zn_subinfo_t *fld);
-void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t *r);
-_zn_subinfo_result_t _zn_subinfo_decode(_z_zbuf_t *zbf, uint8_t header);
+_Z_DECLARE_ENCODE_NOH(subinfo);
+_Z_DECLARE_DECODE(subinfo);
 
-int _zn_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const zn_reskey_t *fld);
-void _zn_reskey_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_reskey_result_t *r);
-_zn_reskey_result_t _zn_reskey_decode(_z_zbuf_t *zbf, uint8_t header);
+_Z_DECLARE_ENCODE(reskey);
+_Z_DECLARE_DECODE(reskey);
 
-/*------------------ Message Decorators ------------------*/
-_ZN_DECLARE_ENCODE_NOH(attachment);
-_ZN_DECLARE_P_DECODE(attachment);
+_Z_DECLARE_ENCODE_NOH(data_info);
+_Z_DECLARE_DECODE_NOH(data_info);
 
-_ZN_DECLARE_ENCODE_NOH(reply_context);
-_ZN_DECLARE_P_DECODE(reply_context);
+// /*------------------ Message Decorators ------------------*/
+_Z_DECLARE_ENCODE_NOH(attachment);
+_Z_DECLARE_P_DECODE(attachment);
 
-/*------------------ Zenoh Message ------------------*/
-_ZN_DECLARE_ENCODE(res_decl);
-_ZN_DECLARE_DECODE(res_decl);
+_Z_DECLARE_ENCODE_NOH(reply_context);
+_Z_DECLARE_P_DECODE(reply_context);
 
-_ZN_DECLARE_ENCODE(pub_decl);
-_ZN_DECLARE_DECODE(pub_decl);
+// /*------------------ Zenoh Message ------------------*/
+_Z_DECLARE_ENCODE(res_decl);
+_Z_DECLARE_DECODE(res_decl);
 
-_ZN_DECLARE_ENCODE(sub_decl);
-_ZN_DECLARE_DECODE(sub_decl);
+_Z_DECLARE_ENCODE(pub_decl);
+_Z_DECLARE_DECODE(pub_decl);
 
-_ZN_DECLARE_ENCODE(qle_decl);
-_ZN_DECLARE_DECODE(qle_decl);
+_Z_DECLARE_ENCODE(sub_decl);
+_Z_DECLARE_DECODE(sub_decl);
 
-_ZN_DECLARE_ENCODE_NOH(forget_res_decl);
-_ZN_DECLARE_DECODE_NOH(forget_res_decl);
+_Z_DECLARE_ENCODE(qle_decl);
+_Z_DECLARE_DECODE(qle_decl);
 
-_ZN_DECLARE_ENCODE(forget_pub_decl);
-_ZN_DECLARE_DECODE(forget_pub_decl);
+_Z_DECLARE_ENCODE_NOH(forget_res_decl);
+_Z_DECLARE_DECODE_NOH(forget_res_decl);
 
-_ZN_DECLARE_ENCODE(forget_sub_decl);
-_ZN_DECLARE_DECODE(forget_sub_decl);
+_Z_DECLARE_ENCODE(forget_pub_decl);
+_Z_DECLARE_DECODE(forget_pub_decl);
 
-_ZN_DECLARE_ENCODE(forget_qle_decl);
-_ZN_DECLARE_DECODE(forget_qle_decl);
+_Z_DECLARE_ENCODE(forget_sub_decl);
+_Z_DECLARE_DECODE(forget_sub_decl);
 
-_ZN_DECLARE_ENCODE_NOH(declaration);
-_ZN_DECLARE_DECODE_NOH(declaration);
+_Z_DECLARE_ENCODE(forget_qle_decl);
+_Z_DECLARE_DECODE(forget_qle_decl);
 
-_ZN_DECLARE_ENCODE_NOH(declare);
-_ZN_DECLARE_DECODE_NOH(declare);
+_Z_DECLARE_ENCODE_NOH(declaration);
+_Z_DECLARE_DECODE_NOH(declaration);
 
-_ZN_DECLARE_ENCODE_NOH(data_info);
-_ZN_DECLARE_DECODE_NOH(data_info);
+int _z_declare_encode(_z_wbuf_t *wbf, const _z_msg_declare_t *msg);
+void _z_declare_decode_na(_z_zbuf_t *zbf, _z_declare_result_t *r);
+_z_declare_result_t _z_declare_decode(_z_zbuf_t *zbf);
 
-_ZN_DECLARE_ENCODE(data);
-_ZN_DECLARE_DECODE(data);
+int _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg);
+void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r);
+_z_data_result_t _z_data_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(pull);
-_ZN_DECLARE_DECODE(pull);
+int _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg);
+void _z_pull_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pull_result_t *r);
+_z_pull_result_t _z_pull_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(query);
-_ZN_DECLARE_DECODE(query);
+int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg);
+void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r);
+_z_query_result_t _z_query_decode(_z_zbuf_t *zbf, uint8_t header);
 
-/*------------------ Transport Message ------------------*/
-_ZN_DECLARE_ENCODE(join);
-_ZN_DECLARE_DECODE(join);
+// /*------------------ Transport Message ------------------*/
+int _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg);
+void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r);
+_z_join_result_t _z_join_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(init);
-_ZN_DECLARE_DECODE(init);
+int _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg);
+void _z_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_init_result_t *r);
+_z_init_result_t _z_init_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(open);
-_ZN_DECLARE_DECODE(open);
+int _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg);
+void _z_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_open_result_t *r);
+_z_open_result_t _z_open_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(close);
-_ZN_DECLARE_DECODE(close);
+int _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *msg);
+void _z_close_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_close_result_t *r);
+_z_close_result_t _z_close_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(sync);
-_ZN_DECLARE_DECODE(sync);
+int _z_sync_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_sync_t *msg);
+void _z_sync_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sync_result_t *r);
+_z_sync_result_t _z_sync_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(ack_nack);
-_ZN_DECLARE_DECODE(ack_nack);
+int _z_ack_nack_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_ack_nack_t *msg);
+void _z_ack_nack_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_ack_nack_result_t *r);
+_z_ack_nack_result_t _z_ack_nack_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE(keep_alive);
-_ZN_DECLARE_DECODE(keep_alive);
+int _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_alive_t *msg);
+void _z_keep_alive_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keep_alive_result_t *r);
+_z_keep_alive_result_t _z_keep_alive_decode(_z_zbuf_t *zbf, uint8_t header);
 
-_ZN_DECLARE_ENCODE_NOH(ping_pong);
-_ZN_DECLARE_DECODE_NOH(ping_pong);
+int _z_ping_pong_encode(_z_wbuf_t *wbf, const _z_t_msg_ping_pong_t *msg);
+void _z_ping_pong_decode_na(_z_zbuf_t *zbf, _z_ping_pong_result_t *r);
+_z_ping_pong_result_t _z_ping_pong_decode(_z_zbuf_t *zbf);
 
-_ZN_DECLARE_ENCODE(frame);
-_ZN_DECLARE_DECODE(frame);
+int _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
+void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r);
+_z_frame_result_t _z_frame_decode(_z_zbuf_t *zbf, uint8_t header);
+
+// /*------------------ Discovery Message ------------------*/
+int _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg);
+void _z_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_scout_result_t *r);
+_z_scout_result_t _z_scout_decode(_z_zbuf_t *zbf, uint8_t header);
+
+int _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *msg);
+void _z_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_hello_result_t *r);
+_z_hello_result_t _z_hello_decode(_z_zbuf_t *zbf, uint8_t header);
 
 #endif /* ZENOH_PICO_TEST_H */

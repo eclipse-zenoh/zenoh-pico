@@ -18,6 +18,6 @@
 /**
  * Initialise the zenoh runtime logger
  */
-void z_init_logger(void);
+void _z_init_logger(void);
 
 #endif /* ZENOH_PICO_LOGGER_NETAPI_H */

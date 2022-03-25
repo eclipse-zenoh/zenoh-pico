@@ -15,12 +15,12 @@
 #ifndef ZENOH_PICO_SYSTEM_VOID_H
 #define ZENOH_PICO_SYSTEM_VOID_H
 
-typedef void *z_task_t;
-typedef void *z_task_attr_t;
-typedef void *z_mutex_t;
-typedef void *z_condvar_t;
+typedef void *_z_task_t;
+typedef void *_z_task_attr_t;
+typedef void *_z_mutex_t;
+typedef void *_z_condvar_t;
 
-typedef void *z_clock_t;
-typedef void *z_time_t;
+typedef void *_z_clock_t;
+typedef void *_z_time_t;
 
 #endif /* ZENOH_PICO_SYSTEM_VOID_H */

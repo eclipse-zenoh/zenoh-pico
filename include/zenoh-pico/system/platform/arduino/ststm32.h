@@ -15,12 +15,12 @@
 #ifndef ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
 
-typedef void * z_task_t;
-typedef void * z_task_attr_t;
-typedef void * z_mutex_t;
-typedef void * z_condvar_t;
+typedef void * _z_task_t;
+typedef void * _z_task_attr_t;
+typedef void * _z_mutex_t;
+typedef void * _z_condvar_t;
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef struct timespec _z_clock_t;
+typedef struct timeval _z_time_t;
 
 #endif /* ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H */

@@ -22,16 +22,16 @@
  */
 typedef struct
 {
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-} zn_subscriber_t;
+    void *zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t id;
+} z_subscriber_t;
 
 /**
  * Create a default subscription info.
  *
  * Returns:
- *     A :c:type:`zn_subinfo_t` containing the created subscription info.
+ *     A :c:type:`_z_subinfo_t` containing the created subscription info.
  */
-zn_subinfo_t zn_subinfo_default(void);
+_z_subinfo_t _z_subinfo_default(void);
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

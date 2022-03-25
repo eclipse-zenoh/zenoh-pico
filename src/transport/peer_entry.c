@@ -15,7 +15,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 
-void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src)
+void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src)
 {
     _z_wbuf_clear(&src->dbuf_reliable);
     _z_wbuf_clear(&src->dbuf_best_effort);
@@ -24,14 +24,14 @@ void _zn_transport_peer_entry_clear(_zn_transport_peer_entry_t *src)
     _z_bytes_clear(&src->remote_addr);
 }
 
-void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_transport_peer_entry_t *src)
+void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src)
 {
     _z_wbuf_copy(&dst->dbuf_reliable, &src->dbuf_reliable);
     _z_wbuf_copy(&dst->dbuf_best_effort, &src->dbuf_best_effort);
 
     dst->sn_resolution = src->sn_resolution;
     dst->sn_resolution_half = src->sn_resolution_half;
-    _zn_conduit_sn_list_copy(&dst->sn_rx_sns, &src->sn_rx_sns);
+    _z_conduit_sn_list_copy(&dst->sn_rx_sns, &src->sn_rx_sns);
 
     dst->lease = src->lease;
     dst->next_lease = src->next_lease;
@@ -41,13 +41,13 @@ void _zn_transport_peer_entry_copy(_zn_transport_peer_entry_t *dst, const _zn_tr
     _z_bytes_copy(&dst->remote_addr, &src->remote_addr);
 }
 
-size_t _zn_transport_peer_entry_size(const _zn_transport_peer_entry_t *src)
+size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src)
 {
     (void) (src);
-    return sizeof(_zn_transport_peer_entry_t);
+    return sizeof(_z_transport_peer_entry_t);
 }
 
-int _zn_transport_peer_entry_eq(const _zn_transport_peer_entry_t *left, const _zn_transport_peer_entry_t *right)
+int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right)
 {
     if (left->remote_pid.len != right->remote_pid.len)
         return 0; // False

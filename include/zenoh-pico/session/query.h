@@ -18,14 +18,14 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Query ------------------*/
-z_zint_t _zn_get_query_id(zn_session_t *zn);
+_z_zint_t _z_get_query_id(_z_session_t *zn);
 
-_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, const z_zint_t id);
+_z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id);
 
-int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
-int _zn_trigger_query_reply_partial(zn_session_t *zn, const _zn_reply_context_t *reply_context, const zn_reskey_t reskey, const z_bytes_t payload, const _zn_data_info_t data_info);
-int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context);
-void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pq);
-void _zn_flush_pending_queries(zn_session_t *zn);
+int _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
+int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context, const _z_reskey_t reskey, const _z_bytes_t payload, const _z_data_info_t data_info);
+int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *reply_context);
+void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
+void _z_flush_pending_queries(_z_session_t *zn);
 
 #endif /* ZENOH_PICO_SESSION_QUERY_H */

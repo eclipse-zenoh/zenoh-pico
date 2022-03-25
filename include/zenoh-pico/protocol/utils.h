@@ -29,11 +29,11 @@
  * Returns:
  *     ``1`` in case of success, ``0`` in case of failure.
  */
-int zn_rname_intersect(const z_str_t left, const z_str_t right);
+int _z_rname_intersect(const _z_str_t left, const _z_str_t right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
-zn_reskey_t _zn_reskey_duplicate(const zn_reskey_t *resky);
-z_timestamp_t z_timestamp_duplicate(const z_timestamp_t *tstamp);
-void z_timestamp_reset(z_timestamp_t *tstamp);
+_z_reskey_t _z_reskey_duplicate(const _z_reskey_t *resky);
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
+void _z_timestamp_reset(_z_timestamp_t *tstamp);
 
 #endif /* ZENOH_PICO_PROTOCOL_UTILS_H */

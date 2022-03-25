@@ -57,7 +57,7 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE/src
         cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/net/zn_pub.c zn_pub.c
+        ln -s $ZENOH_PICO_BASE/examples/net/z_pub.c z_pub.c
 
         cd $ZEPHYR_BASE
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini

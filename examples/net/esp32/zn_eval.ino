@@ -29,12 +29,12 @@ extern "C"
 #define URI "/demo/example/zenoh-pico-eval"
 #define VALUE "Eval from pico (ESP32)!"
 
-void query_handler(zn_query_t *query, const void *arg)
+void query_handler(z_query_t *query, const void *arg)
 {
     (void)(arg); // Unused paramater
-    z_string_t res = zn_query_res_name(query);
-    z_string_t pred = zn_query_predicate(query);
-    zn_send_reply(query, query->rname, (const unsigned char *)VALUE, strlen(VALUE));
+    _z_string_t res = _z_query_res_name(query);
+    _z_string_t pred = _z_query_predicate(query);
+    _z_send_reply(query, query->rname, (const unsigned char *)VALUE, strlen(VALUE));
 }
 
 void setup()
@@ -47,21 +47,21 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
         delay(1000);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
-    zn_session_t *s = zn_open(config);
+    _z_session_t *s = _z_open(config);
     if (s == NULL)
         return;
 
-    zn_reskey_t reskey = zn_rname(URI);
-    zn_queryable_t *qable = zn_declare_queryable(s, reskey, ZN_QUERYABLE_EVAL, query_handler, NULL);
+    _z_reskey_t reskey = _z_rname(URI);
+    _z_queryable_t *qable = _z_declare_queryable(s, reskey, Z_QUERYABLE_EVAL, query_handler, NULL);
     if (qable == 0)
         return;
 
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
+    _zp_start_read_task(s);
+    _zp_start_lease_task(s);
 }
 
 void loop()

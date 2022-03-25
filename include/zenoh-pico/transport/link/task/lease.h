@@ -17,12 +17,12 @@
 
 #include "zenoh-pico/transport/transport.h"
 
-int _znp_send_keep_alive(_zn_transport_t *zt);
-int _znp_unicast_send_keep_alive(_zn_transport_unicast_t *ztu);
-int _znp_multicast_send_keep_alive(_zn_transport_multicast_t *ztm);
+int _z_send_keep_alive(_z_transport_t *zt);
+int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu);
+int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm);
 
-void *_znp_lease_task(void *arg);
-void *_znp_unicast_lease_task(void *arg);
-void *_znp_multicast_lease_task(void *arg);
+void *_zp_lease_task(void *arg);
+void *_zp_unicast_lease_task(void *arg);
+void *_zp_multicast_lease_task(void *arg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_LEASE_H */

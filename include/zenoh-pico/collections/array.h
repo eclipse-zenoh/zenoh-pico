@@ -26,7 +26,9 @@
     {                                                                              \
         name##_array_t a;                                                          \
         a.len = capacity;                                                          \
-        a.val = (type *)malloc(capacity * sizeof(type));                           \
+        a.val = NULL;                                                              \
+        if (capacity > 0)                                                          \
+            a.val = (type *)malloc(capacity * sizeof(type));                       \
         return a;                                                                  \
     }                                                                              \
     static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) \

@@ -14,20 +14,28 @@
 
 #include "zenoh-pico/net/memory.h"
 
-void zn_sample_free(zn_sample_t sample)
+void _z_sample_clear(_z_sample_t *sample)
 {
-    if (sample.key.val)
-        _z_string_clear(&sample.key);
-    if (sample.value.val)
-        _z_bytes_clear(&sample.value);
+    _z_reskey_clear(&sample->key);
+    _z_bytes_clear(&sample->value);
+    _z_str_clear(sample->encoding.suffix); // FIXME: call the z_encoding_clear
 }
 
-void zn_hello_array_free(zn_hello_array_t hellos)
+void _z_sample_free(_z_sample_t **sample)
 {
-    zn_hello_t *h = (zn_hello_t *)hellos.val;
+    _z_sample_t *ptr = (_z_sample_t *)*sample;
+    _z_sample_clear(ptr);
+
+    free(ptr);
+    *sample = NULL;
+}
+
+void _z_hello_array_clear(_z_hello_array_t *hellos)
+{
+    _z_hello_t *h = (_z_hello_t *)hellos->val;
     if (h)
     {
-        for (unsigned int i = 0; i < hellos.len; i++)
+        for (unsigned int i = 0; i < hellos->len; i++)
         {
             if (h[i].pid.len > 0)
                 _z_bytes_clear(&h[i].pid);
@@ -39,16 +47,43 @@ void zn_hello_array_free(zn_hello_array_t hellos)
     }
 }
 
-void zn_reply_data_array_free(zn_reply_data_array_t replies)
+void _z_hello_array_free(_z_hello_array_t **hellos)
 {
-    for (unsigned int i = 0; i < replies.len; i++)
-    {
-        if (replies.val[i].replier_id.val)
-            _z_bytes_clear((z_bytes_t *)&replies.val[i].replier_id);
-        if (replies.val[i].data.value.val)
-            _z_bytes_clear((z_bytes_t *)&replies.val[i].data.value);
-        if (replies.val[i].data.key.val)
-            _z_string_clear((z_string_t *)&replies.val[i].data.key);
-    }
-    free((zn_reply_data_t *)replies.val);
+    _z_hello_array_t *ptr = (_z_hello_array_t *)*hellos;
+    _z_hello_array_clear(ptr);
+
+    free(ptr);
+    *hellos = NULL;
+}
+
+void _z_reply_data_clear(_z_reply_data_t *reply_data)
+{
+    _z_sample_clear(&reply_data->data);
+    _z_bytes_clear(&reply_data->replier_id);
+}
+
+void _z_reply_data_free(_z_reply_data_t **reply_data)
+{
+    _z_reply_data_t *ptr = (_z_reply_data_t *)*reply_data;
+    _z_reply_data_clear(ptr);
+
+    free(ptr);
+    *reply_data = NULL;
+}
+
+void _z_reply_data_array_clear(_z_reply_data_array_t *replies)
+{
+    for (unsigned int i = 0; i < replies->len; i++)
+        _z_reply_data_clear((_z_reply_data_t*)&replies->val[i]);
+
+    free((_z_reply_data_t *)replies->val);
+}
+
+void _z_reply_data_array_free(_z_reply_data_array_t **replies)
+{
+    _z_reply_data_array_t *ptr = (_z_reply_data_array_t *)*replies;
+    _z_reply_data_array_clear(ptr);
+
+    free(ptr);
+    *replies = NULL;
 }

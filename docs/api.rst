@@ -30,18 +30,18 @@ or an error code when they fail.
 
     One of the following result kinds:
 
-      | ``_z_res_t_OK``
-      | ``_z_res_t_ERR``
+      | ``_Z_RES_OK``
+      | ``_Z_RES_ERR``
 
   .. c:member:: union value
 
     .. c:member:: type <name>
 
-      The actual value when :c:member:`name_result_t.tag` equals ``_z_res_t_OK``.
+      The actual value when :c:member:`name_result_t.tag` equals ``_Z_RES_OK``.
 
     .. c:member:: int error
 
-      The error code when :c:member:`name_result_t.tag` equals ``_z_res_t_ERR``.
+      The error code when :c:member:`name_result_t.tag` equals ``_Z_RES_ERR``.
 
 .. c:type:: struct name_p_result_t
 
@@ -51,18 +51,18 @@ or an error code when they fail.
 
     One of the following result kinds:
 
-      | ``_z_res_t_OK``
-      | ``_z_res_t_ERR``
+      | ``_Z_RES_OK``
+      | ``_Z_RES_ERR``
 
   .. c:member:: union value
 
     .. c:member:: type *<name>
 
-      A pointer to the actual value when :c:member:`name_p_result_t.tag` equals ``_z_res_t_OK``.
+      A pointer to the actual value when :c:member:`name_p_result_t.tag` equals ``_Z_RES_OK``.
 
     .. c:member:: int error
 
-      The error code when :c:member:`name_p_result_t.tag` equals ``_z_res_t_ERR``.
+      The error code when :c:member:`name_p_result_t.tag` equals ``_Z_RES_ERR``.
 
 
 Collections
@@ -142,7 +142,7 @@ Vectors
 Data Structures
 ---------------
 
-.. c:type:: struct zn_reskey_t
+.. c:type:: struct _z_reskey_t
 
   Data structure representing a resource key.
 
@@ -150,41 +150,41 @@ Data Structures
 
     One of the following kinds:
 
-      | ``ZN_INT_RES_KEY``
-      | ``ZN_STR_RES_KEY``
+      | ``Z_INT_RES_KEY``
+      | ``Z_STR_RES_KEY``
 
-  .. c:member:: union zn_reskey_t key
+  .. c:member:: union _z_reskey_t key
 
-    .. c:member:: z_zint_t rid
+    .. c:member:: _z_zint_t rid
 
-      A resource id (integer) when :c:member:`zn_reskey_t.kind` equals ``ZN_INT_RES_KEY``.
+      A resource id (integer) when :c:member:`_z_reskey_t.kind` equals ``Z_INT_RES_KEY``.
 
     .. c:member:: char *rname
 
-      A resource name (string) when :c:member:`zn_reskey_t.kind` equals ``ZN_STR_RES_KEY``.
+      A resource name (string) when :c:member:`_z_reskey_t.kind` equals ``Z_STR_RES_KEY``.
 
-.. c:type:: struct zn_subinfo_t
+.. c:type:: struct _z_subinfo_t
 
-  Data structure representing a subscription mode (see :c:func:`zn_declare_subscriber`).
+  Data structure representing a subscription mode (see :c:func:`_z_declare_subscriber`).
 
   .. c:member:: uint8_t kind
 
     One of the following subscription modes:
 
-      | ``ZN_PUSH_MODE``
-      | ``ZN_PULL_MODE``
-      | ``ZN_PERIODIC_PUSH_MODE``
-      | ``ZN_PERIODIC_PULL_MODE``
+      | ``Z_PUSH_MODE``
+      | ``Z_PULL_MODE``
+      | ``Z_PERIODIC_PUSH_MODE``
+      | ``Z_PERIODIC_PULL_MODE``
 
-  .. c:member:: zn_period_t tprop
+  .. c:member:: _z_period_t tprop
 
     The period. *Unsupported*
 
-.. c:type:: struct z_timestamp_t
+.. c:type:: struct _z_timestamp_t
 
   Data structure representing a unique timestamp.
 
-  .. c:member:: z_zint_t time
+  .. c:member:: _z_zint_t time
 
     The time as a 64-bit long, where:
 
@@ -195,19 +195,19 @@ Data Structures
 
     The unique identifier of the clock that generated this timestamp.
 
-.. c:type:: struct zn_data_info_t
+.. c:type:: struct z_data_info_t
 
   Data structure containing meta informations about the associated data.
 
   .. c:member:: unsigned int flags
 
-    Flags indicating which meta information is present in the :c:type:`zn_data_info_t`:
+    Flags indicating which meta information is present in the :c:type:`z_data_info_t`:
 
-      | ``ZN_T_STAMP``
-      | ``ZN_KIND``
-      | ``ZN_ENCODING``
+      | ``Z_T_STAMP``
+      | ``Z_KIND``
+      | ``Z_ENCODING``
 
-  .. c:member:: z_timestamp_t tstamp
+  .. c:member:: _z_timestamp_t tstamp
 
     The unique timestamp at which the data has been produced.
 
@@ -219,107 +219,107 @@ Data Structures
 
     The kind of the data.
 
-.. c:type:: struct zn_query_dest_t
+.. c:type:: struct z_query_dest_t
 
-  Data structure defining which storages or evals should be destination of a query (see :c:func:`zn_query_wo`).
+  Data structure defining which storages or evals should be destination of a query (see :c:func:`z_query_wo`).
 
   .. c:member:: uint8_t kind
 
     One of the following destination kinds:
 
-      | ``ZN_BEST_MATCH`` the nearest complete storage/eval if there is one, all storages/evals if not.
-      | ``ZN_COMPLETE`` only complete storages/evals.
-      | ``ZN_ALL`` all storages/evals.
-      | ``ZN_NONE`` no storages/evals.
+      | ``Z_BEST_MATCH`` the nearest complete storage/eval if there is one, all storages/evals if not.
+      | ``Z_COMPLETE`` only complete storages/evals.
+      | ``Z_ALL`` all storages/evals.
+      | ``Z_NONE`` no storages/evals.
 
   .. c:member:: uint8_t nb
 
     The number of storages or evals that should be destination of the query when
-    :c:member:`zn_query_dest_t.kind` equals ``ZN_COMPLETE``.
+    :c:member:`z_query_dest_t.kind` equals ``Z_COMPLETE``.
 
-.. c:type:: struct zn_reply_value_t
+.. c:type:: struct z_reply_value_t
 
-  Data structure containing one of the replies to a query (see :c:type:`zn_reply_handler_t`).
+  Data structure containing one of the replies to a query (see :c:type:`z_reply_handler_t`).
 
   .. c:member:: char kind
 
     One of the following kinds:
 
-      | ``ZN_STORAGE_DATA`` the reply contains some data from a storage.
-      | ``ZN_STORAGE_FINAL`` the reply indicates that no more data is expected from the specified storage.
-      | ``ZN_EVAL_DATA`` the reply contains some data from an eval.
-      | ``ZN_EVAL_FINAL`` the reply indicates that no more data is expected from the specified eval.
-      | ``ZN_REPLY_FINAL`` the reply indicates that no more replies are expected for the query.
+      | ``Z_STORAGE_DATA`` the reply contains some data from a storage.
+      | ``Z_STORAGE_FINAL`` the reply indicates that no more data is expected from the specified storage.
+      | ``Z_EVAL_DATA`` the reply contains some data from an eval.
+      | ``Z_EVAL_FINAL`` the reply indicates that no more data is expected from the specified eval.
+      | ``Z_REPLY_FINAL`` the reply indicates that no more replies are expected for the query.
 
   .. c:member:: const unsigned char *srcid
 
-    The unique identifier of the storage or eval that sent the reply when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA``, ``ZN_STORAGE_FINAL``, ``ZN_EVAL_DATA`` or ``ZN_EVAL_FINAL``.
+    The unique identifier of the storage or eval that sent the reply when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA``, ``Z_STORAGE_FINAL``, ``Z_EVAL_DATA`` or ``Z_EVAL_FINAL``.
 
   .. c:member:: size_t srcid_length
 
-    The length of the :c:member:`zn_reply_value_t.srcid` when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA``, ``ZN_STORAGE_FINAL``, ``ZN_EVAL_DATA`` or ``ZN_EVAL_FINAL``.
+    The length of the :c:member:`z_reply_value_t.srcid` when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA``, ``Z_STORAGE_FINAL``, ``Z_EVAL_DATA`` or ``Z_EVAL_FINAL``.
 
-  .. c:member:: z_zint_t rsn
+  .. c:member:: _z_zint_t rsn
 
-    The sequence number of the reply from the identified storage or eval when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA``, ``ZN_STORAGE_FINAL``, ``ZN_EVAL_DATA`` or ``ZN_EVAL_FINAL``.
+    The sequence number of the reply from the identified storage or eval when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA``, ``Z_STORAGE_FINAL``, ``Z_EVAL_DATA`` or ``Z_EVAL_FINAL``.
 
   .. c:member:: const char *rname
 
-    The resource name of the received data when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA`` or ``ZN_EVAL_DATA``.
+    The resource name of the received data when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA`` or ``Z_EVAL_DATA``.
 
   .. c:member:: const unsigned char *data
 
-    A pointer to the received data when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA`` or ``ZN_EVAL_DATA``.
+    A pointer to the received data when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA`` or ``Z_EVAL_DATA``.
 
   .. c:member:: size_t data_length
 
-    The length of the received :c:member:`zn_reply_value_t.data` when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA`` or ``ZN_EVAL_DATA``.
+    The length of the received :c:member:`z_reply_value_t.data` when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA`` or ``Z_EVAL_DATA``.
 
-  .. c:member:: zn_data_info_t info
+  .. c:member:: z_data_info_t info
 
-    Some meta information about the received :c:member:`zn_reply_value_t.data` when :c:member:`zn_reply_value_t.kind` equals
-    ``ZN_STORAGE_DATA`` or ``ZN_EVAL_DATA``.
+    Some meta information about the received :c:member:`z_reply_value_t.data` when :c:member:`z_reply_value_t.kind` equals
+    ``Z_STORAGE_DATA`` or ``Z_EVAL_DATA``.
 
-.. c:type:: struct zn_property_t
+.. c:type:: struct _z_property_t
 
   A key/value pair where the key is an integer and the value a byte sequence.
 
-  .. c:member:: z_zint_t id
+  .. c:member:: _z_zint_t id
 
-    The key of the :c:type:`zn_property_t`.
+    The key of the :c:type:`_z_property_t`.
 
   .. c:member:: z_array_uint8_t value
 
-    The value of the :c:type:`zn_property_t`.
+    The value of the :c:type:`_z_property_t`.
 
 Functions
 ---------
 
-.. c:function:: zn_session_p_result_t zn_open(char* locator, zn_on_disconnect_t on_disconnect, const z_vec_t *ps)
+.. c:function:: z_session_p_result_t _z_open(char* locator, z_on_disconnect_t on_disconnect, const z_vec_t *ps)
 
   Open a zenoh-net session.
 
   | **locator** is a string representing the network endpoint to which establish the session. A typical locator looks like this : ``tcp/127.0.0.1:7447``.
-    If ``NULL``, :c:func:`zn_open` will scout and try to establish the session automatically.
+    If ``NULL``, :c:func:`_z_open` will scout and try to establish the session automatically.
   | **on_disconnect** is a function that will be called each time the client API is disconnected from the infrastructure. It can be set to ``NULL``.
-  | **ps** is a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` that will be used to establish and configure the zenoh-net session.
+  | **ps** is a :c:type:`vector<z_vec_t>` of :c:type:`_z_property_t` that will be used to establish and configure the zenoh-net session.
     **ps** will typically contain the ``username`` and ``password`` informations needed to establish the zenoh-net session with a secured infrastructure.
     It can be set to ``NULL``.
 
   Return a handle to the zenoh-net session.
 
-.. c:function:: z_vec_t zn_info(zn_session_t *z)
+.. c:function:: z_vec_t _z_info(_z_session_t *z)
 
-  Return a :c:type:`vector<z_vec_t>` of :c:type:`zn_property_t` containing various informations about the established zenoh-net session
+  Return a :c:type:`vector<z_vec_t>` of :c:type:`_z_property_t` containing various informations about the established zenoh-net session
   represented by **z**.
 
-.. c:function:: zn_sub_p_result_t zn_declare_subscriber(zn_session_t *z, const char* resource, const zn_subinfo_t *sm, zn_data_handler_t data_handler, void *arg)
+.. c:function:: z_sub_p_result_t _z_declare_subscriber(_z_session_t *z, const char* resource, const _z_subinfo_t *sm, _z_data_handler_t data_handler, void *arg)
 
   Declare a subscription for all published data matching the provided resource name **resource** in session **z**.
 
@@ -331,7 +331,7 @@ Functions
 
   Return a zenoh-net subscriber.
 
-.. c:function:: zn_pub_p_result_t zn_declare_publisher(zn_session_t *z, const char *resource)
+.. c:function:: z_pub_p_result_t _z_declare_publisher(_z_session_t *z, const char *resource)
 
   Declare a publication for resource name **resource** in session **z**.
 
@@ -340,7 +340,7 @@ Functions
 
   Return a zenoh-net publisher.
 
-.. c:function:: zn_sto_p_result_t zn_declare_storage(zn_session_t *z, const char* resource, zn_data_handler_t data_handler, zn_query_handler_t query_handler, void *arg)
+.. c:function:: z_sto_p_result_t z_declare_storage(_z_session_t *z, const char* resource, _z_data_handler_t data_handler, _z_query_handler_t query_handler, void *arg)
 
   Declare a storage for all data matching the provided resource name **resource** in session **z**.
 
@@ -353,7 +353,7 @@ Functions
 
   Return a zenoh-net storage.
 
-.. c:function:: zn_eval_p_result_t zn_declare_eval(zn_session_t *z, const char* resource, zn_query_handler_t query_handler, void *arg)
+.. c:function:: z_eval_p_result_t z_declare_eval(_z_session_t *z, const char* resource, _z_query_handler_t query_handler, void *arg)
 
   Declare an eval able to provide data matching the provided resource name **resource** in session **z**.
 
@@ -365,7 +365,7 @@ Functions
 
   Return a zenoh-net eval.
 
-.. c:function:: int zn_stream_compact_data(zn_publisher_t *pub, const unsigned char *payload, size_t len)
+.. c:function:: int z_stream_compact_data(_z_publisher_t *pub, const unsigned char *payload, size_t len)
 
   Send data in a *compact_data* message for the resource published by publisher **pub**.
 
@@ -375,7 +375,7 @@ Functions
 
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_stream_data(zn_publisher_t *pub, const unsigned char *payload, size_t len)
+.. c:function:: int z_stream_data(_z_publisher_t *pub, const unsigned char *payload, size_t len)
 
   Send data in a *stream_data* message for the resource published by publisher **pub**.
 
@@ -385,7 +385,7 @@ Functions
 
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_stream_data_wo(zn_publisher_t *pub, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind)
+.. c:function:: int z_stream_data_wo(_z_publisher_t *pub, const unsigned char *payload, size_t len, uint8_t encoding, uint8_t kind)
 
   Send data in a *stream_data* message for the resource published by publisher **pub**.
 
@@ -397,7 +397,7 @@ Functions
 
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_write_data(zn_session_t *z, const char* resource, const unsigned char *payload, size_t length)
+.. c:function:: int _z_write_data(_z_session_t *z, const char* resource, const unsigned char *payload, size_t length)
 
   Send data in a *write_data* message for the resource **resource**.
 
@@ -408,7 +408,7 @@ Functions
 
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_write_data_wo(zn_session_t *z, const char* resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind)
+.. c:function:: int _z_write_data_wo(_z_session_t *z, const char* resource, const unsigned char *payload, size_t length, uint8_t encoding, uint8_t kind)
 
   Send data in a *write_data* message for the resource **resource**.
 
@@ -421,16 +421,16 @@ Functions
 
   Return 0 if the publication was successful.
 
-.. c:function:: int zn_pull(zn_subscriber_t *sub)
+.. c:function:: int _z_pull(_z_subscriber_t *sub)
 
-  Pull data for the `ZN_PULL_MODE` or `ZN_PERIODIC_PULL_MODE` subscription **sub**. The pulled data will be provided
-  by calling the **data_handler** function provided to the `c.zn_declare_subscriber`_ function.
+  Pull data for the `Z_PULL_MODE` or `Z_PERIODIC_PULL_MODE` subscription **sub**. The pulled data will be provided
+  by calling the **data_handler** function provided to the `c._z_declare_subscriber`_ function.
 
   | **sub** is the subscription to pull from.
 
   Return 0 if pull was successful.
 
-.. c:function:: int zn_query(zn_session_t *z, const char* resource, const char* predicate, zn_reply_handler_t reply_handler, void *arg)
+.. c:function:: int _z_query(_z_session_t *z, const char* resource, const char* predicate, z_reply_handler_t reply_handler, void *arg)
 
   Query data matching resource name **resource** in session **z**.
 
@@ -443,7 +443,7 @@ Functions
 
   Return 0 if the query was sent successfully.
 
-.. c:function:: int zn_query_wo(zn_session_t *z, const char* resource, const char* predicate, zn_reply_handler_t reply_handler, void *arg, zn_query_dest_t dest_storages, zn_query_dest_t dest_evals)
+.. c:function:: int z_query_wo(_z_session_t *z, const char* resource, const char* predicate, z_reply_handler_t reply_handler, void *arg, z_query_dest_t dest_storages, z_query_dest_t dest_evals)
 
   Query data matching resource name **resource** in session **z**.
 
@@ -453,12 +453,12 @@ Functions
     It may allow them to filter, transform and/or compute the queried data.
   | **reply_handler** is the callback function that will be called on reception of the replies of the query.
   | **arg** is a pointer that will be passed to the **reply_handler** function on each call.
-  | **dest_storages** indicates which matching storages should be destination of the query (see :c:type:`zn_query_dest_t`).
-  | **dest_evals** indicates which matching evals should be destination of the query (see :c:type:`zn_query_dest_t`).
+  | **dest_storages** indicates which matching storages should be destination of the query (see :c:type:`z_query_dest_t`).
+  | **dest_evals** indicates which matching evals should be destination of the query (see :c:type:`z_query_dest_t`).
 
   Return 0 if the query was sent successfully.
 
-.. c:function:: int zn_undeclare_subscriber(zn_subscriber_t *sub)
+.. c:function:: int _z_undeclare_subscriber(_z_subscriber_t *sub)
 
   Undeclare the subscrbtion **sub**.
 
@@ -466,7 +466,7 @@ Functions
 
   Return 0 when successful.
 
-.. c:function:: int zn_undeclare_publisher(zn_subscriber_t *pub)
+.. c:function:: int _z_undeclare_publisher(_z_subscriber_t *pub)
 
   Undeclare the publication *pub*.
 
@@ -474,7 +474,7 @@ Functions
 
   Return 0 when successful.
 
-.. c:function:: int zn_undeclare_storage(zn_sto_t *sto)
+.. c:function:: int z_undeclare_storage(z_sto_t *sto)
 
   Undeclare the storage **sto**.
 
@@ -482,7 +482,7 @@ Functions
 
   Return 0 when successful.
 
-.. c:function:: int zn_undeclare_eval(zn_eva_t *eval)
+.. c:function:: int z_undeclare_eval(z_eva_t *eval)
 
   Undeclare the eval **eval**.
 
@@ -490,7 +490,7 @@ Functions
 
   Return 0 when successful.
 
-.. c:function:: int zn_close(zn_session_t *z)
+.. c:function:: int _z_close(_z_session_t *z)
 
   Close the zenoh-net session *z*.
 
@@ -502,22 +502,22 @@ Functions
 Handlers
 --------
 
-.. c:type:: void (*zn_data_handler_t)(const zn_resource_id_t *rid, const unsigned char *data, size_t length, const zn_data_info_t *info, void *arg)
+.. c:type:: void (*_z_data_handler_t)(const z_resource_id_t *rid, const unsigned char *data, size_t length, const z_data_info_t *info, void *arg)
 
-  Function to pass as argument of :c:func:`zn_declare_subscriber` or :c:func:`zn_declare_storage`.
+  Function to pass as argument of :c:func:`_z_declare_subscriber` or :c:func:`z_declare_storage`.
   It will be called on reception of data matching the subscribed/stored resource selection.
 
   | **rid** is the resource id of the received data.
   | **data** is a pointer to the received data.
   | **length** is the length of the received data.
-  | **info** is the :c:type:`zn_data_info_t` associated with the received data.
-  | **arg** is the pointer passed to :c:func:`zn_declare_subscriber` or :c:func:`zn_declare_storage`.
+  | **info** is the :c:type:`z_data_info_t` associated with the received data.
+  | **arg** is the pointer passed to :c:func:`_z_declare_subscriber` or :c:func:`z_declare_storage`.
 
-.. c:type:: void (*zn_query_handler_t)(const char *rname, const char *predicate, zn_replies_sender_t send_replies, void *query_handle, void *arg)
+.. c:type:: void (*_z_query_handler_t)(const char *rname, const char *predicate, z_replies_sender_t send_replies, void *query_handle, void *arg)
 
-  Function to pass as argument of :c:func:`zn_declare_storage` or :c:func:`zn_declare_eval`.
+  Function to pass as argument of :c:func:`z_declare_storage` or :c:func:`z_declare_eval`.
   It will be called on reception of query matching the stored/evaluated resource selection.
-  The :c:type:`zn_query_handler_t` must provide the data matching the resource *rname* by calling
+  The :c:type:`_z_query_handler_t` must provide the data matching the resource *rname* by calling
   the *send_replies* function with the *query_handle* and the data as arguments. The *send_replies*
   function MUST be called but accepts empty data array.
 
@@ -525,19 +525,19 @@ Handlers
   | **predicate** is a string provided by the querier refining the data to be provided.
   | **send_replies** is a function that MUST be called with the *query_handle* and the provided data as arguments.
   | **query_handle** is a pointer to pass as argument of *send_replies*.
-  | **arg** is the pointer passed to :c:func:`zn_declare_storage` or :c:func:`zn_declare_eval`.
+  | **arg** is the pointer passed to :c:func:`z_declare_storage` or :c:func:`z_declare_eval`.
 
-.. c:type:: void (*zn_reply_handler_t)(const zn_reply_value_t *reply, void *arg)
+.. c:type:: void (*z_reply_handler_t)(const z_reply_value_t *reply, void *arg)
 
-  Function to pass as argument of :c:func:`zn_query` or :c:func:`zn_query_wo`.
-  It will be called on reception of replies to the query sent by :c:func:`zn_query` or :c:func:`zn_query_wo`.
+  Function to pass as argument of :c:func:`z_query` or :c:func:`z_query_wo`.
+  It will be called on reception of replies to the query sent by :c:func:`z_query` or :c:func:`z_query_wo`.
 
-  | **reply** is the actual :c:type:`reply<zn_reply_value_t>`.
-  | **arg** is the pointer passed to :c:func:`zn_query` or :c:func:`zn_query_wo`.
+  | **reply** is the actual :c:type:`reply<z_reply_value_t>`.
+  | **arg** is the pointer passed to :c:func:`z_query` or :c:func:`z_query_wo`.
 
-.. c:type:: void (*zn_on_disconnect_t)(void *z)
+.. c:type:: void (*z_on_disconnect_t)(void *z)
 
-  Function to pass as argument of :c:func:`zn_open`.
+  Function to pass as argument of :c:func:`_z_open`.
   It will be called each time the client API is disconnected from the infrastructure.
 
   | **z** is the zenoh-net session.

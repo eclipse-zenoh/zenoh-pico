@@ -14,25 +14,25 @@
 
 #include "zenoh-pico/net/resource.h"
 
-zn_reskey_t zn_rid(unsigned long rid)
+_z_reskey_t _z_rid(unsigned long rid)
 {
-    zn_reskey_t rk;
+    _z_reskey_t rk;
     rk.rid = rid;
     rk.rname = NULL;
     return rk;
 }
 
-zn_reskey_t zn_rname(const z_str_t rname)
+_z_reskey_t _z_rname(const _z_str_t rname)
 {
-    zn_reskey_t rk;
-    rk.rid = ZN_RESOURCE_ID_NONE;
+    _z_reskey_t rk;
+    rk.rid = Z_RESOURCE_ID_NONE;
     rk.rname = _z_str_clone(rname);
     return rk;
 }
 
-zn_reskey_t zn_rid_with_suffix(unsigned long rid, const z_str_t suffix)
+_z_reskey_t _z_rid_with_suffix(unsigned long rid, const _z_str_t suffix)
 {
-    zn_reskey_t rk;
+    _z_reskey_t rk;
     rk.rid = rid;
     rk.rname = _z_str_clone(suffix);
     return rk;

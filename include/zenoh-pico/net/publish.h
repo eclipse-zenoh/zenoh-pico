@@ -22,9 +22,9 @@
  */
 typedef struct
 {
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-    zn_reskey_t key;
-} zn_publisher_t;
+    void *zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t id;
+    _z_reskey_t key;
+} z_publisher_t;
 
 #endif /* ZENOH_PICO_PUBLISH_NETAPI_H */

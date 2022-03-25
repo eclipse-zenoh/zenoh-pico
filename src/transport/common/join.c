@@ -14,11 +14,11 @@
 
 #include "zenoh-pico/transport/link/task/join.h"
 
-int _znp_send_join(_zn_transport_t *zt)
+int _zp_send_join(_z_transport_t *zt)
 {
     // Join task only applies to multicast transports
-    if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_send_join(&zt->transport.multicast);
+    if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_send_join(&zt->transport.multicast);
     else
         return -1;
 }

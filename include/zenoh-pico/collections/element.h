@@ -50,29 +50,29 @@ typedef int (*z_element_eq_f)(const void *left, const void *right);
     }
 
 /*------------------ void ----------------*/
-typedef void _zn_noop_t;
-static inline size_t _zn_noop_size(void *s)
+typedef void _z_noop_t;
+static inline size_t _z_noop_size(void *s)
 {
     (void)(s);
     return 0;
 }
 
-static inline void _zn_noop_clear(void *s)
+static inline void _z_noop_clear(void *s)
 {
     (void)(s);
 }
 
-static inline void _zn_noop_free(void **s)
+static inline void _z_noop_free(void **s)
 {
     (void)(s);
 }
 
-static inline void _zn_noop_copy(void *dst, const void *src)
+static inline void _z_noop_copy(void *dst, const void *src)
 {
     (void)(dst);
     (void)(src);
 }
 
-_Z_ELEM_DEFINE(_zn_noop, _zn_noop_t, _zn_noop_size, _zn_noop_clear, _zn_noop_copy)
+_Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

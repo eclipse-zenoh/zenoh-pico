@@ -28,7 +28,7 @@ extern "C"
 #define PEER "tcp/10.0.0.1:7447"
 #define URI "/demo/example/**"
 
-void data_handler(const zn_sample_t *sample, const void *arg)
+void data_handler(const _z_sample_t *sample, const void *arg)
 {
     (void)(arg); // Unused argument
 
@@ -47,19 +47,19 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
         delay(1000);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
-    zn_session_t *s = zn_open(config);
+    _z_session_t *s = _z_open(config);
     if (s == NULL)
         return;
 
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
+    _zp_start_read_task(s);
+    _zp_start_lease_task(s);
 
-    zn_reskey_t reskey = zn_rname(URI);
-    zn_subscriber_t *sub = zn_declare_subscriber(s, reskey, zn_subinfo_default(), data_handler, NULL);
+    _z_reskey_t reskey = _z_rname(URI);
+    _z_subscriber_t *sub = _z_declare_subscriber(s, reskey, _z_subinfo_default(), data_handler, NULL);
     if (sub == 0)
         return;
 }

@@ -19,58 +19,58 @@
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/utils/logging.h"
 
-zn_session_t *_zn_open(z_str_t locator, int mode)
+_z_session_t *__z_open_inner(_z_str_t locator, int mode)
 {
-    zn_session_t *zn = _zn_session_init();
+    _z_session_t *zn = _z_session_init();
 
-    _zn_transport_p_result_t res = _zn_new_transport(zn->tp_manager, locator, mode);
-    if (res.tag == _z_res_t_ERR)
+    _z_transport_p_result_t res = _z_new_transport(zn->tp_manager, locator, mode);
+    if (res.tag == _Z_RES_ERR)
         goto ERR;
 
     // Attach session and transport to one another
     zn->tp = res.value.transport;
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.session = zn;
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
         zn->tp->transport.multicast.session = zn;
 
     return zn;
 
 ERR:
-    _zn_session_free(&zn);
+    _z_session_free(&zn);
 
     return NULL;
 }
 
-zn_session_t *zn_open(zn_properties_t *config)
+_z_session_t *_z_open(_z_properties_t *config)
 {
     if (config == NULL)
         return NULL;
 
-    z_str_t locator = NULL;
+    _z_str_t locator = NULL;
     // Scout if peer is not configured
-    if (zn_properties_get(config, ZN_CONFIG_PEER_KEY).val == NULL)
+    if (_z_properties_get(config, Z_CONFIG_PEER_KEY) == NULL)
     {
-        // ZN_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float
+        // Z_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float
         // while the scout loop timeout uses milliseconds granularity
-        z_str_t tout = zn_properties_get(config, ZN_CONFIG_SCOUTING_TIMEOUT_KEY).val;
+        _z_str_t tout = _z_properties_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (tout == NULL)
-            tout = ZN_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+            tout = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         clock_t timeout = strtof(tout, NULL);
 
         // Scout and return upon the first result
-        zn_hello_array_t locs = _zn_scout(ZN_ROUTER, config, timeout, 1);
+        _z_hello_array_t locs = _z_scout_inner(Z_ROUTER, config, timeout, 1);
         if (locs.len > 0)
         {
             if (locs.val[0].locators.len > 0)
                 locator = _z_str_clone(locs.val[0].locators.val[0]);
             else
             {
-                zn_hello_array_free(locs);
+                _z_hello_array_clear(&locs);
                 return NULL;
             }
 
-            zn_hello_array_free(locs);
+            _z_hello_array_clear(&locs);
         }
         else
         {
@@ -81,78 +81,78 @@ zn_session_t *zn_open(zn_properties_t *config)
         }
     }
     else
-        locator = _z_str_clone(zn_properties_get(config, ZN_CONFIG_PEER_KEY).val);
+        locator = _z_str_clone(_z_properties_get(config, Z_CONFIG_PEER_KEY));
 
     // @TODO: check invalid configurations
     // For example, client mode in multicast links
 
     // Check operation mode
-    z_str_t s_mode = zn_properties_get(config, ZN_CONFIG_MODE_KEY).val;
+    _z_str_t s_mode = _z_properties_get(config, Z_CONFIG_MODE_KEY);
     int mode = 0; // By default, zenoh-pico will operate as a client
-    if (_z_str_eq(s_mode, ZN_CONFIG_MODE_CLIENT))
+    if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT))
         mode = 0;
-    else if (_z_str_eq(s_mode, ZN_CONFIG_MODE_PEER))
+    else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER))
         mode = 1;
 
-    zn_session_t *zn = _zn_open(locator, mode);
+    _z_session_t *zn = __z_open_inner(locator, mode);
     
     free(locator);
     return zn;
 }
 
-void zn_close(zn_session_t *zn)
+void _z_close(_z_session_t *zn)
 {
-    _zn_session_close(zn, _ZN_CLOSE_GENERIC);
+    _z_session_close(zn, _Z_CLOSE_GENERIC);
 }
 
-zn_properties_t *zn_info(zn_session_t *zn)
+_z_properties_t *_z_info(const _z_session_t *zn)
 {
-    zn_properties_t *ps = (zn_properties_t *)malloc(sizeof(zn_properties_t));
-    zn_properties_init(ps);
-    zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    _z_properties_t *ps = (_z_properties_t *)malloc(sizeof(_z_properties_t));
+    _z_properties_init(ps);
+    _z_properties_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
     {
-        zn_properties_insert(ps, ZN_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->tp->transport.unicast.remote_pid));
+        _z_properties_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->tp->transport.unicast.remote_pid));
     }
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
-        _zn_transport_peer_entry_list_t *xs = zn->tp->transport.multicast.peers;
+        _z_transport_peer_entry_list_t *xs = zn->tp->transport.multicast.peers;
         while (xs != NULL)
         {
-            _zn_transport_peer_entry_t *peer = _zn_transport_peer_entry_list_head(xs);
-            zn_properties_insert(ps, ZN_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->remote_pid));
+            _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
+            _z_properties_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->remote_pid));
 
-            xs = _zn_transport_peer_entry_list_tail(xs);
+            xs = _z_transport_peer_entry_list_tail(xs);
         }
     }
     return ps;
 }
 
-int znp_read(zn_session_t *zn)
+int _zp_read(_z_session_t *zn)
 {
-    return _znp_read(zn->tp);
+    return _z_read(zn->tp);
 }
 
-int znp_send_keep_alive(zn_session_t *zn)
+int _zp_send_keep_alive(_z_session_t *zn)
 {
-    return _znp_send_keep_alive(zn->tp);
+    return _z_send_keep_alive(zn->tp);
 }
 
-int znp_start_read_task(zn_session_t *zn)
+int _zp_start_read_task(_z_session_t *zn)
 {
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(z_task_t));
+    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    memset(task, 0, sizeof(_z_task_t));
 
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
     {
         zn->tp->transport.unicast.read_task = task;
-        if (z_task_init(task, NULL, _znp_unicast_read_task, &zn->tp->transport.unicast) != 0)
+        if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->tp->transport.unicast) != 0)
             return -1;
     }
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
         zn->tp->transport.multicast.read_task = task;
-        if (z_task_init(task, NULL, _znp_multicast_read_task, &zn->tp->transport.multicast) != 0)
+        if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->tp->transport.multicast) != 0)
             return -1;
     }
     else
@@ -161,31 +161,31 @@ int znp_start_read_task(zn_session_t *zn)
     return 0;
 }
 
-int znp_stop_read_task(zn_session_t *zn)
+int _zp_stop_read_task(_z_session_t *zn)
 {
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.read_task_running = 0;
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
         zn->tp->transport.multicast.read_task_running = 0;
 
     return 0;
 }
 
-int znp_start_lease_task(zn_session_t *zn)
+int _zp_start_lease_task(_z_session_t *zn)
 {
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
-    memset(task, 0, sizeof(z_task_t));
+    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    memset(task, 0, sizeof(_z_task_t));
 
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
     {
         zn->tp->transport.unicast.lease_task = task;
-        if (z_task_init(task, NULL, _znp_unicast_lease_task, &zn->tp->transport.unicast) != 0)
+        if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->tp->transport.unicast) != 0)
             return -1;
     }
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
         zn->tp->transport.multicast.lease_task = task;
-        if (z_task_init(task, NULL, _znp_multicast_lease_task, &zn->tp->transport.multicast) != 0)
+        if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->tp->transport.multicast) != 0)
             return -1;
     }
     else
@@ -194,11 +194,11 @@ int znp_start_lease_task(zn_session_t *zn)
     return 0;
 }
 
-int znp_stop_lease_task(zn_session_t *zn)
+int _zp_stop_lease_task(_z_session_t *zn)
 {
-    if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
+    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
         zn->tp->transport.unicast.lease_task_running = 0;
-    else if (zn->tp->type == _ZN_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
         zn->tp->transport.multicast.lease_task_running = 0;
 
     return 0;

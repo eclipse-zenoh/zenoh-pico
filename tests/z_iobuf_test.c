@@ -36,7 +36,7 @@ void print_wbuf_overview(_z_wbuf_t *wbf)
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [ ", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->capacity; i++)
+    for (size_t i = 0; i < ios->w_pos; i++)
     {
         printf("%02x", ios->buf[i]);
         if (i < ios->capacity - 1)

@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
+#include "zenoh-pico/api/api.h"
+
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/session.h"

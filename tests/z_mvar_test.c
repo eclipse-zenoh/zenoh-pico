@@ -27,13 +27,13 @@ char msg[256];
 volatile unsigned int produced = 0;
 void *produce(void *m)
 {
-    z_mvar_t *mv = (z_mvar_t *)m;
+    _z_mvar_t *mv = (_z_mvar_t *)m;
     for (produced = 0; produced < RUN; produced++)
     {
-        // z_sleep_us(250000);
+        // _z_sleep_us(250000);
         printf(">> Producing (%u/%u)\n", produced + 1, RUN);
         sprintf(msg, "My message #%d", produced);
-        z_mvar_put(mv, msg);
+        _z_mvar_put(mv, msg);
         printf(">> Produced (%u/%u): %s\n", produced + 1, RUN, msg);
     }
     return 0;
@@ -42,12 +42,12 @@ void *produce(void *m)
 volatile int consumed = 0;
 void *consume(void *m)
 {
-    z_mvar_t *mv = (z_mvar_t *)m;
+    _z_mvar_t *mv = (_z_mvar_t *)m;
     for (consumed = 0; consumed < RUN; consumed++)
     {
         printf("<< Consuming (%u/%u)\n", consumed + 1, RUN);
-        // z_sleep_us(250000);
-        z_str_t m = (z_str_t)z_mvar_get(mv);
+        // _z_sleep_us(250000);
+        _z_str_t m = (_z_str_t)_z_mvar_get(mv);
         printf("<< Consumed (%u:%u): %s\n", consumed + 1, RUN, m);
     }
     return 0;
@@ -55,26 +55,26 @@ void *consume(void *m)
 
 int main(void)
 {
-    z_mutex_t m1;
-    z_mutex_init(&m1);
+    _z_mutex_t m1;
+    _z_mutex_init(&m1);
 
-    z_mutex_t m2;
-    z_mutex_init(&m2);
+    _z_mutex_t m2;
+    _z_mutex_init(&m2);
 
-    z_mvar_t *mv = z_mvar_empty();
+    _z_mvar_t *mv = _z_mvar_empty();
 
-    z_task_t producer;
-    z_task_t consumer;
-    z_task_init(&producer, NULL, produce, mv);
-    z_task_init(&consumer, NULL, consume, mv);
+    _z_task_t producer;
+    _z_task_t consumer;
+    _z_task_init(&producer, NULL, produce, mv);
+    _z_task_init(&consumer, NULL, consume, mv);
 
     // Wait to receive all the data
-    z_clock_t now = z_clock_now();
+    _z_clock_t now = _z_clock_now();
     while (produced < RUN && consumed < RUN)
     {
-        assert(z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
         (void) (now);
-        z_sleep_s(1);
+        _z_sleep_s(1);
     }
 
     free(mv);

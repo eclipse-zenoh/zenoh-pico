@@ -175,22 +175,22 @@ $ docker run --init -net host eclipse/zenoh:master --help
 ### Basic Pub/Sub Example
 Assuming that (1) you are running the **zenoh** network router,  and (2) you are under the build directory, do:
 ```bash
-$ ./zn_sub
+$ ./z_sub
 ```
 
 And on another shell, do:
 ```bash
-$ ./zn_pub
+$ ./z_pub
 ```
 ## Basic Eval/Query Example
 Assuming you are running the **zenoh** network service, do:
 ```bash
-$ ./zn_eval
+$ ./z_eval
 ```
 
 And on another shell, do:
 ```bash
-$ ./zn_query
+$ ./z_query
 ```
 
 

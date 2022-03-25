@@ -22,16 +22,16 @@ typedef struct
 {
     void *elem;
     int full;
-    z_mutex_t mtx;
-    z_condvar_t can_put;
-    z_condvar_t can_get;
-} z_mvar_t;
+    _z_mutex_t mtx;
+    _z_condvar_t can_put;
+    _z_condvar_t can_get;
+} _z_mvar_t;
 
-z_mvar_t *z_mvar_empty(void);
-int z_mvar_is_empty(z_mvar_t *mv);
+_z_mvar_t *_z_mvar_empty(void);
+int _z_mvar_is_empty(_z_mvar_t *mv);
 
-z_mvar_t *z_mvar_of(void *e);
-void *z_mvar_get(z_mvar_t *mv);
-void z_mvar_put(z_mvar_t *mv, void *e);
+_z_mvar_t *_z_mvar_of(void *e);
+void *_z_mvar_get(_z_mvar_t *mv);
+void _z_mvar_put(_z_mvar_t *mv, void *e);
 
 #endif /* ZENOH_PICO_SYSTEM_COLLECTIONS_H */

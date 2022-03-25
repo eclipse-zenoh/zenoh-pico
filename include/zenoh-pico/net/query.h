@@ -16,47 +16,68 @@
 #define ZENOH_PICO_QUERY_NETAPI_H
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/api/constants.h"
+
+/**
+ * The query to be answered by a queryable.
+ */
+typedef struct
+{
+    void *zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t qid;
+    unsigned int kind;
+    _z_str_t rname;
+    _z_str_t predicate;
+} z_query_t;
+
+/**
+ * The callback signature of the functions handling query messages.
+ */
+typedef void (*_z_queryable_handler_t)(const z_query_t *query, const void *arg);
+
+typedef struct
+{
+    _z_zint_t id;
+    _z_str_t rname;
+    _z_reskey_t key;
+    unsigned int kind;
+    _z_queryable_handler_t callback;
+    void *arg;
+} _z_queryable_t;
+
+int _z_queryable_eq(const _z_queryable_t *one, const _z_queryable_t *two);
+void _z_queryable_clear(_z_queryable_t *res);
+
+_Z_ELEM_DEFINE(_z_queryable, _z_queryable_t, _z_noop_size, _z_queryable_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_queryable, _z_queryable_t)
 
 /**
  * Return type when declaring a queryable.
  */
 typedef struct
 {
-    void *zn;  // FIXME: zn_session_t *zn;
-    z_zint_t id;
-} zn_queryable_t;
+    void *zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t id;
+} z_queryable_t;
 
 /**
- * Create a default :c:type:`zn_query_consolidation_t`.
+ * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
+ * at the different stages of the reply process.
  *
- * Returns:
- *     A :c:type:`zn_query_consolidation_t` containing the created query
- *     consolidation.
+ * Members:
+ *   first_routers: The consolidation mode to apply on first routers of the replies routing path.
+ *   last_router: The consolidation mode to apply on last router of the replies routing path.
+ *   reception: The consolidation mode to apply at reception of the replies.
  */
-zn_query_consolidation_t zn_query_consolidation_default(void);
+typedef struct
+{
+    z_consolidation_mode_t first_routers;
+    z_consolidation_mode_t last_router;
+    z_consolidation_mode_t reception;
+} _z_consolidation_strategy_t;
 
-/**
- * Create a none :c:type:`zn_query_consolidation_t`.
- *
- * Returns:
- *     A :c:type:`zn_query_consolidation_t` containing the created query
- *     consolidation.
- */
-zn_query_consolidation_t zn_query_consolidation_none(void);
-
-/**
- * Check if two :c:type:`zn_query_consolidation_t` are equal
- *
- * Parameters:
- *     left: The first :c:type:`zn_query_consolidation_t` to compare.
- *           The caller keeps its ownership.
- *     right: The second :c:type:`zn_query_consolidation_t` to compare.
- *            The caller keeps its ownership.
- *
- * Returns:
- *     0 if equal, or different from 0 if not equal.
- */
-int zn_query_consolidation_equal(const zn_query_consolidation_t *left, const zn_query_consolidation_t *right);
+_z_consolidation_strategy_t _z_consolidation_strategy_none(void);
+_z_consolidation_strategy_t _z_consolidation_strategy_default(void);
 
 /**
  * Get the predicate of a received query.
@@ -65,11 +86,11 @@ int zn_query_consolidation_equal(const zn_query_consolidation_t *left, const zn_
  *     query: The query. The caller keeps its ownership.
  *
  * Returns:
- *     A :c:type:`z_string_t` containing the predicate of the query.
+ *     A :c:type:`_z_string_t` containing the predicate of the query.
  *     Note that, the predicate is provided as a reference, thus should not be
  *     modified.
  */
-z_string_t zn_query_predicate(const zn_query_t *query);
+_z_string_t _z_query_predicate(const z_query_t *query);
 
 /**
  * Get the resource name of a received query.
@@ -78,33 +99,19 @@ z_string_t zn_query_predicate(const zn_query_t *query);
  *     query: The query. The caller keeps its ownership.
  *
  * Returns:
- *     A :c:type:`z_string_t` containing the resource name of the query.
+ *     A :c:type:`_z_string_t` containing the resource name of the query.
  *     Note that, the resource name is provided as a reference, thus should
  *     not be modified.
  */
-z_string_t zn_query_res_name(const zn_query_t *query);
+_z_string_t _z_query_res_name(const z_query_t *query);
 
 /**
- * Create a default :c:type:`zn_query_target_t`.
+ * Create a default :c:type:`_z_query_target_t`.
  *
  * Returns:
- *     A :c:type:`zn_query_target_t` containing the created query
+ *     A :c:type:`_z_query_target_t` containing the created query
  *     target.
  */
-zn_query_target_t zn_query_target_default(void);
-
-/**
- * Check if two :c:type:`zn_query_target_t` are equal
- *
- * Parameters:
- *     left: The first :c:type:`zn_query_target_t` to compare.
- *           The caller keeps its ownership.
- *     right: The second :c:type:`zn_query_target_t` to compare.
- *            The caller keeps its ownership.
- *
- * Returns:
- *     0 if equal, or different from 0 if not equal.
- */
-int zn_query_target_equal(const zn_query_target_t *left, const zn_query_target_t *right);
+_z_query_target_t _z_query_target_default(void);
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

@@ -22,13 +22,13 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Locator ------------------*/
-#if ZN_LINK_TCP == 1
+#if Z_LINK_TCP == 1
 #define TCP_SCHEMA "tcp"
 #endif
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #define UDP_SCHEMA "udp"
 #endif
-#if ZN_LINK_BLUETOOTH == 1
+#if Z_LINK_BLUETOOTH == 1
 #define BT_SCHEMA "bt"
 #endif
 
@@ -36,39 +36,39 @@
 #define LOCATOR_METADATA_SEPARATOR '?'
 typedef struct
 {
-    z_str_t protocol;
-    z_str_t address;
+    _z_str_t protocol;
+    _z_str_t address;
     _z_str_intmap_t metadata;
-} _zn_locator_t;
+} _z_locator_t;
 
-_ZN_RESULT_DECLARE(_zn_locator_t, locator)
+_Z_RESULT_DECLARE(_z_locator_t, locator)
 
-int _zn_locator_eq(const _zn_locator_t *left, const _zn_locator_t *right);
+int _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
 
-z_str_t _zn_locator_to_str(const _zn_locator_t *l);
-_zn_locator_result_t _zn_locator_from_str(const z_str_t s);
+_z_str_t _z_locator_to_str(const _z_locator_t *l);
+_z_locator_result_t _z_locator_from_str(const _z_str_t s);
 
-size_t _zn_locator_size(_zn_locator_t *lc);
-void _zn_locator_clear(_zn_locator_t *lc);
-_Z_ELEM_DEFINE(_zn_locator, _zn_locator_t, _zn_locator_size, _zn_locator_clear, _zn_noop_copy)
+size_t _z_locator_size(_z_locator_t *lc);
+void _z_locator_clear(_z_locator_t *lc);
+_Z_ELEM_DEFINE(_z_locator, _z_locator_t, _z_locator_size, _z_locator_clear, _z_noop_copy)
 
 /*------------------ Locator array ------------------*/
-_Z_ARRAY_DEFINE(_zn_locator, _zn_locator_t)
-_ZN_RESULT_DECLARE(_zn_locator_array_t, locator_array)
+_Z_ARRAY_DEFINE(_z_locator, _z_locator_t)
+_Z_RESULT_DECLARE(_z_locator_array_t, locator_array)
 
 /*------------------ Endpoint ------------------*/
 #define ENDPOINT_CONFIG_SEPARATOR '#'
 
 typedef struct
 {
-    _zn_locator_t locator;
+    _z_locator_t locator;
     _z_str_intmap_t config;
-} _zn_endpoint_t;
-_ZN_RESULT_DECLARE(_zn_endpoint_t, endpoint)
+} _z_endpoint_t;
+_Z_RESULT_DECLARE(_z_endpoint_t, endpoint)
 
-z_str_t _zn_endpoint_to_str(const _zn_endpoint_t *e);
-_zn_endpoint_result_t _zn_endpoint_from_str(const z_str_t s);
-void _zn_endpoint_clear(_zn_endpoint_t *ep);
-void _zn_endpoint_free(_zn_endpoint_t **ep);
+_z_str_t _z_endpoint_to_str(const _z_endpoint_t *e);
+_z_endpoint_result_t _z_endpoint_from_str(const _z_str_t s);
+void _z_endpoint_clear(_z_endpoint_t *ep);
+void _z_endpoint_free(_z_endpoint_t **ep);
 
 #endif /* ZENOH_PICO_LINK_ENDPOINT_H */

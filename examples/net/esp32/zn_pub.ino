@@ -28,8 +28,8 @@ extern "C"
 #define PEER "tcp/10.0.0.1:7447"
 #define URI "/demo/example/zenoh-pico/pub/esp32"
 
-zn_session_t *s = NULL;
-zn_reskey_t *reskey = NULL;
+_z_session_t *s = NULL;
+_z_reskey_t *reskey = NULL;
 
 void setup()
 {
@@ -41,20 +41,20 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
         delay(1000);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
-    s = zn_open(config);
+    s = _z_open(config);
     if (s == NULL)
         return;
 
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
+    _zp_start_read_task(s);
+    _zp_start_lease_task(s);
 
-    unsigned long rid = zn_declare_resource(s, zn_rname(URI));
-    reskey = (zn_reskey_t *)malloc(sizeof(zn_reskey_t));
-    *reskey = zn_rid(rid);
+    unsigned long rid = _z_declare_resource(s, _z_rname(URI));
+    reskey = (_z_reskey_t *)malloc(sizeof(_z_reskey_t));
+    *reskey = _z_rid(rid);
 }
 
 void loop()
@@ -67,5 +67,5 @@ void loop()
         return;
 
     char *buf = "Publishing data from ESP32";
-    zn_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
+    _z_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
 }

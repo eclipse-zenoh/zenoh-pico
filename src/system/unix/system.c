@@ -18,23 +18,23 @@
 
 /*------------------ Task ------------------*/
 // As defined in "zenoh/system.h"
-// typedef pthread_t z_task_t;
-int z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg)
+// typedef pthread_t _z_task_t;
+int _z_task_init(pthread_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg)
 {
     return pthread_create(task, attr, fun, arg);
 }
 
-int z_task_join(pthread_t *task)
+int _z_task_join(pthread_t *task)
 {
     return pthread_join(*task, NULL);
 }
 
-int z_task_cancel(pthread_t *task)
+int _z_task_cancel(pthread_t *task)
 {
     return pthread_cancel(*task);
 }
 
-void z_task_free(pthread_t **task)
+void _z_task_free(pthread_t **task)
 {
     pthread_t *ptr = *task;
     free(ptr);
@@ -43,82 +43,80 @@ void z_task_free(pthread_t **task)
 
 /*------------------ Mutex ------------------*/
 // As defined in "zenoh/system.h"
-// typedef pthread_mutex_t z_mutex_t;
-int z_mutex_init(pthread_mutex_t *m)
+// typedef pthread_mutex_t _z_mutex_t;
+int _z_mutex_init(pthread_mutex_t *m)
 {
     return pthread_mutex_init(m, 0);
 }
 
-int z_mutex_free(pthread_mutex_t *m)
+int _z_mutex_free(pthread_mutex_t *m)
 {
     return pthread_mutex_destroy(m);
 }
 
-int z_mutex_lock(pthread_mutex_t *m)
+int _z_mutex_lock(pthread_mutex_t *m)
 {
     return pthread_mutex_lock(m);
 }
 
-int z_mutex_trylock(pthread_mutex_t *m)
+int _z_mutex_trylock(pthread_mutex_t *m)
 {
     return pthread_mutex_trylock(m);
 }
 
-int z_mutex_unlock(pthread_mutex_t *m)
+int _z_mutex_unlock(pthread_mutex_t *m)
 {
     return pthread_mutex_unlock(m);
 }
 
 /*------------------ Condvar ------------------*/
 // As defined in "zenoh/system.h"
-// typedef pthread_cond_t z_condvar_t;
-int z_condvar_init(pthread_cond_t *cv)
+// typedef pthread_cond_t _z_condvar_t;
+int _z_condvar_init(pthread_cond_t *cv)
 {
     return pthread_cond_init(cv, 0);
 }
 
-int z_condvar_free(pthread_cond_t *cv)
+int _z_condvar_free(pthread_cond_t *cv)
 {
     return pthread_cond_destroy(cv);
 }
 
-int z_condvar_signal(z_condvar_t *cv)
+int _z_condvar_signal(_z_condvar_t *cv)
 {
     return pthread_cond_signal(cv);
 }
 
-int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
+int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
     return pthread_cond_wait(cv, m);
 }
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time)
+int _z_sleep_us(unsigned int time)
 {
     return usleep(time);
 }
 
-int z_sleep_ms(unsigned int time)
+int _z_sleep_ms(unsigned int time)
 {
     return usleep(1000 * time);
 }
 
-int z_sleep_s(unsigned int time)
+int _z_sleep_s(unsigned int time)
 {
     return sleep(time);
 }
 
 /*------------------ Instant ------------------*/
-// As defined in "zenoh/system.h"
-// typedef struct timespec z_clock_t;
-struct timespec z_clock_now()
+struct timespec _z_clock_now()
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     return now;
 }
 
-clock_t z_clock_elapsed_us(struct timespec *instant)
+clock_t _z_clock_elapsed_us(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
@@ -127,7 +125,7 @@ clock_t z_clock_elapsed_us(struct timespec *instant)
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(struct timespec *instant)
+clock_t _z_clock_elapsed_ms(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
@@ -136,7 +134,7 @@ clock_t z_clock_elapsed_ms(struct timespec *instant)
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(struct timespec *instant)
+clock_t _z_clock_elapsed_s(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
@@ -146,16 +144,14 @@ clock_t z_clock_elapsed_s(struct timespec *instant)
 }
 
 /*------------------ Time ------------------*/
-// As defined in "zenoh/system.h"
-// typedef struct timeval z_time_t;
-struct timeval z_time_now()
+struct timeval _z_time_now()
 {
     struct timeval now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-time_t z_time_elapsed_us(struct timeval *time)
+time_t _z_time_elapsed_us(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -164,7 +160,7 @@ time_t z_time_elapsed_us(struct timeval *time)
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(struct timeval *time)
+time_t _z_time_elapsed_ms(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -173,7 +169,7 @@ time_t z_time_elapsed_ms(struct timeval *time)
     return elapsed;
 }
 
-time_t z_time_elapsed_s(struct timeval *time)
+time_t _z_time_elapsed_s(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);

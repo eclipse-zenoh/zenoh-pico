@@ -19,44 +19,45 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/api/constants.h"
 
 /**
  * Whatami values.
  */
-#define ZN_ROUTER 0x01 // 1 << 0
-#define ZN_PEER 0x02   // 1 << 1
-#define ZN_CLIENT 0x04 // 1 << 2
+#define Z_ROUTER 0x01 // 1 << 0
+#define Z_PEER 0x02   // 1 << 1
+#define Z_CLIENT 0x04 // 1 << 2
 
 /**
  * Query kind values.
  */
-#define ZN_QUERYABLE_ALL_KINDS 0x01 // 1 << 0
-#define ZN_QUERYABLE_STORAGE 0x02   // 1 << 1
-#define ZN_QUERYABLE_EVAL 0x04      // 1 << 2
+#define Z_QUERYABLE_ALL_KINDS 0x01 // 1 << 0
+#define Z_QUERYABLE_STORAGE 0x02   // 1 << 1
+#define Z_QUERYABLE_EVAL 0x04      // 1 << 2
 
 /**
  * The reserved resource ID indicating a string-only resource key.
  */
-#define ZN_RESOURCE_ID_NONE 0
+#define Z_RESOURCE_ID_NONE 0
 
 /**
  * Priority values.
  */
-#define ZN_PRIORITIES_NUM 8
+#define Z_PRIORITIES_NUM 8
 
 /**
  * A variable-length encoding unsigned integer.
  */
-typedef size_t z_zint_t;
+typedef size_t _z_zint_t;
 
 /**
  * A zenoh encoding.
  */
 typedef struct
 {
-    z_zint_t prefix;
-    z_str_t suffix;
-} z_encoding_t;
+    _z_zint_t prefix;
+    _z_str_t suffix;
+} _z_encoding_t;
 
 /**
  * A zenoh timestamp.
@@ -64,21 +65,21 @@ typedef struct
 typedef struct
 {
     uint64_t time;
-    z_bytes_t id;
-} z_timestamp_t;
+    _z_bytes_t id;
+} _z_timestamp_t;
 
 /**
  * A zenoh-net resource key.
  *
  * Members:
- *   unsigned long: The resource ID.
- *   const z_str_t val: A pointer to the string containing the resource name.
+ *   _z_zint_t: The resource ID.
+ *   _z_str_t val: A pointer to the string containing the resource name.
  */
 typedef struct
 {
-    unsigned long rid;
-    z_str_t rname;
-} zn_reskey_t;
+    _z_zint_t rid;
+    _z_str_t rname;
+} _z_reskey_t;
 
 /**
  * A zenoh-net data sample.
@@ -86,140 +87,96 @@ typedef struct
  * A sample is the value associated to a given resource at a given point in time.
  *
  * Members:
- *   zn_string_t key: The resource key of this data sample.
- *   zn_bytes_t value: The value of this data sample.
+ *   _z_reskey_t key: The resource key of this data sample.
+ *   _z_bytes_t value: The value of this data sample.
+ *   _z_encoding_t encoding: The encoding for the value of this data sample.
  */
 typedef struct
 {
-    z_string_t key;
-    z_bytes_t value;
-} zn_sample_t;
+    _z_reskey_t key;
+    _z_bytes_t value;
+    _z_encoding_t encoding;
+} _z_sample_t;
 
 /**
- * A hello message returned by a zenoh entity to a scout message sent with :c:func:`zn_scout`.
+ * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:
  *   unsigned int whatami: The kind of zenoh entity.
- *   zn_bytes_t pid: The peer id of the scouted entity (empty if absent).
- *   zn_str_array_t locators: The locators of the scouted entity.
+ *   _z_bytes_t pid: The peer id of the scouted entity (empty if absent).
+ *   _z_str_array_t locators: The locators of the scouted entity.
  */
-typedef struct zn_hello_t
+typedef struct
 {
     unsigned int whatami;
-    z_bytes_t pid;
-    z_str_array_t locators;
-} zn_hello_t;
+    _z_bytes_t pid;
+    _z_str_array_t locators;
+} _z_hello_t;
 
 /**
- * An array of :c:struct:`zn_hello_t` messages.
+ * An array of :c:struct:`_z_hello_t` messages.
  *
  * Members:
  *   size_t len: The length of the array.
- *   const zn_hello_t *val: A pointer to the array.
+ *   const _z_hello_t *val: A pointer to the array.
  */
-typedef struct zn_hello_array_t
+typedef struct
 {
-    const zn_hello_t *val;
+    const _z_hello_t *val;
     size_t len;
-} zn_hello_array_t;
+} _z_hello_array_t;
 
 /**
- * The possible values of :c:member:`zn_target_t.tag`.
+ * The possible values of :c:member:`_z_target_t.tag`.
  *
- *     - **zn_target_t_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
- *     - **zn_target_t_COMPLETE**: A set of complete queryables.
- *     - **zn_target_t_ALL**: All matching queryables.
- *     - **zn_target_t_NONE**: No queryables.
+ *     - **Z_TARGET_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
+ *     - **Z_TARGET_COMPLETE**: A set of complete queryables.
+ *     - **Z_TARGET_ALL**: All matching queryables.
+ *     - **Z_TARGET_NONE**: No queryables.
  */
 typedef enum
 {
-    zn_target_t_BEST_MATCHING = 0,
-    zn_target_t_ALL = 1,
-    zn_target_t_ALLCOMPLETE = 2,
-    zn_target_t_NONE = 3,
-    zn_target_t_COMPLETE = 4,
-} zn_target_t_Tag;
+    Z_TARGET_BEST_MATCHING = 0,
+    Z_TARGET_ALL = 1,
+    Z_TARGET_NONE = 2,
+    Z_TARGET_ALLCOMPLETE = 3,
+    Z_TARGET_COMPLETE = 4
+} _z_target_t;
 
 typedef struct
 {
-    unsigned int n;
-} zn_target_t_COMPLETE_Body;
-
-typedef struct
-{
-    zn_target_t_Tag tag;
-    union
-    {
-        zn_target_t_COMPLETE_Body complete;
-    } type;
-} zn_target_t;
+    _z_zint_t n;
+} _z_target_complete_body_t;
 
 /**
- * The zenoh-net queryables that should be target of a :c:func:`zn_query`.
+ * The zenoh-net queryables that should be target of a :c:func:`z_query`.
  *
  * Members:
  *     unsigned int kind: A mask of queryable kinds.
- *     zn_target_t target: The query target.
+ *     _z_target_t target: The query target.
  */
-typedef struct zn_query_target_t
+typedef struct
 {
     unsigned int kind;
-    zn_target_t target;
-} zn_query_target_t;
-
-/**
- * The kind of consolidation that should be applied on replies to a :c:func:`zn_query`.
- *
- *     - **zn_consolidation_mode_t_FULL**: Guaranties unicity of replies. Optimizes bandwidth.
- *     - **zn_consolidation_mode_t_LAZY**: Does not garanty unicity. Optimizes latency.
- *     - **zn_consolidation_mode_t_NONE**: No consolidation.
- */
-typedef enum
-{
-    zn_consolidation_mode_t_NONE = 0,
-    zn_consolidation_mode_t_LAZY = 1,
-    zn_consolidation_mode_t_FULL = 2,
-} zn_consolidation_mode_t;
-
-/**
- * The kind of consolidation that should be applied on replies to a :c:func:`zn_query`
- * at the different stages of the reply process.
- *
- * Members:
- *   zn_consolidation_mode_t first_routers: The consolidation mode to apply on first routers of the replies routing path.
- *   zn_consolidation_mode_t last_router: The consolidation mode to apply on last router of the replies routing path.
- *   zn_consolidation_mode_t reception: The consolidation mode to apply at reception of the replies.
- */
-typedef struct zn_query_consolidation_t
-{
-    zn_consolidation_mode_t first_routers;
-    zn_consolidation_mode_t last_router;
-    zn_consolidation_mode_t reception;
-} zn_query_consolidation_t;
-
-/**
- * The subscription reliability.
- *
- *     - **zn_reliability_t_BEST_EFFORT**
- *     - **zn_reliability_t_RELIABLE**
- */
-typedef enum
-{
-    zn_reliability_t_BEST_EFFORT,
-    zn_reliability_t_RELIABLE,
-} zn_reliability_t;
+    _z_target_t target;
+    union
+    {
+        _z_target_complete_body_t complete;
+    } type;
+    
+} _z_query_target_t;
 
 /**
  * The congestion control.
  *
- *     - **zn_congestion_control_t_BLOCK**
- *     - **zn_congestion_control_t_DROP**
+ *     - **Z_CONGESTION_CONTROL_BLOCK**
+ *     - **Z_CONGESTION_CONTROL_DROP**
  */
 typedef enum
 {
-    zn_congestion_control_t_BLOCK,
-    zn_congestion_control_t_DROP,
-} zn_congestion_control_t;
+    Z_CONGESTION_CONTROL_BLOCK = 0,
+    Z_CONGESTION_CONTROL_DROP = 1,
+} _z_congestion_control_t;
 
 /**
  * The subscription period.
@@ -234,33 +191,33 @@ typedef struct
     unsigned int origin;
     unsigned int period;
     unsigned int duration;
-} zn_period_t;
+} _z_period_t;
 
 /**
  * The subscription mode.
  *
- *     - **zn_submode_t_PUSH**
- *     - **zn_submode_t_PULL**
+ *     - **Z_SUBMODE_PUSH**
+ *     - **Z_SUBMODE_PULL**
  */
 typedef enum
 {
-    zn_submode_t_PUSH,
-    zn_submode_t_PULL,
-} zn_submode_t;
+    Z_SUBMODE_PUSH = 0,
+    Z_SUBMODE_PULL = 1,
+} _z_submode_t;
 
 /**
- * Informations to be passed to :c:func:`zn_declare_subscriber` to configure the created :c:type:`zn_subscriber_t`.
+ * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created :c:type:`_z_subscriber_t`.
  *
  * Members:
- *     zn_reliability_t reliability: The subscription reliability.
- *     zn_submode_t mode: The subscription mode.
- *     zn_period_t *period: The subscription period.
+ *     z_reliability_t reliability: The subscription reliability.
+ *     _z_submode_t mode: The subscription mode.
+ *     _z_period_t *period: The subscription period.
  */
 typedef struct
 {
-    zn_reliability_t reliability;
-    zn_submode_t mode;
-    zn_period_t *period;
-} zn_subinfo_t;
+    z_reliability_t reliability;
+    _z_submode_t mode;
+    _z_period_t period;
+} _z_subinfo_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

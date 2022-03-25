@@ -16,73 +16,73 @@
 #include "zenoh-pico/system/collections.h"
 
 /*-------- mvar --------*/
-z_mvar_t *z_mvar_empty()
+_z_mvar_t *_z_mvar_empty()
 {
-    z_mvar_t *mv = (z_mvar_t *)malloc(sizeof(z_mvar_t));
-    memset(mv, 0, sizeof(z_mvar_t));
-    z_mutex_init(&mv->mtx);
-    z_condvar_init(&mv->can_put);
-    z_condvar_init(&mv->can_get);
+    _z_mvar_t *mv = (_z_mvar_t *)malloc(sizeof(_z_mvar_t));
+    memset(mv, 0, sizeof(_z_mvar_t));
+    _z_mutex_init(&mv->mtx);
+    _z_condvar_init(&mv->can_put);
+    _z_condvar_init(&mv->can_get);
     return mv;
 }
 
-int z_mvar_is_empty(z_mvar_t *mv)
+int _z_mvar_is_empty(_z_mvar_t *mv)
 {
     return mv->full == 0;
 }
 
-z_mvar_t *z_mvar_of(void *e)
+_z_mvar_t *_z_mvar_of(void *e)
 {
-    z_mvar_t *mv = z_mvar_empty();
+    _z_mvar_t *mv = _z_mvar_empty();
     mv->elem = e;
     mv->full = 1;
     return mv;
 }
 
-void *z_mvar_get(z_mvar_t *mv)
+void *_z_mvar_get(_z_mvar_t *mv)
 {
     int lock = 1;
     do
     {
         if (lock == 1)
-            z_mutex_lock(&mv->mtx);
+            _z_mutex_lock(&mv->mtx);
 
         if (mv->full)
         {
             mv->full = 0;
             void *e = mv->elem;
             mv->elem = 0;
-            z_mutex_unlock(&mv->mtx);
-            z_condvar_signal(&mv->can_put);
+            _z_mutex_unlock(&mv->mtx);
+            _z_condvar_signal(&mv->can_put);
             return e;
         }
         else
         {
-            z_condvar_wait(&mv->can_get, &mv->mtx);
+            _z_condvar_wait(&mv->can_get, &mv->mtx);
             lock = 0;
         }
     } while (1);
 }
 
-void z_mvar_put(z_mvar_t *mv, void *e)
+void _z_mvar_put(_z_mvar_t *mv, void *e)
 {
     int lock = 1;
     do
     {
         if (lock == 1)
-            z_mutex_lock(&mv->mtx);
+            _z_mutex_lock(&mv->mtx);
 
         if (mv->full)
         {
-            z_condvar_wait(&mv->can_put, &mv->mtx);
+            _z_condvar_wait(&mv->can_put, &mv->mtx);
             lock = 0;
         }
         else
         {
             mv->elem = e;
             mv->full = 1;
-            z_condvar_signal(&mv->can_get);
-            z_mutex_unlock(&mv->mtx);
+            _z_condvar_signal(&mv->can_get);
+            _z_mutex_unlock(&mv->mtx);
             return;
         }
     } while (1);

@@ -22,22 +22,22 @@
 typedef struct
 {
     // Placeholder for future extensions
-} _zn_link_manager_t;
+} _z_link_manager_t;
 
-_zn_link_manager_t *_zn_link_manager_init(void);
-void _zn_link_manager_free(_zn_link_manager_t **ztm);
+_z_link_manager_t *_z_link_manager_init(void);
+void _z_link_manager_free(_z_link_manager_t **ztm);
 
-#if ZN_LINK_BLUETOOTH == 1
-_zn_link_t *_zn_new_link_bt(_zn_endpoint_t endpoint);
+#if Z_LINK_BLUETOOTH == 1
+_z_link_t *_z_new_link_bt(_z_endpoint_t endpoint);
 #endif
-#if ZN_LINK_TCP == 1
-_zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint);
+#if Z_LINK_TCP == 1
+_z_link_t *_z_new_link_tcp(_z_endpoint_t endpoint);
 #endif
-#if ZN_LINK_UDP_UNICAST == 1
-_zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint);
+#if Z_LINK_UDP_UNICAST == 1
+_z_link_t *_z_new_link_udp_unicast(_z_endpoint_t endpoint);
 #endif
-#if ZN_LINK_UDP_MULTICAST == 1
-_zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint);
+#if Z_LINK_UDP_MULTICAST == 1
+_z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint);
 #endif
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

@@ -31,8 +31,8 @@ extern "C"
 
 #define BEEP_PIN 32
 
-zn_session_t *s = NULL;
-zn_reskey_t *reskey = NULL;
+_z_session_t *s = NULL;
+_z_reskey_t *reskey = NULL;
 
 bool status = false;
 
@@ -42,26 +42,26 @@ void setup()
 
     pinMode(BEEP_PIN, OUTPUT);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
     Serial.print("Opening Session on classic Bluetooth as slave: ");
     Serial.print(PEER);
     Serial.print("...");
 
-    s = zn_open(config);
+    s = _z_open(config);
     if (s == NULL)
         while(true);
     Serial.println("OK");
 
     Serial.print("Starting Leasing and Reading tasks...");
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
+    _zp_start_read_task(s);
+    _zp_start_lease_task(s);
     Serial.println("OK");
 
-    reskey = (zn_reskey_t *)malloc(sizeof(zn_reskey_t));
-    *reskey = zn_rname(URI);
+    reskey = (_z_reskey_t *)malloc(sizeof(_z_reskey_t));
+    *reskey = _z_rname(URI);
 }
 
 void loop()
@@ -76,7 +76,7 @@ void loop()
     status = !status;
 
     digitalWrite(BEEP_PIN, HIGH);
-    zn_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
+    _z_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
     delay(100);
     digitalWrite(BEEP_PIN, LOW);
 

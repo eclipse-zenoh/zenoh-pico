@@ -28,7 +28,7 @@ extern "C"
 #define PEER "tcp/10.0.0.1:7447"
 #define URI "/demo/example/**"
 
-zn_session_t *s = NULL;
+_z_session_t *s = NULL;
 
 void setup()
 {
@@ -40,16 +40,16 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
         delay(1000);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make(MODE));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
-    s = zn_open(config);
+    s = _z_open(config);
     if (s == NULL)
         return;
 
-    znp_start_read_task(s);
-    znp_start_lease_task(s);
+    _zp_start_read_task(s);
+    _zp_start_lease_task(s);
 }
 
 void loop()
@@ -59,12 +59,12 @@ void loop()
     if (s == NULL)
         return;
 
-    zn_reply_data_array_t replies = zn_query_collect(s, zn_rname(URI), "", zn_query_target_default(), zn_query_consolidation_default());
+    _z_reply_data_array_t replies = _z_query_collect(s, _z_rname(URI), "", _z_query_target_default(), z_query_consolidation_default());
     for (unsigned int i = 0; i < replies.len; i++)
     {
         // printf(">> [Reply handler] received (%.*s, %.*s)\n",
         //        (int)replies.val[i].data.key.len, replies.val[i].data.key.val,
         //        (int)replies.val[i].data.value.len, replies.val[i].data.value.val);
     }
-    zn_reply_data_array_free(replies);
+    _z_reply_data_array_clear(&replies);
 }

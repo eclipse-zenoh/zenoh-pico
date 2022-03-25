@@ -23,15 +23,15 @@
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
     _z_wbuf_reset(buf);
 
     if (is_streamed == 1)
     {
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(buf, 0, i);
-        _z_wbuf_set_wpos(buf, _ZN_MSG_LEN_ENC_SIZE);
+        _z_wbuf_set_wpos(buf, _Z_MSG_LEN_ENC_SIZE);
     }
 }
 
@@ -40,22 +40,22 @@ void __unsafe_zn_prepare_wbuf(_z_wbuf_t *buf, int is_streamed)
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_zn_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, int is_streamed)
 {
     if (is_streamed == 1)
     {
-        size_t len = _z_wbuf_len(buf) - _ZN_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+        size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
     }
 }
 
-_zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_fragment, int is_final, z_zint_t sn)
+_z_transport_message_t _z_frame_header(z_reliability_t reliability, int is_fragment, int is_final, _z_zint_t sn)
 {
     // Create the frame session message that carries the zenoh message
-    int is_reliable = reliability == zn_reliability_t_RELIABLE;
+    int is_reliable = reliability == Z_RELIABILITY_RELIABLE;
 
-    _zn_transport_message_t t_msg = _zn_t_msg_make_frame_header(sn, is_reliable, is_fragment, is_final);
+    _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, is_reliable, is_fragment, is_final);
 
     return t_msg;
 }
@@ -65,7 +65,7 @@ _zn_transport_message_t __zn_frame_header(zn_reliability_t reliability, int is_f
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reliability_t reliability, size_t sn)
+int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn)
 {
     // Assume first that this is not the final fragment
     int is_final = 0;
@@ -74,9 +74,9 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _zn_transport_message_t f_hdr = __zn_frame_header(reliability, 1, is_final, sn);
+        _z_transport_message_t f_hdr = _z_frame_header(reliability, 1, is_final, sn);
         // Encode the frame header
-        int res = _zn_transport_message_encode(dst, &f_hdr);
+        int res = _z_transport_message_encode(dst, &f_hdr);
         if (res == 0)
         {
             size_t space_left = _z_wbuf_space_left(dst);
@@ -101,42 +101,42 @@ int __unsafe_zn_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, zn_reli
     } while (1);
 }
 
-int _zn_send_t_msg(_zn_transport_t *zt, const _zn_transport_message_t *t_msg)
+int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg)
 {
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _zn_unicast_send_t_msg(&zt->transport.unicast, t_msg);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _zn_multicast_send_t_msg(&zt->transport.multicast, t_msg);
+    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _z_unicast_send_t_msg(&zt->transport.unicast, t_msg);
+    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _z_multicast_send_t_msg(&zt->transport.multicast, t_msg);
     else
         return -1;
 }
 
-int _zn_link_send_t_msg(const _zn_link_t *zl, const _zn_transport_message_t *t_msg)
+int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
 {
     // Create and prepare the buffer to serialize the message on
-    uint16_t mtu = zl->mtu < ZN_BATCH_SIZE ? zl->mtu : ZN_BATCH_SIZE;
+    uint16_t mtu = zl->mtu < Z_BATCH_SIZE ? zl->mtu : Z_BATCH_SIZE;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
     if (zl->is_streamed == 1)
     {
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(&wbf, 0, i);
-        _z_wbuf_set_wpos(&wbf, _ZN_MSG_LEN_ENC_SIZE);
+        _z_wbuf_set_wpos(&wbf, _Z_MSG_LEN_ENC_SIZE);
     }
 
     // Encode the session message
-    if (_zn_transport_message_encode(&wbf, t_msg) != 0)
+    if (_z_transport_message_encode(&wbf, t_msg) != 0)
         goto ERR;
 
     // Write the message legnth in the reserved space if needed
     if (zl->is_streamed == 1)
     {
-        size_t len = _z_wbuf_len(&wbf) - _ZN_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
+        size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(&wbf, (uint8_t)((len >> 8 * i) & 0xFF), i);
     }
 
     // Send the wbuf on the socket
-    int res = _zn_link_send_wbuf(zl, &wbf);
+    int res = _z_link_send_wbuf(zl, &wbf);
 
     // Release the buffer
     _z_wbuf_clear(&wbf);

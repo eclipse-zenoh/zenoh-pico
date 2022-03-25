@@ -14,24 +14,24 @@
 
 #include "zenoh-pico/transport/link/task/lease.h"
 
-int _znp_send_keep_alive(_zn_transport_t *zt)
+int _z_send_keep_alive(_z_transport_t *zt)
 {   
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _znp_unicast_send_keep_alive(&zt->transport.unicast);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_send_keep_alive(&zt->transport.multicast);
+    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_send_keep_alive(&zt->transport.unicast);
+    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_send_keep_alive(&zt->transport.multicast);
     else
         return -1;
 }
 
-void *_znp_lease_task(void *arg)
+void *_zp_lease_task(void *arg)
 {
-    _zn_transport_t *zt = (_zn_transport_t *)arg;
+    _z_transport_t *zt = (_z_transport_t *)arg;
 
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _znp_unicast_lease_task(&zt->transport.unicast);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_lease_task(&zt->transport.multicast);
+    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_lease_task(&zt->transport.unicast);
+    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_lease_task(&zt->transport.multicast);
     else
         return NULL;
 }

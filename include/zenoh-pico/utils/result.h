@@ -18,48 +18,43 @@
 #include <stdlib.h>
 
 /*------------------ Result Enums ------------------*/
-typedef enum _z_err_t
-{
-    _z_err_t_PARSE_UINT8,
-    _z_err_t_PARSE_ZINT,
-    _z_err_t_PARSE_BYTES,
-    _z_err_t_PARSE_STRING
-} _z_err_t;
-
-typedef enum _z_res_t
-{
-    _z_res_t_OK = 0,
-    _z_res_t_ERR = -1
-} _z_res_t;
-
-/*------------------ Internal Zenoh-net Errors ------------------*/
 typedef enum
 {
-    _zn_err_t_IO_GENERIC,
-    _zn_err_t_IOBUF_NO_SPACE,
-    _zn_err_t_INVALID_LOCATOR,
-    _zn_err_t_OPEN_TRANSPORT_FAILED,
-    _zn_err_t_PARSE_CONSOLIDATION,
-    _zn_err_t_PARSE_DECLARATION,
-    _zn_err_t_PARSE_PAYLOAD,
-    _zn_err_t_PARSE_PERIOD,
-    _zn_err_t_PARSE_PROPERTIES,
-    _zn_err_t_PARSE_PROPERTY,
-    _zn_err_t_PARSE_RESKEY,
-    _zn_err_t_PARSE_TRANSPORT_MESSAGE,
-    _zn_err_t_PARSE_SUBMODE,
-    _zn_err_t_PARSE_TIMESTAMP,
-    _zn_err_t_PARSE_ZENOH_MESSAGE,
-    _zn_err_t_RESOURCE_DECLARATION,
-    _zn_err_t_TX_CONNECTION,
-    _zn_err_t_UNEXPECTED_MESSAGE
-} _zn_err_t;
+    _Z_ERR_PARSE_UINT8,
+    _Z_ERR_PARSE_ZINT,
+    _Z_ERR_PARSE_BYTES,
+    _Z_ERR_PARSE_STRING,
+    _Z_ERR_IO_GENERIC,
+    _Z_ERR_IOBUF_NO_SPACE,
+    _Z_ERR_INVALID_LOCATOR,
+    _Z_ERR_OPEN_TRANSPORT_FAILED,
+    _Z_ERR_PARSE_CONSOLIDATION,
+    _Z_ERR_PARSE_DECLARATION,
+    _Z_ERR_PARSE_PAYLOAD,
+    _Z_ERR_PARSE_PERIOD,
+    _Z_ERR_PARSE_PROPERTIES,
+    _Z_ERR_PARSE_PROPERTY,
+    _Z_ERR_PARSE_RESKEY,
+    _Z_ERR_PARSE_TRANSPORT_MESSAGE,
+    _Z_ERR_PARSE_SUBMODE,
+    _Z_ERR_PARSE_TIMESTAMP,
+    _Z_ERR_PARSE_ZENOH_MESSAGE,
+    _Z_ERR_RESOURCE_DECLARATION,
+    _Z_ERR_TX_CONNECTION,
+    _Z_ERR_UNEXPECTED_MESSAGE
+} _z_err_t;
+
+typedef enum
+{
+    _Z_RES_OK = 0,
+    _Z_RES_ERR = -1
+} _z_res_t;
 
 /*------------------ Internal Result Macros ------------------*/
 #define _RESULT_DECLARE(type, name, prefix) \
     typedef struct                          \
     {                                       \
-        enum _z_res_t tag;                  \
+        _z_res_t tag;                       \
         union                               \
         {                                   \
             type name;                      \
@@ -70,7 +65,7 @@ typedef enum
 #define _P_RESULT_DECLARE(type, name, prefix)                                           \
     typedef struct                                                                      \
     {                                                                                   \
-        enum _z_res_t tag;                                                              \
+        _z_res_t tag;                                                                   \
         union                                                                           \
         {                                                                               \
             type *name;                                                                 \
@@ -90,32 +85,32 @@ typedef enum
     }
 
 #define _ASSURE_RESULT(in_r, out_r, e) \
-    if (in_r.tag == _z_res_t_ERR)      \
+    if (in_r.tag == _Z_RES_ERR)        \
     {                                  \
-        out_r.tag = _z_res_t_ERR;      \
+        out_r.tag = _Z_RES_ERR;        \
         out_r.value.error = e;         \
         return out_r;                  \
     }
 
 #define _ASSURE_P_RESULT(in_r, out_r, e) \
-    if (in_r.tag == _z_res_t_ERR)        \
+    if (in_r.tag == _Z_RES_ERR)          \
     {                                    \
-        out_r->tag = _z_res_t_ERR;       \
+        out_r->tag = _Z_RES_ERR;         \
         out_r->value.error = e;          \
         return;                          \
     }
 
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
-    if (in_r.tag == _z_res_t_ERR)                   \
+    if (in_r.tag == _Z_RES_ERR)                     \
     {                                               \
         free(out_r->value.name);                    \
-        out_r->tag = _z_res_t_ERR;                  \
+        out_r->tag = _Z_RES_ERR;                    \
         out_r->value.error = e;                     \
         return;                                     \
     }
 
 #define _ASSERT_RESULT(r, msg) \
-    if (r.tag == _z_res_t_ERR) \
+    if (r.tag == _Z_RES_ERR)   \
     {                          \
         printf(msg);           \
         printf("\n");          \
@@ -123,7 +118,7 @@ typedef enum
     }
 
 #define _ASSERT_P_RESULT(r, msg) \
-    if (r.tag == _z_res_t_ERR)   \
+    if (r.tag == _Z_RES_ERR)     \
     {                            \
         printf(msg);             \
         printf("\n");            \
@@ -134,16 +129,8 @@ typedef enum
 #define _Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _z)
 #define _Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _z)
 
-/*------------------ Internal Zenoh-net Results ------------------*/
-#define _ZN_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _zn)
-#define _ZN_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _zn)
-
 /*------------------ Internal Zenoh Results ------------------*/
 #define Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, z)
 #define Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, z)
-
-/*------------------ Internal Zenoh-net Results ------------------*/
-#define ZN_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, zn)
-#define ZN_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, zn)
 
 #endif /* ZENOH_PICO_UTILS_RESULT_H */

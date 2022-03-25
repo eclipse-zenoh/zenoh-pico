@@ -17,16 +17,16 @@
 
 #include "zenoh-pico/net/session.h"
 
-#define _ZN_QUERYABLE_COMPLETE_DEFAULT 1
-#define _ZN_QUERYABLE_DISTANCE_DEFAULT 0
+#define _Z_QUERYABLE_COMPLETE_DEFAULT 1
+#define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
 /*------------------ Queryable ------------------*/
-_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, const z_zint_t id);
-_zn_queryable_list_t *_zn_get_queryables_by_name(zn_session_t *zn, const z_str_t rname);
+_z_queryable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
+_z_queryable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname);
 
-int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *q);
-int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query);
-void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *q);
-void _zn_flush_queryables(zn_session_t *zn);
+int _z_register_queryable(_z_session_t *zn, _z_queryable_t *q);
+int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query);
+void _z_unregister_queryable(_z_session_t *zn, _z_queryable_t *q);
+void _z_flush_queryables(_z_session_t *zn);
 
 #endif /* ZENOH_PICO_SESSION_QUERYABLE_H */

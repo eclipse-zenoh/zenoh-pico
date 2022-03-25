@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-z_str_t uri = "/demo/example/";
+_z_str_t uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -33,7 +33,7 @@ _z_list_t *subs2 = NULL; // @TODO: use type-safe list
 volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
-void data_handler(const zn_sample_t *sample, const void *arg)
+void data_handler(const _z_sample_t *sample, const void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
@@ -41,59 +41,59 @@ void data_handler(const zn_sample_t *sample, const void *arg)
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     assert(sample->value.len == MSG_LEN);
-    assert(sample->key.len == strlen(res));
-    assert(strncmp(res, sample->key.val, sample->key.len) == 0);
+    assert(strlen(sample->key.rname) == strlen(res));
+    assert(strncmp(res, sample->key.rname, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
 }
 
-int main(int argc, z_str_t *argv)
+int main(int argc, _z_str_t *argv)
 {
     assert(argc == 2);
     (void) (argc);
 
     setbuf(stdout, NULL);
 
-    zn_properties_t *config = zn_config_default();
-    zn_properties_insert(config, ZN_CONFIG_MODE_KEY, z_string_make("peer"));
-    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _z_properties_t *config = _z_properties_default();
+    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make("peer"));
+    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
 
-    zn_session_t *s1 = zn_open(config);
+    _z_session_t *s1 = _z_open(config);
     assert(s1 != NULL);
-    z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
+    _z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     _z_string_clear(&pid1);
 
     // Start the read session session lease loops
-    znp_start_read_task(s1);
-    znp_start_lease_task(s1);
+    _zp_start_read_task(s1);
+    _zp_start_lease_task(s1);
 
-    z_sleep_s(SLEEP);
+    _z_sleep_s(SLEEP);
 
-    zn_session_t *s2 = zn_open(config);
+    _z_session_t *s2 = _z_open(config);
     assert(s2 != NULL);
-    z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
+    _z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     _z_string_clear(&pid2);
 
     // Start the read session session lease loops
-    znp_start_read_task(s2);
-    znp_start_lease_task(s2);
+    _zp_start_read_task(s2);
+    _zp_start_lease_task(s2);
 
-    z_sleep_s(SLEEP * 5);
+    _z_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
     char s1_res[64];
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        zn_reskey_t rk = zn_rname(s1_res);
-        zn_subscriber_t *sub = zn_declare_subscriber(s2, rk, zn_subinfo_default(), data_handler, &idx[i]);
+        _z_reskey_t rk = _z_rname(s1_res);
+        z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
@@ -110,22 +110,22 @@ int main(int argc, z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            zn_reskey_t rk = zn_rname(s1_res);
-            zn_write_ext(s1, rk, payload, len, Z_ENCODING_DEFAULT, Z_DATA_KIND_DEFAULT, zn_congestion_control_t_BLOCK);
+            _z_reskey_t rk = _z_rname(s1_res);
+            _z_write_ext(s1, rk, payload, len, Z_ENCODING_DEFAULT, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.rid, len, n * SET + (i + 1), total);
-            _zn_reskey_clear(&rk);
+            _z_reskey_clear(&rk);
         }
     }
 
     // Wait to receive all the data
-    z_clock_t now = z_clock_now();
+    _z_clock_t now = _z_clock_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected)
     {
-        assert(z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
         (void) (now);
         printf("Waiting for datas... %u/%u\n", datas, expected);
-        z_sleep_s(SLEEP);
+        _z_sleep_s(SLEEP);
     }
     if (is_reliable)
         assert(datas == expected);
@@ -133,39 +133,39 @@ int main(int argc, z_str_t *argv)
         assert(datas >= expected);
     datas = 0;
 
-    z_sleep_s(SLEEP);
+    _z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        zn_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
+        z_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         printf("Undeclared subscriber on session 2: %zu\n", sub->id);
-        zn_undeclare_subscriber(sub);
-        subs2 = _z_list_pop(subs2, _zn_noop_elem_free); // @TODO: use type-safe list
+        _z_undeclare_subscriber(sub);
+        subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
-    z_sleep_s(SLEEP);
+    _z_sleep_s(SLEEP);
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
-    znp_stop_lease_task(s1);
-    znp_stop_read_task(s1);
+    _zp_stop_lease_task(s1);
+    _zp_stop_read_task(s1);
 
     printf("Stopping threads on session 2\n");
-    znp_stop_lease_task(s2);
-    znp_stop_read_task(s2);
+    _zp_stop_lease_task(s2);
+    _zp_stop_read_task(s2);
 
     // Close both sessions
     printf("Closing session 1\n");
-    zn_close(s1);
+    _z_close(s1);
 
-    z_sleep_s(SLEEP);
+    _z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
-    zn_close(s2);
+    _z_close(s2);
 
     // Cleanup properties
-    zn_properties_free(&config);
+    _z_properties_free(&config);
 
     free((uint8_t *)payload);
     payload = NULL;

@@ -22,17 +22,17 @@
  * Create an empty set of properties for zenoh-net session configuration.
  *
  * Returns:
- *     A :c:type:`zn_properties_t` containing an empty configuration.
+ *     A :c:type:`_z_properties_t` containing an empty configuration.
  */
-zn_properties_t *zn_config_empty(void);
+_z_properties_t *_z_properties_empty(void);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
  *
  * Returns:
- *     A :c:type:`zn_properties_t` containing a default configuration.
+ *     A :c:type:`_z_properties_t` containing a default configuration.
  */
-zn_properties_t *zn_config_default(void);
+_z_properties_t *_z_properties_default(void);
 
 /**
  * Create a default set of properties for client mode zenoh-net session configuration.
@@ -41,8 +41,8 @@ zn_properties_t *zn_config_default(void);
  * Parameters:
  *   locator: An optional peer locator. The caller keeps its ownership.
  * Returns:
- *     A :c:type:`zn_properties_t` containing a default configuration for client mode.
+ *     A :c:type:`_z_properties_t` containing a default configuration for client mode.
  */
-zn_properties_t *zn_config_client(const z_str_t locator);
+_z_properties_t *_z_properties_client(const _z_str_t locator);
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

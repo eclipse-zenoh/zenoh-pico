@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/transport/utils.h"
 
-int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, const z_zint_t sn_right)
+int _z_sn_precedes(const _z_zint_t sn_resolution_half, const _z_zint_t sn_left, const _z_zint_t sn_right)
 {
     if (sn_right > sn_left)
         return (sn_right - sn_left <= sn_resolution_half);
@@ -22,12 +22,12 @@ int _zn_sn_precedes(const z_zint_t sn_resolution_half, const z_zint_t sn_left, c
         return (sn_left - sn_right > sn_resolution_half);
 }
 
-z_zint_t _zn_sn_increment(const z_zint_t sn_resolution, const z_zint_t sn)
+_z_zint_t _z_sn_increment(const _z_zint_t sn_resolution, const _z_zint_t sn)
 {
     return (sn + 1) % sn_resolution;
 }
 
-z_zint_t _zn_sn_decrement(const z_zint_t sn_resolution, const z_zint_t sn)
+_z_zint_t _z_sn_decrement(const _z_zint_t sn_resolution, const _z_zint_t sn)
 {
     if (sn == 0)
         return sn_resolution - 1;
@@ -35,7 +35,7 @@ z_zint_t _zn_sn_decrement(const z_zint_t sn_resolution, const z_zint_t sn)
         return sn - 1;
 }
 
-void _zn_conduit_sn_list_copy(_zn_conduit_sn_list_t *dst, const _zn_conduit_sn_list_t *src)
+void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list_t *src)
 {
     dst->is_qos = src->is_qos;
     if (dst->is_qos == 0)
@@ -45,7 +45,7 @@ void _zn_conduit_sn_list_copy(_zn_conduit_sn_list_t *dst, const _zn_conduit_sn_l
     }
     else
     {
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < Z_PRIORITIES_NUM; i++)
         {
             dst->val.qos[i].best_effort = src->val.qos[i].best_effort;
             dst->val.qos[i].reliable = src->val.qos[i].reliable;
@@ -53,19 +53,19 @@ void _zn_conduit_sn_list_copy(_zn_conduit_sn_list_t *dst, const _zn_conduit_sn_l
     }
 }
 
-void _zn_conduit_sn_list_decrement(const z_zint_t sn_resolution, _zn_conduit_sn_list_t *sns)
+void _z_conduit_sn_list_decrement(const _z_zint_t sn_resolution, _z_conduit_sn_list_t *sns)
 {
     if (sns->is_qos == 0)
     {
-        sns->val.plain.best_effort = _zn_sn_decrement(sn_resolution, sns->val.plain.best_effort);
-        sns->val.plain.reliable = _zn_sn_decrement(sn_resolution, sns->val.plain.reliable);
+        sns->val.plain.best_effort = _z_sn_decrement(sn_resolution, sns->val.plain.best_effort);
+        sns->val.plain.reliable = _z_sn_decrement(sn_resolution, sns->val.plain.reliable);
     }
     else
     {
-        for (int i = 0; i < ZN_PRIORITIES_NUM; i++)
+        for (int i = 0; i < Z_PRIORITIES_NUM; i++)
         {
-            sns->val.qos[i].best_effort = _zn_sn_decrement(sn_resolution, sns->val.qos[i].best_effort);
-            sns->val.qos[i].best_effort = _zn_sn_decrement(sn_resolution, sns->val.qos[i].reliable);
+            sns->val.qos[i].best_effort = _z_sn_decrement(sn_resolution, sns->val.qos[i].best_effort);
+            sns->val.qos[i].best_effort = _z_sn_decrement(sn_resolution, sns->val.qos[i].reliable);
         }
     }
 }

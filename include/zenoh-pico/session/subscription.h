@@ -18,16 +18,16 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Subscription ------------------*/
-_zn_subscriber_t *_zn_get_subscription_by_id(zn_session_t *zn, int is_local, const z_zint_t id);
-_zn_subscriber_list_t *_zn_get_subscriptions_by_name(zn_session_t *zn, int is_local, const z_str_t rname);
-_zn_subscriber_list_t *_zn_get_subscription_by_key(zn_session_t *zn, int is_local, const zn_reskey_t *reskey);
+_z_subscriber_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id);
+_z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname);
+_z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey);
 
-int _zn_register_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub);
-int _zn_trigger_subscriptions(zn_session_t *zn, const zn_reskey_t reskey, const z_bytes_t payload);
-void _zn_unregister_subscription(zn_session_t *zn, int is_local, _zn_subscriber_t *sub);
-void _zn_flush_subscriptions(zn_session_t *zn);
+int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub);
+int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _z_bytes_t payload, const _z_encoding_t encoding);
+void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub);
+void _z_flush_subscriptions(_z_session_t *zn);
 
 /*------------------ Pull ------------------*/
-z_zint_t _zn_get_pull_id(zn_session_t *zn);
+_z_zint_t _z_get_pull_id(_z_session_t *zn);
 
 #endif /* ZENOH_PICO_SESSION_SUBSCRIPTION_H */
