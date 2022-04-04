@@ -25,31 +25,21 @@
 #define BT_CONFIG_MODE_KEY     0x01
 #define BT_CONFIG_MODE_STR     "mode"
 
-#define BT_CONFIG_RNAME_KEY    0x02
-#define BT_CONFIG_RNAME_STR    "rname"
-
-#define BT_CONFIG_LNAME_KEY    0x03
-#define BT_CONFIG_LNAME_STR    "lname"
-
-#define BT_CONFIG_PROFILE_KEY  0x04
+#define BT_CONFIG_PROFILE_KEY  0x02
 #define BT_CONFIG_PROFILE_STR  "profile"
 
-#define BT_CONFIG_TOUT_KEY     0x05
+#define BT_CONFIG_TOUT_KEY     0x03
 #define BT_CONFIG_TOUT_STR     "tout"
 
 #define BT_CONFIG_MAPPING_BUILD          \
-    int argc = 5;                        \
+    int argc = 3;                        \
     _z_str_intmapping_t args[argc];      \
     args[0].key = BT_CONFIG_MODE_KEY;    \
     args[0].str = BT_CONFIG_MODE_STR;    \
-    args[1].key = BT_CONFIG_RNAME_KEY;   \
-    args[1].str = BT_CONFIG_RNAME_STR;   \
-    args[2].key = BT_CONFIG_LNAME_KEY;   \
-    args[2].str = BT_CONFIG_LNAME_STR;   \
-    args[3].key = BT_CONFIG_PROFILE_KEY; \
-    args[3].str = BT_CONFIG_PROFILE_STR; \
-    args[4].key = BT_CONFIG_TOUT_KEY;    \
-    args[4].str = BT_CONFIG_TOUT_STR;
+    args[1].key = BT_CONFIG_PROFILE_KEY; \
+    args[1].str = BT_CONFIG_PROFILE_STR; \
+    args[2].key = BT_CONFIG_TOUT_KEY;    \
+    args[2].str = BT_CONFIG_TOUT_STR;
 
 size_t _zn_bt_config_strlen(const _z_str_intmap_t *s);
 

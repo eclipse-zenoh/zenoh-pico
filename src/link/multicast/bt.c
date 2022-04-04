@@ -26,15 +26,13 @@ int _zn_f_link_open_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    self->socket.bt.sock = _zn_open_bt(strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
-                                       _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY),
-                                       _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY),
+    self->socket.bt.sock = _zn_open_bt(self->endpoint.locator.address,
+                                       strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
                                        strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_PROFILE_KEY), "spp") == 0 ? _ZN_BT_PROFILE_SPP : _ZN_BT_PROFILE_UNSUPPORTED);
     if (self->socket.bt.sock == NULL)
         goto ERR;
 
-    self->socket.bt.lname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY));
-    self->socket.bt.rname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY));
+    self->socket.bt.gname = self->endpoint.locator.address;
 
     return 0;
 
@@ -46,15 +44,13 @@ int _zn_f_link_listen_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    self->socket.bt.sock = _zn_listen_bt(strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
-                                         _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY),
-                                         _z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY),
+    self->socket.bt.sock = _zn_listen_bt(self->endpoint.locator.address,
+                                         strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_MODE_KEY), "master") == 0 ? _ZN_BT_MODE_MASTER : _ZN_BT_MODE_SLAVE,
                                          strcmp(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_PROFILE_KEY), "spp") == 0 ? _ZN_BT_PROFILE_SPP : _ZN_BT_PROFILE_UNSUPPORTED);
     if (self->socket.bt.sock == NULL)
         goto ERR;
 
-    self->socket.bt.lname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_LNAME_KEY));
-    self->socket.bt.rname = _z_str_clone(_z_str_intmap_get(&self->endpoint.config, BT_CONFIG_RNAME_KEY));
+    self->socket.bt.gname = self->endpoint.locator.address;
 
     return 0;
 
@@ -72,8 +68,7 @@ void _zn_f_link_close_bt(void *arg)
 void _zn_f_link_free_bt(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
-    _z_str_free(&self->socket.bt.lname);
-    _z_str_free(&self->socket.bt.rname);
+    _z_str_free(&self->socket.bt.gname);
 }
 
 size_t _zn_f_link_write_bt(const void *arg, const uint8_t *ptr, size_t len)
@@ -97,8 +92,8 @@ size_t _zn_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *
     size_t rb  = _zn_read_bt(self->socket.bt.sock, ptr, len);
     if (rb > 0 && addr != NULL)
     {
-        *addr = _z_bytes_make(strlen(self->socket.bt.rname));
-        memcpy((void *)addr->val, self->socket.bt.rname, addr->len);
+        *addr = _z_bytes_make(strlen(self->socket.bt.gname));
+        memcpy((void *)addr->val, self->socket.bt.gname, addr->len);
     }
 
     return rb;
@@ -111,8 +106,8 @@ size_t _zn_f_link_read_exact_bt(const void *arg, uint8_t *ptr, size_t len, z_byt
     size_t rb  = _zn_read_exact_bt(self->socket.bt.sock, ptr, len);
     if (rb == len && addr != NULL)
     {
-        *addr = _z_bytes_make(strlen(self->socket.bt.rname));
-        memcpy((void *)addr->val, self->socket.bt.rname, addr->len);
+        *addr = _z_bytes_make(strlen(self->socket.bt.gname));
+        memcpy((void *)addr->val, self->socket.bt.gname, addr->len);
     }
 
     return rb;

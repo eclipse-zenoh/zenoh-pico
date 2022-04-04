@@ -513,7 +513,7 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 #if ZN_LINK_BLUETOOTH == 1
 #include "zenoh-pico/system/link/bt.h"
 /*------------------ Bluetooth sockets ------------------*/
-void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+void *_zn_open_bt(z_str_t gname, uint8_t mode, uint8_t profile)
 {
     switch (profile)
     {
@@ -522,12 +522,12 @@ void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
         BluetoothSerial *sbt = new BluetoothSerial();
         if (mode == _ZN_BT_MODE_SLAVE)
         {
-            sbt->begin(lname, false);
+            sbt->begin(gname, false);
         }
         else if (mode == _ZN_BT_MODE_MASTER)
         {
-            sbt->begin(lname, true);
-            uint8_t connected = sbt->connect(rname);
+            sbt->begin(gname, true);
+            uint8_t connected = sbt->connect(gname);
             if(!connected)
                 while(!sbt->connected(10000));
         }
@@ -543,7 +543,7 @@ void *_zn_open_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
     }
 }
 
-void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
+void *_zn_listen_bt(z_str_t gname, uint8_t mode, uint8_t profile)
 {
     switch (profile)
     {
@@ -552,12 +552,12 @@ void *_zn_listen_bt(uint8_t mode, z_str_t lname, z_str_t rname, uint8_t profile)
         BluetoothSerial *sbt = new BluetoothSerial();
         if (mode == _ZN_BT_MODE_SLAVE)
         {
-            sbt->begin(lname, false);
+            sbt->begin(gname, false);
         }
         else if (mode == _ZN_BT_MODE_MASTER)
         {
-            sbt->begin(lname, true);
-            uint8_t connected = sbt->connect(rname);
+            sbt->begin(gname, true);
+            uint8_t connected = sbt->connect(gname);
             if(!connected)
                 while(!sbt->connected(10000));
         }

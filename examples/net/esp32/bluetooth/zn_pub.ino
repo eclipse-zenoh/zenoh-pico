@@ -26,7 +26,7 @@ extern "C"
 
 // Zenoh-specific parameters
 #define MODE "peer"
-#define PEER "bt/esp-pico#mode=slave"
+#define PEER "bt/esp-pico#mode=slave;profile=spp"
 #define URI "/demo/example/switch/led/1"
 
 #define BEEP_PIN 32
