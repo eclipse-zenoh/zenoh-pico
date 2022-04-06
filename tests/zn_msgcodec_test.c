@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #define ZENOH_PICO_TEST_H
 
@@ -320,7 +320,7 @@ void payload_field(void)
     // Encode
     int res = _zn_payload_encode(&wbf, &e_pld);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -370,7 +370,7 @@ void timestamp_field(void)
     // Encode
     int res = z_timestamp_encode(&wbf, &e_ts);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -451,7 +451,7 @@ void subinfo_field(void)
     uint8_t header = e_sm.reliability == zn_reliability_t_RELIABLE ? _ZN_FLAG_Z_R : 0;
     int res = _zn_subinfo_encode(&wbf, &e_sm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -514,7 +514,7 @@ void res_key_field(void)
     uint8_t header = (e_rk.rname) ? _ZN_FLAG_Z_K : 0;
     int res = _zn_reskey_encode(&wbf, header, &e_rk);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -645,7 +645,7 @@ void data_info_field(void)
     // Encode
     int res = _zn_data_info_encode(&wbf, &e_di);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -704,7 +704,7 @@ void attachment_decorator(void)
     // Encode
     int res = _zn_attachment_encode(&wbf, e_at);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -788,7 +788,7 @@ void reply_contex_decorator(void)
     // Encode
     int res = _zn_reply_context_encode(&wbf, e_rc);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -843,7 +843,7 @@ void resource_declaration(void)
     // Encode
     int res = _zn_res_decl_encode(&wbf, e_hdr, &e_rd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -889,7 +889,7 @@ void publisher_declaration(void)
     // Encode
     int res = _zn_pub_decl_encode(&wbf, e_hdr, &e_pd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -947,7 +947,7 @@ void subscriber_declaration(void)
     // Encode
     int res = _zn_sub_decl_encode(&wbf, e_hdr, &e_sd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1012,7 +1012,7 @@ void queryable_declaration(void)
     // Encode
     int res = _zn_qle_decl_encode(&wbf, e_hdr, &e_qd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1057,7 +1057,7 @@ void forget_resource_declaration(void)
     // Encode
     int res = _zn_forget_res_decl_encode(&wbf, &e_frd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1103,7 +1103,7 @@ void forget_publisher_declaration(void)
     // Encode
     int res = _zn_forget_pub_decl_encode(&wbf, e_hdr, &e_fpd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1149,7 +1149,7 @@ void forget_subscriber_declaration(void)
     // Encode
     int res = _zn_forget_sub_decl_encode(&wbf, e_hdr, &e_fsd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1197,7 +1197,7 @@ void forget_queryable_declaration(void)
     // Encode
     int res = _zn_forget_qle_decl_encode(&wbf, e_hdr, &e_fqd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1337,7 +1337,7 @@ void declare_message(void)
     // Encode
     int res = _zn_declare_encode(&wbf, &e_dcl);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1401,7 +1401,7 @@ void data_message(void)
     // Encode
     int res = _zn_data_encode(&wbf, z_msg.header, &e_da);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1461,7 +1461,7 @@ void pull_message(void)
     // Encode
     int res = _zn_pull_encode(&wbf, z_msg.header, &e_pu);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1573,7 +1573,7 @@ void query_message(void)
     // Encode
     int res = _zn_query_encode(&wbf, e_hdr, &e_qy);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1747,7 +1747,7 @@ void zenoh_message(void)
     // Encode
     int res = _zn_zenoh_message_encode(&wbf, &e_zm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1796,7 +1796,7 @@ void scout_message(void)
     // Encode
     int res = _zn_scout_encode(&wbf, t_msg.header, &e_sc);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1864,7 +1864,7 @@ void hello_message(void)
     // Encode
     int res = _zn_hello_encode(&wbf, t_msg.header, &e_he);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1981,7 +1981,7 @@ void join_message(void)
     // Encode
     int res = _zn_join_encode(&wbf, t_msg.header, &t_msg.body.join);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2067,7 +2067,7 @@ void init_message(void)
     // Encode
     int res = _zn_init_encode(&wbf, t_msg.header, &e_it);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2133,7 +2133,7 @@ void open_message(void)
     // Encode
     int res = _zn_open_encode(&wbf, t_msg.header, &e_op);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2188,7 +2188,7 @@ void close_message(void)
     // Encode
     int res = _zn_close_encode(&wbf, t_msg.header, &e_cl);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2243,7 +2243,7 @@ void sync_message(void)
     // Encode
     int res = _zn_sync_encode(&wbf, t_msg.header, &e_sy);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2297,7 +2297,7 @@ void ack_nack_message(void)
     // Encode
     int res = _zn_ack_nack_encode(&wbf, t_msg.header, &e_an);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2345,7 +2345,7 @@ void keep_alive_message(void)
     // Encode
     int res = _zn_keep_alive_encode(&wbf, t_msg.header, &e_ka);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2393,7 +2393,7 @@ void ping_pong_message(void)
     // Encode
     int res = _zn_ping_pong_encode(&wbf, &e_pp);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2477,7 +2477,7 @@ void frame_message(void)
     // Encode
     int res = _zn_frame_encode(&wbf, t_msg.header, &e_fr);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2634,7 +2634,7 @@ void transport_message(void)
     // Encode
     int res = _zn_transport_message_encode(&wbf, &e_tm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2670,7 +2670,7 @@ void batch(void)
         // Encode
         int res = _zn_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; i++)
     {
@@ -2679,7 +2679,7 @@ void batch(void)
         // Encode
         int res = _zn_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++)
     {
@@ -2688,7 +2688,7 @@ void batch(void)
         // Encode
         int res = _zn_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
 
     // Decode
@@ -2839,7 +2839,7 @@ void fragmentation(void)
         size_t written = _z_wbuf_len(&fbf);
         res = _zn_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
         written -= _z_wbuf_len(&fbf);
 
         printf("  -Encoded Fragment: ");

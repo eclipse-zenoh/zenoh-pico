@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <errno.h>
 #include <unistd.h>
@@ -27,7 +27,6 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/logging.h"
-
 
 /*------------------ Endpoint ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
@@ -126,7 +125,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
+    (void)laddr;
 
     // @TODO: To be implemented
 
@@ -187,7 +186,7 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     return sock;
 
@@ -198,8 +197,8 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
-    (void) tout;
+    (void)laddr;
+    (void)tout;
 
     // @TODO: To be implemented
 
@@ -217,7 +216,7 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock, ptr, len, 0,
-                         (struct sockaddr *)&raddr, &addrlen);
+                          (struct sockaddr *)&raddr, &addrlen);
 
     if (rb < 0)
         return SIZE_MAX;
@@ -298,7 +297,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     if (bind(sock, lsockaddr, addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
@@ -358,7 +357,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     int optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)

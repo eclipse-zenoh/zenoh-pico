@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
@@ -98,57 +98,58 @@ void _zn_socket_event_handler(SOCKET sock, uint8_t ev_type, void *ev_msg)
     __zn_wifi_socket_t *ws = __zn_wifi_socket_list_head(xs);
     switch (ev_type)
     {
-        case SOCKET_MSG_BIND:
-        {
-            tstrSocketBindMsg *ev_bind_msg = (tstrSocketBindMsg *)ev_msg;
-            if (ev_bind_msg && ev_bind_msg->status == -1)
-                ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
-            else
-                ws->state = __ZN_SOCKET_BRIDGE_ERROR;
+    case SOCKET_MSG_BIND:
+    {
+        tstrSocketBindMsg *ev_bind_msg = (tstrSocketBindMsg *)ev_msg;
+        if (ev_bind_msg && ev_bind_msg->status == -1)
+            ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+        else
+            ws->state = __ZN_SOCKET_BRIDGE_ERROR;
+    }
+    break;
 
-        } break;
+    case SOCKET_MSG_CONNECT:
+    {
+        tstrSocketConnectMsg *ev_conn_msg = (tstrSocketConnectMsg *)ev_msg;
+        if (ev_conn_msg && ev_conn_msg->s8Error >= 0)
+            ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
+        else
+            ws->state = __ZN_SOCKET_BRIDGE_ERROR;
+    }
+    break;
 
-        case SOCKET_MSG_CONNECT:
-        {
-            tstrSocketConnectMsg *ev_conn_msg = (tstrSocketConnectMsg *)ev_msg;
-            if (ev_conn_msg && ev_conn_msg->s8Error >= 0)
-                ws->state = __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED;
-            else
-                ws->state = __ZN_SOCKET_BRIDGE_ERROR;
+    case SOCKET_MSG_RECV:
+    case SOCKET_MSG_RECVFROM:
+    {
+        tstrSocketRecvMsg *ev_recv_msg = (tstrSocketRecvMsg *)ev_msg;
+        //            uint32 strRemoteHostAddr = ev_recv_msg->strRemoteAddr.sin_addr.s_addr;
+        //            uint16 u16port = ev_recv_msg->strRemoteAddr.sin_port;
 
-        } break;
+        if (ev_recv_msg->s16BufferSize <= 0)
+            goto ERR_OR_SUCCESS;
 
-        case SOCKET_MSG_RECV:
-        case SOCKET_MSG_RECVFROM:
-        {
-            tstrSocketRecvMsg *ev_recv_msg = (tstrSocketRecvMsg *)ev_msg;
-//            uint32 strRemoteHostAddr = ev_recv_msg->strRemoteAddr.sin_addr.s_addr;
-//            uint16 u16port = ev_recv_msg->strRemoteAddr.sin_port;
+        if (ws->buffer_available < ev_recv_msg->s16BufferSize)
+            goto ERR_OR_SUCCESS;
 
-            if (ev_recv_msg->s16BufferSize <= 0)
-                goto ERR_OR_SUCCESS;
+        unsigned int to_read = ev_recv_msg->s16BufferSize;
+        if (hif_receive(ev_recv_msg->pu8Buffer, (unsigned char *)ws->buffer_current, to_read, 1) != M2M_SUCCESS)
+            goto ERR_OR_SUCCESS;
 
-            if (ws->buffer_available < ev_recv_msg->s16BufferSize)
-                goto ERR_OR_SUCCESS;
+        ws->buffer_current += to_read;
+        ws->buffer_lenght += to_read;
+        ws->buffer_available -= to_read;
+    }
+    break;
 
-            unsigned int to_read = ev_recv_msg->s16BufferSize;
-            if (hif_receive(ev_recv_msg->pu8Buffer, (unsigned char *)ws->buffer_current, to_read, 1) != M2M_SUCCESS)
-                goto ERR_OR_SUCCESS;
+    case SOCKET_MSG_SEND:
+    case SOCKET_MSG_SENDTO:
+    {
+        // Do nothing at the moment
+    }
+    break;
 
-            ws->buffer_current += to_read;
-            ws->buffer_lenght += to_read;
-            ws->buffer_available -= to_read;
-
-        } break;
-
-        case SOCKET_MSG_SEND:
-        case SOCKET_MSG_SENDTO:
-        {
-            // Do nothing at the moment
-        } break;
-
-        default:
-            break;
+    default:
+        break;
     }
 
 ERR_OR_SUCCESS:
@@ -205,7 +206,7 @@ int _zn_open_tcp(void *arg, const clock_t tout)
     if (sock < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_1;
 
-    if (connect(sock, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
+    if (connect(sock, (struct sockaddr *)raddr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
 
     __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
@@ -220,7 +221,7 @@ int _zn_open_tcp(void *arg, const clock_t tout)
     z_clock_t start = z_clock_now();
     while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+    if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_3;
 
     // This is required after binding (just for TCP) due to WiFi101 library
@@ -309,7 +310,7 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
     m2m_wifi_handle_events(NULL);
 
-    if (send(sock, (void*)ptr, len, 0) < 0)
+    if (send(sock, (void *)ptr, len, 0) < 0)
         return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
@@ -331,7 +332,7 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
     addr->sin_family = AF_INET;
-    if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
+    if (bind(sock, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
 
     __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
@@ -346,7 +347,7 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     z_clock_t start = z_clock_now();
     while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+    if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_3;
 
     // This is required after binding (just for UDP) due to WiFi101 library
@@ -434,7 +435,7 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
     m2m_wifi_handle_events(NULL);
 
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
-    if (sendto(sock, (void*)ptr, len, 0, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
+    if (sendto(sock, (void *)ptr, len, 0, (struct sockaddr *)raddr, sizeof(struct sockaddr_in)) < 0)
         return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
@@ -457,7 +458,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
     addr->sin_family = AF_INET;
-    if (bind(sock, (struct sockaddr*)addr, sizeof(struct sockaddr_in)) < 0)
+    if (bind(sock, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
     __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
@@ -472,7 +473,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     z_clock_t start = z_clock_now();
     while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
-    if(ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
+    if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
 
     // Create laddr endpoint
@@ -564,7 +565,7 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
     m2m_wifi_handle_events(NULL);
 
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
-    if (sendto(sock, (void*)ptr, len, 0, (struct sockaddr*)raddr, sizeof(struct sockaddr_in)) < 0)
+    if (sendto(sock, (void *)ptr, len, 0, (struct sockaddr *)raddr, sizeof(struct sockaddr_in)) < 0)
         return SIZE_MAX;
 
     m2m_wifi_handle_events(NULL);
