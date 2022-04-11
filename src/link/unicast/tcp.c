@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <string.h>
 #include "zenoh-pico/config.h"
@@ -129,7 +129,7 @@ size_t _zn_f_link_write_all_tcp(const void *arg, const uint8_t *ptr, size_t len)
 
 size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
-    (void) (addr);
+    (void)(addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_tcp(self->socket.tcp.sock, ptr, len);
@@ -137,7 +137,7 @@ size_t _zn_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t 
 
 size_t _zn_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr)
 {
-    (void) (addr);
+    (void)(addr);
     const _zn_link_t *self = (const _zn_link_t *)arg;
 
     return _zn_read_exact_tcp(self->socket.tcp.sock, ptr, len);
