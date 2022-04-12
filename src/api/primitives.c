@@ -379,7 +379,9 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
     else
     {
         // Signal that we have received all the replies
+        z_mutex_lock(&pqc->mutex);  // Avoid condvar signal to be triggered before wait
         z_condvar_signal(&pqc->cond_var);
+        z_mutex_unlock(&pqc->mutex);
     }
 }
 
@@ -389,18 +391,15 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
                                        const zn_query_target_t target,
                                        const zn_query_consolidation_t consolidation)
 {
-    // Create the synchronization variables
     _zn_pending_query_collect_t pqc;
+    pqc.replies = NULL;
     z_mutex_init(&pqc.mutex);
     z_condvar_init(&pqc.cond_var);
-    pqc.replies = NULL;
 
     // Issue the query
+    z_mutex_lock(&pqc.mutex); // Get the lock on the query, released on condvar wait
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
-
-    // Wait to be notified
-    z_mutex_lock(&pqc.mutex);
-    z_condvar_wait(&pqc.cond_var, &pqc.mutex);
+    z_condvar_wait(&pqc.cond_var, &pqc.mutex); // Wait to be notified, releases pqc.mutex
 
     zn_reply_data_array_t rda;
     rda.len = _zn_reply_data_list_len(pqc.replies);
