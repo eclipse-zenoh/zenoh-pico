@@ -79,7 +79,7 @@ void _z_vec_append(_z_vec_t *v, void *e)
     if (v->len == v->capacity)
     {
         // Allocate a new vector
-        size_t _capacity = (v->capacity << 1) | 0x01;
+        size_t _capacity = v->len == 0 ? 1 : v->capacity << 1;
         void **_val = (void **)malloc(_capacity * sizeof(void *));
         memcpy(_val, v->val, v->capacity * sizeof(void *));
 
