@@ -67,9 +67,15 @@ _zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unica
     uint16_t mtu = link->mtu < ZN_BATCH_SIZE ? link->mtu : ZN_BATCH_SIZE;
     zt->transport.unicast.wbuf = _z_wbuf_make(mtu, 0);
     zt->transport.unicast.zbuf = _z_zbuf_make(ZN_BATCH_SIZE);
+
     // Initialize the defragmentation buffers
+#if ZN_DYNAMIC_MEMORY_ALLOCATION == 1
     zt->transport.unicast.dbuf_reliable = _z_wbuf_make(0, 1);
     zt->transport.unicast.dbuf_best_effort = _z_wbuf_make(0, 1);
+#else
+    zt->transport.unicast.dbuf_reliable = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+    zt->transport.unicast.dbuf_best_effort = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+#endif
 
     // Set default SN resolution
     zt->transport.unicast.sn_resolution = param.sn_resolution;

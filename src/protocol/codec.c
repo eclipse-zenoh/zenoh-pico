@@ -148,17 +148,9 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
 {
     _ZN_EC(_z_zint_encode(wbf, bs->len))
     if (wbf->is_expandable && bs->len > ZN_TSID_LENGTH)
-    {
-        // Do not copy, just add a slice to the expandable buffer
-        // Only create a new slice if the malloc is cheaper than copying a
-        // large amount of data
-        _z_wbuf_add_iosli_from(wbf, bs->val, bs->len);
-        return 0;
-    }
+        return _z_wbuf_wrap_bytes(wbf, bs->val, 0, bs->len);
     else
-    {
         return _z_wbuf_write_bytes(wbf, bs->val, 0, bs->len);
-    }
 }
 
 void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)

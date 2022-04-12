@@ -168,6 +168,8 @@ void iosli_writable_readable(void)
 
     printf("  - IOSli bytes\n");
     uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    memset((uint8_t *)payload, 1, len * sizeof(uint8_t));
+
     for (size_t i = 0; i < len; i++)
     {
         payload[i] = gen_uint8();
@@ -185,6 +187,7 @@ void iosli_writable_readable(void)
     }
 
     uint8_t *buffer = (uint8_t *)malloc(len * sizeof(uint8_t));
+    memset((uint8_t *)buffer, 1, len * sizeof(uint8_t));
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
     _z_iosli_read_bytes(&ios, buffer, 0, len);
@@ -212,6 +215,11 @@ void iosli_writable_readable(void)
     _z_iosli_clear(&wios);
     assert(_z_iosli_writable(&wios) == 0);
     assert(_z_iosli_readable(&wios) == 0);
+
+    _z_iosli_clear(pios);
+    free(pios);
+    _z_iosli_clear(cios);
+    free(cios);
 
     free(buffer);
     free(payload);
@@ -251,6 +259,8 @@ void zbuf_writable_readable(void)
         printf("    Readable: %zu\n", readable);
         assert(readable == len - read);
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void zbuf_compact(void)
@@ -286,6 +296,8 @@ void zbuf_compact(void)
         }
         printf(" ]\n");
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void zbuf_view(void)
@@ -323,6 +335,8 @@ void zbuf_view(void)
 
         _z_zbuf_set_rpos(&zbf, _z_zbuf_get_rpos(&zbf) + vs);
     }
+
+    _z_zbuf_clear(&zbf);
 }
 
 void wbuf_writable_readable(void)
@@ -357,6 +371,8 @@ void wbuf_writable_readable(void)
         printf("    Readable: %zu\n", readable);
         assert(readable == written);
     }
+
+    _z_wbuf_clear(&wbf);
 }
 
 void wbuf_write_zbuf_read(void)
@@ -461,6 +477,41 @@ void wbuf_put_zbuf_get(void)
     _z_wbuf_clear(&wbf);
 }
 
+void wbuf_reusable_write_zbuf_read(void)
+{
+    _z_wbuf_t wbf = gen_wbuf(128);
+    for (int i = 0; i < 10; i++)
+    {
+        size_t len = rand() % 128;
+        printf("\n>>> WBuf => Write and Read\n");
+        print_wbuf_overview(&wbf);
+        printf("    Writing %zu bytes\n", len);
+        for (size_t i = 0; i < len; i++)
+            _z_wbuf_write(&wbf, (uint8_t)i % 255);
+
+        printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+        printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
+        assert(_z_wbuf_len(&wbf) == len);
+
+        _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+        assert(_z_zbuf_len(&zbf) == len);
+        printf("    Reading %zu bytes\n", len);
+        printf("    [");
+        for (uint8_t i = 0; i < len; i++)
+        {
+            uint8_t l = (uint8_t)i % 255;
+            uint8_t r = _z_zbuf_read(&zbf);
+            printf(" %02x:%02x", l, r);
+            assert(l == r);
+        }
+        printf("]\n");
+        _z_zbuf_clear(&zbf);
+        _z_wbuf_reset(&wbf);
+    }
+
+    _z_wbuf_clear(&wbf);
+}
+
 void wbuf_set_pos_wbuf_get_pos(void)
 {
     size_t len = 128;
@@ -516,30 +567,11 @@ void wbuf_add_iosli(void)
         uint8_t remaining = 255 - written;
         uint8_t range = remaining < len ? remaining : len;
         uint8_t to_write = 1 + gen_uint8() % range;
-        if (gen_bool())
+        printf("    Writing %u bytes\n", to_write);
+        for (uint8_t i = 0; i < to_write; i++)
         {
-            printf("    Writing %u bytes\n", to_write);
-            for (uint8_t i = 0; i < to_write; i++)
-            {
-                _z_wbuf_write(&wbf, counter);
-                counter++;
-            }
-        }
-        else
-        {
-            _z_iosli_t *ios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
-            ios->r_pos = 0;
-            ios->w_pos = 0;
-            ios->capacity = to_write;
-            ios->buf = (uint8_t *)malloc(to_write);
-
-            for (uint8_t i = 0; i < to_write; i++)
-            {
-                _z_iosli_write(ios, counter);
-                counter++;
-            }
-            printf("    Adding IOSli with %u bytes\n", to_write);
-            _z_wbuf_add_iosli(&wbf, ios);
+            _z_wbuf_write(&wbf, counter);
+            counter++;
         }
         written += to_write;
     }
@@ -590,5 +622,8 @@ int main(void)
         wbuf_write_zbuf_read();
         wbuf_write_zbuf_read_bytes();
         wbuf_put_zbuf_get();
+
+        // Reusable WBuf
+        wbuf_reusable_write_zbuf_read();
     }
 }

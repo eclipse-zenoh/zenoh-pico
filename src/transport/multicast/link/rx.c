@@ -16,6 +16,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/config.h"
 
 _zn_transport_peer_entry_t *_zn_find_peer_entry(_zn_transport_peer_entry_list_t *l, z_bytes_t *remote_addr)
 {
@@ -156,8 +157,13 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
             _zn_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
             _zn_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
 
-            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
+#if ZN_DYNAMIC_MEMORY_ALLOCATION == 1
             entry->dbuf_reliable = _z_wbuf_make(0, 1);
+            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
+#else
+            entry->dbuf_reliable = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+            entry->dbuf_best_effort = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+#endif
 
             // Update lease time (set as ms during)
             entry->lease = t_msg->body.join.lease;
@@ -268,16 +274,33 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
         if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_F))
         {
-            int res = _z_res_t_OK;
-
             // Select the right defragmentation buffer
             _z_wbuf_t *dbuf = _ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_R) ? &entry->dbuf_reliable : &entry->dbuf_best_effort;
-            // Add the fragment to the defragmentation buffer
-            _z_wbuf_add_iosli_from(dbuf, t_msg->body.frame.payload.fragment.val, t_msg->body.frame.payload.fragment.len);
+
+            uint8_t drop = 0;
+            if (_z_wbuf_len(dbuf) + t_msg->body.frame.payload.fragment.len > ZN_FRAG_MAX_SIZE)
+            {
+                // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
+                // Otherwise, last (smaller) fragments can be understood as a complete message
+                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, _z_wbuf_space_left(dbuf));
+                drop = 1;
+            }
+            else
+            {
+                // Add the fragment to the defragmentation buffer
+                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
+            }
 
             // Check if this is the last fragment
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_E))
             {
+                // Drop message if it is bigger the max buffer size
+                if (drop == 1)
+                {
+                    _z_wbuf_reset(dbuf);
+                    break;
+                }
+
                 // Convert the defragmentation buffer into a decoding buffer
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
@@ -286,33 +309,27 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
                 if (r_zm.tag == _z_res_t_OK)
                 {
                     _zn_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    res = _zn_handle_zenoh_message(ztm->session, &d_zm);
+                    _zn_handle_zenoh_message(ztm->session, &d_zm);
 
-                    // Free the decoded message
+                    // Clear must be explicitly called for fragmented zenoh messages.
+                    // Non-fragmented zenoh messages are released when their transport message is released.
                     _zn_z_msg_clear(&d_zm);
                 }
 
                 // Free the decoding buffer
-                _z_zbuf_reset(&zbf);
+                _z_zbuf_clear(&zbf);
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
-
-            if (res != _z_res_t_OK)
-                break;
         }
         else
         {
             // Handle all the zenoh message, one by one
             unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
             for (unsigned int i = 0; i < len; i++)
-            {
-                int res = _zn_handle_zenoh_message(ztm->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
-                if (res != _z_res_t_OK)
-                    break;
-            }
-            break;
+                _zn_handle_zenoh_message(ztm->session, (_zn_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
         }
+        break;
     }
 
     default:
