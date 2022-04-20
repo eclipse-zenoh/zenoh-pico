@@ -14,8 +14,7 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include "zenoh-pico.h"
-#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/net/zenoh-pico.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
