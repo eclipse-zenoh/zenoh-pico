@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -123,8 +123,8 @@ void iosli_writable_readable(void)
         uint8_t b2 = _z_iosli_get(pios, i);
 
         assert(b1 == b2);
-        (void) (b1);
-        (void) (b2);
+        (void)(b1);
+        (void)(b2);
     }
 
     _z_iosli_t *cios = _z_iosli_clone(pios);
@@ -139,9 +139,9 @@ void iosli_writable_readable(void)
         uint8_t b3 = _z_iosli_read(cios);
 
         assert(b1 == b2 && b2 == b3);
-        (void) (b1);
-        (void) (b2);
-        (void) (b3);
+        (void)(b1);
+        (void)(b2);
+        (void)(b3);
 
         assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios) && _z_iosli_writable(pios) == _z_iosli_writable(cios));
         assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios) && _z_iosli_readable(pios) == _z_iosli_readable(cios));

@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <assert.h>
 #include <string.h>
@@ -79,7 +79,7 @@ void _z_vec_append(_z_vec_t *v, void *e)
     if (v->len == v->capacity)
     {
         // Allocate a new vector
-        size_t _capacity = (v->capacity << 1) | 0x01;
+        size_t _capacity = v->len == 0 ? 1 : v->capacity << 1;
         void **_val = (void **)malloc(_capacity * sizeof(void *));
         memcpy(_val, v->val, v->capacity * sizeof(void *));
 

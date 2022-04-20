@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <netdb.h>
 #include <string.h>
@@ -90,7 +90,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
+    (void)laddr;
 
     // @TODO: to be implemented
 
@@ -171,7 +171,7 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     return sock;
 
@@ -182,7 +182,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
+    (void)laddr;
 
     // @TODO: To be implemented
 
@@ -272,7 +272,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     if (bind(sock, lsockaddr, addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
@@ -356,7 +356,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     int optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
@@ -368,23 +368,23 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     // Join the multicast group
     if (raddr->ai_family == AF_INET)
     {
-       struct ip_mreq mreq;
-       memset(&mreq, 0, sizeof(mreq));
-       mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
-       mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-       if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
-           goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+        struct ip_mreq mreq;
+        memset(&mreq, 0, sizeof(mreq));
+        mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+            goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
     }
     else if (raddr->ai_family == AF_INET6)
     {
-       struct ipv6_mreq mreq;
-       memset(&mreq, 0, sizeof(mreq));
-       memcpy(&mreq.ipv6mr_multiaddr,
-              &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
-              sizeof(struct in6_addr));
-       //        mreq.ipv6mr_interface = ifindex;
-       if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
-           goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
+        struct ipv6_mreq mreq;
+        memset(&mreq, 0, sizeof(mreq));
+        memcpy(&mreq.ipv6mr_multiaddr,
+               &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
+               sizeof(struct in6_addr));
+        //        mreq.ipv6mr_interface = ifindex;
+        if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
+            goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
     }
     else
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
@@ -415,8 +415,8 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
         struct ipv6_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         memcpy(&mreq.ipv6mr_multiaddr,
-         &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
-         sizeof(struct in6_addr));
+               &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
+               sizeof(struct in6_addr));
         // mreq.ipv6mr_interface = ifindex;
         setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
@@ -437,7 +437,7 @@ size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_b
         rb = recvfrom(sock, ptr, len, 0,
                       (struct sockaddr *)&raddr, &addrlen);
 
-        if(rb == SIZE_MAX)
+        if (rb == SIZE_MAX)
             return rb;
 
         if (laddr->ai_family == AF_INET)

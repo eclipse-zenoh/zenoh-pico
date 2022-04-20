@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/logger.h"
@@ -253,7 +253,7 @@ void zn_undeclare_queryable(zn_queryable_t *qle)
 void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply.
-    z_bytes_t pid = _z_bytes_wrap(((zn_session_t*)query->zn)->tp_manager->local_pid.val, ((zn_session_t*)query->zn)->tp_manager->local_pid.len);
+    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)query->zn)->tp_manager->local_pid.val, ((zn_session_t *)query->zn)->tp_manager->local_pid.len);
     _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, query->kind, 0);
 
     // @TODO: use numerical resources if possible
@@ -379,7 +379,9 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
     else
     {
         // Signal that we have received all the replies
+        z_mutex_lock(&pqc->mutex);  // Avoid condvar signal to be triggered before wait
         z_condvar_signal(&pqc->cond_var);
+        z_mutex_unlock(&pqc->mutex);
     }
 }
 
@@ -389,18 +391,15 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
                                        const zn_query_target_t target,
                                        const zn_query_consolidation_t consolidation)
 {
-    // Create the synchronization variables
     _zn_pending_query_collect_t pqc;
+    pqc.replies = NULL;
     z_mutex_init(&pqc.mutex);
     z_condvar_init(&pqc.cond_var);
-    pqc.replies = NULL;
 
     // Issue the query
+    z_mutex_lock(&pqc.mutex); // Get the lock on the query, released on condvar wait
     zn_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
-
-    // Wait to be notified
-    z_mutex_lock(&pqc.mutex);
-    z_condvar_wait(&pqc.cond_var, &pqc.mutex);
+    z_condvar_wait(&pqc.cond_var, &pqc.mutex); // Wait to be notified, releases pqc.mutex
 
     zn_reply_data_array_t rda;
     rda.len = _zn_reply_data_list_len(pqc.replies);

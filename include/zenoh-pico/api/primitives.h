@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_PRIMITIVES_API_H
 #define ZENOH_PICO_PRIMITIVES_API_H
@@ -39,7 +39,6 @@
  *     The caller gets its ownership, thus must be released using :c:function:`zn_hello_array_free`.
  */
 zn_hello_array_t zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period);
-
 
 /*------------------ Declarations ------------------*/
 
@@ -154,7 +153,6 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn,
  *          queryable upon successful return.
  */
 void zn_undeclare_queryable(zn_queryable_t *qle);
-
 
 /*------------------ Operations ------------------*/
 
