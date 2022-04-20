@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <stdio.h>
 #include <assert.h>
@@ -78,13 +78,13 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
-    (void) (arg);
+    (void)(arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     assert(sample->value.len == MSG_LEN);
     assert(sample->key.len == strlen(res));
     assert(strncmp(res, sample->key.val, sample->key.len) == 0);
-    (void) (sample);
+    (void)(sample);
 
     datas++;
 }
@@ -92,7 +92,7 @@ void data_handler(const zn_sample_t *sample, const void *arg)
 int main(int argc, z_str_t *argv)
 {
     assert(argc == 2);
-    (void) (argc);
+    (void)(argc);
 
     setbuf(stdout, NULL);
 
@@ -171,7 +171,7 @@ int main(int argc, z_str_t *argv)
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
-	_zn_reskey_clear(&rk);
+        _zn_reskey_clear(&rk);
     }
 
     z_sleep_s(SLEEP);

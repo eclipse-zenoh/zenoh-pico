@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -270,8 +270,8 @@ ERR_1:
 
 _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    (void) (zl);
-    (void) (local_pid);
+    (void)(zl);
+    (void)(local_pid);
     _zn_transport_multicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
@@ -283,8 +283,8 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_cl
 
 _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_peer(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    (void) (zl);
-    (void) (local_pid);
+    (void)(zl);
+    (void)(local_pid);
     _zn_transport_unicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;

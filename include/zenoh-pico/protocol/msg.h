@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_PROTOCOL_MSG_H
 #define ZENOH_PICO_PROTOCOL_MSG_H
@@ -1019,17 +1019,17 @@ _zn_transport_message_t _zn_t_msg_make_frame_header(z_zint_t sn, int is_reliable
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _zn_t_msg_copy(_zn_transport_message_t *clone, _zn_transport_message_t *msg);
-//void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
-//void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
+// void _zn_t_msg_copy_scout(_zn_scout_t *clone, _zn_scout_t *scout);
+// void _zn_t_msg_copy_hello(_zn_hello_t *clone, _zn_hello_t *hello);
 void _zn_t_msg_copy_join(_zn_join_t *clone, _zn_join_t *join);
 void _zn_t_msg_copy_init(_zn_init_t *clone, _zn_init_t *init);
 void _zn_t_msg_copy_open(_zn_open_t *clone, _zn_open_t *open);
-//void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
-//void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
-//void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
-//void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
-//void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
-//void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
-//void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
+// void _zn_t_msg_copy_close(_zn_close_t *clone, _zn_close_t *close);
+// void _zn_t_msg_copy_sync(_zn_sync_t *clone, _zn_sync_t *sync);
+// void _zn_t_msg_copy_ack_nack(_zn_ack_nack_t *clone, _zn_ack_nack_t *ack);
+// void _zn_t_msg_copy_keep_alive(_zn_keep_alive_t *clone, _zn_keep_alive_t *keep_alive);
+// void _zn_t_msg_copy_ping(_zn_ping_pong_t *clone, _zn_ping_pong_t *ping);
+// void _zn_t_msg_copy_pong(_zn_ping_pong_t *clone, _zn_ping_pong_t *pong);
+// void _zn_t_msg_copy_frame(_zn_frame_t *clone, _zn_frame_t *frame);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */
