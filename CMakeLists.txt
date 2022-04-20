@@ -215,8 +215,12 @@ if(BUILD_MULTICAST)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
   add_executable(zn_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/zn_peer_multicast_test.c)
-
   target_link_libraries(zn_peer_multicast_test ${Libname})
+
+  if (CMAKE_C_STANDARD MATCHES "11")
+    add_executable(z_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/z_peer_multicast_test.c)
+    target_link_libraries(z_peer_multicast_test ${Libname})
+  endif()
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/multicast.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh COPYONLY)
 
@@ -228,8 +232,12 @@ if(BUILD_INTEGRATION)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
   add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
-
   target_link_libraries(zn_client_test ${Libname})
+
+  if (CMAKE_C_STANDARD MATCHES "11")
+    add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
+    target_link_libraries(z_client_test ${Libname})
+  endif()
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
