@@ -12,8 +12,8 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_SESSION_API_H
-#define ZENOH_PICO_SESSION_API_H
+#ifndef ZENOH_PICO_API_PRIMITIVES_H
+#define ZENOH_PICO_API_PRIMITIVES_H
 
 #include "zenoh-pico/api/types.h"
 
@@ -209,4 +209,4 @@ uint8_t z_hello_array_check(const z_owned_hello_array_t *hellos);
 uint8_t z_hello_check(const z_owned_hello_t *hello);
 uint8_t z_str_array_check(const z_owned_str_array_t *strs);
 
-#endif /* ZENOH_PICO_SESSION_API_H */
+#endif /* ZENOH_PICO_API_PRIMITIVES_H */

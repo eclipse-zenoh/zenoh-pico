@@ -81,7 +81,8 @@ int main(int argc, char **argv)
 {
     (void) (argc);
     (void) (argv);
-    // z_init_logger();
+
+    z_init_logger();
 
     z_owned_config_t config = z_config_default();
 

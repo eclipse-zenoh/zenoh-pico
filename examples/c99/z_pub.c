@@ -18,9 +18,9 @@
 
 int main(int argc, char **argv)
 {
-    // z_init_logger();
+    z_init_logger();
 
-    z_str_t expr = "/demo/example/zenoh-c-pub";
+    z_str_t expr = "/demo/example/zenoh-pico-pub";
     z_str_t value = "Pub from Pico!";
 
     z_owned_config_t config = z_config_default();

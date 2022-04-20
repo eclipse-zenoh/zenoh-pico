@@ -18,7 +18,7 @@
 
 int main(int argc, char **argv)
 {
-//    z_init_logger();
+    z_init_logger();
 
     z_str_t expr = "/demo/example/**";
     if (argc > 1)

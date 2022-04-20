@@ -15,8 +15,6 @@
 #ifndef ZENOH_PICO_API_TYPES_H
 #define ZENOH_PICO_API_TYPES_H
 
-#include "zenoh-pico/api/constants.h"
-
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/net/publish.h"

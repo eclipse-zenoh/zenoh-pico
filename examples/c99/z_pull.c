@@ -13,31 +13,25 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
 
-char *expr = "/demo/example/zenoh-c-eval";
-char *value = "Eval from C!";
-
-void query_handler(const z_query_t *query, const void *arg)
+void data_handler(const _z_sample_t *sample, const void *arg)
 {
-    (void) (arg);
+    (void)(arg); // Unused argument
 
-    z_str_t res = z_query_key_expr(query).rname;
-    z_str_t pred = z_query_predicate(query);
-    printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
-    z_send_reply(query, expr, (const unsigned char *)value, strlen(value));
-
-    _z_str_clear(res);
+    printf(">> [Subscription listener] Received (%zu:%s, %.*s)\n",
+           sample->key.rid, sample->key.rname,
+           (int)sample->value.len, sample->value.val);
 }
 
 int main(int argc, char **argv)
 {
-    //    z_init_logger();
+    z_init_logger();
 
     z_str_t expr = "/demo/example/**";
+
     if (argc > 1)
     {
         expr = argv[1];
@@ -59,28 +53,31 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start the receive and the session lease loop for zenoh-pico
     _zp_start_read_task(z_session_loan(&s));
     _zp_start_lease_task(z_session_loan(&s));
 
-    printf("Creating Queryable on '%s'...\n", expr);
-    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_expr(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
-    if (!z_queryable_check(&qable))
+    printf("Creating Subscriber on '%s'...\n", expr);
+    z_subinfo_t subinfo;
+    subinfo.reliability = Z_RELIABILITY_RELIABLE;
+    subinfo.mode = Z_SUBMODE_PULL;
+    subinfo.period = Z_PERIOD_NONE;
+    z_owned_subscriber_t sub = z_subscribe(z_session_loan(&s), z_expr(expr), subinfo, data_handler, NULL);
+    if (!z_subscriber_check(&sub))
     {
-        printf("Unable to create queryable.\n");
-        goto EXIT;
+        printf("Unable to create subscriber.\n");
+        exit(-1);
     }
 
-    printf("Enter 'q' to quit...\n");
+    printf("Press <enter> to pull data...\n");
     char c = 0;
     while (c != 'q')
     {
         c = getchar();
+        z_pull(z_subscriber_loan(&sub));
     }
 
-    z_queryable_close(z_queryable_move(&qable));
+    z_subscriber_close(z_subscriber_move(&sub));
 
-EXIT:
     _zp_stop_read_task(z_session_loan(&s));
     _zp_stop_lease_task(z_session_loan(&s));
     z_close(z_session_move(&s));
