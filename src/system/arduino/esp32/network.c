@@ -371,12 +371,15 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     }
     else if (raddr->ai_family == AF_INET6)
     {
-        struct ip6_mreq mreq;
+        struct ipv6_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         memcpy(&mreq.ipv6mr_multiaddr,
                &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
                sizeof(struct in6_addr));
-        //        mreq.ipv6mr_interface = ifindex;
+        mreq.ipv6mr_interface = 1; // FIXME: 0 is supposed to be the default interface,
+                                   //        but it fails on the setsockopt.
+                                   //        1 seems to be a working value on the WiFi interface
+                                   //        which is the one available by default in ESP32
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
             goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
     }
@@ -406,13 +409,16 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
     }
     else if (raddr->ai_family == AF_INET6)
     {
-        // struct ipv6_mreq mreq;
-        // memset(&mreq, 0, sizeof(mreq));
-        // memcpy(&mreq.ipv6mr_multiaddr,
-        //  &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
-        //  sizeof(struct in6_addr));
-        // // mreq.ipv6mr_interface = ifindex;
-        // setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        struct ipv6_mreq mreq;
+        memset(&mreq, 0, sizeof(mreq));
+        memcpy(&mreq.ipv6mr_multiaddr,
+         &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
+         sizeof(struct in6_addr));
+        mreq.ipv6mr_interface = 1; // FIXME: 0 is supposed to be the default interface,
+                            //        but it fails on the setsockopt.
+                            //        1 seems to be a working value on the WiFi interface
+                            //        which is the one available by default in ESP32
+        setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 
     close(sock_recv);
