@@ -46,7 +46,7 @@ void *_znp_multicast_read_task(void *arg)
     // Prepare the buffer
     _z_zbuf_reset(&ztm->zbuf);
 
-    z_bytes_t addr;
+    z_bytes_t addr = _z_bytes_wrap(NULL, 0);
     while (ztm->read_task_running)
     {
         // Read bytes from socket to the main buffer
@@ -55,9 +55,12 @@ void *_znp_multicast_read_task(void *arg)
         {
             if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
             {
-                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
+                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
                 if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
+                {
+                    _z_bytes_clear(&addr);
                     continue;
+                }
             }
 
             for (int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)

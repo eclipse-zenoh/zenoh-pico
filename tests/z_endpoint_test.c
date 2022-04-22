@@ -21,6 +21,7 @@
 
 int main(void)
 {
+#if ZN_LINK_UDP_UNICAST == 1
     char s[64];
 
     // Locator
@@ -168,6 +169,7 @@ int main(void)
     eres = _zn_endpoint_from_str(s);
     assert(eres.tag == _z_res_t_ERR);
     assert(eres.value.error == _z_err_t_PARSE_STRING);
+#endif
 
     return 0;
 }

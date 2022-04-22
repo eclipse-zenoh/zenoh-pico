@@ -28,7 +28,9 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/logging.h"
 
-/*------------------ Endpoint ------------------*/
+#if ZN_LINK_TCP == 1
+
+/*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
     struct addrinfo hints;
@@ -46,31 +48,7 @@ void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
     return addr;
 }
 
-void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
-{
-    struct addrinfo hints;
-    struct addrinfo *addr = NULL;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_UDP;
-
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
-        return NULL;
-
-    return addr;
-}
-
 void _zn_free_endpoint_tcp(void *arg)
-{
-    struct addrinfo *self = (struct addrinfo *)arg;
-
-    freeaddrinfo(self);
-}
-
-void _zn_free_endpoint_udp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo *)arg;
 
@@ -173,8 +151,36 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
     return send(sock, ptr, len, 0);
 #endif
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
+void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
+{
+    struct addrinfo hints;
+    struct addrinfo *addr = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
+        return NULL;
+
+    return addr;
+}
+
+void _zn_free_endpoint_udp(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo *)arg;
+
+    freeaddrinfo(self);
+}
+#endif
+
+#if ZN_LINK_UDP_UNICAST == 1
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -248,7 +254,9 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
 
+#if ZN_LINK_UDP_MULTICAST == 1
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
@@ -527,3 +535,9 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+
+#endif
+
+#if ZN_LINK_BLUETOOTH == 1
+    #error "Bluetooth not supported yet on Unix port of Zenoh-Pico"
+#endif

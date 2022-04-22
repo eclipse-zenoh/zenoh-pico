@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include "zenoh-pico/collections/string.h"
 
+#if ZN_LINK_TCP == 1
+
 typedef struct
 {
     int sock;
@@ -33,5 +35,6 @@ void _zn_close_tcp(int sock);
 size_t _zn_read_exact_tcp(int sock, uint8_t *ptr, size_t len);
 size_t _zn_read_tcp(int sock, uint8_t *ptr, size_t len);
 size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len);
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_TCP_H */

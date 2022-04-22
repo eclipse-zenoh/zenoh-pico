@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
@@ -25,15 +26,27 @@ _zn_link_p_result_t _zn_open_link(const z_str_t locator)
     _zn_endpoint_t endpoint = ep_res.value.endpoint;
 
     // Create transport link
+#if ZN_LINK_TCP == 1
     if (_z_str_eq(endpoint.locator.protocol, TCP_SCHEMA))
     {
         r.value.link = _zn_new_link_tcp(endpoint);
     }
-    else if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
+    else
+#endif
+#if ZN_LINK_UDP_UNICAST == 1
+    if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
     {
         r.value.link = _zn_new_link_udp_unicast(endpoint);
     }
     else
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+    if (_z_str_eq(endpoint.locator.protocol, BT_SCHEMA))
+    {
+        r.value.link = _zn_new_link_bt(endpoint);
+    }
+    else
+#endif
         goto ERR2;
 
     // Open transport link for communication
@@ -67,11 +80,20 @@ _zn_link_p_result_t _zn_listen_link(const z_str_t locator)
 
     // @TODO: for now listening is only supported for UDP multicast
     // Create transport link
+#if ZN_LINK_UDP_MULTICAST == 1
     if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
     {
         r.value.link = _zn_new_link_udp_multicast(endpoint);
     }
     else
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+    if (_z_str_eq(endpoint.locator.protocol, BT_SCHEMA))
+    {
+        r.value.link = _zn_new_link_bt(endpoint);
+    }
+    else
+#endif
         goto ERR2;
 
     // Open transport link for listening

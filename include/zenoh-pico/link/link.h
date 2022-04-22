@@ -15,10 +15,22 @@
 #ifndef ZENOH_PICO_LINK_H
 #define ZENOH_PICO_LINK_H
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/system/platform.h"
+
+#if ZN_LINK_TCP == 1
 #include "zenoh-pico/system/link/tcp.h"
+#endif
+
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/system/link/udp.h"
+#endif
+
+#if ZN_LINK_BLUETOOTH == 1
+#include "zenoh-pico/system/link/bt.h"
+#endif
+
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Link ------------------*/
@@ -37,8 +49,15 @@ typedef struct
 
     union
     {
+#if ZN_LINK_TCP == 1
         _zn_tcp_socket_t tcp;
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
         _zn_udp_socket_t udp;
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+        _zn_bt_socket_t bt;
+#endif
     } socket;
 
     _zn_f_link_open open_f;

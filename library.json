@@ -3,5 +3,9 @@
     "license": "Apache-2.0",
     "build": {
         "extraScript": "extra_script.py"
+    },
+    "dependencies":
+    {
+       "BluetoothSerial": "1.0"
     }
 }

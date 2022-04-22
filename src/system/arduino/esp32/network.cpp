@@ -12,15 +12,21 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <BluetoothSerial.h>
+
+extern "C"
+{
 #include <netdb.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 
-/*------------------ Endpoint ------------------*/
+#if ZN_LINK_TCP == 1
+/*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
     struct addrinfo hints;
@@ -38,23 +44,6 @@ void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
     return addr;
 }
 
-void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
-{
-    struct addrinfo hints;
-    struct addrinfo *addr = NULL;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_UDP;
-
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
-        return NULL;
-
-    return addr;
-}
-
 void _zn_free_endpoint_tcp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo *)arg;
@@ -62,23 +51,15 @@ void _zn_free_endpoint_tcp(void *arg)
     freeaddrinfo(self);
 }
 
-void _zn_free_endpoint_udp(void *arg)
-{
-    struct addrinfo *self = (struct addrinfo *)arg;
-
-    freeaddrinfo(self);
-}
-
-/*------------------ TCP sockets ------------------*/
 int _zn_open_tcp(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
+    int flags = 1;
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
         goto _ZN_OPEN_TCP_ERROR_1;
 
-    int flags = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)
         goto _ZN_OPEN_TCP_ERROR_2;
 
@@ -90,8 +71,7 @@ int _zn_open_tcp(void *arg, const clock_t tout)
         goto _ZN_OPEN_TCP_ERROR_2;
 #endif
 
-    struct addrinfo *it = NULL;
-    for (it = raddr; it != NULL; it = it->ai_next)
+    for (struct addrinfo *it = raddr; it != NULL; it = it->ai_next)
     {
         if (connect(sock, it->ai_addr, it->ai_addrlen) < 0)
         {
@@ -154,8 +134,36 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 {
     return send(sock, ptr, len, 0);
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
+void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
+{
+    struct addrinfo hints;
+    struct addrinfo *addr = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
+        return NULL;
+
+    return addr;
+}
+
+void _zn_free_endpoint_udp(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo *)arg;
+
+    freeaddrinfo(self);
+}
+#endif
+
+#if ZN_LINK_UDP_UNICAST == 1
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -225,12 +233,15 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
 
+#if ZN_LINK_UDP_MULTICAST == 1
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
     struct addrinfo *laddr = NULL;
     unsigned int addrlen = 0;
+    int sock;
 
     struct sockaddr *lsockaddr = NULL;
     if (raddr->ai_family == AF_INET)
@@ -259,7 +270,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     else
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
-    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
@@ -315,6 +326,8 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     struct addrinfo *raddr = (struct addrinfo *)arg;
     struct sockaddr *laddr = NULL;
     unsigned int addrlen = 0;
+    int sock;
+    int optflag;
 
     if (raddr->ai_family == AF_INET)
     {
@@ -343,7 +356,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     else
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
 
-    int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
+    sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_1;
 
@@ -352,7 +365,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
-    int optflag = 1;
+    optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
 
@@ -495,3 +508,121 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
+
+#if ZN_LINK_BLUETOOTH == 1
+#include "zenoh-pico/system/link/bt.h"
+/*------------------ Bluetooth sockets ------------------*/
+void *_zn_open_bt(z_str_t gname, uint8_t mode, uint8_t profile)
+{
+    switch (profile)
+    {
+    case _ZN_BT_PROFILE_SPP:
+    {
+        BluetoothSerial *sbt = new BluetoothSerial();
+        if (mode == _ZN_BT_MODE_SLAVE)
+        {
+            sbt->begin(gname, false);
+        }
+        else if (mode == _ZN_BT_MODE_MASTER)
+        {
+            sbt->begin(gname, true);
+            uint8_t connected = sbt->connect(gname);
+            if(!connected)
+                while(!sbt->connected(10000));
+        }
+        else
+            return NULL;
+
+        return sbt;
+    } break;
+
+    case _ZN_BT_PROFILE_UNSUPPORTED:
+    default:
+        return NULL;
+    }
+}
+
+void *_zn_listen_bt(z_str_t gname, uint8_t mode, uint8_t profile)
+{
+    switch (profile)
+    {
+    case _ZN_BT_PROFILE_SPP:
+    {
+        BluetoothSerial *sbt = new BluetoothSerial();
+        if (mode == _ZN_BT_MODE_SLAVE)
+        {
+            sbt->begin(gname, false);
+        }
+        else if (mode == _ZN_BT_MODE_MASTER)
+        {
+            sbt->begin(gname, true);
+            uint8_t connected = sbt->connect(gname);
+            if(!connected)
+                while(!sbt->connected(10000));
+        }
+        else
+            return NULL;
+
+        return sbt;
+    } break;
+
+    case _ZN_BT_PROFILE_UNSUPPORTED:
+    default:
+        return NULL;
+    }
+}
+
+void _zn_close_bt(void *arg)
+{
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    sbt->end();
+}
+
+size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)
+{
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    int c = 0;
+    for (int i = 0; i < len; i++)
+    {
+        c = sbt->read();
+        if (c == -1)
+        {
+            delay(1); // FIXME: without this, the read task is blocking the other tasks
+            return i;
+        }
+        ptr[i] = c;
+    }
+
+    return len;
+}
+
+size_t _zn_read_exact_bt(void *arg, uint8_t *ptr, size_t len)
+{
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    size_t n = len;
+    size_t rb = 0;
+
+    do
+    {
+        rb = _zn_read_bt(sbt, ptr, n);
+        if (rb == SIZE_MAX)
+            return rb;
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
+}
+
+size_t _zn_send_bt(void *arg, const uint8_t *ptr, size_t len)
+{
+    BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    sbt->write(ptr, len);
+
+    return len;
+}
+#endif
+
+} // extern "C"
