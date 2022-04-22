@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/api/session.h"
 #include "zenoh-pico/api/memory.h"
@@ -25,7 +25,7 @@ zn_session_t *_zn_open(z_str_t locator, int mode)
 
     _zn_transport_p_result_t res = _zn_new_transport(zn->tp_manager, locator, mode);
     if (res.tag == _z_res_t_ERR)
-        return NULL;
+        goto ERR;
 
     // Attach session and transport to one another
     zn->tp = res.value.transport;
@@ -35,6 +35,11 @@ zn_session_t *_zn_open(z_str_t locator, int mode)
         zn->tp->transport.multicast.session = zn;
 
     return zn;
+
+ERR:
+    _zn_session_free(&zn);
+
+    return NULL;
 }
 
 zn_session_t *zn_open(zn_properties_t *config)
@@ -90,7 +95,7 @@ zn_session_t *zn_open(zn_properties_t *config)
         mode = 1;
 
     zn_session_t *zn = _zn_open(locator, mode);
-    
+
     free(locator);
     return zn;
 }

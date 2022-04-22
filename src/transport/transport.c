@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -67,9 +67,15 @@ _zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unica
     uint16_t mtu = link->mtu < ZN_BATCH_SIZE ? link->mtu : ZN_BATCH_SIZE;
     zt->transport.unicast.wbuf = _z_wbuf_make(mtu, 0);
     zt->transport.unicast.zbuf = _z_zbuf_make(ZN_BATCH_SIZE);
+
     // Initialize the defragmentation buffers
+#if ZN_DYNAMIC_MEMORY_ALLOCATION == 1
     zt->transport.unicast.dbuf_reliable = _z_wbuf_make(0, 1);
     zt->transport.unicast.dbuf_best_effort = _z_wbuf_make(0, 1);
+#else
+    zt->transport.unicast.dbuf_reliable = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+    zt->transport.unicast.dbuf_best_effort = _z_wbuf_make(ZN_FRAG_MAX_SIZE, 0);
+#endif
 
     // Set default SN resolution
     zt->transport.unicast.sn_resolution = param.sn_resolution;
@@ -264,8 +270,8 @@ ERR_1:
 
 _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_client(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    (void) (zl);
-    (void) (local_pid);
+    (void)(zl);
+    (void)(local_pid);
     _zn_transport_multicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;
@@ -277,8 +283,8 @@ _zn_transport_multicast_establish_param_result_t _zn_transport_multicast_open_cl
 
 _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_peer(const _zn_link_t *zl, const z_bytes_t local_pid)
 {
-    (void) (zl);
-    (void) (local_pid);
+    (void)(zl);
+    (void)(local_pid);
     _zn_transport_unicast_establish_param_result_t ret;
     ret.tag = _z_res_t_ERR;
     ret.value.error = -1;

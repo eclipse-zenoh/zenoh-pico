@@ -1,21 +1,29 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <string.h>
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
+#if ZN_LINK_TCP == 1
 #include "zenoh-pico/link/config/tcp.h"
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/link/config/udp.h"
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+#include "zenoh-pico/link/config/bt.h"
+#endif
 
 /*------------------ Locator ------------------*/
 void _zn_locator_init(_zn_locator_t *locator)
@@ -283,11 +291,21 @@ _z_str_intmap_result_t _zn_endpoint_config_from_str(const z_str_t s, const z_str
     p_start++;
 
     // Call the right configuration parser depending on the protocol
+#if ZN_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA))
         res = _zn_tcp_config_from_str(p_start);
-    else if (_z_str_eq(proto, UDP_SCHEMA))
+    else
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+    if (_z_str_eq(proto, UDP_SCHEMA))
         res = _zn_udp_config_from_str(p_start);
     else
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+    if (_z_str_eq(proto, BT_SCHEMA))
+        res = _zn_bt_config_from_str(p_start);
+    else
+#endif
         goto ERR;
 
     return res;
@@ -303,11 +321,21 @@ size_t _zn_endpoint_config_strlen(const _z_str_intmap_t *s, const z_str_t proto)
     size_t len;
 
     // Call the right configuration parser depending on the protocol
+#if ZN_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA))
         len = _zn_tcp_config_strlen(s);
-    else if (_z_str_eq(proto, UDP_SCHEMA))
+    else
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+    if (_z_str_eq(proto, UDP_SCHEMA))
         len = _zn_udp_config_strlen(s);
     else
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+    if (_z_str_eq(proto, BT_SCHEMA))
+        len = _zn_bt_config_strlen(s);
+    else
+#endif
         goto ERR;
 
     return len;
@@ -322,11 +350,21 @@ z_str_t _zn_endpoint_config_to_str(const _z_str_intmap_t *s, const z_str_t proto
     z_str_t res;
 
     // Call the right configuration parser depending on the protocol
+#if ZN_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA))
         res = _zn_tcp_config_to_str(s);
-    else if (_z_str_eq(proto, UDP_SCHEMA))
+    else
+#endif
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+    if (_z_str_eq(proto, UDP_SCHEMA))
         res = _zn_udp_config_to_str(s);
     else
+#endif
+#if ZN_LINK_BLUETOOTH == 1
+    if (_z_str_eq(proto, BT_SCHEMA))
+        res = _zn_bt_config_to_str(s);
+    else
+#endif
         goto ERR;
 
     return res;

@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/query.h"
@@ -120,10 +120,10 @@ ERR:
 }
 
 int _zn_trigger_query_reply_partial(zn_session_t *zn,
-                                     const _zn_reply_context_t *reply_context,
-                                     const zn_reskey_t reskey,
-                                     const z_bytes_t payload,
-                                     const _zn_data_info_t data_info)
+                                    const _zn_reply_context_t *reply_context,
+                                    const zn_reskey_t reskey,
+                                    const z_bytes_t payload,
+                                    const _zn_data_info_t data_info)
 {
     z_mutex_lock(&zn->mutex_inner);
 

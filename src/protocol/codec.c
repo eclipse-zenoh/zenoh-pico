@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/utils/logging.h"
@@ -148,17 +148,9 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const z_bytes_t *bs)
 {
     _ZN_EC(_z_zint_encode(wbf, bs->len))
     if (wbf->is_expandable && bs->len > ZN_TSID_LENGTH)
-    {
-        // Do not copy, just add a slice to the expandable buffer
-        // Only create a new slice if the malloc is cheaper than copying a
-        // large amount of data
-        _z_wbuf_add_iosli_from(wbf, bs->val, bs->len);
-        return 0;
-    }
+        return _z_wbuf_wrap_bytes(wbf, bs->val, 0, bs->len);
     else
-    {
         return _z_wbuf_write_bytes(wbf, bs->val, 0, bs->len);
-    }
 }
 
 void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)

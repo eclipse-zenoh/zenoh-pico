@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http: *www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https: *www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_CONFIG_H
 #define ZENOH_PICO_CONFIG_H
@@ -137,12 +137,16 @@
 
 #define ZN_CONGESTION_CONTROL_DEFAULT zn_congestion_control_t_DROP
 
-#define ZN_TRANSPORT_TCP_IP 1
-//#define ZN_TRANSPORT_BLE 1
+#define ZN_LINK_TCP 1
+#define ZN_LINK_UDP_MULTICAST 1
+#define ZN_LINK_UDP_UNICAST 1
+#define ZN_LINK_BLUETOOTH 0
 
-#define ZN_FRAG_BUF_TX_CHUNK 128
-#define ZN_FRAG_BUF_RX_LIMIT 10000000
+#define ZN_SCOUTING_UDP 1
 
+#define ZN_IOSLICE_SIZE 128
 #define ZN_BATCH_SIZE 65535
+#define ZN_FRAG_MAX_SIZE 300000
+#define ZN_DYNAMIC_MEMORY_ALLOCATION 0
 
 #endif /* ZENOH_PICO_CONFIG_H */

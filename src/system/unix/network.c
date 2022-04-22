@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <errno.h>
 #include <unistd.h>
@@ -28,8 +28,9 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if ZN_LINK_TCP == 1
 
-/*------------------ Endpoint ------------------*/
+/*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
     struct addrinfo hints;
@@ -47,31 +48,7 @@ void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
     return addr;
 }
 
-void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
-{
-    struct addrinfo hints;
-    struct addrinfo *addr = NULL;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_UDP;
-
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
-        return NULL;
-
-    return addr;
-}
-
 void _zn_free_endpoint_tcp(void *arg)
-{
-    struct addrinfo *self = (struct addrinfo *)arg;
-
-    freeaddrinfo(self);
-}
-
-void _zn_free_endpoint_udp(void *arg)
 {
     struct addrinfo *self = (struct addrinfo *)arg;
 
@@ -126,7 +103,7 @@ _ZN_OPEN_TCP_ERROR_1:
 int _zn_listen_tcp(void *arg)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
+    (void)laddr;
 
     // @TODO: To be implemented
 
@@ -174,8 +151,36 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
     return send(sock, ptr, len, 0);
 #endif
 }
+#endif
 
+#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
+void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
+{
+    struct addrinfo hints;
+    struct addrinfo *addr = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(s_addr, port, &hints, &addr) < 0)
+        return NULL;
+
+    return addr;
+}
+
+void _zn_free_endpoint_udp(void *arg)
+{
+    struct addrinfo *self = (struct addrinfo *)arg;
+
+    freeaddrinfo(self);
+}
+#endif
+
+#if ZN_LINK_UDP_UNICAST == 1
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -187,7 +192,7 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     return sock;
 
@@ -198,8 +203,8 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
 int _zn_listen_udp_unicast(void *arg, const clock_t tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
-    (void) laddr;
-    (void) tout;
+    (void)laddr;
+    (void)tout;
 
     // @TODO: To be implemented
 
@@ -217,7 +222,7 @@ size_t _zn_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock, ptr, len, 0,
-                         (struct sockaddr *)&raddr, &addrlen);
+                          (struct sockaddr *)&raddr, &addrlen);
 
     if (rb < 0)
         return SIZE_MAX;
@@ -249,7 +254,9 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+#endif
 
+#if ZN_LINK_UDP_MULTICAST == 1
 int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
@@ -298,7 +305,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     if (bind(sock, lsockaddr, addrlen) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;
@@ -331,9 +338,12 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     laddr->ai_next = NULL;
     *arg_2 = laddr;
 
-#if defined(ZENOH_LINUX)
-    free(lsockaddr);
-#endif
+// This is leaking 16 bytes according to valgrind, but it is a know problem on some libc6 implementations:
+//    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
+// To avoid a fix to break zenoh-pico, we are let it leak for the moment.
+//#if defined(ZENOH_LINUX)
+//    free(lsockaddr);
+//#endif
 
     return sock;
 
@@ -358,7 +368,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     struct timeval tv;
     tv.tv_sec = tout;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
     int optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (z_str_t)&optflag, sizeof(optflag)) < 0)
@@ -442,8 +452,11 @@ void _zn_close_udp_multicast(int sock_recv, int sock_send, void *arg)
         setsockopt(sock_recv, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
     }
 
-    close(sock_recv);
-    close(sock_send);
+    if (sock_recv < 0)
+        close(sock_recv);
+
+    if (sock_send < 0)
+        close(sock_send);
 }
 
 size_t _zn_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, z_bytes_t *addr)
@@ -522,3 +535,9 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 
     return sendto(sock, ptr, len, 0, raddr->ai_addr, raddr->ai_addrlen);
 }
+
+#endif
+
+#if ZN_LINK_BLUETOOTH == 1
+    #error "Bluetooth not supported yet on Unix port of Zenoh-Pico"
+#endif
