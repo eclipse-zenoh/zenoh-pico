@@ -37,15 +37,14 @@ int main(int argc, char **argv)
     }
 
     z_owned_info_t ops = z_info(z_loan(&s));
-    z_info_t ps = z_loan(&ops);
 
-    z_str_t prop = z_info_get(ps, Z_INFO_PID_KEY);
+    z_str_t prop = z_info_get(z_loan(&ops), Z_INFO_PID_KEY);
     printf("info_pid : %s\n", prop);
 
-    prop = z_info_get(ps, Z_INFO_ROUTER_PID_KEY);
+    prop = z_info_get(z_loan(&ops), Z_INFO_ROUTER_PID_KEY);
     printf("info_router_pid : %s\n", prop);
 
-    prop = z_info_get(ps, Z_INFO_PEER_PID_KEY);
+    prop = z_info_get(z_loan(&ops), Z_INFO_PEER_PID_KEY);
     printf("info_peer_pid : %s\n", prop);
 
     z_info_clear(z_move(&ops));

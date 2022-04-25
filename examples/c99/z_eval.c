@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     _zp_start_lease_task(z_session_loan(&s));
 
     printf("Creating Queryable on '%s'...\n", expr);
-    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_expr(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
+    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_expr_new(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
     if (!z_queryable_check(&qable))
     {
         printf("Unable to create queryable.\n");

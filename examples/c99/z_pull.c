@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     subinfo.reliability = Z_RELIABILITY_RELIABLE;
     subinfo.mode = Z_SUBMODE_PULL;
     subinfo.period = Z_PERIOD_NONE;
-    z_owned_subscriber_t sub = z_subscribe(z_session_loan(&s), z_expr(expr), subinfo, data_handler, NULL);
+    z_owned_subscriber_t sub = z_subscribe(z_session_loan(&s), z_expr_new(expr), subinfo, data_handler, NULL);
     if (!z_subscriber_check(&sub))
     {
         printf("Unable to create subscriber.\n");

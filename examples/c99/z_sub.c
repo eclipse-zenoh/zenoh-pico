@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     _zp_start_read_task(z_session_loan(&s));
     _zp_start_lease_task(z_session_loan(&s));
 
-    z_owned_subscriber_t sub = z_subscribe(z_session_loan(&s), z_expr(expr), z_subinfo_default(), data_handler, NULL);
+    z_owned_subscriber_t sub = z_subscribe(z_session_loan(&s), z_expr_new(expr), z_subinfo_default(), data_handler, NULL);
     if (!z_subscriber_check(&sub))
     {
         printf("Unable to declare subscriber.\n");
