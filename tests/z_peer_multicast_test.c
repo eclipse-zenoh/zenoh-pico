@@ -96,7 +96,7 @@ int main(int argc, _z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
-        *sub = z_subscribe(z_loan(&s2), z_expr(s1_res), z_subinfo_default(), data_handler, &idx[i]);
+        *sub = z_subscribe(z_loan(&s2), z_expr_new(s1_res), z_subinfo_default(), data_handler, &idx[i]);
         assert(z_check(sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->value->id, (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list

@@ -33,10 +33,7 @@ z_owned_string_t z_string_new(const z_str_t s);
 void z_string_clear(z_owned_string_t s);
 void z_string_free(z_owned_string_t **s);
 
-z_keyexpr_t z_expr(const z_str_t name);
-z_keyexpr_t z_id(z_zint_t id);
-z_keyexpr_t z_id_with_suffix(z_zint_t id, const z_str_t suffix);
-z_keyexpr_t z_keyexpr_new_loaned(z_zint_t id, const z_str_t suffix);
+z_owned_keyexpr_t z_id_new(z_zint_t id);
 z_owned_keyexpr_t z_expr_new(const z_str_t name);
 z_owned_keyexpr_t z_id_with_suffix_new(z_zint_t id, const z_str_t suffix);
 z_owned_keyexpr_t z_keyexpr_new(z_zint_t id, const z_str_t suffix);
@@ -62,7 +59,7 @@ void z_encoding_clear(z_owned_encoding_t encoding);
 void z_encoding_free(z_owned_encoding_t **encoding);
 
 z_subinfo_t z_subinfo_default(void);
-const z_period_t z_subinfo_period(const z_subinfo_t *info);
+z_period_t z_subinfo_period(const z_subinfo_t *info);
 
 z_target_t z_target_default(void);
 z_query_target_t z_query_target_default(void);
@@ -109,10 +106,10 @@ z_str_t z_info_get(z_info_t *info, unsigned int key);
 void z_info_clear(z_owned_info_t zi);
 void z_info_free(z_owned_info_t **zi);
 
-z_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
-void z_undeclare_expr(z_session_t *zs, z_keyexpr_t *keyexpr);
+z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
+void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
 
-z_owned_publisher_t z_declare_publication(z_session_t *zs, z_keyexpr_t *keyexpr);
+z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t keyexpr);
 void z_publisher_close(z_owned_publisher_t sub);
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len);
 int z_put_ext(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
@@ -135,9 +132,10 @@ uint8_t z_bytes_check(const z_owned_bytes_t *bytes);
 z_bytes_t *z_bytes_loan(const z_owned_bytes_t *bytes);
 z_owned_bytes_t z_bytes_move(z_owned_bytes_t *bytes);
 
-z_keyexpr_t z_keyexpr_loan(const z_owned_keyexpr_t *keyexpr);
 uint8_t z_keyexpr_check(const z_owned_keyexpr_t *keyexpr);
+z_keyexpr_t *z_keyexpr_loan(const z_owned_keyexpr_t *keyexpr);
 z_owned_keyexpr_t z_keyexpr_move(z_owned_keyexpr_t *keyexpr);
+z_owned_keyexpr_t z_keyexpr_clone(z_owned_keyexpr_t *keyexpr);
 
 uint8_t z_string_check(const z_owned_string_t *string);
 z_string_t *z_string_loan(const z_owned_string_t *string);

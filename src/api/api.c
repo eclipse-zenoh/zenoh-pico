@@ -94,14 +94,12 @@ void z_info_clear(z_owned_info_t zi)
     free(zi.value);
 }
 
-z_keyexpr_t z_expr(const z_str_t name)
+z_owned_keyexpr_t z_id_new(const z_zint_t id)
 {
-    return _z_rname(name);
-}
-
-z_keyexpr_t z_id(const z_zint_t id)
-{
-    return _z_rid(id);
+    z_owned_keyexpr_t key;
+    key.value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
+    *key.value = _z_rid(id);
+    return key;
 }
 
 z_owned_keyexpr_t z_expr_new(const z_str_t name)
@@ -120,20 +118,30 @@ z_owned_keyexpr_t z_id_with_suffix_new(const z_zint_t id, const z_str_t name)
     return key;
 }
 
-z_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr)
+z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr)
 {
-    return _z_rid(_z_declare_resource(zs, *keyexpr.value));
+    z_owned_keyexpr_t key;
+    key.value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
+    *key.value = _z_rid_with_suffix(_z_declare_resource(zs, *keyexpr.value), NULL);
+
+    free(keyexpr.value);
+    keyexpr.value = NULL;
+    return key;
 }
 
-void z_undeclare_expr(z_session_t *zs, z_keyexpr_t *keyexpr)
+void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr)
 {
-    _z_undeclare_resource(zs, keyexpr->rid);
+    _z_undeclare_resource(zs, keyexpr.value->rid);
+    z_keyexpr_clear(keyexpr);
 }
 
-z_owned_publisher_t z_declare_publication(z_session_t *zs, z_keyexpr_t *keyexpr)
+z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t keyexpr)
 {
     z_owned_publisher_t pub;
-    pub.value = _z_declare_publisher(zs, *keyexpr);
+    pub.value = _z_declare_publisher(zs, *keyexpr.value);
+
+    free(keyexpr.value);
+    keyexpr.value = NULL;
     return pub;
 }
 
@@ -161,6 +169,9 @@ z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, 
 {
     z_owned_queryable_t qable;
     qable.value = _z_declare_queryable(zs, *keyexpr.value, kind, callback, arg);
+
+    free(keyexpr.value);
+    keyexpr.value = NULL;
     return qable;
 }
 
@@ -256,6 +267,9 @@ z_owned_reply_data_array_t z_get_collect(z_session_t *zs,
     z_owned_reply_data_array_t rda;
     rda.value = (z_reply_data_array_t*)malloc(sizeof(z_reply_data_array_t));
     *rda.value = _z_query_collect(zs, *keyexpr.value, predicate, target, strategy);
+
+    free(keyexpr.value);
+    keyexpr.value = NULL;
     return rda;
 }
 
@@ -304,6 +318,9 @@ z_owned_subscriber_t z_subscribe(z_session_t *zs, z_owned_keyexpr_t keyexpr, z_s
 {
     z_owned_subscriber_t sub;
     sub.value = _z_declare_subscriber(zs, *keyexpr.value, sub_info, callback, arg);
+
+    free(keyexpr.value);
+    keyexpr.value = NULL;
     return sub;
 }
 
@@ -350,9 +367,9 @@ z_info_t *z_info_loan(const z_owned_info_t *info)
     return info->value;
 }
 
-z_keyexpr_t z_keyexpr_loan(const z_owned_keyexpr_t *key)
+z_keyexpr_t *z_keyexpr_loan(const z_owned_keyexpr_t *key)
 {
-    return *key->value;
+    return key->value;
 }
 
 z_session_t *z_session_loan(const z_owned_session_t *session)
@@ -580,6 +597,15 @@ uint8_t z_publisher_check(const z_owned_publisher_t *publisher)
 uint8_t z_queryable_check(const z_owned_queryable_t *queryable)
 {
     return queryable->value != NULL;
+}
+
+/*************** Clones ****************/
+z_owned_keyexpr_t z_keyexpr_clone(z_owned_keyexpr_t *keyexpr)
+{
+    z_owned_keyexpr_t ret;
+    ret.value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
+    *ret.value = _z_reskey_duplicate(keyexpr->value);
+    return ret;
 }
 
 /*************** Clears ****************/

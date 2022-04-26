@@ -111,6 +111,10 @@
                                 : z_reply_data_array_move,     \
                                     z_owned_hello_array_t      \
                                 : z_hello_array_move)(x)
+
+#define z_clone(x) _Generic((*x),   z_owned_keyexpr_t          \
+                                : z_keyexpr_clone)(x)
+
 #endif
 
 #endif /* ZENOH_PICO_API_MACROS_H */

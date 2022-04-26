@@ -133,9 +133,10 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        z_keyexpr_t expr = z_declare_expr(z_loan(&s1), z_expr(s1_res));
-        printf("Declared resource on session 1: %lu %s\n", expr.rid, expr.rname);
-        rids1[i] = expr.rid;
+        z_owned_keyexpr_t expr = z_declare_expr(z_loan(&s1), z_expr_new(s1_res));
+        printf("Declared resource on session 1: %lu %s\n", expr.value->rid, expr.value->rname);
+        rids1[i] = expr.value->rid;
+        z_keyexpr_clear(z_move(&expr));
     }
 
     _z_sleep_s(SLEEP);
@@ -143,9 +144,10 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        z_keyexpr_t expr = z_declare_expr(z_loan(&s2), z_expr(s1_res));
-        printf("Declared resource on session 2: %lu %s\n", expr.rid, expr.rname);
-        rids2[i] = expr.rid;
+        z_owned_keyexpr_t expr = z_declare_expr(z_loan(&s2), z_expr_new(s1_res));
+        printf("Declared resource on session 2: %lu %s\n", expr.value->rid, expr.value->rname);
+        rids2[i] = expr.value->rid;
+        z_keyexpr_clear(z_move(&expr));
     }
 
     _z_sleep_s(SLEEP);
@@ -154,7 +156,7 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
-        *sub = z_subscribe(z_loan(&s2), z_id(rids2[i]), z_subinfo_default(), data_handler, &idx[i]);
+        *sub = z_subscribe(z_loan(&s2), z_id_new(rids2[i]), z_subinfo_default(), data_handler, &idx[i]);
         assert(z_check(sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->value->id, rids2[i], "");
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
@@ -166,7 +168,7 @@ int main(int argc, z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_queryable_t *qle = (z_owned_queryable_t*)malloc(sizeof(z_owned_queryable_t));
-        *qle = z_queryable_new(z_loan(&s2), z_expr(s1_res), Z_QUERYABLE_EVAL, query_handler, &idx[i]);
+        *qle = z_queryable_new(z_loan(&s2), z_expr_new(s1_res), Z_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(z_check(qle));
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->value->id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
@@ -178,7 +180,7 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         z_owned_publisher_t *pub = (z_owned_publisher_t*)malloc(sizeof(z_owned_publisher_t));
-        *pub = z_declare_publication(z_loan(&s1), z_id(rids1[i]));
+        *pub = z_declare_publication(z_loan(&s1), z_id_new(rids1[i]));
         if (!z_check(pub))
         printf("Declared publisher on session 1: %zu\n", pub->value->id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
@@ -236,7 +238,7 @@ int main(int argc, z_str_t *argv)
             for (unsigned int i = 0; i < SET; i++)
             {
                 sprintf(s1_res, "%s%d", uri, i);
-                z_owned_reply_data_array_t reply_data_a = z_get_collect(z_loan(&s1), z_expr(s1_res), "", z_query_target_default(), z_query_consolidation_default());
+                z_owned_reply_data_array_t reply_data_a = z_get_collect(z_loan(&s1), z_expr_new(s1_res), "", z_query_target_default(), z_query_consolidation_default());
                 printf("Queried and collected data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
                 replies += reply_data_a.value->len;
                 z_reply_data_array_clear(z_move(&reply_data_a));
@@ -283,7 +285,7 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         printf("Undeclared resource on session 1: %lu\n", rids1[i]);
-        z_undeclare_expr(z_loan(&s1), z_id(rids1[i]));
+        z_undeclare_expr(z_loan(&s1), z_id_new(rids1[i]));
     }
 
     _z_sleep_s(SLEEP);
@@ -291,7 +293,7 @@ int main(int argc, z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         printf("Undeclared resource on session 2: %lu\n", rids2[i]);
-        z_undeclare_expr(z_loan(&s2), z_id(rids2[i]));
+        z_undeclare_expr(z_loan(&s2), z_id_new(rids2[i]));
     }
 
     _z_sleep_s(SLEEP);
