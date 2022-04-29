@@ -39,9 +39,9 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->value.len == MSG_LEN);
-    assert(strlen(sample->key.rname) == strlen(res));
-    assert(strncmp(res, sample->key.rname, strlen(res)) == 0);
+    assert(sample->_value.len == MSG_LEN);
+    assert(strlen(sample->_key._rname) == strlen(res));
+    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -64,7 +64,7 @@ int main(int argc, _z_str_t *argv)
 
     _z_session_t *s1 = _z_open(config);
     assert(s1 != NULL);
-    _z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
+    _z_string_t pid1 = _z_string_from_bytes(&s1->_tp_manager->_local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     _z_string_clear(&pid1);
 
@@ -76,7 +76,7 @@ int main(int argc, _z_str_t *argv)
 
     _z_session_t *s2 = _z_open(config);
     assert(s2 != NULL);
-    _z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
+    _z_string_t pid2 = _z_string_from_bytes(&s2->_tp_manager->_local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     _z_string_clear(&pid2);
 
@@ -94,7 +94,7 @@ int main(int argc, _z_str_t *argv)
         _z_reskey_t rk = _z_rname(s1_res);
         z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -110,7 +110,7 @@ int main(int argc, _z_str_t *argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             _z_reskey_t rk = _z_rname(s1_res);
-            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
+            _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
             _z_reskey_clear(&rk);
@@ -139,7 +139,7 @@ int main(int argc, _z_str_t *argv)
     while (subs2)
     {
         z_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
-        printf("Undeclared subscriber on session 2: %zu\n", sub->id);
+        printf("Undeclared subscriber on session 2: %zu\n", sub->_id);
         _z_undeclare_subscriber(sub);
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }

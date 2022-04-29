@@ -23,50 +23,50 @@ _z_link_p_result_t _z_open_link(const _z_str_t locator)
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res.value.endpoint;
+    _z_endpoint_t endpoint = ep_res._value._endpoint;
 
     // Create transport link
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(endpoint.locator.protocol, TCP_SCHEMA))
+    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA))
     {
-        r.value.link = _z_new_link_tcp(endpoint);
+        r._value._link = _z_new_link_tcp(endpoint);
     }
     else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-    if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA))
     {
-        r.value.link = _z_new_link_udp_unicast(endpoint);
+        r._value._link = _z_new_link_udp_unicast(endpoint);
     }
     else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-    if (_z_str_eq(endpoint.locator.protocol, BT_SCHEMA))
+    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA))
     {
-        r.value.link = _z_new_link_bt(endpoint);
+        r.value._link = _z_new_link_bt(endpoint);
     }
     else
 #endif
         goto ERR2;
 
     // Open transport link for communication
-    if (r.value.link->open_f(r.value.link) < 0)
+    if (r._value._link->_open_f(r._value._link) < 0)
         goto ERR3;
 
-    r.tag = _Z_RES_OK;
+    r._tag = _Z_RES_OK;
     return r;
 
 ERR3:
-    _z_link_free(&r.value.link);
-    r.value.error = -1;
+    _z_link_free(&r._value._link);
+    r._value._error = -1;
     goto ERR1; // _z_link_free is releasing the endpoint
 
 ERR2:
-    r.value.error = _Z_ERR_INVALID_LOCATOR;
+    r._value._error = _Z_ERR_INVALID_LOCATOR;
     _z_endpoint_clear(&endpoint);
 
 ERR1:
-    r.tag = _Z_RES_ERR;
+    r._tag = _Z_RES_ERR;
     return r;
 }
 
@@ -76,44 +76,44 @@ _z_link_p_result_t _z_listen_link(const _z_str_t locator)
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res.value.endpoint;
+    _z_endpoint_t endpoint = ep_res._value._endpoint;
 
     // @TODO: for now listening is only supported for UDP multicast
     // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA))
     {
-        r.value.link = _z_new_link_udp_multicast(endpoint);
+        r._value._link = _z_new_link_udp_multicast(endpoint);
     }
     else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-    if (_z_str_eq(endpoint.locator.protocol, BT_SCHEMA))
+    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA))
     {
-        r.value.link = _z_new_link_bt(endpoint);
+        r._value._link = _z_new_link_bt(endpoint);
     }
     else
 #endif
         goto ERR2;
 
     // Open transport link for listening
-    if (r.value.link->listen_f(r.value.link) < 0)
+    if (r._value._link->_listen_f(r._value._link) < 0)
         goto ERR3;
 
-    r.tag = _Z_RES_OK;
+    r._tag = _Z_RES_OK;
     return r;
 
 ERR3:
-    _z_link_free(&r.value.link);
-    r.value.error = _Z_ERR_INVALID_LOCATOR;
+    _z_link_free(&r._value._link);
+    r._value._error = _Z_ERR_INVALID_LOCATOR;
     goto ERR1; // _z_link_free is releasing the endpoint
 
 ERR2:
     _z_endpoint_clear(&endpoint);
 
 ERR1:
-    r.tag = _Z_RES_ERR;
-    r.value.error = -1;
+    r._tag = _Z_RES_ERR;
+    r._value._error = -1;
 
     return r;
 }
@@ -122,9 +122,9 @@ void _z_link_free(_z_link_t **zn)
 {
     _z_link_t *ptr = *zn;
 
-    ptr->close_f(ptr);
-    ptr->free_f(ptr);
-    _z_endpoint_clear(&ptr->endpoint);
+    ptr->_close_f(ptr);
+    ptr->_free_f(ptr);
+    _z_endpoint_clear(&ptr->_endpoint);
 
     free(ptr);
     *zn = NULL;
@@ -132,7 +132,7 @@ void _z_link_free(_z_link_t **zn)
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr)
 {
-    size_t rb = link->read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
+    size_t rb = link->_read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
     if (rb != SIZE_MAX)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
@@ -140,7 +140,7 @@ size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr
 
 size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_bytes_t *addr)
 {
-    size_t rb = link->read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
+    size_t rb = link->_read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
     if (rb != SIZE_MAX)
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     return rb;
@@ -156,7 +156,7 @@ int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf)
         do
         {
             _Z_DEBUG("Sending wbuf on socket...");
-            wb = link->write_f(link, bs.val, n);
+            wb = link->_write_f(link, bs.val, n);
             _Z_DEBUG(" sent %d bytes\n", wb);
             if (wb == SIZE_MAX)
             {

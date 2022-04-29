@@ -20,6 +20,7 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/vec.h"
+#include "zenoh-pico/collections/array.h"
 
 /*-------- str --------*/
 /**
@@ -35,6 +36,7 @@ int _z_str_eq(const _z_str_t left, const _z_str_t right);
 size_t _z_str_size(const _z_str_t src);
 void _z_str_copy(_z_str_t dst, const _z_str_t src);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
+_Z_ARRAY_DEFINE(_z_str, _z_str_t)
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -44,8 +46,8 @@ _Z_INT_MAP_DEFINE(_z_str, char)
 
 typedef struct
 {
-    unsigned int key;
-    _z_str_t str;
+    unsigned int _key;
+    _z_str_t _str;
 } _z_str_intmapping_t;
 _Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
 
@@ -80,25 +82,5 @@ void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 _z_string_t _z_string_from_bytes(_z_bytes_t *bs);
-
-/*-------- str_array --------*/
-/**
- * An array of NULL terminated strings.
- *
- * Members:
- *   size_t len: The length of the array.
- *   _z_str_t *val: A pointer to the array.
- */
-typedef struct
-{
-    _z_str_t *val;
-    size_t len;
-} _z_str_array_t;
-
-_z_str_array_t _z_str_array_make(size_t len);
-void _z_str_array_init(_z_str_array_t *sa, size_t len);
-void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
-void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
-void _z_str_array_free(_z_str_array_t *sa);
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

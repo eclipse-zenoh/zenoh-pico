@@ -22,10 +22,10 @@
 
 typedef struct
 {
-    int sock;
-    int msock;
-    void *raddr;
-    void *laddr;
+    int _sock;
+    int _msock;
+    void *_raddr;
+    void *_laddr;
 } _z_udp_socket_t;
 
 void *_z_create_endpoint_udp(const _z_str_t s_addr, const _z_str_t port);

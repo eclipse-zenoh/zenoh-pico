@@ -27,8 +27,8 @@
  */
 typedef struct _z_l_t
 {
-    void *val;
-    struct _z_l_t *tail;
+    void *_val;
+    struct _z_l_t *_tail;
 } _z_list_t;
 
 _z_list_t *_z_list_of(void *x);

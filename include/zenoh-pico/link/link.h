@@ -45,34 +45,34 @@ typedef void (*_z_f_link_free)(void *arg);
 
 typedef struct
 {
-    _z_endpoint_t endpoint;
+    _z_endpoint_t _endpoint;
 
     union
     {
 #if Z_LINK_TCP == 1
-        _z_tcp_socket_t tcp;
+        _z_tcp_socket_t _tcp;
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        _z_udp_socket_t udp;
+        _z_udp_socket_t _udp;
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        _z_bt_socket_t bt;
+        _z_bt_socket_t _bt;
 #endif
-    } socket;
+    } _socket;
 
-    _z_f_link_open open_f;
-    _z_f_link_listen listen_f;
-    _z_f_link_close close_f;
-    _z_f_link_write write_f;
-    _z_f_link_write_all write_all_f;
-    _z_f_link_read read_f;
-    _z_f_link_read_exact read_exact_f;
-    _z_f_link_free free_f;
+    _z_f_link_open _open_f;
+    _z_f_link_listen _listen_f;
+    _z_f_link_close _close_f;
+    _z_f_link_write _write_f;
+    _z_f_link_write_all _write_all_f;
+    _z_f_link_read _read_f;
+    _z_f_link_read_exact _read_exact_f;
+    _z_f_link_free _free_f;
 
-    uint16_t mtu;
-    uint8_t is_reliable;
-    uint8_t is_streamed;
-    uint8_t is_multicast;
+    uint16_t _mtu;
+    uint8_t _is_reliable;
+    uint8_t _is_streamed;
+    uint8_t _is_multicast;
 } _z_link_t;
 
 _Z_RESULT_DECLARE(_z_link_t, link)

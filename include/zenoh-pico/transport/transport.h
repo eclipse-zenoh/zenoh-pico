@@ -23,20 +23,20 @@
 typedef struct
 {
     // Defragmentation buffers
-    _z_wbuf_t dbuf_reliable;
-    _z_wbuf_t dbuf_best_effort;
+    _z_wbuf_t _dbuf_reliable;
+    _z_wbuf_t _dbuf_best_effort;
 
     // SN numbers
-    _z_zint_t sn_resolution;
-    _z_zint_t sn_resolution_half;
-    _z_conduit_sn_list_t sn_rx_sns;
+    _z_zint_t _sn_resolution;
+    _z_zint_t _sn_resolution_half;
+    _z_conduit_sn_list_t _sn_rx_sns;
 
-    _z_bytes_t remote_pid;
-    _z_bytes_t remote_addr;
+    _z_bytes_t _remote_pid;
+    _z_bytes_t _remote_addr;
 
-    volatile _z_zint_t lease;
-    volatile _z_zint_t next_lease;
-    volatile int received;
+    volatile _z_zint_t _lease;
+    volatile _z_zint_t _next_lease;
+    volatile int _received;
 } _z_transport_peer_entry_t;
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
@@ -49,93 +49,93 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 typedef struct
 {
     // Session associated to the transport
-    void *session;
+    void *_session;
 
     // TX and RX mutexes
-    _z_mutex_t mutex_rx;
-    _z_mutex_t mutex_tx;
+    _z_mutex_t _mutex_rx;
+    _z_mutex_t _mutex_tx;
 
     // Defragmentation buffers
-    _z_wbuf_t dbuf_reliable;
-    _z_wbuf_t dbuf_best_effort;
+    _z_wbuf_t _dbuf_reliable;
+    _z_wbuf_t _dbuf_best_effort;
 
     // SN numbers
-    _z_zint_t sn_resolution;
-    _z_zint_t sn_resolution_half;
-    _z_zint_t sn_tx_reliable;
-    _z_zint_t sn_tx_best_effort;
-    _z_zint_t sn_rx_reliable;
-    _z_zint_t sn_rx_best_effort;
+    _z_zint_t _sn_resolution;
+    _z_zint_t _sn_resolution_half;
+    _z_zint_t _sn_tx_reliable;
+    _z_zint_t _sn_tx_best_effort;
+    _z_zint_t _sn_rx_reliable;
+    _z_zint_t _sn_rx_best_effort;
 
-    _z_bytes_t remote_pid;
+    _z_bytes_t _remote_pid;
 
     // ----------- Link related -----------
     // TX and RX buffers
-    const _z_link_t *link;
-    _z_wbuf_t wbuf;
-    _z_zbuf_t zbuf;
+    const _z_link_t *_link;
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
 
-    volatile int received;
-    volatile int transmitted;
+    volatile int _received;
+    volatile int _transmitted;
 
-    volatile int read_task_running;
-    _z_task_t *read_task;
+    volatile int _read_task_running;
+    _z_task_t *_read_task;
 
-    volatile int lease_task_running;
-    _z_task_t *lease_task;
-    volatile _z_zint_t lease;
+    volatile int _lease_task_running;
+    _z_task_t *_lease_task;
+    volatile _z_zint_t _lease;
 } _z_transport_unicast_t;
 
 typedef struct
 {
     // Session associated to the transport
-    void *session;
+    void *_session;
 
     // TX and RX mutexes
-    _z_mutex_t mutex_rx;
-    _z_mutex_t mutex_tx;
+    _z_mutex_t _mutex_rx;
+    _z_mutex_t _mutex_tx;
 
     // Peer list mutex
-    _z_mutex_t mutex_peer;
+    _z_mutex_t _mutex_peer;
 
     // Known valid peers
-    _z_transport_peer_entry_list_t *peers;
+    _z_transport_peer_entry_list_t *_peers;
 
     // SN initial numbers
-    _z_zint_t sn_resolution;
-    _z_zint_t sn_resolution_half;
-    _z_zint_t sn_tx_reliable;
-    _z_zint_t sn_tx_best_effort;
+    _z_zint_t _sn_resolution;
+    _z_zint_t _sn_resolution_half;
+    _z_zint_t _sn_tx_reliable;
+    _z_zint_t _sn_tx_best_effort;
 
     // ----------- Link related -----------
     // TX and RX buffers
-    const _z_link_t *link;
-    _z_wbuf_t wbuf;
-    _z_zbuf_t zbuf;
+    const _z_link_t *_link;
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
 
-    volatile int transmitted;
+    volatile int _transmitted;
 
-    volatile int read_task_running;
-    _z_task_t *read_task;
+    volatile int _read_task_running;
+    _z_task_t *_read_task;
 
-    volatile int lease_task_running;
-    _z_task_t *lease_task;
-    volatile _z_zint_t lease;
+    volatile int _lease_task_running;
+    _z_task_t *_lease_task;
+    volatile _z_zint_t _lease;
 } _z_transport_multicast_t;
 
 typedef struct
 {
     union
     {
-        _z_transport_unicast_t unicast;
-        _z_transport_multicast_t multicast;
-    } transport;
+        _z_transport_unicast_t _unicast;
+        _z_transport_multicast_t _multicast;
+    } _transport;
 
     enum
     {
         _Z_TRANSPORT_UNICAST_TYPE,
         _Z_TRANSPORT_MULTICAST_TYPE,
-    } type;
+    } _type;
 } _z_transport_t;
 
 _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
@@ -146,22 +146,22 @@ _Z_P_RESULT_DECLARE(_z_transport_t, transport)
 
 typedef struct
 {
-    _z_bytes_t remote_pid;
-    unsigned int whatami;
-    _z_zint_t sn_resolution;
-    _z_zint_t initial_sn_rx;
-    _z_zint_t initial_sn_tx;
-    uint8_t is_qos;
-    _z_zint_t lease;
+    _z_bytes_t _remote_pid;
+    unsigned int _whatami;
+    _z_zint_t _sn_resolution;
+    _z_zint_t _initial_sn_rx;
+    _z_zint_t _initial_sn_tx;
+    uint8_t _is_qos;
+    _z_zint_t _lease;
 } _z_transport_unicast_establish_param_t;
 
 _Z_RESULT_DECLARE(_z_transport_unicast_establish_param_t, transport_unicast_establish_param)
 
 typedef struct
 {
-    _z_zint_t sn_resolution;
-    _z_zint_t initial_sn_tx;
-    uint8_t is_qos;
+    _z_zint_t _sn_resolution;
+    _z_zint_t _initial_sn_tx;
+    uint8_t _is_qos;
 } _z_transport_multicast_establish_param_t;
 
 _Z_RESULT_DECLARE(_z_transport_multicast_establish_param_t, transport_multicast_establish_param)

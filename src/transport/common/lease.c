@@ -16,10 +16,10 @@
 
 int _z_send_keep_alive(_z_transport_t *zt)
 {   
-    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
-        return _zp_unicast_send_keep_alive(&zt->transport.unicast);
-    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
-        return _zp_multicast_send_keep_alive(&zt->transport.multicast);
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_send_keep_alive(&zt->_transport._unicast);
+    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_send_keep_alive(&zt->_transport._multicast);
     else
         return -1;
 }
@@ -28,10 +28,10 @@ void *_zp_lease_task(void *arg)
 {
     _z_transport_t *zt = (_z_transport_t *)arg;
 
-    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
-        return _zp_unicast_lease_task(&zt->transport.unicast);
-    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
-        return _zp_multicast_lease_task(&zt->transport.multicast);
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_lease_task(&zt->_transport._unicast);
+    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_lease_task(&zt->_transport._multicast);
     else
         return NULL;
 }

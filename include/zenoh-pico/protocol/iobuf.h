@@ -23,11 +23,11 @@
 
 typedef struct
 {
-    uint8_t *buf;
-    size_t r_pos;
-    size_t w_pos;
-    size_t capacity;
-    uint8_t is_alloc;
+    uint8_t *_buf;
+    size_t _r_pos;
+    size_t _w_pos;
+    size_t _capacity;
+    uint8_t _is_alloc;
 } _z_iosli_t;
 
 _z_iosli_t _z_iosli_make(size_t capacity);
@@ -59,7 +59,7 @@ _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 /*------------------ ZBuf ------------------*/
 typedef struct
 {
-    _z_iosli_t ios;
+    _z_iosli_t _ios;
 } _z_zbuf_t;
 
 _z_zbuf_t _z_zbuf_make(size_t capacity);
@@ -90,11 +90,11 @@ void _z_zbuf_free(_z_zbuf_t **zbf);
 /*------------------ WBuf ------------------*/
 typedef struct
 {
-    _z_iosli_vec_t ioss;
-    size_t r_idx;
-    size_t w_idx;
-    size_t capacity;
-    uint8_t is_expandable;
+    _z_iosli_vec_t _ioss;
+    size_t _r_idx;
+    size_t _w_idx;
+    size_t _capacity;
+    uint8_t _is_expandable;
 } _z_wbuf_t;
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable);

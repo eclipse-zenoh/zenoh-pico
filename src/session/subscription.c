@@ -20,19 +20,19 @@
 
 int _z_subscriber_eq(const _z_subscriber_t *other, const _z_subscriber_t *this)
 {
-    return this->id == other->id;
+    return this->_id == other->_id;
 }
 
 void _z_subscriber_clear(_z_subscriber_t *sub)
 {
-    _z_str_clear(sub->rname);
-    _z_reskey_clear(&sub->key);
+    _z_str_clear(sub->_rname);
+    _z_reskey_clear(&sub->_key);
 }
 
 /*------------------ Pull ------------------*/
 _z_zint_t _z_get_pull_id(_z_session_t *zn)
 {
-    return zn->pull_id++;
+    return zn->_pull_id++;
 }
 
 _z_subscriber_t *__z_get_subscription_by_id(_z_subscriber_list_t *subs, const _z_zint_t id)
@@ -41,7 +41,7 @@ _z_subscriber_t *__z_get_subscription_by_id(_z_subscriber_list_t *subs, const _z
     while (subs != NULL)
     {
         sub = _z_subscriber_list_head(subs);
-        if (id == sub->id)
+        if (id == sub->_id)
             return sub;
 
         subs = _z_subscriber_list_tail(subs);
@@ -56,7 +56,7 @@ _z_subscriber_list_t *__z_get_subscriptions_by_name(_z_subscriber_list_t *subs, 
     while (subs != NULL)
     {
         _z_subscriber_t *sub = _z_subscriber_list_head(subs);
-        if (_z_rname_intersect(sub->rname, rname))
+        if (_z_rname_intersect(sub->_rname, rname))
             xs = _z_subscriber_list_push(xs, sub);
 
         subs = _z_subscriber_list_tail(subs);
@@ -68,47 +68,47 @@ _z_subscriber_list_t *__z_get_subscriptions_by_name(_z_subscriber_list_t *subs, 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
 _z_subscriber_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
 {
-    _z_subscriber_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    _z_subscriber_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscription_by_id(subs, id);
 }
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
 _z_subscriber_list_t *__unsafe_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname)
 {
-    _z_subscriber_list_t *subs = is_local ? zn->local_subscriptions : zn->remote_subscriptions;
+    _z_subscriber_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscriptions_by_name(subs, rname);
 }
 
 _z_subscriber_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_subscriber_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return sub;
 }
 
 _z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return subs;
 }
 
 _z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, is_local, reskey);
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
 
     _z_str_clear(rname);
     return subs;
@@ -117,29 +117,29 @@ _z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local,
 int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub)
 {
     _Z_DEBUG(">>> Allocating sub decl for (%s)\n", sub->rname);
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, sub->rname);
+    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, sub->_rname);
     if (subs != NULL) // A subscription for this name already exists
         goto ERR;
 
     // Register the subscription
     if (is_local)
-        zn->local_subscriptions = _z_subscriber_list_push(zn->local_subscriptions, sub);
+        zn->_local_subscriptions = _z_subscriber_list_push(zn->_local_subscriptions, sub);
     else
-        zn->remote_subscriptions = _z_subscriber_list_push(zn->remote_subscriptions, sub);
+        zn->_remote_subscriptions = _z_subscriber_list_push(zn->_remote_subscriptions, sub);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
 
 ERR:
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return -1;
 }
 
 int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _z_bytes_t payload, const _z_encoding_t encoding)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
     _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &reskey);
     if (rname == NULL)
@@ -148,49 +148,49 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _
 
     // Build the sample
     _z_sample_t s;
-    s.key = key;
-    s.value = payload;
-    s.encoding.prefix = encoding.prefix;
-    s.encoding.suffix = encoding.suffix;
+    s._key = key;
+    s._value = payload;
+    s._encoding._prefix = encoding._prefix;
+    s._encoding._suffix = encoding._suffix;
 
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, _Z_RESOURCE_IS_LOCAL, rname);
     _z_subscriber_list_t *xs = subs;
     while (xs != NULL)
     {
         _z_subscriber_t *sub = _z_subscriber_list_head(xs);
-        sub->callback(&s, sub->arg);
+        sub->_callback(&s, sub->_arg);
         xs = _z_subscriber_list_tail(xs);
     }
 
     _z_reskey_clear(&key);
     _z_str_clear(rname);
     _z_list_free(&subs, _z_noop_free);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
 
 ERR:
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return -1;
 }
 
 void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
     if (is_local)
-        zn->local_subscriptions = _z_subscriber_list_drop_filter(zn->local_subscriptions, _z_subscriber_eq, sub);
+        zn->_local_subscriptions = _z_subscriber_list_drop_filter(zn->_local_subscriptions, _z_subscriber_eq, sub);
     else
-        zn->remote_subscriptions = _z_subscriber_list_drop_filter(zn->remote_subscriptions, _z_subscriber_eq, sub);
+        zn->_remote_subscriptions = _z_subscriber_list_drop_filter(zn->_remote_subscriptions, _z_subscriber_eq, sub);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
 }
 
 void _z_flush_subscriptions(_z_session_t *zn)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_subscriber_list_free(&zn->local_subscriptions);
-    _z_subscriber_list_free(&zn->remote_subscriptions);
+    _z_subscriber_list_free(&zn->_local_subscriptions);
+    _z_subscriber_list_free(&zn->_remote_subscriptions);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
 }

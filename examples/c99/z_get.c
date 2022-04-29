@@ -51,11 +51,11 @@ int main(int argc, char **argv)
     target.target = Z_TARGET_ALL;
     z_owned_reply_data_array_t replies = z_get_collect(z_session_loan(&s), z_expr_new(expr), "", target, z_query_consolidation_default());
 
-    for (unsigned int i = 0; i < replies.value->len; ++i)
+    for (unsigned int i = 0; i < z_reply_data_array_loan(&replies)->len; ++i)
     {
         printf(">> Received ('%s': '%.*s')\n",
-               replies.value->val[i].data.key.rname,
-               (int)replies.value->val[i].data.value.len, replies.value->val[i].data.value.val);
+               z_reply_data_array_loan(&replies)->val[i].data.key.rname,
+               (int)z_reply_data_array_loan(&replies)->val[i].data.value.len, z_reply_data_array_loan(&replies)->val[i].data.value.val);
     }
     z_reply_data_array_clear(z_reply_data_array_move(&replies));
 

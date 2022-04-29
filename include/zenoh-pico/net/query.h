@@ -23,11 +23,11 @@
  */
 typedef struct
 {
-    void *zn;  // FIXME: _z_session_t *zn;
-    _z_zint_t qid;
-    unsigned int kind;
-    _z_str_t rname;
-    _z_str_t predicate;
+    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t _qid;
+    unsigned int _kind;
+    _z_str_t _rname;
+    _z_str_t _predicate;
 } z_query_t;
 
 /**
@@ -37,12 +37,12 @@ typedef void (*_z_queryable_handler_t)(const z_query_t *query, const void *arg);
 
 typedef struct
 {
-    _z_zint_t id;
-    _z_str_t rname;
-    _z_reskey_t key;
-    unsigned int kind;
-    _z_queryable_handler_t callback;
-    void *arg;
+    _z_zint_t _id;
+    _z_str_t _rname;
+    _z_reskey_t _key;
+    unsigned int _kind;
+    _z_queryable_handler_t _callback;
+    void *_arg;
 } _z_queryable_t;
 
 int _z_queryable_eq(const _z_queryable_t *one, const _z_queryable_t *two);
@@ -56,8 +56,8 @@ _Z_LIST_DEFINE(_z_queryable, _z_queryable_t)
  */
 typedef struct
 {
-    void *zn;  // FIXME: _z_session_t *zn;
-    _z_zint_t id;
+    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t _id;
 } z_queryable_t;
 
 /**
@@ -71,9 +71,9 @@ typedef struct
  */
 typedef struct
 {
-    z_consolidation_mode_t first_routers;
-    z_consolidation_mode_t last_router;
-    z_consolidation_mode_t reception;
+    z_consolidation_mode_t _first_routers;
+    z_consolidation_mode_t _last_router;
+    z_consolidation_mode_t _reception;
 } _z_consolidation_strategy_t;
 
 _z_consolidation_strategy_t _z_consolidation_strategy_none(void);

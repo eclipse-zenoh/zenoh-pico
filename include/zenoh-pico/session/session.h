@@ -34,13 +34,14 @@
  */
 typedef struct
 {
-    _z_sample_t data;
-    unsigned int replier_kind;
-    _z_bytes_t replier_id;
+    _z_sample_t _sample;
+    unsigned int _replier_kind;
+    _z_bytes_t _replier_id;
 } _z_reply_data_t;
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
+_Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
 
 /**
  * An reply to a :c:func:`z_query`.
@@ -52,29 +53,14 @@ _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
  */
 typedef struct
 {
-    z_reply_tag_t tag;
-    _z_reply_data_t data;
+    z_reply_tag_t _tag;
+    _z_reply_data_t _data;
 } _z_reply_t;
 
-/**
- * An array of :c:type:`_z_reply_data_t`.
- * Result of :c:func:`_z_query_collect`.
- *
- * Members:
- *   char *const *val: A pointer to the array.
- *   unsigned int len: The length of the array.
- *
- */
 typedef struct
 {
-    const _z_reply_data_t *val;
-    size_t len;
-} _z_reply_data_array_t;
-
-typedef struct
-{
-    _z_zint_t id;
-    _z_reskey_t key;
+    _z_zint_t _id;
+    _z_reskey_t _key;
 } _z_resource_t;
 
 int _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
@@ -90,12 +76,12 @@ typedef void (*_z_data_handler_t)(const _z_sample_t *sample, const void *arg);
 
 typedef struct
 {
-    _z_zint_t id;
-    _z_str_t rname;
-    _z_reskey_t key;
-    _z_subinfo_t info;
-    _z_data_handler_t callback;
-    void *arg;
+    _z_zint_t _id;
+    _z_str_t _rname;
+    _z_reskey_t _key;
+    _z_subinfo_t _info;
+    _z_data_handler_t _callback;
+    void *_arg;
 } _z_subscriber_t;
 
 int _z_subscriber_eq(const _z_subscriber_t *one, const _z_subscriber_t *two);
@@ -106,14 +92,14 @@ _Z_LIST_DEFINE(_z_subscriber, _z_subscriber_t)
 
 typedef struct
 {
-    _z_zint_t id;
-    _z_reskey_t key;
+    _z_zint_t _id;
+    _z_reskey_t _key;
 } _z_publisher_t;
 
 typedef struct
 {
-    _z_reply_t *reply;
-    _z_timestamp_t tstamp;
+    _z_reply_t *_reply;
+    _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
 int _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
@@ -129,15 +115,15 @@ typedef void (*_z_query_handler_t)(_z_reply_t reply, const void *arg);
 
 typedef struct
 {
-    _z_zint_t id;
-    _z_str_t rname;
-    _z_reskey_t key;
-    _z_str_t predicate;
-    _z_query_target_t target;
-    _z_consolidation_strategy_t consolidation;
-    _z_pending_reply_list_t *pending_replies;
-    _z_query_handler_t callback;
-    void *arg;
+    _z_zint_t _id;
+    _z_str_t _rname;
+    _z_reskey_t _key;
+    _z_str_t _predicate;
+    _z_query_target_t _target;
+    _z_consolidation_strategy_t _consolidation;
+    _z_pending_reply_list_t *_pending_replies;
+    _z_query_handler_t _callback;
+    void *_arg;
 } _z_pending_query_t;
 
 int _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
@@ -148,9 +134,9 @@ _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct
 {
-    _z_mutex_t mutex;
-    _z_condvar_t cond_var;
-    _z_reply_data_list_t *replies;
+    _z_mutex_t _mutex;
+    _z_condvar_t _cond_var;
+    _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

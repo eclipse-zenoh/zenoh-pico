@@ -103,10 +103,10 @@ int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliab
 
 int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg)
 {
-    if (zt->type == _Z_TRANSPORT_UNICAST_TYPE)
-        return _z_unicast_send_t_msg(&zt->transport.unicast, t_msg);
-    else if (zt->type == _Z_TRANSPORT_MULTICAST_TYPE)
-        return _z_multicast_send_t_msg(&zt->transport.multicast, t_msg);
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
+    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
     else
         return -1;
 }
@@ -114,9 +114,9 @@ int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg)
 int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
 {
     // Create and prepare the buffer to serialize the message on
-    uint16_t mtu = zl->mtu < Z_BATCH_SIZE ? zl->mtu : Z_BATCH_SIZE;
+    uint16_t mtu = zl->_mtu < Z_BATCH_SIZE ? zl->_mtu : Z_BATCH_SIZE;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
-    if (zl->is_streamed == 1)
+    if (zl->_is_streamed == 1)
     {
         for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             _z_wbuf_put(&wbf, 0, i);
@@ -128,7 +128,7 @@ int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
         goto ERR;
 
     // Write the message legnth in the reserved space if needed
-    if (zl->is_streamed == 1)
+    if (zl->_is_streamed == 1)
     {
         size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
         for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)

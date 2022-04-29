@@ -30,7 +30,7 @@ typedef struct
 {
     const uint8_t *val;
     size_t len;
-    uint8_t is_alloc;
+    uint8_t _is_alloc;
 } _z_bytes_t;
 
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity);

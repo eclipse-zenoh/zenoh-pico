@@ -42,17 +42,6 @@ _Z_RESULT_DECLARE(_z_str_t, str)
 int _z_str_encode(_z_wbuf_t *buf, const _z_str_t s);
 _z_str_result_t _z_str_decode(_z_zbuf_t *buf);
 
-/*------------------ Internal Zenoh-net Encoding/Decoding ------------------*/
-_Z_RESULT_DECLARE(_z_property_t, property)
-int _z_property_encode(_z_wbuf_t *wbf, const _z_property_t *m);
-_z_property_result_t _z_property_decode(_z_zbuf_t *zbf);
-void _z_property_decode_na(_z_zbuf_t *zbf, _z_property_result_t *r);
-
-_Z_RESULT_DECLARE(_z_properties_t, properties)
-int _z_properties_encode(_z_wbuf_t *wbf, const _z_properties_t *m);
-_z_properties_result_t _z_properties_decode(_z_zbuf_t *zbf);
-void _z_properties_decode_na(_z_zbuf_t *zbf, _z_properties_result_t *r);
-
 _Z_RESULT_DECLARE(_z_period_t, period)
 int _z_period_encode(_z_wbuf_t *wbf, const _z_period_t *m);
 _z_period_result_t _z_period_decode(_z_zbuf_t *zbf);

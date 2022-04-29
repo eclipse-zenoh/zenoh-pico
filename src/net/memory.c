@@ -16,9 +16,9 @@
 
 void _z_sample_clear(_z_sample_t *sample)
 {
-    _z_reskey_clear(&sample->key);
-    _z_bytes_clear(&sample->value);
-    _z_str_clear(sample->encoding.suffix); // FIXME: call the z_encoding_clear
+    _z_reskey_clear(&sample->_key);
+    _z_bytes_clear(&sample->_value);
+    _z_str_clear(sample->_encoding._suffix); // FIXME: call the z_encoding_clear
 }
 
 void _z_sample_free(_z_sample_t **sample)
@@ -30,36 +30,18 @@ void _z_sample_free(_z_sample_t **sample)
     *sample = NULL;
 }
 
-void _z_hello_array_clear(_z_hello_array_t *hellos)
+void _z_hello_clear(_z_hello_t *hello)
 {
-    _z_hello_t *h = (_z_hello_t *)hellos->val;
-    if (h)
-    {
-        for (unsigned int i = 0; i < hellos->len; i++)
-        {
-            if (h[i].pid.len > 0)
-                _z_bytes_clear(&h[i].pid);
-            if (h[i].locators.len > 0)
-                _z_str_array_free(&h[i].locators);
-        }
-
-        free(h);
-    }
-}
-
-void _z_hello_array_free(_z_hello_array_t **hellos)
-{
-    _z_hello_array_t *ptr = (_z_hello_array_t *)*hellos;
-    _z_hello_array_clear(ptr);
-
-    free(ptr);
-    *hellos = NULL;
+    if (hello->_pid.len > 0)
+        _z_bytes_clear(&hello->_pid);
+    if (_z_str_array_len(&hello->_locators) > 0)
+        _z_str_array_clear(&hello->_locators);
 }
 
 void _z_reply_data_clear(_z_reply_data_t *reply_data)
 {
-    _z_sample_clear(&reply_data->data);
-    _z_bytes_clear(&reply_data->replier_id);
+    _z_sample_clear(&reply_data->_sample);
+    _z_bytes_clear(&reply_data->_replier_id);
 }
 
 void _z_reply_data_free(_z_reply_data_t **reply_data)
@@ -69,21 +51,4 @@ void _z_reply_data_free(_z_reply_data_t **reply_data)
 
     free(ptr);
     *reply_data = NULL;
-}
-
-void _z_reply_data_array_clear(_z_reply_data_array_t *replies)
-{
-    for (unsigned int i = 0; i < replies->len; i++)
-        _z_reply_data_clear((_z_reply_data_t*)&replies->val[i]);
-
-    free((_z_reply_data_t *)replies->val);
-}
-
-void _z_reply_data_array_free(_z_reply_data_array_t **replies)
-{
-    _z_reply_data_array_t *ptr = (_z_reply_data_array_t *)*replies;
-    _z_reply_data_array_clear(ptr);
-
-    free(ptr);
-    *replies = NULL;
 }

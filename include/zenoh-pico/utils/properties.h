@@ -26,32 +26,6 @@
 #define Z_INFO_ROUTER_PID_KEY 0x02
 
 /**
- * A zenoh-net property.
- *
- * Members:
- *   unsiggned int id: The property ID.
- *   _z_string_t value: The property value as a string.
- */
-typedef struct
-{
-    unsigned int id;
-    _z_string_t value;
-} _z_property_t;
-
-/**
- * A zenoh-net property mapping.
- *
- * Members:
- *   unsiggned int key: The numeric-form property ID.
- *   _z_str_t str: The string-form property ID.
- */
-typedef struct
-{
-    unsigned int key;
-    _z_string_t str;
-} _z_property_mapping_t;
-
-/**
  * Zenoh-net properties are represented as int-string map.
  */
 typedef _z_str_intmap_t _z_properties_t;

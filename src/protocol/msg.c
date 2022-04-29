@@ -29,15 +29,15 @@ void _z_payload_clear(_z_payload_t *p)
 /*------------------ Timestamp Field ------------------*/
 void _z_timestamp_clear(_z_timestamp_t *ts)
 {
-    _z_bytes_clear(&ts->id);
+    _z_bytes_clear(&ts->_id);
 }
 
 /*------------------ ResKey Field ------------------*/
 void _z_reskey_clear(_z_reskey_t *rk)
 {
-    rk->rid = 0;
-    if (rk->rname != NULL)
-        _z_str_clear(rk->rname);
+    rk->_rid = 0;
+    if (rk->_rname != NULL)
+        _z_str_clear(rk->_rname);
 }
 
 void _z_reskey_free(_z_reskey_t **rk)
@@ -61,7 +61,7 @@ void _z_locators_clear(_z_locator_array_t *ls)
 /*------------------ Attachment Decorator ------------------*/
 void _z_t_msg_clear_attachment(_z_attachment_t *a)
 {
-    _z_payload_clear(&a->payload);
+    _z_payload_clear(&a->_payload);
 }
 
 /*------------------ ReplyContext Decorator ------------------*/
@@ -69,21 +69,21 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_
 {
     _z_reply_context_t *rctx = (_z_reply_context_t *)malloc(sizeof(_z_reply_context_t));
 
-    rctx->qid = qid;
-    rctx->replier_id = replier_id;
-    rctx->replier_kind = replier_kind;
+    rctx->_qid = qid;
+    rctx->_replier_id = replier_id;
+    rctx->_replier_kind = replier_kind;
 
-    rctx->header = _Z_MID_REPLY_CONTEXT;
+    rctx->_header = _Z_MID_REPLY_CONTEXT;
     if (is_final)
-        _Z_SET_FLAG(rctx->header, _Z_FLAG_Z_F);
+        _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
 
     return rctx;
 }
 
 void _z_msg_clear_reply_context(_z_reply_context_t *rc)
 {
-    if (!_Z_HAS_FLAG(rc->header, _Z_FLAG_Z_F))
-        _z_bytes_clear(&rc->replier_id);
+    if (!_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F))
+        _z_bytes_clear(&rc->_replier_id);
 }
 
 /*=============================*/
@@ -94,19 +94,19 @@ _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_reskey_t key)
 {
     _z_declaration_t decl;
 
-    decl.body.res.id = id;
-    decl.body.res.key = key;
+    decl._body._res._id = id;
+    decl._body._res._key = key;
 
-    decl.header = _Z_DECL_RESOURCE;
-    if (decl.body.res.key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_RESOURCE;
+    if (decl._body._res._key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Forget Resource Declaration ------------------*/
@@ -114,9 +114,9 @@ _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid)
 {
     _z_declaration_t decl;
 
-    decl.body.forget_res.rid = rid;
+    decl._body._forget_res._rid = rid;
 
-    decl.header = _Z_DECL_FORGET_RESOURCE;
+    decl._header = _Z_DECL_FORGET_RESOURCE;
 
     return decl;
 }
@@ -131,18 +131,18 @@ _z_declaration_t _z_msg_make_declaration_publisher(_z_reskey_t key)
 {
     _z_declaration_t decl;
 
-    decl.body.pub.key = key;
+    decl._body._pub._key = key;
 
-    decl.header = _Z_DECL_PUBLISHER;
-    if (key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_PUBLISHER;
+    if (key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Forget Publisher Declaration ------------------*/
@@ -150,18 +150,18 @@ _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_reskey_t key)
 {
     _z_declaration_t decl;
 
-    decl.body.forget_pub.key = key;
+    decl._body._forget_pub._key = key;
 
-    decl.header = _Z_DECL_FORGET_PUBLISHER;
-    if (key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_FORGET_PUBLISHER;
+    if (key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Subscriber Declaration ------------------*/
@@ -169,16 +169,16 @@ _z_declaration_t _z_msg_make_declaration_subscriber(_z_reskey_t key, _z_subinfo_
 {
     _z_declaration_t decl;
 
-    decl.body.sub.key = key;
-    decl.body.sub.subinfo = subinfo;
+    decl._body._sub._key = key;
+    decl._body._sub._subinfo = subinfo;
 
-    decl.header = _Z_DECL_SUBSCRIBER;
-    if (key.rname)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
-    if (subinfo.mode != Z_SUBMODE_PUSH)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_S);
-    if (subinfo.reliability == Z_RELIABILITY_RELIABLE)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_R);
+    decl._header = _Z_DECL_SUBSCRIBER;
+    if (key._rname)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
+    if (subinfo._mode != Z_SUBMODE_PUSH)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_S);
+    if (subinfo._reliability == Z_RELIABILITY_RELIABLE)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_R);
 
     return decl;
 }
@@ -191,8 +191,8 @@ void _z_subinfo_clear(_z_subinfo_t *si)
 
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
-    _z_subinfo_clear(&dcl->subinfo);
+    _z_reskey_clear(&dcl->_key);
+    _z_subinfo_clear(&dcl->_subinfo);
 }
 
 /*------------------ Forget Subscriber Declaration ------------------*/
@@ -200,18 +200,18 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_reskey_t key)
 {
     _z_declaration_t decl;
 
-    decl.body.forget_sub.key = key;
+    decl._body._forget_sub._key = key;
 
-    decl.header = _Z_DECL_FORGET_SUBSCRIBER;
-    if (key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_FORGET_SUBSCRIBER;
+    if (key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Queryable Declaration ------------------*/
@@ -219,24 +219,24 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_reskey_t key, _z_zint_t ki
 {
     _z_declaration_t decl;
 
-    decl.body.qle.key = key;
-    decl.body.qle.kind = kind;
+    decl._body._qle._key = key;
+    decl._body._qle._kind = kind;
 
-    decl.header = _Z_DECL_QUERYABLE;
-    if (key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_QUERYABLE;
+    if (key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
-    decl.body.qle.complete = complete;
-    decl.body.qle.distance = distance;
-    if (decl.body.qle.complete != _Z_QUERYABLE_COMPLETE_DEFAULT || decl.body.qle.distance != _Z_QUERYABLE_DISTANCE_DEFAULT)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_Q);
+    decl._body._qle._complete = complete;
+    decl._body._qle._distance = distance;
+    if (decl._body._qle._complete != _Z_QUERYABLE_COMPLETE_DEFAULT || decl._body._qle._distance != _Z_QUERYABLE_DISTANCE_DEFAULT)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_Q);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Forget Queryable Declaration ------------------*/
@@ -244,19 +244,19 @@ _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_reskey_t key, _z_zi
 {
     _z_declaration_t decl;
 
-    decl.body.forget_qle.key = key;
-    decl.body.forget_qle.kind = kind;
+    decl._body._forget_qle._key = key;
+    decl._body._forget_qle._kind = kind;
 
-    decl.header = _Z_DECL_FORGET_QUERYABLE;
-    if (key.rname != NULL)
-        _Z_SET_FLAG(decl.header, _Z_FLAG_Z_K);
+    decl._header = _Z_DECL_FORGET_QUERYABLE;
+    if (key._rname != NULL)
+        _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
 }
 
 void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->key);
+    _z_reskey_clear(&dcl->_key);
 }
 
 /*------------------ Declare ------------------*/
@@ -264,44 +264,44 @@ _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations)
 {
     _z_zenoh_message_t msg;
 
-    msg.body.declare.declarations = declarations;
+    msg._body._declare._declarations = declarations;
 
-    msg.header = _Z_MID_DECLARE;
+    msg._header = _Z_MID_DECLARE;
 
-    msg.attachment = NULL;
-    msg.reply_context = NULL;
+    msg._attachment = NULL;
+    msg._reply_context = NULL;
 
     return msg;
 }
 
 void _z_msg_clear_declaration(_z_declaration_t *dcl)
 {
-    uint8_t did = _Z_MID(dcl->header);
+    uint8_t did = _Z_MID(dcl->_header);
     switch (did)
     {
     case _Z_DECL_RESOURCE:
-        _z_msg_clear_declaration_resource(&dcl->body.res);
+        _z_msg_clear_declaration_resource(&dcl->_body._res);
         break;
     case _Z_DECL_PUBLISHER:
-        _z_msg_clear_declaration_publisher(&dcl->body.pub);
+        _z_msg_clear_declaration_publisher(&dcl->_body._pub);
         break;
     case _Z_DECL_SUBSCRIBER:
-        _z_msg_clear_declaration_subscriber(&dcl->body.sub);
+        _z_msg_clear_declaration_subscriber(&dcl->_body._sub);
         break;
     case _Z_DECL_QUERYABLE:
-        _z_msg_clear_declaration_queryable(&dcl->body.qle);
+        _z_msg_clear_declaration_queryable(&dcl->_body._qle);
         break;
     case _Z_DECL_FORGET_RESOURCE:
-        _z_msg_clear_declaration_forget_resource(&dcl->body.forget_res);
+        _z_msg_clear_declaration_forget_resource(&dcl->_body._forget_res);
         break;
     case _Z_DECL_FORGET_PUBLISHER:
-        _z_msg_clear_declaration_forget_publisher(&dcl->body.forget_pub);
+        _z_msg_clear_declaration_forget_publisher(&dcl->_body._forget_pub);
         break;
     case _Z_DECL_FORGET_SUBSCRIBER:
-        _z_msg_clear_declaration_forget_subscriber(&dcl->body.forget_sub);
+        _z_msg_clear_declaration_forget_subscriber(&dcl->_body._forget_sub);
         break;
     case _Z_DECL_FORGET_QUERYABLE:
-        _z_msg_clear_declaration_forget_queryable(&dcl->body.forget_qle);
+        _z_msg_clear_declaration_forget_queryable(&dcl->_body._forget_qle);
         break;
     default:
         _Z_DEBUG("WARNING: Trying to free declaration with unknown ID(%d)\n", did);
@@ -311,7 +311,7 @@ void _z_msg_clear_declaration(_z_declaration_t *dcl)
 
 void _z_msg_clear_declare(_z_msg_declare_t *dcl)
 {
-    _z_declaration_array_clear(&dcl->declarations);
+    _z_declaration_array_clear(&dcl->_declarations);
 }
 
 /*------------------ Data Info Field ------------------*/
@@ -324,17 +324,17 @@ void _z_data_info_clear(_z_data_info_t *di)
     //   - first_router_sn
     //   - kind
 
-    if (_Z_HAS_FLAG(di->flags, _Z_DATA_INFO_ENC))
-        _z_str_clear(di->encoding.suffix);
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC))
+        _z_str_clear(di->_encoding._suffix);
 
-    if (_Z_HAS_FLAG(di->flags, _Z_DATA_INFO_SRC_ID))
-        _z_bytes_clear(&di->source_id);
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID))
+        _z_bytes_clear(&di->_source_id);
 
-    if (_Z_HAS_FLAG(di->flags, _Z_DATA_INFO_RTR_ID))
-        _z_bytes_clear(&di->first_router_id);
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID))
+        _z_bytes_clear(&di->_first_router_id);
 
-    if (_Z_HAS_FLAG(di->flags, _Z_DATA_INFO_TSTAMP))
-        _z_timestamp_clear(&di->tstamp);
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP))
+        _z_timestamp_clear(&di->_tstamp);
 }
 
 /*------------------ Data Message ------------------*/
@@ -342,29 +342,29 @@ _z_zenoh_message_t _z_msg_make_data(_z_reskey_t key, _z_data_info_t info, _z_pay
 {
     _z_zenoh_message_t msg;
 
-    msg.body.data.key = key;
-    msg.body.data.info = info;
-    msg.body.data.payload = payload;
+    msg._body._data._key = key;
+    msg._body._data._info = info;
+    msg._body._data._payload = payload;
 
-    msg.header = _Z_MID_DATA;
-    if (msg.body.data.info.flags != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_I);
-    if (msg.body.data.key.rname != NULL)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_K);
+    msg._header = _Z_MID_DATA;
+    if (msg._body._data._info._flags != 0)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_I);
+    if (msg._body._data._key._rname != NULL)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
     if (can_be_dropped)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_D);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
 
-    msg.attachment = NULL;
-    msg.reply_context = NULL;
+    msg._attachment = NULL;
+    msg._reply_context = NULL;
 
     return msg;
 }
 
 void _z_msg_clear_data(_z_msg_data_t *msg)
 {
-    _z_reskey_clear(&msg->key);
-    _z_data_info_clear(&msg->info);
-    _z_payload_clear(&msg->payload);
+    _z_reskey_clear(&msg->_key);
+    _z_data_info_clear(&msg->_info);
+    _z_payload_clear(&msg->_payload);
 }
 
 /*------------------ Unit Message ------------------*/
@@ -372,12 +372,12 @@ _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped)
 {
     _z_zenoh_message_t msg;
 
-    msg.header = _Z_MID_UNIT;
+    msg._header = _Z_MID_UNIT;
     if (can_be_dropped)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_D);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
 
-    msg.attachment = NULL;
-    msg.reply_context = NULL;
+    msg._attachment = NULL;
+    msg._reply_context = NULL;
 
     return msg;
 }
@@ -392,27 +392,27 @@ _z_zenoh_message_t _z_msg_make_pull(_z_reskey_t key, _z_zint_t pull_id, _z_zint_
 {
     _z_zenoh_message_t msg;
 
-    msg.body.pull.key = key;
-    msg.body.pull.pull_id = pull_id;
-    msg.body.pull.max_samples = max_samples;
+    msg._body._pull._key = key;
+    msg._body._pull._pull_id = pull_id;
+    msg._body._pull._max_samples = max_samples;
 
-    msg.header = _Z_MID_PULL;
+    msg._header = _Z_MID_PULL;
     if (is_final)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_F);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_F);
     if (max_samples != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_N);
-    if (msg.body.pull.key.rname != NULL)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_K);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_N);
+    if (msg._body._pull._key._rname != NULL)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
 
-    msg.attachment = NULL;
-    msg.reply_context = NULL;
+    msg._attachment = NULL;
+    msg._reply_context = NULL;
 
     return msg;
 }
 
 void _z_msg_clear_pull(_z_msg_pull_t *msg)
 {
-    _z_reskey_clear(&msg->key);
+    _z_reskey_clear(&msg->_key);
 }
 
 /*------------------ Query Message ------------------*/
@@ -420,35 +420,35 @@ _z_zenoh_message_t _z_msg_make_query(_z_reskey_t key, _z_str_t predicate, _z_zin
 {
     _z_zenoh_message_t msg;
 
-    msg.body.query.key = key;
-    msg.body.query.predicate = predicate;
-    msg.body.query.qid = qid;
-    msg.body.query.target = target;
-    msg.body.query.consolidation = consolidation;
+    msg._body._query._key = key;
+    msg._body._query._predicate = predicate;
+    msg._body._query._qid = qid;
+    msg._body._query._target = target;
+    msg._body._query._consolidation = consolidation;
 
-    msg.header = _Z_MID_QUERY;
-    if (msg.body.query.target.kind != Z_QUERYABLE_ALL_KINDS)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_T);
-    if (msg.body.query.key.rname != NULL)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_Z_K);
+    msg._header = _Z_MID_QUERY;
+    if (msg._body._query._target._kind != Z_QUERYABLE_ALL_KINDS)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
+    if (msg._body._query._key._rname != NULL)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
 
-    msg.attachment = NULL;
-    msg.reply_context = NULL;
+    msg._attachment = NULL;
+    msg._reply_context = NULL;
 
     return msg;
 }
 
 void _z_msg_clear_query(_z_msg_query_t *msg)
 {
-    _z_reskey_clear(&msg->key);
-    _z_str_clear(msg->predicate);
+    _z_reskey_clear(&msg->_key);
+    _z_str_clear(msg->_predicate);
 }
 
 /*------------------ Reply Message ------------------*/
 _z_zenoh_message_t _z_msg_make_reply(_z_reskey_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx)
 {
     _z_zenoh_message_t msg = _z_msg_make_data(key, info, payload, can_be_dropped);
-    msg.reply_context = rctx;
+    msg._reply_context = rctx;
 
     return msg;
 }
@@ -456,34 +456,34 @@ _z_zenoh_message_t _z_msg_make_reply(_z_reskey_t key, _z_data_info_t info, _z_pa
 /*------------------ Zenoh Message ------------------*/
 void _z_msg_clear(_z_zenoh_message_t *msg)
 {
-    if (msg->attachment != NULL)
+    if (msg->_attachment != NULL)
     {
-        _z_t_msg_clear_attachment(msg->attachment);
-        free(msg->attachment);
+        _z_t_msg_clear_attachment(msg->_attachment);
+        free(msg->_attachment);
     }
-    if (msg->reply_context != NULL)
+    if (msg->_reply_context != NULL)
     {
-        _z_msg_clear_reply_context(msg->reply_context);
-        free(msg->reply_context);
+        _z_msg_clear_reply_context(msg->_reply_context);
+        free(msg->_reply_context);
     }
 
-    uint8_t mid = _Z_MID(msg->header);
+    uint8_t mid = _Z_MID(msg->_header);
     switch (mid)
     {
     case _Z_MID_DECLARE:
-        _z_msg_clear_declare(&msg->body.declare);
+        _z_msg_clear_declare(&msg->_body._declare);
         break;
     case _Z_MID_DATA:
-        _z_msg_clear_data(&msg->body.data);
+        _z_msg_clear_data(&msg->_body._data);
         break;
     case _Z_MID_PULL:
-        _z_msg_clear_pull(&msg->body.pull);
+        _z_msg_clear_pull(&msg->_body._pull);
         break;
     case _Z_MID_QUERY:
-        _z_msg_clear_query(&msg->body.query);
+        _z_msg_clear_query(&msg->_body._query);
         break;
     case _Z_MID_UNIT:
-        _z_msg_clear_unit(&msg->body.unit);
+        _z_msg_clear_unit(&msg->_body._unit);
         break;
     default:
         _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
@@ -499,15 +499,15 @@ _z_transport_message_t _z_t_msg_make_scout(_z_zint_t what, int request_pid)
 {
     _z_transport_message_t msg;
 
-    msg.body.scout.what = what;
+    msg._body._scout._what = what;
 
-    msg.header = _Z_MID_SCOUT;
+    msg._header = _Z_MID_SCOUT;
     if (request_pid)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_I);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     if (what != Z_ROUTER)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_W);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -524,19 +524,19 @@ _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z
 {
     _z_transport_message_t msg;
 
-    msg.body.hello.whatami = whatami;
-    msg.body.hello.pid = pid;
-    msg.body.hello.locators = locators;
+    msg._body._hello._whatami = whatami;
+    msg._body._hello._pid = pid;
+    msg._body._hello._locators = locators;
 
-    msg.header = _Z_MID_HELLO;
+    msg._header = _Z_MID_HELLO;
     if (whatami != Z_ROUTER)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_W);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     if (!_z_bytes_is_empty(&pid))
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_I);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     if (!_z_locator_array_is_empty(&locators))
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_L);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_L);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -544,10 +544,10 @@ _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z
 void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header)
 {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
+        _z_bytes_clear(&msg->_pid);
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_L))
-        _z_locators_clear(&msg->locators);
+        _z_locators_clear(&msg->_locators);
 }
 
 /*------------------ Join Message ------------------*/
@@ -555,44 +555,44 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z
 {
     _z_transport_message_t msg;
 
-    msg.body.join.options = 0;
-    if (next_sns.is_qos)
-        _Z_SET_FLAG(msg.body.join.options, _Z_OPT_JOIN_QOS);
-    msg.body.join.version = version;
-    msg.body.join.whatami = whatami;
-    msg.body.join.lease = lease;
-    msg.body.join.sn_resolution = sn_resolution;
-    msg.body.join.next_sns = next_sns;
-    msg.body.join.pid = pid;
+    msg._body._join._options = 0;
+    if (next_sns._is_qos)
+        _Z_SET_FLAG(msg._body._join._options, _Z_OPT_JOIN_QOS);
+    msg._body._join._version = version;
+    msg._body._join._whatami = whatami;
+    msg._body._join._lease = lease;
+    msg._body._join._sn_resolution = sn_resolution;
+    msg._body._join._next_sns = next_sns;
+    msg._body._join._pid = pid;
 
-    msg.header = _Z_MID_JOIN;
+    msg._header = _Z_MID_JOIN;
     if (lease % 1000 == 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_T1);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T1);
     if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_S);
-    if (msg.body.join.options != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_O);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
+    if (msg._body._join._options != 0)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
 
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg)
 {
-    clone->options = msg->options;
-    clone->version = msg->version;
-    clone->whatami = msg->whatami;
-    clone->lease = msg->lease;
-    clone->sn_resolution = msg->sn_resolution;
-    clone->next_sns = msg->next_sns;
-    _z_bytes_copy(&clone->pid, &msg->pid);
+    clone->_options = msg->_options;
+    clone->_version = msg->_version;
+    clone->_whatami = msg->_whatami;
+    clone->_lease = msg->_lease;
+    clone->_sn_resolution = msg->_sn_resolution;
+    clone->_next_sns = msg->_next_sns;
+    _z_bytes_copy(&clone->_pid, &msg->_pid);
 }
 
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header)
 {
     (void) (header);
-    _z_bytes_clear(&msg->pid);
+    _z_bytes_clear(&msg->_pid);
 }
 
 /*------------------ Init Message ------------------*/
@@ -600,22 +600,22 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami
 {
     _z_transport_message_t msg;
 
-    msg.body.init.options = 0;
+    msg._body._init._options = 0;
     if (is_qos)
-        _Z_SET_FLAG(msg.body.init.options, _Z_OPT_INIT_QOS);
-    msg.body.init.version = version;
-    msg.body.init.whatami = whatami;
-    msg.body.init.sn_resolution = sn_resolution;
-    msg.body.init.pid = pid;
-    _z_bytes_reset(&msg.body.init.cookie);
+        _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
+    msg._body._init._version = version;
+    msg._body._init._whatami = whatami;
+    msg._body._init._sn_resolution = sn_resolution;
+    msg._body._init._pid = pid;
+    _z_bytes_reset(&msg._body._init._cookie);
 
-    msg.header = _Z_MID_INIT;
+    msg._header = _Z_MID_INIT;
     if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_S);
-    if (msg.body.init.options != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_O);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
+    if (msg._body._init._options != 0)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -624,42 +624,42 @@ _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami
 {
     _z_transport_message_t msg;
 
-    msg.body.init.options = 0;
+    msg._body._init._options = 0;
     if (is_qos)
-        _Z_SET_FLAG(msg.body.init.options, _Z_OPT_INIT_QOS);
-    msg.body.init.version = version;
-    msg.body.init.whatami = whatami;
-    msg.body.init.sn_resolution = sn_resolution;
-    msg.body.init.pid = pid;
-    msg.body.init.cookie = cookie;
+        _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
+    msg._body._init._version = version;
+    msg._body._init._whatami = whatami;
+    msg._body._init._sn_resolution = sn_resolution;
+    msg._body._init._pid = pid;
+    msg._body._init._cookie = cookie;
 
-    msg.header = _Z_MID_INIT;
-    _Z_SET_FLAG(msg.header, _Z_FLAG_T_A);
+    msg._header = _Z_MID_INIT;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
     if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_S);
-    if (msg.body.init.options != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_O);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
+    if (msg._body._init._options != 0)
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
 
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg)
 {
-    clone->options = msg->options;
-    clone->version = msg->version;
-    clone->whatami = msg->whatami;
-    clone->sn_resolution = msg->sn_resolution;
-    _z_bytes_copy(&clone->pid, &msg->pid);
-    _z_bytes_copy(&clone->cookie, &msg->cookie);
+    clone->_options = msg->_options;
+    clone->_version = msg->_version;
+    clone->_whatami = msg->_whatami;
+    clone->_sn_resolution = msg->_sn_resolution;
+    _z_bytes_copy(&clone->_pid, &msg->_pid);
+    _z_bytes_copy(&clone->_cookie, &msg->_cookie);
 }
 
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header)
 {
-    _z_bytes_clear(&msg->pid);
+    _z_bytes_clear(&msg->_pid);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_A))
-        _z_bytes_clear(&msg->cookie);
+        _z_bytes_clear(&msg->_cookie);
 }
 
 /*------------------ Open Message ------------------*/
@@ -667,15 +667,15 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
 {
     _z_transport_message_t msg;
 
-    msg.body.open.lease = lease;
-    msg.body.open.initial_sn = initial_sn;
-    msg.body.open.cookie = cookie;
+    msg._body._open._lease = lease;
+    msg._body._open._initial_sn = initial_sn;
+    msg._body._open._cookie = cookie;
 
-    msg.header = _Z_MID_OPEN;
+    msg._header = _Z_MID_OPEN;
     if (lease % 1000 == 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_T2);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -684,31 +684,31 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
 {
     _z_transport_message_t msg;
 
-    msg.body.open.lease = lease;
-    msg.body.open.initial_sn = initial_sn;
-    _z_bytes_reset(&msg.body.open.cookie);
+    msg._body._open._lease = lease;
+    msg._body._open._initial_sn = initial_sn;
+    _z_bytes_reset(&msg._body._open._cookie);
 
-    msg.header = _Z_MID_OPEN;
-    _Z_SET_FLAG(msg.header, _Z_FLAG_T_A);
+    msg._header = _Z_MID_OPEN;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
     if (lease % 1000 == 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_T2);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
 
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg)
 {
-    clone->lease = msg->lease;
-    clone->initial_sn = msg->initial_sn;
-    _z_bytes_reset(&clone->cookie);
+    clone->_lease = msg->_lease;
+    clone->_initial_sn = msg->_initial_sn;
+    _z_bytes_reset(&clone->_cookie);
 }
 
 void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header)
 {
     if (!_Z_HAS_FLAG(header, _Z_FLAG_T_A))
-        _z_bytes_clear(&msg->cookie);
+        _z_bytes_clear(&msg->_cookie);
 }
 
 /*------------------ Close Message ------------------*/
@@ -716,16 +716,16 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int l
 {
     _z_transport_message_t msg;
 
-    msg.body.close.reason = reason;
-    msg.body.close.pid = pid;
+    msg._body._close._reason = reason;
+    msg._body._close._pid = pid;
 
-    msg.header = _Z_MID_CLOSE;
+    msg._header = _Z_MID_CLOSE;
     if (!_z_bytes_is_empty(&pid))
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_I);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     if (link_only)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_K);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_K);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -733,7 +733,7 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int l
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header)
 {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
+        _z_bytes_clear(&msg->_pid);
 }
 
 /*------------------ Sync Message ------------------*/
@@ -741,18 +741,18 @@ _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, int is_reliable, _z_zint
 {
     _z_transport_message_t msg;
 
-    msg.body.sync.sn = sn;
-    msg.body.sync.count = count;
+    msg._body._sync._sn = sn;
+    msg._body._sync._count = count;
 
-    msg.header = _Z_MID_SYNC;
+    msg._header = _Z_MID_SYNC;
     if (is_reliable)
     {
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
         if (count != 0)
-            _Z_SET_FLAG(msg.header, _Z_FLAG_T_C);
+            _Z_SET_FLAG(msg._header, _Z_FLAG_T_C);
     }
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -769,14 +769,14 @@ _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask)
 {
     _z_transport_message_t msg;
 
-    msg.body.ack_nack.sn = sn;
-    msg.body.ack_nack.mask = mask;
+    msg._body._ack_nack._sn = sn;
+    msg._body._ack_nack._mask = mask;
 
-    msg.header = _Z_MID_ACK_NACK;
+    msg._header = _Z_MID_ACK_NACK;
     if (mask != 0)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_M);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_M);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -793,13 +793,13 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid)
 {
     _z_transport_message_t msg;
 
-    msg.body.keep_alive.pid = pid;
+    msg._body._keep_alive._pid = pid;
 
-    msg.header = _Z_MID_KEEP_ALIVE;
+    msg._header = _Z_MID_KEEP_ALIVE;
     if (!_z_bytes_is_empty(&pid))
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_I);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -807,7 +807,7 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid)
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header)
 {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I))
-        _z_bytes_clear(&msg->pid);
+        _z_bytes_clear(&msg->_pid);
 }
 
 /*------------------ PingPong Messages ------------------*/
@@ -815,11 +815,11 @@ _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash)
 {
     _z_transport_message_t msg;
 
-    msg.body.ping_pong.hash = hash;
+    msg._body._ping_pong._hash = hash;
 
-    msg.header = _Z_MID_PING_PONG;
+    msg._header = _Z_MID_PING_PONG;
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -828,12 +828,12 @@ _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash)
 {
     _z_transport_message_t msg;
 
-    msg.body.ping_pong.hash = hash;
+    msg._body._ping_pong._hash = hash;
 
-    msg.header = _Z_MID_PING_PONG;
-    _Z_SET_FLAG(msg.header, _Z_FLAG_T_P);
+    msg._header = _Z_MID_PING_PONG;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_T_P);
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -850,22 +850,22 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable,
 {
     _z_transport_message_t msg;
 
-    msg.body.frame.sn = sn;
+    msg._body._frame._sn = sn;
 
     // Reset payload content
-    memset(&msg.body.frame.payload, 0, sizeof(_z_frame_payload_t));
+    memset(&msg._body._frame._payload, 0, sizeof(_z_frame_payload_t));
 
-    msg.header = _Z_MID_FRAME;
+    msg._header = _Z_MID_FRAME;
     if (is_reliable)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
     if (is_fragment)
     {
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_F);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
         if (is_final)
-            _Z_SET_FLAG(msg.header, _Z_FLAG_T_E);
+            _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
     }
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -874,20 +874,20 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
 {
     _z_transport_message_t msg;
 
-    msg.body.frame.sn = sn;
-    msg.body.frame.payload = payload;
+    msg._body._frame._sn = sn;
+    msg._body._frame._payload = payload;
 
-    msg.header = _Z_MID_FRAME;
+    msg._header = _Z_MID_FRAME;
     if (is_reliable)
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
     if (is_fragment)
     {
-        _Z_SET_FLAG(msg.header, _Z_FLAG_T_F);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
         if (is_final)
-            _Z_SET_FLAG(msg.header, _Z_FLAG_T_E);
+            _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
     }
 
-    msg.attachment = NULL;
+    msg._attachment = NULL;
 
     return msg;
 }
@@ -895,52 +895,52 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header)
 {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_F))
-        _z_payload_clear(&msg->payload.fragment);
+        _z_payload_clear(&msg->_payload._fragment);
     else
-        _z_zenoh_message_vec_clear(&msg->payload.messages);
+        _z_zenoh_message_vec_clear(&msg->_payload._messages);
 }
 
 /*------------------ Transport Message ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg)
 {
-    clone->header = msg->header;
-    clone->attachment = msg->attachment;
+    clone->_header = msg->_header;
+    clone->_attachment = msg->_attachment;
 
-    uint8_t mid = _Z_MID(msg->header);
+    uint8_t mid = _Z_MID(msg->_header);
     switch (mid)
     {
     case _Z_MID_SCOUT:
-        // _z_t_msg_copy_scout(&clone->body.scout, &msg->body.scout);
+        // _z_t_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
         break;
     case _Z_MID_HELLO:
-        // _z_t_msg_copy_hello(&clone->body.hello, &msg->body.hello);
+        // _z_t_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
         break;
     case _Z_MID_JOIN:
-        _z_t_msg_copy_join(&clone->body.join, &msg->body.join);
+        _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
         break;
     case _Z_MID_INIT:
-        _z_t_msg_copy_init(&clone->body.init, &msg->body.init);
+        _z_t_msg_copy_init(&clone->_body._init, &msg->_body._init);
         break;
     case _Z_MID_OPEN:
-        _z_t_msg_copy_open(&clone->body.open, &msg->body.open);
+        _z_t_msg_copy_open(&clone->_body._open, &msg->_body._open);
         break;
     case _Z_MID_CLOSE:
-        // _z_t_msg_copy_close(&clone->body.close, &msg->body.close);
+        // _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
         break;
     case _Z_MID_SYNC:
-        // _z_t_msg_copy_sync(&clone->body.sync, (&msg->body.sync);
+        // _z_t_msg_copy_sync(&clone->_body._sync, (&msg->_body._sync);
         break;
     case _Z_MID_ACK_NACK:
-        // _z_t_msg_copy_ack_nack(&clone->body.ack_nack, g->body.ack_nack);
+        // _z_t_msg_copy_ack_nack(&clone->_body._ack_nack, g->body._ack_nack);
         break;
     case _Z_MID_KEEP_ALIVE:
-        // _z_t_msg_copy_keep_alive(&clone->body.keep_alive, >body.keep_alive);
+        // _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, >body._keep_alive);
         break;
     case _Z_MID_PING_PONG:
-        // _z_t_msg_copy_ping_pong(&clone->body.ping_pong, ->body.ping_pong);
+        // _z_t_msg_copy_ping_pong(&clone->_body._ping_pong, ->body._ping_pong);
         break;
     case _Z_MID_FRAME:
-        // _z_t_msg_copy_frame(&clone->body.frame, &msg->body.frame);
+        // _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
         break;
     default:
         _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
@@ -950,47 +950,47 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg)
 
 void _z_t_msg_clear(_z_transport_message_t *msg)
 {
-    if (msg->attachment)
+    if (msg->_attachment)
     {
-        _z_t_msg_clear_attachment(msg->attachment);
-        free(msg->attachment);
+        _z_t_msg_clear_attachment(msg->_attachment);
+        free(msg->_attachment);
     }
 
-    uint8_t mid = _Z_MID(msg->header);
+    uint8_t mid = _Z_MID(msg->_header);
     switch (mid)
     {
     case _Z_MID_SCOUT:
-        _z_t_msg_clear_scout(&msg->body.scout, msg->header);
+        _z_t_msg_clear_scout(&msg->_body._scout, msg->_header);
         break;
     case _Z_MID_HELLO:
-        _z_t_msg_clear_hello(&msg->body.hello, msg->header);
+        _z_t_msg_clear_hello(&msg->_body._hello, msg->_header);
         break;
     case _Z_MID_JOIN:
-        _z_t_msg_clear_join(&msg->body.join, msg->header);
+        _z_t_msg_clear_join(&msg->_body._join, msg->_header);
         break;
     case _Z_MID_INIT:
-        _z_t_msg_clear_init(&msg->body.init, msg->header);
+        _z_t_msg_clear_init(&msg->_body._init, msg->_header);
         break;
     case _Z_MID_OPEN:
-        _z_t_msg_clear_open(&msg->body.open, msg->header);
+        _z_t_msg_clear_open(&msg->_body._open, msg->_header);
         break;
     case _Z_MID_CLOSE:
-        _z_t_msg_clear_close(&msg->body.close, msg->header);
+        _z_t_msg_clear_close(&msg->_body._close, msg->_header);
         break;
     case _Z_MID_SYNC:
-        _z_t_msg_clear_sync(&msg->body.sync, msg->header);
+        _z_t_msg_clear_sync(&msg->_body._sync, msg->_header);
         break;
     case _Z_MID_ACK_NACK:
-        _z_t_msg_clear_ack_nack(&msg->body.ack_nack, msg->header);
+        _z_t_msg_clear_ack_nack(&msg->_body._ack_nack, msg->_header);
         break;
     case _Z_MID_KEEP_ALIVE:
-        _z_t_msg_clear_keep_alive(&msg->body.keep_alive, msg->header);
+        _z_t_msg_clear_keep_alive(&msg->_body._keep_alive, msg->_header);
         break;
     case _Z_MID_PING_PONG:
-        _z_t_msg_clear_ping_pong(&msg->body.ping_pong, msg->header);
+        _z_t_msg_clear_ping_pong(&msg->_body._ping_pong, msg->_header);
         break;
     case _Z_MID_FRAME:
-        _z_t_msg_clear_frame(&msg->body.frame, msg->header);
+        _z_t_msg_clear_frame(&msg->_body._frame, msg->_header);
         return;
     default:
         _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);

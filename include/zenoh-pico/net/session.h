@@ -23,30 +23,30 @@
  */
 typedef struct
 {
-    _z_mutex_t mutex_inner;
+    _z_mutex_t _mutex_inner;
 
     // Session counters // FIXME: move to transport check
-    _z_zint_t resource_id;
-    _z_zint_t entity_id;
-    _z_zint_t pull_id;
-    _z_zint_t query_id;
+    _z_zint_t _resource_id;
+    _z_zint_t _entity_id;
+    _z_zint_t _pull_id;
+    _z_zint_t _query_id;
 
     // Session declarations
-    _z_resource_list_t *local_resources;
-    _z_resource_list_t *remote_resources;
+    _z_resource_list_t *_local_resources;
+    _z_resource_list_t *_remote_resources;
 
     // Session subscriptions
-    _z_subscriber_list_t *local_subscriptions;
-    _z_subscriber_list_t *remote_subscriptions;
+    _z_subscriber_list_t *_local_subscriptions;
+    _z_subscriber_list_t *_remote_subscriptions;
 
     // Session queryables
-    _z_queryable_list_t *local_queryables;
-    _z_pending_query_list_t *pending_queries;
+    _z_queryable_list_t *_local_queryables;
+    _z_pending_query_list_t *_pending_queries;
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
-    _z_transport_t *tp;
-    _z_transport_manager_t *tp_manager;
+    _z_transport_t *_tp;
+    _z_transport_manager_t *_tp_manager;
 } _z_session_t;
 
 /**

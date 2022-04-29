@@ -22,8 +22,8 @@
  */
 typedef struct
 {
-    void *zn;  // FIXME: _z_session_t *zn;
-    _z_zint_t id;
+    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_zint_t _id;
 } z_subscriber_t;
 
 /**

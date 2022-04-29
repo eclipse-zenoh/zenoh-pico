@@ -33,9 +33,9 @@ extern "C" {
 
 typedef struct
 {
-    void *sock;
-    _z_str_t rname; // FIXME: To be replaced by its addr
-    _z_str_t lname; // FIXME: To be replaced by its addr
+    void *_sock;
+    _z_str_t _rname; // FIXME: To be replaced by its addr
+    _z_str_t _lname; // FIXME: To be replaced by its addr
 } _z_bt_socket_t;
 
 void *_z_open_bt(uint8_t mode, _z_str_t lname, _z_str_t rname, uint8_t profile);

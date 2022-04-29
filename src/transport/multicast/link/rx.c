@@ -20,13 +20,14 @@
 
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr)
 {
-    for (; l != NULL; l = l->tail)
+    for (; l != NULL; l = _z_transport_peer_entry_list_tail(l))
     {
-        if (((_z_transport_peer_entry_t *)l->val)->remote_addr.len != remote_addr->len)
+        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+        if (val->_remote_addr.len != remote_addr->len)
             continue;
 
-        if (memcmp(((_z_transport_peer_entry_t *)l->val)->remote_addr.val, remote_addr->val, remote_addr->len) == 0)
-            return l->val;
+        if (memcmp(val->_remote_addr.val, remote_addr->val, remote_addr->len) == 0)
+            return val;
     }
 
     return NULL;
@@ -36,61 +37,61 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
 void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_result_t *r, _z_bytes_t *addr)
 {
     _Z_DEBUG(">> recv session msg\n");
-    r->tag = _Z_RES_OK;
+    r->_tag = _Z_RES_OK;
 
     // Acquire the lock
-    _z_mutex_lock(&ztm->mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_reset(&ztm->zbuf);
+    _z_zbuf_reset(&ztm->_zbuf);
 
-    if (ztm->link->is_streamed == 1)
+    if (ztm->_link->_is_streamed == 1)
     {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE)
+        if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
 
         size_t len = 0;
         for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
-            len |= _z_zbuf_read(&ztm->zbuf) << (i * 8);
+            len |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
 
         _Z_DEBUG(">> \t msg len = %hu\n", len);
-        size_t writable = _z_zbuf_capacity(&ztm->zbuf) - _z_zbuf_len(&ztm->zbuf);
+        size_t writable = _z_zbuf_capacity(&ztm->_zbuf) - _z_zbuf_len(&ztm->_zbuf);
         if (writable < len)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IOBUF_NO_SPACE;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IOBUF_NO_SPACE;
             goto EXIT_SRCV_PROC;
         }
 
         // Read enough bytes to decode the message
-        if (_z_link_recv_exact_zbuf(ztm->link, &ztm->zbuf, len, addr) != len)
+        if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, len, addr) != len)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     }
     else
     {
-        if (_z_link_recv_zbuf(ztm->link, &ztm->zbuf, addr) == SIZE_MAX)
+        if (_z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     }
 
     _Z_DEBUG(">> \t transport_message_decode\n");
-    _z_transport_message_decode_na(&ztm->zbuf, r);
+    _z_transport_message_decode_na(&ztm->_zbuf, r);
 
 EXIT_SRCV_PROC:
     // Release the lock
-    _z_mutex_unlock(&ztm->mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
 }
 
 _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_bytes_t *addr)
@@ -104,11 +105,11 @@ _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *
 int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr)
 {
     // Acquire and keep the lock
-    _z_mutex_lock(&ztm->mutex_peer);
+    _z_mutex_lock(&ztm->_mutex_peer);
 
     // Mark the session that we have received data from this peer
-    _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->peers, addr);
-    switch (_Z_MID(t_msg->header))
+    _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
+    switch (_Z_MID(t_msg->_header))
     {
     case _Z_MID_SCOUT:
     {
@@ -137,58 +138,58 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
     case _Z_MID_JOIN:
     {
         _Z_INFO("Received _Z_JOIN message\n");
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_A))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_A))
         {
-            if (t_msg->body.join.version != Z_PROTO_VERSION)
+            if (t_msg->_body._join._version != Z_PROTO_VERSION)
                 break;
         }
 
         if (entry == NULL) // New peer
         {
             entry = (_z_transport_peer_entry_t *)malloc(sizeof(_z_transport_peer_entry_t));
-            entry->remote_addr = _z_bytes_duplicate(addr);
-            entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.pid);
-            if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_S))
-                entry->sn_resolution = t_msg->body.join.sn_resolution;
+            entry->_remote_addr = _z_bytes_duplicate(addr);
+            entry->_remote_pid = _z_bytes_duplicate(&t_msg->_body._join._pid);
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S))
+                entry->_sn_resolution = t_msg->_body._join._sn_resolution;
             else
-                entry->sn_resolution = Z_SN_RESOLUTION_DEFAULT;
-            entry->sn_resolution_half = entry->sn_resolution / 2;
+                entry->_sn_resolution = Z_SN_RESOLUTION_DEFAULT;
+            entry->_sn_resolution_half = entry->_sn_resolution / 2;
 
-            _z_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
-            _z_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
+            _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
+            _z_conduit_sn_list_decrement(entry->_sn_resolution, &entry->_sn_rx_sns);
 
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
-            entry->dbuf_reliable = _z_wbuf_make(0, 1);
-            entry->dbuf_best_effort = _z_wbuf_make(0, 1);
+            entry->_dbuf_reliable = _z_wbuf_make(0, 1);
+            entry->_dbuf_best_effort = _z_wbuf_make(0, 1);
 #else
-            entry->dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
-            entry->dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
+            entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
+            entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
 #endif
 
             // Update lease time (set as ms during)
-            entry->lease = t_msg->body.join.lease;
-            entry->next_lease = entry->lease;
-            entry->received = 1;
+            entry->_lease = t_msg->_body._join._lease;
+            entry->_next_lease = entry->_lease;
+            entry->_received = 1;
 
-            ztm->peers = _z_transport_peer_entry_list_push(ztm->peers, entry);
+            ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
         }
         else // Existing peer
         {
-            entry->received = 1;
+            entry->_received = 1;
 
             // Check if the sn resolution remains the same
-            if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_S) && (entry->sn_resolution != t_msg->body.join.sn_resolution))
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) && (entry->_sn_resolution != t_msg->_body._join._sn_resolution))
             {
-                _z_transport_peer_entry_list_drop_filter(ztm->peers, _z_transport_peer_entry_eq, entry);
+                _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                 break;
             }
 
             // Update SNs
-            _z_conduit_sn_list_copy(&entry->sn_rx_sns, &t_msg->body.join.next_sns);
-            _z_conduit_sn_list_decrement(entry->sn_resolution, &entry->sn_rx_sns);
+            _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
+            _z_conduit_sn_list_decrement(entry->_sn_resolution, &entry->_sn_rx_sns);
 
             // Update lease time (set as ms during)
-            entry->lease = t_msg->body.join.lease;
+            entry->_lease = t_msg->_body._join._lease;
         }
         break;
     }
@@ -200,13 +201,13 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         if (entry == NULL)
             break;
 
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_I))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I))
         {
             // Check if the Peer ID matches the remote address in the knonw peer list
-            if (entry->remote_pid.len != t_msg->body.close.pid.len || memcmp(entry->remote_pid.val, t_msg->body.close.pid.val, entry->remote_pid.len) != 0)
+            if (entry->_remote_pid.len != t_msg->_body._close._pid.len || memcmp(entry->_remote_pid.val, t_msg->_body._close._pid.val, entry->_remote_pid.len) != 0)
                 break;
         }
-        ztm->peers = _z_transport_peer_entry_list_drop_filter(ztm->peers, _z_transport_peer_entry_eq, entry);
+        ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
 
         break;
     }
@@ -228,7 +229,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         _Z_INFO("Received _Z_KEEP_ALIVE message\n");
         if (entry == NULL)
             break;
-        entry->received = 1;
+        entry->_received = 1;
 
         break;
     }
@@ -244,55 +245,55 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         _Z_INFO("Received _Z_FRAME message\n");
         if (entry == NULL)
             break;
-        entry->received = 1;
+        entry->_received = 1;
 
         // Check if the SN is correct
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_R))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R))
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_z_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.reliable, t_msg->body.frame.sn))
-                entry->sn_rx_sns.val.plain.reliable = t_msg->body.frame.sn;
+            if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn))
+                entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
             else
             {
-                _z_wbuf_clear(&entry->dbuf_reliable);
+                _z_wbuf_clear(&entry->_dbuf_reliable);
                 _Z_INFO("Reliable message dropped because it is out of order");
                 break;
             }
         }
         else
         {
-            if (_z_sn_precedes(entry->sn_resolution_half, entry->sn_rx_sns.val.plain.best_effort, t_msg->body.frame.sn))
-                entry->sn_rx_sns.val.plain.best_effort = t_msg->body.frame.sn;
+            if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._best_effort, t_msg->_body._frame._sn))
+                entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
             else
             {
-                _z_wbuf_clear(&entry->dbuf_best_effort);
+                _z_wbuf_clear(&entry->_dbuf_best_effort);
                 _Z_INFO("Best effort message dropped because it is out of order");
                 break;
             }
         }
 
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_F))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F))
         {
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_R) ? &entry->dbuf_reliable : &entry->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &entry->_dbuf_reliable : &entry->_dbuf_best_effort;
 
             uint8_t drop = 0;
-            if (_z_wbuf_len(dbuf) + t_msg->body.frame.payload.fragment.len > Z_FRAG_MAX_SIZE)
+            if (_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len > Z_FRAG_MAX_SIZE)
             {
                 // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, _z_wbuf_space_left(dbuf));
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, _z_wbuf_space_left(dbuf));
                 drop = 1;
             }
             else
             {
                 // Add the fragment to the defragmentation buffer
-                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, t_msg->_body._frame._payload._fragment.len);
             }
 
             // Check if this is the last fragment
-            if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_E))
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E))
             {
                 // Drop message if it is bigger the max buffer size
                 if (drop == 1)
@@ -306,10 +307,10 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
 
                 // Decode the zenoh message
                 _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(&zbf);
-                if (r_zm.tag == _Z_RES_OK)
+                if (r_zm._tag == _Z_RES_OK)
                 {
-                    _z_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    _z_handle_zenoh_message(ztm->session, &d_zm);
+                    _z_zenoh_message_t d_zm = r_zm._value._zenoh_message;
+                    _z_handle_zenoh_message(ztm->_session, &d_zm);
 
                     // Clear must be explicitly called for fragmented zenoh messages.
                     // Non-fragmented zenoh messages are released when their transport message is released.
@@ -325,9 +326,9 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         else
         {
             // Handle all the zenoh message, one by one
-            unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
+            unsigned int len = _z_vec_len(&t_msg->_body._frame._payload._messages);
             for (unsigned int i = 0; i < len; i++)
-                _z_handle_zenoh_message(ztm->session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
+                _z_handle_zenoh_message(ztm->_session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._payload._messages, i));
         }
         break;
     }
@@ -339,6 +340,6 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
     }
     }
 
-    _z_mutex_unlock(&ztm->mutex_peer);
+    _z_mutex_unlock(&ztm->_mutex_peer);
     return _Z_RES_OK;
 }

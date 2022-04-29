@@ -22,8 +22,8 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     (void)(arg); // Unused argument
 
     printf(">> [Subscription listener] Received (%zu:%s, %.*s)\n",
-           sample->key.rid, sample->key.rname,
-           (int)sample->value.len, sample->value.val);
+           sample->_key._rid, sample->_key._rname,
+           (int)sample->_value.len, sample->_value.val);
 }
 
 int main(int argc, char **argv)
@@ -58,9 +58,9 @@ int main(int argc, char **argv)
 
     printf("Creating Subscriber on '%s'...\n", expr);
     z_subinfo_t subinfo;
-    subinfo.reliability = Z_RELIABILITY_RELIABLE;
-    subinfo.mode = Z_SUBMODE_PULL;
-    subinfo.period = Z_PERIOD_NONE;
+    subinfo._reliability = Z_RELIABILITY_RELIABLE;
+    subinfo._mode = Z_SUBMODE_PULL;
+    subinfo._period = Z_PERIOD_NONE;
     z_owned_subscriber_t sub = z_subscribe(z_loan(&s), z_expr_new(expr), subinfo, data_handler, NULL);
     if (!z_check(&sub))
     {

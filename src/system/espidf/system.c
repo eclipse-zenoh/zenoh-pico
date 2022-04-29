@@ -20,14 +20,14 @@
 // A task function should __not__ simply return.
 typedef struct
 {
-    void *(*fun)(void *);
-    void *arg;
-} _z_task_arg;
+    void *(*_fun)(void *);
+    void *_arg;
+} __z_task_arg;
 
 void z_task_wrapper(void *arg)
 {
-    _z_task_arg *z_arg = (_z_task_arg*)arg;
-    z_arg->fun(z_arg->arg);
+    __z_task_arg *z_arg = (__z_task_arg*)arg;
+    z_arg->_fun(z_arg->_arg);
     vTaskDelete(NULL);
     free(z_arg);
 }
@@ -36,9 +36,9 @@ void z_task_wrapper(void *arg)
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _z_task_arg *z_arg = (_z_task_arg *)malloc(sizeof(_z_task_arg));
-    z_arg->fun = fun;
-    z_arg->arg = arg;
+    __z_task_arg *z_arg = (__z_task_arg *)malloc(sizeof(__z_task_arg));
+    z_arg->_fun = fun;
+    z_arg->_arg = arg;
     if (xTaskCreate(z_task_wrapper, "", 2560, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS)
         return -1;
 
@@ -65,38 +65,38 @@ void _z_task_free(_z_task_t **task)
 }
 
 /*------------------ Mutex ------------------*/
-int _z_mutex_init(pthread_mutex_t *m)
+int _z_mutex_init(_z_mutex_t *m)
 {
     return pthread_mutex_init(m, NULL);
 }
 
-int _z_mutex_free(pthread_mutex_t *m)
+int _z_mutex_free(_z_mutex_t *m)
 {
     return pthread_mutex_destroy(m);
 }
 
-int _z_mutex_lock(pthread_mutex_t *m)
+int _z_mutex_lock(_z_mutex_t *m)
 {
     return pthread_mutex_lock(m);
 }
 
-int _z_mutex_trylock(pthread_mutex_t *m)
+int _z_mutex_trylock(_z_mutex_t *m)
 {
     return pthread_mutex_trylock(m);
 }
 
-int _z_mutex_unlock(pthread_mutex_t *m)
+int _z_mutex_unlock(_z_mutex_t *m)
 {
     return pthread_mutex_unlock(m);
 }
 
 /*------------------ Condvar ------------------*/
-int _z_condvar_init(pthread_cond_t *cv)
+int _z_condvar_init(_z_condvar_t *cv)
 {
     return pthread_cond_init(cv, NULL);
 }
 
-int _z_condvar_free(pthread_cond_t *cv)
+int _z_condvar_free(_z_condvar_t *cv)
 {
     return pthread_cond_destroy(cv);
 }

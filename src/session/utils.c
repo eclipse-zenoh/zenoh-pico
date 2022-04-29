@@ -21,23 +21,23 @@
 _z_reskey_t _z_reskey_duplicate(const _z_reskey_t *reskey)
 {
     _z_reskey_t rk;
-    rk.rid = reskey->rid,
-    rk.rname = reskey->rname ? _z_str_clone(reskey->rname) : NULL;
+    rk._rid = reskey->_rid,
+    rk._rname = reskey->_rname ? _z_str_clone(reskey->_rname) : NULL;
     return rk;
 }
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp)
 {
     _z_timestamp_t ts;
-    _z_bytes_copy(&ts.id, &tstamp->id);
-    ts.time = tstamp->time;
+    _z_bytes_copy(&ts._id, &tstamp->_id);
+    ts._time = tstamp->_time;
     return ts;
 }
 
 void _z_timestamp_reset(_z_timestamp_t *tstamp)
 {
-    _z_bytes_reset(&tstamp->id);
-    tstamp->time = 0;
+    _z_bytes_reset(&tstamp->_id);
+    tstamp->_time = 0;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
@@ -46,25 +46,25 @@ _z_session_t *_z_session_init(void)
     _z_session_t *zn = (_z_session_t *)malloc(sizeof(_z_session_t));
 
     // Initialize the counters to 1
-    zn->entity_id = 1;
-    zn->resource_id = 1;
-    zn->query_id = 1;
-    zn->pull_id = 1;
+    zn->_entity_id = 1;
+    zn->_resource_id = 1;
+    zn->_query_id = 1;
+    zn->_pull_id = 1;
 
     // Initialize the data structs
-    zn->local_resources = NULL;
-    zn->remote_resources = NULL;
-    zn->local_subscriptions = NULL;
-    zn->remote_subscriptions = NULL;
-    zn->local_queryables = NULL;
-    zn->pending_queries = NULL;
+    zn->_local_resources = NULL;
+    zn->_remote_resources = NULL;
+    zn->_local_subscriptions = NULL;
+    zn->_remote_subscriptions = NULL;
+    zn->_local_queryables = NULL;
+    zn->_pending_queries = NULL;
 
     // Associate a transport with the session
-    zn->tp = NULL;
-    zn->tp_manager = _z_transport_manager_init();
+    zn->_tp = NULL;
+    zn->_tp_manager = _z_transport_manager_init();
 
     // Initialize the mutexes
-    _z_mutex_init(&zn->mutex_inner);
+    _z_mutex_init(&zn->_mutex_inner);
 
     return zn;
 }
@@ -74,9 +74,9 @@ void _z_session_free(_z_session_t **zn)
     _z_session_t *ptr = *zn;
 
     // Clean up transports and manager
-    _z_transport_manager_free(&ptr->tp_manager);
-    if (ptr->tp != NULL)
-        _z_transport_free(&ptr->tp);
+    _z_transport_manager_free(&ptr->_tp_manager);
+    if (ptr->_tp != NULL)
+        _z_transport_free(&ptr->_tp);
 
     // Clean up the entities
     _z_flush_resources(ptr);
@@ -85,7 +85,7 @@ void _z_session_free(_z_session_t **zn)
     _z_flush_pending_queries(ptr);
 
     // Clean up the mutexes
-    _z_mutex_free(&ptr->mutex_inner);
+    _z_mutex_free(&ptr->_mutex_inner);
 
     free(ptr);
     *zn = NULL;
@@ -93,7 +93,7 @@ void _z_session_free(_z_session_t **zn)
 
 int _z_session_close(_z_session_t *zn, uint8_t reason)
 {
-    int res = _z_transport_close(zn->tp, reason);
+    int res = _z_transport_close(zn->_tp, reason);
 
     // Free the session
     _z_session_free(&zn);

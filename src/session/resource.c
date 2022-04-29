@@ -17,23 +17,23 @@
 
 int _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this)
 {
-    return this->id == other->id;
+    return this->_id == other->_id;
 }
 
 void _z_resource_clear(_z_resource_t *res)
 {
-    _z_reskey_clear(&res->key);
+    _z_reskey_clear(&res->_key);
 }
 
 /*------------------ Entity ------------------*/
 _z_zint_t _z_get_entity_id(_z_session_t *zn)
 {
-    return zn->entity_id++;
+    return zn->_entity_id++;
 }
 
 _z_zint_t _z_get_resource_id(_z_session_t *zn)
 {
-    return zn->resource_id++;
+    return zn->_resource_id++;
 }
 
 /*------------------ Resource ------------------*/
@@ -42,7 +42,7 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id
     while (xs != NULL)
     {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->id == id)
+        if (r->_id == id)
             return r;
 
         xs = _z_resource_list_tail(xs);
@@ -56,7 +56,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_reskey_t
     while (xs != NULL)
     {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->key.rid == reskey->rid && _z_str_eq(r->key.rname, reskey->rname) == 1)
+        if (r->_key._rid == reskey->_rid && _z_str_eq(r->_key._rname, reskey->_rname) == 1)
             return r;
 
         xs = _z_resource_list_tail(xs);
@@ -73,27 +73,27 @@ _z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_reskey_
     size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (reskey->rname != NULL)
+    if (reskey->_rname != NULL)
     {
-        len += strlen(reskey->rname);
-        strs = _z_str_list_push(strs, reskey->rname);
+        len += strlen(reskey->_rname);
+        strs = _z_str_list_push(strs, reskey->_rname);
     }
 
     // Recursevely go through all the RIDs
-    _z_zint_t id = reskey->rid;
+    _z_zint_t id = reskey->_rid;
     while (id != Z_RESOURCE_ID_NONE)
     {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
         if (res == NULL)
             goto ERR;
 
-        if (res->key.rname != NULL)
+        if (res->_key._rname != NULL)
         {
-            len += strlen(res->key.rname);
-            strs = _z_str_list_push(strs, res->key.rname);
+            len += strlen(res->_key._rname);
+            strs = _z_str_list_push(strs, res->_key._rname);
         }
 
-        id = res->key.rid;
+        id = res->_key._rid;
     }
 
     // Concatenate all the partial resource names
@@ -119,101 +119,101 @@ ERR:
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
 _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t id)
 {
-    _z_resource_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_id(decls, id);
 }
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
 _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
 {
-    _z_resource_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_key(decls, reskey);
 }
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
 _z_str_t __unsafe_z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
 {
-    _z_resource_list_t *decls = is_local ? zn->local_resources : zn->remote_resources;
+    _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_name_from_key(decls, reskey);
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t rid)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, is_local, rid);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, reskey);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }
 
 _z_str_t _z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
     _z_str_t res = __unsafe_z_get_resource_name_from_key(zn, is_local, reskey);
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }
 
 int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
 {
-    _Z_DEBUG(">>> Allocating res decl for (%zu,%lu,%s)\n", res->id, res->key.rid, res->key.rname);
-    _z_mutex_lock(&zn->mutex_inner);
+    _Z_DEBUG(">>> Allocating res decl for (%zu,%lu,%s)\n", res->_id, res->_key.rid, res->_key.rname);
+    _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->id);
+    _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->_id);
     if (r != NULL) // Inconsistent declarations have been found
         goto ERR;
 
     // Register the resource
     if (is_local)
-        zn->local_resources = _z_resource_list_push(zn->local_resources, res);
+        zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
     else
-        zn->remote_resources = _z_resource_list_push(zn->remote_resources, res);
+        zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
 
 ERR:
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
     return -1;
 }
 
 void _z_unregister_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
     if (is_local)
-        zn->local_resources = _z_resource_list_drop_filter(zn->local_resources, _z_resource_eq, res);
+        zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
     else
-        zn->remote_resources = _z_resource_list_drop_filter(zn->remote_resources, _z_resource_eq, res);
+        zn->_remote_resources = _z_resource_list_drop_filter(zn->_remote_resources, _z_resource_eq, res);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
 }
 
 void _z_flush_resources(_z_session_t *zn)
 {
-    _z_mutex_lock(&zn->mutex_inner);
+    _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_resource_list_free(&zn->local_resources);
-    _z_resource_list_free(&zn->remote_resources);
+    _z_resource_list_free(&zn->_local_resources);
+    _z_resource_list_free(&zn->_remote_resources);
 
-    _z_mutex_unlock(&zn->mutex_inner);
+    _z_mutex_unlock(&zn->_mutex_inner);
 }

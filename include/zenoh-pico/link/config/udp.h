@@ -26,13 +26,13 @@
 #define UDP_CONFIG_TOUT_KEY  0x02
 #define UDP_CONFIG_TOUT_STR  "tout"
 
-#define UDP_CONFIG_MAPPING_BUILD        \
-    int argc = 2;                       \
-    _z_str_intmapping_t args[argc];     \
-    args[0].key = UDP_CONFIG_IFACE_KEY; \
-    args[0].str = UDP_CONFIG_IFACE_STR; \
-    args[1].key = UDP_CONFIG_TOUT_KEY;  \
-    args[1].str = UDP_CONFIG_TOUT_STR;
+#define UDP_CONFIG_MAPPING_BUILD         \
+    int argc = 2;                        \
+    _z_str_intmapping_t args[argc];      \
+    args[0]._key = UDP_CONFIG_IFACE_KEY; \
+    args[0]._str = UDP_CONFIG_IFACE_STR; \
+    args[1]._key = UDP_CONFIG_TOUT_KEY;  \
+    args[1]._str = UDP_CONFIG_TOUT_STR;
 
 size_t _z_udp_config_strlen(const _z_str_intmap_t *s);
 

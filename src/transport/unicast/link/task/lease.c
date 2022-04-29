@@ -31,41 +31,41 @@ void *_zp_unicast_lease_task(void *arg)
 {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
 
-    ztu->lease_task_running = 1;
-    ztu->received = 0;
-    ztu->transmitted = 0;
+    ztu->_lease_task_running = 1;
+    ztu->_received = 0;
+    ztu->_transmitted = 0;
 
-    _z_zint_t next_lease = ztu->lease;
-    _z_zint_t next_keep_alive = ztu->lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
-    while (ztu->lease_task_running)
+    _z_zint_t next_lease = ztu->_lease;
+    _z_zint_t next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+    while (ztu->_lease_task_running)
     {
         if (next_lease <= 0)
         {
             // Check if received data
-            if (ztu->received == 1)
+            if (ztu->_received == 1)
             {
                 // Reset the lease parameters
-                ztu->received = 0;
+                ztu->_received = 0;
             }
             else
             {
-                _Z_INFO("Closing session because it has expired after %zums\n", ztu->lease);
+                _Z_INFO("Closing session because it has expired after %zums\n", ztu->_lease);
                 _z_transport_unicast_close(ztu, _Z_CLOSE_EXPIRED);
                 return 0;
             }
 
-            next_lease = ztu->lease;
+            next_lease = ztu->_lease;
         }
 
         if (next_keep_alive <= 0)
         {
             // Check if need to send a keep alive
-            if (ztu->transmitted == 0)
+            if (ztu->_transmitted == 0)
                 _zp_unicast_send_keep_alive(ztu);
 
             // Reset the keep alive parameters
-            ztu->transmitted = 0;
-            next_keep_alive = ztu->lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+            ztu->_transmitted = 0;
+            next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
         }
 
         // Compute the target interval

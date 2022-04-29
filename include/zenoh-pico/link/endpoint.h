@@ -36,9 +36,9 @@
 #define LOCATOR_METADATA_SEPARATOR '?'
 typedef struct
 {
-    _z_str_t protocol;
-    _z_str_t address;
-    _z_str_intmap_t metadata;
+    _z_str_t _protocol;
+    _z_str_t _address;
+    _z_str_intmap_t _metadata;
 } _z_locator_t;
 
 _Z_RESULT_DECLARE(_z_locator_t, locator)
@@ -61,8 +61,8 @@ _Z_RESULT_DECLARE(_z_locator_array_t, locator_array)
 
 typedef struct
 {
-    _z_locator_t locator;
-    _z_str_intmap_t config;
+    _z_locator_t _locator;
+    _z_str_intmap_t _config;
 } _z_endpoint_t;
 _Z_RESULT_DECLARE(_z_endpoint_t, endpoint)
 

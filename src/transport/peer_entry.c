@@ -17,28 +17,28 @@
 
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src)
 {
-    _z_wbuf_clear(&src->dbuf_reliable);
-    _z_wbuf_clear(&src->dbuf_best_effort);
+    _z_wbuf_clear(&src->_dbuf_reliable);
+    _z_wbuf_clear(&src->_dbuf_best_effort);
 
-    _z_bytes_clear(&src->remote_pid);
-    _z_bytes_clear(&src->remote_addr);
+    _z_bytes_clear(&src->_remote_pid);
+    _z_bytes_clear(&src->_remote_addr);
 }
 
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src)
 {
-    _z_wbuf_copy(&dst->dbuf_reliable, &src->dbuf_reliable);
-    _z_wbuf_copy(&dst->dbuf_best_effort, &src->dbuf_best_effort);
+    _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
+    _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
 
-    dst->sn_resolution = src->sn_resolution;
-    dst->sn_resolution_half = src->sn_resolution_half;
-    _z_conduit_sn_list_copy(&dst->sn_rx_sns, &src->sn_rx_sns);
+    dst->_sn_resolution = src->_sn_resolution;
+    dst->_sn_resolution_half = src->_sn_resolution_half;
+    _z_conduit_sn_list_copy(&dst->_sn_rx_sns, &src->_sn_rx_sns);
 
-    dst->lease = src->lease;
-    dst->next_lease = src->next_lease;
-    dst->received = src->received;
+    dst->_lease = src->_lease;
+    dst->_next_lease = src->_next_lease;
+    dst->_received = src->_received;
 
-    _z_bytes_copy(&dst->remote_pid, &src->remote_pid);
-    _z_bytes_copy(&dst->remote_addr, &src->remote_addr);
+    _z_bytes_copy(&dst->_remote_pid, &src->_remote_pid);
+    _z_bytes_copy(&dst->_remote_addr, &src->_remote_addr);
 }
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src)
@@ -49,10 +49,10 @@ size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src)
 
 int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right)
 {
-    if (left->remote_pid.len != right->remote_pid.len)
+    if (left->_remote_pid.len != right->_remote_pid.len)
         return 0; // False
 
-    if (memcmp(left->remote_pid.val, right->remote_pid.val, left->remote_pid.len) != 0)
+    if (memcmp(left->_remote_pid.val, right->_remote_pid.val, left->_remote_pid.len) != 0)
         return 0; // False
 
     return 1; // True

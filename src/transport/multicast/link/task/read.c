@@ -20,11 +20,11 @@ int _zp_multicast_read(_z_transport_multicast_t *ztm)
 {
     _z_bytes_t addr;
     _z_transport_message_result_t r_s = _z_multicast_recv_t_msg(ztm, &addr);
-    if (r_s.tag == _Z_RES_ERR)
+    if (r_s._tag == _Z_RES_ERR)
         goto ERR;
 
-    int res = _z_multicast_handle_transport_message(ztm, &r_s.value.transport_message, &addr);
-    _z_t_msg_clear(&r_s.value.transport_message);
+    int res = _z_multicast_handle_transport_message(ztm, &r_s._value._transport_message, &addr);
+    _z_t_msg_clear(&r_s._value._transport_message);
 
     return res;
 
@@ -36,27 +36,27 @@ void *_zp_multicast_read_task(void *arg)
 {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
 
-    ztm->read_task_running = 1;
+    ztm->_read_task_running = 1;
 
     _z_transport_message_result_t r;
 
     // Acquire and keep the lock
-    _z_mutex_lock(&ztm->mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_reset(&ztm->zbuf);
+    _z_zbuf_reset(&ztm->_zbuf);
 
     _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
-    while (ztm->read_task_running)
+    while (ztm->_read_task_running)
     {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (ztm->link->is_streamed == 1)
+        if (ztm->_link->_is_streamed == 1)
         {
-            if (_z_zbuf_len(&ztm->zbuf) < _Z_MSG_LEN_ENC_SIZE)
+            if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE)
             {
-                _z_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
-                if (_z_zbuf_len(&ztm->zbuf) < _Z_MSG_LEN_ENC_SIZE)
+                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
+                if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE)
                 {
                     _z_bytes_clear(&addr);
                     continue;
@@ -64,40 +64,40 @@ void *_zp_multicast_read_task(void *arg)
             }
 
             for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
-                to_read |= _z_zbuf_read(&ztm->zbuf) << (i * 8);
+                to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
 
-            if (_z_zbuf_len(&ztm->zbuf) < to_read)
+            if (_z_zbuf_len(&ztm->_zbuf) < to_read)
             {
-                _z_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
-                if (_z_zbuf_len(&ztm->zbuf) < to_read)
+                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, NULL);
+                if (_z_zbuf_len(&ztm->_zbuf) < to_read)
                 {
-                    _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                    _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     continue;
                 }
             }
         }
         else
         {
-            to_read = _z_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
+            to_read = _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
             if (to_read == SIZE_MAX)
                 continue;
         }
 
         // Wrap the main buffer for to_read bytes
-        _z_zbuf_t zbuf = _z_zbuf_view(&ztm->zbuf, to_read);
+        _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
         while (_z_zbuf_len(&zbuf) > 0)
         {
             // Decode one session message
             _z_transport_message_decode_na(&zbuf, &r);
 
-            if (r.tag == _Z_RES_OK)
+            if (r._tag == _Z_RES_OK)
             {
-                int res = _z_multicast_handle_transport_message(ztm, &r.value.transport_message, &addr);
+                int res = _z_multicast_handle_transport_message(ztm, &r._value._transport_message, &addr);
 
                 if (res == _Z_RES_OK)
                 {
-                    _z_t_msg_clear(&r.value.transport_message);
+                    _z_t_msg_clear(&r._value._transport_message);
                     _z_bytes_clear(&addr);
                 }
                 else
@@ -111,16 +111,16 @@ void *_zp_multicast_read_task(void *arg)
         }
 
         // Move the read position of the read buffer
-        _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) + to_read);
-        _z_zbuf_compact(&ztm->zbuf);
+        _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
+        _z_zbuf_compact(&ztm->_zbuf);
     }
 
 EXIT_RECV_LOOP:
     if (ztm)
     {
-        ztm->read_task_running = 0;
+        ztm->_read_task_running = 0;
         // Release the lock
-        _z_mutex_unlock(&ztm->mutex_rx);
+        _z_mutex_unlock(&ztm->_mutex_rx);
     }
 
     return 0;

@@ -37,35 +37,35 @@ _z_zint_t _z_sn_decrement(const _z_zint_t sn_resolution, const _z_zint_t sn)
 
 void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list_t *src)
 {
-    dst->is_qos = src->is_qos;
-    if (dst->is_qos == 0)
+    dst->_is_qos = src->_is_qos;
+    if (dst->_is_qos == 0)
     {
-        dst->val.plain.best_effort = src->val.plain.best_effort;
-        dst->val.plain.reliable = src->val.plain.reliable;
+        dst->_val._plain._best_effort = src->_val._plain._best_effort;
+        dst->_val._plain._reliable = src->_val._plain._reliable;
     }
     else
     {
         for (int i = 0; i < Z_PRIORITIES_NUM; i++)
         {
-            dst->val.qos[i].best_effort = src->val.qos[i].best_effort;
-            dst->val.qos[i].reliable = src->val.qos[i].reliable;
+            dst->_val._qos[i]._best_effort = src->_val._qos[i]._best_effort;
+            dst->_val._qos[i]._reliable = src->_val._qos[i]._reliable;
         }
     }
 }
 
 void _z_conduit_sn_list_decrement(const _z_zint_t sn_resolution, _z_conduit_sn_list_t *sns)
 {
-    if (sns->is_qos == 0)
+    if (sns->_is_qos == 0)
     {
-        sns->val.plain.best_effort = _z_sn_decrement(sn_resolution, sns->val.plain.best_effort);
-        sns->val.plain.reliable = _z_sn_decrement(sn_resolution, sns->val.plain.reliable);
+        sns->_val._plain._best_effort = _z_sn_decrement(sn_resolution, sns->_val._plain._best_effort);
+        sns->_val._plain._reliable = _z_sn_decrement(sn_resolution, sns->_val._plain._reliable);
     }
     else
     {
         for (int i = 0; i < Z_PRIORITIES_NUM; i++)
         {
-            sns->val.qos[i].best_effort = _z_sn_decrement(sn_resolution, sns->val.qos[i].best_effort);
-            sns->val.qos[i].best_effort = _z_sn_decrement(sn_resolution, sns->val.qos[i].reliable);
+            sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._best_effort);
+            sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._reliable);
         }
     }
 }

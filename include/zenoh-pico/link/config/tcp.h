@@ -24,11 +24,11 @@
 #define TCP_CONFIG_TOUT_KEY  0x01
 #define TCP_CONFIG_TOUT_STR  "tout"
 
-#define TCP_CONFIG_MAPPING_BUILD       \
-    int argc = 1;                      \
-    _z_str_intmapping_t args[argc];    \
-    args[0].key = TCP_CONFIG_TOUT_KEY; \
-    args[0].str = TCP_CONFIG_TOUT_STR;
+#define TCP_CONFIG_MAPPING_BUILD        \
+    int argc = 1;                       \
+    _z_str_intmapping_t args[argc];     \
+    args[0]._key = TCP_CONFIG_TOUT_KEY; \
+    args[0]._str = TCP_CONFIG_TOUT_STR;
 
 size_t _z_tcp_config_strlen(const _z_str_intmap_t *s);
 

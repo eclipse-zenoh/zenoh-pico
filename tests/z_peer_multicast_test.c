@@ -39,9 +39,9 @@ void data_handler(const z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->value.len == MSG_LEN);
-    assert(strlen(sample->key.rname) == strlen(res));
-    assert(strncmp(res, sample->key.rname, strlen(res)) == 0);
+    assert(sample->_value.len == MSG_LEN);
+    assert(strlen(sample->_key._rname) == strlen(res));
+    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -64,7 +64,7 @@ int main(int argc, _z_str_t *argv)
 
     z_owned_session_t s1 = z_open(z_move(&config));
     assert(z_check(&s1));
-    z_string_t pid1 = _z_string_from_bytes(&z_loan(&s1)->tp_manager->local_pid);
+    z_string_t pid1 = _z_string_from_bytes(&z_loan(&s1)->_tp_manager->_local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     _z_string_clear(&pid1);
 
@@ -80,7 +80,7 @@ int main(int argc, _z_str_t *argv)
 
     z_owned_session_t s2 = z_open(z_move(&config));
     assert(z_check(&s2));
-    z_string_t pid2 = _z_string_from_bytes(&z_loan(&s2)->tp_manager->local_pid);
+    z_string_t pid2 = _z_string_from_bytes(&z_loan(&s2)->_tp_manager->_local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     _z_string_clear(&pid2);
 
@@ -98,7 +98,7 @@ int main(int argc, _z_str_t *argv)
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
         *sub = z_subscribe(z_loan(&s2), z_expr_new(s1_res), z_subinfo_default(), data_handler, &idx[i]);
         assert(z_check(sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->value->id, (z_zint_t)0, s1_res);
+        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -144,7 +144,7 @@ int main(int argc, _z_str_t *argv)
     while (subs2)
     {
         z_owned_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
-        printf("Undeclared subscriber on session 2: %zu\n", sub->value->id);
+        printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)->_id);
         z_subscriber_close(z_move(sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }

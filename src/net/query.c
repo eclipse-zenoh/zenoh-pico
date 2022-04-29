@@ -16,33 +16,33 @@
 
 _z_consolidation_strategy_t _z_consolidation_strategy_default(void)
 {
-    _z_consolidation_strategy_t qc = { .first_routers = Z_CONSOLIDATION_MODE_LAZY,
-                                      .last_router = Z_CONSOLIDATION_MODE_LAZY,
-                                      .reception = Z_CONSOLIDATION_MODE_FULL };
+    _z_consolidation_strategy_t qc = { ._first_routers = Z_CONSOLIDATION_MODE_LAZY,
+                                       ._last_router = Z_CONSOLIDATION_MODE_LAZY,
+                                       ._reception = Z_CONSOLIDATION_MODE_FULL };
     return qc;
 }
 
 _z_consolidation_strategy_t _z_consolidation_strategy_none(void)
 {
-    _z_consolidation_strategy_t qc = { .first_routers = Z_CONSOLIDATION_MODE_NONE,
-                                      .last_router = Z_CONSOLIDATION_MODE_NONE,
-                                      .reception = Z_CONSOLIDATION_MODE_NONE };
+    _z_consolidation_strategy_t qc = { ._first_routers = Z_CONSOLIDATION_MODE_NONE,
+                                       ._last_router = Z_CONSOLIDATION_MODE_NONE,
+                                       ._reception = Z_CONSOLIDATION_MODE_NONE };
     return qc;
 }
 
 _z_string_t _z_query_predicate(const z_query_t *query)
 {
     _z_string_t s;
-    s.len = strlen(query->predicate);
-    s.val = query->predicate;
+    s.len = strlen(query->_predicate);
+    s.val = query->_predicate;
     return s;
 }
 
 _z_string_t _z_query_res_name(const z_query_t *query)
 {
     _z_string_t s;
-    s.len = strlen(query->rname);
-    s.val = query->rname;
+    s.len = strlen(query->_rname);
+    s.val = query->_rname;
     return s;
 }
 
@@ -54,7 +54,7 @@ _z_target_t z_target_default(void)
 _z_query_target_t _z_query_target_default(void)
 {
     _z_query_target_t qt;
-    qt.kind = Z_QUERYABLE_ALL_KINDS;
-    qt.target = z_target_default();
+    qt._kind = Z_QUERYABLE_ALL_KINDS;
+    qt._target = z_target_default();
     return qt;
 }

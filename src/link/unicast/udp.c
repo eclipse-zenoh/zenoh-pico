@@ -71,12 +71,12 @@ int _z_f_link_open_udp_unicast(void *arg)
     _z_link_t *self = (_z_link_t *)arg;
 
     clock_t timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    _z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
+    _z_str_t tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtof(tout, NULL);
 
-    self->socket.udp.sock = _z_open_udp_unicast(self->socket.udp.raddr, timeout);
-    if (self->socket.udp.sock < 0)
+    self->_socket._udp._sock = _z_open_udp_unicast(self->_socket._udp._raddr, timeout);
+    if (self->_socket._udp._sock < 0)
         goto ERR;
 
     return 0;
@@ -90,12 +90,12 @@ int _z_f_link_listen_udp_unicast(void *arg)
     _z_link_t *self = (_z_link_t *)arg;
 
     clock_t timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    _z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
+    _z_str_t tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtof(tout, NULL);
 
-    self->socket.udp.sock = _z_listen_udp_unicast(self->socket.udp.raddr, timeout);
-    if (self->socket.udp.sock < 0)
+    self->_socket._udp._sock = _z_listen_udp_unicast(self->_socket._udp._raddr, timeout);
+    if (self->_socket._udp._sock < 0)
         goto ERR;
 
     return 0;
@@ -108,28 +108,28 @@ void _z_f_link_close_udp_unicast(void *arg)
 {
     _z_link_t *self = (_z_link_t *)arg;
 
-    _z_close_udp_unicast(self->socket.udp.sock);
+    _z_close_udp_unicast(self->_socket._udp._sock);
 }
 
 void _z_f_link_free_udp_unicast(void *arg)
 {
     _z_link_t *self = (_z_link_t *)arg;
 
-    _z_free_endpoint_udp(self->socket.udp.raddr);
+    _z_free_endpoint_udp(self->_socket._udp._raddr);
 }
 
 size_t _z_f_link_write_udp_unicast(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _z_link_t *self = (const _z_link_t *)arg;
 
-    return _z_send_udp_unicast(self->socket.udp.sock, ptr, len, self->socket.udp.raddr);
+    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._raddr);
 }
 
 size_t _z_f_link_write_all_udp_unicast(const void *arg, const uint8_t *ptr, size_t len)
 {
     const _z_link_t *self = (const _z_link_t *)arg;
 
-    return _z_send_udp_unicast(self->socket.udp.sock, ptr, len, self->socket.udp.raddr);
+    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._raddr);
 }
 
 size_t _z_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr)
@@ -137,7 +137,7 @@ size_t _z_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len, _z_
     (void) (addr);
     const _z_link_t *self = (const _z_link_t *)arg;
 
-    return _z_read_udp_unicast(self->socket.udp.sock, ptr, len);
+    return _z_read_udp_unicast(self->_socket._udp._sock, ptr, len);
 }
 
 size_t _z_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr)
@@ -145,7 +145,7 @@ size_t _z_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t le
     (void) (addr);
     const _z_link_t *self = (const _z_link_t *)arg;
 
-    return _z_read_exact_udp_unicast(self->socket.udp.sock, ptr, len);
+    return _z_read_exact_udp_unicast(self->_socket._udp._sock, ptr, len);
 }
 
 uint16_t _z_get_link_mtu_udp_unicast(void)
@@ -158,31 +158,31 @@ _z_link_t *_z_new_link_udp_unicast(_z_endpoint_t endpoint)
 {
     _z_link_t *lt = (_z_link_t *)malloc(sizeof(_z_link_t));
 
-    lt->is_reliable = 0;
-    lt->is_streamed = 0;
-    lt->is_multicast = 0;
-    lt->mtu = _z_get_link_mtu_udp_unicast();
+    lt->_is_reliable = 0;
+    lt->_is_streamed = 0;
+    lt->_is_multicast = 0;
+    lt->_mtu = _z_get_link_mtu_udp_unicast();
 
-    lt->endpoint = endpoint;
+    lt->_endpoint = endpoint;
 
-    lt->socket.udp.sock = -1;
-    lt->socket.udp.msock = -1;
-    _z_str_t s_addr = _z_parse_address_segment_udp_unicast(endpoint.locator.address);
-    _z_str_t s_port = _z_parse_port_segment_udp_unicast(endpoint.locator.address);
-    lt->socket.udp.raddr = _z_create_endpoint_udp(s_addr, s_port);
-    lt->socket.udp.laddr = NULL;
+    lt->_socket._udp._sock = -1;
+    lt->_socket._udp._msock = -1;
+    _z_str_t s_addr = _z_parse_address_segment_udp_unicast(endpoint._locator._address);
+    _z_str_t s_port = _z_parse_port_segment_udp_unicast(endpoint._locator._address);
+    lt->_socket._udp._raddr = _z_create_endpoint_udp(s_addr, s_port);
+    lt->_socket._udp._laddr = NULL;
     free(s_addr);
     free(s_port);
 
-    lt->open_f = _z_f_link_open_udp_unicast;
-    lt->listen_f = _z_f_link_listen_udp_unicast;
-    lt->close_f = _z_f_link_close_udp_unicast;
-    lt->free_f = _z_f_link_free_udp_unicast;
+    lt->_open_f = _z_f_link_open_udp_unicast;
+    lt->_listen_f = _z_f_link_listen_udp_unicast;
+    lt->_close_f = _z_f_link_close_udp_unicast;
+    lt->_free_f = _z_f_link_free_udp_unicast;
 
-    lt->write_f = _z_f_link_write_udp_unicast;
-    lt->write_all_f = _z_f_link_write_all_udp_unicast;
-    lt->read_f = _z_f_link_read_udp_unicast;
-    lt->read_exact_f = _z_f_link_read_exact_udp_unicast;
+    lt->_write_f = _z_f_link_write_udp_unicast;
+    lt->_write_all_f = _z_f_link_write_all_udp_unicast;
+    lt->_read_f = _z_f_link_read_udp_unicast;
+    lt->_read_exact_f = _z_f_link_read_exact_udp_unicast;
 
     return lt;
 }

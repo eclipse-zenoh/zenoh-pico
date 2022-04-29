@@ -48,14 +48,14 @@ int main(int argc, char **argv)
 
     printf("Sending Query '%s'...\n", expr);
     z_query_target_t target = z_query_target_default();
-    target.target = Z_TARGET_ALL;
+    target._target = Z_TARGET_ALL;
     z_owned_reply_data_array_t replies = z_get_collect(z_loan(&s), z_expr_new(expr), "", target, z_query_consolidation_default());
 
-    for (unsigned int i = 0; i < replies.value->len; ++i)
+    for (unsigned int i = 0; i < z_loan(&replies)->_len; ++i)
     {
         printf(">> Received ('%s': '%.*s')\n",
-               replies.value->val[i].data.key.rname,
-               (int)replies.value->val[i].data.value.len, replies.value->val[i].data.value.val);
+               z_loan(&replies)->_val[i]._sample._key._rname,
+               (int)z_loan(&replies)->_val[i]._sample._value.len, z_loan(&replies)->_val[i]._sample._value.val);
     }
     z_reply_data_array_clear(z_move(&replies));
 

@@ -55,8 +55,8 @@ typedef size_t _z_zint_t;
  */
 typedef struct
 {
-    _z_zint_t prefix;
-    _z_str_t suffix;
+    _z_zint_t _prefix;
+    _z_str_t _suffix;
 } _z_encoding_t;
 
 /**
@@ -64,8 +64,8 @@ typedef struct
  */
 typedef struct
 {
-    uint64_t time;
-    _z_bytes_t id;
+    uint64_t _time;
+    _z_bytes_t _id;
 } _z_timestamp_t;
 
 /**
@@ -77,8 +77,8 @@ typedef struct
  */
 typedef struct
 {
-    _z_zint_t rid;
-    _z_str_t rname;
+    _z_zint_t _rid;
+    _z_str_t _rname;
 } _z_reskey_t;
 
 /**
@@ -93,9 +93,9 @@ typedef struct
  */
 typedef struct
 {
-    _z_reskey_t key;
-    _z_bytes_t value;
-    _z_encoding_t encoding;
+    _z_reskey_t _key;
+    _z_bytes_t _value;
+    _z_encoding_t _encoding;
 } _z_sample_t;
 
 /**
@@ -108,23 +108,13 @@ typedef struct
  */
 typedef struct
 {
-    unsigned int whatami;
-    _z_bytes_t pid;
-    _z_str_array_t locators;
+    unsigned int _whatami;
+    _z_bytes_t _pid;
+    _z_str_array_t _locators;
 } _z_hello_t;
-
-/**
- * An array of :c:struct:`_z_hello_t` messages.
- *
- * Members:
- *   size_t len: The length of the array.
- *   const _z_hello_t *val: A pointer to the array.
- */
-typedef struct
-{
-    const _z_hello_t *val;
-    size_t len;
-} _z_hello_array_t;
+void _z_hello_clear(_z_hello_t *src);
+_Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
+_Z_ARRAY_DEFINE(_z_hello, _z_hello_t)
 
 /**
  * The possible values of :c:member:`_z_target_t.tag`.
@@ -145,7 +135,7 @@ typedef enum
 
 typedef struct
 {
-    _z_zint_t n;
+    _z_zint_t _n;
 } _z_target_complete_body_t;
 
 /**
@@ -157,13 +147,13 @@ typedef struct
  */
 typedef struct
 {
-    unsigned int kind;
-    _z_target_t target;
+    unsigned int _kind;
+    _z_target_t _target;
     union
     {
-        _z_target_complete_body_t complete;
-    } type;
-    
+        _z_target_complete_body_t _complete;
+    } _type;
+
 } _z_query_target_t;
 
 /**
@@ -188,9 +178,9 @@ typedef enum
  */
 typedef struct
 {
-    unsigned int origin;
-    unsigned int period;
-    unsigned int duration;
+    unsigned int _origin;
+    unsigned int _period;
+    unsigned int _duration;
 } _z_period_t;
 
 /**
@@ -215,9 +205,9 @@ typedef enum
  */
 typedef struct
 {
-    z_reliability_t reliability;
-    _z_submode_t mode;
-    _z_period_t period;
+    z_reliability_t _reliability;
+    _z_submode_t _mode;
+    _z_period_t _period;
 } _z_subinfo_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

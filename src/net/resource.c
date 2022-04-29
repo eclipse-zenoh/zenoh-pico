@@ -17,18 +17,18 @@
 _z_reskey_t _z_rid(unsigned long rid)
 {
     _z_reskey_t rk;
-    rk.rid = rid;
-    rk.rname = NULL;
+    rk._rid = rid;
+    rk._rname = NULL;
     return rk;
 }
 
 _z_reskey_t _z_rname(const _z_str_t rname)
 {
     _z_reskey_t rk;
-    rk.rid = Z_RESOURCE_ID_NONE;
-    rk.rname = NULL;
+    rk._rid = Z_RESOURCE_ID_NONE;
+    rk._rname = NULL;
     if (rname != NULL)
-        rk.rname = _z_str_clone(rname);
+        rk._rname = _z_str_clone(rname);
 
     return rk;
 }
@@ -36,10 +36,10 @@ _z_reskey_t _z_rname(const _z_str_t rname)
 _z_reskey_t _z_rid_with_suffix(unsigned long rid, const _z_str_t suffix)
 {
     _z_reskey_t rk;
-    rk.rid = rid;
-    rk.rname = NULL;
+    rk._rid = rid;
+    rk._rname = NULL;
     if (suffix != NULL)
-        rk.rname = _z_str_clone(suffix);
+        rk._rname = _z_str_clone(suffix);
 
     return rk;
 }

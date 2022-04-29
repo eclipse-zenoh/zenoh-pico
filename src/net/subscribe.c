@@ -17,8 +17,8 @@
 _z_subinfo_t _z_subinfo_default()
 {
     _z_subinfo_t si;
-    si.reliability = Z_RELIABILITY_RELIABLE;
-    si.mode = Z_SUBMODE_PUSH;
-    si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
+    si._reliability = Z_RELIABILITY_RELIABLE;
+    si._mode = Z_SUBMODE_PUSH;
+    si._period = (_z_period_t){._origin = 0, ._period = 0, ._duration = 0};
     return si;
 }

@@ -34,10 +34,10 @@ typedef struct
         __Z_SOCKET_BRIDGE_ERROR = 255,
     } state;
 
-    char *buffer;
-    char *buffer_current;
-    uint16_t buffer_lenght;
-    uint16_t buffer_available;
+    char *_buffer;
+    char *_buffer_current;
+    uint16_t _buffer_lenght;
+    uint16_t _buffer_available;
 } __z_wifi_socket_t;
 
 int _z_wifi_socket_eq(const __z_wifi_socket_t *one, const __z_wifi_socket_t *two)

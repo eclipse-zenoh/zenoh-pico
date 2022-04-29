@@ -18,26 +18,26 @@
 _z_list_t *_z_list_of(void *x)
 {
     _z_list_t *xs = (_z_list_t *)malloc(sizeof(_z_list_t));
-    xs->val = x;
-    xs->tail = NULL;
+    xs->_val = x;
+    xs->_tail = NULL;
     return xs;
 }
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x)
 {
     _z_list_t *lst = _z_list_of(x);
-    lst->tail = xs;
+    lst->_tail = xs;
     return lst;
 }
 
 void *_z_list_head(const _z_list_t *xs)
 {
-    return xs->val;
+    return xs->_val;
 }
 
 _z_list_t *_z_list_tail(const _z_list_t *xs)
 {
-    return xs->tail;
+    return xs->_tail;
 }
 
 size_t _z_list_len(const _z_list_t *xs)
@@ -60,8 +60,8 @@ int _z_list_is_empty(const _z_list_t *xs)
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f)
 {
     _z_list_t *head = xs;
-    xs = head->tail;
-    f_f(&head->val);
+    xs = head->_tail;
+    f_f(&head->_val);
     free(head);
 
     return xs;
@@ -87,37 +87,37 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
     while (current != NULL)
     {
-        if (c_f(left, current->val))
+        if (c_f(left, current->_val))
         {
             _z_list_t *this = current;
 
             // head removal
             if (this == xs)
             {
-                xs = xs->tail;
+                xs = xs->_tail;
                 previous = xs;
             }
             // tail removal
-            else if (this->tail == NULL)
+            else if (this->_tail == NULL)
             {
-                previous->tail = NULL;
+                previous->_tail = NULL;
             }
             // middle removal
             else
             {
-                previous->tail = this->tail;
+                previous->_tail = this->_tail;
             }
 
-            current = this->tail;
+            current = this->_tail;
 
-            f_f(&this->val);
+            f_f(&this->_val);
             free(this);
             return xs;
         }
         else
         {
             previous = current;
-            current = current->tail;
+            current = current->_tail;
         }
     }
 

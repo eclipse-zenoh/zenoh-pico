@@ -24,7 +24,7 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl)
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE);
     _z_zbuf_reset(&zbf);
 
-    if (zl->is_streamed == 1)
+    if (zl->_is_streamed == 1)
     {
         // Read the message length
         if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE)
@@ -49,18 +49,18 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl)
     }
 
     _z_transport_message_result_t res = _z_transport_message_decode(&zbf);
-    if (res.tag == _Z_RES_ERR)
+    if (res._tag == _Z_RES_ERR)
         goto ERR;
 
-    _z_t_msg_copy(&ret.value.transport_message, &res.value.transport_message);
+    _z_t_msg_copy(&ret._value._transport_message, &res._value._transport_message);
 
     _z_zbuf_clear(&zbf);
-    ret.tag = _Z_RES_OK;
+    ret._tag = _Z_RES_OK;
     return ret;
 
 ERR:
     _z_zbuf_clear(&zbf);
 
-    ret.tag = _Z_RES_ERR;
+    ret._tag = _Z_RES_ERR;
     return ret;
 }

@@ -197,8 +197,8 @@ void _z_payload_clear(_z_payload_t *p);
 //
 typedef struct
 {
-    _z_payload_t payload;
-    uint8_t header;
+    _z_payload_t _payload;
+    uint8_t _header;
 } _z_attachment_t;
 void _z_t_msg_clear_attachment(_z_attachment_t *a);
 
@@ -223,10 +223,10 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 //
 typedef struct
 {
-    _z_zint_t qid;
-    _z_zint_t replier_kind;
-    _z_bytes_t replier_id;
-    uint8_t header;
+    _z_zint_t _qid;
+    _z_zint_t _replier_kind;
+    _z_bytes_t _replier_id;
+    uint8_t _header;
 } _z_reply_context_t;
 void _z_msg_clear_reply_context(_z_reply_context_t *rc);
 
@@ -268,8 +268,8 @@ void _z_reskey_free(_z_reskey_t **rk);
 //
 typedef struct
 {
-    _z_zint_t id;
-    _z_reskey_t key;
+    _z_zint_t _id;
+    _z_reskey_t _key;
 } _z_res_decl_t;
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 
@@ -283,7 +283,7 @@ void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 //
 typedef struct
 {
-    _z_zint_t rid;
+    _z_zint_t _rid;
 } _z_forget_res_decl_t;
 void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
 
@@ -297,7 +297,7 @@ void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t key;
+    _z_reskey_t _key;
 } _z_pub_decl_t;
 void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 
@@ -311,7 +311,7 @@ void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t key;
+    _z_reskey_t _key;
 } _z_forget_pub_decl_t;
 void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
 
@@ -339,8 +339,8 @@ void _z_subinfo_clear(_z_subinfo_t *si);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_subinfo_t subinfo;
+    _z_reskey_t _key;
+    _z_subinfo_t _subinfo;
 } _z_sub_decl_t;
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
 
@@ -354,7 +354,7 @@ void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t key;
+    _z_reskey_t _key;
 } _z_forget_sub_decl_t;
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 
@@ -372,10 +372,10 @@ void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_zint_t kind;
-    _z_zint_t complete;
-    _z_zint_t distance;
+    _z_reskey_t _key;
+    _z_zint_t _kind;
+    _z_zint_t _complete;
+    _z_zint_t _distance;
 } _z_qle_decl_t;
 void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 
@@ -391,8 +391,8 @@ void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_zint_t kind;
+    _z_reskey_t _key;
+    _z_zint_t _kind;
 } _z_forget_qle_decl_t;
 void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl);
 
@@ -410,16 +410,16 @@ typedef struct
 {
     union
     {
-        _z_res_decl_t res;
-        _z_forget_res_decl_t forget_res;
-        _z_pub_decl_t pub;
-        _z_forget_pub_decl_t forget_pub;
-        _z_sub_decl_t sub;
-        _z_forget_sub_decl_t forget_sub;
-        _z_qle_decl_t qle;
-        _z_forget_qle_decl_t forget_qle;
-    } body;
-    uint8_t header;
+        _z_res_decl_t _res;
+        _z_forget_res_decl_t _forget_res;
+        _z_pub_decl_t _pub;
+        _z_forget_pub_decl_t _forget_pub;
+        _z_sub_decl_t _sub;
+        _z_forget_sub_decl_t _forget_sub;
+        _z_qle_decl_t _qle;
+        _z_forget_qle_decl_t _forget_qle;
+    } _body;
+    uint8_t _header;
 } _z_declaration_t;
 
 void _z_msg_clear_declaration(_z_declaration_t *dcl);
@@ -428,7 +428,7 @@ _Z_ARRAY_DEFINE(_z_declaration, _z_declaration_t)
 
 typedef struct
 {
-    _z_declaration_array_t declarations;
+    _z_declaration_array_t _declarations;
 } _z_msg_declare_t;
 void _z_msg_clear_declare(_z_msg_declare_t *dcl);
 
@@ -465,14 +465,14 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 // - if options & (1 << 5) then the payload is sliced
 typedef struct
 {
-    _z_zint_t flags;
-    _z_zint_t kind;
-    _z_encoding_t encoding;
-    _z_timestamp_t tstamp;
-    _z_bytes_t source_id;
-    _z_zint_t source_sn;
-    _z_bytes_t first_router_id;
-    _z_zint_t first_router_sn;
+    _z_zint_t _flags;
+    _z_zint_t _kind;
+    _z_encoding_t _encoding;
+    _z_timestamp_t _tstamp;
+    _z_bytes_t _source_id;
+    _z_zint_t _source_sn;
+    _z_bytes_t _first_router_id;
+    _z_zint_t _first_router_sn;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
 
@@ -492,9 +492,9 @@ void _z_data_info_clear(_z_data_info_t *di);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_data_info_t info;
-    _z_payload_t payload;
+    _z_reskey_t _key;
+    _z_data_info_t _info;
+    _z_payload_t _payload;
 } _z_msg_data_t;
 void _z_msg_clear_data(_z_msg_data_t *msg);
 
@@ -525,9 +525,9 @@ void _z_msg_clear_unit(_z_msg_unit_t *unt);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_zint_t pull_id;
-    _z_zint_t max_samples;
+    _z_reskey_t _key;
+    _z_zint_t _pull_id;
+    _z_zint_t _max_samples;
 } _z_msg_pull_t;
 void _z_msg_clear_pull(_z_msg_pull_t *msg);
 
@@ -549,29 +549,29 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 //
 typedef struct
 {
-    _z_reskey_t key;
-    _z_str_t predicate;
-    _z_zint_t qid;
-    _z_query_target_t target;
-    _z_consolidation_strategy_t consolidation;
+    _z_reskey_t _key;
+    _z_str_t _predicate;
+    _z_zint_t _qid;
+    _z_query_target_t _target;
+    _z_consolidation_strategy_t _consolidation;
 } _z_msg_query_t;
 void _z_msg_clear_query(_z_msg_query_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
 typedef union
 {
-    _z_msg_declare_t declare;
-    _z_msg_data_t data;
-    _z_msg_query_t query;
-    _z_msg_pull_t pull;
-    _z_msg_unit_t unit;
+    _z_msg_declare_t _declare;
+    _z_msg_data_t _data;
+    _z_msg_query_t _query;
+    _z_msg_pull_t _pull;
+    _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
 typedef struct
 {
-    _z_attachment_t *attachment;
-    _z_reply_context_t *reply_context;
-    _z_zenoh_body_t body;
-    uint8_t header;
+    _z_attachment_t *_attachment;
+    _z_reply_context_t *_reply_context;
+    _z_zenoh_body_t _body;
+    uint8_t _header;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
 _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear, _z_noop_copy)
@@ -617,7 +617,7 @@ _z_zenoh_message_t _z_msg_make_reply(_z_reskey_t key, _z_data_info_t info, _z_pa
 //
 typedef struct
 {
-    _z_zint_t what;
+    _z_zint_t _what;
 } _z_t_msg_scout_t;
 void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 
@@ -653,9 +653,9 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t whatami;
-    _z_bytes_t pid;
-    _z_locator_array_t locators;
+    _z_zint_t _whatami;
+    _z_bytes_t _pid;
+    _z_locator_array_t _locators;
 } _z_t_msg_hello_t;
 void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
 
@@ -698,27 +698,27 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t reliable;
-    _z_zint_t best_effort;
+    _z_zint_t _reliable;
+    _z_zint_t _best_effort;
 } _z_coundit_sn_t;
 typedef struct
 {
     union
     {
-        _z_coundit_sn_t plain;
-        _z_coundit_sn_t qos[Z_PRIORITIES_NUM];
-    } val;
-    uint8_t is_qos;
+        _z_coundit_sn_t _plain;
+        _z_coundit_sn_t _qos[Z_PRIORITIES_NUM];
+    } _val;
+    uint8_t _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct
 {
-    _z_zint_t options;
-    _z_zint_t whatami;
-    _z_zint_t lease;
-    _z_zint_t sn_resolution;
-    _z_bytes_t pid;
-    _z_conduit_sn_list_t next_sns;
-    uint8_t version;
+    _z_zint_t _options;
+    _z_zint_t _whatami;
+    _z_zint_t _lease;
+    _z_zint_t _sn_resolution;
+    _z_bytes_t _pid;
+    _z_conduit_sn_list_t _next_sns;
+    uint8_t _version;
 } _z_t_msg_join_t;
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 
@@ -760,12 +760,12 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t options;
-    _z_zint_t whatami;
-    _z_zint_t sn_resolution;
-    _z_bytes_t pid;
-    _z_bytes_t cookie;
-    uint8_t version;
+    _z_zint_t _options;
+    _z_zint_t _whatami;
+    _z_zint_t _sn_resolution;
+    _z_bytes_t _pid;
+    _z_bytes_t _cookie;
+    uint8_t _version;
 } _z_t_msg_init_t;
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
 
@@ -794,9 +794,9 @@ void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t lease;
-    _z_zint_t initial_sn;
-    _z_bytes_t cookie;
+    _z_zint_t _lease;
+    _z_zint_t _initial_sn;
+    _z_bytes_t _cookie;
 } _z_t_msg_open_t;
 void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
 
@@ -826,8 +826,8 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
 //           the session's lease period expires.
 typedef struct
 {
-    _z_bytes_t pid;
-    uint8_t reason;
+    _z_bytes_t _pid;
+    uint8_t _reason;
 } _z_t_msg_close_t;
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header);
 
@@ -856,8 +856,8 @@ void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t sn;
-    _z_zint_t count;
+    _z_zint_t _sn;
+    _z_zint_t _count;
 } _z_t_msg_sync_t;
 void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header);
 
@@ -882,8 +882,8 @@ void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t sn;
-    _z_zint_t mask;
+    _z_zint_t _sn;
+    _z_zint_t _mask;
 } _z_t_msg_ack_nack_t;
 void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
 
@@ -906,7 +906,7 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_bytes_t pid;
+    _z_bytes_t _pid;
 } _z_t_msg_keep_alive_t;
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
 
@@ -928,7 +928,7 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
 //
 typedef struct
 {
-    _z_zint_t hash;
+    _z_zint_t _hash;
 } _z_t_msg_ping_pong_t;
 void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
 
@@ -965,36 +965,36 @@ void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
 //
 typedef union
 {
-    _z_payload_t fragment;
-    _z_zenoh_message_vec_t messages;
+    _z_payload_t _fragment;
+    _z_zenoh_message_vec_t _messages;
 } _z_frame_payload_t;
 typedef struct
 {
-    _z_zint_t sn;
-    _z_frame_payload_t payload;
+    _z_zint_t _sn;
+    _z_frame_payload_t _payload;
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header);
 
 /*------------------ Transport Message ------------------*/
 typedef union
 {
-    _z_t_msg_scout_t scout;
-    _z_t_msg_hello_t hello;
-    _z_t_msg_join_t join;
-    _z_t_msg_init_t init;
-    _z_t_msg_open_t open;
-    _z_t_msg_close_t close;
-    _z_t_msg_sync_t sync;
-    _z_t_msg_ack_nack_t ack_nack;
-    _z_t_msg_keep_alive_t keep_alive;
-    _z_t_msg_ping_pong_t ping_pong;
-    _z_t_msg_frame_t frame;
+    _z_t_msg_scout_t _scout;
+    _z_t_msg_hello_t _hello;
+    _z_t_msg_join_t _join;
+    _z_t_msg_init_t _init;
+    _z_t_msg_open_t _open;
+    _z_t_msg_close_t _close;
+    _z_t_msg_sync_t _sync;
+    _z_t_msg_ack_nack_t _ack_nack;
+    _z_t_msg_keep_alive_t _keep_alive;
+    _z_t_msg_ping_pong_t _ping_pong;
+    _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
 typedef struct
 {
-    _z_attachment_t *attachment;
-    _z_transport_body_t body;
-    uint8_t header;
+    _z_attachment_t *_attachment;
+    _z_transport_body_t _body;
+    uint8_t _header;
 } _z_transport_message_t;
 void _z_t_msg_clear(_z_transport_message_t *msg);
 

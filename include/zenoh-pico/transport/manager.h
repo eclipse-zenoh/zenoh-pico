@@ -21,10 +21,10 @@
 
 typedef struct
 {
-    _z_bytes_t local_pid;
+    _z_bytes_t _local_pid;
     // FIXME: remote_pids
 
-    _z_link_manager_t *link_manager;
+    _z_link_manager_t *_link_manager;
 } _z_transport_manager_t;
 
 _z_transport_manager_t *_z_transport_manager_init(void);

@@ -26,99 +26,100 @@ typedef _z_zint_t z_zint_t;
 typedef _z_str_t z_str_t;
 typedef struct
 {
-    z_str_t value;
+    z_str_t _value;
 } z_owned_str_t;
+
 typedef _z_str_array_t z_str_array_t;
 typedef struct
 {
-    z_str_array_t *value;
+    z_str_array_t *_value;
 } z_owned_str_array_t;
 
 typedef _z_bytes_t z_bytes_t;
 typedef struct
 {
-    z_bytes_t *value;
+    z_bytes_t *_value;
 } z_owned_bytes_t;
 
 typedef _z_string_t z_string_t;
 typedef struct
 {
-    z_string_t *value;
+    z_string_t *_value;
 } z_owned_string_t;
 
 typedef _z_encoding_t z_encoding_t;
 typedef struct
 {
-    z_encoding_t *value;
+    z_encoding_t *_value;
 } z_owned_encoding_t;
 
 typedef _z_reskey_t z_keyexpr_t;
 typedef struct
 {
-    z_keyexpr_t *value;
+    z_keyexpr_t *_value;
 } z_owned_keyexpr_t;
 
 typedef _z_sample_t z_sample_t;
 typedef struct
 {
-    z_sample_t *value;
+    z_sample_t *_value;
 } z_owned_sample_t;
 
 typedef _z_reply_data_t z_reply_data_t;
 typedef struct
 {
-    z_reply_data_t *value;
+    z_reply_data_t *_value;
 } z_owned_reply_data_t;
 
 typedef _z_reply_t z_reply_t;
 typedef struct
 {
-    z_reply_t *value;
+    z_reply_t *_value;
 } z_owned_reply_t;
 
 typedef _z_reply_data_array_t z_reply_data_array_t;
 typedef struct
 {
-    z_reply_data_array_t *value;
+    z_reply_data_array_t *_value;
 } z_owned_reply_data_array_t;
 
 typedef _z_hello_t z_hello_t;
 typedef struct
 {
-    z_hello_t *value;
+    z_hello_t *_value;
 } z_owned_hello_t;
 
 typedef _z_hello_array_t z_hello_array_t;
 typedef struct
 {
-    z_hello_array_t *value;
+    z_hello_array_t *_value;
 } z_owned_hello_array_t;
 
 typedef _z_properties_t z_config_t;
 typedef struct
 {
-    z_config_t *value;
+    z_config_t *_value;
 } z_owned_config_t;
 
 typedef _z_session_t z_session_t;
 typedef struct
 {
-    z_session_t *value;
+    z_session_t *_value;
 } z_owned_session_t;
 
 typedef struct
 {
-    z_publisher_t *value;
+    z_publisher_t *_value;
 } z_owned_publisher_t;
 
 typedef struct
 {
-    z_subscriber_t *value;
+    z_subscriber_t *_value;
 } z_owned_subscriber_t;
 
 typedef struct
 {
-    z_queryable_t *value;
+    z_queryable_t *_value;
 } z_owned_queryable_t;
 
 typedef _z_target_t z_target_t;
@@ -129,18 +130,18 @@ typedef _z_period_t z_period_t;
 typedef _z_properties_t z_info_t;
 typedef struct
 {
-    z_info_t *value;
+    z_info_t *_value;
 } z_owned_info_t;
 
 typedef _z_consolidation_strategy_t z_consolidation_strategy_t;
 
 typedef struct
 {
-    z_query_consolidation_tag_t tag;
+    z_query_consolidation_tag_t _tag;
     union
     {
-        z_consolidation_strategy_t manual;
-    } strategy;
+        z_consolidation_strategy_t _manual;
+    } _strategy;
 } z_query_consolidation_t;
 
 typedef struct

@@ -25,21 +25,21 @@
 /*=============================*/
 void print_zbuf_overview(_z_zbuf_t *zbf)
 {
-    printf("    ZBuf => Capacity: %zu\n", zbf->ios.capacity);
+    printf("    ZBuf => Capacity: %zu\n", zbf->_ios._capacity);
 }
 
 void print_wbuf_overview(_z_wbuf_t *wbf)
 {
-    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->is_expandable, wbf->capacity);
+    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable, wbf->_capacity);
 }
 
 void print_iosli(_z_iosli_t *ios)
 {
-    printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [ ", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->w_pos; i++)
+    printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [ ", ios->_capacity, ios->_r_pos, ios->_w_pos);
+    for (size_t i = 0; i < ios->_w_pos; i++)
     {
-        printf("%02x", ios->buf[i]);
-        if (i < ios->capacity - 1)
+        printf("%02x", ios->_buf[i]);
+        if (i < ios->_capacity - 1)
             printf(" ");
     }
     printf(" ]");
@@ -176,7 +176,7 @@ void iosli_writable_readable(void)
         _z_iosli_put(pios, payload[i], i);
 
         assert(payload[i] == _z_iosli_get(pios, i));
-        pios->w_pos++;
+        pios->_w_pos++;
 
         writable = _z_iosli_writable(pios);
         readable = _z_iosli_readable(pios);
@@ -271,7 +271,7 @@ void zbuf_compact(void)
 
     for (uint8_t i = 0; i < len; i++)
     {
-        _z_iosli_write(&zbf.ios, i);
+        _z_iosli_write(&zbf._ios, i);
     }
 
     uint8_t counter = 0;
@@ -308,7 +308,7 @@ void zbuf_view(void)
 
     for (uint8_t i = 0; i < len; i++)
     {
-        _z_iosli_write(&zbf.ios, i);
+        _z_iosli_write(&zbf._ios, i);
     }
 
     uint8_t counter = 0;
@@ -385,7 +385,7 @@ void wbuf_write_zbuf_read(void)
     for (size_t i = 0; i < len; i++)
         _z_wbuf_write(&wbf, (uint8_t)i % 255);
 
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
     printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
     assert(_z_wbuf_len(&wbf) == len);
 
@@ -421,7 +421,7 @@ void wbuf_write_zbuf_read_bytes(void)
     }
     _z_wbuf_write_bytes(&wbf, buf01, 0, len);
 
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
     printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
     assert(_z_wbuf_len(&wbf) == len);
 
@@ -452,7 +452,7 @@ void wbuf_put_zbuf_get(void)
     {
         _z_wbuf_write(&wbf, 0);
     }
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
 
     printf("    Putting %zu bytes\n", len);
     // Put data
@@ -489,7 +489,7 @@ void wbuf_reusable_write_zbuf_read(void)
         for (size_t i = 0; i < len; i++)
             _z_wbuf_write(&wbf, (uint8_t)i % 255);
 
-        printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+        printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
         printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
         assert(_z_wbuf_len(&wbf) == len);
 
@@ -525,7 +525,7 @@ void wbuf_set_pos_wbuf_get_pos(void)
     }
     assert(_z_wbuf_get_rpos(&wbf) == 0);
     assert(_z_wbuf_get_wpos(&wbf) == len);
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
 
     for (size_t i = 0; i < 10; i++)
     {
@@ -576,7 +576,7 @@ void wbuf_add_iosli(void)
         written += to_write;
     }
 
-    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf.r_idx, wbf.w_idx);
+    printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
     for (size_t i = 0; i < _z_wbuf_len_iosli(&wbf); i++)
     {
         _z_iosli_t *ios = _z_wbuf_get_iosli(&wbf, i);

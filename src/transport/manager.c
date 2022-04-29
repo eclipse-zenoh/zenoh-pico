@@ -20,35 +20,35 @@ _z_transport_p_result_t _z_new_transport_client(_z_str_t locator, _z_bytes_t loc
     _z_transport_t *zt = NULL;
 
     _z_link_p_result_t res_zl = _z_open_link(locator);
-    if (res_zl.tag == _Z_RES_ERR)
+    if (res_zl._tag == _Z_RES_ERR)
         goto ERR_1;
 
-    if (res_zl.value.link->is_multicast == 0)
+    if (res_zl._value._link->_is_multicast == 0)
     {
-        _z_transport_unicast_establish_param_result_t res_tp_param = _z_transport_unicast_open_client(res_zl.value.link, local_pid);
-        if (res_tp_param.tag == _Z_RES_ERR)
+        _z_transport_unicast_establish_param_result_t res_tp_param = _z_transport_unicast_open_client(res_zl._value._link, local_pid);
+        if (res_tp_param._tag == _Z_RES_ERR)
             goto ERR_2;
 
-        zt = _z_transport_unicast_new(res_zl.value.link, res_tp_param.value.transport_unicast_establish_param);
+        zt = _z_transport_unicast_new(res_zl._value._link, res_tp_param._value._transport_unicast_establish_param);
     }
     else
     {
-        _z_transport_multicast_establish_param_result_t res_tp_param = _z_transport_multicast_open_client(res_zl.value.link, local_pid);
-        if (res_tp_param.tag == _Z_RES_ERR)
+        _z_transport_multicast_establish_param_result_t res_tp_param = _z_transport_multicast_open_client(res_zl._value._link, local_pid);
+        if (res_tp_param._tag == _Z_RES_ERR)
             goto ERR_2;
 
         // @TODO: not implemented
     }
 
-    ret.tag = _Z_RES_OK;
-    ret.value.transport = zt;
+    ret._tag = _Z_RES_OK;
+    ret._value._transport = zt;
     return ret;
 
 ERR_2:
-    _z_link_free(&res_zl.value.link);
+    _z_link_free(&res_zl._value._link);
 ERR_1:
-    ret.tag = _Z_RES_ERR;
-    ret.value.error = -1;
+    ret._tag = _Z_RES_ERR;
+    ret._value._error = -1;
     return ret;
 }
 
@@ -58,35 +58,35 @@ _z_transport_p_result_t _z_new_transport_peer(_z_str_t locator, _z_bytes_t local
     _z_transport_t *zt = NULL;
 
     _z_link_p_result_t res_zl = _z_listen_link(locator);
-    if (res_zl.tag == _Z_RES_ERR)
+    if (res_zl._tag == _Z_RES_ERR)
         goto ERR_1;
 
-    if (res_zl.value.link->is_multicast == 0)
+    if (res_zl._value._link->_is_multicast == 0)
     {
-        _z_transport_unicast_establish_param_result_t res_tp_param = _z_transport_unicast_open_peer(res_zl.value.link, local_pid);
-        if (res_tp_param.tag == _Z_RES_ERR)
+        _z_transport_unicast_establish_param_result_t res_tp_param = _z_transport_unicast_open_peer(res_zl._value._link, local_pid);
+        if (res_tp_param._tag == _Z_RES_ERR)
             goto ERR_2;
 
-        zt = _z_transport_unicast_new(res_zl.value.link, res_tp_param.value.transport_unicast_establish_param);
+        zt = _z_transport_unicast_new(res_zl._value._link, res_tp_param._value._transport_unicast_establish_param);
     }
     else
     {
-        _z_transport_multicast_establish_param_result_t res_tp_param = _z_transport_multicast_open_peer(res_zl.value.link, local_pid);
-        if (res_tp_param.tag == _Z_RES_ERR)
+        _z_transport_multicast_establish_param_result_t res_tp_param = _z_transport_multicast_open_peer(res_zl._value._link, local_pid);
+        if (res_tp_param._tag == _Z_RES_ERR)
             goto ERR_2;
 
-        zt = _z_transport_multicast_new(res_zl.value.link, res_tp_param.value.transport_multicast_establish_param);
+        zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
     }
 
-    ret.tag = _Z_RES_OK;
-    ret.value.transport = zt;
+    ret._tag = _Z_RES_OK;
+    ret._value._transport = zt;
     return ret;
 
 ERR_2:
-    _z_link_free(&res_zl.value.link);
+    _z_link_free(&res_zl._value._link);
 ERR_1:
-    ret.tag = _Z_RES_ERR;
-    ret.value.error = -1;
+    ret._tag = _Z_RES_ERR;
+    ret._value._error = -1;
     return ret;
 }
 
@@ -96,11 +96,11 @@ _z_transport_manager_t *_z_transport_manager_init()
 
     // Randomly generate a peer ID
     srand(time(NULL));
-    ztm->local_pid = _z_bytes_make(Z_PID_LENGTH);
-    for (unsigned int i = 0; i < ztm->local_pid.len; i++)
-        ((uint8_t *)ztm->local_pid.val)[i] = rand() % 255;
+    ztm->_local_pid = _z_bytes_make(Z_PID_LENGTH);
+    for (unsigned int i = 0; i < ztm->_local_pid.len; i++)
+        ((uint8_t *)ztm->_local_pid.val)[i] = rand() % 255;
 
-    ztm->link_manager = _z_link_manager_init();
+    ztm->_link_manager = _z_link_manager_init();
 
     return ztm;
 }
@@ -110,10 +110,10 @@ void _z_transport_manager_free(_z_transport_manager_t **ztm)
     _z_transport_manager_t *ptr = *ztm;
 
     // Clean up PIDs
-    _z_bytes_clear(&ptr->local_pid);
+    _z_bytes_clear(&ptr->_local_pid);
 
     // Clean up managers
-    _z_link_manager_free(&ptr->link_manager);
+    _z_link_manager_free(&ptr->_link_manager);
 
     free(ptr);
     *ztm = NULL;
@@ -123,9 +123,9 @@ _z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, _z_str_t l
 {
     _z_transport_p_result_t ret;
     if (mode == 0) // FIXME: use enum
-        ret = _z_new_transport_client(locator, ztm->local_pid);
+        ret = _z_new_transport_client(locator, ztm->_local_pid);
     else
-        ret = _z_new_transport_peer(locator, ztm->local_pid);
+        ret = _z_new_transport_peer(locator, ztm->_local_pid);
 
     return ret;
 }

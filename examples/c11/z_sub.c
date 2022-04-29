@@ -20,7 +20,7 @@ void data_handler(const z_sample_t *sample, const void *arg)
 {
     (void) (arg);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n",
-           sample->key.rname, (int)sample->value.len, sample->value.val);
+           sample->_key._rname, (int)sample->_value.len, sample->_value.val);
 }
 
 int main(int argc, char **argv)

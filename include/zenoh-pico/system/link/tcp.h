@@ -22,8 +22,8 @@
 
 typedef struct
 {
-    int sock;
-    void *raddr;
+    int _sock;
+    void *_raddr;
 } _z_tcp_socket_t;
 
 void *_z_create_endpoint_tcp(const _z_str_t s_addr, const _z_str_t port);

@@ -44,8 +44,8 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const _z_str_t s, unsigned int ar
 {
     _z_str_intmap_result_t res;
 
-    res.tag = _Z_RES_OK;
-    res.value.str_intmap = _z_str_intmap_make();
+    res._tag = _Z_RES_OK;
+    res._value._str_intmap = _z_str_intmap_make();
 
     // Check the string contains only the right
     _z_str_t start = s;
@@ -64,13 +64,13 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const _z_str_t s, unsigned int ar
         unsigned int key;
         for (unsigned int i = 0; i < argc; i++)
         {
-            if (p_key_len != strlen(argv[i].str))
+            if (p_key_len != strlen(argv[i]._str))
                 continue;
-            if (strncmp(p_key_start, argv[i].str, p_key_len) != 0)
+            if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0)
                 continue;
 
             found = 1;
-            key = argv[i].key;
+            key = argv[i]._key;
             break;
         }
 
@@ -88,7 +88,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const _z_str_t s, unsigned int ar
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
-        _z_str_intmap_insert(&res.value.str_intmap, key, p_value);
+        _z_str_intmap_insert(&res._value._str_intmap, key, p_value);
 
         // Process next key value
         start = p_value_end + 1;
@@ -97,9 +97,9 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const _z_str_t s, unsigned int ar
     return res;
 
 ERR:
-    _z_str_intmap_clear(&res.value.str_intmap);
-    res.tag = _Z_RES_ERR;
-    res.value.error = _Z_ERR_PARSE_STRING;
+    _z_str_intmap_clear(&res._value._str_intmap);
+    res._tag = _Z_RES_ERR;
+    res._value._error = _Z_ERR_PARSE_STRING;
     return res;
 }
 
@@ -114,12 +114,12 @@ size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_
     size_t len = 0;
     for (size_t i = 0; i < argc; i++)
     {
-        _z_str_t v = _z_str_intmap_get(s, argv[i].key);
+        _z_str_t v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL)
         {
             if (len != 0)
                 len += 1;               // List separator
-            len += strlen(argv[i].str); // Key
+            len += strlen(argv[i]._str); // Key
             len += 1;                   // KeyValue separator
             len += strlen(v);           // Value
         }
@@ -137,12 +137,12 @@ void _z_str_intmap_onto_str(_z_str_t dst, const _z_str_intmap_t *s, unsigned int
     const char ksep = INT_STR_MAP_KEYVALUE_SEPARATOR;
     for (size_t i = 0; i < argc; i++)
     {
-        _z_str_t v = _z_str_intmap_get(s, argv[i].key);
+        _z_str_t v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL)
         {
             if (strlen(dst) != 0)
                 strncat(dst, &lsep, 1); // List separator
-            strcat(dst, argv[i].str);   // Key
+            strcat(dst, argv[i]._str);   // Key
             strncat(dst, &ksep, 1);     // KeyValue separator
             strcat(dst, v);             // Value
         }

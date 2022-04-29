@@ -20,14 +20,14 @@
 // A task function should __not__ simply return.
 typedef struct
 {
-    void *(*fun)(void *);
-    void *arg;
-} _z_task_arg;
+    void *(*_fun)(void *);
+    void *_arg;
+} __z_task_arg;
 
 void z_task_wrapper(void *arg)
 {
-    _z_task_arg *z_arg = (_z_task_arg*)arg;
-    z_arg->fun(z_arg->arg);
+    __z_task_arg *z_arg = (__z_task_arg*)arg;
+    z_arg->_fun(z_arg->_arg);
     vTaskDelete(NULL);
     free(z_arg);
 }
@@ -36,9 +36,9 @@ void z_task_wrapper(void *arg)
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _z_task_arg *z_arg = (_z_task_arg *)malloc(sizeof(_z_task_arg));
-    z_arg->fun = fun;
-    z_arg->arg = arg;
+    __z_task_arg *z_arg = (__z_task_arg *)malloc(sizeof(__z_task_arg));
+    z_arg->_fun = fun;
+    z_arg->_arg = arg;
     if (xTaskCreate(z_task_wrapper, "", 5120, z_arg, 15, task) != pdPASS)
         return -1;
 

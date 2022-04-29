@@ -23,9 +23,9 @@
  */
 typedef struct
 {
-    size_t capacity;
-    size_t len;
-    void **val;
+    size_t _capacity;
+    size_t _len;
+    void **_val;
 } _z_vec_t;
 
 _z_vec_t _z_vec_make(size_t capacity);

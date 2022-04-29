@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%zu': '%s')...\n", keyexpr.value->rid, buf);
+        printf("Putting Data ('%zu': '%s')...\n", z_keyexpr_loan(&keyexpr)->rid, buf);
         z_put(z_session_loan(&s), z_keyexpr_loan(&keyexpr), (const uint8_t *)buf, strlen(buf));
     }
 

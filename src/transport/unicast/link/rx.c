@@ -21,64 +21,64 @@
 void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_result_t *r)
 {
     _Z_DEBUG(">> recv session msg\n");
-    r->tag = _Z_RES_OK;
+    r->_tag = _Z_RES_OK;
 
     // Acquire the lock
-    _z_mutex_lock(&ztu->mutex_rx);
+    _z_mutex_lock(&ztu->_mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_reset(&ztu->zbuf);
+    _z_zbuf_reset(&ztu->_zbuf);
 
-    if (ztu->link->is_streamed == 1)
+    if (ztu->_link->_is_streamed == 1)
     {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE)
+        if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
 
         size_t len = 0;
         for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
-            len |= _z_zbuf_read(&ztu->zbuf) << (i * 8);
+            len |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
 
         _Z_DEBUG(">> \t msg len = %hu\n", len);
-        size_t writable = _z_zbuf_capacity(&ztu->zbuf) - _z_zbuf_len(&ztu->zbuf);
+        size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
         if (writable < len)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IOBUF_NO_SPACE;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IOBUF_NO_SPACE;
             goto EXIT_SRCV_PROC;
         }
 
         // Read enough bytes to decode the message
-        if (_z_link_recv_exact_zbuf(ztu->link, &ztu->zbuf, len, NULL) != len)
+        if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, len, NULL) != len)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     }
     else
     {
-        if (_z_link_recv_zbuf(ztu->link, &ztu->zbuf, NULL) == SIZE_MAX)
+        if (_z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX)
         {
-            r->tag = _Z_RES_ERR;
-            r->value.error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_RES_ERR;
+            r->_value._error = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     }
 
     // Mark the session that we have received data
-    ztu->received = 1;
+    ztu->_received = 1;
 
     _Z_DEBUG(">> \t transport_message_decode\n");
-    _z_transport_message_decode_na(&ztu->zbuf, r);
+    _z_transport_message_decode_na(&ztu->_zbuf, r);
 
 EXIT_SRCV_PROC:
     // Release the lock
-    _z_mutex_unlock(&ztu->mutex_rx);
+    _z_mutex_unlock(&ztu->_mutex_rx);
 }
 
 _z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu)
@@ -91,7 +91,7 @@ _z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu)
 
 int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg)
 {
-    switch (_Z_MID(t_msg->header))
+    switch (_Z_MID(t_msg->_header))
     {
     case _Z_MID_SCOUT:
     {
@@ -151,56 +151,56 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
     {
         _Z_INFO("Received Z_FRAME message\n");
         // Check if the SN is correct
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_R))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R))
         {
             // @TODO: amend once reliability is in place. For the time being only
             //        monothonic SNs are ensured
-            if (_z_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_reliable, t_msg->body.frame.sn))
+            if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn))
             {
-                ztu->sn_rx_reliable = t_msg->body.frame.sn;
+                ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
             }
             else
             {
-                _z_wbuf_clear(&ztu->dbuf_reliable);
+                _z_wbuf_clear(&ztu->_dbuf_reliable);
                 _Z_INFO("Reliable message dropped because it is out of order\n");
                 break;
             }
         }
         else
         {
-            if (_z_sn_precedes(ztu->sn_resolution_half, ztu->sn_rx_best_effort, t_msg->body.frame.sn))
+            if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn))
             {
-                ztu->sn_rx_best_effort = t_msg->body.frame.sn;
+                ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
             }
             else
             {
-                _z_wbuf_clear(&ztu->dbuf_best_effort);
+                _z_wbuf_clear(&ztu->_dbuf_best_effort);
                 _Z_INFO("Best effort message dropped because it is out of order\n");
                 break;
             }
         }
 
-        if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_F))
+        if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F))
         {
             // Select the right defragmentation buffer
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_R) ? &ztu->dbuf_reliable : &ztu->dbuf_best_effort;
+            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &ztu->_dbuf_reliable : &ztu->_dbuf_best_effort;
 
             uint8_t drop = 0;
-            if (_z_wbuf_len(dbuf) + t_msg->body.frame.payload.fragment.len > Z_FRAG_MAX_SIZE)
+            if (_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len > Z_FRAG_MAX_SIZE)
             {
                 // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, _z_wbuf_space_left(dbuf));
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, _z_wbuf_space_left(dbuf));
                 drop = 1;
             }
             else
             {
                 // Add the fragment to the defragmentation buffer
-                _z_wbuf_write_bytes(dbuf, t_msg->body.frame.payload.fragment.val, 0, t_msg->body.frame.payload.fragment.len);
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, t_msg->_body._frame._payload._fragment.len);
             }
 
             // Check if this is the last fragment
-            if (_Z_HAS_FLAG(t_msg->header, _Z_FLAG_T_E))
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E))
             {
                 // Drop message if it is bigger the max buffer size
                 if (drop == 1)
@@ -214,10 +214,10 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
 
                 // Decode the zenoh message
                 _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(&zbf);
-                if (r_zm.tag == _Z_RES_OK)
+                if (r_zm._tag == _Z_RES_OK)
                 {
-                    _z_zenoh_message_t d_zm = r_zm.value.zenoh_message;
-                    _z_handle_zenoh_message(ztu->session, &d_zm);
+                    _z_zenoh_message_t d_zm = r_zm._value._zenoh_message;
+                    _z_handle_zenoh_message(ztu->_session, &d_zm);
 
                     // Clear must be explicitly called for fragmented zenoh messages.
                     // Non-fragmented zenoh messages are released when their transport message is released.
@@ -235,9 +235,9 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
         else
         {
             // Handle all the zenoh message, one by one
-            unsigned int len = _z_vec_len(&t_msg->body.frame.payload.messages);
+            unsigned int len = _z_vec_len(&t_msg->_body._frame._payload._messages);
             for (unsigned int i = 0; i < len; i++)
-                _z_handle_zenoh_message(ztu->session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->body.frame.payload.messages, i));
+                _z_handle_zenoh_message(ztu->_session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._payload._messages, i));
         }
         break;
     }

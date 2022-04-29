@@ -19,9 +19,9 @@ int _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t r
 {
     _Z_DEBUG(">> send zenoh message\n");
 
-    if (zn->tp->type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
         return _z_unicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
-    else if (zn->tp->type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         return _z_multicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
     else
         return -1;

@@ -31,8 +31,8 @@
  */
 typedef struct
 {
-    size_t key;
-    void *val;
+    size_t _key;
+    void *_val;
 } _z_int_void_map_entry_t;
 
 /**
@@ -45,8 +45,8 @@ typedef struct
  */
 typedef struct
 {
-    size_t capacity;
-    _z_list_t **vals;
+    size_t _capacity;
+    _z_list_t **_vals;
 } _z_int_void_map_t;
 
 void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity);
@@ -68,7 +68,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     static inline void name##_intmap_entry_elem_free(void **e)                         \
     {                                                                                  \
         name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                      \
-        name##_elem_free((void **)&ptr->val);                                          \
+        name##_elem_free((void **)&ptr->_val);                                         \
         free(ptr);                                                                     \
         *e = NULL;                                                                     \
     }                                                                                  \

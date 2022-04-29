@@ -43,8 +43,8 @@ void query_handler(const z_query_t *query, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(_z_str_eq(query->rname, res));
-    assert(_z_str_eq(query->predicate, ""));
+    assert(_z_str_eq(query->_rname, res));
+    assert(_z_str_eq(query->_predicate, ""));
 
     _z_send_reply(query, res, (const uint8_t *)res, strlen(res));
 
@@ -57,13 +57,13 @@ void reply_handler(const _z_reply_t reply, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply.tag == Z_REPLY_TAG_DATA)
+    if (reply._tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply.data.data.key.rname, replies, total);
-        assert(reply.data.data.value.len == strlen(res));
-        assert(strncmp(res, (const _z_str_t)reply.data.data.value.val, strlen(res)) == 0);
-        assert(strlen(reply.data.data.key.rname) == strlen(res));
-        assert(strncmp(res, reply.data.data.key.rname, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply._data._sample._key._rname, replies, total);
+        assert(reply._data._sample._value.len == strlen(res));
+        assert(strncmp(res, (const _z_str_t)reply._data._sample._value.val, strlen(res)) == 0);
+        assert(strlen(reply._data._sample._key._rname) == strlen(res));
+        assert(strncmp(res, reply._data._sample._key._rname, strlen(res)) == 0);
     }
     else
     {
@@ -79,9 +79,9 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->value.len == MSG_LEN);
-    assert(strlen(sample->key.rname) == strlen(res));
-    assert(strncmp(res, sample->key.rname, strlen(res)) == 0);
+    assert(sample->_value.len == MSG_LEN);
+    assert(strlen(sample->_key._rname) == strlen(res));
+    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -103,7 +103,7 @@ int main(int argc, _z_str_t *argv)
 
     _z_session_t *s1 = _z_open(config);
     assert(s1 != NULL);
-    _z_string_t pid1 = _z_string_from_bytes(&s1->tp_manager->local_pid);
+    _z_string_t pid1 = _z_string_from_bytes(&s1->_tp_manager->_local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     _z_string_clear(&pid1);
 
@@ -115,7 +115,7 @@ int main(int argc, _z_str_t *argv)
 
     _z_session_t *s2 = _z_open(config);
     assert(s2 != NULL);
-    _z_string_t pid2 = _z_string_from_bytes(&s2->tp_manager->local_pid);
+    _z_string_t pid2 = _z_string_from_bytes(&s2->_tp_manager->_local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     _z_string_clear(&pid2);
 
@@ -132,7 +132,7 @@ int main(int argc, _z_str_t *argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_reskey_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s1, rk);
-        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk.rid, rk.rname);
+        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk._rid, rk._rname);
         rids1[i] = rid;
     }
 
@@ -143,7 +143,7 @@ int main(int argc, _z_str_t *argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_reskey_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s2, rk);
-        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk.rid, rk.rname);
+        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk._rid, rk._rname);
         rids2[i] = rid;
     }
 
@@ -155,7 +155,7 @@ int main(int argc, _z_str_t *argv)
         _z_reskey_t rk = _z_rid(rids2[i]);
         z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->id, rk.rid, rk.rname);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -167,7 +167,7 @@ int main(int argc, _z_str_t *argv)
         _z_reskey_t rk = _z_rname(s1_res);
         z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
-        printf("Declared queryable on session 2: %zu %lu %s\n", qle->id, rk.rid, rk.rname);
+        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk._rid, rk._rname);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
     }
 
@@ -179,7 +179,7 @@ int main(int argc, _z_str_t *argv)
         _z_reskey_t rk = _z_rid(rids1[i]);
         z_publisher_t *pub = _z_declare_publisher(s1, rk);
         assert(pub != NULL);
-        printf("Declared publisher on session 1: %zu\n", pub->id);
+        printf("Declared publisher on session 1: %zu\n", pub->_id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
     }
 
@@ -196,9 +196,9 @@ int main(int argc, _z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             _z_reskey_t rk = _z_rid(rids1[i]);
-            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
+            _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.rid, len, n * SET + (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk._rid, len, n * SET + (i + 1), total);
         }
     }
 
@@ -230,7 +230,7 @@ int main(int argc, _z_str_t *argv)
             _z_query_target_t qry_tgt = _z_query_target_default();
             _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, &idx[i]);
-            printf("Queried data from session 1: %lu %s\n", rk.rid, rk.rname);
+            printf("Queried data from session 1: %lu %s\n", rk._rid, rk._rname);
         }
     }
 
@@ -279,9 +279,9 @@ int main(int argc, _z_str_t *argv)
                 _z_query_target_t qry_tgt = _z_query_target_default();
                 _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
                 _z_reply_data_array_t ra = _z_query_collect(s1, myrk, "", qry_tgt, qry_con);
-                printf("Queried and collected data from session 1: %lu %s\n", rk.rid, rk.rname);
+                printf("Queried and collected data from session 1: %lu %s\n", rk._rid, rk._rname);
                 _z_reskey_clear(&rk);
-                replies += ra.len;
+                replies += ra._len;
                 _z_reply_data_array_clear(&ra);
             }
         }
@@ -294,7 +294,7 @@ int main(int argc, _z_str_t *argv)
     while (pubs1)
     {
         z_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
-        printf("Undeclared publisher on session 2: %zu\n", pub->id);
+        printf("Undeclared publisher on session 2: %zu\n", pub->_id);
         _z_undeclare_publisher(pub);
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free); // @TODO: use type-safe list
     }
@@ -305,7 +305,7 @@ int main(int argc, _z_str_t *argv)
     while (subs2)
     {
         z_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
-        printf("Undeclared subscriber on session 2: %zu\n", sub->id);
+        printf("Undeclared subscriber on session 2: %zu\n", sub->_id);
         _z_undeclare_subscriber(sub);
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }
@@ -315,7 +315,7 @@ int main(int argc, _z_str_t *argv)
     while (qles2)
     {
         z_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
-        printf("Undeclared queryable on session 2: %zu\n", qle->id);
+        printf("Undeclared queryable on session 2: %zu\n", qle->_id);
         _z_undeclare_queryable(qle);
         qles2 = _z_list_pop(qles2, _z_noop_elem_free); // @TODO: use type-safe list
     }

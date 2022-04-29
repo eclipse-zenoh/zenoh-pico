@@ -54,75 +54,75 @@ typedef enum
 #define _RESULT_DECLARE(type, name, prefix) \
     typedef struct                          \
     {                                       \
-        _z_res_t tag;                       \
+        _z_res_t _tag;                      \
         union                               \
         {                                   \
-            type name;                      \
-            int error;                      \
-        } value;                            \
+            type _##name;                   \
+            int _error;                     \
+        } _value;                           \
     } prefix##_##name##_result_t;
 
 #define _P_RESULT_DECLARE(type, name, prefix)                                           \
     typedef struct                                                                      \
     {                                                                                   \
-        _z_res_t tag;                                                                   \
+        _z_res_t _tag;                                                                  \
         union                                                                           \
         {                                                                               \
-            type *name;                                                                 \
-            int error;                                                                  \
-        } value;                                                                        \
+            type* _##name;                                                              \
+            int _error;                                                                 \
+        } _value;                                                                       \
     } prefix##_##name##_p_result_t;                                                     \
                                                                                         \
     inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        r->value.name = (type *)malloc(sizeof(type));                                   \
+        r->_value._##name = (type *)malloc(sizeof(type));                               \
     }                                                                                   \
                                                                                         \
     inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        free(r->value.name);                                                            \
-        r->value.name = NULL;                                                           \
+        free(r->_value._##name);                                                        \
+        r->_value._##name = NULL;                                                       \
     }
 
 #define _ASSURE_RESULT(in_r, out_r, e) \
-    if (in_r.tag == _Z_RES_ERR)        \
+    if (in_r._tag == _Z_RES_ERR)       \
     {                                  \
-        out_r.tag = _Z_RES_ERR;        \
-        out_r.value.error = e;         \
+        out_r._tag = _Z_RES_ERR;       \
+        out_r._value._error = e;       \
         return out_r;                  \
     }
 
 #define _ASSURE_P_RESULT(in_r, out_r, e) \
-    if (in_r.tag == _Z_RES_ERR)          \
+    if (in_r._tag == _Z_RES_ERR)         \
     {                                    \
-        out_r->tag = _Z_RES_ERR;         \
-        out_r->value.error = e;          \
+        out_r->_tag = _Z_RES_ERR;        \
+        out_r->_value._error = e;        \
         return;                          \
     }
 
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
-    if (in_r.tag == _Z_RES_ERR)                     \
+    if (in_r._tag == _Z_RES_ERR)                    \
     {                                               \
-        free(out_r->value.name);                    \
-        out_r->tag = _Z_RES_ERR;                    \
-        out_r->value.error = e;                     \
+        free(out_r->_value._##name);                \
+        out_r->_tag = _Z_RES_ERR;                   \
+        out_r->_value._error = e;                   \
         return;                                     \
     }
 
 #define _ASSERT_RESULT(r, msg) \
-    if (r.tag == _Z_RES_ERR)   \
+    if (r._tag == _Z_RES_ERR)  \
     {                          \
         printf(msg);           \
         printf("\n");          \
-        exit(r.value.error);   \
+        exit(r._value._error); \
     }
 
 #define _ASSERT_P_RESULT(r, msg) \
-    if (r.tag == _Z_RES_ERR)     \
+    if (r._tag == _Z_RES_ERR)    \
     {                            \
         printf(msg);             \
         printf("\n");            \
-        exit(r.value.error);     \
+        exit(r._value._error);   \
     }
 
 /*------------------ Internal Zenoh Results ------------------*/
