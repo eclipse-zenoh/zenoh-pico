@@ -22,7 +22,7 @@ int _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this)
 
 void _z_resource_clear(_z_resource_t *res)
 {
-    _z_reskey_clear(&res->_key);
+    _z_keyexpr_clear(&res->_key);
 }
 
 /*------------------ Entity ------------------*/
@@ -51,12 +51,12 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id
     return NULL;
 }
 
-_z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_reskey_t *reskey)
+_z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr)
 {
     while (xs != NULL)
     {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_key._rid == reskey->_rid && _z_str_eq(r->_key._rname, reskey->_rname) == 1)
+        if (r->_key._rid == keyexpr->_rid && _z_str_eq(r->_key._rname, keyexpr->_rname) == 1)
             return r;
 
         xs = _z_resource_list_tail(xs);
@@ -65,7 +65,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_reskey_t
     return NULL;
 }
 
-_z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_reskey_t *reskey)
+_z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr)
 {
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
@@ -73,14 +73,14 @@ _z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_reskey_
     size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (reskey->_rname != NULL)
+    if (keyexpr->_rname != NULL)
     {
-        len += strlen(reskey->_rname);
-        strs = _z_str_list_push(strs, reskey->_rname);
+        len += strlen(keyexpr->_rname);
+        strs = _z_str_list_push(strs, keyexpr->_rname);
     }
 
     // Recursevely go through all the RIDs
-    _z_zint_t id = reskey->_rid;
+    _z_zint_t id = keyexpr->_rid;
     while (id != Z_RESOURCE_ID_NONE)
     {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
@@ -132,10 +132,10 @@ _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
+_z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
-    return __z_get_resource_by_key(decls, reskey);
+    return __z_get_resource_by_key(decls, keyexpr);
 }
 
 /**
@@ -143,10 +143,10 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, int is_local, co
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_str_t __unsafe_z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
+_z_str_t __unsafe_z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
-    return __z_get_resource_name_from_key(decls, reskey);
+    return __z_get_resource_name_from_key(decls, keyexpr);
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t rid)
@@ -157,18 +157,18 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t r
     return res;
 }
 
-_z_resource_t *_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
+_z_resource_t *_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, reskey);
+    _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, keyexpr);
     _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }
 
-_z_str_t _z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
+_z_str_t _z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t res = __unsafe_z_get_resource_name_from_key(zn, is_local, reskey);
+    _z_str_t res = __unsafe_z_get_resource_name_from_key(zn, is_local, keyexpr);
     _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }

@@ -25,7 +25,7 @@ int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *tw
 void _z_questionable_clear(_z_questionable_t *qle)
 {
     _z_str_clear(qle->_rname);
-    _z_reskey_clear(&qle->_key);
+    _z_keyexpr_clear(&qle->_key);
 }
 
 /*------------------ Queryable ------------------*/
@@ -97,10 +97,10 @@ _z_questionable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str
     return qles;
 }
 
-_z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_reskey_t *reskey)
+_z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, reskey);
+    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
     _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
     _z_mutex_unlock(&zn->_mutex_inner);
 

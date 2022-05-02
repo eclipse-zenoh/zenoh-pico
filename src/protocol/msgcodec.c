@@ -132,7 +132,7 @@ _z_subinfo_result_t _z_subinfo_decode(_z_zbuf_t *zbf, uint8_t header)
 }
 
 /*------------------ ResKey Field ------------------*/
-int _z_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const _z_reskey_t *fld)
+int _z_keyexpr_encode(_z_wbuf_t *wbf, uint8_t header, const _z_keyexpr_t *fld)
 {
     _Z_DEBUG("Encoding _RESKEY\n");
 
@@ -144,7 +144,7 @@ int _z_reskey_encode(_z_wbuf_t *wbf, uint8_t header, const _z_reskey_t *fld)
     return 0;
 }
 
-void _z_reskey_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_reskey_result_t *r)
+void _z_keyexpr_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keyexpr_result_t *r)
 {
     _Z_DEBUG("Decoding _RESKEY\n");
     r->_tag = _Z_RES_OK;
@@ -152,24 +152,24 @@ void _z_reskey_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_reskey_result_t *r)
     // Decode the header
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
-    r->_value._reskey._rid = r_zint._value._zint;
+    r->_value._keyexpr._rid = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
     {
         _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-        r->_value._reskey._rname = r_str._value._str;
+        r->_value._keyexpr._rname = r_str._value._str;
     }
     else
     {
-        r->_value._reskey._rname = NULL;
+        r->_value._keyexpr._rname = NULL;
     }
 }
 
-_z_reskey_result_t _z_reskey_decode(_z_zbuf_t *zbf, uint8_t header)
+_z_keyexpr_result_t _z_keyexpr_decode(_z_zbuf_t *zbf, uint8_t header)
 {
-    _z_reskey_result_t r;
-    _z_reskey_decode_na(zbf, header, &r);
+    _z_keyexpr_result_t r;
+    _z_keyexpr_decode_na(zbf, header, &r);
     return r;
 }
 
@@ -331,7 +331,7 @@ int _z_res_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_res_decl_t *dcl)
 
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, dcl->_id))
-    return _z_reskey_encode(wbf, header, &dcl->_key);
+    return _z_keyexpr_encode(wbf, header, &dcl->_key);
 }
 
 void _z_res_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_res_decl_result_t *r)
@@ -344,9 +344,9 @@ void _z_res_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_res_decl_result_t 
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._res_decl._id = r_zint._value._zint;
 
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._res_decl._key = r_res._value._reskey;
+    r->_value._res_decl._key = r_res._value._keyexpr;
 }
 
 _z_res_decl_result_t _z_res_decl_decode(_z_zbuf_t *zbf, uint8_t header)
@@ -362,7 +362,7 @@ int _z_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_pub_decl_t *dcl)
     _Z_DEBUG("Encoding _Z_DECL_PUBLISHER\n");
 
     // Encode the body
-    return _z_reskey_encode(wbf, header, &dcl->_key);
+    return _z_keyexpr_encode(wbf, header, &dcl->_key);
 }
 
 void _z_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pub_decl_result_t *r)
@@ -371,9 +371,9 @@ void _z_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pub_decl_result_t 
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._pub_decl._key = r_res._value._reskey;
+    r->_value._pub_decl._key = r_res._value._keyexpr;
 }
 
 _z_pub_decl_result_t _z_pub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
@@ -389,7 +389,7 @@ int _z_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_sub_decl_t *dcl)
     _Z_DEBUG("Encoding _Z_DECL_SUBSCRIBER\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &dcl->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key))
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S))
         return _z_subinfo_encode(wbf, &dcl->_subinfo);
 
@@ -402,9 +402,9 @@ void _z_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sub_decl_result_t 
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._sub_decl._key = r_res._value._reskey;
+    r->_value._sub_decl._key = r_res._value._keyexpr;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S))
     {
@@ -437,7 +437,7 @@ int _z_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_qle_decl_t *dcl)
     _Z_DEBUG("Encoding _Z_DECL_QUERYABLE\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &dcl->_key));
+    _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key));
     _Z_EC(_z_zint_encode(wbf, dcl->_kind));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q))
@@ -455,9 +455,9 @@ void _z_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_qle_decl_result_t 
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._qle_decl._key = r_res._value._reskey;
+    r->_value._qle_decl._key = r_res._value._keyexpr;
 
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
@@ -515,7 +515,7 @@ int _z_forget_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget_pu
     _Z_DEBUG("Encoding _Z_DECL_FORGET_PUBLISHER\n");
 
     // Encode the body
-    return _z_reskey_encode(wbf, header, &dcl->_key);
+    return _z_keyexpr_encode(wbf, header, &dcl->_key);
 }
 
 void _z_forget_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_forget_pub_decl_result_t *r)
@@ -524,9 +524,9 @@ void _z_forget_pub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_forget_pub_
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._forget_pub_decl._key = r_res._value._reskey;
+    r->_value._forget_pub_decl._key = r_res._value._keyexpr;
 }
 
 _z_forget_pub_decl_result_t _z_forget_pub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
@@ -542,7 +542,7 @@ int _z_forget_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget_su
     _Z_DEBUG("Encoding _Z_DECL_FORGET_PUBLISHER\n");
 
     // Encode the body
-    return _z_reskey_encode(wbf, header, &dcl->_key);
+    return _z_keyexpr_encode(wbf, header, &dcl->_key);
 }
 
 void _z_forget_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_forget_sub_decl_result_t *r)
@@ -551,9 +551,9 @@ void _z_forget_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_forget_sub_
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._forget_sub_decl._key = r_res._value._reskey;
+    r->_value._forget_sub_decl._key = r_res._value._keyexpr;
 }
 
 _z_forget_sub_decl_result_t _z_forget_sub_decl_decode(_z_zbuf_t *zbf, uint8_t header)
@@ -569,7 +569,7 @@ int _z_forget_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget_ql
     _Z_DEBUG("Encoding _Z_DECL_FORGET_QUERYABLE\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &dcl->_key));
+    _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key));
     _Z_EC(_z_zint_encode(wbf, dcl->_kind));
 
     return 0;
@@ -581,9 +581,9 @@ void _z_forget_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_forget_qle_
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_res = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_res = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._forget_qle_decl._key = r_res._value._reskey;
+    r->_value._forget_qle_decl._key = r_res._value._keyexpr;
 
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
@@ -884,7 +884,7 @@ int _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg)
     _Z_DEBUG("Encoding _Z_MID_DATA\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I))
         _Z_EC(_z_data_info_encode(wbf, &msg->_info))
@@ -900,9 +900,9 @@ void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r)
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_key = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_key = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._data._key = r_key._value._reskey;
+    r->_value._data._key = r_key._value._keyexpr;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I))
     {
@@ -933,7 +933,7 @@ int _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg)
     _Z_DEBUG("Encoding _Z_MID_PULL\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
     _Z_EC(_z_zint_encode(wbf, msg->_pull_id))
 
@@ -949,9 +949,9 @@ void _z_pull_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pull_result_t *r)
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    _z_reskey_result_t r_key = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_key = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._pull._key = r_key._value._reskey;
+    r->_value._pull._key = r_key._value._keyexpr;
 
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
@@ -1001,7 +1001,7 @@ int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg)
     _Z_DEBUG("Encoding _Z_MID_QUERY\n");
 
     // Encode the body
-    _Z_EC(_z_reskey_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
     _Z_EC(_z_str_encode(wbf, msg->_predicate))
 
@@ -1096,9 +1096,9 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
     _Z_DEBUG("Decoding _Z_MID_QUERY\n");
     r->_tag = _Z_RES_OK;
 
-    _z_reskey_result_t r_key = _z_reskey_decode(zbf, header);
+    _z_keyexpr_result_t r_key = _z_keyexpr_decode(zbf, header);
     _ASSURE_P_RESULT(r_key, r, _Z_ERR_PARSE_RESKEY)
-    r->_value._query._key = r_key._value._reskey;
+    r->_value._query._key = r_key._value._keyexpr;
 
     _z_str_result_t r_str = _z_str_decode(zbf);
     _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)

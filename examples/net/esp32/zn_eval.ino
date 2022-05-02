@@ -55,8 +55,8 @@ void setup()
     if (s == NULL)
         return;
 
-    _z_reskey_t reskey = _z_rname(URI);
-    _z_queryable_t *qable = _z_declare_queryable(s, reskey, Z_QUERYABLE_EVAL, query_handler, NULL);
+    _z_keyexpr_t keyexpr = _z_rname(URI);
+    _z_queryable_t *qable = _z_declare_queryable(s, keyexpr, Z_QUERYABLE_EVAL, query_handler, NULL);
     if (qable == 0)
         return;
 

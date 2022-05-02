@@ -32,7 +32,7 @@ extern "C"
 #define BEEP_PIN 32
 
 _z_session_t *s = NULL;
-_z_reskey_t *reskey = NULL;
+_z_keyexpr_t *keyexpr = NULL;
 
 bool status = false;
 
@@ -60,8 +60,8 @@ void setup()
     _zp_start_lease_task(s);
     Serial.println("OK");
 
-    reskey = (_z_reskey_t *)malloc(sizeof(_z_reskey_t));
-    *reskey = _z_rname(URI);
+    keyexpr = (_z_keyexpr_t *)malloc(sizeof(_z_keyexpr_t));
+    *keyexpr = _z_rname(URI);
 }
 
 void loop()
@@ -76,7 +76,7 @@ void loop()
     status = !status;
 
     digitalWrite(BEEP_PIN, HIGH);
-    _z_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
+    _z_write(s, *keyexpr, (const uint8_t *)buf, strlen(buf));
     delay(100);
     digitalWrite(BEEP_PIN, LOW);
 

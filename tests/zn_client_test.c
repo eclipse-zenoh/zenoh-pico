@@ -130,7 +130,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        _z_reskey_t rk = _z_rname(s1_res);
+        _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s1, rk);
         printf("Declared resource on session 1: %lu %lu %s\n", rid, rk._rid, rk._rname);
         rids1[i] = rid;
@@ -141,7 +141,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        _z_reskey_t rk = _z_rname(s1_res);
+        _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s2, rk);
         printf("Declared resource on session 2: %lu %lu %s\n", rid, rk._rid, rk._rname);
         rids2[i] = rid;
@@ -152,7 +152,7 @@ int main(int argc, _z_str_t *argv)
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++)
     {
-        _z_reskey_t rk = _z_rid(rids2[i]);
+        _z_keyexpr_t rk = _z_rid(rids2[i]);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
@@ -164,7 +164,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        _z_reskey_t rk = _z_rname(s1_res);
+        _z_keyexpr_t rk = _z_rname(s1_res);
         _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk._rid, rk._rname);
@@ -176,7 +176,7 @@ int main(int argc, _z_str_t *argv)
     // Declare publisher on firt session
     for (unsigned int i = 0; i < SET; i++)
     {
-        _z_reskey_t rk = _z_rid(rids1[i]);
+        _z_keyexpr_t rk = _z_rid(rids1[i]);
         z_publisher_t *pub = _z_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->_id);
@@ -195,7 +195,7 @@ int main(int argc, _z_str_t *argv)
     {
         for (unsigned int i = 0; i < SET; i++)
         {
-            _z_reskey_t rk = _z_rid(rids1[i]);
+            _z_keyexpr_t rk = _z_rid(rids1[i]);
             _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk._rid, len, n * SET + (i + 1), total);
@@ -226,7 +226,7 @@ int main(int argc, _z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            _z_reskey_t rk = _z_rname(s1_res);
+            _z_keyexpr_t rk = _z_rname(s1_res);
             _z_query_target_t qry_tgt = _z_query_target_default();
             _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, &idx[i]);
@@ -274,13 +274,13 @@ int main(int argc, _z_str_t *argv)
             for (unsigned int i = 0; i < SET; i++)
             {
                 sprintf(s1_res, "%s%d", uri, i);
-                _z_reskey_t rk = _z_rname(s1_res);
-                _z_reskey_t myrk = _z_rname(s1_res);
+                _z_keyexpr_t rk = _z_rname(s1_res);
+                _z_keyexpr_t myrk = _z_rname(s1_res);
                 _z_query_target_t qry_tgt = _z_query_target_default();
                 _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
                 _z_reply_data_array_t ra = _z_query_collect(s1, myrk, "", qry_tgt, qry_con);
                 printf("Queried and collected data from session 1: %lu %s\n", rk._rid, rk._rname);
-                _z_reskey_clear(&rk);
+                _z_keyexpr_clear(&rk);
                 replies += ra._len;
                 _z_reply_data_array_clear(&ra);
             }

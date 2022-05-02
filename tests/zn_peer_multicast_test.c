@@ -91,7 +91,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        _z_reskey_t rk = _z_rname(s1_res);
+        _z_keyexpr_t rk = _z_rname(s1_res);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
@@ -109,11 +109,11 @@ int main(int argc, _z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            _z_reskey_t rk = _z_rname(s1_res);
+            _z_keyexpr_t rk = _z_rname(s1_res);
             _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
-            _z_reskey_clear(&rk);
+            _z_keyexpr_clear(&rk);
         }
     }
 

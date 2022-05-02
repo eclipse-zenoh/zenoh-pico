@@ -49,7 +49,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _Z_INFO("Received declare-resource message\n");
 
                 _z_zint_t id = decl._body._res._id;
-                _z_reskey_t key = decl._body._res._key;
+                _z_keyexpr_t key = decl._body._res._key;
 
                 // Register remote resource declaration
                 _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
@@ -89,7 +89,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
                 rs->_id = _z_get_entity_id(zn);
                 rs->_rname = rname;
-                rs->_key = _z_reskey_duplicate(&decl._body._sub._key);
+                rs->_key = _z_keyexpr_duplicate(&decl._body._sub._key);
                 rs->_info = decl._body._sub._subinfo;
                 rs->_callback = NULL;
                 rs->_arg = NULL;

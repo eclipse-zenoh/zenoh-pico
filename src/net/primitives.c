@@ -27,11 +27,11 @@ _z_hello_array_t _z_scout(const _z_zint_t what, const _z_properties_t *config, c
 }
 
 /*------------------ Resource Declaration ------------------*/
-_z_zint_t _z_declare_resource(_z_session_t *zn, _z_reskey_t reskey)
+_z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
     _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
     r->_id = _z_get_resource_id(zn);
-    r->_key = reskey;
+    r->_key = keyexpr;
 
     // FIXME: remove when resource declaration is implemented for multicast transport
     if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
@@ -42,7 +42,7 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_reskey_t reskey)
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_resource(r->_id, _z_reskey_duplicate(&r->_key));
+    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&r->_key));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -83,15 +83,15 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 }
 
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey)
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
     _z_publisher_t *pub = (_z_publisher_t *)malloc(sizeof(_z_publisher_t));
     pub->_zn = zn;
-    pub->_key = reskey;
+    pub->_key = keyexpr;
     pub->_id = _z_get_entity_id(zn);
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_publisher(_z_reskey_duplicate(&reskey));
+    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -109,7 +109,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey)
 void _z_undeclare_publisher(_z_publisher_t *pub)
 {
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_publisher(_z_reskey_duplicate(&pub->_key));
+    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -123,12 +123,12 @@ void _z_undeclare_publisher(_z_publisher_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_reskey_t reskey, _z_subinfo_t sub_info, _z_data_handler_t callback, void *arg)
+_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info, _z_data_handler_t callback, void *arg)
 {
     _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
     rs->_id = _z_get_entity_id(zn);
-    rs->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &reskey);
-    rs->_key = reskey;
+    rs->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    rs->_key = keyexpr;
     rs->_info = sub_info;
     rs->_callback = callback;
     rs->_arg = arg;
@@ -138,7 +138,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_reskey_t reskey, _z_
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_subscriber(_z_reskey_duplicate(&reskey), sub_info);
+    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -169,7 +169,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
         return;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_reskey_t key;
+    _z_keyexpr_t key;
     key._rid = Z_RESOURCE_ID_NONE;
     key._rname = _z_str_clone(s->_rname);
     *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_subscriber(key);
@@ -187,12 +187,12 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_reskey_t reskey, unsigned int kind, _z_questionable_handler_t callback, void *arg)
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, unsigned int kind, _z_questionable_handler_t callback, void *arg)
 {
     _z_questionable_t *rq = (_z_questionable_t *)malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
-    rq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &reskey);
-    rq->_key = reskey;
+    rq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    rq->_key = keyexpr;
     rq->_kind = kind;
     rq->_callback = callback;
     rq->_arg = arg;
@@ -202,7 +202,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_reskey_t reskey, unsig
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_queryable(_z_reskey_duplicate(&reskey), kind, _Z_QUERYABLE_COMPLETE_DEFAULT, _Z_QUERYABLE_DISTANCE_DEFAULT);
+    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), kind, _Z_QUERYABLE_COMPLETE_DEFAULT, _Z_QUERYABLE_DISTANCE_DEFAULT);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -233,7 +233,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
         return;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_reskey_t key;
+    _z_keyexpr_t key;
     key._rid = Z_RESOURCE_ID_NONE;
     key._rname = _z_str_clone(q->_rname);
     *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_queryable(key, q->_kind);
@@ -259,9 +259,9 @@ void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *pa
 
     // @TODO: use numerical resources if possible
     // ResKey
-    _z_reskey_t reskey;
-    reskey._rid = Z_RESOURCE_ID_NONE;
-    reskey._rname = key;
+    _z_keyexpr_t keyexpr;
+    keyexpr._rid = Z_RESOURCE_ID_NONE;
+    keyexpr._rname = key;
 
     // Empty data info
     _z_data_info_t di;
@@ -275,7 +275,7 @@ void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *pa
     // Congestion control
     int can_be_dropped = 0;
 
-    _z_zenoh_message_t z_msg = _z_msg_make_reply(reskey, di, pld, can_be_dropped, rctx);
+    _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
 
     if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
     {
@@ -289,7 +289,7 @@ void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *pa
 }
 
 /*------------------ Write ------------------*/
-int _z_write(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload, const size_t len)
+int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -307,12 +307,12 @@ int _z_write(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload,
     // Congestion control
     int can_be_dropped = Z_CONGESTION_CONTROL_DEFAULT == Z_CONGESTION_CONTROL_DROP;
 
-    _z_zenoh_message_t z_msg = _z_msg_make_data(reskey, info, pld, can_be_dropped);
+    _z_zenoh_message_t z_msg = _z_msg_make_data(keyexpr, info, pld, can_be_dropped);
 
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
-int _z_write_ext(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl)
+int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -334,19 +334,19 @@ int _z_write_ext(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payl
     // Congestion control
     int can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;
 
-    _z_zenoh_message_t z_msg = _z_msg_make_data(reskey, info, pld, can_be_dropped);
+    _z_zenoh_message_t z_msg = _z_msg_make_data(keyexpr, info, pld, can_be_dropped);
 
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl);
 }
 
 /*------------------ Query ------------------*/
-void _z_query(_z_session_t *zn, _z_reskey_t reskey, const _z_str_t predicate, const _z_query_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
+void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_query_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
     pq->_id = _z_get_query_id(zn);
-    pq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &reskey);
-    pq->_key = reskey;
+    pq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    pq->_key = keyexpr;
     pq->_predicate = _z_str_clone(predicate);
     pq->_target = target;
     pq->_consolidation = consolidation;
@@ -357,7 +357,7 @@ void _z_query(_z_session_t *zn, _z_reskey_t reskey, const _z_str_t predicate, co
     // Add the pending query to the current session
     _z_register_pending_query(zn, pq);
 
-    _z_zenoh_message_t z_msg = _z_msg_make_query(reskey, pq->_predicate, pq->_id, pq->_target, pq->_consolidation);
+    _z_zenoh_message_t z_msg = _z_msg_make_query(keyexpr, pq->_predicate, pq->_id, pq->_target, pq->_consolidation);
 
     int res = _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
     if (res != 0)
@@ -372,7 +372,7 @@ void reply_collect_handler(const _z_reply_t reply, const void *arg)
         _z_reply_data_t *rd = (_z_reply_data_t *)malloc(sizeof(_z_reply_data_t));
         rd->_replier_kind = reply._data._replier_kind;
         _z_bytes_copy(&rd->_replier_id, &reply._data._replier_id);
-        rd->_sample._key = _z_reskey_duplicate(&reply._data._sample._key);
+        rd->_sample._key = _z_keyexpr_duplicate(&reply._data._sample._key);
         _z_bytes_copy(&rd->_sample._value, &reply._data._sample._value);
         rd->_sample._encoding._prefix = reply._data._sample._encoding._prefix;
         rd->_sample._encoding._suffix = reply._data._sample._encoding._suffix ? _z_str_clone(reply._data._sample._encoding._suffix) : NULL;
@@ -389,7 +389,7 @@ void reply_collect_handler(const _z_reply_t reply, const void *arg)
 }
 
 _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
-                                     _z_reskey_t reskey,
+                                     _z_keyexpr_t keyexpr,
                                      const _z_str_t predicate,
                                      const _z_query_target_t target,
                                      const _z_consolidation_strategy_t consolidation)
@@ -402,7 +402,7 @@ _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
 
     // Issue the query
     _z_mutex_lock(&pqc._mutex); // Get the lock on the query, released on condvar wait
-    _z_query(zn, reskey, predicate, target, consolidation, reply_collect_handler, &pqc);
+    _z_query(zn, keyexpr, predicate, target, consolidation, reply_collect_handler, &pqc);
     _z_condvar_wait(&pqc._cond_var, &pqc._mutex); // Wait to be notified, releases pqc._mutex
 
     _z_reply_data_array_t rda;

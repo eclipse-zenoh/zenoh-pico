@@ -88,7 +88,7 @@
 #define _Z_FLAG_Z_D 0x20 // 1 << 5 | Dropping          if D==1 then the message can be dropped
 #define _Z_FLAG_Z_F 0x20 // 1 << 5 | Final             if F==1 then this is the final message (e.g., ReplyContext, Pull)
 #define _Z_FLAG_Z_I 0x40 // 1 << 6 | DataInfo          if I==1 then DataInfo is present
-#define _Z_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey       if K==1 then reskey is string
+#define _Z_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
 #define _Z_FLAG_Z_N 0x40 // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
 #define _Z_FLAG_Z_P 0x80 // 1 << 7 | Period            if P==1 then a period is present
 #define _Z_FLAG_Z_Q 0x40 // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
@@ -253,8 +253,8 @@ void _z_msg_clear_reply_context(_z_reply_context_t *rc);
 // ~    Suffix     ~ if K==1
 // +---------------+
 //
-void _z_reskey_clear(_z_reskey_t *rk);
-void _z_reskey_free(_z_reskey_t **rk);
+void _z_keyexpr_clear(_z_keyexpr_t *rk);
+void _z_keyexpr_free(_z_keyexpr_t **rk);
 
 /*------------------ Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -263,13 +263,13 @@ void _z_reskey_free(_z_reskey_t **rk);
 // +---------------+
 // ~      RID      ~
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
 typedef struct
 {
     _z_zint_t _id;
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_res_decl_t;
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 
@@ -292,12 +292,12 @@ void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|   PUB   |
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_pub_decl_t;
 void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 
@@ -306,12 +306,12 @@ void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_PUB  |
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_forget_pub_decl_t;
 void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
 
@@ -330,7 +330,7 @@ void _z_subinfo_clear(_z_subinfo_t *si);
 // +-+-+-+-+-+-+-+-+
 // |K|S|R|   SUB   |
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 // ~    SubInfo    ~ if S==1. Otherwise: SubMode=Push
 // +---------------+
@@ -339,7 +339,7 @@ void _z_subinfo_clear(_z_subinfo_t *si);
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_subinfo_t _subinfo;
 } _z_sub_decl_t;
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
@@ -349,12 +349,12 @@ void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
 // +-+-+-+-+-+-+-+-+
 // |K|X|X|  F_SUB  |
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_forget_sub_decl_t;
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 
@@ -363,7 +363,7 @@ void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 // +-+-+-+-+-+-+-+-+
 // |K|Q|X|  QABLE  |
 // +---------------+
-// ~     ResKey    ~ if K==1 then reskey is string
+// ~     ResKey    ~ if K==1 then keyexpr is string
 // +---------------+
 // ~     Kind      ~
 // +---------------+
@@ -372,7 +372,7 @@ void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_zint_t _kind;
     _z_zint_t _complete;
     _z_zint_t _distance;
@@ -384,14 +384,14 @@ void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 // +-+-+-+-+-+-+-+-+
 // |K|X|X| F_QABLE |
 // +---------------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 // ~     Kind      ~
 // +---------------+
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_zint_t _kind;
 } _z_forget_qle_decl_t;
 void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl);
@@ -481,7 +481,7 @@ void _z_data_info_clear(_z_data_info_t *di);
 // +-+-+-+-+-+-+-+-+
 // |K|I|D|  DATA   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 // ~    DataInfo   ~ if I==1
 // +---------------+
@@ -492,7 +492,7 @@ void _z_data_info_clear(_z_data_info_t *di);
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_data_info_t _info;
     _z_payload_t _payload;
 } _z_msg_data_t;
@@ -516,7 +516,7 @@ void _z_msg_clear_unit(_z_msg_unit_t *unt);
 // +-+-+-+-+-+-+-+-+
 // |K|N|F|  PULL   |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 // ~    pullid     ~
 // +---------------+
@@ -525,7 +525,7 @@ void _z_msg_clear_unit(_z_msg_unit_t *unt);
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_zint_t _pull_id;
     _z_zint_t _max_samples;
 } _z_msg_pull_t;
@@ -536,7 +536,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 // +-+-+-+-+-+-+-+-+
 // |K|X|T|  QUERY  |
 // +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then reskey is string
+// ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 // ~   predicate   ~
 // +---------------+
@@ -549,7 +549,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 //
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_str_t _predicate;
     _z_zint_t _qid;
     _z_query_target_t _target;
@@ -579,20 +579,20 @@ _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind, int is_final);
-_z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_reskey_t key);
+_z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
-_z_declaration_t _z_msg_make_declaration_publisher(_z_reskey_t key);
-_z_declaration_t _z_msg_make_declaration_forget_publisher(_z_reskey_t key);
-_z_declaration_t _z_msg_make_declaration_subscriber(_z_reskey_t key, _z_subinfo_t subinfo);
-_z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_reskey_t key);
-_z_declaration_t _z_msg_make_declaration_queryable(_z_reskey_t key, _z_zint_t kind, _z_zint_t complete, _z_zint_t distance);
-_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_reskey_t key, _z_zint_t kind);
+_z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
+_z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key);
+_z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo);
+_z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
+_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete, _z_zint_t distance);
+_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_zint_t kind);
 _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
-_z_zenoh_message_t _z_msg_make_data(_z_reskey_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
+_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
-_z_zenoh_message_t _z_msg_make_pull(_z_reskey_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_reskey_t key, _z_str_t predicate, _z_zint_t qid, _z_query_target_t target, _z_consolidation_strategy_t consolidation);
-_z_zenoh_message_t _z_msg_make_reply(_z_reskey_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx);
+_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zint_t qid, _z_query_target_t target, _z_consolidation_strategy_t consolidation);
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx);
 
 /*=============================*/
 /*     Transport Messages      */

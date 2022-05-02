@@ -18,11 +18,11 @@
 #include "zenoh-pico/session/query.h"
 
 /*------------------ clone helpers ------------------*/
-_z_reskey_t _z_reskey_duplicate(const _z_reskey_t *reskey)
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *keyexpr)
 {
-    _z_reskey_t rk;
-    rk._rid = reskey->_rid,
-    rk._rname = reskey->_rname ? _z_str_clone(reskey->_rname) : NULL;
+    _z_keyexpr_t rk;
+    rk._rid = keyexpr->_rid,
+    rk._rname = keyexpr->_rname ? _z_str_clone(keyexpr->_rname) : NULL;
     return rk;
 }
 

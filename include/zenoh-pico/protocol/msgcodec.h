@@ -24,7 +24,7 @@
 
 /*------------------ Result declarations ------------------*/
 _Z_RESULT_DECLARE(_z_timestamp_t, timestamp)
-_Z_RESULT_DECLARE(_z_reskey_t, reskey)
+_Z_RESULT_DECLARE(_z_keyexpr_t, keyexpr)
 _Z_RESULT_DECLARE(_z_subinfo_t, subinfo)
 _Z_RESULT_DECLARE(_z_query_target_t, query_target)
 _Z_RESULT_DECLARE(_z_consolidation_strategy_t, query_consolidation)
@@ -107,8 +107,8 @@ _Z_DECLARE_DECODE_NOH(timestamp);
 _Z_DECLARE_ENCODE_NOH(subinfo);
 _Z_DECLARE_DECODE(subinfo);
 
-_Z_DECLARE_ENCODE(reskey);
-_Z_DECLARE_DECODE(reskey);
+_Z_DECLARE_ENCODE(keyexpr);
+_Z_DECLARE_DECODE(keyexpr);
 
 _Z_DECLARE_ENCODE_NOH(data_info);
 _Z_DECLARE_DECODE_NOH(data_info);

@@ -33,17 +33,17 @@ void _z_timestamp_clear(_z_timestamp_t *ts)
 }
 
 /*------------------ ResKey Field ------------------*/
-void _z_reskey_clear(_z_reskey_t *rk)
+void _z_keyexpr_clear(_z_keyexpr_t *rk)
 {
     rk->_rid = 0;
     if (rk->_rname != NULL)
         _z_str_clear(rk->_rname);
 }
 
-void _z_reskey_free(_z_reskey_t **rk)
+void _z_keyexpr_free(_z_keyexpr_t **rk)
 {
-    _z_reskey_t *ptr = (_z_reskey_t *)*rk;
-    _z_reskey_clear(ptr);
+    _z_keyexpr_t *ptr = (_z_keyexpr_t *)*rk;
+    _z_keyexpr_clear(ptr);
 
     free(ptr);
     *rk = NULL;
@@ -90,7 +90,7 @@ void _z_msg_clear_reply_context(_z_reply_context_t *rc)
 /*       Zenoh Messages        */
 /*=============================*/
 /*------------------ Resource Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_reskey_t key)
+_z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key)
 {
     _z_declaration_t decl;
 
@@ -106,7 +106,7 @@ _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_reskey_t key)
 
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Forget Resource Declaration ------------------*/
@@ -127,7 +127,7 @@ void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl)
 }
 
 /*------------------ Publisher Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_publisher(_z_reskey_t key)
+_z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key)
 {
     _z_declaration_t decl;
 
@@ -142,11 +142,11 @@ _z_declaration_t _z_msg_make_declaration_publisher(_z_reskey_t key)
 
 void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Forget Publisher Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_forget_publisher(_z_reskey_t key)
+_z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key)
 {
     _z_declaration_t decl;
 
@@ -161,11 +161,11 @@ _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_reskey_t key)
 
 void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_subscriber(_z_reskey_t key, _z_subinfo_t subinfo)
+_z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo)
 {
     _z_declaration_t decl;
 
@@ -191,12 +191,12 @@ void _z_subinfo_clear(_z_subinfo_t *si)
 
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
     _z_subinfo_clear(&dcl->_subinfo);
 }
 
 /*------------------ Forget Subscriber Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_reskey_t key)
+_z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key)
 {
     _z_declaration_t decl;
 
@@ -211,11 +211,11 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_reskey_t key)
 
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_queryable(_z_reskey_t key, _z_zint_t kind, _z_zint_t complete, _z_zint_t distance)
+_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete, _z_zint_t distance)
 {
     _z_declaration_t decl;
 
@@ -236,11 +236,11 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_reskey_t key, _z_zint_t ki
 
 void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Forget Queryable Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_reskey_t key, _z_zint_t kind)
+_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_zint_t kind)
 {
     _z_declaration_t decl;
 
@@ -256,7 +256,7 @@ _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_reskey_t key, _z_zi
 
 void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl)
 {
-    _z_reskey_clear(&dcl->_key);
+    _z_keyexpr_clear(&dcl->_key);
 }
 
 /*------------------ Declare ------------------*/
@@ -338,7 +338,7 @@ void _z_data_info_clear(_z_data_info_t *di)
 }
 
 /*------------------ Data Message ------------------*/
-_z_zenoh_message_t _z_msg_make_data(_z_reskey_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped)
+_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped)
 {
     _z_zenoh_message_t msg;
 
@@ -362,7 +362,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_reskey_t key, _z_data_info_t info, _z_pay
 
 void _z_msg_clear_data(_z_msg_data_t *msg)
 {
-    _z_reskey_clear(&msg->_key);
+    _z_keyexpr_clear(&msg->_key);
     _z_data_info_clear(&msg->_info);
     _z_payload_clear(&msg->_payload);
 }
@@ -388,7 +388,7 @@ void _z_msg_clear_unit(_z_msg_unit_t *unt)
 }
 
 /*------------------ Pull Message ------------------*/
-_z_zenoh_message_t _z_msg_make_pull(_z_reskey_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final)
+_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final)
 {
     _z_zenoh_message_t msg;
 
@@ -412,11 +412,11 @@ _z_zenoh_message_t _z_msg_make_pull(_z_reskey_t key, _z_zint_t pull_id, _z_zint_
 
 void _z_msg_clear_pull(_z_msg_pull_t *msg)
 {
-    _z_reskey_clear(&msg->_key);
+    _z_keyexpr_clear(&msg->_key);
 }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_reskey_t key, _z_str_t predicate, _z_zint_t qid, _z_query_target_t target, _z_consolidation_strategy_t consolidation)
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zint_t qid, _z_query_target_t target, _z_consolidation_strategy_t consolidation)
 {
     _z_zenoh_message_t msg;
 
@@ -440,12 +440,12 @@ _z_zenoh_message_t _z_msg_make_query(_z_reskey_t key, _z_str_t predicate, _z_zin
 
 void _z_msg_clear_query(_z_msg_query_t *msg)
 {
-    _z_reskey_clear(&msg->_key);
+    _z_keyexpr_clear(&msg->_key);
     _z_str_clear(msg->_predicate);
 }
 
 /*------------------ Reply Message ------------------*/
-_z_zenoh_message_t _z_msg_make_reply(_z_reskey_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx)
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx)
 {
     _z_zenoh_message_t msg = _z_msg_make_data(key, info, payload, can_be_dropped);
     msg._reply_context = rctx;

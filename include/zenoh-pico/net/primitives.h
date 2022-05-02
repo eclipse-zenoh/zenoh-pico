@@ -51,13 +51,13 @@ _z_hello_array_t _z_scout(const _z_zint_t what, const _z_properties_t *config, c
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to map to a numerical id. The callee gets
+ *     keyexpr: The resource key to map to a numerical id. The callee gets
  *             the ownership of any allocated value.
  *
  * Returns:
  *     A numerical id of the declared resource.
  */
-_z_zint_t _z_declare_resource(_z_session_t *zn, _z_reskey_t reskey);
+_z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -79,13 +79,13 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey:  The resource key to publish. The callee gets the ownership
+ *     keyexpr:  The resource key to publish. The callee gets the ownership
  *              of any allocated value.
  *
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey);
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -101,7 +101,7 @@ void _z_undeclare_publisher(_z_publisher_t *pub);
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to subscribe. The callee gets the ownership
+ *     keyexpr: The resource key to subscribe. The callee gets the ownership
  *             of any allocated value.
  *     sub_info: The :c:type:`_z_subinfo_t` to configure the :c:type:`_z_subscriber_t`.
  *               The callee gets the ownership of any allocated value.
@@ -112,7 +112,7 @@ void _z_undeclare_publisher(_z_publisher_t *pub);
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
 _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
-                                      _z_reskey_t reskey,
+                                      _z_keyexpr_t keyexpr,
                                       _z_subinfo_t sub_info,
                                       _z_data_handler_t callback,
                                       void *arg);
@@ -131,7 +131,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub);
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key the :c:type:`_z_queryable_t` will reply to.
+ *     keyexpr: The resource key the :c:type:`_z_queryable_t` will reply to.
  *             The callee gets the ownership of any allocated value.
  *     kind: The kind of :c:type:`_z_queryable_t`.
  *     callback: The callback function that will be called each time a matching query is received.
@@ -141,7 +141,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub);
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn,
-                                    _z_reskey_t reskey,
+                                    _z_keyexpr_t keyexpr,
                                     unsigned int kind,
                                     _z_questionable_handler_t callback,
                                     void *arg);
@@ -163,13 +163,13 @@ void _z_undeclare_queryable(_z_queryable_t *qle);
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to write. The caller keeps its ownership.
+ *     keyexpr: The resource key to write. The caller keeps its ownership.
  *     payload: The value to write.
  *     len: The length of the value to write.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _z_write(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload, const size_t len);
+int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
 
 /**
  * Write data corresponding to a given resource key, allowing the definition of
@@ -177,7 +177,7 @@ int _z_write(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload,
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to write. The caller keeps its ownership.
+ *     keyexpr: The resource key to write. The caller keeps its ownership.
  *     payload: The value to write.
  *     len: The length of the value to write.
  *     encoding: The encoding of the payload. The callee gets the ownership of
@@ -188,7 +188,7 @@ int _z_write(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload,
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _z_write_ext(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl);
+int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
@@ -206,7 +206,7 @@ void _z_pull(const _z_subscriber_t *sub);
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to query. The callee gets the ownership of any
+ *     keyexpr: The resource key to query. The callee gets the ownership of any
  *             allocated value.
  *     predicate: An indication to matching queryables about the queried data.
  *     target: The kind of queryables that should be target of this query.
@@ -215,7 +215,7 @@ void _z_pull(const _z_subscriber_t *sub);
  *     arg: A pointer that will be passed to the **callback** on each call.
  */
 void _z_query(_z_session_t *zn,
-              _z_reskey_t reskey,
+              _z_keyexpr_t keyexpr,
               const _z_str_t predicate,
               const _z_query_target_t target,
               const _z_consolidation_strategy_t consolidation,
@@ -228,7 +228,7 @@ void _z_query(_z_session_t *zn,
  *
  * Parameters:
  *     session: The zenoh-net session. The caller keeps its ownership.
- *     reskey: The resource key to query. The callee gets the ownership of any
+ *     keyexpr: The resource key to query. The callee gets the ownership of any
  *             allocated value.
  *     predicate: An indication to matching queryables about the queried data.
  *     target: The kind of queryables that should be target of this query.
@@ -238,7 +238,7 @@ void _z_query(_z_session_t *zn,
  *    An array containing all the replies for this query.
  */
 _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
-                                       _z_reskey_t reskey,
+                                       _z_keyexpr_t keyexpr,
                                        const _z_str_t predicate,
                                        const _z_query_target_t target,
                                        const _z_consolidation_strategy_t consolidation);

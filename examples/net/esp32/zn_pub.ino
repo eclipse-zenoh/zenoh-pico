@@ -29,7 +29,7 @@ extern "C"
 #define URI "/demo/example/zenoh-pico/pub/esp32"
 
 _z_session_t *s = NULL;
-_z_reskey_t *reskey = NULL;
+_z_keyexpr_t *keyexpr = NULL;
 
 void setup()
 {
@@ -53,8 +53,8 @@ void setup()
     _zp_start_lease_task(s);
 
     unsigned long rid = _z_declare_resource(s, _z_rname(URI));
-    reskey = (_z_reskey_t *)malloc(sizeof(_z_reskey_t));
-    *reskey = _z_rid(rid);
+    keyexpr = (_z_keyexpr_t *)malloc(sizeof(_z_keyexpr_t));
+    *keyexpr = _z_rid(rid);
 }
 
 void loop()
@@ -63,9 +63,9 @@ void loop()
     if (s == NULL)
         return;
 
-    if (reskey == NULL)
+    if (keyexpr == NULL)
         return;
 
     char *buf = "Publishing data from ESP32";
-    _z_write(s, *reskey, (const uint8_t *)buf, strlen(buf));
+    _z_write(s, *keyexpr, (const uint8_t *)buf, strlen(buf));
 }

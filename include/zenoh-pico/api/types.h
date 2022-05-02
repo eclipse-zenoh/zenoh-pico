@@ -27,7 +27,7 @@ typedef _z_str_t z_str_t;
 typedef _z_bytes_t z_bytes_t;
 
 typedef _z_string_t z_string_t;
-typedef _z_reskey_t z_keyexpr_t;
+typedef _z_keyexpr_t z_keyexpr_t;
 
 typedef _z_properties_t z_config_t;
 typedef _z_session_t z_session_t;

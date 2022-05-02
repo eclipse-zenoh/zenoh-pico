@@ -58,8 +58,8 @@ void setup()
     _zp_start_read_task(s);
     _zp_start_lease_task(s);
 
-    _z_reskey_t reskey = _z_rname(URI);
-    _z_subscriber_t *sub = _z_declare_subscriber(s, reskey, _z_subinfo_default(), data_handler, NULL);
+    _z_keyexpr_t keyexpr = _z_rname(URI);
+    _z_subscriber_t *sub = _z_declare_subscriber(s, keyexpr, _z_subinfo_default(), data_handler, NULL);
     if (sub == 0)
         return;
 }

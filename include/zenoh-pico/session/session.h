@@ -60,7 +60,7 @@ typedef struct
 typedef struct
 {
     _z_zint_t _id;
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_resource_t;
 
 int _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
@@ -78,7 +78,7 @@ typedef struct
 {
     _z_zint_t _id;
     _z_str_t _rname;
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_subinfo_t _info;
     _z_data_handler_t _callback;
     void *_arg;
@@ -93,7 +93,7 @@ _Z_LIST_DEFINE(_z_subscriber, _z_subscription_t)
 typedef struct
 {
     _z_zint_t _id;
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
 } _z_publication_t;
 
 typedef struct
@@ -117,7 +117,7 @@ typedef struct
 {
     _z_zint_t _id;
     _z_str_t _rname;
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_str_t _predicate;
     _z_query_target_t _target;
     _z_consolidation_strategy_t _consolidation;

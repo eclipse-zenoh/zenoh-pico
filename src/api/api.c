@@ -608,7 +608,7 @@ z_owned_keyexpr_t z_keyexpr_clone(z_owned_keyexpr_t *keyexpr)
 {
     z_owned_keyexpr_t ret;
     ret._value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
-    *ret._value = _z_reskey_duplicate(keyexpr->_value);
+    *ret._value = _z_keyexpr_duplicate(keyexpr->_value);
     return ret;
 }
 
@@ -625,7 +625,7 @@ void z_config_clear(z_owned_config_t config)
 
 void z_keyexpr_clear(z_owned_keyexpr_t key)
 {
-    _z_reskey_free(&key._value);
+    _z_keyexpr_free(&key._value);
 }
 
 void z_reply_data_array_clear(z_owned_reply_data_array_t reply_data_a)

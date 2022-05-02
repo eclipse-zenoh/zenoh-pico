@@ -49,7 +49,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr)
 void _z_pending_query_clear(_z_pending_query_t *pen_qry)
 {
     _z_str_clear(pen_qry->_rname);
-    _z_reskey_clear(&pen_qry->_key);
+    _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_predicate);
 
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
@@ -121,7 +121,7 @@ ERR:
 
 int _z_trigger_query_reply_partial(_z_session_t *zn,
                                      const _z_reply_context_t *reply_context,
-                                     const _z_reskey_t reskey,
+                                     const _z_keyexpr_t keyexpr,
                                      const _z_bytes_t payload,
                                      const _z_data_info_t data_info)
 {
@@ -150,12 +150,12 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
     reply->_tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->_data._replier_id, &reply_context->_replier_id);
     reply->_data._replier_kind = reply_context->_replier_kind;
-    if (reskey._rid == Z_RESOURCE_ID_NONE)
-        reply->_data._sample._key = _z_reskey_duplicate(&reskey);
+    if (keyexpr._rid == Z_RESOURCE_ID_NONE)
+        reply->_data._sample._key = _z_keyexpr_duplicate(&keyexpr);
     else
     {
         reply->_data._sample._key._rid = Z_RESOURCE_ID_NONE;
-        reply->_data._sample._key._rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &reskey);
+        reply->_data._sample._key._rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
     }
     _z_bytes_copy(&reply->_data._sample._value, &payload);
     reply->_data._sample._encoding._prefix = data_info._encoding._prefix;

@@ -25,9 +25,9 @@
  *     rid: The resource id.
  *
  * Returns:
- *     A :c:type:`_z_reskey_t` containing a new resource key.
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
-_z_reskey_t _z_rid(unsigned long rid);
+_z_keyexpr_t _z_rid(unsigned long rid);
 
 /**
  * Create a resource key from a resource name.
@@ -36,9 +36,9 @@ _z_reskey_t _z_rid(unsigned long rid);
  *     rname: The resource name. The caller keeps its ownership.
  *
  * Returns:
- *     A :c:type:`_z_reskey_t` containing a new resource key.
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
-_z_reskey_t _z_rname(const _z_str_t rname);
+_z_keyexpr_t _z_rname(const _z_str_t rname);
 
 /**
  * Create a resource key from a resource id and a suffix.
@@ -48,8 +48,8 @@ _z_reskey_t _z_rname(const _z_str_t rname);
  *     suffix: The suffix.
  *
  * Returns:
- *     A :c:type:`_z_reskey_t` containing a new resource key.
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
-_z_reskey_t _z_rid_with_suffix(unsigned long rid, const _z_str_t suffix);
+_z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const _z_str_t suffix);
 
 #endif /* ZENOH_PICO_RESOURCE_NETAPI_H */

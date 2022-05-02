@@ -83,8 +83,8 @@ void setup()
     Serial.print("Declaring subscriber on: ");
     Serial.print(URI);
     Serial.print("...");
-    _z_reskey_t reskey = _z_rname(URI);
-    _z_subscriber_t *sub = _z_declare_subscriber(s, reskey, _z_subinfo_default(), data_handler, NULL);
+    _z_keyexpr_t keyexpr = _z_rname(URI);
+    _z_subscriber_t *sub = _z_declare_subscriber(s, keyexpr, _z_subinfo_default(), data_handler, NULL);
     if (sub == 0)
         while(true);
     Serial.println("OK");

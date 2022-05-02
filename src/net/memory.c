@@ -16,7 +16,7 @@
 
 void _z_sample_clear(_z_sample_t *sample)
 {
-    _z_reskey_clear(&sample->_key);
+    _z_keyexpr_clear(&sample->_key);
     _z_bytes_clear(&sample->_value);
     _z_str_clear(sample->_encoding._suffix); // FIXME: call the z_encoding_clear
 }

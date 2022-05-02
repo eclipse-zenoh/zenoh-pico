@@ -26,7 +26,7 @@ int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *
 void _z_subscription_clear(_z_subscription_t *sub)
 {
     _z_str_clear(sub->_rname);
-    _z_reskey_clear(&sub->_key);
+    _z_keyexpr_clear(&sub->_key);
 }
 
 /*------------------ Pull ------------------*/
@@ -103,10 +103,10 @@ _z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_loca
     return subs;
 }
 
-_z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey)
+_z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, is_local, reskey);
+    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, is_local, keyexpr);
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
     _z_mutex_unlock(&zn->_mutex_inner);
 
@@ -137,14 +137,14 @@ ERR:
     return -1;
 }
 
-int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _z_bytes_t payload, const _z_encoding_t encoding)
+int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &reskey);
+    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
     if (rname == NULL)
         goto ERR;
-    _z_reskey_t key = _z_rname(rname);
+    _z_keyexpr_t key = _z_rname(rname);
 
     // Build the sample
     _z_sample_t s;
@@ -162,7 +162,7 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _
         xs = _z_subscriber_list_tail(xs);
     }
 
-    _z_reskey_clear(&key);
+    _z_keyexpr_clear(&key);
     _z_str_clear(rname);
     _z_list_free(&subs, _z_noop_free);
     _z_mutex_unlock(&zn->_mutex_inner);

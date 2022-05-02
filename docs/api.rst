@@ -142,7 +142,7 @@ Vectors
 Data Structures
 ---------------
 
-.. c:type:: struct _z_reskey_t
+.. c:type:: struct _z_keyexpr_t
 
   Data structure representing a resource key.
 
@@ -153,15 +153,15 @@ Data Structures
       | ``Z_INT_RES_KEY``
       | ``Z_STR_RES_KEY``
 
-  .. c:member:: union _z_reskey_t key
+  .. c:member:: union _z_keyexpr_t key
 
     .. c:member:: _z_zint_t rid
 
-      A resource id (integer) when :c:member:`_z_reskey_t.kind` equals ``Z_INT_RES_KEY``.
+      A resource id (integer) when :c:member:`_z_keyexpr_t.kind` equals ``Z_INT_RES_KEY``.
 
     .. c:member:: char *rname
 
-      A resource name (string) when :c:member:`_z_reskey_t.kind` equals ``Z_STR_RES_KEY``.
+      A resource name (string) when :c:member:`_z_keyexpr_t.kind` equals ``Z_STR_RES_KEY``.
 
 .. c:type:: struct _z_subinfo_t
 

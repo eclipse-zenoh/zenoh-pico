@@ -469,9 +469,9 @@ void subinfo_field(void)
 }
 
 /*------------------ ResKey field ------------------*/
-_z_reskey_t gen_res_key(void)
+_z_keyexpr_t gen_res_key(void)
 {
-    _z_reskey_t key;
+    _z_keyexpr_t key;
     key._rid = gen_zint();
     int is_numerical = gen_bool();
     if (is_numerical)
@@ -482,7 +482,7 @@ _z_reskey_t gen_res_key(void)
     return key;
 }
 
-void assert_eq_res_key(_z_reskey_t *left, _z_reskey_t *right, uint8_t header)
+void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header)
 {
     printf("ResKey -> ");
     printf("ID (%zu:%zu), ", left->_rid, right->_rid);
@@ -507,26 +507,26 @@ void res_key_field(void)
     _z_wbuf_t wbf = gen_wbuf(128);
 
     // Initialize
-    _z_reskey_t e_rk = gen_res_key();
+    _z_keyexpr_t e_rk = gen_res_key();
 
     // Encode
     uint8_t header = (e_rk._rname) ? _Z_FLAG_Z_K : 0;
-    int res = _z_reskey_encode(&wbf, header, &e_rk);
+    int res = _z_keyexpr_encode(&wbf, header, &e_rk);
     assert(res == 0);
     (void) (res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_reskey_result_t r_rk = _z_reskey_decode(&zbf, header);
+    _z_keyexpr_result_t r_rk = _z_keyexpr_decode(&zbf, header);
     assert(r_rk._tag == _Z_RES_OK);
 
-    _z_reskey_t d_rk = r_rk._value._reskey;
+    _z_keyexpr_t d_rk = r_rk._value._keyexpr;
     printf("   ");
     assert_eq_res_key(&e_rk, &d_rk, header);
     printf("\n");
 
     // Free
-    _z_reskey_clear(&d_rk);
+    _z_keyexpr_clear(&d_rk);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1360,7 +1360,7 @@ void declare_message(void)
 /*------------------ Data message ------------------*/
 _z_zenoh_message_t gen_data_message(void)
 {
-    _z_reskey_t key = gen_res_key();
+    _z_keyexpr_t key = gen_res_key();
 
     _z_data_info_t info;
     if (gen_bool())
@@ -1424,7 +1424,7 @@ void data_message(void)
 /*------------------ Pull message ------------------*/
 _z_zenoh_message_t gen_pull_message(void)
 {
-    _z_reskey_t key = gen_res_key();
+    _z_keyexpr_t key = gen_res_key();
     _z_zint_t pull_id = gen_zint();
     _z_zint_t max_samples = gen_bool() ? gen_zint() : 0;
     int is_final = gen_bool();
@@ -1484,7 +1484,7 @@ void pull_message(void)
 /*------------------ Query message ------------------*/
 _z_zenoh_message_t gen_query_message(void)
 {
-    _z_reskey_t key = gen_res_key();
+    _z_keyexpr_t key = gen_res_key();
     _z_str_t predicate = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 

@@ -32,7 +32,7 @@
 int _z_rname_intersect(const _z_str_t left, const _z_str_t right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
-_z_reskey_t _z_reskey_duplicate(const _z_reskey_t *resky);
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *resky);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_reset(_z_timestamp_t *tstamp);
 

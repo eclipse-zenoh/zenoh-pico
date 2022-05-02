@@ -79,7 +79,7 @@ typedef struct
 {
     _z_zint_t _rid;
     _z_str_t _rname;
-} _z_reskey_t;
+} _z_keyexpr_t;
 
 /**
  * A zenoh-net data sample.
@@ -87,13 +87,13 @@ typedef struct
  * A sample is the value associated to a given resource at a given point in time.
  *
  * Members:
- *   _z_reskey_t key: The resource key of this data sample.
+ *   _z_keyexpr_t key: The resource key of this data sample.
  *   _z_bytes_t value: The value of this data sample.
  *   _z_encoding_t encoding: The encoding for the value of this data sample.
  */
 typedef struct
 {
-    _z_reskey_t _key;
+    _z_keyexpr_t _key;
     _z_bytes_t _value;
     _z_encoding_t _encoding;
 } _z_sample_t;
