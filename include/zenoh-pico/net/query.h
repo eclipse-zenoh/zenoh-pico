@@ -33,7 +33,7 @@ typedef struct
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_queryable_handler_t)(const z_query_t *query, const void *arg);
+typedef void (*_z_questionable_handler_t)(const z_query_t *query, const void *arg);
 
 typedef struct
 {
@@ -41,15 +41,15 @@ typedef struct
     _z_str_t _rname;
     _z_reskey_t _key;
     unsigned int _kind;
-    _z_queryable_handler_t _callback;
+    _z_questionable_handler_t _callback;
     void *_arg;
-} _z_queryable_t;
+} _z_questionable_t;
 
-int _z_queryable_eq(const _z_queryable_t *one, const _z_queryable_t *two);
-void _z_queryable_clear(_z_queryable_t *res);
+int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
+void _z_questionable_clear(_z_questionable_t *res);
 
-_Z_ELEM_DEFINE(_z_queryable, _z_queryable_t, _z_noop_size, _z_queryable_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_queryable, _z_queryable_t)
+_Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_questionable, _z_questionable_t)
 
 /**
  * Return type when declaring a queryable.
@@ -58,7 +58,7 @@ typedef struct
 {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
-} z_queryable_t;
+} _z_queryable_t;
 
 /**
  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`

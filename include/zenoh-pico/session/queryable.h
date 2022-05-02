@@ -21,12 +21,12 @@
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
 /*------------------ Queryable ------------------*/
-_z_queryable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
-_z_queryable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname);
+_z_questionable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
+_z_questionable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname);
 
-int _z_register_queryable(_z_session_t *zn, _z_queryable_t *q);
+int _z_register_queryable(_z_session_t *zn, _z_questionable_t *q);
 int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query);
-void _z_unregister_queryable(_z_session_t *zn, _z_queryable_t *q);
+void _z_unregister_queryable(_z_session_t *zn, _z_questionable_t *q);
 void _z_flush_queryables(_z_session_t *zn);
 
 #endif /* ZENOH_PICO_SESSION_QUERYABLE_H */

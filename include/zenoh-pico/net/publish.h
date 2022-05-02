@@ -25,6 +25,6 @@ typedef struct
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
     _z_reskey_t _key;
-} z_publisher_t;
+} _z_publisher_t;
 
 #endif /* ZENOH_PICO_PUBLISH_NETAPI_H */

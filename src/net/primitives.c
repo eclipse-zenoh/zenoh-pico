@@ -83,9 +83,9 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 }
 
 /*------------------  Publisher Declaration ------------------*/
-z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey)
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey)
 {
-    z_publisher_t *pub = (z_publisher_t *)malloc(sizeof(z_publisher_t));
+    _z_publisher_t *pub = (_z_publisher_t *)malloc(sizeof(_z_publisher_t));
     pub->_zn = zn;
     pub->_key = reskey;
     pub->_id = _z_get_entity_id(zn);
@@ -106,7 +106,7 @@ z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey)
     return pub;
 }
 
-void _z_undeclare_publisher(z_publisher_t *pub)
+void _z_undeclare_publisher(_z_publisher_t *pub)
 {
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_publisher(_z_reskey_duplicate(&pub->_key));
@@ -123,9 +123,9 @@ void _z_undeclare_publisher(z_publisher_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_reskey_t reskey, _z_subinfo_t sub_info, _z_data_handler_t callback, void *arg)
+_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_reskey_t reskey, _z_subinfo_t sub_info, _z_data_handler_t callback, void *arg)
 {
-    _z_subscriber_t *rs = (_z_subscriber_t *)malloc(sizeof(_z_subscriber_t));
+    _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
     rs->_id = _z_get_entity_id(zn);
     rs->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &reskey);
     rs->_key = reskey;
@@ -150,7 +150,7 @@ z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_reskey_t reskey, _z_s
 
     _z_msg_clear(&z_msg);
 
-    z_subscriber_t *subscriber = (z_subscriber_t *)malloc(sizeof(z_subscriber_t));
+    _z_subscriber_t *subscriber = (_z_subscriber_t *)malloc(sizeof(_z_subscriber_t));
     subscriber->_zn = zn;
     subscriber->_id = rs->_id;
 
@@ -162,9 +162,9 @@ ERR:
     return NULL;
 }
 
-void _z_undeclare_subscriber(z_subscriber_t *sub)
+void _z_undeclare_subscriber(_z_subscriber_t *sub)
 {
-    _z_subscriber_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+    _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s == NULL)
         return;
 
@@ -187,9 +187,9 @@ void _z_undeclare_subscriber(z_subscriber_t *sub)
 }
 
 /*------------------ Queryable Declaration ------------------*/
-z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_reskey_t reskey, unsigned int kind, _z_queryable_handler_t callback, void *arg)
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_reskey_t reskey, unsigned int kind, _z_questionable_handler_t callback, void *arg)
 {
-    _z_queryable_t *rq = (_z_queryable_t *)malloc(sizeof(_z_queryable_t));
+    _z_questionable_t *rq = (_z_questionable_t *)malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
     rq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &reskey);
     rq->_key = reskey;
@@ -214,7 +214,7 @@ z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_reskey_t reskey, unsign
 
     _z_msg_clear(&z_msg);
 
-    z_queryable_t *queryable = (z_queryable_t *)malloc(sizeof(z_queryable_t));
+    _z_queryable_t *queryable = (_z_queryable_t *)malloc(sizeof(_z_queryable_t));
     queryable->_zn = zn;
     queryable->_id = rq->_id;
 
@@ -226,9 +226,9 @@ ERR:
     return NULL;
 }
 
-void _z_undeclare_queryable(z_queryable_t *qle)
+void _z_undeclare_queryable(_z_queryable_t *qle)
 {
-    _z_queryable_t *q = _z_get_queryable_by_id(qle->_zn, qle->_id);
+    _z_questionable_t *q = _z_get_queryable_by_id(qle->_zn, qle->_id);
     if (q == NULL)
         return;
 
@@ -429,9 +429,9 @@ _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
 }
 
 /*------------------ Pull ------------------*/
-void _z_pull(const z_subscriber_t *sub)
+void _z_pull(const _z_subscriber_t *sub)
 {
-    _z_subscriber_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+    _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s == NULL)
         return;
 

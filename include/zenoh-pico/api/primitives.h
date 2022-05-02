@@ -26,19 +26,13 @@ void z_init_logger(void);
 
 /********* Data Types Handlers *********/
 z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len);
-void z_bytes_clear(z_owned_bytes_t b);
-void z_bytes_free(z_owned_bytes_t **b);
 
 z_owned_string_t z_string_new(const z_str_t s);
-void z_string_clear(z_owned_string_t s);
-void z_string_free(z_owned_string_t **s);
 
 z_owned_keyexpr_t z_id_new(z_zint_t id);
 z_owned_keyexpr_t z_expr_new(const z_str_t name);
 z_owned_keyexpr_t z_id_with_suffix_new(z_zint_t id, const z_str_t suffix);
 z_owned_keyexpr_t z_keyexpr_new(z_zint_t id, const z_str_t suffix);
-void z_keyexpr_clear(z_owned_keyexpr_t keyexpr);
-void z_keyexpr_free(z_owned_keyexpr_t **keyexpr);
 
 z_owned_config_t z_config_new(void);
 z_owned_config_t z_config_empty(void);
@@ -51,12 +45,8 @@ z_owned_string_t z_config_get(z_config_t *config, z_string_t key);
 z_string_t z_config_to_str(z_config_t *config);
 int z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 //int z_config_insert_json(z_config_t config, z_string_t key, z_string_t value);
-void z_config_clear(z_owned_config_t config);
-void z_config_free(z_owned_config_t **config);
 
 z_encoding_t z_encoding_default(void);
-void z_encoding_clear(z_owned_encoding_t encoding);
-void z_encoding_free(z_owned_encoding_t **encoding);
 
 z_subinfo_t z_subinfo_default(void);
 z_period_t z_subinfo_period(const z_subinfo_t *info);
@@ -73,26 +63,44 @@ z_query_consolidation_t z_query_consolidation_reception(void);
 z_keyexpr_t z_query_key_expr(const z_query_t *query);
 z_str_t z_query_predicate(const z_query_t *query);
 
-void z_reply_data_array_clear(z_owned_reply_data_array_t replies);
-void z_reply_data_array_free(z_owned_reply_data_array_t **replies);
+#define _OWNED_FUNCTIONS(type, ownedtype, name)          \
+    uint8_t z_##name##_check(const ownedtype *name);     \
+    type *z_##name##_loan(const ownedtype *name);        \
+    ownedtype z_##name##_move(ownedtype *name);          \
+    ownedtype z_##name##_clone(ownedtype *name);         \
+    void z_##name##_clear(ownedtype name);               \
+    void z_##name##_free(ownedtype **name);
 
-void z_reply_data_clear(z_owned_reply_data_t reply_data);
-void z_reply_data_free(z_owned_reply_data_t **reply_data);
+_OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
+_OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)
 
-void z_reply_clear(z_owned_reply_t reply);
-void z_reply_free(z_owned_reply_t **reply);
+_OWNED_FUNCTIONS(z_string_t, z_owned_string_t, string)
+_OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
 
-void z_sample_clear(z_owned_sample_t sample);
-void z_sample_free(z_owned_sample_t **sample);
+_OWNED_FUNCTIONS(z_config_t, z_owned_config_t, config)
+_OWNED_FUNCTIONS(z_session_t, z_owned_session_t, session)
+_OWNED_FUNCTIONS(z_info_t, z_owned_info_t, info)
+_OWNED_FUNCTIONS(z_subscriber_t, z_owned_subscriber_t, subscriber)
+_OWNED_FUNCTIONS(z_publisher_t, z_owned_publisher_t, publisher)
+_OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 
-void z_hello_array_clear(z_owned_hello_array_t hellos);
-void z_hello_array_free(z_owned_hello_array_t **hellos);
+_OWNED_FUNCTIONS(z_encoding_t, z_owned_encoding_t, encoding)
+_OWNED_FUNCTIONS(z_subinfo_t, z_owned_subinfo_t, subinfo)
+_OWNED_FUNCTIONS(z_period_t, z_owned_period_t, period)
+_OWNED_FUNCTIONS(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy)
+_OWNED_FUNCTIONS(z_query_target_t, z_owned_query_target_t, query_target)
+_OWNED_FUNCTIONS(z_target_t, z_owned_target_t, target)
+_OWNED_FUNCTIONS(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation)
+_OWNED_FUNCTIONS(z_put_options_t, z_owned_put_options_t, put_options)
 
-void z_hello_clear(z_owned_hello_t hello);
-void z_hello_free(z_owned_hello_t **hello);
+_OWNED_FUNCTIONS(z_sample_t, z_owned_sample_t, sample)
+_OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
+_OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
+_OWNED_FUNCTIONS(z_reply_data_t, z_owned_reply_data_t, reply_data)
 
-void z_str_array_clear(z_owned_str_array_t strs);
-void z_str_array_free(z_owned_str_array_t **strs);
+_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
+_OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
+_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
 /************* Primitives **************/
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t config, unsigned long timeout);
@@ -126,75 +134,5 @@ z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_owned_keyexpr_t keye
 z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg);
 void z_queryable_close(z_owned_queryable_t queryable);
 void z_send_reply(const z_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
-
-/************** Ownership **************/
-uint8_t z_bytes_check(const z_owned_bytes_t *bytes);
-z_bytes_t *z_bytes_loan(const z_owned_bytes_t *bytes);
-z_owned_bytes_t z_bytes_move(z_owned_bytes_t *bytes);
-
-uint8_t z_keyexpr_check(const z_owned_keyexpr_t *keyexpr);
-z_keyexpr_t *z_keyexpr_loan(const z_owned_keyexpr_t *keyexpr);
-z_owned_keyexpr_t z_keyexpr_move(z_owned_keyexpr_t *keyexpr);
-z_owned_keyexpr_t z_keyexpr_clone(z_owned_keyexpr_t *keyexpr);
-
-uint8_t z_string_check(const z_owned_string_t *string);
-z_string_t *z_string_loan(const z_owned_string_t *string);
-z_owned_string_t z_string_move(z_owned_string_t *string);
-
-uint8_t z_encoding_check(const z_owned_encoding_t *encoding);
-z_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding);
-z_owned_encoding_t z_encoding_move(z_owned_encoding_t *encoding);
-
-uint8_t z_sample_check(const z_owned_sample_t *sample);
-z_sample_t *z_sample_loan(const z_owned_sample_t *sample);
-z_owned_sample_t z_sample_move(z_owned_sample_t *sample);
-
-uint8_t z_config_check(const z_owned_config_t *config);
-z_config_t *z_config_loan(const z_owned_config_t *config);
-z_owned_config_t z_config_move(z_owned_config_t *config);
-
-uint8_t z_session_check(const z_owned_session_t *session);
-z_session_t *z_session_loan(const z_owned_session_t *session);
-z_owned_session_t z_session_move(z_owned_session_t *session);
-
-uint8_t z_info_check(const z_owned_info_t *info);
-z_info_t *z_info_loan(const z_owned_info_t *info);
-z_owned_info_t z_info_move(z_owned_info_t *info);
-
-uint8_t z_publisher_check(const z_owned_publisher_t *publisher);
-z_publisher_t *z_publisher_loan(const z_owned_publisher_t *publisher);
-z_owned_publisher_t z_publisher_move(z_owned_publisher_t *publisher);
-
-uint8_t z_subscriber_check(const z_owned_subscriber_t *subscriber);
-z_subscriber_t *z_subscriber_loan(const z_owned_subscriber_t *subscriber);
-z_owned_subscriber_t z_subscriber_move(z_owned_subscriber_t *subscriber);
-
-uint8_t z_queryable_check(const z_owned_queryable_t *queryable);
-z_queryable_t *z_queryable_loan(const z_owned_queryable_t *queryable);
-z_owned_queryable_t z_queryable_move(z_owned_queryable_t *queryable);
-
-uint8_t z_str_array_check(const z_owned_str_array_t *str_a);
-z_str_array_t *z_str_array_loan(const z_owned_str_array_t *str_a);
-z_owned_str_array_t z_str_array_move(z_owned_str_array_t *str_a);
-
-uint8_t z_hello_check(const z_owned_hello_t *hello);
-z_hello_t *z_hello_loan(const z_owned_hello_t *hello);
-z_owned_hello_t z_hello_move(z_owned_hello_t *hello);
-
-uint8_t z_reply_data_array_check(const z_owned_reply_data_array_t *replies);
-z_reply_data_array_t *z_reply_data_array_loan(const z_owned_reply_data_array_t *replies);
-z_owned_reply_data_array_t z_reply_data_array_move(z_owned_reply_data_array_t *replies);
-
-uint8_t z_hello_array_check(const z_owned_hello_array_t *hellos);
-z_hello_array_t *z_hello_array_loan(const z_owned_hello_array_t *hellos);
-z_owned_hello_array_t z_hello_array_move(z_owned_hello_array_t *hellos);
-
-uint8_t z_sample_check(const z_owned_sample_t *sample);
-uint8_t z_reply_check(const z_owned_reply_t *reply);
-uint8_t z_reply_data_check(const z_owned_reply_data_t *reply_data);
-uint8_t z_reply_data_array_check(const z_owned_reply_data_array_t *replies);
-uint8_t z_hello_array_check(const z_owned_hello_array_t *hellos);
-uint8_t z_hello_check(const z_owned_hello_t *hello);
-uint8_t z_str_array_check(const z_owned_str_array_t *strs);
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

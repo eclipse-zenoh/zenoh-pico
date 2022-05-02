@@ -82,19 +82,19 @@ typedef struct
     _z_subinfo_t _info;
     _z_data_handler_t _callback;
     void *_arg;
-} _z_subscriber_t;
+} _z_subscription_t;
 
-int _z_subscriber_eq(const _z_subscriber_t *one, const _z_subscriber_t *two);
-void _z_subscriber_clear(_z_subscriber_t *sub);
+int _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
+void _z_subscription_clear(_z_subscription_t *sub);
 
-_Z_ELEM_DEFINE(_z_subscriber, _z_subscriber_t, _z_noop_size, _z_subscriber_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_subscriber, _z_subscriber_t)
+_Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_subscriber, _z_subscription_t)
 
 typedef struct
 {
     _z_zint_t _id;
     _z_reskey_t _key;
-} _z_publisher_t;
+} _z_publication_t;
 
 typedef struct
 {

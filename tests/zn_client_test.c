@@ -153,7 +153,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         _z_reskey_t rk = _z_rid(rids2[i]);
-        z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
+        _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
@@ -165,7 +165,7 @@ int main(int argc, _z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         _z_reskey_t rk = _z_rname(s1_res);
-        z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, &idx[i]);
+        _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk._rid, rk._rname);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
@@ -304,7 +304,7 @@ int main(int argc, _z_str_t *argv)
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        z_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
+        _z_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         printf("Undeclared subscriber on session 2: %zu\n", sub->_id);
         _z_undeclare_subscriber(sub);
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
@@ -314,7 +314,7 @@ int main(int argc, _z_str_t *argv)
 
     while (qles2)
     {
-        z_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
+        _z_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
         printf("Undeclared queryable on session 2: %zu\n", qle->_id);
         _z_undeclare_queryable(qle);
         qles2 = _z_list_pop(qles2, _z_noop_elem_free); // @TODO: use type-safe list

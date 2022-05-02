@@ -86,7 +86,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                     break;
                 }
 
-                _z_subscriber_t *rs = (_z_subscriber_t *)malloc(sizeof(_z_subscriber_t));
+                _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
                 rs->_id = _z_get_entity_id(zn);
                 rs->_rname = rname;
                 rs->_key = _z_reskey_duplicate(&decl._body._sub._key);
@@ -127,7 +127,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _z_subscriber_list_t *xs = subs;
                 while (xs != NULL)
                 {
-                    _z_subscriber_t *sub = _z_subscriber_list_head(xs);
+                    _z_subscription_t *sub = _z_subscriber_list_head(xs);
                     _z_unregister_subscription(zn, _Z_RESOURCE_REMOTE, sub);
                     xs = _z_subscriber_list_tail(xs);
                 }

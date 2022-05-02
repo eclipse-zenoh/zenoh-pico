@@ -18,12 +18,12 @@
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _z_subscriber_eq(const _z_subscriber_t *other, const _z_subscriber_t *this)
+int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this)
 {
     return this->_id == other->_id;
 }
 
-void _z_subscriber_clear(_z_subscriber_t *sub)
+void _z_subscription_clear(_z_subscription_t *sub)
 {
     _z_str_clear(sub->_rname);
     _z_reskey_clear(&sub->_key);
@@ -35,9 +35,9 @@ _z_zint_t _z_get_pull_id(_z_session_t *zn)
     return zn->_pull_id++;
 }
 
-_z_subscriber_t *__z_get_subscription_by_id(_z_subscriber_list_t *subs, const _z_zint_t id)
+_z_subscription_t *__z_get_subscription_by_id(_z_subscriber_list_t *subs, const _z_zint_t id)
 {
-    _z_subscriber_t *sub = NULL;
+    _z_subscription_t *sub = NULL;
     while (subs != NULL)
     {
         sub = _z_subscriber_list_head(subs);
@@ -55,7 +55,7 @@ _z_subscriber_list_t *__z_get_subscriptions_by_name(_z_subscriber_list_t *subs, 
     _z_subscriber_list_t *xs = NULL;
     while (subs != NULL)
     {
-        _z_subscriber_t *sub = _z_subscriber_list_head(subs);
+        _z_subscription_t *sub = _z_subscriber_list_head(subs);
         if (_z_rname_intersect(sub->_rname, rname))
             xs = _z_subscriber_list_push(xs, sub);
 
@@ -70,7 +70,7 @@ _z_subscriber_list_t *__z_get_subscriptions_by_name(_z_subscriber_list_t *subs, 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscriber_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
+_z_subscription_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
 {
     _z_subscriber_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscription_by_id(subs, id);
@@ -87,10 +87,10 @@ _z_subscriber_list_t *__unsafe_z_get_subscriptions_by_name(_z_session_t *zn, int
     return __z_get_subscriptions_by_name(subs, rname);
 }
 
-_z_subscriber_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
+_z_subscription_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_subscriber_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
+    _z_subscription_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
     _z_mutex_unlock(&zn->_mutex_inner);
     return sub;
 }
@@ -114,7 +114,7 @@ _z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local,
     return subs;
 }
 
-int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub)
+int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub)
 {
     _Z_DEBUG(">>> Allocating sub decl for (%s)\n", sub->rname);
     _z_mutex_lock(&zn->_mutex_inner);
@@ -157,7 +157,7 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _
     _z_subscriber_list_t *xs = subs;
     while (xs != NULL)
     {
-        _z_subscriber_t *sub = _z_subscriber_list_head(xs);
+        _z_subscription_t *sub = _z_subscriber_list_head(xs);
         sub->_callback(&s, sub->_arg);
         xs = _z_subscriber_list_tail(xs);
     }
@@ -173,14 +173,14 @@ ERR:
     return -1;
 }
 
-void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub)
+void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
     if (is_local)
-        zn->_local_subscriptions = _z_subscriber_list_drop_filter(zn->_local_subscriptions, _z_subscriber_eq, sub);
+        zn->_local_subscriptions = _z_subscriber_list_drop_filter(zn->_local_subscriptions, _z_subscription_eq, sub);
     else
-        zn->_remote_subscriptions = _z_subscriber_list_drop_filter(zn->_remote_subscriptions, _z_subscriber_eq, sub);
+        zn->_remote_subscriptions = _z_subscriber_list_drop_filter(zn->_remote_subscriptions, _z_subscription_eq, sub);
 
     _z_mutex_unlock(&zn->_mutex_inner);
 }

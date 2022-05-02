@@ -85,7 +85,7 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey);
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -94,7 +94,7 @@ z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_reskey_t reskey);
  *     pub: The :c:type:`_z_publisher_t` to undeclare. The callee releases the
  *          publisher upon successful return.
  */
-void _z_undeclare_publisher(z_publisher_t *pub);
+void _z_undeclare_publisher(_z_publisher_t *pub);
 
 /**
  * Declare a :c:type:`_z_subscriber_t` for the given resource key.
@@ -111,7 +111,7 @@ void _z_undeclare_publisher(z_publisher_t *pub);
  * Returns:
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
-z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
+_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
                                       _z_reskey_t reskey,
                                       _z_subinfo_t sub_info,
                                       _z_data_handler_t callback,
@@ -124,7 +124,7 @@ z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
  *     sub: The :c:type:`_z_subscriber_t` to undeclare. The callee releases the
  *          subscriber upon successful return.
  */
-void _z_undeclare_subscriber(z_subscriber_t *sub);
+void _z_undeclare_subscriber(_z_subscriber_t *sub);
 
 /**
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
@@ -140,10 +140,10 @@ void _z_undeclare_subscriber(z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-z_queryable_t *_z_declare_queryable(_z_session_t *zn,
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn,
                                     _z_reskey_t reskey,
                                     unsigned int kind,
-                                    _z_queryable_handler_t callback,
+                                    _z_questionable_handler_t callback,
                                     void *arg);
 
 /**
@@ -153,7 +153,7 @@ z_queryable_t *_z_declare_queryable(_z_session_t *zn,
  *     qle: The :c:type:`_z_queryable_t` to undeclare. The callee releases the
  *          queryable upon successful return.
  */
-void _z_undeclare_queryable(z_queryable_t *qle);
+void _z_undeclare_queryable(_z_queryable_t *qle);
 
 
 /*------------------ Operations ------------------*/
@@ -199,7 +199,7 @@ int _z_write_ext(_z_session_t *zn, const _z_reskey_t reskey, const uint8_t *payl
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-void _z_pull(const z_subscriber_t *sub);
+void _z_pull(const _z_subscriber_t *sub);
 
 /**
  * Query data from the matching queryables in the system.

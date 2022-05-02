@@ -18,13 +18,13 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Subscription ------------------*/
-_z_subscriber_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id);
+_z_subscription_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id);
 _z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname);
 _z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_reskey_t *reskey);
 
-int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub);
+int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub);
 int _z_trigger_subscriptions(_z_session_t *zn, const _z_reskey_t reskey, const _z_bytes_t payload, const _z_encoding_t encoding);
-void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscriber_t *sub);
+void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
 
 /*------------------ Pull ------------------*/

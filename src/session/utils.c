@@ -56,7 +56,7 @@ _z_session_t *_z_session_init(void)
     zn->_remote_resources = NULL;
     zn->_local_subscriptions = NULL;
     zn->_remote_subscriptions = NULL;
-    zn->_local_queryables = NULL;
+    zn->_local_questionable = NULL;
     zn->_pending_queries = NULL;
 
     // Associate a transport with the session
