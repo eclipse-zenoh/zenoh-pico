@@ -15,24 +15,24 @@
 #ifndef ZENOH_PICO_CONFIG_NETAPI_H
 #define ZENOH_PICO_CONFIG_NETAPI_H
 
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/collections/string.h"
 
 /**
  * Create an empty set of properties for zenoh-net session configuration.
  *
  * Returns:
- *     A :c:type:`_z_properties_t` containing an empty configuration.
+ *     A :c:type:`_z_config_t` containing an empty configuration.
  */
-_z_properties_t *_z_properties_empty(void);
+_z_config_t *_z_config_empty(void);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
  *
  * Returns:
- *     A :c:type:`_z_properties_t` containing a default configuration.
+ *     A :c:type:`_z_config_t` containing a default configuration.
  */
-_z_properties_t *_z_properties_default(void);
+_z_config_t *_z_config_default(void);
 
 /**
  * Create a default set of properties for client mode zenoh-net session configuration.
@@ -41,8 +41,8 @@ _z_properties_t *_z_properties_default(void);
  * Parameters:
  *   locator: An optional peer locator. The caller keeps its ownership.
  * Returns:
- *     A :c:type:`_z_properties_t` containing a default configuration for client mode.
+ *     A :c:type:`_z_config_t` containing a default configuration for client mode.
  */
-_z_properties_t *_z_properties_client(const _z_str_t locator);
+_z_config_t *_z_config_client(const _z_str_t locator);
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

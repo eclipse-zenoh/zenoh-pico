@@ -29,12 +29,12 @@ void z_init_logger(void)
 
 z_owned_config_t z_config_default(void)
 {
-    return (z_owned_config_t){._value = _z_properties_default()};
+    return (z_owned_config_t){._value = _z_config_default()};
 }
 
 int z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
-    return _z_properties_insert(config, key, value);
+    return _z_config_insert(config, key, value);
 }
 
 z_owned_session_t z_open(z_owned_config_t config)
@@ -62,22 +62,22 @@ z_owned_info_t z_info(const z_session_t *zs)
 //    z_string_t *str = (z_string_t*)malloc(sizeof(z_string_t));
 //    *str = (z_string_t){.val = NULL, .len = 0};
 //
-//    _z_properties_t *zi = _z_info(zs);
+//    _z_config_t *zi = _z_info(zs);
 //
 //    _z_string_t append;
 //    _z_string_move_str(&append, "info_router_pid : ");
 //    _z_string_append(str, &append);
 //
-//    append = _z_properties_get(zi, Z_INFO_PID_KEY);
+//    append = _z_config_get(zi, Z_INFO_PID_KEY);
 //    _z_string_append(str, &append);
 //
 //    _z_string_move_str(&append, "\ninfo_pid : ");
 //    _z_string_append(str, &append);
 //
-//    append = _z_properties_get(zi, Z_INFO_ROUTER_PID_KEY);
+//    append = _z_config_get(zi, Z_INFO_ROUTER_PID_KEY);
 //    _z_string_append(str, &append);
 //
-//    _z_properties_free(&zi);
+//    _z_config_free(&zi);
 //
 //    z_owned_string_t ret = {._value = str, .is_valid = 1};
 //    return ret;
@@ -85,14 +85,7 @@ z_owned_info_t z_info(const z_session_t *zs)
 
 z_str_t z_info_get(z_info_t *info, unsigned int key)
 {
-    return _z_properties_get(info, key);
-}
-
-void z_info_clear(z_owned_info_t zi)
-{
-    _z_properties_free(&zi._value);
-    free(zi._value);
-    zi._value = NULL;
+    return _z_config_get(info, key);
 }
 
 z_owned_keyexpr_t z_id_new(const z_zint_t id)
@@ -149,20 +142,6 @@ z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t key
 z_encoding_t z_encoding_default(void)
 {
     return (_z_encoding_t){._prefix = Z_ENCODING_APP_OCTETSTREAM, ._suffix = ""};
-}
-
-void z_encoding_clear(z_owned_encoding_t encoding)
-{
-    _z_str_clear(encoding._value->_suffix);
-}
-
-void z_encoding_free(z_owned_encoding_t **encoding)
-{
-    z_owned_encoding_t *ptr = *encoding;
-    z_encoding_clear(*ptr);
-
-    free(ptr);
-    *encoding = NULL;
 }
 
 z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg)
@@ -346,331 +325,78 @@ z_subinfo_t z_subinfo_default(void)
 }
 
 /**************** Loans ****************/
-z_bytes_t *z_bytes_loan(const z_owned_bytes_t *bytes)
+#define _OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_clone)   \
+    uint8_t z_##name##_check(const ownedtype *val)                            \
+    {                                                                         \
+        return val->_value != NULL;                                           \
+    }                                                                         \
+    type *z_##name##_loan(const ownedtype *val)                               \
+    {                                                                         \
+        return val->_value;                                                   \
+    }                                                                         \
+    ownedtype z_##name##_move(ownedtype *val)                                 \
+    {                                                                         \
+        ownedtype ret = {._value = val->_value};                              \
+        val->_value = NULL;                                                   \
+        return ret;                                                           \
+    }                                                                         \
+    ownedtype z_##name##_clone(ownedtype *val)                                \
+    {                                                                         \
+        ownedtype ret;                                                        \
+        ret._value = (type*)malloc(sizeof(type));                             \
+        f_clone(ret._value, val->_value);                                     \
+        return ret;                                                           \
+    }                                                                         \
+    void z_##name##_clear(ownedtype val)                                      \
+    {                                                                         \
+        f_free(&val._value);                                                  \
+    }                                                                         \
+    void z_##name##_free(ownedtype **val)                                     \
+    {                                                                         \
+        ownedtype *ptr = *val;                                                \
+        z_##name##_clear(*ptr);                                               \
+        free(ptr);                                                            \
+        *val = NULL;                                                          \
+    }
+
+static inline void _z_owner_noop_free(void *s)
 {
-    return bytes->_value;
+    (void)(s);
 }
 
-z_config_t *z_config_loan(const z_owned_config_t *config)
+static inline void _z_owner_noop_clone(void *dst, const void *src)
 {
-    return config->_value;
+    (void)(dst);
+    (void)(src);
 }
 
-z_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding)
-{
-    return encoding->_value;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_str_t, z_owned_str_t, str, _z_str_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_clone)
 
-z_info_t *z_info_loan(const z_owned_info_t *info)
-{
-    return info->_value;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_owner_noop_clone)
 
-z_keyexpr_t *z_keyexpr_loan(const z_owned_keyexpr_t *key)
-{
-    return key->_value;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_clone)
 
-z_session_t *z_session_loan(const z_owned_session_t *session)
-{
-    return session->_value;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_subinfo_t, z_owned_subinfo_t, subinfo, _z_subinfo_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_target_t, z_owned_target_t, target, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_clone)
 
-z_sample_t *z_sample_loan(const z_owned_sample_t *sample)
-{
-    return sample->_value;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free, _z_owner_noop_clone)
 
-z_string_t *z_string_loan(const z_owned_string_t *string)
-{
-    return string->_value;
-}
-
-z_str_array_t *z_str_array_loan(const z_owned_str_array_t *str_a)
-{
-    return str_a->_value;
-}
-
-z_hello_t *z_hello_loan(const z_owned_hello_t *hello)
-{
-    return hello->_value;
-}
-
-z_reply_data_array_t *z_reply_data_array_loan(const z_owned_reply_data_array_t *reply_data_a)
-{
-    return reply_data_a->_value;
-}
-
-z_hello_array_t *z_hello_array_loan(const z_owned_hello_array_t *hello_data_a)
-{
-    return hello_data_a->_value;
-}
-
-z_subscriber_t *z_subscriber_loan(const z_owned_subscriber_t *subscriber)
-{
-    return subscriber->_value;
-}
-
-z_publisher_t *z_publisher_loan(const z_owned_publisher_t *publisher)
-{
-    return publisher->_value;
-}
-
-z_queryable_t *z_queryable_loan(const z_owned_queryable_t *queryable)
-{
-    return queryable->_value;
-}
-
-/**************** Moves ****************/
-z_owned_bytes_t z_bytes_move(z_owned_bytes_t *bytes)
-{
-    z_owned_bytes_t ret = {._value = bytes->_value};
-    bytes->_value = NULL;
-    return ret;
-}
-
-z_owned_config_t z_config_move(z_owned_config_t *config)
-{
-    z_owned_config_t ret = {._value = config->_value};
-    config->_value = NULL;
-    return ret;
-}
-
-z_owned_string_t z_string_move(z_owned_string_t *string)
-{
-    z_owned_string_t ret = {._value = string->_value};
-    string->_value = NULL;
-    return ret;
-}
-
-z_owned_encoding_t z_encoding_move(z_owned_encoding_t *encoding)
-{
-    z_owned_encoding_t ret = {._value = encoding->_value};
-    encoding->_value = NULL;
-    return ret;
-}
-
-z_owned_info_t z_info_move(z_owned_info_t *info)
-{
-    z_owned_info_t ret = {._value = info->_value};
-    info->_value = NULL;
-    return ret;
-}
-
-z_owned_keyexpr_t z_keyexpr_move(z_owned_keyexpr_t *key)
-{
-    z_owned_keyexpr_t ret = {._value = key->_value};
-    key->_value = NULL;
-    return ret;
-}
-
-z_owned_session_t z_session_move(z_owned_session_t *session)
-{
-    z_owned_session_t ret = {._value = session->_value};
-    session->_value = NULL;
-    return ret;
-}
-
-z_owned_sample_t z_sample_move(z_owned_sample_t *sample)
-{
-    z_owned_sample_t ret = {._value = sample->_value};
-    sample->_value = NULL;
-    return ret;
-}
-
-z_owned_str_array_t z_str_array_move(z_owned_str_array_t *str_a)
-{
-    z_owned_str_array_t ret = {._value = str_a->_value};
-    str_a->_value = NULL;
-    return ret;
-}
-
-z_owned_hello_t z_hello_move(z_owned_hello_t *hello)
-{
-    z_owned_hello_t ret = {._value = hello->_value};
-    hello->_value = NULL;
-    return ret;
-}
-
-z_owned_reply_data_array_t z_reply_data_array_move(z_owned_reply_data_array_t *reply_data_a)
-{
-    z_owned_reply_data_array_t ret = {._value = reply_data_a->_value};
-    reply_data_a->_value = NULL;
-    return ret;
-}
-
-z_owned_hello_array_t z_hello_array_move(z_owned_hello_array_t *hellos)
-{
-    z_owned_hello_array_t ret = {._value = hellos->_value};
-    hellos->_value = NULL;
-    return ret;
-}
-
-z_owned_subscriber_t z_subscriber_move(z_owned_subscriber_t *subscriber)
-{
-    z_owned_subscriber_t ret = {._value = subscriber->_value};
-    subscriber->_value = NULL;
-    return ret;
-}
-
-z_owned_publisher_t z_publisher_move(z_owned_publisher_t *publisher)
-{
-    z_owned_publisher_t ret = {._value = publisher->_value};
-    publisher->_value = NULL;
-    return ret;
-}
-
-z_owned_queryable_t z_queryable_move(z_owned_queryable_t *queryable)
-{
-    z_owned_queryable_t ret = {._value = queryable->_value};
-    queryable->_value = NULL;
-    return ret;
-}
-
-/*************** Checks ****************/
-uint8_t z_bytes_check(const z_owned_bytes_t *bytes)
-{
-    return bytes->_value != NULL;
-}
-
-uint8_t z_config_check(const z_owned_config_t *config)
-{
-    return config->_value != NULL;
-}
-
-uint8_t z_encoding_check(const z_owned_encoding_t *encoding)
-{
-    return encoding->_value != NULL;
-}
-
-uint8_t z_info_check(const z_owned_info_t *info)
-{
-    return info->_value != NULL;
-}
-
-uint8_t z_keyexpr_check(const z_owned_keyexpr_t *key)
-{
-    return key->_value != NULL;
-}
-
-uint8_t z_session_check(const z_owned_session_t *session)
-{
-    return session->_value != NULL;
-}
-
-uint8_t z_sample_check(const z_owned_sample_t *sample)
-{
-    return sample->_value != NULL;
-}
-
-uint8_t z_string_check(const z_owned_string_t *string)
-{
-    return string->_value != NULL;
-}
-
-uint8_t z_str_array_check(const z_owned_str_array_t *str_a)
-{
-    return str_a->_value != NULL;
-}
-
-uint8_t z_reply_data_array_check(const z_owned_reply_data_array_t *reply_data_a)
-{
-    return reply_data_a->_value != NULL;
-}
-
-uint8_t z_hello_check(const z_owned_hello_t *hello)
-{
-    return hello->_value != NULL;
-}
-
-uint8_t z_hello_array_check(const z_owned_hello_array_t *hellos)
-{
-    return hellos->_value != NULL;
-}
-
-uint8_t z_subscriber_check(const z_owned_subscriber_t *subscriber)
-{
-    return subscriber->_value != NULL;
-}
-
-uint8_t z_publisher_check(const z_owned_publisher_t *publisher)
-{
-    return publisher->_value != NULL;
-}
-
-uint8_t z_queryable_check(const z_owned_queryable_t *queryable)
-{
-    return queryable->_value != NULL;
-}
-
-/*************** Clones ****************/
-z_owned_keyexpr_t z_keyexpr_clone(z_owned_keyexpr_t *keyexpr)
-{
-    z_owned_keyexpr_t ret;
-    ret._value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
-    *ret._value = _z_keyexpr_duplicate(keyexpr->_value);
-    return ret;
-}
-
-/*************** Clears ****************/
-void z_string_clear(z_owned_string_t string)
-{
-    _z_string_free(&string._value);
-}
-
-void z_config_clear(z_owned_config_t config)
-{
-    _z_properties_free(&config._value);
-}
-
-void z_keyexpr_clear(z_owned_keyexpr_t key)
-{
-    _z_keyexpr_free(&key._value);
-}
-
-void z_reply_data_array_clear(z_owned_reply_data_array_t reply_data_a)
-{
-    _z_reply_data_array_free(&reply_data_a._value);
-}
-
-void z_hello_array_clear(z_owned_hello_array_t hello_a)
-{
-    _z_hello_array_free(&hello_a._value);
-}
-
-/*************** Frees *****************/
-void z_config_free(z_owned_config_t **config)
-{
-    z_owned_config_t *ptr = *config;
-    z_config_clear(*ptr);
-
-    free(ptr);
-    *config = NULL;
-}
-
-void z_hello_array_free(z_owned_hello_array_t **hello_a)
-{
-    z_owned_hello_array_t *ptr = *hello_a;
-    z_hello_array_clear(*ptr);
-
-    free(ptr);
-    *hello_a = NULL;
-}
-
-void z_reply_data_array_free(z_owned_reply_data_array_t **reply_data_a)
-{
-    z_owned_reply_data_array_t *ptr = *reply_data_a;
-    z_reply_data_array_clear(*ptr);
-
-    free(ptr);
-    *reply_data_a = NULL;
-}
-
-void z_keyexpr_free(z_owned_keyexpr_t **key)
-{
-    z_owned_keyexpr_t *ptr = *key;
-    z_keyexpr_clear(*ptr);
-
-    free(ptr);
-    *key = NULL;
-}
+_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_clone)

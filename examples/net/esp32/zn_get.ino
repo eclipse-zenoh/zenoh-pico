@@ -40,9 +40,9 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
         delay(1000);
 
-    _z_properties_t *config = _z_properties_default();
-    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
-    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
+    _z_config_t *config = _z_config_default();
+    _z_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _z_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
     s = _z_open(config);
     if (s == NULL)

@@ -98,7 +98,7 @@ _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_reply_data_t, z_owned_reply_data_t, reply_data)
 
-_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
+_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, owned_str_array)
 _OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
 _OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
@@ -111,8 +111,6 @@ void z_close(z_owned_session_t zs);
 z_owned_info_t z_info(const z_session_t *zs);
 z_owned_string_t z_info_as_str(const z_session_t *zs);
 z_str_t z_info_get(z_info_t *info, unsigned int key);
-void z_info_clear(z_owned_info_t zi);
-void z_info_free(z_owned_info_t **zi);
 
 z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
 void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);

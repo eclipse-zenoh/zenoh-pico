@@ -113,6 +113,7 @@ typedef struct
     _z_str_array_t _locators;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
+void _z_hello_free(_z_hello_t **hello);
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_ARRAY_DEFINE(_z_hello, _z_hello_t)
 

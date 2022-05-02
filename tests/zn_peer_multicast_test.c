@@ -55,9 +55,9 @@ int main(int argc, _z_str_t *argv)
     setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
-    _z_properties_t *config = _z_properties_default();
-    _z_properties_insert(config, Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    _z_properties_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _z_config_t *config = _z_config_default();
+    _z_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make("peer"));
+    _z_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
@@ -165,7 +165,7 @@ int main(int argc, _z_str_t *argv)
     _z_close(s2);
 
     // Cleanup properties
-    _z_properties_free(&config);
+    _z_config_free(&config);
 
     free((uint8_t *)payload);
     payload = NULL;

@@ -16,7 +16,7 @@
 #define ZENOH_PICO_SESSION_NETAPI_H
 
 #include "zenoh-pico/session/session.h"
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/config.h"
 
 /**
  * A zenoh-net session.
@@ -59,7 +59,7 @@ typedef struct
  *     A pointer of A :c:type:`_z_session_t` containing the created zenoh-net
  *     session or null if the creation did not succeed.
  */
-_z_session_t *_z_open(_z_properties_t *config);
+_z_session_t *_z_open(_z_config_t *config);
 
 /**
  * Close a zenoh-net session.
@@ -76,9 +76,9 @@ void _z_close(_z_session_t *session);
  *     session: A zenoh-net session. The caller keeps its ownership.
  *
  * Returns:
- *     A :c:type:`_z_properties_t` map containing informations on the given zenoh-net session.
+ *     A :c:type:`_z_config_t` map containing informations on the given zenoh-net session.
  */
-_z_properties_t *_z_info(const _z_session_t *session);
+_z_config_t *_z_info(const _z_session_t *session);
 
 
 /*------------------ Zenoh-Pico Session Management Auxiliar------------------*/

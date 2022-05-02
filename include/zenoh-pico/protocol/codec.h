@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/config.h"
 
 #define _Z_EC(fn) \
     if (fn != 0)   \

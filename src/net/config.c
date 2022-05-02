@@ -15,34 +15,34 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 
-_z_properties_t *_z_properties_empty()
+_z_config_t *_z_config_empty()
 {
-    _z_properties_t *config = (_z_properties_t *)malloc(sizeof(_z_properties_t));
-    _z_properties_init(config);
+    _z_config_t *config = (_z_config_t *)malloc(sizeof(_z_config_t));
+    _z_config_init(config);
     return config;
 }
 
-_z_properties_t *_z_properties_default()
+_z_config_t *_z_config_default()
 {
-    return _z_properties_client(NULL);
+    return _z_config_client(NULL);
 }
 
-_z_properties_t *_z_properties_client(const _z_str_t locator)
+_z_config_t *_z_config_client(const _z_str_t locator)
 {
-    _z_properties_t *ps = _z_properties_empty();
-    _z_properties_insert(ps, Z_CONFIG_MODE_KEY, z_string_make(Z_CONFIG_MODE_CLIENT));
+    _z_config_t *ps = _z_config_empty();
+    _z_config_insert(ps, Z_CONFIG_MODE_KEY, z_string_make(Z_CONFIG_MODE_CLIENT));
     if (locator)
     {
         // Connect only to the provided locator
-        _z_properties_insert(ps, Z_CONFIG_PEER_KEY, z_string_make(locator));
+        _z_config_insert(ps, Z_CONFIG_PEER_KEY, z_string_make(locator));
     }
     else
     {
         // The locator is not provided, we should perform scouting
-        _z_properties_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
-        _z_properties_insert(ps, Z_CONFIG_MULTICAST_ADDRESS_KEY, z_string_make(Z_CONFIG_MULTICAST_ADDRESS_DEFAULT));
-        _z_properties_insert(ps, Z_CONFIG_MULTICAST_INTERFACE_KEY, z_string_make(Z_CONFIG_MULTICAST_INTERFACE_DEFAULT));
-        _z_properties_insert(ps, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+        _z_config_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
+        _z_config_insert(ps, Z_CONFIG_MULTICAST_ADDRESS_KEY, z_string_make(Z_CONFIG_MULTICAST_ADDRESS_DEFAULT));
+        _z_config_insert(ps, Z_CONFIG_MULTICAST_INTERFACE_KEY, z_string_make(Z_CONFIG_MULTICAST_INTERFACE_DEFAULT));
+        _z_config_insert(ps, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
     }
     return ps;
 }

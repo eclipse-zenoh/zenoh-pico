@@ -42,18 +42,18 @@ ERR:
     return NULL;
 }
 
-_z_session_t *_z_open(_z_properties_t *config)
+_z_session_t *_z_open(_z_config_t *config)
 {
     if (config == NULL)
         return NULL;
 
     _z_str_t locator = NULL;
     // Scout if peer is not configured
-    if (_z_properties_get(config, Z_CONFIG_PEER_KEY) == NULL)
+    if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL)
     {
         // Z_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float
         // while the scout loop timeout uses milliseconds granularity
-        _z_str_t tout = _z_properties_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        _z_str_t tout = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (tout == NULL)
             tout = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         clock_t timeout = strtof(tout, NULL);
@@ -81,13 +81,13 @@ _z_session_t *_z_open(_z_properties_t *config)
         }
     }
     else
-        locator = _z_str_clone(_z_properties_get(config, Z_CONFIG_PEER_KEY));
+        locator = _z_str_clone(_z_config_get(config, Z_CONFIG_PEER_KEY));
 
     // @TODO: check invalid configurations
     // For example, client mode in multicast links
 
     // Check operation mode
-    _z_str_t s_mode = _z_properties_get(config, Z_CONFIG_MODE_KEY);
+    _z_str_t s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
     int mode = 0; // By default, zenoh-pico will operate as a client
     if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT))
         mode = 0;
@@ -105,14 +105,14 @@ void _z_close(_z_session_t *zn)
     _z_session_close(zn, _Z_CLOSE_GENERIC);
 }
 
-_z_properties_t *_z_info(const _z_session_t *zn)
+_z_config_t *_z_info(const _z_session_t *zn)
 {
-    _z_properties_t *ps = (_z_properties_t *)malloc(sizeof(_z_properties_t));
-    _z_properties_init(ps);
-    _z_properties_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
+    _z_config_t *ps = (_z_config_t *)malloc(sizeof(_z_config_t));
+    _z_config_init(ps);
+    _z_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
     {
-        _z_properties_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->_tp->_transport._unicast._remote_pid));
+        _z_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->_tp->_transport._unicast._remote_pid));
     }
     else if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
@@ -120,7 +120,7 @@ _z_properties_t *_z_info(const _z_session_t *zn)
         while (xs != NULL)
         {
             _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
-            _z_properties_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
+            _z_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
 
             xs = _z_transport_peer_entry_list_tail(xs);
         }

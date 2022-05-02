@@ -29,8 +29,8 @@
 typedef char *_z_str_t;
 
 _z_str_t _z_str_clone(const _z_str_t src);
-void _z_str_clear(_z_str_t src);
-void _z_str_free(_z_str_t *src);
+void _z_str_clear(_z_str_t *src);
+void _z_str_free(_z_str_t **src);
 int _z_str_eq(const _z_str_t left, const _z_str_t right);
 
 size_t _z_str_size(const _z_str_t src);

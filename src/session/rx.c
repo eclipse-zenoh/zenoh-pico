@@ -82,7 +82,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _z_subscriber_list_t *subs = _z_get_subscriptions_by_name(zn, _Z_RESOURCE_REMOTE, rname);
                 if (subs != NULL)
                 {
-                    _z_str_clear(rname);
+                    _z_str_clear(&rname);
                     break;
                 }
 

@@ -100,15 +100,15 @@ size_t _z_str_size(const _z_str_t src)
     return strlen(src) + 1;
 }
 
-void _z_str_clear(_z_str_t src)
+void _z_str_clear(_z_str_t *src)
 {
-    free(src);
+    free(*src);
     src = NULL;
 }
 
-void _z_str_free(_z_str_t *src)
+void _z_str_free(_z_str_t **src)
 {
-    _z_str_t ptr = *src;
+    _z_str_t *ptr = *src;
     _z_str_clear(ptr);
     *src = NULL;
 }

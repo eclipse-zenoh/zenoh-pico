@@ -13,28 +13,28 @@
  */
 
 #include <string.h>
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/config.h"
 
-int _z_properties_init(_z_properties_t *ps)
+int _z_config_init(_z_config_t *ps)
 {
     _z_str_intmap_init(ps);
     return 0;
 }
 
-_z_properties_t _z_properties_make()
+_z_config_t _z_config_make()
 {
-    _z_properties_t ps;
-    _z_properties_init(&ps);
+    _z_config_t ps;
+    _z_config_init(&ps);
     return ps;
 }
 
-int _z_properties_insert(_z_properties_t *ps, unsigned int key, _z_string_t value)
+int _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
 {
     _z_str_t res = _z_str_intmap_insert(ps, key, (_z_str_t)value.val);
     return res == value.val ? 0 : -1;
 }
 
-_z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key)
+_z_str_t _z_config_get(const _z_config_t *ps, unsigned int key)
 {
     return _z_str_intmap_get(ps, key);
 }

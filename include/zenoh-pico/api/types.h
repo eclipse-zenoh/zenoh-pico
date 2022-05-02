@@ -29,9 +29,9 @@ typedef _z_bytes_t z_bytes_t;
 typedef _z_string_t z_string_t;
 typedef _z_keyexpr_t z_keyexpr_t;
 
-typedef _z_properties_t z_config_t;
+typedef _z_config_t z_config_t;
 typedef _z_session_t z_session_t;
-typedef _z_properties_t z_info_t;
+typedef _z_config_t z_info_t;
 typedef _z_subscriber_t z_subscriber_t;
 typedef _z_publisher_t z_publisher_t;
 typedef _z_queryable_t z_queryable_t;

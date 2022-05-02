@@ -18,7 +18,7 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
-_z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_properties_t *config, const uint32_t scout_period, const int exit_on_first);
+_z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config, const uint32_t scout_period, const int exit_on_first);
 
 _z_session_t *_z_session_init(void);
 int _z_session_close(_z_session_t *zn, uint8_t reason);

@@ -21,7 +21,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
 
-_z_hello_array_t _z_scout(const _z_zint_t what, const _z_properties_t *config, const uint32_t timeout)
+_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout)
 {
     return _z_scout_inner(what, config, timeout, 0);
 }
@@ -157,7 +157,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     return subscriber;
 
 ERR:
-    _z_str_clear(rs->_rname);
+    _z_str_clear(&rs->_rname);
     free(rs);
     return NULL;
 }
@@ -221,7 +221,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
     return queryable;
 
 ERR:
-    _z_str_clear(rq->_rname);
+    _z_str_clear(&rq->_rname);
     free(rq);
     return NULL;
 }

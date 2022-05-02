@@ -28,17 +28,17 @@
 /**
  * Zenoh-net properties are represented as int-string map.
  */
-typedef _z_str_intmap_t _z_properties_t;
+typedef _z_str_intmap_t _z_config_t;
 
 /**
  * Returns a new empty map of properties.
  */
-_z_properties_t _z_properties_make(void);
+_z_config_t _z_config_make(void);
 
 /**
  * Initialize a new empty map of properties.
  */
-int _z_properties_init(_z_properties_t *ps);
+int _z_config_init(_z_config_t *ps);
 
 /**
  * Insert a property with a given key to a properties map.
@@ -49,7 +49,7 @@ int _z_properties_init(_z_properties_t *ps);
  *   key: The key of the property to add.
  *   value: The value of the property to add.
  */
-int _z_properties_insert(_z_properties_t *ps, unsigned int key, _z_string_t value);
+int _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value);
 
 /**
  * Get the property with the given key from a properties map.
@@ -61,7 +61,7 @@ int _z_properties_insert(_z_properties_t *ps, unsigned int key, _z_string_t valu
  * Returns:
  *     The value of the property with key ``key`` in properties map ``ps``.
  */
-_z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key);
+_z_str_t _z_config_get(const _z_config_t *ps, unsigned int key);
 
 /**
  * Get the length of the given properties map.
@@ -72,7 +72,7 @@ _z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key);
  * Returns:
  *     The length of the given properties map.
  */
-#define _z_properties_len _z_str_intmap_len
+#define _z_config_len _z_str_intmap_len
 
 /**
  * Get the length of the given properties map.
@@ -83,7 +83,7 @@ _z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key);
  * Returns:
  *     A boolean to indicate if properties are present.
  */
-#define _z_properties_is_empty _z_str_intmap_is_empty
+#define _z_config_is_empty _z_str_intmap_is_empty
 
 /**
  * Clear a set of properties.
@@ -91,7 +91,7 @@ _z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key);
  * Parameters:
  *   ps: A pointer to the properties map.
  */
-#define _z_properties_clear _z_str_intmap_clear
+#define _z_config_clear _z_str_intmap_clear
 
 /**
  * Free a set of properties.
@@ -100,6 +100,6 @@ _z_str_t _z_properties_get(const _z_properties_t *ps, unsigned int key);
  *   ps: A pointer to a pointer of properties.
  *
  */
-#define _z_properties_free _z_str_intmap_free
+#define _z_config_free _z_str_intmap_free
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

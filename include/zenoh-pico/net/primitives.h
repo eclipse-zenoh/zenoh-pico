@@ -22,7 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/encoding.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/utils/properties.h"
+#include "zenoh-pico/utils/config.h"
 
 /*------------------ Discovery ------------------*/
 
@@ -38,7 +38,7 @@
  *     An array of :c:type:`_z_t_msg_hello_t` messages.
  *     The caller gets its ownership, thus must be released using :c:function:`_z_hello_array_free`.
  */
-_z_hello_array_t _z_scout(const _z_zint_t what, const _z_properties_t *config, const uint32_t timeout);
+_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout);
 
 
 /*------------------ Declarations ------------------*/

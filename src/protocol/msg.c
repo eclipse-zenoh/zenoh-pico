@@ -37,7 +37,7 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk)
 {
     rk->_rid = 0;
     if (rk->_rname != NULL)
-        _z_str_clear(rk->_rname);
+        _z_str_clear(&rk->_rname);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk)
@@ -189,6 +189,15 @@ void _z_subinfo_clear(_z_subinfo_t *si)
     // Nothing to clear
 }
 
+void _z_subinfo_free(_z_subinfo_t **si)
+{
+    _z_subinfo_t *ptr = (_z_subinfo_t *)*si;
+    _z_subinfo_clear(ptr);
+
+    free(ptr);
+    *si = NULL;
+}
+
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl)
 {
     _z_keyexpr_clear(&dcl->_key);
@@ -325,7 +334,7 @@ void _z_data_info_clear(_z_data_info_t *di)
     //   - kind
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC))
-        _z_str_clear(di->_encoding._suffix);
+        _z_str_clear(&di->_encoding._suffix);
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID))
         _z_bytes_clear(&di->_source_id);
@@ -441,7 +450,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zi
 void _z_msg_clear_query(_z_msg_query_t *msg)
 {
     _z_keyexpr_clear(&msg->_key);
-    _z_str_clear(msg->_predicate);
+    _z_str_clear(&msg->_predicate);
 }
 
 /*------------------ Reply Message ------------------*/
