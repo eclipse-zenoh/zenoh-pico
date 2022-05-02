@@ -177,7 +177,7 @@ int main(int argc, _z_str_t *argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         _z_keyexpr_t rk = _z_rid(rids1[i]);
-        z_publisher_t *pub = _z_declare_publisher(s1, rk);
+        _z_publisher_t *pub = _z_declare_publisher(s1, rk);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->_id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
@@ -293,7 +293,7 @@ int main(int argc, _z_str_t *argv)
     // Undeclare publishers on first session
     while (pubs1)
     {
-        z_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
+        _z_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         printf("Undeclared publisher on session 2: %zu\n", pub->_id);
         _z_undeclare_publisher(pub);
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free); // @TODO: use type-safe list
