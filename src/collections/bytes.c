@@ -87,7 +87,7 @@ _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src)
     return dst;
 }
 
-int _z_bytes_is_empty(const _z_bytes_t *bs)
+uint8_t _z_bytes_is_empty(const _z_bytes_t *bs)
 {
     return bs->len == 0;
 }

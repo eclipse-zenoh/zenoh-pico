@@ -41,7 +41,7 @@ void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_reset(_z_bytes_t *bs);
-int _z_bytes_is_empty(const _z_bytes_t *bs);
+uint8_t _z_bytes_is_empty(const _z_bytes_t *bs);
 
 int _z_bytes_eq(const _z_bytes_t *left, const _z_bytes_t *right);
 void _z_bytes_clear(_z_bytes_t *bs);

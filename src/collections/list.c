@@ -52,7 +52,7 @@ size_t _z_list_len(const _z_list_t *xs)
     return len;
 }
 
-int _z_list_is_empty(const _z_list_t *xs)
+uint8_t _z_list_is_empty(const _z_list_t *xs)
 {
     return _z_list_len(xs) == 0;
 }

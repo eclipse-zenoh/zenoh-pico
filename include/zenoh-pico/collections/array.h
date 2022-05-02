@@ -46,7 +46,7 @@
     {                                                                              \
         return a->_len;                                                            \
     }                                                                              \
-    static inline int name##_array_is_empty(const name##_array_t *a)               \
+    static inline uint8_t name##_array_is_empty(const name##_array_t *a)           \
     {                                                                              \
         return a->_len == 0;                                                       \
     }                                                                              \

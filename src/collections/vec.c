@@ -69,7 +69,7 @@ size_t _z_vec_len(const _z_vec_t *v)
     return v->_len;
 }
 
-int _z_vec_is_empty(const _z_vec_t *v)
+uint8_t _z_vec_is_empty(const _z_vec_t *v)
 {
     return v->_len == 0;
 }

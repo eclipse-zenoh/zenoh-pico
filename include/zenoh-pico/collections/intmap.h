@@ -58,7 +58,7 @@ void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f
 
 size_t _z_int_void_map_capacity(const _z_int_void_map_t *map);
 size_t _z_int_void_map_len(const _z_int_void_map_t *map);
-int _z_int_void_map_is_empty(const _z_int_void_map_t *map);
+uint8_t _z_int_void_map_is_empty(const _z_int_void_map_t *map);
 
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f);
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
@@ -101,7 +101,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     {                                                                                  \
         return _z_int_void_map_len(m);                                                 \
     }                                                                                  \
-    static inline int name##_intmap_is_empty(const name##_intmap_t *m)                 \
+    static inline uint8_t name##_intmap_is_empty(const name##_intmap_t *m)             \
     {                                                                                  \
         return _z_int_void_map_is_empty(m);                                            \
     }                                                                                  \

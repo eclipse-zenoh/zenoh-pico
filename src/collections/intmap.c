@@ -53,7 +53,7 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map)
     return len;
 }
 
-int _z_int_void_map_is_empty(const _z_int_void_map_t *map)
+uint8_t _z_int_void_map_is_empty(const _z_int_void_map_t *map)
 {
     return _z_int_void_map_len(map) == 0;
 }
