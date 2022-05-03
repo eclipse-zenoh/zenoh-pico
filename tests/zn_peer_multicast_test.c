@@ -39,9 +39,9 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->_value.len == MSG_LEN);
-    assert(strlen(sample->_key._rname) == strlen(res));
-    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
+    assert(sample->value.len == MSG_LEN);
+    assert(strlen(sample->key.suffix) == strlen(res));
+    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -94,7 +94,7 @@ int main(int argc, _z_str_t *argv)
         _z_keyexpr_t rk = _z_rname(s1_res);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -110,7 +110,7 @@ int main(int argc, _z_str_t *argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             _z_keyexpr_t rk = _z_rname(s1_res);
-            _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
+            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
             _z_keyexpr_clear(&rk);

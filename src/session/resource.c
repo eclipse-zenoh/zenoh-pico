@@ -56,7 +56,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_
     while (xs != NULL)
     {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_key._rid == keyexpr->_rid && _z_str_eq(r->_key._rname, keyexpr->_rname) == 1)
+        if (r->_key.id == keyexpr->id && _z_str_eq(r->_key.suffix, keyexpr->suffix) == 1)
             return r;
 
         xs = _z_resource_list_tail(xs);
@@ -73,27 +73,27 @@ _z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_keyexpr
     size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (keyexpr->_rname != NULL)
+    if (keyexpr->suffix != NULL)
     {
-        len += strlen(keyexpr->_rname);
-        strs = _z_str_list_push(strs, keyexpr->_rname);
+        len += strlen(keyexpr->suffix);
+        strs = _z_str_list_push(strs, keyexpr->suffix);
     }
 
     // Recursevely go through all the RIDs
-    _z_zint_t id = keyexpr->_rid;
+    _z_zint_t id = keyexpr->id;
     while (id != Z_RESOURCE_ID_NONE)
     {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
         if (res == NULL)
             goto ERR;
 
-        if (res->_key._rname != NULL)
+        if (res->_key.suffix != NULL)
         {
-            len += strlen(res->_key._rname);
-            strs = _z_str_list_push(strs, res->_key._rname);
+            len += strlen(res->_key.suffix);
+            strs = _z_str_list_push(strs, res->_key.suffix);
         }
 
-        id = res->_key._rid;
+        id = res->_key.id;
     }
 
     // Concatenate all the partial resource names

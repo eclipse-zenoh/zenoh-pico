@@ -28,7 +28,7 @@
  */
 typedef struct
 {
-    const uint8_t *val;
+    const uint8_t *start;
     size_t len;
     uint8_t _is_alloc;
 } _z_bytes_t;

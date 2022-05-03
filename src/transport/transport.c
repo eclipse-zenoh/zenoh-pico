@@ -20,7 +20,7 @@
 
 int _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.val, ((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.start, ((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.len);
     _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
 
     int res = _z_unicast_send_t_msg(ztu, &cm);
@@ -33,7 +33,7 @@ int _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_
 
 int _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.val, ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start, ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
     _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
 
     int res = _z_multicast_send_t_msg(ztm, &cm);
@@ -163,7 +163,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     _z_zint_t sn_resolution = Z_SN_RESOLUTION;
     int is_qos = 0;
 
-    _z_bytes_t pid = _z_bytes_wrap(local_pid.val, local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(local_pid.start, local_pid.len);
     _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
 
     // Encode and send the message
@@ -309,7 +309,7 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
     next_sns._val._plain._best_effort = param._initial_sn_tx;
     next_sns._val._plain._reliable = param._initial_sn_tx;
 
-    _z_bytes_t pid = _z_bytes_wrap(local_pid.val, local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(local_pid.start, local_pid.len);
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_PROTO_VERSION, Z_PEER, Z_TRANSPORT_LEASE, param._sn_resolution, pid, next_sns);
 
     // Encode and send the message

@@ -20,7 +20,7 @@
 
 void _z_reply_clear(_z_reply_t *reply)
 {
-    _z_reply_data_clear(&reply->_data);
+    _z_reply_data_clear(&reply->data);
 }
 
 void _z_reply_free(_z_reply_t **reply)
@@ -134,7 +134,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
         goto ERR_1;
 
     // Partial reply received from an unknown target
-    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
+    if (pen_qry->_target.kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target.kind & reply_context->_replier_kind) == 0)
         goto ERR_1;
 
     // Take the right timestamp, or default to none
@@ -146,22 +146,22 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
 
     // Build the reply
     _z_reply_t *reply = (_z_reply_t *)malloc(sizeof(_z_reply_t));
-    reply->_tag = Z_REPLY_TAG_DATA;
-    _z_bytes_copy(&reply->_data._replier_id, &reply_context->_replier_id);
-    reply->_data._replier_kind = reply_context->_replier_kind;
-    if (keyexpr._rid == Z_RESOURCE_ID_NONE)
-        reply->_data._sample._key = _z_keyexpr_duplicate(&keyexpr);
+    reply->tag = Z_REPLY_TAG_DATA;
+    _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
+    reply->data.replier_kind = reply_context->_replier_kind;
+    if (keyexpr.id == Z_RESOURCE_ID_NONE)
+        reply->data.sample.key = _z_keyexpr_duplicate(&keyexpr);
     else
     {
-        reply->_data._sample._key._rid = Z_RESOURCE_ID_NONE;
-        reply->_data._sample._key._rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
+        reply->data.sample.key.id = Z_RESOURCE_ID_NONE;
+        reply->data.sample.key.suffix = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
     }
-    _z_bytes_copy(&reply->_data._sample._value, &payload);
-    reply->_data._sample._encoding._prefix = data_info._encoding._prefix;
-    reply->_data._sample._encoding._suffix = data_info._encoding._suffix ? _z_str_clone(data_info._encoding._suffix) : NULL;
+    _z_bytes_copy(&reply->data.sample.value, &payload);
+    reply->data.sample.encoding.prefix = data_info._encoding.prefix;
+    reply->data.sample.encoding.suffix = data_info._encoding.suffix ? _z_str_clone(data_info._encoding.suffix) : NULL;
 
     // Verify if this is a newer reply, free the old one in case it is
-    if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_FULL || pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_LAZY)
+    if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_FULL || pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
     {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
@@ -170,7 +170,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply->_data._sample._key._rname, reply->_data._sample._key._rname))
+            if (_z_str_eq(pen_rep->_reply->data.sample.key.suffix, reply->data.sample.key.suffix))
             {
                 if (ts._time <= pen_rep->_tstamp._time)
                     goto ERR_2;
@@ -189,12 +189,12 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
         pen_rep->_tstamp = ts;
 
         // Trigger the handler
-        if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_LAZY)
+        if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
             pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
         else
             pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
-    else if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_NONE)
+    else if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_NONE)
     {
         pen_qry->_callback(reply, pen_qry->_arg);
         _z_reply_free(&reply);
@@ -224,11 +224,11 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
         goto ERR;
 
     // Final reply received from an unknown target
-    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
+    if (pen_qry->_target.kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target.kind & reply_context->_replier_kind) == 0)
         goto ERR;
 
     // The reply is the final one, apply consolidation if needed
-    if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_FULL)
+    if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_FULL)
     {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
@@ -238,7 +238,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
 
             // Check if this is the same resource key
             // Trigger the query handler
-            if (_z_rname_intersect(pen_qry->_rname, pen_rep->_reply->_data._sample._key._rname))
+            if (_z_rname_intersect(pen_qry->_rname, pen_rep->_reply->data.sample.key.suffix))
                 pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
 
             pen_rps = _z_pending_reply_list_tail(pen_rps);
@@ -248,7 +248,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
     // Trigger the final query handler
     _z_reply_t freply;
     memset(&freply, 0, sizeof(_z_reply_t));
-    freply._tag = Z_REPLY_TAG_FINAL;
+    freply.tag = Z_REPLY_TAG_FINAL;
     pen_qry->_callback(&freply, pen_qry->_arg);
 
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);

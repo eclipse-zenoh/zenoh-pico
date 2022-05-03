@@ -52,7 +52,7 @@ int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_t
     if (left->_remote_pid.len != right->_remote_pid.len)
         return 0; // False
 
-    if (memcmp(left->_remote_pid.val, right->_remote_pid.val, left->_remote_pid.len) != 0)
+    if (memcmp(left->_remote_pid.start, right->_remote_pid.start, left->_remote_pid.len) != 0)
         return 0; // False
 
     return 1; // True

@@ -19,7 +19,7 @@
 /*-------- bytes --------*/
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity)
 {
-    bs->val = (uint8_t *)malloc(capacity * sizeof(uint8_t));
+    bs->start = (uint8_t *)malloc(capacity * sizeof(uint8_t));
     bs->len = capacity;
     bs->_is_alloc = 1;
 }
@@ -34,7 +34,7 @@ _z_bytes_t _z_bytes_make(size_t capacity)
 _z_bytes_t _z_bytes_wrap(const uint8_t *p, size_t len)
 {
     _z_bytes_t bs;
-    bs.val = p;
+    bs.start = p;
     bs.len = len;
     bs._is_alloc = 0;
     return bs;
@@ -42,7 +42,7 @@ _z_bytes_t _z_bytes_wrap(const uint8_t *p, size_t len)
 
 void _z_bytes_reset(_z_bytes_t *bs)
 {
-    bs->val = NULL;
+    bs->start = NULL;
     bs->len = 0;
     bs->_is_alloc = 0;
 }
@@ -52,7 +52,7 @@ void _z_bytes_clear(_z_bytes_t *bs)
     if (!bs->_is_alloc)
         return;
 
-    free((uint8_t *)bs->val);
+    free((uint8_t *)bs->start);
     _z_bytes_reset(bs);
 }
 
@@ -68,12 +68,12 @@ void _z_bytes_free(_z_bytes_t **bs)
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src)
 {
     _z_bytes_init(dst, src->len);
-    memcpy((uint8_t *)dst->val, src->val, src->len);
+    memcpy((uint8_t *)dst->start, src->start, src->len);
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src)
 {
-    dst->val = src->val;
+    dst->start = src->start;
     dst->len = src->len;
     dst->_is_alloc = src->_is_alloc;
 

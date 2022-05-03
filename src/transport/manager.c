@@ -98,7 +98,7 @@ _z_transport_manager_t *_z_transport_manager_init()
     srand(time(NULL));
     ztm->_local_pid = _z_bytes_make(Z_PID_LENGTH);
     for (unsigned int i = 0; i < ztm->_local_pid.len; i++)
-        ((uint8_t *)ztm->_local_pid.val)[i] = rand() % 255;
+        ((uint8_t *)ztm->_local_pid.start)[i] = rand() % 255;
 
     ztm->_link_manager = _z_link_manager_init();
 

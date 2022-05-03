@@ -55,8 +55,8 @@ typedef size_t _z_zint_t;
  */
 typedef struct
 {
-    _z_zint_t _prefix;
-    _z_str_t _suffix;
+    _z_zint_t prefix;
+    _z_str_t suffix;
 } _z_encoding_t;
 
 /**
@@ -77,8 +77,8 @@ typedef struct
  */
 typedef struct
 {
-    _z_zint_t _rid;
-    _z_str_t _rname;
+    _z_zint_t id;
+    _z_str_t suffix;
 } _z_keyexpr_t;
 
 /**
@@ -93,9 +93,9 @@ typedef struct
  */
 typedef struct
 {
-    _z_keyexpr_t _key;
-    _z_bytes_t _value;
-    _z_encoding_t _encoding;
+    _z_keyexpr_t key;
+    _z_bytes_t value;
+    _z_encoding_t encoding;
 } _z_sample_t;
 
 /**
@@ -108,9 +108,9 @@ typedef struct
  */
 typedef struct
 {
-    unsigned int _whatami;
-    _z_bytes_t _pid;
-    _z_str_array_t _locators;
+    unsigned int whatami;
+    _z_bytes_t pid;
+    _z_str_array_t locators;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
@@ -136,7 +136,7 @@ typedef enum
 
 typedef struct
 {
-    _z_zint_t _n;
+    _z_zint_t n;
 } _z_target_complete_body_t;
 
 /**
@@ -148,12 +148,12 @@ typedef struct
  */
 typedef struct
 {
-    unsigned int _kind;
-    _z_target_t _target;
+    unsigned int kind;
+    _z_target_t target;
     union
     {
-        _z_target_complete_body_t _complete;
-    } _type;
+        _z_target_complete_body_t complete;
+    } type;
 
 } _z_query_target_t;
 
@@ -179,9 +179,9 @@ typedef enum
  */
 typedef struct
 {
-    unsigned int _origin;
-    unsigned int _period;
-    unsigned int _duration;
+    unsigned int origin;
+    unsigned int period;
+    unsigned int duration;
 } _z_period_t;
 
 /**
@@ -206,9 +206,9 @@ typedef enum
  */
 typedef struct
 {
-    z_reliability_t _reliability;
-    _z_submode_t _mode;
-    _z_period_t _period;
+    z_reliability_t reliability;
+    _z_submode_t mode;
+    _z_period_t period;
 } _z_subinfo_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

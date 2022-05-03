@@ -85,8 +85,8 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs)
     char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++)
     {
-        s_val[2 * i] = c[(bs->val[i] & 0xF0) >> 4];
-        s_val[2 * i + 1] = c[bs->val[i] & 0x0F];
+        s_val[2 * i] = c[(bs->start[i] & 0xF0) >> 4];
+        s_val[2 * i + 1] = c[bs->start[i] & 0x0F];
     }
     s_val[s.len] = '\0';
     s.val = s_val;

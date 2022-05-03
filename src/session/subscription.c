@@ -148,10 +148,9 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
 
     // Build the sample
     _z_sample_t s;
-    s._key = key;
-    s._value = payload;
-    s._encoding._prefix = encoding._prefix;
-    s._encoding._suffix = encoding._suffix;
+    s.key = key;
+    s.value = payload;
+    s.encoding = encoding;
 
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, _Z_RESOURCE_IS_LOCAL, rname);
     _z_subscriber_list_t *xs = subs;

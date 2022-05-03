@@ -190,13 +190,13 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
             {
                 // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, _z_wbuf_space_left(dbuf));
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0, _z_wbuf_space_left(dbuf));
                 drop = 1;
             }
             else
             {
                 // Add the fragment to the defragmentation buffer
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, t_msg->_body._frame._payload._fragment.len);
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0, t_msg->_body._frame._payload._fragment.len);
             }
 
             // Check if this is the last fragment

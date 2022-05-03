@@ -52,11 +52,11 @@ int main(int argc, char **argv)
     z_owned_keyexpr_t keyexpr = z_expr_new(expr);
     z_owned_reply_data_array_t replies = z_get_collect(z_session_loan(&s), z_keyexpr_loan(&keyexpr), "", target, z_query_consolidation_default());
 
-    for (unsigned int i = 0; i < z_reply_data_array_loan(&replies)->len; ++i)
+    for (unsigned int i = 0; i < z_reply_data_array_len(z_reply_data_array_loan(&replies));++i)
     {
         printf(">> Received ('%s': '%.*s')\n",
-               z_reply_data_array_loan(&replies)->val[i].data.key.rname,
-               (int)z_reply_data_array_loan(&replies)->val[i].data.value.len, z_reply_data_array_loan(&replies)->val[i].data.value.val);
+               z_reply_data_array_get(z_reply_data_array_loan(&replies), i)->sample.key.suffix,
+               (int)z_reply_data_array_get(z_reply_data_array_loan(&replies), i)->sample.value.len, z_reply_data_array_get(z_reply_data_array_loan(&replies), i)->sample.value.start);
     }
     z_reply_data_array_clear(z_reply_data_array_move(&replies));
     z_keyexpr_clear(z_keyexpr_move(&keyexpr));

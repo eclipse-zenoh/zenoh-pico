@@ -57,13 +57,13 @@ void reply_handler(const _z_reply_t *reply, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply->_tag == Z_REPLY_TAG_DATA)
+    if (reply->tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->_data._sample._key._rname, replies, total);
-        assert(reply->_data._sample._value.len == strlen(res));
-        assert(strncmp(res, (const _z_str_t)reply->_data._sample._value.val, strlen(res)) == 0);
-        assert(strlen(reply->_data._sample._key._rname) == strlen(res));
-        assert(strncmp(res, reply->_data._sample._key._rname, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.key.suffix, replies, total);
+        assert(reply->data.sample.value.len == strlen(res));
+        assert(strncmp(res, (const _z_str_t)reply->data.sample.value.start, strlen(res)) == 0);
+        assert(strlen(reply->data.sample.key.suffix) == strlen(res));
+        assert(strncmp(res, reply->data.sample.key.suffix, strlen(res)) == 0);
     }
     else
     {
@@ -79,9 +79,9 @@ void data_handler(const z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->_value.len == MSG_LEN);
-    assert(strlen(sample->_key._rname) == strlen(res));
-    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
+    assert(sample->value.len == MSG_LEN);
+    assert(strlen(sample->key.suffix) == strlen(res));
+    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -134,8 +134,8 @@ int main(int argc, z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_expr(z_loan(&s1), z_expr_new(s1_res));
-        printf("Declared resource on session 1: %lu %s\n", z_keyexpr_loan(&expr)->_rid, z_keyexpr_loan(&expr)->_rname);
-        rids1[i] = z_keyexpr_loan(&expr)->_rid;
+        printf("Declared resource on session 1: %lu %s\n", z_keyexpr_loan(&expr)->id, z_keyexpr_loan(&expr)->suffix);
+        rids1[i] = z_keyexpr_loan(&expr)->id;
         z_keyexpr_clear(z_move(&expr));
     }
 
@@ -145,8 +145,8 @@ int main(int argc, z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_expr(z_loan(&s2), z_expr_new(s1_res));
-        printf("Declared resource on session 2: %lu %s\n", z_keyexpr_loan(&expr)->_rid, z_keyexpr_loan(&expr)->_rname);
-        rids2[i] = z_keyexpr_loan(&expr)->_rid;
+        printf("Declared resource on session 2: %lu %s\n", z_keyexpr_loan(&expr)->id, z_keyexpr_loan(&expr)->suffix);
+        rids2[i] = z_keyexpr_loan(&expr)->id;
         z_keyexpr_clear(z_move(&expr));
     }
 

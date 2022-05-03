@@ -19,7 +19,7 @@
 
 void fprintpid(FILE *stream, z_bytes_t pid)
 {
-    if (pid.val == NULL)
+    if (pid.start == NULL)
     {
         fprintf(stream, "None");
     }
@@ -28,7 +28,7 @@ void fprintpid(FILE *stream, z_bytes_t pid)
         fprintf(stream, "Some(");
         for (unsigned int i = 0; i < pid.len; i++)
         {
-            fprintf(stream, "%02X", (int)pid.val[i]);
+            fprintf(stream, "%02X", (int)pid.start[i]);
         }
         fprintf(stream, ")");
     }
@@ -69,11 +69,11 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs)
 void fprinthello(FILE *stream, const z_hello_t *hello)
 {
     fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello->_pid);
+    fprintpid(stream, hello->pid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello->_whatami);
+    fprintwhatami(stream, hello->whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello->_locators);
+    fprintlocators(stream, &hello->locators);
     fprintf(stream, " }");
 }
 

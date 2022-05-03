@@ -83,14 +83,14 @@ int _z_subinfo_encode(_z_wbuf_t *wbf, const _z_subinfo_t *fld)
     _Z_DEBUG("Encoding _SUB_MODE\n");
 
     // Encode the header
-    uint8_t header = fld->_mode;
-    if (fld->_period._origin != 0 || fld->_period._period != 0 || fld->_period._duration != 0)
+    uint8_t header = fld->mode;
+    if (fld->period.origin != 0 || fld->period.period != 0 || fld->period.duration != 0)
         _Z_SET_FLAG(header, _Z_FLAG_Z_P);
     _Z_EC(_z_wbuf_write(wbf, header))
 
     // Encode the body
-    if (fld->_period._origin != 0 || fld->_period._period != 0 || fld->_period._duration != 0)
-        return _z_period_encode(wbf, &fld->_period);
+    if (fld->period.origin != 0 || fld->period.period != 0 || fld->period.duration != 0)
+        return _z_period_encode(wbf, &fld->period);
 
     return 0;
 }
@@ -102,25 +102,25 @@ void _z_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_subinfo_result_t *r
 
     // Decode the header
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R))
-        r->_value._subinfo._reliability = Z_RELIABILITY_RELIABLE;
+        r->_value._subinfo.reliability = Z_RELIABILITY_RELIABLE;
     else
-        r->_value._subinfo._reliability = Z_RELIABILITY_BEST_EFFORT;
+        r->_value._subinfo.reliability = Z_RELIABILITY_BEST_EFFORT;
 
     // Decode the body
     _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
     _ASSURE_P_RESULT(r_uint8, r, _Z_ERR_PARSE_PERIOD)
 
     uint8_t mode = r_uint8._value._uint8;
-    r->_value._subinfo._mode = _Z_MID(mode);
+    r->_value._subinfo.mode = _Z_MID(mode);
     if (_Z_HAS_FLAG(mode, _Z_FLAG_Z_P))
     {
         _z_period_result_t r_tp = _z_period_decode(zbf);
         _ASSURE_P_RESULT(r_tp, r, _Z_ERR_PARSE_PERIOD)
-        r->_value._subinfo._period = r_tp._value._period;
+        r->_value._subinfo.period = r_tp._value._period;
     }
     else
     {
-        r->_value._subinfo._period = (_z_period_t){ ._origin = 0, ._period = 0, ._duration = 0 };
+        r->_value._subinfo.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
     }
 }
 
@@ -137,9 +137,9 @@ int _z_keyexpr_encode(_z_wbuf_t *wbf, uint8_t header, const _z_keyexpr_t *fld)
     _Z_DEBUG("Encoding _RESKEY\n");
 
     // Encode the body
-    _Z_EC(_z_zint_encode(wbf, fld->_rid))
+    _Z_EC(_z_zint_encode(wbf, fld->id))
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
-        _Z_EC(_z_str_encode(wbf, fld->_rname))
+        _Z_EC(_z_str_encode(wbf, fld->suffix))
 
     return 0;
 }
@@ -152,17 +152,17 @@ void _z_keyexpr_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keyexpr_result_t *r
     // Decode the header
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
-    r->_value._keyexpr._rid = r_zint._value._zint;
+    r->_value._keyexpr.id = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
     {
         _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-        r->_value._keyexpr._rname = r_str._value._str;
+        r->_value._keyexpr.suffix = r_str._value._str;
     }
     else
     {
-        r->_value._keyexpr._rname = NULL;
+        r->_value._keyexpr.suffix = NULL;
     }
 }
 
@@ -415,12 +415,12 @@ void _z_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sub_decl_result_t 
     else
     {
         // Default subscription mode is non-periodic PUSH
-        r->_value._sub_decl._subinfo._mode = Z_SUBMODE_PUSH;
-        r->_value._sub_decl._subinfo._period = (_z_period_t){ ._origin = 0, ._period = 0, ._duration = 0 };
+        r->_value._sub_decl._subinfo.mode = Z_SUBMODE_PUSH;
+        r->_value._sub_decl._subinfo.period = (_z_period_t){ .origin = 0, .period = 0, .duration = 0 };
         if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R))
-            r->_value._sub_decl._subinfo._reliability = Z_RELIABILITY_RELIABLE;
+            r->_value._sub_decl._subinfo.reliability = Z_RELIABILITY_RELIABLE;
         else
-            r->_value._sub_decl._subinfo._reliability = Z_RELIABILITY_BEST_EFFORT;
+            r->_value._sub_decl._subinfo.reliability = Z_RELIABILITY_BEST_EFFORT;
     }
 }
 
@@ -775,8 +775,8 @@ int _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld)
 
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_ENC))
     {
-        _Z_EC(_z_zint_encode(wbf, fld->_encoding._prefix))
-        _Z_EC(_z_str_encode(wbf, fld->_encoding._suffix))
+        _Z_EC(_z_zint_encode(wbf, fld->_encoding.prefix))
+        _Z_EC(_z_str_encode(wbf, fld->_encoding.suffix))
     }
 
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_TSTAMP))
@@ -828,11 +828,11 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r)
     {
         _z_zint_result_t r_enc = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_enc, r, _Z_ERR_PARSE_ZINT)
-        r->_value._data_info._encoding._prefix = r_enc._value._zint;
+        r->_value._data_info._encoding.prefix = r_enc._value._zint;
 
         _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-        r->_value._data_info._encoding._suffix = r_str._value._str;
+        r->_value._data_info._encoding.suffix = r_str._value._str;
     }
 
     if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_TSTAMP))
@@ -977,11 +977,11 @@ int _z_msg_query_target_encode(_z_wbuf_t *wbf, const _z_query_target_t *qt)
 {
     _Z_DEBUG("Encoding _QUERY_TARGET\n");
 
-    _Z_EC(_z_zint_encode(wbf, qt->_kind))
+    _Z_EC(_z_zint_encode(wbf, qt->kind))
 
-    _Z_EC(_z_zint_encode(wbf, qt->_target))
-    if (qt->_target == Z_TARGET_COMPLETE)
-        _Z_EC(_z_zint_encode(wbf, qt->_type._complete._n))
+    _Z_EC(_z_zint_encode(wbf, qt->target))
+    if (qt->target == Z_TARGET_COMPLETE)
+        _Z_EC(_z_zint_encode(wbf, qt->type.complete.n))
 
     return 0;
 }
@@ -989,9 +989,9 @@ int _z_msg_query_target_encode(_z_wbuf_t *wbf, const _z_query_target_t *qt)
 int _z_query_consolidation_encode(_z_wbuf_t *wbf, const _z_consolidation_strategy_t *qc)
 {
     _Z_DEBUG("Encoding _QUERY_CONSOLIDATION\n");
-    _z_zint_t consolidation = qc->_reception;
-    consolidation |= qc->_last_router << 2;
-    consolidation |= qc->_first_routers << 4;
+    _z_zint_t consolidation = qc->reception;
+    consolidation |= qc->last_router << 2;
+    consolidation |= qc->first_routers << 4;
 
     return _z_zint_encode(wbf, consolidation);
 }
@@ -1021,17 +1021,17 @@ _z_query_target_result_t _z_msg_query_target_decode(_z_zbuf_t *zbf)
 
     _z_zint_result_t r_kind = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_kind, r, _Z_ERR_PARSE_ZINT)
-    r._value._query_target._kind = r_kind._value._zint;
+    r._value._query_target.kind = r_kind._value._zint;
 
     _z_zint_result_t r_tag = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_tag, r, _Z_ERR_PARSE_ZINT)
-    r._value._query_target._target = r_tag._value._zint;
+    r._value._query_target.target = r_tag._value._zint;
 
-    if (r._value._query_target._target == Z_TARGET_COMPLETE)
+    if (r._value._query_target.target == Z_TARGET_COMPLETE)
     {
         _z_zint_result_t r_n = _z_zint_decode(zbf);
         _ASSURE_RESULT(r_n, r, _Z_ERR_PARSE_ZINT)
-        r._value._query_target._type._complete._n = r_n._value._zint;
+        r._value._query_target.type.complete.n = r_n._value._zint;
     }
 
     return r;
@@ -1052,7 +1052,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf)
     case Z_CONSOLIDATION_MODE_NONE:
     case Z_CONSOLIDATION_MODE_LAZY:
     case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation._first_routers = mode;
+        r._value._query_consolidation.first_routers = mode;
         break;
     default:
         r._tag = _Z_RES_ERR;
@@ -1066,7 +1066,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf)
     case Z_CONSOLIDATION_MODE_NONE:
     case Z_CONSOLIDATION_MODE_LAZY:
     case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation._last_router = mode;
+        r._value._query_consolidation.last_router = mode;
         break;
     default:
         r._tag = _Z_RES_ERR;
@@ -1080,7 +1080,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf)
     case Z_CONSOLIDATION_MODE_NONE:
     case Z_CONSOLIDATION_MODE_LAZY:
     case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation._reception = mode;
+        r._value._query_consolidation.reception = mode;
         break;
     default:
         r._tag = _Z_RES_ERR;
@@ -1116,8 +1116,8 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
     }
     else
     {
-        r->_value._query._target._kind = Z_QUERYABLE_ALL_KINDS;
-        r->_value._query._target._target = Z_TARGET_BEST_MATCHING;
+        r->_value._query._target.kind = Z_QUERYABLE_ALL_KINDS;
+        r->_value._query._target.target = Z_TARGET_BEST_MATCHING;
     }
 
     _z_query_consolidation_result_t r_con = _z_query_consolidation_decode(zbf);
@@ -1786,7 +1786,7 @@ int _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg)
     {
         // Do not write the fragment as _z_bytes_t since the total frame length
         // is eventually prepended to the frame. There is no need to encode the fragment length.
-        return _z_wbuf_write_bytes(wbf, msg->_payload._fragment.val, 0, msg->_payload._fragment.len);
+        return _z_wbuf_write_bytes(wbf, msg->_payload._fragment.start, 0, msg->_payload._fragment.len);
     }
     else
     {

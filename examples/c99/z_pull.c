@@ -22,8 +22,8 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     (void)(arg); // Unused argument
 
     printf(">> [Subscription listener] Received (%zu:%s, %.*s)\n",
-           sample->key.rid, sample->key.rname,
-           (int)sample->value.len, sample->value.val);
+           sample->key.id, sample->key.suffix,
+           (int)sample->value.len, sample->value.start);
 }
 
 int main(int argc, char **argv)

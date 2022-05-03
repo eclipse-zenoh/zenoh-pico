@@ -102,14 +102,14 @@ _z_hello_array_t _z_scout_loop(
             _z_hello_t *sc = (_z_hello_t *)&ls._val[ls._len - 1];
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_I)
-                _z_bytes_copy(&sc->_pid, &t_msg._body._hello._pid);
+                _z_bytes_copy(&sc->pid, &t_msg._body._hello._pid);
             else
-                _z_bytes_reset(&sc->_pid);
+                _z_bytes_reset(&sc->pid);
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_W)
-                sc->_whatami = t_msg._body._hello._whatami;
+                sc->whatami = t_msg._body._hello._whatami;
             else
-                sc->_whatami = Z_ROUTER; // Default value is from a router
+                sc->whatami = Z_ROUTER; // Default value is from a router
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_L)
             {
@@ -118,13 +118,13 @@ _z_hello_array_t _z_scout_loop(
                 {
                     la._val[i] = _z_locator_to_str(_z_locator_array_get(&t_msg._body._hello._locators, i));
                 }
-                _z_str_array_move(&sc->_locators, &la);
+                _z_str_array_move(&sc->locators, &la);
             }
             else
             {
                 // @TODO: construct the locator departing from the sock address
-                sc->_locators._len = 0;
-                sc->_locators._val = NULL;
+                sc->locators._len = 0;
+                sc->locators._val = NULL;
             }
 
             break;

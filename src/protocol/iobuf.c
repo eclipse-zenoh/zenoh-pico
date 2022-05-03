@@ -105,7 +105,7 @@ _z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios)
 {
     _z_bytes_t a;
     a.len = _z_iosli_readable(ios);
-    a.val = ios->_buf + ios->_r_pos;
+    a.start = ios->_buf + ios->_r_pos;
     return a;
 }
 

@@ -21,8 +21,8 @@
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *keyexpr)
 {
     _z_keyexpr_t rk;
-    rk._rid = keyexpr->_rid,
-    rk._rname = keyexpr->_rname ? _z_str_clone(keyexpr->_rname) : NULL;
+    rk.id = keyexpr->id,
+    rk.suffix = keyexpr->suffix ? _z_str_clone(keyexpr->suffix) : NULL;
     return rk;
 }
 

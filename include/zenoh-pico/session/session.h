@@ -34,9 +34,9 @@
  */
 typedef struct
 {
-    _z_sample_t _sample;
-    unsigned int _replier_kind;
-    _z_bytes_t _replier_id;
+    _z_sample_t sample;
+    unsigned int replier_kind;
+    _z_bytes_t replier_id;
 } _z_reply_data_t;
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
@@ -53,8 +53,8 @@ _Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
  */
 typedef struct
 {
-    z_reply_tag_t _tag;
-    _z_reply_data_t _data;
+    z_reply_tag_t tag;
+    _z_reply_data_t data;
 } _z_reply_t;
 
 typedef struct

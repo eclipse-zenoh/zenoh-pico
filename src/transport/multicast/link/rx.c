@@ -26,7 +26,7 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
         if (val->_remote_addr.len != remote_addr->len)
             continue;
 
-        if (memcmp(val->_remote_addr.val, remote_addr->val, remote_addr->len) == 0)
+        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0)
             return val;
     }
 
@@ -204,7 +204,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I))
         {
             // Check if the Peer ID matches the remote address in the knonw peer list
-            if (entry->_remote_pid.len != t_msg->_body._close._pid.len || memcmp(entry->_remote_pid.val, t_msg->_body._close._pid.val, entry->_remote_pid.len) != 0)
+            if (entry->_remote_pid.len != t_msg->_body._close._pid.len || memcmp(entry->_remote_pid.start, t_msg->_body._close._pid.start, entry->_remote_pid.len) != 0)
                 break;
         }
         ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
@@ -283,13 +283,13 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
             {
                 // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, _z_wbuf_space_left(dbuf));
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0, _z_wbuf_space_left(dbuf));
                 drop = 1;
             }
             else
             {
                 // Add the fragment to the defragmentation buffer
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.val, 0, t_msg->_body._frame._payload._fragment.len);
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0, t_msg->_body._frame._payload._fragment.len);
             }
 
             // Check if this is the last fragment

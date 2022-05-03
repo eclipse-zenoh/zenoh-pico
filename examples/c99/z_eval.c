@@ -25,12 +25,12 @@ void query_handler(const z_query_t *query, const void *arg)
 {
     (void) (arg);
 
-    z_str_t res = z_query_key_expr(query).rname;
+    z_str_t res = z_query_key_expr(query).suffix;
     z_str_t pred = z_query_predicate(query);
     printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
     z_send_reply(query, expr, (const unsigned char *)value, strlen(value));
 
-    _z_str_clear(res);
+    _z_str_clear(&res);
 }
 
 int main(int argc, char **argv)

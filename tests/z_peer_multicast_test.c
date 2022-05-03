@@ -39,9 +39,9 @@ void data_handler(const z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->_value.len == MSG_LEN);
-    assert(strlen(sample->_key._rname) == strlen(res));
-    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
+    assert(sample->value.len == MSG_LEN);
+    assert(strlen(sample->key.suffix) == strlen(res));
+    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;

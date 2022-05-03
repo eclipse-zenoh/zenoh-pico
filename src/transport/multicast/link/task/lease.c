@@ -56,7 +56,7 @@ _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers)
 
 int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm)
 {
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.val, ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start, ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(pid);
 
     return _z_multicast_send_t_msg(ztm, &t_msg);

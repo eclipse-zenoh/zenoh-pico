@@ -57,13 +57,13 @@ void reply_handler(const _z_reply_t *reply, const void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply->_tag == Z_REPLY_TAG_DATA)
+    if (reply->tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->_data._sample._key._rname, replies, total);
-        assert(reply->_data._sample._value.len == strlen(res));
-        assert(strncmp(res, (const _z_str_t)reply->_data._sample._value.val, strlen(res)) == 0);
-        assert(strlen(reply->_data._sample._key._rname) == strlen(res));
-        assert(strncmp(res, reply->_data._sample._key._rname, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.key.suffix, replies, total);
+        assert(reply->data.sample.value.len == strlen(res));
+        assert(strncmp(res, (const _z_str_t)reply->data.sample.value.start, strlen(res)) == 0);
+        assert(strlen(reply->data.sample.key.suffix) == strlen(res));
+        assert(strncmp(res, reply->data.sample.key.suffix, strlen(res)) == 0);
     }
     else
     {
@@ -79,9 +79,9 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->_value.len == MSG_LEN);
-    assert(strlen(sample->_key._rname) == strlen(res));
-    assert(strncmp(res, sample->_key._rname, strlen(res)) == 0);
+    assert(sample->value.len == MSG_LEN);
+    assert(strlen(sample->key.suffix) == strlen(res));
+    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -132,7 +132,7 @@ int main(int argc, _z_str_t *argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s1, rk);
-        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk._rid, rk._rname);
+        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk.id, rk.suffix);
         rids1[i] = rid;
     }
 
@@ -143,7 +143,7 @@ int main(int argc, _z_str_t *argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s2, rk);
-        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk._rid, rk._rname);
+        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk.id, rk.suffix);
         rids2[i] = rid;
     }
 
@@ -155,7 +155,7 @@ int main(int argc, _z_str_t *argv)
         _z_keyexpr_t rk = _z_rid(rids2[i]);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._rid, rk._rname);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -167,7 +167,7 @@ int main(int argc, _z_str_t *argv)
         _z_keyexpr_t rk = _z_rname(s1_res);
         _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, &idx[i]);
         assert(qle != NULL);
-        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk._rid, rk._rname);
+        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk.id, rk.suffix);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
     }
 
@@ -196,9 +196,9 @@ int main(int argc, _z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             _z_keyexpr_t rk = _z_rid(rids1[i]);
-            _z_encoding_t encoding = {._prefix = Z_ENCODING_DEFAULT, ._suffix = ""};
+            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk._rid, len, n * SET + (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.id, len, n * SET + (i + 1), total);
         }
     }
 
@@ -230,7 +230,7 @@ int main(int argc, _z_str_t *argv)
             _z_query_target_t qry_tgt = _z_query_target_default();
             _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, &idx[i]);
-            printf("Queried data from session 1: %lu %s\n", rk._rid, rk._rname);
+            printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);
         }
     }
 
@@ -279,7 +279,7 @@ int main(int argc, _z_str_t *argv)
                 _z_query_target_t qry_tgt = _z_query_target_default();
                 _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
                 _z_reply_data_array_t ra = _z_query_collect(s1, myrk, "", qry_tgt, qry_con);
-                printf("Queried and collected data from session 1: %lu %s\n", rk._rid, rk._rname);
+                printf("Queried and collected data from session 1: %lu %s\n", rk.id, rk.suffix);
                 _z_keyexpr_clear(&rk);
                 replies += ra._len;
                 _z_reply_data_array_clear(&ra);

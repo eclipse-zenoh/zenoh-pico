@@ -71,9 +71,9 @@ typedef struct
  */
 typedef struct
 {
-    z_consolidation_mode_t _first_routers;
-    z_consolidation_mode_t _last_router;
-    z_consolidation_mode_t _reception;
+    z_consolidation_mode_t first_routers;
+    z_consolidation_mode_t last_router;
+    z_consolidation_mode_t reception;
 } _z_consolidation_strategy_t;
 
 _z_consolidation_strategy_t _z_consolidation_strategy_none(void);

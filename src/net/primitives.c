@@ -170,8 +170,8 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     _z_keyexpr_t key;
-    key._rid = Z_RESOURCE_ID_NONE;
-    key._rname = _z_str_clone(s->_rname);
+    key.id = Z_RESOURCE_ID_NONE;
+    key.suffix = _z_str_clone(s->_rname);
     *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_subscriber(key);
 
     // Build the declare message to send on the wire
@@ -234,8 +234,8 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     _z_keyexpr_t key;
-    key._rid = Z_RESOURCE_ID_NONE;
-    key._rname = _z_str_clone(q->_rname);
+    key.id = Z_RESOURCE_ID_NONE;
+    key.suffix = _z_str_clone(q->_rname);
     *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_queryable(key, q->_kind);
 
     // Build the declare message to send on the wire
@@ -254,14 +254,14 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
 void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply._
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.val, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
     _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, query->_kind, 0);
 
     // @TODO: use numerical resources if possible
     // ResKey
     _z_keyexpr_t keyexpr;
-    keyexpr._rid = Z_RESOURCE_ID_NONE;
-    keyexpr._rname = key;
+    keyexpr.id = Z_RESOURCE_ID_NONE;
+    keyexpr.suffix = key;
 
     // Empty data info
     _z_data_info_t di;
@@ -270,7 +270,7 @@ void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *pa
     // Payload
     _z_payload_t pld;
     pld.len = len;
-    pld.val = payload;
+    pld.start = payload;
 
     // Congestion control
     int can_be_dropped = 0;
@@ -302,7 +302,7 @@ int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payloa
     // Payload
     _z_payload_t pld;
     pld.len = len;
-    pld.val = payload;
+    pld.start = payload;
 
     // Congestion control
     int can_be_dropped = Z_CONGESTION_CONTROL_DEFAULT == Z_CONGESTION_CONTROL_DROP;
@@ -329,7 +329,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
     // Payload
     _z_payload_t pld;
     pld.len = len;
-    pld.val = payload;
+    pld.start = payload;
 
     // Congestion control
     int can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;
@@ -366,15 +366,15 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, 
 void reply_collect_handler(const _z_reply_t *reply, const void *arg)
 {
     _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
-    if (reply->_tag == Z_REPLY_TAG_DATA)
+    if (reply->tag == Z_REPLY_TAG_DATA)
     {
         _z_reply_data_t *rd = (_z_reply_data_t *)malloc(sizeof(_z_reply_data_t));
-        rd->_replier_kind = reply->_data._replier_kind;
-        _z_bytes_copy(&rd->_replier_id, &reply->_data._replier_id);
-        rd->_sample._key = _z_keyexpr_duplicate(&reply->_data._sample._key);
-        _z_bytes_copy(&rd->_sample._value, &reply->_data._sample._value);
-        rd->_sample._encoding._prefix = reply->_data._sample._encoding._prefix;
-        rd->_sample._encoding._suffix = reply->_data._sample._encoding._suffix ? _z_str_clone(reply->_data._sample._encoding._suffix) : NULL;
+        rd->replier_kind = reply->data.replier_kind;
+        _z_bytes_copy(&rd->replier_id, &reply->data.replier_id);
+        rd->sample.key = _z_keyexpr_duplicate(&reply->data.sample.key);
+        _z_bytes_copy(&rd->sample.value, &reply->data.sample.value);
+        rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
+        rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : "";
 
         pqc->_replies = _z_reply_data_list_push(pqc->_replies, rd);
     }
@@ -410,12 +410,12 @@ _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
     for (unsigned int i = 0; i < rda._len; i++)
     {
         _z_reply_data_t *reply = _z_reply_data_list_head(pqc._replies);
-        replies[i]._replier_kind = reply->_replier_kind;
-        _z_bytes_move(&replies[i]._replier_id, &reply->_replier_id);
-        replies[i]._sample._key = reply->_sample._key;
-        _z_bytes_move(&replies[i]._sample._value, &reply->_sample._value);
-        replies[i]._sample._encoding._prefix = reply->_sample._encoding._prefix;
-        replies[i]._sample._encoding._suffix = reply->_sample._encoding._suffix ? _z_str_clone(reply->_sample._encoding._suffix) : NULL;
+        replies[i].replier_kind = reply->replier_kind;
+        _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
+        replies[i].sample.key = reply->sample.key;
+        _z_bytes_move(&replies[i].sample.value, &reply->sample.value);
+        replies[i].sample.encoding.prefix = reply->sample.encoding.prefix;
+        replies[i].sample.encoding.suffix = reply->sample.encoding.suffix ? _z_str_clone(reply->sample.encoding.suffix) : "";
 
         pqc._replies = _z_reply_data_list_pop(pqc._replies);
     }

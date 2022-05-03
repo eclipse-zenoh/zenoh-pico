@@ -54,8 +54,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 // Register remote resource declaration
                 _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
                 r->_id = id;
-                r->_key._rid = key._rid;
-                r->_key._rname = _z_str_clone(key._rname);
+                r->_key.id = key.id;
+                r->_key.suffix = _z_str_clone(key.suffix);
 
                 int res = _z_register_resource(zn, _Z_RESOURCE_REMOTE, r);
                 if (res != 0)

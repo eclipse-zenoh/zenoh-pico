@@ -18,9 +18,9 @@
 /*------------------ period ------------------*/
 int _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp)
 {
-    _Z_EC(_z_zint_encode(buf, tp->_origin))
-    _Z_EC(_z_zint_encode(buf, tp->_period))
-    return _z_zint_encode(buf, tp->_duration);
+    _Z_EC(_z_zint_encode(buf, tp->origin))
+    _Z_EC(_z_zint_encode(buf, tp->period))
+    return _z_zint_encode(buf, tp->duration);
 }
 
 void _z_period_decode_na(_z_zbuf_t *buf, _z_period_result_t *r)
@@ -34,9 +34,9 @@ void _z_period_decode_na(_z_zbuf_t *buf, _z_period_result_t *r)
     _z_zint_result_t r_duration = _z_zint_decode(buf);
     _ASSURE_P_RESULT(r_duration, r, _Z_ERR_PARSE_ZINT);
 
-    r->_value._period._origin = r_origin._value._zint;
-    r->_value._period._period = r_period._value._zint;
-    r->_value._period._duration = r_duration._value._zint;
+    r->_value._period.origin = r_origin._value._zint;
+    r->_value._period.period = r_period._value._zint;
+    r->_value._period.duration = r_duration._value._zint;
 }
 
 _z_period_result_t _z_period_decode(_z_zbuf_t *buf)
@@ -108,9 +108,9 @@ int _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs)
 {
     _Z_EC(_z_zint_encode(wbf, bs->len))
     if (wbf->_is_expandable && bs->len > Z_TSID_LENGTH)
-        return _z_wbuf_wrap_bytes(wbf, bs->val, 0, bs->len);
+        return _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     else
-        return _z_wbuf_write_bytes(wbf, bs->val, 0, bs->len);
+        return _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
 }
 
 void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r)
