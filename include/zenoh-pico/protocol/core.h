@@ -121,9 +121,9 @@ _Z_ARRAY_DEFINE(_z_hello, _z_hello_t)
  * The possible values of :c:member:`_z_target_t.tag`.
  *
  *     - **Z_TARGET_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
- *     - **Z_TARGET_COMPLETE**: A set of complete queryables.
  *     - **Z_TARGET_ALL**: All matching queryables.
  *     - **Z_TARGET_NONE**: No queryables.
+ *     - **Z_TARGET_COMPLETE**: A set of complete queryables.
  */
 typedef enum
 {

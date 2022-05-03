@@ -32,7 +32,6 @@ z_owned_string_t z_string_new(const z_str_t s);
 z_owned_keyexpr_t z_id_new(z_zint_t id);
 z_owned_keyexpr_t z_expr_new(const z_str_t name);
 z_owned_keyexpr_t z_id_with_suffix_new(z_zint_t id, const z_str_t suffix);
-z_owned_keyexpr_t z_keyexpr_new(z_zint_t id, const z_str_t suffix);
 
 z_owned_config_t z_config_new(void);
 z_owned_config_t z_config_empty(void);
@@ -98,7 +97,7 @@ _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_reply_data_t, z_owned_reply_data_t, reply_data)
 
-_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, owned_str_array)
+_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 _OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
 _OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
@@ -138,5 +137,8 @@ int zp_stop_read_task(z_session_t *zs);
 
 int zp_start_lease_task(z_session_t *zs);
 int zp_stop_lease_task(z_session_t *zs);
+
+/************* Accessors **************/
+
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

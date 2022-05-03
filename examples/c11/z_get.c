@@ -58,8 +58,8 @@ int main(int argc, char **argv)
                z_loan(&replies)->_val[i]._sample._key._rname,
                (int)z_loan(&replies)->_val[i]._sample._value.len, z_loan(&replies)->_val[i]._sample._value.val);
     }
-    z_reply_data_array_clear(z_move(&replies));
-    z_keyexpr_clear(z_move(&keyexpr));
+    z_clear(z_move(&replies));
+    z_clear(z_move(&keyexpr));
 
     zp_stop_read_task(z_loan(&s));
     zp_stop_lease_task(z_loan(&s));
