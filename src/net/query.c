@@ -46,15 +46,12 @@ _z_string_t _z_query_res_name(const z_query_t *query)
     return s;
 }
 
-_z_target_t z_target_default(void)
+_z_query_target_t _z_query_target_default(void)
 {
     return Z_TARGET_BEST_MATCHING;
 }
 
-_z_query_target_t _z_query_target_default(void)
+_z_target_t _z_target_default(void)
 {
-    _z_query_target_t qt;
-    qt.kind = Z_QUERYABLE_ALL_KINDS;
-    qt.target = z_target_default();
-    return qt;
+    return (_z_target_t){._kind = Z_QUERYABLE_ALL_KINDS, .target = _z_query_target_default()};
 }

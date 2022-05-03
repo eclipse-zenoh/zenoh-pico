@@ -132,7 +132,7 @@ typedef enum
     Z_TARGET_NONE = 2,
     Z_TARGET_ALLCOMPLETE = 3,
     Z_TARGET_COMPLETE = 4
-} _z_target_t;
+} _z_query_target_t;
 
 typedef struct
 {
@@ -148,14 +148,14 @@ typedef struct
  */
 typedef struct
 {
-    unsigned int kind;
-    _z_target_t target;
+    unsigned int _kind;
+    _z_query_target_t target;
     union
     {
         _z_target_complete_body_t complete;
     } type;
 
-} _z_query_target_t;
+} _z_target_t;
 
 /**
  * The congestion control.

@@ -118,7 +118,7 @@ typedef struct
     _z_zint_t _id;
     _z_str_t _rname;
     _z_str_t _predicate;
-    _z_query_target_t _target;
+    _z_target_t _target;
     _z_consolidation_strategy_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
     _z_query_handler_t _callback;

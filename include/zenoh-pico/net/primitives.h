@@ -214,13 +214,7 @@ void _z_pull(const _z_subscriber_t *sub);
  *     callback: The callback function that will be called on reception of replies for this query.
  *     arg: A pointer that will be passed to the **callback** on each call.
  */
-void _z_query(_z_session_t *zn,
-              _z_keyexpr_t keyexpr,
-              const _z_str_t predicate,
-              const _z_query_target_t target,
-              const _z_consolidation_strategy_t consolidation,
-              _z_query_handler_t callback,
-              void *arg);
+void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg);
 
 /**
  * Query data from the matching queryables in the system.
@@ -237,11 +231,7 @@ void _z_query(_z_session_t *zn,
  * Returns:
  *    An array containing all the replies for this query.
  */
-_z_reply_data_array_t _z_query_collect(_z_session_t *zn,
-                                       _z_keyexpr_t keyexpr,
-                                       const _z_str_t predicate,
-                                       const _z_query_target_t target,
-                                       const _z_consolidation_strategy_t consolidation);
+_z_reply_data_array_t _z_query_collect(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation);
 
 /**
  * Send a reply to a query.

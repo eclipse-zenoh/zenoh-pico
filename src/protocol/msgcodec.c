@@ -973,11 +973,11 @@ _z_pull_result_t _z_pull_decode(_z_zbuf_t *zbf, uint8_t header)
 }
 
 /*------------------ Query Message ------------------*/
-int _z_msg_query_target_encode(_z_wbuf_t *wbf, const _z_query_target_t *qt)
+int _z_msg_query_target_encode(_z_wbuf_t *wbf, const _z_target_t *qt)
 {
     _Z_DEBUG("Encoding _QUERY_TARGET\n");
 
-    _Z_EC(_z_zint_encode(wbf, qt->kind))
+    _Z_EC(_z_zint_encode(wbf, qt->_kind))
 
     _Z_EC(_z_zint_encode(wbf, qt->target))
     if (qt->target == Z_TARGET_COMPLETE)
@@ -1013,25 +1013,25 @@ int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg)
     return _z_query_consolidation_encode(wbf, &msg->_consolidation);
 }
 
-_z_query_target_result_t _z_msg_query_target_decode(_z_zbuf_t *zbf)
+_z_target_result_t _z_msg_query_target_decode(_z_zbuf_t *zbf)
 {
     _Z_DEBUG("Decoding _QUERY_TARGET\n");
-    _z_query_target_result_t r;
+    _z_target_result_t r;
     r._tag = _Z_RES_OK;
 
     _z_zint_result_t r_kind = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_kind, r, _Z_ERR_PARSE_ZINT)
-    r._value._query_target.kind = r_kind._value._zint;
+    r._value._target._kind = r_kind._value._zint;
 
     _z_zint_result_t r_tag = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_tag, r, _Z_ERR_PARSE_ZINT)
-    r._value._query_target.target = r_tag._value._zint;
+    r._value._target.target = r_tag._value._zint;
 
-    if (r._value._query_target.target == Z_TARGET_COMPLETE)
+    if (r._value._target.target == Z_TARGET_COMPLETE)
     {
         _z_zint_result_t r_n = _z_zint_decode(zbf);
         _ASSURE_RESULT(r_n, r, _Z_ERR_PARSE_ZINT)
-        r._value._query_target.type.complete.n = r_n._value._zint;
+        r._value._target.type.complete.n = r_n._value._zint;
     }
 
     return r;
@@ -1110,13 +1110,13 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T))
     {
-        _z_query_target_result_t r_qt = _z_msg_query_target_decode(zbf);
+        _z_target_result_t r_qt = _z_msg_query_target_decode(zbf);
         _ASSURE_P_RESULT(r_qt, r, _Z_ERR_PARSE_ZINT)
-        r->_value._query._target = r_qt._value._query_target;
+        r->_value._query._target = r_qt._value._target;
     }
     else
     {
-        r->_value._query._target.kind = Z_QUERYABLE_ALL_KINDS;
+        r->_value._query._target._kind = Z_QUERYABLE_ALL_KINDS;
         r->_value._query._target.target = Z_TARGET_BEST_MATCHING;
     }
 

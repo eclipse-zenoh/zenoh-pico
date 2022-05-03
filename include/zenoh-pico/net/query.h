@@ -106,12 +106,11 @@ _z_string_t _z_query_predicate(const z_query_t *query);
 _z_string_t _z_query_res_name(const z_query_t *query);
 
 /**
- * Create a default :c:type:`_z_query_target_t`.
+ * Create a default :c:type:`_z_target_t`.
  *
  * Returns:
- *     A :c:type:`_z_query_target_t` containing the created query
- *     target.
+ *     A :c:type:`_z_target_t` containing the created query target.
  */
-_z_query_target_t _z_query_target_default(void);
+_z_target_t _z_target_default(void);
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

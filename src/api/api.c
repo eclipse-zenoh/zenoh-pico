@@ -211,12 +211,12 @@ z_str_t z_query_predicate(const z_query_t *query)
     return query->_predicate;
 }
 
-z_query_target_t z_query_target_default(void)
+z_target_t z_target_default(void)
 {
-    return _z_query_target_default();
+    return _z_target_default();
 }
 
-void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg)
+void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg)
 {
     // FIXME: move this to a function
     _z_consolidation_strategy_t strategy;
@@ -238,7 +238,7 @@ void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_que
     _z_query(zs, _z_keyexpr_duplicate(keyexpr), predicate, target, strategy, callback, arg);
 }
 
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation)
+z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation)
 {
     // FIXME: move this to a function
     _z_consolidation_strategy_t strategy;
@@ -279,16 +279,6 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t config, unsigned l
 
     return hellos; 
 }
-
-// void z_get(z_session_t *zs, z_keyexpr_t keyexpr, z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation, void (*callback)(z_reply_t, const void*), void *arg)
-// {
-    // _z_reply_data_array_t replies = _z_query_collect(zs, keyexpr, predicate, target, consolidation);
-
-    // for (unsigned int i = 0; i < replies.len; i++)
-    //     callback(replies.val[i], arg);
-
-    // _z_reply_data_array_free(replies);
-// }
 
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, size_t len)
 {

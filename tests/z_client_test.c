@@ -232,7 +232,7 @@ int main(int argc, z_str_t *argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             z_owned_keyexpr_t keyexpr = z_expr_new(s1_res);
-            z_get(z_loan(&s1), z_loan(&keyexpr), "", z_query_target_default(), z_query_consolidation_default(), reply_handler, &idx[i]);
+            z_get(z_loan(&s1), z_loan(&keyexpr), "", z_target_default(), z_query_consolidation_default(), reply_handler, &idx[i]);
             printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
             z_keyexpr_clear(z_move(&keyexpr));
         }
@@ -279,7 +279,7 @@ int main(int argc, z_str_t *argv)
             {
                 sprintf(s1_res, "%s%d", uri, i);
                 z_owned_keyexpr_t keyexpr = z_expr_new(s1_res);
-                z_owned_reply_data_array_t reply_data_a = z_get_collect(z_loan(&s1), z_loan(&keyexpr), "", z_query_target_default(), z_query_consolidation_default());
+                z_owned_reply_data_array_t reply_data_a = z_get_collect(z_loan(&s1), z_loan(&keyexpr), "", z_target_default(), z_query_consolidation_default());
                 printf("Queried and collected data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
                 replies += z_reply_data_array_loan(&reply_data_a)->_len;
                 z_reply_data_array_clear(z_move(&reply_data_a));

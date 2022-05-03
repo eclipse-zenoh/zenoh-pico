@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_loan(&s));
 
     printf("Sending Query '%s'...\n", expr);
-    z_query_target_t target = z_query_target_default();
+    z_target_t target = z_target_default();
     target.target = Z_TARGET_ALL;
     z_owned_keyexpr_t keyexpr = z_expr_new(expr);
     z_owned_reply_data_array_t replies = z_get_collect(z_loan(&s), z_loan(&keyexpr), "", target, z_query_consolidation_default());

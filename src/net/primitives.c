@@ -340,7 +340,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
 }
 
 /*------------------ Query ------------------*/
-void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_query_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
+void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
@@ -390,7 +390,7 @@ void reply_collect_handler(const _z_reply_t *reply, const void *arg)
 _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
                                      _z_keyexpr_t keyexpr,
                                      const _z_str_t predicate,
-                                     const _z_query_target_t target,
+                                     const _z_target_t target,
                                      const _z_consolidation_strategy_t consolidation)
 {
     // Create the synchronization variables

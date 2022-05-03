@@ -134,7 +134,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
         goto ERR_1;
 
     // Partial reply received from an unknown target
-    if (pen_qry->_target.kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target.kind & reply_context->_replier_kind) == 0)
+    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
         goto ERR_1;
 
     // Take the right timestamp, or default to none
@@ -224,7 +224,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
         goto ERR;
 
     // Final reply received from an unknown target
-    if (pen_qry->_target.kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target.kind & reply_context->_replier_kind) == 0)
+    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
         goto ERR;
 
     // The reply is the final one, apply consolidation if needed

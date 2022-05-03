@@ -26,7 +26,7 @@
 _Z_RESULT_DECLARE(_z_timestamp_t, timestamp)
 _Z_RESULT_DECLARE(_z_keyexpr_t, keyexpr)
 _Z_RESULT_DECLARE(_z_subinfo_t, subinfo)
-_Z_RESULT_DECLARE(_z_query_target_t, query_target)
+_Z_RESULT_DECLARE(_z_target_t, target)
 _Z_RESULT_DECLARE(_z_consolidation_strategy_t, query_consolidation)
 
 _Z_RESULT_DECLARE(_z_data_info_t, data_info)
