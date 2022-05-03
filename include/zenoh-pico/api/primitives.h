@@ -127,7 +127,7 @@ void z_subscriber_close(z_owned_subscriber_t sub);
 
 // void z_get(z_session_t *zs, z_owned_keyexpr_t keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation, void (*callback)(z_owned_reply_t, const void*), void *arg);
 
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_owned_keyexpr_t keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation);
+z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation);
 
 z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg);
 void z_queryable_close(z_owned_queryable_t queryable);

@@ -117,7 +117,6 @@ typedef struct
 {
     _z_zint_t _id;
     _z_str_t _rname;
-    _z_keyexpr_t _key;
     _z_str_t _predicate;
     _z_query_target_t _target;
     _z_consolidation_strategy_t _consolidation;

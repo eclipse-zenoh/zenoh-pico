@@ -346,7 +346,6 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, 
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
     pq->_id = _z_get_query_id(zn);
     pq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    pq->_key = keyexpr;
     pq->_predicate = _z_str_clone(predicate);
     pq->_target = target;
     pq->_consolidation = consolidation;

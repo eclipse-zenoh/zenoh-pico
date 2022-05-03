@@ -49,7 +49,6 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr)
 void _z_pending_query_clear(_z_pending_query_t *pen_qry)
 {
     _z_str_clear(&pen_qry->_rname);
-    _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(&pen_qry->_predicate);
 
     _z_pending_reply_list_free(&pen_qry->_pending_replies);

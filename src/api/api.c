@@ -216,7 +216,7 @@ z_query_target_t z_query_target_default(void)
     return _z_query_target_default();
 }
 
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_owned_keyexpr_t keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation)
+z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation)
 {    
     _z_consolidation_strategy_t strategy;
     if (consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
@@ -236,10 +236,8 @@ z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_owned_keyexpr_t keye
 
     z_owned_reply_data_array_t rda;
     rda._value = (z_reply_data_array_t*)malloc(sizeof(z_reply_data_array_t));
-    *rda._value = _z_query_collect(zs, *keyexpr._value, predicate, target, strategy);
+    *rda._value = _z_query_collect(zs, *keyexpr, predicate, target, strategy);
 
-    free(keyexpr._value);
-    keyexpr._value = NULL;
     return rda;
 }
 
