@@ -191,7 +191,7 @@ if(BUILD_TESTING)
 
   add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
   add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
-  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)  
+  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
   add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
   
@@ -199,7 +199,7 @@ if(BUILD_TESTING)
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
-  target_link_libraries(zn_rname_test ${Libname})  
+  target_link_libraries(zn_rname_test ${Libname})
 
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
@@ -241,6 +241,9 @@ if(BUILD_INTEGRATION)
 
   enable_testing()
   add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
+  if (CMAKE_C_STANDARD MATCHES "11")
+    add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
+  endif()
 endif()
 
 # For packaging
