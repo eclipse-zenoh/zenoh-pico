@@ -108,8 +108,8 @@ int main(int argc, z_str_t *argv)
     _z_string_clear(&pid1);
 
     // Start the read session session lease loops
-    _zp_start_read_task(z_loan(&s1));
-    _zp_start_lease_task(z_loan(&s1));
+    zp_start_read_task(z_loan(&s1));
+    zp_start_lease_task(z_loan(&s1));
 
     _z_sleep_s(SLEEP);
 
@@ -123,8 +123,8 @@ int main(int argc, z_str_t *argv)
     _z_string_clear(&pid2);
 
     // Start the read session session lease loops
-    _zp_start_read_task(z_loan(&s2));
-    _zp_start_lease_task(z_loan(&s2));
+    zp_start_read_task(z_loan(&s2));
+    zp_start_lease_task(z_loan(&s2));
 
     _z_sleep_s(SLEEP);
 
@@ -342,12 +342,12 @@ int main(int argc, z_str_t *argv)
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
-    _zp_stop_read_task(z_loan(&s1));
-    _zp_stop_lease_task(z_loan(&s1));
+    zp_stop_read_task(z_loan(&s1));
+    zp_stop_lease_task(z_loan(&s1));
 
     printf("Stopping threads on session 2\n");
-    _zp_stop_read_task(z_loan(&s2));
-    _zp_stop_lease_task(z_loan(&s2));
+    zp_stop_read_task(z_loan(&s2));
+    zp_stop_lease_task(z_loan(&s2));
 
     // Close both sessions
     printf("Closing session 1\n");

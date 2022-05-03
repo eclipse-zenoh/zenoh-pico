@@ -43,8 +43,8 @@ int main(int argc, char **argv)
     }
 
     // Start the receive and the session lease loop for zenoh-pico
-    _zp_start_read_task(z_loan(&s));
-    _zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(&s));
+    zp_start_lease_task(z_loan(&s));
 
     printf("Sending Query '%s'...\n", expr);
     z_query_target_t target = z_query_target_default();
@@ -61,8 +61,8 @@ int main(int argc, char **argv)
     z_reply_data_array_clear(z_move(&replies));
     z_keyexpr_clear(z_move(&keyexpr));
 
-    _zp_stop_read_task(z_loan(&s));
-    _zp_stop_lease_task(z_loan(&s));
+    zp_stop_read_task(z_loan(&s));
+    zp_stop_lease_task(z_loan(&s));
     z_close(z_move(&s));
     return 0;
 }

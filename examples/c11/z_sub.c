@@ -46,8 +46,8 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    _zp_start_read_task(z_loan(&s));
-    _zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(&s));
+    zp_start_lease_task(z_loan(&s));
 
     z_owned_subscriber_t sub = z_subscribe(z_loan(&s), z_expr_new(expr), z_subinfo_default(), data_handler, NULL);
     if (!z_check(&sub))
@@ -65,8 +65,8 @@ int main(int argc, char **argv)
 
     z_subscriber_close(z_move(&sub));
 
-    _zp_stop_read_task(z_loan(&s));
-    _zp_stop_lease_task(z_loan(&s));
+    zp_stop_read_task(z_loan(&s));
+    zp_stop_lease_task(z_loan(&s));
     z_close(z_move(&s));
     return 0;
 }

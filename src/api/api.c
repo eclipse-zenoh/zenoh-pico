@@ -339,6 +339,27 @@ z_subinfo_t z_subinfo_default(void)
     return _z_subinfo_default();
 }
 
+/**************** Tasks ****************/
+int zp_start_read_task(z_session_t *zs)
+{
+    return _zp_start_read_task(zs);
+}
+
+int zp_stop_read_task(z_session_t *zs)
+{
+    return _zp_stop_read_task(zs);
+}
+
+int zp_start_lease_task(z_session_t *zs)
+{
+    return _zp_start_lease_task(zs);
+}
+
+int zp_stop_lease_task(z_session_t *zs)
+{
+    return _zp_stop_lease_task(zs);
+}
+
 /**************** Loans ****************/
 #define _OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_clone)   \
     uint8_t z_##name##_check(const ownedtype *val)                            \

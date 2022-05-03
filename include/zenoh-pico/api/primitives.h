@@ -132,4 +132,11 @@ z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, 
 void z_queryable_close(z_owned_queryable_t queryable);
 void z_send_reply(const z_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
 
+/************* Tasks **************/
+int zp_start_read_task(z_session_t *zs);
+int zp_stop_read_task(z_session_t *zs);
+
+int zp_start_lease_task(z_session_t *zs);
+int zp_stop_lease_task(z_session_t *zs);
+
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

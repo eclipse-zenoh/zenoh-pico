@@ -59,8 +59,8 @@ int main(int argc, char **argv)
     }
 
     // Start the receive and the session lease loop for zenoh-pico
-    _zp_start_read_task(z_loan(&s));
-    _zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(&s));
+    zp_start_lease_task(z_loan(&s));
 
     printf("Creating Queryable on '%s'...\n", expr);
     z_owned_queryable_t qable = z_queryable_new(z_loan(&s), z_expr_new(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
     z_queryable_close(z_move(&qable));
 
 EXIT:
-    _zp_stop_read_task(z_loan(&s));
-    _zp_stop_lease_task(z_loan(&s));
+    zp_stop_read_task(z_loan(&s));
+    zp_stop_lease_task(z_loan(&s));
     z_close(z_move(&s));
     return 0;
 }

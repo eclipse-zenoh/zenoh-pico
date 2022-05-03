@@ -40,8 +40,8 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    _zp_start_read_task(z_loan(&s));
-    _zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(&s));
+    zp_start_lease_task(z_loan(&s));
 
     printf("Declaring key expression '%s'...\n", expr);
     z_owned_keyexpr_t keyexpr = z_declare_expr(z_loan(&s), z_expr_new(expr));
@@ -65,8 +65,8 @@ EXIT:
     z_publisher_close(z_move(&pub));
     z_undeclare_expr(z_loan(&s), z_move(&keyexpr));
 
-    _zp_stop_read_task(z_loan(&s));
-    _zp_stop_lease_task(z_loan(&s));
+    zp_stop_read_task(z_loan(&s));
+    zp_stop_lease_task(z_loan(&s));
     z_close(z_move(&s));
     return 0;
 }

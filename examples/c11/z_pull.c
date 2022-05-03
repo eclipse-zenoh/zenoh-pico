@@ -53,8 +53,8 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    _zp_start_read_task(z_loan(&s));
-    _zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(&s));
+    zp_start_lease_task(z_loan(&s));
 
     printf("Creating Subscriber on '%s'...\n", expr);
     z_subinfo_t subinfo;
@@ -78,8 +78,8 @@ int main(int argc, char **argv)
 
     z_subscriber_close(z_move(&sub));
 
-    _zp_stop_read_task(z_loan(&s));
-    _zp_stop_lease_task(z_loan(&s));
+    zp_stop_read_task(z_loan(&s));
+    zp_stop_lease_task(z_loan(&s));
     z_close(z_move(&s));
     return 0;
 }
