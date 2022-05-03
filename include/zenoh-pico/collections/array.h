@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ARRAY_H
 #define ZENOH_PICO_COLLECTIONS_ARRAY_H
 
+#include <stdint.h>
+
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_ARRAY_DEFINE(name, type)                                                \
     typedef struct                                                                 \

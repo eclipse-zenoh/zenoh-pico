@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_COLLECTIONS_VECTOR_H
 #define ZENOH_PICO_COLLECTIONS_VECTOR_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/collections/element.h"
 
 /*-------- Dynamically allocated vector --------*/
