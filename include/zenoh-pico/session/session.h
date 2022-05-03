@@ -111,7 +111,7 @@ _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_query_handler_t)(_z_reply_t reply, const void *arg);
+typedef void (*_z_query_handler_t)(const _z_reply_t *reply, const void *arg);
 
 typedef struct
 {

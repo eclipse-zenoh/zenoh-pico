@@ -363,18 +363,18 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, 
         _z_unregister_pending_query(zn, pq);
 }
 
-void reply_collect_handler(const _z_reply_t reply, const void *arg)
+void reply_collect_handler(const _z_reply_t *reply, const void *arg)
 {
     _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
-    if (reply._tag == Z_REPLY_TAG_DATA)
+    if (reply->_tag == Z_REPLY_TAG_DATA)
     {
         _z_reply_data_t *rd = (_z_reply_data_t *)malloc(sizeof(_z_reply_data_t));
-        rd->_replier_kind = reply._data._replier_kind;
-        _z_bytes_copy(&rd->_replier_id, &reply._data._replier_id);
-        rd->_sample._key = _z_keyexpr_duplicate(&reply._data._sample._key);
-        _z_bytes_copy(&rd->_sample._value, &reply._data._sample._value);
-        rd->_sample._encoding._prefix = reply._data._sample._encoding._prefix;
-        rd->_sample._encoding._suffix = reply._data._sample._encoding._suffix ? _z_str_clone(reply._data._sample._encoding._suffix) : NULL;
+        rd->_replier_kind = reply->_data._replier_kind;
+        _z_bytes_copy(&rd->_replier_id, &reply->_data._replier_id);
+        rd->_sample._key = _z_keyexpr_duplicate(&reply->_data._sample._key);
+        _z_bytes_copy(&rd->_sample._value, &reply->_data._sample._value);
+        rd->_sample._encoding._prefix = reply->_data._sample._encoding._prefix;
+        rd->_sample._encoding._suffix = reply->_data._sample._encoding._suffix ? _z_str_clone(reply->_data._sample._encoding._suffix) : NULL;
 
         pqc->_replies = _z_reply_data_list_push(pqc->_replies, rd);
     }

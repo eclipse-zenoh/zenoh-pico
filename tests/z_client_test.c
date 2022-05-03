@@ -52,18 +52,18 @@ void query_handler(const z_query_t *query, const void *arg)
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(const z_reply_t reply, const void *arg)
+void reply_handler(const _z_reply_t *reply, const void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply._tag == Z_REPLY_TAG_DATA)
+    if (reply->_tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply._data._sample._key._rname, replies, total);
-        assert(reply._data._sample._value.len == strlen(res));
-        assert(strncmp(res, (const z_str_t)reply._data._sample._value.val, strlen(res)) == 0);
-        assert(strlen(reply._data._sample._key._rname) == strlen(res));
-        assert(strncmp(res, reply._data._sample._key._rname, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->_data._sample._key._rname, replies, total);
+        assert(reply->_data._sample._value.len == strlen(res));
+        assert(strncmp(res, (const _z_str_t)reply->_data._sample._value.val, strlen(res)) == 0);
+        assert(strlen(reply->_data._sample._key._rname) == strlen(res));
+        assert(strncmp(res, reply->_data._sample._key._rname, strlen(res)) == 0);
     }
     else
     {
@@ -225,7 +225,47 @@ int main(int argc, z_str_t *argv)
     _z_sleep_s(SLEEP);
 
     // Query data from first session
-    // TODO: update when query with callbacks are implemented
+    total = QRY * SET;
+    for (unsigned int n = 0; n < QRY; n++)
+    {
+        for (unsigned int i = 0; i < SET; i++)
+        {
+            sprintf(s1_res, "%s%d", uri, i);
+            z_owned_keyexpr_t keyexpr = z_expr_new(s1_res);
+            z_get(z_loan(&s1), z_loan(&keyexpr), "", z_query_target_default(), z_query_consolidation_default(), reply_handler, &idx[i]);
+            printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
+            z_keyexpr_clear(z_move(&keyexpr));
+        }
+    }
+
+    // Wait to receive all the expected queries
+    now = _z_clock_now();
+    expected = is_reliable ? total : 1;
+    while (queries < expected)
+    {
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
+        printf("Waiting for queries... %u/%u\n", queries, expected);
+        _z_sleep_s(SLEEP);
+    }
+    if (is_reliable)
+        assert(queries == expected);
+    else
+        assert(queries >= expected);
+    queries = 0;
+
+    // Wait to receive all the expectred replies
+    now = _z_clock_now();
+    while (replies < expected)
+    {
+        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
+        printf("Waiting for replies... %u/%u\n", replies, expected);
+        _z_sleep_s(SLEEP);
+    }
+    if (is_reliable)
+        assert(replies == expected);
+    else
+        assert(replies >= expected);
+    replies = 0;
 
     if (is_reliable)
     {

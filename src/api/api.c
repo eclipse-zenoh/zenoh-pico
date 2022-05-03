@@ -216,8 +216,31 @@ z_query_target_t z_query_target_default(void)
     return _z_query_target_default();
 }
 
+void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg)
+{
+    // FIXME: move this to a function
+    _z_consolidation_strategy_t strategy;
+    if (consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
+        strategy = consolidation._strategy._manual;
+    else
+    {
+        // if (keyexpr.rname.)
+        strategy = z_query_consolidation_default()._strategy._manual;
+        // QueryConsolidation::Auto => {
+        //     if self.selector.has_time_range() {
+        //         ConsolidationStrategy::none()
+        //     } else {
+        //         ConsolidationStrategy::default()
+        //     }
+        // }
+    }
+
+    _z_query(zs, _z_keyexpr_duplicate(keyexpr), predicate, target, strategy, callback, arg);
+}
+
 z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_query_target_t target, z_query_consolidation_t consolidation)
-{    
+{
+    // FIXME: move this to a function
     _z_consolidation_strategy_t strategy;
     if (consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
         strategy = consolidation._strategy._manual;

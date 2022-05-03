@@ -52,18 +52,18 @@ void query_handler(const z_query_t *query, const void *arg)
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(const _z_reply_t reply, const void *arg)
+void reply_handler(const _z_reply_t *reply, const void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply._tag == Z_REPLY_TAG_DATA)
+    if (reply->_tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply._data._sample._key._rname, replies, total);
-        assert(reply._data._sample._value.len == strlen(res));
-        assert(strncmp(res, (const _z_str_t)reply._data._sample._value.val, strlen(res)) == 0);
-        assert(strlen(reply._data._sample._key._rname) == strlen(res));
-        assert(strncmp(res, reply._data._sample._key._rname, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->_data._sample._key._rname, replies, total);
+        assert(reply->_data._sample._value.len == strlen(res));
+        assert(strncmp(res, (const _z_str_t)reply->_data._sample._value.val, strlen(res)) == 0);
+        assert(strlen(reply->_data._sample._key._rname) == strlen(res));
+        assert(strncmp(res, reply->_data._sample._key._rname, strlen(res)) == 0);
     }
     else
     {

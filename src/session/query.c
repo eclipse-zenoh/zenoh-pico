@@ -190,13 +190,13 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
 
         // Trigger the handler
         if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_LAZY)
-            pen_qry->_callback(*pen_rep->_reply, pen_qry->_arg);
+            pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
         else
             pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
     else if (pen_qry->_consolidation._reception == Z_CONSOLIDATION_MODE_NONE)
     {
-        pen_qry->_callback(*reply, pen_qry->_arg);
+        pen_qry->_callback(reply, pen_qry->_arg);
         _z_reply_free(&reply);
     }
 
@@ -239,7 +239,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
             // Check if this is the same resource key
             // Trigger the query handler
             if (_z_rname_intersect(pen_qry->_rname, pen_rep->_reply->_data._sample._key._rname))
-                pen_qry->_callback(*pen_rep->_reply, pen_qry->_arg);
+                pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
 
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
@@ -249,7 +249,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
     _z_reply_t freply;
     memset(&freply, 0, sizeof(_z_reply_t));
     freply._tag = Z_REPLY_TAG_FINAL;
-    pen_qry->_callback(freply, pen_qry->_arg);
+    pen_qry->_callback(&freply, pen_qry->_arg);
 
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
