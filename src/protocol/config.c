@@ -28,10 +28,10 @@ _z_config_t _z_config_make()
     return ps;
 }
 
-int _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
+uint8_t _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
 {
-    _z_str_t res = _z_str_intmap_insert(ps, key, (_z_str_t)value.val);
-    return res == value.val ? 0 : -1;
+    _z_str_t res = _z_str_intmap_insert(ps, key, value.val);
+    return res == value.val;
 }
 
 _z_str_t _z_config_get(const _z_config_t *ps, unsigned int key)

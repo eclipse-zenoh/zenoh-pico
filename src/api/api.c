@@ -32,7 +32,7 @@ z_owned_config_t z_config_default(void)
     return (z_owned_config_t){._value = _z_config_default()};
 }
 
-int z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
+uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
     return _z_config_insert(config, key, value);
 }

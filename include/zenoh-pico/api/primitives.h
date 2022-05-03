@@ -43,7 +43,7 @@ z_owned_config_t z_config_from_file(const char *path);
 z_owned_config_t z_config_from_str(const char *str);
 z_owned_string_t z_config_get(z_config_t *config, z_string_t key);
 z_string_t z_config_to_str(z_config_t *config);
-int z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
+uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 //int z_config_insert_json(z_config_t config, z_string_t key, z_string_t value);
 
 z_encoding_t z_encoding_default(void);
