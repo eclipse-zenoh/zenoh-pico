@@ -53,12 +53,12 @@ void fprintwhatami(FILE *stream, unsigned int whatami)
 void fprintlocators(FILE *stream, const z_str_array_t *locs)
 {
     fprintf(stream, "[");
-    for (unsigned int i = 0; i < _z_str_array_len(locs); i++)
+    for (unsigned int i = 0; i < z_str_array_len(locs); i++)
     {
         fprintf(stream, "\"");
-        fprintf(stream, "%s", *_z_str_array_get(locs, i));
+        fprintf(stream, "%s", *z_str_array_get(locs, i));
         fprintf(stream, "\"");
-        if (i < _z_str_array_len(locs) - 1)
+        if (i < z_str_array_len(locs) - 1)
         {
             fprintf(stream, ", ");
         }
@@ -88,11 +88,11 @@ int main(int argc, char **argv)
 
     printf("Scouting...\n");
     z_owned_hello_array_t hellos = z_scout(Z_ROUTER | Z_PEER, z_move(&config), 1000);
-    if (_z_hello_array_len(z_loan(&hellos)) > 0)
+    if (z_hello_array_len(z_loan(&hellos)) > 0)
     {
-        for (unsigned int i = 0; i < _z_hello_array_len(z_loan(&hellos)); ++i)
+        for (unsigned int i = 0; i < z_hello_array_len(z_loan(&hellos)); ++i)
         {
-            fprinthello(stdout, _z_hello_array_get(z_loan(&hellos), i));
+            fprinthello(stdout, z_hello_array_get(z_loan(&hellos), i));
             fprintf(stdout, "\n");
         }
     }

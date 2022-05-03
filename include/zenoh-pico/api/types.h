@@ -63,9 +63,24 @@ typedef _z_hello_t z_hello_t;
 typedef _z_reply_t z_reply_t;
 typedef _z_reply_data_t z_reply_data_t;
 
-typedef _z_str_array_t z_str_array_t;
-typedef _z_hello_array_t z_hello_array_t;
-typedef _z_reply_data_array_t z_reply_data_array_t;
+#define _TYPEDEF_ARRAY(type, alias, elem, name)                               \
+    typedef type alias;                                                       \
+    static inline elem *z_##name##_array_get(const alias *a, size_t k)        \
+    {                                                                         \
+        return _z_##name##_array_get(a, k);                                   \
+    }                                                                         \
+    static inline size_t z_##name##_array_len(const alias *a)                 \
+    {                                                                         \
+        return _z_##name##_array_len(a);                                      \
+    }                                                                         \
+    static inline uint8_t z_##name##_array_is_empty(const alias *a)           \
+    {                                                                         \
+        return _z_##name##_array_is_empty(a);                                 \
+    }                                                                         \
+
+_TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, z_str_t, str)
+_TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
+_TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, reply_data)
 
 /* Owned types */
 #define _OWNED_TYPE(type, name)  \
