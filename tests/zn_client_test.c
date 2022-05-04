@@ -231,6 +231,7 @@ int main(int argc, _z_str_t *argv)
             _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, &idx[i]);
             printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);
+            _z_keyexpr_clear(&rk);
         }
     }
 
@@ -275,10 +276,9 @@ int main(int argc, _z_str_t *argv)
             {
                 sprintf(s1_res, "%s%d", uri, i);
                 _z_keyexpr_t rk = _z_rname(s1_res);
-                _z_keyexpr_t myrk = _z_rname(s1_res);
                 _z_target_t qry_tgt = _z_target_default();
                 _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
-                _z_reply_data_array_t ra = _z_query_collect(s1, myrk, "", qry_tgt, qry_con);
+                _z_reply_data_array_t ra = _z_query_collect(s1, rk, "", qry_tgt, qry_con);
                 printf("Queried and collected data from session 1: %lu %s\n", rk.id, rk.suffix);
                 _z_keyexpr_clear(&rk);
                 replies += ra._len;

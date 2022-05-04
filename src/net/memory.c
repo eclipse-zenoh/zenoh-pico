@@ -14,11 +14,22 @@
 
 #include "zenoh-pico/net/memory.h"
 
+void _z_sample_move(_z_sample_t *dst, _z_sample_t *src)
+{
+    dst->key.id = src->key.id;                   // FIXME: call the z_encoding_move
+    dst->key.suffix = src->key.suffix;           // FIXME: call the z_encoding_move
+    src->key.suffix = NULL;                      // FIXME: call the z_encoding_move
+    _z_bytes_move(&dst->value, &src->value);
+    dst->encoding.prefix = src->encoding.prefix; // FIXME: call the z_encoding_move
+    dst->encoding.suffix = src->encoding.suffix; // FIXME: call the z_encoding_move
+    src->encoding.suffix = NULL;                 // FIXME: call the z_encoding_move
+}
+
 void _z_sample_clear(_z_sample_t *sample)
 {
     _z_keyexpr_clear(&sample->key);
     _z_bytes_clear(&sample->value);
-    _z_str_clear(&sample->encoding.suffix); // FIXME: call the z_encoding_clear
+    _z_str_clear(sample->encoding.suffix); // FIXME: call the z_encoding_clear
 }
 
 void _z_sample_free(_z_sample_t **sample)
@@ -34,7 +45,7 @@ void _z_hello_clear(_z_hello_t *hello)
 {
     if (hello->pid.len > 0)
         _z_bytes_clear(&hello->pid);
-    if (_z_str_array_len(&hello->locators) > 0)
+    if (hello->locators._len > 0)
         _z_str_array_clear(&hello->locators);
 }
 

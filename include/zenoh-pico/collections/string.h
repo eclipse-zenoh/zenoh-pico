@@ -29,14 +29,16 @@
 typedef char *_z_str_t;
 
 _z_str_t _z_str_clone(const _z_str_t src);
-void _z_str_clear(_z_str_t *src);
-void _z_str_free(_z_str_t **src);
+void _z_str_clear(_z_str_t src);
+void _z_str_free(_z_str_t *src);
 int _z_str_eq(const _z_str_t left, const _z_str_t right);
 
 size_t _z_str_size(const _z_str_t src);
 void _z_str_copy(_z_str_t dst, const _z_str_t src);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
-_Z_ARRAY_DEFINE(_z_str, _z_str_t)
+// _Z_ARRAY_DEFINE(_z_str, _z_str_t) // This is here for reference on why
+                                     // the _z_str_array_t was not defined using this macro
+                                     // but instead manually as find below
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -82,5 +84,29 @@ void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 _z_string_t _z_string_from_bytes(_z_bytes_t *bs);
+
+/*-------- str_array --------*/
+/**
+ * An array of NULL terminated strings.
+ *
+ * Members:
+ *   size_t len: The length of the array.
+ *   z_str_t *val: A pointer to the array.
+ */
+typedef struct
+{
+    _z_str_t *_val;
+    size_t _len;
+} _z_str_array_t;
+
+_z_str_array_t _z_str_array_make(size_t len);
+void _z_str_array_init(_z_str_array_t *sa, size_t len);
+_z_str_t *_z_str_array_get(const _z_str_array_t *sa, size_t pos);
+size_t _z_str_array_len(const _z_str_array_t *sa);
+uint8_t _z_str_array_is_empty(const _z_str_array_t *sa);
+void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
+void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
+void _z_str_array_clear(_z_str_array_t *sa);
+void _z_str_array_free(_z_str_array_t **sa);
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

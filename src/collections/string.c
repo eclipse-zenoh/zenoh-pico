@@ -63,7 +63,7 @@ void _z_string_reset(_z_string_t *str)
 
 void _z_string_clear(_z_string_t *str)
 {
-    free((_z_str_t)str->val);
+    free(str->val);
     _z_string_reset(str);
 }
 
@@ -100,15 +100,15 @@ size_t _z_str_size(const _z_str_t src)
     return strlen(src) + 1;
 }
 
-void _z_str_clear(_z_str_t *src)
+void _z_str_clear(_z_str_t src)
 {
-    free(*src);
+    free(src);
     src = NULL;
 }
 
-void _z_str_free(_z_str_t **src)
+void _z_str_free(_z_str_t *src)
 {
-    _z_str_t *ptr = *src;
+    _z_str_t ptr = *src;
     _z_str_clear(ptr);
     *src = NULL;
 }
@@ -128,4 +128,66 @@ _z_str_t _z_str_clone(const _z_str_t src)
 int _z_str_eq(const _z_str_t left, const _z_str_t right)
 {
     return strcmp(left, right) == 0;
+}
+
+/*-------- str_array --------*/
+void _z_str_array_init(_z_str_array_t *sa, size_t len)
+{
+    _z_str_t **val = (_z_str_t **)&sa->_val;
+    *val = (_z_str_t *)malloc(len * sizeof(_z_str_t));
+    sa->_len = len;
+}
+
+_z_str_array_t _z_str_array_make(size_t len)
+{
+    _z_str_array_t sa;
+    _z_str_array_init(&sa, len);
+    return sa;
+}
+
+_z_str_t *_z_str_array_get(const _z_str_array_t *sa, size_t pos)
+{
+    return &sa->_val[pos];
+}
+
+size_t _z_str_array_len(const _z_str_array_t *sa)
+{
+    return sa->_len;
+}
+
+uint8_t _z_str_array_is_empty(const _z_str_array_t *sa)
+{
+    return sa->_len == 0;
+}
+
+void _z_str_array_clear(_z_str_array_t *sa)
+{
+    for (size_t i = 0; i < sa->_len; i++)
+        free(sa->_val[i]);
+    free(sa->_val);
+}
+
+void _z_str_array_free(_z_str_array_t **sa)
+{
+    _z_str_array_t *ptr = *sa;
+    _z_str_array_clear(ptr);
+    free(ptr);
+    *sa = NULL;
+}
+
+void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src)
+{
+    _z_str_array_init(dst, src->_len);
+    for (size_t i = 0; i < src->_len; i++)
+        dst->_val[i] = _z_str_clone(src->_val[i]);
+    dst->_len = src->_len;
+}
+
+void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src)
+{
+    dst->_val = src->_val;
+    dst->_len = src->_len;
+
+    src->_val = NULL;
+    src->_len = 0;
 }

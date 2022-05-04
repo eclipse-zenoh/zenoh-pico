@@ -37,7 +37,7 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk)
 {
     rk->id = 0;
     if (rk->suffix != NULL)
-        _z_str_clear(&rk->suffix);
+        _z_str_clear(rk->suffix);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk)
@@ -334,7 +334,7 @@ void _z_data_info_clear(_z_data_info_t *di)
     //   - kind
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC))
-        _z_str_clear(&di->_encoding.suffix);
+        _z_str_clear(di->_encoding.suffix);
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID))
         _z_bytes_clear(&di->_source_id);
@@ -450,7 +450,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zi
 void _z_msg_clear_query(_z_msg_query_t *msg)
 {
     _z_keyexpr_clear(&msg->_key);
-    _z_str_clear(&msg->_predicate);
+    _z_str_clear(msg->_predicate);
 }
 
 /*------------------ Reply Message ------------------*/

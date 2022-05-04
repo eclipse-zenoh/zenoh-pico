@@ -18,12 +18,17 @@
 #include "zenoh-pico/session/query.h"
 
 /*------------------ clone helpers ------------------*/
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *keyexpr)
+void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src)
 {
-    _z_keyexpr_t rk;
-    rk.id = keyexpr->id,
-    rk.suffix = keyexpr->suffix ? _z_str_clone(keyexpr->suffix) : NULL;
-    return rk;
+    dst->id = src->id;
+    dst->suffix = src->suffix ? _z_str_clone(src->suffix) : NULL;
+}
+
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src)
+{
+    _z_keyexpr_t dst;
+    _z_keyexpr_copy(&dst, src);
+    return dst;
 }
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp)

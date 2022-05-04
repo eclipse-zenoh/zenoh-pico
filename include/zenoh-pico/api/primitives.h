@@ -67,8 +67,7 @@ z_str_t z_query_predicate(const z_query_t *query);
     type *z_##name##_loan(const ownedtype *name);        \
     ownedtype z_##name##_move(ownedtype *name);          \
     ownedtype z_##name##_clone(ownedtype *name);         \
-    void z_##name##_clear(ownedtype name);               \
-    void z_##name##_free(ownedtype **name);
+    void z_##name##_clear(ownedtype name);
 
 _OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)
@@ -137,8 +136,5 @@ int zp_stop_read_task(z_session_t *zs);
 
 int zp_start_lease_task(z_session_t *zs);
 int zp_stop_lease_task(z_session_t *zs);
-
-/************* Accessors **************/
-
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

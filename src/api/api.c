@@ -235,7 +235,7 @@ void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_tar
         // }
     }
 
-    _z_query(zs, _z_keyexpr_duplicate(keyexpr), predicate, target, strategy, callback, arg);
+    _z_query(zs, *keyexpr, predicate, target, strategy, callback, arg);
 }
 
 z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation)
@@ -351,7 +351,7 @@ int zp_stop_lease_task(z_session_t *zs)
 }
 
 /**************** Loans ****************/
-#define _OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_clone)   \
+#define _OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
     uint8_t z_##name##_check(const ownedtype *val)                            \
     {                                                                         \
         return val->_value != NULL;                                           \
@@ -370,19 +370,12 @@ int zp_stop_lease_task(z_session_t *zs)
     {                                                                         \
         ownedtype ret;                                                        \
         ret._value = (type*)malloc(sizeof(type));                             \
-        f_clone(ret._value, val->_value);                                     \
+        f_copy(ret._value, val->_value);                                      \
         return ret;                                                           \
     }                                                                         \
     void z_##name##_clear(ownedtype val)                                      \
     {                                                                         \
         f_free(&val._value);                                                  \
-    }                                                                         \
-    void z_##name##_free(ownedtype **val)                                     \
-    {                                                                         \
-        ownedtype *ptr = *val;                                                \
-        z_##name##_clear(*ptr);                                               \
-        free(ptr);                                                            \
-        *val = NULL;                                                          \
     }
 
 static inline void _z_owner_noop_free(void *s)
@@ -390,39 +383,39 @@ static inline void _z_owner_noop_free(void *s)
     (void)(s);
 }
 
-static inline void _z_owner_noop_clone(void *dst, const void *src)
+static inline void _z_owner_noop_copy(void *dst, const void *src)
 {
     (void)(dst);
     (void)(src);
 }
 
-_OWNED_FUNCTIONS_DEFINITION(z_str_t, z_owned_str_t, str, _z_str_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_clone)
+// _OWNED_FUNCTIONS_DEFINITION(z_str_t, z_owned_str_t, str, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_subinfo_t, z_owned_subinfo_t, subinfo, _z_subinfo_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_target_t, z_owned_target_t, target, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_subinfo_t, z_owned_subinfo_t, subinfo, _z_subinfo_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_target_t, z_owned_target_t, target, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_clone)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_clone)
+_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_copy)
+_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_copy)

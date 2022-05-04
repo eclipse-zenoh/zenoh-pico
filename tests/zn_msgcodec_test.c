@@ -194,7 +194,7 @@ _z_str_array_t gen_str_array(size_t size)
 {
     _z_str_array_t sa = _z_str_array_make(size);
     for (size_t i = 0; i < size; i++)
-        *_z_str_array_get(&sa, i) = gen_str(16);
+        ((_z_str_t *)sa._val)[i] = gen_str(16);
 
     return sa;
 }
@@ -204,7 +204,7 @@ _z_locator_array_t gen_locator_array(size_t size)
     _z_locator_array_t la = _z_locator_array_make(size);
     for (size_t i = 0; i < size; i++)
     {
-        _z_locator_t *val = _z_locator_array_get(&la, i);
+        _z_locator_t *val = &la._val[i];
         val->_protocol = gen_str(3);
         val->_address = gen_str(12);
         val->_metadata = _z_str_intmap_make(); // @TODO: generate metadata
@@ -262,17 +262,17 @@ void assert_eq_uint8_array(_z_bytes_t *left, _z_bytes_t *right)
 void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right)
 {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", _z_str_array_len(left), _z_str_array_len(right));
+    printf("Length (%zu:%zu), ", left->_len, right->_len);
 
-    assert(_z_str_array_len(left) == _z_str_array_len(right));
+    assert(left->_len == right->_len);
     printf("Content (");
-    for (size_t i = 0; i < _z_str_array_len(left); i++)
+    for (size_t i = 0; i < left->_len; i++)
     {
-        const _z_str_t l = *_z_str_array_get(left, i);
-        const _z_str_t r = *_z_str_array_get(right, i);
+        const _z_str_t l = left->_val[i];
+        const _z_str_t r = right->_val[i];
 
         printf("%s:%s", l, r);
-        if (i < _z_str_array_len(left) - 1)
+        if (i < left->_len - 1)
             printf(" ");
 
         assert(_z_str_eq(l, r));
@@ -283,20 +283,20 @@ void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right)
 void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right)
 {
     printf("Locators -> ");
-    printf("Length (%zu:%zu), ", _z_locator_array_len(left), _z_locator_array_len(right));
+    printf("Length (%zu:%zu), ", left->_len, right->_len);
 
-    assert(_z_locator_array_len(left) == _z_locator_array_len(right));
+    assert(left->_len == right->_len);
     printf("Content (");
-    for (size_t i = 0; i < _z_locator_array_len(left); i++)
+    for (size_t i = 0; i < left->_len; i++)
     {
-        const _z_locator_t *l = _z_locator_array_get(left, i);
-        const _z_locator_t *r = _z_locator_array_get(right, i);
+        const _z_locator_t *l = &left->_val[i];
+        const _z_locator_t *r = &right->_val[i];
 
         _z_str_t ls = _z_locator_to_str(l);
         _z_str_t rs = _z_locator_to_str(r);
 
         printf("%s:%s", ls, rs);
-        if (i < _z_locator_array_len(left) - 1)
+        if (i < left->_len - 1)
             printf(" ");
 
         free(ls);
@@ -1308,20 +1308,20 @@ _z_zenoh_message_t gen_declare_message(void)
 {
     _z_declaration_array_t declarations = _z_declaration_array_make(gen_zint() % 16);
 
-    for (_z_zint_t i = 0; i < _z_declaration_array_len(&declarations); i++)
-        *_z_declaration_array_get(&declarations, i) = gen_declaration();
+    for (_z_zint_t i = 0; i < declarations._len; i++)
+        declarations._val[i] = gen_declaration();
 
     return _z_msg_make_declare(declarations);
 }
 
 void assert_eq_declare_message(_z_msg_declare_t *left, _z_msg_declare_t *right)
 {
-    assert(_z_declaration_array_len(&left->_declarations) == _z_declaration_array_len(&right->_declarations));
+    assert(left->_declarations._len == right->_declarations._len);
 
-    for (_z_zint_t i = 0; i < _z_declaration_array_len(&left->_declarations); i++)
+    for (_z_zint_t i = 0; i < left->_declarations._len; i++)
     {
         printf("   ");
-        assert_eq_declaration(_z_declaration_array_get(&left->_declarations, i), _z_declaration_array_get(&right->_declarations, i));
+        assert_eq_declaration(&left->_declarations._val[i], &right->_declarations._val[i]);
         printf("\n");
     }
 }

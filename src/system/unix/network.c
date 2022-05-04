@@ -370,7 +370,7 @@ int _z_listen_udp_multicast(void *arg, const clock_t tout, const _z_str_t iface)
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,(char*)&tv,sizeof(tv));
 
     int optflag = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (_z_str_t)&optflag, sizeof(optflag)) < 0)
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optflag, sizeof(optflag)) < 0)
         goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 
 #if defined(ZENOH_MACOS)

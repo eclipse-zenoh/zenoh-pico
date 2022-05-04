@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/net/primitives.h"
+#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
@@ -42,7 +43,7 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&r->_key));
+    declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&r->_key));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -68,7 +69,7 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
         return;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_resource(rid);
+    declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -91,7 +92,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr)
     pub->_id = _z_get_entity_id(zn);
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
+    declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -109,7 +110,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr)
 void _z_undeclare_publisher(_z_publisher_t *pub)
 {
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
+    declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -138,7 +139,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
+    declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -157,7 +158,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     return subscriber;
 
 ERR:
-    _z_str_clear(&rs->_rname);
+    _z_str_clear(rs->_rname);
     free(rs);
     return NULL;
 }
@@ -172,7 +173,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
     _z_keyexpr_t key;
     key.id = Z_RESOURCE_ID_NONE;
     key.suffix = _z_str_clone(s->_rname);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_subscriber(key);
+    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(key);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -202,7 +203,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), kind, _Z_QUERYABLE_COMPLETE_DEFAULT, _Z_QUERYABLE_DISTANCE_DEFAULT);
+    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), kind, _Z_QUERYABLE_COMPLETE_DEFAULT, _Z_QUERYABLE_DISTANCE_DEFAULT);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -221,7 +222,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
     return queryable;
 
 ERR:
-    _z_str_clear(&rq->_rname);
+    _z_str_clear(rq->_rname);
     free(rq);
     return NULL;
 }
@@ -236,7 +237,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
     _z_keyexpr_t key;
     key.id = Z_RESOURCE_ID_NONE;
     key.suffix = _z_str_clone(q->_rname);
-    *_z_declaration_array_get(&declarations, 0) = _z_msg_make_declaration_forget_queryable(key, q->_kind);
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(key, q->_kind);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -363,7 +364,7 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, 
         _z_unregister_pending_query(zn, pq);
 }
 
-void reply_collect_handler(const _z_reply_t *reply, const void *arg)
+void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
 {
     _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
     if (reply->tag == Z_REPLY_TAG_DATA)
@@ -374,7 +375,7 @@ void reply_collect_handler(const _z_reply_t *reply, const void *arg)
         rd->sample.key = _z_keyexpr_duplicate(&reply->data.sample.key);
         _z_bytes_copy(&rd->sample.value, &reply->data.sample.value);
         rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
-        rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : "";
+        rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : _z_str_clone("");
 
         pqc->_replies = _z_reply_data_list_push(pqc->_replies, rd);
     }
@@ -401,7 +402,7 @@ _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
 
     // Issue the query
     _z_mutex_lock(&pqc._mutex); // Get the lock on the query, released on condvar wait
-    _z_query(zn, keyexpr, predicate, target, consolidation, reply_collect_handler, &pqc);
+    _z_query(zn, keyexpr, predicate, target, consolidation, _z_reply_collect_handler, &pqc);
     _z_condvar_wait(&pqc._cond_var, &pqc._mutex); // Wait to be notified, releases pqc._mutex
 
     _z_reply_data_array_t rda;
@@ -412,10 +413,7 @@ _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
         _z_reply_data_t *reply = _z_reply_data_list_head(pqc._replies);
         replies[i].replier_kind = reply->replier_kind;
         _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
-        replies[i].sample.key = reply->sample.key;
-        _z_bytes_move(&replies[i].sample.value, &reply->sample.value);
-        replies[i].sample.encoding.prefix = reply->sample.encoding.prefix;
-        replies[i].sample.encoding.suffix = reply->sample.encoding.suffix ? _z_str_clone(reply->sample.encoding.suffix) : "";
+        _z_sample_move(&replies[i].sample, &reply->sample);
 
         pqc._replies = _z_reply_data_list_pop(pqc._replies);
     }

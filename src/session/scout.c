@@ -89,7 +89,7 @@ _z_hello_array_t _z_scout_loop(
             {
                 _z_hello_t *val = (_z_hello_t *)malloc((ls._len + 1) * sizeof(_z_hello_t));
                 memcpy(val, ls._val, ls._len);
-                free((_z_hello_t *)ls._val);
+                free(ls._val);
                 ls._val = val;
             }
             else
@@ -113,12 +113,9 @@ _z_hello_array_t _z_scout_loop(
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_L)
             {
-                _z_str_array_t la = _z_str_array_make(_z_locator_array_len(&t_msg._body._hello._locators));
-                for (size_t i = 0; i < la._len; i++)
-                {
-                    la._val[i] = _z_locator_to_str(_z_locator_array_get(&t_msg._body._hello._locators, i));
-                }
-                _z_str_array_move(&sc->locators, &la);
+                sc->locators = _z_str_array_make(t_msg._body._hello._locators._len);
+                for (size_t i = 0; i < sc->locators._len; i++)
+                    sc->locators._val[i] = _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
             }
             else
             {
@@ -138,7 +135,7 @@ _z_hello_array_t _z_scout_loop(
 
         _z_t_msg_clear(&t_msg);
 
-        if (_z_hello_array_len(&ls) > 0 && exit_on_first)
+        if (ls._len > 0 && exit_on_first)
             break;
     }
 

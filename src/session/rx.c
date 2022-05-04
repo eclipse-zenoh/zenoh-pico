@@ -39,9 +39,9 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
     case _Z_MID_DECLARE:
     {
         _Z_INFO("Received _Z_DECLARE message\n");
-        for (unsigned int i = 0; i < _z_declaration_array_len(&msg->_body._declare._declarations); i++)
+        for (unsigned int i = 0; i < msg->_body._declare._declarations._len; i++)
         {
-            _z_declaration_t decl = *_z_declaration_array_get(&msg->_body._declare._declarations, i);
+            _z_declaration_t decl = msg->_body._declare._declarations._val[i];
             switch (_Z_MID(decl._header))
             {
             case _Z_DECL_RESOURCE:
@@ -82,7 +82,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _z_subscriber_list_t *subs = _z_get_subscriptions_by_name(zn, _Z_RESOURCE_REMOTE, rname);
                 if (subs != NULL)
                 {
-                    _z_str_clear(&rname);
+                    _z_str_clear(rname);
                     break;
                 }
 

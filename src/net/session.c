@@ -60,10 +60,10 @@ _z_session_t *_z_open(_z_config_t *config)
 
         // Scout and return upon the first result
         _z_hello_array_t locs = _z_scout_inner(Z_ROUTER, config, timeout, 1);
-        if (_z_hello_array_len(&locs) > 0)
+        if (locs._len > 0)
         {
-            if (_z_str_array_len(&_z_hello_array_get(&locs, 0)->locators) > 0)
-                locator = _z_str_clone(*_z_str_array_get(&_z_hello_array_get(&locs, 0)->locators, 0));
+            if (locs._val[0].locators._len > 0)
+                locator = _z_str_clone(locs._val[0].locators._val[0]);
             else
             {
                 _z_hello_array_clear(&locs);

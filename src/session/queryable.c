@@ -24,7 +24,7 @@ int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *tw
 
 void _z_questionable_clear(_z_questionable_t *qle)
 {
-    _z_str_clear(&qle->_rname);
+    _z_str_clear(qle->_rname);
     _z_keyexpr_clear(&qle->_key);
 }
 
@@ -104,7 +104,7 @@ _z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_keye
     _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
     _z_mutex_unlock(&zn->_mutex_inner);
 
-    _z_str_clear(&rname);
+    _z_str_clear(rname);
     return qles;
 }
 
@@ -169,7 +169,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     }
     _z_msg_clear(&z_msg);
 
-    _z_str_clear(&rname);
+    _z_str_clear(rname);
     _z_list_free(&qles, _z_noop_free);
     _z_mutex_unlock(&zn->_mutex_inner);
     return 0;

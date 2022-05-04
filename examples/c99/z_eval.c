@@ -30,7 +30,7 @@ void query_handler(const z_query_t *query, const void *arg)
     printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
     z_send_reply(query, expr, (const unsigned char *)value, strlen(value));
 
-    _z_str_clear(&res);
+    _z_str_clear(res);
 }
 
 int main(int argc, char **argv)

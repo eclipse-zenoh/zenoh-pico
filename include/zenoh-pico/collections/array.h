@@ -42,7 +42,7 @@
     }                                                                              \
     static inline type *name##_array_get(const name##_array_t *a, size_t k)        \
     {                                                                              \
-        return (type *)&a->_val[k];                                                \
+        return &a->_val[k];                                                        \
     }                                                                              \
     static inline size_t name##_array_len(const name##_array_t *a)                 \
     {                                                                              \
@@ -64,6 +64,7 @@
     {                                                                              \
         name##_array_t *ptr = *a;                                                  \
         name##_array_clear(ptr);                                                   \
+        free(ptr);                                                                 \
         *a = NULL;                                                                 \
     }
 

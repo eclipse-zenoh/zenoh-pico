@@ -177,10 +177,10 @@ _z_keyexpr_result_t _z_keyexpr_decode(_z_zbuf_t *zbf, uint8_t header)
 int _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la)
 {
     _Z_DEBUG("Encoding _LOCATORS\n");
-    _Z_EC(_z_zint_encode(wbf, _z_locator_array_len(la)))
-    for (size_t i = 0; i < _z_locator_array_len(la); i++)
+    _Z_EC(_z_zint_encode(wbf, la->_len))
+    for (size_t i = 0; i < la->_len; i++)
     {
-        _z_str_t s = _z_locator_to_str(_z_locator_array_get(la, i));
+        _z_str_t s = _z_locator_to_str(&la->_val[i]);
         _Z_EC(_z_str_encode(wbf, s))
         free(s);
     }
@@ -206,11 +206,12 @@ void _z_locators_decode_na(_z_zbuf_t *zbf, _z_locator_array_result_t *r)
         _z_str_result_t r_s = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_s, r, _Z_ERR_PARSE_STRING);
 
+        // TODO: this can be optimized by avoid translation from locator to str and vice-versa
         _z_locator_result_t r_l = _z_locator_from_str(r_s._value._str);
         free(r_s._value._str);
         _ASSURE_P_RESULT(r_l, r, _Z_ERR_INVALID_LOCATOR);
 
-        *_z_locator_array_get(&r->_value._locator_array, i) = r_l._value._locator;
+        r->_value._locator_array._val[i] = r_l._value._locator;
     }
 }
 
@@ -712,10 +713,9 @@ int _z_declare_encode(_z_wbuf_t *wbf, const _z_msg_declare_t *msg)
     _Z_DEBUG("Encoding _Z_MID_DECLARE\n");
 
     // Encode the body
-    _z_zint_t len = _z_declaration_array_len(&msg->_declarations);
-    _Z_EC(_z_zint_encode(wbf, len))
-    for (_z_zint_t i = 0; i < len; i++)
-        _Z_EC(_z_declaration_encode(wbf, _z_declaration_array_get(&msg->_declarations, i)));
+    _Z_EC(_z_zint_encode(wbf, msg->_declarations._len))
+    for (_z_zint_t i = 0; i < msg->_declarations._len; i++)
+        _Z_EC(_z_declaration_encode(wbf, &msg->_declarations._val[i]));
 
     return 0;
 }
@@ -738,7 +738,7 @@ void _z_declare_decode_na(_z_zbuf_t *zbf, _z_declare_result_t *r)
         _z_declaration_decode_na(zbf, &r_decl);
         if (r_decl._tag == _Z_RES_OK)
         {
-            *_z_declaration_array_get(&r->_value._declare._declarations, i) = r_decl._value._declaration;
+            r->_value._declare._declarations._val[i] = r_decl._value._declaration;
         }
         else
         {

@@ -35,8 +35,8 @@ void _z_locator_init(_z_locator_t *locator)
 
 void _z_locator_clear(_z_locator_t *lc)
 {
-    free((_z_str_t)lc->_protocol);
-    free((_z_str_t)lc->_address);
+    _z_str_clear(lc->_protocol);
+    _z_str_clear(lc->_address);
     _z_str_intmap_clear(&lc->_metadata);
 }
 
@@ -44,6 +44,8 @@ void _z_locator_free(_z_locator_t **lc)
 {
     _z_locator_t *ptr = *lc;
     _z_locator_clear(ptr);
+
+    free(ptr);
     *lc = NULL;
 }
 

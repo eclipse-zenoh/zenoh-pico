@@ -25,7 +25,7 @@ int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *
 
 void _z_subscription_clear(_z_subscription_t *sub)
 {
-    _z_str_clear(&sub->_rname);
+    _z_str_clear(sub->_rname);
     _z_keyexpr_clear(&sub->_key);
 }
 
@@ -110,7 +110,7 @@ _z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local,
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
     _z_mutex_unlock(&zn->_mutex_inner);
 
-    _z_str_clear(&rname);
+    _z_str_clear(rname);
     return subs;
 }
 
@@ -162,7 +162,7 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     }
 
     _z_keyexpr_clear(&key);
-    _z_str_clear(&rname);
+    _z_str_clear(rname);
     _z_list_free(&subs, _z_noop_free);
     _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
