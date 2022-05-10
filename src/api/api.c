@@ -201,16 +201,6 @@ z_query_consolidation_t z_query_consolidationreception(void)
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
-z_keyexpr_t z_query_key_expr(const z_query_t *query)
-{
-    return _z_rname(query->_rname);
-}
-
-z_str_t z_query_predicate(const z_query_t *query)
-{
-    return query->_predicate;
-}
-
 z_target_t z_target_default(void)
 {
     return _z_target_default();

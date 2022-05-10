@@ -131,8 +131,8 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     z_query_t q;
     q._zn = zn;
     q._qid = query->_qid;
-    q._rname = rname;
-    q._predicate = query->_predicate;
+    q.key = query->_key;
+    q.predicate = query->_predicate;
 
     _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
     _z_questionable_list_t *xs = qles;

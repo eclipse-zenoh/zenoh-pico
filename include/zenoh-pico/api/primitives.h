@@ -59,8 +59,6 @@ z_query_consolidation_t z_query_consolidationlast_router(void);
 z_query_consolidation_t z_query_consolidation_lazy(void);
 z_query_consolidation_t z_query_consolidation_none(void);
 z_query_consolidation_t z_query_consolidationreception(void);
-z_keyexpr_t z_query_key_expr(const z_query_t *query);
-z_str_t z_query_predicate(const z_query_t *query);
 
 #define _OWNED_FUNCTIONS(type, ownedtype, name)          \
     uint8_t z_##name##_check(const ownedtype *name);     \

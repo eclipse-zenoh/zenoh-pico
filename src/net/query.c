@@ -30,22 +30,6 @@ _z_consolidation_strategy_t _z_consolidation_strategy_none(void)
     return qc;
 }
 
-_z_string_t _z_query_predicate(const z_query_t *query)
-{
-    _z_string_t s;
-    s.len = strlen(query->_predicate);
-    s.val = query->_predicate;
-    return s;
-}
-
-_z_string_t _z_query_res_name(const z_query_t *query)
-{
-    _z_string_t s;
-    s.len = strlen(query->_rname);
-    s.val = query->_rname;
-    return s;
-}
-
 _z_query_target_t _z_query_target_default(void)
 {
     return Z_TARGET_BEST_MATCHING;

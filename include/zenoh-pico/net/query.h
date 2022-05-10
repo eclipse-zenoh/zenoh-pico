@@ -26,8 +26,8 @@ typedef struct
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _qid;
     unsigned int _kind;
-    _z_str_t _rname;
-    _z_str_t _predicate;
+    _z_keyexpr_t key;
+    _z_str_t predicate;
 } z_query_t;
 
 /**
@@ -78,32 +78,6 @@ typedef struct
 
 _z_consolidation_strategy_t _z_consolidation_strategy_none(void);
 _z_consolidation_strategy_t _z_consolidation_strategy_default(void);
-
-/**
- * Get the predicate of a received query.
- *
- * Parameters:
- *     query: The query. The caller keeps its ownership.
- *
- * Returns:
- *     A :c:type:`_z_string_t` containing the predicate of the query.
- *     Note that, the predicate is provided as a reference, thus should not be
- *     modified.
- */
-_z_string_t _z_query_predicate(const z_query_t *query);
-
-/**
- * Get the resource name of a received query.
- *
- * Parameters:
- *     query: The query. The caller keeps its ownership.
- *
- * Returns:
- *     A :c:type:`_z_string_t` containing the resource name of the query.
- *     Note that, the resource name is provided as a reference, thus should
- *     not be modified.
- */
-_z_string_t _z_query_res_name(const z_query_t *query);
 
 /**
  * Create a default :c:type:`_z_target_t`.
