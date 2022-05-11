@@ -41,7 +41,13 @@ _z_link_p_result_t _z_open_link(const char *locator)
 #endif
 #if Z_LINK_BLUETOOTH == 1
     if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA)) {
-        r.value._link = _z_new_link_bt(endpoint);
+        r._value._link = _z_new_link_bt(endpoint);
+    }
+    else
+#endif
+#if Z_LINK_SERIAL == 1
+    if (_z_str_eq(endpoint._locator._protocol, SERIAL_SCHEMA)) {
+        r._value._link = _z_new_link_serial(endpoint);
     }
     else
 #endif

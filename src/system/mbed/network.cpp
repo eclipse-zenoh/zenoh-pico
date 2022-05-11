@@ -13,6 +13,8 @@
 //
 
 #include <mbed.h>
+#include <EthernetInterface.h>
+#include <USBSerial.h>
 
 extern "C"
 {
@@ -322,8 +324,147 @@ size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, voi
     UDPSocket *sock = (UDPSocket *)sock_arg;
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
-    int sb = sock->sendto(*raddr, ptr, len);
-    return sb;
+    int wb = sock->sendto(*raddr, ptr, len);
+    return wb;
+}
+#endif
+
+#if Z_LINK_SERIAL == 1
+
+#include "zenoh-pico/system/link/serial.h"
+#include "zenoh-pico/utils/checksum.h"
+#include "zenoh-pico/utils/encoding.h"
+
+void *_z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate)
+{
+    BufferedSerial *sock = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
+
+    sock->set_format(8, BufferedSerial::None, 1); // Default in Zenoh Rust
+    sock->enable_input(true);
+    sock->enable_output(true);
+
+    return sock;
+}
+
+void *_z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate)
+{
+    return NULL;
+}
+
+void _z_close_serial(void *sock_arg)
+{
+    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+    delete sock;
+}
+
+size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len)
+{
+    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+
+    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t rb = 0;
+    for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
+        sock->read(&before_cobs[i], 1);
+        rb = rb + 1;
+        if (before_cobs[i] == 0x00) {
+            break;
+        }
+    }
+
+    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    int trb = _z_cobs_decode(before_cobs, rb, after_cobs);
+        
+    size_t i = 0;
+    uint16_t payload_len = 0;
+    for (; i < sizeof(payload_len); i++) {
+        payload_len |= (after_cobs[i] << (i * 8));
+    }
+
+    if (trb < payload_len + 6) {
+        goto ERR;
+    }
+
+    memcpy(ptr, &after_cobs[i], payload_len);
+    i = i + payload_len;
+
+    {   // Limit the scope of CRC checks
+        uint32_t crc = 0;
+        for (unsigned int j = 0; j < sizeof(crc); i++, j++) {
+            crc |= (after_cobs[i] << (j * 8));
+        }
+
+        uint32_t c_crc = _z_crc32(ptr, payload_len);
+        if (c_crc != crc) {
+            goto ERR;
+        }
+    }
+
+    free(before_cobs);
+    free(after_cobs);
+
+    return payload_len;
+
+ERR:
+    free(before_cobs);
+    free(after_cobs);
+
+    return SIZE_MAX;
+}
+
+size_t _z_read_exact_serial(void *sock_arg, uint8_t *ptr, size_t len)
+{
+    size_t n = len;
+    size_t rb = 0;
+
+    do {
+        rb = _z_read_serial(sock_arg, ptr, n);
+        if (rb == SIZE_MAX) {
+            return rb;
+        }
+
+        n -= rb;
+        ptr = ptr + (len - n);
+    } while (n > 0);
+
+    return len;
+}
+
+size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len)
+{
+    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+
+    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t i = 0;
+    for (; i < sizeof(uint16_t); ++i) {
+        before_cobs[i] = (len >> (i * 8)) & 0XFF;
+    }
+
+    memcpy(&before_cobs[i], ptr, len);
+    i = i + len;
+
+    uint32_t crc = _z_crc32(ptr, len);
+    for (unsigned int j = 0; j < sizeof(crc); i++, j++) {
+        before_cobs[i] = (crc >> (j * 8)) & 0XFF;
+    }
+
+    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    int twb = _z_cobs_encode(before_cobs, i, after_cobs);
+    after_cobs[twb] = 0x00; // Manually add the COBS delimiter
+
+    int wb = sock->write(after_cobs, twb + 1);
+    if (wb != twb + 1) {
+        goto ERR;
+    }
+
+    free(before_cobs);
+    free(after_cobs);
+    return len;
+
+ERR:
+    free(before_cobs);
+    free(after_cobs);
+
+    return SIZE_MAX;
 }
 #endif
 

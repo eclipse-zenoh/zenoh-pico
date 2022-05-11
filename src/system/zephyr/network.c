@@ -574,3 +574,7 @@ size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, voi
 #if Z_LINK_BLUETOOTH == 1
     #error "Bluetooth not supported yet on Zephyr port of Zenoh-Pico"
 #endif
+
+#if Z_LINK_SERIAL == 1
+    #error "Serial not supported yet on Zephyr port of Zenoh-Pico"
+#endif
