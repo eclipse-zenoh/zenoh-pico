@@ -201,8 +201,8 @@ int _zn_open_tcp(void *arg, const clock_t tout)
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
-    z_clock_t start = z_clock_now();
-    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    z_time_t start = z_time_now();
+    while (ws->state != 1 && z_time_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
     if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_3;
@@ -348,8 +348,8 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
-    z_clock_t start = z_clock_now();
-    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    z_time_t start = z_time_now();
+    while (ws->state != 1 && z_time_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
     if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_3;
@@ -476,8 +476,8 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
-    z_clock_t start = z_clock_now();
-    while (ws->state != 1 && z_clock_elapsed_ms(&start) < 2000)
+    z_time_t start = z_time_now();
+    while (ws->state != 1 && z_time_elapsed_ms(&start) < 2000)
         m2m_wifi_handle_events(NULL);
     if (ws->state != __ZN_SOCKET_BRIDGE_BIND_OR_CONNECTED)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_3;

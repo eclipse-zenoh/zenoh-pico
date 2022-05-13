@@ -118,7 +118,7 @@ int main(int argc, z_str_t *argv)
     }
 
     // Wait to receive all the data
-    z_clock_t now = z_clock_now();
+    z_time_t now = z_time_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected)
     {

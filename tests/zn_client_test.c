@@ -205,11 +205,11 @@ int main(int argc, z_str_t *argv)
     }
 
     // Wait to receive all the data
-    z_clock_t now = z_clock_now();
+    z_time_t now = z_time_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected)
     {
-        assert(z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_time_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
@@ -237,11 +237,11 @@ int main(int argc, z_str_t *argv)
     }
 
     // Wait to receive all the expected queries
-    now = z_clock_now();
+    now = z_time_now();
     expected = is_reliable ? total : 1;
     while (queries < expected)
     {
-        assert(z_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_time_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for queries... %u/%u\n", queries, expected);
         z_sleep_s(SLEEP);
     }
@@ -252,7 +252,7 @@ int main(int argc, z_str_t *argv)
     queries = 0;
 
     // Wait to receive all the expectred replies
-    now = z_clock_now();
+    now = z_time_now();
     while (replies < expected)
     {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);

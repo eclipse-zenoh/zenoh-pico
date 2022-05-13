@@ -124,7 +124,7 @@ int z_sleep_s(unsigned int time)
 z_clock_t z_clock_now()
 {
     // TODO: not implemented
-    return -1;
+    return NULL;
 }
 
 clock_t z_clock_elapsed_us(z_clock_t *instant)
