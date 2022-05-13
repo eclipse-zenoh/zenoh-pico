@@ -78,7 +78,7 @@ int _zn_f_link_open_tcp(void *arg)
         timeout = strtof(tout, NULL);
 
     self->socket.tcp.sock = _zn_open_tcp(self->socket.tcp.raddr, timeout);
-    if (self->socket.tcp.sock < 0)
+    if (self->socket.tcp.sock == NULL)
         goto ERR;
 
     return 0;
@@ -92,7 +92,7 @@ int _zn_f_link_listen_tcp(void *arg)
     _zn_link_t *self = (_zn_link_t *)arg;
 
     self->socket.tcp.sock = _zn_listen_tcp(self->socket.tcp.raddr);
-    if (self->socket.tcp.sock < 0)
+    if (self->socket.tcp.sock == NULL)
         goto ERR;
 
     return 0;
@@ -162,7 +162,7 @@ _zn_link_t *_zn_new_link_tcp(_zn_endpoint_t endpoint)
 
     lt->endpoint = endpoint;
 
-    lt->socket.tcp.sock = -1;
+    lt->socket.tcp.sock = NULL;
     z_str_t s_addr = _zn_parse_address_segment_tcp(endpoint.locator.address);
     z_str_t s_port = _zn_parse_port_segment_tcp(endpoint.locator.address);
     lt->socket.tcp.raddr = _zn_create_endpoint_tcp(s_addr, s_port);

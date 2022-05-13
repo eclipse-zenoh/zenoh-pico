@@ -79,7 +79,7 @@ int _zn_f_link_open_udp_multicast(void *arg)
     if (tout != NULL)
         timeout = strtof(tout, NULL);
 
-    if (_zn_open_udp_multicast(self->socket.udp.raddr, &self->socket.udp.laddr, timeout, iface) < 0)
+    if (_zn_open_udp_multicast(self->socket.udp.raddr, &self->socket.udp.laddr, timeout, iface) == NULL)
         goto ERR;
 
     return 0;
@@ -97,11 +97,11 @@ int _zn_f_link_listen_udp_multicast(void *arg)
         goto ERR_1;
 
     self->socket.udp.sock = _zn_listen_udp_multicast(self->socket.udp.raddr, ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
-    if (self->socket.udp.sock < 0)
+    if (self->socket.udp.sock == NULL)
         goto ERR_1;
 
     self->socket.udp.msock = _zn_open_udp_multicast(self->socket.udp.raddr, &self->socket.udp.laddr, ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
-    if (self->socket.udp.msock < 0)
+    if (self->socket.udp.msock == NULL)
         goto ERR_2;
 
     return 0;
@@ -173,8 +173,8 @@ _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)
 
     lt->endpoint = endpoint;
 
-    lt->socket.udp.sock = -1;
-    lt->socket.udp.msock = -1;
+    lt->socket.udp.sock = NULL;
+    lt->socket.udp.msock = NULL;
     z_str_t s_addr = _zn_parse_address_segment_udp_multicast(endpoint.locator.address);
     z_str_t s_port = _zn_parse_port_segment_udp_multicast(endpoint.locator.address);
     lt->socket.udp.raddr = _zn_create_endpoint_udp(s_addr, s_port);

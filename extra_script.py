@@ -9,7 +9,8 @@ if framework == 'zephyr':
   src_filter=["+<*>",
               "-<tests/>",
               "-<example/>",
-              "-<system/espidf>",
+              "-<system/espidf/>",
+              "-<system/mbed/>",
               "-<system/unix/>",
               "-<system/arduino/>"]
   cppdefines=["ZENOH_ZEPHYR"]
@@ -20,8 +21,9 @@ elif framework == 'arduino':
     src_filter=["+<*>",
                 "-<tests/>",
                 "-<example/>",
-                "-<system/espidf>",
-                "-<system/arduino/ststm32>",
+                "-<system/espidf/>",
+                "-<system/mbed/>",
+                "-<system/arduino/ststm32/>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
     cppdefines=["ZENOH_ARDUINO_ESP32"]
@@ -29,8 +31,9 @@ elif framework == 'arduino':
     src_filter=["+<*>",
                 "-<tests/>",
                 "-<example/>",
-                "-<system/espidf>",
-                "-<system/arduino/esp32>",
+                "-<system/espidf/>",
+                "-<system/mbed/>",
+                "-<system/arduino/esp32/>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
     cppdefines=["ZENOH_ARDUINO_STSTM32"]
@@ -39,11 +42,21 @@ elif framework == 'espidf':
   src_filter=["+<*>",
               "-<tests/>",
               "-<example/>",
+              "-<system/mbed/>",
               "-<system/unix/>",
               "-<system/arduino/>",
               "-<system/zephyr/>"]
   cppdefines=["ZENOH_ESPIDF"]
 
+elif framework == 'mbed':
+  src_filter=["+<*>",
+              "-<tests/>",
+              "-<example/>",
+              "-<system/espidf/>",
+              "-<system/unix/>",
+              "-<system/arduino/>",
+              "-<system/zephyr/>"]
+  cppdefines=["ZENOH_MBED"]
 
 env.Append(SRC_FILTER=src_filter)
 env.Append(CPPDEFINES=cppdefines)

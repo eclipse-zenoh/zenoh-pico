@@ -19,6 +19,8 @@
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_ESPIDF)
 #include "zenoh-pico/system/platform/espidf.h"
+#elif defined(ZENOH_MBED)
+#include "zenoh-pico/system/platform/mbed.h"
 #elif defined(ZENOH_ZEPHYR)
 #include "zenoh-pico/system/platform/zephyr.h"
 #elif defined(ZENOH_ARDUINO_ESP32)
