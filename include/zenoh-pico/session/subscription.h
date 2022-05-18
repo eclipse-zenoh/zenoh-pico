@@ -19,8 +19,7 @@
 
 /*------------------ Subscription ------------------*/
 _z_subscription_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id);
-_z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname);
-_z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr);
+_z_subscriber_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr);
 
 int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub);
 int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding);

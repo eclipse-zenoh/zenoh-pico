@@ -38,7 +38,6 @@ typedef void (*_z_questionable_handler_t)(const z_query_t *query, const void *ar
 typedef struct
 {
     _z_zint_t _id;
-    _z_str_t _rname;
     _z_keyexpr_t _key;
     unsigned int _kind;
     _z_questionable_handler_t _callback;

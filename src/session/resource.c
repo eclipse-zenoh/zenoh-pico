@@ -65,7 +65,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_
     return NULL;
 }
 
-_z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr)
+_z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr)
 {
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
@@ -109,11 +109,11 @@ _z_str_t __z_get_resource_name_from_key(_z_resource_list_t *xs, const _z_keyexpr
     }
 
     _z_list_free(&strs, _z_noop_free);
-    return rname;
+    return (_z_keyexpr_t){.id = Z_RESOURCE_ID_NONE, .suffix = rname};
 
 ERR:
     _z_list_free(&strs, _z_noop_free);
-    return NULL;
+    return (_z_keyexpr_t){.id = Z_RESOURCE_ID_NONE, .suffix = NULL};
 }
 
 /**
@@ -143,10 +143,10 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, int is_local, co
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_str_t __unsafe_z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
+_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_resource_list_t *decls = is_local ? zn->_local_resources : zn->_remote_resources;
-    return __z_get_resource_name_from_key(decls, keyexpr);
+    return __z_get_expanded_key_from_key(decls, keyexpr);
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t rid)
@@ -165,10 +165,10 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_k
     return res;
 }
 
-_z_str_t _z_get_resource_name_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
+_z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t res = __unsafe_z_get_resource_name_from_key(zn, is_local, keyexpr);
+    _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, is_local, keyexpr);
     _z_mutex_unlock(&zn->_mutex_inner);
     return res;
 }
@@ -178,6 +178,7 @@ int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
     _Z_DEBUG(">>> Allocating res decl for (%zu,%lu,%s)\n", res->_id, res->_key.rid, res->_key.rname);
     _z_mutex_lock(&zn->_mutex_inner);
 
+    // FIXME: check by keyexpr instead
     _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->_id);
     if (r != NULL) // Inconsistent declarations have been found
         goto ERR;

@@ -42,9 +42,7 @@ z_owned_session_t z_open(z_owned_config_t *config)
     z_owned_session_t zs;
     zs._value = _z_open(config->_value);
 
-    z_config_clear(config);
     config->_value = NULL;
-
     return zs;
 }
 

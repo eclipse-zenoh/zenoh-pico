@@ -128,8 +128,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 {
     _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
     rs->_id = _z_get_entity_id(zn);
-    rs->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rs->_key = keyexpr;
+    rs->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     rs->_info = sub_info;
     rs->_callback = callback;
     rs->_arg = arg;
@@ -139,7 +138,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
+    declarations._val[0] = _z_msg_make_declaration_subscriber(keyexpr, sub_info);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -158,7 +157,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     return subscriber;
 
 ERR:
-    _z_str_clear(rs->_rname);
+    _z_keyexpr_clear(&rs->_key);
     free(rs);
     return NULL;
 }
@@ -170,9 +169,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
         return;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_keyexpr_t key;
-    key.id = Z_RESOURCE_ID_NONE;
-    key.suffix = _z_str_clone(s->_rname);
+    _z_keyexpr_t key = _z_keyexpr_duplicate(&s->_key);
     declarations._val[0] = _z_msg_make_declaration_forget_subscriber(key);
 
     // Build the declare message to send on the wire
@@ -192,8 +189,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
 {
     _z_questionable_t *rq = (_z_questionable_t *)malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
-    rq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rq->_key = keyexpr;
+    rq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     rq->_kind = kind;
     rq->_callback = callback;
     rq->_arg = arg;
@@ -222,7 +218,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
     return queryable;
 
 ERR:
-    _z_str_clear(rq->_rname);
+    _z_keyexpr_clear(&rq->_key);
     free(rq);
     return NULL;
 }
@@ -234,9 +230,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
         return;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_keyexpr_t key;
-    key.id = Z_RESOURCE_ID_NONE;
-    key.suffix = _z_str_clone(q->_rname);
+    _z_keyexpr_t key = _z_keyexpr_duplicate(&q->_key);
     declarations._val[0] = _z_msg_make_declaration_forget_queryable(key, q->_kind);
 
     // Build the declare message to send on the wire
@@ -346,7 +340,7 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, 
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
     pq->_id = _z_get_query_id(zn);
-    pq->_rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    pq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     pq->_predicate = _z_str_clone(predicate);
     pq->_target = target;
     pq->_consolidation = consolidation;

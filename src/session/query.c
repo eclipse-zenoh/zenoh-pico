@@ -48,8 +48,8 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr)
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry)
 {
-    _z_str_clear(pen_qry->_rname);
-    _z_str_clear(pen_qry->_predicate);
+    _z_string_clear(pen_qry->_key.suffix);
+    _z_string_clear(pen_qry->_predicate);
 
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
 }
@@ -149,13 +149,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
     reply->tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
     reply->data.replier_kind = reply_context->_replier_kind;
-    if (keyexpr.id == Z_RESOURCE_ID_NONE)
-        reply->data.sample.key = _z_keyexpr_duplicate(&keyexpr);
-    else
-    {
-        reply->data.sample.key.id = Z_RESOURCE_ID_NONE;
-        reply->data.sample.key.suffix = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
-    }
+    reply->data.sample.key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
     _z_bytes_copy(&reply->data.sample.value, &payload);
     reply->data.sample.encoding.prefix = data_info._encoding.prefix;
     reply->data.sample.encoding.suffix = data_info._encoding.suffix ? _z_str_clone(data_info._encoding.suffix) : NULL;
@@ -238,7 +232,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
 
             // Check if this is the same resource key
             // Trigger the query handler
-            if (_z_rname_intersect(pen_qry->_rname, pen_rep->_reply->data.sample.key.suffix))
+            if (_z_rname_intersect(pen_qry->_key.suffix, pen_rep->_reply->data.sample.key.suffix))
                 pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
 
             pen_rps = _z_pending_reply_list_tail(pen_rps);

@@ -22,7 +22,7 @@
 
 /*------------------ Queryable ------------------*/
 _z_questionable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
-_z_questionable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname);
+_z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t key);
 
 int _z_register_queryable(_z_session_t *zn, _z_questionable_t *q);
 int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query);

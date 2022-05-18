@@ -48,14 +48,10 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             {
                 _Z_INFO("Received declare-resource message\n");
 
-                _z_zint_t id = decl._body._res._id;
-                _z_keyexpr_t key = decl._body._res._key;
-
                 // Register remote resource declaration
                 _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
-                r->_id = id;
-                r->_key.id = key.id;
-                r->_key.suffix = _z_str_clone(key.suffix);
+                r->_id = decl._body._res._id;
+                r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
                 int res = _z_register_resource(zn, _Z_RESOURCE_REMOTE, r);
                 if (res != 0)
@@ -77,19 +73,14 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             case _Z_DECL_SUBSCRIBER:
             {
                 _Z_INFO("Received declare-subscriber message\n");
-                _z_str_t rname = _z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &decl._body._sub._key);
-
-                _z_subscriber_list_t *subs = _z_get_subscriptions_by_name(zn, _Z_RESOURCE_REMOTE, rname);
+                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &decl._body._sub._key);
+                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_REMOTE, &key);
                 if (subs != NULL)
-                {
-                    _z_str_clear(rname);
                     break;
-                }
 
                 _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
                 rs->_id = _z_get_entity_id(zn);
-                rs->_rname = rname;
-                rs->_key = _z_keyexpr_duplicate(&decl._body._sub._key);
+                rs->_key = key;
                 rs->_info = decl._body._sub._subinfo;
                 rs->_callback = NULL;
                 rs->_arg = NULL;
@@ -122,7 +113,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             case _Z_DECL_FORGET_SUBSCRIBER:
             {
                 _Z_INFO("Received forget-subscriber message\n");
-                _z_subscriber_list_t *subs = _z_get_subscription_by_key(zn, _Z_RESOURCE_REMOTE, &decl._body._forget_sub._key);
+                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &decl._body._forget_sub._key);
+                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_REMOTE, &key);
 
                 _z_subscriber_list_t *xs = subs;
                 while (xs != NULL)

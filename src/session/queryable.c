@@ -15,6 +15,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two)
@@ -24,7 +25,6 @@ int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *tw
 
 void _z_questionable_clear(_z_questionable_t *qle)
 {
-    _z_str_clear(qle->_rname);
     _z_keyexpr_clear(&qle->_key);
 }
 
@@ -44,13 +44,13 @@ _z_questionable_t *__z_get_queryable_by_id(_z_questionable_list_t *qles, const _
     return qle;
 }
 
-_z_questionable_list_t *__z_get_queryables_by_name(_z_questionable_list_t *qles, const _z_str_t rname)
+_z_questionable_list_t *__z_get_queryables_by_key(_z_questionable_list_t *qles, const _z_keyexpr_t key)
 {
     _z_questionable_list_t *xs = NULL;
     while (qles != NULL)
     {
         _z_questionable_t *qle = _z_questionable_list_head(qles);
-        if (_z_rname_intersect(qle->_rname, rname))
+        if (_z_rname_intersect(qle->_key.suffix, key.suffix))
             xs = _z_questionable_list_push(xs, qle);
 
         qles = _z_questionable_list_tail(qles);
@@ -75,10 +75,10 @@ _z_questionable_t *__unsafe_z_get_queryable_by_id(_z_session_t *zn, const _z_zin
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_questionable_list_t *__unsafe_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname)
+_z_questionable_list_t *__unsafe_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t key)
 {
     _z_questionable_list_t *qles = zn->_local_questionable;
-    return __z_get_queryables_by_name(qles, rname);
+    return __z_get_queryables_by_key(qles, key);
 }
 
 _z_questionable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id)
@@ -89,22 +89,13 @@ _z_questionable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id)
     return qle;
 }
 
-_z_questionable_list_t *_z_get_queryables_by_name(_z_session_t *zn, const _z_str_t rname)
-{
-    _z_mutex_lock(&zn->_mutex_inner);
-    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
-    _z_mutex_unlock(&zn->_mutex_inner);
-    return qles;
-}
-
 _z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
-    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
+    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_key(zn, key);
     _z_mutex_unlock(&zn->_mutex_inner);
 
-    _z_str_clear(rname);
     return qles;
 }
 
@@ -123,18 +114,18 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &query->_key);
-    if(rname == NULL)
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &query->_key);
+    if(key.suffix == NULL)
         goto ERR;
 
     // Build the query
     z_query_t q;
     q._zn = zn;
     q._qid = query->_qid;
-    q.key = query->_key;
+    q.key = key;
     q.predicate = query->_predicate;
 
-    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_name(zn, rname);
+    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_key(zn, key);
     _z_questionable_list_t *xs = qles;
     while (xs != NULL)
     {
@@ -169,7 +160,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     }
     _z_msg_clear(&z_msg);
 
-    _z_str_clear(rname);
+    _z_keyexpr_clear(&key);
     _z_list_free(&qles, _z_noop_free);
     _z_mutex_unlock(&zn->_mutex_inner);
     return 0;

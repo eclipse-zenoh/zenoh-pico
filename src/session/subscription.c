@@ -25,7 +25,6 @@ int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *
 
 void _z_subscription_clear(_z_subscription_t *sub)
 {
-    _z_str_clear(sub->_rname);
     _z_keyexpr_clear(&sub->_key);
 }
 
@@ -50,13 +49,13 @@ _z_subscription_t *__z_get_subscription_by_id(_z_subscriber_list_t *subs, const 
     return sub;
 }
 
-_z_subscriber_list_t *__z_get_subscriptions_by_name(_z_subscriber_list_t *subs, const _z_str_t rname)
+_z_subscriber_list_t *__z_get_subscriptions_by_key(_z_subscriber_list_t *subs, const _z_keyexpr_t key)
 {
     _z_subscriber_list_t *xs = NULL;
     while (subs != NULL)
     {
         _z_subscription_t *sub = _z_subscriber_list_head(subs);
-        if (_z_rname_intersect(sub->_rname, rname))
+        if (_z_rname_intersect(sub->_key.suffix, key.suffix))
             xs = _z_subscriber_list_push(xs, sub);
 
         subs = _z_subscriber_list_tail(subs);
@@ -81,10 +80,10 @@ _z_subscription_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int is_lo
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscriber_list_t *__unsafe_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname)
+_z_subscriber_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t key)
 {
     _z_subscriber_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
-    return __z_get_subscriptions_by_name(subs, rname);
+    return __z_get_subscriptions_by_key(subs, key);
 }
 
 _z_subscription_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id)
@@ -95,22 +94,11 @@ _z_subscription_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, con
     return sub;
 }
 
-_z_subscriber_list_t *_z_get_subscriptions_by_name(_z_session_t *zn, int is_local, const _z_str_t rname)
+_z_subscriber_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *key)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
+    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, *key);
     _z_mutex_unlock(&zn->_mutex_inner);
-    return subs;
-}
-
-_z_subscriber_list_t *_z_get_subscription_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
-{
-    _z_mutex_lock(&zn->_mutex_inner);
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, is_local, keyexpr);
-    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, rname);
-    _z_mutex_unlock(&zn->_mutex_inner);
-
-    _z_str_clear(rname);
     return subs;
 }
 
@@ -119,7 +107,7 @@ int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *
     _Z_DEBUG(">>> Allocating sub decl for (%s)\n", sub->rname);
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, is_local, sub->_rname);
+    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, sub->_key);
     if (subs != NULL) // A subscription for this name already exists
         goto ERR;
 
@@ -141,10 +129,9 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_str_t rname = __unsafe_z_get_resource_name_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
-    if (rname == NULL)
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
+    if (key.suffix == NULL)
         goto ERR;
-    _z_keyexpr_t key = _z_rname(rname);
 
     // Build the sample
     _z_sample_t s;
@@ -152,7 +139,7 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     s.value = payload;
     s.encoding = encoding;
 
-    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_name(zn, _Z_RESOURCE_IS_LOCAL, rname);
+    _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
     _z_subscriber_list_t *xs = subs;
     while (xs != NULL)
     {
@@ -162,7 +149,6 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     }
 
     _z_keyexpr_clear(&key);
-    _z_str_clear(rname);
     _z_list_free(&subs, _z_noop_free);
     _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
