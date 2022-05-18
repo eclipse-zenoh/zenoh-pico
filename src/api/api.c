@@ -37,17 +37,23 @@ uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
     return _z_config_insert(config, key, value);
 }
 
-z_owned_session_t z_open(z_owned_config_t config)
+z_owned_session_t z_open(z_owned_config_t *config)
 {
     z_owned_session_t zs;
-    zs._value = _z_open(config._value);
+    zs._value = _z_open(config->_value);
+
     z_config_clear(config);
+    config->_value = NULL;
+
     return zs;
 }
 
-void z_close(z_owned_session_t zs)
+void z_close(z_owned_session_t *zs)
 {
-    _z_close(zs._value);
+    _z_close(zs->_value);
+
+    z_session_clear(zs);
+    zs->_value = NULL;
 }
 
 z_owned_info_t z_info(const z_session_t *zs)
@@ -123,10 +129,12 @@ z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr)
     return key;
 }
 
-void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr)
+void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 {
-    _z_undeclare_resource(zs, keyexpr._value->id);
+    _z_undeclare_resource(zs, keyexpr->_value->id);
+
     z_keyexpr_clear(keyexpr);
+    keyexpr->_value = NULL;
 }
 
 z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t keyexpr)
@@ -154,11 +162,13 @@ z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, 
     return qable;
 }
 
-void z_queryable_close(z_owned_queryable_t queryable)
+void z_queryable_close(z_owned_queryable_t *queryable)
 {
-    _z_undeclare_queryable(queryable._value);
-    free(queryable._value);
-    queryable._value = NULL;
+    _z_undeclare_queryable(queryable->_value);
+
+    z_queryable_clear(queryable);
+    free(queryable->_value);
+    queryable->_value = NULL;
 }
 
 z_query_consolidation_t z_query_consolidation_auto(void)
@@ -259,13 +269,14 @@ void z_send_reply(const z_query_t *query, const z_str_t key, const uint8_t *payl
     _z_send_reply(query, key, payload, len);
 }
 
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t config, unsigned long timeout)
+z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
 {
     z_owned_hello_array_t hellos;
     hellos._value = (z_hello_array_t*)malloc(sizeof(z_hello_array_t));
-    *hellos._value = _z_scout(what, config._value, timeout);
+    *hellos._value = _z_scout(what, config->_value, timeout);
 
     z_config_clear(config);
+    config->_value = NULL;
 
     return hellos; 
 }
@@ -300,18 +311,22 @@ void z_pull(const z_subscriber_t *sub)
     _z_pull(sub);
 }
 
-void z_subscriber_close(z_owned_subscriber_t sub)
+void z_subscriber_close(z_owned_subscriber_t *sub)
 {
-    _z_undeclare_subscriber(sub._value);
-    free(sub._value);
-    sub._value = NULL;
+    _z_undeclare_subscriber(sub->_value);
+
+    z_subscriber_clear(sub);
+    free(sub->_value);
+    sub->_value = NULL;
 }
 
-void z_publisher_close(z_owned_publisher_t pub)
+void z_publisher_close(z_owned_publisher_t *pub)
 {
-    _z_undeclare_publisher(pub._value);
-    free(pub._value);
-    pub._value = NULL;
+    _z_undeclare_publisher(pub->_value);
+
+    z_publisher_clear(pub);
+    free(pub->_value);
+    pub->_value = NULL;
 }
 
 z_subinfo_t z_subinfo_default(void)
@@ -350,11 +365,9 @@ int zp_stop_lease_task(z_session_t *zs)
     {                                                                         \
         return val->_value;                                                   \
     }                                                                         \
-    ownedtype z_##name##_move(ownedtype *val)                                 \
+    ownedtype *z_##name##_move(ownedtype *val)                                \
     {                                                                         \
-        ownedtype ret = {._value = val->_value};                              \
-        val->_value = NULL;                                                   \
-        return ret;                                                           \
+        return val;                                                           \
     }                                                                         \
     ownedtype z_##name##_clone(ownedtype *val)                                \
     {                                                                         \
@@ -363,9 +376,9 @@ int zp_stop_lease_task(z_session_t *zs)
         f_copy(ret._value, val->_value);                                      \
         return ret;                                                           \
     }                                                                         \
-    void z_##name##_clear(ownedtype val)                                      \
+    void z_##name##_clear(ownedtype *val)                                     \
     {                                                                         \
-        f_free(&val._value);                                                  \
+        f_free(&val->_value);                                                 \
     }
 
 static inline void _z_owner_noop_free(void *s)

@@ -63,11 +63,11 @@ z_query_consolidation_t z_query_consolidationreception(void);
 #define _OWNED_FUNCTIONS(type, ownedtype, name)          \
     uint8_t z_##name##_check(const ownedtype *name);     \
     type *z_##name##_loan(const ownedtype *name);        \
-    ownedtype z_##name##_move(ownedtype *name);          \
+    ownedtype *z_##name##_move(ownedtype *name);         \
     ownedtype z_##name##_clone(ownedtype *name);         \
-    void z_##name##_clear(ownedtype name);
+    void z_##name##_clear(ownedtype *name);
 
-_OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
+_OWNED_FUNCTIONS(z_string_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)
 
 _OWNED_FUNCTIONS(z_string_t, z_owned_string_t, string)
@@ -99,33 +99,33 @@ _OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
 _OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
 /************* Primitives **************/
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t config, unsigned long timeout);
+z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout);
 
-z_owned_session_t z_open(z_owned_config_t config);
-void z_close(z_owned_session_t zs);
+z_owned_session_t z_open(z_owned_config_t *config);
+void z_close(z_owned_session_t *zs);
 
 z_owned_info_t z_info(const z_session_t *zs);
 z_owned_string_t z_info_as_str(const z_session_t *zs);
 z_str_t z_info_get(z_info_t *info, unsigned int key);
 
 z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
-void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
+void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
 z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t keyexpr);
-void z_publisher_close(z_owned_publisher_t sub);
+void z_publisher_close(z_owned_publisher_t *sub);
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len);
 int z_put_ext(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 z_put_options_t z_put_options_default(void);
 
 z_owned_subscriber_t z_subscribe(z_session_t *zs, z_owned_keyexpr_t keyexpr, z_subinfo_t sub_info, void (*callback)(const z_sample_t*, const void*), void *arg);
 void z_pull(const z_subscriber_t *sub);
-void z_subscriber_close(z_owned_subscriber_t sub);
+void z_subscriber_close(z_owned_subscriber_t *sub);
 
 void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg);
 z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation);
 
 z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg);
-void z_queryable_close(z_owned_queryable_t queryable);
+void z_queryable_close(z_owned_queryable_t *queryable);
 void z_send_reply(const z_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
 
 /************* Tasks **************/

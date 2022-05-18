@@ -47,7 +47,7 @@
     z_owned_hello_array_t : z_hello_array_loan,                       \
     z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
 
-#define z_clear(x) _Generic((x),                                       \
+#define z_clear(x) _Generic((*x),                                      \
     z_owned_str_t : z_str_clear,                                       \
     z_owned_bytes_t : z_bytes_clear,                                   \
     z_owned_string_t : z_string_clear,                                 \

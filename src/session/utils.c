@@ -99,9 +99,5 @@ void _z_session_free(_z_session_t **zn)
 int _z_session_close(_z_session_t *zn, uint8_t reason)
 {
     int res = _z_transport_close(zn->_tp, reason);
-
-    // Free the session
-    _z_session_free(&zn);
-
     return res;
 }
