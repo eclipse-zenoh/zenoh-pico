@@ -87,12 +87,12 @@ int main(int argc, char **argv)
     z_owned_config_t config = z_config_default();
 
     printf("Scouting...\n");
-    z_owned_hello_array_t hellos = z_scout(Z_ROUTER | Z_PEER, z_move(&config), 1000);
-    if (z_hello_array_len(z_loan(&hellos)) > 0)
+    z_owned_hello_array_t hellos = z_scout(Z_ROUTER | Z_PEER, z_move(config), 1000);
+    if (z_hello_array_len(z_loan(hellos)) > 0)
     {
-        for (unsigned int i = 0; i < z_hello_array_len(z_loan(&hellos)); ++i)
+        for (unsigned int i = 0; i < z_hello_array_len(z_loan(hellos)); ++i)
         {
-            fprinthello(stdout, z_hello_array_get(z_loan(&hellos), i));
+            fprinthello(stdout, z_hello_array_get(z_loan(hellos), i));
             fprintf(stdout, "\n");
         }
     }
@@ -100,6 +100,6 @@ int main(int argc, char **argv)
     {
         printf("Did not find any zenoh process.\n");
     }
-    z_clear(z_move(&hellos));
+    z_clear(z_move(hellos));
     return 0;
 }

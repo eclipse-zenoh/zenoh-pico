@@ -26,27 +26,27 @@ int main(int argc, char **argv)
     z_owned_config_t config = z_config_default();
     if (argc > 1)
     {
-        z_config_insert(z_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+        z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     }
 
-    z_config_insert(z_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    z_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    z_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
-    z_owned_session_t s = z_open(z_move(&config));
-    if (!z_check(&s))
+    z_owned_session_t s = z_open(z_move(config));
+    if (!z_check(s))
     {
         printf("Unable to open session!\n");
         exit(-1);
     }
 
-    zp_start_read_task(z_loan(&s));
-    zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(s));
+    zp_start_lease_task(z_loan(s));
 
     printf("Declaring key expression '%s'...\n", expr);
-    z_owned_keyexpr_t keyexpr = z_declare_expr(z_loan(&s), z_expr_new(expr));
-    z_owned_publisher_t pub = z_declare_publication(z_loan(&s), z_clone(&keyexpr));
-    if (!z_check(&pub))
+    z_owned_keyexpr_t keyexpr = z_declare_expr(z_loan(s), z_expr_new(expr));
+    z_owned_publisher_t pub = z_declare_publication(z_loan(s), z_clone(keyexpr));
+    if (!z_check(pub))
     {
         printf("Unable to declare publication.\n");
         goto EXIT;
@@ -57,16 +57,16 @@ int main(int argc, char **argv)
     {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%zu': '%s')...\n", z_loan(&keyexpr)->id, buf);
-        z_put(z_loan(&s), z_loan(&keyexpr), (const uint8_t *)buf, strlen(buf));
+        printf("Putting Data ('%zu': '%s')...\n", z_loan(keyexpr)->id, buf);
+        z_put(z_loan(s), z_loan(keyexpr), (const uint8_t *)buf, strlen(buf));
     }
 
 EXIT:
-    z_publisher_close(z_move(&pub));
-    z_undeclare_expr(z_loan(&s), z_move(&keyexpr));
+    z_publisher_close(z_move(pub));
+    z_undeclare_expr(z_loan(s), z_move(keyexpr));
 
-    zp_stop_read_task(z_loan(&s));
-    zp_stop_lease_task(z_loan(&s));
-    z_close(z_move(&s));
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
+    z_close(z_move(s));
     return 0;
 }

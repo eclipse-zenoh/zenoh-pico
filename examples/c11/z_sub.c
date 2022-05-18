@@ -32,25 +32,25 @@ int main(int argc, char **argv)
     z_owned_config_t config = z_config_default();
     if (argc > 1)
     {
-        z_config_insert(z_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+        z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     }
 
-    z_config_insert(z_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    z_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    z_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
-    z_owned_session_t s = z_open(z_move(&config));
-    if (!z_check(&s))
+    z_owned_session_t s = z_open(z_move(config));
+    if (!z_check(s))
     {
         printf("Unable to open session!\n");
         exit(-1);
     }
 
-    zp_start_read_task(z_loan(&s));
-    zp_start_lease_task(z_loan(&s));
+    zp_start_read_task(z_loan(s));
+    zp_start_lease_task(z_loan(s));
 
-    z_owned_subscriber_t sub = z_subscribe(z_loan(&s), z_expr_new(expr), z_subinfo_default(), data_handler, NULL);
-    if (!z_check(&sub))
+    z_owned_subscriber_t sub = z_subscribe(z_loan(s), z_expr_new(expr), z_subinfo_default(), data_handler, NULL);
+    if (!z_check(sub))
     {
         printf("Unable to declare subscriber.\n");
         exit(-1);
@@ -63,10 +63,10 @@ int main(int argc, char **argv)
         c = getchar();
     }
 
-    z_subscriber_close(z_move(&sub));
+    z_subscriber_close(z_move(sub));
 
-    zp_stop_read_task(z_loan(&s));
-    zp_stop_lease_task(z_loan(&s));
-    z_close(z_move(&s));
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
+    z_close(z_move(s));
     return 0;
 }

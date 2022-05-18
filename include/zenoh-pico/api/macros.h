@@ -20,7 +20,7 @@
 
 #if ZENOH_C_STANDARD != 99
 
-#define z_loan(x) _Generic((*x),                                      \
+#define z_loan(x) _Generic((x),                                       \
     z_owned_str_t : z_str_loan,                                       \
     z_owned_bytes_t : z_bytes_loan,                                   \
     z_owned_string_t : z_string_loan,                                 \
@@ -45,7 +45,7 @@
     z_owned_reply_data_t : z_reply_data_loan,                         \
     z_owned_str_array_t : z_str_array_loan,                           \
     z_owned_hello_array_t : z_hello_array_loan,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_loan)(x)
+    z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
 
 #define z_clear(x) _Generic((x),                                       \
     z_owned_str_t : z_str_clear,                                       \
@@ -74,7 +74,7 @@
     z_owned_hello_array_t : z_hello_array_clear,                       \
     z_owned_reply_data_array_t : z_reply_data_array_clear)(x)
 
-#define z_check(x) _Generic((*x),                                      \
+#define z_check(x) _Generic((x),                                       \
     z_owned_str_t : z_str_check,                                       \
     z_owned_bytes_t : z_bytes_check,                                   \
     z_owned_string_t : z_string_check,                                 \
@@ -99,9 +99,9 @@
     z_owned_reply_data_t : z_reply_data_check,                         \
     z_owned_str_array_t : z_str_array_check,                           \
     z_owned_hello_array_t : z_hello_array_check,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_check)(x)
+    z_owned_reply_data_array_t : z_reply_data_array_check)(&x)
 
-#define z_move(x) _Generic((*x),                                      \
+#define z_move(x) _Generic((x),                                       \
     z_owned_str_t : z_str_move,                                       \
     z_owned_bytes_t : z_bytes_move,                                   \
     z_owned_string_t : z_string_move,                                 \
@@ -126,9 +126,9 @@
     z_owned_reply_data_t : z_reply_data_move,                         \
     z_owned_str_array_t : z_str_array_move,                           \
     z_owned_hello_array_t : z_hello_array_move,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_move)(x)
+    z_owned_reply_data_array_t : z_reply_data_array_move)(&x)
 
-#define z_clone(x) _Generic((*x),                                      \
+#define z_clone(x) _Generic((x),                                       \
     z_owned_str_t : z_str_clone,                                       \
     z_owned_bytes_t : z_bytes_clone,                                   \
     z_owned_string_t : z_string_clone,                                 \
@@ -153,7 +153,7 @@
     z_owned_reply_data_t : z_reply_data_clone,                         \
     z_owned_str_array_t : z_str_array_clone,                           \
     z_owned_hello_array_t : z_hello_array_clone,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_clone)(x)
+    z_owned_reply_data_array_t : z_reply_data_array_clone)(&x)
 
 #endif /* ZENOH_C_STANDARD != 99 */
 
