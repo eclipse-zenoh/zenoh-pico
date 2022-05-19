@@ -185,8 +185,8 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
         // Trigger the handler
         if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
             pen_qry->_callback(pen_rep->_reply, pen_qry->_arg);
-        else
-            pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
+
+        pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
     else if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_NONE)
     {
