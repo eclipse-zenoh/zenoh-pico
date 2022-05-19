@@ -176,7 +176,7 @@ z_query_consolidation_t z_query_consolidation_auto(void)
 
 z_query_consolidation_t z_query_consolidation_default(void)
 {
-    return z_query_consolidationreception();
+    return z_query_consolidation_reception();
 }
 
 z_query_consolidation_t z_query_consolidation_full(void)
@@ -185,7 +185,7 @@ z_query_consolidation_t z_query_consolidation_full(void)
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_FULL, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
-z_query_consolidation_t z_query_consolidationlast_router(void)
+z_query_consolidation_t z_query_consolidation_last_router(void)
 {
     return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
@@ -203,7 +203,7 @@ z_query_consolidation_t z_query_consolidation_none(void)
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_NONE, .last_router = Z_CONSOLIDATION_MODE_NONE, .reception = Z_CONSOLIDATION_MODE_NONE}};
 }
 
-z_query_consolidation_t z_query_consolidationreception(void)
+z_query_consolidation_t z_query_consolidation_reception(void)
 {
     return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};

@@ -55,10 +55,10 @@ z_query_target_t z_query_target_default(void);
 z_query_consolidation_t z_query_consolidation_auto(void);
 z_query_consolidation_t z_query_consolidation_default(void);
 z_query_consolidation_t z_query_consolidation_full(void);
-z_query_consolidation_t z_query_consolidationlast_router(void);
+z_query_consolidation_t z_query_consolidation_last_router(void);
 z_query_consolidation_t z_query_consolidation_lazy(void);
 z_query_consolidation_t z_query_consolidation_none(void);
-z_query_consolidation_t z_query_consolidationreception(void);
+z_query_consolidation_t z_query_consolidation_reception(void);
 
 #define _OWNED_FUNCTIONS(type, ownedtype, name)          \
     uint8_t z_##name##_check(const ownedtype *name);     \
