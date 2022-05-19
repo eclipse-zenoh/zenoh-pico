@@ -81,27 +81,24 @@ void *_zp_unicast_read_task(void *arg)
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_zbuf, to_read);
 
-        while (_z_zbuf_len(&zbuf) > 0)
+        // Mark the session that we have received data
+        ztu->_received = 1;
+
+        // Decode one session message
+        _z_transport_message_decode_na(&zbuf, &r);
+
+        if (r._tag == _Z_RES_OK)
         {
-            // Mark the session that we have received data
-            ztu->_received = 1;
-
-            // Decode one session message
-            _z_transport_message_decode_na(&zbuf, &r);
-
-            if (r._tag == _Z_RES_OK)
-            {
-                int res = _z_unicast_handle_transport_message(ztu, &r._value._transport_message);
-                if (res == _Z_RES_OK)
-                    _z_t_msg_clear(&r._value._transport_message);
-                else
-                    goto EXIT_RECV_LOOP;
-            }
+            int res = _z_unicast_handle_transport_message(ztu, &r._value._transport_message);
+            if (res == _Z_RES_OK)
+                _z_t_msg_clear(&r._value._transport_message);
             else
-            {
-                _Z_ERROR("Connection closed due to malformed message\n");
                 goto EXIT_RECV_LOOP;
-            }
+        }
+        else
+        {
+            _Z_ERROR("Connection closed due to malformed message\n\n\n");
+            goto EXIT_RECV_LOOP;
         }
 
         // Move the read position of the read buffer
