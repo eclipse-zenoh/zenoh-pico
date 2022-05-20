@@ -56,8 +56,8 @@ int main(int argc, _z_str_t *argv)
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();
-    z_config_insert(z_loan(&config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    z_config_insert(z_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    z_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
+    z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
@@ -65,8 +65,8 @@ int main(int argc, _z_str_t *argv)
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
     z_string_t pid1 = _z_string_from_bytes(&z_loan(s1)->_tp_manager->_local_pid);
-    printf("Session 1 with PID: %s\n", pid1);
-    _z_string_clear(pid1);
+    printf("Session 1 with PID: %s\n", pid1.val);
+    _z_string_clear(&pid1);
 
     // Start the read session session lease loops
     zp_start_read_task(z_loan(s1));
@@ -75,14 +75,14 @@ int main(int argc, _z_str_t *argv)
     _z_sleep_s(SLEEP);
 
     config = z_config_default();
-    z_config_insert(z_loan(&config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    z_config_insert(z_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    z_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
+    z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
     z_string_t pid2 = _z_string_from_bytes(&z_loan(s2)->_tp_manager->_local_pid);
-    printf("Session 2 with PID: %s\n", pid2);
-    _z_string_clear(pid2);
+    printf("Session 2 with PID: %s\n", pid2.val);
+    _z_string_clear(&pid2);
 
     // Start the read session session lease loops
     zp_start_read_task(z_loan(s2));
