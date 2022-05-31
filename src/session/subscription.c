@@ -27,7 +27,7 @@ void _zn_subscriber_clear(_zn_subscriber_t *sub)
     _z_str_clear(sub->rname);
     _zn_reskey_clear(&sub->key);
     if (sub->info.period)
-        free(sub->info.period);
+        z_free(sub->info.period);
 }
 
 /*------------------ Pull ------------------*/

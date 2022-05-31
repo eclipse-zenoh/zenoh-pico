@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdlib.h>
 #include "zenoh-pico/transport/manager.h"
 
 _zn_transport_p_result_t _zn_new_transport_client(z_str_t locator, z_bytes_t local_pid)
@@ -92,7 +93,7 @@ ERR_1:
 
 _zn_transport_manager_t *_zn_transport_manager_init()
 {
-    _zn_transport_manager_t *ztm = (_zn_transport_manager_t *)malloc(sizeof(_zn_transport_manager_t));
+    _zn_transport_manager_t *ztm = (_zn_transport_manager_t *)z_malloc(sizeof(_zn_transport_manager_t));
 
     // Randomly generate a peer ID
     srand(time(NULL));
@@ -115,7 +116,7 @@ void _zn_transport_manager_free(_zn_transport_manager_t **ztm)
     // Clean up managers
     _zn_link_manager_free(&ptr->link_manager);
 
-    free(ptr);
+    z_free(ptr);
     *ztm = NULL;
 }
 

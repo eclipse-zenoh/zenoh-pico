@@ -29,7 +29,7 @@ void _zn_reply_free(zn_reply_t **reply)
     zn_reply_t *ptr = *reply;
     _zn_reply_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *reply = NULL;
 }
 
@@ -146,7 +146,7 @@ int _zn_trigger_query_reply_partial(zn_session_t *zn,
         z_timestamp_reset(&ts);
 
     // Build the reply
-    zn_reply_t *reply = (zn_reply_t *)malloc(sizeof(zn_reply_t));
+    zn_reply_t *reply = (zn_reply_t *)z_malloc(sizeof(zn_reply_t));
     reply->tag = zn_reply_t_Tag_DATA;
     _z_bytes_copy(&reply->data.data.value, &payload);
     if (reskey.rid == ZN_RESOURCE_ID_NONE)
@@ -181,7 +181,7 @@ int _zn_trigger_query_reply_partial(zn_session_t *zn,
             pen_rps = _zn_pending_reply_list_tail(pen_rps);
         }
 
-        pen_rep = (_zn_pending_reply_t *)malloc(sizeof(_zn_pending_reply_t));
+        pen_rep = (_zn_pending_reply_t *)z_malloc(sizeof(_zn_pending_reply_t));
         pen_rep->reply = reply;
         pen_rep->tstamp = ts;
 

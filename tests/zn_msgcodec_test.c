@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -148,7 +149,7 @@ _zn_payload_t gen_payload(size_t len)
 {
     _zn_payload_t pld;
     pld.len = len;
-    pld.val = (uint8_t *)malloc(len * sizeof(uint8_t));
+    pld.val = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     for (size_t i = 0; i < len; i++)
         ((uint8_t *)pld.val)[i] = 0xff;
 
@@ -159,7 +160,7 @@ z_bytes_t gen_bytes(size_t len)
 {
     z_bytes_t arr;
     arr.len = len;
-    arr.val = (uint8_t *)malloc(sizeof(uint8_t) * len);
+    arr.val = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
     for (z_zint_t i = 0; i < len; i++)
         ((uint8_t *)arr.val)[i] = gen_uint8();
 
@@ -174,7 +175,7 @@ uint64_t gen_time(void)
 z_str_t gen_str(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    z_str_t str = (z_str_t)malloc((size * sizeof(char)) + 1);
+    z_str_t str = (z_str_t)z_malloc((size * sizeof(char)) + 1);
     for (z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
@@ -292,8 +293,8 @@ void assert_eq_locator_array(_zn_locator_array_t *left, _zn_locator_array_t *rig
         if (i < left->len - 1)
             printf(" ");
 
-        free(ls);
-        free(rs);
+        z_free(ls);
+        z_free(rs);
 
         assert(_zn_locator_eq(l, r));
     }
@@ -396,7 +397,7 @@ zn_subinfo_t gen_subinfo(void)
     zn_subinfo_t sm;
     sm.mode = gen_bool() ? zn_submode_t_PUSH : zn_submode_t_PULL;
     sm.reliability = gen_bool() ? zn_reliability_t_RELIABLE : zn_reliability_t_BEST_EFFORT;
-    sm.period = gen_bool() ? (zn_period_t *)malloc(sizeof(zn_period_t)) : NULL;
+    sm.period = gen_bool() ? (zn_period_t *)z_malloc(sizeof(zn_period_t)) : NULL;
 
     if (sm.period)
     {
@@ -677,7 +678,7 @@ void print_attachment(_zn_attachment_t *att)
 
 _zn_attachment_t *gen_attachment(void)
 {
-    _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
+    _zn_attachment_t *p_at = (_zn_attachment_t *)z_malloc(sizeof(_zn_attachment_t));
 
     p_at->header = _ZN_MID_ATTACHMENT;
     // _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
@@ -718,7 +719,7 @@ void attachment_decorator(void)
     printf("\n");
 
     // Free
-    free(e_at);
+    z_free(e_at);
     _zn_t_msg_clear_attachment(d_at);
     _zn_attachment_p_result_free(&r_at);
     _z_zbuf_clear(&zbf);
@@ -802,7 +803,7 @@ void reply_contex_decorator(void)
     printf("\n");
 
     // Free
-    free(e_rc);
+    z_free(e_rc);
     _zn_z_msg_clear_reply_context(d_rc);
     _zn_reply_context_p_result_free(&r_rc);
     _z_zbuf_clear(&zbf);
@@ -2430,7 +2431,7 @@ _zn_transport_message_t gen_frame_message(int can_be_fragment)
         for (z_zint_t i = 0; i < num; i++)
         {
             _zn_zenoh_message_t e_zm = gen_zenoh_message();
-            _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+            _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)z_malloc(sizeof(_zn_zenoh_message_t));
             *p_zm = e_zm;
             _z_vec_append(&payload.messages, p_zm);
         }
@@ -2662,7 +2663,7 @@ void batch(void)
     _z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
 
     // Initialize
-    _zn_transport_message_t *e_tm = (_zn_transport_message_t *)malloc(tot_num * sizeof(_zn_transport_message_t));
+    _zn_transport_message_t *e_tm = (_zn_transport_message_t *)z_malloc(tot_num * sizeof(_zn_transport_message_t));
     for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random transport message
@@ -2709,7 +2710,7 @@ void batch(void)
         _zn_t_msg_clear(&d_sm);
     }
 
-    free(e_tm);
+    z_free(e_tm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

@@ -88,14 +88,14 @@ zn_hello_array_t _zn_scout_loop(
             // Allocate or expand the vector
             if (ls.val)
             {
-                zn_hello_t *val = (zn_hello_t *)malloc((ls.len + 1) * sizeof(zn_hello_t));
+                zn_hello_t *val = (zn_hello_t *)z_malloc((ls.len + 1) * sizeof(zn_hello_t));
                 memcpy(val, ls.val, ls.len);
-                free((zn_hello_t *)ls.val);
+                z_free((zn_hello_t *)ls.val);
                 ls.val = val;
             }
             else
             {
-                ls.val = (zn_hello_t *)malloc(sizeof(zn_hello_t));
+                ls.val = (zn_hello_t *)z_malloc(sizeof(zn_hello_t));
             }
             ls.len++;
 

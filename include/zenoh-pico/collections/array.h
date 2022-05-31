@@ -26,7 +26,7 @@
     {                                                                              \
         name##_array_t a;                                                          \
         a.len = capacity;                                                          \
-        a.val = (type *)malloc(capacity * sizeof(type));                           \
+        a.val = (type *)z_malloc(capacity * sizeof(type));                           \
         return a;                                                                  \
     }                                                                              \
     static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) \
@@ -44,7 +44,7 @@
     {                                                                              \
         for (size_t i = 0; i < a->len; i++)                                        \
             name##_elem_clear(&a->val[i]);                                         \
-        free(a->val);                                                              \
+        z_free(a->val);                                                              \
         a->len = 0;                                                                \
         a->val = NULL;                                                             \
     }                                                                              \

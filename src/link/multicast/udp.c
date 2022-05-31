@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
@@ -30,7 +31,7 @@ z_str_t _zn_parse_port_segment_udp_multicast(const z_str_t address)
     z_str_t p_end = &address[strlen(address)];
 
     int len = p_end - p_start;
-    z_str_t port = (z_str_t)malloc((len + 1) * sizeof(char));
+    z_str_t port = (z_str_t)z_malloc((len + 1) * sizeof(char));
     strncpy(port, p_start, len);
     port[len] = '\0';
 
@@ -47,7 +48,7 @@ z_str_t _zn_parse_address_segment_udp_multicast(const z_str_t address)
         p_start++;
         p_end--;
         int len = p_end - p_start;
-        z_str_t ip6_addr = (z_str_t)malloc((len + 1) * sizeof(char));
+        z_str_t ip6_addr = (z_str_t)z_malloc((len + 1) * sizeof(char));
         strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
@@ -56,7 +57,7 @@ z_str_t _zn_parse_address_segment_udp_multicast(const z_str_t address)
     else
     {
         int len = p_end - p_start;
-        z_str_t ip4_addr_or_domain = (z_str_t)malloc((len + 1) * sizeof(char));
+        z_str_t ip4_addr_or_domain = (z_str_t)z_malloc((len + 1) * sizeof(char));
         strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
@@ -164,7 +165,7 @@ uint16_t _zn_get_link_mtu_udp_multicast(void)
 
 _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)
 {
-    _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
+    _zn_link_t *lt = (_zn_link_t *)z_malloc(sizeof(_zn_link_t));
 
     lt->is_reliable = 0;
     lt->is_streamed = 0;
@@ -179,8 +180,8 @@ _zn_link_t *_zn_new_link_udp_multicast(_zn_endpoint_t endpoint)
     z_str_t s_port = _zn_parse_port_segment_udp_multicast(endpoint.locator.address);
     lt->socket.udp.raddr = _zn_create_endpoint_udp(s_addr, s_port);
     lt->socket.udp.laddr = NULL;
-    free(s_addr);
-    free(s_port);
+    z_free(s_addr);
+    z_free(s_port);
 
     lt->open_f = _zn_f_link_open_udp_multicast;
     lt->listen_f = _zn_f_link_listen_udp_multicast;

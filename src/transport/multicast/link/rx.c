@@ -145,7 +145,7 @@ int _zn_multicast_handle_transport_message(_zn_transport_multicast_t *ztm, _zn_t
 
         if (entry == NULL) // New peer
         {
-            entry = (_zn_transport_peer_entry_t *)malloc(sizeof(_zn_transport_peer_entry_t));
+            entry = (_zn_transport_peer_entry_t *)z_malloc(sizeof(_zn_transport_peer_entry_t));
             entry->remote_addr = _z_bytes_duplicate(addr);
             entry->remote_pid = _z_bytes_duplicate(&t_msg->body.join.pid);
             if (_ZN_HAS_FLAG(t_msg->header, _ZN_FLAG_T_S))

@@ -16,6 +16,7 @@
 #define ZENOH_PICO_LINK_H
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/system/platform.h"
 

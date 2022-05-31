@@ -35,8 +35,8 @@ void _zn_locator_init(_zn_locator_t *locator)
 
 void _zn_locator_clear(_zn_locator_t *lc)
 {
-    free((z_str_t)lc->protocol);
-    free((z_str_t)lc->address);
+    z_free((z_str_t)lc->protocol);
+    z_free((z_str_t)lc->address);
     _z_str_intmap_clear(&lc->metadata);
 }
 
@@ -87,7 +87,7 @@ z_str_t _zn_locator_protocol_from_str(const z_str_t s)
         goto ERR;
 
     size_t p_len = p_end - p_start;
-    z_str_t protocol = (z_str_t)malloc((p_len + 1) * sizeof(char));
+    z_str_t protocol = (z_str_t)z_malloc((p_len + 1) * sizeof(char));
     strncpy(protocol, p_start, p_len);
     protocol[p_len] = '\0';
 
@@ -114,7 +114,7 @@ z_str_t _zn_locator_address_from_str(const z_str_t s)
         goto ERR;
 
     size_t p_len = p_end - p_start;
-    z_str_t address = (z_str_t)malloc((p_len + 1) * sizeof(char));
+    z_str_t address = (z_str_t)z_malloc((p_len + 1) * sizeof(char));
     strncpy(address, p_start, p_len);
     address[p_len] = '\0';
 
@@ -251,7 +251,7 @@ void _zn_locator_onto_str(z_str_t dst, const _zn_locator_t *l)
 z_str_t _zn_locator_to_str(const _zn_locator_t *l)
 {
     size_t len = _zn_locator_strlen(l);
-    z_str_t dst = (z_str_t)malloc(len + 1);
+    z_str_t dst = (z_str_t)z_malloc(len + 1);
     _zn_locator_onto_str(dst, l);
     return dst;
 }
@@ -274,7 +274,7 @@ void _zn_endpoint_free(_zn_endpoint_t **ep)
     _zn_endpoint_t *ptr = *ep;
     _zn_locator_clear(&ptr->locator);
     _z_str_intmap_clear(&ptr->config);
-    free(ptr);
+    z_free(ptr);
     *ep = NULL;
 }
 
@@ -417,7 +417,7 @@ z_str_t _zn_endpoint_to_str(const _zn_endpoint_t *endpoint)
         len += strlen(config); // Config content
     }
 
-    z_str_t s = (z_str_t)malloc(len + 1);
+    z_str_t s = (z_str_t)z_malloc(len + 1);
 
     strcat(s, locator);
 ERR:

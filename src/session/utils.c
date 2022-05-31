@@ -43,7 +43,7 @@ void z_timestamp_reset(z_timestamp_t *tstamp)
 /*------------------ Init/Free/Close session ------------------*/
 zn_session_t *_zn_session_init(void)
 {
-    zn_session_t *zn = (zn_session_t *)malloc(sizeof(zn_session_t));
+    zn_session_t *zn = (zn_session_t *)z_malloc(sizeof(zn_session_t));
 
     // Initialize the counters to 1
     zn->entity_id = 1;
@@ -87,7 +87,7 @@ void _zn_session_free(zn_session_t **zn)
     // Clean up the mutexes
     z_mutex_free(&ptr->mutex_inner);
 
-    free(ptr);
+    z_free(ptr);
     *zn = NULL;
 }
 

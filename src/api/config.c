@@ -17,7 +17,7 @@
 
 zn_properties_t *zn_config_empty()
 {
-    zn_properties_t *config = (zn_properties_t *)malloc(sizeof(zn_properties_t));
+    zn_properties_t *config = (zn_properties_t *)z_malloc(sizeof(zn_properties_t));
     zn_properties_init(config);
     return config;
 }

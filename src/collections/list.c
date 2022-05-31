@@ -17,7 +17,7 @@
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x)
 {
-    _z_list_t *xs = (_z_list_t *)malloc(sizeof(_z_list_t));
+    _z_list_t *xs = (_z_list_t *)z_malloc(sizeof(_z_list_t));
     xs->val = x;
     xs->tail = NULL;
     return xs;
@@ -62,7 +62,7 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f)
     _z_list_t *head = xs;
     xs = head->tail;
     f_f(&head->val);
-    free(head);
+    z_free(head);
 
     return xs;
 }
@@ -111,7 +111,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             current = this->tail;
 
             f_f(&this->val);
-            free(this);
+            z_free(this);
             return xs;
         }
         else

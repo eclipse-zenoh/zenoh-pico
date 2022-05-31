@@ -241,7 +241,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     struct sockaddr *lsockaddr = NULL;
     if (raddr->ai_family == AF_INET)
     {
-        lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
         memset(lsockaddr, 0, sizeof(struct sockaddr_in));
         addrlen = sizeof(struct sockaddr_in);
 
@@ -252,7 +252,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     }
     else if (raddr->ai_family == AF_INET6)
     {
-        lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
         memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
         addrlen = sizeof(struct sockaddr_in6);
 
@@ -293,7 +293,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     }
 
     // Create laddr endpoint
-    laddr = (struct addrinfo *)malloc(sizeof(struct addrinfo));
+    laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
     laddr->ai_flags = 0;
     laddr->ai_family = raddr->ai_family;
     laddr->ai_socktype = raddr->ai_socktype;
@@ -310,7 +310,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_3:
     close(sock);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
-    free(lsockaddr);
+    z_free(lsockaddr);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
@@ -324,7 +324,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
 
     if (raddr->ai_family == AF_INET)
     {
-        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+        laddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
         memset(laddr, 0, sizeof(struct sockaddr_in));
         addrlen = sizeof(struct sockaddr_in);
 
@@ -335,7 +335,7 @@ int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
     }
     else if (raddr->ai_family == AF_INET6)
     {
-        laddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+        laddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
         memset(laddr, 0, sizeof(struct sockaddr_in6));
         addrlen = sizeof(struct sockaddr_in6);
 

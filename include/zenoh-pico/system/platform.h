@@ -30,7 +30,10 @@
 #error "Unknown platform"
 #endif
 
-#include "zenoh-pico/protocol/iobuf.h"
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size);
+void *z_realloc(void *ptr, size_t size);
+void z_free(void *ptr);
 
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);

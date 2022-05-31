@@ -47,7 +47,7 @@ int __zn_wifi_socket_eq(const __zn_wifi_socket_t *one, const __zn_wifi_socket_t 
 
 void __zn_wifi_socket_clear(__zn_wifi_socket_t *res)
 {
-    free(res->buffer);
+    z_free(res->buffer);
     res->buffer = NULL;
     res->buffer_current = NULL;
 }
@@ -72,12 +72,12 @@ int _zn_inet_pton(const z_str_t address, struct sockaddr_in *addr)
             p_end = last;
 
         size_t len = p_end - p_start;
-        char *s_octet = (char *)malloc((len + 1) * sizeof(char));
+        char *s_octet = (char *)z_malloc((len + 1) * sizeof(char));
         strncpy(s_octet, p_start, len);
         s_octet[len] = '\0';
 
         uint8_t octet = atoi(s_octet);
-        free(s_octet);
+        z_free(s_octet);
         if (octet > 255)
             return -1;
 
@@ -162,7 +162,7 @@ ERR_OR_SUCCESS:
 /*------------------ TCP sockets ------------------*/
 void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port)
 {
-    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in *addr = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
 
     addr->sin_family = AF_INET;
@@ -176,7 +176,7 @@ void _zn_free_endpoint_tcp(void *arg)
 {
     struct sockaddr_in *self = (struct sockaddr_in *)arg;
 
-    free(self);
+    z_free(self);
 }
 
 int _zn_open_tcp(void *arg, const clock_t tout)
@@ -192,12 +192,12 @@ int _zn_open_tcp(void *arg, const clock_t tout)
     if (connect(sock, (struct sockaddr *)raddr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_2;
 
-    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)z_malloc(sizeof(__zn_wifi_socket_t));
     ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
     ws->buffer_available = ZN_BATCH_SIZE;
-    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer = (char *)z_malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
@@ -306,7 +306,7 @@ size_t _zn_send_tcp(int sock, const uint8_t *ptr, size_t len)
 /*------------------ UDP sockets ------------------*/
 void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port)
 {
-    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in *addr = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
 
     addr->sin_family = AF_INET;
@@ -320,7 +320,7 @@ void _zn_free_endpoint_udp(void *arg)
 {
     struct sockaddr_in *self = (struct sockaddr_in *)arg;
 
-    free(self);
+    z_free(self);
 }
 
 int _zn_open_udp_unicast(void *arg, const clock_t tout)
@@ -333,18 +333,18 @@ int _zn_open_udp_unicast(void *arg, const clock_t tout)
     if (sock < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_1;
 
-    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in *addr = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
     addr->sin_family = AF_INET;
     if (bind(sock, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_2;
 
-    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)z_malloc(sizeof(__zn_wifi_socket_t));
     ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
     ws->buffer_available = ZN_BATCH_SIZE;
-    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer = (char *)z_malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
@@ -461,18 +461,18 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     if (sock < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
-    struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in *addr = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
     addr->sin_family = AF_INET;
     if (bind(sock, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_2;
 
-    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)malloc(sizeof(__zn_wifi_socket_t));
+    __zn_wifi_socket_t *ws = (__zn_wifi_socket_t *)z_malloc(sizeof(__zn_wifi_socket_t));
     ws->state = __ZN_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
     ws->buffer_available = ZN_BATCH_SIZE;
-    ws->buffer = (char *)malloc(ws->buffer_available);
+    ws->buffer = (char *)z_malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = __zn_wifi_socket_list_push(g_wifi_buffers, ws);
 
