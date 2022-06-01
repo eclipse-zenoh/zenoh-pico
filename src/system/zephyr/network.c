@@ -95,7 +95,7 @@ int _zn_listen_tcp(void *arg)
 
 void _zn_close_tcp(int sock)
 {
-    shutdown(sock, SHUT_RDWR);
+    // shutdown(sock, SHUT_RDWR); // Not implemented in Zephyr
     close(sock);
 }
 
