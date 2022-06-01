@@ -75,7 +75,7 @@ int _zn_f_link_open_tcp(void *arg)
     clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, TCP_CONFIG_TOUT_KEY);
     if (tout != NULL)
-        timeout = strtof(tout, NULL);
+        timeout = strtol(tout, NULL, 10);
 
     self->socket.tcp.sock = _zn_open_tcp(self->socket.tcp.raddr, timeout);
     if (self->socket.tcp.sock < 0)
