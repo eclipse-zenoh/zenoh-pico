@@ -402,8 +402,6 @@ ERR:
 
 z_str_t _zn_endpoint_to_str(const _zn_endpoint_t *endpoint)
 {
-    z_str_t res;
-
     z_str_t locator = _zn_locator_to_str(&endpoint->locator);
     if (locator == NULL)
         goto ERR;
@@ -419,8 +417,11 @@ z_str_t _zn_endpoint_to_str(const _zn_endpoint_t *endpoint)
 
     z_str_t s = (z_str_t)malloc(len + 1);
 
+    s[0] = '\0';
     strcat(s, locator);
+    strcat(s, config);
+
+    return s;
 ERR:
-    res = NULL;
-    return res;
+    return NULL;
 }
