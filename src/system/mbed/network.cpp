@@ -13,7 +13,6 @@
 //
 
 #include <mbed.h>
-#include <EthernetInterface.h>
 
 extern "C"
 {
@@ -24,8 +23,6 @@ extern "C"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/collections/string.h"
-
-extern EthernetInterface net;
 
 #if ZN_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
@@ -43,11 +40,12 @@ void _zn_free_endpoint_tcp(void *addr_arg)
 
 TCPSocket *_zn_open_tcp(void *raddr_arg, const clock_t tout)
 {
+    NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
     TCPSocket *sock = new TCPSocket();
     sock->set_timeout(tout * 1000);
-    if (sock->open(&net) < 0)
+    if (sock->open(net) < 0)
         goto _ZN_OPEN_TCP_UNICAST_ERROR_1;
 
     if (sock->connect(*raddr) < 0)
@@ -127,9 +125,11 @@ void _zn_free_endpoint_udp(void *addr_arg)
 #if ZN_LINK_UDP_UNICAST == 1
 UDPSocket *_zn_open_udp_unicast(void *raddr_arg, const clock_t tout)
 {
+    NetworkInterface *net = NetworkInterface::get_default_instance();
+
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout * 1000);
-    if (sock->open(&net) < 0)
+    if (sock->open(net) < 0)
         goto _ZN_OPEN_UDP_UNICAST_ERROR_1;
 
     return sock;
@@ -199,9 +199,11 @@ UDPSocket *_zn_open_udp_multicast(void *raddr_arg, void **laddr_arg, const clock
     *laddr_arg = NULL; // Multicast messages are not self-consumed,
                        // so no need to save the local address
 
+    NetworkInterface *net = NetworkInterface::get_default_instance();
+
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout * 1000);
-    if (sock->open(&net) < 0)
+    if (sock->open(net) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
     return sock;
@@ -213,11 +215,12 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_1:
 
 UDPSocket *_zn_listen_udp_multicast(void *raddr_arg, const clock_t tout, const z_str_t iface)
 {
+    NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout * 1000);
-    if (sock->open(&net) < 0)
+    if (sock->open(net) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
     if (sock->join_multicast_group(*raddr))
@@ -307,7 +310,7 @@ size_t _zn_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, vo
 #endif
 
 #if ZN_LINK_BLUETOOTH == 1
-    #error "Bluetooth not supported yet on ESP-IDF port of Zenoh-Pico"
+    #error "Bluetooth not supported yet on MBED port of Zenoh-Pico"
 #endif
 
 } // extern "C"
