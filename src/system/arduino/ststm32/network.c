@@ -22,8 +22,6 @@
 #include <driver/include/m2m_wifi.h>
 #include <driver/source/m2m_hif.h>
 
-#if ZN_LINK_TCP == 1 || ZN_LINK_UDP_UNICAST == 1
-
 typedef struct
 {
     int sock;
