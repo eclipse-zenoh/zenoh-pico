@@ -105,17 +105,19 @@ int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)
 {
-    return usleep(time);
+    delay_us(time);
+    return 0;
 }
 
 int z_sleep_ms(unsigned int time)
 {
-    return usleep(1000 * time);
+    delay_ms(time);
+    return 0;
 }
 
 int z_sleep_s(unsigned int time)
 {
-    return sleep(time);
+    return z_sleep_ms(time * 1000);
 }
 
 /*------------------ Instant ------------------*/
