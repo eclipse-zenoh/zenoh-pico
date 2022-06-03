@@ -26,7 +26,7 @@ typedef struct
     void *_raddr;
 } _z_tcp_socket_t;
 
-void *_z_create_endpoint_tcp(const _z_str_t s_addr, const _z_str_t port);
+void *_z_create_endpoint_tcp(const char *s_addr, const char *port);
 void _z_free_endpoint_tcp(void *arg);
 
 int _z_open_tcp(void *arg, const clock_t tout);

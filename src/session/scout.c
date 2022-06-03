@@ -22,7 +22,7 @@
 
 _z_hello_array_t _z_scout_loop(
     const _z_wbuf_t *wbf,
-    const _z_str_t locator,
+    const char *locator,
     clock_t period,
     int exit_on_first)
 {
@@ -164,7 +164,7 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
     _z_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
-    const _z_str_t locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
+    const char *locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
     locs = _z_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
     _z_wbuf_clear(&wbf);

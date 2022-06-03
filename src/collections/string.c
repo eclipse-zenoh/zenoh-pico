@@ -16,7 +16,7 @@
 #include "zenoh-pico/collections/string.h"
 
 /*-------- string --------*/
-_z_string_t z_string_make(const _z_str_t value)
+_z_string_t z_string_make(const char *value)
 {
     _z_string_t s;
     s.val = _z_str_clone(value);
@@ -49,7 +49,7 @@ void _z_string_move(_z_string_t *dst, _z_string_t *src)
     src->len = 0;
 }
 
-void _z_string_move_str(_z_string_t *dst, _z_str_t src)
+void _z_string_move_str(_z_string_t *dst, char *src)
 {
     dst->val = src;
     dst->len = strlen(src);
@@ -80,7 +80,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs)
 {
     _z_string_t s;
     s.len = 2 * bs->len;
-    _z_str_t s_val = (_z_str_t)malloc(s.len * sizeof(char) + 1);
+    char *s_val = (char *)malloc(s.len * sizeof(char) + 1);
 
     char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++)
@@ -95,37 +95,37 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs)
 }
 
 /*-------- str --------*/
-size_t _z_str_size(const _z_str_t src)
+size_t _z_str_size(const char *src)
 {
     return strlen(src) + 1;
 }
 
-void _z_str_clear(_z_str_t src)
+void _z_str_clear(char *src)
 {
     free(src);
     src = NULL;
 }
 
-void _z_str_free(_z_str_t *src)
+void _z_str_free(char **src)
 {
-    _z_str_t ptr = *src;
+    char *ptr = *src;
     _z_str_clear(ptr);
     *src = NULL;
 }
 
-void _z_str_copy(_z_str_t dst, const _z_str_t src)
+void _z_str_copy(char *dst, const char *src)
 {
     strcpy(dst, src);
 }
 
-_z_str_t _z_str_clone(const _z_str_t src)
+char *_z_str_clone(const char *src)
 {
-    _z_str_t dst = (_z_str_t)malloc(_z_str_size(src));
+    char *dst = (char *)malloc(_z_str_size(src));
     _z_str_copy(dst, src);
     return dst;
 }
 
-int _z_str_eq(const _z_str_t left, const _z_str_t right)
+int _z_str_eq(const char *left, const char *right)
 {
     return strcmp(left, right) == 0;
 }
@@ -133,8 +133,8 @@ int _z_str_eq(const _z_str_t left, const _z_str_t right)
 /*-------- str_array --------*/
 void _z_str_array_init(_z_str_array_t *sa, size_t len)
 {
-    _z_str_t **val = (_z_str_t **)&sa->_val;
-    *val = (_z_str_t *)malloc(len * sizeof(_z_str_t));
+    char ***val = (char ***)&sa->_val;
+    *val = (char **)malloc(len * sizeof(char *));
     sa->_len = len;
 }
 
@@ -145,7 +145,7 @@ _z_str_array_t _z_str_array_make(size_t len)
     return sa;
 }
 
-_z_str_t *_z_str_array_get(const _z_str_array_t *sa, size_t pos)
+char **_z_str_array_get(const _z_str_array_t *sa, size_t pos)
 {
     return &sa->_val[pos];
 }

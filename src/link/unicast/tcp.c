@@ -20,27 +20,27 @@
 
 #if Z_LINK_TCP == 1
 
-_z_str_t _z_parse_port_segment_tcp(_z_str_t address)
+char *_z_parse_port_segment_tcp(char *address)
 {
-    _z_str_t p_start = strrchr(address, ':');
+    char *p_start = strrchr(address, ':');
     if (p_start == NULL)
         return NULL;
     p_start++;
 
-    _z_str_t p_end = &address[strlen(address)];
+    char *p_end = &address[strlen(address)];
 
     int len = p_end - p_start;
-    _z_str_t port = (_z_str_t)malloc((len + 1) * sizeof(char));
+    char *port = (char *)malloc((len + 1) * sizeof(char));
     strncpy(port, p_start, len);
     port[len] = '\0';
 
     return port;
 }
 
-_z_str_t _z_parse_address_segment_tcp(_z_str_t address)
+char *_z_parse_address_segment_tcp(char *address)
 {
-    _z_str_t p_start = &address[0];
-    _z_str_t p_end = strrchr(address, ':');
+    char *p_start = &address[0];
+    char *p_end = strrchr(address, ':');
 
     // IPv6
     if (*p_start == '[' && *(p_end - 1) == ']')
@@ -48,7 +48,7 @@ _z_str_t _z_parse_address_segment_tcp(_z_str_t address)
         p_start++;
         p_end--;
         int len = p_end - p_start;
-        _z_str_t ip6_addr = (_z_str_t)malloc((len + 1) * sizeof(char));
+        char *ip6_addr = (char *)malloc((len + 1) * sizeof(char));
         strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
@@ -58,7 +58,7 @@ _z_str_t _z_parse_address_segment_tcp(_z_str_t address)
     else
     {
         int len = p_end - p_start;
-        _z_str_t ip4_addr_or_domain = (_z_str_t)malloc((len + 1) * sizeof(char));
+        char *ip4_addr_or_domain = (char *)malloc((len + 1) * sizeof(char));
         strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
@@ -73,7 +73,7 @@ int _z_f_link_open_tcp(void *arg)
     _z_link_t *self = (_z_link_t *)arg;
 
     clock_t timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    _z_str_t tout = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
+    char *tout = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtof(tout, NULL);
 
@@ -163,8 +163,8 @@ _z_link_t *_z_new_link_tcp(_z_endpoint_t endpoint)
     lt->_endpoint = endpoint;
 
     lt->_socket._tcp._sock = -1;
-    _z_str_t s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
-    _z_str_t s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
+    char *s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
+    char *s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
     lt->_socket._tcp._raddr = _z_create_endpoint_tcp(s_addr, s_port);
     free(s_addr);
     free(s_port);

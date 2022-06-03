@@ -48,7 +48,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr)
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry)
 {
-    _z_str_clear(pen_qry->_key.suffix);
+    _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_predicate);
 
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
@@ -118,11 +118,7 @@ ERR:
     return -1;
 }
 
-int _z_trigger_query_reply_partial(_z_session_t *zn,
-                                     const _z_reply_context_t *reply_context,
-                                     const _z_keyexpr_t keyexpr,
-                                     const _z_bytes_t payload,
-                                     const _z_data_info_t data_info)
+int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
@@ -137,13 +133,6 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
     if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
         goto ERR_1;
 
-    // Take the right timestamp, or default to none
-    _z_timestamp_t ts;
-    if _Z_HAS_FLAG (data_info._flags, _Z_DATA_INFO_TSTAMP)
-        _z_timestamp_duplicate(&ts);
-    else
-        _z_timestamp_reset(&ts);
-
     // Build the reply
     _z_reply_t *reply = (_z_reply_t *)malloc(sizeof(_z_reply_t));
     reply->tag = Z_REPLY_TAG_DATA;
@@ -151,8 +140,10 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
     reply->data.replier_kind = reply_context->_replier_kind;
     reply->data.sample.key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
     _z_bytes_copy(&reply->data.sample.value, &payload);
-    reply->data.sample.encoding.prefix = data_info._encoding.prefix;
-    reply->data.sample.encoding.suffix = data_info._encoding.suffix ? _z_str_clone(data_info._encoding.suffix) : NULL;
+    reply->data.sample.encoding.prefix = encoding.prefix;
+    reply->data.sample.encoding.suffix = encoding.suffix ? _z_str_clone(encoding.suffix) : NULL;
+    reply->data.sample.kind = kind;
+    reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
     if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_FULL || pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
@@ -166,7 +157,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply->data.sample.key.suffix, reply->data.sample.key.suffix))
             {
-                if (ts._time <= pen_rep->_tstamp._time)
+                if (timestamp._time <= pen_rep->_tstamp._time)
                     goto ERR_2;
                 else
                 {
@@ -180,7 +171,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn,
 
         pen_rep = (_z_pending_reply_t *)malloc(sizeof(_z_pending_reply_t));
         pen_rep->_reply = reply;
-        pen_rep->_tstamp = ts;
+        pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
 
         // Trigger the handler
         if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)

@@ -18,15 +18,15 @@
 
 #include "zenoh-pico.h"
 
-z_str_t expr = "/demo/example/zenoh-pico-eval";
-z_str_t value = "Eval from Pico!";
+char *expr = "/demo/example/zenoh-pico-eval";
+char *value = "Eval from Pico!";
 
 void query_handler(const z_query_t *query, const void *arg)
 {
     (void) (arg);
 
-    z_str_t res = query->key.suffix;
-    z_str_t pred = query->predicate;
+    char *res = query->key.suffix;
+    char *pred = query->predicate;
     printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
     z_send_reply(query, expr, (const unsigned char *)value, strlen(value));
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_session_loan(&s));
 
     printf("Creating Queryable on '%s'...\n", expr);
-    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_expr_new(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
+    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_keyexpr(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
     if (!z_queryable_check(&qable))
     {
         printf("Unable to create queryable.\n");

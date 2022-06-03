@@ -177,10 +177,10 @@ uint64_t gen_time(void)
     return (uint64_t)time(NULL);
 }
 
-_z_str_t gen_str(size_t size)
+char *gen_str(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    _z_str_t str = (_z_str_t)malloc((size * sizeof(char)) + 1);
+    char *str = (char *)malloc((size * sizeof(char)) + 1);
     for (_z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
@@ -194,7 +194,7 @@ _z_str_array_t gen_str_array(size_t size)
 {
     _z_str_array_t sa = _z_str_array_make(size);
     for (size_t i = 0; i < size; i++)
-        ((_z_str_t *)sa._val)[i] = gen_str(16);
+        ((char **)sa._val)[i] = gen_str(16);
 
     return sa;
 }
@@ -268,8 +268,8 @@ void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right)
     printf("Content (");
     for (size_t i = 0; i < left->_len; i++)
     {
-        const _z_str_t l = left->_val[i];
-        const _z_str_t r = right->_val[i];
+        const char *l = left->_val[i];
+        const char *r = right->_val[i];
 
         printf("%s:%s", l, r);
         if (i < left->_len - 1)
@@ -292,8 +292,8 @@ void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right
         const _z_locator_t *l = &left->_val[i];
         const _z_locator_t *r = &right->_val[i];
 
-        _z_str_t ls = _z_locator_to_str(l);
-        _z_str_t rs = _z_locator_to_str(r);
+        char *ls = _z_locator_to_str(l);
+        char *rs = _z_locator_to_str(r);
 
         printf("%s:%s", ls, rs);
         if (i < left->_len - 1)
@@ -1485,7 +1485,7 @@ void pull_message(void)
 _z_zenoh_message_t gen_query_message(void)
 {
     _z_keyexpr_t key = gen_res_key();
-    _z_str_t predicate = gen_str(gen_uint8() % 16);
+    char *predicate = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 
     _z_target_t target;

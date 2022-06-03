@@ -17,7 +17,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_link_p_result_t _z_open_link(const _z_str_t locator)
+_z_link_p_result_t _z_open_link(const char *locator)
 {
     _z_link_p_result_t r;
 
@@ -70,7 +70,7 @@ ERR1:
     return r;
 }
 
-_z_link_p_result_t _z_listen_link(const _z_str_t locator)
+_z_link_p_result_t _z_listen_link(const char *locator)
 {
     _z_link_p_result_t r;
 

@@ -551,7 +551,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 typedef struct
 {
     _z_keyexpr_t _key;
-    _z_str_t _predicate;
+    char *_predicate;
     _z_zint_t _qid;
     _z_target_t _target;
     _z_consolidation_strategy_t _consolidation;
@@ -592,7 +592,7 @@ _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zint_t qid, _z_target_t target, _z_consolidation_strategy_t consolidation);
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_t qid, _z_target_t target, _z_consolidation_strategy_t consolidation);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx);
 
 /*=============================*/

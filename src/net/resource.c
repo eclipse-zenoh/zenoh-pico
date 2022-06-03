@@ -22,7 +22,7 @@ _z_keyexpr_t _z_rid(unsigned long rid)
     return rk;
 }
 
-_z_keyexpr_t _z_rname(const _z_str_t rname)
+_z_keyexpr_t _z_rname(const char *rname)
 {
     _z_keyexpr_t rk;
     rk.id = Z_RESOURCE_ID_NONE;
@@ -33,7 +33,7 @@ _z_keyexpr_t _z_rname(const _z_str_t rname)
     return rk;
 }
 
-_z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const _z_str_t suffix)
+_z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const char *suffix)
 {
     _z_keyexpr_t rk;
     rk.id = rid;

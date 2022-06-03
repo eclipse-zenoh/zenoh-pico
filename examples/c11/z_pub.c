@@ -20,8 +20,8 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    z_str_t expr = "/demo/example/zenoh-pico-pub";
-    z_str_t value = "Pub from Pico!";
+    char *expr = "/demo/example/zenoh-pico-pub";
+    char *value = "Pub from Pico!";
 
     z_owned_config_t config = z_config_default();
     if (argc > 1)
@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_loan(s));
 
     printf("Declaring key expression '%s'...\n", expr);
-    z_owned_keyexpr_t keyexpr = z_declare_expr(z_loan(s), z_expr_new(expr));
-    z_owned_publisher_t pub = z_declare_publication(z_loan(s), z_clone(keyexpr));
+    z_owned_keyexpr_t keyexpr = z_declare_keyexpr(z_loan(s), z_keyexpr(expr));
+    z_owned_publisher_t pub = z_declare_publication(z_loan(s), *z_loan(keyexpr));
     if (!z_check(pub))
     {
         printf("Unable to declare publication.\n");

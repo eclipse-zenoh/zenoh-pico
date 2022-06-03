@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-_z_str_t uri = "/demo/example/";
+char *uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -47,7 +47,7 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, _z_str_t *argv)
+int main(int argc, char **argv)
 {
     assert(argc == 2);
     (void) (argc);

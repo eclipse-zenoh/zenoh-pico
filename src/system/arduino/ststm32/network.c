@@ -57,7 +57,7 @@ _Z_LIST_DEFINE(_z_wifi_socket, __z_wifi_socket_t)
 
 _z_wifi_socket_list_t *g_wifi_buffers = NULL;
 
-int _z_inet_pton(const _z_str_t address, struct sockaddr_in *addr)
+int _z_inet_pton(const char *address, struct sockaddr_in *addr)
 {
     unsigned long ret = 0;
 
@@ -159,7 +159,7 @@ ERR_OR_SUCCESS:
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-void *_z_create_endpoint_tcp(const _z_str_t s_addr, const _z_str_t port)
+void *_z_create_endpoint_tcp(const char *s_addr, const char *port)
 {
     struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
@@ -303,7 +303,7 @@ size_t _z_send_tcp(int sock, const uint8_t *ptr, size_t len)
 
 #if Z_LINK_UDP_UNICAST == 1
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const _z_str_t s_addr, const _z_str_t port)
+void *_z_create_endpoint_udp(const char *s_addr, const char *port)
 {
     struct sockaddr_in *addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
     memset(addr, 0, sizeof(addr));
@@ -448,7 +448,7 @@ size_t _z_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const _z_str_t iface)
+int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const char *iface)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg_1;
     struct sockaddr_in *laddr = NULL;
@@ -499,7 +499,7 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-int _z_listen_udp_multicast(void *arg, const clock_t tout, const _z_str_t iface)
+int _z_listen_udp_multicast(void *arg, const clock_t tout, const char *iface)
 {
     // @TODO: To be implemented
 

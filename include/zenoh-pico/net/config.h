@@ -43,6 +43,6 @@ _z_config_t *_z_config_default(void);
  * Returns:
  *     A :c:type:`_z_config_t` containing a default configuration for client mode.
  */
-_z_config_t *_z_config_client(const _z_str_t locator);
+_z_config_t *_z_config_client(const char *locator);
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

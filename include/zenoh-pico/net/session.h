@@ -25,7 +25,7 @@ typedef struct
 {
     _z_mutex_t _mutex_inner;
 
-    // Session counters // FIXME: move to transport check
+    // Session counters
     _z_zint_t _resource_id;
     _z_zint_t _entity_id;
     _z_zint_t _pull_id;

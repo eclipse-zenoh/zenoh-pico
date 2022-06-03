@@ -26,12 +26,8 @@ void z_init_logger(void);
 
 /********* Data Types Handlers *********/
 z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len);
-
-z_owned_string_t z_string_new(const z_str_t s);
-
-z_owned_keyexpr_t z_id_new(z_zint_t id);
-z_owned_keyexpr_t z_expr_new(const z_str_t name);
-z_owned_keyexpr_t z_id_with_suffix_new(z_zint_t id, const z_str_t suffix);
+z_owned_string_t z_string_new(const char *s);
+z_keyexpr_t z_keyexpr(const char *name);
 
 z_owned_config_t z_config_new(void);
 z_owned_config_t z_config_empty(void);
@@ -46,9 +42,6 @@ uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 //int z_config_insert_json(z_config_t config, z_string_t key, z_string_t value);
 
 z_encoding_t z_encoding_default(void);
-
-z_subinfo_t z_subinfo_default(void);
-z_period_t z_subinfo_period(const z_subinfo_t *info);
 
 z_target_t z_target_default(void);
 z_query_target_t z_query_target_default(void);
@@ -81,7 +74,6 @@ _OWNED_FUNCTIONS(z_publisher_t, z_owned_publisher_t, publisher)
 _OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 
 _OWNED_FUNCTIONS(z_encoding_t, z_owned_encoding_t, encoding)
-_OWNED_FUNCTIONS(z_subinfo_t, z_owned_subinfo_t, subinfo)
 _OWNED_FUNCTIONS(z_period_t, z_owned_period_t, period)
 _OWNED_FUNCTIONS(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy)
 _OWNED_FUNCTIONS(z_query_target_t, z_owned_query_target_t, query_target)
@@ -106,27 +98,28 @@ void z_close(z_owned_session_t *zs);
 
 z_owned_info_t z_info(const z_session_t *zs);
 z_owned_string_t z_info_as_str(const z_session_t *zs);
-z_str_t z_info_get(z_info_t *info, unsigned int key);
+char *z_info_get(z_info_t *info, unsigned int key);
 
-z_owned_keyexpr_t z_declare_expr(z_session_t *zs, z_owned_keyexpr_t keyexpr);
+z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
 void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
-z_owned_publisher_t z_declare_publication(z_session_t *zs, z_owned_keyexpr_t keyexpr);
+z_owned_publisher_t z_declare_publication(z_session_t *zs, z_keyexpr_t keyexpr);
 void z_publisher_close(z_owned_publisher_t *sub);
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len);
-int z_put_ext(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
+int z_put_ext(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 z_put_options_t z_put_options_default(void);
 
-z_owned_subscriber_t z_subscribe(z_session_t *zs, z_owned_keyexpr_t keyexpr, z_subinfo_t sub_info, void (*callback)(const z_sample_t*, const void*), void *arg);
+z_subscriber_options_t z_subscriber_options_default(void);
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, void (*callback)(const z_sample_t*, const void*), const z_subscriber_options_t *opts);
 void z_pull(const z_subscriber_t *sub);
 void z_subscriber_close(z_owned_subscriber_t *sub);
 
-void z_get(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg);
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t *keyexpr, const z_str_t predicate, z_target_t target, z_query_consolidation_t consolidation);
+void z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg);
+z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation);
 
-z_owned_queryable_t z_queryable_new(z_session_t *zs, z_owned_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg);
+z_owned_queryable_t z_queryable_new(z_session_t *zs, z_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg);
 void z_queryable_close(z_owned_queryable_t *queryable);
-void z_send_reply(const z_query_t *query, const z_str_t key, const uint8_t *payload, size_t len);
+void z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, size_t len);
 
 /************* Tasks **************/
 int zp_start_read_task(z_session_t *zs);

@@ -125,7 +125,7 @@ ERR:
     return -1;
 }
 
-int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding)
+int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
@@ -138,6 +138,8 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     s.key = key;
     s.value = payload;
     s.encoding = encoding;
+    s.kind = kind;
+    s.timestamp = timestamp;
 
     _z_subscriber_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
     _z_subscriber_list_t *xs = subs;

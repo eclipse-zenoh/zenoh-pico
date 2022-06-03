@@ -13,6 +13,7 @@
  */
 
 #include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*=============================*/
@@ -180,7 +181,7 @@ int _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la)
     _Z_EC(_z_zint_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++)
     {
-        _z_str_t s = _z_locator_to_str(&la->_val[i]);
+        char *s = _z_locator_to_str(&la->_val[i]);
         _Z_EC(_z_str_encode(wbf, s))
         free(s);
     }
@@ -823,6 +824,10 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r)
         _ASSURE_P_RESULT(r_knd, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._kind = r_knd._value._zint;
     }
+    else
+    {
+        r->_value._data_info._kind = Z_SAMPLE_KIND_PUT;
+    }
 
     if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_ENC))
     {
@@ -840,6 +845,10 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r)
         _z_timestamp_result_t r_tsp = _z_timestamp_decode(zbf);
         _ASSURE_P_RESULT(r_tsp, r, _Z_ERR_PARSE_TIMESTAMP)
         r->_value._data_info._tstamp = r_tsp._value._timestamp;
+    }
+    else
+    {
+        _z_timestamp_reset(&r->_value._data_info._tstamp);
     }
 
     if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SRC_ID))

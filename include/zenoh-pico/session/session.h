@@ -118,7 +118,7 @@ typedef struct
 {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    _z_str_t _predicate;
+    char *_predicate;
     _z_target_t _target;
     _z_consolidation_strategy_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;

@@ -61,7 +61,7 @@ uint8_t _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value);
  * Returns:
  *     The value of the property with key ``key`` in properties map ``ps``.
  */
-_z_str_t _z_config_get(const _z_config_t *ps, unsigned int key);
+char *_z_config_get(const _z_config_t *ps, unsigned int key);
 
 /**
  * Get the length of the given properties map.

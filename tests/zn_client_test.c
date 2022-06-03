@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-_z_str_t uri = "/demo/example/";
+char *uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -61,7 +61,7 @@ void reply_handler(const _z_reply_t *reply, const void *arg)
     {
         printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.key.suffix, replies, total);
         assert(reply->data.sample.value.len == strlen(res));
-        assert(strncmp(res, (const _z_str_t)reply->data.sample.value.start, strlen(res)) == 0);
+        assert(strncmp(res, (const char *)reply->data.sample.value.start, strlen(res)) == 0);
         assert(strlen(reply->data.sample.key.suffix) == strlen(res));
         assert(strncmp(res, reply->data.sample.key.suffix, strlen(res)) == 0);
     }
@@ -87,7 +87,7 @@ void data_handler(const _z_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, _z_str_t *argv)
+int main(int argc, char **argv)
 {
     assert(argc == 2);
     (void) (argc);

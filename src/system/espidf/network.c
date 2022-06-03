@@ -22,7 +22,7 @@
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-void *_z_create_endpoint_tcp(const _z_str_t s_addr, const _z_str_t port)
+void *_z_create_endpoint_tcp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
@@ -134,7 +134,7 @@ size_t _z_send_tcp(int sock, const uint8_t *ptr, size_t len)
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const _z_str_t s_addr, const _z_str_t port)
+void *_z_create_endpoint_udp(const char *s_addr, const char *port)
 {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
@@ -232,7 +232,7 @@ size_t _z_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const _z_str_t iface)
+int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const char *iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
     struct addrinfo *laddr = NULL;
@@ -316,7 +316,7 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-int _z_listen_udp_multicast(void *arg, const clock_t tout, const _z_str_t iface)
+int _z_listen_udp_multicast(void *arg, const clock_t tout, const char *iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
     struct sockaddr *laddr = NULL;

@@ -38,8 +38,8 @@ _Z_RESULT_DECLARE(_z_bytes_t, bytes)
 int _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
 _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *buf);
 
-_Z_RESULT_DECLARE(_z_str_t, str)
-int _z_str_encode(_z_wbuf_t *buf, const _z_str_t s);
+_Z_RESULT_DECLARE(char *, str)
+int _z_str_encode(_z_wbuf_t *buf, const char *s);
 _z_str_result_t _z_str_decode(_z_zbuf_t *buf);
 
 _Z_RESULT_DECLARE(_z_period_t, period)

@@ -19,7 +19,7 @@
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_session_t *__z_open_inner(_z_str_t locator, int mode)
+_z_session_t *__z_open_inner(char *locator, int mode)
 {
     _z_session_t *zn = _z_session_init();
 
@@ -47,13 +47,13 @@ _z_session_t *_z_open(_z_config_t *config)
     if (config == NULL)
         return NULL;
 
-    _z_str_t locator = NULL;
+    char *locator = NULL;
     // Scout if peer is not configured
     if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL)
     {
         // Z_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in seconds as a float
         // while the scout loop timeout uses milliseconds granularity
-        _z_str_t tout = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        char *tout = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (tout == NULL)
             tout = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         clock_t timeout = strtof(tout, NULL);
@@ -87,7 +87,7 @@ _z_session_t *_z_open(_z_config_t *config)
     // For example, client mode in multicast links
 
     // Check operation mode
-    _z_str_t s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
+    char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
     int mode = 0; // By default, zenoh-pico will operate as a client
     if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT))
         mode = 0;

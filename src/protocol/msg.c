@@ -37,7 +37,7 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk)
 {
     rk->id = 0;
     if (rk->suffix != NULL)
-        _z_str_clear(rk->suffix);
+        _z_str_clear((char *)rk->suffix);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk)
@@ -425,7 +425,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg)
 }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_str_t predicate, _z_zint_t qid, _z_target_t target, _z_consolidation_strategy_t consolidation)
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_t qid, _z_target_t target, _z_consolidation_strategy_t consolidation)
 {
     _z_zenoh_message_t msg;
 

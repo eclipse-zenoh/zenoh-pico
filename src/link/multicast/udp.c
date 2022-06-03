@@ -20,34 +20,34 @@
 
 #if Z_LINK_UDP_MULTICAST == 1
 
-_z_str_t _z_parse_port_segment_udp_multicast(const _z_str_t address)
+char *_z_parse_port_segment_udp_multicast(const char *address)
 {
-    _z_str_t p_start = strrchr(address, ':');
+    const char *p_start = strrchr(address, ':');
     if (p_start == NULL)
         return NULL;
     p_start++;
 
-    _z_str_t p_end = &address[strlen(address)];
+    const char *p_end = &address[strlen(address)];
 
     int len = p_end - p_start;
-    _z_str_t port = (_z_str_t)malloc((len + 1) * sizeof(char));
+    char *port = (char *)malloc((len + 1) * sizeof(char));
     strncpy(port, p_start, len);
     port[len] = '\0';
 
     return port;
 }
 
-_z_str_t _z_parse_address_segment_udp_multicast(const _z_str_t address)
+char *_z_parse_address_segment_udp_multicast(const char *address)
 {
-    _z_str_t p_start = &address[0];
-    _z_str_t p_end = strrchr(address, ':');
+    const char *p_start = &address[0];
+    const char *p_end = strrchr(address, ':');
 
     if (*p_start == '[' && *(p_end - 1) == ']')
     {
         p_start++;
         p_end--;
         int len = p_end - p_start;
-        _z_str_t ip6_addr = (_z_str_t)malloc((len + 1) * sizeof(char));
+        char *ip6_addr = (char *)malloc((len + 1) * sizeof(char));
         strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
@@ -56,7 +56,7 @@ _z_str_t _z_parse_address_segment_udp_multicast(const _z_str_t address)
     else
     {
         int len = p_end - p_start;
-        _z_str_t ip4_addr_or_domain = (_z_str_t)malloc((len + 1) * sizeof(char));
+        char *ip4_addr_or_domain = (char *)malloc((len + 1) * sizeof(char));
         strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
@@ -70,12 +70,12 @@ int _z_f_link_open_udp_multicast(void *arg)
 {
     _z_link_t *self = (_z_link_t *)arg;
 
-    const _z_str_t iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
+    const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
     if (iface == NULL)
         goto ERR;
 
     clock_t timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    _z_str_t tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
+    char *tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtof(tout, NULL);
 
@@ -92,7 +92,7 @@ int _z_f_link_listen_udp_multicast(void *arg)
 {
     _z_link_t *self = (_z_link_t *)arg;
 
-    const _z_str_t iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
+    const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
     if (iface == NULL)
         goto ERR_1;
 
@@ -175,8 +175,8 @@ _z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint)
 
     lt->_socket._udp._sock = -1;
     lt->_socket._udp._msock = -1;
-    _z_str_t s_addr = _z_parse_address_segment_udp_multicast(endpoint._locator._address);
-    _z_str_t s_port = _z_parse_port_segment_udp_multicast(endpoint._locator._address);
+    char *s_addr = _z_parse_address_segment_udp_multicast(endpoint._locator._address);
+    char *s_port = _z_parse_port_segment_udp_multicast(endpoint._locator._address);
     lt->_socket._udp._raddr = _z_create_endpoint_udp(s_addr, s_port);
     lt->_socket._udp._laddr = NULL;
     free(s_addr);

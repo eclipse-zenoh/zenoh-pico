@@ -17,7 +17,7 @@
 #include "zenoh-pico.h"
 
 void data_handler(const z_sample_t *sample, const void *arg)
-{
+{    
     (void) (arg);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n",
            sample->key.suffix, (int)sample->value.len, sample->value.start);
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    z_str_t expr = "/demo/example/**";
+    char *expr = "/demo/example/**";
 
     z_owned_config_t config = z_config_default();
     if (argc > 1)
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     zp_start_read_task(z_loan(s));
     zp_start_lease_task(z_loan(s));
 
-    z_owned_subscriber_t sub = z_subscribe(z_loan(s), z_expr_new(expr), z_subinfo_default(), data_handler, NULL);
+    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(expr), data_handler, NULL);
     if (!z_check(sub))
     {
         printf("Unable to declare subscriber.\n");

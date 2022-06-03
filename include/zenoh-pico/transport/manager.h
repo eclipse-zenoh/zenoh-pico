@@ -30,7 +30,7 @@ typedef struct
 _z_transport_manager_t *_z_transport_manager_init(void);
 void _z_transport_manager_free(_z_transport_manager_t **ztm);
 
-_z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, _z_str_t locator, uint8_t mode);
+_z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, uint8_t mode);
 void _z_free_transport(_z_transport_manager_t *ztm, _z_transport_t **zt);
 
 #endif /* ZENOH_PICO_TRANSPORT_MANAGER_H */

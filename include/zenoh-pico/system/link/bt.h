@@ -34,12 +34,12 @@ extern "C" {
 typedef struct
 {
     void *_sock;
-    _z_str_t _rname; // FIXME: To be replaced by its addr
-    _z_str_t _lname; // FIXME: To be replaced by its addr
+    char *_rname; // FIXME: To be replaced by its addr
+    char *_lname; // FIXME: To be replaced by its addr
 } _z_bt_socket_t;
 
-void *_z_open_bt(uint8_t mode, _z_str_t lname, _z_str_t rname, uint8_t profile);
-void *_z_listen_bt(uint8_t mode, _z_str_t lname, _z_str_t rname, uint8_t profile);
+void *_z_open_bt(uint8_t mode, char *lname, char *rname, uint8_t profile);
+void *_z_listen_bt(uint8_t mode, char *lname, char *rname, uint8_t profile);
 void _z_close_bt(void *);
 size_t _z_read_exact_bt(void *, uint8_t *ptr, size_t len);
 size_t _z_read_bt(void *, uint8_t *ptr, size_t len);

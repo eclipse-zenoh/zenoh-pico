@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    z_str_t expr = "/demo/example/**";
+    char *expr = "/demo/example/**";
 
     if (argc > 1)
     {
@@ -57,11 +57,11 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_loan(s));
 
     printf("Creating Subscriber on '%s'...\n", expr);
-    z_subinfo_t subinfo;
-    subinfo.reliability = Z_RELIABILITY_RELIABLE;
-    subinfo.mode = Z_SUBMODE_PULL;
-    subinfo.period = Z_PERIOD_NONE;
-    z_owned_subscriber_t sub = z_subscribe(z_loan(s), z_expr_new(expr), subinfo, data_handler, NULL);
+    // z_subinfo_t subinfo;
+    // subinfo.reliability = Z_RELIABILITY_RELIABLE;
+    // subinfo.mode = Z_SUBMODE_PULL;
+    // subinfo.period = Z_PERIOD_NONE;
+    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(expr), data_handler, NULL);
     if (!z_check(sub))
     {
         printf("Unable to create subscriber.\n");

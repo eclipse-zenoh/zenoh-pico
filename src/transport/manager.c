@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/transport/manager.h"
 
-_z_transport_p_result_t _z_new_transport_client(_z_str_t locator, _z_bytes_t local_pid)
+_z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_pid)
 {
     _z_transport_p_result_t ret;
     _z_transport_t *zt = NULL;
@@ -52,7 +52,7 @@ ERR_1:
     return ret;
 }
 
-_z_transport_p_result_t _z_new_transport_peer(_z_str_t locator, _z_bytes_t local_pid)
+_z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pid)
 {
     _z_transport_p_result_t ret;
     _z_transport_t *zt = NULL;
@@ -119,7 +119,7 @@ void _z_transport_manager_free(_z_transport_manager_t **ztm)
     *ztm = NULL;
 }
 
-_z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, _z_str_t locator, uint8_t mode)
+_z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, uint8_t mode)
 {
     _z_transport_p_result_t ret;
     if (mode == 0) // FIXME: use enum

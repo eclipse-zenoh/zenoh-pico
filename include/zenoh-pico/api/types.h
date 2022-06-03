@@ -23,7 +23,6 @@
 
 /* Loaned types */
 typedef _z_zint_t z_zint_t;
-typedef _z_str_t z_str_t;
 typedef _z_bytes_t z_bytes_t;
 
 typedef _z_string_t z_string_t;
@@ -37,11 +36,16 @@ typedef _z_publisher_t z_publisher_t;
 typedef _z_queryable_t z_queryable_t;
 
 typedef _z_encoding_t z_encoding_t;
-typedef _z_subinfo_t z_subinfo_t;
 typedef _z_period_t z_period_t;
 typedef _z_consolidation_strategy_t z_consolidation_strategy_t;
 typedef _z_query_target_t z_query_target_t;
 typedef _z_target_t z_target_t;
+
+typedef struct {
+  z_reliability_t reliability;
+  void *cargs;
+} z_subscriber_options_t;
+
 typedef struct
 {
     z_query_consolidation_tag_t _tag;
@@ -78,7 +82,7 @@ typedef _z_reply_data_t z_reply_data_t;
         return _z_##name##_array_is_empty(a);                                 \
     }                                                                         \
 
-_TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, z_str_t, str)
+_TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
 _TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
 _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, reply_data)
 
@@ -86,10 +90,10 @@ _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, repl
 #define _OWNED_TYPE(type, name)  \
     typedef struct               \
     {                            \
-        type *_value;            \
+        type *_value;             \
     } z_owned_##name##_t;
 
-_OWNED_TYPE(z_str_t, str)
+_OWNED_TYPE(char *, str)
 _OWNED_TYPE(z_bytes_t, bytes)
 
 _OWNED_TYPE(z_string_t, string)
@@ -103,7 +107,6 @@ _OWNED_TYPE(z_publisher_t, publisher)
 _OWNED_TYPE(z_queryable_t, queryable)
 
 _OWNED_TYPE(z_encoding_t, encoding)
-_OWNED_TYPE(z_subinfo_t, subinfo)
 _OWNED_TYPE(z_period_t, period)
 _OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
 _OWNED_TYPE(z_query_target_t, query_target)

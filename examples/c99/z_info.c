@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
     z_owned_info_t ops = z_info(z_session_loan(&s));
 
-    z_str_t prop = z_info_get(z_info_loan(&ops), Z_INFO_PID_KEY);
+    char *prop = z_info_get(z_info_loan(&ops), Z_INFO_PID_KEY);
     printf("info_pid : %s\n", prop);
 
     prop = z_info_get(z_info_loan(&ops), Z_INFO_ROUTER_PID_KEY);

@@ -246,7 +246,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
     _z_unregister_queryable(qle->_zn, q);
 }
 
-void _z_send_reply(const z_query_t *query, const _z_str_t key, const uint8_t *payload, const size_t len)
+void _z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply._
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
@@ -335,7 +335,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
 }
 
 /*------------------ Query ------------------*/
-void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const _z_str_t predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
+void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
@@ -370,6 +370,8 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
         _z_bytes_copy(&rd->sample.value, &reply->data.sample.value);
         rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
         rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : _z_str_clone("");
+        rd->sample.kind = reply->data.sample.kind;
+        rd->sample.timestamp = _z_timestamp_duplicate(&reply->data.sample.timestamp);
 
         pqc->_replies = _z_reply_data_list_push(pqc->_replies, rd);
     }
@@ -384,7 +386,7 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
 
 _z_reply_data_array_t _z_query_collect(_z_session_t *zn,
                                      _z_keyexpr_t keyexpr,
-                                     const _z_str_t predicate,
+                                     const char *predicate,
                                      const _z_target_t target,
                                      const _z_consolidation_strategy_t consolidation)
 {

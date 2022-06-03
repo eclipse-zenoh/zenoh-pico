@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-z_str_t uri = "/demo/example/";
+char *uri = "/demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -47,7 +47,7 @@ void data_handler(const z_sample_t *sample, const void *arg)
     datas++;
 }
 
-int main(int argc, _z_str_t *argv)
+int main(int argc, char **argv)
 {
     assert(argc == 2);
     (void) (argc);
@@ -96,7 +96,9 @@ int main(int argc, _z_str_t *argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
-        *sub = z_subscribe(z_loan(s2), z_expr_new(s1_res), z_subinfo_default(), data_handler, &idx[i]);
+        z_subscriber_options_t opts = z_subscriber_options_default();
+        opts.cargs = &idx[i];
+        *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), data_handler, &opts);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
@@ -113,12 +115,10 @@ int main(int argc, _z_str_t *argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            z_owned_keyexpr_t keyexpr = z_expr_new(s1_res);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-            z_put_ext(z_loan(s1), z_loan(keyexpr), (const uint8_t *)payload, len, &opt);
+            z_put_ext(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
-            z_keyexpr_clear(z_move(keyexpr));
         }
     }
 

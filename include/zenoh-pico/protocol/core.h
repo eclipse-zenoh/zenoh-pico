@@ -56,7 +56,7 @@ typedef size_t _z_zint_t;
 typedef struct
 {
     _z_zint_t prefix;
-    _z_str_t suffix;
+    char *suffix;
 } _z_encoding_t;
 
 /**
@@ -73,12 +73,12 @@ typedef struct
  *
  * Members:
  *   _z_zint_t: The resource ID.
- *   _z_str_t val: A pointer to the string containing the resource name.
+ *   char *val: A pointer to the string containing the resource name.
  */
 typedef struct
 {
     _z_zint_t id;
-    _z_str_t suffix;
+    const char *suffix;
 } _z_keyexpr_t;
 
 /**
@@ -96,6 +96,8 @@ typedef struct
     _z_keyexpr_t key;
     _z_bytes_t value;
     _z_encoding_t encoding;
+    _z_zint_t kind;
+    _z_timestamp_t timestamp;
 } _z_sample_t;
 
 /**

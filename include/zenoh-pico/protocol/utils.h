@@ -29,7 +29,7 @@
  * Returns:
  *     ``1`` in case of success, ``0`` in case of failure.
  */
-int _z_rname_intersect(const _z_str_t left, const _z_str_t right);
+int _z_rname_intersect(const char *left, const char *right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);

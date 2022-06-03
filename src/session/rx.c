@@ -29,9 +29,9 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
     {
         _Z_INFO("Received _Z_MID_DATA message %d\n", msg->header);
         if (msg->_reply_context) // This is some data from a query
-            _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key, msg->_body._data._payload, msg->_body._data._info);
+            _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key, msg->_body._data._payload, msg->_body._data._info._encoding, msg->_body._data._info._kind, msg->_body._data._info._tstamp);
         else // This is pure data
-            _z_trigger_subscriptions(zn, msg->_body._data._key, msg->_body._data._payload, msg->_body._data._info._encoding);
+            _z_trigger_subscriptions(zn, msg->_body._data._key, msg->_body._data._payload, msg->_body._data._info._encoding, msg->_body._data._info._kind, msg->_body._data._info._tstamp);
 
         return _Z_RES_OK;
     }

@@ -17,6 +17,12 @@
 
 typedef enum
 {
+    Z_SAMPLE_KIND_PUT = 0,
+    Z_SAMPLE_KIND_DELETE = 1,
+} z_sample_kind_t;
+
+typedef enum
+{
     Z_ENCODING_EMPTY = 0,
     Z_ENCODING_APP_OCTETSTREAM = 1,
     Z_ENCODING_APP_CUSTOM = 2,

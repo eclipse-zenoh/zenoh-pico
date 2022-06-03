@@ -32,7 +32,6 @@
     z_owned_publisher_t : z_publisher_loan,                           \
     z_owned_queryable_t : z_queryable_loan,                           \
     z_owned_encoding_t : z_encoding_loan,                             \
-    z_owned_subinfo_t : z_subinfo_loan,                               \
     z_owned_period_t : z_period_loan,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_loan, \
     z_owned_query_target_t : z_query_target_loan,                     \
@@ -59,7 +58,6 @@
     z_owned_publisher_t : z_publisher_clear,                           \
     z_owned_queryable_t : z_queryable_clear,                           \
     z_owned_encoding_t : z_encoding_clear,                             \
-    z_owned_subinfo_t : z_subinfo_clear,                               \
     z_owned_period_t : z_period_clear,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_clear, \
     z_owned_query_target_t : z_query_target_clear,                     \
@@ -86,7 +84,6 @@
     z_owned_publisher_t : z_publisher_check,                           \
     z_owned_queryable_t : z_queryable_check,                           \
     z_owned_encoding_t : z_encoding_check,                             \
-    z_owned_subinfo_t : z_subinfo_check,                               \
     z_owned_period_t : z_period_check,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_check, \
     z_owned_query_target_t : z_query_target_check,                     \
@@ -113,7 +110,6 @@
     z_owned_publisher_t : z_publisher_move,                           \
     z_owned_queryable_t : z_queryable_move,                           \
     z_owned_encoding_t : z_encoding_move,                             \
-    z_owned_subinfo_t : z_subinfo_move,                               \
     z_owned_period_t : z_period_move,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_move, \
     z_owned_query_target_t : z_query_target_move,                     \
@@ -140,7 +136,6 @@
     z_owned_publisher_t : z_publisher_clone,                           \
     z_owned_queryable_t : z_queryable_clone,                           \
     z_owned_encoding_t : z_encoding_clone,                             \
-    z_owned_subinfo_t : z_subinfo_clone,                               \
     z_owned_period_t : z_period_clone,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_clone, \
     z_owned_query_target_t : z_query_target_clone,                     \

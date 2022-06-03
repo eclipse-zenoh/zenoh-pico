@@ -141,7 +141,7 @@ _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf)
 }
 
 /*------------------ string with null terminator ------------------*/
-int _z_str_encode(_z_wbuf_t *wbf, const _z_str_t s)
+int _z_str_encode(_z_wbuf_t *wbf, const char *s)
 {
     size_t len = strlen(s);
     _Z_EC(_z_zint_encode(wbf, len))
@@ -167,7 +167,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
     }
 
     // Allocate space for the string terminator
-    _z_str_t s = (_z_str_t)malloc(len + 1);
+    char *s = (char *)malloc(len + 1);
     s[len] = '\0';
     _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
     r._value._str = s;
