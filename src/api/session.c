@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdlib.h>
+
 #include "zenoh-pico/api/session.h"
 #include "zenoh-pico/api/memory.h"
 #include "zenoh-pico/session/utils.h"
@@ -96,7 +98,7 @@ zn_session_t *zn_open(zn_properties_t *config)
 
     zn_session_t *zn = _zn_open(locator, mode);
 
-    free(locator);
+    z_free(locator);
     return zn;
 }
 
@@ -107,7 +109,7 @@ void zn_close(zn_session_t *zn)
 
 zn_properties_t *zn_info(zn_session_t *zn)
 {
-    zn_properties_t *ps = (zn_properties_t *)malloc(sizeof(zn_properties_t));
+    zn_properties_t *ps = (zn_properties_t *)z_malloc(sizeof(zn_properties_t));
     zn_properties_init(ps);
     zn_properties_insert(ps, ZN_INFO_PID_KEY, _z_string_from_bytes(&zn->tp_manager->local_pid));
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
@@ -140,7 +142,7 @@ int znp_send_keep_alive(zn_session_t *zn)
 
 int znp_start_read_task(zn_session_t *zn)
 {
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     memset(task, 0, sizeof(z_task_t));
 
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)
@@ -173,7 +175,7 @@ int znp_stop_read_task(zn_session_t *zn)
 
 int znp_start_lease_task(zn_session_t *zn)
 {
-    z_task_t *task = (z_task_t *)malloc(sizeof(z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     memset(task, 0, sizeof(z_task_t));
 
     if (zn->tp->type == _ZN_TRANSPORT_UNICAST_TYPE)

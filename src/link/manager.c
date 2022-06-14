@@ -16,7 +16,7 @@
 
 _zn_link_manager_t *_zn_link_manager_init()
 {
-    _zn_link_manager_t *zlm = (_zn_link_manager_t *)malloc(sizeof(_zn_link_manager_t));
+    _zn_link_manager_t *zlm = (_zn_link_manager_t *)z_malloc(sizeof(_zn_link_manager_t));
 
     return zlm;
 }
@@ -24,6 +24,6 @@ _zn_link_manager_t *_zn_link_manager_init()
 void _zn_link_manager_free(_zn_link_manager_t **zlm)
 {
     _zn_link_manager_t *ptr = *zlm;
-    free(ptr);
+    z_free(ptr);
     *zlm = NULL;
 }

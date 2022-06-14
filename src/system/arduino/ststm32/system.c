@@ -15,6 +15,23 @@
 #include "zenoh-pico/system/platform.h"
 #include <hw/driver/delay.h>
 
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size)
+{
+    return pvPortMalloc(size);
+}
+
+void *z_realloc(void *ptr, size_t size)
+{
+    // TODO: not implemented
+    return NULL;
+}
+
+void z_free(void *ptr)
+{
+    vPortFree(ptr);
+}
+
 /*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
@@ -34,7 +51,7 @@ int z_task_cancel(z_task_t *task)
 void z_task_free(z_task_t **task)
 {
     z_task_t *ptr = *task;
-    free(ptr);
+    z_free(ptr);
     *task = NULL;
 }
 
@@ -88,17 +105,19 @@ int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)
 {
-    return usleep(time);
+    delay_us(time);
+    return 0;
 }
 
 int z_sleep_ms(unsigned int time)
 {
-    return usleep(1000 * time);
+    delay_ms(time);
+    return 0;
 }
 
 int z_sleep_s(unsigned int time)
 {
-    return sleep(time);
+    return z_sleep_ms(time * 1000);
 }
 
 /*------------------ Instant ------------------*/
@@ -144,34 +163,34 @@ clock_t z_clock_elapsed_s(z_clock_t *instant)
 }
 
 /*------------------ Time ------------------*/
-struct timeval z_time_now()
+z_time_t z_time_now()
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-time_t z_time_elapsed_us(struct timeval *time)
+time_t z_time_elapsed_us(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(struct timeval *time)
+time_t z_time_elapsed_ms(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-time_t z_time_elapsed_s(struct timeval *time)
+time_t z_time_elapsed_s(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = now.tv_sec - time->tv_sec;

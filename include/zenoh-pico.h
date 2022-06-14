@@ -25,8 +25,4 @@
 #include "zenoh-pico/api/publish.h"
 #include "zenoh-pico/api/memory.h"
 
-#if defined(ZENOH_ZEPHYR)
-#include <zephyr.h>
-#endif
-
 #endif /* ZENOH_PICO_H */

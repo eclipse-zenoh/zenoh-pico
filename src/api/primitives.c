@@ -29,7 +29,7 @@ zn_hello_array_t zn_scout(const unsigned int what, const zn_properties_t *config
 /*------------------ Resource Declaration ------------------*/
 z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
 {
-    _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+    _zn_resource_t *r = (_zn_resource_t *)z_malloc(sizeof(_zn_resource_t));
     r->id = _zn_get_resource_id(zn);
     r->key = reskey;
 
@@ -57,7 +57,7 @@ z_zint_t zn_declare_resource(zn_session_t *zn, zn_reskey_t reskey)
     return r->id;
 
 ERR:
-    free(r);
+    z_free(r);
     return ZN_RESOURCE_ID_NONE;
 }
 
@@ -85,7 +85,7 @@ void zn_undeclare_resource(zn_session_t *zn, const z_zint_t rid)
 /*------------------  Publisher Declaration ------------------*/
 zn_publisher_t *zn_declare_publisher(zn_session_t *zn, zn_reskey_t reskey)
 {
-    zn_publisher_t *pub = (zn_publisher_t *)malloc(sizeof(zn_publisher_t));
+    zn_publisher_t *pub = (zn_publisher_t *)z_malloc(sizeof(zn_publisher_t));
     pub->zn = zn;
     pub->key = reskey;
     pub->id = _zn_get_entity_id(zn);
@@ -125,7 +125,7 @@ void zn_undeclare_publisher(zn_publisher_t *pub)
 /*------------------ Subscriber Declaration ------------------*/
 zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_subinfo_t sub_info, zn_data_handler_t callback, void *arg)
 {
-    _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
+    _zn_subscriber_t *rs = (_zn_subscriber_t *)z_malloc(sizeof(_zn_subscriber_t));
     rs->id = _zn_get_entity_id(zn);
     rs->rname = _zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, &reskey);
     rs->key = reskey;
@@ -150,7 +150,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
     _zn_z_msg_clear(&z_msg);
 
-    zn_subscriber_t *subscriber = (zn_subscriber_t *)malloc(sizeof(zn_subscriber_t));
+    zn_subscriber_t *subscriber = (zn_subscriber_t *)z_malloc(sizeof(zn_subscriber_t));
     subscriber->zn = zn;
     subscriber->id = rs->id;
 
@@ -158,7 +158,7 @@ zn_subscriber_t *zn_declare_subscriber(zn_session_t *zn, zn_reskey_t reskey, zn_
 
 ERR:
     _z_str_clear(rs->rname);
-    free(rs);
+    z_free(rs);
     return NULL;
 }
 
@@ -189,7 +189,7 @@ void zn_undeclare_subscriber(zn_subscriber_t *sub)
 /*------------------ Queryable Declaration ------------------*/
 zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsigned int kind, zn_queryable_handler_t callback, void *arg)
 {
-    _zn_queryable_t *rq = (_zn_queryable_t *)malloc(sizeof(_zn_queryable_t));
+    _zn_queryable_t *rq = (_zn_queryable_t *)z_malloc(sizeof(_zn_queryable_t));
     rq->id = _zn_get_entity_id(zn);
     rq->rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, &reskey);
     rq->kind = kind;
@@ -213,7 +213,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
     _zn_z_msg_clear(&z_msg);
 
-    zn_queryable_t *queryable = (zn_queryable_t *)malloc(sizeof(zn_queryable_t));
+    zn_queryable_t *queryable = (zn_queryable_t *)z_malloc(sizeof(zn_queryable_t));
     queryable->zn = zn;
     queryable->id = rq->id;
 
@@ -221,7 +221,7 @@ zn_queryable_t *zn_declare_queryable(zn_session_t *zn, zn_reskey_t reskey, unsig
 
 ERR:
     _z_str_clear(rq->rname);
-    free(rq);
+    z_free(rq);
     return NULL;
 }
 
@@ -281,7 +281,7 @@ void zn_send_reply(zn_query_t *query, const z_str_t key, const uint8_t *payload,
         // @TODO: retransmission
     }
 
-    free(rctx);
+    z_free(rctx);
     // FIXME: Provide wrap for all allocated values, so that clear can be executed
     //        Still, currently it is not leaking, since all values are owned by the user
     //_zn_z_msg_clear(&z_msg);
@@ -343,7 +343,7 @@ int zn_write_ext(zn_session_t *zn, const zn_reskey_t reskey, const uint8_t *payl
 void zn_query(zn_session_t *zn, zn_reskey_t reskey, const z_str_t predicate, const zn_query_target_t target, const zn_query_consolidation_t consolidation, zn_query_handler_t callback, void *arg)
 {
     // Create the pending query object
-    _zn_pending_query_t *pq = (_zn_pending_query_t *)malloc(sizeof(_zn_pending_query_t));
+    _zn_pending_query_t *pq = (_zn_pending_query_t *)z_malloc(sizeof(_zn_pending_query_t));
     pq->id = _zn_get_query_id(zn);
     pq->key = reskey;
     pq->predicate = _z_str_clone(predicate);
@@ -368,7 +368,7 @@ void reply_collect_handler(const zn_reply_t reply, const void *arg)
     _zn_pending_query_collect_t *pqc = (_zn_pending_query_collect_t *)arg;
     if (reply.tag == zn_reply_t_Tag_DATA)
     {
-        zn_reply_data_t *rd = (zn_reply_data_t *)malloc(sizeof(zn_reply_data_t));
+        zn_reply_data_t *rd = (zn_reply_data_t *)z_malloc(sizeof(zn_reply_data_t));
         rd->replier_kind = reply.data.replier_kind;
         _z_bytes_copy(&rd->replier_id, &reply.data.replier_id);
         _z_string_copy(&rd->data.key, &reply.data.data.key);
@@ -403,7 +403,7 @@ zn_reply_data_array_t zn_query_collect(zn_session_t *zn,
 
     zn_reply_data_array_t rda;
     rda.len = _zn_reply_data_list_len(pqc.replies);
-    zn_reply_data_t *replies = (zn_reply_data_t *)malloc(rda.len * sizeof(zn_reply_data_t));
+    zn_reply_data_t *replies = (zn_reply_data_t *)z_malloc(rda.len * sizeof(zn_reply_data_t));
     for (unsigned int i = 0; i < rda.len; i++)
     {
         zn_reply_data_t *reply = _zn_reply_data_list_head(pqc.replies);

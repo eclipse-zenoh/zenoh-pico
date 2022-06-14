@@ -207,7 +207,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf)
     }
 
     // Allocate space for the string terminator
-    z_str_t s = (z_str_t)malloc(len + 1);
+    z_str_t s = (z_str_t)z_malloc(len + 1);
     s[len] = '\0';
     _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
     r.value.str = s;

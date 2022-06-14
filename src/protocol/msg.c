@@ -38,7 +38,7 @@ void _zn_reskey_clear(zn_reskey_t *rk)
     rk->rid = 0;
     if (rk->rname != NULL)
     {
-        free(rk->rname);
+        z_free(rk->rname);
         rk->rname = NULL;
     }
 }
@@ -61,7 +61,7 @@ void _zn_t_msg_clear_attachment(_zn_attachment_t *a)
 /*------------------ ReplyContext Decorator ------------------*/
 _zn_reply_context_t *_zn_z_msg_make_reply_context(z_zint_t qid, z_bytes_t replier_id, z_zint_t replier_kind, int is_final)
 {
-    _zn_reply_context_t *rctx = (_zn_reply_context_t *)malloc(sizeof(_zn_reply_context_t));
+    _zn_reply_context_t *rctx = (_zn_reply_context_t *)z_malloc(sizeof(_zn_reply_context_t));
 
     rctx->qid = qid;
     rctx->replier_id = replier_id;
@@ -180,7 +180,7 @@ _zn_declaration_t _zn_z_msg_make_declaration_subscriber(zn_reskey_t key, zn_subi
 void _zn_subinfo_clear(zn_subinfo_t *si)
 {
     if (si->period)
-        free(si->period);
+        z_free(si->period);
 }
 
 void _zn_z_msg_clear_declaration_subscriber(_zn_sub_decl_t *dcl)
@@ -453,12 +453,12 @@ void _zn_z_msg_clear(_zn_zenoh_message_t *msg)
     if (msg->attachment != NULL)
     {
         _zn_t_msg_clear_attachment(msg->attachment);
-        free(msg->attachment);
+        z_free(msg->attachment);
     }
     if (msg->reply_context != NULL)
     {
         _zn_z_msg_clear_reply_context(msg->reply_context);
-        free(msg->reply_context);
+        z_free(msg->reply_context);
     }
 
     uint8_t mid = _ZN_MID(msg->header);
@@ -947,7 +947,7 @@ void _zn_t_msg_clear(_zn_transport_message_t *msg)
     if (msg->attachment)
     {
         _zn_t_msg_clear_attachment(msg->attachment);
-        free(msg->attachment);
+        z_free(msg->attachment);
     }
 
     uint8_t mid = _ZN_MID(msg->header);

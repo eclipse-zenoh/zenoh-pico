@@ -36,7 +36,7 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity)
     ios->w_pos = 0;
     ios->capacity = capacity;
     ios->is_alloc = 1;
-    ios->buf = (uint8_t *)malloc(capacity);
+    ios->buf = (uint8_t *)z_malloc(capacity);
 }
 
 _z_iosli_t _z_iosli_make(size_t capacity)
@@ -48,7 +48,7 @@ _z_iosli_t _z_iosli_make(size_t capacity)
 
 _z_iosli_t *_z_iosli_new(size_t capacity)
 {
-    _z_iosli_t *pios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
+    _z_iosli_t *pios = (_z_iosli_t *)z_malloc(sizeof(_z_iosli_t));
     __z_iosli_init(pios, capacity);
     return pios;
 }
@@ -125,7 +125,7 @@ void _z_iosli_clear(_z_iosli_t *ios)
 {
     if (ios->is_alloc)
     {
-        free(ios->buf);
+        z_free(ios->buf);
         ios->buf = NULL;
     }
 }
@@ -145,7 +145,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src)
     dst->is_alloc = src->is_alloc;
     if (dst->is_alloc == 1)
     {
-        dst->buf = (uint8_t *)malloc(src->capacity);
+        dst->buf = (uint8_t *)z_malloc(src->capacity);
         memcpy(dst->buf, src->buf, src->capacity);
     }
     else
@@ -156,7 +156,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src)
 
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src)
 {
-    _z_iosli_t *dst = (_z_iosli_t *)malloc(_z_iosli_size(src));
+    _z_iosli_t *dst = (_z_iosli_t *)z_malloc(_z_iosli_size(src));
     _z_iosli_copy(dst, src);
     return dst;
 }
@@ -281,7 +281,7 @@ void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios)
 
 _z_iosli_t * __z_wbuf_new_iosli(size_t capacity)
 {
-    _z_iosli_t *ios = (_z_iosli_t *)malloc(sizeof(_z_iosli_t));
+    _z_iosli_t *ios = (_z_iosli_t *)z_malloc(sizeof(_z_iosli_t));
     __z_iosli_init(ios, capacity);
     return ios;
 }

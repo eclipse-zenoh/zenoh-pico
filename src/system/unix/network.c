@@ -14,7 +14,6 @@
 
 #include <errno.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -277,14 +276,14 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
             {
                 if (tmp->ifa_addr->sa_family == AF_INET)
                 {
-                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
                     memset(lsockaddr, 0, sizeof(struct sockaddr_in));
                     memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
                     addrlen = sizeof(struct sockaddr_in);
                 }
                 else if (tmp->ifa_addr->sa_family == AF_INET6)
                 {
-                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
                     memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
                     memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
                     addrlen = sizeof(struct sockaddr_in6);
@@ -327,7 +326,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
     }
 
     // Create laddr endpoint
-    laddr = (struct addrinfo *)malloc(sizeof(struct addrinfo));
+    laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
     laddr->ai_flags = 0;
     laddr->ai_family = raddr->ai_family;
     laddr->ai_socktype = raddr->ai_socktype;
@@ -342,7 +341,7 @@ int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const 
 //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
 // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
 //#if defined(ZENOH_LINUX)
-//    free(lsockaddr);
+//    z_free(lsockaddr);
 //#endif
 
     return sock;
@@ -351,7 +350,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_3:
     close(sock);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
-    free(lsockaddr);
+    z_free(lsockaddr);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;

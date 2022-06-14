@@ -97,7 +97,7 @@ z_str_t __zn_get_resource_name_from_key(_zn_resource_list_t *xs, const zn_reskey
     }
 
     // Concatenate all the partial resource names
-    z_str_t rname = (z_str_t)malloc(len + 1);
+    z_str_t rname = (z_str_t)z_malloc(len + 1);
     rname[0] = '\0'; // NULL terminator must be set (required to strcat)
 
     _z_str_list_t *xstr = strs;

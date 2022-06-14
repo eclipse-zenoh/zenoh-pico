@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_UTILS_RESULT_H
 #define ZENOH_PICO_UTILS_RESULT_H
 
-#include <stdlib.h>
+#include "zenoh-pico/system/platform.h"
 
 /*------------------ Result Enums ------------------*/
 typedef enum _z_err_t
@@ -80,12 +80,12 @@ typedef enum
                                                                                         \
     inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        r->value.name = (type *)malloc(sizeof(type));                                   \
+        r->value.name = (type *)z_malloc(sizeof(type));                                   \
     }                                                                                   \
                                                                                         \
     inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        free(r->value.name);                                                            \
+        z_free(r->value.name);                                                            \
         r->value.name = NULL;                                                           \
     }
 
@@ -108,7 +108,7 @@ typedef enum
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
     if (in_r.tag == _z_res_t_ERR)                   \
     {                                               \
-        free(out_r->value.name);                    \
+        z_free(out_r->value.name);                    \
         out_r->tag = _z_res_t_ERR;                  \
         out_r->value.error = e;                     \
         return;                                     \

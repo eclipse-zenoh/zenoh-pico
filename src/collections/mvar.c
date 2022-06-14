@@ -18,7 +18,7 @@
 /*-------- mvar --------*/
 z_mvar_t *z_mvar_empty()
 {
-    z_mvar_t *mv = (z_mvar_t *)malloc(sizeof(z_mvar_t));
+    z_mvar_t *mv = (z_mvar_t *)z_malloc(sizeof(z_mvar_t));
     memset(mv, 0, sizeof(z_mvar_t));
     z_mutex_init(&mv->mtx);
     z_condvar_init(&mv->can_put);
