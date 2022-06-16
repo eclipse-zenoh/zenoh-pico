@@ -15,12 +15,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/random.h>
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random(void)
 {
-    return arc4random();
+    uint8_t ret;
+#if defined(ZENOH_LINUX)
+    getrandom(&ret, sizeof(uint8_t), GRND_RANDOM);
+#elif defined(ZENOH_MACOS)
+    ret = arc4random();
+#endif
+
+    return ret;
 }
 
 /*------------------ Memory ------------------*/
