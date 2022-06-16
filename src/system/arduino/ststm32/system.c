@@ -15,6 +15,12 @@
 #include "zenoh-pico/system/platform.h"
 #include <hw/driver/delay.h>
 
+/*------------------ Random ------------------*/
+uint8_t z_random(void)
+{
+    return random(0xFF);
+}
+
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {

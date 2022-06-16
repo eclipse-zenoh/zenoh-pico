@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 #define ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 
+#include <stdint.h>
 #include <pthread.h>
 
 typedef pthread_t z_task_t;

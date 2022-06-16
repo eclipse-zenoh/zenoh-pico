@@ -30,6 +30,9 @@
 #error "Unknown platform"
 #endif
 
+/*------------------ Random ------------------*/
+uint8_t z_random(void);
+
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size);
 void *z_realloc(void *ptr, size_t size);

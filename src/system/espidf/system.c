@@ -16,6 +16,12 @@
 #include <esp_heap_caps.h>
 #include "zenoh-pico/system/platform.h"
 
+/*------------------ Random ------------------*/
+uint8_t z_random(void)
+{
+    return esp_random();
+}
+
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {

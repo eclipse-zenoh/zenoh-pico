@@ -17,6 +17,12 @@
 #include <sys/time.h>
 #include "zenoh-pico/system/platform.h"
 
+/*------------------ Random ------------------*/
+uint8_t z_random(void)
+{
+    return arc4random();
+}
+
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {
