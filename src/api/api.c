@@ -50,7 +50,7 @@ void z_close(z_owned_session_t *zs)
 {
     _z_close(zs->_value);
 
-    z_session_clear(zs);
+    z_session_drop(zs);
     zs->_value = NULL;
 }
 
@@ -126,7 +126,7 @@ void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 {
     _z_undeclare_resource(zs, keyexpr->_value->id);
 
-    z_keyexpr_clear(keyexpr);
+    z_keyexpr_drop(keyexpr);
     keyexpr->_value = NULL;
 }
 
@@ -149,7 +149,7 @@ void z_queryable_close(z_owned_queryable_t *queryable)
 {
     _z_undeclare_queryable(queryable->_value);
 
-    z_queryable_clear(queryable);
+    z_queryable_drop(queryable);
     free(queryable->_value);
     queryable->_value = NULL;
 }
@@ -258,7 +258,7 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned 
     hellos._value = (z_hello_array_t*)malloc(sizeof(z_hello_array_t));
     *hellos._value = _z_scout(what, config->_value, timeout);
 
-    z_config_clear(config);
+    z_config_drop(config);
     config->_value = NULL;
 
     return hellos; 
@@ -307,7 +307,7 @@ void z_subscriber_close(z_owned_subscriber_t *sub)
 {
     _z_undeclare_subscriber(sub->_value);
 
-    z_subscriber_clear(sub);
+    z_subscriber_drop(sub);
     free(sub->_value);
     sub->_value = NULL;
 }
@@ -316,7 +316,7 @@ void z_publisher_close(z_owned_publisher_t *pub)
 {
     _z_undeclare_publisher(pub->_value);
 
-    z_publisher_clear(pub);
+    z_publisher_drop(pub);
     free(pub->_value);
     pub->_value = NULL;
 }
@@ -363,7 +363,7 @@ int zp_stop_lease_task(z_session_t *zs)
         f_copy(ret._value, val->_value);                                      \
         return ret;                                                           \
     }                                                                         \
-    void z_##name##_clear(ownedtype *val)                                     \
+    void z_##name##_drop(ownedtype *val)                                     \
     {                                                                         \
         f_free(&val->_value);                                                 \
     }

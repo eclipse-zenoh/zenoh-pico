@@ -58,7 +58,7 @@ z_query_consolidation_t z_query_consolidation_reception(void);
     type *z_##name##_loan(const ownedtype *name);        \
     ownedtype *z_##name##_move(ownedtype *name);         \
     ownedtype z_##name##_clone(ownedtype *name);         \
-    void z_##name##_clear(ownedtype *name);
+    void z_##name##_drop(ownedtype *name);
 
 _OWNED_FUNCTIONS(z_string_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)

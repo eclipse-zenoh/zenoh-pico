@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     prop = z_info_get(z_loan(ops), Z_INFO_PEER_PID_KEY);
     printf("info_peer_pid : %s\n", prop);
 
-    z_clear(z_move(ops));
+    z_drop(z_move(ops));
     z_close(z_move(s));
     return 0;
 }

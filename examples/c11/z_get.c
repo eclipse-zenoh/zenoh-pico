@@ -57,7 +57,7 @@ int main(int argc, char **argv)
                z_reply_data_array_get(z_loan(replies), i)->sample.key.suffix,
                (int)z_reply_data_array_get(z_loan(replies), i)->sample.value.len, z_reply_data_array_get(z_loan(replies), i)->sample.value.start);
     }
-    z_clear(z_move(replies));
+    z_drop(z_move(replies));
 
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));

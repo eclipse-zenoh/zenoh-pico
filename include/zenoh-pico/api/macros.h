@@ -46,31 +46,31 @@
     z_owned_hello_array_t : z_hello_array_loan,                       \
     z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
 
-#define z_clear(x) _Generic((*x),                                      \
-    z_owned_str_t : z_str_clear,                                       \
-    z_owned_bytes_t : z_bytes_clear,                                   \
-    z_owned_string_t : z_string_clear,                                 \
-    z_owned_keyexpr_t : z_keyexpr_clear,                               \
-    z_owned_config_t : z_config_clear,                                 \
-    z_owned_session_t : z_session_clear,                               \
-    z_owned_info_t : z_info_clear,                                     \
-    z_owned_subscriber_t : z_subscriber_clear,                         \
-    z_owned_publisher_t : z_publisher_clear,                           \
-    z_owned_queryable_t : z_queryable_clear,                           \
-    z_owned_encoding_t : z_encoding_clear,                             \
-    z_owned_period_t : z_period_clear,                                 \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_clear, \
-    z_owned_query_target_t : z_query_target_clear,                     \
-    z_owned_target_t : z_target_clear,                                 \
-    z_owned_query_consolidation_t : z_query_consolidation_clear,       \
-    z_owned_put_options_t : z_put_options_clear,                       \
-    z_owned_sample_t : z_sample_clear,                                 \
-    z_owned_hello_t : z_hello_clear,                                   \
-    z_owned_reply_t : z_reply_clear,                                   \
-    z_owned_reply_data_t : z_reply_data_clear,                         \
-    z_owned_str_array_t : z_str_array_clear,                           \
-    z_owned_hello_array_t : z_hello_array_clear,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_clear)(x)
+#define z_drop(x) _Generic((*x),                                      \
+    z_owned_str_t : z_str_drop,                                       \
+    z_owned_bytes_t : z_bytes_drop,                                   \
+    z_owned_string_t : z_string_drop,                                 \
+    z_owned_keyexpr_t : z_keyexpr_drop,                               \
+    z_owned_config_t : z_config_drop,                                 \
+    z_owned_session_t : z_session_drop,                               \
+    z_owned_info_t : z_info_drop,                                     \
+    z_owned_subscriber_t : z_subscriber_drop,                         \
+    z_owned_publisher_t : z_publisher_drop,                           \
+    z_owned_queryable_t : z_queryable_drop,                           \
+    z_owned_encoding_t : z_encoding_drop,                             \
+    z_owned_period_t : z_period_drop,                                 \
+    z_owned_consolidation_strategy_t : z_consolidation_strategy_drop, \
+    z_owned_query_target_t : z_query_target_drop,                     \
+    z_owned_target_t : z_target_drop,                                 \
+    z_owned_query_consolidation_t : z_query_consolidation_drop,       \
+    z_owned_put_options_t : z_put_options_drop,                       \
+    z_owned_sample_t : z_sample_drop,                                 \
+    z_owned_hello_t : z_hello_drop,                                   \
+    z_owned_reply_t : z_reply_drop,                                   \
+    z_owned_reply_data_t : z_reply_data_drop,                         \
+    z_owned_str_array_t : z_str_array_drop,                           \
+    z_owned_hello_array_t : z_hello_array_drop,                       \
+    z_owned_reply_data_array_t : z_reply_data_array_drop)(x)
 
 #define z_check(x) _Generic((x),                                       \
     z_owned_str_t : z_str_check,                                       \
