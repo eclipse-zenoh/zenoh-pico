@@ -43,7 +43,6 @@ uint8_t z_config_insert_json(z_config_t *config, const char *key, const char *va
 
 z_encoding_t z_encoding_default(void);
 
-z_target_t z_target_default(void);
 z_query_target_t z_query_target_default(void);
 z_query_consolidation_t z_query_consolidation_auto(void);
 z_query_consolidation_t z_query_consolidation_default(void);
@@ -77,7 +76,6 @@ _OWNED_FUNCTIONS(z_encoding_t, z_owned_encoding_t, encoding)
 _OWNED_FUNCTIONS(z_period_t, z_owned_period_t, period)
 _OWNED_FUNCTIONS(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy)
 _OWNED_FUNCTIONS(z_query_target_t, z_owned_query_target_t, query_target)
-_OWNED_FUNCTIONS(z_target_t, z_owned_target_t, target)
 _OWNED_FUNCTIONS(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation)
 _OWNED_FUNCTIONS(z_put_options_t, z_owned_put_options_t, put_options)
 
@@ -116,8 +114,8 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
 void z_pull(const z_subscriber_t *sub);
 void z_subscriber_close(z_owned_subscriber_t *sub);
 
-void z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg);
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation);
+uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options);
+z_get_options_t z_get_options_default(void);
 
 void z_closure_query_call(const z_closure_query_t *closure, z_query_t query);
 z_queryable_options_t z_queryable_options_default(void);

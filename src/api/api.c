@@ -230,6 +230,11 @@ z_queryable_options_t z_queryable_options_default(void)
     return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
 }
 
+z_query_target_t z_query_target_default(void)
+{
+    return _z_query_target_default();
+}
+
 z_query_consolidation_t z_query_consolidation_auto(void)
 {
     return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_AUTO};
@@ -270,57 +275,46 @@ z_query_consolidation_t z_query_consolidation_reception(void)
                                       ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
-z_target_t z_target_default(void)
+uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options)
 {
-    return _z_target_default();
-}
-
-void z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation, void (*callback)(const z_reply_t*, const void*), void *arg)
-{
-    // FIXME: move this to a function
     _z_consolidation_strategy_t strategy;
-    if (consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
-        strategy = consolidation._strategy._manual;
+    _z_target_t target;
+    target._kind = Z_QUERYABLE_ALL_KINDS;
+
+    if (options != NULL)
+    {
+        // TODO: Check before release
+        if (options->consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
+            strategy = options->consolidation._strategy._manual;
+        else
+        {
+            // if (keyexpr.rname.)
+            strategy = z_query_consolidation_default()._strategy._manual;
+            // QueryConsolidation::Auto => {
+            //     if self.selector.has_time_range() {
+            //         ConsolidationStrategy::none()
+            //     } else {
+            //         ConsolidationStrategy::default()
+            //     }
+            // }
+        }
+        target.target = options->target;
+        // TODO: Check before release
+        // if (target._target == Z_TARGET_COMPLETE)
+        //     target._type._complete = 0;
+    }
     else
     {
-        // if (keyexpr.rname.)
+        target.target = z_query_target_default();
         strategy = z_query_consolidation_default()._strategy._manual;
-        // QueryConsolidation::Auto => {
-        //     if self.selector.has_time_range() {
-        //         ConsolidationStrategy::none()
-        //     } else {
-        //         ConsolidationStrategy::default()
-        //     }
-        // }
     }
 
-    _z_query(zs, keyexpr, predicate, target, strategy, callback, arg);
+    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->context);
 }
 
-z_owned_reply_data_array_t z_get_collect(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_target_t target, z_query_consolidation_t consolidation)
+z_get_options_t z_get_options_default(void)
 {
-    // FIXME: move this to a function
-    _z_consolidation_strategy_t strategy;
-    if (consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
-        strategy = consolidation._strategy._manual;
-    else
-    {
-        // if (keyexpr.rname.)
-        strategy = z_query_consolidation_default()._strategy._manual;
-        // QueryConsolidation::Auto => {
-        //     if self.selector.has_time_range() {
-        //         ConsolidationStrategy::none()
-        //     } else {
-        //         ConsolidationStrategy::default()
-        //     }
-        // }
-    }
-
-    z_owned_reply_data_array_t rda;
-    rda._value = (z_reply_data_array_t*)malloc(sizeof(z_reply_data_array_t));
-    *rda._value = _z_query_collect(zs, keyexpr, predicate, target, strategy);
-
-    return rda;
+    return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
 void z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, size_t len)
@@ -464,11 +458,9 @@ _OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_ow
 _OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
 
 _OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
-// _OWNED_FUNCTIONS_DEFINITION(z_subinfo_t, z_owned_subinfo_t, subinfo, _z_subinfo_free, _z_owner_noop_copy)
 _OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
 _OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
 _OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_target_t, z_owned_target_t, target, _z_owner_noop_free, _z_owner_noop_copy)
 _OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
 _OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
 

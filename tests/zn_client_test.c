@@ -264,30 +264,6 @@ int main(int argc, char **argv)
         assert(replies >= expected);
     replies = 0;
 
-    if (is_reliable)
-    {
-        _z_sleep_s(SLEEP);
-
-        // Query and collect from first session
-        total = QRY_CLT * SET;
-        for (unsigned int n = 0; n < QRY_CLT; n++)
-        {
-            for (unsigned int i = 0; i < SET; i++)
-            {
-                sprintf(s1_res, "%s%d", uri, i);
-                _z_keyexpr_t rk = _z_rname(s1_res);
-                _z_target_t qry_tgt = _z_target_default();
-                _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
-                _z_reply_data_array_t ra = _z_query_collect(s1, rk, "", qry_tgt, qry_con);
-                printf("Queried and collected data from session 1: %lu %s\n", rk.id, rk.suffix);
-                _z_keyexpr_clear(&rk);
-                replies += ra._len;
-                _z_reply_data_array_clear(&ra);
-            }
-        }
-        assert(replies == total);
-    }
-
     _z_sleep_s(SLEEP);
 
     // Undeclare publishers on first session

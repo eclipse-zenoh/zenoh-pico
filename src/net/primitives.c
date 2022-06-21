@@ -339,7 +339,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
 }
 
 /*------------------ Query ------------------*/
-void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg)
+uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
@@ -357,9 +357,7 @@ void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, con
 
     _z_zenoh_message_t z_msg = _z_msg_make_query(keyexpr, pq->_predicate, pq->_id, pq->_target, pq->_consolidation);
 
-    int res = _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
-    if (res != 0)
-        _z_unregister_pending_query(zn, pq);
+    return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 }
 
 void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)

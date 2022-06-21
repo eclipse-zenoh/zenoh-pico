@@ -75,6 +75,12 @@ typedef struct
     uint8_t priority;
 } z_put_options_t;
 
+typedef struct
+{
+    z_query_target_t target;
+    z_query_consolidation_t consolidation;
+} z_get_options_t;
+
 typedef _z_sample_t z_sample_t;
 typedef _z_hello_t z_hello_t;
 typedef _z_reply_t z_reply_t;
@@ -93,6 +99,13 @@ typedef struct
   _z_questionable_handler_t call;
   void (*drop)(void*);
 } z_closure_query_t;
+
+typedef struct
+{
+  void *context;
+  _z_reply_handler_t call;
+  void (*drop)(void*);
+} z_closure_reply_t;
 
 #define _TYPEDEF_ARRAY(type, alias, elem, name)                               \
     typedef type alias;                                                       \
@@ -137,7 +150,6 @@ _OWNED_TYPE(z_encoding_t, encoding)
 _OWNED_TYPE(z_period_t, period)
 _OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
 _OWNED_TYPE(z_query_target_t, query_target)
-_OWNED_TYPE(z_target_t, target)
 _OWNED_TYPE(z_query_consolidation_t, query_consolidation)
 _OWNED_TYPE(z_put_options_t, put_options)
 

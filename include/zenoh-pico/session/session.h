@@ -24,7 +24,7 @@
 #define _Z_RESOURCE_IS_LOCAL 1
 
 /**
- * An reply to a :c:func:`z_query` (or :c:func:`_z_query_collect`).
+ * An reply to a :c:func:`z_query`.
  *
  * Members:
  *   _z_sample_t data: a :c:type:`_z_sample_t` containing the key and value of the reply.
@@ -112,7 +112,7 @@ _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_query_handler_t)(const _z_reply_t *reply, const void *arg);
+typedef void (*_z_reply_handler_t)(const _z_reply_t *reply, const void *arg);
 
 typedef struct
 {
@@ -122,7 +122,7 @@ typedef struct
     _z_target_t _target;
     _z_consolidation_strategy_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
-    _z_query_handler_t _callback;
+    _z_reply_handler_t _callback;
     void *_arg;
 } _z_pending_query_t;
 

@@ -340,7 +340,7 @@ Functions
 
   Return a zenoh-net publisher.
 
-.. c:function:: z_sto_p_result_t z_declare_storage(_z_session_t *z, const char* resource, _z_data_handler_t data_handler, _z_query_handler_t query_handler, void *arg)
+.. c:function:: z_sto_p_result_t z_declare_storage(_z_session_t *z, const char* resource, _z_data_handler_t data_handler, _z_reply_handler_t reply_handler, void *arg)
 
   Declare a storage for all data matching the provided resource name **resource** in session **z**.
 
@@ -353,7 +353,7 @@ Functions
 
   Return a zenoh-net storage.
 
-.. c:function:: z_eval_p_result_t z_declare_eval(_z_session_t *z, const char* resource, _z_query_handler_t query_handler, void *arg)
+.. c:function:: z_eval_p_result_t z_declare_eval(_z_session_t *z, const char* resource, _z_reply_handler_t reply_handler, void *arg)
 
   Declare an eval able to provide data matching the provided resource name **resource** in session **z**.
 
@@ -513,11 +513,11 @@ Handlers
   | **info** is the :c:type:`z_data_info_t` associated with the received data.
   | **arg** is the pointer passed to :c:func:`_z_declare_subscriber` or :c:func:`z_declare_storage`.
 
-.. c:type:: void (*_z_query_handler_t)(const char *rname, const char *predicate, z_replies_sender_t send_replies, void *query_handle, void *arg)
+.. c:type:: void (*_z_reply_handler_t)(const char *rname, const char *predicate, z_replies_sender_t send_replies, void *query_handle, void *arg)
 
   Function to pass as argument of :c:func:`z_declare_storage` or :c:func:`z_declare_eval`.
   It will be called on reception of query matching the stored/evaluated resource selection.
-  The :c:type:`_z_query_handler_t` must provide the data matching the resource *rname* by calling
+  The :c:type:`_z_reply_handler_t` must provide the data matching the resource *rname* by calling
   the *send_replies* function with the *query_handle* and the data as arguments. The *send_replies*
   function MUST be called but accepts empty data array.
 

@@ -35,7 +35,6 @@
     z_owned_period_t : z_period_loan,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_loan, \
     z_owned_query_target_t : z_query_target_loan,                     \
-    z_owned_target_t : z_target_loan,                                 \
     z_owned_query_consolidation_t : z_query_consolidation_loan,       \
     z_owned_put_options_t : z_put_options_loan,                       \
     z_owned_sample_t : z_sample_loan,                                 \
@@ -61,7 +60,6 @@
     z_owned_period_t : z_period_drop,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_drop, \
     z_owned_query_target_t : z_query_target_drop,                     \
-    z_owned_target_t : z_target_drop,                                 \
     z_owned_query_consolidation_t : z_query_consolidation_drop,       \
     z_owned_put_options_t : z_put_options_drop,                       \
     z_owned_sample_t : z_sample_drop,                                 \
@@ -87,7 +85,6 @@
     z_owned_period_t : z_period_check,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_check, \
     z_owned_query_target_t : z_query_target_check,                     \
-    z_owned_target_t : z_target_check,                                 \
     z_owned_query_consolidation_t : z_query_consolidation_check,       \
     z_owned_put_options_t : z_put_options_check,                       \
     z_owned_sample_t : z_sample_check,                                 \
@@ -113,7 +110,6 @@
     z_owned_period_t : z_period_move,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_move, \
     z_owned_query_target_t : z_query_target_move,                     \
-    z_owned_target_t : z_target_move,                                 \
     z_owned_query_consolidation_t : z_query_consolidation_move,       \
     z_owned_put_options_t : z_put_options_move,                       \
     z_owned_sample_t : z_sample_move,                                 \
@@ -139,7 +135,6 @@
     z_owned_period_t : z_period_clone,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_clone, \
     z_owned_query_target_t : z_query_target_clone,                     \
-    z_owned_target_t : z_target_clone,                                 \
     z_owned_query_consolidation_t : z_query_consolidation_clone,       \
     z_owned_put_options_t : z_put_options_clone,                       \
     z_owned_sample_t : z_sample_clone,                                 \

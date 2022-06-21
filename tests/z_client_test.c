@@ -229,7 +229,8 @@ int main(int argc, char **argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            z_get(z_loan(s1), z_keyexpr(s1_res), "", z_target_default(), z_query_consolidation_default(), reply_handler, &idx[i]);
+            z_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
+            z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
             printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
         }
     }
@@ -262,26 +263,6 @@ int main(int argc, char **argv)
     else
         assert(replies >= expected);
     replies = 0;
-
-    if (is_reliable)
-    {
-        _z_sleep_s(SLEEP);
-
-        // Query and collect from first session
-        total = QRY_CLT * SET;
-        for (unsigned int n = 0; n < QRY_CLT; n++)
-        {
-            for (unsigned int i = 0; i < SET; i++)
-            {
-                sprintf(s1_res, "%s%d", uri, i);
-                z_owned_reply_data_array_t reply_data_a = z_get_collect(z_loan(s1), z_keyexpr(s1_res), "", z_target_default(), z_query_consolidation_default());
-                printf("Queried and collected data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
-                replies += z_loan(reply_data_a)->_len;
-                z_drop(z_move(reply_data_a));
-            }
-        }
-        assert(replies == total);
-    }
 
     _z_sleep_s(SLEEP);
 

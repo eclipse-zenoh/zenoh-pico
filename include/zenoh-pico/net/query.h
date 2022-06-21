@@ -79,6 +79,8 @@ typedef struct
 _z_consolidation_strategy_t _z_consolidation_strategy_none(void);
 _z_consolidation_strategy_t _z_consolidation_strategy_default(void);
 
+_z_query_target_t _z_query_target_default(void);
+
 /**
  * Create a default :c:type:`_z_target_t`.
  *

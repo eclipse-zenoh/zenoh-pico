@@ -210,24 +210,7 @@ void _z_pull(const _z_subscriber_t *sub);
  *     callback: The callback function that will be called on reception of replies for this query.
  *     arg: A pointer that will be passed to the **callback** on each call.
  */
-void _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_query_handler_t callback, void *arg);
-
-/**
- * Query data from the matching queryables in the system.
- * Replies are collected in an array.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to query. The callee gets the ownership of any
- *             allocated value.
- *     predicate: An indication to matching queryables about the queried data.
- *     target: The kind of queryables that should be target of this query.
- *     consolidation: The kind of consolidation that should be applied on replies.
- *
- * Returns:
- *    An array containing all the replies for this query.
- */
-_z_reply_data_array_t _z_query_collect(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation);
+uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg);
 
 /**
  * Send a reply to a query.
