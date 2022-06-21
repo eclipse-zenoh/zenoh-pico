@@ -27,14 +27,71 @@ void z_init_logger(void)
     // TODO
 }
 
+z_owned_config_t z_config_new(void)
+{
+    return (z_owned_config_t){._value = _z_config_empty()};
+}
+
+z_owned_config_t z_config_empty(void)
+{
+    return (z_owned_config_t){._value = _z_config_empty()};
+}
+
 z_owned_config_t z_config_default(void)
 {
     return (z_owned_config_t){._value = _z_config_default()};
 }
 
+z_owned_config_t z_config_client(const char *const *peers, size_t n_peers)
+{
+    (void) (n_peers);
+    return (z_owned_config_t){._value = _z_config_client(peers[0])};
+}
+
+z_owned_config_t z_config_peer(void)
+{
+    // Not implemented yet in Zenoh-Pico
+    return (z_owned_config_t){._value = NULL};
+}
+
+z_owned_config_t z_config_from_file(const char *path)
+{
+    // Not implemented yet in Zenoh-Pico
+    (void) (path);
+    return (z_owned_config_t){._value = NULL};
+}
+
+z_owned_config_t z_config_from_str(const char *str)
+{
+    // Not implemented yet in Zenoh-Pico
+    (void) (str);
+    return (z_owned_config_t){._value = NULL};
+}
+
+const char *z_config_get(z_config_t *config, unsigned int key)
+{
+    return _z_config_get(config, key);
+}
+
+const char *z_config_to_str(z_config_t *config)
+{
+    // Not implemented yet in Zenoh-Pico
+    (void) (config);
+    return NULL;
+}
+
 uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
     return _z_config_insert(config, key, value);
+}
+
+uint8_t z_config_insert_json(z_config_t *config, const char *key, const char *value)
+{
+    // Not implemented yet in Zenoh-Pico
+    (void) (config);
+    (void) (key);
+    (void) (value);
+    return 0;
 }
 
 z_owned_session_t z_open(z_owned_config_t *config)

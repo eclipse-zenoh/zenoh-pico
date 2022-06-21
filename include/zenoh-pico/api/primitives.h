@@ -32,14 +32,14 @@ z_keyexpr_t z_keyexpr(const char *name);
 z_owned_config_t z_config_new(void);
 z_owned_config_t z_config_empty(void);
 z_owned_config_t z_config_default(void);
-z_owned_config_t z_config_client(const char *const *peers, z_zint_t n_peers);
+z_owned_config_t z_config_client(const char *const *peers, size_t n_peers);
 z_owned_config_t z_config_peer(void);
 z_owned_config_t z_config_from_file(const char *path);
 z_owned_config_t z_config_from_str(const char *str);
-z_owned_string_t z_config_get(z_config_t *config, z_string_t key);
-z_string_t z_config_to_str(z_config_t *config);
+const char *z_config_get(z_config_t *config, unsigned int key);
+const char *z_config_to_str(z_config_t *config);
 uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
-//int z_config_insert_json(z_config_t config, z_string_t key, z_string_t value);
+uint8_t z_config_insert_json(z_config_t *config, const char *key, const char *value);
 
 z_encoding_t z_encoding_default(void);
 
