@@ -188,12 +188,13 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, unsigned int kind, _z_questionable_handler_t callback, void *arg)
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete, _z_questionable_handler_t callback, void *arg)
 {
     _z_questionable_t *rq = (_z_questionable_t *)malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
     rq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rq->_kind = kind;
+    rq->_complete = complete;
+    rq->_kind = Z_QUERYABLE_EVAL;
     rq->_callback = callback;
     rq->_arg = arg;
 
@@ -202,7 +203,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uns
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), kind, _Z_QUERYABLE_COMPLETE_DEFAULT, _Z_QUERYABLE_DISTANCE_DEFAULT);
+    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_kind, rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);

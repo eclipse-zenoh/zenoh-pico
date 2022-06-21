@@ -150,6 +150,15 @@
     z_owned_hello_array_t : z_hello_array_clone,                       \
     z_owned_reply_data_array_t : z_reply_data_array_clone)(&x)
 
+#define z_call(x, ...) _Generic((x),                                   \
+    z_owned_closure_query_t : z_closure_query_call)(&x, __VA_ARGS__)
+
+#define _z_closure_overloader(callback, droper, ctx, ...) \
+  {                                                       \
+    .call = callback, .drop = droper, .context = ctx      \
+  }
+#define z_closure(...) _z_closure_overloader(__VA_ARGS__, 0, 0)
+
 #endif /* ZENOH_C_STANDARD != 99 */
 
 #endif /* ZENOH_PICO_API_MACROS_H */

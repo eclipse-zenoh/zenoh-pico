@@ -133,18 +133,14 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub);
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key the :c:type:`_z_queryable_t` will reply to.
  *             The callee gets the ownership of any allocated value.
- *     kind: The kind of :c:type:`_z_queryable_t`.
+ *     complete: The complete of :c:type:`_z_queryable_t`.
  *     callback: The callback function that will be called each time a matching query is received.
  *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn,
-                                    _z_keyexpr_t keyexpr,
-                                    unsigned int kind,
-                                    _z_questionable_handler_t callback,
-                                    void *arg);
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr,uint8_t complete, _z_questionable_handler_t callback, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.

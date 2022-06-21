@@ -19,6 +19,7 @@
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
 
@@ -206,9 +207,13 @@ z_encoding_t z_encoding_default(void)
     return (_z_encoding_t){.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
 }
 
-z_owned_queryable_t z_queryable_new(z_session_t *zs, z_keyexpr_t keyexpr, unsigned int kind, void (*callback)(const z_query_t*, const void*), void *arg)
+z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options)
 {
-    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, kind, callback, arg)};
+    if (options != NULL)
+        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->context)};
+
+    z_queryable_options_t opt = z_queryable_options_default();
+    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->context)};
 }
 
 void z_queryable_close(z_owned_queryable_t *queryable)
@@ -218,6 +223,11 @@ void z_queryable_close(z_owned_queryable_t *queryable)
     z_queryable_drop(queryable);
     free(queryable->_value);
     queryable->_value = NULL;
+}
+
+z_queryable_options_t z_queryable_options_default(void)
+{
+    return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
 }
 
 z_query_consolidation_t z_query_consolidation_auto(void)

@@ -39,7 +39,8 @@ typedef struct
 {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    unsigned int _kind;
+    uint8_t _complete;
+    uint8_t _kind;
     _z_questionable_handler_t _callback;
     void *_arg;
 } _z_questionable_t;

@@ -171,8 +171,9 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
+        z_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t*)malloc(sizeof(z_owned_queryable_t));
-        *qle = z_queryable_new(z_loan(s2), z_keyexpr(s1_res), Z_QUERYABLE_EVAL, query_handler, &idx[i]);
+        *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
         printf("Declared queryable on session 2: %zu %lu %s\n", z_loan(*qle)->_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
