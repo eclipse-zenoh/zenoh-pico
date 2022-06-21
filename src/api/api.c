@@ -357,21 +357,16 @@ z_put_options_t z_put_options_default(void)
 
 z_subscriber_options_t z_subscriber_options_default(void)
 {
-    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE, .cargs = NULL};
+    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
 }
 
-z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, void (*callback)(const z_sample_t*, const void*), const z_subscriber_options_t *opts)
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options)
 {
     _z_subinfo_t subinfo = _z_subinfo_default();
-    void *cargs = NULL;
-    if (opts != NULL)
-    {
-        subinfo.reliability = opts->reliability;
-        cargs = opts->cargs;
-    }
+    if (options != NULL)
+        subinfo.reliability = options->reliability;
 
-
-    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback, cargs)};
+    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->context)};
 }
 
 void z_pull(const z_subscriber_t *sub)

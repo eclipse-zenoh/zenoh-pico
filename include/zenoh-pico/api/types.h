@@ -43,7 +43,7 @@ typedef _z_target_t z_target_t;
 
 typedef struct {
   z_reliability_t reliability;
-  void *cargs;
+  z_submode_t mode;
 } z_subscriber_options_t;
 
 typedef struct
@@ -79,6 +79,13 @@ typedef _z_sample_t z_sample_t;
 typedef _z_hello_t z_hello_t;
 typedef _z_reply_t z_reply_t;
 typedef _z_reply_data_t z_reply_data_t;
+
+typedef struct
+{
+  void *context;
+  _z_data_handler_t call;
+  void (*drop)(void*);
+} z_closure_sample_t;
 
 typedef struct
 {

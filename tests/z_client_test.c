@@ -153,14 +153,9 @@ int main(int argc, char **argv)
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++)
     {
+        z_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
-        z_subscriber_options_t opts = z_subscriber_options_default();
-        opts.cargs = &idx[i];
-
-        *sub = z_declare_subscriber(z_loan(s2), z_keyexpr("fdsafdsa"), data_handler, &opts);
-        *sub = z_declare_subscriber(z_loan(s2), *z_loan(rids2[i]), data_handler, &opts);
-
-
+        *sub = z_declare_subscriber(z_loan(s2), *z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i])->id, "");
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list

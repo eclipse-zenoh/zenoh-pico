@@ -175,18 +175,6 @@ typedef struct
 } _z_period_t;
 
 /**
- * The subscription mode.
- *
- *     - **Z_SUBMODE_PUSH**
- *     - **Z_SUBMODE_PULL**
- */
-typedef enum
-{
-    Z_SUBMODE_PUSH = 0,
-    Z_SUBMODE_PULL = 1,
-} _z_submode_t;
-
-/**
  * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created :c:type:`_z_subscription_t`.
  *
  * Members:
@@ -197,7 +185,7 @@ typedef enum
 typedef struct
 {
     z_reliability_t reliability;
-    _z_submode_t mode;
+    z_submode_t mode;
     _z_period_t period;
 } _z_subinfo_t;
 

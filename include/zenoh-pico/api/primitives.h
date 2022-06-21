@@ -112,7 +112,7 @@ int z_put_ext(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zi
 z_put_options_t z_put_options_default(void);
 
 z_subscriber_options_t z_subscriber_options_default(void);
-z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, void (*callback)(const z_sample_t*, const void*), const z_subscriber_options_t *opts);
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options);
 void z_pull(const z_subscriber_t *sub);
 void z_subscriber_close(z_owned_subscriber_t *sub);
 

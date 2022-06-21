@@ -110,4 +110,10 @@ typedef enum
     Z_PRIORITY_BACKGROUND = 7,
 } z_priority_t;
 
+typedef enum
+{
+    Z_SUBMODE_PUSH = 0,
+    Z_SUBMODE_PULL = 1,
+} z_submode_t;
+
 #endif /* ZENOH_PICO_API_CONSTANTS_H */
