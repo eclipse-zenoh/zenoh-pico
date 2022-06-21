@@ -177,7 +177,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         _z_keyexpr_t rk = _z_rid(rids1[i]);
-        _z_publisher_t *pub = _z_declare_publisher(s1, rk);
+        _z_publisher_t *pub = _z_declare_publisher(s1, rk, -1, Z_CONGESTION_CONTROL_DROP, Z_PRIORITY_DATA_HIGH);
         assert(pub != NULL);
         printf("Declared publisher on session 1: %zu\n", pub->_id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list

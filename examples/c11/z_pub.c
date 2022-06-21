@@ -45,7 +45,8 @@ int main(int argc, char **argv)
 
     printf("Declaring key expression '%s'...\n", expr);
     z_owned_keyexpr_t keyexpr = z_declare_keyexpr(z_loan(s), z_keyexpr(expr));
-    z_owned_publisher_t pub = z_declare_publication(z_loan(s), *z_loan(keyexpr));
+    z_publisher_options_t options = z_publisher_options_default();
+    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), *z_loan(keyexpr), &options);
     if (!z_check(pub))
     {
         printf("Unable to declare publication.\n");

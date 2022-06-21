@@ -187,9 +187,18 @@ void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
     keyexpr->_value = NULL;
 }
 
-z_owned_publisher_t z_declare_publication(z_session_t *zs, z_keyexpr_t keyexpr)
+z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options)
 {
-    return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr)};
+    if (options != NULL)
+        return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr, options->local_routing, options->congestion_control, options->priority)};
+
+    z_publisher_options_t opt = z_publisher_options_default();
+    return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr, opt.local_routing, opt.congestion_control, opt.priority)};
+}
+
+z_publisher_options_t z_publisher_options_default(void)
+{
+    return (z_publisher_options_t){.local_routing = -1, .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
 }
 
 z_encoding_t z_encoding_default(void)

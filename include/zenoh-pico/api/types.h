@@ -54,6 +54,14 @@ typedef struct
         z_consolidation_strategy_t _manual;
     } _strategy;
 } z_query_consolidation_t;
+
+typedef struct
+{
+    int8_t local_routing;
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
+} z_publisher_options_t;
+
 typedef struct
 {
     z_encoding_t encoding;

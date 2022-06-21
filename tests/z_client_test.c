@@ -184,7 +184,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         z_owned_publisher_t *pub = (z_owned_publisher_t*)malloc(sizeof(z_owned_publisher_t));
-        *pub = z_declare_publication(z_loan(s1), *z_loan(rids1[i]));
+        *pub = z_declare_publisher(z_loan(s1), *z_loan(rids1[i]), NULL);
         if (!z_check(*pub))
         printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list

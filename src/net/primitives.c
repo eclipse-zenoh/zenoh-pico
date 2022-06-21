@@ -84,12 +84,15 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 }
 
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr)
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing, z_congestion_control_t congestion_control, z_priority_t priority)
 {
     _z_publisher_t *pub = (_z_publisher_t *)malloc(sizeof(_z_publisher_t));
     pub->_zn = zn;
     pub->_key = keyexpr;
     pub->_id = _z_get_entity_id(zn);
+    pub->_local_routing = local_routing;
+    pub->_congestion_control = congestion_control;
+    pub->_priority = priority;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
@@ -307,7 +310,7 @@ int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payloa
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
-int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl)
+int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const z_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.

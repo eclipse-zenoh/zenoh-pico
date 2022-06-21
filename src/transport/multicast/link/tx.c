@@ -71,7 +71,7 @@ int _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     return res;
 }
 
-int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, _z_congestion_control_t cong_ctrl)
+int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, z_congestion_control_t cong_ctrl)
 {
     _Z_DEBUG(">> send zenoh message\n");
 

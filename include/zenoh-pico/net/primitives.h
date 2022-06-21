@@ -85,7 +85,7 @@ void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr);
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing, z_congestion_control_t congestion_control, z_priority_t priority);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -188,7 +188,7 @@ int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payloa
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const _z_congestion_control_t cong_ctrl);
+int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const uint8_t kind, const z_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided

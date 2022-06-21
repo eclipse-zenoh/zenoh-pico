@@ -94,6 +94,12 @@ typedef enum
 
 typedef enum
 {
+    Z_CONGESTION_CONTROL_BLOCK = 0,
+    Z_CONGESTION_CONTROL_DROP = 1,
+} z_congestion_control_t;
+
+typedef enum
+{
     Z_PRIORITY_CONTROL = 0,
     Z_PRIORITY_REALTIME = 1,
     Z_PRIORITY_INTERACTIVE_HIGH = 2,

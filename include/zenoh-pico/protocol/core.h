@@ -160,18 +160,6 @@ typedef struct
 } _z_target_t;
 
 /**
- * The congestion control.
- *
- *     - **Z_CONGESTION_CONTROL_BLOCK**
- *     - **Z_CONGESTION_CONTROL_DROP**
- */
-typedef enum
-{
-    Z_CONGESTION_CONTROL_BLOCK = 0,
-    Z_CONGESTION_CONTROL_DROP = 1,
-} _z_congestion_control_t;
-
-/**
  * The subscription period.
  *
  * Members:
