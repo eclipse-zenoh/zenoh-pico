@@ -271,7 +271,7 @@ int main(int argc, char **argv)
     {
         z_owned_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)->_id);
-        z_publisher_close(z_move(*pub));
+        z_publisher_delete(z_move(*pub));
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free); // @TODO: use type-safe list
     }
 

@@ -77,6 +77,11 @@ typedef struct
 
 typedef struct
 {
+    z_encoding_t encoding;
+} z_publisher_put_options_t;
+
+typedef struct
+{
     z_query_target_t target;
     z_query_consolidation_t consolidation;
 } z_get_options_t;

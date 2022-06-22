@@ -102,7 +102,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
 void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options);
-void z_publisher_close(z_owned_publisher_t *sub);
+void z_publisher_delete(z_owned_publisher_t *sub);
 z_publisher_options_t z_publisher_options_default(void);
 
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len);
