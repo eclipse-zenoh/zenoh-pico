@@ -226,6 +226,6 @@ uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, 
  *     payload: The value of this reply.
  *     len: The length of the value of this reply.
  */
-void _z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, const size_t len);
+void _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

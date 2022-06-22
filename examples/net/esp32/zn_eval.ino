@@ -34,7 +34,7 @@ void query_handler(z_query_t *query, const void *arg)
     (void)(arg); // Unused paramater
     _z_string_t res = _z_query_res_name(query);
     _z_string_t pred = _z_query_predicate(query);
-    _z_send_reply(query, query->rname, (const unsigned char *)VALUE, strlen(VALUE));
+    _z_send_reply(query, query->rname, query->key, strlen(VALUE));
 }
 
 void setup()

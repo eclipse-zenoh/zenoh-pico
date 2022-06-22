@@ -250,17 +250,11 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
     _z_unregister_queryable(qle->_zn, q);
 }
 
-void _z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, const size_t len)
+void _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply._
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
     _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, query->_kind, 0);
-
-    // @TODO: use numerical resources if possible
-    // ResKey
-    _z_keyexpr_t keyexpr;
-    keyexpr.id = Z_RESOURCE_ID_NONE;
-    keyexpr.suffix = key;
 
     // Empty data info
     _z_data_info_t di;

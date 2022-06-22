@@ -325,9 +325,9 @@ z_get_options_t z_get_options_default(void)
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
-void z_send_reply(const z_query_t *query, const char *key, const uint8_t *payload, size_t len)
+void z_query_reply(const z_query_t *query, const z_keyexpr_t *keyexpr, const uint8_t *payload, size_t len)
 {
-    _z_send_reply(query, key, payload, len);
+    _z_send_reply(query, *keyexpr, payload, len);
 }
 
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
