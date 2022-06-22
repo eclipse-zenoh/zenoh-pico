@@ -116,8 +116,7 @@ int main(int argc, char **argv)
             sprintf(s1_res, "%s%d", uri, i);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-            z_keyexpr_t key = z_keyexpr(s1_res);
-            z_put(z_loan(s1), &key, (const uint8_t *)payload, len, &opt);
+            z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
         }
     }

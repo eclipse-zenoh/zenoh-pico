@@ -86,7 +86,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs);
  *
  * Members:
  *   size_t len: The length of the array.
- *   z_str_t *val: A pointer to the array.
+ *   char **_val: A pointer to the array.
  */
 typedef struct
 {

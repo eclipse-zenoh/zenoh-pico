@@ -21,7 +21,6 @@
 #if ZENOH_C_STANDARD != 99
 
 #define z_loan(x) _Generic((x),                                       \
-    z_owned_str_t : z_str_loan,                                       \
     z_owned_bytes_t : z_bytes_loan,                                   \
     z_owned_string_t : z_string_loan,                                 \
     z_owned_keyexpr_t : z_keyexpr_loan,                               \
@@ -46,7 +45,6 @@
     z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
 
 #define z_drop(x) _Generic((*x),                                      \
-    z_owned_str_t : z_str_drop,                                       \
     z_owned_bytes_t : z_bytes_drop,                                   \
     z_owned_string_t : z_string_drop,                                 \
     z_owned_keyexpr_t : z_keyexpr_drop,                               \
@@ -71,7 +69,6 @@
     z_owned_reply_data_array_t : z_reply_data_array_drop)(x)
 
 #define z_check(x) _Generic((x),                                       \
-    z_owned_str_t : z_str_check,                                       \
     z_owned_bytes_t : z_bytes_check,                                   \
     z_owned_string_t : z_string_check,                                 \
     z_owned_keyexpr_t : z_keyexpr_check,                               \
@@ -96,7 +93,6 @@
     z_owned_reply_data_array_t : z_reply_data_array_check)(&x)
 
 #define z_move(x) _Generic((x),                                       \
-    z_owned_str_t : z_str_move,                                       \
     z_owned_bytes_t : z_bytes_move,                                   \
     z_owned_string_t : z_string_move,                                 \
     z_owned_keyexpr_t : z_keyexpr_move,                               \
@@ -121,7 +117,6 @@
     z_owned_reply_data_array_t : z_reply_data_array_move)(&x)
 
 #define z_clone(x) _Generic((x),                                       \
-    z_owned_str_t : z_str_clone,                                       \
     z_owned_bytes_t : z_bytes_clone,                                   \
     z_owned_string_t : z_string_clone,                                 \
     z_owned_keyexpr_t : z_keyexpr_clone,                               \

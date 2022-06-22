@@ -28,7 +28,7 @@ void query_handler(const z_query_t *query, const void *arg)
     const char *res = query->key.suffix;
     char *pred = query->predicate;
     printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
-    z_query_reply(query, &query->key, (const unsigned char *)value, strlen(value));
+    z_query_reply(query, query->key, (const unsigned char *)value, strlen(value));
 }
 
 int main(int argc, char **argv)

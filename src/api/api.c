@@ -330,9 +330,9 @@ z_get_options_t z_get_options_default(void)
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
-void z_query_reply(const z_query_t *query, const z_keyexpr_t *keyexpr, const uint8_t *payload, size_t len)
+void z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len)
 {
-    _z_send_reply(query, *keyexpr, payload, len);
+    _z_send_reply(query, keyexpr, payload, len);
 }
 
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
@@ -347,12 +347,12 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned 
     return hellos; 
 }
 
-int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
+int z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
 {
     if (options != NULL)
-        return _z_write_ext(zs, *keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
+        return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
 
-    return _z_write_ext(zs, *keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_DATA_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
+    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_DATA_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
 z_put_options_t z_put_options_default(void)
@@ -419,29 +419,54 @@ int zp_stop_lease_task(z_session_t *zs)
 }
 
 /**************** Loans ****************/
-#define _OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    uint8_t z_##name##_check(const ownedtype *val)                            \
-    {                                                                         \
-        return val->_value != NULL;                                           \
-    }                                                                         \
-    type *z_##name##_loan(const ownedtype *val)                               \
-    {                                                                         \
-        return val->_value;                                                   \
-    }                                                                         \
-    ownedtype *z_##name##_move(ownedtype *val)                                \
-    {                                                                         \
-        return val;                                                           \
-    }                                                                         \
-    ownedtype z_##name##_clone(ownedtype *val)                                \
-    {                                                                         \
-        ownedtype ret;                                                        \
-        ret._value = (type*)malloc(sizeof(type));                             \
-        f_copy(ret._value, val->_value);                                      \
-        return ret;                                                           \
-    }                                                                         \
-    void z_##name##_drop(ownedtype *val)                                     \
-    {                                                                         \
-        f_free(&val->_value);                                                 \
+#define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
+    uint8_t z_##name##_check(const ownedtype *val)                                    \
+    {                                                                                 \
+        return val->_value != NULL;                                                   \
+    }                                                                                 \
+    type *z_##name##_loan(const ownedtype *val)                                       \
+    {                                                                                 \
+        return val->_value;                                                           \
+    }                                                                                 \
+    ownedtype *z_##name##_move(ownedtype *val)                                        \
+    {                                                                                 \
+        return val;                                                                   \
+    }                                                                                 \
+    ownedtype z_##name##_clone(ownedtype *val)                                        \
+    {                                                                                 \
+        ownedtype ret;                                                                \
+        ret._value = (type*)malloc(sizeof(type));                                     \
+        f_copy(ret._value, val->_value);                                              \
+        return ret;                                                                   \
+    }                                                                                 \
+    void z_##name##_drop(ownedtype *val)                                              \
+    {                                                                                 \
+        f_free(&val->_value);                                                         \
+    }
+
+#define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
+    uint8_t z_##name##_check(const ownedtype *val)                                      \
+    {                                                                                   \
+        return val->_value != NULL;                                                     \
+    }                                                                                   \
+    type z_##name##_loan(const ownedtype *val)                                          \
+    {                                                                                   \
+        return *val->_value;                                                             \
+    }                                                                                   \
+    ownedtype *z_##name##_move(ownedtype *val)                                          \
+    {                                                                                   \
+        return val;                                                                     \
+    }                                                                                   \
+    ownedtype z_##name##_clone(ownedtype *val)                                          \
+    {                                                                                   \
+        ownedtype ret;                                                                  \
+        ret._value = (type*)malloc(sizeof(type));                                       \
+        f_copy(ret._value, val->_value);                                                \
+        return ret;                                                                     \
+    }                                                                                   \
+    void z_##name##_drop(ownedtype *val)                                                \
+    {                                                                                   \
+        f_free(&val->_value);                                                           \
     }
 
 static inline void _z_owner_noop_free(void *s)
@@ -455,31 +480,29 @@ static inline void _z_owner_noop_copy(void *dst, const void *src)
     (void)(src);
 }
 
-// _OWNED_FUNCTIONS_DEFINITION(z_str_t, z_owned_str_t, str, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
+_IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free, _z_owner_noop_copy)
 
-_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free, _z_owner_noop_copy)
-
-_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_copy)

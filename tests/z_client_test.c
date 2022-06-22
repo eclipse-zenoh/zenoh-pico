@@ -46,9 +46,7 @@ void query_handler(const z_query_t *query, const void *arg)
     assert(_z_str_eq(query->key.suffix, res));
     assert(_z_str_eq(query->predicate, ""));
 
-    z_keyexpr_t key = z_keyexpr(res);
-    z_query_reply(query, &key, (const uint8_t *)res, strlen(res));
-
+    z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res));
     queries++;
 }
 
@@ -135,7 +133,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
-        printf("Declared resource on session 1: %lu %s\n", z_loan(expr)->id, z_loan(expr)->suffix);
+        printf("Declared resource on session 1: %lu %s\n", z_loan(expr).id, z_loan(expr).suffix);
         rids1[i] = expr;
     }
 
@@ -145,7 +143,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s2), z_keyexpr(s1_res));
-        printf("Declared resource on session 2: %lu %s\n", z_loan(expr)->id, z_loan(expr)->suffix);
+        printf("Declared resource on session 2: %lu %s\n", z_loan(expr).id, z_loan(expr).suffix);
         rids2[i] = expr;
     }
 
@@ -156,9 +154,9 @@ int main(int argc, char **argv)
     {
         z_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
-        *sub = z_declare_subscriber(z_loan(s2), *z_loan(rids2[i]), &callback, NULL);
+        *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i])->id, "");
+        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i]).id, "");
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -181,7 +179,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         z_owned_publisher_t *pub = (z_owned_publisher_t*)malloc(sizeof(z_owned_publisher_t));
-        *pub = z_declare_publisher(z_loan(s1), *z_loan(rids1[i]), NULL);
+        *pub = z_declare_publisher(z_loan(s1), z_loan(rids1[i]), NULL);
         if (!z_check(*pub))
         printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
         pubs1 = _z_list_push(pubs1, pub); // @TODO: use type-safe list
@@ -202,7 +200,7 @@ int main(int argc, char **argv)
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", z_loan(rids1[i])->id, len, n * SET + (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", z_loan(rids1[i]).id, len, n * SET + (i + 1), total);
         }
     }
 
@@ -302,7 +300,7 @@ int main(int argc, char **argv)
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++)
     {
-        printf("Undeclared resource on session 1: %lu\n", z_loan(rids1[i])->id);
+        printf("Undeclared resource on session 1: %lu\n", z_loan(rids1[i]).id);
         z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
@@ -310,7 +308,7 @@ int main(int argc, char **argv)
 
     for (unsigned int i = 0; i < SET; i++)
     {
-        printf("Undeclared resource on session 2: %lu\n", z_loan(rids2[i])->id);
+        printf("Undeclared resource on session 2: %lu\n", z_loan(rids2[i]).id);
         z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
