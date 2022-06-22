@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         c = getchar();
     }
 
-    z_subscriber_close(z_subscriber_move(&sub));
+    z_undeclare_subscriber(z_subscriber_move(&sub));
 
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));

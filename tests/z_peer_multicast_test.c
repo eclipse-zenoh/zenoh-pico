@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     {
         z_owned_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)->_id);
-        z_subscriber_close(z_move(*sub));
+        z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }
 

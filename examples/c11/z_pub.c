@@ -63,8 +63,8 @@ int main(int argc, char **argv)
     }
 
 EXIT:
-    z_publisher_delete(z_move(pub));
-    z_undeclare_expr(z_loan(s), z_move(keyexpr));
+    z_undeclare_publisher(z_move(pub));
+    z_undeclare_keyexpr(z_loan(s), z_move(keyexpr));
 
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));

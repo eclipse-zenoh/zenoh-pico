@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         z_pull(z_loan(sub));
     }
 
-    z_subscriber_close(z_move(sub));
+    z_undeclare_subscriber(z_move(sub));
 
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));

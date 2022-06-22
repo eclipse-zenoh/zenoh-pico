@@ -180,7 +180,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
     return key;
 }
 
-void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
+void z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 {
     _z_undeclare_resource(zs, keyexpr->_value->id);
 
@@ -202,12 +202,17 @@ z_publisher_options_t z_publisher_options_default(void)
     return (z_publisher_options_t){.local_routing = -1, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA_HIGH};
 }
 
-uint8_t z_publisher_put(const z_publisher_t *publisher, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options)
+uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options)
 {
     if (options != NULL)
-        return _z_write_ext(publisher->_zn, publisher->_key, payload, len, options->encoding, Z_DATA_KIND_PUT, publisher->_congestion_control);
+        return _z_write_ext(pub->_zn, pub->_key, payload, len, options->encoding, Z_DATA_KIND_PUT, pub->_congestion_control);
 
-    return _z_write_ext(publisher->_zn, publisher->_key, payload, len, z_encoding_default(), Z_DATA_KIND_PUT, publisher->_congestion_control);
+    return _z_write_ext(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_DATA_KIND_PUT, pub->_congestion_control);
+}
+
+uint8_t z_publisher_delete(const z_publisher_t *pub)
+{
+    return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_DATA_KIND_DELETE, pub->_congestion_control);
 }
 
 z_encoding_t z_encoding_default(void)
@@ -224,7 +229,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_
     return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->context)};
 }
 
-void z_queryable_close(z_owned_queryable_t *queryable)
+void z_undeclare_queryable(z_owned_queryable_t *queryable)
 {
     _z_undeclare_queryable(queryable->_value);
 
@@ -374,7 +379,7 @@ void z_pull(const z_subscriber_t *sub)
     _z_pull(sub);
 }
 
-void z_subscriber_close(z_owned_subscriber_t *sub)
+void z_undeclare_subscriber(z_owned_subscriber_t *sub)
 {
     _z_undeclare_subscriber(sub->_value);
 
@@ -383,7 +388,7 @@ void z_subscriber_close(z_owned_subscriber_t *sub)
     sub->_value = NULL;
 }
 
-void z_publisher_delete(z_owned_publisher_t *pub)
+void z_undeclare_publisher(z_owned_publisher_t *pub)
 {
     _z_undeclare_publisher(pub->_value);
 

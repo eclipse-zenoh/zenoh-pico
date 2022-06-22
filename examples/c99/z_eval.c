@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         c = getchar();
     }
 
-    z_queryable_close(z_queryable_move(&qable));
+    z_undeclare_queryable(z_queryable_move(&qable));
 
 EXIT:
     zp_stop_read_task(z_session_loan(&s));

@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     {
         z_owned_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)->_id);
-        z_publisher_delete(z_move(*pub));
+        z_undeclare_publisher(z_move(*pub));
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
     {
         z_owned_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
         printf("Undeclared subscriber on session 2: %zu\n", z_loan(*sub)->_id);
-        z_subscriber_close(z_move(*sub));
+        z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
     {
         z_owned_queryable_t *qle = _z_list_head(qles2); // @TODO: use type-safe list
         printf("Undeclared queryable on session 2: %zu\n", z_loan(*qle)->_id);
-        z_queryable_close(z_move(*qle));
+        z_undeclare_queryable(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         printf("Undeclared resource on session 1: %lu\n", z_loan(rids1[i])->id);
-        z_undeclare_expr(z_loan(s1), z_move(rids1[i]));
+        z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     _z_sleep_s(SLEEP);
@@ -311,7 +311,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         printf("Undeclared resource on session 2: %lu\n", z_loan(rids2[i])->id);
-        z_undeclare_expr(z_loan(s2), z_move(rids2[i]));
+        z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
     _z_sleep_s(SLEEP);

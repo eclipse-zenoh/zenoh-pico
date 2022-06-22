@@ -99,19 +99,23 @@ z_owned_string_t z_info_as_str(const z_session_t *zs);
 char *z_info_get(z_info_t *info, unsigned int key);
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
-void z_undeclare_expr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
+void z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options);
-void z_publisher_delete(z_owned_publisher_t *sub);
+void z_undeclare_publisher(z_owned_publisher_t *pub);
 z_publisher_options_t z_publisher_options_default(void);
 
 int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 z_put_options_t z_put_options_default(void);
 
+uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options);
+uint8_t z_publisher_delete(const z_publisher_t *pub);
+z_publisher_options_t z_publisher_options_default(void);
+
 z_subscriber_options_t z_subscriber_options_default(void);
 z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options);
 void z_pull(const z_subscriber_t *sub);
-void z_subscriber_close(z_owned_subscriber_t *sub);
+void z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
 uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options);
 z_get_options_t z_get_options_default(void);
@@ -119,7 +123,7 @@ z_get_options_t z_get_options_default(void);
 void z_closure_query_call(const z_closure_query_t *closure, z_query_t query);
 z_queryable_options_t z_queryable_options_default(void);
 z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options);
-void z_queryable_close(z_owned_queryable_t *queryable);
+void z_undeclare_queryable(z_owned_queryable_t *queryable);
 void z_query_reply(const z_query_t *query, const z_keyexpr_t *keyexpr, const uint8_t *payload, size_t len);
 
 /************* Tasks **************/
