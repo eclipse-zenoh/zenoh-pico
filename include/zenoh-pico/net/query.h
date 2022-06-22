@@ -31,27 +31,6 @@ typedef struct
 } z_query_t;
 
 /**
- * The callback signature of the functions handling query messages.
- */
-typedef void (*_z_questionable_handler_t)(const z_query_t *query, const void *arg);
-
-typedef struct
-{
-    _z_zint_t _id;
-    _z_keyexpr_t _key;
-    uint8_t _complete;
-    uint8_t _kind;
-    _z_questionable_handler_t _callback;
-    void *_arg;
-} _z_questionable_t;
-
-int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
-void _z_questionable_clear(_z_questionable_t *res);
-
-_Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_questionable, _z_questionable_t)
-
-/**
  * Return type when declaring a queryable.
  */
 typedef struct

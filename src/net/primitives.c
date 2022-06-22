@@ -127,13 +127,14 @@ void _z_undeclare_publisher(_z_publisher_t *pub)
 }
 
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info, _z_data_handler_t callback, void *arg)
+_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info, _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg)
 {
     _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
     rs->_id = _z_get_entity_id(zn);
     rs->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     rs->_info = sub_info;
     rs->_callback = callback;
+    rs->_dropper = dropper;
     rs->_arg = arg;
 
     int res = _z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs);
@@ -184,11 +185,12 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub)
     }
 
     _z_msg_clear(&z_msg);
+
     _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete, _z_questionable_handler_t callback, void *arg)
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete, _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg)
 {
     _z_questionable_t *rq = (_z_questionable_t *)malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
@@ -196,6 +198,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
     rq->_complete = complete;
     rq->_kind = Z_QUERYABLE_EVAL;
     rq->_callback = callback;
+    rq->_dropper = dropper;
     rq->_arg = arg;
 
     int res = _z_register_queryable(zn, rq);
@@ -333,7 +336,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
 }
 
 /*------------------ Query ------------------*/
-uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg)
+uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
@@ -343,6 +346,7 @@ uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, 
     pq->_target = target;
     pq->_consolidation = consolidation;
     pq->_callback = callback;
+    pq->_dropper = dropper;
     pq->_pending_replies = NULL;
     pq->_arg = arg;
 
@@ -378,43 +382,6 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
         _z_condvar_signal(&pqc->_cond_var);
         _z_mutex_unlock(&pqc->_mutex);
     }
-}
-
-_z_reply_data_array_t _z_query_collect(_z_session_t *zn,
-                                     _z_keyexpr_t keyexpr,
-                                     const char *predicate,
-                                     const _z_target_t target,
-                                     const _z_consolidation_strategy_t consolidation)
-{
-    // Create the synchronization variables
-    _z_pending_query_collect_t pqc;
-    pqc._replies = NULL;
-    _z_mutex_init(&pqc._mutex);
-    _z_condvar_init(&pqc._cond_var);
-
-    // Issue the query
-    _z_mutex_lock(&pqc._mutex); // Get the lock on the query, released on condvar wait
-    _z_query(zn, keyexpr, predicate, target, consolidation, _z_reply_collect_handler, &pqc);
-    _z_condvar_wait(&pqc._cond_var, &pqc._mutex); // Wait to be notified, releases pqc._mutex
-
-    _z_reply_data_array_t rda;
-    rda._len = _z_reply_data_list_len(pqc._replies);
-    _z_reply_data_t *replies = (_z_reply_data_t *)malloc(rda._len * sizeof(_z_reply_data_t));
-    for (unsigned int i = 0; i < rda._len; i++)
-    {
-        _z_reply_data_t *reply = _z_reply_data_list_head(pqc._replies);
-        replies[i].replier_kind = reply->replier_kind;
-        _z_bytes_move(&replies[i].replier_id, &reply->replier_id);
-        _z_sample_move(&replies[i].sample, &reply->sample);
-
-        pqc._replies = _z_reply_data_list_pop(pqc._replies);
-    }
-    rda._val = replies;
-
-    _z_condvar_free(&pqc._cond_var);
-    _z_mutex_free(&pqc._mutex);
-
-    return rda;
 }
 
 /*------------------ Pull ------------------*/

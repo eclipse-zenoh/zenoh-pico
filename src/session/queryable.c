@@ -25,6 +25,8 @@ int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *tw
 
 void _z_questionable_clear(_z_questionable_t *qle)
 {
+    if (qle->_dropper != NULL)
+        qle->_dropper(qle->_arg);
     _z_keyexpr_clear(&qle->_key);
 }
 

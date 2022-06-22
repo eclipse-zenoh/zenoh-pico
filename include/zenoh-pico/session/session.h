@@ -20,6 +20,11 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/string.h"
 
+/**
+ * The callback signature of the cleanup functions.
+ */
+typedef void (*_z_drop_handler_t)(void *arg);
+
 #define _Z_RESOURCE_REMOTE 0
 #define _Z_RESOURCE_IS_LOCAL 1
 
@@ -82,6 +87,7 @@ typedef struct
     _z_keyexpr_t _key;
     _z_subinfo_t _info;
     _z_data_handler_t _callback;
+    _z_drop_handler_t _dropper;
     void *_arg;
 } _z_subscription_t;
 
@@ -96,6 +102,28 @@ typedef struct
     _z_zint_t _id;
     _z_keyexpr_t _key;
 } _z_publication_t;
+
+/**
+ * The callback signature of the functions handling query messages.
+ */
+typedef void (*_z_questionable_handler_t)(const z_query_t *query, const void *arg);
+
+typedef struct
+{
+    _z_zint_t _id;
+    _z_keyexpr_t _key;
+    uint8_t _complete;
+    uint8_t _kind;
+    _z_questionable_handler_t _callback;
+    _z_drop_handler_t _dropper;
+    void *_arg;
+} _z_questionable_t;
+
+int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
+void _z_questionable_clear(_z_questionable_t *res);
+
+_Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_questionable, _z_questionable_t)
 
 typedef struct
 {
@@ -123,6 +151,7 @@ typedef struct
     _z_consolidation_strategy_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
     _z_reply_handler_t _callback;
+    _z_drop_handler_t _dropper;
     void *_arg;
 } _z_pending_query_t;
 

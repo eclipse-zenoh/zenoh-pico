@@ -25,6 +25,8 @@ int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *
 
 void _z_subscription_clear(_z_subscription_t *sub)
 {
+    if (sub->_dropper != NULL)
+        sub->_dropper(sub->_arg);
     _z_keyexpr_clear(&sub->_key);
 }
 

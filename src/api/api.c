@@ -382,7 +382,7 @@ uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_clo
         strategy = z_query_consolidation_default()._strategy._manual;
     }
 
-    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->context);
+    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->drop, callback->context);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
@@ -449,7 +449,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
-    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->context)};
+    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
 }
 
 void z_undeclare_subscriber(z_owned_subscriber_t *sub)
@@ -474,10 +474,10 @@ z_queryable_options_t z_queryable_options_default(void)
 z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options)
 {
     if (options != NULL)
-        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->context)};
+        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->drop, callback->context)};
 
     z_queryable_options_t opt = z_queryable_options_default();
-    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->context)};
+    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->drop, callback->context)};
 }
 
 void z_undeclare_queryable(z_owned_queryable_t *queryable)
