@@ -105,8 +105,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_
 void z_publisher_delete(z_owned_publisher_t *sub);
 z_publisher_options_t z_publisher_options_default(void);
 
-int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len);
-int z_put_ext(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
+int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 z_put_options_t z_put_options_default(void);
 
 z_subscriber_options_t z_subscriber_options_default(void);

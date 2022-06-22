@@ -200,7 +200,7 @@ int main(int argc, char **argv)
         {
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-            z_put_ext(z_loan(s1), *z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
+            z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
             printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", z_loan(rids1[i])->id, len, n * SET + (i + 1), total);
         }
     }

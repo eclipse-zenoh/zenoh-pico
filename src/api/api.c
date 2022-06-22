@@ -342,19 +342,17 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned 
     return hellos; 
 }
 
-int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, size_t len)
+int z_put(z_session_t *zs, z_keyexpr_t *keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
 {
-    return _z_write(zs, *keyexpr, (const uint8_t *)payload, len);
-}
+    if (options != NULL)
+        return _z_write_ext(zs, *keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
 
-int z_put_ext(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt)
-{
-    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, opt->encoding, opt->kind, opt->congestion_control);
+    return _z_write_ext(zs, *keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_DATA_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
 z_put_options_t z_put_options_default(void)
 {
-    return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_DATA_KIND_DEFAULT, .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_DATA_KIND_DEFAULT, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
 }
 
 z_subscriber_options_t z_subscriber_options_default(void)
