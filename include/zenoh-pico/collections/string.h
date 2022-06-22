@@ -71,7 +71,6 @@ typedef struct
 } _z_string_t;
 
 _z_string_t z_string_make(const char *value);
-void _z_string_append(_z_string_t *dst, const _z_string_t *src);
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 void _z_string_move_str(_z_string_t *dst, char *src);

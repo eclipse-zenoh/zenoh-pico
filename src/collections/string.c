@@ -24,13 +24,6 @@ _z_string_t z_string_make(const char *value)
     return s;
 }
 
-void _z_string_append(_z_string_t *dst, const _z_string_t *src)
-{
-    dst->len += src->len;
-    dst->val = (char *)realloc(dst->val, dst->len);
-    strcat(dst->val, src->val);
-}
-
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src)
 {
     if (src->val)
