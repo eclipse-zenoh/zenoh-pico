@@ -50,20 +50,18 @@ void print_iosli(_z_iosli_t *ios)
 /*=============================*/
 int gen_bool(void)
 {
-    return z_random() % 2;
+    return z_random_u8() % 2;
 }
 
 uint8_t gen_uint8(void)
 {
-    return z_random() % 255;
+    return z_random_u8() % 255;
 }
 
 size_t gen_size_t(void)
 {
     size_t ret = 0;
-    for (unsigned int i = 0; i < sizeof(size_t); i++)
-        ret |= z_random() << (i * 8);
-
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
@@ -486,7 +484,7 @@ void wbuf_reusable_write_zbuf_read(void)
     _z_wbuf_t wbf = gen_wbuf(128);
     for (int i = 0; i < 10; i++)
     {
-        size_t len = z_random() % 128;
+        size_t len = z_random_u8() % 128;
         printf("\n>>> WBuf => Write and Read\n");
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);

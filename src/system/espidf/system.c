@@ -17,9 +17,33 @@
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random(void)
+uint8_t z_random_u8(void)
+{
+    return z_random_u32();
+}
+
+uint16_t z_random_u16(void)
+{
+    return z_random_u32();
+}
+
+uint32_t z_random_u32(void)
 {
     return esp_random();
+}
+
+uint64_t z_random_u64(void)
+{
+    uint64_t ret = 0;
+    ret |= z_random_u32();
+    ret |= z_random_u32() << 8;
+
+    return ret;
+}
+
+void z_random_fill(void *buf, size_t len)
+{
+    esp_fill_random(buf, len);
 }
 
 /*------------------ Memory ------------------*/

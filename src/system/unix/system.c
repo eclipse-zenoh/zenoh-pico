@@ -19,16 +19,62 @@
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random(void)
+uint8_t z_random_u8(void)
 {
     uint8_t ret;
 #if defined(ZENOH_LINUX)
     getrandom(&ret, sizeof(uint8_t), GRND_RANDOM);
 #elif defined(ZENOH_MACOS)
+    ret = z_random_u32();
+#endif
+
+    return ret;
+}
+
+uint16_t z_random_u16(void)
+{
+    uint16_t ret;
+#if defined(ZENOH_LINUX)
+    getrandom(&ret, sizeof(uint16_t), GRND_RANDOM);
+#elif defined(ZENOH_MACOS)
+    ret = z_random_u32();
+#endif
+
+    return ret;
+}
+
+uint32_t z_random_u32(void)
+{
+    uint32_t ret;
+#if defined(ZENOH_LINUX)
+    getrandom(&ret, sizeof(uint32_t), GRND_RANDOM);
+#elif defined(ZENOH_MACOS)
     ret = arc4random();
 #endif
 
     return ret;
+}
+
+uint64_t z_random_u64(void)
+{
+    uint64_t ret = 0;
+#if defined(ZENOH_LINUX)
+    getrandom(&ret, sizeof(uint64_t), GRND_RANDOM);
+#elif defined(ZENOH_MACOS)
+    ret |= z_random_u32();
+    ret |= z_random_u32() << 8;
+#endif
+
+    return ret;
+}
+
+void z_random_fill(void *buf, size_t len)
+{
+#if defined(ZENOH_LINUX)
+    getrandom(buf, len, GRND_RANDOM);
+#elif defined(ZENOH_MACOS)
+    arc4random_buf(buf, len);
+#endif
 }
 
 /*------------------ Memory ------------------*/

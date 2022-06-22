@@ -119,20 +119,18 @@ void print_transport_message_type(uint8_t header)
 /*=============================*/
 int gen_bool(void)
 {
-    return z_random() % 2;
+    return z_random_u8() % 2;
 }
 
 uint8_t gen_uint8(void)
 {
-    return z_random() % 255;
+    return z_random_u8() % 255;
 }
 
 z_zint_t gen_zint(void)
 {
     z_zint_t ret = 0;
-    for (unsigned int i = 0; i < sizeof(z_zint_t); i++)
-        ret |= z_random() << (i * 8);
-
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
@@ -154,8 +152,7 @@ _zn_payload_t gen_payload(size_t len)
     _zn_payload_t pld;
     pld.len = len;
     pld.val = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    for (size_t i = 0; i < len; i++)
-        ((uint8_t *)pld.val)[i] = z_random();
+    z_random_fill((uint8_t *)pld.val, pld.len);
 
     return pld;
 }
