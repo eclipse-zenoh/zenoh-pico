@@ -31,9 +31,12 @@
 /**
  * Query kind values.
  */
-#define Z_QUERYABLE_ALL_KINDS 0x01 // 1 << 0
-#define Z_QUERYABLE_STORAGE 0x02   // 1 << 1
-#define Z_QUERYABLE_EVAL 0x04      // 1 << 2
+typedef enum
+{
+    _Z_QUERYABLE_ALL_KINDS = 0x01,  // 1 << 0
+    _Z_QUERYABLE_STORAGE = 0x02,    // 1 << 1
+    _Z_QUERYABLE_EVAL = 0x04        // 1 << 2
+} _z_queryable_kind_t;
 
 /**
  * The reserved resource ID indicating a string-only resource key.
@@ -96,7 +99,7 @@ typedef struct
     _z_keyexpr_t key;
     _z_bytes_t value;
     _z_encoding_t encoding;
-    _z_zint_t kind;
+    z_sample_kind_t kind;
     _z_timestamp_t timestamp;
 } _z_sample_t;
 
@@ -145,12 +148,12 @@ typedef struct
  * The zenoh-net queryables that should be target of a :c:func:`z_query`.
  *
  * Members:
- *     unsigned int kind: A mask of queryable kinds.
+ *     _z_queryable_kind_t kind: A mask of queryable kinds.
  *     _z_target_t target: The query target.
  */
 typedef struct
 {
-    unsigned int _kind;
+    _z_queryable_kind_t _kind;
     _z_query_target_t target;
     union
     {

@@ -132,7 +132,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     while (xs != NULL)
     {
         _z_questionable_t *qle = _z_questionable_list_head(xs);
-        if (((query->_target._kind & Z_QUERYABLE_ALL_KINDS) | (query->_target._kind & qle->_kind)) != 0)
+        if (((query->_target._kind & _Z_QUERYABLE_ALL_KINDS) | (query->_target._kind & qle->_kind)) != 0)
         {
             q._kind = qle->_kind;
             qle->_callback(&q, qle->_arg);

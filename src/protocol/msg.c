@@ -436,7 +436,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_
     msg._body._query._consolidation = consolidation;
 
     msg._header = _Z_MID_QUERY;
-    if (msg._body._query._target._kind != Z_QUERYABLE_ALL_KINDS)
+    if (msg._body._query._target._kind != _Z_QUERYABLE_ALL_KINDS)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
     if (msg._body._query._key.suffix != NULL)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);

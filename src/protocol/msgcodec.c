@@ -1125,7 +1125,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
     }
     else
     {
-        r->_value._query._target._kind = Z_QUERYABLE_ALL_KINDS;
+        r->_value._query._target._kind = _Z_QUERYABLE_ALL_KINDS;
         r->_value._query._target.target = Z_TARGET_BEST_MATCHING;
     }
 

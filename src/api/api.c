@@ -332,7 +332,7 @@ char *z_info_get(z_info_t *info, unsigned int key)
 
 z_put_options_t z_put_options_default(void)
 {
-    return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_DATA_KIND_DEFAULT, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_SAMPLE_KIND_PUT, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
 }
 
 int z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
@@ -340,7 +340,7 @@ int z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t
     if (options != NULL)
         return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
 
-    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_DATA_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
+    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
 z_get_options_t z_get_options_default(void)
@@ -352,7 +352,7 @@ uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_clo
 {
     _z_consolidation_strategy_t strategy;
     _z_target_t target;
-    target._kind = Z_QUERYABLE_ALL_KINDS;
+    target._kind = _Z_QUERYABLE_ALL_KINDS;
 
     if (options != NULL)
     {
@@ -428,14 +428,14 @@ void z_undeclare_publisher(z_owned_publisher_t *pub)
 uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options)
 {
     if (options != NULL)
-        return _z_write_ext(pub->_zn, pub->_key, payload, len, options->encoding, Z_DATA_KIND_PUT, pub->_congestion_control);
+        return _z_write_ext(pub->_zn, pub->_key, payload, len, options->encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control);
 
-    return _z_write_ext(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_DATA_KIND_PUT, pub->_congestion_control);
+    return _z_write_ext(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, pub->_congestion_control);
 }
 
 uint8_t z_publisher_delete(const z_publisher_t *pub)
 {
-    return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_DATA_KIND_DELETE, pub->_congestion_control);
+    return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, pub->_congestion_control);
 }
 
 z_subscriber_options_t z_subscriber_options_default(void)

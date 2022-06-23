@@ -110,8 +110,8 @@ int main(int argc, char **argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             _z_keyexpr_t rk = _z_rname(s1_res);
-            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
-            _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
+            _z_encoding_t encoding = {.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
+            _z_write_ext(s1, rk, payload, len, encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
             _z_keyexpr_clear(&rk);
         }

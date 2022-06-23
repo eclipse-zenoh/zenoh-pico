@@ -1504,7 +1504,7 @@ _z_zenoh_message_t gen_query_message(void)
     }
     else
     {
-        target._kind = Z_QUERYABLE_ALL_KINDS;
+        target._kind = _Z_QUERYABLE_ALL_KINDS;
         target.target = Z_TARGET_BEST_MATCHING;
     }
 

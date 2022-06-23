@@ -70,7 +70,7 @@ typedef struct
 typedef struct
 {
     z_encoding_t encoding;
-    uint8_t kind;
+    z_sample_kind_t kind;
     uint8_t congestion_control;
     uint8_t priority;
 } z_put_options_t;

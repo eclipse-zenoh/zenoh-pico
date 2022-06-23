@@ -166,7 +166,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
-        _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, NULL, &idx[i]);
+        _z_queryable_t *qle = _z_declare_queryable(s2, rk, _Z_QUERYABLE_EVAL, query_handler, NULL, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk.id, rk.suffix);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
@@ -197,8 +197,8 @@ int main(int argc, char **argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             _z_keyexpr_t rk = _z_rid(rids1[i]);
-            _z_encoding_t encoding = {.prefix = Z_ENCODING_DEFAULT, .suffix = ""};
-            _z_write_ext(s1, rk, payload, len, encoding, Z_DATA_KIND_DEFAULT, Z_CONGESTION_CONTROL_BLOCK);
+            _z_encoding_t encoding = {.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
+            _z_write_ext(s1, rk, payload, len, encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.id, len, n * SET + (i + 1), total);
         }
     }

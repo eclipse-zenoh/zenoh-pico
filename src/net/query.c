@@ -37,5 +37,5 @@ _z_query_target_t _z_query_target_default(void)
 
 _z_target_t _z_target_default(void)
 {
-    return (_z_target_t){._kind = Z_QUERYABLE_ALL_KINDS, .target = _z_query_target_default()};
+    return (_z_target_t){._kind = _Z_QUERYABLE_ALL_KINDS, .target = _z_query_target_default()};
 }
