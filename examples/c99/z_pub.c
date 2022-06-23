@@ -45,7 +45,8 @@ int main(int argc, char **argv)
 
     printf("Declaring key expression '%s'...\n", expr);
     z_owned_keyexpr_t keyexpr = z_declare_keyexpr(z_session_loan(&s), z_keyexpr(expr));
-    z_owned_publisher_t pub = z_declare_publication(z_session_loan(&s), z_keyexpr_clone(&keyexpr));
+    z_publisher_options_t options = z_publisher_options_default();
+    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr_loan(&keyexpr), &options);
     if (!z_publisher_check(&pub))
     {
         printf("Unable to declare publication.\n");
@@ -57,12 +58,12 @@ int main(int argc, char **argv)
     {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%zu': '%s')...\n", z_keyexpr_loan(&keyexpr)->id, buf);
-        z_put(z_session_loan(&s), z_keyexpr_loan(&keyexpr), (const uint8_t *)buf, strlen(buf));
+        printf("Putting Data ('%zu': '%s')...\n", z_keyexpr_loan(&keyexpr).id, buf);
+        z_put(z_session_loan(&s), z_keyexpr_loan(&keyexpr), (const uint8_t *)buf, strlen(buf), NULL);
     }
 
 EXIT:
-    z_publisher_delete(z_publisher_move(&pub));
+    z_undeclare_publisher(z_publisher_move(&pub));
     z_undeclare_keyexpr(z_session_loan(&s), z_keyexpr_move(&keyexpr));
 
     zp_stop_read_task(z_session_loan(&s));

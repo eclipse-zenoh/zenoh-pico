@@ -25,12 +25,10 @@ void query_handler(const z_query_t *query, const void *arg)
 {
     (void) (arg);
 
-    char *res = query->key.suffix;
+    const char *res = query->key.suffix;
     char *pred = query->predicate;
     printf(">> [Queryable ] Received Query '%s?%s'\n", res, pred);
-    z_send_reply(query, expr, (const unsigned char *)value, strlen(value));
-
-    _z_str_clear(res);
+    z_query_reply(query, query->key, (const unsigned char *)value, strlen(value));
 }
 
 int main(int argc, char **argv)
@@ -63,7 +61,8 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_session_loan(&s));
 
     printf("Creating Queryable on '%s'...\n", expr);
-    z_owned_queryable_t qable = z_queryable_new(z_session_loan(&s), z_keyexpr(expr), Z_QUERYABLE_EVAL, query_handler, NULL);
+    z_closure_query_t callback = z_closure(query_handler);
+    z_owned_queryable_t qable = z_declare_queryable(z_session_loan(&s), z_keyexpr(expr), &callback, NULL);
     if (!z_queryable_check(&qable))
     {
         printf("Unable to create queryable.\n");
