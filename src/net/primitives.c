@@ -253,7 +253,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle)
     _z_unregister_queryable(qle->_zn, q);
 }
 
-void _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
+int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply._
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
@@ -273,19 +273,15 @@ void _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *
 
     _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
 
-    if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
-    }
+    int8_t ret = _z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 
     free(rctx);
-    // FIXME: Provide wrap for all allocated values, so that clear can be executed
-    //        Still, currently it is not leaking, since all values are owned by the user
-    //_z_msg_clear(&z_msg);
+
+    return ret;
 }
 
 /*------------------ Write ------------------*/
-int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -308,7 +304,7 @@ int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payloa
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_DEFAULT);
 }
 
-int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl)
+int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl)
 {
     // @TODO: Need to verify that I have declared a publisher with the same resource key.
     //        Then, need to verify there are active subscriptions matching the publisher.
@@ -336,7 +332,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
 }
 
 /*------------------ Query ------------------*/
-uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg)
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)malloc(sizeof(_z_pending_query_t));
@@ -385,11 +381,11 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
 }
 
 /*------------------ Pull ------------------*/
-void _z_pull(const _z_subscriber_t *sub)
+int8_t _z_pull(const _z_subscriber_t *sub)
 {
     _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s == NULL)
-        return;
+        return -1;
 
     _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
     _z_zint_t max_samples = 0; // @TODO: get the correct value for max_sample
@@ -397,12 +393,5 @@ void _z_pull(const _z_subscriber_t *sub)
 
     _z_zenoh_message_t z_msg = _z_msg_make_pull(s->_key, pull_id, max_samples, is_final);
 
-    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
-    }
-
-    // FIXME: Provide wrap for all allocated values, so that clear can be executed
-    //        Still, currently it is not leaking, since owned by the subscription
-    //_z_msg_clear(&z_msg);
+    return _z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 }

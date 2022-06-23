@@ -166,7 +166,7 @@ void _z_undeclare_queryable(_z_queryable_t *qle);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
 
 /**
  * Write data corresponding to a given resource key, allowing the definition of
@@ -185,7 +185,7 @@ int _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payloa
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
+int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
@@ -196,7 +196,7 @@ int _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pa
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-void _z_pull(const _z_subscriber_t *sub);
+int8_t _z_pull(const _z_subscriber_t *sub);
 
 /**
  * Query data from the matching queryables in the system.
@@ -211,7 +211,7 @@ void _z_pull(const _z_subscriber_t *sub);
  *     callback: The callback function that will be called on reception of replies for this query.
  *     arg: A pointer that will be passed to the **callback** on each call.
  */
-uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg);
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Send a reply to a query.
@@ -227,6 +227,6 @@ uint8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, 
  *     payload: The value of this reply.
  *     len: The length of the value of this reply.
  */
-void _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
+int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

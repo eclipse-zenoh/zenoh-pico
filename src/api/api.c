@@ -24,9 +24,10 @@
 #include "zenoh-pico/protocol/utils.h"
 
 /*************** Logging ***************/
-void z_init_logger(void)
+int8_t z_init_logger(void)
 {
     // TODO
+    return 0;
 }
 
 /********* Data Types Handlers *********/
@@ -109,12 +110,12 @@ const char *z_config_to_str(z_config_t *config)
     return NULL;
 }
 
-uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
+int8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
     return _z_config_insert(config, key, value);
 }
 
-uint8_t z_config_insert_json(z_config_t *config, const char *key, const char *value)
+int8_t z_config_insert_json(z_config_t *config, const char *key, const char *value)
 {
     // Not implemented yet in Zenoh-Pico
     (void) (config);
@@ -175,7 +176,7 @@ z_query_consolidation_t z_query_consolidation_reception(void)
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    uint8_t z_##name##_check(const ownedtype *val)                                    \
+    bool z_##name##_check(const ownedtype *val)                                    \
     {                                                                                 \
         return val->_value != NULL;                                                   \
     }                                                                                 \
@@ -200,7 +201,7 @@ z_query_consolidation_t z_query_consolidation_reception(void)
     }
 
 #define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    uint8_t z_##name##_check(const ownedtype *val)                                      \
+    bool z_##name##_check(const ownedtype *val)                                      \
     {                                                                                   \
         return val->_value != NULL;                                                     \
     }                                                                                   \
@@ -279,23 +280,26 @@ z_owned_session_t z_open(z_owned_config_t *config)
 {
     z_owned_session_t zs;
     zs._value = _z_open(config->_value);
-
     config->_value = NULL;
+
     return zs;
 }
 
-void z_close(z_owned_session_t *zs)
+int8_t z_close(z_owned_session_t *zs)
 {
     _z_close(zs->_value);
 
     z_session_drop(zs);
     zs->_value = NULL;
+
+    return 0;
 }
 
 z_owned_info_t z_info(const z_session_t *zs)
 {
     z_owned_info_t zi;
     zi._value = _z_info(zs);
+
     return zi;
 }
 
@@ -335,7 +339,7 @@ z_put_options_t z_put_options_default(void)
     return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_SAMPLE_KIND_PUT, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
 }
 
-int z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
+int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
 {
     if (options != NULL)
         return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
@@ -348,7 +352,7 @@ z_get_options_t z_get_options_default(void)
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
-uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options)
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options)
 {
     _z_consolidation_strategy_t strategy;
     _z_target_t target;
@@ -394,12 +398,14 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
     return key;
 }
 
-void z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
+int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 {
     _z_undeclare_resource(zs, keyexpr->_value->id);
 
     z_keyexpr_drop(keyexpr);
     keyexpr->_value = NULL;
+
+    return 0;
 }
 
 z_publisher_options_t z_publisher_options_default(void)
@@ -416,16 +422,18 @@ z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_
     return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr, opt.local_routing, opt.congestion_control, opt.priority)};
 }
 
-void z_undeclare_publisher(z_owned_publisher_t *pub)
+int8_t z_undeclare_publisher(z_owned_publisher_t *pub)
 {
     _z_undeclare_publisher(pub->_value);
 
     z_publisher_drop(pub);
     free(pub->_value);
     pub->_value = NULL;
+
+    return 0;
 }
 
-uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options)
+int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options)
 {
     if (options != NULL)
         return _z_write_ext(pub->_zn, pub->_key, payload, len, options->encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control);
@@ -433,7 +441,7 @@ uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t
     return _z_write_ext(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, pub->_congestion_control);
 }
 
-uint8_t z_publisher_delete(const z_publisher_t *pub)
+int8_t z_publisher_delete(const z_publisher_t *pub)
 {
     return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, pub->_congestion_control);
 }
@@ -452,18 +460,20 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
 }
 
-void z_undeclare_subscriber(z_owned_subscriber_t *sub)
+int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
 {
     _z_undeclare_subscriber(sub->_value);
 
     z_subscriber_drop(sub);
     free(sub->_value);
     sub->_value = NULL;
+
+    return 0;
 }
 
-void z_pull(const z_subscriber_t *sub)
+int8_t z_pull(const z_subscriber_t *sub)
 {
-    _z_pull(sub);
+    return _z_pull(sub);
 }
 
 z_queryable_options_t z_queryable_options_default(void)
@@ -480,37 +490,39 @@ z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_
     return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->drop, callback->context)};
 }
 
-void z_undeclare_queryable(z_owned_queryable_t *queryable)
+int8_t z_undeclare_queryable(z_owned_queryable_t *queryable)
 {
     _z_undeclare_queryable(queryable->_value);
 
     z_queryable_drop(queryable);
     free(queryable->_value);
     queryable->_value = NULL;
+
+    return 0;
 }
 
-void z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len)
+int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len)
 {
-    _z_send_reply(query, keyexpr, payload, len);
+    return _z_send_reply(query, keyexpr, payload, len);
 }
 
 /**************** Tasks ****************/
-int zp_start_read_task(z_session_t *zs)
+int8_t zp_start_read_task(z_session_t *zs)
 {
     return _zp_start_read_task(zs);
 }
 
-int zp_stop_read_task(z_session_t *zs)
+int8_t zp_stop_read_task(z_session_t *zs)
 {
     return _zp_stop_read_task(zs);
 }
 
-int zp_start_lease_task(z_session_t *zs)
+int8_t zp_start_lease_task(z_session_t *zs)
 {
     return _zp_start_lease_task(zs);
 }
 
-int zp_stop_lease_task(z_session_t *zs)
+int8_t zp_stop_lease_task(z_session_t *zs)
 {
     return _zp_stop_lease_task(zs);
 }

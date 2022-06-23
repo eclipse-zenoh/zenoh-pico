@@ -92,7 +92,7 @@ _z_config_t *_z_info(const _z_session_t *session);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_read(_z_session_t *z);
+int8_t _zp_read(_z_session_t *z);
 
 /**
  * Send a KeepAlive message.
@@ -102,7 +102,7 @@ int _zp_read(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_send_keep_alive(_z_session_t *z);
+int8_t _zp_send_keep_alive(_z_session_t *z);
 
 /**
  * Start a separate task to read from the network and process the messages
@@ -114,7 +114,7 @@ int _zp_send_keep_alive(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_start_read_task(_z_session_t *z);
+int8_t _zp_start_read_task(_z_session_t *z);
 
 /**
  * Stop the read task. This may result in stopping a thread or a process depending
@@ -125,7 +125,7 @@ int _zp_start_read_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_stop_read_task(_z_session_t *z);
+int8_t _zp_stop_read_task(_z_session_t *z);
 
 /**
  * Start a separate task to handle the session lease. This task will send ``KeepAlive``
@@ -141,7 +141,7 @@ int _zp_stop_read_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_start_lease_task(_z_session_t *z);
+int8_t _zp_start_lease_task(_z_session_t *z);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending
@@ -152,6 +152,6 @@ int _zp_start_lease_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int _zp_stop_lease_task(_z_session_t *z);
+int8_t _zp_stop_lease_task(_z_session_t *z);
 
 #endif /* ZENOH_PICO_SESSION_NETAPI_H */

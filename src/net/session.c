@@ -128,17 +128,17 @@ _z_config_t *_z_info(const _z_session_t *zn)
     return ps;
 }
 
-int _zp_read(_z_session_t *zn)
+int8_t _zp_read(_z_session_t *zn)
 {
     return _z_read(zn->_tp);
 }
 
-int _zp_send_keep_alive(_z_session_t *zn)
+int8_t _zp_send_keep_alive(_z_session_t *zn)
 {
     return _z_send_keep_alive(zn->_tp);
 }
 
-int _zp_start_read_task(_z_session_t *zn)
+int8_t _zp_start_read_task(_z_session_t *zn)
 {
     _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
     memset(task, 0, sizeof(_z_task_t));
@@ -161,7 +161,7 @@ int _zp_start_read_task(_z_session_t *zn)
     return 0;
 }
 
-int _zp_stop_read_task(_z_session_t *zn)
+int8_t _zp_stop_read_task(_z_session_t *zn)
 {
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
         zn->_tp->_transport._unicast._read_task_running = 0;
@@ -171,7 +171,7 @@ int _zp_stop_read_task(_z_session_t *zn)
     return 0;
 }
 
-int _zp_start_lease_task(_z_session_t *zn)
+int8_t _zp_start_lease_task(_z_session_t *zn)
 {
     _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
     memset(task, 0, sizeof(_z_task_t));
@@ -194,7 +194,7 @@ int _zp_start_lease_task(_z_session_t *zn)
     return 0;
 }
 
-int _zp_stop_lease_task(_z_session_t *zn)
+int8_t _zp_stop_lease_task(_z_session_t *zn)
 {
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
         zn->_tp->_transport._unicast._lease_task_running = 0;

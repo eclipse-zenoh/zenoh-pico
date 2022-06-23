@@ -15,6 +15,9 @@
 #ifndef ZENOH_PICO_API_PRIMITIVES_H
 #define ZENOH_PICO_API_PRIMITIVES_H
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "zenoh-pico/api/types.h"
 
 #include "zenoh-pico/net/session.h"
@@ -22,7 +25,7 @@
 #include "zenoh-pico/net/query.h"
 
 /*************** Logging ***************/
-void z_init_logger(void);
+int8_t z_init_logger(void);
 
 /********* Data Types Handlers *********/
 z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len);
@@ -38,8 +41,8 @@ z_owned_config_t z_config_from_file(const char *path);
 z_owned_config_t z_config_from_str(const char *str);
 const char *z_config_get(z_config_t *config, unsigned int key);
 const char *z_config_to_str(z_config_t *config);
-uint8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
-uint8_t z_config_insert_json(z_config_t *config, const char *key, const char *value);
+int8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
+int8_t z_config_insert_json(z_config_t *config, const char *key, const char *value);
 
 z_encoding_t z_encoding_default(void);
 
@@ -54,14 +57,14 @@ z_query_consolidation_t z_query_consolidation_reception(void);
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    uint8_t z_##name##_check(const ownedtype *name);     \
+    bool z_##name##_check(const ownedtype *name);     \
     type *z_##name##_loan(const ownedtype *name);        \
     ownedtype *z_##name##_move(ownedtype *name);         \
     ownedtype z_##name##_clone(ownedtype *name);         \
     void z_##name##_drop(ownedtype *name);
 
 #define _IMMUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    uint8_t z_##name##_check(const ownedtype *name);       \
+    bool z_##name##_check(const ownedtype *name);       \
     type z_##name##_loan(const ownedtype *name);          \
     ownedtype *z_##name##_move(ownedtype *name);           \
     ownedtype z_##name##_clone(ownedtype *name);           \
@@ -98,45 +101,45 @@ _MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout);
 
 z_owned_session_t z_open(z_owned_config_t *config);
-void z_close(z_owned_session_t *zs);
+int8_t z_close(z_owned_session_t *zs);
 
 z_owned_info_t z_info(const z_session_t *zs);
 z_owned_string_t z_info_as_str(const z_session_t *zs);
 char *z_info_get(z_info_t *info, unsigned int key);
 
 z_put_options_t z_put_options_default(void);
-int z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
+int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 
 z_get_options_t z_get_options_default(void);
-uint8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options);
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options);
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
-void z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
+int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
 z_publisher_options_t z_publisher_options_default(void);
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options);
-void z_undeclare_publisher(z_owned_publisher_t *pub);
+int8_t z_undeclare_publisher(z_owned_publisher_t *pub);
 
-uint8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options);
-uint8_t z_publisher_delete(const z_publisher_t *pub);
+int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options);
+int8_t z_publisher_delete(const z_publisher_t *pub);
 
 z_subscriber_options_t z_subscriber_options_default(void);
 z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options);
-void z_undeclare_subscriber(z_owned_subscriber_t *sub);
+int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
-void z_pull(const z_subscriber_t *sub);
+int8_t z_pull(const z_subscriber_t *sub);
 
 z_queryable_options_t z_queryable_options_default(void);
 z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options);
-void z_undeclare_queryable(z_owned_queryable_t *queryable);
+int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
-void z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len);
+int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len);
 
 /************* Tasks **************/
-int zp_start_read_task(z_session_t *zs);
-int zp_stop_read_task(z_session_t *zs);
+int8_t zp_start_read_task(z_session_t *zs);
+int8_t zp_stop_read_task(z_session_t *zs);
 
-int zp_start_lease_task(z_session_t *zs);
-int zp_stop_lease_task(z_session_t *zs);
+int8_t zp_start_lease_task(z_session_t *zs);
+int8_t zp_stop_lease_task(z_session_t *zs);
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */
