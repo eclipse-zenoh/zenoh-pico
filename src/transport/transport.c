@@ -202,7 +202,8 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
             }
 
             // The initial SN at TX side
-            param.initial_sn_tx = (z_zint_t)rand() % param.sn_resolution;
+            z_random_fill(&param.initial_sn_tx, sizeof(param.initial_sn_tx));
+            param.initial_sn_tx = param.initial_sn_tx % param.sn_resolution;
 
             // Initialize the Local and Remote Peer IDs
             _z_bytes_copy(&param.remote_pid, &iam.body.init.pid);
