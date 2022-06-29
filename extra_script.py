@@ -1,4 +1,4 @@
-Import('env')
+Import('env', 'projenv')
 from os.path import join, realpath
 
 src_filter = []
@@ -47,6 +47,8 @@ elif framework == 'espidf':
 
 env.Append(SRC_FILTER=src_filter)
 env.Append(CPPDEFINES=cppdefines)
+
+projenv.Append(CPPDEFINES=cppdefines)
 
 # pass flags to a global build environment (for all libraries, etc)
 global_env = DefaultEnvironment()
