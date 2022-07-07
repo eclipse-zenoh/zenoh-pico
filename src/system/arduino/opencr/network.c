@@ -579,5 +579,5 @@ size_t _zn_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *ar
 #endif
 
 #if ZN_LINK_BLUETOOTH == 1
-    #error "Bluetooth not supported yet on STSTM32 port of Zenoh-Pico"
+    #error "Bluetooth not supported yet on OpenCR port of Zenoh-Pico"
 #endif

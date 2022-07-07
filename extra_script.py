@@ -21,19 +21,21 @@ elif framework == 'arduino':
                 "-<tests/>",
                 "-<example/>",
                 "-<system/espidf>",
-                "-<system/arduino/ststm32>",
+                "-<system/arduino/opencr>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
     cppdefines=["ZENOH_ARDUINO_ESP32"]
   if platform == 'ststm32':
-    src_filter=["+<*>",
-                "-<tests/>",
-                "-<example/>",
-                "-<system/espidf>",
-                "-<system/arduino/esp32>",
-                "-<system/unix/>",
-                "-<system/zephyr/>"]
-    cppdefines=["ZENOH_ARDUINO_STSTM32"]
+    board = env.get("PIOENV")
+    if board == 'opencr':
+      src_filter=["+<*>",
+                  "-<tests/>",
+                  "-<example/>",
+                  "-<system/espidf>",
+                  "-<system/arduino/esp32>",
+                  "-<system/unix/>",
+                  "-<system/zephyr/>"]
+      cppdefines=["ZENOH_ARDUINO_OPENCR"]
 
 elif framework == 'espidf':
   src_filter=["+<*>",
@@ -44,10 +46,10 @@ elif framework == 'espidf':
               "-<system/zephyr/>"]
   cppdefines=["ZENOH_ESPIDF"]
 
-
 env.Append(SRC_FILTER=src_filter)
 env.Append(CPPDEFINES=cppdefines)
 
+# pass flags to the main project environment
 projenv.Append(CPPDEFINES=cppdefines)
 
 # pass flags to a global build environment (for all libraries, etc)

@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
-#define ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H
+#ifndef ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
+#define ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
 
 #include <stddef.h>
 #include <time.h>
@@ -26,4 +26,4 @@ typedef void *z_condvar_t;
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
-#endif /* ZENOH_PICO_SYSTEM_ARDUINO_STSTM32_TYPES_H */
+#endif /* ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H */
