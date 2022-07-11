@@ -223,6 +223,9 @@ UDPSocket *_zn_listen_udp_multicast(void *raddr_arg, const clock_t tout, const z
     if (sock->open(net) < 0)
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
+    if (sock->bind(raddr->get_port()) < 0)
+        goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
+
     if (sock->join_multicast_group(*raddr))
         goto _ZN_OPEN_UDP_MULTICAST_ERROR_1;
 
