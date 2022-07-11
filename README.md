@@ -17,6 +17,8 @@ that is able to scale down to extremely constrainded devices and networks.
 zenoh-pico targets constrained devices and offers a C API for pure clients, i.e., it does not support peer-to-peer communication.
 zenoh-pico can be easily tested against a zenoh router running in a Docker container (see https://github.com/eclipse-zenoh/zenoh#how-to-test-it).
 
+Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
+
 -------------------------------
 ## How to install it
 

@@ -16,6 +16,8 @@
 #define ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 
 #include <pthread.h>
+#include <stdint.h>
+#include <sys/time.h>
 
 typedef pthread_t z_task_t;
 typedef pthread_attr_t z_task_attr_t;

@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ELEMENT_H
 #define ZENOH_PICO_COLLECTIONS_ELEMENT_H
 
-#include <stdlib.h>
+#include "zenoh-pico/system/platform.h"
 
 /*-------- element functions --------*/
 typedef size_t (*z_element_size_f)(void *e);
@@ -35,7 +35,7 @@ typedef int (*z_element_eq_f)(const void *left, const void *right);
     {                                                                      \
         type *ptr = (type *)*e;                                            \
         elem_clear_f(ptr);                                                 \
-        free(ptr);                                                         \
+        z_free(ptr);                                                       \
         *e = NULL;                                                         \
     }                                                                      \
     static inline void name##_elem_copy(void *dst, const void *src)        \
@@ -44,7 +44,7 @@ typedef int (*z_element_eq_f)(const void *left, const void *right);
     }                                                                      \
     static inline void *name##_elem_clone(const void *src)                 \
     {                                                                      \
-        type *dst = (type *)malloc(elem_size_f((type *)src));              \
+        type *dst = (type *)z_malloc(elem_size_f((type *)src));            \
         elem_copy_f(dst, (type *)src);                                     \
         return dst;                                                        \
     }

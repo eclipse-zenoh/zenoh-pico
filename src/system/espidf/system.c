@@ -12,9 +12,57 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/system/platform.h"
 #include <sys/time.h>
+#include <esp_heap_caps.h>
+#include "zenoh-pico/system/platform.h"
 
+/*------------------ Random ------------------*/
+uint8_t z_random_u8(void)
+{
+    return z_random_u32();
+}
+
+uint16_t z_random_u16(void)
+{
+    return z_random_u32();
+}
+
+uint32_t z_random_u32(void)
+{
+    return esp_random();
+}
+
+uint64_t z_random_u64(void)
+{
+    uint64_t ret = 0;
+    ret |= z_random_u32();
+    ret |= z_random_u32() << 8;
+
+    return ret;
+}
+
+void z_random_fill(void *buf, size_t len)
+{
+    esp_fill_random(buf, len);
+}
+
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size)
+{
+    return heap_caps_malloc(size, MALLOC_CAP_8BIT);
+}
+
+void *z_realloc(void *ptr, size_t size)
+{
+    return heap_caps_realloc(ptr, size, MALLOC_CAP_8BIT);
+}
+
+void z_free(void *ptr)
+{
+    heap_caps_free(ptr);
+}
+
+/*------------------ Task ------------------*/
 // This wrapper is only used for ESP32.
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
@@ -29,13 +77,12 @@ void z_task_wrapper(void *arg)
     _zn_task_arg *zn_arg = (_zn_task_arg *)arg;
     zn_arg->fun(zn_arg->arg);
     vTaskDelete(NULL);
-    free(zn_arg);
+    z_free(zn_arg);
 }
 
-/*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _zn_task_arg *zn_arg = (_zn_task_arg *)malloc(sizeof(_zn_task_arg));
+    _zn_task_arg *zn_arg = (_zn_task_arg *)z_malloc(sizeof(_zn_task_arg));
     zn_arg->fun = fun;
     zn_arg->arg = arg;
     if (xTaskCreate(z_task_wrapper, "", 2560, zn_arg, configMAX_PRIORITIES / 2, task) != pdPASS)
@@ -59,43 +106,43 @@ int z_task_cancel(z_task_t *task)
 void z_task_free(z_task_t **task)
 {
     z_task_t *ptr = *task;
-    free(ptr);
+    z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int z_mutex_init(pthread_mutex_t *m)
+int z_mutex_init(z_mutex_t *m)
 {
     return pthread_mutex_init(m, NULL);
 }
 
-int z_mutex_free(pthread_mutex_t *m)
+int z_mutex_free(z_mutex_t *m)
 {
     return pthread_mutex_destroy(m);
 }
 
-int z_mutex_lock(pthread_mutex_t *m)
+int z_mutex_lock(z_mutex_t *m)
 {
     return pthread_mutex_lock(m);
 }
 
-int z_mutex_trylock(pthread_mutex_t *m)
+int z_mutex_trylock(z_mutex_t *m)
 {
     return pthread_mutex_trylock(m);
 }
 
-int z_mutex_unlock(pthread_mutex_t *m)
+int z_mutex_unlock(z_mutex_t *m)
 {
     return pthread_mutex_unlock(m);
 }
 
 /*------------------ Condvar ------------------*/
-int z_condvar_init(pthread_cond_t *cv)
+int z_condvar_init(z_condvar_t *cv)
 {
     return pthread_cond_init(cv, NULL);
 }
 
-int z_condvar_free(pthread_cond_t *cv)
+int z_condvar_free(z_condvar_t *cv)
 {
     return pthread_cond_destroy(cv);
 }
@@ -127,34 +174,34 @@ int z_sleep_s(unsigned int time)
 }
 
 /*------------------ Instant ------------------*/
-struct timespec z_clock_now()
+z_clock_t z_clock_now()
 {
-    struct timespec now;
+    z_clock_t now;
     clock_gettime(CLOCK_REALTIME, &now);
     return now;
 }
 
-clock_t z_clock_elapsed_us(struct timespec *instant)
+clock_t z_clock_elapsed_us(z_clock_t *instant)
 {
-    struct timespec now;
+    z_clock_t now;
     clock_gettime(CLOCK_REALTIME, &now);
 
     clock_t elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(struct timespec *instant)
+clock_t z_clock_elapsed_ms(z_clock_t *instant)
 {
-    struct timespec now;
+    z_clock_t now;
     clock_gettime(CLOCK_REALTIME, &now);
 
     clock_t elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(struct timespec *instant)
+clock_t z_clock_elapsed_s(z_clock_t *instant)
 {
-    struct timespec now;
+    z_clock_t now;
     clock_gettime(CLOCK_REALTIME, &now);
 
     clock_t elapsed = now.tv_sec - instant->tv_sec;
@@ -162,34 +209,34 @@ clock_t z_clock_elapsed_s(struct timespec *instant)
 }
 
 /*------------------ Time ------------------*/
-struct timeval z_time_now()
+z_time_t z_time_now()
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-time_t z_time_elapsed_us(struct timeval *time)
+time_t z_time_elapsed_us(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(struct timeval *time)
+time_t z_time_elapsed_ms(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-time_t z_time_elapsed_s(struct timeval *time)
+time_t z_time_elapsed_s(z_time_t *time)
 {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     time_t elapsed = now.tv_sec - time->tv_sec;

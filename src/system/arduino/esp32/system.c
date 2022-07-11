@@ -12,9 +12,57 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/system/platform.h"
 #include <sys/time.h>
+#include <esp_heap_caps.h>
+#include "zenoh-pico/system/platform.h"
 
+/*------------------ Random ------------------*/
+uint8_t z_random_u8(void)
+{
+    return z_random_u32();
+}
+
+uint16_t z_random_u16(void)
+{
+    return z_random_u32();
+}
+
+uint32_t z_random_u32(void)
+{
+    return esp_random();
+}
+
+uint64_t z_random_u64(void)
+{
+    uint64_t ret = 0;
+    ret |= z_random_u32();
+    ret |= z_random_u32() << 8;
+
+    return ret;
+}
+
+void z_random_fill(void *buf, size_t len)
+{
+    esp_fill_random(buf, len);
+}
+
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size)
+{
+    return heap_caps_malloc(size, MALLOC_CAP_8BIT);
+}
+
+void *z_realloc(void *ptr, size_t size)
+{
+    return heap_caps_realloc(ptr, size, MALLOC_CAP_8BIT);
+}
+
+void z_free(void *ptr)
+{
+    heap_caps_free(ptr);
+}
+
+/*------------------ Task ------------------*/
 // This wrapper is only used for ESP32.
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
@@ -29,16 +77,15 @@ void z_task_wrapper(void *arg)
     _zn_task_arg *zn_arg = (_zn_task_arg *)arg;
     zn_arg->fun(zn_arg->arg);
     vTaskDelete(NULL);
-    free(zn_arg);
+    z_free(zn_arg);
 }
 
-/*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _zn_task_arg *zn_arg = (_zn_task_arg *)malloc(sizeof(_zn_task_arg));
+    _zn_task_arg *zn_arg = (_zn_task_arg *)z_malloc(sizeof(_zn_task_arg));
     zn_arg->fun = fun;
     zn_arg->arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 5120, zn_arg, 15, task) != pdPASS)
+    if (xTaskCreate(z_task_wrapper, "", 2560, zn_arg, configMAX_PRIORITIES / 2, task) != pdPASS)
         return -1;
 
     return 0;
@@ -59,7 +106,7 @@ int z_task_cancel(z_task_t *task)
 void z_task_free(z_task_t **task)
 {
     z_task_t *ptr = *task;
-    free(ptr);
+    z_free(ptr);
     *task = NULL;
 }
 

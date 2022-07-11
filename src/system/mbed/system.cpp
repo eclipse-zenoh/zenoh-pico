@@ -45,6 +45,22 @@ void z_random_fill(void *buf, size_t len)
     randLIB_get_n_bytes_random(buf, len);
 }
 
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size)
+{
+    return malloc(size);
+}
+
+void *z_realloc(void *ptr, size_t size)
+{
+    return realloc(ptr, size);
+}
+
+void z_free(void *ptr)
+{
+    free(ptr);
+}
+
 /*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
@@ -70,7 +86,7 @@ int z_task_cancel(z_task_t *task)
 void z_task_free(z_task_t **task)
 {
     z_task_t *ptr = *task;
-    free(ptr);
+    z_free(ptr);
     *task = NULL;
 }
 

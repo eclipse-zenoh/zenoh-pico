@@ -35,7 +35,7 @@ void zn_hello_array_free(zn_hello_array_t hellos)
                 _z_str_array_free(&h[i].locators);
         }
 
-        free(h);
+        z_free(h);
     }
 }
 
@@ -50,5 +50,5 @@ void zn_reply_data_array_free(zn_reply_data_array_t replies)
         if (replies.val[i].data.key.val)
             _z_string_clear((z_string_t *)&replies.val[i].data.key);
     }
-    free((zn_reply_data_t *)replies.val);
+    z_free((zn_reply_data_t *)replies.val);
 }

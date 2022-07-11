@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -33,10 +34,10 @@
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->capacity, ios->r_pos, ios->w_pos);
-    for (size_t i = 0; i < ios->capacity; i++)
+    for (size_t i = ios->r_pos; i < ios->w_pos; i++)
     {
         printf("%02x", ios->buf[i]);
-        if (i < ios->capacity - 1)
+        if (i < ios->w_pos - ios->r_pos - 1)
             printf(" ");
     }
     printf("]");
@@ -118,17 +119,19 @@ void print_transport_message_type(uint8_t header)
 /*=============================*/
 int gen_bool(void)
 {
-    return rand() % 2;
+    return z_random_u8() % 2;
 }
 
 uint8_t gen_uint8(void)
 {
-    return (uint8_t)rand() % 255;
+    return z_random_u8() % 255;
 }
 
 z_zint_t gen_zint(void)
 {
-    return (z_zint_t)rand();
+    z_zint_t ret = 0;
+    z_random_fill(&ret, sizeof(ret));
+    return ret;
 }
 
 _z_wbuf_t gen_wbuf(size_t len)
@@ -148,9 +151,8 @@ _zn_payload_t gen_payload(size_t len)
 {
     _zn_payload_t pld;
     pld.len = len;
-    pld.val = (uint8_t *)malloc(len * sizeof(uint8_t));
-    for (size_t i = 0; i < len; i++)
-        ((uint8_t *)pld.val)[i] = 0xff;
+    pld.val = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    z_random_fill((uint8_t *)pld.val, pld.len);
 
     return pld;
 }
@@ -159,7 +161,7 @@ z_bytes_t gen_bytes(size_t len)
 {
     z_bytes_t arr;
     arr.len = len;
-    arr.val = (uint8_t *)malloc(sizeof(uint8_t) * len);
+    arr.val = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
     for (z_zint_t i = 0; i < len; i++)
         ((uint8_t *)arr.val)[i] = gen_uint8();
 
@@ -174,7 +176,7 @@ uint64_t gen_time(void)
 z_str_t gen_str(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    z_str_t str = (z_str_t)malloc((size * sizeof(char)) + 1);
+    z_str_t str = (z_str_t)z_malloc((size * sizeof(char)) + 1);
     for (z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
@@ -292,8 +294,8 @@ void assert_eq_locator_array(_zn_locator_array_t *left, _zn_locator_array_t *rig
         if (i < left->len - 1)
             printf(" ");
 
-        free(ls);
-        free(rs);
+        z_free(ls);
+        z_free(rs);
 
         assert(_zn_locator_eq(l, r));
     }
@@ -312,7 +314,7 @@ void assert_eq_payload(_zn_payload_t *left, _zn_payload_t *right)
 void payload_field(void)
 {
     printf("\n>> Payload field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_payload_t e_pld = gen_payload(64);
@@ -362,7 +364,7 @@ void assert_eq_timestamp(z_timestamp_t *left, z_timestamp_t *right)
 void timestamp_field(void)
 {
     printf("\n>> Timestamp field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     z_timestamp_t e_ts = gen_timestamp();
@@ -396,7 +398,7 @@ zn_subinfo_t gen_subinfo(void)
     zn_subinfo_t sm;
     sm.mode = gen_bool() ? zn_submode_t_PUSH : zn_submode_t_PULL;
     sm.reliability = gen_bool() ? zn_reliability_t_RELIABLE : zn_reliability_t_BEST_EFFORT;
-    sm.period = gen_bool() ? (zn_period_t *)malloc(sizeof(zn_period_t)) : NULL;
+    sm.period = gen_bool() ? (zn_period_t *)z_malloc(sizeof(zn_period_t)) : NULL;
 
     if (sm.period)
     {
@@ -442,7 +444,7 @@ void assert_eq_subinfo(zn_subinfo_t *left, zn_subinfo_t *right)
 void subinfo_field(void)
 {
     printf("\n>> SubInfo field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     zn_subinfo_t e_sm = gen_subinfo();
@@ -505,7 +507,7 @@ void assert_eq_res_key(zn_reskey_t *left, zn_reskey_t *right, uint8_t header)
 void res_key_field(void)
 {
     printf("\n>> ResKey field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     zn_reskey_t e_rk = gen_res_key();
@@ -637,7 +639,7 @@ void assert_eq_data_info(_zn_data_info_t *left, _zn_data_info_t *right)
 void data_info_field(void)
 {
     printf("\n>> DataInfo field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_data_info_t e_di = gen_data_info();
@@ -677,7 +679,7 @@ void print_attachment(_zn_attachment_t *att)
 
 _zn_attachment_t *gen_attachment(void)
 {
-    _zn_attachment_t *p_at = (_zn_attachment_t *)malloc(sizeof(_zn_attachment_t));
+    _zn_attachment_t *p_at = (_zn_attachment_t *)z_malloc(sizeof(_zn_attachment_t));
 
     p_at->header = _ZN_MID_ATTACHMENT;
     // _ZN_SET_FLAG(p_at->header, _ZN_FLAGS(gen_uint8()));
@@ -696,7 +698,7 @@ void assert_eq_attachment(_zn_attachment_t *left, _zn_attachment_t *right)
 void attachment_decorator(void)
 {
     printf("\n>> Attachment decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_attachment_t *e_at = gen_attachment();
@@ -718,7 +720,7 @@ void attachment_decorator(void)
     printf("\n");
 
     // Free
-    free(e_at);
+    z_free(e_at);
     _zn_t_msg_clear_attachment(d_at);
     _zn_attachment_p_result_free(&r_at);
     _z_zbuf_clear(&zbf);
@@ -780,7 +782,7 @@ void assert_eq_reply_context(_zn_reply_context_t *left, _zn_reply_context_t *rig
 void reply_contex_decorator(void)
 {
     printf("\n>> ReplyContext decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_reply_context_t *e_rc = gen_reply_context();
@@ -802,7 +804,7 @@ void reply_contex_decorator(void)
     printf("\n");
 
     // Free
-    free(e_rc);
+    z_free(e_rc);
     _zn_z_msg_clear_reply_context(d_rc);
     _zn_reply_context_p_result_free(&r_rc);
     _z_zbuf_clear(&zbf);
@@ -834,7 +836,7 @@ void assert_eq_resource_declaration(_zn_res_decl_t *left, _zn_res_decl_t *right,
 void resource_declaration(void)
 {
     printf("\n>> Resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -880,7 +882,7 @@ void assert_eq_publisher_declaration(_zn_pub_decl_t *left, _zn_pub_decl_t *right
 void publisher_declaration(void)
 {
     printf("\n>> Publisher declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -938,7 +940,7 @@ void assert_eq_subscriber_declaration(_zn_sub_decl_t *left, _zn_sub_decl_t *righ
 void subscriber_declaration(void)
 {
     printf("\n>> Subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1003,7 +1005,7 @@ void assert_eq_queryable_declaration(_zn_qle_decl_t *left, _zn_qle_decl_t *right
 void queryable_declaration(void)
 {
     printf("\n>> Queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1049,7 +1051,7 @@ void assert_eq_forget_resource_declaration(_zn_forget_res_decl_t *left, _zn_forg
 void forget_resource_declaration(void)
 {
     printf("\n>> Forget resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_forget_res_decl_t e_frd = gen_forget_resource_declaration();
@@ -1094,7 +1096,7 @@ void assert_eq_forget_publisher_declaration(_zn_forget_pub_decl_t *left, _zn_for
 void forget_publisher_declaration(void)
 {
     printf("\n>> Forget publisher declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1140,7 +1142,7 @@ void assert_eq_forget_subscriber_declaration(_zn_forget_sub_decl_t *left, _zn_fo
 void forget_subscriber_declaration(void)
 {
     printf("\n>> Forget subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1188,7 +1190,7 @@ void assert_eq_forget_queryable_declaration(_zn_forget_qle_decl_t *left, _zn_for
 void forget_queryable_declaration(void)
 {
     printf("\n>> Forget queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1326,7 +1328,7 @@ void assert_eq_declare_message(_zn_declare_t *left, _zn_declare_t *right)
 void declare_message(void)
 {
     printf("\n>> Declare message\n");
-    _z_wbuf_t wbf = gen_wbuf(512);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_zenoh_message_t z_msg = gen_declare_message();
@@ -1390,7 +1392,7 @@ void assert_eq_data_message(_zn_data_t *left, _zn_data_t *right, uint8_t header)
 void data_message(void)
 {
     printf("\n>> Data message\n");
-    _z_wbuf_t wbf = gen_wbuf(256);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_zenoh_message_t z_msg = gen_data_message();
@@ -1450,7 +1452,7 @@ void assert_eq_pull_message(_zn_pull_t *left, _zn_pull_t *right, uint8_t header)
 void pull_message(void)
 {
     printf("\n>> Pull message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_zenoh_message_t z_msg = gen_pull_message();
@@ -1561,7 +1563,7 @@ void assert_eq_query_message(_zn_query_t *left, _zn_query_t *right, uint8_t head
 void query_message(void)
 {
     printf("\n>> Query message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1703,7 +1705,7 @@ void assert_eq_zenoh_message(_zn_zenoh_message_t *left, _zn_zenoh_message_t *rig
 void zenoh_message(void)
 {
     printf("\n>> Zenoh message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_zenoh_message_t e_zm = gen_zenoh_message();
@@ -1787,7 +1789,7 @@ void assert_eq_scout_message(_zn_scout_t *left, _zn_scout_t *right, uint8_t head
 void scout_message(void)
 {
     printf("\n>> Scout message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_scout_message();
@@ -1853,7 +1855,7 @@ void assert_eq_hello_message(_zn_hello_t *left, _zn_hello_t *right, uint8_t head
 void hello_message(void)
 {
     printf("\n>> Hello message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_hello_message();
@@ -1970,7 +1972,7 @@ void assert_eq_join_message(_zn_join_t *left, _zn_join_t *right, uint8_t header)
 void join_message(void)
 {
     printf("\n>> Join message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_join_message();
@@ -2056,7 +2058,7 @@ void assert_eq_init_message(_zn_init_t *left, _zn_init_t *right, uint8_t header)
 void init_message(void)
 {
     printf("\n>> Init message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_init_message();
@@ -2122,7 +2124,7 @@ void assert_eq_open_message(_zn_open_t *left, _zn_open_t *right, uint8_t header)
 void open_message(void)
 {
     printf("\n>> Open message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_open_message();
@@ -2177,7 +2179,7 @@ void assert_eq_close_message(_zn_close_t *left, _zn_close_t *right, uint8_t head
 void close_message(void)
 {
     printf("\n>> Close message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_close_message();
@@ -2232,7 +2234,7 @@ void assert_eq_sync_message(_zn_sync_t *left, _zn_sync_t *right, uint8_t header)
 void sync_message(void)
 {
     printf("\n>> Sync message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_sync_message();
@@ -2286,7 +2288,7 @@ void assert_eq_ack_nack_message(_zn_ack_nack_t *left, _zn_ack_nack_t *right, uin
 void ack_nack_message(void)
 {
     printf("\n>> AckNack message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_ack_nack_message();
@@ -2335,7 +2337,7 @@ void assert_eq_keep_alive_message(_zn_keep_alive_t *left, _zn_keep_alive_t *righ
 void keep_alive_message(void)
 {
     printf("\n>> KeepAlive message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_keep_alive_message();
@@ -2382,7 +2384,7 @@ void assert_eq_ping_pong_message(_zn_ping_pong_t *left, _zn_ping_pong_t *right)
 void ping_pong_message(void)
 {
     printf("\n>> PingPong message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_ping_pong_message();
@@ -2430,7 +2432,7 @@ _zn_transport_message_t gen_frame_message(int can_be_fragment)
         for (z_zint_t i = 0; i < num; i++)
         {
             _zn_zenoh_message_t e_zm = gen_zenoh_message();
-            _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+            _zn_zenoh_message_t *p_zm = (_zn_zenoh_message_t *)z_malloc(sizeof(_zn_zenoh_message_t));
             *p_zm = e_zm;
             _z_vec_append(&payload.messages, p_zm);
         }
@@ -2466,7 +2468,7 @@ void assert_eq_frame_message(_zn_frame_t *left, _zn_frame_t *right, uint8_t head
 void frame_message(void)
 {
     printf("\n>> Frame message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t t_msg = gen_frame_message(1);
@@ -2623,7 +2625,7 @@ void assert_eq_transport_message(_zn_transport_message_t *left, _zn_transport_me
 void transport_message(void)
 {
     printf("\n>> Session message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _zn_transport_message_t e_tm = gen_transport_message(1);
@@ -2662,7 +2664,7 @@ void batch(void)
     _z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
 
     // Initialize
-    _zn_transport_message_t *e_tm = (_zn_transport_message_t *)malloc(tot_num * sizeof(_zn_transport_message_t));
+    _zn_transport_message_t *e_tm = (_zn_transport_message_t *)z_malloc(tot_num * sizeof(_zn_transport_message_t));
     for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random transport message
@@ -2709,7 +2711,7 @@ void batch(void)
         _zn_t_msg_clear(&d_sm);
     }
 
-    free(e_tm);
+    z_free(e_tm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

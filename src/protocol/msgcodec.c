@@ -115,7 +115,7 @@ void _zn_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_subinfo_result_t 
     {
         _zn_period_result_t r_tp = _zn_period_decode(zbf);
         _ASSURE_P_RESULT(r_tp, r, _zn_err_t_PARSE_PERIOD)
-        zn_period_t *p_per = (zn_period_t *)malloc(sizeof(zn_period_t));
+        zn_period_t *p_per = (zn_period_t *)z_malloc(sizeof(zn_period_t));
         memcpy(p_per, &r_tp.value.period, sizeof(zn_period_t));
         r->value.subinfo.period = p_per;
     }
@@ -183,7 +183,7 @@ int _zn_locators_encode(_z_wbuf_t *wbf, const _zn_locator_array_t *la)
     {
         z_str_t s = _zn_locator_to_str(&la->val[i]);
         _ZN_EC(_z_str_encode(wbf, s))
-        free(s);
+        z_free(s);
     }
 
     return 0;
@@ -208,7 +208,7 @@ void _zn_locators_decode_na(_z_zbuf_t *zbf, _zn_locator_array_result_t *r)
         _ASSURE_P_RESULT(r_s, r, _z_err_t_PARSE_STRING);
 
         _zn_locator_result_t r_l = _zn_locator_from_str(r_s.value.str);
-        free(r_s.value.str);
+        z_free(r_s.value.str);
         _ASSURE_P_RESULT(r_l, r, _zn_err_t_INVALID_LOCATOR);
 
         r->value.locator_array.val[i] = r_l.value.locator;
@@ -1826,7 +1826,7 @@ void _zn_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _zn_frame_result_t *r)
             _zn_zenoh_message_result_t r_zm = _zn_zenoh_message_decode(zbf);
             if (r_zm.tag == _z_res_t_OK)
             {
-                _zn_zenoh_message_t *zm = (_zn_zenoh_message_t *)malloc(sizeof(_zn_zenoh_message_t));
+                _zn_zenoh_message_t *zm = (_zn_zenoh_message_t *)z_malloc(sizeof(_zn_zenoh_message_t));
                 memcpy(zm, &r_zm.value.zenoh_message, sizeof(_zn_zenoh_message_t));
                 _zn_zenoh_message_vec_append(&r->value.frame.payload.messages, zm);
             }

@@ -15,6 +15,9 @@
 #ifndef ZENOH_PICO_SYSTEM_MBED_TYPES_H
 #define ZENOH_PICO_SYSTEM_MBED_TYPES_H
 
+#include <stdint.h>
+#include <sys/time.h>
+
 typedef int _zn_socket_t;
 
 typedef void *z_task_t;         // Workaround as MBED is a C++ library

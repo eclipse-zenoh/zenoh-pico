@@ -14,7 +14,6 @@
 
 #include <errno.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -97,7 +96,7 @@ void *_zn_open_tcp(void *arg, const clock_t tout)
             break;
     }
 
-    __zn_net_socket *ret = (__zn_net_socket*)malloc(sizeof(__zn_net_socket));
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -123,7 +122,7 @@ void _zn_close_tcp(void *sock_arg)
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
     shutdown(sock->_fd, SHUT_RDWR);
     close(sock->_fd);
-    free(sock);
+    z_free(sock);
 }
 
 size_t _zn_read_tcp(void *sock_arg, uint8_t *ptr, size_t len)
@@ -206,7 +205,7 @@ void *_zn_open_udp_unicast(void *arg, const clock_t tout)
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
-    __zn_net_socket *ret = (__zn_net_socket*)malloc(sizeof(__zn_net_socket));
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -229,7 +228,7 @@ void _zn_close_udp_unicast(void *sock_arg)
 {
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
     close(sock->_fd);
-    free(sock);
+    z_free(sock);
 }
 
 size_t _zn_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len)
@@ -296,14 +295,14 @@ void *_zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, cons
             {
                 if (tmp->ifa_addr->sa_family == AF_INET)
                 {
-                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
                     memset(lsockaddr, 0, sizeof(struct sockaddr_in));
                     memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
                     addrlen = sizeof(struct sockaddr_in);
                 }
                 else if (tmp->ifa_addr->sa_family == AF_INET6)
                 {
-                    lsockaddr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in6));
+                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
                     memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
                     memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
                     addrlen = sizeof(struct sockaddr_in6);
@@ -346,7 +345,7 @@ void *_zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, cons
     }
 
     // Create laddr endpoint
-    laddr = (struct addrinfo *)malloc(sizeof(struct addrinfo));
+    laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
     laddr->ai_flags = 0;
     laddr->ai_family = raddr->ai_family;
     laddr->ai_socktype = raddr->ai_socktype;
@@ -361,10 +360,10 @@ void *_zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, cons
 //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
 // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
 //#if defined(ZENOH_LINUX)
-//    free(lsockaddr);
+//    z_free(lsockaddr);
 //#endif
 
-    __zn_net_socket *ret = (__zn_net_socket*)malloc(sizeof(__zn_net_socket));
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -372,7 +371,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_3:
     close(sock);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_2:
-    free(lsockaddr);
+    z_free(lsockaddr);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return NULL;
@@ -441,7 +440,7 @@ void *_zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t ifac
     else
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
 
-    __zn_net_socket *ret = (__zn_net_socket*)malloc(sizeof(__zn_net_socket));
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -480,13 +479,13 @@ void _zn_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr
     if (sockrecv != NULL)
     {
         close(sockrecv->_fd);
-        // free(sockrecv);
+        // z_free(sockrecv);
     }
 
     if (socksend != NULL)
     {
         close(socksend->_fd);
-        // free(socksend);
+        // z_free(socksend);
     }
 }
 

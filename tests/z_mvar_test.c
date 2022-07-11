@@ -77,7 +77,7 @@ int main(void)
         z_sleep_s(1);
     }
 
-    free(mv);
+    z_free(mv);
 
     return 0;
 }

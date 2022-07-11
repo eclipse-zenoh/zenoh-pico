@@ -25,14 +25,24 @@
 #include "zenoh-pico/system/platform/zephyr.h"
 #elif defined(ZENOH_ARDUINO_ESP32)
 #include "zenoh-pico/system/platform/arduino/esp32.h"
-#elif defined(ZENOH_ARDUINO_STSTM32)
-#include "zenoh-pico/system/platform/arduino/ststm32.h"
+#elif defined(ZENOH_ARDUINO_OPENCR)
+#include "zenoh-pico/system/platform/arduino/opencr.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"
 #endif
 
-#include "zenoh-pico/protocol/iobuf.h"
+/*------------------ Random ------------------*/
+uint8_t z_random_u8(void);
+uint16_t z_random_u16(void);
+uint32_t z_random_u32(void);
+uint64_t z_random_u64(void);
+void z_random_fill(void *buf, size_t len);
+
+/*------------------ Memory ------------------*/
+void *z_malloc(size_t size);
+void *z_realloc(void *ptr, size_t size);
+void z_free(void *ptr);
 
 /*------------------ Thread ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);

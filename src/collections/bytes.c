@@ -12,14 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stdlib.h>
 #include <string.h>
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/collections/bytes.h"
 
 /*-------- bytes --------*/
 void _z_bytes_init(z_bytes_t *bs, size_t capacity)
 {
-    bs->val = (uint8_t *)malloc(capacity * sizeof(uint8_t));
+    bs->val = (uint8_t *)z_malloc(capacity * sizeof(uint8_t));
     bs->len = capacity;
     bs->is_alloc = 1;
 }
@@ -52,7 +52,7 @@ void _z_bytes_clear(z_bytes_t *bs)
     if (!bs->is_alloc)
         return;
 
-    free((uint8_t *)bs->val);
+    z_free((uint8_t *)bs->val);
     _z_bytes_reset(bs);
 }
 

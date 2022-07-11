@@ -101,7 +101,7 @@ int main(int argc, z_str_t *argv)
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    const uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;
@@ -118,7 +118,7 @@ int main(int argc, z_str_t *argv)
     }
 
     // Wait to receive all the data
-    z_time_t now = z_time_now();
+    z_clock_t now = z_clock_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected)
     {
@@ -167,7 +167,7 @@ int main(int argc, z_str_t *argv)
     // Cleanup properties
     zn_properties_free(&config);
 
-    free((uint8_t *)payload);
+    z_free((uint8_t *)payload);
     payload = NULL;
 
     return 0;

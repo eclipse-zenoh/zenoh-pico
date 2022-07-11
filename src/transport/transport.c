@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdlib.h>
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
@@ -56,7 +57,7 @@ int _zn_send_close(_zn_transport_t *zt, uint8_t reason, int link_only)
 
 _zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unicast_establish_param_t param)
 {
-    _zn_transport_t *zt = (_zn_transport_t *)malloc(sizeof(_zn_transport_t));
+    _zn_transport_t *zt = (_zn_transport_t *)z_malloc(sizeof(_zn_transport_t));
     zt->type = _ZN_TRANSPORT_UNICAST_TYPE;
 
     // Initialize the mutexes
@@ -113,7 +114,7 @@ _zn_transport_t *_zn_transport_unicast_new(_zn_link_t *link, _zn_transport_unica
 
 _zn_transport_t *_zn_transport_multicast_new(_zn_link_t *link, _zn_transport_multicast_establish_param_t param)
 {
-    _zn_transport_t *zt = (_zn_transport_t *)malloc(sizeof(_zn_transport_t));
+    _zn_transport_t *zt = (_zn_transport_t *)z_malloc(sizeof(_zn_transport_t));
     zt->type = _ZN_TRANSPORT_MULTICAST_TYPE;
 
     // Initialize the mutexes
@@ -201,7 +202,8 @@ _zn_transport_unicast_establish_param_result_t _zn_transport_unicast_open_client
             }
 
             // The initial SN at TX side
-            param.initial_sn_tx = (z_zint_t)rand() % param.sn_resolution;
+            z_random_fill(&param.initial_sn_tx, sizeof(param.initial_sn_tx));
+            param.initial_sn_tx = param.initial_sn_tx % param.sn_resolution;
 
             // Initialize the Local and Remote Peer IDs
             _z_bytes_copy(&param.remote_pid, &iam.body.init.pid);
@@ -416,6 +418,6 @@ void _zn_transport_free(_zn_transport_t **zt)
     else if (ptr->type == _ZN_TRANSPORT_MULTICAST_TYPE)
         _zn_transport_multicast_clear(&ptr->transport.multicast);
 
-    free(ptr);
+    z_free(ptr);
     *zt = NULL;
 }

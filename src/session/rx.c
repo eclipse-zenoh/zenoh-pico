@@ -52,7 +52,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 zn_reskey_t key = decl.body.res.key;
 
                 // Register remote resource declaration
-                _zn_resource_t *r = (_zn_resource_t *)malloc(sizeof(_zn_resource_t));
+                _zn_resource_t *r = (_zn_resource_t *)z_malloc(sizeof(_zn_resource_t));
                 r->id = id;
                 r->key.rid = key.rid;
                 r->key.rname = _z_str_clone(key.rname);
@@ -61,7 +61,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                 if (res != 0)
                 {
                     _zn_resource_clear(r);
-                    free(r);
+                    z_free(r);
                 }
 
                 break;
@@ -86,7 +86,7 @@ int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *msg)
                     break;
                 }
 
-                _zn_subscriber_t *rs = (_zn_subscriber_t *)malloc(sizeof(_zn_subscriber_t));
+                _zn_subscriber_t *rs = (_zn_subscriber_t *)z_malloc(sizeof(_zn_subscriber_t));
                 rs->id = _zn_get_entity_id(zn);
                 rs->rname = rname;
                 rs->key = _zn_reskey_duplicate(&decl.body.sub.key);

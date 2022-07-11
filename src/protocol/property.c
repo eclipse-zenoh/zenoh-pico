@@ -96,7 +96,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const z_str_t s, unsigned int arg
             p_value_end = end;
 
         size_t p_value_len = p_value_end - p_value_start;
-        z_str_t p_value = (z_str_t)malloc((p_value_len + 1) * sizeof(char));
+        z_str_t p_value = (z_str_t)z_malloc((p_value_len + 1) * sizeof(char));
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
@@ -166,7 +166,7 @@ z_str_t _z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str
     // Calculate the string length to allocate
     size_t len = _z_str_intmap_strlen(s, argc, argv);
     // Build the string
-    z_str_t dst = (z_str_t)malloc(len + 1);
+    z_str_t dst = (z_str_t)z_malloc(len + 1);
     _z_str_intmap_onto_str(dst, s, argc, argv);
     return dst;
 }

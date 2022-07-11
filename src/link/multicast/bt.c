@@ -120,7 +120,7 @@ uint16_t _zn_get_link_mtu_bt(void)
 
 _zn_link_t *_zn_new_link_bt(_zn_endpoint_t endpoint)
 {
-    _zn_link_t *lt = (_zn_link_t *)malloc(sizeof(_zn_link_t));
+    _zn_link_t *lt = (_zn_link_t *)z_malloc(sizeof(_zn_link_t));
 
     lt->is_reliable = 0;
     lt->is_streamed = 1;
