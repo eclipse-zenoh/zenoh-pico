@@ -13,10 +13,37 @@
 //
 
 #include <mbed.h>
+#include <randLIB.h>
 
 extern "C"
 {
 #include "zenoh-pico/system/platform.h"
+
+/*------------------ Random ------------------*/
+uint8_t z_random_u8(void)
+{
+    return randLIB_get_8bit();
+}
+
+uint16_t z_random_u16(void)
+{
+    return randLIB_get_16bit();
+}
+
+uint32_t z_random_u32(void)
+{
+    return randLIB_get_32bit();
+}
+
+uint64_t z_random_u64(void)
+{
+    return randLIB_get_64bit();
+}
+
+void z_random_fill(void *buf, size_t len)
+{
+    randLIB_get_n_bytes_random(buf, len);
+}
 
 /*------------------ Task ------------------*/
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
