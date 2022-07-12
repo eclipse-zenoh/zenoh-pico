@@ -172,7 +172,7 @@ _OWNED_TYPE(z_queryable_t, queryable)
 _OWNED_TYPE(z_encoding_t, encoding)
 _OWNED_TYPE(z_period_t, period)
 _OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
-_OWNED_TYPE(_z_target_t, query_target)
+_OWNED_TYPE(z_query_target_t, query_target)
 _OWNED_TYPE(z_query_consolidation_t, query_consolidation)
 _OWNED_TYPE(z_put_options_t, put_options)
 

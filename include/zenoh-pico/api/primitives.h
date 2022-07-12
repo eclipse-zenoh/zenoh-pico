@@ -85,7 +85,7 @@ _MUTABLE_OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 _MUTABLE_OWNED_FUNCTIONS(z_encoding_t, z_owned_encoding_t, encoding)
 _MUTABLE_OWNED_FUNCTIONS(z_period_t, z_owned_period_t, period)
 _MUTABLE_OWNED_FUNCTIONS(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy)
-_MUTABLE_OWNED_FUNCTIONS(_z_target_t, z_owned_query_target_t, query_target)
+_MUTABLE_OWNED_FUNCTIONS(z_query_target_t, z_owned_query_target_t, query_target)
 _MUTABLE_OWNED_FUNCTIONS(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation)
 _MUTABLE_OWNED_FUNCTIONS(z_put_options_t, z_owned_put_options_t, put_options)
 
