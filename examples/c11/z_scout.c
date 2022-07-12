@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
     z_init_logger();
 
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config = zp_config_default();
 
     printf("Scouting...\n");
     z_owned_hello_array_t hellos = z_scout(Z_ROUTER | Z_PEER, z_move(config), 1000);

@@ -211,7 +211,7 @@ int8_t _z_pull(const _z_subscriber_t *sub);
  *     callback: The callback function that will be called on reception of replies for this query.
  *     arg: A pointer that will be passed to the **callback** on each call.
  */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const _z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg);
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Send a reply to a query.

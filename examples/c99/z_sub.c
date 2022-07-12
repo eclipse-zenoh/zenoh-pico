@@ -29,14 +29,14 @@ int main(int argc, char **argv)
 
     char *expr = "/demo/example/**";
 
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config = zp_config_default();
     if (argc > 1)
     {
-        z_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     }
 
-    z_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    z_closure_sample_t callback = z_closure(data_handler);
+    z_owned_closure_sample_t callback = z_closure(data_handler);
     z_owned_subscriber_t sub = z_declare_subscriber(z_session_loan(&s), z_keyexpr(expr), &callback, NULL);
     if (!z_subscriber_check(&sub))
     {

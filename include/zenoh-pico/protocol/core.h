@@ -29,16 +29,6 @@
 #define Z_CLIENT 0x04 // 1 << 2
 
 /**
- * Query kind values.
- */
-typedef enum
-{
-    _Z_QUERYABLE_ALL_KINDS = 0x01,  // 1 << 0
-    _Z_QUERYABLE_STORAGE = 0x02,    // 1 << 1
-    _Z_QUERYABLE_EVAL = 0x04        // 1 << 2
-} _z_queryable_kind_t;
-
-/**
  * The reserved resource ID indicating a string-only resource key.
  */
 #define Z_RESOURCE_ID_NONE 0
@@ -58,7 +48,7 @@ typedef size_t _z_zint_t;
  */
 typedef struct
 {
-    _z_zint_t prefix;
+    z_encoding_prefix_t prefix;
     char *suffix;
 } _z_encoding_t;
 
@@ -122,45 +112,10 @@ void _z_hello_free(_z_hello_t **hello);
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_ARRAY_DEFINE(_z_hello, _z_hello_t)
 
-/**
- * The possible values of :c:member:`_z_target_t.tag`.
- *
- *     - **Z_TARGET_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
- *     - **Z_TARGET_ALL**: All matching queryables.
- *     - **Z_TARGET_NONE**: No queryables.
- *     - **Z_TARGET_COMPLETE**: A set of complete queryables.
- */
-typedef enum
-{
-    Z_TARGET_BEST_MATCHING = 0,
-    Z_TARGET_ALL = 1,
-    Z_TARGET_NONE = 2,
-    Z_TARGET_ALLCOMPLETE = 3,
-    Z_TARGET_COMPLETE = 4
-} _z_query_target_t;
-
 typedef struct
 {
     _z_zint_t n;
 } _z_target_complete_body_t;
-
-/**
- * The zenoh-net queryables that should be target of a :c:func:`z_query`.
- *
- * Members:
- *     _z_queryable_kind_t kind: A mask of queryable kinds.
- *     _z_target_t target: The query target.
- */
-typedef struct
-{
-    _z_queryable_kind_t _kind;
-    _z_query_target_t target;
-    union
-    {
-        _z_target_complete_body_t complete;
-    } type;
-
-} _z_target_t;
 
 /**
  * The subscription period.

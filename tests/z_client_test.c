@@ -94,8 +94,8 @@ int main(int argc, char **argv)
     setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
-    z_owned_config_t config = z_config_default();
-    z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    z_owned_config_t config = zp_config_default();
+    zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
@@ -112,8 +112,8 @@ int main(int argc, char **argv)
 
     _z_sleep_s(SLEEP);
 
-    config = z_config_default();
-    z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    config = zp_config_default();
+    zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++)
     {
-        z_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
+        z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         sprintf(s1_res, "%s%d", uri, i);
-        z_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
+        z_owned_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t*)malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
         for (unsigned int i = 0; i < SET; i++)
         {
             sprintf(s1_res, "%s%d", uri, i);
-            z_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
+            z_owned_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
             z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
             printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
         }

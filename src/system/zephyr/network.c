@@ -451,8 +451,8 @@ size_t _z_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, _z_b
                 if (addr != NULL)
                 {
                     *addr = _z_bytes_make(sizeof(uint32_t) + sizeof(uint16_t));
-                    memcpy((void *)addr->val, &b->sin_addr.s_addr, sizeof(uint32_t));
-                    memcpy((void *)(addr->val + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
+                    memcpy((void *)addr->start, &b->sin_addr.s_addr, sizeof(uint32_t));
+                    memcpy((void *)(addr->start + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
                 }
                 break;
             }
@@ -467,8 +467,8 @@ size_t _z_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, _z_b
                 if (addr != NULL)
                 {
                     *addr = _z_bytes_make((sizeof(uint32_t) * 4) + sizeof(uint16_t));
-                    memcpy((void *)addr->val, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
-                    memcpy((void *)(addr->val + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
+                    memcpy((void *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
+                    memcpy((void *)(addr->start + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
                 }
                 break;
             }

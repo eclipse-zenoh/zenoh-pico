@@ -19,14 +19,14 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config = zp_config_default();
     if (argc > 1)
     {
-        z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     }
 
-    z_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    zp_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    zp_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
     z_owned_session_t s = z_open(z_move(config));

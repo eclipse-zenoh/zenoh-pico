@@ -27,11 +27,19 @@ typedef struct
 } _z_subscriber_t;
 
 /**
- * Create a default subscription info.
+ * Create a default subscription info for a push subscriber.
  *
  * Returns:
  *     A :c:type:`_z_subinfo_t` containing the created subscription info.
  */
-_z_subinfo_t _z_subinfo_default(void);
+_z_subinfo_t _z_subinfo_push_default(void);
+
+/**
+ * Create a default subscription info for a pull subscriber.
+ *
+ * Returns:
+ *     A :c:type:`_z_subinfo_t` containing the created subscription info.
+ */
+_z_subinfo_t _z_subinfo_pull_default(void);
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

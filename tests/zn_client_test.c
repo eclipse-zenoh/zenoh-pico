@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     _z_config_t *config = _z_config_default();
-    _z_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _zp_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < SET; i++)
     {
         _z_keyexpr_t rk = _z_rid(rids2[i]);
-        _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, NULL, &idx[i]);
+        _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_push_default(), data_handler, NULL, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
-        _z_queryable_t *qle = _z_declare_queryable(s2, rk, _Z_QUERYABLE_EVAL, query_handler, NULL, &idx[i]);
+        _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, NULL, &idx[i]);
         assert(qle != NULL);
         printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk.id, rk.suffix);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
@@ -228,8 +228,8 @@ int main(int argc, char **argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             _z_keyexpr_t rk = _z_rname(s1_res);
-            _z_target_t qry_tgt = _z_target_default();
-            _z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
+            _z_target_t qry_tgt = {.kind = Z_QUERYABLE_ALL_KINDS, .target = Z_TARGET_BEST_MATCHING};
+            z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, NULL, &idx[i]);
             printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);
             _z_keyexpr_clear(&rk);

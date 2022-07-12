@@ -25,7 +25,7 @@ typedef struct
 {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _qid;
-    _z_queryable_kind_t _kind;
+    z_queryable_kind_t kind;
     _z_keyexpr_t key;
     char *predicate;
 } z_query_t;
@@ -39,33 +39,14 @@ typedef struct
     _z_zint_t _id;
 } _z_queryable_t;
 
-/**
- * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
- * at the different stages of the reply process.
- *
- * Members:
- *   first_routers: The consolidation mode to apply on first routers of the replies routing path.
- *   last_router: The consolidation mode to apply on last router of the replies routing path.
- *   reception: The consolidation mode to apply at reception of the replies.
- */
 typedef struct
 {
-    z_consolidation_mode_t first_routers;
-    z_consolidation_mode_t last_router;
-    z_consolidation_mode_t reception;
-} _z_consolidation_strategy_t;
+    z_queryable_kind_t _kind;
+    z_query_target_t _target;
+} _z_target_t;
 
-_z_consolidation_strategy_t _z_consolidation_strategy_none(void);
-_z_consolidation_strategy_t _z_consolidation_strategy_default(void);
-
-_z_query_target_t _z_query_target_default(void);
-
-/**
- * Create a default :c:type:`_z_target_t`.
- *
- * Returns:
- *     A :c:type:`_z_target_t` containing the created query target.
- */
-_z_target_t _z_target_default(void);
+_z_target_t _z_query_target_default(void);
+z_consolidation_strategy_t _z_consolidation_strategy_none(void);
+z_consolidation_strategy_t _z_consolidation_strategy_default(void);
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

@@ -598,7 +598,7 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right)
     }
     if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_ENC)
     {
-        printf("Encoding (%zu %s:%zu %s), ", left->_encoding.prefix, left->_encoding.suffix, right->_encoding.prefix, right->_encoding.suffix);
+        printf("Encoding (%u %s:%u %s), ", left->_encoding.prefix, left->_encoding.suffix, right->_encoding.prefix, right->_encoding.suffix);
         assert(left->_encoding.prefix == right->_encoding.prefix);
         assert(!strcmp(left->_encoding.suffix, right->_encoding.suffix));
     }
@@ -1491,20 +1491,20 @@ _z_zenoh_message_t gen_query_message(void)
     _z_target_t target;
     if (gen_bool())
     {
-        target._kind = gen_uint8();
+        target.kind = gen_uint8();
 
         uint8_t tgt[] = {
             Z_TARGET_BEST_MATCHING,
-            Z_TARGET_COMPLETE,
+            Z_TARGET_ALL_COMPLETE,
             Z_TARGET_ALL,
             Z_TARGET_NONE};
         target.target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
-        if (target.target == Z_TARGET_COMPLETE)
-            target.type.complete.n = gen_uint8();
+        // if (target.target == Z_TARGET_COMPLETE)
+        //     target.type.complete.n = gen_uint8();
     }
     else
     {
-        target._kind = _Z_QUERYABLE_ALL_KINDS;
+        target.kind = Z_QUERYABLE_ALL_KINDS;
         target.target = Z_TARGET_BEST_MATCHING;
     }
 
@@ -1512,7 +1512,7 @@ _z_zenoh_message_t gen_query_message(void)
         Z_CONSOLIDATION_MODE_FULL,
         Z_CONSOLIDATION_MODE_LAZY,
         Z_CONSOLIDATION_MODE_NONE};
-    _z_consolidation_strategy_t consolidation;
+    z_consolidation_strategy_t consolidation;
     consolidation.first_routers = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
     consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
     consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
@@ -1537,17 +1537,17 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     if _Z_HAS_FLAG (header, _Z_FLAG_Z_T)
     {
         printf("   Target => ");
-        printf("Kind (%u:%u), ", left->_target._kind, right->_target._kind);
-        assert(left->_target._kind == right->_target._kind);
+        printf("Kind (%u:%u), ", left->_target.kind, right->_target.kind);
+        assert(left->_target.kind == right->_target.kind);
 
         printf("Tag (%u:%u)", left->_target.target, right->_target.target);
         assert(left->_target.target == right->_target.target);
 
-        if (left->_target.target == Z_TARGET_COMPLETE)
-        {
-            printf(", N (%zu:%zu)", left->_target.type.complete.n, right->_target.type.complete.n);
-            assert(left->_target.type.complete.n == right->_target.type.complete.n);
-        }
+        // if (left->_target.target == Z_TARGET_COMPLETE)
+        // {
+        //     printf(", N (%zu:%zu)", left->_target.type.complete.n, right->_target.type.complete.n);
+        //     assert(left->_target.type.complete.n == right->_target.type.complete.n);
+        // }
 
         printf("\n");
     }

@@ -28,7 +28,7 @@ _z_config_t _z_config_make()
     return ps;
 }
 
-int8_t _z_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
+int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
 {
     char *res = _z_str_intmap_insert(ps, key, value.val);
     if (res != value.val)

@@ -57,65 +57,65 @@ z_keyexpr_t z_keyexpr(const char *name)
     return _z_rname(name);
 }
 
-z_owned_config_t z_config_new(void)
+z_owned_config_t zp_config_new(void)
 {
     return (z_owned_config_t){._value = _z_config_empty()};
 }
 
-z_owned_config_t z_config_empty(void)
+z_owned_config_t zp_config_empty(void)
 {
     return (z_owned_config_t){._value = _z_config_empty()};
 }
 
-z_owned_config_t z_config_default(void)
+z_owned_config_t zp_config_default(void)
 {
     return (z_owned_config_t){._value = _z_config_default()};
 }
 
-z_owned_config_t z_config_client(const char *const *peers, size_t n_peers)
+z_owned_config_t zp_config_client(const char *const *peers, size_t n_peers)
 {
     (void) (n_peers);
     return (z_owned_config_t){._value = _z_config_client(peers[0])};
 }
 
-z_owned_config_t z_config_peer(void)
+z_owned_config_t zp_config_peer(void)
 {
     // Not implemented yet in Zenoh-Pico
     return (z_owned_config_t){._value = NULL};
 }
 
-z_owned_config_t z_config_from_file(const char *path)
+z_owned_config_t zp_config_from_file(const char *path)
 {
     // Not implemented yet in Zenoh-Pico
     (void) (path);
     return (z_owned_config_t){._value = NULL};
 }
 
-z_owned_config_t z_config_from_str(const char *str)
+z_owned_config_t zp_config_from_str(const char *str)
 {
     // Not implemented yet in Zenoh-Pico
     (void) (str);
     return (z_owned_config_t){._value = NULL};
 }
 
-const char *z_config_get(z_config_t *config, unsigned int key)
+const char *zp_config_get(z_config_t *config, unsigned int key)
 {
     return _z_config_get(config, key);
 }
 
-const char *z_config_to_str(z_config_t *config)
+const char *zp_config_to_str(z_config_t *config)
 {
     // Not implemented yet in Zenoh-Pico
     (void) (config);
     return NULL;
 }
 
-int8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value)
+int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
-    return _z_config_insert(config, key, value);
+    return _zp_config_insert(config, key, value);
 }
 
-int8_t z_config_insert_json(z_config_t *config, const char *key, const char *value)
+int8_t zp_config_insert_json(z_config_t *config, const char *key, const char *value)
 {
     // Not implemented yet in Zenoh-Pico
     (void) (config);
@@ -131,12 +131,12 @@ z_encoding_t z_encoding_default(void)
 
 z_query_target_t z_query_target_default(void)
 {
-    return _z_query_target_default();
+    return Z_TARGET_BEST_MATCHING;
 }
 
 z_query_consolidation_t z_query_consolidation_auto(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_AUTO};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_AUTO};
 }
 
 z_query_consolidation_t z_query_consolidation_default(void)
@@ -146,32 +146,32 @@ z_query_consolidation_t z_query_consolidation_default(void)
 
 z_query_consolidation_t z_query_consolidation_full(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_FULL, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_FULL, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
 z_query_consolidation_t z_query_consolidation_last_router(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
 z_query_consolidation_t z_query_consolidation_lazy(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_LAZY}};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_LAZY}};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_NONE, .last_router = Z_CONSOLIDATION_MODE_NONE, .reception = Z_CONSOLIDATION_MODE_NONE}};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_NONE, .last_router = Z_CONSOLIDATION_MODE_NONE, .reception = Z_CONSOLIDATION_MODE_NONE}};
 }
 
 z_query_consolidation_t z_query_consolidation_reception(void)
 {
-    return (z_query_consolidation_t) {._tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      ._strategy._manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
 /**************** Loans ****************/
@@ -243,6 +243,7 @@ _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
@@ -250,7 +251,7 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryabl
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(_z_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
 
@@ -336,13 +337,13 @@ char *z_info_get(z_info_t *info, unsigned int key)
 
 z_put_options_t z_put_options_default(void)
 {
-    return (z_put_options_t) {.encoding = z_encoding_default(), .kind = Z_SAMPLE_KIND_PUT, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t) {.encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
 }
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
 {
     if (options != NULL)
-        return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, options->kind, options->congestion_control);
+        return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, Z_SAMPLE_KIND_PUT, options->congestion_control);
 
     return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
 }
@@ -352,21 +353,21 @@ z_get_options_t z_get_options_default(void)
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options)
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options)
 {
-    _z_consolidation_strategy_t strategy;
+    z_consolidation_strategy_t strategy;
     _z_target_t target;
-    target._kind = _Z_QUERYABLE_ALL_KINDS;
+    target._kind = Z_QUERYABLE_ALL_KINDS;
 
     if (options != NULL)
     {
         // TODO: Check before release
-        if (options->consolidation._tag == Z_QUERY_CONSOLIDATION_MANUAL)
-            strategy = options->consolidation._strategy._manual;
+        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL)
+            strategy = options->consolidation.manual;
         else
         {
             // if (keyexpr.rname.)
-            strategy = z_query_consolidation_default()._strategy._manual;
+            strategy = z_query_consolidation_default().manual;
             // QueryConsolidation::Auto => {
             //     if self.selector.has_time_range() {
             //         ConsolidationStrategy::none()
@@ -375,15 +376,12 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_clos
             //     }
             // }
         }
-        target.target = options->target;
-        // TODO: Check before release
-        // if (target._target == Z_TARGET_COMPLETE)
-        //     target._type._complete = 0;
+        target._target = options->target;
     }
     else
     {
-        target.target = z_query_target_default();
-        strategy = z_query_consolidation_default()._strategy._manual;
+        target._target = z_query_target_default();
+        strategy = z_query_consolidation_default().manual;
     }
 
     return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->drop, callback->context);
@@ -451,13 +449,22 @@ z_subscriber_options_t z_subscriber_options_default(void)
     return (z_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
 }
 
-z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options)
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options)
 {
-    _z_subinfo_t subinfo = _z_subinfo_default();
+    _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
     return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
+}
+
+z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options)
+{
+    _z_subinfo_t subinfo = _z_subinfo_pull_default();
+    if (options != NULL)
+        subinfo.reliability = options->reliability;
+
+    return (z_owned_pull_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
 }
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
@@ -471,7 +478,18 @@ int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
     return 0;
 }
 
-int8_t z_pull(const z_subscriber_t *sub)
+int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub)
+{
+    _z_undeclare_subscriber(sub->_value);
+
+    z_pull_subscriber_drop(sub);
+    free(sub->_value);
+    sub->_value = NULL;
+
+    return 0;
+}
+
+int8_t z_pull(const z_pull_subscriber_t *sub)
 {
     return _z_pull(sub);
 }
@@ -481,7 +499,7 @@ z_queryable_options_t z_queryable_options_default(void)
     return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
 }
 
-z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options)
+z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback, const z_queryable_options_t *options)
 {
     if (options != NULL)
         return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->drop, callback->context)};

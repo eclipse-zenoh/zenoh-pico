@@ -32,17 +32,17 @@ z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len);
 z_owned_string_t z_string_new(const char *s);
 z_keyexpr_t z_keyexpr(const char *name);
 
-z_owned_config_t z_config_new(void);
-z_owned_config_t z_config_empty(void);
-z_owned_config_t z_config_default(void);
-z_owned_config_t z_config_client(const char *const *peers, size_t n_peers);
-z_owned_config_t z_config_peer(void);
-z_owned_config_t z_config_from_file(const char *path);
-z_owned_config_t z_config_from_str(const char *str);
-const char *z_config_get(z_config_t *config, unsigned int key);
-const char *z_config_to_str(z_config_t *config);
-int8_t z_config_insert(z_config_t *config, unsigned int key, z_string_t value);
-int8_t z_config_insert_json(z_config_t *config, const char *key, const char *value);
+z_owned_config_t zp_config_new(void);
+z_owned_config_t zp_config_empty(void);
+z_owned_config_t zp_config_default(void);
+z_owned_config_t zp_config_client(const char *const *peers, size_t n_peers);
+z_owned_config_t zp_config_peer(void);
+z_owned_config_t zp_config_from_file(const char *path);
+z_owned_config_t zp_config_from_str(const char *str);
+const char *zp_config_get(z_config_t *config, unsigned int key);
+const char *zp_config_to_str(z_config_t *config);
+int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
+int8_t zp_config_insert_json(z_config_t *config, const char *key, const char *value);
 
 z_encoding_t z_encoding_default(void);
 
@@ -78,13 +78,14 @@ _MUTABLE_OWNED_FUNCTIONS(z_config_t, z_owned_config_t, config)
 _MUTABLE_OWNED_FUNCTIONS(z_session_t, z_owned_session_t, session)
 _MUTABLE_OWNED_FUNCTIONS(z_info_t, z_owned_info_t, info)
 _MUTABLE_OWNED_FUNCTIONS(z_subscriber_t, z_owned_subscriber_t, subscriber)
+_MUTABLE_OWNED_FUNCTIONS(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber)
 _MUTABLE_OWNED_FUNCTIONS(z_publisher_t, z_owned_publisher_t, publisher)
 _MUTABLE_OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 
 _MUTABLE_OWNED_FUNCTIONS(z_encoding_t, z_owned_encoding_t, encoding)
 _MUTABLE_OWNED_FUNCTIONS(z_period_t, z_owned_period_t, period)
 _MUTABLE_OWNED_FUNCTIONS(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy)
-_MUTABLE_OWNED_FUNCTIONS(z_query_target_t, z_owned_query_target_t, query_target)
+_MUTABLE_OWNED_FUNCTIONS(_z_target_t, z_owned_query_target_t, query_target)
 _MUTABLE_OWNED_FUNCTIONS(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation)
 _MUTABLE_OWNED_FUNCTIONS(z_put_options_t, z_owned_put_options_t, put_options)
 
@@ -111,7 +112,7 @@ z_put_options_t z_put_options_default(void);
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 
 z_get_options_t z_get_options_default(void);
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_closure_reply_t *callback, const z_get_options_t *options);
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options);
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
 int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);
@@ -124,13 +125,15 @@ int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t 
 int8_t z_publisher_delete(const z_publisher_t *pub);
 
 z_subscriber_options_t z_subscriber_options_default(void);
-z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_sample_t *callback, const z_subscriber_options_t *options);
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
-int8_t z_pull(const z_subscriber_t *sub);
+z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
+int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
+int8_t z_pull(const z_pull_subscriber_t *sub);
 
 z_queryable_options_t z_queryable_options_default(void);
-z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_closure_query_t *callback, const z_queryable_options_t *options);
+z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback, const z_queryable_options_t *options);
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len);

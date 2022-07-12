@@ -109,10 +109,10 @@ _z_config_t *_z_info(const _z_session_t *zn)
 {
     _z_config_t *ps = (_z_config_t *)malloc(sizeof(_z_config_t));
     _z_config_init(ps);
-    _z_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
+    _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
     {
-        _z_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->_tp->_transport._unicast._remote_pid));
+        _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&zn->_tp->_transport._unicast._remote_pid));
     }
     else if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
@@ -120,7 +120,7 @@ _z_config_t *_z_info(const _z_session_t *zn)
         while (xs != NULL)
         {
             _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
-            _z_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
+            _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
 
             xs = _z_transport_peer_entry_list_tail(xs);
         }

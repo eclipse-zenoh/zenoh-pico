@@ -14,11 +14,20 @@
 
 #include "zenoh-pico/net/subscribe.h"
 
-_z_subinfo_t _z_subinfo_default()
+_z_subinfo_t _z_subinfo_push_default()
 {
     _z_subinfo_t si;
     si.reliability = Z_RELIABILITY_RELIABLE;
     si.mode = Z_SUBMODE_PUSH;
+    si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
+    return si;
+}
+
+_z_subinfo_t _z_subinfo_pull_default()
+{
+    _z_subinfo_t si;
+    si.reliability = Z_RELIABILITY_RELIABLE;
+    si.mode = Z_SUBMODE_PULL;
     si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
     return si;
 }

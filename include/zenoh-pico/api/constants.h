@@ -44,7 +44,14 @@ typedef enum
     Z_ENCODING_IMAGE_JPEG = 18,
     Z_ENCODING_IMAGE_PNG = 19,
     Z_ENCODING_IMAGE_GIF = 20,
-} z_encoding_type_t;
+} z_encoding_prefix_t;
+
+typedef enum
+{
+    Z_QUERYABLE_ALL_KINDS = 0x01,  // 1 << 0
+    Z_QUERYABLE_STORAGE = 0x02,    // 1 << 1
+    Z_QUERYABLE_EVAL = 0x04        // 1 << 2
+} z_queryable_kind_t;
 
 /**
  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`.
@@ -115,5 +122,38 @@ typedef enum
     Z_SUBMODE_PUSH = 0,
     Z_SUBMODE_PULL = 1,
 } z_submode_t;
+
+/**
+ * The possible values of :c:member:`z_query_target_t.tag`.
+ *
+ *     - **Z_TARGET_BEST_MATCHING**: The nearest complete queryable if any else all matching queryables.
+ *     - **Z_TARGET_ALL**: All matching queryables.
+ *     - **Z_TARGET_NONE**: No queryables.
+ *     - **Z_TARGET_ALL_COMPLETE**: A set of complete queryables.
+ */
+typedef enum
+{
+    Z_TARGET_BEST_MATCHING = 0,
+    Z_TARGET_ALL = 1,
+    Z_TARGET_NONE = 2,
+    Z_TARGET_ALL_COMPLETE = 3,
+} z_query_target_t;
+
+//FIXME
+/**
+ * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
+ * at the different stages of the reply process.
+ *
+ * Members:
+ *   first_routers: The consolidation mode to apply on first routers of the replies routing path.
+ *   last_router: The consolidation mode to apply on last router of the replies routing path.
+ *   reception: The consolidation mode to apply at reception of the replies.
+ */
+typedef struct
+{
+    z_consolidation_mode_t first_routers;
+    z_consolidation_mode_t last_router;
+    z_consolidation_mode_t reception;
+} z_consolidation_strategy_t;
 
 #endif /* ZENOH_PICO_API_CONSTANTS_H */

@@ -56,8 +56,8 @@ int main(int argc, char **argv)
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     _z_config_t *config = _z_config_default();
-    _z_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    _z_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _zp_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make("peer"));
+    _zp_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++)
         idx[i] = i;
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
-        _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_default(), data_handler, NULL, &idx[i]);
+        _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_push_default(), data_handler, NULL, &idx[i]);
         assert(sub != NULL);
         printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list

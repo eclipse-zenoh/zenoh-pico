@@ -32,27 +32,46 @@ typedef _z_config_t z_config_t;
 typedef _z_session_t z_session_t;
 typedef _z_config_t z_info_t;
 typedef _z_subscriber_t z_subscriber_t;
+typedef _z_subscriber_t z_pull_subscriber_t;
 typedef _z_publisher_t z_publisher_t;
 typedef _z_queryable_t z_queryable_t;
 
 typedef _z_encoding_t z_encoding_t;
 typedef _z_period_t z_period_t;
-typedef _z_consolidation_strategy_t z_consolidation_strategy_t;
-typedef _z_query_target_t z_query_target_t;
-typedef _z_target_t z_target_t;
+
+// typedef struct
+// {
+//     z_queryable_kind_t kind;
+//     z_query_target_t target;
+// } _z_target_t;
+
+// /**
+//  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
+//  * at the different stages of the reply process.
+//  *
+//  * Members:
+//  *   first_routers: The consolidation mode to apply on first routers of the replies routing path.
+//  *   last_router: The consolidation mode to apply on last router of the replies routing path.
+//  *   reception: The consolidation mode to apply at reception of the replies.
+//  */
+// typedef struct
+// {
+//     z_consolidation_mode_t first_routers;
+//     z_consolidation_mode_t last_router;
+//     z_consolidation_mode_t reception;
+// } z_consolidation_strategy_t;
 
 typedef struct {
   z_reliability_t reliability;
-  z_submode_t mode;
 } z_subscriber_options_t;
 
 typedef struct
 {
-    z_query_consolidation_tag_t _tag;
+    z_query_consolidation_tag_t tag;
     union
     {
-        z_consolidation_strategy_t _manual;
-    } _strategy;
+        z_consolidation_strategy_t manual;
+    };
 } z_query_consolidation_t;
 
 typedef struct
@@ -70,7 +89,6 @@ typedef struct
 typedef struct
 {
     z_encoding_t encoding;
-    z_sample_kind_t kind;
     uint8_t congestion_control;
     uint8_t priority;
 } z_put_options_t;
@@ -96,21 +114,21 @@ typedef struct
   void *context;
   _z_data_handler_t call;
   void (*drop)(void*);
-} z_closure_sample_t;
+} z_owned_closure_sample_t;
 
 typedef struct
 {
   void *context;
   _z_questionable_handler_t call;
   void (*drop)(void*);
-} z_closure_query_t;
+} z_owned_closure_query_t;
 
 typedef struct
 {
   void *context;
   _z_reply_handler_t call;
   void (*drop)(void*);
-} z_closure_reply_t;
+} z_owned_closure_reply_t;
 
 #define _TYPEDEF_ARRAY(type, alias, elem, name)                               \
     typedef type alias;                                                       \
@@ -146,13 +164,14 @@ _OWNED_TYPE(z_config_t, config)
 _OWNED_TYPE(z_session_t, session)
 _OWNED_TYPE(z_info_t, info)
 _OWNED_TYPE(z_subscriber_t, subscriber)
+_OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
 _OWNED_TYPE(z_publisher_t, publisher)
 _OWNED_TYPE(z_queryable_t, queryable)
 
 _OWNED_TYPE(z_encoding_t, encoding)
 _OWNED_TYPE(z_period_t, period)
 _OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
-_OWNED_TYPE(z_query_target_t, query_target)
+_OWNED_TYPE(_z_target_t, query_target)
 _OWNED_TYPE(z_query_consolidation_t, query_consolidation)
 _OWNED_TYPE(z_put_options_t, put_options)
 

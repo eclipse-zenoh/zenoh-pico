@@ -43,8 +43,8 @@ void setup()
     pinMode(BEEP_PIN, OUTPUT);
 
     _z_config_t *config = _z_config_default();
-    _z_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
-    _z_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
+    _zp_config_insert(config, Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    _zp_config_insert(config, Z_CONFIG_PEER_KEY, z_string_make(PEER));
 
     Serial.print("Opening Session on classic Bluetooth as slave: ");
     Serial.print(PEER);

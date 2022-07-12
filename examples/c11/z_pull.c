@@ -36,14 +36,14 @@ int main(int argc, char **argv)
     {
         expr = argv[1];
     }
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config = zp_config_default();
     if (argc > 2)
     {
-        z_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    z_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    zp_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    zp_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
     z_owned_session_t s = z_open(z_move(config));
@@ -58,9 +58,8 @@ int main(int argc, char **argv)
 
     printf("Creating Subscriber on '%s'...\n", expr);
     z_subscriber_options_t opts = z_subscriber_options_default();
-    opts.mode = Z_SUBMODE_PULL;
-    z_closure_sample_t callback = z_closure(data_handler);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(expr), &callback, &opts);
+    z_owned_closure_sample_t callback = z_closure(data_handler);
+    z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_keyexpr(expr), &callback, &opts);
     if (!z_check(sub))
     {
         printf("Unable to create subscriber.\n");
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
         z_pull(z_loan(sub));
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_undeclare_pull_subscriber(z_move(sub));
 
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));

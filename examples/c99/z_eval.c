@@ -39,14 +39,14 @@ int main(int argc, char **argv)
     {
         expr = argv[1];
     }
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config = zp_config_default();
     if (argc > 2)
     {
-        z_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
     }
 
-    z_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    z_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
 
     printf("Openning session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_session_loan(&s));
 
     printf("Creating Queryable on '%s'...\n", expr);
-    z_closure_query_t callback = z_closure(query_handler);
+    z_owned_closure_query_t callback = z_closure(query_handler);
     z_owned_queryable_t qable = z_declare_queryable(z_session_loan(&s), z_keyexpr(expr), &callback, NULL);
     if (!z_queryable_check(&qable))
     {
