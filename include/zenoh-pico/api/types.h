@@ -39,12 +39,6 @@ typedef _z_queryable_t z_queryable_t;
 typedef _z_encoding_t z_encoding_t;
 typedef _z_period_t z_period_t;
 
-// typedef struct
-// {
-//     z_queryable_kind_t kind;
-//     z_query_target_t target;
-// } _z_target_t;
-
 // /**
 //  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
 //  * at the different stages of the reply process.

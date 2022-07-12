@@ -1491,21 +1491,19 @@ _z_zenoh_message_t gen_query_message(void)
     _z_target_t target;
     if (gen_bool())
     {
-        target.kind = gen_uint8();
+        target._kind = gen_uint8();
 
         uint8_t tgt[] = {
             Z_TARGET_BEST_MATCHING,
             Z_TARGET_ALL_COMPLETE,
             Z_TARGET_ALL,
             Z_TARGET_NONE};
-        target.target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
-        // if (target.target == Z_TARGET_COMPLETE)
-        //     target.type.complete.n = gen_uint8();
+        target._target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
     }
     else
     {
-        target.kind = Z_QUERYABLE_ALL_KINDS;
-        target.target = Z_TARGET_BEST_MATCHING;
+        target._kind = Z_QUERYABLE_ALL_KINDS;
+        target._target = Z_TARGET_BEST_MATCHING;
     }
 
     uint8_t con[] = {
@@ -1537,11 +1535,11 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     if _Z_HAS_FLAG (header, _Z_FLAG_Z_T)
     {
         printf("   Target => ");
-        printf("Kind (%u:%u), ", left->_target.kind, right->_target.kind);
-        assert(left->_target.kind == right->_target.kind);
+        printf("Kind (%u:%u), ", left->_target._kind, right->_target._kind);
+        assert(left->_target._kind == right->_target._kind);
 
-        printf("Tag (%u:%u)", left->_target.target, right->_target.target);
-        assert(left->_target.target == right->_target.target);
+        printf("Tag (%u:%u)", left->_target._target, right->_target._target);
+        assert(left->_target._target == right->_target._target);
 
         // if (left->_target.target == Z_TARGET_COMPLETE)
         // {

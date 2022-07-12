@@ -228,7 +228,7 @@ int main(int argc, char **argv)
         {
             sprintf(s1_res, "%s%d", uri, i);
             _z_keyexpr_t rk = _z_rname(s1_res);
-            _z_target_t qry_tgt = {.kind = Z_QUERYABLE_ALL_KINDS, .target = Z_TARGET_BEST_MATCHING};
+            _z_target_t qry_tgt = _z_target_default();
             z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, NULL, &idx[i]);
             printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);

@@ -45,7 +45,7 @@ typedef struct
     z_query_target_t _target;
 } _z_target_t;
 
-_z_target_t _z_query_target_default(void);
+_z_target_t _z_target_default(void);
 z_consolidation_strategy_t _z_consolidation_strategy_none(void);
 z_consolidation_strategy_t _z_consolidation_strategy_default(void);
 
