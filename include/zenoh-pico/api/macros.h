@@ -118,7 +118,10 @@
     z_owned_reply_data_t : z_reply_data_move,                         \
     z_owned_str_array_t : z_str_array_move,                           \
     z_owned_hello_array_t : z_hello_array_move,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_move)(&x)
+    z_owned_reply_data_array_t : z_reply_data_array_move,             \
+    z_owned_closure_sample_t : z_closure_sample_move,                 \
+    z_owned_closure_query_t : z_closure_query_move,                   \
+    z_owned_closure_reply_t : z_closure_reply_move)(&x)
 
 #define z_clone(x) _Generic((x),                                       \
     z_owned_bytes_t : z_bytes_clone,                                   \

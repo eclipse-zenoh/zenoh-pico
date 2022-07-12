@@ -264,6 +264,21 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_arra
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array, _z_reply_data_array_free, _z_owner_noop_copy)
 
+z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample)
+{
+    return closure_sample;
+}
+
+z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query)
+{
+    return closure_query;
+}
+
+z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply)
+{
+    return closure_reply;
+}
+
 /************* Primitives **************/
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
 {
@@ -355,6 +370,9 @@ z_get_options_t z_get_options_default(void)
 
 int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options)
 {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
     z_consolidation_strategy_t strategy;
     _z_target_t target;
     target._kind = Z_QUERYABLE_ALL_KINDS;
@@ -384,7 +402,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
         strategy = z_query_consolidation_default().manual;
     }
 
-    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->drop, callback->context);
+    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
@@ -451,20 +469,26 @@ z_subscriber_options_t z_subscriber_options_default(void)
 
 z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options)
 {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
     _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
-    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
+    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, ctx)};
 }
 
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options)
 {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
     _z_subinfo_t subinfo = _z_subinfo_pull_default();
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
-    return (z_owned_pull_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, callback->context)};
+    return (z_owned_pull_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
@@ -501,11 +525,14 @@ z_queryable_options_t z_queryable_options_default(void)
 
 z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback, const z_queryable_options_t *options)
 {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
     if (options != NULL)
-        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->drop, callback->context)};
+        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->drop, ctx)};
 
     z_queryable_options_t opt = z_queryable_options_default();
-    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->drop, callback->context)};
+    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable)

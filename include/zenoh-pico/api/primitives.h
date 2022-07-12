@@ -98,6 +98,10 @@ _MUTABLE_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 _MUTABLE_OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
 _MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
+z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
+z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
+z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
+
 /************* Primitives **************/
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout);
 
