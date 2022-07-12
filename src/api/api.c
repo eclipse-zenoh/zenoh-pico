@@ -524,6 +524,25 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
     return _z_send_reply(query, keyexpr, payload, len);
 }
 
+uint8_t z_reply_is_ok(const z_owned_reply_t *reply)
+{
+    (void) (reply);
+    // For the moment always return TRUE.
+    // The support for reply errors will come in the next release.
+    return 1;
+}
+
+z_value_t z_reply_err(const z_owned_reply_t *reply)
+{
+    (void) (reply);
+    return (z_value_t){ .payload = _z_bytes_make(0), .encoding = z_encoding_default() };
+}
+
+z_sample_t z_reply_ok(const z_owned_reply_t *reply)
+{
+    return reply->_value->data.sample;
+}
+
 /**************** Tasks ****************/
 int8_t zp_start_read_task(z_session_t *zs)
 {

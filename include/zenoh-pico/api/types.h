@@ -39,6 +39,12 @@ typedef _z_queryable_t z_queryable_t;
 typedef _z_encoding_t z_encoding_t;
 typedef _z_period_t z_period_t;
 
+typedef struct
+{
+    z_bytes_t payload;
+    z_encoding_t encoding;
+} z_value_t;
+
 // /**
 //  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
 //  * at the different stages of the reply process.
@@ -55,7 +61,8 @@ typedef _z_period_t z_period_t;
 //     z_consolidation_mode_t reception;
 // } z_consolidation_strategy_t;
 
-typedef struct {
+typedef struct
+{
   z_reliability_t reliability;
 } z_subscriber_options_t;
 
