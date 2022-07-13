@@ -16,7 +16,7 @@
 
 #include "zenoh-pico.h"
 
-void reply_handler(const _z_reply_t *reply, const void *arg)
+void reply_handler(z_reply_t *reply, void *arg)
 {
     if (reply->tag == Z_REPLY_TAG_DATA)
     {

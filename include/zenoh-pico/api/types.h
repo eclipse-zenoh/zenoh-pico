@@ -110,27 +110,6 @@ typedef _z_hello_t z_hello_t;
 typedef _z_reply_t z_reply_t;
 typedef _z_reply_data_t z_reply_data_t;
 
-typedef struct
-{
-  void *context;
-  _z_data_handler_t call;
-  void (*drop)(void*);
-} z_owned_closure_sample_t;
-
-typedef struct
-{
-  void *context;
-  _z_questionable_handler_t call;
-  void (*drop)(void*);
-} z_owned_closure_query_t;
-
-typedef struct
-{
-  void *context;
-  _z_reply_handler_t call;
-  void (*drop)(void*);
-} z_owned_closure_reply_t;
-
 #define _TYPEDEF_ARRAY(type, alias, elem, name)                               \
     typedef type alias;                                                       \
     static inline elem *z_##name##_array_get(const alias *a, size_t k)        \
@@ -184,5 +163,26 @@ _OWNED_TYPE(z_reply_data_t, reply_data)
 _OWNED_TYPE(z_str_array_t, str_array)
 _OWNED_TYPE(z_hello_array_t, hello_array)
 _OWNED_TYPE(z_reply_data_array_t, reply_data_array)
+
+typedef struct
+{
+  void *context;
+  _z_data_handler_t call;
+  void (*drop)(void*);
+} z_owned_closure_sample_t;
+
+typedef struct
+{
+  void *context;
+  _z_questionable_handler_t call;
+  void (*drop)(void*);
+} z_owned_closure_query_t;
+
+typedef struct
+{
+  void *context;
+  _z_reply_handler_t call;
+  void (*drop)(void*);
+} z_owned_closure_reply_t;
 
 #endif /* ZENOH_PICO_API_TYPES_H */

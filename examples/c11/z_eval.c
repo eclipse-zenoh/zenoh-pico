@@ -21,7 +21,7 @@
 char *expr = "/demo/example/zenoh-pico-eval";
 char *value = "Eval from Pico!";
 
-void query_handler(const z_query_t *query, const void *arg)
+void query_handler(z_query_t *query, void *arg)
 {
     (void) (arg);
 

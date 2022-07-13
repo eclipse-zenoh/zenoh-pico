@@ -79,7 +79,7 @@ _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_data_handler_t)(const _z_sample_t *sample, const void *arg);
+typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct
 {
@@ -106,7 +106,7 @@ typedef struct
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_questionable_handler_t)(const z_query_t *query, const void *arg);
+typedef void (*_z_questionable_handler_t)(z_query_t *query, void *arg);
 
 typedef struct
 {
@@ -140,7 +140,7 @@ _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(const _z_reply_t *reply, const void *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg);
 
 typedef struct
 {

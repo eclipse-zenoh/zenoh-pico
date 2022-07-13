@@ -38,7 +38,7 @@ z_owned_keyexpr_t rids2[SET];
 volatile unsigned int total = 0;
 
 volatile unsigned int queries = 0;
-void query_handler(const z_query_t *query, const void *arg)
+void query_handler(z_query_t *query, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
@@ -51,7 +51,7 @@ void query_handler(const z_query_t *query, const void *arg)
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(const _z_reply_t *reply, const void *arg)
+void reply_handler(z_reply_t *reply, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
@@ -72,7 +72,7 @@ void reply_handler(const _z_reply_t *reply, const void *arg)
 }
 
 volatile unsigned int datas = 0;
-void data_handler(const z_sample_t *sample, const void *arg)
+void data_handler(const z_sample_t *sample, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);

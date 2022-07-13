@@ -33,7 +33,7 @@ _z_list_t *subs2 = NULL; // @TODO: use type-safe list
 volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
-void data_handler(const z_sample_t *sample, const void *arg)
+void data_handler(const z_sample_t *sample, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);

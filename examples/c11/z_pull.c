@@ -17,7 +17,7 @@
 
 #include "zenoh-pico.h"
 
-void data_handler(const _z_sample_t *sample, const void *arg)
+void data_handler(const _z_sample_t *sample, void *arg)
 {
     (void)(arg); // Unused argument
 
