@@ -21,9 +21,8 @@ elif framework == 'arduino':
     src_filter=["+<*>",
                 "-<tests/>",
                 "-<example/>",
-                "-<system/espidf/>",
-                "-<system/mbed/>",
-                "-<system/arduino/ststm32/>",
+                "-<system/espidf>",
+                "-<system/arduino/opencr>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
     cppdefines=["ZENOH_ARDUINO_ESP32"]
