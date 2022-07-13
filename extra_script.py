@@ -22,6 +22,7 @@ elif framework == 'arduino':
                 "-<tests/>",
                 "-<example/>",
                 "-<system/espidf>",
+                "-<system/mbed/>",
                 "-<system/arduino/opencr>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
