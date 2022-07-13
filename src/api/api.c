@@ -72,56 +72,14 @@ z_owned_config_t zp_config_default(void)
     return (z_owned_config_t){._value = _z_config_default()};
 }
 
-z_owned_config_t zp_config_client(const char *const *peers, size_t n_peers)
-{
-    (void) (n_peers);
-    return (z_owned_config_t){._value = _z_config_client(peers[0])};
-}
-
-z_owned_config_t zp_config_peer(void)
-{
-    // Not implemented yet in Zenoh-Pico
-    return (z_owned_config_t){._value = NULL};
-}
-
-z_owned_config_t zp_config_from_file(const char *path)
-{
-    // Not implemented yet in Zenoh-Pico
-    (void) (path);
-    return (z_owned_config_t){._value = NULL};
-}
-
-z_owned_config_t zp_config_from_str(const char *str)
-{
-    // Not implemented yet in Zenoh-Pico
-    (void) (str);
-    return (z_owned_config_t){._value = NULL};
-}
-
 const char *zp_config_get(z_config_t *config, unsigned int key)
 {
     return _z_config_get(config, key);
 }
 
-const char *zp_config_to_str(z_config_t *config)
-{
-    // Not implemented yet in Zenoh-Pico
-    (void) (config);
-    return NULL;
-}
-
 int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 {
     return _zp_config_insert(config, key, value);
-}
-
-int8_t zp_config_insert_json(z_config_t *config, const char *key, const char *value)
-{
-    // Not implemented yet in Zenoh-Pico
-    (void) (config);
-    (void) (key);
-    (void) (value);
-    return 0;
 }
 
 z_encoding_t z_encoding_default(void)
@@ -176,7 +134,7 @@ z_query_consolidation_t z_query_consolidation_reception(void)
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    bool z_##name##_check(const ownedtype *val)                                    \
+    bool z_##name##_check(const ownedtype *val)                                       \
     {                                                                                 \
         return val->_value != NULL;                                                   \
     }                                                                                 \
@@ -201,13 +159,13 @@ z_query_consolidation_t z_query_consolidation_reception(void)
     }
 
 #define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    bool z_##name##_check(const ownedtype *val)                                      \
+    bool z_##name##_check(const ownedtype *val)                                         \
     {                                                                                   \
         return val->_value != NULL;                                                     \
     }                                                                                   \
     type z_##name##_loan(const ownedtype *val)                                          \
     {                                                                                   \
-        return *val->_value;                                                             \
+        return *val->_value;                                                            \
     }                                                                                   \
     ownedtype *z_##name##_move(ownedtype *val)                                          \
     {                                                                                   \
@@ -318,32 +276,6 @@ z_owned_info_t z_info(const z_session_t *zs)
 
     return zi;
 }
-
-//z_owned_string_t z_info_as_str(const z_session_t *zs)
-//{
-//    z_string_t *str = (z_string_t*)malloc(sizeof(z_string_t));
-//    *str = (z_string_t){.val = NULL, .len = 0};
-//
-//    _z_config_t *zi = _z_info(zs);
-//
-//    _z_string_t append;
-//    _z_string_move_str(&append, "info_router_pid : ");
-//    _z_string_append(str, &append);
-//
-//    append = _z_config_get(zi, Z_INFO_PID_KEY);
-//    _z_string_append(str, &append);
-//
-//    _z_string_move_str(&append, "\ninfo_pid : ");
-//    _z_string_append(str, &append);
-//
-//    append = _z_config_get(zi, Z_INFO_ROUTER_PID_KEY);
-//    _z_string_append(str, &append);
-//
-//    _z_config_free(&zi);
-//
-//    z_owned_string_t ret = {._value = str, .is_valid = 1};
-//    return ret;
-//}
 
 char *z_info_get(z_info_t *info, unsigned int key)
 {
