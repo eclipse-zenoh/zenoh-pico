@@ -1,19 +1,28 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+
 #include <stdio.h>
-#include <stdlib.h>
 #include "zenoh-pico.h"
+
+void print_zid(const z_id_t *id, void *ctx)
+{
+    printf(" ");
+    for (int i = 15; i >= 0; i--)
+    {
+        printf("%02X", id->id[i]);
+    }
+    printf("\n");
+}
 
 int main(int argc, char **argv)
 {
@@ -21,14 +30,12 @@ int main(int argc, char **argv)
 
     z_owned_config_t config = zp_config_default();
     if (argc > 1)
-    {
         zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
-    }
 
-    zp_config_insert(z_loan(config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    zp_config_insert(z_loan(config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
+    if (argc > 2)
+        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(argv[2]));
 
-    printf("Openning session...\n");
+    printf("Opening session...\n");
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s))
     {
@@ -36,18 +43,25 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    z_owned_info_t ops = z_info(z_loan(s));
+    zp_start_read_task(z_loan(s));
+    zp_start_lease_task(z_loan(s));
 
-    char *prop = z_info_get(z_loan(ops), Z_INFO_PID_KEY);
-    printf("info_pid : %s\n", prop);
+    z_id_t self_id = z_info_zid(z_loan(s));
+    printf("Own ID:");
+    print_zid(&self_id, NULL);
 
-    prop = z_info_get(z_loan(ops), Z_INFO_ROUTER_PID_KEY);
-    printf("info_router_pid : %s\n", prop);
+    printf("Routers IDs:\n");
+    z_owned_closure_zid_t callback = z_closure(print_zid);
+    z_info_routers_zid(z_loan(s), z_move(callback));
 
-    prop = z_info_get(z_loan(ops), Z_INFO_PEER_PID_KEY);
-    printf("info_peer_pid : %s\n", prop);
+    // `callback` has been `z_move`d just above, so it's safe to reuse the variable,
+    // we'll just have to make sure we `z_move` it again to avoid mem-leaks.
+    printf("Peers IDs:\n");
+    z_owned_closure_zid_t callback2 = z_closure(print_zid);
+    z_info_peers_zid(z_loan(s), z_move(callback2));
 
-    z_drop(z_move(ops));
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
+
     z_close(z_move(s));
-    return 0;
 }

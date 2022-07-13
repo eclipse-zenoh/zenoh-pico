@@ -95,6 +95,7 @@ _MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply
 z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
 z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
 z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
+z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
 
 /************* Primitives **************/
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout);
@@ -102,9 +103,9 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned 
 z_owned_session_t z_open(z_owned_config_t *config);
 int8_t z_close(z_owned_session_t *zs);
 
-z_owned_info_t z_info(const z_session_t *zs);
-z_owned_string_t z_info_as_str(const z_session_t *zs);
-char *z_info_get(z_info_t *info, unsigned int key);
+void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+z_id_t z_info_zid(const z_session_t *session);
 
 z_put_options_t z_put_options_default(void);
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);

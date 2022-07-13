@@ -237,6 +237,11 @@ z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_r
     return closure_reply;
 }
 
+z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid)
+{
+    return closure_zid;
+}
+
 /************* Primitives **************/
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
 {
@@ -269,17 +274,62 @@ int8_t z_close(z_owned_session_t *zs)
     return 0;
 }
 
+void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
+{
+    void *ctx = callback->context;
+    callback->context = NULL;
+
+    z_id_t id;
+    if (zs->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    {
+        _z_transport_peer_entry_list_t *l = zs->_tp->_transport._multicast._peers;
+        for (; l != NULL; l = _z_transport_peer_entry_list_tail(l))
+        {
+            _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+            memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
+            memset(&id.id[val->_remote_pid.len], 0, sizeof(id) - val->_remote_pid.len);
+
+            callback->call(&id, ctx);
+        }
+    }
+
+    if (callback->drop != NULL)
+        callback->drop(ctx);
+}
+
+void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
+{
+    void *ctx = callback->context;
+    callback->context = NULL;
+
+    z_id_t id;
+    if (zs->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    {
+        memcpy(&id.id[0], zs->_tp->_transport._unicast._remote_pid.start, zs->_tp->_transport._unicast._remote_pid.len);
+        memset(&id.id[zs->_tp->_transport._unicast._remote_pid.len], 0, sizeof(id) - zs->_tp->_transport._unicast._remote_pid.len);
+
+        callback->call(&id, ctx);
+    }
+
+    if (callback->drop != NULL)
+        callback->drop(ctx);
+}
+
+z_id_t z_info_zid(const z_session_t *zs)
+{
+    z_id_t id;
+    memcpy(&id.id[0], zs->_tp_manager->_local_pid.start, zs->_tp_manager->_local_pid.len);
+    memset(&id.id[zs->_tp_manager->_local_pid.len], 0, sizeof(id) - zs->_tp_manager->_local_pid.len);
+
+    return id;
+}
+
 z_owned_info_t z_info(const z_session_t *zs)
 {
     z_owned_info_t zi;
     zi._value = _z_info(zs);
 
     return zi;
-}
-
-char *z_info_get(z_info_t *info, unsigned int key)
-{
-    return _z_config_get(info, key);
 }
 
 z_put_options_t z_put_options_default(void)

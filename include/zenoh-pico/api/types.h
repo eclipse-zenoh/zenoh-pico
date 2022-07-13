@@ -25,6 +25,13 @@
 typedef _z_zint_t z_zint_t;
 typedef _z_bytes_t z_bytes_t;
 
+// Represents a Zenoh ID.
+// Valid Zenoh IDs are LSB-first 128bit unsigned and non-zero integers.
+typedef struct
+{
+    uint8_t id[16];
+} z_id_t;
+
 typedef _z_string_t z_string_t;
 typedef _z_keyexpr_t z_keyexpr_t;
 
@@ -185,5 +192,12 @@ typedef struct
   z_owned_reply_handler_t call;
   void (*drop)(void*);
 } z_owned_closure_reply_t;
+
+typedef struct
+{
+  void *context;
+  void (*call)(const z_id_t*, void*);
+  void (*drop)(void*);
+} z_owned_closure_zid_t;
 
 #endif /* ZENOH_PICO_API_TYPES_H */
