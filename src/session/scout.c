@@ -61,8 +61,8 @@ zn_hello_array_t _zn_scout_loop(
     // The receiving buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
 
-    z_time_t start = z_time_now();
-    while (z_time_elapsed_ms(&start) < period)
+    z_clock_t start = z_clock_now();
+    while (z_clock_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
         _z_zbuf_reset(&zbf);
