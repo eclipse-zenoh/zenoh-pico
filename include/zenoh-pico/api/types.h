@@ -178,10 +178,11 @@ typedef struct
   void (*drop)(void*);
 } z_owned_closure_query_t;
 
+typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
 typedef struct
 {
   void *context;
-  _z_reply_handler_t call;
+  z_owned_reply_handler_t call;
   void (*drop)(void*);
 } z_owned_closure_reply_t;
 

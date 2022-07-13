@@ -51,11 +51,12 @@ void query_handler(z_query_t *query, void *arg)
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(z_reply_t *reply, void *arg)
+void reply_handler(z_owned_reply_t oreply, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
+    z_reply_t *reply = z_loan(oreply);
     if (reply->tag == Z_REPLY_TAG_DATA)
     {
         printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.key.suffix, replies, total);

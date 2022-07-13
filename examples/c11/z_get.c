@@ -16,8 +16,9 @@
 
 #include "zenoh-pico.h"
 
-void reply_handler(z_reply_t *reply, void *arg)
+void reply_handler(z_owned_reply_t oreply, void *arg)
 {
+    z_reply_t *reply = z_loan(oreply);
     if (reply->tag == Z_REPLY_TAG_DATA)
     {
         (void) (arg);

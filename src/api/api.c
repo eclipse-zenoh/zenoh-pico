@@ -300,6 +300,21 @@ z_get_options_t z_get_options_default(void)
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
+typedef struct
+{
+    z_owned_reply_handler_t user_call;
+    void *ctx;
+} __z_reply_handler_wrapper_t;
+
+
+void __z_reply_handler(_z_reply_t *reply, void *arg)
+{
+    z_owned_reply_t oreply = {._value = reply};
+
+    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)arg;
+    wrapped_ctx->user_call(oreply, wrapped_ctx->ctx);
+}
+
 int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options)
 {
     void *ctx = callback->context;
@@ -334,7 +349,11 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
         strategy = z_query_consolidation_default().manual;
     }
 
-    return _z_query(zs, keyexpr, predicate, target, strategy, callback->call, callback->drop, ctx);
+    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)malloc(sizeof(__z_reply_handler_wrapper_t));
+    wrapped_ctx->user_call = callback->call;
+    wrapped_ctx->ctx = ctx;
+
+    return _z_query_api(zs, keyexpr, predicate, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
