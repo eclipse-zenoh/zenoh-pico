@@ -50,6 +50,10 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry)
 {
     if (pen_qry->_dropper != NULL)
         pen_qry->_dropper(pen_qry->_drop_arg);
+
+    if (pen_qry->_call_is_api == 1)
+        free(pen_qry->_call_arg);
+
     _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_predicate);
 

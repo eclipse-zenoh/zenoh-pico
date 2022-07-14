@@ -28,7 +28,7 @@ _z_keyexpr_t _z_rname(const char *rname)
     rk.id = Z_RESOURCE_ID_NONE;
     rk.suffix = NULL;
     if (rname != NULL)
-        rk.suffix = _z_str_clone(rname);
+        rk.suffix = rname;
 
     return rk;
 }

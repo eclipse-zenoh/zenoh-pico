@@ -30,4 +30,7 @@ typedef struct
     z_priority_t _priority;
 } _z_publisher_t;
 
+void _z_publisher_clear(_z_publisher_t *pub);
+void _z_publisher_free(_z_publisher_t **pub);
+
 #endif /* ZENOH_PICO_PUBLISH_NETAPI_H */

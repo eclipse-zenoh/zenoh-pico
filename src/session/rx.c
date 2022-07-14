@@ -83,6 +83,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 rs->_key = key;
                 rs->_info = decl._body._sub._subinfo;
                 rs->_callback = NULL;
+                rs->_dropper = NULL;
                 rs->_arg = NULL;
                 _z_register_subscription(zn, _Z_RESOURCE_REMOTE, rs);
 
@@ -124,6 +125,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                     xs = _z_subscriber_list_tail(xs);
                 }
                 _z_list_free(&subs, _z_noop_free);
+                _z_keyexpr_clear(&key);
                 break;
             }
             case _Z_DECL_FORGET_QUERYABLE:

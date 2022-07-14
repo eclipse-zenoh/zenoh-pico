@@ -154,6 +154,7 @@ typedef struct
     _z_drop_handler_t _dropper;
     void *_call_arg; // These two can be merged into one, when API and NET are a single layer
     void *_drop_arg; // These two can be merged into one, when API and NET are a single layer
+    uint8_t _call_is_api; // This can be removed, when API and NET are a single layer
 } _z_pending_query_t;
 
 int _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);

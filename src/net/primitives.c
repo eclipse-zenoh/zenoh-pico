@@ -32,7 +32,7 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
     _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
     r->_id = _z_get_resource_id(zn);
-    r->_key = keyexpr;
+    r->_key = _z_keyexpr_duplicate(&keyexpr);
 
     // FIXME: remove when resource declaration is implemented for multicast transport
     if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
@@ -88,7 +88,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int
 {
     _z_publisher_t *pub = (_z_publisher_t *)malloc(sizeof(_z_publisher_t));
     pub->_zn = zn;
-    pub->_key = keyexpr;
+    pub->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     pub->_id = _z_get_entity_id(zn);
     pub->_local_routing = local_routing;
     pub->_congestion_control = congestion_control;
@@ -142,7 +142,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
         goto ERR;
 
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_subscriber(keyexpr, sub_info);
+    declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
 
     // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
@@ -346,6 +346,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, c
     pq->_pending_replies = NULL;
     pq->_call_arg = arg;
     pq->_drop_arg = arg;
+    pq->_call_is_api = 0;
 
     // Add the pending query to the current session
     _z_register_pending_query(zn, pq);
@@ -369,6 +370,7 @@ int8_t _z_query_api(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicat
     pq->_pending_replies = NULL;
     pq->_call_arg = arg_call;
     pq->_drop_arg = arg_drop;
+    pq->_call_is_api = 1;
 
     // Add the pending query to the current session
     _z_register_pending_query(zn, pq);

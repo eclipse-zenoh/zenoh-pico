@@ -141,7 +141,7 @@ void _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr,uint8_t complete, _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete, _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.

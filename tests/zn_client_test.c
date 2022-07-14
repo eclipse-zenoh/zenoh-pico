@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "zenoh-pico/net/zenoh-pico.h"
+#include "zenoh-pico/session/utils.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -232,7 +233,6 @@ int main(int argc, char **argv)
             z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, NULL, &idx[i]);
             printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);
-            _z_keyexpr_clear(&rk);
         }
     }
 
@@ -273,6 +273,7 @@ int main(int argc, char **argv)
         _z_publisher_t *pub = _z_list_head(pubs1); // @TODO: use type-safe list
         printf("Undeclared publisher on session 2: %zu\n", pub->_id);
         _z_undeclare_publisher(pub);
+        _z_publisher_clear(pub);
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
@@ -328,11 +329,13 @@ int main(int argc, char **argv)
     // Close both sessions
     printf("Closing session 1\n");
     _z_close(s1);
+    _z_session_free(&s1);
 
     _z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
     _z_close(s2);
+    _z_session_free(&s2);
 
     // Cleanup properties
     _z_config_free(&config);
