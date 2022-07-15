@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "zenoh-pico/net/zenoh-pico.h"
+#include "zenoh-pico/session/utils.h"
 
 #define MSG 10
 #define MSG_LEN 1024
@@ -113,7 +114,6 @@ int main(int argc, char **argv)
             _z_encoding_t encoding = {.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
-            _z_keyexpr_clear(&rk);
         }
     }
 
@@ -158,11 +158,13 @@ int main(int argc, char **argv)
     // Close both sessions
     printf("Closing session 1\n");
     _z_close(s1);
+    _z_session_free(&s1);
 
     _z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
     _z_close(s2);
+    _z_session_free(&s2);
 
     // Cleanup properties
     _z_config_free(&config);
