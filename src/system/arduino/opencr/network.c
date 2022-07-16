@@ -177,7 +177,7 @@ void _zn_free_endpoint_tcp(void *arg)
     z_free(self);
 }
 
-int _zn_open_tcp(void *arg, const clock_t tout)
+int _zn_open_tcp(void *arg, unsigned long tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
 
@@ -321,7 +321,7 @@ void _zn_free_endpoint_udp(void *arg)
     z_free(self);
 }
 
-int _zn_open_udp_unicast(void *arg, const clock_t tout)
+int _zn_open_udp_unicast(void *arg, unsigned long tout)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg;
 
@@ -367,7 +367,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
     return -1;
 }
 
-int _zn_listen_udp_unicast(void *arg, const clock_t tout)
+int _zn_listen_udp_unicast(void *arg, unsigned long tout)
 {
     struct sockaddr_in *laddr = (struct sockaddr_in *)arg;
 
@@ -447,7 +447,7 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 #endif
 
 #if ZN_LINK_UDP_MULTICAST == 1
-int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
+int _zn_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, const z_str_t iface)
 {
     struct sockaddr_in *raddr = (struct sockaddr_in *)arg_1;
     struct sockaddr_in *laddr = NULL;
@@ -498,7 +498,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
+int _zn_listen_udp_multicast(void *arg, unsigned long tout, const z_str_t iface)
 {
     // @TODO: To be implemented
 

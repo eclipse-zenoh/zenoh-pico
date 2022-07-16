@@ -75,7 +75,7 @@ int _zn_f_link_open_udp_multicast(void *arg)
     if (iface == NULL)
         goto ERR;
 
-    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtol(tout, NULL, 10);

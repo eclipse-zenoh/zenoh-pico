@@ -71,7 +71,7 @@ int _zn_f_link_open_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtol(tout, NULL, 10);
@@ -90,7 +90,7 @@ int _zn_f_link_listen_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtol(tout, NULL, 10);

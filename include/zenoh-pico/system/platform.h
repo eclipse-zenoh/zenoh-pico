@@ -72,14 +72,14 @@ int z_sleep_s(unsigned int time);
 
 /*------------------ Clock ------------------*/
 z_clock_t z_clock_now(void);
-clock_t z_clock_elapsed_us(z_clock_t *time);
-clock_t z_clock_elapsed_ms(z_clock_t *time);
-clock_t z_clock_elapsed_s(z_clock_t *time);
+unsigned long z_clock_elapsed_us(z_clock_t *time);
+unsigned long z_clock_elapsed_ms(z_clock_t *time);
+unsigned long z_clock_elapsed_s(z_clock_t *time);
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void);
-time_t z_time_elapsed_us(z_time_t *time);
-time_t z_time_elapsed_ms(z_time_t *time);
-time_t z_time_elapsed_s(z_time_t *time);
+unsigned long z_time_elapsed_us(z_time_t *time);
+unsigned long z_time_elapsed_ms(z_time_t *time);
+unsigned long z_time_elapsed_s(z_time_t *time);
 
 #endif /* ZENOH_PICO_SYSTEM_COMMON_H */

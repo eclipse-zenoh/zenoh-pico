@@ -38,7 +38,7 @@ void _zn_free_endpoint_tcp(void *addr_arg)
     delete addr;
 }
 
-TCPSocket *_zn_open_tcp(void *raddr_arg, const clock_t tout)
+TCPSocket *_zn_open_tcp(void *raddr_arg, unsigned long tout)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
@@ -123,7 +123,7 @@ void _zn_free_endpoint_udp(void *addr_arg)
 #endif
 
 #if ZN_LINK_UDP_UNICAST == 1
-UDPSocket *_zn_open_udp_unicast(void *raddr_arg, const clock_t tout)
+UDPSocket *_zn_open_udp_unicast(void *raddr_arg, unsigned long tout)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
@@ -139,7 +139,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
     return NULL;
 }
 
-UDPSocket *_zn_listen_udp_unicast(void *raddr_arg, const clock_t tout)
+UDPSocket *_zn_listen_udp_unicast(void *raddr_arg, unsigned long tout)
 {
     // @TODO: To be implemented
 
@@ -194,7 +194,7 @@ size_t _zn_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void
 #endif
 
 #if ZN_LINK_UDP_MULTICAST == 1
-UDPSocket *_zn_open_udp_multicast(void *raddr_arg, void **laddr_arg, const clock_t tout, const z_str_t iface)
+UDPSocket *_zn_open_udp_multicast(void *raddr_arg, void **laddr_arg, unsigned long tout, const z_str_t iface)
 {
     *laddr_arg = NULL; // Multicast messages are not self-consumed,
                        // so no need to save the local address
@@ -213,7 +213,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return NULL;
 }
 
-UDPSocket *_zn_listen_udp_multicast(void *raddr_arg, const clock_t tout, const z_str_t iface)
+UDPSocket *_zn_listen_udp_multicast(void *raddr_arg, unsigned long tout, const z_str_t iface)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;

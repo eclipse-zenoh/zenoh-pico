@@ -46,7 +46,7 @@ void _zn_free_endpoint_tcp(void *arg)
     freeaddrinfo(self);
 }
 
-int _zn_open_tcp(void *arg, const clock_t tout)
+int _zn_open_tcp(void *arg, unsigned long tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
@@ -160,7 +160,7 @@ void _zn_free_endpoint_udp(void *arg)
 #endif
 
 #if ZN_LINK_UDP_UNICAST == 1
-int _zn_open_udp_unicast(void *arg, const clock_t tout)
+int _zn_open_udp_unicast(void *arg, unsigned long tout)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
@@ -179,7 +179,7 @@ _ZN_OPEN_UDP_UNICAST_ERROR_1:
     return -1;
 }
 
-int _zn_listen_udp_unicast(void *arg, const clock_t tout)
+int _zn_listen_udp_unicast(void *arg, unsigned long tout)
 {
     struct addrinfo *laddr = (struct addrinfo *)arg;
     (void)laddr;
@@ -232,7 +232,7 @@ size_t _zn_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg)
 #endif
 
 #if ZN_LINK_UDP_MULTICAST == 1
-int _zn_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const z_str_t iface)
+int _zn_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
     struct addrinfo *laddr = NULL;
@@ -316,7 +316,7 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_1:
     return -1;
 }
 
-int _zn_listen_udp_multicast(void *arg, const clock_t tout, const z_str_t iface)
+int _zn_listen_udp_multicast(void *arg, unsigned long tout, const z_str_t iface)
 {
     struct addrinfo *raddr = (struct addrinfo *)arg;
     struct sockaddr *laddr = NULL;

@@ -166,30 +166,30 @@ z_clock_t z_clock_now()
     return now;
 }
 
-clock_t z_clock_elapsed_us(z_clock_t *instant)
+unsigned long z_clock_elapsed_us(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(z_clock_t *instant)
+unsigned long z_clock_elapsed_ms(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(z_clock_t *instant)
+unsigned long z_clock_elapsed_s(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = now.tv_sec - instant->tv_sec;
+    unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
 }
 
@@ -201,29 +201,29 @@ z_time_t z_time_now()
     return now;
 }
 
-time_t z_time_elapsed_us(z_time_t *time)
+unsigned long z_time_elapsed_us(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
+    unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(z_time_t *time)
+unsigned long z_time_elapsed_ms(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
+    unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-time_t z_time_elapsed_s(z_time_t *time)
+unsigned long z_time_elapsed_s(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = now.tv_sec - time->tv_sec;
+    unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
 }

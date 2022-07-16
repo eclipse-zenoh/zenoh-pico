@@ -32,16 +32,16 @@ void *_zn_create_endpoint_udp(const z_str_t s_addr, const z_str_t port);
 void _zn_free_endpoint_udp(void *addr_arg);
 
 // Unicast
-void *_zn_open_udp_unicast(void *raddr_arg, const clock_t tout);
-void *_zn_listen_udp_unicast(void *raddr_arg, const clock_t tout);
+void *_zn_open_udp_unicast(void *raddr_arg, unsigned long tout);
+void *_zn_listen_udp_unicast(void *raddr_arg, unsigned long tout);
 void _zn_close_udp_unicast(void *sock_arg);
 size_t _zn_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len);
 size_t _zn_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len);
 size_t _zn_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg);
 
 // Multicast
-void *_zn_open_udp_multicast(void *raddr_arg, void **laddr_arg, const clock_t tout, const z_str_t iface);
-void *_zn_listen_udp_multicast(void *raddr_arg, const clock_t tout, const z_str_t iface);
+void *_zn_open_udp_multicast(void *raddr_arg, void **laddr_arg, unsigned long tout, const z_str_t iface);
+void *_zn_listen_udp_multicast(void *raddr_arg, unsigned long tout, const z_str_t iface);
 void _zn_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_arg);
 size_t _zn_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, z_bytes_t *addr);
 size_t _zn_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, z_bytes_t *addr);
