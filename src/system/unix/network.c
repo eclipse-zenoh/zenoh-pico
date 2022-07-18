@@ -63,6 +63,7 @@ void _zn_free_endpoint_tcp(void *arg)
 /*------------------ TCP sockets ------------------*/
 void *_zn_open_tcp(void *arg, unsigned long tout)
 {
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
     (void)tout;
 
@@ -96,7 +97,6 @@ void *_zn_open_tcp(void *arg, unsigned long tout)
             break;
     }
 
-    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -104,6 +104,7 @@ _ZN_OPEN_TCP_ERROR_2:
     close(sock);
 
 _ZN_OPEN_TCP_ERROR_1:
+    z_free(ret);
     return NULL;
 }
 
@@ -194,6 +195,7 @@ void _zn_free_endpoint_udp(void *arg)
 #if ZN_LINK_UDP_UNICAST == 1
 void *_zn_open_udp_unicast(void *arg, unsigned long tout)
 {
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
@@ -205,11 +207,11 @@ void *_zn_open_udp_unicast(void *arg, unsigned long tout)
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
 
-    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
 _ZN_OPEN_UDP_UNICAST_ERROR_1:
+    z_free(ret);
     return NULL;
 }
 
@@ -277,6 +279,7 @@ size_t _zn_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void
 #if ZN_LINK_UDP_MULTICAST == 1
 void *_zn_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, const z_str_t iface)
 {
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
     struct addrinfo *laddr = NULL;
     unsigned int addrlen = 0;
@@ -363,7 +366,6 @@ void *_zn_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, cons
 //    z_free(lsockaddr);
 //#endif
 
-    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -374,11 +376,13 @@ _ZN_OPEN_UDP_MULTICAST_ERROR_2:
     z_free(lsockaddr);
 
 _ZN_OPEN_UDP_MULTICAST_ERROR_1:
+    z_free(ret);
     return NULL;
 }
 
 void *_zn_listen_udp_multicast(void *arg, unsigned long tout, const z_str_t iface)
 {
+    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
@@ -440,7 +444,6 @@ void *_zn_listen_udp_multicast(void *arg, unsigned long tout, const z_str_t ifac
     else
         goto _ZN_LISTEN_UDP_MULTICAST_ERROR_2;
 
-    __zn_net_socket *ret = (__zn_net_socket*)z_malloc(sizeof(__zn_net_socket));
     ret->_fd = sock;
     return ret;
 
@@ -448,6 +451,7 @@ _ZN_LISTEN_UDP_MULTICAST_ERROR_2:
     close(sock);
 
 _ZN_LISTEN_UDP_MULTICAST_ERROR_1:
+    z_free(ret);
     return NULL;
 }
 
@@ -457,35 +461,38 @@ void _zn_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr
     __zn_net_socket *socksend = (__zn_net_socket *)socksend_arg;
     struct addrinfo *raddr = (struct addrinfo *)raddr_arg;
 
-    if (raddr->ai_family == AF_INET)
-    {
-        struct ip_mreq mreq;
-        memset(&mreq, 0, sizeof(mreq));
-        mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
-        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-        setsockopt(sockrecv->_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
-    }
-    else if (raddr->ai_family == AF_INET6)
-    {
-        struct ipv6_mreq mreq;
-        memset(&mreq, 0, sizeof(mreq));
-        memcpy(&mreq.ipv6mr_multiaddr,
-               &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
-               sizeof(struct in6_addr));
-        // mreq.ipv6mr_interface = ifindex;
-        setsockopt(sockrecv->_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
-    }
-
+    // Both sockrecv and socksend must be compared to NULL,
+    //  because we dont know if the close is trigger by a normal close
+    //  or some of the sockets failed during the opening/listening procedure.
     if (sockrecv != NULL)
     {
+        if (raddr->ai_family == AF_INET)
+        {
+            struct ip_mreq mreq;
+            memset(&mreq, 0, sizeof(mreq));
+            mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
+            mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+            setsockopt(sockrecv->_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+        }
+        else if (raddr->ai_family == AF_INET6)
+        {
+            struct ipv6_mreq mreq;
+            memset(&mreq, 0, sizeof(mreq));
+            memcpy(&mreq.ipv6mr_multiaddr,
+                &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr,
+                sizeof(struct in6_addr));
+            // mreq.ipv6mr_interface = ifindex;
+            setsockopt(sockrecv->_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        }
+
         close(sockrecv->_fd);
-        // z_free(sockrecv);
+        z_free(sockrecv);
     }
 
     if (socksend != NULL)
     {
         close(socksend->_fd);
-        // z_free(socksend);
+        z_free(socksend);
     }
 }
 

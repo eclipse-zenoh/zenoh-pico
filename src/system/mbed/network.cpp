@@ -242,13 +242,22 @@ void _zn_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr
     UDPSocket *socksend = (UDPSocket *)socksend_arg;
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
-    sockrecv->leave_multicast_group(*raddr);
+    // Both sockrecv and socksend must be compared to NULL,
+    //  because we dont know if the close is trigger by a normal close
+    //  or some of the sockets failed during the opening/listening procedure.
+    if (sockrecv != NULL)
+    {
+        sockrecv->leave_multicast_group(*raddr);
 
-    sockrecv->close();
-    socksend->close();
+        sockrecv->close();
+        delete sockrecv;
+    }
 
-    delete sockrecv;
-    delete socksend;
+    if (sockrecv != NULL)
+    {
+        socksend->close();
+        delete socksend;
+    }
 }
 
 size_t _zn_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, z_bytes_t *addr)
