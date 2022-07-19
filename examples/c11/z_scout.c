@@ -100,6 +100,7 @@ int main(int argc, char **argv)
     {
         printf("Did not find any zenoh process.\n");
     }
+
     z_drop(z_move(hellos));
     return 0;
 }

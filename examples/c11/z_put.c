@@ -45,30 +45,26 @@ int main(int argc, char **argv)
     zp_start_read_task(z_loan(s));
     zp_start_lease_task(z_loan(s));
 
-    printf("Declaring publisher for '%s'...", keyexpr);
-    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
-    if (!z_check(pub))
+    printf("Declaring key expression '%s'...\n", keyexpr);
+    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
+    if (!z_check(ke))
     {
-        printf("Unable to declare publisher for key expression!\n");
+        printf("Unable to declare key expression!\n");
         exit(-1);
     }
 
-    char buf[256];
-    for (int idx = 0; 1; ++idx)
+    printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+    if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), NULL) < 0)
     {
-        sleep(1);
-        sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+        printf("Oh no! Put has failed...\n");
     }
 
-    z_undeclare_publisher(z_move(pub));
+    z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
     // Stop the receive and the session lease loop for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
 
     z_close(z_move(s));
-
     return 0;
 }
