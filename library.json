@@ -6,6 +6,7 @@
     },
     "dependencies":
     {
-       "BluetoothSerial": "1.0"
+       "BluetoothSerial": "0.16.1",
+       "FreeRTOS": "1.0.0"
     }
 }
