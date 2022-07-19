@@ -112,6 +112,9 @@ void *_zn_listen_tcp(void *arg)
 void _zn_close_tcp(void *sock_arg)
 {
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     shutdown(sock->_fd, SHUT_RDWR);
     close(sock->_fd);
     z_free(sock);
@@ -215,6 +218,9 @@ void *_zn_listen_udp_unicast(void *arg, unsigned long tout)
 void _zn_close_udp_unicast(void *sock_arg)
 {
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     close(sock->_fd);
     z_free(sock);
 }
@@ -627,7 +633,11 @@ void *_zn_listen_bt(z_str_t gname, uint8_t mode, uint8_t profile)
 void _zn_close_bt(void *arg)
 {
     BluetoothSerial *sbt = (BluetoothSerial *)arg;
+    if (sbt == NULL)
+        return;
+
     sbt->end();
+    delete sbt;
 }
 
 size_t _zn_read_bt(void *arg, uint8_t *ptr, size_t len)

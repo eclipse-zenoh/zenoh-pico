@@ -68,6 +68,9 @@ TCPSocket *_zn_listen_tcp(void *raddr_arg)
 void _zn_close_tcp(void *sock_arg)
 {
     TCPSocket *sock = (TCPSocket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     sock->close();
     delete sock;
 }
@@ -149,6 +152,9 @@ UDPSocket *_zn_listen_udp_unicast(void *raddr_arg, unsigned long tout)
 void _zn_close_udp_unicast(void *sock_arg)
 {
     UDPSocket *sock = (UDPSocket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     sock->close();
     delete sock;
 }

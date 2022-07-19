@@ -121,6 +121,9 @@ void *_zn_listen_tcp(void *arg)
 void _zn_close_tcp(void *sock_arg)
 {
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     shutdown(sock->_fd, SHUT_RDWR);
     close(sock->_fd);
     z_free(sock);
@@ -229,6 +232,9 @@ void *_zn_listen_udp_unicast(void *arg, unsigned long tout)
 void _zn_close_udp_unicast(void *sock_arg)
 {
     __zn_net_socket *sock = (__zn_net_socket *)sock_arg;
+    if (sock == NULL)
+        return;
+
     close(sock->_fd);
     z_free(sock);
 }
