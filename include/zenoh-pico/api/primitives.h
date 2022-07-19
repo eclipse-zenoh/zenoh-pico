@@ -31,6 +31,9 @@ int8_t z_init_logger(void);
 z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len);
 z_owned_string_t z_string_new(const char *s);
 z_keyexpr_t z_keyexpr(const char *name);
+const char *z_keyexpr_to_string(z_keyexpr_t key);
+char *z_keyexpr_resolve(z_session_t *zs, z_keyexpr_t key);
+uint8_t z_keyexpr_is_valid(z_keyexpr_t *key);
 
 z_owned_config_t zp_config_new(void);
 z_owned_config_t zp_config_empty(void);

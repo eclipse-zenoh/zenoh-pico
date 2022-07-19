@@ -19,6 +19,7 @@
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/utils.h"
@@ -55,6 +56,28 @@ z_owned_string_t z_string_new(const char *s)
 z_keyexpr_t z_keyexpr(const char *name)
 {
     return _z_rname(name);
+}
+
+const char *z_keyexpr_to_string(z_keyexpr_t key)
+{
+    if (key._id != Z_RESOURCE_ID_NONE)
+        return NULL;
+
+    return key._suffix;
+}
+
+char *z_keyexpr_resolve(z_session_t *zs, z_keyexpr_t key)
+{
+    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs, _Z_RESOURCE_IS_LOCAL, &key);
+    return (char *)ekey._suffix; // ekey will be out of scope so, suffix can be safely casted as non-const
+}
+
+uint8_t z_keyexpr_is_valid(z_keyexpr_t *key)
+{
+    if (key->_id != Z_RESOURCE_ID_NONE || key->_suffix != NULL)
+        return 1;
+
+    return 0;
 }
 
 z_owned_config_t zp_config_new(void)
