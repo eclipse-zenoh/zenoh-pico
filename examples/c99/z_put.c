@@ -16,24 +16,22 @@
 
 #include "zenoh-pico.h"
 
-void data_handler(const z_sample_t *sample, void *arg)
-{
-    (void) (arg);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n",
-           z_keyexpr_to_string(sample->keyexpr), (int)sample->payload.len, sample->payload.start);
-}
-
 int main(int argc, char **argv)
 {
     z_init_logger();
 
-    char *keyexpr = "demo/example/**";
+    char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *value = "Pub from Pico!";
+
     if (argc > 1)
         keyexpr = argv[1];
 
-    z_owned_config_t config = zp_config_default();
     if (argc > 2)
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
+        keyexpr = argv[2];
+
+    z_owned_config_t config = zp_config_default();
+    if (argc > 3)
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[3]));
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
@@ -43,37 +41,30 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start read and lease tasks for zenoh-pico
+    // Start the receive and the session lease loop for zenoh-pico
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    z_owned_closure_sample_t callback = z_closure(data_handler);
-    printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
-    if (!z_subscriber_check(&sub))
+    printf("Declaring key expression '%s'...\n", keyexpr);
+    z_owned_keyexpr_t ke = z_declare_keyexpr(z_session_loan(&s), z_keyexpr(keyexpr));
+    if (!z_keyexpr_check(&ke))
     {
-        printf("Unable to declare subscriber.\n");
+        printf("Unable to declare key expression!\n");
         exit(-1);
     }
 
-    printf("Enter 'q' to quit...\n");
-    char c = 0;
-    while (c != 'q')
+    printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+    if (z_put(z_session_loan(&s), z_keyexpr_loan(&ke), (const uint8_t *)value, strlen(value), NULL) < 0)
     {
-        c = getchar();
-        if (c == -1)
-        {
-            sleep(1);
-        }
+        printf("Oh no! Put has failed...\n");
     }
 
-    z_undeclare_subscriber(z_subscriber_move(&sub));
+    z_undeclare_keyexpr(z_session_loan(&s), z_keyexpr_move(&ke));
 
     // Stop the receive and the session lease loop for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
 
     z_close(z_session_move(&s));
-
     return 0;
 }

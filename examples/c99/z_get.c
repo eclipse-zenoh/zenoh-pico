@@ -16,18 +16,24 @@
 
 #include "zenoh-pico.h"
 
-void reply_handler(const _z_reply_t *reply, const void *arg)
+void reply_dropper(void *ctx)
 {
-    if (reply->tag == Z_REPLY_TAG_DATA)
+    (void) (ctx);
+    printf(">> Received query final notification\n");
+}
+
+void reply_handler(z_owned_reply_t oreply, void *ctx)
+{
+    (void) (ctx);
+    if (z_reply_is_ok(&oreply))
     {
-        (void) (arg);
-        printf(">> [Reply] Received ('%s': '%.*s')\n",
-            reply->data.sample.key.suffix, (int)reply->data.sample.value.len, reply->data.sample.value.start);
+        z_sample_t sample = z_reply_ok(&oreply);
+        const char *key = z_keyexpr_to_string(sample.keyexpr);
+        printf(">> Received ('%s': '%.*s')\n", key, (int)sample.payload.len, sample.payload.start);
     }
     else
     {
-        printf(">> [Reply] Received Final ('%s')\n",
-            reply->data.sample.key.suffix);
+        printf(">> Received an error\n");
     }
 }
 
@@ -35,21 +41,15 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    char *expr = "/demo/example/**";
+    char *keyexpr = "demo/example/**";
     if (argc > 1)
-    {
-        expr = argv[1];
-    }
+        keyexpr = argv[1];
+
     z_owned_config_t config = zp_config_default();
     if (argc > 2)
-    {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
-    }
 
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
-
-    printf("Openning session...\n");
+    printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
     if (!z_session_check(&s))
     {
@@ -57,13 +57,22 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start the receive and the session lease loop for zenoh-pico
+    // Start read and lease tasks for zenoh-pico
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    printf("Sending Query '%s'...\n", expr);
-    z_owned_closure_reply_t callback = z_closure(reply_handler);
-    if (z_get(z_session_loan(&s), z_keyexpr(expr), "", &callback, NULL) == 0)
+    z_keyexpr_t ke = z_keyexpr(keyexpr);
+    if (!z_keyexpr_is_valid(&ke))
+    {
+        printf("%s is not a valid key expression", keyexpr);
+        exit(-1);
+    }
+
+    printf("Sending Query '%s'...\n", keyexpr);
+    z_get_options_t opts = z_get_options_default();
+    opts.target = Z_QUERY_TARGET_ALL;
+    z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
+    if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), NULL) < 0)
     {
         printf("Unable to send query.\n");
         exit(-1);
@@ -72,12 +81,13 @@ int main(int argc, char **argv)
     printf("Enter 'q' to quit...\n");
     char c = 0;
     while (c != 'q')
-    {
         c = getchar();
-    }
 
+    // Stop the receive and the session lease loop for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
+
     z_close(z_session_move(&s));
+
     return 0;
 }

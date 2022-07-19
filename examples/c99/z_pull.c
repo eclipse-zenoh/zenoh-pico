@@ -17,35 +17,26 @@
 
 #include "zenoh-pico.h"
 
-void data_handler(const _z_sample_t *sample, const void *arg)
+void data_handler(const z_sample_t *sample, void *arg)
 {
-    (void)(arg); // Unused argument
-
-    printf(">> [Subscription listener] Received (%zu:%s, %.*s)\n",
-           sample->key.id, sample->key.suffix,
-           (int)sample->value.len, sample->value.start);
+    (void) (arg);
+    printf(">> [Pull Subscriber] Received ('%s': '%.*s')\n",
+           z_keyexpr_to_string(sample->keyexpr), (int)sample->payload.len, sample->payload.start);
 }
 
 int main(int argc, char **argv)
 {
     z_init_logger();
 
-    char *expr = "/demo/example/**";
-
+    char *keyexpr = "demo/example/**";
     if (argc > 1)
-    {
-        expr = argv[1];
-    }
+        keyexpr = argv[1];
+
     z_owned_config_t config = zp_config_default();
     if (argc > 2)
-    {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
-    }
 
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_USER_KEY, z_string_make("user"));
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_PASSWORD_KEY, z_string_make("password"));
-
-    printf("Openning session...\n");
+    printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
     if (!z_session_check(&s))
     {
@@ -53,31 +44,36 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    // Start read and lease tasks for zenoh-pico
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    printf("Creating Subscriber on '%s'...\n", expr);
-    z_subscriber_options_t opts = z_subscriber_options_default();
     z_owned_closure_sample_t callback = z_closure(data_handler);
-    z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(expr), &callback, &opts);
-    if (!z_subscriber_check(&sub))
+    printf("Declaring Subscriber on '%s'...\n", keyexpr);
+    z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
+    if (!z_pull_subscriber_check(&sub))
     {
-        printf("Unable to create subscriber.\n");
+        printf("Unable to declare subscriber.\n");
         exit(-1);
     }
 
-    printf("Press <enter> to pull data...\n");
+    printf("Enter any key to pull data or 'q' to quit...\n");
     char c = 0;
-    while (c != 'q')
+    while (1)
     {
         c = getchar();
+        if (c == 'q')
+            break;
         z_pull(z_pull_subscriber_loan(&sub));
     }
 
     z_undeclare_pull_subscriber(z_pull_subscriber_move(&sub));
 
+    // Stop the receive and the session lease loop for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
+
     z_close(z_session_move(&s));
+
     return 0;
 }
