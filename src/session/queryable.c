@@ -124,8 +124,8 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     z_query_t q;
     q._zn = zn;
     q._qid = query->_qid;
-    q.key = key;
-    q.predicate = query->_predicate;
+    q._key = key;
+    q._predicate = query->_predicate;
 
     _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_key(zn, key);
     _z_questionable_list_t *xs = qles;
@@ -134,7 +134,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
         _z_questionable_t *qle = _z_questionable_list_head(xs);
         if (((query->_target._kind & Z_QUERYABLE_ALL_KINDS) | (query->_target._kind & qle->_kind)) != 0)
         {
-            q.kind = qle->_kind;
+            q._kind = qle->_kind;
             qle->_callback(&q, qle->_arg);
         }
 

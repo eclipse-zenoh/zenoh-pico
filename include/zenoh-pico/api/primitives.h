@@ -52,6 +52,9 @@ z_query_consolidation_t z_query_consolidation_lazy(void);
 z_query_consolidation_t z_query_consolidation_none(void);
 z_query_consolidation_t z_query_consolidation_reception(void);
 
+z_bytes_t z_query_value_selector(z_query_t *query);
+z_keyexpr_t z_query_keyexpr(z_query_t *query);
+
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
     bool z_##name##_check(const ownedtype *name);     \

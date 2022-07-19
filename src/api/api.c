@@ -155,6 +155,17 @@ z_query_consolidation_t z_query_consolidation_reception(void)
                                       .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
+z_bytes_t z_query_value_selector(z_query_t *query)
+{
+    z_bytes_t value_selector = _z_bytes_wrap((uint8_t *)query->_predicate, strlen(query->_predicate));
+    return value_selector;
+}
+
+z_keyexpr_t z_query_keyexpr(z_query_t *query)
+{
+    return query->_key;
+}
+
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
     bool z_##name##_check(const ownedtype *val)                                       \
