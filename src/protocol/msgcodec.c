@@ -138,9 +138,9 @@ int _z_keyexpr_encode(_z_wbuf_t *wbf, uint8_t header, const _z_keyexpr_t *fld)
     _Z_DEBUG("Encoding _RESKEY\n");
 
     // Encode the body
-    _Z_EC(_z_zint_encode(wbf, fld->id))
+    _Z_EC(_z_zint_encode(wbf, fld->_id))
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
-        _Z_EC(_z_str_encode(wbf, fld->suffix))
+        _Z_EC(_z_str_encode(wbf, fld->_suffix))
 
     return 0;
 }
@@ -153,17 +153,17 @@ void _z_keyexpr_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keyexpr_result_t *r
     // Decode the header
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
-    r->_value._keyexpr.id = r_zint._value._zint;
+    r->_value._keyexpr._id = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
     {
         _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-        r->_value._keyexpr.suffix = r_str._value._str;
+        r->_value._keyexpr._suffix = r_str._value._str;
     }
     else
     {
-        r->_value._keyexpr.suffix = NULL;
+        r->_value._keyexpr._suffix = NULL;
     }
 }
 
@@ -1118,7 +1118,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
     else
     {
         r->_value._query._target._kind = Z_QUERYABLE_ALL_KINDS;
-        r->_value._query._target._target = Z_TARGET_BEST_MATCHING;
+        r->_value._query._target._target = Z_QUERY_TARGET_BEST_MATCHING;
     }
 
     _z_query_consolidation_result_t r_con = _z_query_consolidation_decode(zbf);

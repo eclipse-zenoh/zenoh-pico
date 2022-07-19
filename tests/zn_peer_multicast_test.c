@@ -40,9 +40,9 @@ void data_handler(const _z_sample_t *sample, void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->value.len == MSG_LEN);
-    assert(strlen(sample->key.suffix) == strlen(res));
-    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
+    assert(sample->payload.len == MSG_LEN);
+    assert(strlen(sample->keyexpr._suffix) == strlen(res));
+    assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
         _z_keyexpr_t rk = _z_rname(s1_res);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_push_default(), data_handler, NULL, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._id, rk._suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 

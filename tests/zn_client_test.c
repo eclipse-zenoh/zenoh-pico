@@ -44,7 +44,7 @@ void query_handler(z_query_t *query, void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(_z_str_eq(query->key.suffix, res));
+    assert(_z_str_eq(query->key._suffix, res));
     assert(_z_str_eq(query->predicate, ""));
 
     _z_keyexpr_t key = _z_rname(res);
@@ -59,13 +59,13 @@ void reply_handler(_z_reply_t *reply, void *arg)
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
 
-    if (reply->tag == Z_REPLY_TAG_DATA)
+    if (reply->_tag == Z_REPLY_TAG_DATA)
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.key.suffix, replies, total);
-        assert(reply->data.sample.value.len == strlen(res));
-        assert(strncmp(res, (const char *)reply->data.sample.value.start, strlen(res)) == 0);
-        assert(strlen(reply->data.sample.key.suffix) == strlen(res));
-        assert(strncmp(res, reply->data.sample.key.suffix, strlen(res)) == 0);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.keyexpr._suffix, replies, total);
+        assert(reply->data.sample.payload.len == strlen(res));
+        assert(strncmp(res, (const char *)reply->data.sample.payload.start, strlen(res)) == 0);
+        assert(strlen(reply->data.sample.keyexpr._suffix) == strlen(res));
+        assert(strncmp(res, reply->data.sample.keyexpr._suffix, strlen(res)) == 0);
     }
     else
     {
@@ -81,9 +81,9 @@ void data_handler(const _z_sample_t *sample, void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    assert(sample->value.len == MSG_LEN);
-    assert(strlen(sample->key.suffix) == strlen(res));
-    assert(strncmp(res, sample->key.suffix, strlen(res)) == 0);
+    assert(sample->payload.len == MSG_LEN);
+    assert(strlen(sample->keyexpr._suffix) == strlen(res));
+    assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
     (void) (sample);
 
     datas++;
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s1, rk);
-        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk.id, rk.suffix);
+        printf("Declared resource on session 1: %lu %lu %s\n", rid, rk._id, rk._suffix);
         rids1[i] = rid;
     }
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
         sprintf(s1_res, "%s%d", uri, i);
         _z_keyexpr_t rk = _z_rname(s1_res);
         unsigned long rid = _z_declare_resource(s2, rk);
-        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk.id, rk.suffix);
+        printf("Declared resource on session 2: %lu %lu %s\n", rid, rk._id, rk._suffix);
         rids2[i] = rid;
     }
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
         _z_keyexpr_t rk = _z_rid(rids2[i]);
         _z_subscriber_t *sub = _z_declare_subscriber(s2, rk, _z_subinfo_push_default(), data_handler, NULL, &idx[i]);
         assert(sub != NULL);
-        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk.id, rk.suffix);
+        printf("Declared subscription on session 2: %zu %lu %s\n", sub->_id, rk._id, rk._suffix);
         subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
     }
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
         _z_keyexpr_t rk = _z_rname(s1_res);
         _z_queryable_t *qle = _z_declare_queryable(s2, rk, Z_QUERYABLE_EVAL, query_handler, NULL, &idx[i]);
         assert(qle != NULL);
-        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk.id, rk.suffix);
+        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_id, rk._id, rk._suffix);
         qles2 = _z_list_push(qles2, qle); // @TODO: use type-safe list
     }
 
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
             _z_keyexpr_t rk = _z_rid(rids1[i]);
             _z_encoding_t encoding = {.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
             _z_write_ext(s1, rk, payload, len, encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk.id, len, n * SET + (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", rk._id, len, n * SET + (i + 1), total);
         }
     }
 
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
             _z_target_t qry_tgt = _z_target_default();
             z_consolidation_strategy_t qry_con = _z_consolidation_strategy_default();
             _z_query(s1, rk, "", qry_tgt, qry_con, reply_handler, NULL, &idx[i]);
-            printf("Queried data from session 1: %lu %s\n", rk.id, rk.suffix);
+            printf("Queried data from session 1: %lu %s\n", rk._id, rk._suffix);
         }
     }
 

@@ -35,9 +35,9 @@ void _z_timestamp_clear(_z_timestamp_t *ts)
 /*------------------ ResKey Field ------------------*/
 void _z_keyexpr_clear(_z_keyexpr_t *rk)
 {
-    rk->id = 0;
-    if (rk->suffix != NULL)
-        _z_str_clear((char *)rk->suffix);
+    rk->_id = 0;
+    if (rk->_suffix != NULL)
+        _z_str_clear((char *)rk->_suffix);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk)
@@ -98,7 +98,7 @@ _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key
     decl._body._res._key = key;
 
     decl._header = _Z_DECL_RESOURCE;
-    if (decl._body._res._key.suffix != NULL)
+    if (decl._body._res._key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
@@ -134,7 +134,7 @@ _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key)
     decl._body._pub._key = key;
 
     decl._header = _Z_DECL_PUBLISHER;
-    if (key.suffix != NULL)
+    if (key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
@@ -153,7 +153,7 @@ _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key)
     decl._body._forget_pub._key = key;
 
     decl._header = _Z_DECL_FORGET_PUBLISHER;
-    if (key.suffix != NULL)
+    if (key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
@@ -173,7 +173,7 @@ _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo
     decl._body._sub._subinfo = subinfo;
 
     decl._header = _Z_DECL_SUBSCRIBER;
-    if (key.suffix)
+    if (key._suffix)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
     if (subinfo.mode != Z_SUBMODE_PUSH)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_S);
@@ -212,7 +212,7 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key)
     decl._body._forget_sub._key = key;
 
     decl._header = _Z_DECL_FORGET_SUBSCRIBER;
-    if (key.suffix != NULL)
+    if (key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
@@ -232,7 +232,7 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t k
     decl._body._qle._kind = kind;
 
     decl._header = _Z_DECL_QUERYABLE;
-    if (key.suffix != NULL)
+    if (key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     decl._body._qle._complete = complete;
@@ -257,7 +257,7 @@ _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_z
     decl._body._forget_qle._kind = kind;
 
     decl._header = _Z_DECL_FORGET_QUERYABLE;
-    if (key.suffix != NULL)
+    if (key._suffix != NULL)
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
 
     return decl;
@@ -358,7 +358,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
     msg._header = _Z_MID_DATA;
     if (msg._body._data._info._flags != 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_I);
-    if (msg._body._data._key.suffix != NULL)
+    if (msg._body._data._key._suffix != NULL)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
     if (can_be_dropped)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
@@ -410,7 +410,7 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_F);
     if (max_samples != 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_N);
-    if (msg._body._pull._key.suffix != NULL)
+    if (msg._body._pull._key._suffix != NULL)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
 
     msg._attachment = NULL;
@@ -438,7 +438,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_
     msg._header = _Z_MID_QUERY;
     if (msg._body._query._target._kind != Z_QUERYABLE_ALL_KINDS)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
-    if (msg._body._query._key.suffix != NULL)
+    if (msg._body._query._key._suffix != NULL)
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
 
     msg._attachment = NULL;

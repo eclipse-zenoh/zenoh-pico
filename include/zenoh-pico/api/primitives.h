@@ -137,6 +137,7 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len);
 uint8_t z_reply_is_ok(const z_owned_reply_t *reply);
+z_sample_t z_reply_ok(z_owned_reply_t *reply);
 
 /************* Tasks **************/
 int8_t zp_start_read_task(z_session_t *zs);

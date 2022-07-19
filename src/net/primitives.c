@@ -383,13 +383,13 @@ int8_t _z_query_api(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicat
 void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
 {
     _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
-    if (reply->tag == Z_REPLY_TAG_DATA)
+    if (reply->_tag == Z_REPLY_TAG_DATA)
     {
         _z_reply_data_t *rd = (_z_reply_data_t *)malloc(sizeof(_z_reply_data_t));
         rd->replier_kind = reply->data.replier_kind;
         _z_bytes_copy(&rd->replier_id, &reply->data.replier_id);
-        rd->sample.key = _z_keyexpr_duplicate(&reply->data.sample.key);
-        _z_bytes_copy(&rd->sample.value, &reply->data.sample.value);
+        rd->sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
+        _z_bytes_copy(&rd->sample.payload, &reply->data.sample.payload);
         rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
         rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : _z_str_clone("");
         rd->sample.kind = reply->data.sample.kind;

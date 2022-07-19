@@ -472,12 +472,12 @@ void subinfo_field(void)
 _z_keyexpr_t gen_res_key(void)
 {
     _z_keyexpr_t key;
-    key.id = gen_zint();
+    key._id = gen_zint();
     int is_numerical = gen_bool();
     if (is_numerical)
-        key.suffix = NULL;
+        key._suffix = NULL;
     else
-        key.suffix = gen_str(gen_zint() % 16);
+        key._suffix = gen_str(gen_zint() % 16);
 
     return key;
 }
@@ -485,14 +485,14 @@ _z_keyexpr_t gen_res_key(void)
 void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header)
 {
     printf("ResKey -> ");
-    printf("ID (%zu:%zu), ", left->id, right->id);
-    assert(left->id == right->id);
+    printf("ID (%zu:%zu), ", left->_id, right->_id);
+    assert(left->_id == right->_id);
 
     printf("Name (");
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K))
     {
-        printf("%s:%s", left->suffix, right->suffix);
-        assert(_z_str_eq(left->suffix, right->suffix));
+        printf("%s:%s", left->_suffix, right->_suffix);
+        assert(_z_str_eq(left->_suffix, right->_suffix));
     }
     else
     {
@@ -510,7 +510,7 @@ void res_key_field(void)
     _z_keyexpr_t e_rk = gen_res_key();
 
     // Encode
-    uint8_t header = (e_rk.suffix) ? _Z_FLAG_Z_K : 0;
+    uint8_t header = (e_rk._suffix) ? _Z_FLAG_Z_K : 0;
     int res = _z_keyexpr_encode(&wbf, header, &e_rk);
     assert(res == 0);
     (void) (res);
@@ -822,7 +822,7 @@ _z_res_decl_t gen_resource_declaration(uint8_t *header)
 
     e_rd._id = gen_zint();
     e_rd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_rd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_rd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_rd;
 }
@@ -870,7 +870,7 @@ _z_pub_decl_t gen_publisher_declaration(uint8_t *header)
     _z_pub_decl_t e_pd;
 
     e_pd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_pd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_pd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_pd;
 }
@@ -922,7 +922,7 @@ _z_sub_decl_t gen_subscriber_declaration(uint8_t *header)
         _Z_SET_FLAG(*header, _Z_FLAG_Z_R);
 
     e_sd._key = gen_res_key();
-    if (e_sd._key.suffix)
+    if (e_sd._key._suffix)
         _Z_SET_FLAG(*header, _Z_FLAG_Z_K);
 
     return e_sd;
@@ -974,7 +974,7 @@ _z_qle_decl_t gen_queryable_declaration(uint8_t *header)
     _z_qle_decl_t e_qd;
 
     e_qd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_qd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_qd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     e_qd._kind = gen_uint8();
 
@@ -1084,7 +1084,7 @@ _z_forget_pub_decl_t gen_forget_publisher_declaration(uint8_t *header)
     _z_forget_pub_decl_t e_fpd;
 
     e_fpd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_fpd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_fpd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_fpd;
 }
@@ -1130,7 +1130,7 @@ _z_forget_sub_decl_t gen_forget_subscriber_declaration(uint8_t *header)
     _z_forget_sub_decl_t e_fsd;
 
     e_fsd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_fsd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_fsd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_fsd;
 }
@@ -1176,7 +1176,7 @@ _z_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header)
     _z_forget_qle_decl_t e_fqd;
 
     e_fqd._key = gen_res_key();
-    _Z_SET_FLAG(*header, (e_fqd._key.suffix) ? _Z_FLAG_Z_K : 0);
+    _Z_SET_FLAG(*header, (e_fqd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     e_fqd._kind = gen_uint8();
 
@@ -1494,16 +1494,16 @@ _z_zenoh_message_t gen_query_message(void)
         target._kind = gen_uint8();
 
         uint8_t tgt[] = {
-            Z_TARGET_BEST_MATCHING,
-            Z_TARGET_ALL_COMPLETE,
-            Z_TARGET_ALL,
-            Z_TARGET_NONE};
+            Z_QUERY_TARGET_BEST_MATCHING,
+            Z_QUERY_TARGET_ALL_COMPLETE,
+            Z_QUERY_TARGET_ALL,
+            Z_QUERY_TARGET_NONE};
         target._target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
     }
     else
     {
         target._kind = Z_QUERYABLE_ALL_KINDS;
-        target._target = Z_TARGET_BEST_MATCHING;
+        target._target = Z_QUERY_TARGET_BEST_MATCHING;
     }
 
     uint8_t con[] = {

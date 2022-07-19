@@ -20,8 +20,8 @@
 /*------------------ clone helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src)
 {
-    dst->id = src->id;
-    dst->suffix = src->suffix ? _z_str_clone(src->suffix) : NULL;
+    dst->_id = src->_id;
+    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
 }
 
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src)

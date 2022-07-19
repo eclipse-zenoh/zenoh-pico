@@ -60,7 +60,7 @@ _Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
  */
 typedef struct
 {
-    z_reply_tag_t tag;
+    z_reply_tag_t _tag;
     _z_reply_data_t data;
 } _z_reply_t;
 

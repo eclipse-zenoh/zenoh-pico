@@ -52,7 +52,7 @@ _z_questionable_list_t *__z_get_queryables_by_key(_z_questionable_list_t *qles, 
     while (qles != NULL)
     {
         _z_questionable_t *qle = _z_questionable_list_head(qles);
-        if (_z_rname_intersect(qle->_key.suffix, key.suffix))
+        if (_z_rname_intersect(qle->_key._suffix, key._suffix))
             xs = _z_questionable_list_push(xs, qle);
 
         qles = _z_questionable_list_tail(qles);
@@ -117,7 +117,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     _z_mutex_lock(&zn->_mutex_inner);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &query->_key);
-    if(key.suffix == NULL)
+    if(key._suffix == NULL)
         goto ERR;
 
     // Build the query

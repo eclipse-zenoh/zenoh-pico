@@ -141,11 +141,11 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
 
     // Build the reply
     _z_reply_t *reply = (_z_reply_t *)malloc(sizeof(_z_reply_t));
-    reply->tag = Z_REPLY_TAG_DATA;
+    reply->_tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
     reply->data.replier_kind = reply_context->_replier_kind;
-    reply->data.sample.key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
-    _z_bytes_copy(&reply->data.sample.value, &payload);
+    reply->data.sample.keyexpr = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
+    _z_bytes_copy(&reply->data.sample.payload, &payload);
     reply->data.sample.encoding.prefix = encoding.prefix;
     reply->data.sample.encoding.suffix = encoding.suffix ? _z_str_clone(encoding.suffix) : NULL;
     reply->data.sample.kind = kind;
@@ -161,7 +161,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply->data.sample.key.suffix, reply->data.sample.key.suffix))
+            if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix))
             {
                 if (timestamp._time <= pen_rep->_tstamp._time)
                     goto ERR_2;

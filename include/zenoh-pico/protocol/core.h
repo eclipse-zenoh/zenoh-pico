@@ -70,8 +70,8 @@ typedef struct
  */
 typedef struct
 {
-    _z_zint_t id;
-    const char *suffix;
+    _z_zint_t _id;
+    const char *_suffix;
 } _z_keyexpr_t;
 
 /**
@@ -86,8 +86,8 @@ typedef struct
  */
 typedef struct
 {
-    _z_keyexpr_t key;
-    _z_bytes_t value;
+    _z_keyexpr_t keyexpr;
+    _z_bytes_t payload;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
     _z_timestamp_t timestamp;

@@ -57,7 +57,7 @@ _z_subscriber_list_t *__z_get_subscriptions_by_key(_z_subscriber_list_t *subs, c
     while (subs != NULL)
     {
         _z_subscription_t *sub = _z_subscriber_list_head(subs);
-        if (_z_rname_intersect(sub->_key.suffix, key.suffix))
+        if (_z_rname_intersect(sub->_key._suffix, key._suffix))
             xs = _z_subscriber_list_push(xs, sub);
 
         subs = _z_subscriber_list_tail(subs);
@@ -132,13 +132,13 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     _z_mutex_lock(&zn->_mutex_inner);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
-    if (key.suffix == NULL)
+    if (key._suffix == NULL)
         goto ERR;
 
     // Build the sample
     _z_sample_t s;
-    s.key = key;
-    s.value = payload;
+    s.keyexpr = key;
+    s.payload = payload;
     s.encoding = encoding;
     s.kind = kind;
     s.timestamp = timestamp;

@@ -56,7 +56,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_
     while (xs != NULL)
     {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_key.id == keyexpr->id && _z_str_eq(r->_key.suffix, keyexpr->suffix) == 1)
+        if (r->_key._id == keyexpr->_id && _z_str_eq(r->_key._suffix, keyexpr->_suffix) == 1)
             return r;
 
         xs = _z_resource_list_tail(xs);
@@ -73,31 +73,31 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (keyexpr->suffix != NULL)
+    if (keyexpr->_suffix != NULL)
     {
-        len += strlen(keyexpr->suffix);
-        strs = _z_str_list_push(strs, (char *)keyexpr->suffix); // Warning: list must be release with
+        len += strlen(keyexpr->_suffix);
+        strs = _z_str_list_push(strs, (char *)keyexpr->_suffix); // Warning: list must be release with
                                                                 //   _z_list_free(&strs, _z_noop_free);
                                                                 //   or will release the suffix as well
     }
 
     // Recursevely go through all the RIDs
-    _z_zint_t id = keyexpr->id;
+    _z_zint_t id = keyexpr->_id;
     while (id != Z_RESOURCE_ID_NONE)
     {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
         if (res == NULL)
             goto ERR;
 
-        if (res->_key.suffix != NULL)
+        if (res->_key._suffix != NULL)
         {
-            len += strlen(res->_key.suffix);
-            strs = _z_str_list_push(strs, (char *)res->_key.suffix); // Warning: list must be release with
+            len += strlen(res->_key._suffix);
+            strs = _z_str_list_push(strs, (char *)res->_key._suffix); // Warning: list must be release with
                                                                      //   _z_list_free(&strs, _z_noop_free);
                                                                      //   or will release the suffix as well
         }
 
-        id = res->_key.id;
+        id = res->_key._id;
     }
 
     // Concatenate all the partial resource names
@@ -113,11 +113,11 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     }
 
     _z_list_free(&strs, _z_noop_free);
-    return (_z_keyexpr_t){.id = Z_RESOURCE_ID_NONE, .suffix = rname};
+    return (_z_keyexpr_t){._id = Z_RESOURCE_ID_NONE, ._suffix = rname};
 
 ERR:
     _z_list_free(&strs, _z_noop_free);
-    return (_z_keyexpr_t){.id = Z_RESOURCE_ID_NONE, .suffix = NULL};
+    return (_z_keyexpr_t){._id = Z_RESOURCE_ID_NONE, ._suffix = NULL};
 }
 
 /**

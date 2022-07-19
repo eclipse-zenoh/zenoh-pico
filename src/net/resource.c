@@ -17,18 +17,18 @@
 _z_keyexpr_t _z_rid(unsigned long rid)
 {
     _z_keyexpr_t rk;
-    rk.id = rid;
-    rk.suffix = NULL;
+    rk._id = rid;
+    rk._suffix = NULL;
     return rk;
 }
 
 _z_keyexpr_t _z_rname(const char *rname)
 {
     _z_keyexpr_t rk;
-    rk.id = Z_RESOURCE_ID_NONE;
-    rk.suffix = NULL;
+    rk._id = Z_RESOURCE_ID_NONE;
+    rk._suffix = NULL;
     if (rname != NULL)
-        rk.suffix = rname;
+        rk._suffix = rname;
 
     return rk;
 }
@@ -36,10 +36,10 @@ _z_keyexpr_t _z_rname(const char *rname)
 _z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const char *suffix)
 {
     _z_keyexpr_t rk;
-    rk.id = rid;
-    rk.suffix = NULL;
+    rk._id = rid;
+    rk._suffix = NULL;
     if (suffix != NULL)
-        rk.suffix = _z_str_clone(suffix);
+        rk._suffix = _z_str_clone(suffix);
 
     return rk;
 }

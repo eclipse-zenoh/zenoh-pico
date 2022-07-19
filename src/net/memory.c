@@ -16,11 +16,11 @@
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src)
 {
-    dst->key.id = src->key.id;                   // FIXME: call the z_keyexpr_move
-    dst->key.suffix = src->key.suffix;           // FIXME: call the z_keyexpr_move
-    src->key.suffix = NULL;                      // FIXME: call the z_keyexpr_move
+    dst->keyexpr._id = src->keyexpr._id;              // FIXME: call the z_keyexpr_move
+    dst->keyexpr._suffix = src->keyexpr._suffix;      // FIXME: call the z_keyexpr_move
+    src->keyexpr._suffix = NULL;                      // FIXME: call the z_keyexpr_move
 
-    _z_bytes_move(&dst->value, &src->value);
+    _z_bytes_move(&dst->payload, &src->payload);
 
     dst->encoding.prefix = src->encoding.prefix; // FIXME: call the z_encoding_move
     dst->encoding.suffix = src->encoding.suffix; // FIXME: call the z_encoding_move
@@ -32,8 +32,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src)
 
 void _z_sample_clear(_z_sample_t *sample)
 {
-    _z_keyexpr_clear(&sample->key);
-    _z_bytes_clear(&sample->value);
+    _z_keyexpr_clear(&sample->keyexpr);
+    _z_bytes_clear(&sample->payload);
     _z_str_clear(sample->encoding.suffix); // FIXME: call the z_encoding_clear
     _z_timestamp_clear(&sample->timestamp);
 }

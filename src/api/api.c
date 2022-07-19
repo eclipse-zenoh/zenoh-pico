@@ -89,7 +89,7 @@ z_encoding_t z_encoding_default(void)
 
 z_query_target_t z_query_target_default(void)
 {
-    return Z_TARGET_BEST_MATCHING;
+    return Z_QUERY_TARGET_BEST_MATCHING;
 }
 
 z_query_consolidation_t z_query_consolidation_auto(void)
@@ -419,7 +419,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
 
 int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 {
-    _z_undeclare_resource(zs, keyexpr->_value->id);
+    _z_undeclare_resource(zs, keyexpr->_value->_id);
 
     z_keyexpr_drop(keyexpr);
     keyexpr->_value = NULL;
@@ -568,7 +568,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply)
     return (z_value_t){ .payload = _z_bytes_make(0), .encoding = z_encoding_default() };
 }
 
-z_sample_t z_reply_ok(const z_owned_reply_t *reply)
+z_sample_t z_reply_ok(z_owned_reply_t *reply)
 {
     return reply->_value->data.sample;
 }
