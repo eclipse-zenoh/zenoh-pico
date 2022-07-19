@@ -229,19 +229,14 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
 
             // Check if this is the same resource key
             // Trigger the query handler
-            if (_z_rname_intersect(pen_qry->_key.suffix, pen_rep->_reply->data.sample.key.suffix))
+            if (_z_rname_intersect(pen_qry->_key._suffix, pen_rep->_reply->data.sample.keyexpr._suffix))
                 pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
 
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
     }
 
-    // Trigger the final query handler
-    _z_reply_t freply;
-    memset(&freply, 0, sizeof(_z_reply_t));
-    freply.tag = Z_REPLY_TAG_FINAL;
-    pen_qry->_callback(&freply, pen_qry->_call_arg);
-
+    // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL tag
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
     _z_mutex_unlock(&zn->_mutex_inner);
