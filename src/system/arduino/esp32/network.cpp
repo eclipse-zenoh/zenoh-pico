@@ -454,6 +454,7 @@ void _zn_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr
     //  because we dont know if the close is trigger by a normal close
     //  or some of the sockets failed during the opening/listening procedure.
     if (sockrecv != NULL)
+    {
         if (raddr->ai_family == AF_INET)
         {
             struct ip_mreq mreq;
