@@ -4,25 +4,25 @@
 
 typedef enum _z_keyexpr_canon_status_t {
     _Z_SUCCESS,                        // the key expression is canon
-    _Z_EMPTY_CHUNK,                    // the key contains empty chunks
     _Z_LONE_DOLLAR_STAR,               // the key contains a `$*` chunk, which must be replaced by `*`
-    _Z_STARS_IN_CHUNK,                 // the key contains a `*` in a chunk without being escaped by a DSL, which is forbidden
     _Z_SINGLE_STAR_AFTER_DOUBLE_STAR,  // the key contains `**/*`, which must be replaced by `*/**`
     _Z_DOUBLE_STAR_AFTER_DOUBLE_STAR,  // the key contains `**/**`, which must be replaced by `**`
-    _Z_DOLLAR_AFTER_DOLLAR_OR_STAR,    // the key contains `$*$` or `$$`, which is forbidden
-    _Z_CONTAINS_SHARP_OR_QMARK,        // the key contains `#` or `?`, which is forbidden
-    _Z_CONTAINS_UNBOUND_DOLLAR         // the key contains a `$` which isn't bound to a DSL
+    _Z_EMPTY_CHUNK,                    // the key contains empty chunks
+    _Z_STARS_IN_CHUNK,  // the key contains a `*` in a chunk without being escaped by a DSL, which is forbidden
+    _Z_DOLLAR_AFTER_DOLLAR_OR_STAR,  // the key contains `$*$` or `$$`, which is forbidden
+    _Z_CONTAINS_SHARP_OR_QMARK,      // the key contains `#` or `?`, which is forbidden
+    _Z_CONTAINS_UNBOUND_DOLLAR       // the key contains a `$` which isn't bound to a DSL
 } _z_keyexpr_canon_status_t;
 
 _z_keyexpr_canon_status_t _zp_canon_prefix(const char *start, size_t *len) {
     bool in_big_wild = false;
     char const *chunk_start = start;
     const char *end = start + *len;
-    char const *chunk_end;
+    char const *next_slash;
     do {
-        chunk_end = memchr(chunk_start, '/', end - chunk_start);
-        size_t chunk_len = (chunk_end ? chunk_end : end) - chunk_start;
-        const char *end = chunk_start + chunk_len;
+        next_slash = memchr(chunk_start, '/', end - chunk_start);
+        const char *chunk_end = next_slash ? next_slash : end;
+        size_t chunk_len = chunk_end - chunk_start;
         switch (chunk_len) {
             case 0:
                 return _Z_EMPTY_CHUNK;
@@ -31,7 +31,7 @@ _z_keyexpr_canon_status_t _zp_canon_prefix(const char *start, size_t *len) {
                     *len = chunk_start - start - 3;
                     return _Z_SINGLE_STAR_AFTER_DOUBLE_STAR;
                 }
-                chunk_start = end + 1;
+                chunk_start = chunk_end + 1;
                 continue;
             case 2:
                 if (chunk_start[1] == '*') {
@@ -44,7 +44,7 @@ _z_keyexpr_canon_status_t _zp_canon_prefix(const char *start, size_t *len) {
                                 *len = chunk_start - start - 3;
                                 return _Z_DOUBLE_STAR_AFTER_DOUBLE_STAR;
                             } else {
-                                chunk_start = end + 1;
+                                chunk_start = chunk_end + 1;
                                 in_big_wild = true;
                                 continue;
                             }
@@ -53,7 +53,7 @@ _z_keyexpr_canon_status_t _zp_canon_prefix(const char *start, size_t *len) {
                 break;
         }
         unsigned char in_dollar = 0;
-        for (char const *c = chunk_start; c < end; c++) {
+        for (char const *c = chunk_start; c < chunk_end; c++) {
             switch (*c) {
                 case '#':
                 case '?':
@@ -80,15 +80,13 @@ _z_keyexpr_canon_status_t _zp_canon_prefix(const char *start, size_t *len) {
         if (in_dollar == 1) {
             return _Z_CONTAINS_UNBOUND_DOLLAR;
         }
-        chunk_start = end + 1;
+        chunk_start = chunk_end + 1;
         in_big_wild = false;
     } while (chunk_start < end);
-    return _Z_SUCCESS;
+    return chunk_start > end ? _Z_SUCCESS : _Z_EMPTY_CHUNK;
 }
 
-_z_keyexpr_canon_status_t _zp_is_canon_ke(const char *start, size_t len) {
-    return _zp_canon_prefix(start, &len);
-}
+_z_keyexpr_canon_status_t _zp_is_canon_ke(const char *start, size_t len) { return _zp_canon_prefix(start, &len); }
 
 void _zp_write(char *to, size_t *to_len, const char *from, size_t len) {
     memmove(to, from, len);
@@ -155,7 +153,8 @@ _z_keyexpr_canon_status_t _zp_canonize(char *start, size_t *len) {
         case _Z_LONE_DOLLAR_STAR:
         case _Z_SINGLE_STAR_AFTER_DOUBLE_STAR:
         case _Z_DOUBLE_STAR_AFTER_DOUBLE_STAR:
-            break;  // Canonization only handles these errors, so finding any other error (or a success) means immediate return
+            break;  // Canonization only handles these errors, so finding any other error (or a success) means immediate
+                    // return
         default:
             return prefix_canon_state;
     }
@@ -258,7 +257,7 @@ _z_keyexpr_canon_status_t _zp_canonize_null_terminated(char *start) {
 #ifdef QUICKTEST
 #include "stdio.h"
 int main() {
-#define N 18
+#define N 26
     const char *input[N] = {
         "greetings/hello/there",
         "greetings/good/*/morning",
@@ -277,18 +276,42 @@ int main() {
         "hi$*$*$*",
         "$*$*$*hi",
         "$*$*$*hi$*$*$*",
+        "hi*",
+        "/hi",
+        "hi/",
+        "",
+        "greetings/**/*/",
+        "greetings/**/*/e?",
+        "greetings/**/*/e#",
+        "greetings/**/*/e$",
+        "greetings/**/*/$e",
     };
-    _z_keyexpr_canon_status_t expected[N] = {
-        _Z_SUCCESS,
-        _Z_SUCCESS,
-        _Z_SUCCESS,
-        _Z_SUCCESS,
-        _Z_LONE_DOLLAR_STAR,
-        _Z_SINGLE_STAR_AFTER_DOUBLE_STAR,
-        _Z_SINGLE_STAR_AFTER_DOUBLE_STAR,
-        _Z_DOUBLE_STAR_AFTER_DOUBLE_STAR,
-        _Z_SINGLE_STAR_AFTER_DOUBLE_STAR,
-    };
+    _z_keyexpr_canon_status_t expected[N] = {_Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_SUCCESS,
+                                             _Z_STARS_IN_CHUNK,
+                                             _Z_EMPTY_CHUNK,
+                                             _Z_EMPTY_CHUNK,
+                                             _Z_EMPTY_CHUNK,
+                                             _Z_EMPTY_CHUNK,
+                                             _Z_CONTAINS_SHARP_OR_QMARK,
+                                             _Z_CONTAINS_SHARP_OR_QMARK,
+                                             _Z_CONTAINS_UNBOUND_DOLLAR,
+                                             _Z_CONTAINS_UNBOUND_DOLLAR};
     const char *canonized[N] = {
         "greetings/hello/there",
         "greetings/good/*/morning",
@@ -307,14 +330,74 @@ int main() {
         "hi$*",
         "$*hi",
         "$*hi$*",
+        "/hi",
+        "hi/",
+        "",
+        "greetings/**/*/",
+        "greetings/**/*/e?",
+        "greetings/**/*/e#",
+        "greetings/**/*/e$",
+        "greetings/**/*/$e",
     };
     for (int i = 0; i < N; i++) {
         const char *ke = input[i];
+        printf("ke: %s\n", ke);
         char canon[128];
         strcpy(canon, ke);
-        _zp_canonize_null_terminated(canon);
-        printf("%s expected %s got %s\n", ke, canonized[i], canon);
-        assert(!strcmp(canonized[i], canon));
+        _z_keyexpr_canon_status_t status = _zp_canonize_null_terminated(canon);
+        printf("\tstatus: expected %d got %d\n", expected[i], status);
+        assert(status == expected[i]);
+        if (status == _Z_SUCCESS) {
+            printf("\tcanon : expected %s got %s\n", canonized[i], canon);
+            assert(!strcmp(canonized[i], canon));
+        }
+    }
+    return 0;
+}
+#endif
+
+#ifdef CANONIZER
+#include "stdio.h"
+#include "stdlib.h"
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Pass any number of key expressions as arguments to obtain their canon forms");
+        return -1;
+    }
+    char *buffer = NULL;
+    for (int i = 1; i < argc; i++) {
+        size_t len = strlen(argv[i]);
+        buffer = realloc(buffer, len + 1);
+        strcpy(buffer, argv[i]);
+        buffer[len] = 0;
+        _z_keyexpr_canon_status_t status = _zp_canonize_null_terminated(buffer);
+        switch (status) {
+            case _Z_SUCCESS:
+                printf("canon(%s) => %s\r\n", argv[i], buffer);
+                break;
+            case _Z_EMPTY_CHUNK:
+                printf(
+                    "Couldn't canonize `%s` because empty chunks are forbidden (as well as leading and trailing "
+                    "slashes)\r\n",
+                    argv[i]);
+                break;
+            case _Z_STARS_IN_CHUNK:
+                printf("Couldn't canonize `%s` because `*` is only legal when surrounded by `/` or preceded by `$`\r\n",
+                       argv[i]);
+                break;
+            case _Z_DOLLAR_AFTER_DOLLAR_OR_STAR:
+                printf("Couldn't canonize `%s` because `*$` and `$$` are illegal patterns\r\n", argv[i]);
+                break;
+            case _Z_CONTAINS_SHARP_OR_QMARK:
+                printf("Couldn't canonize `%s` because `#` and `?` are illegal characters\r\n", argv[i]);
+                break;
+            case _Z_CONTAINS_UNBOUND_DOLLAR:
+                printf("Couldn't canonize `%s` because `$` may only be followed by `*`\r\n", argv[i]);
+                break;
+            default:
+                assert(false);
+                break;
+        }
     }
     return 0;
 }

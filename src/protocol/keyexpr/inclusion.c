@@ -1,6 +1,6 @@
 #include "stdbool.h"
 #include "string.h"
-bool _zp_ke_intersect_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
+bool _zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while (lstart < lend && rstart < rend) {
         char l = *lstart++;
         char r = *rstart++;
@@ -8,14 +8,14 @@ bool _zp_ke_intersect_stardsl_chunk(char const *lstart, const char *lend, char c
             if (++lstart == lend) {
                 return true;
             }
-            return _zp_ke_intersect_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   _zp_ke_intersect_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return _zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
+                   _zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
         } else if (r == '$') {
             if (++rstart == rend) {
                 return true;
             }
-            return _zp_ke_intersect_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
-                   _zp_ke_intersect_stardsl_chunk(lstart, lend, rstart - 2, rend);
+            return _zp_ke_includes_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
+                   _zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 2, rend);
         } else if (l != r) {
             return false;
         }
@@ -24,7 +24,7 @@ bool _zp_ke_intersect_stardsl_chunk(char const *lstart, const char *lend, char c
            (rend - rstart == 2 && rstart[0] == '$');
 }
 
-bool _zp_ke_intersect_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     size_t lclen;
     bool streq;
     const char *lend = lstart + llen;
@@ -46,11 +46,11 @@ bool _zp_ke_intersect_stardsl(char const *lstart, const size_t llen, char const 
             case 2:
             case 3:
                 if (lwildness == 2) {
-                    return !lns || _zp_ke_intersect_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_intersect_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns || _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                           (rns && _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 } else {
-                    return !rns || _zp_ke_intersect_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_intersect_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns || _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
+                           (lns && _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
                 }
                 break;
             case 1:
@@ -58,7 +58,7 @@ bool _zp_ke_intersect_stardsl(char const *lstart, const size_t llen, char const 
             default:
                 lclen = lcend - lstart;
                 streq = lclen == rcend - rstart && strncmp(lstart, rstart, lclen) == 0;
-                if (!(streq || _zp_ke_intersect_stardsl_chunk(lstart, lcend, rstart, rcend))) {
+                if (!(streq || _zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }
         }
@@ -69,7 +69,7 @@ bool _zp_ke_intersect_stardsl(char const *lstart, const size_t llen, char const 
         rstart = rns + 1;
     }
 }
-bool _zp_ke_intersect_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
     for (;;) {
@@ -89,11 +89,11 @@ bool _zp_ke_intersect_nodsl(char const *lstart, const size_t llen, char const *r
             case 2:
             case 3:
                 if (lwildness == 2) {
-                    return !lns || _zp_ke_intersect_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_intersect_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns || _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                           (rns && _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 } else {
-                    return !rns || _zp_ke_intersect_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_intersect_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns || _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
+                           (lns && _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
                 }
                 break;
             case 1:
@@ -111,7 +111,7 @@ bool _zp_ke_intersect_nodsl(char const *lstart, const size_t llen, char const *r
     }
 }
 
-bool _zp_ke_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+bool _zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq) {
         return true;
@@ -140,16 +140,16 @@ bool _zp_ke_intersect(const char *lstart, const size_t llen, const char *rstart,
         case 0:
             return false;
         case 1:
-            return _zp_ke_intersect_nodsl(lstart, llen, rstart, rlen);
+            return _zp_ke_includes_nodsl(lstart, llen, rstart, rlen);
         default:
-            return _zp_ke_intersect_stardsl(lstart, llen, rstart, rlen);
+            return _zp_ke_includes_stardsl(lstart, llen, rstart, rlen);
     }
 }
 
 #ifdef QUICKTEST
 #include "assert.h"
 #include "stdio.h"
-bool intersect(const char *l, const char *r) { return _zp_ke_intersect(l, strlen(l), r, strlen(r)); }
+bool intersect(const char *l, const char *r) { return _zp_ke_includes(l, strlen(l), r, strlen(r)); }
 int main() {
     assert(intersect("a", "a") == true);
     assert(intersect("a/b", "a/b") == true);
