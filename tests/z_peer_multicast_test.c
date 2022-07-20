@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "/demo/example/";
+char *uri = "demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations

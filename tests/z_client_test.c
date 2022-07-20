@@ -24,7 +24,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "/demo/example/";
+char *uri = "demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -55,20 +55,19 @@ void reply_handler(z_owned_reply_t oreply, void *arg)
 {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
-
-    z_reply_t *reply = z_loan(oreply);
-    if (reply->_tag == Z_REPLY_TAG_DATA)
+    if (z_reply_is_ok(&oreply))
     {
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, reply->data.sample.keyexpr._suffix, replies, total);
-        assert(reply->data.sample.payload.len == strlen(res));
-        assert(strncmp(res, (const char *)reply->data.sample.payload.start, strlen(res)) == 0);
-        assert(strlen(reply->data.sample.keyexpr._suffix) == strlen(res));
-        assert(strncmp(res, reply->data.sample.keyexpr._suffix, strlen(res)) == 0);
+        z_sample_t sample = z_reply_ok(&oreply);
+        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, z_keyexpr_to_string(sample.keyexpr), replies, total);
+        assert(sample.payload.len == strlen(res));
+        assert(strncmp(res, (const char *)sample.payload.start, strlen(res)) == 0);
+        assert(strlen(z_keyexpr_to_string(sample.keyexpr)) == strlen(res));
+        assert(strncmp(res, z_keyexpr_to_string(sample.keyexpr), strlen(res)) == 0);
+        replies++;
     }
     else
     {
-        replies++;
-        printf(">> Received reply final: %s\t(%u/%u)\n", res, replies, total);
+        printf(">> Received an error\n");
     }
 }
 
