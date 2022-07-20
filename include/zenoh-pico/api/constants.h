@@ -135,8 +135,7 @@ typedef enum
 {
     Z_QUERY_TARGET_BEST_MATCHING = 0,
     Z_QUERY_TARGET_ALL = 1,
-    Z_QUERY_TARGET_NONE = 2,
-    Z_QUERY_TARGET_ALL_COMPLETE = 3,
+    Z_QUERY_TARGET_ALL_COMPLETE = 2,
 } z_query_target_t;
 
 //FIXME

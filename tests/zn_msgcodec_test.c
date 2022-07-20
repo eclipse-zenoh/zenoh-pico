@@ -1496,8 +1496,7 @@ _z_zenoh_message_t gen_query_message(void)
         uint8_t tgt[] = {
             Z_QUERY_TARGET_BEST_MATCHING,
             Z_QUERY_TARGET_ALL_COMPLETE,
-            Z_QUERY_TARGET_ALL,
-            Z_QUERY_TARGET_NONE};
+            Z_QUERY_TARGET_ALL};
         target._target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
     }
     else
