@@ -10,18 +10,11 @@ bool _zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char co
             }
             return _zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
                    _zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
-        } else if (r == '$') {
-            if (++rstart == rend) {
-                return true;
-            }
-            return _zp_ke_includes_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
-                   _zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 2, rend);
         } else if (l != r) {
             return false;
         }
     }
-    return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$') ||
-           (rend - rstart == 2 && rstart[0] == '$');
+    return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$');
 }
 
 bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
@@ -42,23 +35,19 @@ bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *
         if (*rstart == '*') {
             rwildness = rcend - rstart;
         }
-        switch (lwildness | rwildness) {
+        if (rwildness > lwildness) {
+            return false;
+        }
+        switch (lwildness) {
             case 2:
-            case 3:
-                if (lwildness == 2) {
-                    return !lns || _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
-                } else {
-                    return !rns || _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
-                }
-                break;
+                return !lns || _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                       (rns && _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
             default:
                 lclen = lcend - lstart;
-                streq = lclen == rcend - rstart && strncmp(lstart, rstart, lclen) == 0;
-                if (!(streq || _zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend))) {
+                streq = (lclen == rcend - rstart) && (strncmp(lstart, rstart, lclen) == 0);
+                if (!streq && !_zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
                     return false;
                 }
         }
@@ -85,17 +74,13 @@ bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rs
         if (*rstart == '*') {
             rwildness = rcend - rstart;
         }
-        switch (lwildness | rwildness) {
+        if (rwildness > lwildness) {
+            return false;
+        }
+        switch (lwildness) {
             case 2:
-            case 3:
-                if (lwildness == 2) {
-                    return !lns || _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
-                } else {
-                    return !rns || _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
-                }
-                break;
+                return !lns || _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                       (rns && _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
             default:
@@ -149,36 +134,41 @@ bool _zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, 
 #ifdef QUICKTEST
 #include "assert.h"
 #include "stdio.h"
-bool intersect(const char *l, const char *r) { return _zp_ke_includes(l, strlen(l), r, strlen(r)); }
+bool includes(const char *l, const char *r) { return _zp_ke_includes(l, strlen(l), r, strlen(r)); }
 int main() {
-    assert(intersect("a", "a") == true);
-    assert(intersect("a/b", "a/b") == true);
-    assert(intersect("*", "a") == true);
-    assert(intersect("a", "*") == true);
-    assert(intersect("*", "aaaaa") == true);
-    assert(intersect("**", "a") == true);
-    assert(intersect("a", "**") == true);
-    assert(intersect("**", "a") == true);
-    assert(intersect("a/a/a/a", "**") == true);
-    assert(intersect("a/*", "a/b") == true);
-    assert(intersect("a/*/b", "a/b") == false);
-    assert(intersect("a/**/b", "a/b") == true);
-    assert(intersect("a/b$*", "a/b") == true);
-    assert(intersect("a/$*b$*", "a/b") == true);
-    assert(intersect("a/$*b", "a/b") == true);
-    assert(intersect("a/b$*", "a/bc") == true);
-    assert(intersect("a/$*b$*", "a/ebc") == true);
-    assert(intersect("a/$*b", "a/cb") == true);
-    assert(intersect("a/b$*", "a/ebc") == false);
-    assert(intersect("a/$*b", "a/cbc") == false);
-    assert(intersect("a/**/b$*", "a/b") == true);
-    assert(intersect("a/**/$*b$*", "a/b") == true);
-    assert(intersect("a/**/$*b", "a/b") == true);
-    assert(intersect("a/**/b$*", "a/bc") == true);
-    assert(intersect("a/**/$*b$*", "a/ebc") == true);
-    assert(intersect("a/**/$*b", "a/cb") == true);
-    assert(intersect("a/**/b$*", "a/ebc") == false);
-    assert(intersect("a/**/$*b", "a/cbc") == false);
+    assert(includes("a", "a") == true);
+    assert(includes("a/b", "a/b") == true);
+    assert(includes("*", "a") == true);
+    assert(includes("a", "*") == false);
+    assert(includes("*", "aaaaa") == true);
+    assert(includes("**", "a") == true);
+    assert(includes("a", "**") == false);
+    assert(includes("**", "a") == true);
+    assert(includes("**", "a/a/a/a") == true);
+    assert(includes("**", "*/**") == true);
+    assert(includes("*/**", "*/**") == true);
+    assert(includes("*/**", "**") == false);
+    assert(includes("a/a/a/a", "**") == false);
+    assert(includes("a/*", "a/b") == true);
+    assert(includes("a/*/b", "a/b") == false);
+    assert(includes("a/**/b", "a/b") == true);
+    assert(includes("a/b$*", "a/b") == true);
+    assert(includes("a/b", "a/b$*") == false);
+    assert(includes("a/$*b$*", "a/b") == true);
+    assert(includes("a/$*b", "a/b") == true);
+    assert(includes("a/b$*", "a/bc") == true);
+    assert(includes("a/$*b$*", "a/ebc") == true);
+    assert(includes("a/$*b", "a/cb") == true);
+    assert(includes("a/b$*", "a/ebc") == false);
+    assert(includes("a/$*b", "a/cbc") == false);
+    assert(includes("a/**/b$*", "a/b") == true);
+    assert(includes("a/**/$*b$*", "a/b") == true);
+    assert(includes("a/**/$*b", "a/b") == true);
+    assert(includes("a/**/b$*", "a/bc") == true);
+    assert(includes("a/**/$*b$*", "a/ebc") == true);
+    assert(includes("a/**/$*b", "a/cb") == true);
+    assert(includes("a/**/b$*", "a/ebc") == false);
+    assert(includes("a/**/$*b", "a/cbc") == false);
     return 0;
 }
 #endif
