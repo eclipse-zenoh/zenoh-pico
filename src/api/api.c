@@ -107,7 +107,7 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value)
 
 z_encoding_t z_encoding_default(void)
 {
-    return (_z_encoding_t){.prefix = Z_ENCODING_APP_OCTETSTREAM, .suffix = ""};
+    return (_z_encoding_t){.prefix = Z_ENCODING_PREFIX_APP_OCTET_STREAM, .suffix = ""};
 }
 
 z_query_target_t z_query_target_default(void)
