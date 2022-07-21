@@ -263,9 +263,11 @@ bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *
                 }
         }
 
-        if (!lns || !rns)
+        if (!lns)
         {
-            return lns == rns;
+            return !rns;
+        } else if (!rns) {
+            return !lns || (lend - lns == 3 && lend[1] == '*');
         }
 
         lstart = lns + 1;
@@ -316,9 +318,11 @@ bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rs
                 }
         }
 
-        if (!lns || !rns)
+        if (!lns)
         {
-            return lns == rns;
+            return !rns;
+        } else if (!rns) {
+            return !lns || (lend - lns == 3 && lend[1] == '*');
         }
 
         lstart = lns + 1;
@@ -463,9 +467,11 @@ bool _zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const
                 }
         }
 
-        if (!lns || !rns)
+        if (!lns)
         {
-            return lns == rns;
+            return !rns || (rend - rns == 3 && rend[1] == '*');
+        } else if (!rns) {
+            return !lns || (lend - lns == 3 && lend[1] == '*');
         }
         lstart = lns + 1;
         rstart = rns + 1;
@@ -521,9 +527,12 @@ bool _zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *
                 }
         }
 
-        if (!lns || !rns)
+        if (!lns)
         {
-            return lns == rns;
+            return !rns || (rend - rns == 3 && rend[1] == '*');
+        } else if (!rns) {
+            return !lns || (lend - lns == 3 && lend[1] == '*');
+
         }
 
         lstart = lns + 1;
