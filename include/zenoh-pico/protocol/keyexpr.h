@@ -12,24 +12,17 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#ifndef ZENOH_PICO_PROTOCOL_UTILS_H
-#define ZENOH_PICO_PROTOCOL_UTILS_H
+#ifndef ZENOH_PICO_PROTOCOL_KEYEXPR_H
+#define ZENOH_PICO_PROTOCOL_KEYEXPR_H
 
+#include <stdbool.h>
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/collections/string.h"
 
-/**
- * Intersects two resource names. This function compares two resource names
- * and verifies that the first resource name intersects (i.e., matches) the
- * second resource name. E.g., /foo/\* interesects /foo/a.
- *
- * Parameters:
- *     left: The resource name to match against.
- *     right: The resource name to be compared.
- * Returns:
- *     ``1`` in case of success, ``0`` in case of failure.
- */
-int _z_rname_intersect(const char *left, const char *right);
+z_keyexpr_canon_status_t _z_keyexpr_is_canon_ke(const char *start, size_t len);
+z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
+bool _z_keyexpr_includes(const char *l, const char *r);
+bool _z_keyexpr_intersect(const char *l, const char *r);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
@@ -37,4 +30,4 @@ _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_reset(_z_timestamp_t *tstamp);
 
-#endif /* ZENOH_PICO_PROTOCOL_UTILS_H */
+#endif /* ZENOH_PICO_PROTOCOL_KEYEXPR_H */

@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 #
 # Contributors:
-#   ADLINK zenoh team, <zenoh@adlink-labs.tech>
+# ADLINK zenoh team, <zenoh@adlink-labs.tech>
 #
 cmake_minimum_required(VERSION 3.8)
 
@@ -24,6 +24,7 @@ if(NOT CMAKE_C_STANDARD)
     message(STATUS "Setting C99 as the C Standard")
   endif()
 endif()
+
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # while in development, use timestamp for patch version:
@@ -34,28 +35,30 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
+
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
-option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
+option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
 
-option (BUILD_EXAMPLES "Use this to also build the examples." ON)
+option(BUILD_EXAMPLES "Use this to also build the examples." ON)
 message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 
-option (BUILD_TESTING "Use this to also build tests." ON)
+option(BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
-option (BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
-option (ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
+option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definitions(-DZENOH_LINUX)
   set(JNI_PLATFORM_NAME "linux")
@@ -72,7 +75,7 @@ endif()
 add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
 add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
-if (SKBUILD)
+if(SKBUILD)
   set(INSTALL_RPATH "zenoh")
   set(INSTALL_NAME_DIR "zenoh")
   set(INSTALL_INCLUDE_NAME_DIR "zenoh/include")
@@ -81,53 +84,53 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pipe -g -O0)
-elseif (CMAKE_BUILD_TYPE MATCHES "RELEASE")
+elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   add_compile_options(-pipe -O3)
 endif()
 
 set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
-                        "include/zenoh-pico/*.h"
-                        "include/zenoh-pico/api/*.h"
-                        "include/zenoh-pico/collections/*.h"
-                        "include/zenoh-pico/link/*.h"
-                        "include/zenoh-pico/link/config/*.h"
-                        "include/zenoh-pico/protocol/*.h"
-                        "include/zenoh-pico/session/*.h"
-                        "include/zenoh-pico/system/*.h"
-                        "include/zenoh-pico/system/link/*.h"
-                        "include/zenoh-pico/transport/*.h"
-                        "include/zenoh-pico/utils/*.h"
+  "include/zenoh-pico/*.h"
+  "include/zenoh-pico/api/*.h"
+  "include/zenoh-pico/collections/*.h"
+  "include/zenoh-pico/link/*.h"
+  "include/zenoh-pico/link/config/*.h"
+  "include/zenoh-pico/protocol/*.h"
+  "include/zenoh-pico/session/*.h"
+  "include/zenoh-pico/system/*.h"
+  "include/zenoh-pico/system/link/*.h"
+  "include/zenoh-pico/transport/*.h"
+  "include/zenoh-pico/utils/*.h"
 )
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-if (UNIX)
+if(UNIX)
   file(GLOB Sources "src/*.c"
-                    "src/api/*.c"
-                    "src/net/*.c"
-                    "src/collections/*.c"
-                    "src/link/*.c"
-                    "src/link/config/*.c"
-                    "src/link/unicast/*.c"
-                    "src/link/multicast/*.c"
-                    "src/protocol/*.c"
-                    "src/session/*.c"
-                    "src/system/*.c"
-                    "src/system/unix/*.c"
-                    "src/transport/*.c"
-                    "src/transport/common/*.c"
-                    "src/transport/unicast/*.c"
-                    "src/transport/unicast/link/*.c"
-                    "src/transport/unicast/link/task/*.c"
-                    "src/transport/multicast/*.c"
-                    "src/transport/multicast/link/*.c"
-                    "src/transport/multicast/link/task/*.c"
+    "src/api/*.c"
+    "src/net/*.c"
+    "src/collections/*.c"
+    "src/link/*.c"
+    "src/link/config/*.c"
+    "src/link/unicast/*.c"
+    "src/link/multicast/*.c"
+    "src/protocol/*.c"
+    "src/protocol/keyexpr/*.c"
+    "src/session/*.c"
+    "src/system/*.c"
+    "src/system/unix/*.c"
+    "src/transport/*.c"
+    "src/transport/common/*.c"
+    "src/transport/unicast/*.c"
+    "src/transport/unicast/link/*.c"
+    "src/transport/unicast/link/task/*.c"
+    "src/transport/multicast/*.c"
+    "src/transport/multicast/link/*.c"
+    "src/transport/multicast/link/task/*.c"
   )
 endif()
 
@@ -143,20 +146,20 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 install(TARGETS ${Libname}
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib
-          COMPONENT Library
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  COMPONENT Library
 )
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-          DESTINATION include
-          COMPONENT Headers
+  DESTINATION include
+  COMPONENT Headers
 )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
-          DESTINATION include
-          COMPONENT Headers
+  DESTINATION include
+  COMPONENT Headers
 )
 
-if (BUILD_EXAMPLES)
+if(BUILD_EXAMPLES)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
 
   if (CMAKE_C_STANDARD MATCHES "99")
@@ -197,7 +200,7 @@ if(BUILD_TESTING)
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
   add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
-  
+
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
@@ -207,7 +210,7 @@ if(BUILD_TESTING)
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
   add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
-  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)    
+  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
   add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
 endif()
@@ -237,7 +240,7 @@ if(BUILD_INTEGRATION)
 endif()
 
 # For packaging
-if (PACKAGING)
+if(PACKAGING)
   set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
   set(CPACK_COMPONENTS_ALL Library Headers)
@@ -260,14 +263,15 @@ if (PACKAGING)
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
-        set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
+      set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
     endif()
 
     message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")
+
     if(CPACK_GENERATOR)
-        set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
+      set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
     else()
-        set(CPACK_GENERATOR "DEB")
+      set(CPACK_GENERATOR "DEB")
     endif()
 
     # DEB package
@@ -275,28 +279,29 @@ if (PACKAGING)
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
     set(CPACK_DEB_COMPONENT_INSTALL ON)
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
     set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${PROJECT_VERSION})")
   endif()
 
   if(PACKAGING MATCHES "RPM")
     if(NOT RPMARCH)
-        set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
+      set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
     endif()
 
     message(STATUS "Configure RPM packaging for Linux ${RPMARCH}")
+
     if(CPACK_GENERATOR)
-        set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
+      set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
     else()
-        set(CPACK_GENERATOR "RPM")
+      set(CPACK_GENERATOR "RPM")
     endif()
 
     # RPM package
     set(CPACK_RPM_PACKAGE_ARCHITECTURE ${RPMARCH})
     set(CPACK_RPM_COMPONENT_INSTALL ON)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
-    set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
+    set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
     set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
   endif()
 

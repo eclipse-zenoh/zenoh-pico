@@ -12,9 +12,9 @@
  *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
  */
 
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/net/memory.h"
 
@@ -229,7 +229,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
 
             // Check if this is the same resource key
             // Trigger the query handler
-            if (_z_rname_intersect(pen_qry->_key._suffix, pen_rep->_reply->data.sample.keyexpr._suffix))
+            if (_z_keyexpr_intersect(pen_qry->_key._suffix, pen_rep->_reply->data.sample.keyexpr._suffix))
                 pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
 
             pen_rps = _z_pending_reply_list_tail(pen_rps);

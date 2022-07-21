@@ -20,7 +20,7 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout)
 {

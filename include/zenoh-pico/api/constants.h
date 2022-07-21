@@ -17,6 +17,19 @@
 
 typedef enum
 {
+    Z_KEYEXPR_CANON_SUCCESS = 0,                          // the key expression is canon
+    Z_KEYEXPR_CANON_LONE_DOLLAR_STAR = -1,                // the key contains a `$*` chunk, which must be replaced by `*`
+    Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR = -2,   // the key contains `**/*`, which must be replaced by `*/**`
+    Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR = -3,   // the key contains `**/**`, which must be replaced by `**`
+    Z_KEYEXPR_CANON_EMPTY_CHUNK = -4,                     // the key contains empty chunks
+    Z_KEYEXPR_CANON_STARS_IN_CHUNK = -5,                  // the key contains a `*` in a chunk without being escaped by a DSL, which is forbidden
+    Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR = -6,     // the key contains `$*$` or `$$`, which is forbidden
+    Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK = -7,         // the key contains `#` or `?`, which is forbidden
+    Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR = -8          // the key contains a `$` which isn't bound to a DSL
+} z_keyexpr_canon_status_t;
+
+typedef enum
+{
     Z_SAMPLE_KIND_PUT = 0,
     Z_SAMPLE_KIND_DELETE = 1,
 } z_sample_kind_t;

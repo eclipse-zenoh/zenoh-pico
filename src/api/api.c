@@ -22,7 +22,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 /*************** Logging ***************/
 int8_t z_init_logger(void)
