@@ -195,7 +195,7 @@ int _z_open_tcp(void *arg, const clock_t tout)
     ws->state = __Z_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
-    ws->buffer_available = Z_BATCH_SIZE;
+    ws->buffer_available = Z_BATCH_SIZE_RX;
     ws->buffer = (char *)malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = _z_wifi_socket_list_push(g_wifi_buffers, ws);
@@ -342,7 +342,7 @@ int _z_open_udp_unicast(void *arg, const clock_t tout)
     ws->state = __Z_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
-    ws->buffer_available = Z_BATCH_SIZE;
+    ws->buffer_available = Z_BATCH_SIZE_RX;
     ws->buffer = (char *)malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = _z_wifi_socket_list_push(g_wifi_buffers, ws);
@@ -401,7 +401,7 @@ size_t _z_read_udp_unicast(int sock, uint8_t *ptr, size_t len)
         {
             memcpy(ptr, ws->buffer, len);
             ws->buffer_lenght = 0;
-            ws->buffer_available = Z_BATCH_SIZE;
+            ws->buffer_available = Z_BATCH_SIZE_RX;
             ws->buffer_current = ws->buffer;
 
             return len;
@@ -470,7 +470,7 @@ int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const c
     ws->state = __Z_SOCKET_BRIDGE_UNINITIALIZED;
     ws->sock = sock;
     ws->buffer_lenght = 0;
-    ws->buffer_available = Z_BATCH_SIZE;
+    ws->buffer_available = Z_BATCH_SIZE_RX;
     ws->buffer = (char *)malloc(ws->buffer_available);
     ws->buffer_current = ws->buffer;
     g_wifi_buffers = _z_wifi_socket_list_push(g_wifi_buffers, ws);
@@ -533,7 +533,7 @@ size_t _z_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, _z_b
         {
             memcpy(ptr, ws->buffer, len);
             ws->buffer_lenght = 0;
-            ws->buffer_available = Z_BATCH_SIZE;
+            ws->buffer_available = Z_BATCH_SIZE_RX;
             ws->buffer_current = ws->buffer;
 
             return len;

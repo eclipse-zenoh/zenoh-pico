@@ -57,7 +57,7 @@ _z_hello_array_t _z_scout_loop(
     }
 
     // The receiving buffer
-    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE);
+    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
     _z_clock_t start = _z_clock_now();
     while (_z_clock_elapsed_ms(&start) < period)
@@ -155,7 +155,7 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
     _z_hello_array_t locs = _z_hello_array_make(0);
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, 0);
 
     // Create and encode the scout message
     int request_id = 1;

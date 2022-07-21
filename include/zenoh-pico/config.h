@@ -145,7 +145,11 @@
 #define Z_SCOUTING_UDP 1
 
 #define Z_IOSLICE_SIZE 128
-#define Z_BATCH_SIZE 65535
+#define Z_BATCH_SIZE_RX 65535 // Warning: changing this value can break the communication
+                              //          with zenohd in the current protocol version.
+                              //          In the future, it will be possible to negotiate such value.
+                              // Change it at your own risk.
+#define Z_BATCH_SIZE_TX 65535
 #define Z_FRAG_MAX_SIZE 300000
 #define Z_DYNAMIC_MEMORY_ALLOCATION 1
 

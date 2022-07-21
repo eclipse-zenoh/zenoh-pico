@@ -64,9 +64,9 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
     _z_mutex_init(&zt->_transport._unicast._mutex_rx);
 
     // Initialize the read and write buffers
-    uint16_t mtu = link->_mtu < Z_BATCH_SIZE ? link->_mtu : Z_BATCH_SIZE;
+    uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
     zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, 0);
-    zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
+    zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
     // Initialize the defragmentation buffers
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
@@ -122,9 +122,9 @@ _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multica
     _z_mutex_init(&zt->_transport._multicast._mutex_peer);
 
     // Initialize the read and write buffers
-    uint16_t mtu = link->_mtu < Z_BATCH_SIZE ? link->_mtu : Z_BATCH_SIZE;
+    uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
     zt->_transport._multicast._wbuf = _z_wbuf_make(mtu, 0);
-    zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
+    zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
     // Set default SN resolution
     zt->_transport._multicast._sn_resolution = param._sn_resolution;
