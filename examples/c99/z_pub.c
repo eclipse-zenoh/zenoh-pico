@@ -27,7 +27,7 @@ int main(int argc, char **argv)
         keyexpr = argv[1];
 
     if (argc > 2)
-        keyexpr = argv[2];
+        value = argv[2];
 
     z_owned_config_t config = zp_config_default();
     if (argc > 3)

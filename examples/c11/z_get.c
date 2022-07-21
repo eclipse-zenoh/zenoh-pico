@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     z_get_options_t opts = z_get_options_default();
     opts.target = Z_QUERY_TARGET_ALL;
     z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
-    if (z_get(z_loan(s), ke, "", z_move(callback), NULL) < 0)
+    if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0)
     {
         printf("Unable to send query.\n");
         exit(-1);

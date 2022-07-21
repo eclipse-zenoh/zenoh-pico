@@ -18,7 +18,7 @@
 
 #include "zenoh-pico.h"
 
-char *expr = "demo/example/zenoh-pico-queryable";
+char *keyexpr = "demo/example/zenoh-pico-queryable";
 char *value = "Queryable from Pico!";
 
 void query_handler(z_query_t *query, void *ctx)
@@ -35,11 +35,14 @@ int main(int argc, char **argv)
     z_init_logger();
 
     if (argc > 1)
-        expr = argv[1];
+        keyexpr = argv[1];
+
+    if (argc > 2)
+        value = argv[2];
 
     z_owned_config_t config = zp_config_default();
-    if (argc > 2)
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
+    if (argc > 3)
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[3]));
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_move(config));
@@ -53,16 +56,16 @@ int main(int argc, char **argv)
     zp_start_read_task(z_loan(s));
     zp_start_lease_task(z_loan(s));
 
-    z_keyexpr_t keyexpr = z_keyexpr(expr);
-    if (!z_check(keyexpr))
+    z_keyexpr_t ke = z_keyexpr(keyexpr);
+    if (!z_check(ke))
     {
-        printf("%s is not a valid key expression", expr);
+        printf("%s is not a valid key expression", keyexpr);
         exit(-1);
     }
 
-    printf("Creating Queryable on '%s'...\n", expr);
+    printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_closure_query_t callback = z_closure(query_handler);
-    z_owned_queryable_t qable = z_declare_queryable(z_loan(s), keyexpr, z_move(callback), NULL);
+    z_owned_queryable_t qable = z_declare_queryable(z_loan(s), ke, z_move(callback), NULL);
     if (!z_check(qable))
     {
         printf("Unable to create queryable.\n");
