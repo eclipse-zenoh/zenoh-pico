@@ -80,6 +80,30 @@ uint8_t z_keyexpr_is_valid(z_keyexpr_t *key)
     return 0;
 }
 
+z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len)
+{
+    return _z_keyexpr_is_canon(start, len);
+}
+
+z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len)
+{
+    return _z_keyexpr_canonize(start, len);
+}
+
+bool z_keyexpr_includes(const char *l, size_t l_len, const char *r, size_t r_len)
+{
+    (void) (l_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
+    (void) (r_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
+    return _z_keyexpr_includes(l, r);
+}
+
+bool z_keyexpr_intersect(const char *l, size_t l_len, const char *r, size_t r_len)
+{
+    (void) (l_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
+    (void) (r_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
+    return _z_keyexpr_intersect(l, r);
+}
+
 z_owned_config_t zp_config_new(void)
 {
     return (z_owned_config_t){._value = _z_config_empty()};

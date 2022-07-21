@@ -35,6 +35,11 @@ const char *z_keyexpr_to_string(z_keyexpr_t key);
 char *z_keyexpr_resolve(z_session_t *zs, z_keyexpr_t key);
 uint8_t z_keyexpr_is_valid(z_keyexpr_t *key);
 
+z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len);
+z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len);
+bool z_keyexpr_includes(const char *l, size_t l_len, const char *r, size_t r_len);
+bool z_keyexpr_intersect(const char *l, size_t l_len, const char *r, size_t r_len);
+
 z_owned_config_t zp_config_new(void);
 z_owned_config_t zp_config_empty(void);
 z_owned_config_t zp_config_default(void);
