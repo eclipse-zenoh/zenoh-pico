@@ -190,7 +190,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 }
 
 /*------------------ Inclusion helpers ------------------*/
-bool _zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend)
+bool ___zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend)
 {
     while (lstart < lend && rstart < rend)
     {
@@ -202,8 +202,8 @@ bool _zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char co
             {
                 return true;
             }
-            return _zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   _zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return ___zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
+                   ___zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
         }
         else if (l != r)
         {
@@ -214,7 +214,7 @@ bool _zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char co
     return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$');
 }
 
-bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
+bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
 {
     size_t lclen;
     bool streq;
@@ -248,8 +248,8 @@ bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *
         switch (lwildness)
         {
             case 2:
-                return !lns || _zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                       (rns && _zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                return !lns || __zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                       (rns && __zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
 
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
@@ -257,7 +257,7 @@ bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *
             default:
                 lclen = lcend - lstart;
                 streq = (lclen == (size_t) (rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
-                if (!streq && !_zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend))
+                if (!streq && !___zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend))
                 {
                     return false;
                 }
@@ -277,7 +277,7 @@ bool _zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *
     }
 }
 
-bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
+bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
 {
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
@@ -307,8 +307,8 @@ bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rs
         switch (lwildness)
         {
             case 2:
-                return !lns || _zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                       (rns && _zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                return !lns || __zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                       (rns && __zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
 
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
@@ -334,7 +334,7 @@ bool _zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rs
     }
 }
 
-bool _zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen)
+bool __zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen)
 {
     bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq)
@@ -376,15 +376,15 @@ bool _zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, 
             return false;
 
         case 1:
-            return _zp_ke_includes_nodsl(lstart, llen, rstart, rlen);
+            return __zp_ke_includes_nodsl(lstart, llen, rstart, rlen);
 
         default:
-            return _zp_ke_includes_stardsl(lstart, llen, rstart, rlen);
+            return __zp_ke_includes_stardsl(lstart, llen, rstart, rlen);
     }
 }
 
 /*------------------ Intersection helpers ------------------*/
-bool _zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend)
+bool ___zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend)
 {
     while (lstart < lend && rstart < rend)
     {
@@ -397,8 +397,8 @@ bool _zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char 
                 return true;
             }
 
-            return _zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   _zp_ke_intersects_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return ___zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
+                   ___zp_ke_intersects_stardsl_chunk(lstart - 2, lend, rstart, rend);
         }
         else if (r == '$')
         {
@@ -407,8 +407,8 @@ bool _zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char 
                 return true;
             }
 
-            return _zp_ke_intersects_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
-                   _zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
+            return ___zp_ke_intersects_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
+                   ___zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
         }
         else if (l != r)
         {
@@ -420,7 +420,7 @@ bool _zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char 
            (rend - rstart == 2 && rstart[0] == '$');
 }
 
-bool _zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
+bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
 {
     size_t lclen;
     bool streq;
@@ -449,13 +449,13 @@ bool _zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const
             case 3:
                 if (lwildness == 2)
                 {
-                    return !lns || _zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns || __zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                           (rns && __zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 }
                 else
                 {
-                    return !rns || _zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns || __zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
+                           (lns && __zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
                 }
                 break;
 
@@ -465,7 +465,7 @@ bool _zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const
             default:
                 lclen = lcend - lstart;
                 streq = lclen == (size_t) (rcend - rstart) && strncmp(lstart, rstart, lclen) == 0;
-                if (!(streq || _zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend)))
+                if (!(streq || ___zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend)))
                 {
                     return false;
                 }
@@ -484,7 +484,7 @@ bool _zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const
     }
 }
 
-bool _zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
+bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen)
 {
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
@@ -513,13 +513,13 @@ bool _zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *
             case 3:
                 if (lwildness == 2)
                 {
-                    return !lns || _zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && _zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns || __zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
+                           (rns && __zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 }
                 else
                 {
-                    return !rns || _zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && _zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns || __zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
+                           (lns && __zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
                 }
                 break;
 
@@ -547,7 +547,7 @@ bool _zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *
     }
 }
 
-bool _zp_ke_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen)
+bool __zp_ke_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen)
 {
     bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq)
@@ -590,10 +590,10 @@ bool _zp_ke_intersects(const char *lstart, const size_t llen, const char *rstart
             return false;
 
         case 1:
-            return _zp_ke_intersects_nodsl(lstart, llen, rstart, rlen);
+            return __zp_ke_intersects_nodsl(lstart, llen, rstart, rlen);
 
         default:
-            return _zp_ke_intersects_stardsl(lstart, llen, rstart, rlen);
+            return __zp_ke_intersects_stardsl(lstart, llen, rstart, rlen);
     }
 }
 
@@ -738,10 +738,10 @@ z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len)
 
 bool _z_keyexpr_includes(const char *l, const char *r)
 {
-    return _zp_ke_includes(l, strlen(l), r, strlen(r));
+    return __zp_ke_includes(l, strlen(l), r, strlen(r));
 }
 
 bool _z_keyexpr_intersect(const char *l, const char *r)
 {
-    return _zp_ke_intersects(l, strlen(l), r, strlen(r));
+    return __zp_ke_intersects(l, strlen(l), r, strlen(r));
 }

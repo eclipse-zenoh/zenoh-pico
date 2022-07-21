@@ -19,7 +19,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 
-z_keyexpr_canon_status_t _z_keyexpr_is_canon_ke(const char *start, size_t len);
+z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
 bool _z_keyexpr_includes(const char *l, const char *r);
 bool _z_keyexpr_intersect(const char *l, const char *r);
