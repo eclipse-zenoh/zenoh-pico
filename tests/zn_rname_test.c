@@ -93,39 +93,135 @@ int main(void)
     assert(!_z_keyexpr_intersect("a/**/b$*", "a/ebc"));
     assert(!_z_keyexpr_intersect("a/**/$*b", "a/cbc"));
 
-    // assert(_z_keyexpr_includes("a", "a"));
-    // assert(_z_keyexpr_includes("a/b", "a/b"));
-    // assert(_z_keyexpr_includes("*", "a"));
-    // assert(!_z_keyexpr_includes("a", "*") == false);
-    // assert(_z_keyexpr_includes("*", "aaaaa"));
-    // assert(_z_keyexpr_includes("**", "a"));
-    // assert(!_z_keyexpr_includes("a", "**") == false);
-    // assert(_z_keyexpr_includes("**", "a"));
-    // assert(_z_keyexpr_includes("**", "a/a/a/a"));
-    // assert(_z_keyexpr_includes("**", "*/**"));
-    // assert(_z_keyexpr_includes("*/**", "*/**"));
-    // assert(!_z_keyexpr_includes("*/**", "**") == false);
-    // assert(!_z_keyexpr_includes("a/a/a/a", "**") == false);
-    // assert(_z_keyexpr_includes("a/*", "a/b"));
-    // assert(!_z_keyexpr_includes("a/*/b", "a/b") == false);
-    // assert(_z_keyexpr_includes("a/**/b", "a/b"));
-    // assert(_z_keyexpr_includes("a/b$*", "a/b"));
-    // assert(!_z_keyexpr_includes("a/b", "a/b$*") == false);
-    // assert(_z_keyexpr_includes("a/$*b$*", "a/b"));
-    // assert(_z_keyexpr_includes("a/$*b", "a/b"));
-    // assert(_z_keyexpr_includes("a/b$*", "a/bc"));
-    // assert(_z_keyexpr_includes("a/$*b$*", "a/ebc"));
-    // assert(_z_keyexpr_includes("a/$*b", "a/cb"));
-    // assert(!_z_keyexpr_includes("a/b$*", "a/ebc") == false);
-    // assert(!_z_keyexpr_includes("a/$*b", "a/cbc") == false);
-    // assert(_z_keyexpr_includes("a/**/b$*", "a/b"));
-    // assert(_z_keyexpr_includes("a/**/$*b$*", "a/b"));
-    // assert(_z_keyexpr_includes("a/**/$*b", "a/b"));
-    // assert(_z_keyexpr_includes("a/**/b$*", "a/bc"));
-    // assert(_z_keyexpr_includes("a/**/$*b$*", "a/ebc"));
-    // assert(_z_keyexpr_includes("a/**/$*b", "a/cb"));
-    // assert(!_z_keyexpr_includes("a/**/b$*", "a/ebc") == false);
-    // assert(!_z_keyexpr_includes("a/**/$*b", "a/cbc") == false);
+    assert(_z_keyexpr_includes("a", "a"));
+    assert(_z_keyexpr_includes("a/b", "a/b"));
+    assert(_z_keyexpr_includes("*", "a"));
+    assert(!_z_keyexpr_includes("a", "*"));
+    assert(_z_keyexpr_includes("*", "aaaaa"));
+    assert(_z_keyexpr_includes("**", "a"));
+    assert(!_z_keyexpr_includes("a", "**"));
+    assert(_z_keyexpr_includes("**", "a"));
+    assert(_z_keyexpr_includes("**", "a/a/a/a"));
+    assert(_z_keyexpr_includes("**", "*/**"));
+    assert(_z_keyexpr_includes("*/**", "*/**"));
+    assert(!_z_keyexpr_includes("*/**", "**"));
+    assert(!_z_keyexpr_includes("a/a/a/a", "**"));
+    assert(_z_keyexpr_includes("a/*", "a/b"));
+    assert(!_z_keyexpr_includes("a/*/b", "a/b"));
+    assert(_z_keyexpr_includes("a/**/b", "a/b"));
+    assert(_z_keyexpr_includes("a/b$*", "a/b"));
+    assert(!_z_keyexpr_includes("a/b", "a/b$*"));
+    assert(_z_keyexpr_includes("a/$*b$*", "a/b"));
+    assert(_z_keyexpr_includes("a/$*b", "a/b"));
+    assert(_z_keyexpr_includes("a/b$*", "a/bc"));
+    assert(_z_keyexpr_includes("a/$*b$*", "a/ebc"));
+    assert(_z_keyexpr_includes("a/$*b", "a/cb"));
+    assert(!_z_keyexpr_includes("a/b$*", "a/ebc"));
+    assert(!_z_keyexpr_includes("a/$*b", "a/cbc"));
+    assert(_z_keyexpr_includes("a/**/b$*", "a/b"));
+    assert(_z_keyexpr_includes("a/**/$*b$*", "a/b"));
+    assert(_z_keyexpr_includes("a/**/$*b", "a/b"));
+    assert(_z_keyexpr_includes("a/**/b$*", "a/bc"));
+    assert(_z_keyexpr_includes("a/**/$*b$*", "a/ebc"));
+    assert(_z_keyexpr_includes("a/**/$*b", "a/cb"));
+    assert(!_z_keyexpr_includes("a/**/b$*", "a/ebc"));
+    assert(!_z_keyexpr_includes("a/**/$*b", "a/cbc"));
+
+#define N 26
+    const char *input[N] = { "greetings/hello/there",
+                             "greetings/good/*/morning",
+                             "greetings/*",
+                             "greetings/*/**",
+                             "greetings/$*",
+                             "greetings/**/*/morning",
+                             "greetings/**/*",
+                             "greetings/**/**",
+                             "greetings/**/*/**",
+                             "$*",
+                             "$*$*",
+                             "$*$*$*",
+                             "$*hi$*$*",
+                             "$*$*hi$*",
+                             "hi$*$*$*",
+                             "$*$*$*hi",
+                             "$*$*$*hi$*$*$*",
+                             "hi*",
+                             "/hi",
+                             "hi/",
+                             "",
+                             "greetings/**/*/",
+                             "greetings/**/*/e?",
+                             "greetings/**/*/e#",
+                             "greetings/**/*/e$",
+                             "greetings/**/*/$e"};
+    z_keyexpr_canon_status_t expected[N] = { Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_SUCCESS,
+                                             Z_KEYEXPR_CANON_STARS_IN_CHUNK,
+                                             Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                             Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                             Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                             Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                             Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
+                                             Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
+                                             Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR,
+                                             Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR };
+    const char *canonized[N] = { "greetings/hello/there",
+                                 "greetings/good/*/morning",
+                                 "greetings/*",
+                                 "greetings/*/**",
+                                 "greetings/*",
+                                 "greetings/*/**/morning",
+                                 "greetings/*/**",
+                                 "greetings/**",
+                                 "greetings/*/**",
+                                 "*",
+                                 "*",
+                                 "*",
+                                 "$*hi$*",
+                                 "$*hi$*",
+                                 "hi$*",
+                                 "$*hi",
+                                 "$*hi$*",
+                                 "hi*",
+                                 "/hi",
+                                 "hi/",
+                                 "",
+                                 "greetings/**/*/",
+                                 "greetings/**/*/e?",
+                                 "greetings/**/*/e#",
+                                 "greetings/**/*/e$",
+                                 "greetings/**/*/$e"};
+
+    for (int i = 0; i < N; i++)
+    {
+        const char *ke = input[i];
+        char canon[128];
+        strcpy(canon, ke);
+        size_t canon_len = strlen(canon);
+        z_keyexpr_canon_status_t status = _z_keyexpr_canonize(canon, &canon_len);
+        printf("%d : %d\n", status, expected[i]);
+        assert(status == expected[i]);
+        if (status == Z_KEYEXPR_CANON_SUCCESS)
+        {
+            printf("%s : %s\n", canon, canonized[i]);
+            assert(strcmp(canonized[i], canon) == 0);
+        }
+    }
 
     return 0;
 }
