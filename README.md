@@ -1,20 +1,23 @@
-![zenoh banner](./zenoh-dragon.png)
+<img src="https://raw.githubusercontent.com/eclipse-zenoh/zenoh/master/zenoh-dragon.png" height="150">
 
 ![Build](https://github.com/eclipse-zenoh/zenoh-pico/workflows/build/badge.svg)
 ![Crossbuild](https://github.com/eclipse-zenoh/zenoh-pico/workflows/crossbuild/badge.svg)
 ![integration](https://github.com/eclipse-zenoh/zenoh-pico/workflows/integration/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/zenoh-c/badge/?version=latest)](https://zenoh-c.readthedocs.io/en/latest/?badge=latest)
-[![Gitter](https://badges.gitter.im/atolab/zenoh.svg)](https://gitter.im/atolab/zenoh?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Discussion](https://img.shields.io/badge/discussion-on%20github-blue)](https://github.com/eclipse-zenoh/roadmap/discussions)
+[![Discord](https://img.shields.io/badge/chat-on%20discord-blue)](https://discord.gg/vSDSpqnbkm)
 [![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Eclipse zenoh C Client API
+# Eclipse zenoh native C library for constrained devices
 
 [Eclipse zenoh](http://zenoh.io) is an extremely efficient and fault-tolerant [Named Data Networking](http://named-data.net) (NDN) protocol
 that is able to scale down to extremely constrainded devices and networks.
 
 zenoh-pico targets constrained devices and offers a C API for pure clients, i.e., it does not support peer-to-peer communication.
 zenoh-pico can be easily tested against a zenoh router running in a Docker container (see https://github.com/eclipse-zenoh/zenoh#how-to-test-it).
+
+Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
 -------------------------------
 ## How to install it

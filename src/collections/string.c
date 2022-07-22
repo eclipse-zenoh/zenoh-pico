@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <string.h>
 #include "zenoh-pico/collections/string.h"
@@ -56,7 +56,7 @@ void _z_string_reset(_z_string_t *str)
 
 void _z_string_clear(_z_string_t *str)
 {
-    free(str->val);
+    z_free(str->val);
     _z_string_reset(str);
 }
 
@@ -65,7 +65,7 @@ void _z_string_free(_z_string_t **str)
     _z_string_t *ptr = (_z_string_t *)*str;
     _z_string_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *str = NULL;
 }
 
@@ -73,7 +73,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs)
 {
     _z_string_t s;
     s.len = 2 * bs->len;
-    char *s_val = (char *)malloc(s.len * sizeof(char) + 1);
+    char *s_val = (char *)z_malloc(s.len * sizeof(char) + 1);
 
     char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++)
@@ -95,7 +95,7 @@ size_t _z_str_size(const char *src)
 
 void _z_str_clear(char *src)
 {
-    free(src);
+    z_free(src);
     src = NULL;
 }
 
@@ -113,7 +113,7 @@ void _z_str_copy(char *dst, const char *src)
 
 char *_z_str_clone(const char *src)
 {
-    char *dst = (char *)malloc(_z_str_size(src));
+    char *dst = (char *)z_malloc(_z_str_size(src));
     _z_str_copy(dst, src);
     return dst;
 }
@@ -126,8 +126,8 @@ int _z_str_eq(const char *left, const char *right)
 /*-------- str_array --------*/
 void _z_str_array_init(_z_str_array_t *sa, size_t len)
 {
-    char ***val = (char ***)&sa->_val;
-    *val = (char **)malloc(len * sizeof(char *));
+    char **val = (char **)&sa->_val;
+    *val = (char *)z_malloc(len * sizeof(char *));
     sa->_len = len;
 }
 
@@ -156,15 +156,15 @@ uint8_t _z_str_array_is_empty(const _z_str_array_t *sa)
 void _z_str_array_clear(_z_str_array_t *sa)
 {
     for (size_t i = 0; i < sa->_len; i++)
-        free(sa->_val[i]);
-    free(sa->_val);
+        z_free(sa->_val[i]);
+    z_free(sa->_val);
 }
 
 void _z_str_array_free(_z_str_array_t **sa)
 {
     _z_str_array_t *ptr = *sa;
     _z_str_array_clear(ptr);
-    free(ptr);
+    z_free(ptr);
     *sa = NULL;
 }
 

@@ -1,17 +1,18 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
+#include <stdlib.h>
 #include "zenoh-pico/transport/manager.h"
 
 _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_pid)
@@ -92,13 +93,11 @@ ERR_1:
 
 _z_transport_manager_t *_z_transport_manager_init()
 {
-    _z_transport_manager_t *ztm = (_z_transport_manager_t *)malloc(sizeof(_z_transport_manager_t));
+    _z_transport_manager_t *ztm = (_z_transport_manager_t *)z_malloc(sizeof(_z_transport_manager_t));
 
     // Randomly generate a peer ID
-    srand(time(NULL));
     ztm->_local_pid = _z_bytes_make(Z_PID_LENGTH);
-    for (unsigned int i = 0; i < ztm->_local_pid.len; i++)
-        ((uint8_t *)ztm->_local_pid.start)[i] = rand() % 255;
+    z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
 
     ztm->_link_manager = _z_link_manager_init();
 
@@ -115,7 +114,7 @@ void _z_transport_manager_free(_z_transport_manager_t **ztm)
     // Clean up managers
     _z_link_manager_free(&ptr->_link_manager);
 
-    free(ptr);
+    z_free(ptr);
     *ztm = NULL;
 }
 

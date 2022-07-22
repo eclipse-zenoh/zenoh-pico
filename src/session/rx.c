@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -49,7 +49,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 _Z_INFO("Received declare-resource message\n");
 
                 // Register remote resource declaration
-                _z_resource_t *r = (_z_resource_t *)malloc(sizeof(_z_resource_t));
+                _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
                 r->_id = decl._body._res._id;
                 r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
@@ -57,7 +57,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 if (res != 0)
                 {
                     _z_resource_clear(r);
-                    free(r);
+                    z_free(r);
                 }
 
                 break;
@@ -78,7 +78,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 if (subs != NULL)
                     break;
 
-                _z_subscription_t *rs = (_z_subscription_t *)malloc(sizeof(_z_subscription_t));
+                _z_subscription_t *rs = (_z_subscription_t *)z_malloc(sizeof(_z_subscription_t));
                 rs->_id = _z_get_entity_id(zn);
                 rs->_key = key;
                 rs->_info = decl._body._sub._subinfo;

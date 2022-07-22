@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_SYSTEM_LINK_UDP_H
 #define ZENOH_PICO_SYSTEM_LINK_UDP_H
@@ -22,30 +22,30 @@
 
 typedef struct
 {
-    int _sock;
-    int _msock;
+    void *_sock;
+    void *_msock;
     void *_raddr;
     void *_laddr;
 } _z_udp_socket_t;
 
 void *_z_create_endpoint_udp(const char *s_addr, const char *port);
-void _z_free_endpoint_udp(void *arg);
+void _z_free_endpoint_udp(void *addr_arg);
 
 // Unicast
-int _z_open_udp_unicast(void *arg, const clock_t tout);
-int _z_listen_udp_unicast(void *arg, const clock_t tout);
-void _z_close_udp_unicast(int sock);
-size_t _z_read_exact_udp_unicast(int sock, uint8_t *ptr, size_t len);
-size_t _z_read_udp_unicast(int sock, uint8_t *ptr, size_t len);
-size_t _z_send_udp_unicast(int sock, const uint8_t *ptr, size_t len, void *arg);
+void *_z_open_udp_unicast(void *raddr_arg, unsigned long tout);
+void *_z_listen_udp_unicast(void *raddr_arg, unsigned long tout);
+void _z_close_udp_unicast(void *sock_arg);
+size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg);
 
 // Multicast
-int _z_open_udp_multicast(void *arg_1, void **arg_2, const clock_t tout, const char *iface);
-int _z_listen_udp_multicast(void *arg, const clock_t tout, const char *iface);
-void _z_close_udp_multicast(int sock_recv, int sock_send, void *arg);
-size_t _z_read_exact_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, _z_bytes_t *addr);
-size_t _z_read_udp_multicast(int sock, uint8_t *ptr, size_t len, void *arg, _z_bytes_t *addr);
-size_t _z_send_udp_multicast(int sock, const uint8_t *ptr, size_t len, void *arg);
+void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, unsigned long tout, const char *iface);
+void *_z_listen_udp_multicast(void *raddr_arg, unsigned long tout, const char *iface);
+void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_arg);
+size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr);
+size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr);
+size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg);
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_UDP_H */

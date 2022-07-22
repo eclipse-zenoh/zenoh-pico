@@ -1,16 +1,15 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include "zenoh-pico/net/memory.h"
 
@@ -43,7 +42,7 @@ void _z_sample_free(_z_sample_t **sample)
     _z_sample_t *ptr = (_z_sample_t *)*sample;
     _z_sample_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *sample = NULL;
 }
 
@@ -60,7 +59,7 @@ void _z_hello_free(_z_hello_t **hello)
     _z_hello_t *ptr = (_z_hello_t *)*hello;
     _z_hello_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *hello = NULL;
 }
 
@@ -75,6 +74,6 @@ void _z_reply_data_free(_z_reply_data_t **reply_data)
     _z_reply_data_t *ptr = (_z_reply_data_t *)*reply_data;
     _z_reply_data_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *reply_data = NULL;
 }

@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <string.h>
 #include "zenoh-pico/utils/config.h"
@@ -87,7 +87,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
             p_value_end = end;
 
         size_t p_value_len = p_value_end - p_value_start;
-        char *p_value = (char *)malloc((p_value_len + 1) * sizeof(char));
+        char *p_value = (char *)z_malloc((p_value_len + 1) * sizeof(char));
         strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
@@ -157,7 +157,7 @@ char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_i
     // Calculate the string length to allocate
     size_t len = _z_str_intmap_strlen(s, argc, argv);
     // Build the string
-    char *dst = (char *)malloc(len + 1);
+    char *dst = (char *)z_malloc(len + 1);
     _z_str_intmap_onto_str(dst, s, argc, argv);
     return dst;
 }

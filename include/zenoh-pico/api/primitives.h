@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_API_PRIMITIVES_H
 #define ZENOH_PICO_API_PRIMITIVES_H
@@ -156,11 +156,15 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
 uint8_t z_reply_is_ok(const z_owned_reply_t *reply);
 z_sample_t z_reply_ok(z_owned_reply_t *reply);
 
-/************* Tasks **************/
+/************* Multi Thread Taks helpers **************/
 int8_t zp_start_read_task(z_session_t *zs);
 int8_t zp_stop_read_task(z_session_t *zs);
 
 int8_t zp_start_lease_task(z_session_t *zs);
 int8_t zp_stop_lease_task(z_session_t *zs);
+
+/************* Single Thread helpers **************/
+int8_t zp_read(z_session_t *zs);
+int8_t zp_send_keep_alive(z_session_t *zs);
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

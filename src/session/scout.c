@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/link/manager.h"
@@ -20,10 +20,10 @@
     #error "Scouting UDP requires UDP unicast links to be enabled (Z_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-_z_hello_array_t _z_scout_loop(
+_z_hello_array_t __z_scout_loop(
     const _z_wbuf_t *wbf,
     const char *locator,
-    clock_t period,
+    unsigned long period,
     int exit_on_first)
 {
     // Define an empty array
@@ -59,8 +59,8 @@ _z_hello_array_t _z_scout_loop(
     // The receiving buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
-    _z_clock_t start = _z_clock_now();
-    while (_z_clock_elapsed_ms(&start) < period)
+    z_time_t start = z_time_now();
+    while (z_time_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
         _z_zbuf_reset(&zbf);
@@ -87,14 +87,14 @@ _z_hello_array_t _z_scout_loop(
             // Allocate or expand the vector
             if (ls._val)
             {
-                _z_hello_t *val = (_z_hello_t *)malloc((ls._len + 1) * sizeof(_z_hello_t));
+                _z_hello_t *val = (_z_hello_t *)z_malloc((ls._len + 1) * sizeof(_z_hello_t));
                 memcpy(val, ls._val, ls._len);
-                free(ls._val);
+                z_free(ls._val);
                 ls._val = val;
             }
             else
             {
-                ls._val = (_z_hello_t *)malloc(sizeof(_z_hello_t));
+                ls._val = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
             }
             ls._len++;
 
@@ -165,7 +165,7 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
 
     // Scout on multicast
     const char *locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
-    locs = _z_scout_loop(&wbf, locator, scout_period, exit_on_first);
+    locs = __z_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
     _z_wbuf_clear(&wbf);
 

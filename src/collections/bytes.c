@@ -1,25 +1,25 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
-#include <stdlib.h>
 #include <string.h>
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/collections/bytes.h"
 
 /*-------- bytes --------*/
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity)
 {
-    bs->start = (uint8_t *)malloc(capacity * sizeof(uint8_t));
+    bs->start = (uint8_t *)z_malloc(capacity * sizeof(uint8_t));
     bs->len = capacity;
     bs->_is_alloc = 1;
 }
@@ -52,7 +52,7 @@ void _z_bytes_clear(_z_bytes_t *bs)
     if (!bs->_is_alloc)
         return;
 
-    free((uint8_t *)bs->start);
+    z_free((uint8_t *)bs->start);
     _z_bytes_reset(bs);
 }
 
@@ -61,7 +61,7 @@ void _z_bytes_free(_z_bytes_t **bs)
     _z_bytes_t *ptr = (_z_bytes_t *)*bs;
     _z_bytes_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *bs = NULL;
 }
 

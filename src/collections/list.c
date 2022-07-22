@@ -1,23 +1,23 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/collections/list.h"
 
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x)
 {
-    _z_list_t *xs = (_z_list_t *)malloc(sizeof(_z_list_t));
+    _z_list_t *xs = (_z_list_t *)z_malloc(sizeof(_z_list_t));
     xs->_val = x;
     xs->_tail = NULL;
     return xs;
@@ -62,7 +62,7 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f)
     _z_list_t *head = xs;
     xs = head->_tail;
     f_f(&head->_val);
-    free(head);
+    z_free(head);
 
     return xs;
 }
@@ -111,7 +111,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             current = this->_tail;
 
             f_f(&this->_val);
-            free(this);
+            z_free(this);
             return xs;
         }
         else

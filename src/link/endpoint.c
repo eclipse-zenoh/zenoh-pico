@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <string.h>
 #include "zenoh-pico/config.h"
@@ -45,7 +45,7 @@ void _z_locator_free(_z_locator_t **lc)
     _z_locator_t *ptr = *lc;
     _z_locator_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *lc = NULL;
 }
 
@@ -89,7 +89,7 @@ char *_z_locator_protocol_from_str(const char *s)
         goto ERR;
 
     size_t p_len = p_end - p_start;
-    char *protocol = (char *)malloc((p_len + 1) * sizeof(char));
+    char *protocol = (char *)z_malloc((p_len + 1) * sizeof(char));
     strncpy(protocol, p_start, p_len);
     protocol[p_len] = '\0';
 
@@ -116,7 +116,7 @@ char *_z_locator_address_from_str(const char *s)
         goto ERR;
 
     size_t p_len = p_end - p_start;
-    char *address = (char *)malloc((p_len + 1) * sizeof(char));
+    char *address = (char *)z_malloc((p_len + 1) * sizeof(char));
     strncpy(address, p_start, p_len);
     address[p_len] = '\0';
 
@@ -253,7 +253,7 @@ void _z_locator_onto_str(char *dst, const _z_locator_t *l)
 char *_z_locator_to_str(const _z_locator_t *l)
 {
     size_t len = _z_locator_strlen(l);
-    char *dst = (char *)malloc(len + 1);
+    char *dst = (char *)z_malloc(len + 1);
     _z_locator_onto_str(dst, l);
     return dst;
 }
@@ -276,7 +276,7 @@ void _z_endpoint_free(_z_endpoint_t **ep)
     _z_endpoint_t *ptr = *ep;
     _z_locator_clear(&ptr->_locator);
     _z_str_intmap_clear(&ptr->_config);
-    free(ptr);
+    z_free(ptr);
     *ep = NULL;
 }
 
@@ -404,8 +404,6 @@ ERR:
 
 char *_z_endpoint_to_str(const _z_endpoint_t *endpoint)
 {
-    char *res;
-
     char *locator = _z_locator_to_str(&endpoint->_locator);
     if (locator == NULL)
         goto ERR;
@@ -419,10 +417,13 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint)
         len += strlen(config); // Config content
     }
 
-    char *s = (char *)malloc(len + 1);
-
+    char *s = (char *)z_malloc(len + 1);
+    s[0] = '\0';
     strcat(s, locator);
+    strcat(s, config);
+
+    return s;
+
 ERR:
-    res = NULL;
-    return res;
+    return NULL;
 }

@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *     ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/collections/intmap.h"
 
@@ -76,7 +76,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     if (map->_vals == NULL)
     {
         // Lazily allocate and initialize to NULL all the pointers
-        map->_vals = (_z_list_t **)malloc(map->_capacity * sizeof(_z_list_t *));
+        map->_vals = (_z_list_t **)z_malloc(map->_capacity * sizeof(_z_list_t *));
         // memset(map->vals, 0, map->capacity * sizeof(_z_list_t *));
 
         for (size_t idx = 0; idx < map->_capacity; idx++)
@@ -87,7 +87,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     _z_int_void_map_remove(map, k, f_f);
 
     // Insert the element
-    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)malloc(sizeof(_z_int_void_map_entry_t));
+    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)z_malloc(sizeof(_z_int_void_map_entry_t));
     entry->_key = k;
     entry->_val = v;
 
@@ -126,7 +126,7 @@ void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f)
     for (size_t idx = 0; idx < map->_capacity; idx++)
         _z_list_free(&map->_vals[idx], f_f);
 
-    free(map->_vals);
+    z_free(map->_vals);
     map->_vals = NULL;
 }
 
@@ -135,6 +135,6 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f)
     _z_int_void_map_t *ptr = *map;
     _z_int_void_map_clear(ptr, f);
 
-    free(ptr);
+    z_free(ptr);
     *map = NULL;
 }

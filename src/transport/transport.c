@@ -1,17 +1,18 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
+#include <stdlib.h>
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
@@ -56,7 +57,7 @@ int _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only)
 
 _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_establish_param_t param)
 {
-    _z_transport_t *zt = (_z_transport_t *)malloc(sizeof(_z_transport_t));
+    _z_transport_t *zt = (_z_transport_t *)z_malloc(sizeof(_z_transport_t));
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
 
     // Initialize the mutexes
@@ -113,7 +114,7 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
 
 _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multicast_establish_param_t param)
 {
-    _z_transport_t *zt = (_z_transport_t *)malloc(sizeof(_z_transport_t));
+    _z_transport_t *zt = (_z_transport_t *)z_malloc(sizeof(_z_transport_t));
     zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
 
     // Initialize the mutexes
@@ -201,7 +202,8 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
             }
 
             // The initial SN at TX side
-            param._initial_sn_tx = (_z_zint_t)rand() % param._sn_resolution;
+            z_random_fill(&param._initial_sn_tx, sizeof(param._initial_sn_tx));
+            param._initial_sn_tx = param._initial_sn_tx % param._sn_resolution;
 
             // Initialize the Local and Remote Peer IDs
             _z_bytes_copy(&param._remote_pid, &iam._body._init._pid);
@@ -416,6 +418,6 @@ void _z_transport_free(_z_transport_t **zt)
     else if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         _z_transport_multicast_clear(&ptr->_transport._multicast);
 
-    free(ptr);
+    z_free(ptr);
     *zt = NULL;
 }

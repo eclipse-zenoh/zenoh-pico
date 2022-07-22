@@ -1,16 +1,15 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #ifndef ZENOH_PICO_API_TYPES_H
 #define ZENOH_PICO_API_TYPES_H
@@ -171,18 +170,20 @@ _OWNED_TYPE(z_str_array_t, str_array)
 _OWNED_TYPE(z_hello_array_t, hello_array)
 _OWNED_TYPE(z_reply_data_array_t, reply_data_array)
 
+typedef void (*_z_dropper_handler_t)(void *arg);
+
 typedef struct
 {
   void *context;
   _z_data_handler_t call;
-  void (*drop)(void*);
+  _z_dropper_handler_t drop;
 } z_owned_closure_sample_t;
 
 typedef struct
 {
   void *context;
   _z_questionable_handler_t call;
-  void (*drop)(void*);
+  _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
@@ -190,14 +191,15 @@ typedef struct
 {
   void *context;
   z_owned_reply_handler_t call;
-  void (*drop)(void*);
+  _z_dropper_handler_t drop;
 } z_owned_closure_reply_t;
 
+typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 typedef struct
 {
   void *context;
-  void (*call)(const z_id_t*, void*);
-  void (*drop)(void*);
+  z_id_handler_t call;
+  _z_dropper_handler_t drop;
 } z_owned_closure_zid_t;
 
 #endif /* ZENOH_PICO_API_TYPES_H */

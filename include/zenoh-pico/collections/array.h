@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_COLLECTIONS_ARRAY_H
 #define ZENOH_PICO_COLLECTIONS_ARRAY_H
@@ -28,9 +28,7 @@
     {                                                                              \
         name##_array_t a;                                                          \
         a._len = capacity;                                                         \
-        a._val = NULL;                                                             \
-        if (capacity > 0)                                                          \
-            a._val = (type *)malloc(capacity * sizeof(type));                      \
+        a._val = (type *)z_malloc(capacity * sizeof(type));                        \
         return a;                                                                  \
     }                                                                              \
     static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) \
@@ -56,7 +54,7 @@
     {                                                                              \
         for (size_t i = 0; i < a->_len; i++)                                       \
             name##_elem_clear(&a->_val[i]);                                        \
-        free(a->_val);                                                             \
+        z_free(a->_val);                                                           \
         a->_len = 0;                                                               \
         a->_val = NULL;                                                            \
     }                                                                              \
@@ -64,7 +62,7 @@
     {                                                                              \
         name##_array_t *ptr = *a;                                                  \
         name##_array_clear(ptr);                                                   \
-        free(ptr);                                                                 \
+        z_free(ptr);                                                               \
         *a = NULL;                                                                 \
     }
 

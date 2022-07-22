@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/resource.h"
@@ -28,7 +28,7 @@ void _z_reply_free(_z_reply_t **reply)
     _z_reply_t *ptr = *reply;
     _z_reply_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *reply = NULL;
 }
 
@@ -52,7 +52,7 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry)
         pen_qry->_dropper(pen_qry->_drop_arg);
 
     if (pen_qry->_call_is_api == 1)
-        free(pen_qry->_call_arg);
+        z_free(pen_qry->_call_arg);
 
     _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_predicate);
@@ -140,7 +140,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
         goto ERR_1;
 
     // Build the reply
-    _z_reply_t *reply = (_z_reply_t *)malloc(sizeof(_z_reply_t));
+    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
     reply->_tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
     reply->data.replier_kind = reply_context->_replier_kind;
@@ -175,7 +175,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
 
-        pen_rep = (_z_pending_reply_t *)malloc(sizeof(_z_pending_reply_t));
+        pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
         pen_rep->_reply = reply;
         pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
 

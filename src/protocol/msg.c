@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
@@ -45,7 +45,7 @@ void _z_keyexpr_free(_z_keyexpr_t **rk)
     _z_keyexpr_t *ptr = (_z_keyexpr_t *)*rk;
     _z_keyexpr_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *rk = NULL;
 }
 
@@ -67,7 +67,7 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a)
 /*------------------ ReplyContext Decorator ------------------*/
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind, int is_final)
 {
-    _z_reply_context_t *rctx = (_z_reply_context_t *)malloc(sizeof(_z_reply_context_t));
+    _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
 
     rctx->_qid = qid;
     rctx->_replier_id = replier_id;
@@ -194,7 +194,7 @@ void _z_subinfo_free(_z_subinfo_t **si)
     _z_subinfo_t *ptr = (_z_subinfo_t *)*si;
     _z_subinfo_clear(ptr);
 
-    free(ptr);
+    z_free(ptr);
     *si = NULL;
 }
 
@@ -468,12 +468,12 @@ void _z_msg_clear(_z_zenoh_message_t *msg)
     if (msg->_attachment != NULL)
     {
         _z_t_msg_clear_attachment(msg->_attachment);
-        free(msg->_attachment);
+        z_free(msg->_attachment);
     }
     if (msg->_reply_context != NULL)
     {
         _z_msg_clear_reply_context(msg->_reply_context);
-        free(msg->_reply_context);
+        z_free(msg->_reply_context);
     }
 
     uint8_t mid = _Z_MID(msg->_header);
@@ -962,7 +962,7 @@ void _z_t_msg_clear(_z_transport_message_t *msg)
     if (msg->_attachment)
     {
         _z_t_msg_clear_attachment(msg->_attachment);
-        free(msg->_attachment);
+        z_free(msg->_attachment);
     }
 
     uint8_t mid = _Z_MID(msg->_header);

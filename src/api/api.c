@@ -1,16 +1,15 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include "zenoh-pico/api/primitives.h"
 
@@ -35,7 +34,7 @@ int8_t z_init_logger(void)
 z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len)
 {
     z_owned_bytes_t ret;
-    ret._value = (z_bytes_t*)malloc(sizeof(z_bytes_t));
+    ret._value = (z_bytes_t*)z_malloc(sizeof(z_bytes_t));
     ret._value->start = start;
     ret._value->len = len;
     ret._value->_is_alloc = 0;
@@ -46,7 +45,7 @@ z_owned_bytes_t z_bytes_new(const uint8_t *start, z_zint_t len)
 z_owned_string_t z_string_new(const char *s)
 {
     z_owned_string_t ret;
-    ret._value = (z_string_t*)malloc(sizeof(z_string_t));
+    ret._value = (z_string_t*)z_malloc(sizeof(z_string_t));
     ret._value->val = (char *)s; // FIXME
     ret._value->len = strlen(s);
 
@@ -254,7 +253,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
     ownedtype z_##name##_clone(ownedtype *val)                                        \
     {                                                                                 \
         ownedtype ret;                                                                \
-        ret._value = (type*)malloc(sizeof(type));                                     \
+        ret._value = (type*)z_malloc(sizeof(type));                                     \
         f_copy(ret._value, val->_value);                                              \
         return ret;                                                                   \
     }                                                                                 \
@@ -279,7 +278,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
     ownedtype z_##name##_clone(ownedtype *val)                                          \
     {                                                                                   \
         ownedtype ret;                                                                  \
-        ret._value = (type*)malloc(sizeof(type));                                       \
+        ret._value = (type*)z_malloc(sizeof(type));                                       \
         f_copy(ret._value, val->_value);                                                \
         return ret;                                                                     \
     }                                                                                   \
@@ -351,7 +350,7 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid)
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
 {
     z_owned_hello_array_t hellos;
-    hellos._value = (z_hello_array_t*)malloc(sizeof(z_hello_array_t));
+    hellos._value = (z_hello_array_t*)z_malloc(sizeof(z_hello_array_t));
     *hellos._value = _z_scout(what, config->_value, timeout);
 
     z_config_drop(config);
@@ -506,7 +505,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
         strategy = z_query_consolidation_default().manual;
     }
 
-    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)malloc(sizeof(__z_reply_handler_wrapper_t));
+    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)z_malloc(sizeof(__z_reply_handler_wrapper_t));
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
@@ -516,7 +515,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
 {
     z_owned_keyexpr_t key;
-    key._value = (z_keyexpr_t*)malloc(sizeof(z_keyexpr_t));
+    key._value = (z_keyexpr_t*)z_malloc(sizeof(z_keyexpr_t));
     *key._value = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
 
     return key;
@@ -551,7 +550,7 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub)
     _z_undeclare_publisher(pub->_value);
 
     z_publisher_drop(pub);
-    free(pub->_value);
+    z_free(pub->_value);
     pub->_value = NULL;
 
     return 0;
@@ -604,7 +603,7 @@ int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
     _z_undeclare_subscriber(sub->_value);
 
     z_subscriber_drop(sub);
-    free(sub->_value);
+    z_free(sub->_value);
     sub->_value = NULL;
 
     return 0;
@@ -615,7 +614,7 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub)
     _z_undeclare_subscriber(sub->_value);
 
     z_pull_subscriber_drop(sub);
-    free(sub->_value);
+    z_free(sub->_value);
     sub->_value = NULL;
 
     return 0;
@@ -648,7 +647,7 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable)
     _z_undeclare_queryable(queryable->_value);
 
     z_queryable_drop(queryable);
-    free(queryable->_value);
+    z_free(queryable->_value);
     queryable->_value = NULL;
 
     return 0;
@@ -697,4 +696,14 @@ int8_t zp_start_lease_task(z_session_t *zs)
 int8_t zp_stop_lease_task(z_session_t *zs)
 {
     return _zp_stop_lease_task(zs);
+}
+
+int8_t zp_read(z_session_t *zs)
+{
+    return _zp_read(zs);
+}
+
+int8_t zp_send_keep_alive(z_session_t *zs)
+{
+    return _zp_send_keep_alive(zs);
 }

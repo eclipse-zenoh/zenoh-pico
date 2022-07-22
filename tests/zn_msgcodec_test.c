@@ -1,22 +1,23 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #define ZENOH_PICO_TEST_H
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -33,10 +34,10 @@
 void print_iosli(_z_iosli_t *ios)
 {
     printf("IOSli: Capacity: %zu, Rpos: %zu, Wpos: %zu, Buffer: [", ios->_capacity, ios->_r_pos, ios->_w_pos);
-    for (size_t i = 0; i < ios->_w_pos; i++)
+    for (size_t i = ios->_r_pos; i < ios->_w_pos; i++)
     {
         printf("%02x", ios->_buf[i]);
-        if (i < ios->_capacity - 1)
+        if (i < ios->_w_pos - ios->_r_pos - 1)
             printf(" ");
     }
     printf("]");
@@ -118,17 +119,19 @@ void print_transport_message_type(uint8_t header)
 /*=============================*/
 int gen_bool(void)
 {
-    return rand() % 2;
+    return z_random_u8() % 2;
 }
 
 uint8_t gen_uint8(void)
 {
-    return (uint8_t)rand() % 255;
+    return z_random_u8() % 255;
 }
 
 _z_zint_t gen_zint(void)
 {
-    return (_z_zint_t)rand();
+    _z_zint_t ret = 0;
+    z_random_fill(&ret, sizeof(ret));
+    return ret;
 }
 
 _z_wbuf_t gen_wbuf(size_t len)
@@ -149,9 +152,8 @@ _z_payload_t gen_payload(size_t len)
     _z_payload_t pld;
     pld._is_alloc = 1;
     pld.len = len;
-    pld.start = (uint8_t *)malloc(len * sizeof(uint8_t));
-    for (_z_zint_t i = 0; i < len; i++)
-        ((uint8_t *)pld.start)[i] = gen_uint8();
+    pld.start = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    z_random_fill((uint8_t *)pld.start, pld.len);
 
     return pld;
 }
@@ -165,7 +167,7 @@ _z_bytes_t gen_bytes(size_t len)
     if (len == 0)
         return arr;
 
-    arr.start = (uint8_t *)malloc(sizeof(uint8_t) * len);
+    arr.start = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
     for (_z_zint_t i = 0; i < len; i++)
         ((uint8_t *)arr.start)[i] = gen_uint8();
 
@@ -180,7 +182,7 @@ uint64_t gen_time(void)
 char *gen_str(size_t size)
 {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char *str = (char *)malloc((size * sizeof(char)) + 1);
+    char *str = (char *)z_malloc((size * sizeof(char)) + 1);
     for (_z_zint_t i = 0; i < size; i++)
     {
         int key = rand() % (int)(sizeof(charset) - 1);
@@ -299,8 +301,8 @@ void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right
         if (i < left->_len - 1)
             printf(" ");
 
-        free(ls);
-        free(rs);
+        z_free(ls);
+        z_free(rs);
 
         assert(_z_locator_eq(l, r));
     }
@@ -319,7 +321,7 @@ void assert_eq_payload(_z_payload_t *left, _z_payload_t *right)
 void payload_field(void)
 {
     printf("\n>> Payload field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_payload_t e_pld = gen_payload(64);
@@ -327,7 +329,7 @@ void payload_field(void)
     // Encode
     int res = _z_payload_encode(&wbf, &e_pld);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -369,7 +371,7 @@ void assert_eq_timestamp(_z_timestamp_t *left, _z_timestamp_t *right)
 void timestamp_field(void)
 {
     printf("\n>> Timestamp field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_timestamp_t e_ts = gen_timestamp();
@@ -377,7 +379,7 @@ void timestamp_field(void)
     // Encode
     int res = _z_timestamp_encode(&wbf, &e_ts);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -441,7 +443,7 @@ void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right)
 void subinfo_field(void)
 {
     printf("\n>> SubInfo field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_subinfo_t e_sm = gen_subinfo();
@@ -450,7 +452,7 @@ void subinfo_field(void)
     uint8_t header = e_sm.reliability == Z_RELIABILITY_RELIABLE ? _Z_FLAG_Z_R : 0;
     int res = _z_subinfo_encode(&wbf, &e_sm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -504,7 +506,7 @@ void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header)
 void res_key_field(void)
 {
     printf("\n>> ResKey field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_keyexpr_t e_rk = gen_res_key();
@@ -513,7 +515,7 @@ void res_key_field(void)
     uint8_t header = (e_rk._suffix) ? _Z_FLAG_Z_K : 0;
     int res = _z_keyexpr_encode(&wbf, header, &e_rk);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -636,7 +638,7 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right)
 void data_info_field(void)
 {
     printf("\n>> DataInfo field\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_data_info_t e_di = gen_data_info();
@@ -644,7 +646,7 @@ void data_info_field(void)
     // Encode
     int res = _z_data_info_encode(&wbf, &e_di);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -676,7 +678,7 @@ void print_attachment(_z_attachment_t *att)
 
 _z_attachment_t *gen_attachment(void)
 {
-    _z_attachment_t *p_at = (_z_attachment_t *)malloc(sizeof(_z_attachment_t));
+    _z_attachment_t *p_at = (_z_attachment_t *)z_malloc(sizeof(_z_attachment_t));
 
     p_at->_header = _Z_MID_ATTACHMENT;
     // _Z_SET_FLAG(p_at->_header, _Z_FLAGS(gen_uint8()));
@@ -695,7 +697,7 @@ void assert_eq_attachment(_z_attachment_t *left, _z_attachment_t *right)
 void attachment_decorator(void)
 {
     printf("\n>> Attachment decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_attachment_t *e_at = gen_attachment();
@@ -703,7 +705,7 @@ void attachment_decorator(void)
     // Encode
     int res = _z_attachment_encode(&wbf, e_at);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -717,7 +719,7 @@ void attachment_decorator(void)
     printf("\n");
 
     // Free
-    free(e_at);
+    z_free(e_at);
     _z_t_msg_clear_attachment(d_at);
     _z_attachment_p_result_free(&r_at);
     _z_zbuf_clear(&zbf);
@@ -783,7 +785,7 @@ void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right
 void reply_contex_decorator(void)
 {
     printf("\n>> ReplyContext decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_reply_context_t *e_rc = gen_reply_context();
@@ -791,7 +793,7 @@ void reply_contex_decorator(void)
     // Encode
     int res = _z_reply_context_encode(&wbf, e_rc);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -805,7 +807,7 @@ void reply_contex_decorator(void)
     printf("\n");
 
     // Free
-    free(e_rc);
+    z_free(e_rc);
     _z_msg_clear_reply_context(d_rc);
     _z_reply_context_p_result_free(&r_rc);
     _z_zbuf_clear(&zbf);
@@ -837,7 +839,7 @@ void assert_eq_resource_declaration(_z_res_decl_t *left, _z_res_decl_t *right, u
 void resource_declaration(void)
 {
     printf("\n>> Resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -846,7 +848,7 @@ void resource_declaration(void)
     // Encode
     int res = _z_res_decl_encode(&wbf, e_hdr, &e_rd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -883,7 +885,7 @@ void assert_eq_publisher_declaration(_z_pub_decl_t *left, _z_pub_decl_t *right, 
 void publisher_declaration(void)
 {
     printf("\n>> Publisher declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -892,7 +894,7 @@ void publisher_declaration(void)
     // Encode
     int res = _z_pub_decl_encode(&wbf, e_hdr, &e_pd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -941,7 +943,7 @@ void assert_eq_subscriber_declaration(_z_sub_decl_t *left, _z_sub_decl_t *right,
 void subscriber_declaration(void)
 {
     printf("\n>> Subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -950,7 +952,7 @@ void subscriber_declaration(void)
     // Encode
     int res = _z_sub_decl_encode(&wbf, e_hdr, &e_sd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1006,7 +1008,7 @@ void assert_eq_queryable_declaration(_z_qle_decl_t *left, _z_qle_decl_t *right, 
 void queryable_declaration(void)
 {
     printf("\n>> Queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1015,7 +1017,7 @@ void queryable_declaration(void)
     // Encode
     int res = _z_qle_decl_encode(&wbf, e_hdr, &e_qd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1052,7 +1054,7 @@ void assert_eq_forget_resource_declaration(_z_forget_res_decl_t *left, _z_forget
 void forget_resource_declaration(void)
 {
     printf("\n>> Forget resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_forget_res_decl_t e_frd = gen_forget_resource_declaration();
@@ -1060,7 +1062,7 @@ void forget_resource_declaration(void)
     // Encode
     int res = _z_forget_res_decl_encode(&wbf, &e_frd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1097,7 +1099,7 @@ void assert_eq_forget_publisher_declaration(_z_forget_pub_decl_t *left, _z_forge
 void forget_publisher_declaration(void)
 {
     printf("\n>> Forget publisher declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1106,7 +1108,7 @@ void forget_publisher_declaration(void)
     // Encode
     int res = _z_forget_pub_decl_encode(&wbf, e_hdr, &e_fpd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1143,7 +1145,7 @@ void assert_eq_forget_subscriber_declaration(_z_forget_sub_decl_t *left, _z_forg
 void forget_subscriber_declaration(void)
 {
     printf("\n>> Forget subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1152,7 +1154,7 @@ void forget_subscriber_declaration(void)
     // Encode
     int res = _z_forget_sub_decl_encode(&wbf, e_hdr, &e_fsd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1191,7 +1193,7 @@ void assert_eq_forget_queryable_declaration(_z_forget_qle_decl_t *left, _z_forge
 void forget_queryable_declaration(void)
 {
     printf("\n>> Forget queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1200,7 +1202,7 @@ void forget_queryable_declaration(void)
     // Encode
     int res = _z_forget_qle_decl_encode(&wbf, e_hdr, &e_fqd);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1329,7 +1331,7 @@ void assert_eq_declare_message(_z_msg_declare_t *left, _z_msg_declare_t *right)
 void declare_message(void)
 {
     printf("\n>> Declare message\n");
-    _z_wbuf_t wbf = gen_wbuf(512);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_declare_message();
@@ -1340,7 +1342,7 @@ void declare_message(void)
     // Encode
     int res = _z_declare_encode(&wbf, &e_dcl);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1393,7 +1395,7 @@ void assert_eq_data_message(_z_msg_data_t *left, _z_msg_data_t *right, uint8_t h
 void data_message(void)
 {
     printf("\n>> Data message\n");
-    _z_wbuf_t wbf = gen_wbuf(256);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_data_message();
@@ -1404,7 +1406,7 @@ void data_message(void)
     // Encode
     int res = _z_data_encode(&wbf, z_msg._header, &e_da);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1453,7 +1455,7 @@ void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right, uint8_t h
 void pull_message(void)
 {
     printf("\n>> Pull message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_pull_message();
@@ -1464,7 +1466,7 @@ void pull_message(void)
     // Encode
     int res = _z_pull_encode(&wbf, z_msg._header, &e_pu);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1562,7 +1564,7 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
 void query_message(void)
 {
     printf("\n>> Query message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     uint8_t e_hdr = 0;
@@ -1574,7 +1576,7 @@ void query_message(void)
     // Encode
     int res = _z_query_encode(&wbf, e_hdr, &e_qy);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1704,7 +1706,7 @@ void assert_eq_zenoh_message(_z_zenoh_message_t *left, _z_zenoh_message_t *right
 void zenoh_message(void)
 {
     printf("\n>> Zenoh message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_zenoh_message_t e_zm = gen_zenoh_message();
@@ -1748,7 +1750,7 @@ void zenoh_message(void)
     // Encode
     int res = _z_zenoh_message_encode(&wbf, &e_zm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1788,7 +1790,7 @@ void assert_eq_scout_message(_z_t_msg_scout_t *left, _z_t_msg_scout_t *right, ui
 void scout_message(void)
 {
     printf("\n>> Scout message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_scout_message();
@@ -1797,7 +1799,7 @@ void scout_message(void)
     // Encode
     int res = _z_scout_encode(&wbf, t_msg._header, &e_sc);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1854,7 +1856,7 @@ void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, ui
 void hello_message(void)
 {
     printf("\n>> Hello message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_hello_message();
@@ -1865,7 +1867,7 @@ void hello_message(void)
     // Encode
     int res = _z_hello_encode(&wbf, t_msg._header, &e_he);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1971,7 +1973,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
 void join_message(void)
 {
     printf("\n>> Join message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_join_message();
@@ -1982,7 +1984,7 @@ void join_message(void)
     // Encode
     int res = _z_join_encode(&wbf, t_msg._header, &t_msg._body._join);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2057,7 +2059,7 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
 void init_message(void)
 {
     printf("\n>> Init message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_init_message();
@@ -2068,7 +2070,7 @@ void init_message(void)
     // Encode
     int res = _z_init_encode(&wbf, t_msg._header, &e_it);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2123,7 +2125,7 @@ void assert_eq_open_message(_z_t_msg_open_t *left, _z_t_msg_open_t *right, uint8
 void open_message(void)
 {
     printf("\n>> Open message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_open_message();
@@ -2134,7 +2136,7 @@ void open_message(void)
     // Encode
     int res = _z_open_encode(&wbf, t_msg._header, &e_op);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2178,7 +2180,7 @@ void assert_eq_close_message(_z_t_msg_close_t *left, _z_t_msg_close_t *right, ui
 void close_message(void)
 {
     printf("\n>> Close message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_close_message();
@@ -2189,7 +2191,7 @@ void close_message(void)
     // Encode
     int res = _z_close_encode(&wbf, t_msg._header, &e_cl);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2233,7 +2235,7 @@ void assert_eq_sync_message(_z_t_msg_sync_t *left, _z_t_msg_sync_t *right, uint8
 void sync_message(void)
 {
     printf("\n>> Sync message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_sync_message();
@@ -2244,7 +2246,7 @@ void sync_message(void)
     // Encode
     int res = _z_sync_encode(&wbf, t_msg._header, &e_sy);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2287,7 +2289,7 @@ void assert_eq_ack_nack_message(_z_t_msg_ack_nack_t *left, _z_t_msg_ack_nack_t *
 void ack_nack_message(void)
 {
     printf("\n>> AckNack message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_ack_nack_message();
@@ -2298,7 +2300,7 @@ void ack_nack_message(void)
     // Encode
     int res = _z_ack_nack_encode(&wbf, t_msg._header, &e_an);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2336,7 +2338,7 @@ void assert_eq_keep_alive_message(_z_t_msg_keep_alive_t *left, _z_t_msg_keep_ali
 void keep_alive_message(void)
 {
     printf("\n>> KeepAlive message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_keep_alive_message();
@@ -2346,7 +2348,7 @@ void keep_alive_message(void)
     // Encode
     int res = _z_keep_alive_encode(&wbf, t_msg._header, &e_ka);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2383,7 +2385,7 @@ void assert_eq_ping_pong_message(_z_t_msg_ping_pong_t *left, _z_t_msg_ping_pong_
 void ping_pong_message(void)
 {
     printf("\n>> PingPong message\n");
-    _z_wbuf_t wbf = gen_wbuf(128);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_ping_pong_message();
@@ -2394,7 +2396,7 @@ void ping_pong_message(void)
     // Encode
     int res = _z_ping_pong_encode(&wbf, &e_pp);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2431,7 +2433,7 @@ _z_transport_message_t gen_frame_message(int can_be_fragment)
         for (_z_zint_t i = 0; i < num; i++)
         {
             _z_zenoh_message_t e_zm = gen_zenoh_message();
-            _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)malloc(sizeof(_z_zenoh_message_t));
+            _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
             *p_zm = e_zm;
             _z_vec_append(&payload._messages, p_zm);
         }
@@ -2467,7 +2469,7 @@ void assert_eq_frame_message(_z_t_msg_frame_t *left, _z_t_msg_frame_t *right, ui
 void frame_message(void)
 {
     printf("\n>> Frame message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t t_msg = gen_frame_message(1);
@@ -2478,7 +2480,7 @@ void frame_message(void)
     // Encode
     int res = _z_frame_encode(&wbf, t_msg._header, &e_fr);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2624,7 +2626,7 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
 void transport_message(void)
 {
     printf("\n>> Session message\n");
-    _z_wbuf_t wbf = gen_wbuf(1024);
+    _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
     _z_transport_message_t e_tm = gen_transport_message(1);
@@ -2635,7 +2637,7 @@ void transport_message(void)
     // Encode
     int res = _z_transport_message_encode(&wbf, &e_tm);
     assert(res == 0);
-    (void) (res);
+    (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -2663,7 +2665,7 @@ void batch(void)
     _z_wbuf_t wbf = gen_wbuf(tot_num * 1024);
 
     // Initialize
-    _z_transport_message_t *e_tm = (_z_transport_message_t *)malloc(tot_num * sizeof(_z_transport_message_t));
+    _z_transport_message_t *e_tm = (_z_transport_message_t *)z_malloc(tot_num * sizeof(_z_transport_message_t));
     for (uint8_t i = 0; i < bef_num; i++)
     {
         // Initialize random transport message
@@ -2671,7 +2673,7 @@ void batch(void)
         // Encode
         int res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; i++)
     {
@@ -2680,7 +2682,7 @@ void batch(void)
         // Encode
         int res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++)
     {
@@ -2689,7 +2691,7 @@ void batch(void)
         // Encode
         int res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
     }
 
     // Decode
@@ -2710,7 +2712,7 @@ void batch(void)
         _z_t_msg_clear(&d_sm);
     }
 
-    free(e_tm);
+    z_free(e_tm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -2838,7 +2840,7 @@ void fragmentation(void)
         size_t written = _z_wbuf_len(&fbf);
         res = _z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == 0);
-        (void) (res);
+        (void)(res);
         written -= _z_wbuf_len(&fbf);
 
         printf("  -Encoded Fragment: ");

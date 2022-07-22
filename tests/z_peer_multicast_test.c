@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <stdio.h>
 #include <assert.h>
@@ -50,7 +50,7 @@ void data_handler(const z_sample_t *sample, void *arg)
 int main(int argc, char **argv)
 {
     assert(argc == 2);
-    (void) (argc);
+    (void)(argc);
 
     setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     zp_start_read_task(z_loan(s1));
     zp_start_lease_task(z_loan(s1));
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     config = zp_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     zp_start_read_task(z_loan(s2));
     zp_start_lease_task(z_loan(s2));
 
-    _z_sleep_s(SLEEP * 5);
+    z_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
     char s1_res[64];
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
-        z_owned_subscriber_t *sub = (z_owned_subscriber_t*)malloc(sizeof(z_owned_subscriber_t));
+        z_owned_subscriber_t *sub = (z_owned_subscriber_t*)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, (z_zint_t)0, s1_res);
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    const uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;
@@ -122,14 +122,14 @@ int main(int argc, char **argv)
     }
 
     // Wait to receive all the data
-    _z_clock_t now = _z_clock_now();
+    z_time_t now = z_time_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected)
     {
-        assert(_z_clock_elapsed_s(&now) < TIMEOUT);
-        (void) (now);
+        assert(z_time_elapsed_s(&now) < TIMEOUT);
+        (void)(now);
         printf("Waiting for datas... %u/%u\n", datas, expected);
-        _z_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     if (is_reliable)
         assert(datas == expected);
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
         assert(datas >= expected);
     datas = 0;
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
     while (subs2)
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
         subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
     }
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
@@ -163,12 +163,12 @@ int main(int argc, char **argv)
     printf("Closing session 1\n");
     z_close(z_move(s1));
 
-    _z_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
     z_close(z_move(s2));
 
-    free((uint8_t *)payload);
+    z_free((uint8_t *)payload);
     payload = NULL;
 
     return 0;

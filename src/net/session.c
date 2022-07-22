@@ -1,16 +1,15 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/memory.h"
@@ -96,7 +95,7 @@ _z_session_t *_z_open(_z_config_t *config)
 
     _z_session_t *zn = __z_open_inner(locator, mode);
     
-    free(locator);
+    z_free(locator);
     return zn;
 }
 
@@ -107,7 +106,7 @@ void _z_close(_z_session_t *zn)
 
 _z_config_t *_z_info(const _z_session_t *zn)
 {
-    _z_config_t *ps = (_z_config_t *)malloc(sizeof(_z_config_t));
+    _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     _z_config_init(ps);
     _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
@@ -140,7 +139,7 @@ int8_t _zp_send_keep_alive(_z_session_t *zn)
 
 int8_t _zp_start_read_task(_z_session_t *zn)
 {
-    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     memset(task, 0, sizeof(_z_task_t));
 
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
@@ -173,7 +172,7 @@ int8_t _zp_stop_read_task(_z_session_t *zn)
 
 int8_t _zp_start_lease_task(_z_session_t *zn)
 {
-    _z_task_t *task = (_z_task_t *)malloc(sizeof(_z_task_t));
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     memset(task, 0, sizeof(_z_task_t));
 
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)

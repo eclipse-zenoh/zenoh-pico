@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -50,17 +50,19 @@ void print_iosli(_z_iosli_t *ios)
 /*=============================*/
 int gen_bool(void)
 {
-    return rand() % 2;
+    return z_random_u8() % 2;
 }
 
 uint8_t gen_uint8(void)
 {
-    return (uint8_t)rand() % 255;
+    return z_random_u8() % 255;
 }
 
 size_t gen_size_t(void)
 {
-    return (size_t)rand();
+    size_t ret = 0;
+    z_random_fill(&ret, sizeof(ret));
+    return ret;
 }
 
 _z_zbuf_t gen_zbuf(size_t len)
@@ -123,8 +125,8 @@ void iosli_writable_readable(void)
         uint8_t b2 = _z_iosli_get(pios, i);
 
         assert(b1 == b2);
-        (void) (b1);
-        (void) (b2);
+        (void)(b1);
+        (void)(b2);
     }
 
     _z_iosli_t *cios = _z_iosli_clone(pios);
@@ -139,9 +141,9 @@ void iosli_writable_readable(void)
         uint8_t b3 = _z_iosli_read(cios);
 
         assert(b1 == b2 && b2 == b3);
-        (void) (b1);
-        (void) (b2);
-        (void) (b3);
+        (void)(b1);
+        (void)(b2);
+        (void)(b3);
 
         assert(_z_iosli_writable(&ios) == _z_iosli_writable(pios) && _z_iosli_writable(pios) == _z_iosli_writable(cios));
         assert(_z_iosli_readable(&ios) == _z_iosli_readable(pios) && _z_iosli_readable(pios) == _z_iosli_readable(cios));
@@ -167,7 +169,7 @@ void iosli_writable_readable(void)
     assert(_z_iosli_readable(cios) == 0);
 
     printf("  - IOSli bytes\n");
-    uint8_t *payload = (uint8_t *)malloc(len * sizeof(uint8_t));
+    uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     memset((uint8_t *)payload, 1, len * sizeof(uint8_t));
 
     for (size_t i = 0; i < len; i++)
@@ -186,7 +188,7 @@ void iosli_writable_readable(void)
         assert(readable == i + 1);
     }
 
-    uint8_t *buffer = (uint8_t *)malloc(len * sizeof(uint8_t));
+    uint8_t *buffer = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     memset((uint8_t *)buffer, 1, len * sizeof(uint8_t));
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
@@ -217,12 +219,12 @@ void iosli_writable_readable(void)
     assert(_z_iosli_readable(&wios) == 0);
 
     _z_iosli_clear(pios);
-    free(pios);
+    z_free(pios);
     _z_iosli_clear(cios);
-    free(cios);
+    z_free(cios);
 
-    free(buffer);
-    free(payload);
+    z_free(buffer);
+    z_free(payload);
 }
 
 void zbuf_writable_readable(void)
@@ -414,7 +416,7 @@ void wbuf_write_zbuf_read_bytes(void)
     print_wbuf_overview(&wbf);
 
     printf("    Writing %zu bytes\n", len);
-    uint8_t *buf01 = (uint8_t *)malloc(len * sizeof(uint8_t));
+    uint8_t *buf01 = (uint8_t *)z_malloc(len * sizeof(uint8_t));
     for (size_t i = 0; i < len; i++)
     {
         buf01[i] = (uint8_t)i % 255;
@@ -436,7 +438,7 @@ void wbuf_write_zbuf_read_bytes(void)
     }
     printf(" ]\n");
 
-    free(buf01);
+    z_free(buf01);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -482,7 +484,7 @@ void wbuf_reusable_write_zbuf_read(void)
     _z_wbuf_t wbf = gen_wbuf(128);
     for (int i = 0; i < 10; i++)
     {
-        size_t len = rand() % 128;
+        size_t len = z_random_u8() % 128;
         printf("\n>>> WBuf => Write and Read\n");
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);

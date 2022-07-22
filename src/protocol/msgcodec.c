@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -183,7 +183,7 @@ int _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la)
     {
         char *s = _z_locator_to_str(&la->_val[i]);
         _Z_EC(_z_str_encode(wbf, s))
-        free(s);
+        z_free(s);
     }
 
     return 0;
@@ -209,7 +209,7 @@ void _z_locators_decode_na(_z_zbuf_t *zbf, _z_locator_array_result_t *r)
 
         // TODO: this can be optimized by avoid translation from locator to str and vice-versa
         _z_locator_result_t r_l = _z_locator_from_str(r_s._value._str);
-        free(r_s._value._str);
+        z_free(r_s._value._str);
         _ASSURE_P_RESULT(r_l, r, _Z_ERR_INVALID_LOCATOR);
 
         r->_value._locator_array._val[i] = r_l._value._locator;
@@ -1828,7 +1828,7 @@ void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r)
             _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(zbf);
             if (r_zm._tag == _Z_RES_OK)
             {
-                _z_zenoh_message_t *zm = (_z_zenoh_message_t *)malloc(sizeof(_z_zenoh_message_t));
+                _z_zenoh_message_t *zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
                 memcpy(zm, &r_zm._value._zenoh_message, sizeof(_z_zenoh_message_t));
                 _z_zenoh_message_vec_append(&r->_value._frame._payload._messages, zm);
             }

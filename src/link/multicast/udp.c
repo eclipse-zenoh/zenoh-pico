@@ -1,17 +1,18 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
+#include <stdlib.h>
 #include <string.h>
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
@@ -30,7 +31,7 @@ char *_z_parse_port_segment_udp_multicast(const char *address)
     const char *p_end = &address[strlen(address)];
 
     int len = p_end - p_start;
-    char *port = (char *)malloc((len + 1) * sizeof(char));
+    char *port = (char *)z_malloc((len + 1) * sizeof(char));
     strncpy(port, p_start, len);
     port[len] = '\0';
 
@@ -47,7 +48,7 @@ char *_z_parse_address_segment_udp_multicast(const char *address)
         p_start++;
         p_end--;
         int len = p_end - p_start;
-        char *ip6_addr = (char *)malloc((len + 1) * sizeof(char));
+        char *ip6_addr = (char *)z_malloc((len + 1) * sizeof(char));
         strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
@@ -56,7 +57,7 @@ char *_z_parse_address_segment_udp_multicast(const char *address)
     else
     {
         int len = p_end - p_start;
-        char *ip4_addr_or_domain = (char *)malloc((len + 1) * sizeof(char));
+        char *ip4_addr_or_domain = (char *)z_malloc((len + 1) * sizeof(char));
         strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
@@ -74,12 +75,12 @@ int _z_f_link_open_udp_multicast(void *arg)
     if (iface == NULL)
         goto ERR;
 
-    clock_t timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     char *tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
-        timeout = strtof(tout, NULL);
+        timeout = strtol(tout, NULL, 10);
 
-    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, timeout, iface) < 0)
+    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, timeout, iface) == NULL)
         goto ERR;
 
     return 0;
@@ -97,11 +98,11 @@ int _z_f_link_listen_udp_multicast(void *arg)
         goto ERR_1;
 
     self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._raddr, Z_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
-    if (self->_socket._udp._sock < 0)
+    if (self->_socket._udp._sock == NULL)
         goto ERR_1;
 
     self->_socket._udp._msock = _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
-    if (self->_socket._udp._msock < 0)
+    if (self->_socket._udp._msock == NULL)
         goto ERR_2;
 
     return 0;
@@ -164,7 +165,7 @@ uint16_t _z_get_link_mtu_udp_multicast(void)
 
 _z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint)
 {
-    _z_link_t *lt = (_z_link_t *)malloc(sizeof(_z_link_t));
+    _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
 
     lt->_is_reliable = 0;
     lt->_is_streamed = 0;
@@ -173,14 +174,14 @@ _z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint)
 
     lt->_endpoint = endpoint;
 
-    lt->_socket._udp._sock = -1;
-    lt->_socket._udp._msock = -1;
+    lt->_socket._udp._sock = NULL;
+    lt->_socket._udp._msock = NULL;
     char *s_addr = _z_parse_address_segment_udp_multicast(endpoint._locator._address);
     char *s_port = _z_parse_port_segment_udp_multicast(endpoint._locator._address);
     lt->_socket._udp._raddr = _z_create_endpoint_udp(s_addr, s_port);
     lt->_socket._udp._laddr = NULL;
-    free(s_addr);
-    free(s_port);
+    z_free(s_addr);
+    z_free(s_port);
 
     lt->_open_f = _z_f_link_open_udp_multicast;
     lt->_listen_f = _z_f_link_listen_udp_multicast;

@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_UTILS_RESULT_H
 #define ZENOH_PICO_UTILS_RESULT_H
@@ -75,12 +75,12 @@ typedef enum
                                                                                         \
     inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        r->_value._##name = (type *)malloc(sizeof(type));                               \
+        r->_value._##name = (type *)z_malloc(sizeof(type));                             \
     }                                                                                   \
                                                                                         \
     inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) \
     {                                                                                   \
-        free(r->_value._##name);                                                        \
+        z_free(r->_value._##name);                                                      \
         r->_value._##name = NULL;                                                       \
     }
 
@@ -103,7 +103,7 @@ typedef enum
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
     if (in_r._tag == _Z_RES_ERR)                    \
     {                                               \
-        free(out_r->_value._##name);                \
+        z_free(out_r->_value._##name);              \
         out_r->_tag = _Z_RES_ERR;                   \
         out_r->_value._error = e;                   \
         return;                                     \

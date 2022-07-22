@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_COLLECTIONS_INTMAP_H
 #define ZENOH_PICO_COLLECTIONS_INTMAP_H
@@ -71,7 +71,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     {                                                                                  \
         name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                      \
         name##_elem_free((void **)&ptr->_val);                                         \
-        free(ptr);                                                                     \
+        z_free(ptr);                                                                   \
         *e = NULL;                                                                     \
     }                                                                                  \
     typedef _z_int_void_map_t name##_intmap_t;                                         \

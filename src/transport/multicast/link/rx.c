@@ -1,16 +1,16 @@
-/*
- * Copyright (c) 2017, 2021 ADLINK Technology Inc.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *
- * Contributors:
- *   ADLINK zenoh team, <zenoh@adlink-labs.tech>
- */
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
@@ -146,7 +146,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
 
         if (entry == NULL) // New peer
         {
-            entry = (_z_transport_peer_entry_t *)malloc(sizeof(_z_transport_peer_entry_t));
+            entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
             entry->_remote_addr = _z_bytes_duplicate(addr);
             entry->_remote_pid = _z_bytes_duplicate(&t_msg->_body._join._pid);
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S))
