@@ -85,6 +85,11 @@ z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len)
     return _z_keyexpr_is_canon(start, len);
 }
 
+z_keyexpr_canon_status_t zp_keyexpr_is_canon_null_terminated(const char *start)
+{
+    return _z_keyexpr_is_canon(start, strlen(start));
+}
+
 z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len)
 {
     return _z_keyexpr_canonize(start, len);
@@ -106,7 +111,7 @@ bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
     return _z_keyexpr_includes(l, llen, r, rlen);
 }
 
-z_keyexpr_canon_status_t zp_keyexpr_includes_null_terminated(const char *l, const char *r)
+bool zp_keyexpr_includes_null_terminated(const char *l, const char *r)
 {
     return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
 }
@@ -116,9 +121,34 @@ bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
     return _z_keyexpr_intersect(l, llen, r, rlen);
 }
 
-z_keyexpr_canon_status_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r)
+bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r)
 {
     return _z_keyexpr_intersect(l, strlen(l), r, strlen(r));
+}
+
+bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen)
+{
+    if (llen != rlen)
+    {
+        return false;
+    }
+
+    if (strncmp(l, r, llen) != 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool zp_keyexpr_equals_null_terminated(const char *l, const char *r)
+{
+    if (strcmp(l, r) != 0)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 z_owned_config_t zp_config_new(void)

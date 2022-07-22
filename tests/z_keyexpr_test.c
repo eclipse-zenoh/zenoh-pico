@@ -342,5 +342,12 @@ int main(void)
         printf("\n");
     }
 
+    assert(!z_keyexpr_equals("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
+    assert(!z_keyexpr_equals("a/bc", strlen("a/bc"), "a/cb", strlen("a/cb")));
+    assert(z_keyexpr_equals("greetings/hello/there", strlen("greetings/hello/there"), "greetings/hello/there", strlen("greetings/hello/there")));
+    assert(!zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb"));
+    assert(!zp_keyexpr_equals_null_terminated("a/bc", "a/cb"));
+    assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there"));
+
     return 0;
 }
