@@ -21,8 +21,8 @@
 
 z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
-bool _z_keyexpr_includes(const char *l, const char *r);
-bool _z_keyexpr_intersect(const char *l, const char *r);
+bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
+bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);

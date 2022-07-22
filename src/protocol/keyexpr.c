@@ -159,7 +159,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 }
 
 /*------------------ Inclusion helpers ------------------*/
-bool ___zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
+bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while (lstart < lend && rstart < rend) {
         char l = *lstart++;
         char r = *rstart++;
@@ -167,8 +167,8 @@ bool ___zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char 
             if (++lstart == lend) {
                 return true;
             }
-            return ___zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   ___zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return __zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
+                   __zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
         } else if (l != r) {
             return false;
         }
@@ -214,7 +214,7 @@ bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const 
             default:
                 lclen = lcend - lstart;
                 streq = (lclen == (size_t)(rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
-                if (!streq && !___zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
+                if (!streq && !__zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
                     return false;
                 }
         }
@@ -277,48 +277,8 @@ bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *r
     }
 }
 
-bool __zp_ke_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
-    bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
-    if (streq) {
-        return true;
-    }
-
-    int contains = 0;  // STAR: 1, DSL: 2
-    char const *end = lstart + llen;
-    for (char const *c = lstart; c < end; c++) {
-        if (*c == '*') {
-            contains |= 1;
-        }
-        if (*c == '$') {
-            contains |= 3;
-            break;
-        }
-    }
-
-    end = rstart + rlen;
-    for (char const *c = rstart; contains < 3 && c < end; c++) {
-        if (*c == '*') {
-            contains |= 1;
-        }
-        if (*c == '$') {
-            contains |= 3;
-        }
-    }
-
-    switch (contains) {
-        case 0:
-            return false;
-
-        case 1:
-            return __zp_ke_includes_nodsl(lstart, llen, rstart, rlen);
-
-        default:
-            return __zp_ke_includes_stardsl(lstart, llen, rstart, rlen);
-    }
-}
-
 /*------------------ Intersection helpers ------------------*/
-bool ___zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
+bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while (lstart < lend && rstart < rend) {
         char l = *lstart++;
         char r = *rstart++;
@@ -327,15 +287,15 @@ bool ___zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, cha
                 return true;
             }
 
-            return ___zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   ___zp_ke_intersects_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return __zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
+                   __zp_ke_intersects_stardsl_chunk(lstart - 2, lend, rstart, rend);
         } else if (r == '$') {
             if (++rstart == rend) {
                 return true;
             }
 
-            return ___zp_ke_intersects_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
-                   ___zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
+            return __zp_ke_intersects_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
+                   __zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
         } else if (l != r) {
             return false;
         }
@@ -382,7 +342,7 @@ bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char cons
             default:
                 lclen = lcend - lstart;
                 streq = lclen == (size_t)(rcend - rstart) && strncmp(lstart, rstart, lclen) == 0;
-                if (!(streq || ___zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
+                if (!(streq || __zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }
         }
@@ -448,7 +408,48 @@ bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const 
     }
 }
 
-bool __zp_ke_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+/*------------------ Zenoh-Core helpers ------------------*/
+bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+    bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
+    if (streq) {
+        return true;
+    }
+
+    int contains = 0;  // STAR: 1, DSL: 2
+    char const *end = lstart + llen;
+    for (char const *c = lstart; c < end; c++) {
+        if (*c == '*') {
+            contains |= 1;
+        }
+        if (*c == '$') {
+            contains |= 3;
+            break;
+        }
+    }
+
+    end = rstart + rlen;
+    for (char const *c = rstart; contains < 3 && c < end; c++) {
+        if (*c == '*') {
+            contains |= 1;
+        }
+        if (*c == '$') {
+            contains |= 3;
+        }
+    }
+
+    switch (contains) {
+        case 0:
+            return false;
+
+        case 1:
+            return __zp_ke_includes_nodsl(lstart, llen, rstart, rlen);
+
+        default:
+            return __zp_ke_includes_stardsl(lstart, llen, rstart, rlen);
+    }
+}
+
+bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq) {
         return true;
@@ -606,7 +607,3 @@ z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
 }
 
 z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len) { return __zp_canon_prefix(start, &len); }
-
-bool _z_keyexpr_includes(const char *l, const char *r) { return __zp_ke_includes(l, strlen(l), r, strlen(r)); }
-
-bool _z_keyexpr_intersect(const char *l, const char *r) { return __zp_ke_intersects(l, strlen(l), r, strlen(r)); }

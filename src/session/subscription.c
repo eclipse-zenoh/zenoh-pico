@@ -57,7 +57,7 @@ _z_subscriber_list_t *__z_get_subscriptions_by_key(_z_subscriber_list_t *subs, c
     while (subs != NULL)
     {
         _z_subscription_t *sub = _z_subscriber_list_head(subs);
-        if (_z_keyexpr_intersect(sub->_key._suffix, key._suffix))
+        if (_z_keyexpr_intersect(sub->_key._suffix, strlen(sub->_key._suffix), key._suffix, strlen(key._suffix)))
             xs = _z_subscriber_list_push(xs, sub);
 
         subs = _z_subscriber_list_tail(subs);

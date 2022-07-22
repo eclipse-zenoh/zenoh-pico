@@ -90,18 +90,14 @@ z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len)
     return _z_keyexpr_canonize(start, len);
 }
 
-bool z_keyexpr_includes(const char *l, size_t l_len, const char *r, size_t r_len)
+bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
 {
-    (void) (l_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
-    (void) (r_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
-    return _z_keyexpr_includes(l, r);
+    return _z_keyexpr_includes(l, llen, r, rlen);
 }
 
-bool z_keyexpr_intersect(const char *l, size_t l_len, const char *r, size_t r_len)
+bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
 {
-    (void) (l_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
-    (void) (r_len); // Just for compatibility with Zenoh-C, since Zenoh-Pico strings are null-terminated
-    return _z_keyexpr_intersect(l, r);
+    return _z_keyexpr_intersect(l, llen, r, rlen);
 }
 
 z_owned_config_t zp_config_new(void)
