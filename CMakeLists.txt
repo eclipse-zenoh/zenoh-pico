@@ -48,6 +48,9 @@ message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
 option(BUILD_EXAMPLES "Use this to also build the examples." ON)
 message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 
+option(BUILD_TOOLS "Use this to also build the tools." ON)
+message(STATUS "Build examples: ${BUILD_TOOLS}")
+
 option(BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
@@ -190,6 +193,12 @@ if(BUILD_EXAMPLES)
     target_link_libraries(z_queryable ${Libname})
     target_link_libraries(z_info ${Libname})
     target_link_libraries(z_scout ${Libname})
+endif()
+
+if(BUILD_TOOLS)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tools)
+  add_executable(z_keyexpr_canonizer ${PROJECT_SOURCE_DIR}/tools/z_keyexpr_canonizer.c)
+  target_link_libraries(z_keyexpr_canonizer ${Libname})
 endif()
 
 if(BUILD_TESTING)
