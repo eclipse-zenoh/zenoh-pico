@@ -181,30 +181,30 @@ struct timespec z_clock_now()
     return now;
 }
 
-clock_t z_clock_elapsed_us(struct timespec *instant)
+unsigned long z_clock_elapsed_us(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
 
-    clock_t elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(struct timespec *instant)
+unsigned long z_clock_elapsed_ms(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
 
-    clock_t elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(struct timespec *instant)
+unsigned long z_clock_elapsed_s(struct timespec *instant)
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
 
-    clock_t elapsed = now.tv_sec - instant->tv_sec;
+    unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
 }
 
@@ -216,29 +216,29 @@ struct timeval z_time_now()
     return now;
 }
 
-time_t z_time_elapsed_us(struct timeval *time)
+unsigned long z_time_elapsed_us(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
+    unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(struct timeval *time)
+unsigned long z_time_elapsed_ms(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
+    unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-time_t z_time_elapsed_s(struct timeval *time)
+unsigned long z_time_elapsed_s(struct timeval *time)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = now.tv_sec - time->tv_sec;
+    unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
 }

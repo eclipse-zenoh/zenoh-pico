@@ -12,8 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/system/platform.h"
+#include <FreeRTOS.h>
 #include <hw/driver/delay.h>
+
+#include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void)
@@ -49,7 +51,9 @@ void z_random_fill(void *buf, size_t len)
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {
-    return pvPortMalloc(size);
+    // return pvPortMalloc(size); // Further investigation is required to understand
+                                  // why pvPortMalloc or pvPortMallocAligned are failing
+    return malloc(size);
 }
 
 void *z_realloc(void *ptr, size_t size)
@@ -60,7 +64,9 @@ void *z_realloc(void *ptr, size_t size)
 
 void z_free(void *ptr)
 {
-    vPortFree(ptr);
+    // vPortFree(ptr); // Further investigation is required to understand
+                       // why vPortFree or vPortFreeAligned are failing
+    return free(ptr);
 }
 
 /*------------------ Task ------------------*/
@@ -166,30 +172,30 @@ z_clock_t z_clock_now()
     return now;
 }
 
-clock_t z_clock_elapsed_us(z_clock_t *instant)
+unsigned long z_clock_elapsed_us(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_ms(z_clock_t *instant)
+unsigned long z_clock_elapsed_ms(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-clock_t z_clock_elapsed_s(z_clock_t *instant)
+unsigned long z_clock_elapsed_s(z_clock_t *instant)
 {
     z_clock_t now;
     _zn_clock_gettime(NULL, &now);
 
-    clock_t elapsed = now.tv_sec - instant->tv_sec;
+    unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
 }
 
@@ -201,29 +207,29 @@ z_time_t z_time_now()
     return now;
 }
 
-time_t z_time_elapsed_us(z_time_t *time)
+unsigned long z_time_elapsed_us(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
+    unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-time_t z_time_elapsed_ms(z_time_t *time)
+unsigned long z_time_elapsed_ms(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
+    unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-time_t z_time_elapsed_s(z_time_t *time)
+unsigned long z_time_elapsed_s(z_time_t *time)
 {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    time_t elapsed = now.tv_sec - time->tv_sec;
+    unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
 }

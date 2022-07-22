@@ -69,7 +69,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     {                                                                                  \
         name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                      \
         name##_elem_free((void **)&ptr->val);                                          \
-        z_free(ptr);                                                                     \
+        z_free(ptr);                                                                   \
         *e = NULL;                                                                     \
     }                                                                                  \
     typedef _z_int_void_map_t name##_intmap_t;                                         \

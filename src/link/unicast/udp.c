@@ -71,13 +71,13 @@ int _zn_f_link_open_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtol(tout, NULL, 10);
 
     self->socket.udp.sock = _zn_open_udp_unicast(self->socket.udp.raddr, timeout);
-    if (self->socket.udp.sock < 0)
+    if (self->socket.udp.sock == NULL)
         goto ERR;
 
     return 0;
@@ -90,13 +90,13 @@ int _zn_f_link_listen_udp_unicast(void *arg)
 {
     _zn_link_t *self = (_zn_link_t *)arg;
 
-    clock_t timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
+    unsigned long timeout = ZN_CONFIG_SOCKET_TIMEOUT_DEFAULT;
     z_str_t tout = _z_str_intmap_get(&self->endpoint.config, UDP_CONFIG_TOUT_KEY);
     if (tout != NULL)
         timeout = strtol(tout, NULL, 10);
 
     self->socket.udp.sock = _zn_listen_udp_unicast(self->socket.udp.raddr, timeout);
-    if (self->socket.udp.sock < 0)
+    if (self->socket.udp.sock == NULL)
         goto ERR;
 
     return 0;
@@ -166,8 +166,8 @@ _zn_link_t *_zn_new_link_udp_unicast(_zn_endpoint_t endpoint)
 
     lt->endpoint = endpoint;
 
-    lt->socket.udp.sock = -1;
-    lt->socket.udp.msock = -1;
+    lt->socket.udp.sock = NULL;
+    lt->socket.udp.msock = NULL;
     z_str_t s_addr = _zn_parse_address_segment_udp_unicast(endpoint.locator.address);
     z_str_t s_port = _zn_parse_port_segment_udp_unicast(endpoint.locator.address);
     lt->socket.udp.raddr = _zn_create_endpoint_udp(s_addr, s_port);

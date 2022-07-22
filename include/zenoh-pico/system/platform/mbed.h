@@ -12,19 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SYSTEM_UNIX_TYPES_H
-#define ZENOH_PICO_SYSTEM_UNIX_TYPES_H
+#ifndef ZENOH_PICO_SYSTEM_MBED_TYPES_H
+#define ZENOH_PICO_SYSTEM_MBED_TYPES_H
 
-#include <pthread.h>
 #include <stdint.h>
 #include <sys/time.h>
 
-typedef pthread_t z_task_t;
-typedef pthread_attr_t z_task_attr_t;
-typedef pthread_mutex_t z_mutex_t;
-typedef pthread_cond_t z_condvar_t;
+typedef int _zn_socket_t;
 
-typedef struct timespec z_clock_t;
+typedef void *z_task_t;         // Workaround as MBED is a C++ library
+typedef void *z_task_attr_t;    // Workaround as MBED is a C++ library
+typedef void *z_mutex_t;        // Workaround as MBED is a C++ library
+typedef void *z_condvar_t;      // Workaround as MBED is a C++ library
+
+typedef void *z_clock_t;        // Not defined
 typedef struct timeval z_time_t;
 
-#endif /* ZENOH_PICO_SYSTEM_UNIX_TYPES_H */
+#endif /* ZENOH_PICO_SYSTEM_MBED_TYPES_H */

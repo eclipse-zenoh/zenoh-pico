@@ -12,95 +12,75 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <sys/time.h>
-#include <esp_heap_caps.h>
+#include <mbed.h>
+#include <randLIB.h>
+
+extern "C"
+{
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void)
 {
-    return z_random_u32();
+    return randLIB_get_8bit();
 }
 
 uint16_t z_random_u16(void)
 {
-    return z_random_u32();
+    return randLIB_get_16bit();
 }
 
 uint32_t z_random_u32(void)
 {
-    return esp_random();
+    return randLIB_get_32bit();
 }
 
 uint64_t z_random_u64(void)
 {
-    uint64_t ret = 0;
-    ret |= z_random_u32();
-    ret |= z_random_u32() << 8;
-
-    return ret;
+    return randLIB_get_64bit();
 }
 
 void z_random_fill(void *buf, size_t len)
 {
-    esp_fill_random(buf, len);
+    randLIB_get_n_bytes_random(buf, len);
 }
 
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {
-    return heap_caps_malloc(size, MALLOC_CAP_8BIT);
+    return malloc(size);
 }
 
 void *z_realloc(void *ptr, size_t size)
 {
-    return heap_caps_realloc(ptr, size, MALLOC_CAP_8BIT);
+    return realloc(ptr, size);
 }
 
 void z_free(void *ptr)
 {
-    heap_caps_free(ptr);
+    free(ptr);
 }
 
 /*------------------ Task ------------------*/
-// This wrapper is only used for ESP32.
-// In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
-// A task function should __not__ simply return.
-typedef struct
-{
-    void *(*fun)(void *);
-    void *arg;
-} _zn_task_arg;
-
-void z_task_wrapper(void *arg)
-{
-    _zn_task_arg *zn_arg = (_zn_task_arg *)arg;
-    zn_arg->fun(zn_arg->arg);
-    vTaskDelete(NULL);
-    z_free(zn_arg);
-}
-
 int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    _zn_task_arg *zn_arg = (_zn_task_arg *)z_malloc(sizeof(_zn_task_arg));
-    zn_arg->fun = fun;
-    zn_arg->arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 2560, zn_arg, configMAX_PRIORITIES / 2, task) != pdPASS)
-        return -1;
-
-    return 0;
+    *task = new Thread();
+    mbed::Callback<void()> c = mbed::Callback<void()>(fun, arg);
+    return ((Thread*)*task)->start(c);
 }
 
 int z_task_join(z_task_t *task)
 {
-    // Note: join not supported using FreeRTOS API
-    return 0;
+    int res = ((Thread*)*task)->join();
+    delete ((Thread*)*task);
+    return res;
 }
 
 int z_task_cancel(z_task_t *task)
 {
-    vTaskDelete(task);
-    return 0;
+    int res = ((Thread*)*task)->terminate();
+    delete ((Thread*)*task);
+    return res;
 }
 
 void z_task_free(z_task_t **task)
@@ -113,112 +93,112 @@ void z_task_free(z_task_t **task)
 /*------------------ Mutex ------------------*/
 int z_mutex_init(z_mutex_t *m)
 {
-    return pthread_mutex_init(m, NULL);
+    *m = new Mutex();
+    return 0;
 }
 
 int z_mutex_free(z_mutex_t *m)
 {
-    return pthread_mutex_destroy(m);
+    delete ((Mutex*)*m);
+    return 0;
 }
 
 int z_mutex_lock(z_mutex_t *m)
 {
-    return pthread_mutex_lock(m);
+    ((Mutex*)*m)->lock();
+    return 0;
 }
 
 int z_mutex_trylock(z_mutex_t *m)
 {
-    return pthread_mutex_trylock(m);
+    return ((Mutex*)*m)->trylock() == true ? 0 : -1;
 }
 
 int z_mutex_unlock(z_mutex_t *m)
 {
-    return pthread_mutex_unlock(m);
+    ((Mutex*)*m)->unlock();
+    return 0;
 }
 
 /*------------------ Condvar ------------------*/
 int z_condvar_init(z_condvar_t *cv)
 {
-    return pthread_cond_init(cv, NULL);
+    return 0;
 }
 
 int z_condvar_free(z_condvar_t *cv)
 {
-    return pthread_cond_destroy(cv);
+    delete ((ConditionVariable*)*cv);
+    return 0;
 }
 
 int z_condvar_signal(z_condvar_t *cv)
 {
-    return pthread_cond_signal(cv);
+    ((ConditionVariable*)*cv)->notify_all();
+    return 0;
 }
 
 int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m)
 {
-    return pthread_cond_wait(cv, m);
+    *cv = new ConditionVariable(*((Mutex*)*m));
+    ((ConditionVariable*)*cv)->wait();
+    return 0;
 }
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)
 {
-    return usleep(time);
+    return -1; // Not supported
 }
 
 int z_sleep_ms(unsigned int time)
 {
-    return usleep(1000 * time);
+    ThisThread::sleep_for(chrono::milliseconds(time));
+    return 0;
 }
 
 int z_sleep_s(unsigned int time)
 {
-    return sleep(time);
+    ThisThread::sleep_for(chrono::seconds(time));
+    return 0;
 }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now()
 {
-    z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
-    return now;
+    // TODO: not implemented
+    return NULL;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant)
 {
-    z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
-
-    unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
-    return elapsed;
+    // TODO: not implemented
+    return -1;
 }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant)
 {
-    z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
-
-    unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
-    return elapsed;
+    // TODO: not implemented
+    return -1;
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant)
 {
-    z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
-
-    unsigned long elapsed = now.tv_sec - instant->tv_sec;
-    return elapsed;
+    // TODO: not implemented
+    return -1;
 }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now()
 {
-    z_time_t now;
+    struct timeval now;
     gettimeofday(&now, NULL);
     return now;
 }
 
 unsigned long z_time_elapsed_us(z_time_t *time)
 {
-    z_time_t now;
+    struct timeval now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
@@ -227,7 +207,7 @@ unsigned long z_time_elapsed_us(z_time_t *time)
 
 unsigned long z_time_elapsed_ms(z_time_t *time)
 {
-    z_time_t now;
+    struct timeval now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
@@ -236,9 +216,11 @@ unsigned long z_time_elapsed_ms(z_time_t *time)
 
 unsigned long z_time_elapsed_s(z_time_t *time)
 {
-    z_time_t now;
+    struct timeval now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
 }
+
+} // extern "C"

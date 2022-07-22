@@ -45,8 +45,8 @@ typedef struct {
 It includes a set of function pointers that implement the high-level behavior
 of the transport link. All these must be implemented:
 ```
-typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, clock_t tout);
-typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, clock_t tout);
+typedef _zn_socket_result_t (*_zn_f_link_open)(void *arg, unsigned long tout);
+typedef _zn_socket_result_t (*_zn_f_link_listen)(void *arg, unsigned long tout);
 typedef void (*_zn_f_link_close)(void *arg);
 typedef size_t (*_zn_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
 typedef size_t (*_zn_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);

@@ -39,10 +39,10 @@ typedef struct
 
 void *_zn_open_bt(z_str_t gname, uint8_t mode, uint8_t profile);
 void *_zn_listen_bt(z_str_t gname, uint8_t mode, uint8_t profile);
-void _zn_close_bt(void *);
-size_t _zn_read_exact_bt(void *, uint8_t *ptr, size_t len);
-size_t _zn_read_bt(void *, uint8_t *ptr, size_t len);
-size_t _zn_send_bt(void *, const uint8_t *ptr, size_t len);
+void _zn_close_bt(void *sock_arg);
+size_t _zn_read_exact_bt(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _zn_read_bt(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _zn_send_bt(void *sock_arg, const uint8_t *ptr, size_t len);
 
 #ifdef __cplusplus
 }

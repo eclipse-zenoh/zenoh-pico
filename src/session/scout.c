@@ -20,10 +20,10 @@
     #error "Scouting UDP requires UDP unicast links to be enabled (ZN_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-zn_hello_array_t _zn_scout_loop(
+zn_hello_array_t __zn_scout_loop(
     const _z_wbuf_t *wbf,
     const z_str_t locator,
-    clock_t period,
+    unsigned long period,
     int exit_on_first)
 {
     // Define an empty array
@@ -61,8 +61,8 @@ zn_hello_array_t _zn_scout_loop(
     // The receiving buffer
     _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
 
-    z_clock_t start = z_clock_now();
-    while (z_clock_elapsed_ms(&start) < period)
+    z_time_t start = z_time_now();
+    while (z_time_elapsed_ms(&start) < period)
     {
         // Eventually read hello messages
         _z_zbuf_reset(&zbf);
@@ -171,7 +171,7 @@ zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *confi
 
     // Scout on multicast
     const z_str_t locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
-    locs = _zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
+    locs = __zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
 
     _z_wbuf_clear(&wbf);
 
