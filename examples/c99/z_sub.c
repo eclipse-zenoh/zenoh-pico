@@ -59,13 +59,7 @@ int main(int argc, char **argv)
     printf("Enter 'q' to quit...\n");
     char c = 0;
     while (c != 'q')
-    {
         c = getchar();
-        if (c == -1)
-        {
-            sleep(1);
-        }
-    }
 
     z_undeclare_subscriber(z_subscriber_move(&sub));
 
