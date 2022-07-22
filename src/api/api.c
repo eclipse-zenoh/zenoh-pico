@@ -90,14 +90,35 @@ z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len)
     return _z_keyexpr_canonize(start, len);
 }
 
+z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start)
+{
+    size_t len = strlen(start);
+    size_t newlen = len;
+    z_keyexpr_canon_status_t result = _z_keyexpr_canonize(start, &newlen);
+    if (newlen < len) {
+        start[newlen] = '\0';
+    }
+    return result;
+}
+
 bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
 {
     return _z_keyexpr_includes(l, llen, r, rlen);
 }
 
+z_keyexpr_canon_status_t zp_keyexpr_includes_null_terminated(const char *l, const char *r)
+{
+    return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
+}
+
 bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
 {
     return _z_keyexpr_intersect(l, llen, r, rlen);
+}
+
+z_keyexpr_canon_status_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r)
+{
+    return _z_keyexpr_intersect(l, strlen(l), r, strlen(r));
 }
 
 z_owned_config_t zp_config_new(void)
