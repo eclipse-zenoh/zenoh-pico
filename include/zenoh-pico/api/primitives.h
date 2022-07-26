@@ -109,6 +109,11 @@ _MUTABLE_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 _MUTABLE_OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
 _MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
+z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context);
+z_owned_closure_query_t z_closure_query(_z_questionable_handler_t call, _z_dropper_handler_t drop, void *context);
+z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper_handler_t drop, void *context);
+z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t drop, void *context);
+
 z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
 z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
 z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);

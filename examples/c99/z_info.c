@@ -52,13 +52,13 @@ int main(int argc, char **argv)
     print_zid(&self_id, NULL);
 
     printf("Routers IDs:\n");
-    z_owned_closure_zid_t callback = z_closure(print_zid);
+    z_owned_closure_zid_t callback = z_closure_zid(print_zid, NULL, NULL);
     z_info_routers_zid(z_session_loan(&s), z_closure_zid_move(&callback));
 
     // `callback` has been `z_move`d just above, so it's safe to reuse the variable,
     // we'll just have to make sure we `z_move` it again to avoid mem-leaks.
     printf("Peers IDs:\n");
-    z_owned_closure_zid_t callback2 = z_closure(print_zid);
+    z_owned_closure_zid_t callback2 = z_closure_zid(print_zid, NULL, NULL);
     z_info_peers_zid(z_session_loan(&s), z_closure_zid_move(&callback2));
 
     zp_stop_read_task(z_session_loan(&s));

@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    z_owned_closure_sample_t callback = z_closure(data_handler);
+    z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
     if (!z_pull_subscriber_check(&sub))
