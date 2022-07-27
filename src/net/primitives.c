@@ -347,31 +347,7 @@ int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t 
 }
 
 /*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg)
-{
-    // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
-    pq->_id = _z_get_query_id(zn);
-    pq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    pq->_predicate = _z_str_clone(predicate);
-    pq->_target = target;
-    pq->_consolidation = consolidation;
-    pq->_callback = callback;
-    pq->_dropper = dropper;
-    pq->_pending_replies = NULL;
-    pq->_call_arg = arg;
-    pq->_drop_arg = arg;
-    pq->_call_is_api = 0;
-
-    // Add the pending query to the current session
-    _z_register_pending_query(zn, pq);
-
-    _z_zenoh_message_t z_msg = _z_msg_make_query(keyexpr, pq->_predicate, pq->_id, pq->_target, pq->_consolidation);
-
-    return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
-}
-
-int8_t _z_query_api(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop)
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));

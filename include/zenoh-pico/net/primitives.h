@@ -216,27 +216,11 @@ int8_t _z_pull(const _z_subscriber_t *sub);
  *     target: The kind of queryables that should be target of this query.
  *     consolidation: The kind of consolidation that should be applied on replies.
  *     callback: The callback function that will be called on reception of replies for this query.
- *     dropper: The callback function that will be called on upon completion of the callback.
- *     arg: A pointer that will be passed to the **callback** on each call.
- */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, _z_drop_handler_t dropper, void *arg);
-
-/**
- * Query data from the matching queryables in the system (usage by the API only).
- *
- * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to query. The callee gets the ownership of any
- *             allocated value.
- *     predicate: An indication to matching queryables about the queried data.
- *     target: The kind of queryables that should be target of this query.
- *     consolidation: The kind of consolidation that should be applied on replies.
- *     callback: The callback function that will be called on reception of replies for this query.
  *     arg_call: A pointer that will be passed to the **callback** on each call.
  *     dropper: The callback function that will be called on upon completion of the callback.
  *     arg_drop: A pointer that will be passed to the **dropper** on each call.
  */
-int8_t _z_query_api(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *predicate, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /**
  * Send a reply to a query.

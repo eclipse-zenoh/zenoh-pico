@@ -529,7 +529,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    return _z_query_api(zs, keyexpr, predicate, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
+    return _z_query(zs, keyexpr, predicate, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
