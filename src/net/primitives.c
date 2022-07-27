@@ -64,7 +64,7 @@ ERR_1:
     return Z_RESOURCE_ID_NONE;
 }
 
-int _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
+int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 {
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_LOCAL, rid);
     if (r == NULL) {
@@ -119,7 +119,7 @@ ERR_1:
     return NULL;
 }
 
-int _z_undeclare_publisher(_z_publisher_t *pub)
+int8_t _z_undeclare_publisher(_z_publisher_t *pub)
 {
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
@@ -175,7 +175,7 @@ ERR_1:
     return NULL;
 }
 
-int _z_undeclare_subscriber(_z_subscriber_t *sub)
+int8_t _z_undeclare_subscriber(_z_subscriber_t *sub)
 {
     _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s == NULL) {
@@ -240,7 +240,7 @@ ERR_1:
     return NULL;
 }
 
-int _z_undeclare_queryable(_z_queryable_t *qle)
+int8_t _z_undeclare_queryable(_z_queryable_t *qle)
 {
     _z_questionable_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
     if (q == NULL) {

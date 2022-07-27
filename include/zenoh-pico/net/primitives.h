@@ -70,7 +70,7 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
+int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
 
 /**
  * Declare a :c:type:`_z_publisher_t` for the given resource key.
@@ -97,7 +97,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int _z_undeclare_publisher(_z_publisher_t *pub);
+int8_t _z_undeclare_publisher(_z_publisher_t *pub);
 
 /**
  * Declare a :c:type:`_z_subscriber_t` for the given resource key.
@@ -130,7 +130,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int _z_undeclare_subscriber(_z_subscriber_t *sub);
+int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
 
 /**
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
@@ -157,7 +157,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int _z_undeclare_queryable(_z_queryable_t *qle);
+int8_t _z_undeclare_queryable(_z_queryable_t *qle);
 
 
 /*------------------ Operations ------------------*/
