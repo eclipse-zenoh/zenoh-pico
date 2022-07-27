@@ -86,7 +86,7 @@ void _z_session_free(_z_session_t **zn)
     // Clean up the entities
     _z_flush_resources(ptr);
     _z_flush_subscriptions(ptr);
-    _z_flush_queryables(ptr);
+    _z_flush_questionables(ptr);
     _z_flush_pending_queries(ptr);
 
     // Clean up the mutexes

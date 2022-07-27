@@ -31,7 +31,7 @@ void _z_questionable_clear(_z_questionable_t *qle)
 }
 
 /*------------------ Queryable ------------------*/
-_z_questionable_t *__z_get_queryable_by_id(_z_questionable_list_t *qles, const _z_zint_t id)
+_z_questionable_t *__z_get_questionable_by_id(_z_questionable_list_t *qles, const _z_zint_t id)
 {
     _z_questionable_t *qle = NULL;
     while (qles != NULL)
@@ -46,7 +46,7 @@ _z_questionable_t *__z_get_queryable_by_id(_z_questionable_list_t *qles, const _
     return qle;
 }
 
-_z_questionable_list_t *__z_get_queryables_by_key(_z_questionable_list_t *qles, const _z_keyexpr_t key)
+_z_questionable_list_t *__z_get_questionable_by_key(_z_questionable_list_t *qles, const _z_keyexpr_t key)
 {
     _z_questionable_list_t *xs = NULL;
     while (qles != NULL)
@@ -66,10 +66,10 @@ _z_questionable_list_t *__z_get_queryables_by_key(_z_questionable_list_t *qles, 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_questionable_t *__unsafe_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id)
+_z_questionable_t *__unsafe_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id)
 {
     _z_questionable_list_t *qles = zn->_local_questionable;
-    return __z_get_queryable_by_id(qles, id);
+    return __z_get_questionable_by_id(qles, id);
 }
 
 /**
@@ -77,31 +77,31 @@ _z_questionable_t *__unsafe_z_get_queryable_by_id(_z_session_t *zn, const _z_zin
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_questionable_list_t *__unsafe_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t key)
+_z_questionable_list_t *__unsafe_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key)
 {
     _z_questionable_list_t *qles = zn->_local_questionable;
-    return __z_get_queryables_by_key(qles, key);
+    return __z_get_questionable_by_key(qles, key);
 }
 
-_z_questionable_t *_z_get_queryable_by_id(_z_session_t *zn, const _z_zint_t id)
+_z_questionable_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id)
 {
     _z_mutex_lock(&zn->_mutex_inner);
-    _z_questionable_t *qle = __unsafe_z_get_queryable_by_id(zn, id);
+    _z_questionable_t *qle = __unsafe_z_get_questionable_by_id(zn, id);
     _z_mutex_unlock(&zn->_mutex_inner);
     return qle;
 }
 
-_z_questionable_list_t *_z_get_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr)
+_z_questionable_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr)
 {
     _z_mutex_lock(&zn->_mutex_inner);
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
-    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_key(zn, key);
+    _z_questionable_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
     _z_mutex_unlock(&zn->_mutex_inner);
 
     return qles;
 }
 
-int _z_register_queryable(_z_session_t *zn, _z_questionable_t *qle)
+int _z_register_questionable(_z_session_t *zn, _z_questionable_t *qle)
 {
     _Z_DEBUG(">>> Allocating queryable for (%s,%u)\n", qle->_rname, qle->_kind);
     _z_mutex_lock(&zn->_mutex_inner);
@@ -116,7 +116,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &query->_key);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
     if(key._suffix == NULL)
         goto ERR;
 
@@ -127,7 +127,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     q._key = key;
     q._predicate = query->_predicate;
 
-    _z_questionable_list_t *qles = __unsafe_z_get_queryables_by_key(zn, key);
+    _z_questionable_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
     _z_questionable_list_t *xs = qles;
     while (xs != NULL)
     {
@@ -172,14 +172,14 @@ ERR:
     return -1;
 }
 
-void _z_unregister_queryable(_z_session_t *zn, _z_questionable_t *qle)
+void _z_unregister_questionable(_z_session_t *zn, _z_questionable_t *qle)
 {
     _z_mutex_lock(&zn->_mutex_inner);
     zn->_local_questionable = _z_questionable_list_drop_filter(zn->_local_questionable, _z_questionable_eq, qle);
     _z_mutex_unlock(&zn->_mutex_inner);
 }
 
-void _z_flush_queryables(_z_session_t *zn)
+void _z_flush_questionables(_z_session_t *zn)
 {
     _z_mutex_lock(&zn->_mutex_inner);
     _z_questionable_list_free(&zn->_local_questionable);

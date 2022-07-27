@@ -21,6 +21,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 
+/*------------------ Scouting ------------------*/
 _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout)
 {
     return _z_scout_inner(what, config, timeout, 0);
@@ -29,100 +30,111 @@ _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const
 /*------------------ Resource Declaration ------------------*/
 _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
+    // FIXME: remove when resource declaration is implemented for multicast transport
+    if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        goto ERR_1;
+    }
+
     _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
     r->_id = _z_get_resource_id(zn);
     r->_key = _z_keyexpr_duplicate(&keyexpr);
-
-    // FIXME: remove when resource declaration is implemented for multicast transport
-    if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
-        goto ERR;
-
-    int res = _z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
-    if (res != 0)
-        goto ERR;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&r->_key));
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) < 0) {
+        goto ERR_2;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&keyexpr));
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_3;
+    }
     _z_msg_clear(&z_msg);
 
     return r->_id;
 
-ERR:
+ERR_3:
+    _z_msg_clear(&z_msg);
+
+ERR_2:
+    _z_resource_clear(r);
     z_free(r);
+
+ERR_1:
     return Z_RESOURCE_ID_NONE;
 }
 
-void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
+int _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 {
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_LOCAL, rid);
-    if (r == NULL)
-        return;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (r == NULL) {
+        goto ERR_1;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_2;
+    }
     _z_msg_clear(&z_msg);
+
+    // Only if message is successfully send, local resource state can be removed
     _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
+
+    return 0;
+
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
+    return -1;
 }
 
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing, z_congestion_control_t congestion_control, z_priority_t priority)
 {
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_1;
+    }
+    _z_msg_clear(&z_msg);
+
     _z_publisher_t *pub = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
     pub->_zn = zn;
-    pub->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    pub->_key = _z_keyexpr_duplicate(&keyexpr);
     pub->_id = _z_get_entity_id(zn);
     pub->_local_routing = local_routing;
     pub->_congestion_control = congestion_control;
     pub->_priority = priority;
 
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
-    }
-
-    _z_msg_clear(&z_msg);
-
     return pub;
+
+ERR_1:
+    _z_msg_clear(&z_msg);
+    return NULL;
 }
 
-void _z_undeclare_publisher(_z_publisher_t *pub)
+int _z_undeclare_publisher(_z_publisher_t *pub)
 {
+    // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
-
-    // Build the declare message to send on the wire
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_1;
     }
-
     _z_msg_clear(&z_msg);
+
+    return 0;
+
+ERR_1:
+    _z_msg_clear(&z_msg);
+    return -1;
 }
 
 /*------------------ Subscriber Declaration ------------------*/
@@ -135,22 +147,17 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     rs->_callback = callback;
     rs->_dropper = dropper;
     rs->_arg = arg;
-
-    int res = _z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs);
-    if (res != 0)
-        goto ERR;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs) < 0) {
+        goto ERR_1;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_2;
+    }
     _z_msg_clear(&z_msg);
 
     _z_subscriber_t *subscriber = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
@@ -159,33 +166,39 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 
     return subscriber;
 
-ERR:
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
     _z_keyexpr_clear(&rs->_key);
     z_free(rs);
     return NULL;
 }
 
-void _z_undeclare_subscriber(_z_subscriber_t *sub)
+int _z_undeclare_subscriber(_z_subscriber_t *sub)
 {
     _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL)
-        return;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_keyexpr_t key = _z_keyexpr_duplicate(&s->_key);
-    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(key);
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (s == NULL) {
+        goto ERR_1;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->_key));
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+       goto ERR_2;
+    }
     _z_msg_clear(&z_msg);
 
+    // Only if message is successfully send, local subscription state can be removed
     _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
+
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
+    return -1;
 }
 
 /*------------------ Queryable Declaration ------------------*/
@@ -199,22 +212,17 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
     rq->_callback = callback;
     rq->_dropper = dropper;
     rq->_arg = arg;
-
-    int res = _z_register_queryable(zn, rq);
-    if (res != 0)
-        goto ERR;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_kind, rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_register_questionable(zn, rq) < 0) {
+        goto ERR_1;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_kind, rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_2;
+    }
     _z_msg_clear(&z_msg);
 
     _z_queryable_t *queryable = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
@@ -223,33 +231,41 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
 
     return queryable;
 
-ERR:
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
     _z_keyexpr_clear(&rq->_key);
     z_free(rq);
     return NULL;
 }
 
-void _z_undeclare_queryable(_z_queryable_t *qle)
+int _z_undeclare_queryable(_z_queryable_t *qle)
 {
-    _z_questionable_t *q = _z_get_queryable_by_id(qle->_zn, qle->_id);
-    if (q == NULL)
-        return;
-
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    _z_keyexpr_t key = _z_keyexpr_duplicate(&q->_key);
-    declarations._val[0] = _z_msg_make_declaration_forget_queryable(key, q->_kind);
-
-    // Build the declare message to send on the wire
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-
-    if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    _z_questionable_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
+    if (q == NULL) {
+        goto ERR_1;
     }
 
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key), q->_kind);
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        goto ERR_2;
+    }
     _z_msg_clear(&z_msg);
 
-    _z_unregister_queryable(qle->_zn, q);
+    // Only if message is successfully send, local queryable state can be removed
+    _z_unregister_questionable(qle->_zn, q);
+
+    return 0;
+
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
+    return -1;
 }
 
 int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)

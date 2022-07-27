@@ -25,7 +25,7 @@
  */
 typedef void (*_z_drop_handler_t)(void *arg);
 
-#define _Z_RESOURCE_REMOTE 0
+#define _Z_RESOURCE_IS_REMOTE 0
 #define _Z_RESOURCE_IS_LOCAL 1
 
 /**

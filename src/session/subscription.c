@@ -131,7 +131,7 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
 {
     _z_mutex_lock(&zn->_mutex_inner);
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &keyexpr);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
     if (key._suffix == NULL)
         goto ERR;
 

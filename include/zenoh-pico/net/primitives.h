@@ -67,8 +67,10 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     rid: The numerical id of the resource to undeclare.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
  */
-void _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
+int _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
 
 /**
  * Declare a :c:type:`_z_publisher_t` for the given resource key.
@@ -92,8 +94,10 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int
  * Parameters:
  *     pub: The :c:type:`_z_publisher_t` to undeclare. The callee releases the
  *          publisher upon successful return.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
  */
-void _z_undeclare_publisher(_z_publisher_t *pub);
+int _z_undeclare_publisher(_z_publisher_t *pub);
 
 /**
  * Declare a :c:type:`_z_subscriber_t` for the given resource key.
@@ -123,8 +127,10 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
  * Parameters:
  *     sub: The :c:type:`_z_subscriber_t` to undeclare. The callee releases the
  *          subscriber upon successful return.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
  */
-void _z_undeclare_subscriber(_z_subscriber_t *sub);
+int _z_undeclare_subscriber(_z_subscriber_t *sub);
 
 /**
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
@@ -148,8 +154,10 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
  * Parameters:
  *     qle: The :c:type:`_z_queryable_t` to undeclare. The callee releases the
  *          queryable upon successful return.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
  */
-void _z_undeclare_queryable(_z_queryable_t *qle);
+int _z_undeclare_queryable(_z_queryable_t *qle);
 
 
 /*------------------ Operations ------------------*/

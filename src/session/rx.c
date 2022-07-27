@@ -53,7 +53,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 r->_id = decl._body._res._id;
                 r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
-                int res = _z_register_resource(zn, _Z_RESOURCE_REMOTE, r);
+                int res = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
                 if (res != 0)
                 {
                     _z_resource_clear(r);
@@ -73,8 +73,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             case _Z_DECL_SUBSCRIBER:
             {
                 _Z_INFO("Received declare-subscriber message\n");
-                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &decl._body._sub._key);
-                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_REMOTE, &key);
+                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._sub._key);
+                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
                 if (subs != NULL)
                     break;
 
@@ -85,7 +85,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
                 rs->_callback = NULL;
                 rs->_dropper = NULL;
                 rs->_arg = NULL;
-                _z_register_subscription(zn, _Z_RESOURCE_REMOTE, rs);
+                _z_register_subscription(zn, _Z_RESOURCE_IS_REMOTE, rs);
 
                 _z_list_free(&subs, _z_noop_free);
                 break;
@@ -99,9 +99,9 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             case _Z_DECL_FORGET_RESOURCE:
             {
                 _Z_INFO("Received forget-resource message\n");
-                _z_resource_t *rd = _z_get_resource_by_id(zn, _Z_RESOURCE_REMOTE, decl._body._forget_res._rid);
+                _z_resource_t *rd = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_REMOTE, decl._body._forget_res._rid);
                 if (rd != NULL)
-                    _z_unregister_resource(zn, _Z_RESOURCE_REMOTE, rd);
+                    _z_unregister_resource(zn, _Z_RESOURCE_IS_REMOTE, rd);
 
                 break;
             }
@@ -114,14 +114,14 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg)
             case _Z_DECL_FORGET_SUBSCRIBER:
             {
                 _Z_INFO("Received forget-subscriber message\n");
-                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_REMOTE, &decl._body._forget_sub._key);
-                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_REMOTE, &key);
+                _z_keyexpr_t key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._forget_sub._key);
+                _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
 
                 _z_subscriber_list_t *xs = subs;
                 while (xs != NULL)
                 {
                     _z_subscription_t *sub = _z_subscriber_list_head(xs);
-                    _z_unregister_subscription(zn, _Z_RESOURCE_REMOTE, sub);
+                    _z_unregister_subscription(zn, _Z_RESOURCE_IS_REMOTE, sub);
                     xs = _z_subscriber_list_tail(xs);
                 }
                 _z_list_free(&subs, _z_noop_free);

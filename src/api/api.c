@@ -558,11 +558,24 @@ z_publisher_options_t z_publisher_options_default(void)
 
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options)
 {
-    if (options != NULL)
-        return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr, options->local_routing, options->congestion_control, options->priority)};
+    z_keyexpr_t key = keyexpr;
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        if (r == NULL) {
+            key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+        }
+    }
+
+    if (options != NULL) {
+        return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, options->local_routing, options->congestion_control, options->priority)};
+    }
 
     z_publisher_options_t opt = z_publisher_options_default();
-    return (z_owned_publisher_t){._value = _z_declare_publisher(zs, keyexpr, opt.local_routing, opt.congestion_control, opt.priority)};
+    return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, opt.local_routing, opt.congestion_control, opt.priority)};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub)
@@ -599,11 +612,24 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     void *ctx = callback->context;
     callback->context = NULL;
 
+    printf("z_declare_subscriber: %zu:%s\n", keyexpr._id, keyexpr._suffix);
+
+    z_keyexpr_t key = keyexpr;
+    printf("z_declare_subscriber: %zu:%s\n", key._id, key._suffix);
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        if (r == NULL)
+            key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+    }
+
     _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
-    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, ctx)};
+    return (z_owned_subscriber_t){._value = _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx)};
 }
 
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options)
@@ -611,11 +637,16 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t
     void *ctx = callback->context;
     callback->context = NULL;
 
+    z_keyexpr_t key = keyexpr;
+    _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    if (r == NULL)
+        key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+
     _z_subinfo_t subinfo = _z_subinfo_pull_default();
     if (options != NULL)
         subinfo.reliability = options->reliability;
 
-    return (z_owned_pull_subscriber_t){._value = _z_declare_subscriber(zs, keyexpr, subinfo, callback->call, callback->drop, ctx)};
+    return (z_owned_pull_subscriber_t){._value = _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub)
@@ -655,11 +686,16 @@ z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_
     void *ctx = callback->context;
     callback->context = NULL;
 
+    z_keyexpr_t key = keyexpr;
+    _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    if (r == NULL)
+        key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+
     if (options != NULL)
-        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, options->complete, callback->call, callback->drop, ctx)};
+        return (z_owned_queryable_t){._value = _z_declare_queryable(zs, key, options->complete, callback->call, callback->drop, ctx)};
 
     z_queryable_options_t opt = z_queryable_options_default();
-    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, keyexpr, opt.complete, callback->call, callback->drop, ctx)};
+    return (z_owned_queryable_t){._value = _z_declare_queryable(zs, key, opt.complete, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable)
