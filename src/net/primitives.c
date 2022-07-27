@@ -321,10 +321,6 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl)
 {
-    // @TODO: Need to verify that I have declared a publisher with the same resource key.
-    //        Then, need to verify there are active subscriptions matching the publisher.
-    // @TODO: Need to check subscriptions to determine the right reliability value.
-
     // Data info
     _z_data_info_t info;
     info._flags = 0;
