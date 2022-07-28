@@ -24,8 +24,8 @@ on:
 jobs:
   build:
 
-    name: Build on ubuntu-latest
-    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
