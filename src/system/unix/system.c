@@ -71,7 +71,7 @@ uint64_t z_random_u64(void)
 void z_random_fill(void *buf, size_t len)
 {
 #if defined(ZENOH_LINUX)
-    while (getrandom(&buf, len, GRND_RANDOM) < 0);
+    while (getrandom(buf, len, GRND_RANDOM) < 0);
 #elif defined(ZENOH_MACOS)
     arc4random_buf(buf, len);
 #endif
