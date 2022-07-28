@@ -284,11 +284,11 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     pld.start = payload;
 
     // Congestion control
-    int can_be_dropped = Z_CONGESTION_CONTROL_DEFAULT == Z_CONGESTION_CONTROL_DROP;
+    int can_be_dropped = 0;
 
     _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
 
-    int8_t ret = _z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_DEFAULT);
+    int8_t ret = _z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 
     z_free(rctx);
 
