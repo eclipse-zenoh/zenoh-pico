@@ -25,6 +25,7 @@ _z_link_p_result_t _z_open_link(const char *locator)
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
     _z_endpoint_t endpoint = ep_res._value._endpoint;
 
+    // TODO[peer]: when peer unicast mode is supported, this must be revisited
     // Create transport link
 #if Z_LINK_TCP == 1
     if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA)) {
@@ -35,12 +36,6 @@ _z_link_p_result_t _z_open_link(const char *locator)
 #if Z_LINK_UDP_UNICAST == 1
     if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
         r._value._link = _z_new_link_udp_unicast(endpoint);
-    }
-    else
-#endif
-#if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
-        r._value._link = _z_new_link_udp_multicast(endpoint);
     }
     else
 #endif
@@ -88,19 +83,8 @@ _z_link_p_result_t _z_listen_link(const char *locator)
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
     _z_endpoint_t endpoint = ep_res._value._endpoint;
 
+    // TODO[peer]: when peer unicast mode is supported, this must be revisited
     // Create transport link
-#if Z_LINK_TCP == 1
-    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA)) {
-        r._value._link = _z_new_link_tcp(endpoint);
-    }
-    else
-#endif
-#if Z_LINK_UDP_UNICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
-        r._value._link = _z_new_link_udp_unicast(endpoint);
-    }
-    else
-#endif
 #if Z_LINK_UDP_MULTICAST == 1
     if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
         r._value._link = _z_new_link_udp_multicast(endpoint);
