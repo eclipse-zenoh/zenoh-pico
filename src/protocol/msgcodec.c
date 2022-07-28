@@ -1011,7 +1011,7 @@ int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg)
     // Encode the body
     _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
-    _Z_EC(_z_str_encode(wbf, msg->_predicate))
+    _Z_EC(_z_str_encode(wbf, msg->_value_selector))
 
     _Z_EC(_z_zint_encode(wbf, msg->_qid))
 
@@ -1103,7 +1103,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r)
 
     _z_str_result_t r_str = _z_str_decode(zbf);
     _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-    r->_value._query._predicate = r_str._value._str;
+    r->_value._query._value_selector = r_str._value._str;
 
     _z_zint_result_t r_qid = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_qid, r, _Z_ERR_PARSE_ZINT)

@@ -133,7 +133,7 @@ z_put_options_t z_put_options_default(void);
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
 
 z_get_options_t z_get_options_default(void);
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options);
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback, const z_get_options_t *options);
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr);
 int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr);

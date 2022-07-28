@@ -1487,7 +1487,7 @@ void pull_message(void)
 _z_zenoh_message_t gen_query_message(void)
 {
     _z_keyexpr_t key = gen_res_key();
-    char *predicate = gen_str(gen_uint8() % 16);
+    char *value_selector = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 
     _z_target_t target;
@@ -1516,7 +1516,7 @@ _z_zenoh_message_t gen_query_message(void)
     consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
     consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    return _z_msg_make_query(key, predicate, qid, target, consolidation);
+    return _z_msg_make_query(key, value_selector, qid, target, consolidation);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header)
@@ -1525,8 +1525,8 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     assert_eq_res_key(&left->_key, &right->_key, header);
     printf("\n");
 
-    printf("   Predicate (%s:%s)", left->_predicate, right->_predicate);
-    assert(_z_str_eq(left->_predicate, right->_predicate));
+    printf("   Predicate (%s:%s)", left->_value_selector, right->_value_selector);
+    assert(_z_str_eq(left->_value_selector, right->_value_selector));
     printf("\n");
 
     printf("   Query ID (%zu:%zu)", left->_qid, right->_qid);

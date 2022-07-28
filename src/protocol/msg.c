@@ -425,12 +425,12 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg)
 }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_t qid, _z_target_t target, z_consolidation_strategy_t consolidation)
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_strategy_t consolidation)
 {
     _z_zenoh_message_t msg;
 
     msg._body._query._key = key;
-    msg._body._query._predicate = predicate;
+    msg._body._query._value_selector = value_selector;
     msg._body._query._qid = qid;
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
@@ -450,7 +450,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *predicate, _z_zint_
 void _z_msg_clear_query(_z_msg_query_t *msg)
 {
     _z_keyexpr_clear(&msg->_key);
-    _z_str_clear(msg->_predicate);
+    _z_str_clear(msg->_value_selector);
 }
 
 /*------------------ Reply Message ------------------*/

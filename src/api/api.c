@@ -227,7 +227,7 @@ z_query_consolidation_t z_query_consolidation_reception(void)
 
 z_bytes_t z_query_value_selector(z_query_t *query)
 {
-    z_bytes_t value_selector = _z_bytes_wrap((uint8_t *)query->_predicate, strlen(query->_predicate));
+    z_bytes_t value_selector = _z_bytes_wrap((uint8_t *)query->_value_selector, strlen(query->_value_selector));
     return value_selector;
 }
 
@@ -491,7 +491,7 @@ void __z_reply_handler(_z_reply_t *reply, void *arg)
     wrapped_ctx->user_call(oreply, wrapped_ctx->ctx);
 }
 
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owned_closure_reply_t *callback, const z_get_options_t *options)
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback, const z_get_options_t *options)
 {
     void *ctx = callback->context;
     callback->context = NULL;
@@ -504,7 +504,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
         if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL) {
             strategy = options->consolidation.manual;
         } else {
-            if (strstr(predicate, "_time=") != NULL) {
+            if (strstr(value_selector, "_time=") != NULL) {
                 strategy = _z_consolidation_strategy_none();
             } else {
                 strategy = _z_consolidation_strategy_default();
@@ -522,7 +522,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    return _z_query(zs, keyexpr, predicate, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
+    return _z_query(zs, keyexpr, value_selector, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)

@@ -146,7 +146,7 @@ typedef struct
 {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    char *_predicate;
+    char *_value_selector;
     _z_target_t _target;
     z_consolidation_strategy_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;

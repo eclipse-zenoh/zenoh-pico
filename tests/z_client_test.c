@@ -43,7 +43,7 @@ void query_handler(z_query_t *query, void *arg)
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
     assert(_z_str_eq(query->_key._suffix, res));
-    assert(_z_str_eq(query->_predicate, ""));
+    assert(_z_str_eq(query->_value_selector, ""));
 
     z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res));
     queries++;

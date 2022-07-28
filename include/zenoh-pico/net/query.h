@@ -26,7 +26,7 @@ typedef struct
     _z_zint_t _qid;
     z_queryable_kind_t _kind;
     _z_keyexpr_t _key;
-    char *_predicate;
+    char *_value_selector;
 } z_query_t;
 
 /**

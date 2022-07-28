@@ -430,26 +430,26 @@ Functions
 
   Return 0 if pull was successful.
 
-.. c:function:: int _z_query(_z_session_t *z, const char* resource, const char* predicate, z_reply_handler_t reply_handler, void *arg)
+.. c:function:: int _z_query(_z_session_t *z, const char* resource, const char* value_selector, z_reply_handler_t reply_handler, void *arg)
 
   Query data matching resource name **resource** in session **z**.
 
   | **z** is the zenoh-net session.
   | **resource** is the resource to query.
-  | **predicate** is a string that will be  propagated to the storages and evals that should provide the queried data.
+  | **value_selector** is a string that will be  propagated to the storages and evals that should provide the queried data.
     It may allow them to filter, transform and/or compute the queried data.
   | **reply_handler** is the callback function that will be called on reception of the replies of the query.
   | **arg** is a pointer that will be passed to the **reply_handler** function on each call.
 
   Return 0 if the query was sent successfully.
 
-.. c:function:: int z_query_wo(_z_session_t *z, const char* resource, const char* predicate, z_reply_handler_t reply_handler, void *arg, z_query_dest_t dest_storages, z_query_dest_t dest_evals)
+.. c:function:: int z_query_wo(_z_session_t *z, const char* resource, const char* value_selector, z_reply_handler_t reply_handler, void *arg, z_query_dest_t dest_storages, z_query_dest_t dest_evals)
 
   Query data matching resource name **resource** in session **z**.
 
   | **z** is the zenoh-net session.
   | **resource** is the resource to query.
-  | **predicate** is a string that will be  propagated to the storages and evals that should provide the queried data.
+  | **value_selector** is a string that will be  propagated to the storages and evals that should provide the queried data.
     It may allow them to filter, transform and/or compute the queried data.
   | **reply_handler** is the callback function that will be called on reception of the replies of the query.
   | **arg** is a pointer that will be passed to the **reply_handler** function on each call.
@@ -513,7 +513,7 @@ Handlers
   | **info** is the :c:type:`z_data_info_t` associated with the received data.
   | **arg** is the pointer passed to :c:func:`_z_declare_subscriber` or :c:func:`z_declare_storage`.
 
-.. c:type:: void (*_z_reply_handler_t)(const char *rname, const char *predicate, z_replies_sender_t send_replies, void *query_handle, void *arg)
+.. c:type:: void (*_z_reply_handler_t)(const char *rname, const char *value_selector, z_replies_sender_t send_replies, void *query_handle, void *arg)
 
   Function to pass as argument of :c:func:`z_declare_storage` or :c:func:`z_declare_eval`.
   It will be called on reception of query matching the stored/evaluated resource selection.
@@ -522,7 +522,7 @@ Handlers
   function MUST be called but accepts empty data array.
 
   | **rname** is the resource name of the queried data.
-  | **predicate** is a string provided by the querier refining the data to be provided.
+  | **value_selector** is a string provided by the querier refining the data to be provided.
   | **send_replies** is a function that MUST be called with the *query_handle* and the provided data as arguments.
   | **query_handle** is a pointer to pass as argument of *send_replies*.
   | **arg** is the pointer passed to :c:func:`z_declare_storage` or :c:func:`z_declare_eval`.
