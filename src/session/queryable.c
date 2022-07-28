@@ -118,7 +118,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
     if(key._suffix == NULL)
-        goto ERR;
+        goto ERR_1;
 
     // Build the query
     z_query_t q;
@@ -156,9 +156,8 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
     z_msg._reply_context = rctx;
 
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
+        goto ERR_2;
     }
     _z_msg_clear(&z_msg);
 
@@ -167,7 +166,12 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query)
     _z_mutex_unlock(&zn->_mutex_inner);
     return 0;
 
-ERR:
+ERR_2:
+    _z_msg_clear(&z_msg);
+    _z_keyexpr_clear(&key);
+    _z_list_free(&qles, _z_noop_free);
+
+ERR_1:
     _z_mutex_unlock(&zn->_mutex_inner);
     return -1;
 }

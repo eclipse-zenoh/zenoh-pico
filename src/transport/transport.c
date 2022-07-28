@@ -170,16 +170,18 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     // Encode and send the message
     _Z_INFO("Sending Z_INIT(Syn)\n");
     int res = _z_link_send_t_msg(zl, &ism);
-    if (res != 0)
+    if (res != 0) {
         goto ERR_1;
+    }
 
     // The announced sn resolution
     param._sn_resolution = ism._body._init._sn_resolution;
     _z_t_msg_clear(&ism);
 
     _z_transport_message_result_t r_iam = _z_link_recv_t_msg(zl);
-    if (r_iam._tag == _Z_RES_ERR)
+    if (r_iam._tag == _Z_RES_ERR) {
         goto ERR_1;
+    }
 
     _z_transport_message_t iam = r_iam._value._transport_message;
     switch (_Z_MID(iam._header))
@@ -187,18 +189,17 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     case _Z_MID_INIT:
     {
         _Z_INFO("Received Z_INIT(Ack)\n");
-        if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_A)
-        {
+        if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_A) {
             // Handle SN resolution option if present
-            if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_S)
-            {
+            if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_S) {
                 // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
                 // otherwise the InitAck message is considered invalid and it should be treated as a
                 // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                if (iam._body._init._sn_resolution <= param._sn_resolution)
+                if (iam._body._init._sn_resolution <= param._sn_resolution) {
                     param._sn_resolution = iam._body._init._sn_resolution;
-                else
+                } else {
                     goto ERR_2;
+                }
             }
 
             // The initial SN at TX side
@@ -219,33 +220,33 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
             _Z_INFO("Sending Z_OPEN(Syn)\n");
             res = _z_link_send_t_msg(zl, &osm);
 
-            if (res != 0)
+            if (res != 0) {
                 goto ERR_3;
+            }
 
             _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
-            if (r_oam._tag == _Z_RES_ERR)
+            if (r_oam._tag == _Z_RES_ERR) {
                 goto ERR_3;
+            }
             _z_transport_message_t oam = r_oam._value._transport_message;
             _Z_INFO("Received Z_OPEN(Ack)\n");
 
-            if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A))
-            {
+            if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A)) {
                 // The session lease
                 param._lease = oam._body._open._lease;
 
                 // The initial SN at RX side. Initialize the session as we had already received
                 // a message with a SN equal to initial_sn - 1.
                 param._initial_sn_rx = _z_sn_decrement(param._sn_resolution, oam._body._open._initial_sn);
-            }
-            else
+            } else {
                 goto ERR_3;
+            }
 
             _z_t_msg_clear(&oam);
-
             break;
-        }
-        else
+        } else {
             goto ERR_2;
+        }
     }
 
     default:
@@ -261,7 +262,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     return ret;
 
 ERR_3:
-    _z_bytes_clear(&param._remote_pid); // FIXME: Conditional jump or move depends on uninitialised value(s)
+    _z_bytes_clear(&param._remote_pid);
 ERR_2:
     _z_t_msg_clear(&iam);
 ERR_1:

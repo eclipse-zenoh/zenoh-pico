@@ -166,25 +166,25 @@ int z_sleep_s(unsigned int time)
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now()
 {
-    // TODO: not implemented
+    // Not supported by default
     return NULL;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant)
 {
-    // TODO: not implemented
+    // Not supported by default
     return -1;
 }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant)
 {
-    // TODO: not implemented
+    // Not supported by default
     return -1;
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant)
 {
-    // TODO: not implemented
+    // Not supported by default
     return -1;
 }
 

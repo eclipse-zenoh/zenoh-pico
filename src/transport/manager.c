@@ -38,7 +38,7 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
         if (res_tp_param._tag == _Z_RES_ERR)
             goto ERR_2;
 
-        // @TODO: not implemented
+        zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
     }
 
     ret._tag = _Z_RES_OK;

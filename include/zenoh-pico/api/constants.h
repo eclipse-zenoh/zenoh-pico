@@ -150,7 +150,7 @@ typedef enum
     Z_QUERY_TARGET_ALL_COMPLETE = 2,
 } z_query_target_t;
 
-//FIXME
+//FIXME: move to types.h
 /**
  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
  * at the different stages of the reply process.

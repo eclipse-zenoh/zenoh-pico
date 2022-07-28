@@ -27,8 +27,8 @@
 char *uri = "demo/example/";
 unsigned int idx[SET];
 
-// The active resource, subscriber, queryable declarations
-_z_list_t *subs2 = NULL; // @TODO: use type-safe list
+// The active subscribers
+_z_list_t *subs2 = NULL;
 
 volatile unsigned int total = 0;
 
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, (z_zint_t)0, s1_res);
-        subs2 = _z_list_push(subs2, sub); // @TODO: use type-safe list
+        subs2 = _z_list_push(subs2, sub);
     }
 
     // Write data from firt session
@@ -142,10 +142,10 @@ int main(int argc, char **argv)
     // Undeclare subscribers and queryables on second session
     while (subs2)
     {
-        z_owned_subscriber_t *sub = _z_list_head(subs2); // @TODO: use type-safe list
+        z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)->_id);
         z_undeclare_subscriber(z_move(*sub));
-        subs2 = _z_list_pop(subs2, _z_noop_elem_free); // @TODO: use type-safe list
+        subs2 = _z_list_pop(subs2, _z_noop_elem_free);
     }
 
     z_sleep_s(SLEEP);

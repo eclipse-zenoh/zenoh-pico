@@ -27,45 +27,55 @@ _z_link_p_result_t _z_open_link(const char *locator)
 
     // Create transport link
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA))
-    {
+    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA)) {
         r._value._link = _z_new_link_tcp(endpoint);
     }
     else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA))
-    {
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
         r._value._link = _z_new_link_udp_unicast(endpoint);
     }
     else
 #endif
+#if Z_LINK_UDP_MULTICAST == 1
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
+        r._value._link = _z_new_link_udp_multicast(endpoint);
+    }
+    else
+#endif
 #if Z_LINK_BLUETOOTH == 1
-    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA))
-    {
+    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA)) {
         r.value._link = _z_new_link_bt(endpoint);
     }
     else
 #endif
-        goto ERR2;
+    {
+        goto ERR_2;
+    }
+
+    if (r._value._link == NULL) {
+        goto ERR_2;
+    }
 
     // Open transport link for communication
-    if (r._value._link->_open_f(r._value._link) < 0)
-        goto ERR3;
+    if (r._value._link->_open_f(r._value._link) < 0) {
+        goto ERR_3;
+    }
 
     r._tag = _Z_RES_OK;
     return r;
 
-ERR3:
+ERR_3:
     _z_link_free(&r._value._link);
     r._value._error = -1;
-    goto ERR1; // _z_link_free is releasing the endpoint
+    goto ERR_1; // _z_link_free is releasing the endpoint
 
-ERR2:
+ERR_2:
     r._value._error = _Z_ERR_INVALID_LOCATOR;
     _z_endpoint_clear(&endpoint);
 
-ERR1:
+ERR_1:
     r._tag = _Z_RES_ERR;
     return r;
 }
@@ -78,40 +88,56 @@ _z_link_p_result_t _z_listen_link(const char *locator)
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
     _z_endpoint_t endpoint = ep_res._value._endpoint;
 
-    // @TODO: for now listening is only supported for UDP multicast
     // Create transport link
+#if Z_LINK_TCP == 1
+    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA)) {
+        r._value._link = _z_new_link_tcp(endpoint);
+    }
+    else
+#endif
+#if Z_LINK_UDP_UNICAST == 1
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
+        r._value._link = _z_new_link_udp_unicast(endpoint);
+    }
+    else
+#endif
 #if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA))
-    {
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
         r._value._link = _z_new_link_udp_multicast(endpoint);
     }
     else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA))
-    {
+    if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA)) {
         r._value._link = _z_new_link_bt(endpoint);
     }
     else
 #endif
-        goto ERR2;
+    {
+        goto ERR_2;
+    }
+
+    if (r._value._link == NULL) {
+        goto ERR_2;
+    }
 
     // Open transport link for listening
-    if (r._value._link->_listen_f(r._value._link) < 0)
-        goto ERR3;
+    if (r._value._link->_listen_f(r._value._link) < 0) {
+        goto ERR_3;
+    }
 
     r._tag = _Z_RES_OK;
     return r;
 
-ERR3:
+ERR_3:
     _z_link_free(&r._value._link);
     r._value._error = _Z_ERR_INVALID_LOCATOR;
-    goto ERR1; // _z_link_free is releasing the endpoint
+    goto ERR_1; // _z_link_free is releasing the endpoint
 
-ERR2:
+ERR_2:
     _z_endpoint_clear(&endpoint);
 
-ERR1:
+ERR_1:
     r._tag = _Z_RES_ERR;
     r._value._error = -1;
 

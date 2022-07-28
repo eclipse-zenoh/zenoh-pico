@@ -51,21 +51,21 @@ void z_random_fill(void *buf, size_t len)
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size)
 {
-    // return pvPortMalloc(size); // Further investigation is required to understand
-                                  // why pvPortMalloc or pvPortMallocAligned are failing
+    // return pvPortMalloc(size); // FIXME: Further investigation is required to understand
+                                  //        why pvPortMalloc or pvPortMallocAligned are failing
     return malloc(size);
 }
 
 void *z_realloc(void *ptr, size_t size)
 {
-    // TODO: not implemented
+    // Not implemented by the platform
     return NULL;
 }
 
 void z_free(void *ptr)
 {
-    // vPortFree(ptr); // Further investigation is required to understand
-                       // why vPortFree or vPortFreeAligned are failing
+    // vPortFree(ptr); // FIXME: Further investigation is required to understand
+                       //        why vPortFree or vPortFreeAligned are failing
     return free(ptr);
 }
 

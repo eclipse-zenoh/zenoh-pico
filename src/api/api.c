@@ -18,6 +18,7 @@
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
@@ -26,7 +27,7 @@
 /*************** Logging ***************/
 int8_t z_init_logger(void)
 {
-    // TODO
+    _z_init_logger();
     return 0;
 }
 
