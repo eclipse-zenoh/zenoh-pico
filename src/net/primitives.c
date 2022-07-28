@@ -22,7 +22,7 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Scouting ------------------*/
-_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout)
+_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, uint32_t timeout)
 {
     return _z_scout_inner(what, config, timeout, 0);
 }

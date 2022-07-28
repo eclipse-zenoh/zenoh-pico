@@ -38,13 +38,13 @@ void _z_free_endpoint_tcp(void *addr_arg)
     delete addr;
 }
 
-TCPSocket *_z_open_tcp(void *raddr_arg, unsigned long tout)
+TCPSocket *_z_open_tcp(void *raddr_arg, uint32_t tout)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
     TCPSocket *sock = new TCPSocket();
-    sock->set_timeout(tout * 1000);
+    sock->set_timeout(tout);
     if (sock->open(net) < 0)
         goto _Z_OPEN_TCP_UNICAST_ERROR_1;
 
@@ -126,12 +126,12 @@ void _z_free_endpoint_udp(void *addr_arg)
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1
-UDPSocket *_z_open_udp_unicast(void *raddr_arg, unsigned long tout)
+UDPSocket *_z_open_udp_unicast(void *raddr_arg, uint32_t tout)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     UDPSocket *sock = new UDPSocket();
-    sock->set_timeout(tout * 1000);
+    sock->set_timeout(tout);
     if (sock->open(net) < 0)
         goto _Z_OPEN_UDP_UNICAST_ERROR_1;
 
@@ -142,7 +142,7 @@ _Z_OPEN_UDP_UNICAST_ERROR_1:
     return NULL;
 }
 
-UDPSocket *_z_listen_udp_unicast(void *raddr_arg, unsigned long tout)
+UDPSocket *_z_listen_udp_unicast(void *raddr_arg, uint32_t tout)
 {
     // @TODO: To be implemented
 
@@ -200,7 +200,7 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-UDPSocket *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, unsigned long tout, const char *iface)
+UDPSocket *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, const char *iface)
 {
     *laddr_arg = NULL; // Multicast messages are not self-consumed,
                        // so no need to save the local address
@@ -208,7 +208,7 @@ UDPSocket *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, unsigned lon
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     UDPSocket *sock = new UDPSocket();
-    sock->set_timeout(tout * 1000);
+    sock->set_timeout(tout);
     if (sock->open(net) < 0)
         goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
 
@@ -219,13 +219,13 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
     return NULL;
 }
 
-UDPSocket *_z_listen_udp_multicast(void *raddr_arg, unsigned long tout, const char *iface)
+UDPSocket *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
 {
     NetworkInterface *net = NetworkInterface::get_default_instance();
     SocketAddress *raddr = (SocketAddress *)raddr_arg;
 
     UDPSocket *sock = new UDPSocket();
-    sock->set_timeout(tout * 1000);
+    sock->set_timeout(tout);
     if (sock->open(net) < 0)
         goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
 

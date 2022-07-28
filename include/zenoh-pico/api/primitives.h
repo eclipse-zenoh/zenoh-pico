@@ -120,7 +120,7 @@ z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_r
 z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
 
 /************* Primitives **************/
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout);
+z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t timeout);
 
 z_owned_session_t z_open(z_owned_config_t *config);
 int8_t z_close(z_owned_session_t *zs);

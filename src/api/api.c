@@ -367,7 +367,7 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid)
 }
 
 /************* Primitives **************/
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, unsigned long timeout)
+z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t timeout)
 {
     z_owned_hello_array_t hellos;
     hellos._value = (z_hello_array_t*)z_malloc(sizeof(z_hello_array_t));
@@ -612,10 +612,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     void *ctx = callback->context;
     callback->context = NULL;
 
-    printf("z_declare_subscriber: %zu:%s\n", keyexpr._id, keyexpr._suffix);
-
     z_keyexpr_t key = keyexpr;
-    printf("z_declare_subscriber: %zu:%s\n", key._id, key._suffix);
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.

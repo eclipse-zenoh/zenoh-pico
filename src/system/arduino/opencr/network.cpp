@@ -48,7 +48,7 @@ void _z_free_endpoint_tcp(void *addr_arg)
     z_free(addr);
 }
 
-void *_z_open_tcp(void *raddr_arg, const clock_t tout)
+void *_z_open_tcp(void *raddr_arg, uint32_t tout)
 {
     __z_tcp_addr_t *raddr = (__z_tcp_addr_t *)raddr_arg;
 
@@ -59,7 +59,7 @@ void *_z_open_tcp(void *raddr_arg, const clock_t tout)
     return sock;
 }
 
-void * _z_listen_tcp(void *laddr_arg, const clock_t tout)
+void * _z_listen_tcp(void *laddr_arg, uint32_t tout)
 {
     __z_tcp_addr_t *laddr = (__z_tcp_addr_t *)laddr_arg;
 
@@ -145,7 +145,7 @@ void _z_free_endpoint_udp(void *addr_arg)
 
 #if Z_LINK_UDP_UNICAST == 1
 
-void *_z_open_udp_unicast(void *raddr_arg, const clock_t tout)
+void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout)
 {
     __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
 
@@ -156,7 +156,7 @@ void *_z_open_udp_unicast(void *raddr_arg, const clock_t tout)
     return sock;
 }
 
-void * _z_listen_udp_unicast(void *laddr_arg, const clock_t tout)
+void * _z_listen_udp_unicast(void *laddr_arg, uint32_t tout)
 {
     __z_udp_addr_t *laddr = (__z_udp_addr_t *)laddr_arg;
 
@@ -228,7 +228,7 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, const clock_t tout, const char *iface)
+void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, const char *iface)
 {
     __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
     __z_udp_addr_t *laddr = NULL; // Multicast messages are not self-consumed,
@@ -241,7 +241,7 @@ void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, const clock_t tou
     return sock;
 }
 
-void *_z_listen_udp_multicast(void *raddr_arg, const clock_t tout, const char *iface)
+void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
 {
     __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
 

@@ -73,12 +73,12 @@ int _z_f_link_open_tcp(void *arg)
 {
     _z_link_t *self = (_z_link_t *)arg;
 
-    unsigned long timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    char *tout = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
-    if (tout != NULL)
-        timeout = strtol(tout, NULL, 10);
+    uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
+    char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
+    if (tout_as_str != NULL)
+        tout = strtoul(tout_as_str, NULL, 10);
 
-    self->_socket._tcp._sock = _z_open_tcp(self->_socket._tcp._raddr, timeout);
+    self->_socket._tcp._sock = _z_open_tcp(self->_socket._tcp._raddr, tout);
     if (self->_socket._tcp._sock == NULL)
         goto ERR;
 

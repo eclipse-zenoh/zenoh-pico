@@ -91,11 +91,11 @@
 /**
  * In client mode, the period dedicated to scouting a router before failing.
  * String key : `"scouting_timeout"`.
- * Accepted values : `<int in seconds>`.
- * Default value : `"3"`.
+ * Accepted values : `<int in milliseconds>`.
+ * Default value : `"3000"`.
  */
 #define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
-#define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3"
+#define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3000"
 
 /**
  * Indicates if data messages should be timestamped.
@@ -112,20 +112,24 @@
 #define Z_PROTO_VERSION 0x06
 
 /**
- * Default session lease in milliseconds: 10 seconds
+ * Default session lease in milliseconds.
  */
 #define Z_TRANSPORT_LEASE 10000
+
+/**
+ * Default session lease expire factor.
+ */
 #define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3.5
 
 /**
- * Default multicast session join interval in milliseconds: 2.5 seconds
+ * Default multicast session join interval in milliseconds.
  */
 #define Z_JOIN_INTERVAL 2500
 
 /**
- * Default socket timeout: 2 seconds
+ * Default socket timeout in milliseconds.
  */
-#define Z_CONFIG_SOCKET_TIMEOUT_DEFAULT 2
+#define Z_CONFIG_SOCKET_TIMEOUT 2000
 
 /**
  * The default sequence number resolution takes 4 bytes on the wire.

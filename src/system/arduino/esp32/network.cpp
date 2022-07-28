@@ -56,7 +56,7 @@ void _z_free_endpoint_tcp(void *arg)
     freeaddrinfo(self);
 }
 
-void *_z_open_tcp(void *arg, unsigned long tout)
+void *_z_open_tcp(void *arg, uint32_t tout)
 {
     __z_net_socket *ret = (__z_net_socket*)z_malloc(sizeof(__z_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -183,7 +183,7 @@ void _z_free_endpoint_udp(void *arg)
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1
-void *_z_open_udp_unicast(void *arg, unsigned long tout)
+void *_z_open_udp_unicast(void *arg, uint32_t tout)
 {
     __z_net_socket *ret = (__z_net_socket*)z_malloc(sizeof(__z_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -193,12 +193,16 @@ void *_z_open_udp_unicast(void *arg, unsigned long tout)
         goto _Z_OPEN_UDP_UNICAST_ERROR_1;
 
     z_time_t tv;
-    tv.tv_sec = tout;
-    tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+    tv.tv_sec = tout / 1000;
+    tv.tv_usec = (tout % 1000) * 1000;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+        goto _Z_OPEN_UDP_UNICAST_ERROR_2;
 
     ret->_fd = sock;
     return ret;
+
+_Z_OPEN_UDP_UNICAST_ERROR_2:
+    close(sock);
 
 _Z_OPEN_UDP_UNICAST_ERROR_1:
     z_free(ret);
@@ -266,7 +270,7 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-void *_z_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, const char *iface)
+void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char *iface)
 {
     __z_net_socket *ret = (__z_net_socket*)z_malloc(sizeof(__z_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg_1;
@@ -306,9 +310,10 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, unsigned long tout, const
         goto _Z_OPEN_UDP_MULTICAST_ERROR_2;
 
     z_time_t tv;
-    tv.tv_sec = tout;
-    tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+    tv.tv_sec = tout / 1000;
+    tv.tv_usec = (tout % 1000) * 1000;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
 
     if (bind(sock, lsockaddr, addrlen) < 0)
         goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
@@ -354,7 +359,7 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
     return NULL;
 }
 
-void *_z_listen_udp_multicast(void *arg, unsigned long tout, const char *iface)
+void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface)
 {
     __z_net_socket *ret = (__z_net_socket*)z_malloc(sizeof(__z_net_socket));
     struct addrinfo *raddr = (struct addrinfo *)arg;
@@ -395,9 +400,10 @@ void *_z_listen_udp_multicast(void *arg, unsigned long tout, const char *iface)
         goto _Z_LISTEN_UDP_MULTICAST_ERROR_1;
 
     z_time_t tv;
-    tv.tv_sec = tout;
-    tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+    tv.tv_sec = tout / 1000;
+    tv.tv_usec = (tout % 1000) * 1000;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 
     optflag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optflag, sizeof(optflag)) < 0)

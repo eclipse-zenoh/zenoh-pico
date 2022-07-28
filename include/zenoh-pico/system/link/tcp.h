@@ -29,7 +29,7 @@ typedef struct
 void *_z_create_endpoint_tcp(const char *s_addr, const char *port);
 void _z_free_endpoint_tcp(void *addr_arg);
 
-void *_z_open_tcp(void *raddr_arg, unsigned long tout);
+void *_z_open_tcp(void *raddr_arg, uint32_t tout);
 void *_z_listen_tcp(void *raddr_arg);
 void _z_close_tcp(void *sock_arg);
 size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len);

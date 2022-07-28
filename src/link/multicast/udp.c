@@ -75,12 +75,12 @@ int _z_f_link_open_udp_multicast(void *arg)
     if (iface == NULL)
         goto ERR;
 
-    unsigned long timeout = Z_CONFIG_SOCKET_TIMEOUT_DEFAULT;
-    char *tout = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
-    if (tout != NULL)
-        timeout = strtol(tout, NULL, 10);
+    uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
+    char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
+    if (tout_as_str != NULL)
+        tout = strtoul(tout_as_str, NULL, 10);
 
-    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, timeout, iface) == NULL)
+    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, tout, iface) == NULL)
         goto ERR;
 
     return 0;
@@ -97,11 +97,11 @@ int _z_f_link_listen_udp_multicast(void *arg)
     if (iface == NULL)
         goto ERR_1;
 
-    self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._raddr, Z_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
+    self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._raddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
     if (self->_socket._udp._sock == NULL)
         goto ERR_1;
 
-    self->_socket._udp._msock = _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT_DEFAULT, iface);
+    self->_socket._udp._msock = _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
     if (self->_socket._udp._msock == NULL)
         goto ERR_2;
 
