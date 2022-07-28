@@ -500,27 +500,18 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
     _z_target_t target;
     target._kind = Z_QUERYABLE_ALL_KINDS;
 
-    if (options != NULL)
-    {
-        // TODO: Check before release
-        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL)
+    if (options != NULL) {
+        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL) {
             strategy = options->consolidation.manual;
-        else
-        {
-            // if (keyexpr.rname.)
-            strategy = z_query_consolidation_default().manual;
-            // QueryConsolidation::Auto => {
-            //     if self.selector.has_time_range() {
-            //         ConsolidationStrategy::none()
-            //     } else {
-            //         ConsolidationStrategy::default()
-            //     }
-            // }
+        } else {
+            if (strstr(predicate, "_time=") != NULL) {
+                strategy = _z_consolidation_strategy_none();
+            } else {
+                strategy = _z_consolidation_strategy_default();
+            }
         }
         target._target = options->target;
-    }
-    else
-    {
+    } else {
         target._target = z_query_target_default();
         strategy = z_query_consolidation_default().manual;
     }
