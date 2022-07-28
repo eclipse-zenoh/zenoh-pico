@@ -51,8 +51,10 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry)
     if (pen_qry->_dropper != NULL)
         pen_qry->_dropper(pen_qry->_drop_arg);
 
-    if (pen_qry->_call_is_api == 1)
-        z_free(pen_qry->_call_arg);
+    // TODO[API-NET]: When API and NET are a single layer, there is no need to release the _call_arg.
+    //       Currently, this release is required because we are wrapping the user callback and args
+    //       to enclose the z_reply_t into a z_owned_reply_t.
+    z_free(pen_qry->_call_arg);
 
     _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_predicate);

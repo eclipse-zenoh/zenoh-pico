@@ -525,6 +525,8 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *predicate, z_owne
         strategy = z_query_consolidation_default().manual;
     }
 
+    // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
+    //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)z_malloc(sizeof(__z_reply_handler_wrapper_t));
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
