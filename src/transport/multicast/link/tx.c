@@ -13,6 +13,7 @@
 //
 
 #include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -25,16 +26,12 @@
 _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliability_t reliability)
 {
     _z_zint_t sn;
-    // Get the sequence number and update it in modulo operation
-    if (reliability == Z_RELIABILITY_RELIABLE)
-    {
+    if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztm->_sn_tx_reliable;
-        ztm->_sn_tx_reliable = (ztm->_sn_tx_reliable + 1) % ztm->_sn_resolution;
-    }
-    else
-    {
+        ztm->_sn_tx_reliable = _z_sn_increment(ztm->_sn_resolution, ztm->_sn_tx_reliable);
+    } else {
         sn = ztm->_sn_tx_best_effort;
-        ztm->_sn_tx_best_effort = (ztm->_sn_tx_best_effort + 1) % ztm->_sn_resolution;
+        ztm->_sn_tx_best_effort = _z_sn_increment(ztm->_sn_resolution, ztm->_sn_tx_best_effort);
     }
     return sn;
 }
