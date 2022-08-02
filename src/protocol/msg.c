@@ -577,7 +577,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z
     msg._header = _Z_MID_JOIN;
     if (lease % 1000 == 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_T1);
-    if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
+    if (sn_resolution != Z_SN_RESOLUTION)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
     if (msg._body._join._options != 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
@@ -619,7 +619,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami
     _z_bytes_reset(&msg._body._init._cookie);
 
     msg._header = _Z_MID_INIT;
-    if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
+    if (sn_resolution != Z_SN_RESOLUTION)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
     if (msg._body._init._options != 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
@@ -644,7 +644,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami
 
     msg._header = _Z_MID_INIT;
     _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
-    if (sn_resolution != Z_SN_RESOLUTION_DEFAULT)
+    if (sn_resolution != Z_SN_RESOLUTION)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
     if (msg._body._init._options != 0)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);

@@ -96,7 +96,7 @@ _z_transport_manager_t *_z_transport_manager_init()
     _z_transport_manager_t *ztm = (_z_transport_manager_t *)z_malloc(sizeof(_z_transport_manager_t));
 
     // Randomly generate a peer ID
-    ztm->_local_pid = _z_bytes_make(Z_PID_LENGTH);
+    ztm->_local_pid = _z_bytes_make(Z_ZID_LENGTH);
     z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
 
     ztm->_link_manager = _z_link_manager_init();

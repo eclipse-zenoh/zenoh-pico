@@ -461,7 +461,7 @@ z_owned_info_t z_info(const z_session_t *zs)
 
 z_put_options_t z_put_options_default(void)
 {
-    return (z_put_options_t) {.encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t) {.encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
 }
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *options)
@@ -469,7 +469,7 @@ int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zin
     if (options != NULL)
         return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, options->encoding, Z_SAMPLE_KIND_PUT, options->congestion_control);
 
-    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_DEFAULT);
+    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_DROP);
 }
 
 z_get_options_t z_get_options_default(void)
@@ -547,7 +547,7 @@ int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr)
 
 z_publisher_options_t z_publisher_options_default(void)
 {
-    return (z_publisher_options_t){.local_routing = -1, .congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DATA_HIGH};
+    return (z_publisher_options_t){.local_routing = -1, .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
 }
 
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options)

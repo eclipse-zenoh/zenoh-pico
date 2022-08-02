@@ -1891,7 +1891,7 @@ _z_transport_message_t gen_join_message(void)
     _z_zint_t whatami = gen_bool() ? gen_zint() : Z_ROUTER;
     _z_bytes_t pid = gen_bytes(16);
     _z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
-    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION_DEFAULT;
+    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
 
     _z_conduit_sn_list_t next_sns;
     if (gen_bool())
@@ -2006,7 +2006,7 @@ _z_transport_message_t gen_init_message(void)
 {
     uint8_t version = gen_uint8();
     _z_zint_t whatami = gen_bool() ? gen_zint() : Z_ROUTER;
-    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION_DEFAULT;
+    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
     _z_bytes_t pid = gen_bytes(16);
     int is_qos = gen_bool();
 
