@@ -15,6 +15,11 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
+#define ZENOH_PICO "0.6.0"
+#define ZENOH_PICO_MAJOR 0
+#define ZENOH_PICO_MINOR 6
+#define ZENOH_PICO_PATCH 0
+
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
