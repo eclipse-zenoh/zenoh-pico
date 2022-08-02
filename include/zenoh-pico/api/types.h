@@ -74,6 +74,11 @@ typedef struct
 
 typedef struct
 {
+    z_reliability_t reliability;
+} z_pull_subscriber_options_t;
+
+typedef struct
+{
     z_query_consolidation_tag_t tag;
     union
     {
@@ -95,6 +100,10 @@ typedef struct
 
 typedef struct
 {
+} z_query_reply_options_t;
+
+typedef struct
+{
     z_encoding_t encoding;
     uint8_t congestion_control;
     uint8_t priority;
@@ -102,8 +111,17 @@ typedef struct
 
 typedef struct
 {
+    uint8_t congestion_control;
+} z_delete_options_t;
+
+typedef struct
+{
     z_encoding_t encoding;
 } z_publisher_put_options_t;
+
+typedef struct
+{
+} z_publisher_delete_options_t;
 
 typedef struct
 {

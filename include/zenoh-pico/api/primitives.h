@@ -130,7 +130,9 @@ void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
 z_id_t z_info_zid(const z_session_t *session);
 
 z_put_options_t z_put_options_default(void);
+z_delete_options_t z_delete_options_default(void);
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t len, const z_put_options_t *opt);
+int8_t z_delete(z_session_t *zs, z_keyexpr_t keyexpr, const z_delete_options_t *opt);
 
 z_get_options_t z_get_options_default(void);
 int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback, const z_get_options_t *options);
@@ -142,14 +144,16 @@ z_publisher_options_t z_publisher_options_default(void);
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options);
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub);
 
+z_publisher_put_options_t z_publisher_put_options_default(void);
+z_publisher_delete_options_t z_publisher_delete_options_default(void);
 int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options);
-int8_t z_publisher_delete(const z_publisher_t *pub);
+int8_t z_publisher_delete(const z_publisher_t *pub, const z_publisher_delete_options_t *options);
 
 z_subscriber_options_t z_subscriber_options_default(void);
 z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
-z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
+z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_pull_subscriber_options_t *options);
 int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
 int8_t z_pull(const z_pull_subscriber_t *sub);
 
@@ -157,7 +161,7 @@ z_queryable_options_t z_queryable_options_default(void);
 z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback, const z_queryable_options_t *options);
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
-int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len);
+int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t len, const z_query_reply_options_t *options);
 uint8_t z_reply_is_ok(const z_owned_reply_t *reply);
 z_sample_t z_reply_ok(z_owned_reply_t *reply);
 

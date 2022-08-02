@@ -45,7 +45,7 @@ void query_handler(z_query_t *query, void *arg)
     assert(_z_str_eq(query->_key._suffix, res));
     assert(_z_str_eq(query->_value_selector, ""));
 
-    z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res));
+    z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res), NULL);
     queries++;
 }
 
