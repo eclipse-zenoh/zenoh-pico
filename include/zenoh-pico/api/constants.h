@@ -14,6 +14,17 @@
 #ifndef ZENOH_PICO_API_CONSTANTS_H
 #define ZENOH_PICO_API_CONSTANTS_H
 
+/**
+ * Whatami values, defined as a bitmask.
+ */
+typedef enum
+{
+    Z_WHATAMI_ROUTER = 0x01, // 1 << 0
+    Z_WHATAMI_PEER = 0x02,   // 1 << 1
+    Z_WHATAMI_CLIENT = 0x04  // 1 << 2
+} z_whatami_t;
+
+
 typedef enum
 {
     Z_KEYEXPR_CANON_SUCCESS = 0,                          // the key expression is canon

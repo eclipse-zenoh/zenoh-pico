@@ -57,7 +57,7 @@ _z_session_t *_z_open(_z_config_t *config)
         uint32_t tout = strtoul(tout_as_str, NULL, 10);
 
         // Scout and return upon the first result
-        _z_hello_array_t locs = _z_scout_inner(Z_ROUTER, config, tout, 1);
+        _z_hello_array_t locs = _z_scout_inner(Z_WHATAMI_ROUTER, config, tout, 1);
         if (locs._len > 0)
         {
             if (locs._val[0].locators._len > 0)

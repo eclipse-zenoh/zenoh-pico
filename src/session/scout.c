@@ -109,7 +109,7 @@ _z_hello_array_t __z_scout_loop(
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_W)
                 sc->whatami = t_msg._body._hello._whatami;
             else
-                sc->whatami = Z_ROUTER; // Default value is from a router
+                sc->whatami = Z_WHATAMI_ROUTER; // Default value is from a router
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_L)
             {

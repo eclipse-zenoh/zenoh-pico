@@ -513,7 +513,7 @@ _z_transport_message_t _z_t_msg_make_scout(_z_zint_t what, int request_pid)
     msg._header = _Z_MID_SCOUT;
     if (request_pid)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    if (what != Z_ROUTER)
+    if (what != Z_WHATAMI_ROUTER)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
 
     msg._attachment = NULL;
@@ -538,7 +538,7 @@ _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z
     msg._body._hello._locators = locators;
 
     msg._header = _Z_MID_HELLO;
-    if (whatami != Z_ROUTER)
+    if (whatami != Z_WHATAMI_ROUTER)
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     if (!_z_bytes_is_empty(&pid))
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);

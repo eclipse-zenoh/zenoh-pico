@@ -160,7 +160,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
 
     // Build the open message
     uint8_t version = Z_PROTO_VERSION;
-    _z_zint_t whatami = Z_CLIENT;
+    _z_zint_t whatami = Z_WHATAMI_CLIENT;
     _z_zint_t sn_resolution = Z_SN_RESOLUTION;
     int is_qos = 0;
 
@@ -313,7 +313,7 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
     next_sns._val._plain._reliable = param._initial_sn_tx;
 
     _z_bytes_t pid = _z_bytes_wrap(local_pid.start, local_pid.len);
-    _z_transport_message_t jsm = _z_t_msg_make_join(Z_PROTO_VERSION, Z_PEER, Z_TRANSPORT_LEASE, param._sn_resolution, pid, next_sns);
+    _z_transport_message_t jsm = _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param._sn_resolution, pid, next_sns);
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");

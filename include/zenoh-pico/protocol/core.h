@@ -22,13 +22,6 @@
 #include "zenoh-pico/api/constants.h"
 
 /**
- * Whatami values.
- */
-#define Z_ROUTER 0x01 // 1 << 0
-#define Z_PEER 0x02   // 1 << 1
-#define Z_CLIENT 0x04 // 1 << 2
-
-/**
  * The reserved resource ID indicating a string-only resource key.
  */
 #define Z_RESOURCE_ID_NONE 0
