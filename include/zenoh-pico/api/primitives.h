@@ -50,7 +50,7 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Get null-terminated string departing from a c:type::`z_keyexpr_t`.
  *
  * If given keyexpr contains a declared keyexpr, the resulting value will be NULL.
- * In that case, the user must use c:func::`z_keyexpr_resolve` to resolve the nesting declarations
+ * In that case, the user must use c:func::`zp_keyexpr_resolve` to resolve the nesting declarations
  * and get its full expanded representation.
  *
  * Parameters:
@@ -59,7 +59,7 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Returns:
  *   The c:type::`z_keyexpr_t` corresponding to the given string.
  */
-const char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
+char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a c::type:`z_keyexpr_t` for a given c:type::`z_session_t`.
@@ -72,8 +72,18 @@ const char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
  * Returns:
  *   The string representation of a keyexpr for a given session.
  */
-char *z_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
-uint8_t z_keyexpr_is_valid(z_keyexpr_t *key);
+char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
+
+/**
+ * Checks if a given keyexpr is valid.
+ *
+ * Parameters:
+ *   keyexpr: A loaned instance of c:type::`z_keyexpr_t` to be checked.
+ *
+ * Returns:
+ *   Returns `true` if the keyexpr is valid, or `false` otherwise.
+ */
+bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
 
 /**
  * Check if a given keyexpr is valid and and in its canonical form.

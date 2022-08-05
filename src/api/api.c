@@ -37,23 +37,26 @@ z_keyexpr_t z_keyexpr(const char *name)
     return _z_rname(name);
 }
 
-const char *z_keyexpr_to_string(z_keyexpr_t keyexpr)
+char *z_keyexpr_to_string(z_keyexpr_t keyexpr)
 {
     if (keyexpr._id != Z_RESOURCE_ID_NONE)
         return NULL;
 
-    return keyexpr._suffix;
+    char *ret = (char *)malloc(strlen(keyexpr._suffix) + 1);
+    strcpy(ret, keyexpr._suffix);
+
+    return ret;
 }
 
-char *z_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr)
+char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr)
 {
     _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     return (char *)ekey._suffix; // ekey will be out of scope so, suffix can be safely casted as non-const
 }
 
-uint8_t z_keyexpr_is_valid(z_keyexpr_t *key)
+bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr)
 {
-    if (key->_id != Z_RESOURCE_ID_NONE || key->_suffix != NULL)
+    if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL)
         return 1;
 
     return 0;

@@ -20,8 +20,10 @@
 void data_handler(const z_sample_t *sample, void *arg)
 {
     (void) (arg);
-    printf(">> [Pull Subscriber] Received ('%s': '%.*s')\n",
-           z_keyexpr_to_string(sample->keyexpr), (int)sample->payload.len, sample->payload.start);
+    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    printf(">> [Subscriber] Received ('%s': '%.*s')\n",
+           keystr, (int)sample->payload.len, sample->payload.start);
+    free(keystr);
 }
 
 int main(int argc, char **argv)
