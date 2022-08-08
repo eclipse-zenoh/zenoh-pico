@@ -25,10 +25,10 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 
 /*************** Logging ***************/
-int8_t z_init_logger(void)
+bool z_init_logger(void)
 {
     _z_init_logger();
-    return 0;
+    return true;
 }
 
 /********* Data Types Handlers *********/
@@ -57,9 +57,9 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr)
 bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr)
 {
     if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL)
-        return 1;
+        return true;
 
-    return 0;
+    return false;
 }
 
 z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len)
@@ -298,7 +298,6 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_own
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_put_options_t, z_owned_put_options_t, put_options, _z_owner_noop_free, _z_owner_noop_copy)
 
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
@@ -729,7 +728,7 @@ bool z_reply_is_ok(const z_owned_reply_t *reply)
     (void) (reply);
     // For the moment always return TRUE.
     // The support for reply errors will come in the next release.
-    return 1;
+    return true;
 }
 
 z_value_t z_reply_err(const z_owned_reply_t *reply)
