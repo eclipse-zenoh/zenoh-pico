@@ -45,7 +45,7 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    if (ztm->_link->_is_streamed == 1)
+    if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities))
     {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE)

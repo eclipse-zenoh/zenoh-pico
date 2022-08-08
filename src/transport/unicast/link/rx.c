@@ -29,7 +29,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    if (ztu->_link->_is_streamed == 1)
+    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities))
     {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE)

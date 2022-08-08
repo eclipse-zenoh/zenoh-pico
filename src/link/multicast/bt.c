@@ -121,9 +121,7 @@ _z_link_t *_z_new_link_bt(_z_endpoint_t endpoint)
 {
     _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
 
-    lt->_is_reliable = 0;
-    lt->_is_streamed = 1;
-    lt->_is_multicast = 1;
+    lt->_capabilities = Z_LINK_CAPABILITY_STREAMED | Z_LINK_CAPABILITY_MULTICAST;
     lt->_mtu = _z_get_link_mtu_bt();
 
     lt->_endpoint = endpoint;

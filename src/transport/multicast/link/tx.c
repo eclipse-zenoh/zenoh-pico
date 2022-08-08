@@ -44,14 +44,14 @@ int _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     _z_mutex_lock(&ztm->_mutex_tx);
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+    __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
     // Encode the session message
     int res = _z_transport_message_encode(&ztm->_wbuf, t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+        __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
         // Mark the session that we have transmitted data
@@ -91,7 +91,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     }
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+    __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
     // Get the next sequence number
     _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);
@@ -111,7 +111,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+        __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
@@ -142,7 +142,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
             is_first = 0;
 
             // Clear the buffer for serialization
-            __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+            __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
             // Serialize one fragment
             res = __unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn);
@@ -153,7 +153,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
             }
 
             // Write the message length in the reserved space if needed
-            __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+            __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
             // Send the wbuf on the socket
             res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);

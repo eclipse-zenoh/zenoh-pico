@@ -49,7 +49,7 @@ void *_zp_unicast_read_task(void *arg)
     {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (ztu->_link->_is_streamed == 1)
+        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities))
         {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE)
             {

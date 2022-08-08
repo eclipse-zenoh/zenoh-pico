@@ -51,7 +51,7 @@ void *_zp_multicast_read_task(void *arg)
     {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (ztm->_link->_is_streamed == 1)
+        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities))
         {
             if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE)
             {
