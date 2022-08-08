@@ -19,6 +19,15 @@
 
 #if ZENOH_C_STANDARD != 99
 
+/**
+ * Defines a generic function for loaning any of the ``z_owned_X_t`` types.
+ *
+ * Parameters:
+ *   x: The instance to loan.
+ *
+ * Returns:
+ *   Returns the loaned type associated with `x`.
+ */
 #define z_loan(x) _Generic((x),                                       \
     z_owned_bytes_t : z_bytes_loan,                                   \
     z_owned_string_t : z_string_loan,                                 \
@@ -43,6 +52,12 @@
     z_owned_hello_array_t : z_hello_array_loan,                       \
     z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
 
+/**
+ * Defines a generic function for droping any of the ``z_owned_X_t`` types.
+ *
+ * Parameters:
+ *   x: The instance to drop.
+ */
 #define z_drop(x) _Generic((*x),                                      \
     z_owned_bytes_t : z_bytes_drop,                                   \
     z_owned_string_t : z_string_drop,                                 \
@@ -67,6 +82,15 @@
     z_owned_hello_array_t : z_hello_array_drop,                       \
     z_owned_reply_data_array_t : z_reply_data_array_drop)(x)
 
+/**
+ * Defines a generic function for checking the validity of any of the ``z_owned_X_t`` types.
+ *
+ * Parameters:
+ *   x: The instance to check.
+ *
+ * Returns:
+ *   Returns ``true`` if valid, or ``false`` otherwise.
+ */
 #define z_check(x) _Generic((x),                                       \
     z_owned_bytes_t : z_bytes_check,                                   \
     z_owned_string_t : z_string_check,                                 \
@@ -92,6 +116,15 @@
     z_owned_hello_array_t : z_hello_array_check,                       \
     z_owned_reply_data_array_t : z_reply_data_array_check)(&x)
 
+/**
+ * Defines a generic function for moving any of the ``z_owned_X_t`` types.
+ *
+ * Parameters:
+ *   x: The instance to move.
+ *
+ * Returns:
+ *   Returns the instance associated with `x`.
+ */
 #define z_move(x) _Generic((x),                                       \
     z_owned_bytes_t : z_bytes_move,                                   \
     z_owned_string_t : z_string_move,                                 \
@@ -120,6 +153,15 @@
     z_owned_closure_reply_t : z_closure_reply_move,                   \
     z_owned_closure_zid_t : z_closure_zid_move)(&x)
 
+/**
+ * Defines a generic function for cloning any of the ``z_owned_X_t`` types.
+ *
+ * Parameters:
+ *   x: The instance to clone.
+ *
+ * Returns:
+ *   Returns the cloned instance of `x`.
+ */
 #define z_clone(x) _Generic((x),                                       \
     z_owned_bytes_t : z_bytes_clone,                                   \
     z_owned_string_t : z_string_clone,                                 \
@@ -148,6 +190,18 @@
   {                                                       \
     .call = callback, .drop = droper, .context = ctx      \
   }
+
+/**
+ * Defines a variadic macro to ease the definition of callback closures.
+ *
+ * Parameters:
+ *   callback: the typical ``callback`` function. ``context`` will be passed as its last argument.
+ *   droper: allows the callback's state to be freed. ``context`` will be passed as its last argument.
+ *   context: a pointer to an arbitrary state.
+ *
+ * Returns:
+ *   Returns the new closure.
+ */
 #define z_closure(...) _z_closure_overloader(__VA_ARGS__, 0, 0)
 
 #endif /* ZENOH_C_STANDARD != 99 */

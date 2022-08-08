@@ -36,14 +36,14 @@ typedef enum
  *
  * Enumerators:
  *     Z_KEYEXPR_CANON_SUCCESS: The key expression is canon.
- *     Z_KEYEXPR_CANON_LONE_DOLLAR_STAR: The key contains a `$*` chunk, which must be replaced by `*`.
- *     Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR: The key contains `**\/*`, which must be replaced by `*\/**`.
- *     Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR: The key contains `**\/**`, which must be replaced by `**`.
+ *     Z_KEYEXPR_CANON_LONE_DOLLAR_STAR: The key contains a ``$*`` chunk, which must be replaced by ``*``.
+ *     Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR: The key contains ``** / *``, which must be replaced by ``* / **``.
+ *     Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR: The key contains ``** / **``, which must be replaced by ``**``.
  *     Z_KEYEXPR_CANON_EMPTY_CHUNK: The key contains empty chunks.
- *     Z_KEYEXPR_CANON_STARS_IN_CHUNK: The key contains a `*` in a chunk without being escaped by a DSL, which is forbidden.
- *     Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR: The key contains `$*$` or `$$`, which is forbidden.
- *     Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK: The key contains `#` or `?`, which is forbidden.
- *     Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR: The key contains a `$` which is not bound to a DSL.
+ *     Z_KEYEXPR_CANON_STARS_IN_CHUNK: The key contains a ``*`` in a chunk without being escaped by a DSL, which is forbidden.
+ *     Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR: The key contains ``$*$`` or ``$$``, which is forbidden.
+ *     Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK: The key contains ``#`` or ``?``, which is forbidden.
+ *     Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR: The key contains a ``$`` which is not bound to a DSL.
  */
 typedef enum
 {
