@@ -11,15 +11,18 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "zenoh-pico.h"
 
 void print_zid(const z_id_t *id, void *ctx)
 {
     (void) (ctx);
     printf(" ");
-    for (int i = 15; i >= 0; i--)
-    {
+    for (int i = 15; i >= 0; i--) {
         printf("%02X", id->id[i]);
     }
     printf("\n");
@@ -29,17 +32,39 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    z_owned_config_t config = zp_config_default();
-    if (argc > 1)
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    char *mode = "client";
+    char *locator = NULL;
 
-    if (argc > 2)
-        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(argv[2]));
+    int opt;
+    while ((opt = getopt (argc, argv, "e:m:")) != -1) {
+        switch (opt) {
+            case 'e':
+                locator = optarg;
+                break;
+            case 'm':
+                mode = optarg;
+                break;
+            case '?':
+                if (optopt == 'e' || optopt == 'm') {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                exit(-1);
+        }
+    }
+
+    z_owned_config_t config = zp_config_default();
+    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    if (locator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    }
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s))
-    {
+    if (!z_check(s)) {
         printf("Unable to open session!\n");
         exit(-1);
     }

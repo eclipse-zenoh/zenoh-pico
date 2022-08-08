@@ -11,7 +11,10 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
+
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
@@ -22,21 +25,40 @@ int main(int argc, char **argv)
 
     char *keyexpr = "demo/example/zenoh-pico-pub";
     char *value = "Pub from Pico!";
+    char *locator = NULL;
 
-    if (argc > 1)
-        keyexpr = argv[1];
-
-    if (argc > 2)
-        value = argv[2];
+    int opt;
+    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+        switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
+            case 'v':
+                value = optarg;
+                break;
+            case 'e':
+                locator = optarg;
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                exit(-1);
+        }
+    }
 
     z_owned_config_t config = zp_config_default();
-    if (argc > 3)
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[3]));
+    if (locator != NULL) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    }
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s))
-    {
+    if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
         exit(-1);
     }
@@ -45,17 +67,15 @@ int main(int argc, char **argv)
     zp_start_read_task(z_session_loan(&s));
     zp_start_lease_task(z_session_loan(&s));
 
-    printf("Declaring publisher for '%s'...", keyexpr);
+    printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(keyexpr), NULL);
-    if (!z_publisher_check(&pub))
-    {
+    if (!z_publisher_check(&pub)) {
         printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
 
     char buf[256];
-    for (int idx = 0; 1; ++idx)
-    {
+    for (int idx = 0; 1; ++idx) {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);

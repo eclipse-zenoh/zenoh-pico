@@ -11,9 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
@@ -35,20 +35,40 @@ int main(int argc, char **argv)
 {
     z_init_logger();
 
-    if (argc > 1)
-        keyexpr = argv[1];
+    char *locator = NULL;
 
-    if (argc > 2)
-        value = argv[2];
+    int opt;
+    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+        switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
+            case 'v':
+                value = optarg;
+                break;
+            case 'e':
+                locator = optarg;
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                exit(-1);
+        }
+    }
 
     z_owned_config_t config = zp_config_default();
-    if (argc > 3)
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[3]));
+    if (locator != NULL) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    }
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s))
-    {
+    if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
         exit(-1);
     }
@@ -58,8 +78,7 @@ int main(int argc, char **argv)
     zp_start_lease_task(z_session_loan(&s));
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_keyexpr_is_valid(&ke))
-    {
+    if (!z_keyexpr_is_valid(&ke)) {
         printf("%s is not a valid key expression", keyexpr);
         exit(-1);
     }
@@ -67,16 +86,16 @@ int main(int argc, char **argv)
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_closure_query_t callback = z_closure_query(query_handler, NULL, NULL);
     z_owned_queryable_t qable = z_declare_queryable(z_session_loan(&s), ke, z_closure_query_move(&callback), NULL);
-    if (!z_queryable_check(&qable))
-    {
+    if (!z_queryable_check(&qable)) {
         printf("Unable to create queryable.\n");
         exit(-1);
     }
 
     printf("Enter 'q' to quit...\n");
     char c = 0;
-    while (c != 'q')
+    while (c != 'q') {
         c = getchar();
+    }
 
     z_undeclare_queryable(z_queryable_move(&qable));
 

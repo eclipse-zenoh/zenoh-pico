@@ -11,15 +11,16 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
 
-void data_handler(const z_sample_t *sample, void *arg)
+void data_handler(const z_sample_t *sample, void *ctx)
 {
-    (void) (arg);
+    (void) (ctx);
     char *keystr = z_keyexpr_to_string(sample->keyexpr);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n",
            keystr, (int)sample->payload.len, sample->payload.start);
@@ -31,17 +32,37 @@ int main(int argc, char **argv)
     z_init_logger();
 
     char *keyexpr = "demo/example/**";
-    if (argc > 1)
-        keyexpr = argv[1];
+    char *locator = NULL;
+
+    int opt;
+    while ((opt = getopt (argc, argv, "k:e:")) != -1) {
+        switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
+            case 'e':
+                locator = optarg;
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'e') {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                exit(-1);
+        }
+    }
 
     z_owned_config_t config = zp_config_default();
-    if (argc > 2)
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(argv[2]));
+    if (locator != NULL) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    }
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s))
-    {
+    if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
         exit(-1);
     }
@@ -53,19 +74,18 @@ int main(int argc, char **argv)
     z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
-    if (!z_pull_subscriber_check(&sub))
-    {
+    if (!z_pull_subscriber_check(&sub)) {
         printf("Unable to declare subscriber.\n");
         exit(-1);
     }
 
     printf("Enter any key to pull data or 'q' to quit...\n");
     char c = 0;
-    while (1)
-    {
+    while (1) {
         c = getchar();
-        if (c == 'q')
+        if (c == 'q') {
             break;
+        }
         z_pull(z_pull_subscriber_loan(&sub));
     }
 
