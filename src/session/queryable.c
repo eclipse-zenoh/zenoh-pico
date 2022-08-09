@@ -118,7 +118,7 @@ _z_questionable_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_ke
 
 int _z_register_questionable(_z_session_t *zn, _z_questionable_t *qle)
 {
-    _Z_DEBUG(">>> Allocating queryable for (%s,%u)\n", qle->_rname, qle->_kind);
+    _Z_DEBUG(">>> Allocating queryable for (%lu:%s,%u)\n", qle->_key._id, qle->_key._suffix, qle->_kind);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);

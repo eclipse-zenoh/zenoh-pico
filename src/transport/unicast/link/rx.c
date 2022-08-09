@@ -48,7 +48,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
         for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             len |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
 
-        _Z_DEBUG(">> \t msg len = %hu\n", len);
+        _Z_DEBUG(">> \t msg len = %zu\n", len);
         size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
         if (writable < len)
         {

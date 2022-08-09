@@ -117,7 +117,7 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
 
 int _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry)
 {
-    _Z_DEBUG(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->_key.rid, pen_qry->_key.rname, pen_qry->_value_selector);
+    _Z_DEBUG(">>> Allocating query for (%lu:%s,%s)\n", pen_qry->_key._id, pen_qry->_key._suffix, pen_qry->_value_selector);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);

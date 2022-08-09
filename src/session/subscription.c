@@ -122,7 +122,7 @@ _z_subscriber_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, int is_local
 
 int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *sub)
 {
-    _Z_DEBUG(">>> Allocating sub decl for (%s)\n", sub->rname);
+    _Z_DEBUG(">>> Allocating sub decl for (%lu:%s)\n", sub->_key._id, sub->_key._suffix);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
