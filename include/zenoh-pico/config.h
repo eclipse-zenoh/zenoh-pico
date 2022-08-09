@@ -152,7 +152,7 @@
  * Default socket timeout in milliseconds.
  */
 #ifndef Z_CONFIG_SOCKET_TIMEOUT
-#define Z_CONFIG_SOCKET_TIMEOUT 2000
+#define Z_CONFIG_SOCKET_TIMEOUT 100
 #endif
 
 /**
