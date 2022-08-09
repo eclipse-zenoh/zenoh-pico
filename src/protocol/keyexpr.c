@@ -11,14 +11,15 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/protocol/keyexpr.h"
-
 #include <assert.h>
+#include <stdbool.h>
 #include <string.h>
+
+#include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Canonize helpers ------------------*/
 z_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
-    bool in_big_wild = false;
+    _Bool in_big_wild = false;
     char const *chunk_start = start;
     const char *end = start + *len;
     char const *next_slash;
@@ -112,7 +113,7 @@ size_t __zp_starts_with(const char *s, const char *needle) {
 }
 void __zp_singleify(char *start, size_t *len, const char *needle) {
     const char *end = start + *len;
-    bool right_after_needle = false;
+    _Bool right_after_needle = false;
     char *reader = start;
     while (reader < end) {
         size_t len = __zp_starts_with(reader, needle);
@@ -158,7 +159,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 }
 
 /*------------------ Inclusion helpers ------------------*/
-bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
+_Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while (lstart < lend && rstart < rend) {
         char l = *lstart++;
         char r = *rstart++;
@@ -176,9 +177,9 @@ bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char c
     return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$');
 }
 
-bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+_Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     size_t lclen;
-    bool streq;
+    _Bool streq;
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
 
@@ -229,7 +230,7 @@ bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const 
     }
 }
 
-bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+_Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
     for (;;) {
@@ -277,7 +278,7 @@ bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *r
 }
 
 /*------------------ Intersection helpers ------------------*/
-bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
+_Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while (lstart < lend && rstart < rend) {
         char l = *lstart++;
         char r = *rstart++;
@@ -304,9 +305,9 @@ bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char
            (rend - rstart == 2 && rstart[0] == '$');
 }
 
-bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+_Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     size_t lclen;
-    bool streq;
+    _Bool streq;
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
 
@@ -356,7 +357,7 @@ bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char cons
     }
 }
 
-bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
+_Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
     for (;;) {
@@ -408,8 +409,8 @@ bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const 
 }
 
 /*------------------ Zenoh-Core helpers ------------------*/
-bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
-    bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
+_Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+    _Bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq) {
         return true;
     }
@@ -448,8 +449,8 @@ bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rsta
     }
 }
 
-bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
-    bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
+_Bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+    _Bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq) {
         return true;
     }
@@ -510,7 +511,7 @@ z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     char *next_slash = memchr(reader, '/', end - reader);
     char const *chunk_end = next_slash ? next_slash : end;
 
-    bool in_big_wild = false;
+    _Bool in_big_wild = false;
     if (chunk_end - reader == 2 && reader[1] == '*') {
         switch (*reader) {
             case '*':

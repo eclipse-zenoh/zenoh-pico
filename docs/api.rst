@@ -428,16 +428,16 @@ Functions
 .. autocfunction:: primitives.h::z_keyexpr
 .. autocfunction:: primitives.h::z_keyexpr_to_string
 .. autocfunction:: primitives.h::zp_keyexpr_resolve
-.. .. autocfunction:: primitives.h::z_keyexpr_is_valid
+.. autocfunction:: primitives.h::z_keyexpr_is_valid
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
 .. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_canonize
 .. autocfunction:: primitives.h::zp_keyexpr_canonize_null_terminated
-.. .. autocfunction:: primitives.h::z_keyexpr_includes
+.. autocfunction:: primitives.h::z_keyexpr_includes
 .. autocfunction:: primitives.h::zp_keyexpr_includes_null_terminated
-.. .. autocfunction:: primitives.h::z_keyexpr_intersect
+.. autocfunction:: primitives.h::z_keyexpr_intersect
 .. autocfunction:: primitives.h::zp_keyexpr_intersect_null_terminated
-.. .. autocfunction:: primitives.h::z_keyexpr_equals
+.. autocfunction:: primitives.h::z_keyexpr_equals
 .. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
 .. autocfunction:: primitives.h::zp_config_new
 .. autocfunction:: primitives.h::zp_config_empty

@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <stdbool.h>
+
 #include "zenoh-pico/config.h"
 
 #include "zenoh-pico/api/primitives.h"
@@ -27,7 +29,7 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 
 /*************** Logging ***************/
-bool z_init_logger(void)
+_Bool z_init_logger(void)
 {
     _z_init_logger();
     return true;
@@ -56,7 +58,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr)
     return (char *)ekey._suffix; // ekey will be out of scope so, suffix can be safely casted as non-const
 }
 
-bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr)
+_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr)
 {
     if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL)
         return true;
@@ -90,27 +92,27 @@ z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start)
     return result;
 }
 
-bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
+_Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
 {
     return _z_keyexpr_includes(l, llen, r, rlen);
 }
 
-bool zp_keyexpr_includes_null_terminated(const char *l, const char *r)
+_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r)
 {
     return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
 }
 
-bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
+_Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
 {
     return _z_keyexpr_intersect(l, llen, r, rlen);
 }
 
-bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r)
+_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r)
 {
     return _z_keyexpr_intersect(l, strlen(l), r, strlen(r));
 }
 
-bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen)
+_Bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen)
 {
     if (llen != rlen)
     {
@@ -125,7 +127,7 @@ bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen)
     return true;
 }
 
-bool zp_keyexpr_equals_null_terminated(const char *l, const char *r)
+_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r)
 {
     if (strcmp(l, r) != 0)
     {
@@ -223,7 +225,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    bool z_##name##_check(const ownedtype *val)                                       \
+    _Bool z_##name##_check(const ownedtype *val)                                      \
     {                                                                                 \
         return val->_value != NULL;                                                   \
     }                                                                                 \
@@ -238,7 +240,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
     ownedtype z_##name##_clone(ownedtype *val)                                        \
     {                                                                                 \
         ownedtype ret;                                                                \
-        ret._value = (type*)z_malloc(sizeof(type));                                     \
+        ret._value = (type*)z_malloc(sizeof(type));                                   \
         f_copy(ret._value, val->_value);                                              \
         return ret;                                                                   \
     }                                                                                 \
@@ -248,7 +250,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
     }
 
 #define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    bool z_##name##_check(const ownedtype *val)                                         \
+    _Bool z_##name##_check(const ownedtype *val)                                        \
     {                                                                                   \
         return val->_value != NULL;                                                     \
     }                                                                                   \
@@ -263,7 +265,7 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
     ownedtype z_##name##_clone(ownedtype *val)                                          \
     {                                                                                   \
         ownedtype ret;                                                                  \
-        ret._value = (type*)z_malloc(sizeof(type));                                       \
+        ret._value = (type*)z_malloc(sizeof(type));                                     \
         f_copy(ret._value, val->_value);                                                \
         return ret;                                                                     \
     }                                                                                   \
@@ -733,7 +735,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
     return _z_send_reply(query, keyexpr, payload, payload_len);
 }
 
-bool z_reply_is_ok(const z_owned_reply_t *reply)
+_Bool z_reply_is_ok(const z_owned_reply_t *reply)
 {
     (void) (reply);
     // For the moment always return TRUE.

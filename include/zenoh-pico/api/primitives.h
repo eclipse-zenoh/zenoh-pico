@@ -16,7 +16,6 @@
 #define ZENOH_PICO_API_PRIMITIVES_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "zenoh-pico/api/types.h"
 
@@ -31,7 +30,7 @@
  * Returns:
  *   Returns ``true`` if the logger is successfully initialized, or ``false`` otherwise.
  */
-bool z_init_logger(void);
+_Bool z_init_logger(void);
 
 /********* Data Types Handlers *********/
 /**
@@ -83,7 +82,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
  */
-bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
+_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
 
 /**
  * Check if a given keyexpr is valid and and in its canonical form.
@@ -152,7 +151,7 @@ z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start);
  *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined by ``r``.
  *   Otherwise, it returns ``false``.
  */
-bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen);
+_Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen);
 
 /**
  * Check if a given keyexpr contains another keyexpr in its set.
@@ -166,7 +165,7 @@ bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen);
  * Returns:
  *   Returns true if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined by ``r``.
  */
-bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -181,7 +180,7 @@ bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the sets defined by ``l`` and ``r``.
  *   Otherwise, it returns ``false``.
  */
-bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen);
+_Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -196,7 +195,7 @@ bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen)
  *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the sets defined by ``l`` and ``r``.
  *   Otherwise, it returns ``false``.
  */
-bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a two keyexprs are equal.
@@ -210,7 +209,7 @@ bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  * Returns:
  *   Returns ``true`` if both ``l`` and ``r`` are equal, or ``false`` otherwise.
  */
-bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen);
+_Bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen);
 
 /**
  * Check if a two keyexprs are equal.
@@ -224,7 +223,7 @@ bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen);
  * Returns:
  *   Returns ``true`` if both ``l`` and ``r`` are equal, or ``false`` otherwise.
  */
-bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 /**
  * Return a new, zenoh-allocated, empty configuration.
@@ -508,14 +507,14 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    bool z_##name##_check(const ownedtype *name);        \
+    _Bool z_##name##_check(const ownedtype *name);       \
     type *z_##name##_loan(const ownedtype *name);        \
     ownedtype *z_##name##_move(ownedtype *name);         \
     ownedtype z_##name##_clone(ownedtype *name);         \
     void z_##name##_drop(ownedtype *name);
 
 #define _IMMUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    bool z_##name##_check(const ownedtype *name);          \
+    _Bool z_##name##_check(const ownedtype *name);         \
     type z_##name##_loan(const ownedtype *name);           \
     ownedtype *z_##name##_move(ownedtype *name);           \
     ownedtype z_##name##_clone(ownedtype *name);           \
@@ -1006,7 +1005,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
  * Returns:
  *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or ``false`` otherwise.
  */
-bool z_reply_is_ok(const z_owned_reply_t *reply);
+_Bool z_reply_is_ok(const z_owned_reply_t *reply);
 
 /**
  * Yields the contents of the reply by asserting it indicates a success.
