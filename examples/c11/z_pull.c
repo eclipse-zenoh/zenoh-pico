@@ -68,8 +68,10 @@ int main(int argc, char **argv)
     }
 
     // Start read and lease tasks for zenoh-pico
-    zp_start_read_task(z_loan(s));
-    zp_start_lease_task(z_loan(s));
+    if (zp_start_read_task(z_loan(s)) < 0 || zp_start_lease_task(z_loan(s)) < 0) {
+        printf("Unable to start read and lease tasks");
+        exit(-1);
+    }
 
     z_owned_closure_sample_t callback = z_closure(data_handler);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
 
     z_undeclare_pull_subscriber(z_move(sub));
 
-    // Stop the receive and the session lease loop for zenoh-pico
+    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
 

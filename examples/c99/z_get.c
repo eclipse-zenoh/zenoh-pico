@@ -78,8 +78,10 @@ int main(int argc, char **argv)
     }
 
     // Start read and lease tasks for zenoh-pico
-    zp_start_read_task(z_session_loan(&s));
-    zp_start_lease_task(z_session_loan(&s));
+    if (zp_start_read_task(z_session_loan(&s)) < 0 || zp_start_lease_task(z_session_loan(&s)) < 0) {
+        printf("Unable to start read and lease tasks");
+        exit(-1);
+    }
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
     if (!z_keyexpr_is_valid(&ke)) {
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Stop the receive and the session lease loop for zenoh-pico
+    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
 

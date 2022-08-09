@@ -63,9 +63,11 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan(s));
-    zp_start_lease_task(z_loan(s));
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_loan(s)) < 0 || zp_start_lease_task(z_loan(s)) < 0) {
+        printf("Unable to start read and lease tasks");
+        exit(-1);
+    }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
     z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
 
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
-    // Stop the receive and the session lease loop for zenoh-pico
+    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
 

@@ -69,8 +69,11 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    zp_start_read_task(z_loan(s));
-    zp_start_lease_task(z_loan(s));
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_loan(s)) < 0 || zp_start_lease_task(z_loan(s)) < 0) {
+        printf("Unable to start read and lease tasks");
+        exit(-1);
+    }
 
     z_id_t self_id = z_info_zid(z_loan(s));
     printf("Own ID:");
@@ -86,6 +89,7 @@ int main(int argc, char **argv)
     z_owned_closure_zid_t callback2 = z_closure(print_zid);
     z_info_peers_zid(z_loan(s), z_move(callback2));
 
+    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
 
