@@ -16,11 +16,16 @@
 
 int _z_read(_z_transport_t *zt)
 {
+#if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
         return _zp_unicast_read(&zt->_transport._unicast);
-    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else
+#endif // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         return _zp_multicast_read(&zt->_transport._multicast);
     else
+#endif // Z_MULTICAST_TRANSPORT == 1
         return -1;
 }
 
@@ -28,10 +33,15 @@ void *_zp_read_task(void *arg)
 {
     _z_transport_t *zt = (_z_transport_t *)arg;
 
+#if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
         return _zp_unicast_read_task(&zt->_transport._unicast);
-    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else
+#endif // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         return _zp_multicast_read_task(&zt->_transport._multicast);
     else
+#endif // Z_MULTICAST_TRANSPORT == 1
         return NULL;
 }

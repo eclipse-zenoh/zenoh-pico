@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include <FreeRTOS.h>
 #include <hw/driver/delay.h>
 
@@ -69,6 +71,7 @@ void z_free(void *ptr)
     return free(ptr);
 }
 
+#if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
@@ -138,6 +141,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
     return 0;
 }
+#endif // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)

@@ -16,6 +16,8 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/link/task/join.h"
 
+#if Z_MULTICAST_TRANSPORT == 1
+
 int _zp_multicast_send_join(_z_transport_multicast_t *ztm)
 {
     // FIXME: make transport aware of qos configuration
@@ -29,3 +31,5 @@ int _zp_multicast_send_join(_z_transport_multicast_t *ztm)
 
     return _z_multicast_send_t_msg(ztm, &jsm);
 }
+
+#endif // Z_MULTICAST_TRANSPORT == 1

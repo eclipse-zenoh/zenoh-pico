@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -155,32 +157,56 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, int is_local
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, int is_local, _z_zint_t rid)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, is_local, rid);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return res;
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, keyexpr);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return res;
 }
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *keyexpr)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, is_local, keyexpr);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return res;
 }
 
 int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
 {
     _Z_DEBUG(">>> Allocating res decl for (%zu,%lu,%s)\n", res->_id, res->_key.rid, res->_key.rname);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     // FIXME: check by keyexpr instead
     _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->_id);
@@ -193,32 +219,46 @@ int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
     else
         zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return 0;
 
 ERR:
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return -1;
 }
 
 void _z_unregister_resource(_z_session_t *zn, int is_local, _z_resource_t *res)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     if (is_local)
         zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
     else
         zn->_remote_resources = _z_resource_list_drop_filter(zn->_remote_resources, _z_resource_eq, res);
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 }
 
 void _z_flush_resources(_z_session_t *zn)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     _z_resource_list_free(&zn->_local_resources);
     _z_resource_list_free(&zn->_remote_resources);
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 }

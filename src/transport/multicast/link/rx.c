@@ -12,11 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/config.h"
+
+#if Z_MULTICAST_TRANSPORT == 1
 
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr)
 {
@@ -39,8 +43,10 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     _Z_DEBUG(">> recv session msg\n");
     r->_tag = _Z_RES_OK;
 
+#if Z_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztm->_mutex_rx);
+#endif // Z_MULTI_THREAD == 1
 
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
@@ -90,8 +96,11 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     _z_transport_message_decode_na(&ztm->_zbuf, r);
 
 EXIT_SRCV_PROC:
+#if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztm->_mutex_rx);
+#endif // Z_MULTI_THREAD == 1
+    asm("nop");
 }
 
 _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_bytes_t *addr)
@@ -104,8 +113,10 @@ _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *
 
 int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr)
 {
+#if Z_MULTI_THREAD == 1
     // Acquire and keep the lock
     _z_mutex_lock(&ztm->_mutex_peer);
+#endif // Z_MULTI_THREAD == 1
 
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
@@ -340,6 +351,11 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
     }
     }
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_peer);
+#endif // Z_MULTI_THREAD == 1
+
     return _Z_RES_OK;
 }
+
+#endif // Z_MULTICAST_TRANSPORT == 1

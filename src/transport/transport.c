@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include <stdlib.h>
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -19,6 +21,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if Z_UNICAST_TRANSPORT == 1
 int _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_only)
 {
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.start, ((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.len);
@@ -31,7 +34,9 @@ int _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_
 
     return res;
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 int _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int link_only)
 {
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start, ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
@@ -44,25 +49,34 @@ int _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int l
 
     return res;
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
 int _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only)
 {
+#if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
         return _z_unicast_send_close(&zt->_transport._unicast, reason, link_only);
-    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else
+#endif // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         return _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
     else
+#endif // Z_MULTICAST_TRANSPORT == 1
         return -1;
 }
 
+#if Z_UNICAST_TRANSPORT == 1
 _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_establish_param_t param)
 {
     _z_transport_t *zt = (_z_transport_t *)z_malloc(sizeof(_z_transport_t));
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
 
+#if Z_MULTI_THREAD == 1
     // Initialize the mutexes
     _z_mutex_init(&zt->_transport._unicast._mutex_tx);
     _z_mutex_init(&zt->_transport._unicast._mutex_rx);
+#endif // Z_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
@@ -90,11 +104,13 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
     zt->_transport._unicast._sn_rx_reliable = param._initial_sn_rx;
     zt->_transport._unicast._sn_rx_best_effort = param._initial_sn_rx;
 
+#if Z_MULTI_THREAD == 1
     // Tasks
     zt->_transport._unicast._read_task_running = 0;
     zt->_transport._unicast._read_task = NULL;
     zt->_transport._unicast._lease_task_running = 0;
     zt->_transport._unicast._lease_task = NULL;
+#endif // Z_MULTI_THREAD == 1
 
     // Notifiers
     zt->_transport._unicast._received = 0;
@@ -111,16 +127,20 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
 
     return zt;
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multicast_establish_param_t param)
 {
     _z_transport_t *zt = (_z_transport_t *)z_malloc(sizeof(_z_transport_t));
     zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
 
+#if Z_MULTI_THREAD == 1
     // Initialize the mutexes
     _z_mutex_init(&zt->_transport._multicast._mutex_tx);
     _z_mutex_init(&zt->_transport._multicast._mutex_rx);
     _z_mutex_init(&zt->_transport._multicast._mutex_peer);
+#endif // Z_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
@@ -137,11 +157,14 @@ _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multica
     // Initialize peer list
     zt->_transport._multicast._peers = _z_transport_peer_entry_list_new();
 
+#if Z_MULTI_THREAD == 1
     // Tasks
     zt->_transport._multicast._read_task_running = 0;
     zt->_transport._multicast._read_task = NULL;
     zt->_transport._multicast._lease_task_running = 0;
     zt->_transport._multicast._lease_task = NULL;
+#endif // Z_MULTI_THREAD == 1
+
     zt->_transport._multicast._lease = Z_TRANSPORT_LEASE;
 
     // Notifiers
@@ -152,7 +175,9 @@ _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multica
 
     return zt;
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
+#if Z_UNICAST_TRANSPORT == 1
 _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(const _z_link_t *zl, const _z_bytes_t local_pid)
 {
     _z_transport_unicast_establish_param_result_t ret;
@@ -270,7 +295,9 @@ ERR_1:
     ret._value._error = -1;
     return ret;
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_client(const _z_link_t *zl, const _z_bytes_t local_pid)
 {
     (void) (zl);
@@ -283,7 +310,9 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_clie
 
     return ret;
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
+#if Z_UNICAST_TRANSPORT == 1
 _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(const _z_link_t *zl, const _z_bytes_t local_pid)
 {
     (void) (zl);
@@ -296,7 +325,9 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
 
     return ret;
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer(const _z_link_t *zl, const _z_bytes_t local_pid)
 {
     _z_transport_multicast_establish_param_result_t ret;
@@ -333,24 +364,31 @@ ERR_1:
     ret._value._error = -1;
     return ret;
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
+#if Z_UNICAST_TRANSPORT == 1
 int _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason)
 {
     return _z_unicast_send_close(ztu, reason, 0);
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 int _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason)
 {
     return _z_multicast_send_close(ztm, reason, 0);
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
 int _z_transport_close(_z_transport_t *zt, uint8_t reason)
 {
     return _z_send_close(zt, reason, 0);
 }
 
+#if Z_UNICAST_TRANSPORT == 1
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu)
 {
+#if Z_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL)
     {
@@ -366,6 +404,7 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu)
     // Clean up the mutexes
     _z_mutex_free(&ztu->_mutex_tx);
     _z_mutex_free(&ztu->_mutex_rx);
+#endif // Z_MULTI_THREAD == 1
 
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_wbuf);
@@ -379,9 +418,12 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu)
     if (ztu->_link != NULL)
         _z_link_free((_z_link_t **)&ztu->_link);
 }
+#endif // Z_UNICAST_TRANSPORT == 1
 
+#if Z_MULTICAST_TRANSPORT == 1
 void _z_transport_multicast_clear(_z_transport_multicast_t *ztm)
 {
+#if Z_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL)
     {
@@ -398,6 +440,7 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm)
     _z_mutex_free(&ztm->_mutex_tx);
     _z_mutex_free(&ztm->_mutex_rx);
     _z_mutex_free(&ztm->_mutex_peer);
+#endif // Z_MULTI_THREAD == 1
 
     // Clean up the buffers
     _z_wbuf_clear(&ztm->_wbuf);
@@ -409,15 +452,23 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm)
     if (ztm->_link != NULL)
         _z_link_free((_z_link_t **)&ztm->_link);
 }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
 void _z_transport_free(_z_transport_t **zt)
 {
     _z_transport_t *ptr = *zt;
 
+#if Z_UNICAST_TRANSPORT == 1
     if (ptr->_type == _Z_TRANSPORT_UNICAST_TYPE)
         _z_transport_unicast_clear(&ptr->_transport._unicast);
-    else if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else
+#endif // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+    if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         _z_transport_multicast_clear(&ptr->_transport._multicast);
+    else
+#endif // Z_MULTICAST_TRANSPORT == 1
+        asm("nop");
 
     z_free(ptr);
     *zt = NULL;

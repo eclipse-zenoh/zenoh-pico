@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/logger.h"
@@ -31,9 +33,11 @@ _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, uint3
 _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
     // FIXME: remove when resource declaration is implemented for multicast transport
+#if Z_MULTICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         goto ERR_1;
     }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
     r->_id = _z_get_resource_id(zn);
@@ -381,10 +385,12 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
     }
     else
     {
+#if Z_MULTI_THREAD == 1
         // Signal that we have received all the replies
         _z_mutex_lock(&pqc->_mutex); // Avoid condvar signal to be triggered before wait
         _z_condvar_signal(&pqc->_cond_var);
         _z_mutex_unlock(&pqc->_mutex);
+#endif // Z_MULTI_THREAD == 1
     }
 }
 

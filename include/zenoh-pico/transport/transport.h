@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_TRANSPORT_TYPES_H
 #define ZENOH_PICO_TRANSPORT_TYPES_H
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/link/link.h"
@@ -51,9 +53,11 @@ typedef struct
     // Session associated to the transport
     void *_session;
 
+#if Z_MULTI_THREAD == 1
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
+#endif // Z_MULTI_THREAD == 1
 
     // Defragmentation buffers
     _z_wbuf_t _dbuf_reliable;
@@ -78,11 +82,13 @@ typedef struct
     volatile int _received;
     volatile int _transmitted;
 
+#if Z_MULTI_THREAD == 1
     volatile int _read_task_running;
     _z_task_t *_read_task;
-
     volatile int _lease_task_running;
     _z_task_t *_lease_task;
+#endif // Z_MULTI_THREAD == 1
+
     volatile _z_zint_t _lease;
 } _z_transport_unicast_t;
 
@@ -91,12 +97,14 @@ typedef struct
     // Session associated to the transport
     void *_session;
 
+#if Z_MULTI_THREAD == 1
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
 
     // Peer list mutex
     _z_mutex_t _mutex_peer;
+#endif // Z_MULTI_THREAD == 1
 
     // Known valid peers
     _z_transport_peer_entry_list_t *_peers;
@@ -115,11 +123,13 @@ typedef struct
 
     volatile int _transmitted;
 
+#if Z_MULTI_THREAD == 1
     volatile int _read_task_running;
     _z_task_t *_read_task;
-
     volatile int _lease_task_running;
     _z_task_t *_lease_task;
+#endif // Z_MULTI_THREAD == 1
+
     volatile _z_zint_t _lease;
 } _z_transport_multicast_t;
 

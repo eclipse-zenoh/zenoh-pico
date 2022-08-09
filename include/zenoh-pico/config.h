@@ -165,6 +165,13 @@
 #endif
 
 /**
+ * Enable multi-thread support.
+ */
+#ifndef Z_MULTI_THREAD
+#define Z_MULTI_THREAD 1
+#endif
+
+/**
  * Enable TCP links.
  */
 #ifndef Z_LINK_TCP
@@ -235,6 +242,28 @@
  */
 #ifndef Z_DYNAMIC_MEMORY_ALLOCATION
 #define Z_DYNAMIC_MEMORY_ALLOCATION 0
+#endif
+
+/**
+ * Enable Multicast Transport.
+ */
+#ifndef Z_MULTICAST_TRANSPORT
+#if Z_SCOUTING_UDP == 0 && Z_LINK_BLUETOOTH == 0 && Z_LINK_UDP_MULTICAST == 0
+#define Z_MULTICAST_TRANSPORT 0
+#else
+#define Z_MULTICAST_TRANSPORT 1
+#endif
+#endif
+
+/**
+ * Enable Unicast Transport.
+ */
+#ifndef Z_UNICAST_TRANSPORT
+#if Z_LINK_TCP == 0 && Z_LINK_UDP_UNICAST == 0
+#define Z_UNICAST_TRANSPORT 0
+#else
+#define Z_UNICAST_TRANSPORT 1
+#endif
 #endif
 
 #endif /* ZENOH_PICO_CONFIG_H */

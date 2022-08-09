@@ -164,8 +164,10 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
     _z_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
+#if Z_MULTICAST_TRANSPORT == 1
     const char *locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
     locs = __z_scout_loop(&wbf, locator, scout_period, exit_on_first);
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);
 

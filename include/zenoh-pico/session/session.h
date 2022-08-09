@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_TYPES_H
 #define ZENOH_PICO_SESSION_TYPES_H
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/manager.h"
 #include "zenoh-pico/collections/list.h"
@@ -164,8 +165,10 @@ _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _cond_var;
+#endif // Z_MULTI_THREAD == 1
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 

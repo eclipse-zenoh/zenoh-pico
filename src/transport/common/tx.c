@@ -102,14 +102,20 @@ int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliab
 
 int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg)
 {
+#if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
         return _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
-    else if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    else
+#endif // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
         return _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
     else
+#endif // Z_MULTICAST_TRANSPORT == 1
         return -1;
 }
 
+#if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
 int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
 {
     // Create and prepare the buffer to serialize the message on
@@ -146,3 +152,4 @@ ERR:
     _z_wbuf_clear(&wbf);
     return -1;
 }
+#endif // Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1

@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/queryable.h"
@@ -68,8 +70,10 @@ _z_session_t *_z_session_init(void)
     zn->_tp = NULL;
     zn->_tp_manager = _z_transport_manager_init();
 
+#if Z_MULTI_THREAD == 1
     // Initialize the mutexes
     _z_mutex_init(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     return zn;
 }
@@ -89,8 +93,10 @@ void _z_session_free(_z_session_t **zn)
     _z_flush_questionables(ptr);
     _z_flush_pending_queries(ptr);
 
+#if Z_MULTI_THREAD == 1
     // Clean up the mutexes
     _z_mutex_free(&ptr->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     z_free(ptr);
     *zn = NULL;

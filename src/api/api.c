@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/api/primitives.h"
 
 #include "zenoh-pico/net/config.h"
@@ -388,6 +390,7 @@ void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
     callback->context = NULL;
 
     z_id_t id;
+#if Z_MULTICAST_TRANSPORT == 1
     if (zs->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
     {
         _z_transport_peer_entry_list_t *l = zs->_tp->_transport._multicast._peers;
@@ -400,6 +403,7 @@ void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
             callback->call(&id, ctx);
         }
     }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     if (callback->drop != NULL)
         callback->drop(ctx);
@@ -411,6 +415,7 @@ void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
     callback->context = NULL;
 
     z_id_t id;
+#if Z_UNICAST_TRANSPORT == 1
     if (zs->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
     {
         memcpy(&id.id[0], zs->_tp->_transport._unicast._remote_pid.start, zs->_tp->_transport._unicast._remote_pid.len);
@@ -418,6 +423,7 @@ void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback)
 
         callback->call(&id, ctx);
     }
+#endif // Z_UNICAST_TRANSPORT == 1
 
     if (callback->drop != NULL)
         callback->drop(ctx);
@@ -551,12 +557,14 @@ z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
+#if Z_MULTICAST_TRANSPORT == 1
     if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
             key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
         }
     }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     if (options != NULL) {
         return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, options->local_routing, options->congestion_control, options->priority)};
@@ -620,11 +628,13 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
+#if Z_MULTICAST_TRANSPORT == 1
     if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL)
             key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
     }
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL)
@@ -745,22 +755,42 @@ z_sample_t z_reply_ok(z_owned_reply_t *reply)
 /**************** Tasks ****************/
 int8_t zp_start_read_task(z_session_t *zs)
 {
+#if Z_MULTI_THREAD == 1
     return _zp_start_read_task(zs);
+#else
+    (void) (zs);
+    return -1;
+#endif
 }
 
 int8_t zp_stop_read_task(z_session_t *zs)
 {
+#if Z_MULTI_THREAD == 1
     return _zp_stop_read_task(zs);
+#else
+    (void) (zs);
+    return -1;
+#endif
 }
 
 int8_t zp_start_lease_task(z_session_t *zs)
 {
+#if Z_MULTI_THREAD == 1
     return _zp_start_lease_task(zs);
+#else
+    (void) (zs);
+    return -1;
+#endif
 }
 
 int8_t zp_stop_lease_task(z_session_t *zs)
 {
+#if Z_MULTI_THREAD == 1
     return _zp_stop_lease_task(zs);
+#else
+    (void) (zs);
+    return -1;
+#endif
 }
 
 int8_t zp_read(z_session_t *zs)
