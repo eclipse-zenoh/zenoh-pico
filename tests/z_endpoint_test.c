@@ -32,54 +32,54 @@ int main(void)
     sprintf(s, "tcp/127.0.0.1:7447");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_OK);
-    assert(_z_str_eq(lres.value.locator.protocol, "tcp"));
-    assert(_z_str_eq(lres.value.locator.address, "127.0.0.1:7447"));
-    assert(_z_str_intmap_is_empty(&lres.value.locator.metadata));
-    _z_locator_clear(&lres.value.locator);
+    assert(lres._tag == _Z_RES_OK);
+    assert(_z_str_eq(lres._value._locator._protocol, "tcp"));
+    assert(_z_str_eq(lres._value._locator._address, "127.0.0.1:7447"));
+    assert(_z_str_intmap_is_empty(&lres._value._locator._metadata));
+    _z_locator_clear(&lres._value._locator);
 
     s[0] = '\0'; // sprintf(s, "");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "/");
     printf("- %s\n", s);
     lres = _z_locator_from_str("/");
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp/");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "127.0.0.1:7447");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp/127.0.0.1:7447?");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     // No metadata defined so far... but this is a valid syntax in principle
     sprintf(s, "tcp/127.0.0.1:7447?invalid=ctrl");
     printf("- %s\n", s);
     lres = _z_locator_from_str(s);
-    assert(lres.tag == _Z_RES_ERR);
-    assert(lres.value.error == _Z_ERR_PARSE_STRING);
+    assert(lres._tag == _Z_RES_ERR);
+    assert(lres._value._error == _Z_ERR_PARSE_STRING);
 
     // Endpoint
     printf(">>> Testing endpoints...\n");
@@ -89,86 +89,86 @@ int main(void)
     sprintf(s, "tcp/127.0.0.1:7447");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_OK);
-    assert(_z_str_eq(eres.value.endpoint.locator.protocol, "tcp"));
-    assert(_z_str_eq(eres.value.endpoint.locator.address, "127.0.0.1:7447"));
-    assert(_z_str_intmap_is_empty(&eres.value.endpoint.locator.metadata));
-    assert(_z_str_intmap_is_empty(&eres.value.endpoint.config));
-    _z_endpoint_clear(&eres.value.endpoint);
+    assert(eres._tag == _Z_RES_OK);
+    assert(_z_str_eq(eres._value._endpoint._locator._protocol, "tcp"));
+    assert(_z_str_eq(eres._value._endpoint._locator._address, "127.0.0.1:7447"));
+    assert(_z_str_intmap_is_empty(&eres._value._endpoint._locator._metadata));
+    assert(_z_str_intmap_is_empty(&eres._value._endpoint._config));
+    _z_endpoint_clear(&eres._value._endpoint);
 
     s[0] = '\0'; // sprintf(s, "");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "/");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "127.0.0.1:7447");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "tcp/127.0.0.1:7447?");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     // No metadata defined so far... but this is a valid syntax in principle
     sprintf(s, "tcp/127.0.0.1:7447?invalid=ctrl");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "udp/127.0.0.1:7447#%s=eth0", UDP_CONFIG_IFACE_STR);
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_OK);
-    assert(_z_str_eq(eres.value.endpoint.locator.protocol, "udp"));
-    assert(_z_str_eq(eres.value.endpoint.locator.address, "127.0.0.1:7447"));
-    assert(_z_str_intmap_is_empty(&eres.value.endpoint.locator.metadata));
-    assert(_z_str_intmap_len(&eres.value.endpoint.config) == 1);
-    char *p = _z_str_intmap_get(&eres.value.endpoint.config, UDP_CONFIG_IFACE_KEY);
+    assert(eres ._tag == _Z_RES_OK);
+    assert(_z_str_eq(eres._value._endpoint._locator._protocol, "udp"));
+    assert(_z_str_eq(eres._value._endpoint._locator._address, "127.0.0.1:7447"));
+    assert(_z_str_intmap_is_empty(&eres._value._endpoint._locator._metadata));
+    assert(_z_str_intmap_len(&eres._value._endpoint._config) == 1);
+    char *p = _z_str_intmap_get(&eres._value._endpoint._config, UDP_CONFIG_IFACE_KEY);
     assert(_z_str_eq(p, "eth0"));
     (void) (p);
-    _z_endpoint_clear(&eres.value.endpoint);
+    _z_endpoint_clear(&eres._value._endpoint);
 
     sprintf(s, "udp/127.0.0.1:7447#invalid=eth0");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "udp/127.0.0.1:7447?invalid=ctrl#%s=eth0", UDP_CONFIG_IFACE_STR);
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 
     sprintf(s, "udp/127.0.0.1:7447?invalid=ctrl#invalid=eth0");
     printf("- %s\n", s);
     eres = _z_endpoint_from_str(s);
-    assert(eres.tag == _Z_RES_ERR);
-    assert(eres.value.error == _Z_ERR_PARSE_STRING);
+    assert(eres ._tag == _Z_RES_ERR);
+    assert(eres._value._error == _Z_ERR_PARSE_STRING);
 #endif
 
     return 0;
