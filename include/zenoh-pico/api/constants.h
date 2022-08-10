@@ -192,8 +192,6 @@ typedef enum
     Z_REPLY_TAG_FINAL = 1
 } z_reply_tag_t;
 
-#define Z_PERIOD_NONE (z_period_t){.origin = 0, .period = 0, .duration = 0}
-
 /**
  * Congestion control values.
  *

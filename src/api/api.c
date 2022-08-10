@@ -291,14 +291,12 @@ _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _
 
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_info_t, z_owned_info_t, info, _z_config_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_publisher_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
 
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_period_t, z_owned_period_t, period, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
@@ -438,14 +436,6 @@ z_id_t z_info_zid(const z_session_t *zs)
     memset(&id.id[zs->_tp_manager->_local_pid.len], 0, sizeof(id) - zs->_tp_manager->_local_pid.len);
 
     return id;
-}
-
-z_owned_info_t z_info(const z_session_t *zs)
-{
-    z_owned_info_t zi;
-    zi._value = _z_info(zs);
-
-    return zi;
 }
 
 z_put_options_t z_put_options_default(void)

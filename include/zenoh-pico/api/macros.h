@@ -34,13 +34,11 @@
     z_owned_keyexpr_t : z_keyexpr_loan,                               \
     z_owned_config_t : z_config_loan,                                 \
     z_owned_session_t : z_session_loan,                               \
-    z_owned_info_t : z_info_loan,                                     \
     z_owned_subscriber_t : z_subscriber_loan,                         \
     z_owned_pull_subscriber_t : z_pull_subscriber_loan,               \
     z_owned_publisher_t : z_publisher_loan,                           \
     z_owned_queryable_t : z_queryable_loan,                           \
     z_owned_encoding_t : z_encoding_loan,                             \
-    z_owned_period_t : z_period_loan,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_loan, \
     z_owned_query_target_t : z_query_target_loan,                     \
     z_owned_query_consolidation_t : z_query_consolidation_loan,       \
@@ -64,13 +62,11 @@
     z_owned_keyexpr_t : z_keyexpr_drop,                               \
     z_owned_config_t : z_config_drop,                                 \
     z_owned_session_t : z_session_drop,                               \
-    z_owned_info_t : z_info_drop,                                     \
     z_owned_subscriber_t : z_subscriber_drop,                         \
     z_owned_pull_subscriber_t : z_pull_subscriber_drop,               \
     z_owned_publisher_t : z_publisher_drop,                           \
     z_owned_queryable_t : z_queryable_drop,                           \
     z_owned_encoding_t : z_encoding_drop,                             \
-    z_owned_period_t : z_period_drop,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_drop, \
     z_owned_query_target_t : z_query_target_drop,                     \
     z_owned_query_consolidation_t : z_query_consolidation_drop,       \
@@ -98,13 +94,11 @@
     z_keyexpr_t : z_keyexpr_is_valid,                                  \
     z_owned_config_t : z_config_check,                                 \
     z_owned_session_t : z_session_check,                               \
-    z_owned_info_t : z_info_check,                                     \
     z_owned_subscriber_t : z_subscriber_check,                         \
     z_owned_pull_subscriber_t : z_pull_subscriber_check,               \
     z_owned_publisher_t : z_publisher_check,                           \
     z_owned_queryable_t : z_queryable_check,                           \
     z_owned_encoding_t : z_encoding_check,                             \
-    z_owned_period_t : z_period_check,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_check, \
     z_owned_query_target_t : z_query_target_check,                     \
     z_owned_query_consolidation_t : z_query_consolidation_check,       \
@@ -131,13 +125,11 @@
     z_owned_keyexpr_t : z_keyexpr_move,                               \
     z_owned_config_t : z_config_move,                                 \
     z_owned_session_t : z_session_move,                               \
-    z_owned_info_t : z_info_move,                                     \
     z_owned_subscriber_t : z_subscriber_move,                         \
     z_owned_pull_subscriber_t : z_pull_subscriber_move,               \
     z_owned_publisher_t : z_publisher_move,                           \
     z_owned_queryable_t : z_queryable_move,                           \
     z_owned_encoding_t : z_encoding_move,                             \
-    z_owned_period_t : z_period_move,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_move, \
     z_owned_query_target_t : z_query_target_move,                     \
     z_owned_query_consolidation_t : z_query_consolidation_move,       \
@@ -168,13 +160,11 @@
     z_owned_keyexpr_t : z_keyexpr_clone,                               \
     z_owned_config_t : z_config_clone,                                 \
     z_owned_session_t : z_session_clone,                               \
-    z_owned_info_t : z_info_clone,                                     \
     z_owned_subscriber_t : z_subscriber_clone,                         \
     z_owned_pull_subscriber_t : z_pull_subscriber_clone,               \
     z_owned_publisher_t : z_publisher_clone,                           \
     z_owned_queryable_t : z_queryable_clone,                           \
     z_owned_encoding_t : z_encoding_clone,                             \
-    z_owned_period_t : z_period_clone,                                 \
     z_owned_consolidation_strategy_t : z_consolidation_strategy_clone, \
     z_owned_query_target_t : z_query_target_clone,                     \
     z_owned_query_consolidation_t : z_query_consolidation_clone,       \

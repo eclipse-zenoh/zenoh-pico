@@ -91,8 +91,6 @@ typedef _z_config_t z_config_t;
  */
 typedef _z_session_t z_session_t;
 
-typedef _z_config_t z_info_t;
-
 /**
  * Represents a Zenoh (push) Subscriber entity.
  *
@@ -144,8 +142,6 @@ typedef _z_queryable_t z_queryable_t;
  *   z_bytes_t suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
 typedef _z_encoding_t z_encoding_t;
-
-typedef _z_period_t z_period_t;
 
 /**
  * Represents a Zenoh value.
@@ -401,14 +397,12 @@ _OWNED_TYPE(z_keyexpr_t, keyexpr)
 
 _OWNED_TYPE(z_config_t, config)
 _OWNED_TYPE(z_session_t, session)
-_OWNED_TYPE(z_info_t, info)
 _OWNED_TYPE(z_subscriber_t, subscriber)
 _OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
 _OWNED_TYPE(z_publisher_t, publisher)
 _OWNED_TYPE(z_queryable_t, queryable)
 
 _OWNED_TYPE(z_encoding_t, encoding)
-_OWNED_TYPE(z_period_t, period)
 _OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
 _OWNED_TYPE(z_query_target_t, query_target)
 _OWNED_TYPE(z_query_consolidation_t, query_consolidation)
