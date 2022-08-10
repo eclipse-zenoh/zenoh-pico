@@ -12,9 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
+
+#if Z_UNICAST_TRANSPORT == 1
 
 int _zp_unicast_read(_z_transport_unicast_t *ztu)
 {
@@ -33,8 +37,9 @@ ERR:
 
 void *_zp_unicast_read_task(void *arg)
 {
+    (void) (arg);
+#if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
-
     ztu->_read_task_running = 1;
 
     _z_transport_message_result_t r;
@@ -49,7 +54,7 @@ void *_zp_unicast_read_task(void *arg)
     {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (ztu->_link->_is_streamed == 1)
+        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities))
         {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE)
             {
@@ -110,9 +115,13 @@ EXIT_RECV_LOOP:
     if (ztu)
     {
         ztu->_read_task_running = 0;
+
         // Release the lock
         _z_mutex_unlock(&ztu->_mutex_rx);
     }
+#endif // Z_MULTI_THREAD == 1
 
     return 0;
 }
+
+#endif // Z_UNICAST_TRANSPORT == 1

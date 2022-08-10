@@ -17,15 +17,11 @@
 
 void fprintpid(FILE *stream, z_bytes_t pid)
 {
-    if (pid.start == NULL)
-    {
+    if (pid.start == NULL) {
         fprintf(stream, "None");
-    }
-    else
-    {
+    } else {
         fprintf(stream, "Some(");
-        for (unsigned int i = 0; i < pid.len; i++)
-        {
+        for (unsigned int i = 0; i < pid.len; i++) {
             fprintf(stream, "%02X", (int)pid.start[i]);
         }
         fprintf(stream, ")");
@@ -34,16 +30,11 @@ void fprintpid(FILE *stream, z_bytes_t pid)
 
 void fprintwhatami(FILE *stream, unsigned int whatami)
 {
-    if (whatami == Z_ROUTER)
-    {
+    if (whatami == Z_WHATAMI_ROUTER) {
         fprintf(stream, "\"Router\"");
-    }
-    else if (whatami == Z_PEER)
-    {
+    } else if (whatami == Z_WHATAMI_PEER) {
         fprintf(stream, "\"Peer\"");
-    }
-    else
-    {
+    } else {
         fprintf(stream, "\"Other\"");
     }
 }
@@ -51,13 +42,11 @@ void fprintwhatami(FILE *stream, unsigned int whatami)
 void fprintlocators(FILE *stream, const z_str_array_t *locs)
 {
     fprintf(stream, "[");
-    for (unsigned int i = 0; i < z_str_array_len(locs); i++)
-    {
+    for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
         fprintf(stream, "\"");
         fprintf(stream, "%s", *z_str_array_get(locs, i));
         fprintf(stream, "\"");
-        if (i < z_str_array_len(locs) - 1)
-        {
+        if (i < z_str_array_len(locs) - 1) {
             fprintf(stream, ", ");
         }
     }
@@ -85,17 +74,13 @@ int main(int argc, char **argv)
     z_owned_config_t config = zp_config_default();
 
     printf("Scouting...\n");
-    z_owned_hello_array_t hellos = z_scout(Z_ROUTER | Z_PEER, z_config_move(&config), 1000);
-    if (z_hello_array_len(z_hello_array_loan(&hellos)) > 0)
-    {
-        for (unsigned int i = 0; i < z_hello_array_len(z_hello_array_loan(&hellos)); ++i)
-        {
+    z_owned_hello_array_t hellos = z_scout(Z_WHATAMI_ROUTER | Z_WHATAMI_PEER, z_config_move(&config), 1000);
+    if (z_hello_array_len(z_hello_array_loan(&hellos)) > 0) {
+        for (unsigned int i = 0; i < z_hello_array_len(z_hello_array_loan(&hellos)); ++i) {
             fprinthello(stdout, z_hello_array_get(z_hello_array_loan(&hellos), i));
             fprintf(stdout, "\n");
         }
-    }
-    else
-    {
+    } else {
         printf("Did not find any zenoh process.\n");
     }
 

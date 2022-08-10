@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include <sys/time.h>
 #include <esp_heap_caps.h>
 #include "zenoh-pico/system/platform.h"
@@ -62,6 +64,7 @@ void z_free(void *ptr)
     heap_caps_free(ptr);
 }
 
+#if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 // This wrapper is only used for ESP32.
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
@@ -80,8 +83,6 @@ void z_task_wrapper(void *arg)
     z_free(z_arg);
 }
 
-
-/*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
@@ -158,6 +159,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
     return pthread_cond_wait(cv, m);
 }
+#endif // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)

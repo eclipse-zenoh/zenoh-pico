@@ -12,24 +12,29 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-/*------------------ Reception helper ------------------*/
+#if Z_UNICAST_TRANSPORT == 1
+
 void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_result_t *r)
 {
     _Z_DEBUG(">> recv session msg\n");
     r->_tag = _Z_RES_OK;
 
+#if Z_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_rx);
+#endif // Z_MULTI_THREAD == 1
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    if (ztu->_link->_is_streamed == 1)
+    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities))
     {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE)
@@ -43,7 +48,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
         for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
             len |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
 
-        _Z_DEBUG(">> \t msg len = %hu\n", len);
+        _Z_DEBUG(">> \t msg len = %zu\n", len);
         size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
         if (writable < len)
         {
@@ -77,8 +82,11 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     _z_transport_message_decode_na(&ztu->_zbuf, r);
 
 EXIT_SRCV_PROC:
+#if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztu->_mutex_rx);
+#endif // Z_MULTI_THREAD == 1
+    asm("nop");
 }
 
 _z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu)
@@ -251,3 +259,5 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
 
     return _Z_RES_OK;
 }
+
+#endif // Z_UNICAST_TRANSPORT == 1

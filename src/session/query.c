@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -101,16 +103,25 @@ _z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const 
 
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
     return pql;
 }
 
 int _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry)
 {
-    _Z_DEBUG(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->_key.rid, pen_qry->_key.rname, pen_qry->_value_selector);
+    _Z_DEBUG(">>> Allocating query for (%lu:%s,%s)\n", pen_qry->_key._id, pen_qry->_key._suffix, pen_qry->_value_selector);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, pen_qry->_id);
     if (pql != NULL) // A query for this id already exists
@@ -119,7 +130,10 @@ int _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry)
     // Register the query
     zn->_pending_queries = _z_pending_query_list_push(zn->_pending_queries, pen_qry);
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return 0;
 
 ERR:
@@ -128,7 +142,9 @@ ERR:
 
 int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F))
         goto ERR_1;
@@ -193,19 +209,27 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
         _z_reply_free(&reply);
     }
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return 0;
 
 ERR_2:
     _z_reply_free(&reply);
 ERR_1:
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return -1;
 }
 
 int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *reply_context)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 
     // Final reply received with invalid final flag
     if (!_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F))
@@ -241,24 +265,42 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
     // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL tag
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return 0;
 
 ERR:
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     return -1;
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 }
 
 void _z_flush_pending_queries(_z_session_t *zn)
 {
+#if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
+
     _z_pending_query_list_free(&zn->_pending_queries);
+
+#if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
+#endif // Z_MULTI_THREAD == 1
 }

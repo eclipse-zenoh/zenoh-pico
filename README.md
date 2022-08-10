@@ -31,7 +31,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
 -------------------------------
-## How to install it
+## 1. How to install it
 
 The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** packages in the [Eclipse zenoh-pico download area](https://download.eclipse.org/zenoh/zenoh-pico/).
 Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
@@ -45,9 +45,9 @@ For other platforms - like RTOS for embedded systems / microcontrollers -, you w
 WARNING: Note that zenoh-pico has not been ported on Windows yet!
 
 -------------------------------
-## How to build it
+## 2. How to build it
 
-### Unix Environments
+### 2.1 Unix Environments
 To build the **zenoh-pico** library, you need to ensure that [cmake](https://cmake.org) is available
 on your platform -- if not please install it.
 
@@ -79,7 +79,7 @@ For those that still have **CMake** version 2.8, do the following commands:
   $ make install # on Linux use **sudo**
   ```
 
-### Real Time Operating System (RTOS) for Embedded Systems and Microcontrollers
+### 2.2. Real Time Operating System (RTOS) for Embedded Systems and Microcontrollers
 
 In order to manage and ease the process of building and deploying into a a variety of platforms and frameworks
 for embedded systems and microcontrollers, [PlatformIO](https://platformio.org) can be
@@ -88,7 +88,7 @@ used as a supporting platform.
 Once the PlatformIO dependency is satisfied, follow the steps below for the
 tested micro controllers.
 
-#### Zephyr
+#### 2.2.1. Zephyr
 Note: tested with reel_board, nucleo-f767zi, nucleo-f420zi, and nRF52840 boards.
 
 A typical PlatformIO project for Zephyr framework must have the following
@@ -144,7 +144,7 @@ To build and upload the code into the board, run the following command:
   platformio run -t upload
   ```
 
-#### Arduino
+#### 2.2.2. Arduino
 Note: tested with az-delivery-devkit-v4 ESP32 board
 
 A typical PlatformIO project for Arduino framework must have the following
@@ -188,7 +188,7 @@ To build and upload the code into the board, run the following command:
   platformio run -t upload
   ```
 
-#### ESP-IDF
+#### 2.2.3. ESP-IDF
 Note: tested with az-delivery-devkit-v4 ESP32 board
 
 A typical PlatformIO project for ESP-IDF framework must have the following
@@ -235,7 +235,7 @@ To build and upload the code into the board, run the following command:
   platformio run -t upload
   ```
 
-#### MbedOS
+#### 2.2.4. MbedOS
 Note: tested with nucleo-f747zi and nucleo-f429zi boards
 
 A typical PlatformIO project for MbedOS framework must have the following structure:
@@ -277,7 +277,7 @@ To build and upload the code into the board, run the following command:
   platformio run -t upload
   ```
 
-#### OpenCR
+#### 2.2.5. OpenCR
 Note: tested with ROBOTIS OpenCR 1.0 board
 
 A typical PlatformIO project for OpenCR framework must have the following structure:
@@ -322,10 +322,10 @@ To build and upload the code into the board, run the following command:
   platformio run -t upload
   ```
 
-## Running the Examples
+## 3. Running the Examples
 The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see http://zenoh.io/docs/getting-started/quick-test/) and then to run the examples on your machine.
 
-### Starting the zenoh Network Service
+### 3.1. Starting the zenoh Network Service
 Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container)), then simply do:
 
 ```bash
@@ -338,7 +338,7 @@ To see the zenoh manual page, simply do:
 $ docker run --init -net host eclipse/zenoh:master --help
 ```
 
-### Basic Pub/Sub Example
+### 3.2. Basic Pub/Sub Example
 Assuming that (1) you are running the **zenoh** network router,  and (2) you are under the build directory, do:
 ```bash
 $ ./z_sub
@@ -348,7 +348,7 @@ And on another shell, do:
 ```bash
 $ ./z_pub
 ```
-### Basic Queryable/Get Example
+### 3.3. Basic Queryable/Get Example
 Assuming you are running the **zenoh** network router, do:
 ```bash
 $ ./z_queryable

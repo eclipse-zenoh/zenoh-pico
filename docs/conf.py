@@ -13,6 +13,7 @@
 #
 
 # Configuration file for the Sphinx documentation builder.
+from clang.cindex import Config
 
 # -- Project information -----------------------------------------------------
 project = 'zenoh-pico'
@@ -22,8 +23,13 @@ release = '0.6.0'
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'
-extensions = []
+extensions = ['sphinx_c_autodoc', 'sphinx_c_autodoc.napoleon']
 language = 'c'
+c_autodoc_roots = ['../include/zenoh-pico/api/']
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'
+
+breathe_debug_trace_directives = True
+
+Config.set_library_file('/Library/Developer/CommandLineTools/usr/lib/libclang.dylib')

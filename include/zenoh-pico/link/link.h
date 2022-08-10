@@ -38,7 +38,26 @@
 
 #include "zenoh-pico/utils/result.h"
 
-/*------------------ Link ------------------*/
+/**
+ * Link capabilities values, defined as a bitmask.
+ *
+ * Enumerators:
+ *     Z_LINK_CAPABILITY_NONE: Bitmask to define that link has no capabilities.
+ *     Z_LINK_CAPABILITY_RELIEABLE: Bitmask to define and check if link is reliable.
+ *     Z_LINK_CAPABILITY_STREAMED: Bitmask to define and check if link is streamed.
+ *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
+ */
+typedef enum {
+    Z_LINK_CAPABILITY_NONE      = 0x00,     // 0
+    Z_LINK_CAPABILITY_RELIEABLE = 0x01,     // 1 << 0
+    Z_LINK_CAPABILITY_STREAMED  = 0x02,     // 1 << 1
+    Z_LINK_CAPABILITY_MULTICAST = 0x04      // 1 << 2
+} _z_link_capabilities_t;
+
+#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIEABLE) == Z_LINK_CAPABILITY_RELIEABLE)
+#define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
+#define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
+
 typedef int (*_z_f_link_open)(void *arg);
 typedef int (*_z_f_link_listen)(void *arg);
 typedef void (*_z_f_link_close)(void *arg);
@@ -48,12 +67,10 @@ typedef size_t (*_z_f_link_read)(const void *arg, uint8_t *ptr, size_t len, _z_b
 typedef size_t (*_z_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
 typedef void (*_z_f_link_free)(void *arg);
 
-typedef struct
-{
+typedef struct {
     _z_endpoint_t _endpoint;
 
-    union
-    {
+    union {
 #if Z_LINK_TCP == 1
         _z_tcp_socket_t _tcp;
 #endif
@@ -78,9 +95,7 @@ typedef struct
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
-    uint8_t _is_reliable;
-    uint8_t _is_streamed;
-    uint8_t _is_multicast;
+    uint8_t _capabilities;
 } _z_link_t;
 
 _Z_RESULT_DECLARE(_z_link_t, link)

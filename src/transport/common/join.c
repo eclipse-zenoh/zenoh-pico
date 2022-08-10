@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/transport/link/task/join.h"
 
+#if Z_MULTICAST_TRANSPORT == 1
+
 int _zp_send_join(_z_transport_t *zt)
 {
     // Join task only applies to multicast transports
@@ -22,3 +24,5 @@ int _zp_send_join(_z_transport_t *zt)
     else
         return -1;
 }
+
+#endif // Z_MULTICAST_TRANSPORT == 1

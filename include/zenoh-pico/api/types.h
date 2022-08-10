@@ -157,7 +157,7 @@ _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, repl
 #define _OWNED_TYPE(type, name)  \
     typedef struct               \
     {                            \
-        type *_value;             \
+        type *_value;            \
     } z_owned_##name##_t;
 
 _OWNED_TYPE(z_bytes_t, bytes)

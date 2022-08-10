@@ -11,9 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
@@ -24,41 +24,63 @@ char *value = "Queryable from Pico!";
 void query_handler(z_query_t *query, void *ctx)
 {
     (void) (ctx);
-    const char *res = z_keyexpr_to_string(z_query_keyexpr(query));
+    char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
     z_bytes_t pred = z_query_value_selector(query);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", res, (int)pred.len, pred.start);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", keystr, (int)pred.len, pred.start);
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), NULL);
+    free(keystr);
 }
 
 int main(int argc, char **argv)
 {
     z_init_logger();
 
-    if (argc > 1)
-        keyexpr = argv[1];
+    char *locator = NULL;
 
-    if (argc > 2)
-        value = argv[2];
+    int opt;
+    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+        switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
+            case 'v':
+                value = optarg;
+                break;
+            case 'e':
+                locator = optarg;
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                exit(-1);
+        }
+    }
 
     z_owned_config_t config = zp_config_default();
-    if (argc > 3)
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[3]));
+    if (locator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    }
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s))
-    {
+    if (!z_check(s)) {
         printf("Unable to open session!\n");
         exit(-1);
     }
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan(s));
-    zp_start_lease_task(z_loan(s));
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_loan(s)) < 0 || zp_start_lease_task(z_loan(s)) < 0) {
+        printf("Unable to start read and lease tasks");
+        exit(-1);
+    }
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_check(ke))
-    {
+    if (!z_check(ke)) {
         printf("%s is not a valid key expression", keyexpr);
         exit(-1);
     }
@@ -66,20 +88,20 @@ int main(int argc, char **argv)
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_closure_query_t callback = z_closure(query_handler);
     z_owned_queryable_t qable = z_declare_queryable(z_loan(s), ke, z_move(callback), NULL);
-    if (!z_check(qable))
-    {
+    if (!z_check(qable)) {
         printf("Unable to create queryable.\n");
         exit(-1);
     }
 
     printf("Enter 'q' to quit...\n");
     char c = 0;
-    while (c != 'q')
+    while (c != 'q') {
         c = getchar();
+    }
 
     z_undeclare_queryable(z_move(qable));
 
-    // Stop the receive and the session lease loop for zenoh-pico
+    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
 

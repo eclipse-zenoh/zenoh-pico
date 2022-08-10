@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <ctype.h>
 #include <stdio.h>
@@ -18,23 +19,13 @@
 
 #include "zenoh-pico.h"
 
-void reply_dropper(void *ctx)
+void data_handler(const z_sample_t *sample, void *ctx)
 {
     (void) (ctx);
-    printf(">> Received query final notification\n");
-}
-
-void reply_handler(z_owned_reply_t oreply, void *ctx)
-{
-    (void) (ctx);
-    if (z_reply_is_ok(&oreply)) {
-        z_sample_t sample = z_reply_ok(&oreply);
-        char *keystr = z_keyexpr_to_string(sample.keyexpr);
-        printf(">> Received ('%s': '%.*s')\n", keystr, (int)sample.payload.len, sample.payload.start);
-        free(keystr);
-    } else {
-        printf(">> Received an error\n");
-    }
+    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    printf(">> [Subscriber] Received ('%s': '%.*s')\n",
+           keystr, (int)sample->payload.len, sample->payload.start);
+    free(keystr);
 }
 
 int main(int argc, char **argv)
@@ -61,7 +52,7 @@ int main(int argc, char **argv)
                 }
                 return 1;
             default:
-                exit(-1);
+                abort();
         }
     }
 
@@ -83,33 +74,20 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_check(ke)) {
-        printf("%s is not a valid key expression", keyexpr);
+    z_owned_closure_sample_t callback = z_closure(data_handler);
+    printf("Declaring Subscriber on '%s'...\n", keyexpr);
+    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
+    if (!z_check(sub)) {
+        printf("Unable to declare subscriber.\n");
         exit(-1);
     }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = 0;
     while (1) {
-        c = getchar();
-        if (c == 'q') {
-            break;
-        }
-
-        printf("Sending Query '%s'...\n", keyexpr);
-        z_get_options_t opts = z_get_options_default();
-        opts.target = Z_QUERY_TARGET_ALL;
-        z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
-        if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
-            printf("Unable to send query.\n");
-            exit(-1);
-        }
+        zp_read(z_loan(s));
+        zp_send_keep_alive(z_loan(s));
     }
 
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    z_undeclare_subscriber(z_move(sub));
 
     z_close(z_move(s));
 

@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <ctype.h>
 #include <stdio.h>
@@ -18,34 +19,33 @@
 
 #include "zenoh-pico.h"
 
-void print_zid(const z_id_t *id, void *ctx)
+void data_handler(const z_sample_t *sample, void *arg)
 {
-    (void) (ctx);
-    printf(" ");
-    for (int i = 15; i >= 0; i--) {
-        printf("%02X", id->id[i]);
-    }
-    printf("\n");
+    (void) (arg);
+    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    printf(">> [Subscriber] Received ('%s': '%.*s')\n",
+           keystr, (int)sample->payload.len, sample->payload.start);
+    free(keystr);
 }
 
 int main(int argc, char **argv)
 {
     z_init_logger();
 
-    char *mode = "client";
+    char *keyexpr = "demo/example/**";
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "e:m:")) != -1) {
+    while ((opt = getopt (argc, argv, "k:e:")) != -1) {
         switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
             case 'e':
                 locator = optarg;
                 break;
-            case 'm':
-                mode = optarg;
-                break;
             case '?':
-                if (optopt == 'e' || optopt == 'm') {
+                if (optopt == 'k' || optopt == 'e') {
                     fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -57,7 +57,6 @@ int main(int argc, char **argv)
     }
 
     z_owned_config_t config = zp_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }
@@ -69,29 +68,22 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_session_loan(&s)) < 0 || zp_start_lease_task(z_session_loan(&s)) < 0) {
-        printf("Unable to start read and lease tasks");
+    z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
+    printf("Declaring Subscriber on '%s'...\n", keyexpr);
+    z_owned_subscriber_t sub = z_declare_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
+    if (!z_subscriber_check(&sub)) {
+        printf("Unable to declare subscriber.\n");
         exit(-1);
     }
 
-    z_id_t self_id = z_info_zid(z_session_loan(&s));
-    printf("Own ID:");
-    print_zid(&self_id, NULL);
+    while (1) {
+        zp_read(z_session_loan(&s));
+        zp_send_keep_alive(z_session_loan(&s));
+    }
 
-    printf("Routers IDs:\n");
-    z_owned_closure_zid_t callback = z_closure_zid(print_zid, NULL, NULL);
-    z_info_routers_zid(z_session_loan(&s), z_closure_zid_move(&callback));
-
-    // `callback` has been `z_move`d just above, so it's safe to reuse the variable,
-    // we'll just have to make sure we `z_move` it again to avoid mem-leaks.
-    printf("Peers IDs:\n");
-    z_owned_closure_zid_t callback2 = z_closure_zid(print_zid, NULL, NULL);
-    z_info_peers_zid(z_session_loan(&s), z_closure_zid_move(&callback2));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    z_undeclare_subscriber(z_subscriber_move(&sub));
 
     z_close(z_session_move(&s));
+
+    return 0;
 }

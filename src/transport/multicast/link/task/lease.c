@@ -12,11 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/utils/logging.h"
+
+#if Z_MULTICAST_TRANSPORT == 1
 
 _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease)
 {
@@ -64,8 +68,9 @@ int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm)
 
 void *_zp_multicast_lease_task(void *arg)
 {
+    (void) (arg);
+#if Z_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
-
     ztm->_lease_task_running = 1;
     ztm->_transmitted = 0;
 
@@ -78,6 +83,8 @@ void *_zp_multicast_lease_task(void *arg)
     while (ztm->_lease_task_running)
     {
         _z_mutex_lock(&ztm->_mutex_peer);
+
+
         if (next_lease <= 0)
         {
             it = ztm->_peers;
@@ -144,6 +151,7 @@ void *_zp_multicast_lease_task(void *arg)
 
         // Decrement all intervals
         _z_mutex_lock(&ztm->_mutex_peer);
+
         it = ztm->_peers;
         while (it != NULL)
         {
@@ -154,8 +162,12 @@ void *_zp_multicast_lease_task(void *arg)
         next_lease = _z_get_next_lease(ztm->_peers);
         next_keep_alive -= interval;
         next_join -= interval;
+
         _z_mutex_unlock(&ztm->_mutex_peer);
     }
+#endif // Z_MULTI_THREAD == 1
 
     return 0;
 }
+
+#endif // Z_MULTICAST_TRANSPORT == 1

@@ -109,7 +109,7 @@ _z_hello_array_t __z_scout_loop(
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_W)
                 sc->whatami = t_msg._body._hello._whatami;
             else
-                sc->whatami = Z_ROUTER; // Default value is from a router
+                sc->whatami = Z_WHATAMI_ROUTER; // Default value is from a router
 
             if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_L)
             {
@@ -164,8 +164,10 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
     _z_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
+#if Z_MULTICAST_TRANSPORT == 1
     const char *locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
     locs = __z_scout_loop(&wbf, locator, scout_period, exit_on_first);
+#endif // Z_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);
 

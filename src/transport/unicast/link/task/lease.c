@@ -16,6 +16,8 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if Z_UNICAST_TRANSPORT == 1
+
 int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu)
 {
     // Do not send the PID on unicast links
@@ -29,6 +31,8 @@ int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu)
 
 void *_zp_unicast_lease_task(void *arg)
 {
+    (void) (arg);
+#if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
 
     ztu->_lease_task_running = 1;
@@ -85,6 +89,9 @@ void *_zp_unicast_lease_task(void *arg)
         next_lease -= interval;
         next_keep_alive -= interval;
     }
+#endif // Z_MULTI_THREAD == 1
 
     return 0;
 }
+
+#endif // Z_UNICAST_TRANSPORT == 1

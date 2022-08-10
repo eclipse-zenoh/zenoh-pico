@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <ctype.h>
 #include <stdio.h>
@@ -18,34 +19,28 @@
 
 #include "zenoh-pico.h"
 
-void print_zid(const z_id_t *id, void *ctx)
-{
-    (void) (ctx);
-    printf(" ");
-    for (int i = 15; i >= 0; i--) {
-        printf("%02X", id->id[i]);
-    }
-    printf("\n");
-}
-
 int main(int argc, char **argv)
 {
     z_init_logger();
 
-    char *mode = "client";
+    char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *value = "Pub from Pico!";
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "e:m:")) != -1) {
+    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
         switch (opt) {
+            case 'k':
+                keyexpr = optarg;
+                break;
+            case 'v':
+                value = optarg;
+                break;
             case 'e':
                 locator = optarg;
                 break;
-            case 'm':
-                mode = optarg;
-                break;
             case '?':
-                if (optopt == 'e' || optopt == 'm') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
                     fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -57,7 +52,6 @@ int main(int argc, char **argv)
     }
 
     z_owned_config_t config = zp_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }
@@ -69,29 +63,32 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s)) < 0 || zp_start_lease_task(z_loan(s)) < 0) {
-        printf("Unable to start read and lease tasks");
+    printf("Declaring publisher for '%s'...\n", keyexpr);
+    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
+    if (!z_check(pub)) {
+        printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
 
-    z_id_t self_id = z_info_zid(z_loan(s));
-    printf("Own ID:");
-    print_zid(&self_id, NULL);
+    char buf[256];
+    z_clock_t now = z_clock_now();
+    for (int idx = 0; 1;) {
+        if (z_clock_elapsed_ms(&now) > 1000) {
+            sprintf(buf, "[%4d] %s", idx, value);
+            printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+            z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+            ++idx;
 
-    printf("Routers IDs:\n");
-    z_owned_closure_zid_t callback = z_closure(print_zid);
-    z_info_routers_zid(z_loan(s), z_move(callback));
+            now = z_clock_now();
+        }
 
-    // `callback` has been `z_move`d just above, so it's safe to reuse the variable,
-    // we'll just have to make sure we `z_move` it again to avoid mem-leaks.
-    printf("Peers IDs:\n");
-    z_owned_closure_zid_t callback2 = z_closure(print_zid);
-    z_info_peers_zid(z_loan(s), z_move(callback2));
+        zp_read(z_loan(s));
+        zp_send_keep_alive(z_loan(s));
+    }
 
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    z_undeclare_publisher(z_move(pub));
 
     z_close(z_move(s));
+
+    return 0;
 }

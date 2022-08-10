@@ -12,12 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-/*------------------ SN helper ------------------*/
+#if Z_MULTICAST_TRANSPORT == 1
+
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
@@ -40,18 +43,20 @@ int _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
 {
     _Z_DEBUG(">> send session message\n");
 
+#if Z_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztm->_mutex_tx);
+#endif // Z_MULTI_THREAD == 1
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+    __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
     // Encode the session message
     int res = _z_transport_message_encode(&ztm->_wbuf, t_msg);
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+        __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
         // Mark the session that we have transmitted data
@@ -62,8 +67,10 @@ int _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
         _Z_INFO("Dropping session message because it is too large\n");
     }
 
+#if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztm->_mutex_tx);
+#endif // Z_MULTI_THREAD == 1
 
     return res;
 }
@@ -77,10 +84,13 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     // Acquire the lock and drop the message if needed
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK)
     {
+#if Z_MULTI_THREAD == 1
         _z_mutex_lock(&ztm->_mutex_tx);
+#endif // Z_MULTI_THREAD == 1
     }
     else
     {
+#if Z_MULTI_THREAD == 1
         int locked = _z_mutex_trylock(&ztm->_mutex_tx);
         if (locked != 0)
         {
@@ -88,10 +98,11 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
             // We failed to acquire the lock, drop the message
             return 0;
         }
+#endif // Z_MULTI_THREAD == 1
     }
 
     // Prepare the buffer eventually reserving space for the message length
-    __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+    __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
     // Get the next sequence number
     _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);
@@ -111,7 +122,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     if (res == 0)
     {
         // Write the message legnth in the reserved space if needed
-        __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+        __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
@@ -142,7 +153,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
             is_first = 0;
 
             // Clear the buffer for serialization
-            __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+            __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
             // Serialize one fragment
             res = __unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn);
@@ -153,7 +164,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
             }
 
             // Write the message length in the reserved space if needed
-            __unsafe_z_finalize_wbuf(&ztm->_wbuf, ztm->_link->_is_streamed);
+            __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
 
             // Send the wbuf on the socket
             res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
@@ -173,8 +184,12 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     }
 
 EXIT_ZSND_PROC:
+#if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztm->_mutex_tx);
+#endif // Z_MULTI_THREAD == 1
 
     return res;
 }
+
+#endif // Z_MULTICAST_TRANSPORT == 1

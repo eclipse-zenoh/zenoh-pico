@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
 #include <sys/time.h>
 #include <esp_heap_caps.h>
 #include "zenoh-pico/system/platform.h"
@@ -81,6 +83,7 @@ void z_task_wrapper(void *arg)
 }
 
 
+#if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
@@ -158,6 +161,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
     return pthread_cond_wait(cv, m);
 }
+#endif // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time)

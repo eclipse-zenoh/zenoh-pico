@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #include <ctype.h>
 #include <stdio.h>
@@ -18,23 +19,12 @@
 
 #include "zenoh-pico.h"
 
-char *keyexpr = "demo/example/zenoh-pico-queryable";
-char *value = "Queryable from Pico!";
-
-void query_handler(z_query_t *query, void *ctx)
-{
-    (void) (ctx);
-    char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
-    z_bytes_t pred = z_query_value_selector(query);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", keystr, (int)pred.len, pred.start);
-    z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), NULL);
-    free(keystr);
-}
-
 int main(int argc, char **argv)
 {
     z_init_logger();
 
+    char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *value = "Pub from Pico!";
     char *locator = NULL;
 
     int opt;
@@ -73,37 +63,30 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_session_loan(&s)) < 0 || zp_start_lease_task(z_session_loan(&s)) < 0) {
-        printf("Unable to start read and lease tasks");
+    printf("Declaring publisher for '%s'...\n", keyexpr);
+    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(keyexpr), NULL);
+    if (!z_publisher_check(&pub)) {
+        printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
 
-    z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_keyexpr_is_valid(&ke)) {
-        printf("%s is not a valid key expression", keyexpr);
-        exit(-1);
+    char buf[256];
+    z_clock_t now = z_clock_now();
+    for (int idx = 0; 1;) {
+        if (z_clock_elapsed_ms(&now) > 1000) {
+            sprintf(buf, "[%4d] %s", idx, value);
+            printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+            z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
+            ++idx;
+
+            now = z_clock_now();
+        }
+
+        zp_read(z_session_loan(&s));
+        zp_send_keep_alive(z_session_loan(&s));
     }
 
-    printf("Creating Queryable on '%s'...\n", keyexpr);
-    z_owned_closure_query_t callback = z_closure_query(query_handler, NULL, NULL);
-    z_owned_queryable_t qable = z_declare_queryable(z_session_loan(&s), ke, z_closure_query_move(&callback), NULL);
-    if (!z_queryable_check(&qable)) {
-        printf("Unable to create queryable.\n");
-        exit(-1);
-    }
-
-    printf("Enter 'q' to quit...\n");
-    char c = 0;
-    while (c != 'q') {
-        c = getchar();
-    }
-
-    z_undeclare_queryable(z_queryable_move(&qable));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    z_undeclare_publisher(z_publisher_move(&pub));
 
     z_close(z_session_move(&s));
 
