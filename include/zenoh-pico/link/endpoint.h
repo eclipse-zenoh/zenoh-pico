@@ -31,6 +31,9 @@
 #if Z_LINK_BLUETOOTH == 1
 #define BT_SCHEMA "bt"
 #endif
+#if Z_LINK_SERIAL == 1
+#define SERIAL_SCHEMA "serial"
+#endif
 
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'

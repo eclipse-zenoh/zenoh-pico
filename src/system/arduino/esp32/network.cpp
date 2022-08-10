@@ -693,4 +693,8 @@ size_t _z_send_bt(void *arg, const uint8_t *ptr, size_t len)
 }
 #endif
 
+#if Z_LINK_SERIAL == 1
+    #error "Serial not supported yet on Arduino port of Zenoh-Pico"
+#endif
+
 } // extern "C"

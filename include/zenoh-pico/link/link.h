@@ -32,6 +32,12 @@
 #include "zenoh-pico/system/link/bt.h"
 #endif
 
+#if Z_LINK_SERIAL == 1
+#include "zenoh-pico/system/link/serial.h"
+#endif
+
+#include "zenoh-pico/utils/result.h"
+
 /**
  * Link capabilities values, defined as a bitmask.
  *
@@ -73,6 +79,9 @@ typedef struct {
 #endif
 #if Z_LINK_BLUETOOTH == 1
         _z_bt_socket_t _bt;
+#endif
+#if Z_LINK_SERIAL == 1
+        _z_serial_socket_t _serial;
 #endif
     } _socket;
 

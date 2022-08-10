@@ -134,6 +134,7 @@ if(UNIX)
     "src/transport/multicast/*.c"
     "src/transport/multicast/link/*.c"
     "src/transport/multicast/link/task/*.c"
+    "src/utils/*.c"
   )
 endif()
 

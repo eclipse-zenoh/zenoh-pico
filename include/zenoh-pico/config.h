@@ -200,6 +200,13 @@
 #endif
 
 /**
+ * Enable Serial links.
+ */
+#ifndef Z_LINK_SERIAL
+#define Z_LINK_SERIAL 0
+#endif
+
+/**
  * Enable UDP Scouting.
  */
 #ifndef Z_SCOUTING_UDP

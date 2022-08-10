@@ -30,9 +30,9 @@
 #define BT_CONFIG_TOUT_KEY     0x03
 #define BT_CONFIG_TOUT_STR     "tout"
 
-#define BT_CONFIG_MAPPING_BUILD          \
-    int argc = 3;                        \
-    _z_str_intmapping_t args[argc];      \
+#define BT_CONFIG_MAPPING_BUILD           \
+    int argc = 3;                         \
+    _z_str_intmapping_t args[argc];       \
     args[0]._key = BT_CONFIG_MODE_KEY;    \
     args[0]._str = BT_CONFIG_MODE_STR;    \
     args[1]._key = BT_CONFIG_PROFILE_KEY; \
