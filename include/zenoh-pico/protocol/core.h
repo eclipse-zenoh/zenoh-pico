@@ -42,7 +42,7 @@ typedef size_t _z_zint_t;
 typedef struct
 {
     z_encoding_prefix_t prefix;
-    char *suffix;
+    _z_bytes_t suffix;
 } _z_encoding_t;
 
 /**

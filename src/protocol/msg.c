@@ -334,7 +334,7 @@ void _z_data_info_clear(_z_data_info_t *di)
     //   - kind
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC))
-        _z_str_clear(di->_encoding.suffix);
+        _z_bytes_clear(&di->_encoding.suffix);
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID))
         _z_bytes_clear(&di->_source_id);

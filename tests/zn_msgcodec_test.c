@@ -548,10 +548,12 @@ _z_data_info_t gen_data_info(void)
     if (gen_bool())
     {
         di._encoding.prefix = gen_zint();
-        if (gen_bool())
-            di._encoding.suffix = gen_str(8);
+        if (gen_bool()) {
+            di._encoding.suffix = _z_bytes_make(8);
+            di._encoding.suffix = gen_bytes(8);
+        }
         else
-            di._encoding.suffix = gen_str(0);
+            di._encoding.suffix = _z_bytes_make(0);
 
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_ENC);
     }
@@ -600,9 +602,9 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right)
     }
     if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_ENC)
     {
-        printf("Encoding (%u %s:%u %s), ", left->_encoding.prefix, left->_encoding.suffix, right->_encoding.prefix, right->_encoding.suffix);
+        printf("Encoding (%u %.*s:%u %.*s), ", left->_encoding.prefix, (int)left->_encoding.suffix.len, left->_encoding.suffix.start, right->_encoding.prefix, (int)right->_encoding.suffix.len, right->_encoding.suffix.start);
         assert(left->_encoding.prefix == right->_encoding.prefix);
-        assert(!strcmp(left->_encoding.suffix, right->_encoding.suffix));
+        assert_eq_uint8_array(&left->_encoding.suffix, &right->_encoding.suffix);
     }
     if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_TSTAMP)
     {

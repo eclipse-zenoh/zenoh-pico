@@ -777,7 +777,7 @@ int _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld)
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_ENC))
     {
         _Z_EC(_z_zint_encode(wbf, fld->_encoding.prefix))
-        _Z_EC(_z_str_encode(wbf, fld->_encoding.suffix))
+        _Z_EC(_z_bytes_encode(wbf, &fld->_encoding.suffix))
     }
 
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_TSTAMP))
@@ -835,9 +835,9 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r)
         _ASSURE_P_RESULT(r_enc, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._encoding.prefix = r_enc._value._zint;
 
-        _z_str_result_t r_str = _z_str_decode(zbf);
-        _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
-        r->_value._data_info._encoding.suffix = r_str._value._str;
+        _z_bytes_result_t r_bytes = _z_bytes_decode(zbf);
+        _ASSURE_P_RESULT(r_bytes, r, _Z_ERR_PARSE_STRING)
+        r->_value._data_info._encoding.suffix = r_bytes._value._bytes;
     }
 
     if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_TSTAMP))

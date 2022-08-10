@@ -165,7 +165,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     reply->data.sample.keyexpr = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
     _z_bytes_copy(&reply->data.sample.payload, &payload);
     reply->data.sample.encoding.prefix = encoding.prefix;
-    reply->data.sample.encoding.suffix = encoding.suffix ? _z_str_clone(encoding.suffix) : NULL;
+    _z_bytes_copy(&reply->data.sample.encoding.suffix, &encoding.suffix);
     reply->data.sample.kind = kind;
     reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 

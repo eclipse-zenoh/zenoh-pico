@@ -377,7 +377,7 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg)
         rd->sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
         _z_bytes_copy(&rd->sample.payload, &reply->data.sample.payload);
         rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
-        rd->sample.encoding.suffix = reply->data.sample.encoding.suffix ? _z_str_clone(reply->data.sample.encoding.suffix) : _z_str_clone("");
+        _z_bytes_copy(&rd->sample.encoding.suffix, &reply->data.sample.encoding.suffix);
         rd->sample.kind = reply->data.sample.kind;
         rd->sample.timestamp = _z_timestamp_duplicate(&reply->data.sample.timestamp);
 
