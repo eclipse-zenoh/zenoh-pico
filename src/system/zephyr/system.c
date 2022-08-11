@@ -21,11 +21,6 @@
 
 #include "zenoh-pico/system/platform.h"
 
-#define Z_THREADS_NUM 4
-#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
-K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
-static int thread_index = 0;
-
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void)
 {
@@ -74,6 +69,12 @@ void z_free(void *ptr)
 }
 
 #if Z_MULTI_THREAD == 1
+
+#define Z_THREADS_NUM 4
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
+K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
+static int thread_index = 0;
+
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
