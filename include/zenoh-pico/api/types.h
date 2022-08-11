@@ -230,6 +230,7 @@ typedef struct
  */
 typedef struct
 {
+    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
 } z_query_reply_options_t;
 
 /**
@@ -278,6 +279,7 @@ typedef struct
  */
 typedef struct
 {
+    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
 } z_publisher_delete_options_t;
 
 /**

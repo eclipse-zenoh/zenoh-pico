@@ -21,7 +21,7 @@
 
 typedef struct
 {
-    // Placeholder for future extensions
+    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
 } _z_link_manager_t;
 
 _z_link_manager_t *_z_link_manager_init(void);

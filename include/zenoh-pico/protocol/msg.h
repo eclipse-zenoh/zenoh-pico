@@ -509,6 +509,7 @@ void _z_msg_clear_data(_z_msg_data_t *msg);
 //
 typedef struct
 {
+    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
 } _z_msg_unit_t;
 void _z_msg_clear_unit(_z_msg_unit_t *unt);
 
