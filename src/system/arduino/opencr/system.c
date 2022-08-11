@@ -72,20 +72,22 @@ void z_free(void *ptr)
 }
 
 #if Z_MULTI_THREAD == 1
+#error "Multi-threading not supported yet on OpenCR port. Disable it by defining Z_MULTI_THREAD=0"
+
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
-    return 0;
+    return -1;
 }
 
 int _z_task_join(_z_task_t *task)
 {
-    return 0;
+    return -1;
 }
 
 int _z_task_cancel(_z_task_t *task)
 {
-    return 0;
+    return -1;
 }
 
 void _z_task_free(_z_task_t **task)
@@ -98,48 +100,48 @@ void _z_task_free(_z_task_t **task)
 /*------------------ Mutex ------------------*/
 int _z_mutex_init(_z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 
 int _z_mutex_free(_z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 
 int _z_mutex_lock(_z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 
 int _z_mutex_trylock(_z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 
 int _z_mutex_unlock(_z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 
 /*------------------ Condvar ------------------*/
 int _z_condvar_init(_z_condvar_t *cv)
 {
-    return 0;
+    return -1;
 }
 
 int _z_condvar_free(_z_condvar_t *cv)
 {
-    return 0;
+    return -1;
 }
 
 int _z_condvar_signal(_z_condvar_t *cv)
 {
-    return 0;
+    return -1;
 }
 
 int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
 {
-    return 0;
+    return -1;
 }
 #endif // Z_MULTI_THREAD == 1
 

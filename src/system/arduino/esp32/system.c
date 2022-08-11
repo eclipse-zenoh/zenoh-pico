@@ -65,7 +65,6 @@ void z_free(void *ptr)
 }
 
 #if Z_MULTI_THREAD == 1
-/*------------------ Task ------------------*/
 // This wrapper is only used for ESP32.
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
@@ -83,6 +82,7 @@ void z_task_wrapper(void *arg)
     z_free(z_arg);
 }
 
+/*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
 {
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
