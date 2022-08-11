@@ -105,9 +105,7 @@ _z_link_t *_z_new_link_serial(_z_endpoint_t endpoint)
 {
     _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
 
-    lt->_is_reliable = 0;
-    lt->_is_streamed = 0;
-    lt->_is_multicast = 0;
+    lt->_capabilities = Z_LINK_CAPABILITY_NONE;
     lt->_mtu = _z_get_link_mtu_serial();
 
     lt->_endpoint = endpoint;
