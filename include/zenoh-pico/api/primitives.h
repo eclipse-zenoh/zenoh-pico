@@ -16,6 +16,7 @@
 #define ZENOH_PICO_API_PRIMITIVES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "zenoh-pico/api/types.h"
 

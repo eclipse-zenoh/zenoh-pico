@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_PROTOCOL_KEYEXPR_H
 #define ZENOH_PICO_PROTOCOL_KEYEXPR_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 
