@@ -32,4 +32,5 @@ html_theme = 'sphinx_rtd_theme'
 
 breathe_debug_trace_directives = True
 
-Config.set_library_file('/Library/Developer/CommandLineTools/usr/lib/libclang.dylib')
+# Config.set_library_file('/Library/Developer/CommandLineTools/usr/lib/libclang.dylib')
+Config.set_library_file('/usr/local/Cellar/llvm/14.0.6/lib/libclang.dylib')

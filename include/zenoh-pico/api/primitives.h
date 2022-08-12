@@ -63,7 +63,7 @@ char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
- * The user is responsible of droping the returned string using or ``z_free``.
+ * The user is responsible of droping the returned string using ``z_free``.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to resolve the keyexpr.
@@ -86,7 +86,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
 _Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
 
 /**
- * Check if a given keyexpr is valid and and in its canonical form.
+ * Check if a given keyexpr is valid and in its canonical form.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a non-null terminated string.
@@ -99,7 +99,7 @@ _Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
 z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
- * Check if a given keyexpr is valid and and in its canonical form.
+ * Check if a given keyexpr is valid and in its canonical form.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a null terminated string.
@@ -507,18 +507,18 @@ z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper
 z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
-#define _MUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    _Bool z_##name##_check(const ownedtype *name);       \
-    type *z_##name##_loan(const ownedtype *name);        \
-    ownedtype *z_##name##_move(ownedtype *name);         \
-    ownedtype z_##name##_clone(ownedtype *name);         \
+#define _MUTABLE_OWNED_FUNCTIONS(type, ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *name);      \
+    type *z_##name##_loan(const ownedtype *name);       \
+    ownedtype *z_##name##_move(ownedtype *name);        \
+    ownedtype z_##name##_clone(ownedtype *name);        \
     void z_##name##_drop(ownedtype *name);
 
-#define _IMMUTABLE_OWNED_FUNCTIONS(type, ownedtype, name)  \
-    _Bool z_##name##_check(const ownedtype *name);         \
-    type z_##name##_loan(const ownedtype *name);           \
-    ownedtype *z_##name##_move(ownedtype *name);           \
-    ownedtype z_##name##_clone(ownedtype *name);           \
+#define _IMMUTABLE_OWNED_FUNCTIONS(type, ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *name);        \
+    type z_##name##_loan(const ownedtype *name);          \
+    ownedtype *z_##name##_move(ownedtype *name);          \
+    ownedtype z_##name##_clone(ownedtype *name);          \
     void z_##name##_drop(ownedtype *name);
 
 _MUTABLE_OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)
