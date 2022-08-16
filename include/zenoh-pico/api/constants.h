@@ -144,9 +144,10 @@ typedef enum
  * Consolidation mode values.
  *
  * Enumerators:
- *     Z_CONSOLIDATION_MODE_LAST_VALUE: Guaranties unicity of replies. Optimizes bandwidth.
- *     Z_CONSOLIDATION_MODE_MONOTONIC: Does not garanty unicity. Optimizes latency.
- *     Z_CONSOLIDATION_MODE_NONE: No consolidation.
+ *     Z_CONSOLIDATION_MODE_NONE: No consolidation is applied. Replies may come in any order and any number.
+ *     Z_CONSOLIDATION_MODE_MONOTONIC: It guarantees that any reply will be monotonic in time w.r.t.
+ *          the previous received replies. It does not garantuee unicity of replies. Optimizes latency.
+ *     Z_CONSOLIDATION_MODE_LAST_VALUE: It guarantees unicity of replies. Optimizes bandwidth.
  */
 typedef enum
 {
