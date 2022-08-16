@@ -174,22 +174,22 @@ z_query_target_t z_query_target_default(void)
 
 z_query_consolidation_t z_query_consolidation_auto(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_AUTO};
 }
 
-z_query_consolidation_t z_query_consolidation_full(void)
+z_query_consolidation_t z_query_consolidation_last_value(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_LAST_VALUE};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_LAST_VALUE};
 }
 
-z_query_consolidation_t z_query_consolidation_lazy(void)
+z_query_consolidation_t z_query_consolidation_monotonic(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_MONOTONIC};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_MONOTONIC};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_NONE};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_NONE};
 }
 
 z_query_consolidation_t z_query_consolidation_default(void)
@@ -473,23 +473,21 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     callback->context = NULL;
 
     // Default consolidation is full
-    z_query_consolidation_t consolidation = z_query_consolidation_full();
+    z_query_consolidation_t consolidation = z_query_consolidation_default();
     _z_target_t target = {._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
 
     if (options != NULL)
     {
-        if (options->consolidation.mode == Z_CONSOLIDATION_MODE_AUTO)
-        {
-            if (strstr(value_selector, "_time=") != NULL)
-            {
-                consolidation = z_query_consolidation_none();
-            }
-        }
-        else
-        {
-            consolidation = options->consolidation;
-        }
+        consolidation = options->consolidation;
         target._target = options->target;
+    }
+
+    if (consolidation.tag == Z_QUERY_CONSOLIDATION_AUTO)
+    {
+        if (strstr(value_selector, Z_SELECTOR_TIME) != NULL)
+            consolidation = z_query_consolidation_none();
+        else
+            consolidation = z_query_consolidation_last_value();
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
