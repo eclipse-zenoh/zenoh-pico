@@ -179,12 +179,12 @@ z_query_consolidation_t z_query_consolidation_auto(void)
 
 z_query_consolidation_t z_query_consolidation_full(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_FULL};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_LAST_VALUE};
 }
 
 z_query_consolidation_t z_query_consolidation_lazy(void)
 {
-    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_LAZY};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_MONOTONIC};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void)

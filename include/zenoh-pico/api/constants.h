@@ -143,16 +143,16 @@ typedef enum
  *
  * Enumerators:
  *     Z_CONSOLIDATION_MODE_AUTO: Applies automatic consolidation depending on the query.
- *     Z_CONSOLIDATION_MODE_FULL: Guaranties unicity of replies. Optimizes bandwidth.
- *     Z_CONSOLIDATION_MODE_LAZY: Does not garanty unicity. Optimizes latency.
+ *     Z_CONSOLIDATION_MODE_LAST_VALUE: Guaranties unicity of replies. Optimizes bandwidth.
+ *     Z_CONSOLIDATION_MODE_MONOTONIC: Does not garanty unicity. Optimizes latency.
  *     Z_CONSOLIDATION_MODE_NONE: No consolidation.
  */
 typedef enum
 {
     Z_CONSOLIDATION_MODE_AUTO = 0,
     Z_CONSOLIDATION_MODE_NONE = 1,
-    Z_CONSOLIDATION_MODE_LAZY = 2,
-    Z_CONSOLIDATION_MODE_FULL = 3
+    Z_CONSOLIDATION_MODE_MONOTONIC = 2,
+    Z_CONSOLIDATION_MODE_LAST_VALUE = 3
 } z_consolidation_mode_t;
 
 /**
