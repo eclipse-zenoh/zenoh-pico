@@ -102,19 +102,19 @@ typedef enum
 {
     Z_ENCODING_PREFIX_EMPTY = 0,
     Z_ENCODING_PREFIX_APP_OCTET_STREAM = 1,
-    Z_ENCODING_PREFIX_APP_CUSTOM = 2,                   // non iana standard
+    Z_ENCODING_PREFIX_APP_CUSTOM = 2, // non iana standard
     Z_ENCODING_PREFIX_TEXT_PLAIN = 3,
-    Z_ENCODING_PREFIX_APP_PROPERTIES = 4,               // non iana standard
-    Z_ENCODING_PREFIX_APP_JSON = 5,                     // if not readable from casual users
+    Z_ENCODING_PREFIX_APP_PROPERTIES = 4, // non iana standard
+    Z_ENCODING_PREFIX_APP_JSON = 5,       // if not readable from casual users
     Z_ENCODING_PREFIX_APP_SQL = 6,
-    Z_ENCODING_PREFIX_APP_INTEGER = 7,                  // non iana standard
-    Z_ENCODING_PREFIX_APP_FLOAT = 8,                    // non iana standard
-    Z_ENCODING_PREFIX_APP_XML = 9,                      // if not readable from casual users (RFC 3023, section 3)
+    Z_ENCODING_PREFIX_APP_INTEGER = 7, // non iana standard
+    Z_ENCODING_PREFIX_APP_FLOAT = 8,   // non iana standard
+    Z_ENCODING_PREFIX_APP_XML = 9,     // if not readable from casual users (RFC 3023, section 3)
     Z_ENCODING_PREFIX_APP_XHTML_XML = 10,
     Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED = 11,
-    Z_ENCODING_PREFIX_TEXT_JSON = 12,                   // non iana standard - if readable from casual users
+    Z_ENCODING_PREFIX_TEXT_JSON = 12, // non iana standard - if readable from casual users
     Z_ENCODING_PREFIX_TEXT_HTML = 13,
-    Z_ENCODING_PREFIX_TEXT_XML = 14,                    // if readable from casual users (RFC 3023, section 3)
+    Z_ENCODING_PREFIX_TEXT_XML = 14, // if readable from casual users (RFC 3023, section 3)
     Z_ENCODING_PREFIX_TEXT_CSS = 15,
     Z_ENCODING_PREFIX_TEXT_CSV = 16,
     Z_ENCODING_PREFIX_TEXT_JAVASCRIPT = 17,
@@ -133,9 +133,9 @@ typedef enum
  */
 typedef enum
 {
-    Z_QUERYABLE_ALL_KINDS = 0x01,  // 1 << 0
-    Z_QUERYABLE_STORAGE = 0x02,    // 1 << 1
-    Z_QUERYABLE_EVAL = 0x04        // 1 << 2
+    Z_QUERYABLE_ALL_KINDS = 0x01, // 1 << 0
+    Z_QUERYABLE_STORAGE = 0x02,   // 1 << 1
+    Z_QUERYABLE_EVAL = 0x04       // 1 << 2
 } z_queryable_kind_t;
 
 /**
@@ -258,20 +258,16 @@ typedef enum
     Z_QUERY_TARGET_ALL_COMPLETE = 2
 } z_query_target_t;
 
-//FIXME: move to types.h
+// FIXME: move to types.h
 /**
  * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
  * at the different stages of the reply process.
  *
  * Members:
- *   first_routers: The consolidation mode to apply on first routers of the replies routing path.
- *   last_router: The consolidation mode to apply on last router of the replies routing path.
  *   reception: The consolidation mode to apply at reception of the replies.
  */
 typedef struct
 {
-    z_consolidation_mode_t first_routers;
-    z_consolidation_mode_t last_router;
     z_consolidation_mode_t reception;
 } z_consolidation_strategy_t;
 

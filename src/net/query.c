@@ -21,16 +21,12 @@ _z_target_t _z_target_default(void)
 
 z_consolidation_strategy_t _z_consolidation_strategy_default(void)
 {
-    return (z_consolidation_strategy_t) { .first_routers = Z_CONSOLIDATION_MODE_LAZY,
-                                          .last_router = Z_CONSOLIDATION_MODE_LAZY,
-                                          .reception = Z_CONSOLIDATION_MODE_FULL
-                                        };
+    return (z_consolidation_strategy_t){
+        .reception = Z_CONSOLIDATION_MODE_FULL};
 }
 
 z_consolidation_strategy_t _z_consolidation_strategy_none(void)
 {
-    return (z_consolidation_strategy_t) { .first_routers = Z_CONSOLIDATION_MODE_NONE,
-                                          .last_router = Z_CONSOLIDATION_MODE_NONE,
-                                          .reception = Z_CONSOLIDATION_MODE_NONE
-                                        };
+    return (z_consolidation_strategy_t){
+        .reception = Z_CONSOLIDATION_MODE_NONE};
 }

@@ -548,7 +548,8 @@ _z_data_info_t gen_data_info(void)
     if (gen_bool())
     {
         di._encoding.prefix = gen_zint();
-        if (gen_bool()) {
+        if (gen_bool())
+        {
             di._encoding.suffix = _z_bytes_make(8);
             di._encoding.suffix = gen_bytes(8);
         }
@@ -1514,8 +1515,6 @@ _z_zenoh_message_t gen_query_message(void)
         Z_CONSOLIDATION_MODE_LAZY,
         Z_CONSOLIDATION_MODE_NONE};
     z_consolidation_strategy_t consolidation;
-    consolidation.first_routers = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
-    consolidation.last_router = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
     consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
     return _z_msg_make_query(key, value_selector, qid, target, consolidation);
@@ -1553,12 +1552,8 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
         printf("\n");
     }
 
-    printf("   Consolidation (%u:%u, %u:%u, %u:%u)",
-           left->_consolidation.first_routers, right->_consolidation.first_routers,
-           left->_consolidation.last_router, right->_consolidation.last_router,
+    printf("   Consolidation ( %u:%u)",
            left->_consolidation.reception, right->_consolidation.reception);
-    assert(left->_consolidation.first_routers == right->_consolidation.first_routers);
-    assert(left->_consolidation.last_router == right->_consolidation.last_router);
     assert(left->_consolidation.reception == right->_consolidation.reception);
     printf("\n");
 }

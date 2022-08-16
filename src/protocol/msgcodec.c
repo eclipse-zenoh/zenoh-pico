@@ -418,7 +418,7 @@ void _z_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sub_decl_result_t 
     {
         // Default subscription mode is non-periodic PUSH
         r->_value._sub_decl._subinfo.mode = Z_SUBMODE_PUSH;
-        r->_value._sub_decl._subinfo.period = (_z_period_t){ .origin = 0, .period = 0, .duration = 0 };
+        r->_value._sub_decl._subinfo.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
         if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R))
             r->_value._sub_decl._subinfo.reliability = Z_RELIABILITY_RELIABLE;
         else
@@ -998,8 +998,6 @@ int _z_query_consolidation_encode(_z_wbuf_t *wbf, const z_consolidation_strategy
 {
     _Z_DEBUG("Encoding _QUERY_CONSOLIDATION\n");
     _z_zint_t consolidation = qc->reception;
-    consolidation |= qc->last_router << 2;
-    consolidation |= qc->first_routers << 4;
 
     return _z_zint_encode(wbf, consolidation);
 }
@@ -1047,35 +1045,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf)
     _z_zint_result_t r_con = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_con, r, _Z_ERR_PARSE_ZINT)
 
-    unsigned int mode = (r_con._value._zint >> 4) & 0x03;
-    switch (mode)
-    {
-    case Z_CONSOLIDATION_MODE_NONE:
-    case Z_CONSOLIDATION_MODE_LAZY:
-    case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation.first_routers = mode;
-        break;
-    default:
-        r._tag = _Z_RES_ERR;
-        r._value._error = _Z_ERR_PARSE_CONSOLIDATION;
-        return r;
-    }
-
-    mode = (r_con._value._zint >> 2) & 0x03;
-    switch (mode)
-    {
-    case Z_CONSOLIDATION_MODE_NONE:
-    case Z_CONSOLIDATION_MODE_LAZY:
-    case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation.last_router = mode;
-        break;
-    default:
-        r._tag = _Z_RES_ERR;
-        r._value._error = _Z_ERR_PARSE_CONSOLIDATION;
-        return r;
-    }
-
-    mode = r_con._value._zint & 0x03;
+    unsigned int mode = r_con._value._zint & 0x03;
     switch (mode)
     {
     case Z_CONSOLIDATION_MODE_NONE:
@@ -1245,7 +1215,7 @@ void _z_zenoh_message_decode_na(_z_zbuf_t *zbf, _z_zenoh_message_result_t *r)
         default:
         {
             _Z_DEBUG("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
-	    _z_msg_clear(&r->_value._zenoh_message);
+            _z_msg_clear(&r->_value._zenoh_message);
 
             r->_tag = _Z_RES_ERR;
             r->_value._error = _Z_ERR_PARSE_ZENOH_MESSAGE;

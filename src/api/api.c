@@ -85,7 +85,8 @@ z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start)
     size_t len = strlen(start);
     size_t newlen = len;
     z_keyexpr_canon_status_t result = _z_keyexpr_canonize(start, &newlen);
-    if (newlen < len) {
+    if (newlen < len)
+    {
         start[newlen] = '\0';
     }
     return result;
@@ -173,42 +174,30 @@ z_query_target_t z_query_target_default(void)
 
 z_query_consolidation_t z_query_consolidation_auto(void)
 {
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_AUTO};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_AUTO};
 }
 
 z_query_consolidation_t z_query_consolidation_default(void)
 {
-    return z_query_consolidation_reception();
+    return z_query_consolidation_full();
 }
 
 z_query_consolidation_t z_query_consolidation_full(void)
 {
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_FULL, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
-}
-
-z_query_consolidation_t z_query_consolidation_last_router(void)
-{
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_FULL, .reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                     .manual = {.reception = Z_CONSOLIDATION_MODE_FULL}};
 }
 
 z_query_consolidation_t z_query_consolidation_lazy(void)
 {
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_LAZY}};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                     .manual = {.reception = Z_CONSOLIDATION_MODE_LAZY}};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void)
 {
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_NONE, .last_router = Z_CONSOLIDATION_MODE_NONE, .reception = Z_CONSOLIDATION_MODE_NONE}};
-}
-
-z_query_consolidation_t z_query_consolidation_reception(void)
-{
-    return (z_query_consolidation_t) {.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                      .manual = {.first_routers = Z_CONSOLIDATION_MODE_LAZY, .last_router = Z_CONSOLIDATION_MODE_LAZY, .reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
+                                     .manual = {.reception = Z_CONSOLIDATION_MODE_NONE}};
 }
 
 z_bytes_t z_query_value_selector(z_query_t *query)
@@ -223,54 +212,54 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query)
 }
 
 /**************** Loans ****************/
-#define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    _Bool z_##name##_check(const ownedtype *val)                                      \
-    {                                                                                 \
-        return val->_value != NULL;                                                   \
-    }                                                                                 \
-    type *z_##name##_loan(const ownedtype *val)                                       \
-    {                                                                                 \
-        return val->_value;                                                           \
-    }                                                                                 \
-    ownedtype *z_##name##_move(ownedtype *val)                                        \
-    {                                                                                 \
-        return val;                                                                   \
-    }                                                                                 \
-    ownedtype z_##name##_clone(ownedtype *val)                                        \
-    {                                                                                 \
-        ownedtype ret;                                                                \
-        ret._value = (type*)z_malloc(sizeof(type));                                   \
-        f_copy(ret._value, val->_value);                                              \
-        return ret;                                                                   \
-    }                                                                                 \
-    void z_##name##_drop(ownedtype *val)                                              \
-    {                                                                                 \
-        f_free(&val->_value);                                                         \
+#define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy) \
+    _Bool z_##name##_check(const ownedtype *val)                                   \
+    {                                                                              \
+        return val->_value != NULL;                                                \
+    }                                                                              \
+    type *z_##name##_loan(const ownedtype *val)                                    \
+    {                                                                              \
+        return val->_value;                                                        \
+    }                                                                              \
+    ownedtype *z_##name##_move(ownedtype *val)                                     \
+    {                                                                              \
+        return val;                                                                \
+    }                                                                              \
+    ownedtype z_##name##_clone(ownedtype *val)                                     \
+    {                                                                              \
+        ownedtype ret;                                                             \
+        ret._value = (type *)z_malloc(sizeof(type));                               \
+        f_copy(ret._value, val->_value);                                           \
+        return ret;                                                                \
+    }                                                                              \
+    void z_##name##_drop(ownedtype *val)                                           \
+    {                                                                              \
+        f_free(&val->_value);                                                      \
     }
 
-#define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)    \
-    _Bool z_##name##_check(const ownedtype *val)                                        \
-    {                                                                                   \
-        return val->_value != NULL;                                                     \
-    }                                                                                   \
-    type z_##name##_loan(const ownedtype *val)                                          \
-    {                                                                                   \
-        return *val->_value;                                                            \
-    }                                                                                   \
-    ownedtype *z_##name##_move(ownedtype *val)                                          \
-    {                                                                                   \
-        return val;                                                                     \
-    }                                                                                   \
-    ownedtype z_##name##_clone(ownedtype *val)                                          \
-    {                                                                                   \
-        ownedtype ret;                                                                  \
-        ret._value = (type*)z_malloc(sizeof(type));                                     \
-        f_copy(ret._value, val->_value);                                                \
-        return ret;                                                                     \
-    }                                                                                   \
-    void z_##name##_drop(ownedtype *val)                                                \
-    {                                                                                   \
-        f_free(&val->_value);                                                           \
+#define _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy) \
+    _Bool z_##name##_check(const ownedtype *val)                                     \
+    {                                                                                \
+        return val->_value != NULL;                                                  \
+    }                                                                                \
+    type z_##name##_loan(const ownedtype *val)                                       \
+    {                                                                                \
+        return *val->_value;                                                         \
+    }                                                                                \
+    ownedtype *z_##name##_move(ownedtype *val)                                       \
+    {                                                                                \
+        return val;                                                                  \
+    }                                                                                \
+    ownedtype z_##name##_clone(ownedtype *val)                                       \
+    {                                                                                \
+        ownedtype ret;                                                               \
+        ret._value = (type *)z_malloc(sizeof(type));                                 \
+        f_copy(ret._value, val->_value);                                             \
+        return ret;                                                                  \
+    }                                                                                \
+    void z_##name##_drop(ownedtype *val)                                             \
+    {                                                                                \
+        f_free(&val->_value);                                                        \
     }
 
 static inline void _z_owner_noop_free(void *s)
@@ -353,13 +342,13 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid)
 z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t timeout)
 {
     z_owned_hello_array_t hellos;
-    hellos._value = (z_hello_array_t*)z_malloc(sizeof(z_hello_array_t));
+    hellos._value = (z_hello_array_t *)z_malloc(sizeof(z_hello_array_t));
     *hellos._value = _z_scout(what, config->_value, timeout);
 
     z_config_drop(config);
     config->_value = NULL;
 
-    return hellos; 
+    return hellos;
 }
 
 z_owned_session_t z_open(z_owned_config_t *config)
@@ -439,12 +428,12 @@ z_id_t z_info_zid(const z_session_t *zs)
 
 z_put_options_t z_put_options_default(void)
 {
-    return (z_put_options_t) {.encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t){.encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
 }
 
 z_delete_options_t z_delete_options_default(void)
 {
-    return (z_delete_options_t) {.congestion_control = Z_CONGESTION_CONTROL_DROP};
+    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP};
 }
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len, const z_put_options_t *options)
@@ -474,12 +463,11 @@ typedef struct
     void *ctx;
 } __z_reply_handler_wrapper_t;
 
-
 void __z_reply_handler(_z_reply_t *reply, void *arg)
 {
     z_owned_reply_t oreply = {._value = reply};
 
-    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)arg;
+    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t *)arg;
     wrapped_ctx->user_call(oreply, wrapped_ctx->ctx);
 }
 
@@ -492,25 +480,34 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     _z_target_t target;
     target._kind = Z_QUERYABLE_ALL_KINDS;
 
-    if (options != NULL) {
-        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL) {
+    if (options != NULL)
+    {
+        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL)
+        {
             strategy = options->consolidation.manual;
-        } else {
-            if (strstr(value_selector, "_time=") != NULL) {
+        }
+        else
+        {
+            if (strstr(value_selector, "_time=") != NULL)
+            {
                 strategy = _z_consolidation_strategy_none();
-            } else {
+            }
+            else
+            {
                 strategy = _z_consolidation_strategy_default();
             }
         }
         target._target = options->target;
-    } else {
+    }
+    else
+    {
         target._target = z_query_target_default();
         strategy = z_query_consolidation_default().manual;
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
-    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t*)z_malloc(sizeof(__z_reply_handler_wrapper_t));
+    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
@@ -520,7 +517,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)
 {
     z_owned_keyexpr_t key;
-    key._value = (z_keyexpr_t*)z_malloc(sizeof(z_keyexpr_t));
+    key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
     *key._value = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
 
     return key;
@@ -549,15 +546,18 @@ z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE)
+    {
         _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-        if (r == NULL) {
+        if (r == NULL)
+        {
             key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
         }
     }
 #endif // Z_MULTICAST_TRANSPORT == 1
 
-    if (options != NULL) {
+    if (options != NULL)
+    {
         return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, options->local_routing, options->congestion_control, options->priority)};
     }
 
@@ -596,7 +596,7 @@ int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t 
 
 int8_t z_publisher_delete(const z_publisher_t *pub, const z_publisher_delete_options_t *options)
 {
-    (void) (options);
+    (void)(options);
     return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, pub->_congestion_control);
 }
 
@@ -620,7 +620,8 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE)
+    {
         _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL)
             key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
@@ -636,7 +637,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
 
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_pull_subscriber_options_t *options)
 {
-    (void) (options);
+    (void)(options);
 
     void *ctx = callback->context;
     callback->context = NULL;
@@ -720,13 +721,13 @@ z_query_reply_options_t z_query_reply_options_default(void)
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len, const z_query_reply_options_t *options)
 {
-    (void) (options);
+    (void)(options);
     return _z_send_reply(query, keyexpr, payload, payload_len);
 }
 
 _Bool z_reply_is_ok(const z_owned_reply_t *reply)
 {
-    (void) (reply);
+    (void)(reply);
     // For the moment always return TRUE.
     // The support for reply errors will come in the next release.
     return true;
@@ -734,8 +735,8 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply)
 
 z_value_t z_reply_err(const z_owned_reply_t *reply)
 {
-    (void) (reply);
-    return (z_value_t){ .payload = _z_bytes_make(0), .encoding = z_encoding_default() };
+    (void)(reply);
+    return (z_value_t){.payload = _z_bytes_make(0), .encoding = z_encoding_default()};
 }
 
 z_sample_t z_reply_ok(z_owned_reply_t *reply)
@@ -749,7 +750,7 @@ int8_t zp_start_read_task(z_session_t *zs)
 #if Z_MULTI_THREAD == 1
     return _zp_start_read_task(zs);
 #else
-    (void) (zs);
+    (void)(zs);
     return -1;
 #endif
 }
@@ -759,7 +760,7 @@ int8_t zp_stop_read_task(z_session_t *zs)
 #if Z_MULTI_THREAD == 1
     return _zp_stop_read_task(zs);
 #else
-    (void) (zs);
+    (void)(zs);
     return -1;
 #endif
 }
@@ -769,7 +770,7 @@ int8_t zp_start_lease_task(z_session_t *zs)
 #if Z_MULTI_THREAD == 1
     return _zp_start_lease_task(zs);
 #else
-    (void) (zs);
+    (void)(zs);
     return -1;
 #endif
 }
@@ -779,7 +780,7 @@ int8_t zp_stop_lease_task(z_session_t *zs)
 #if Z_MULTI_THREAD == 1
     return _zp_stop_lease_task(zs);
 #else
-    (void) (zs);
+    (void)(zs);
     return -1;
 #endif
 }

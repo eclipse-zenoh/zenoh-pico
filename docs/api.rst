@@ -246,7 +246,6 @@ Primitives
 .. autocfunction:: primitives.h::z_query_consolidation_auto
 .. autocfunction:: primitives.h::z_query_consolidation_default
 .. autocfunction:: primitives.h::z_query_consolidation_full
-.. autocfunction:: primitives.h::z_query_consolidation_last_router
 .. autocfunction:: primitives.h::z_query_consolidation_lazy
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_consolidation_reception

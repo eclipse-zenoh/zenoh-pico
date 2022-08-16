@@ -352,16 +352,6 @@ z_query_consolidation_t z_query_consolidation_default(void);
 z_query_consolidation_t z_query_consolidation_full(void);
 
 /**
- * Full consolidation performed on last router and at reception.
- *
- * This strategy offers a good latency while optimizing bandwidth on the last transport link between the router and the application.
- *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
- */
-z_query_consolidation_t z_query_consolidation_last_router(void);
-
-/**
  * Lazy consolidation performed at all stages.
  *
  * This strategy offers the best latency. Replies are directly transmitted to the application when received
@@ -381,16 +371,6 @@ z_query_consolidation_t z_query_consolidation_lazy(void);
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_none(void);
-
-/**
- * Full consolidation performed at reception.
- *
- * This strategy offers the best latency while garanteeing that there will be no duplicates.
- *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
- */
-z_query_consolidation_t z_query_consolidation_reception(void);
 
 /**
  * Get a query's value selector by aliasing it.
