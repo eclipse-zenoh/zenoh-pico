@@ -14,7 +14,7 @@
 #ifndef ZENOH_PICO_API_CONSTANTS_H
 #define ZENOH_PICO_API_CONSTANTS_H
 
-char *Z_SELECTOR_TIME = "_time=";
+#define Z_SELECTOR_TIME "_time="
 
 /**
  * Whatami values, defined as a bitmask.
