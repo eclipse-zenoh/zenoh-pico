@@ -19,7 +19,6 @@
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/encoding.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/config.h"
 

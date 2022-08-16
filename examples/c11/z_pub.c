@@ -81,7 +81,10 @@ int main(int argc, char **argv)
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+        z_publisher_put_options_t options = z_publisher_put_options_default();
+        options.encoding.prefix = Z_ENCODING_PREFIX_TEXT_PLAIN;
+        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 
     z_undeclare_publisher(z_move(pub));
