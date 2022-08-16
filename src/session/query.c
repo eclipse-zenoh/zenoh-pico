@@ -170,7 +170,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
-    if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_FULL || pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_FULL || pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LAZY)
     {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
@@ -198,12 +198,12 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
         pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
 
         // Trigger the handler
-        if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_LAZY)
+        if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LAZY)
             pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
 
         pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
-    else if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_NONE)
+    else if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_NONE)
     {
         pen_qry->_callback(reply, pen_qry->_call_arg);
         _z_reply_free(&reply);
@@ -245,7 +245,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
         goto ERR;
 
     // The reply is the final one, apply consolidation if needed
-    if (pen_qry->_consolidation.reception == Z_CONSOLIDATION_MODE_FULL)
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_FULL)
     {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;

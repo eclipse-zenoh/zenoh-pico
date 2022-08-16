@@ -555,7 +555,7 @@ typedef struct
     char *_value_selector;
     _z_zint_t _qid;
     _z_target_t _target;
-    z_consolidation_strategy_t _consolidation;
+    z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
 void _z_msg_clear_query(_z_msg_query_t *msg);
 
@@ -593,7 +593,7 @@ _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_strategy_t consolidation);
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_mode_t consolidation);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx);
 
 /*=============================*/
@@ -1020,17 +1020,17 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable,
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-//void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
-//void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
+// void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
+// void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *join);
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *init);
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *open);
-//void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
-//void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
-//void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
-//void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
-//void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
-//void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
-//void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
+// void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
+// void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
+// void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
+// void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
+// void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
+// void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
+// void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

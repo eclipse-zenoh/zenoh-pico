@@ -142,15 +142,17 @@ typedef enum
  * Consolidation mode values.
  *
  * Enumerators:
+ *     Z_CONSOLIDATION_MODE_AUTO: Applies automatic consolidation depending on the query.
  *     Z_CONSOLIDATION_MODE_FULL: Guaranties unicity of replies. Optimizes bandwidth.
  *     Z_CONSOLIDATION_MODE_LAZY: Does not garanty unicity. Optimizes latency.
  *     Z_CONSOLIDATION_MODE_NONE: No consolidation.
  */
 typedef enum
 {
-    Z_CONSOLIDATION_MODE_NONE = 0,
-    Z_CONSOLIDATION_MODE_LAZY = 1,
-    Z_CONSOLIDATION_MODE_FULL = 2
+    Z_CONSOLIDATION_MODE_AUTO = 0,
+    Z_CONSOLIDATION_MODE_NONE = 1,
+    Z_CONSOLIDATION_MODE_LAZY = 2,
+    Z_CONSOLIDATION_MODE_FULL = 3
 } z_consolidation_mode_t;
 
 /**
@@ -165,19 +167,6 @@ typedef enum
     Z_RELIABILITY_BEST_EFFORT = 0,
     Z_RELIABILITY_RELIABLE = 1
 } z_reliability_t;
-
-/**
- * Query consolidation tag values.
- *
- * Enumerators:
- *     Z_QUERY_CONSOLIDATION_AUTO: Tag identifying that the query consolidation will be set automatically.
- *     Z_QUERY_CONSOLIDATION_MANUAL: Tag identifying that the query consolidation is set manually.
- */
-typedef enum
-{
-    Z_QUERY_CONSOLIDATION_AUTO = 0,
-    Z_QUERY_CONSOLIDATION_MANUAL = 1
-} z_query_consolidation_tag_t;
 
 /**
  * Reply tag values.
@@ -257,18 +246,5 @@ typedef enum
     Z_QUERY_TARGET_ALL = 1,
     Z_QUERY_TARGET_ALL_COMPLETE = 2
 } z_query_target_t;
-
-// FIXME: move to types.h
-/**
- * The kind of consolidation that should be applied on replies to a :c:func:`z_query`
- * at the different stages of the reply process.
- *
- * Members:
- *   reception: The consolidation mode to apply at reception of the replies.
- */
-typedef struct
-{
-    z_consolidation_mode_t reception;
-} z_consolidation_strategy_t;
 
 #endif /* ZENOH_PICO_API_CONSTANTS_H */

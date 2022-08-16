@@ -165,7 +165,7 @@ typedef struct
  */
 typedef struct
 {
-  z_reliability_t reliability;
+    z_reliability_t reliability;
 } z_subscriber_options_t;
 
 /**
@@ -184,16 +184,11 @@ typedef struct
  * Represents the replies consolidation to apply on replies to a :c:func:`z_get`.
  *
  * Members:
- *   z_query_consolidation_tag_t tag: Defines if the replies consolidation strategy is automatically or manually applied.
- *   z_consolidation_strategy_t manual: The replies consolidation strategy to apply in case of `manual` configuration.
+ *   z_consolidation_mode_t mode: Defines the consolidation mode to apply to the replies.
  */
 typedef struct
 {
-    z_query_consolidation_tag_t tag;
-    union
-    {
-        z_consolidation_strategy_t manual;
-    };
+    z_consolidation_mode_t mode;
 } z_query_consolidation_t;
 
 /**
@@ -338,20 +333,20 @@ typedef _z_reply_data_t z_reply_data_t;
  */
 typedef _z_reply_t z_reply_t;
 
-#define _TYPEDEF_ARRAY(type, alias, elem, name)                               \
-    typedef type alias;                                                       \
-    static inline elem *z_##name##_array_get(const alias *a, size_t k)        \
-    {                                                                         \
-        return _z_##name##_array_get(a, k);                                   \
-    }                                                                         \
-    static inline size_t z_##name##_array_len(const alias *a)                 \
-    {                                                                         \
-        return _z_##name##_array_len(a);                                      \
-    }                                                                         \
-    static inline uint8_t z_##name##_array_is_empty(const alias *a)           \
-    {                                                                         \
-        return _z_##name##_array_is_empty(a);                                 \
-    }                                                                         \
+#define _TYPEDEF_ARRAY(type, alias, elem, name)                        \
+    typedef type alias;                                                \
+    static inline elem *z_##name##_array_get(const alias *a, size_t k) \
+    {                                                                  \
+        return _z_##name##_array_get(a, k);                            \
+    }                                                                  \
+    static inline size_t z_##name##_array_len(const alias *a)          \
+    {                                                                  \
+        return _z_##name##_array_len(a);                               \
+    }                                                                  \
+    static inline uint8_t z_##name##_array_is_empty(const alias *a)    \
+    {                                                                  \
+        return _z_##name##_array_is_empty(a);                          \
+    }
 
 /**
  * Represents an array of ``char *``.
@@ -387,10 +382,10 @@ _TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
 _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, reply_data)
 
 /* Owned types */
-#define _OWNED_TYPE(type, name)  \
-    typedef struct               \
-    {                            \
-        type *_value;            \
+#define _OWNED_TYPE(type, name) \
+    typedef struct              \
+    {                           \
+        type *_value;           \
     } z_owned_##name##_t;
 
 _OWNED_TYPE(z_bytes_t, bytes)
@@ -405,7 +400,6 @@ _OWNED_TYPE(z_publisher_t, publisher)
 _OWNED_TYPE(z_queryable_t, queryable)
 
 _OWNED_TYPE(z_encoding_t, encoding)
-_OWNED_TYPE(z_consolidation_strategy_t, consolidation_strategy)
 _OWNED_TYPE(z_query_target_t, query_target)
 _OWNED_TYPE(z_query_consolidation_t, query_consolidation)
 _OWNED_TYPE(z_put_options_t, put_options)
@@ -433,9 +427,9 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  */
 typedef struct
 {
-  void *context;
-  _z_data_handler_t call;
-  _z_dropper_handler_t drop;
+    void *context;
+    _z_data_handler_t call;
+    _z_dropper_handler_t drop;
 } z_owned_closure_sample_t;
 
 /**
@@ -450,9 +444,9 @@ typedef struct
  */
 typedef struct
 {
-  void *context;
-  _z_questionable_handler_t call;
-  _z_dropper_handler_t drop;
+    void *context;
+    _z_questionable_handler_t call;
+    _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
@@ -469,9 +463,9 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
  */
 typedef struct
 {
-  void *context;
-  z_owned_reply_handler_t call;
-  _z_dropper_handler_t drop;
+    void *context;
+    z_owned_reply_handler_t call;
+    _z_dropper_handler_t drop;
 } z_owned_closure_reply_t;
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
@@ -488,9 +482,9 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  */
 typedef struct
 {
-  void *context;
-  z_id_handler_t call;
-  _z_dropper_handler_t drop;
+    void *context;
+    z_id_handler_t call;
+    _z_dropper_handler_t drop;
 } z_owned_closure_zid_t;
 
 #endif /* ZENOH_PICO_API_TYPES_H */

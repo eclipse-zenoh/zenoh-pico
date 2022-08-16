@@ -28,27 +28,45 @@
  * Returns:
  *   Returns the loaned type associated with `x`.
  */
-#define z_loan(x) _Generic((x),                                       \
-    z_owned_bytes_t : z_bytes_loan,                                   \
-    z_owned_string_t : z_string_loan,                                 \
-    z_owned_keyexpr_t : z_keyexpr_loan,                               \
-    z_owned_config_t : z_config_loan,                                 \
-    z_owned_session_t : z_session_loan,                               \
-    z_owned_subscriber_t : z_subscriber_loan,                         \
-    z_owned_pull_subscriber_t : z_pull_subscriber_loan,               \
-    z_owned_publisher_t : z_publisher_loan,                           \
-    z_owned_queryable_t : z_queryable_loan,                           \
-    z_owned_encoding_t : z_encoding_loan,                             \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_loan, \
-    z_owned_query_target_t : z_query_target_loan,                     \
-    z_owned_query_consolidation_t : z_query_consolidation_loan,       \
-    z_owned_sample_t : z_sample_loan,                                 \
-    z_owned_hello_t : z_hello_loan,                                   \
-    z_owned_reply_t : z_reply_loan,                                   \
-    z_owned_reply_data_t : z_reply_data_loan,                         \
-    z_owned_str_array_t : z_str_array_loan,                           \
-    z_owned_hello_array_t : z_hello_array_loan,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_loan)(&x)
+#define z_loan(x) _Generic((x),                            \
+                           z_owned_bytes_t                 \
+                           : z_bytes_loan,                 \
+                             z_owned_string_t              \
+                           : z_string_loan,                \
+                             z_owned_keyexpr_t             \
+                           : z_keyexpr_loan,               \
+                             z_owned_config_t              \
+                           : z_config_loan,                \
+                             z_owned_session_t             \
+                           : z_session_loan,               \
+                             z_owned_subscriber_t          \
+                           : z_subscriber_loan,            \
+                             z_owned_pull_subscriber_t     \
+                           : z_pull_subscriber_loan,       \
+                             z_owned_publisher_t           \
+                           : z_publisher_loan,             \
+                             z_owned_queryable_t           \
+                           : z_queryable_loan,             \
+                             z_owned_encoding_t            \
+                           : z_encoding_loan,              \
+                             z_owned_query_target_t        \
+                           : z_query_target_loan,          \
+                             z_owned_query_consolidation_t \
+                           : z_query_consolidation_loan,   \
+                             z_owned_sample_t              \
+                           : z_sample_loan,                \
+                             z_owned_hello_t               \
+                           : z_hello_loan,                 \
+                             z_owned_reply_t               \
+                           : z_reply_loan,                 \
+                             z_owned_reply_data_t          \
+                           : z_reply_data_loan,            \
+                             z_owned_str_array_t           \
+                           : z_str_array_loan,             \
+                             z_owned_hello_array_t         \
+                           : z_hello_array_loan,           \
+                             z_owned_reply_data_array_t    \
+                           : z_reply_data_array_loan)(&x)
 
 /**
  * Defines a generic function for droping any of the ``z_owned_X_t`` types.
@@ -56,27 +74,45 @@
  * Parameters:
  *   x: The instance to drop.
  */
-#define z_drop(x) _Generic((*x),                                      \
-    z_owned_bytes_t : z_bytes_drop,                                   \
-    z_owned_string_t : z_string_drop,                                 \
-    z_owned_keyexpr_t : z_keyexpr_drop,                               \
-    z_owned_config_t : z_config_drop,                                 \
-    z_owned_session_t : z_session_drop,                               \
-    z_owned_subscriber_t : z_subscriber_drop,                         \
-    z_owned_pull_subscriber_t : z_pull_subscriber_drop,               \
-    z_owned_publisher_t : z_publisher_drop,                           \
-    z_owned_queryable_t : z_queryable_drop,                           \
-    z_owned_encoding_t : z_encoding_drop,                             \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_drop, \
-    z_owned_query_target_t : z_query_target_drop,                     \
-    z_owned_query_consolidation_t : z_query_consolidation_drop,       \
-    z_owned_sample_t : z_sample_drop,                                 \
-    z_owned_hello_t : z_hello_drop,                                   \
-    z_owned_reply_t : z_reply_drop,                                   \
-    z_owned_reply_data_t : z_reply_data_drop,                         \
-    z_owned_str_array_t : z_str_array_drop,                           \
-    z_owned_hello_array_t : z_hello_array_drop,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_drop)(x)
+#define z_drop(x) _Generic((*x),                           \
+                           z_owned_bytes_t                 \
+                           : z_bytes_drop,                 \
+                             z_owned_string_t              \
+                           : z_string_drop,                \
+                             z_owned_keyexpr_t             \
+                           : z_keyexpr_drop,               \
+                             z_owned_config_t              \
+                           : z_config_drop,                \
+                             z_owned_session_t             \
+                           : z_session_drop,               \
+                             z_owned_subscriber_t          \
+                           : z_subscriber_drop,            \
+                             z_owned_pull_subscriber_t     \
+                           : z_pull_subscriber_drop,       \
+                             z_owned_publisher_t           \
+                           : z_publisher_drop,             \
+                             z_owned_queryable_t           \
+                           : z_queryable_drop,             \
+                             z_owned_encoding_t            \
+                           : z_encoding_drop,              \
+                             z_owned_query_target_t        \
+                           : z_query_target_drop,          \
+                             z_owned_query_consolidation_t \
+                           : z_query_consolidation_drop,   \
+                             z_owned_sample_t              \
+                           : z_sample_drop,                \
+                             z_owned_hello_t               \
+                           : z_hello_drop,                 \
+                             z_owned_reply_t               \
+                           : z_reply_drop,                 \
+                             z_owned_reply_data_t          \
+                           : z_reply_data_drop,            \
+                             z_owned_str_array_t           \
+                           : z_str_array_drop,             \
+                             z_owned_hello_array_t         \
+                           : z_hello_array_drop,           \
+                             z_owned_reply_data_array_t    \
+                           : z_reply_data_array_drop)(x)
 
 /**
  * Defines a generic function for checking the validity of any of the ``z_owned_X_t`` types.
@@ -87,28 +123,47 @@
  * Returns:
  *   Returns ``true`` if valid, or ``false`` otherwise.
  */
-#define z_check(x) _Generic((x),                                       \
-    z_owned_bytes_t : z_bytes_check,                                   \
-    z_owned_string_t : z_string_check,                                 \
-    z_owned_keyexpr_t : z_keyexpr_check,                               \
-    z_keyexpr_t : z_keyexpr_is_valid,                                  \
-    z_owned_config_t : z_config_check,                                 \
-    z_owned_session_t : z_session_check,                               \
-    z_owned_subscriber_t : z_subscriber_check,                         \
-    z_owned_pull_subscriber_t : z_pull_subscriber_check,               \
-    z_owned_publisher_t : z_publisher_check,                           \
-    z_owned_queryable_t : z_queryable_check,                           \
-    z_owned_encoding_t : z_encoding_check,                             \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_check, \
-    z_owned_query_target_t : z_query_target_check,                     \
-    z_owned_query_consolidation_t : z_query_consolidation_check,       \
-    z_owned_sample_t : z_sample_check,                                 \
-    z_owned_hello_t : z_hello_check,                                   \
-    z_owned_reply_t : z_reply_check,                                   \
-    z_owned_reply_data_t : z_reply_data_check,                         \
-    z_owned_str_array_t : z_str_array_check,                           \
-    z_owned_hello_array_t : z_hello_array_check,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_check)(&x)
+#define z_check(x) _Generic((x),                            \
+                            z_owned_bytes_t                 \
+                            : z_bytes_check,                \
+                              z_owned_string_t              \
+                            : z_string_check,               \
+                              z_owned_keyexpr_t             \
+                            : z_keyexpr_check,              \
+                              z_keyexpr_t                   \
+                            : z_keyexpr_is_valid,           \
+                              z_owned_config_t              \
+                            : z_config_check,               \
+                              z_owned_session_t             \
+                            : z_session_check,              \
+                              z_owned_subscriber_t          \
+                            : z_subscriber_check,           \
+                              z_owned_pull_subscriber_t     \
+                            : z_pull_subscriber_check,      \
+                              z_owned_publisher_t           \
+                            : z_publisher_check,            \
+                              z_owned_queryable_t           \
+                            : z_queryable_check,            \
+                              z_owned_encoding_t            \
+                            : z_encoding_check,             \
+                              z_owned_query_target_t        \
+                            : z_query_target_check,         \
+                              z_owned_query_consolidation_t \
+                            : z_query_consolidation_check,  \
+                              z_owned_sample_t              \
+                            : z_sample_check,               \
+                              z_owned_hello_t               \
+                            : z_hello_check,                \
+                              z_owned_reply_t               \
+                            : z_reply_check,                \
+                              z_owned_reply_data_t          \
+                            : z_reply_data_check,           \
+                              z_owned_str_array_t           \
+                            : z_str_array_check,            \
+                              z_owned_hello_array_t         \
+                            : z_hello_array_check,          \
+                              z_owned_reply_data_array_t    \
+                            : z_reply_data_array_check)(&x)
 
 /**
  * Defines a generic function for moving any of the ``z_owned_X_t`` types.
@@ -119,31 +174,53 @@
  * Returns:
  *   Returns the instance associated with `x`.
  */
-#define z_move(x) _Generic((x),                                       \
-    z_owned_bytes_t : z_bytes_move,                                   \
-    z_owned_string_t : z_string_move,                                 \
-    z_owned_keyexpr_t : z_keyexpr_move,                               \
-    z_owned_config_t : z_config_move,                                 \
-    z_owned_session_t : z_session_move,                               \
-    z_owned_subscriber_t : z_subscriber_move,                         \
-    z_owned_pull_subscriber_t : z_pull_subscriber_move,               \
-    z_owned_publisher_t : z_publisher_move,                           \
-    z_owned_queryable_t : z_queryable_move,                           \
-    z_owned_encoding_t : z_encoding_move,                             \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_move, \
-    z_owned_query_target_t : z_query_target_move,                     \
-    z_owned_query_consolidation_t : z_query_consolidation_move,       \
-    z_owned_sample_t : z_sample_move,                                 \
-    z_owned_hello_t : z_hello_move,                                   \
-    z_owned_reply_t : z_reply_move,                                   \
-    z_owned_reply_data_t : z_reply_data_move,                         \
-    z_owned_str_array_t : z_str_array_move,                           \
-    z_owned_hello_array_t : z_hello_array_move,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_move,             \
-    z_owned_closure_sample_t : z_closure_sample_move,                 \
-    z_owned_closure_query_t : z_closure_query_move,                   \
-    z_owned_closure_reply_t : z_closure_reply_move,                   \
-    z_owned_closure_zid_t : z_closure_zid_move)(&x)
+#define z_move(x) _Generic((x),                            \
+                           z_owned_bytes_t                 \
+                           : z_bytes_move,                 \
+                             z_owned_string_t              \
+                           : z_string_move,                \
+                             z_owned_keyexpr_t             \
+                           : z_keyexpr_move,               \
+                             z_owned_config_t              \
+                           : z_config_move,                \
+                             z_owned_session_t             \
+                           : z_session_move,               \
+                             z_owned_subscriber_t          \
+                           : z_subscriber_move,            \
+                             z_owned_pull_subscriber_t     \
+                           : z_pull_subscriber_move,       \
+                             z_owned_publisher_t           \
+                           : z_publisher_move,             \
+                             z_owned_queryable_t           \
+                           : z_queryable_move,             \
+                             z_owned_encoding_t            \
+                           : z_encoding_move,              \
+                             z_owned_query_target_t        \
+                           : z_query_target_move,          \
+                             z_owned_query_consolidation_t \
+                           : z_query_consolidation_move,   \
+                             z_owned_sample_t              \
+                           : z_sample_move,                \
+                             z_owned_hello_t               \
+                           : z_hello_move,                 \
+                             z_owned_reply_t               \
+                           : z_reply_move,                 \
+                             z_owned_reply_data_t          \
+                           : z_reply_data_move,            \
+                             z_owned_str_array_t           \
+                           : z_str_array_move,             \
+                             z_owned_hello_array_t         \
+                           : z_hello_array_move,           \
+                             z_owned_reply_data_array_t    \
+                           : z_reply_data_array_move,      \
+                             z_owned_closure_sample_t      \
+                           : z_closure_sample_move,        \
+                             z_owned_closure_query_t       \
+                           : z_closure_query_move,         \
+                             z_owned_closure_reply_t       \
+                           : z_closure_reply_move,         \
+                             z_owned_closure_zid_t         \
+                           : z_closure_zid_move)(&x)
 
 /**
  * Defines a generic function for cloning any of the ``z_owned_X_t`` types.
@@ -154,32 +231,50 @@
  * Returns:
  *   Returns the cloned instance of `x`.
  */
-#define z_clone(x) _Generic((x),                                       \
-    z_owned_bytes_t : z_bytes_clone,                                   \
-    z_owned_string_t : z_string_clone,                                 \
-    z_owned_keyexpr_t : z_keyexpr_clone,                               \
-    z_owned_config_t : z_config_clone,                                 \
-    z_owned_session_t : z_session_clone,                               \
-    z_owned_subscriber_t : z_subscriber_clone,                         \
-    z_owned_pull_subscriber_t : z_pull_subscriber_clone,               \
-    z_owned_publisher_t : z_publisher_clone,                           \
-    z_owned_queryable_t : z_queryable_clone,                           \
-    z_owned_encoding_t : z_encoding_clone,                             \
-    z_owned_consolidation_strategy_t : z_consolidation_strategy_clone, \
-    z_owned_query_target_t : z_query_target_clone,                     \
-    z_owned_query_consolidation_t : z_query_consolidation_clone,       \
-    z_owned_sample_t : z_sample_clone,                                 \
-    z_owned_hello_t : z_hello_clone,                                   \
-    z_owned_reply_t : z_reply_clone,                                   \
-    z_owned_reply_data_t : z_reply_data_clone,                         \
-    z_owned_str_array_t : z_str_array_clone,                           \
-    z_owned_hello_array_t : z_hello_array_clone,                       \
-    z_owned_reply_data_array_t : z_reply_data_array_clone)(&x)
+#define z_clone(x) _Generic((x),                            \
+                            z_owned_bytes_t                 \
+                            : z_bytes_clone,                \
+                              z_owned_string_t              \
+                            : z_string_clone,               \
+                              z_owned_keyexpr_t             \
+                            : z_keyexpr_clone,              \
+                              z_owned_config_t              \
+                            : z_config_clone,               \
+                              z_owned_session_t             \
+                            : z_session_clone,              \
+                              z_owned_subscriber_t          \
+                            : z_subscriber_clone,           \
+                              z_owned_pull_subscriber_t     \
+                            : z_pull_subscriber_clone,      \
+                              z_owned_publisher_t           \
+                            : z_publisher_clone,            \
+                              z_owned_queryable_t           \
+                            : z_queryable_clone,            \
+                              z_owned_encoding_t            \
+                            : z_encoding_clone,             \
+                              z_owned_query_target_t        \
+                            : z_query_target_clone,         \
+                              z_owned_query_consolidation_t \
+                            : z_query_consolidation_clone,  \
+                              z_owned_sample_t              \
+                            : z_sample_clone,               \
+                              z_owned_hello_t               \
+                            : z_hello_clone,                \
+                              z_owned_reply_t               \
+                            : z_reply_clone,                \
+                              z_owned_reply_data_t          \
+                            : z_reply_data_clone,           \
+                              z_owned_str_array_t           \
+                            : z_str_array_clone,            \
+                              z_owned_hello_array_t         \
+                            : z_hello_array_clone,          \
+                              z_owned_reply_data_array_t    \
+                            : z_reply_data_array_clone)(&x)
 
 #define _z_closure_overloader(callback, droper, ctx, ...) \
-  {                                                       \
-    .call = callback, .drop = droper, .context = ctx      \
-  }
+    {                                                     \
+        .call = callback, .drop = droper, .context = ctx  \
+    }
 
 /**
  * Defines a variadic macro to ease the definition of callback closures.

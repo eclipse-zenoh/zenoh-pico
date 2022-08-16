@@ -34,7 +34,8 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
 {
     // FIXME: remove when resource declaration is implemented for multicast transport
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    {
         goto ERR_1;
     }
 #endif // Z_MULTICAST_TRANSPORT == 1
@@ -42,7 +43,8 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
     _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
     r->_id = _z_get_resource_id(zn);
     r->_key = _z_keyexpr_duplicate(&keyexpr);
-    if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) < 0) {
+    if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) < 0)
+    {
         goto ERR_2;
     }
 
@@ -50,7 +52,8 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr)
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&keyexpr));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_3;
     }
     _z_msg_clear(&z_msg);
@@ -71,7 +74,8 @@ ERR_1:
 int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
 {
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_LOCAL, rid);
-    if (r == NULL) {
+    if (r == NULL)
+    {
         goto ERR_1;
     }
 
@@ -79,7 +83,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid)
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_2;
     }
     _z_msg_clear(&z_msg);
@@ -103,7 +108,8 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_1;
     }
     _z_msg_clear(&z_msg);
@@ -129,7 +135,8 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub)
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_1;
     }
     _z_msg_clear(&z_msg);
@@ -151,7 +158,8 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     rs->_callback = callback;
     rs->_dropper = dropper;
     rs->_arg = arg;
-    if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs) < 0) {
+    if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs) < 0)
+    {
         goto ERR_1;
     }
 
@@ -159,7 +167,8 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_2;
     }
     _z_msg_clear(&z_msg);
@@ -182,7 +191,8 @@ ERR_1:
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub)
 {
     _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL) {
+    if (s == NULL)
+    {
         goto ERR_1;
     }
 
@@ -190,8 +200,9 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub)
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
-       goto ERR_2;
+    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
+        goto ERR_2;
     }
     _z_msg_clear(&z_msg);
 
@@ -216,7 +227,8 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
     rq->_callback = callback;
     rq->_dropper = dropper;
     rq->_arg = arg;
-    if (_z_register_questionable(zn, rq) < 0) {
+    if (_z_register_questionable(zn, rq) < 0)
+    {
         goto ERR_1;
     }
 
@@ -224,7 +236,8 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_kind, rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_2;
     }
     _z_msg_clear(&z_msg);
@@ -247,7 +260,8 @@ ERR_1:
 int8_t _z_undeclare_queryable(_z_queryable_t *qle)
 {
     _z_questionable_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
-    if (q == NULL) {
+    if (q == NULL)
+    {
         goto ERR_1;
     }
 
@@ -255,7 +269,8 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle)
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key), q->_kind);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0)
+    {
         goto ERR_2;
     }
     _z_msg_clear(&z_msg);
@@ -275,7 +290,7 @@ ERR_1:
 int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len)
 {
     // Build the reply context decorator. This is NOT the final reply._
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t*)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t*)query->_zn)->_tp_manager->_local_pid.len);
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_tp_manager->_local_pid.start, ((_z_session_t *)query->_zn)->_tp_manager->_local_pid.len);
     _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, query->_kind, 0);
 
     // Empty data info
@@ -343,7 +358,7 @@ int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t 
 }
 
 /*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop)
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target, const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop)
 {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));

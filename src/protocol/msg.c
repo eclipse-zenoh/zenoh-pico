@@ -185,7 +185,7 @@ _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo
 
 void _z_subinfo_clear(_z_subinfo_t *si)
 {
-    (void) (si);
+    (void)(si);
     // Nothing to clear
 }
 
@@ -425,7 +425,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg)
 }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_strategy_t consolidation)
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_mode_t consolidation)
 {
     _z_zenoh_message_t msg;
 
@@ -600,7 +600,7 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg)
 
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header)
 {
-    (void) (header);
+    (void)(header);
     _z_bytes_clear(&msg->_pid);
 }
 

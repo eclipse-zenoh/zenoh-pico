@@ -174,30 +174,27 @@ z_query_target_t z_query_target_default(void)
 
 z_query_consolidation_t z_query_consolidation_auto(void)
 {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_AUTO};
-}
-
-z_query_consolidation_t z_query_consolidation_default(void)
-{
-    return z_query_consolidation_full();
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
 }
 
 z_query_consolidation_t z_query_consolidation_full(void)
 {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                     .manual = {.reception = Z_CONSOLIDATION_MODE_FULL}};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_FULL};
 }
 
 z_query_consolidation_t z_query_consolidation_lazy(void)
 {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                     .manual = {.reception = Z_CONSOLIDATION_MODE_LAZY}};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_LAZY};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void)
 {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL,
-                                     .manual = {.reception = Z_CONSOLIDATION_MODE_NONE}};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_NONE};
+}
+
+z_query_consolidation_t z_query_consolidation_default(void)
+{
+    return z_query_consolidation_auto();
 }
 
 z_bytes_t z_query_value_selector(z_query_t *query)
@@ -285,7 +282,6 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publishe
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free, _z_owner_noop_copy)
 
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_consolidation_strategy_t, z_owned_consolidation_strategy_t, consolidation_strategy, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation, _z_owner_noop_free, _z_owner_noop_copy)
 
@@ -476,33 +472,24 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     void *ctx = callback->context;
     callback->context = NULL;
 
-    z_consolidation_strategy_t strategy;
-    _z_target_t target;
-    target._kind = Z_QUERYABLE_ALL_KINDS;
+    // Default consolidation is full
+    z_query_consolidation_t consolidation = z_query_consolidation_full();
+    _z_target_t target = {._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
 
     if (options != NULL)
     {
-        if (options->consolidation.tag == Z_QUERY_CONSOLIDATION_MANUAL)
-        {
-            strategy = options->consolidation.manual;
-        }
-        else
+        if (options->consolidation.mode == Z_CONSOLIDATION_MODE_AUTO)
         {
             if (strstr(value_selector, "_time=") != NULL)
             {
-                strategy = _z_consolidation_strategy_none();
-            }
-            else
-            {
-                strategy = _z_consolidation_strategy_default();
+                consolidation = z_query_consolidation_none();
             }
         }
+        else
+        {
+            consolidation = options->consolidation;
+        }
         target._target = options->target;
-    }
-    else
-    {
-        target._target = z_query_target_default();
-        strategy = z_query_consolidation_default().manual;
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
@@ -511,7 +498,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    return _z_query(zs, keyexpr, value_selector, target, strategy, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
+    return _z_query(zs, keyexpr, value_selector, target, consolidation.mode, __z_reply_handler, wrapped_ctx, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr)

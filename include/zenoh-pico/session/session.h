@@ -149,7 +149,7 @@ typedef struct
     _z_keyexpr_t _key;
     char *_value_selector;
     _z_target_t _target;
-    z_consolidation_strategy_t _consolidation;
+    z_consolidation_mode_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;

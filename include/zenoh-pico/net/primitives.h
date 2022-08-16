@@ -38,7 +38,6 @@
  */
 _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout);
 
-
 /*------------------ Declarations ------------------*/
 
 /**
@@ -114,11 +113,11 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
 _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
-                                      _z_keyexpr_t keyexpr,
-                                      _z_subinfo_t sub_info,
-                                      _z_data_handler_t callback,
-                                      _z_drop_handler_t dropper,
-                                      void *arg);
+                                       _z_keyexpr_t keyexpr,
+                                       _z_subinfo_t sub_info,
+                                       _z_data_handler_t callback,
+                                       _z_drop_handler_t dropper,
+                                       void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -157,7 +156,6 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
  *    0 if success, or a negative value identifying the error.
  */
 int8_t _z_undeclare_queryable(_z_queryable_t *qle);
-
 
 /*------------------ Operations ------------------*/
 
@@ -219,7 +217,7 @@ int8_t _z_pull(const _z_subscriber_t *sub);
  *     dropper: The callback function that will be called on upon completion of the callback.
  *     arg_drop: A pointer that will be passed to the **dropper** on each call.
  */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target, const z_consolidation_strategy_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target, const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /**
  * Send a reply to a query.

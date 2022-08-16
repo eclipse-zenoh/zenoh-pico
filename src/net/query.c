@@ -18,15 +18,3 @@ _z_target_t _z_target_default(void)
 {
     return (_z_target_t){._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
 }
-
-z_consolidation_strategy_t _z_consolidation_strategy_default(void)
-{
-    return (z_consolidation_strategy_t){
-        .reception = Z_CONSOLIDATION_MODE_FULL};
-}
-
-z_consolidation_strategy_t _z_consolidation_strategy_none(void)
-{
-    return (z_consolidation_strategy_t){
-        .reception = Z_CONSOLIDATION_MODE_NONE};
-}

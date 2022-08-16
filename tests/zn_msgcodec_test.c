@@ -1514,8 +1514,8 @@ _z_zenoh_message_t gen_query_message(void)
         Z_CONSOLIDATION_MODE_FULL,
         Z_CONSOLIDATION_MODE_LAZY,
         Z_CONSOLIDATION_MODE_NONE};
-    z_consolidation_strategy_t consolidation;
-    consolidation.reception = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
+    z_consolidation_mode_t consolidation;
+    consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
     return _z_msg_make_query(key, value_selector, qid, target, consolidation);
 }
@@ -1553,8 +1553,8 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     }
 
     printf("   Consolidation ( %u:%u)",
-           left->_consolidation.reception, right->_consolidation.reception);
-    assert(left->_consolidation.reception == right->_consolidation.reception);
+           left->_consolidation, right->_consolidation);
+    assert(left->_consolidation == right->_consolidation);
     printf("\n");
 }
 

@@ -994,12 +994,12 @@ int _z_msg_query_target_encode(_z_wbuf_t *wbf, const _z_target_t *qt)
     return 0;
 }
 
-int _z_query_consolidation_encode(_z_wbuf_t *wbf, const z_consolidation_strategy_t *qc)
+int _z_query_consolidation_encode(_z_wbuf_t *wbf, const z_consolidation_mode_t *qc)
 {
     _Z_DEBUG("Encoding _QUERY_CONSOLIDATION\n");
-    _z_zint_t consolidation = qc->reception;
+    _z_zint_t mode = *qc;
 
-    return _z_zint_encode(wbf, consolidation);
+    return _z_zint_encode(wbf, mode);
 }
 
 int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg)
@@ -1051,7 +1051,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf)
     case Z_CONSOLIDATION_MODE_NONE:
     case Z_CONSOLIDATION_MODE_LAZY:
     case Z_CONSOLIDATION_MODE_FULL:
-        r._value._query_consolidation.reception = mode;
+        r._value._query_consolidation = mode;
         break;
     default:
         r._tag = _Z_RES_ERR;
