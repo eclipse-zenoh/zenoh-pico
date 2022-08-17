@@ -136,6 +136,7 @@ typedef enum {
  * Consolidation mode values.
  *
  * Enumerators:
+ *     Z_CONSOLIDATION_MODE_AUTO: Let Zenoh decide the best consolidation mode depending on the query selector.
  *     Z_CONSOLIDATION_MODE_NONE: No consolidation is applied. Replies may come in any order and any number.
  *     Z_CONSOLIDATION_MODE_MONOTONIC: It guarantees that any reply for a given key expression will be monotonic in time
  *         w.r.t. the previous received replies for the same key expression. I.e., for the same key expression multiple
@@ -145,6 +146,7 @@ typedef enum {
  *         It optimizes bandwidth.
  */
 typedef enum {
+    Z_CONSOLIDATION_MODE_AUTO = -1,
     Z_CONSOLIDATION_MODE_NONE = 0,
     Z_CONSOLIDATION_MODE_MONOTONIC = 1,
     Z_CONSOLIDATION_MODE_LATEST = 2,
@@ -158,15 +160,6 @@ typedef enum {
  *     Z_RELIABILITY_RELIABLE: Defines reliability as ``RELIABLE``
  */
 typedef enum { Z_RELIABILITY_BEST_EFFORT = 0, Z_RELIABILITY_RELIABLE = 1 } z_reliability_t;
-
-/**
- * Query consolidation tag values.
- *
- * Enumerators:
- *     Z_QUERY_CONSOLIDATION_AUTO: Tag identifying that the query consolidation will be set automatically.
- *     Z_QUERY_CONSOLIDATION_MANUAL: Tag identifying that the query consolidation is set manually.
- */
-typedef enum { Z_QUERY_CONSOLIDATION_AUTO = 0, Z_QUERY_CONSOLIDATION_MANUAL = 1 } z_query_consolidation_tag_t;
 
 /**
  * Reply tag values.
