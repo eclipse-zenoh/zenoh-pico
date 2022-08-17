@@ -361,7 +361,7 @@ z_query_consolidation_t z_query_consolidation_default(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
-z_query_consolidation_t z_query_consolidation_last_value(void);
+z_query_consolidation_t z_query_consolidation_latest(void);
 
 /**
  * Lazy consolidation performed at all stages.

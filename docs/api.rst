@@ -241,7 +241,7 @@ Primitives
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
 .. autocfunction:: primitives.h::z_query_consolidation_default
-.. autocfunction:: primitives.h::z_query_consolidation_last_value
+.. autocfunction:: primitives.h::z_query_consolidation_latest
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_consolidation_reception

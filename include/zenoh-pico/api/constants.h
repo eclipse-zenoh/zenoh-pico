@@ -42,7 +42,8 @@ typedef enum {
  *     Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR: The key contains ``** / **``, which must be replaced by ``**``.
  *     Z_KEYEXPR_CANON_EMPTY_CHUNK: The key contains empty chunks.
  *     Z_KEYEXPR_CANON_STARS_IN_CHUNK: The key contains a ``*`` in a chunk without being escaped by a DSL, which is
- * forbidden. Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR: The key contains ``$*$`` or ``$$``, which is forbidden.
+ *         forbidden.
+ *     Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR: The key contains ``$*$`` or ``$$``, which is forbidden.
  *     Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK: The key contains ``#`` or ``?``, which is forbidden.
  *     Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR: The key contains a ``$`` which is not bound to a DSL.
  */
@@ -74,20 +75,20 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
  * Enumerators:
  *     Z_ENCODING_PREFIX_EMPTY: Encoding not defined.
  *     Z_ENCODING_PREFIX_APP_OCTET_STREAM: ``application/octet-stream``. Default value for all other cases. An unknown
- * file type should use this type. Z_ENCODING_PREFIX_APP_CUSTOM: Custom application type. Non IANA standard.
+ *         file type should use this type. Z_ENCODING_PREFIX_APP_CUSTOM: Custom application type. Non IANA standard.
  *     Z_ENCODING_PREFIX_TEXT_PLAIN: ``text/plain``. Default value for textual files. A textual file should be
- * human-readable and must not contain binary data. Z_ENCODING_PREFIX_APP_PROPERTIES: Application properties type. Non
- * IANA standard. Z_ENCODING_PREFIX_APP_JSON: ``application/json``. JSON format. Z_ENCODING_PREFIX_APP_SQL: Application
- * sql type. Non IANA standard. Z_ENCODING_PREFIX_APP_INTEGER: Application integer type. Non IANA standard.
- *     Z_ENCODING_PREFIX_APP_FLOAT: Application float type. Non IANA standard.
+ *         human-readable and must not contain binary data. Z_ENCODING_PREFIX_APP_PROPERTIES: Application properties
+ *         type. Non IANA standard. Z_ENCODING_PREFIX_APP_JSON: ``application/json``. JSON format.
+ *     Z_ENCODING_PREFIX_APP_SQL: Application sql type. Non IANA standard. Z_ENCODING_PREFIX_APP_INTEGER: Application
+ *         integer type. Non IANA standard. Z_ENCODING_PREFIX_APP_FLOAT: Application float type. Non IANA standard.
  *     Z_ENCODING_PREFIX_APP_XML: ``application/xml``. XML.
  *     Z_ENCODING_PREFIX_APP_XHTML_XML: ``application/xhtml+xml``. XHTML.
  *     Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED: ``application/x-www-form-urlencoded``. The keys and values are
- * encoded in key-value tuples separated by '&', with a '=' between the key and the value. Z_ENCODING_PREFIX_TEXT_JSON:
- * Text JSON. Non IANA standard. Z_ENCODING_PREFIX_TEXT_HTML: ``text/html``. HyperText Markup Language (HTML).
- *     Z_ENCODING_PREFIX_TEXT_XML: ``text/xml``. `Application/xml` is recommended as of RFC 7303 (section 4.1), but
- * `text/xml` is still used sometimes. Z_ENCODING_PREFIX_TEXT_CSS: ``text/css``. Cascading Style Sheets (CSS).
- *     Z_ENCODING_PREFIX_TEXT_CSV: ``text/csv``. Comma-separated values (CSV).
+ *         encoded in key-value tuples separated by '&', with a '=' between the key and the value.
+ *      Z_ENCODING_PREFIX_TEXT_JSON: Text JSON. Non IANA standard. Z_ENCODING_PREFIX_TEXT_HTML: ``text/html``. HyperText
+ *         Markup Language (HTML). Z_ENCODING_PREFIX_TEXT_XML: ``text/xml``. `Application/xml` is recommended as of RFC
+ *         7303 (section 4.1), but `text/xml` is still used sometimes. Z_ENCODING_PREFIX_TEXT_CSS: ``text/css``.
+ *         Cascading Style Sheets (CSS). Z_ENCODING_PREFIX_TEXT_CSV: ``text/csv``. Comma-separated values (CSV).
  *     Z_ENCODING_PREFIX_TEXT_JAVASCRIPT: ``text/javascript``. JavaScript.
  *     Z_ENCODING_PREFIX_IMAGE_JPEG: ``image/jpeg``. JPEG images.
  *     Z_ENCODING_PREFIX_IMAGE_PNG: ``image/png``. Portable Network Graphics.
@@ -173,7 +174,7 @@ typedef enum { Z_QUERY_CONSOLIDATION_AUTO = 0, Z_QUERY_CONSOLIDATION_MANUAL = 1 
  * Enumerators:
  *     Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
  *     Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
- * replies for this query.
+ *         replies for this query.
  */
 typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
 
@@ -182,8 +183,9 @@ typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
  *
  * Enumerators:
  *     Z_CONGESTION_CONTROL_BLOCK: Defines congestion control as ``BLOCK``. Messages are not dropped in case of
- * congestion control. Z_CONGESTION_CONTROL_DROP: Defines congestion control as ``DROP``. Messages are dropped in case
- * of congestion control.
+ *         congestion control.
+ *     Z_CONGESTION_CONTROL_DROP: Defines congestion control as ``DROP``. Messages are dropped in case
+ *         of congestion control.
  */
 typedef enum { Z_CONGESTION_CONTROL_BLOCK = 0, Z_CONGESTION_CONTROL_DROP = 1 } z_congestion_control_t;
 

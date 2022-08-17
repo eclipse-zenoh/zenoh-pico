@@ -131,7 +131,7 @@ z_query_consolidation_t z_query_consolidation_auto(void) {
     return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_AUTO};
 }
 
-z_query_consolidation_t z_query_consolidation_last_value(void) {
+z_query_consolidation_t z_query_consolidation_latest(void) {
     return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_LATEST};
 }
 
@@ -381,7 +381,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
         if (strstr(value_selector, Z_SELECTOR_TIME) != NULL)
             consolidation = z_query_consolidation_none();
         else
-            consolidation = z_query_consolidation_last_value();
+            consolidation = z_query_consolidation_latest();
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
