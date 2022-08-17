@@ -128,19 +128,19 @@ z_encoding_t z_encoding_default(void) {
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_AUTO};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
 }
 
 z_query_consolidation_t z_query_consolidation_latest(void) {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_LATEST};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_LATEST};
 }
 
 z_query_consolidation_t z_query_consolidation_monotonic(void) {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_MONOTONIC};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_MONOTONIC};
 }
 
 z_query_consolidation_t z_query_consolidation_none(void) {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_NONE};
+    return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_NONE};
 }
 
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
@@ -377,11 +377,11 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
         target._target = options->target;
     }
 
-    if (consolidation.tag == Z_QUERY_CONSOLIDATION_AUTO) {
+    if (consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
         if (strstr(value_selector, Z_SELECTOR_TIME) != NULL)
-            consolidation = z_query_consolidation_none();
+            consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
         else
-            consolidation = z_query_consolidation_latest();
+            consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args

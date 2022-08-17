@@ -185,9 +185,7 @@ typedef struct {
  *   z_consolidation_mode_t mode: Defines the consolidation mode to apply to the replies.
  */
 typedef struct {
-    z_query_consolidation_tag_t tag;
     z_consolidation_mode_t mode;
-
 } z_query_consolidation_t;
 
 /**
