@@ -34,13 +34,11 @@ typedef void (*_z_drop_handler_t)(void *arg);
  *
  * Members:
  *   _z_sample_t data: a :c:type:`_z_sample_t` containing the key and value of the reply.
- *   unsigned int replier_kind: The kind of the replier that sent this reply.
  *   _z_bytes_t replier_id: The id of the replier that sent this reply.
  *
  */
 typedef struct {
     _z_sample_t sample;
-    unsigned int replier_kind;
     _z_bytes_t replier_id;
 } _z_reply_data_t;
 
@@ -109,7 +107,6 @@ typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
     uint8_t _complete;
-    uint8_t _kind;
     _z_questionable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
@@ -141,7 +138,7 @@ typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
     char *_value_selector;
-    _z_target_t _target;
+    z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
     _z_reply_handler_t _callback;

@@ -215,8 +215,6 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 // +-+-+-+---------+
 // ~      qid      ~
 // +---------------+
-// ~  replier_kind ~ if F==0
-// +---------------+
 // ~   replier_id  ~ if F==0
 // +---------------+
 //
@@ -224,7 +222,6 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 //
 typedef struct {
     _z_zint_t _qid;
-    _z_zint_t _replier_kind;
     _z_bytes_t _replier_id;
     uint8_t _header;
 } _z_reply_context_t;
@@ -360,14 +357,11 @@ void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 // +---------------+
 // ~     ResKey    ~ if K==1 then keyexpr is string
 // +---------------+
-// ~     Kind      ~
-// +---------------+
 // ~   QablInfo    ~ if Q==1
 // +---------------+
 //
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _kind;
     _z_zint_t _complete;
     _z_zint_t _distance;
 } _z_qle_decl_t;
@@ -380,12 +374,9 @@ void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 // +---------------+
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
-// ~     Kind      ~
-// +---------------+
 //
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _kind;
 } _z_forget_qle_decl_t;
 void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl);
 
@@ -529,7 +520,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 // +---------------+
 // ~      qid      ~
 // +---------------+
-// ~     target    ~ if T==1. Otherwise target.kind = Z_QUERYABLE_ALL_KINDS, target.tag = Z_TARGET_BEST_MATCHING
+// ~     target    ~ if T==1. Otherwise target = Z_TARGET_BEST_MATCHING
 // +---------------+
 // ~ consolidation ~
 // +---------------+
@@ -538,7 +529,7 @@ typedef struct {
     _z_keyexpr_t _key;
     char *_value_selector;
     _z_zint_t _qid;
-    _z_target_t _target;
+    z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
 void _z_msg_clear_query(_z_msg_query_t *msg);
@@ -562,22 +553,20 @@ _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear,
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind,
-                                              int is_final);
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, int is_final);
 _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo);
 _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete,
-                                                   _z_zint_t distance);
-_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_zint_t kind);
+_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance);
+_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key);
 _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target,
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, z_query_target_t target,
                                      z_consolidation_mode_t consolidation);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped,
                                      _z_reply_context_t *rctx);

@@ -648,7 +648,6 @@ void print_reply_context(_z_reply_context_t *rc) {
     printf("      Header: %x\n", rc->_header);
     printf("      QID: %zu\n", rc->_qid);
     if (!_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F)) {
-        printf("      Replier Kind: %zu\n", rc->_replier_kind);
         printf("      Replier ID: ");
         print_uint8_array((_z_bytes_t *)&rc->_replier_id);
     }
@@ -658,13 +657,12 @@ void print_reply_context(_z_reply_context_t *rc) {
 _z_reply_context_t *gen_reply_context(void) {
     _z_zint_t qid = gen_zint();
     _z_bytes_t replier_id = gen_bytes(16);
-    _z_zint_t replier_kind = gen_zint();
     int is_final = gen_bool();
     if (is_final == 1) {
         _z_bytes_clear(&replier_id);
     }
 
-    return _z_msg_make_reply_context(qid, replier_id, replier_kind, is_final);
+    return _z_msg_make_reply_context(qid, replier_id, is_final);
 }
 
 void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right) {
@@ -673,15 +671,6 @@ void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right
 
     printf("QID (%zu:%zu), ", left->_qid, right->_qid);
     assert(left->_qid == right->_qid);
-
-    printf("Replier Kind (");
-    if (!_Z_HAS_FLAG(left->_header, _Z_FLAG_Z_F)) {
-        printf("%zu:%zu", left->_replier_kind, right->_replier_kind);
-        assert(left->_replier_kind == right->_replier_kind);
-    } else {
-        printf("NULL:NULL");
-    }
-    printf(") ");
 
     printf("Replier ID (");
     if (!_Z_HAS_FLAG(left->_header, _Z_FLAG_Z_F))
@@ -872,8 +861,6 @@ _z_qle_decl_t gen_queryable_declaration(uint8_t *header) {
     e_qd._key = gen_res_key();
     _Z_SET_FLAG(*header, (e_qd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
-    e_qd._kind = gen_uint8();
-
     if (gen_bool()) {
         e_qd._complete = gen_zint();
         e_qd._distance = gen_zint();
@@ -886,12 +873,10 @@ _z_qle_decl_t gen_queryable_declaration(uint8_t *header) {
 void assert_eq_queryable_declaration(_z_qle_decl_t *left, _z_qle_decl_t *right, uint8_t header) {
     assert_eq_res_key(&left->_key, &right->_key, header);
 
-    printf("Kind (%zu:%zu), ", left->_kind, right->_kind);
-
     if _Z_HAS_FLAG (header, _Z_FLAG_Z_I) {
-        printf("Complete (%zu:%zu), ", left->_kind, right->_kind);
+        printf("Complete (%zu:%zu), ", left->_complete, right->_complete);
         assert(left->_complete == right->_complete);
-        printf("Distance (%zu:%zu), ", left->_kind, right->_kind);
+        printf("Distance (%zu:%zu), ", left->_distance, right->_distance);
         assert(left->_distance == right->_distance);
     }
 }
@@ -1059,8 +1044,6 @@ _z_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header) {
 
     e_fqd._key = gen_res_key();
     _Z_SET_FLAG(*header, (e_fqd._key._suffix) ? _Z_FLAG_Z_K : 0);
-
-    e_fqd._kind = gen_uint8();
 
     return e_fqd;
 }
@@ -1344,15 +1327,12 @@ _z_zenoh_message_t gen_query_message(void) {
     char *value_selector = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 
-    _z_target_t target;
+    z_query_target_t target;
     if (gen_bool()) {
-        target._kind = gen_uint8();
-
         uint8_t tgt[] = {Z_QUERY_TARGET_BEST_MATCHING, Z_QUERY_TARGET_ALL_COMPLETE, Z_QUERY_TARGET_ALL};
-        target._target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
+        target = tgt[gen_uint8() % (sizeof(tgt) / sizeof(uint8_t))];
     } else {
-        target._kind = Z_QUERYABLE_ALL_KINDS;
-        target._target = Z_QUERY_TARGET_BEST_MATCHING;
+        target = Z_QUERY_TARGET_BEST_MATCHING;
     }
 
     uint8_t con[] = {Z_CONSOLIDATION_MODE_LATEST, Z_CONSOLIDATION_MODE_MONOTONIC, Z_CONSOLIDATION_MODE_NONE};
@@ -1376,19 +1356,8 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     printf("\n");
 
     if _Z_HAS_FLAG (header, _Z_FLAG_Z_T) {
-        printf("   Target => ");
-        printf("Kind (%u:%u), ", left->_target._kind, right->_target._kind);
-        assert(left->_target._kind == right->_target._kind);
-
-        printf("Tag (%u:%u)", left->_target._target, right->_target._target);
-        assert(left->_target._target == right->_target._target);
-
-        // if (left->_target.target == Z_TARGET_COMPLETE)
-        // {
-        //     printf(", N (%zu:%zu)", left->_target.type.complete.n, right->_target.type.complete.n);
-        //     assert(left->_target.type.complete.n == right->_target.type.complete.n);
-        // }
-
+        printf("Target (%u:%u), ", left->_target, right->_target);
+        assert(left->_target == right->_target);
         printf("\n");
     }
 

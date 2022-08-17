@@ -216,7 +216,7 @@ int8_t _z_pull(const _z_subscriber_t *sub);
  *     dropper: The callback function that will be called on upon completion of the callback.
  *     arg_drop: A pointer that will be passed to the **dropper** on each call.
  */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target,
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
                 _z_drop_handler_t dropper, void *arg_drop);
 

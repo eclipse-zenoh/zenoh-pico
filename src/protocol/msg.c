@@ -51,13 +51,11 @@ void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_payload); }
 
 /*------------------ ReplyContext Decorator ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind,
-                                              int is_final) {
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, int is_final) {
     _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
 
     rctx->_qid = qid;
     rctx->_replier_id = replier_id;
-    rctx->_replier_kind = replier_kind;
 
     rctx->_header = _Z_MID_REPLY_CONTEXT;
     if (is_final) _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
@@ -176,12 +174,10 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key) {
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete,
-                                                   _z_zint_t distance) {
+_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance) {
     _z_declaration_t decl;
 
     decl._body._qle._key = key;
-    decl._body._qle._kind = kind;
 
     decl._header = _Z_DECL_QUERYABLE;
     if (key._suffix != NULL) _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
@@ -198,11 +194,10 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t k
 void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Forget Queryable Declaration ------------------*/
-_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_zint_t kind) {
+_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key) {
     _z_declaration_t decl;
 
     decl._body._forget_qle._key = key;
-    decl._body._forget_qle._kind = kind;
 
     decl._header = _Z_DECL_FORGET_QUERYABLE;
     if (key._suffix != NULL) _Z_SET_FLAG(decl._header, _Z_FLAG_Z_K);
@@ -265,10 +260,9 @@ void _z_msg_clear_declare(_z_msg_declare_t *dcl) { _z_declaration_array_clear(&d
 // @TODO: implement builder for _z_data_info_t
 
 void _z_data_info_clear(_z_data_info_t *di) {
-    // NOTE: the following fiels do not involve any heap allocation:
+    // NOTE: the following fields do not involve any heap allocation:
     //   - source_sn
     //   - first_router_sn
-    //   - kind
 
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC)) _z_bytes_clear(&di->_encoding.suffix);
 
@@ -341,7 +335,7 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
 void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target,
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, z_query_target_t target,
                                      z_consolidation_mode_t consolidation) {
     _z_zenoh_message_t msg;
 
@@ -352,7 +346,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_
     msg._body._query._consolidation = consolidation;
 
     msg._header = _Z_MID_QUERY;
-    if (msg._body._query._target._kind != Z_QUERYABLE_ALL_KINDS) _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
+    if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
     if (msg._body._query._key._suffix != NULL) _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
 
     msg._attachment = NULL;

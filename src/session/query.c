@@ -133,15 +133,10 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
     if (pen_qry == NULL) goto ERR_1;
 
-    // Partial reply received from an unknown target
-    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
-        goto ERR_1;
-
     // Build the reply
     _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
     reply->_tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
-    reply->data.replier_kind = reply_context->_replier_kind;
     reply->data.sample.keyexpr = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
     _z_bytes_copy(&reply->data.sample.payload, &payload);
     reply->data.sample.encoding.prefix = encoding.prefix;
@@ -212,10 +207,6 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
     // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
     if (pen_qry == NULL) goto ERR;
-
-    // Final reply received from an unknown target
-    if (pen_qry->_target._kind != Z_QUERYABLE_ALL_KINDS && (pen_qry->_target._kind & reply_context->_replier_kind) == 0)
-        goto ERR;
 
     // The reply is the final one, apply consolidation if needed
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {

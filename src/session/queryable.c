@@ -102,7 +102,7 @@ _z_questionable_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_ke
 }
 
 int _z_register_questionable(_z_session_t *zn, _z_questionable_t *qle) {
-    _Z_DEBUG(">>> Allocating queryable for (%lu:%s,%u)\n", qle->_key._id, qle->_key._suffix, qle->_kind);
+    _Z_DEBUG(">>> Allocating queryable for (%lu:%s,%u)\n", qle->_key._id, qle->_key._suffix);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
@@ -136,21 +136,16 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
     _z_questionable_list_t *xs = qles;
     while (xs != NULL) {
         _z_questionable_t *qle = _z_questionable_list_head(xs);
-        if (((query->_target._kind & Z_QUERYABLE_ALL_KINDS) | (query->_target._kind & qle->_kind)) != 0) {
-            q._kind = qle->_kind;
-            qle->_callback(&q, qle->_arg);
-        }
-
+        qle->_callback(&q, qle->_arg);
         xs = _z_questionable_list_tail(xs);
     }
 
     // Send the final reply
-    // Final flagged reply context does not encode the PID or replier kind
-    _z_bytes_t pid;
-    _z_bytes_reset(&pid);
-    _z_zint_t replier_kind = 0;
+    // Final flagged reply context does not encode the ZID
+    _z_bytes_t zid;
+    _z_bytes_reset(&zid);
     int is_final = 1;
-    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, replier_kind, is_final);
+    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
 
     // Congestion control
     int can_be_dropped = 0;

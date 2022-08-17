@@ -370,11 +370,11 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
 
     // Default consolidation is full
     z_query_consolidation_t consolidation = z_query_consolidation_default();
-    _z_target_t target = {._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
+    z_query_target_t target = z_query_target_default();
 
     if (options != NULL) {
         consolidation = options->consolidation;
-        target._target = options->target;
+        target = options->target;
     }
 
     if (consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
