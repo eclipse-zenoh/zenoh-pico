@@ -26,7 +26,6 @@ Enums
 .. autocenum:: constants.h::z_keyexpr_canon_status_t
 .. autocenum:: constants.h::z_sample_kind_t
 .. autocenum:: constants.h::z_encoding_prefix_t
-.. autocenum:: constants.h::z_queryable_kind_t
 .. autocenum:: constants.h::z_consolidation_mode_t
 .. autocenum:: constants.h::z_reliability_t
 .. autocenum:: constants.h::z_query_consolidation_tag_t
