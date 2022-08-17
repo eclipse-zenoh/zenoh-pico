@@ -18,8 +18,7 @@
 #include <stdlib.h>
 
 /*------------------ Result Enums ------------------*/
-typedef enum
-{
+typedef enum {
     _Z_ERR_PARSE_UINT8,
     _Z_ERR_PARSE_ZINT,
     _Z_ERR_PARSE_BYTES,
@@ -44,82 +43,67 @@ typedef enum
     _Z_ERR_UNEXPECTED_MESSAGE
 } _z_err_t;
 
-typedef enum
-{
-    _Z_RES_OK = 0,
-    _Z_RES_ERR = -1
-} _z_res_t;
+typedef enum { _Z_RES_OK = 0, _Z_RES_ERR = -1 } _z_res_t;
 
 /*------------------ Internal Result Macros ------------------*/
 #define _RESULT_DECLARE(type, name, prefix) \
-    typedef struct                          \
-    {                                       \
+    typedef struct {                        \
         _z_res_t _tag;                      \
-        union                               \
-        {                                   \
+        union {                             \
             type _##name;                   \
             int _error;                     \
         } _value;                           \
     } prefix##_##name##_result_t;
 
-#define _P_RESULT_DECLARE(type, name, prefix)                                           \
-    typedef struct                                                                      \
-    {                                                                                   \
-        _z_res_t _tag;                                                                  \
-        union                                                                           \
-        {                                                                               \
-            type* _##name;                                                              \
-            int _error;                                                                 \
-        } _value;                                                                       \
-    } prefix##_##name##_p_result_t;                                                     \
-                                                                                        \
-    inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) \
-    {                                                                                   \
-        r->_value._##name = (type *)z_malloc(sizeof(type));                             \
-    }                                                                                   \
-                                                                                        \
-    inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) \
-    {                                                                                   \
-        z_free(r->_value._##name);                                                      \
-        r->_value._##name = NULL;                                                       \
+#define _P_RESULT_DECLARE(type, name, prefix)                                             \
+    typedef struct {                                                                      \
+        _z_res_t _tag;                                                                    \
+        union {                                                                           \
+            type *_##name;                                                                \
+            int _error;                                                                   \
+        } _value;                                                                         \
+    } prefix##_##name##_p_result_t;                                                       \
+                                                                                          \
+    inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) { \
+        r->_value._##name = (type *)z_malloc(sizeof(type));                               \
+    }                                                                                     \
+                                                                                          \
+    inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) { \
+        z_free(r->_value._##name);                                                        \
+        r->_value._##name = NULL;                                                         \
     }
 
 #define _ASSURE_RESULT(in_r, out_r, e) \
-    if (in_r._tag == _Z_RES_ERR)       \
-    {                                  \
+    if (in_r._tag == _Z_RES_ERR) {     \
         out_r._tag = _Z_RES_ERR;       \
         out_r._value._error = e;       \
         return out_r;                  \
     }
 
 #define _ASSURE_P_RESULT(in_r, out_r, e) \
-    if (in_r._tag == _Z_RES_ERR)         \
-    {                                    \
+    if (in_r._tag == _Z_RES_ERR) {       \
         out_r->_tag = _Z_RES_ERR;        \
         out_r->_value._error = e;        \
         return;                          \
     }
 
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
-    if (in_r._tag == _Z_RES_ERR)                    \
-    {                                               \
+    if (in_r._tag == _Z_RES_ERR) {                  \
         z_free(out_r->_value._##name);              \
         out_r->_tag = _Z_RES_ERR;                   \
         out_r->_value._error = e;                   \
         return;                                     \
     }
 
-#define _ASSERT_RESULT(r, msg) \
-    if (r._tag == _Z_RES_ERR)  \
-    {                          \
-        printf(msg);           \
-        printf("\n");          \
-        exit(r._value._error); \
+#define _ASSERT_RESULT(r, msg)  \
+    if (r._tag == _Z_RES_ERR) { \
+        printf(msg);            \
+        printf("\n");           \
+        exit(r._value._error);  \
     }
 
 #define _ASSERT_P_RESULT(r, msg) \
-    if (r._tag == _Z_RES_ERR)    \
-    {                            \
+    if (r._tag == _Z_RES_ERR) {  \
         printf(msg);             \
         printf("\n");            \
         exit(r._value._error);   \

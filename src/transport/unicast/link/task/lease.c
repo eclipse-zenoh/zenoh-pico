@@ -13,13 +13,13 @@
 //
 
 #include "zenoh-pico/transport/link/task/lease.h"
+
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_UNICAST_TRANSPORT == 1
 
-int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu)
-{
+int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     // Do not send the PID on unicast links
     _z_bytes_t pid;
     _z_bytes_reset(&pid);
@@ -29,9 +29,8 @@ int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu)
     return _z_unicast_send_t_msg(ztu, &t_msg);
 }
 
-void *_zp_unicast_lease_task(void *arg)
-{
-    (void) (arg);
+void *_zp_unicast_lease_task(void *arg) {
+    (void)(arg);
 #if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
 
@@ -41,18 +40,13 @@ void *_zp_unicast_lease_task(void *arg)
 
     _z_zint_t next_lease = ztu->_lease;
     _z_zint_t next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
-    while (ztu->_lease_task_running)
-    {
-        if (next_lease <= 0)
-        {
+    while (ztu->_lease_task_running) {
+        if (next_lease <= 0) {
             // Check if received data
-            if (ztu->_received == 1)
-            {
+            if (ztu->_received == 1) {
                 // Reset the lease parameters
                 ztu->_received = 0;
-            }
-            else
-            {
+            } else {
                 _Z_INFO("Closing session because it has expired after %zums\n", ztu->_lease);
                 _z_transport_unicast_close(ztu, _Z_CLOSE_EXPIRED);
                 return 0;
@@ -61,11 +55,9 @@ void *_zp_unicast_lease_task(void *arg)
             next_lease = ztu->_lease;
         }
 
-        if (next_keep_alive <= 0)
-        {
+        if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztu->_transmitted == 0)
-                _zp_unicast_send_keep_alive(ztu);
+            if (ztu->_transmitted == 0) _zp_unicast_send_keep_alive(ztu);
 
             // Reset the keep alive parameters
             ztu->_transmitted = 0;
@@ -74,13 +66,10 @@ void *_zp_unicast_lease_task(void *arg)
 
         // Compute the target interval
         _z_zint_t interval;
-        if (next_lease > 0)
-        {
+        if (next_lease > 0) {
             interval = next_lease;
-            if (next_keep_alive < interval)
-                interval = next_keep_alive;
-        }
-        else
+            if (next_keep_alive < interval) interval = next_keep_alive;
+        } else
             interval = next_keep_alive;
 
         // The keep alive and lease intervals are expressed in milliseconds
@@ -89,9 +78,9 @@ void *_zp_unicast_lease_task(void *arg)
         next_lease -= interval;
         next_keep_alive -= interval;
     }
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     return 0;
 }
 
-#endif // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_UNICAST_TRANSPORT == 1

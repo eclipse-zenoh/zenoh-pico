@@ -15,8 +15,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 
-void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src)
-{
+void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src) {
     _z_wbuf_clear(&src->_dbuf_reliable);
     _z_wbuf_clear(&src->_dbuf_best_effort);
 
@@ -24,8 +23,7 @@ void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src)
     _z_bytes_clear(&src->_remote_addr);
 }
 
-void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src)
-{
+void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src) {
     _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
 
@@ -41,19 +39,15 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
     _z_bytes_copy(&dst->_remote_addr, &src->_remote_addr);
 }
 
-size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src)
-{
-    (void) (src);
+size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {
+    (void)(src);
     return sizeof(_z_transport_peer_entry_t);
 }
 
-int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right)
-{
-    if (left->_remote_pid.len != right->_remote_pid.len)
-        return 0; // False
+int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
+    if (left->_remote_pid.len != right->_remote_pid.len) return 0;  // False
 
-    if (memcmp(left->_remote_pid.start, right->_remote_pid.start, left->_remote_pid.len) != 0)
-        return 0; // False
+    if (memcmp(left->_remote_pid.start, right->_remote_pid.start, left->_remote_pid.len) != 0) return 0;  // False
 
-    return 1; // True
+    return 1;  // True
 }

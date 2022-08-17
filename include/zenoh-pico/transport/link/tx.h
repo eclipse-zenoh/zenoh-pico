@@ -15,9 +15,9 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_TX_H
 #define ZENOH_PICO_TRANSPORT_LINK_TX_H
 
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/link/link.h"
 
 void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed);
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, int is_streamed);
@@ -25,8 +25,10 @@ int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliab
 _z_transport_message_t _z_frame_header(z_reliability_t reliability, int is_fragment, int is_final, _z_zint_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
-int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, z_congestion_control_t cong_ctrl);
-int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, z_congestion_control_t cong_ctrl);
+int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                          z_congestion_control_t cong_ctrl);
+int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                            z_congestion_control_t cong_ctrl);
 
 int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);
 int _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg);

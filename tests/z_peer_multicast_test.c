@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+
 #include "zenoh-pico.h"
 
 #define MSG 10
@@ -33,8 +34,7 @@ _z_list_t *subs2 = NULL;
 volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
-void data_handler(const z_sample_t *sample, void *arg)
-{
+void data_handler(const z_sample_t *sample, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
@@ -42,13 +42,12 @@ void data_handler(const z_sample_t *sample, void *arg)
     assert(sample->payload.len == MSG_LEN);
     assert(strlen(sample->keyexpr._suffix) == strlen(res));
     assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
-    (void) (sample);
+    (void)(sample);
 
     datas++;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     assert(argc == 2);
     (void)(argc);
 
@@ -59,8 +58,7 @@ int main(int argc, char **argv)
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
     zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
-    for (unsigned int i = 0; i < SET; i++)
-        idx[i] = i;
+    for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
@@ -92,11 +90,10 @@ int main(int argc, char **argv)
 
     // Declare subscribers on second session
     char s1_res[64];
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
-        z_owned_subscriber_t *sub = (z_owned_subscriber_t*)z_malloc(sizeof(z_owned_subscriber_t));
+        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, (z_zint_t)0, s1_res);
@@ -109,10 +106,8 @@ int main(int argc, char **argv)
     memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;
-    for (unsigned int n = 0; n < MSG; n++)
-    {
-        for (unsigned int i = 0; i < SET; i++)
-        {
+    for (unsigned int n = 0; n < MSG; n++) {
+        for (unsigned int i = 0; i < SET; i++) {
             sprintf(s1_res, "%s%d", uri, i);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
@@ -124,8 +119,7 @@ int main(int argc, char **argv)
     // Wait to receive all the data
     z_time_t now = z_time_now();
     unsigned int expected = is_reliable ? total : 1;
-    while (datas < expected)
-    {
+    while (datas < expected) {
         assert(z_time_elapsed_s(&now) < TIMEOUT);
         (void)(now);
         printf("Waiting for datas... %u/%u\n", datas, expected);
@@ -140,8 +134,7 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
-    while (subs2)
-    {
+    while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)->_id);
         z_undeclare_subscriber(z_move(*sub));

@@ -67,7 +67,7 @@ int _z_condvar_free(_z_condvar_t *cv);
 
 int _z_condvar_signal(_z_condvar_t *cv);
 int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time);

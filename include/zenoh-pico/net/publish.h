@@ -20,8 +20,7 @@
 /**
  * Return type when declaring a publisher.
  */
-typedef struct
-{
+typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
     _z_keyexpr_t _key;

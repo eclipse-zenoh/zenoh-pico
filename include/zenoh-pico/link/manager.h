@@ -15,13 +15,12 @@
 #ifndef ZENOH_PICO_LINK_MANAGER_H
 #define ZENOH_PICO_LINK_MANAGER_H
 
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/collections/string.h"
 
-typedef struct
-{
-    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_link_manager_t;
 
 _z_link_manager_t *_z_link_manager_init(void);

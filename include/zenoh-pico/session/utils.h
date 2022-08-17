@@ -18,13 +18,15 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
-_z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config, const uint32_t scout_period, const int exit_on_first);
+_z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config, const uint32_t scout_period,
+                                const int exit_on_first);
 
 _z_session_t *_z_session_init(void);
 int _z_session_close(_z_session_t *zn, uint8_t reason);
 void _z_session_free(_z_session_t **zn);
 
 int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *z_msg);
-int _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, z_congestion_control_t cong_ctrl);
+int _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                  z_congestion_control_t cong_ctrl);
 
 #endif /* ZENOH_PICO_SESSION_UTILS_H */

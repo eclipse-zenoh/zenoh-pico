@@ -12,39 +12,32 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <string.h>
 #include "zenoh-pico/utils/config.h"
 
-int _z_config_init(_z_config_t *ps)
-{
+#include <string.h>
+
+int _z_config_init(_z_config_t *ps) {
     _z_str_intmap_init(ps);
     return 0;
 }
 
-_z_config_t _z_config_make()
-{
+_z_config_t _z_config_make() {
     _z_config_t ps;
     _z_config_init(&ps);
     return ps;
 }
 
-int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value)
-{
+int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value) {
     char *res = _z_str_intmap_insert(ps, key, value.val);
-    if (res != value.val)
-        return -1;
+    if (res != value.val) return -1;
 
     return 0;
 }
 
-char *_z_config_get(const _z_config_t *ps, unsigned int key)
-{
-    return _z_str_intmap_get(ps, key);
-}
+char *_z_config_get(const _z_config_t *ps, unsigned int key) { return _z_str_intmap_get(ps, key); }
 
 /*------------------ int-string map ------------------*/
-_z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc, _z_str_intmapping_t argv[], size_t n)
-{
+_z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc, _z_str_intmapping_t argv[], size_t n) {
     _z_str_intmap_result_t res;
 
     res._tag = _Z_RES_OK;
@@ -53,38 +46,31 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
     // Check the string contains only the right
     const char *start = s;
     const char *end = &s[n];
-    while (start < end)
-    {
+    while (start < end) {
         const char *p_key_start = start;
         const char *p_key_end = strchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR);
 
-        if (p_key_end == NULL)
-            goto ERR;
+        if (p_key_end == NULL) goto ERR;
 
         // Verify the key is valid based on the provided mapping
         size_t p_key_len = p_key_end - p_key_start;
         int found = 0;
         unsigned int key;
-        for (unsigned int i = 0; i < argc; i++)
-        {
-            if (p_key_len != strlen(argv[i]._str))
-                continue;
-            if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0)
-                continue;
+        for (unsigned int i = 0; i < argc; i++) {
+            if (p_key_len != strlen(argv[i]._str)) continue;
+            if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0) continue;
 
             found = 1;
             key = argv[i]._key;
             break;
         }
 
-        if (!found)
-            goto ERR;
+        if (!found) goto ERR;
 
         // Read and populate the value
         const char *p_value_start = p_key_end + 1;
         const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
-        if (p_value_end == NULL)
-            p_value_end = end;
+        if (p_value_end == NULL) p_value_end = end;
 
         size_t p_value_len = p_value_end - p_value_start;
         char *p_value = (char *)z_malloc((p_value_len + 1) * sizeof(char));
@@ -106,54 +92,44 @@ ERR:
     return res;
 }
 
-_z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[])
-{
+_z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[]) {
     return _z_str_intmap_from_strn(s, argc, argv, strlen(s));
 }
 
-size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
-{
+size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {
     // Calculate the string length to allocate
     size_t len = 0;
-    for (size_t i = 0; i < argc; i++)
-    {
+    for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
-        if (v != NULL)
-        {
-            if (len != 0)
-                len += 1;               // List separator
-            len += strlen(argv[i]._str); // Key
-            len += 1;                   // KeyValue separator
-            len += strlen(v);           // Value
+        if (v != NULL) {
+            if (len != 0) len += 1;       // List separator
+            len += strlen(argv[i]._str);  // Key
+            len += 1;                     // KeyValue separator
+            len += strlen(v);             // Value
         }
     }
 
     return len;
 }
 
-void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
-{
+void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {
     // Build the string
     dst[0] = '\0';
 
     const char lsep = INT_STR_MAP_LIST_SEPARATOR;
     const char ksep = INT_STR_MAP_KEYVALUE_SEPARATOR;
-    for (size_t i = 0; i < argc; i++)
-    {
+    for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
-        if (v != NULL)
-        {
-            if (strlen(dst) != 0)
-                strncat(dst, &lsep, 1); // List separator
-            strcat(dst, argv[i]._str);   // Key
-            strncat(dst, &ksep, 1);     // KeyValue separator
-            strcat(dst, v);             // Value
+        if (v != NULL) {
+            if (strlen(dst) != 0) strncat(dst, &lsep, 1);  // List separator
+            strcat(dst, argv[i]._str);                     // Key
+            strncat(dst, &ksep, 1);                        // KeyValue separator
+            strcat(dst, v);                                // Value
         }
     }
 }
 
-char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[])
-{
+char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {
     // Calculate the string length to allocate
     size_t len = _z_str_intmap_strlen(s, argc, argv);
     // Build the string

@@ -16,10 +16,11 @@
 #define ZENOH_PICO_PROTOCOL_CORE_H
 
 #include <string.h>
-#include "zenoh-pico/config.h"
+
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/config.h"
 
 /**
  * The reserved resource ID indicating a string-only resource key.
@@ -39,8 +40,7 @@ typedef size_t _z_zint_t;
 /**
  * A zenoh encoding.
  */
-typedef struct
-{
+typedef struct {
     z_encoding_prefix_t prefix;
     _z_bytes_t suffix;
 } _z_encoding_t;
@@ -48,8 +48,7 @@ typedef struct
 /**
  * A zenoh timestamp.
  */
-typedef struct
-{
+typedef struct {
     uint64_t _time;
     _z_bytes_t _id;
 } _z_timestamp_t;
@@ -61,8 +60,7 @@ typedef struct
  *   _z_zint_t: The resource ID.
  *   char *val: A pointer to the string containing the resource name.
  */
-typedef struct
-{
+typedef struct {
     _z_zint_t _id;
     const char *_suffix;
 } _z_keyexpr_t;
@@ -77,8 +75,7 @@ typedef struct
  *   _z_bytes_t value: The value of this data sample.
  *   _z_encoding_t encoding: The encoding for the value of this data sample.
  */
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t keyexpr;
     _z_bytes_t payload;
     _z_encoding_t encoding;
@@ -94,8 +91,7 @@ typedef struct
  *   _z_bytes_t pid: The peer id of the scouted entity (empty if absent).
  *   _z_str_array_t locators: The locators of the scouted entity.
  */
-typedef struct
-{
+typedef struct {
     unsigned int whatami;
     _z_bytes_t pid;
     _z_str_array_t locators;
@@ -105,8 +101,7 @@ void _z_hello_free(_z_hello_t **hello);
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_ARRAY_DEFINE(_z_hello, _z_hello_t)
 
-typedef struct
-{
+typedef struct {
     _z_zint_t n;
 } _z_target_complete_body_t;
 
@@ -118,8 +113,7 @@ typedef struct
  *     unsigned int period:
  *     unsigned int duration:
  */
-typedef struct
-{
+typedef struct {
     unsigned int origin;
     unsigned int period;
     unsigned int duration;
@@ -133,8 +127,7 @@ typedef struct
  *     _z_submode_t mode: The subscription mode.
  *     _z_period_t *period: The subscription period.
  */
-typedef struct
-{
+typedef struct {
     z_reliability_t reliability;
     z_submode_t mode;
     _z_period_t period;

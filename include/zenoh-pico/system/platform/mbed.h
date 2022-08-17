@@ -15,21 +15,21 @@
 #ifndef ZENOH_PICO_SYSTEM_MBED_TYPES_H
 #define ZENOH_PICO_SYSTEM_MBED_TYPES_H
 
-#include "zenoh-pico/config.h"
-
 #include <stdint.h>
 #include <sys/time.h>
+
+#include "zenoh-pico/config.h"
 
 typedef int _z_socket_t;
 
 #if Z_MULTI_THREAD == 1
-typedef void *_z_task_t;         // Workaround as MBED is a C++ library
-typedef void *_z_task_attr_t;    // Workaround as MBED is a C++ library
-typedef void *_z_mutex_t;        // Workaround as MBED is a C++ library
-typedef void *_z_condvar_t;      // Workaround as MBED is a C++ library
-#endif // Z_MULTI_THREAD == 1
+typedef void *_z_task_t;       // Workaround as MBED is a C++ library
+typedef void *_z_task_attr_t;  // Workaround as MBED is a C++ library
+typedef void *_z_mutex_t;      // Workaround as MBED is a C++ library
+typedef void *_z_condvar_t;    // Workaround as MBED is a C++ library
+#endif                         // Z_MULTI_THREAD == 1
 
-typedef void *z_clock_t;        // Not defined
+typedef void *z_clock_t;  // Not defined
 typedef struct timeval z_time_t;
 
 #endif /* ZENOH_PICO_SYSTEM_MBED_TYPES_H */

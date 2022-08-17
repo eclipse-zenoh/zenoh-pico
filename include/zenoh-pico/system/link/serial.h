@@ -16,17 +16,18 @@
 #define ZENOH_PICO_SYSTEM_LINK_SERIAL_H
 
 #include <stdint.h>
-#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/config.h"
 
 #if Z_LINK_SERIAL == 1
 
 #define _Z_SERIAL_MTU_SIZE 1500
-#define _Z_SERIAL_MFS_SIZE _Z_SERIAL_MTU_SIZE + 2 + 4 // MTU + Serial Len + Serial CRC32
-#define _Z_SERIAL_MAX_COBS_BUF_SIZE 1516 // Max On-the-wire length for an MFS/MTU of 1510/1500 (MFS + Overhead Byte (OHB) + End of packet (EOP))
+#define _Z_SERIAL_MFS_SIZE _Z_SERIAL_MTU_SIZE + 2 + 4  // MTU + Serial Len + Serial CRC32
+#define _Z_SERIAL_MAX_COBS_BUF_SIZE \
+    1516  // Max On-the-wire length for an MFS/MTU of 1510/1500 (MFS + Overhead Byte (OHB) + End of packet (EOP))
 
-typedef struct
-{
+typedef struct {
     void *_sock;
 } _z_serial_socket_t;
 

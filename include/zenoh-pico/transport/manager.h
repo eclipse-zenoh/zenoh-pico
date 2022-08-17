@@ -15,12 +15,11 @@
 #ifndef ZENOH_PICO_TRANSPORT_MANAGER_H
 #define ZENOH_PICO_TRANSPORT_MANAGER_H
 
-#include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/transport/transport.h"
 
-typedef struct
-{
+typedef struct {
     _z_bytes_t _local_pid;
     // FIXME: remote_pids
 

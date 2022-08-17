@@ -11,8 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+
 #include "zenoh-pico.h"
 
 #define MSG 1000
@@ -37,8 +38,7 @@ z_owned_keyexpr_t rids2[SET];
 volatile unsigned int total = 0;
 
 volatile unsigned int queries = 0;
-void query_handler(z_query_t *query, void *arg)
-{
+void query_handler(z_query_t *query, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
@@ -50,12 +50,10 @@ void query_handler(z_query_t *query, void *arg)
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(z_owned_reply_t oreply, void *arg)
-{
+void reply_handler(z_owned_reply_t oreply, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
-    if (z_reply_is_ok(&oreply))
-    {
+    if (z_reply_is_ok(&oreply)) {
         z_sample_t sample = z_reply_ok(&oreply);
         printf(">> Received reply data: %s %s\t(%u/%u)\n", res, z_keyexpr_to_string(sample.keyexpr), replies, total);
         assert(sample.payload.len == strlen(res));
@@ -63,16 +61,13 @@ void reply_handler(z_owned_reply_t oreply, void *arg)
         assert(strlen(z_keyexpr_to_string(sample.keyexpr)) == strlen(res));
         assert(strncmp(res, z_keyexpr_to_string(sample.keyexpr), strlen(res)) == 0);
         replies++;
-    }
-    else
-    {
+    } else {
         printf(">> Received an error\n");
     }
 }
 
 volatile unsigned int datas = 0;
-void data_handler(const z_sample_t *sample, void *arg)
-{
+void data_handler(const z_sample_t *sample, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
@@ -80,15 +75,14 @@ void data_handler(const z_sample_t *sample, void *arg)
     assert(sample->payload.len == MSG_LEN);
     assert(strlen(sample->keyexpr._suffix) == strlen(res));
     assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
-    (void) (sample);
+    (void)(sample);
 
     datas++;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     assert(argc == 2);
-    (void) (argc);
+    (void)(argc);
 
     setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
@@ -96,8 +90,7 @@ int main(int argc, char **argv)
     z_owned_config_t config = zp_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
-    for (unsigned int i = 0; i < SET; i++)
-        idx[i] = i;
+    for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
@@ -128,8 +121,7 @@ int main(int argc, char **argv)
 
     // Declare resources on both sessions
     char s1_res[64];
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
         printf("Declared resource on session 1: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
@@ -138,8 +130,7 @@ int main(int argc, char **argv)
 
     z_sleep_s(SLEEP);
 
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s2), z_keyexpr(s1_res));
         printf("Declared resource on session 2: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
@@ -149,23 +140,22 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Declare subscribers and queryabales on second session
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
-        z_owned_subscriber_t *sub = (z_owned_subscriber_t*)z_malloc(sizeof(z_owned_subscriber_t));
+        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i])._id, "");
+        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i])._id,
+               "");
         subs2 = _z_list_push(subs2, sub);
     }
 
     z_sleep_s(SLEEP);
 
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         sprintf(s1_res, "%s%d", uri, i);
         z_owned_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
-        z_owned_queryable_t *qle = (z_owned_queryable_t*)z_malloc(sizeof(z_owned_queryable_t));
+        z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
         printf("Declared queryable on session 2: %zu %lu %s\n", z_loan(*qle)->_id, (z_zint_t)0, s1_res);
@@ -175,12 +165,10 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Declare publisher on first session
-    for (unsigned int i = 0; i < SET; i++)
-    {
-        z_owned_publisher_t *pub = (z_owned_publisher_t*)z_malloc(sizeof(z_owned_publisher_t));
+    for (unsigned int i = 0; i < SET; i++) {
+        z_owned_publisher_t *pub = (z_owned_publisher_t *)z_malloc(sizeof(z_owned_publisher_t));
         *pub = z_declare_publisher(z_loan(s1), z_loan(rids1[i]), NULL);
-        if (!z_check(*pub))
-        printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
+        if (!z_check(*pub)) printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
         pubs1 = _z_list_push(pubs1, pub);
     }
 
@@ -192,22 +180,20 @@ int main(int argc, char **argv)
     memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;
-    for (unsigned int n = 0; n < MSG; n++)
-    {
-        for (unsigned int i = 0; i < SET; i++)
-        {
+    for (unsigned int n = 0; n < MSG; n++) {
+        for (unsigned int i = 0; i < SET; i++) {
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
-            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", z_loan(rids1[i])._id, len, n * SET + (i + 1), total);
+            printf("Wrote data from session 1: %lu %zu b\t(%u/%u)\n", z_loan(rids1[i])._id, len, n * SET + (i + 1),
+                   total);
         }
     }
 
     // Wait to receive all the data
     z_clock_t now = z_clock_now();
     unsigned int expected = is_reliable ? total : 1;
-    while (datas < expected)
-    {
+    while (datas < expected) {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
@@ -222,10 +208,8 @@ int main(int argc, char **argv)
 
     // Query data from first session
     total = QRY * SET;
-    for (unsigned int n = 0; n < QRY; n++)
-    {
-        for (unsigned int i = 0; i < SET; i++)
-        {
+    for (unsigned int n = 0; n < QRY; n++) {
+        for (unsigned int i = 0; i < SET; i++) {
             sprintf(s1_res, "%s%d", uri, i);
             z_owned_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
             z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
@@ -236,8 +220,7 @@ int main(int argc, char **argv)
     // Wait to receive all the expected queries
     now = z_clock_now();
     expected = is_reliable ? total : 1;
-    while (queries < expected)
-    { 
+    while (queries < expected) {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for queries... %u/%u\n", queries, expected);
         z_sleep_s(SLEEP);
@@ -250,8 +233,7 @@ int main(int argc, char **argv)
 
     // Wait to receive all the expectred replies
     now = z_clock_now();
-    while (replies < expected)
-    {
+    while (replies < expected) {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for replies... %u/%u\n", replies, expected);
         z_sleep_s(SLEEP);
@@ -265,8 +247,7 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Undeclare publishers on first session
-    while (pubs1)
-    {
+    while (pubs1) {
         z_owned_publisher_t *pub = _z_list_head(pubs1);
         printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)->_id);
         z_undeclare_publisher(z_move(*pub));
@@ -276,8 +257,7 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
-    while (subs2)
-    {
+    while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %zu\n", z_loan(*sub)->_id);
         z_undeclare_subscriber(z_move(*sub));
@@ -286,8 +266,7 @@ int main(int argc, char **argv)
 
     z_sleep_s(SLEEP);
 
-    while (qles2)
-    {
+    while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
         printf("Undeclared queryable on session 2: %zu\n", z_loan(*qle)->_id);
         z_undeclare_queryable(z_move(*qle));
@@ -297,16 +276,14 @@ int main(int argc, char **argv)
     z_sleep_s(SLEEP);
 
     // Undeclare resources on both sessions
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 1: %lu\n", z_loan(rids1[i])._id);
         z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     z_sleep_s(SLEEP);
 
-    for (unsigned int i = 0; i < SET; i++)
-    {
+    for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %lu\n", z_loan(rids2[i])._id);
         z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }

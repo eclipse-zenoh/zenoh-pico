@@ -152,10 +152,6 @@ To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check
 
   A zenoh-allocated :c:type:`z_encoding_t`.
 
-.. c:type:: z_owned_consolidation_strategy_t
-
-  A zenoh-allocated :c:type:`z_consolidation_strategy_t`.
-
 .. c:type:: z_owned_query_target_t
 
   A zenoh-allocated :c:type:`z_query_target_t`.
@@ -245,9 +241,8 @@ Primitives
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
 .. autocfunction:: primitives.h::z_query_consolidation_default
-.. autocfunction:: primitives.h::z_query_consolidation_full
-.. autocfunction:: primitives.h::z_query_consolidation_last_router
-.. autocfunction:: primitives.h::z_query_consolidation_lazy
+.. autocfunction:: primitives.h::z_query_consolidation_latest
+.. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_consolidation_reception
 .. autocfunction:: primitives.h::z_query_value_selector

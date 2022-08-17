@@ -22,11 +22,10 @@
 /**
  * A zenoh-net session.
  */
-typedef struct
-{
+typedef struct {
 #if Z_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     // Session counters
     _z_zint_t _resource_id;
@@ -155,6 +154,6 @@ int8_t _zp_start_lease_task(_z_session_t *z);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _zp_stop_lease_task(_z_session_t *z);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
 #endif /* ZENOH_PICO_SESSION_NETAPI_H */

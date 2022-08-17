@@ -15,17 +15,15 @@
 #ifndef ZENOH_PICO_PROTOCOL_MSG_H
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
-#include "zenoh-pico/net/query.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/net/query.h"
+#include "zenoh-pico/protocol/core.h"
 
-#define _Z_DECLARE_CLEAR(layer, name) \
-    void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
+#define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
 
-#define _Z_DECLARE_CLEAR_NOH(layer, name) \
-    void _z_##layer##_msg_clear_##name(_z_##name##_t *m)
+#define _Z_DECLARE_CLEAR_NOH(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m)
 
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -76,30 +74,34 @@
 #define _Z_FLAG_T_M 0x20  // 1 << 5 | Mask             if M==1 then a Mask is present
 #define _Z_FLAG_T_O 0x80  // 1 << 7 | Options          if O==1 then Options are present
 #define _Z_FLAG_T_P 0x20  // 1 << 5 | PingOrPong       if P==1 then the message is Ping, otherwise is Pong
-#define _Z_FLAG_T_R 0x20  // 1 << 5 | Reliable         if R==1 then it concerns the reliable channel, best-effort otherwise
-#define _Z_FLAG_T_S 0x40  // 1 << 6 | SN Resolution    if S==1 then the SN Resolution is present
-#define _Z_FLAG_T_T1 0x20 // 1 << 5 | TimeRes          if T==1 then the time resolution is in seconds
-#define _Z_FLAG_T_T2 0x40 // 1 << 6 | TimeRes          if T==1 then the time resolution is in seconds
-#define _Z_FLAG_T_W 0x40  // 1 << 6 | WhatAmI          if W==1 then WhatAmI is indicated
-#define _Z_FLAG_T_Z 0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
+#define _Z_FLAG_T_R \
+    0x20  // 1 << 5 | Reliable         if R==1 then it concerns the reliable channel, best-effort otherwise
+#define _Z_FLAG_T_S 0x40   // 1 << 6 | SN Resolution    if S==1 then the SN Resolution is present
+#define _Z_FLAG_T_T1 0x20  // 1 << 5 | TimeRes          if T==1 then the time resolution is in seconds
+#define _Z_FLAG_T_T2 0x40  // 1 << 6 | TimeRes          if T==1 then the time resolution is in seconds
+#define _Z_FLAG_T_W 0x40   // 1 << 6 | WhatAmI          if W==1 then WhatAmI is indicated
+#define _Z_FLAG_T_Z \
+    0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
 #define _Z_FLAG_T_X 0x00  // Unused flags are set to zero
 
 /* Zenoh message flags */
-#define _Z_FLAG_Z_D 0x20 // 1 << 5 | Dropping          if D==1 then the message can be dropped
-#define _Z_FLAG_Z_F 0x20 // 1 << 5 | Final             if F==1 then this is the final message (e.g., ReplyContext, Pull)
-#define _Z_FLAG_Z_I 0x40 // 1 << 6 | DataInfo          if I==1 then DataInfo is present
-#define _Z_FLAG_Z_K 0x80 // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
-#define _Z_FLAG_Z_N 0x40 // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
-#define _Z_FLAG_Z_P 0x80 // 1 << 7 | Period            if P==1 then a period is present
-#define _Z_FLAG_Z_Q 0x40 // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
-#define _Z_FLAG_Z_R 0x20 // 1 << 5 | Reliable          if R==1 then it concerns the reliable channel, best-effort otherwise
-#define _Z_FLAG_Z_S 0x40 // 1 << 6 | SubMode           if S==1 then the declaration SubMode is indicated
-#define _Z_FLAG_Z_T 0x20 // 1 << 5 | QueryTarget       if T==1 then the query target is present
-#define _Z_FLAG_Z_X 0x00 // Unused flags are set to zero
+#define _Z_FLAG_Z_D 0x20  // 1 << 5 | Dropping          if D==1 then the message can be dropped
+#define _Z_FLAG_Z_F \
+    0x20  // 1 << 5 | Final             if F==1 then this is the final message (e.g., ReplyContext, Pull)
+#define _Z_FLAG_Z_I 0x40  // 1 << 6 | DataInfo          if I==1 then DataInfo is present
+#define _Z_FLAG_Z_K 0x80  // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
+#define _Z_FLAG_Z_N 0x40  // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
+#define _Z_FLAG_Z_P 0x80  // 1 << 7 | Period            if P==1 then a period is present
+#define _Z_FLAG_Z_Q 0x40  // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
+#define _Z_FLAG_Z_R \
+    0x20  // 1 << 5 | Reliable          if R==1 then it concerns the reliable channel, best-effort otherwise
+#define _Z_FLAG_Z_S 0x40  // 1 << 6 | SubMode           if S==1 then the declaration SubMode is indicated
+#define _Z_FLAG_Z_T 0x20  // 1 << 5 | QueryTarget       if T==1 then the query target is present
+#define _Z_FLAG_Z_X 0x00  // Unused flags are set to zero
 
 /* Init option flags */
-#define _Z_OPT_INIT_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
-#define _Z_OPT_JOIN_QOS 0x01 // 1 << 0 | QoS       if QOS==1 then the session supports QoS
+#define _Z_OPT_INIT_QOS 0x01  // 1 << 0 | QoS       if QOS==1 then the session supports QoS
+#define _Z_OPT_JOIN_QOS 0x01  // 1 << 0 | QoS       if QOS==1 then the session supports QoS
 
 /*=============================*/
 /*       Message header        */
@@ -140,15 +142,15 @@
 /*=============================*/
 /*       DataInfo flags        */
 /*=============================*/
-#define _Z_DATA_INFO_SLICED 0x01 // 1 << 0
-#define _Z_DATA_INFO_KIND 0x02   // 1 << 1
-#define _Z_DATA_INFO_ENC 0x04    // 1 << 2
-#define _Z_DATA_INFO_TSTAMP 0x08 // 1 << 3
+#define _Z_DATA_INFO_SLICED 0x01  // 1 << 0
+#define _Z_DATA_INFO_KIND 0x02    // 1 << 1
+#define _Z_DATA_INFO_ENC 0x04     // 1 << 2
+#define _Z_DATA_INFO_TSTAMP 0x08  // 1 << 3
 // Reserved: bits 4-6
-#define _Z_DATA_INFO_SRC_ID 0x80  // 1 << 7
-#define _Z_DATA_INFO_SRC_SN 0x100 // 1 << 8
-#define _Z_DATA_INFO_RTR_ID 0x200 // 1 << 9
-#define _Z_DATA_INFO_RTR_SN 0x400 // 1 << 10
+#define _Z_DATA_INFO_SRC_ID 0x80   // 1 << 7
+#define _Z_DATA_INFO_SRC_SN 0x100  // 1 << 8
+#define _Z_DATA_INFO_RTR_ID 0x200  // 1 << 9
+#define _Z_DATA_INFO_RTR_SN 0x400  // 1 << 10
 
 /*------------------ Payload field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -195,8 +197,7 @@ void _z_payload_clear(_z_payload_t *p);
 // ~   Attachment  ~
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_payload_t _payload;
     uint8_t _header;
 } _z_attachment_t;
@@ -221,8 +222,7 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 //
 // - if F==1 then the message is a REPLY_FINAL
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _qid;
     _z_zint_t _replier_kind;
     _z_bytes_t _replier_id;
@@ -266,8 +266,7 @@ void _z_keyexpr_free(_z_keyexpr_t **rk);
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
 } _z_res_decl_t;
@@ -281,8 +280,7 @@ void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 // ~      RID      ~
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _rid;
 } _z_forget_res_decl_t;
 void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
@@ -295,8 +293,7 @@ void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
 } _z_pub_decl_t;
 void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
@@ -309,8 +306,7 @@ void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
 } _z_forget_pub_decl_t;
 void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
@@ -338,8 +334,7 @@ void _z_subinfo_free(_z_subinfo_t **si);
 //
 // - if R==1 then the subscription is reliable, best-effort otherwise.
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     _z_subinfo_t _subinfo;
 } _z_sub_decl_t;
@@ -353,8 +348,7 @@ void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
 } _z_forget_sub_decl_t;
 void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
@@ -371,8 +365,7 @@ void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
 // ~   QablInfo    ~ if Q==1
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _kind;
     _z_zint_t _complete;
@@ -390,8 +383,7 @@ void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 // ~     Kind      ~
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _kind;
 } _z_forget_qle_decl_t;
@@ -407,10 +399,8 @@ void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl);
 // ~ [Declaration] ~
 // +---------------+
 //
-typedef struct
-{
-    union
-    {
+typedef struct {
+    union {
         _z_res_decl_t _res;
         _z_forget_res_decl_t _forget_res;
         _z_pub_decl_t _pub;
@@ -427,8 +417,7 @@ void _z_msg_clear_declaration(_z_declaration_t *dcl);
 _Z_ELEM_DEFINE(_z_declaration, _z_declaration_t, _z_noop_size, _z_msg_clear_declaration, _z_noop_copy)
 _Z_ARRAY_DEFINE(_z_declaration, _z_declaration_t)
 
-typedef struct
-{
+typedef struct {
     _z_declaration_array_t _declarations;
 } _z_msg_declare_t;
 void _z_msg_clear_declare(_z_msg_declare_t *dcl);
@@ -464,8 +453,7 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 // +---------------+
 //
 // - if options & (1 << 5) then the payload is sliced
-typedef struct
-{
+typedef struct {
     _z_zint_t _flags;
     _z_zint_t _kind;
     _z_encoding_t _encoding;
@@ -491,8 +479,7 @@ void _z_data_info_clear(_z_data_info_t *di);
 //
 // - if D==1 then the message can be dropped for congestion control reasons.
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     _z_data_info_t _info;
     _z_payload_t _payload;
@@ -507,9 +494,8 @@ void _z_msg_clear_data(_z_msg_data_t *msg);
 //
 // - if D==1 then the message can be dropped for congestion control reasons.
 //
-typedef struct
-{
-    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_msg_unit_t;
 void _z_msg_clear_unit(_z_msg_unit_t *unt);
 
@@ -525,8 +511,7 @@ void _z_msg_clear_unit(_z_msg_unit_t *unt);
 // ~  max_samples  ~ if N==1
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _pull_id;
     _z_zint_t _max_samples;
@@ -549,27 +534,24 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 // ~ consolidation ~
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_keyexpr_t _key;
     char *_value_selector;
     _z_zint_t _qid;
     _z_target_t _target;
-    z_consolidation_strategy_t _consolidation;
+    z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
 void _z_msg_clear_query(_z_msg_query_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
-typedef union
-{
+typedef union {
     _z_msg_declare_t _declare;
     _z_msg_data_t _data;
     _z_msg_query_t _query;
     _z_msg_pull_t _pull;
     _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
-typedef struct
-{
+typedef struct {
     _z_attachment_t *_attachment;
     _z_reply_context_t *_reply_context;
     _z_zenoh_body_t _body;
@@ -580,21 +562,25 @@ _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear,
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind, int is_final);
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _z_zint_t replier_kind,
+                                              int is_final);
 _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo);
 _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete, _z_zint_t distance);
+_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t kind, _z_zint_t complete,
+                                                   _z_zint_t distance);
 _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key, _z_zint_t kind);
 _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target, z_consolidation_strategy_t consolidation);
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped, _z_reply_context_t *rctx);
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, _z_target_t target,
+                                     z_consolidation_mode_t consolidation);
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped,
+                                     _z_reply_context_t *rctx);
 
 /*=============================*/
 /*     Transport Messages      */
@@ -617,8 +603,7 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 //
 // - if I==1 then the sender is asking for hello replies that contain a peer_id.
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _what;
 } _z_t_msg_scout_t;
 void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
@@ -653,8 +638,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 // ~    Locators   ~ if L==1 -- Otherwise src-address is the locator
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _whatami;
     _z_bytes_t _pid;
     _z_locator_array_t _locators;
@@ -698,22 +682,18 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
 // (***) if Q==1 then 8 sequence numbers are present: one for each priority.
 //       if Q==0 then only one sequence number is present.
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _reliable;
     _z_zint_t _best_effort;
 } _z_coundit_sn_t;
-typedef struct
-{
-    union
-    {
+typedef struct {
+    union {
         _z_coundit_sn_t _plain;
         _z_coundit_sn_t _qos[Z_PRIORITIES_NUM];
     } _val;
     uint8_t _is_qos;
 } _z_conduit_sn_list_t;
-typedef struct
-{
+typedef struct {
     _z_zint_t _options;
     _z_zint_t _whatami;
     _z_zint_t _lease;
@@ -760,8 +740,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 //
 // - if Q==1 then the initiator/responder supports QoS.
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _options;
     _z_zint_t _whatami;
     _z_zint_t _sn_resolution;
@@ -794,8 +773,7 @@ void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
 // (*) if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
 // (**) the cookie MUST be the same received in the INIT message with A==1 from the corresponding peer
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _lease;
     _z_zint_t _initial_sn;
     _z_bytes_t _cookie;
@@ -826,8 +804,7 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
 // - if K==1 then close the transport link the CLOSE message was sent on (e.g., TCP socket) but
 //           keep the whole session open. NOTE: the session will be automatically closed when
 //           the session's lease period expires.
-typedef struct
-{
+typedef struct {
     _z_bytes_t _pid;
     uint8_t _reason;
 } _z_t_msg_close_t;
@@ -856,8 +833,7 @@ void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header);
 //
 // - if R==1 then the SYNC concerns the reliable channel, otherwise the best-effort channel.
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _sn;
     _z_zint_t _count;
 } _z_t_msg_sync_t;
@@ -882,8 +858,7 @@ void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header);
 // ~     mask      ~ if M==1
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _sn;
     _z_zint_t _mask;
 } _z_t_msg_ack_nack_t;
@@ -906,8 +881,7 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
 // ~    peer_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
 // +---------------+
 //
-typedef struct
-{
+typedef struct {
     _z_bytes_t _pid;
 } _z_t_msg_keep_alive_t;
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
@@ -928,8 +902,7 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
 //
 // - if P==1 then the message is Ping, otherwise is Pong.
 //
-typedef struct
-{
+typedef struct {
     _z_zint_t _hash;
 } _z_t_msg_ping_pong_t;
 void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
@@ -947,7 +920,8 @@ void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
 // +-+-+-+-+-------+
 // ~      SN       ~
 // +---------------+
-// ~  FramePayload ~ -- if F==1 then the payload is a fragment of a single Zenoh Message, a list of complete Zenoh Messages otherwise.
+// ~  FramePayload ~ -- if F==1 then the payload is a fragment of a single Zenoh Message, a list of complete Zenoh
+// Messages otherwise.
 // +---------------+
 //
 // - if R==1 then the FRAME is sent on the reliable channel, best-effort otherwise.
@@ -965,21 +939,18 @@ void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
 //       de-serialize the payload in one single pass when F==0 since no re-ordering needs to take
 //       place at this stage. Then, the F bit is used to detect the last fragment during re-ordering.
 //
-typedef union
-{
+typedef union {
     _z_payload_t _fragment;
     _z_zenoh_message_vec_t _messages;
 } _z_frame_payload_t;
-typedef struct
-{
+typedef struct {
     _z_zint_t _sn;
     _z_frame_payload_t _payload;
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header);
 
 /*------------------ Transport Message ------------------*/
-typedef union
-{
+typedef union {
     _z_t_msg_scout_t _scout;
     _z_t_msg_hello_t _hello;
     _z_t_msg_join_t _join;
@@ -992,8 +963,7 @@ typedef union
     _z_t_msg_ping_pong_t _ping_pong;
     _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
-typedef struct
-{
+typedef struct {
     _z_attachment_t *_attachment;
     _z_transport_body_t _body;
     uint8_t _header;
@@ -1003,9 +973,12 @@ void _z_t_msg_clear(_z_transport_message_t *msg);
 /*------------------ Builders ------------------*/
 _z_transport_message_t _z_t_msg_make_scout(_z_zint_t what, int request_pid);
 _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z_locator_array_t locators);
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z_zint_t lease, _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
-_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution, _z_bytes_t pid, int is_qos);
-_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution, _z_bytes_t pid, _z_bytes_t cookie, int is_qos);
+_z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z_zint_t lease, _z_zint_t sn_resolution,
+                                          _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
+_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, int is_qos);
+_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, _z_bytes_t cookie, int is_qos);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int link_only);
@@ -1014,23 +987,24 @@ _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
 _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid);
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, int is_reliable, int is_fragment, int is_final);
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, int is_reliable, int is_fragment,
+                                           int is_final);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable, int is_fragment, int is_final);
 
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-//void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
-//void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
+// void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
+// void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *join);
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *init);
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *open);
-//void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
-//void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
-//void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
-//void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
-//void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
-//void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
-//void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
+// void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
+// void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
+// void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
+// void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
+// void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
+// void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
+// void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

@@ -11,41 +11,37 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <string.h>
 #include "zenoh-pico/link/config/bt.h"
+
+#include <string.h>
 
 #if Z_LINK_BLUETOOTH == 1
 
-size_t _z_bt_config_strlen(const _z_str_intmap_t *s)
-{
+size_t _z_bt_config_strlen(const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_strlen(s, argc, args);
 }
 
-void _z_bt_config_onto_str(char *dst, const _z_str_intmap_t *s)
-{
+void _z_bt_config_onto_str(char *dst, const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_onto_str(dst, s, argc, args);
 }
 
-char *_z_bt_config_to_str(const _z_str_intmap_t *s)
-{
+char *_z_bt_config_to_str(const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_to_str(s, argc, args);
 }
 
-_z_str_intmap_result_t _z_bt_config_from_strn(const char *s, size_t n)
-{
+_z_str_intmap_result_t _z_bt_config_from_strn(const char *s, size_t n) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_from_strn(s, argc, args, n);
 }
 
-_z_str_intmap_result_t _z_bt_config_from_str(const char *s)
-{
+_z_str_intmap_result_t _z_bt_config_from_str(const char *s) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_from_str(s, argc, args);

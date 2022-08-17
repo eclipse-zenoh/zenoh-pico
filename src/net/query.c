@@ -11,26 +11,10 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/session/query.h"
 
-_z_target_t _z_target_default(void)
-{
+#include "zenoh-pico/api/primitives.h"
+
+_z_target_t _z_target_default(void) {
     return (_z_target_t){._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
-}
-
-z_consolidation_strategy_t _z_consolidation_strategy_default(void)
-{
-    return (z_consolidation_strategy_t) { .first_routers = Z_CONSOLIDATION_MODE_LAZY,
-                                          .last_router = Z_CONSOLIDATION_MODE_LAZY,
-                                          .reception = Z_CONSOLIDATION_MODE_FULL
-                                        };
-}
-
-z_consolidation_strategy_t _z_consolidation_strategy_none(void)
-{
-    return (z_consolidation_strategy_t) { .first_routers = Z_CONSOLIDATION_MODE_NONE,
-                                          .last_router = Z_CONSOLIDATION_MODE_NONE,
-                                          .reception = Z_CONSOLIDATION_MODE_NONE
-                                        };
 }

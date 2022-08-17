@@ -26,8 +26,7 @@
  *   size_t len: The length of the bytes array.
  *   uint8_t *val: A pointer to the bytes array.
  */
-typedef struct
-{
+typedef struct {
     const uint8_t *start;
     size_t len;
     uint8_t _is_alloc;

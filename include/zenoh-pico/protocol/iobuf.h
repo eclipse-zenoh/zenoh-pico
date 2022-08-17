@@ -21,8 +21,7 @@
 
 /*------------------ IOSli ------------------*/
 
-typedef struct
-{
+typedef struct {
     uint8_t *_buf;
     size_t _r_pos;
     size_t _w_pos;
@@ -57,8 +56,7 @@ _Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_cop
 _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/
-typedef struct
-{
+typedef struct {
     _z_iosli_t _ios;
 } _z_zbuf_t;
 
@@ -88,8 +86,7 @@ void _z_zbuf_clear(_z_zbuf_t *zbf);
 void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
-typedef struct
-{
+typedef struct {
     _z_iosli_vec_t _ioss;
     size_t _r_idx;
     size_t _w_idx;

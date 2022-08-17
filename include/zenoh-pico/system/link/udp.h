@@ -16,12 +16,12 @@
 #define ZENOH_PICO_SYSTEM_LINK_UDP_H
 
 #include <stdint.h>
+
 #include "zenoh-pico/collections/string.h"
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 
-typedef struct
-{
+typedef struct {
     void *_sock;
     void *_msock;
     void *_raddr;

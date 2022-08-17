@@ -16,6 +16,7 @@
 #define ZENOH_PICO_UTILS_PROPERTY_H
 
 #include <stdint.h>
+
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
