@@ -11,10 +11,10 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/session/query.h"
 
-_z_target_t _z_target_default(void)
-{
+#include "zenoh-pico/api/primitives.h"
+
+_z_target_t _z_target_default(void) {
     return (_z_target_t){._kind = Z_QUERYABLE_ALL_KINDS, ._target = z_query_target_default()};
 }

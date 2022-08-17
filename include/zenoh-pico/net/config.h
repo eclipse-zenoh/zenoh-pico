@@ -15,8 +15,8 @@
 #ifndef ZENOH_PICO_CONFIG_NETAPI_H
 #define ZENOH_PICO_CONFIG_NETAPI_H
 
-#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/utils/config.h"
 
 /**
  * Create an empty set of properties for zenoh-net session configuration.

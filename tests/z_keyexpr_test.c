@@ -15,8 +15,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 
-int main(void)
-{
+int main(void) {
     assert(z_keyexpr_intersect("a", strlen("a"), "a", strlen("a")));
     assert(z_keyexpr_intersect("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(z_keyexpr_intersect("*", strlen("*"), "abc", strlen("abc")));
@@ -28,7 +27,8 @@ int main(void)
     assert(z_keyexpr_intersect("ab$*", strlen("ab$*"), "ab", strlen("ab")));
     assert(!z_keyexpr_intersect("ab/*", strlen("ab/*"), "ab", strlen("ab")));
     assert(z_keyexpr_intersect("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/e", strlen("a/b/c/d/e")));
-    assert(z_keyexpr_intersect("a/**/d/**/l", strlen("a/**/d/**/l"), "a/b/c/d/e/f/g/h/i/l", strlen("a/b/c/d/e/f/g/h/i/l")));
+    assert(z_keyexpr_intersect("a/**/d/**/l", strlen("a/**/d/**/l"), "a/b/c/d/e/f/g/h/i/l",
+                               strlen("a/b/c/d/e/f/g/h/i/l")));
     assert(z_keyexpr_intersect("a/**/d/**/l", strlen("a/**/d/**/l"), "a/d/foo/l", strlen("a/d/foo/l")));
     assert(z_keyexpr_intersect("a/$*b/c/$*d/e", strlen("a/$*b/c/$*d/e"), "a/xb/c/xd/e", strlen("a/xb/c/xd/e")));
     assert(!z_keyexpr_intersect("a/*/c/*/e", strlen("a/*/c/*/e"), "a/c/e", strlen("a/c/e")));
@@ -40,11 +40,14 @@ int main(void)
     assert(z_keyexpr_intersect("**", strlen("**"), "a/b/c", strlen("a/b/c")));
     assert(z_keyexpr_intersect("ab/**", strlen("ab/**"), "ab", strlen("ab")));
     assert(z_keyexpr_intersect("**/xyz", strlen("**/xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
-    assert(!z_keyexpr_intersect("**/xyz$*xyz", strlen("**/xyz$*xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
+    assert(
+        !z_keyexpr_intersect("**/xyz$*xyz", strlen("**/xyz$*xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
     assert(z_keyexpr_intersect("a/**/c/**/e", strlen("a/**/c/**/e"), "a/b/b/b/c/d/d/d/e", strlen("a/b/b/b/c/d/d/d/e")));
     assert(z_keyexpr_intersect("a/**/c/**/e", strlen("a/**/c/**/e"), "a/c/e", strlen("a/c/e")));
-    assert(z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/e/f", strlen("a/b/b/b/c/d/d/c/d/e/f")));
-    assert(!z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/d/e/f", strlen("a/b/b/b/c/d/d/c/d/d/e/f")));
+    assert(z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/e/f",
+                               strlen("a/b/b/b/c/d/d/c/d/e/f")));
+    assert(!z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/d/e/f",
+                                strlen("a/b/b/b/c/d/d/c/d/d/e/f")));
     assert(!z_keyexpr_intersect("ab$*cd", strlen("ab$*cd"), "abxxcxxcdx", strlen("abxxcxxcdx")));
     assert(z_keyexpr_intersect("x/abc", strlen("x/abc"), "x/abc", strlen("x/abc")));
     assert(!z_keyexpr_intersect("x/abc", strlen("x/abc"), "abc", strlen("abc")));
@@ -343,7 +346,8 @@ int main(void)
 
     assert(!z_keyexpr_equals("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
     assert(!z_keyexpr_equals("a/bc", strlen("a/bc"), "a/cb", strlen("a/cb")));
-    assert(z_keyexpr_equals("greetings/hello/there", strlen("greetings/hello/there"), "greetings/hello/there", strlen("greetings/hello/there")));
+    assert(z_keyexpr_equals("greetings/hello/there", strlen("greetings/hello/there"), "greetings/hello/there",
+                            strlen("greetings/hello/there")));
     assert(!zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb"));
     assert(!zp_keyexpr_equals_null_terminated("a/bc", "a/cb"));
     assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there"));

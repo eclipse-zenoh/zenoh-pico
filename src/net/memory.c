@@ -13,31 +13,28 @@
 
 #include "zenoh-pico/net/memory.h"
 
-void _z_sample_move(_z_sample_t *dst, _z_sample_t *src)
-{
-    dst->keyexpr._id = src->keyexpr._id;              // FIXME: call the z_keyexpr_move
-    dst->keyexpr._suffix = src->keyexpr._suffix;      // FIXME: call the z_keyexpr_move
-    src->keyexpr._suffix = NULL;                      // FIXME: call the z_keyexpr_move
+void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
+    dst->keyexpr._id = src->keyexpr._id;          // FIXME: call the z_keyexpr_move
+    dst->keyexpr._suffix = src->keyexpr._suffix;  // FIXME: call the z_keyexpr_move
+    src->keyexpr._suffix = NULL;                  // FIXME: call the z_keyexpr_move
 
     _z_bytes_move(&dst->payload, &src->payload);
 
-    dst->encoding.prefix = src->encoding.prefix;                // FIXME: call the z_encoding_move
+    dst->encoding.prefix = src->encoding.prefix;                  // FIXME: call the z_encoding_move
     _z_bytes_move(&dst->encoding.suffix, &src->encoding.suffix);  // FIXME: call the z_encoding_move
 
-    dst->timestamp._time = src->timestamp._time;             // FIXME: call the z_timestamp_move
-    _z_bytes_move(&dst->timestamp._id, &src->timestamp._id); // FIXME: call the z_timestamp_move
+    dst->timestamp._time = src->timestamp._time;              // FIXME: call the z_timestamp_move
+    _z_bytes_move(&dst->timestamp._id, &src->timestamp._id);  // FIXME: call the z_timestamp_move
 }
 
-void _z_sample_clear(_z_sample_t *sample)
-{
+void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
     _z_bytes_clear(&sample->payload);
-    _z_bytes_clear(&sample->encoding.suffix); // FIXME: call the z_encoding_clear
+    _z_bytes_clear(&sample->encoding.suffix);  // FIXME: call the z_encoding_clear
     _z_timestamp_clear(&sample->timestamp);
 }
 
-void _z_sample_free(_z_sample_t **sample)
-{
+void _z_sample_free(_z_sample_t **sample) {
     _z_sample_t *ptr = (_z_sample_t *)*sample;
     _z_sample_clear(ptr);
 
@@ -45,16 +42,12 @@ void _z_sample_free(_z_sample_t **sample)
     *sample = NULL;
 }
 
-void _z_hello_clear(_z_hello_t *hello)
-{
-    if (hello->pid.len > 0)
-        _z_bytes_clear(&hello->pid);
-    if (hello->locators._len > 0)
-        _z_str_array_clear(&hello->locators);
+void _z_hello_clear(_z_hello_t *hello) {
+    if (hello->pid.len > 0) _z_bytes_clear(&hello->pid);
+    if (hello->locators._len > 0) _z_str_array_clear(&hello->locators);
 }
 
-void _z_hello_free(_z_hello_t **hello)
-{
+void _z_hello_free(_z_hello_t **hello) {
     _z_hello_t *ptr = (_z_hello_t *)*hello;
     _z_hello_clear(ptr);
 
@@ -62,14 +55,12 @@ void _z_hello_free(_z_hello_t **hello)
     *hello = NULL;
 }
 
-void _z_reply_data_clear(_z_reply_data_t *reply_data)
-{
+void _z_reply_data_clear(_z_reply_data_t *reply_data) {
     _z_sample_clear(&reply_data->sample);
     _z_bytes_clear(&reply_data->replier_id);
 }
 
-void _z_reply_data_free(_z_reply_data_t **reply_data)
-{
+void _z_reply_data_free(_z_reply_data_t **reply_data) {
     _z_reply_data_t *ptr = (_z_reply_data_t *)*reply_data;
     _z_reply_data_clear(ptr);
 

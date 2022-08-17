@@ -14,15 +14,14 @@
 #ifndef ZENOH_PICO_QUERY_NETAPI_H
 #define ZENOH_PICO_QUERY_NETAPI_H
 
-#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/protocol/core.h"
 
 /**
  * The query to be answered by a queryable.
  */
-typedef struct
-{
-    void *_zn; // FIXME: _z_session_t *zn;
+typedef struct {
+    void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _qid;
     z_queryable_kind_t _kind;
     _z_keyexpr_t _key;
@@ -32,14 +31,12 @@ typedef struct
 /**
  * Return type when declaring a queryable.
  */
-typedef struct
-{
-    void *_zn; // FIXME: _z_session_t *zn;
+typedef struct {
+    void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
 } _z_queryable_t;
 
-typedef struct
-{
+typedef struct {
     z_queryable_kind_t _kind;
     z_query_target_t _target;
 } _z_target_t;

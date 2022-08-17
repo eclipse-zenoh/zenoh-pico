@@ -12,11 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/transport/link/tx.h"
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_UNICAST_TRANSPORT == 1
@@ -26,8 +26,7 @@
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->_mutex_inner
  */
-_z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t reliability)
-{
+_z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t reliability) {
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztu->_sn_tx_reliable;
@@ -39,66 +38,58 @@ _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t
     return sn;
 }
 
-int _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg)
-{
+int _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> send session message\n");
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_tx);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
 
     // Encode the session message
     int res = _z_transport_message_encode(&ztu->_wbuf, t_msg);
-    if (res == 0)
-    {
+    if (res == 0) {
         // Write the message legnth in the reserved space if needed
         __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
         // Mark the session that we have transmitted data
         ztu->_transmitted = 1;
-    }
-    else
-    {
+    } else {
         _Z_INFO("Dropping session message because it is too large\n");
     }
 
 #if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztu->_mutex_tx);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     return res;
 }
 
-int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability, z_congestion_control_t cong_ctrl)
-{
+int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                          z_congestion_control_t cong_ctrl) {
     _Z_DEBUG(">> send zenoh message\n");
 
     _z_transport_unicast_t *ztu = &zn->_tp->_transport._unicast;
 
     // Acquire the lock and drop the message if needed
-    if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK)
-    {
+    if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
 #if Z_MULTI_THREAD == 1
         _z_mutex_lock(&ztu->_mutex_tx);
-#endif // Z_MULTI_THREAD == 1
-    }
-    else
-    {
+#endif  // Z_MULTI_THREAD == 1
+    } else {
 #if Z_MULTI_THREAD == 1
         int locked = _z_mutex_trylock(&ztu->_mutex_tx);
-        if (locked != 0)
-        {
+        if (locked != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control\n");
             // We failed to acquire the lock, drop the message
             return 0;
         }
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
     }
 
     // Prepare the buffer eventually reserving space for the message length
@@ -111,45 +102,37 @@ int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliabi
 
     // Encode the frame header
     int res = _z_transport_message_encode(&ztu->_wbuf, &t_msg);
-    if (res != 0)
-    {
+    if (res != 0) {
         _Z_INFO("Dropping zenoh message because the session frame can not be encoded\n");
         goto EXIT_ZSND_PROC;
     }
 
     // Encode the zenoh message
     res = _z_zenoh_message_encode(&ztu->_wbuf, z_msg);
-    if (res == 0)
-    {
+    if (res == 0) {
         // Write the message legnth in the reserved space if needed
         __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
 
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
-        if (res == 0)
-            ztu->_transmitted = 1;
-    }
-    else
-    {
+        if (res == 0) ztu->_transmitted = 1;
+    } else {
         // The message does not fit in the current batch, let's fragment it
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, 1);
 
         // Encode the message on the expandable wbuf
         res = _z_zenoh_message_encode(&fbf, z_msg);
-        if (res != 0)
-        {
+        if (res != 0) {
             _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
             goto EXIT_FRAG_PROC;
         }
 
         // Fragment and send the message
         int is_first = 1;
-        while (_z_wbuf_len(&fbf) > 0)
-        {
+        while (_z_wbuf_len(&fbf) > 0) {
             // Get the fragment sequence number
-            if (!is_first)
-                sn = __unsafe_z_unicast_get_sn(ztu, reliability);
+            if (!is_first) sn = __unsafe_z_unicast_get_sn(ztu, reliability);
             is_first = 0;
 
             // Clear the buffer for serialization
@@ -157,8 +140,7 @@ int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliabi
 
             // Serialize one fragment
             res = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, &fbf, reliability, sn);
-            if (res != 0)
-            {
+            if (res != 0) {
                 _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
                 goto EXIT_FRAG_PROC;
             }
@@ -168,8 +150,7 @@ int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliabi
 
             // Send the wbuf on the socket
             res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
-            if (res != 0)
-            {
+            if (res != 0) {
                 _Z_INFO("Dropping zenoh message because it can not sent\n");
                 goto EXIT_FRAG_PROC;
             }
@@ -187,9 +168,9 @@ EXIT_ZSND_PROC:
 #if Z_MULTI_THREAD == 1
     // Release the lock
     _z_mutex_unlock(&ztu->_mutex_tx);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     return res;
 }
 
-#endif // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_UNICAST_TRANSPORT == 1

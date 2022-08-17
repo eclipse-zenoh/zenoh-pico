@@ -13,43 +13,37 @@
 //
 
 #include "zenoh-pico/config.h"
-
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/session/queryable.h"
-#include "zenoh-pico/session/query.h"
 
 /*------------------ clone helpers ------------------*/
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src)
-{
+void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     dst->_id = src->_id;
     dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
 }
 
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src)
-{
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
     _z_keyexpr_t dst;
     _z_keyexpr_copy(&dst, src);
     return dst;
 }
 
-_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp)
-{
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     _z_timestamp_t ts;
     _z_bytes_copy(&ts._id, &tstamp->_id);
     ts._time = tstamp->_time;
     return ts;
 }
 
-void _z_timestamp_reset(_z_timestamp_t *tstamp)
-{
+void _z_timestamp_reset(_z_timestamp_t *tstamp) {
     _z_bytes_reset(&tstamp->_id);
     tstamp->_time = 0;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-_z_session_t *_z_session_init(void)
-{
+_z_session_t *_z_session_init(void) {
     _z_session_t *zn = (_z_session_t *)z_malloc(sizeof(_z_session_t));
 
     // Initialize the counters to 1
@@ -73,19 +67,17 @@ _z_session_t *_z_session_init(void)
 #if Z_MULTI_THREAD == 1
     // Initialize the mutexes
     _z_mutex_init(&zn->_mutex_inner);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     return zn;
 }
 
-void _z_session_free(_z_session_t **zn)
-{
+void _z_session_free(_z_session_t **zn) {
     _z_session_t *ptr = *zn;
 
     // Clean up transports and manager
     _z_transport_manager_free(&ptr->_tp_manager);
-    if (ptr->_tp != NULL)
-        _z_transport_free(&ptr->_tp);
+    if (ptr->_tp != NULL) _z_transport_free(&ptr->_tp);
 
     // Clean up the entities
     _z_flush_resources(ptr);
@@ -96,14 +88,13 @@ void _z_session_free(_z_session_t **zn)
 #if Z_MULTI_THREAD == 1
     // Clean up the mutexes
     _z_mutex_free(&ptr->_mutex_inner);
-#endif // Z_MULTI_THREAD == 1
+#endif  // Z_MULTI_THREAD == 1
 
     z_free(ptr);
     *zn = NULL;
 }
 
-int _z_session_close(_z_session_t *zn, uint8_t reason)
-{
+int _z_session_close(_z_session_t *zn, uint8_t reason) {
     int res = _z_transport_close(zn->_tp, reason);
     return res;
 }

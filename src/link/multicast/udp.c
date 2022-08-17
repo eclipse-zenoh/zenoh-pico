@@ -12,20 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/link/config/udp.h"
+
 #include <stdlib.h>
 #include <string.h>
+
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/link/config/udp.h"
 #include "zenoh-pico/system/link/udp.h"
 
 #if Z_LINK_UDP_MULTICAST == 1
 
-char *_z_parse_port_segment_udp_multicast(const char *address)
-{
+char *_z_parse_port_segment_udp_multicast(const char *address) {
     const char *p_start = strrchr(address, ':');
-    if (p_start == NULL)
-        return NULL;
+    if (p_start == NULL) return NULL;
     p_start++;
 
     const char *p_end = &address[strlen(address)];
@@ -38,13 +38,11 @@ char *_z_parse_port_segment_udp_multicast(const char *address)
     return port;
 }
 
-char *_z_parse_address_segment_udp_multicast(const char *address)
-{
+char *_z_parse_address_segment_udp_multicast(const char *address) {
     const char *p_start = &address[0];
     const char *p_end = strrchr(address, ':');
 
-    if (*p_start == '[' && *(p_end - 1) == ']')
-    {
+    if (*p_start == '[' && *(p_end - 1) == ']') {
         p_start++;
         p_end--;
         int len = p_end - p_start;
@@ -53,9 +51,7 @@ char *_z_parse_address_segment_udp_multicast(const char *address)
         ip6_addr[len] = '\0';
 
         return ip6_addr;
-    }
-    else
-    {
+    } else {
         int len = p_end - p_start;
         char *ip4_addr_or_domain = (char *)z_malloc((len + 1) * sizeof(char));
         strncpy(ip4_addr_or_domain, p_start, len);
@@ -67,21 +63,17 @@ char *_z_parse_address_segment_udp_multicast(const char *address)
     return NULL;
 }
 
-int _z_f_link_open_udp_multicast(void *arg)
-{
+int _z_f_link_open_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    if (iface == NULL)
-        goto ERR;
+    if (iface == NULL) goto ERR;
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
-    if (tout_as_str != NULL)
-        tout = strtoul(tout_as_str, NULL, 10);
+    if (tout_as_str != NULL) tout = strtoul(tout_as_str, NULL, 10);
 
-    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, tout, iface) == NULL)
-        goto ERR;
+    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, tout, iface) == NULL) goto ERR;
 
     return 0;
 
@@ -89,21 +81,18 @@ ERR:
     return -1;
 }
 
-int _z_f_link_listen_udp_multicast(void *arg)
-{
+int _z_f_link_listen_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    if (iface == NULL)
-        goto ERR_1;
+    if (iface == NULL) goto ERR_1;
 
     self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._raddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._sock == NULL)
-        goto ERR_1;
+    if (self->_socket._udp._sock == NULL) goto ERR_1;
 
-    self->_socket._udp._msock = _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._msock == NULL)
-        goto ERR_2;
+    self->_socket._udp._msock =
+        _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
+    if (self->_socket._udp._msock == NULL) goto ERR_2;
 
     return 0;
 
@@ -114,57 +103,49 @@ ERR_1:
     return -1;
 }
 
-void _z_f_link_close_udp_multicast(void *arg)
-{
+void _z_f_link_close_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     _z_close_udp_multicast(self->_socket._udp._sock, self->_socket._udp._msock, self->_socket._udp._raddr);
 }
 
-void _z_f_link_free_udp_multicast(void *arg)
-{
+void _z_f_link_free_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     _z_free_endpoint_udp(self->_socket._udp._laddr);
     _z_free_endpoint_udp(self->_socket._udp._raddr);
 }
 
-size_t _z_f_link_write_udp_multicast(const void *arg, const uint8_t *ptr, size_t len)
-{
+size_t _z_f_link_write_udp_multicast(const void *arg, const uint8_t *ptr, size_t len) {
     const _z_link_t *self = (const _z_link_t *)arg;
 
     return _z_send_udp_multicast(self->_socket._udp._msock, ptr, len, self->_socket._udp._raddr);
 }
 
-size_t _z_f_link_write_all_udp_multicast(const void *arg, const uint8_t *ptr, size_t len)
-{
+size_t _z_f_link_write_all_udp_multicast(const void *arg, const uint8_t *ptr, size_t len) {
     const _z_link_t *self = (const _z_link_t *)arg;
 
     return _z_send_udp_multicast(self->_socket._udp._msock, ptr, len, self->_socket._udp._raddr);
 }
 
-size_t _z_f_link_read_udp_multicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr)
-{
+size_t _z_f_link_read_udp_multicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     const _z_link_t *self = (const _z_link_t *)arg;
 
     return _z_read_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._laddr, addr);
 }
 
-size_t _z_f_link_read_exact_udp_multicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr)
-{
+size_t _z_f_link_read_exact_udp_multicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     const _z_link_t *self = (const _z_link_t *)arg;
 
     return _z_read_exact_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._laddr, addr);
 }
 
-uint16_t _z_get_link_mtu_udp_multicast(void)
-{
+uint16_t _z_get_link_mtu_udp_multicast(void) {
     // @TODO: the return value should change depending on the target platform.
     return 1450;
 }
 
-_z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint)
-{
+_z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint) {
     _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
 
     lt->_capabilities = Z_LINK_CAPABILITY_MULTICAST;

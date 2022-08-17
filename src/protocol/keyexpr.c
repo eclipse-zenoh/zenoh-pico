@@ -11,11 +11,11 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/protocol/keyexpr.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
-
-#include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Canonize helpers ------------------*/
 z_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {

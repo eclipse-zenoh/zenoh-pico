@@ -13,15 +13,12 @@
 //
 
 #include "zenoh-pico/net/publish.h"
+
 #include "zenoh-pico/protocol/msg.h"
 
-void _z_publisher_clear(_z_publisher_t *pub)
-{
-    _z_keyexpr_clear(&pub->_key);
-}
+void _z_publisher_clear(_z_publisher_t *pub) { _z_keyexpr_clear(&pub->_key); }
 
-void _z_publisher_free(_z_publisher_t **pub)
-{
+void _z_publisher_free(_z_publisher_t **pub) {
     _z_publisher_t *ptr = *pub;
 
     _z_publisher_clear(ptr);

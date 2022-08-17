@@ -14,10 +14,10 @@
 #ifndef ZENOH_PICO_API_TYPES_H
 #define ZENOH_PICO_API_TYPES_H
 
-#include "zenoh-pico/net/session.h"
-#include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
 
 /**
@@ -44,8 +44,7 @@ typedef _z_bytes_t z_bytes_t;
  * Members:
  *   uint8_t id[16]: The array containing the 16 octets of a Zenoh ID.
  */
-typedef struct
-{
+typedef struct {
     uint8_t id[16];
 } z_id_t;
 
@@ -150,8 +149,7 @@ typedef _z_encoding_t z_encoding_t;
  *   z_bytes_t payload: The payload of this zenoh value.
  *   z_encoding_t encoding: The encoding of the `payload`.
  */
-typedef struct
-{
+typedef struct {
     z_bytes_t payload;
     z_encoding_t encoding;
 } z_value_t;
@@ -163,8 +161,7 @@ typedef struct
  * Members:
  *   z_reliability_t reliability: The subscription reliability.
  */
-typedef struct
-{
+typedef struct {
     z_reliability_t reliability;
 } z_subscriber_options_t;
 
@@ -175,8 +172,7 @@ typedef struct
  * Members:
  *   z_reliability_t reliability: The subscription reliability.
  */
-typedef struct
-{
+typedef struct {
     z_reliability_t reliability;
 } z_pull_subscriber_options_t;
 
@@ -184,11 +180,11 @@ typedef struct
  * Represents the replies consolidation to apply on replies to a :c:func:`z_get`.
  *
  * Members:
- *   z_query_consolidation_tag_t tag: Defines if the replies consolidation strategy is automatically or manually applied.
+ *   z_query_consolidation_tag_t tag: Defines if the replies consolidation strategy is automatically
+ *                                    or manually applied.
  *   z_consolidation_mode_t mode: Defines the consolidation mode to apply to the replies.
  */
-typedef struct
-{
+typedef struct {
     z_query_consolidation_tag_t tag;
     z_consolidation_mode_t mode;
 
@@ -200,11 +196,10 @@ typedef struct
  *
  * Members:
  *   int8_t local_routing: ``0``: disabled, ``1``: enabled, ``-1``: apply session level config.
- *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this publisher.
- *   z_priority_t priority: The priority of messages issued by this publisher.
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
+ * publisher. z_priority_t priority: The priority of messages issued by this publisher.
  */
-typedef struct
-{
+typedef struct {
     int8_t local_routing;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
@@ -217,8 +212,7 @@ typedef struct
  * Members:
  *   uint8_t complete: The completeness of the queryable.
  */
-typedef struct
-{
+typedef struct {
     uint8_t complete;
 } z_queryable_options_t;
 
@@ -226,9 +220,8 @@ typedef struct
  * Represents the set of options that can be applied to a query reply,
  * sent via :c:func:`z_query_reply`.
  */
-typedef struct
-{
-    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } z_query_reply_options_t;
 
 /**
@@ -240,8 +233,7 @@ typedef struct
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   uint8_t priority: The priority of this message.
  */
-typedef struct
-{
+typedef struct {
     z_encoding_t encoding;
     z_congestion_control_t congestion_control;
     uint8_t priority;
@@ -254,8 +246,7 @@ typedef struct
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  */
-typedef struct
-{
+typedef struct {
     uint8_t congestion_control;
 } z_delete_options_t;
 
@@ -266,8 +257,7 @@ typedef struct
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
  */
-typedef struct
-{
+typedef struct {
     z_encoding_t encoding;
 } z_publisher_put_options_t;
 
@@ -275,9 +265,8 @@ typedef struct
  * Represents the set of options that can be applied to the delete operation by a previously declared publisher,
  * whenever issued via :c:func:`z_publisher_delete`.
  */
-typedef struct
-{
-    uint8_t __dummy; // Just to avoid empty structures that might cause undefined behavior
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } z_publisher_delete_options_t;
 
 /**
@@ -288,8 +277,7 @@ typedef struct
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  */
-typedef struct
-{
+typedef struct {
     z_query_target_t target;
     z_query_consolidation_t consolidation;
 } z_get_options_t;
@@ -336,20 +324,11 @@ typedef _z_reply_data_t z_reply_data_t;
  */
 typedef _z_reply_t z_reply_t;
 
-#define _TYPEDEF_ARRAY(type, alias, elem, name)                        \
-    typedef type alias;                                                \
-    static inline elem *z_##name##_array_get(const alias *a, size_t k) \
-    {                                                                  \
-        return _z_##name##_array_get(a, k);                            \
-    }                                                                  \
-    static inline size_t z_##name##_array_len(const alias *a)          \
-    {                                                                  \
-        return _z_##name##_array_len(a);                               \
-    }                                                                  \
-    static inline uint8_t z_##name##_array_is_empty(const alias *a)    \
-    {                                                                  \
-        return _z_##name##_array_is_empty(a);                          \
-    }
+#define _TYPEDEF_ARRAY(type, alias, elem, name)                                                                \
+    typedef type alias;                                                                                        \
+    static inline elem *z_##name##_array_get(const alias *a, size_t k) { return _z_##name##_array_get(a, k); } \
+    static inline size_t z_##name##_array_len(const alias *a) { return _z_##name##_array_len(a); }             \
+    static inline uint8_t z_##name##_array_is_empty(const alias *a) { return _z_##name##_array_is_empty(a); }
 
 /**
  * Represents an array of ``char *``.
@@ -386,8 +365,7 @@ _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, repl
 
 /* Owned types */
 #define _OWNED_TYPE(type, name) \
-    typedef struct              \
-    {                           \
+    typedef struct {            \
         type *_value;           \
     } z_owned_##name##_t;
 
@@ -428,8 +406,7 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  *   _z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
-typedef struct
-{
+typedef struct {
     void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
@@ -442,11 +419,10 @@ typedef struct
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   _z_questionable_handler_t call: `void (*_z_questionable_handler_t)(z_query_t *query, void *arg)` is the callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   _z_questionable_handler_t call: `void (*_z_questionable_handler_t)(z_query_t *query, void *arg)` is the callback
+ * function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
-typedef struct
-{
+typedef struct {
     void *context;
     _z_questionable_handler_t call;
     _z_dropper_handler_t drop;
@@ -461,11 +437,10 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg)` is the callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg)` is the callback
+ * function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
-typedef struct
-{
+typedef struct {
     void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
@@ -483,8 +458,7 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
-typedef struct
-{
+typedef struct {
     void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;

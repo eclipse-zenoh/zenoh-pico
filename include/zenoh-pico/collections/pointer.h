@@ -22,29 +22,24 @@
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_POINTER_DEFINE(name, type)                                        \
-    typedef struct                                                           \
-    {                                                                        \
+    typedef struct {                                                         \
         atomic_uint _cnt;                                                    \
         type *ptr;                                                           \
     } name##_sptr_t;                                                         \
-    static inline name##_sptr_t name##_sptr_new(type ptr)                    \
-    {                                                                        \
+    static inline name##_sptr_t name##_sptr_new(type ptr) {                  \
         name##_sptr_t p;                                                     \
         p.ptr = ptr;                                                         \
         atomic_store_explicit(&p._cnt, 1, memory_order_relaxed);             \
         return p;                                                            \
     }                                                                        \
-    static inline name##_sptr_t name##_sptr_clone(name##_sptr_t p)           \
-    {                                                                        \
+    static inline name##_sptr_t name##_sptr_clone(name##_sptr_t p) {         \
         atomic_fetch_add(&p._cnt, 1, memory_order_relaxed);                  \
         return p;                                                            \
     }                                                                        \
-    static inline _Bool name##_sptr_drop(name##_sptr_t p)                    \
-    {                                                                        \
+    static inline _Bool name##_sptr_drop(name##_sptr_t p) {                  \
         unsigned int c = atomic_fetch_sub(&p._cnt, 1, memory_order_release); \
         _Bool dropped = c == 1;                                              \
-        if (dropped)                                                         \
-        {                                                                    \
+        if (dropped) {                                                       \
             atomic_thread_fence(memory_order_acquire);                       \
             name##_elem_free(p.ptr);                                         \
         }                                                                    \
@@ -52,31 +47,26 @@
     }
 #else
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_POINTER_DEFINE(name, type)                              \
-    typedef struct                                                 \
-    {                                                              \
-        volatile unsigned int _cnt;                                \
-        type *ptr;                                                 \
-    } name##_sptr_t;                                               \
-    static inline name##_sptr_t name##_sptr_new(type ref)          \
-    {                                                              \
-        name##_sptr_t p;                                           \
-        p.ptr = ref;                                               \
-        p._cnt = 1;                                                \
-        return p;                                                  \
-    }                                                              \
-    static inline name##_sptr_t name##_sptr_clone(name##_sptr_t p) \
-    {                                                              \
-        p._cnt += 1;                                               \
-        return p;                                                  \
-    }                                                              \
-    static inline _Bool name##_sptr_drop(name##_sptr_t p)          \
-    {                                                              \
-        p._cnt -= 1;                                               \
-        _Bool dropped = p._cnt == 0;                               \
-        if (dropped)                                               \
-            name##_elem_free(p.ptr);                               \
-        return dropped;                                            \
+#define _Z_POINTER_DEFINE(name, type)                                \
+    typedef struct {                                                 \
+        volatile unsigned int _cnt;                                  \
+        type *ptr;                                                   \
+    } name##_sptr_t;                                                 \
+    static inline name##_sptr_t name##_sptr_new(type ref) {          \
+        name##_sptr_t p;                                             \
+        p.ptr = ref;                                                 \
+        p._cnt = 1;                                                  \
+        return p;                                                    \
+    }                                                                \
+    static inline name##_sptr_t name##_sptr_clone(name##_sptr_t p) { \
+        p._cnt += 1;                                                 \
+        return p;                                                    \
+    }                                                                \
+    static inline _Bool name##_sptr_drop(name##_sptr_t p) {          \
+        p._cnt -= 1;                                                 \
+        _Bool dropped = p._cnt == 0;                                 \
+        if (dropped) name##_elem_free(p.ptr);                        \
+        return dropped;                                              \
     }
 #endif
 

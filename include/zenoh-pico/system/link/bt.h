@@ -15,8 +15,9 @@
 #define ZENOH_PICO_SYSTEM_LINK_BT_H
 
 #include <stdint.h>
-#include "zenoh-pico/config.h"
+
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/config.h"
 
 #if Z_LINK_BLUETOOTH == 1
 
@@ -25,13 +26,12 @@ extern "C" {
 #endif
 
 #define _Z_BT_MODE_MASTER 0
-#define _Z_BT_MODE_SLAVE  1
+#define _Z_BT_MODE_SLAVE 1
 
 #define _Z_BT_PROFILE_UNSUPPORTED 255
 #define _Z_BT_PROFILE_SPP 0
 
-typedef struct
-{
+typedef struct {
     void *_sock;
     char *_gname;
 } _z_bt_socket_t;

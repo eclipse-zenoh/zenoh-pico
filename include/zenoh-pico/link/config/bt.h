@@ -14,21 +14,21 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_BT_H
 #define ZENOH_PICO_LINK_CONFIG_BT_H
 
-#include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
 #if Z_LINK_BLUETOOTH == 1
 
-#define BT_CONFIG_MODE_KEY     0x01
-#define BT_CONFIG_MODE_STR     "mode"
+#define BT_CONFIG_MODE_KEY 0x01
+#define BT_CONFIG_MODE_STR "mode"
 
-#define BT_CONFIG_PROFILE_KEY  0x02
-#define BT_CONFIG_PROFILE_STR  "profile"
+#define BT_CONFIG_PROFILE_KEY 0x02
+#define BT_CONFIG_PROFILE_STR "profile"
 
-#define BT_CONFIG_TOUT_KEY     0x03
-#define BT_CONFIG_TOUT_STR     "tout"
+#define BT_CONFIG_TOUT_KEY 0x03
+#define BT_CONFIG_TOUT_STR "tout"
 
 #define BT_CONFIG_MAPPING_BUILD           \
     int argc = 3;                         \

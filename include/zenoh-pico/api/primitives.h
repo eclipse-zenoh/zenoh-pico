@@ -15,14 +15,13 @@
 #ifndef ZENOH_PICO_API_PRIMITIVES_H
 #define ZENOH_PICO_API_PRIMITIVES_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "zenoh-pico/api/types.h"
-
+#include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
-#include "zenoh-pico/net/query.h"
 
 /*************** Logging ***************/
 /**
@@ -149,8 +148,8 @@ z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined by ``r``.
- *   Otherwise, it returns ``false``.
+ *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, it returns ``false``.
  */
 _Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen);
 
@@ -164,7 +163,8 @@ _Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen)
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns true if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined by ``r``.
+ *   Returns true if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined
+ * by ``r``.
  */
 _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
@@ -178,8 +178,8 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the sets defined by ``l`` and ``r``.
- *   Otherwise, it returns ``false``.
+ *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, it returns ``false``.
  */
 _Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen);
 
@@ -193,8 +193,8 @@ _Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the sets defined by ``l`` and ``r``.
- *   Otherwise, it returns ``false``.
+ *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, it returns ``false``.
  */
 _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
@@ -230,14 +230,18 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
  * Return a new, zenoh-allocated, empty configuration.
  * It consists in an empty set of properties for zenoh session configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using ``z_config_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_config_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
+ * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_config_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
@@ -248,14 +252,18 @@ z_owned_config_t zp_config_new(void);
  * Return a new, zenoh-allocated, empty configuration.
  * It consists in an empty set of properties for zenoh session configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using ``z_config_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_config_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
+ * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_config_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
@@ -266,14 +274,18 @@ z_owned_config_t zp_config_empty(void);
  * Return a new, zenoh-allocated, default configuration.
  * It consists in a default set of properties for zenoh session configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using ``z_config_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_config_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
+ * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_config_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Returns:
  *   Returns a new, zenoh-allocated, default configuration.
@@ -398,14 +410,18 @@ z_keyexpr_t z_query_keyexpr(z_query_t *query);
  * Return a new sample closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_sample_t` by loaning it using ``z_closure_sample_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_closure_sample_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_sample_t` by loaning it using
+ * ``z_closure_sample_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
+ * is equivalent to writing ``z_closure_sample_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_closure_sample_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_closure_sample_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   call: the typical callback function. ``context`` will be passed as its last argument.
@@ -421,14 +437,18 @@ z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_han
  * Return a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_query_t` by loaning it using ``z_closure_query_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_closure_query_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_query_t` by loaning it using
+ * ``z_closure_query_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_closure_query_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_closure_query_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_closure_query_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   call: the typical callback function. ``context`` will be passed as its last argument.
@@ -444,14 +464,18 @@ z_owned_closure_query_t z_closure_query(_z_questionable_handler_t call, _z_dropp
  * Return a new reply closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_reply_t` by loaning it using ``z_closure_reply_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_closure_reply_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_reply_t` by loaning it using
+ * ``z_closure_reply_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_closure_reply_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_closure_reply_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_closure_reply_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   call: the typical callback function. ``context`` will be passed as its last argument.
@@ -467,14 +491,18 @@ z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper
  * Return a new zid closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_zid_t` by loaning it using ``z_closure_zid_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_closure_zid_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_zid_t` by loaning it using
+ * ``z_closure_zid_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_closure_zid_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_closure_zid_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_closure_zid_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   call: the typical callback function. ``context`` will be passed as its last argument.
@@ -534,14 +562,18 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
 /**
  * Looks for other Zenoh-enabled entities like routers and/or peers.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_hello_array_t` by loaning it using ``z_hello_array_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_hello_array_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_hello_array_t` by loaning it using
+ * ``z_hello_array_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_hello_array_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_hello_array_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_hello_array_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   what: A whatami bitmask of zenoh entities kind to scout for. :c:type:`z_whatami_t` defines the available masks.
@@ -557,14 +589,18 @@ z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t 
 /**
  * Opens a Zenoh session.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_session_t` by loaning it using ``z_session_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_session_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_session_t` by loaning it using
+ * ``z_session_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_session_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_session_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_session_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   config: A moved instance of :c:type:`z_owned_config_t` containing the set properties to configure the session.
@@ -653,7 +689,8 @@ z_delete_options_t z_delete_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len, const z_put_options_t *options);
+int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
+             const z_put_options_t *options);
 
 /**
  * Deletes data from a given keyexpr.
@@ -689,7 +726,8 @@ z_get_options_t z_get_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback, const z_get_options_t *options);
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback,
+             const z_get_options_t *options);
 
 /**
  * Declares a keyexpr, so that it is internally mapped into into a numerical id.
@@ -697,14 +735,18 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
  * This numerical id is used on the network to save bandwidth and ease the retrieval of the concerned resource
  * in the routing tables.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_keyexpr_t` by loaning it using ``z_keyexpr_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_keyexpr_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_keyexpr_t` by loaning it using
+ * ``z_keyexpr_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_keyexpr_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_keyexpr_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_keyexpr_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the keyexpr.
@@ -742,14 +784,18 @@ z_publisher_options_t z_publisher_options_default(void);
  * Data can be put and deleted with this publisher with the help of the
  * :c:func:`z_publisher_put` and :c:func:`z_publisher_delete` functions.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_publisher_t` by loaning it using ``z_publisher_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_publisher_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_publisher_t` by loaning it using
+ * ``z_publisher_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_publisher_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_publisher_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_publisher_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the publisher.
@@ -799,7 +845,8 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len, const z_publisher_put_options_t *options);
+int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len,
+                       const z_publisher_put_options_t *options);
 
 /**
  * Deletes data from the keyexpr associated to the given publisher.
@@ -826,26 +873,32 @@ z_subscriber_options_t z_subscriber_options_default(void);
  *
  * Received data is processed by means of callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_subscriber_t` by loaning it using ``z_subscriber_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_subscriber_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_subscriber_t` by loaning it using
+ * ``z_subscriber_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_subscriber_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_subscriber_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_subscriber_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the context to pass to them.
- *   options: The options to apply to the subscriber. If ``NULL`` is passed, the default options will be applied.
+ *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the
+ * context to pass to them. options: The options to apply to the subscriber. If ``NULL`` is passed, the default options
+ * will be applied.
  *
  * Returns:
  *   A :c:type:`z_owned_subscriber_t` with either a valid subscriber or a failing subscriber.
  *   Should the subscriber be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
-z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
+z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,
+                                          const z_subscriber_options_t *options);
 
 /**
  * Undeclares the (push) subscriber generated by a call to :c:func:`z_declare_subscriber`.
@@ -864,26 +917,33 @@ int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
  * Data can be pulled with this subscriber with the help of the
  * :c:func:`z_pull` function. Received data is processed by means of callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_pull_subscriber_t` by loaning it using ``z_pull_subscriber_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_pull_subscriber_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_pull_subscriber_t` by loaning it
+ * using ``z_pull_subscriber_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's
+ * ``_Generic``, is equivalent to writing ``z_pull_subscriber_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_pull_subscriber_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_pull_subscriber_check(&val)`` or ``z_check(val)`` if your
+ * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the context to pass to them.
- *   options: The options to apply to the pull subscriber. If ``NULL`` is passed, the default options will be applied.
+ *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the
+ * context to pass to them. options: The options to apply to the pull subscriber. If ``NULL`` is passed, the default
+ * options will be applied.
  *
  * Returns:
  *   A :c:type:`z_owned_pull_subscriber_t` with either a valid subscriber or a failing subscriber.
  *   Should the pull subscriber be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
-z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback, const z_pull_subscriber_options_t *options);
+z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t keyexpr,
+                                                    z_owned_closure_sample_t *callback,
+                                                    const z_pull_subscriber_options_t *options);
 
 /**
  * Undeclares the pull subscriber generated by a call to :c:func:`z_declare_pull_subscriber`.
@@ -921,26 +981,32 @@ z_queryable_options_t z_queryable_options_default(void);
  *
  * Received queries are processed by means of callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_queryable_t` by loaning it using ``z_queryable_loan(&val)``.
- * The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_queryable_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_queryable_t` by loaning it using
+ * ``z_queryable_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_queryable_loan(&val)``.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
- * To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
- * After a ``z_move``, ``val`` will still exist, but will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val`` is valid.
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_queryable_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_queryable_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containg the callbacks to be called and the context to pass to them.
- *   options: The options to apply to the queryable. If ``NULL`` is passed, the default options will be applied.
+ *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containg the callbacks to be called and the context
+ * to pass to them. options: The options to apply to the queryable. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   A :c:type:`z_owned_queryable_t` with either a valid queryable or a failing queryable.
  *   Should the queryable be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
-z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback, const z_queryable_options_t *options);
+z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
+                                        const z_queryable_options_t *options);
 
 /**
  * Undeclares the queryable generated by a call to :c:func:`z_declare_queryable`.
@@ -956,32 +1022,37 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 /**
  * Sends a reply to a query.
  *
- * This function must be called inside of a :c:type:`z_owned_closure_query_t` callback associated to the :c:type:`z_owned_queryable_t`,
- * passing the received query as parameters of the callback function. This function can be called multiple times to send multiple replies to a query.
- * The reply will be considered complete when the callback returns.
+ * This function must be called inside of a :c:type:`z_owned_closure_query_t` callback associated to the
+ * :c:type:`z_owned_queryable_t`, passing the received query as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply will be considered complete when the callback
+ * returns.
  *
  * Parameters:
  *   query: Pointer to the received query.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
  *   payload: Pointer to the data to put.
  *   payload_len: The length of the ``payload``.
- *   options: The options to apply to the send query reply operation. If ``NULL`` is passed, the default options will be applied.
+ *   options: The options to apply to the send query reply operation. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   Returns ``0`` if the send query reply operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len, const z_query_reply_options_t *options);
+int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
+                     const z_query_reply_options_t *options);
 
 /**
  * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.
  *
- * If this returns ``false``, you should use ``z_check`` before trying to use :c:func:`z_reply_err` if you want to process the error that may be here.
+ * If this returns ``false``, you should use ``z_check`` before trying to use :c:func:`z_reply_err` if you want to
+ * process the error that may be here.
  *
  * Parameters:
  *   reply: Pointer to the received query reply.
  *
  * Returns:
- *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or ``false`` otherwise.
+ *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or
+ * ``false`` otherwise.
  */
 _Bool z_reply_is_ok(const z_owned_reply_t *reply);
 

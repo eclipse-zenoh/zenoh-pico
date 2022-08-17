@@ -14,12 +14,12 @@
 #ifndef ZENOH_PICO_COLLECTIONS_STRING_H
 #define ZENOH_PICO_COLLECTIONS_STRING_H
 
+#include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/vec.h"
-#include "zenoh-pico/collections/array.h"
 
 /*-------- str --------*/
 char *_z_str_clone(const char *src);
@@ -30,9 +30,10 @@ int _z_str_eq(const char *left, const char *right);
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
-// _Z_ARRAY_DEFINE(_z_str, char *) // This is here for reference on why
-                                     // the _z_str_array_t was not defined using this macro
-                                     // but instead manually as find below
+// _Z_ARRAY_DEFINE(_z_str, char *)
+// This is here for reference on why
+// the _z_str_array_t was not defined using this macro
+// but instead manually as find below
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -40,8 +41,7 @@ _Z_INT_MAP_DEFINE(_z_str, char)
 #define INT_STR_MAP_KEYVALUE_SEPARATOR '='
 #define INT_STR_MAP_LIST_SEPARATOR ';'
 
-typedef struct
-{
+typedef struct {
     unsigned int _key;
     char *_str;
 } _z_str_intmapping_t;
@@ -63,8 +63,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
  */
-typedef struct
-{
+typedef struct {
     char *val;
     size_t len;
 } _z_string_t;
@@ -86,8 +85,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs);
  *   size_t len: The length of the array.
  *   char **_val: A pointer to the array.
  */
-typedef struct
-{
+typedef struct {
     char **_val;
     size_t _len;
 } _z_str_array_t;

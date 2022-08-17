@@ -16,8 +16,8 @@
 #define ZENOH_PICO_LINK_H
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 
 #if Z_LINK_TCP == 1
@@ -48,10 +48,10 @@
  *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
  */
 typedef enum {
-    Z_LINK_CAPABILITY_NONE      = 0x00,     // 0
-    Z_LINK_CAPABILITY_RELIEABLE = 0x01,     // 1 << 0
-    Z_LINK_CAPABILITY_STREAMED  = 0x02,     // 1 << 1
-    Z_LINK_CAPABILITY_MULTICAST = 0x04      // 1 << 2
+    Z_LINK_CAPABILITY_NONE = 0x00,       // 0
+    Z_LINK_CAPABILITY_RELIEABLE = 0x01,  // 1 << 0
+    Z_LINK_CAPABILITY_STREAMED = 0x02,   // 1 << 1
+    Z_LINK_CAPABILITY_MULTICAST = 0x04   // 1 << 2
 } _z_link_capabilities_t;
 
 #define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIEABLE) == Z_LINK_CAPABILITY_RELIEABLE)

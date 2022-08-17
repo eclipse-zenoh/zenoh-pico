@@ -15,9 +15,9 @@
 #ifndef ZENOH_PICO_TRANSPORT_LINK_RX_H
 #define ZENOH_PICO_TRANSPORT_LINK_RX_H
 
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/transport.h"
-#include "zenoh-pico/link/link.h"
 
 /*------------------ Transmission and Reception helpers ------------------*/
 _z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu);
@@ -29,6 +29,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
 void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_result_t *r, _z_bytes_t *addr);
 
 int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
-int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr);
+int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
+                                          _z_bytes_t *addr);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_RX_H */

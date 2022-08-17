@@ -14,12 +14,12 @@
 #ifndef ZENOH_PICO_PRIMITIVES_NETAPI_H
 #define ZENOH_PICO_PRIMITIVES_NETAPI_H
 
-#include "zenoh-pico/net/session.h"
-#include "zenoh-pico/net/subscribe.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/config.h"
 
 /*------------------ Discovery ------------------*/
@@ -84,7 +84,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing, z_congestion_control_t congestion_control, z_priority_t priority);
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing,
+                                     z_congestion_control_t congestion_control, z_priority_t priority);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -106,18 +107,14 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *             of any allocated value.
  *     sub_info: The :c:type:`_z_subinfo_t` to configure the :c:type:`_z_subscriber_t`.
  *               The callee gets the ownership of any allocated value.
- *     callback: The callback function that will be called each time a data matching the subscribed resource is received.
- *     arg: A pointer that will be passed to the **callback** on each call.
+ *     callback: The callback function that will be called each time a data matching the subscribed resource is
+ * received. arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
-_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn,
-                                       _z_keyexpr_t keyexpr,
-                                       _z_subinfo_t sub_info,
-                                       _z_data_handler_t callback,
-                                       _z_drop_handler_t dropper,
-                                       void *arg);
+_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+                                       _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -144,7 +141,8 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete, _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete,
+                                     _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -189,7 +187,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len, const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
+int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                    const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
@@ -217,7 +216,9 @@ int8_t _z_pull(const _z_subscriber_t *sub);
  *     dropper: The callback function that will be called on upon completion of the callback.
  *     arg_drop: A pointer that will be passed to the **dropper** on each call.
  */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target, const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target,
+                const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
+                _z_drop_handler_t dropper, void *arg_drop);
 
 /**
  * Send a reply to a query.

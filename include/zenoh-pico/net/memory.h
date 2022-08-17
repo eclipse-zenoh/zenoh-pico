@@ -28,7 +28,8 @@ void _z_sample_clear(_z_sample_t *sample);
 void _z_sample_free(_z_sample_t **sample);
 
 /**
- * Free an array of :c:type:`_z_t_msg_hello_t` messages and it's contained :c:type:`_z_t_msg_hello_t` messages recursively.
+ * Free an array of :c:type:`_z_t_msg_hello_t` messages and it's contained :c:type:`_z_t_msg_hello_t` messages
+ * recursively.
  *
  * Parameters:
  *     strs: The array of :c:type:`_z_t_msg_hello_t` messages to free.

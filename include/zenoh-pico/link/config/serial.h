@@ -15,15 +15,15 @@
 #ifndef ZENOH_PICO_LINK_CONFIG_SERIAL_H
 #define ZENOH_PICO_LINK_CONFIG_SERIAL_H
 
-#include "zenoh-pico/config.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
 #if Z_LINK_SERIAL == 1
 
-#define SERIAL_CONFIG_BAUDRATE_KEY     0x01
-#define SERIAL_CONFIG_BAUDRATE_STR     "baudrate"
+#define SERIAL_CONFIG_BAUDRATE_KEY 0x01
+#define SERIAL_CONFIG_BAUDRATE_STR "baudrate"
 
 // #define SERIAL_CONFIG_DATABITS_KEY     0x02
 // #define SERIAL_CONFIG_DATABITS_STR     "data_bits"
@@ -40,21 +40,21 @@
 // #define SERIAL_CONFIG_TOUT_KEY         0x06
 // #define SERIAL_CONFIG_TOUT_STR         "tout"
 
-#define SERIAL_CONFIG_MAPPING_BUILD                \
-    int argc = 1;                                  \
-    _z_str_intmapping_t args[argc];                \
-    args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY;     \
+#define SERIAL_CONFIG_MAPPING_BUILD            \
+    int argc = 1;                              \
+    _z_str_intmapping_t args[argc];            \
+    args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY; \
     args[0]._str = SERIAL_CONFIG_BAUDRATE_STR;
-    /* args[1]._key = SERIAL_CONFIG_DATABITS_KEY;     \
-    // args[1]._str = SERIAL_CONFIG_DATABITS_STR;     \
-    // args[2]._key = SERIAL_CONFIG_FLOWCONTROL_KEY;  \
-    // args[2]._str = SERIAL_CONFIG_FLOWCONTROL_STR;  \
-    // args[3]._key = SERIAL_CONFIG_PARITY_KEY;       \
-    // args[3]._str = SERIAL_CONFIG_PARITY_STR;       \
-    // args[4]._key = SERIAL_CONFIG_STOPBITS_KEY;     \
-    // args[4]._str = SERIAL_CONFIG_STOPBITS_STR;     \
-    // args[5]._key = SERIAL_CONFIG_TOUT_KEY;         \
-    // args[5]._str = SERIAL_CONFIG_TOUT_STR;*/
+/* args[1]._key = SERIAL_CONFIG_DATABITS_KEY;     \
+// args[1]._str = SERIAL_CONFIG_DATABITS_STR;     \
+// args[2]._key = SERIAL_CONFIG_FLOWCONTROL_KEY;  \
+// args[2]._str = SERIAL_CONFIG_FLOWCONTROL_STR;  \
+// args[3]._key = SERIAL_CONFIG_PARITY_KEY;       \
+// args[3]._str = SERIAL_CONFIG_PARITY_STR;       \
+// args[4]._key = SERIAL_CONFIG_STOPBITS_KEY;     \
+// args[4]._str = SERIAL_CONFIG_STOPBITS_STR;     \
+// args[5]._key = SERIAL_CONFIG_TOUT_KEY;         \
+// args[5]._str = SERIAL_CONFIG_TOUT_STR;*/
 
 size_t _z_serial_config_strlen(const _z_str_intmap_t *s);
 

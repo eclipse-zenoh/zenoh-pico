@@ -12,31 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
-
 #include <FreeRTOS.h>
 #include <hw/driver/delay.h>
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random_u8(void)
-{
-    return random(0xFF);
-}
+uint8_t z_random_u8(void) { return random(0xFF); }
 
-uint16_t z_random_u16(void)
-{
-    return random(0xFFFF);
-}
+uint16_t z_random_u16(void) { return random(0xFFFF); }
 
-uint32_t z_random_u32(void)
-{
-    return random(0xFFFFFFFF);
-}
+uint32_t z_random_u32(void) { return random(0xFFFFFFFF); }
 
-uint64_t z_random_u64(void)
-{
+uint64_t z_random_u64(void) {
     uint64_t ret = 0;
     ret |= z_random_u32();
     ret |= z_random_u32() << 8;
@@ -44,30 +33,25 @@ uint64_t z_random_u64(void)
     return ret;
 }
 
-void z_random_fill(void *buf, size_t len)
-{
-    for (int i = 0; i < len; i++)
-        *((uint8_t*)buf) = z_random_u8();
+void z_random_fill(void *buf, size_t len) {
+    for (int i = 0; i < len; i++) *((uint8_t *)buf) = z_random_u8();
 }
 
 /*------------------ Memory ------------------*/
-void *z_malloc(size_t size)
-{
+void *z_malloc(size_t size) {
     // return pvPortMalloc(size); // FIXME: Further investigation is required to understand
-                                  //        why pvPortMalloc or pvPortMallocAligned are failing
+    //        why pvPortMalloc or pvPortMallocAligned are failing
     return malloc(size);
 }
 
-void *z_realloc(void *ptr, size_t size)
-{
+void *z_realloc(void *ptr, size_t size) {
     // Not implemented by the platform
     return NULL;
 }
 
-void z_free(void *ptr)
-{
+void z_free(void *ptr) {
     // vPortFree(ptr); // FIXME: Further investigation is required to understand
-                       //        why vPortFree or vPortFreeAligned are failing
+    //        why vPortFree or vPortFreeAligned are failing
     return free(ptr);
 }
 
@@ -75,111 +59,66 @@ void z_free(void *ptr)
 #error "Multi-threading not supported yet on OpenCR port. Disable it by defining Z_MULTI_THREAD=0"
 
 /*------------------ Task ------------------*/
-int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg)
-{
-    return -1;
-}
+int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
 
-int _z_task_join(_z_task_t *task)
-{
-    return -1;
-}
+int _z_task_join(_z_task_t *task) { return -1; }
 
-int _z_task_cancel(_z_task_t *task)
-{
-    return -1;
-}
+int _z_task_cancel(_z_task_t *task) { return -1; }
 
-void _z_task_free(_z_task_t **task)
-{
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int _z_mutex_init(_z_mutex_t *m)
-{
-    return -1;
-}
+int _z_mutex_init(_z_mutex_t *m) { return -1; }
 
-int _z_mutex_free(_z_mutex_t *m)
-{
-    return -1;
-}
+int _z_mutex_free(_z_mutex_t *m) { return -1; }
 
-int _z_mutex_lock(_z_mutex_t *m)
-{
-    return -1;
-}
+int _z_mutex_lock(_z_mutex_t *m) { return -1; }
 
-int _z_mutex_trylock(_z_mutex_t *m)
-{
-    return -1;
-}
+int _z_mutex_trylock(_z_mutex_t *m) { return -1; }
 
-int _z_mutex_unlock(_z_mutex_t *m)
-{
-    return -1;
-}
+int _z_mutex_unlock(_z_mutex_t *m) { return -1; }
 
 /*------------------ Condvar ------------------*/
-int _z_condvar_init(_z_condvar_t *cv)
-{
-    return -1;
-}
+int _z_condvar_init(_z_condvar_t *cv) { return -1; }
 
-int _z_condvar_free(_z_condvar_t *cv)
-{
-    return -1;
-}
+int _z_condvar_free(_z_condvar_t *cv) { return -1; }
 
-int _z_condvar_signal(_z_condvar_t *cv)
-{
-    return -1;
-}
+int _z_condvar_signal(_z_condvar_t *cv) { return -1; }
 
-int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m)
-{
-    return -1;
-}
-#endif // Z_MULTI_THREAD == 1
+int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+#endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time)
-{
+int z_sleep_us(unsigned int time) {
     delay_us(time);
     return 0;
 }
 
-int z_sleep_ms(unsigned int time)
-{
+int z_sleep_ms(unsigned int time) {
     delay_ms(time);
     return 0;
 }
 
-int z_sleep_s(unsigned int time)
-{
-    return z_sleep_ms(time * 1000);
-}
+int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
 
 /*------------------ Instant ------------------*/
-void __z_clock_gettime(z_clock_t *ts)
-{
+void __z_clock_gettime(z_clock_t *ts) {
     uint64_t m = millis();
     ts->tv_sec = m / 1000000;
     ts->tv_nsec = (m % 1000000) * 1000;
 }
 
-z_clock_t z_clock_now(void)
-{
+z_clock_t z_clock_now(void) {
     z_clock_t now;
     __z_clock_gettime(&now);
     return now;
 }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant)
-{
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -187,8 +126,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant)
     return elapsed;
 }
 
-unsigned long z_clock_elapsed_ms(z_clock_t *instant)
-{
+unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -196,8 +134,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant)
     return elapsed;
 }
 
-unsigned long z_clock_elapsed_s(z_clock_t *instant)
-{
+unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -206,15 +143,13 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant)
 }
 
 /*------------------ Time ------------------*/
-z_time_t z_time_now(void)
-{
+z_time_t z_time_now(void) {
     z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-unsigned long z_time_elapsed_us(z_time_t *time)
-{
+unsigned long z_time_elapsed_us(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 
@@ -222,8 +157,7 @@ unsigned long z_time_elapsed_us(z_time_t *time)
     return elapsed;
 }
 
-unsigned long z_time_elapsed_ms(z_time_t *time)
-{
+unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 
@@ -231,8 +165,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time)
     return elapsed;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time)
-{
+unsigned long z_time_elapsed_s(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 

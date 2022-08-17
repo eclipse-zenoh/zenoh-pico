@@ -16,12 +16,12 @@
 #define ZENOH_PICO_SYSTEM_LINK_TCP_H
 
 #include <stdint.h>
+
 #include "zenoh-pico/collections/string.h"
 
 #if Z_LINK_TCP == 1
 
-typedef struct
-{
+typedef struct {
     void *_sock;
     void *_raddr;
 } _z_tcp_socket_t;
