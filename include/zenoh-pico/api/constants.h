@@ -136,14 +136,17 @@ typedef enum {
  *
  * Enumerators:
  *     Z_CONSOLIDATION_MODE_NONE: No consolidation is applied. Replies may come in any order and any number.
- *     Z_CONSOLIDATION_MODE_MONOTONIC: It guarantees that any reply will be monotonic in time w.r.t.
- *          the previous received replies. It does not garantuee unicity of replies. Optimizes latency.
- *     Z_CONSOLIDATION_MODE_LAST_VALUE: It guarantees unicity of replies. Optimizes bandwidth.
+ *     Z_CONSOLIDATION_MODE_MONOTONIC: It guarantees that any reply for a given key expression will be monotonic in time
+ *         w.r.t. the previous received replies for the same key expression. I.e., for the same key expression multiple
+ *         replies may be received. It is guaranteed that two replies received at t1 and t2 will have timestamp
+ *         ts2 > ts1. It optimizes latency.
+ *     Z_CONSOLIDATION_MODE_LATEST: It guarantees unicity of replies for the same key expression.
+ *         It optimizes bandwidth.
  */
 typedef enum {
     Z_CONSOLIDATION_MODE_NONE = 0,
     Z_CONSOLIDATION_MODE_MONOTONIC = 1,
-    Z_CONSOLIDATION_MODE_LAST_VALUE = 2,
+    Z_CONSOLIDATION_MODE_LATEST = 2,
 } z_consolidation_mode_t;
 
 /**

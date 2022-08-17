@@ -132,7 +132,7 @@ z_query_consolidation_t z_query_consolidation_auto(void) {
 }
 
 z_query_consolidation_t z_query_consolidation_last_value(void) {
-    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_LAST_VALUE};
+    return (z_query_consolidation_t){.tag = Z_QUERY_CONSOLIDATION_MANUAL, .mode = Z_CONSOLIDATION_MODE_LATEST};
 }
 
 z_query_consolidation_t z_query_consolidation_monotonic(void) {

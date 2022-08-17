@@ -935,7 +935,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf) {
     switch (mode) {
         case Z_CONSOLIDATION_MODE_NONE:
         case Z_CONSOLIDATION_MODE_MONOTONIC:
-        case Z_CONSOLIDATION_MODE_LAST_VALUE:
+        case Z_CONSOLIDATION_MODE_LATEST:
             r._value._query_consolidation = mode;
             break;
         default:

@@ -1355,7 +1355,7 @@ _z_zenoh_message_t gen_query_message(void) {
         target._target = Z_QUERY_TARGET_BEST_MATCHING;
     }
 
-    uint8_t con[] = {Z_CONSOLIDATION_MODE_LAST_VALUE, Z_CONSOLIDATION_MODE_MONOTONIC, Z_CONSOLIDATION_MODE_NONE};
+    uint8_t con[] = {Z_CONSOLIDATION_MODE_LATEST, Z_CONSOLIDATION_MODE_MONOTONIC, Z_CONSOLIDATION_MODE_NONE};
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 

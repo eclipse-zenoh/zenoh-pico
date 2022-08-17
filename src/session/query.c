@@ -150,7 +150,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
-    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LAST_VALUE ||
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST ||
         pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
@@ -218,7 +218,7 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
         goto ERR;
 
     // The reply is the final one, apply consolidation if needed
-    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LAST_VALUE) {
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
         while (pen_rps != NULL) {
