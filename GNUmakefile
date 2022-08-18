@@ -111,7 +111,6 @@ linux-x86:
 linux-x64:
 	CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
 
-
 clean:
 	rm -fr $(BUILD_DIR)
 	rm -rf $(CROSSBUILD_DIR)
