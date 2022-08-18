@@ -309,7 +309,6 @@ typedef _z_hello_t z_hello_t;
  *
  * Members:
  *   z_sample_t sample: The :c:type:`_z_sample_t` containing the key and value of the reply.
- *   unsigned int replier_kind: The kind of the replier that sent this reply.
  *   z_bytes_t replier_id: The id of the replier that sent this reply.
  */
 typedef _z_reply_data_t z_reply_data_t;

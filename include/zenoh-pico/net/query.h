@@ -23,7 +23,6 @@
 typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _qid;
-    z_queryable_kind_t _kind;
     _z_keyexpr_t _key;
     char *_value_selector;
 } z_query_t;
@@ -35,12 +34,5 @@ typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
 } _z_queryable_t;
-
-typedef struct {
-    z_queryable_kind_t _kind;
-    z_query_target_t _target;
-} _z_target_t;
-
-_z_target_t _z_target_default(void);
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

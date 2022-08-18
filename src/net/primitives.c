@@ -207,7 +207,6 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
     rq->_id = _z_get_entity_id(zn);
     rq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     rq->_complete = complete;
-    rq->_kind = Z_QUERYABLE_EVAL;
     rq->_callback = callback;
     rq->_dropper = dropper;
     rq->_arg = arg;
@@ -217,8 +216,8 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uin
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_kind, rq->_complete,
-                                                             _Z_QUERYABLE_DISTANCE_DEFAULT);
+    declarations._val[0] =
+        _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -248,7 +247,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key), q->_kind);
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -271,7 +270,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     // Build the reply context decorator. This is NOT the final reply._
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_tp_manager->_local_pid.start,
                                    ((_z_session_t *)query->_zn)->_tp_manager->_local_pid.len);
-    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, query->_kind, 0);
+    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, 0);
 
     // Empty data info
     _z_data_info_t di;
@@ -337,7 +336,7 @@ int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t 
 }
 
 /*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const _z_target_t target,
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
                 _z_drop_handler_t dropper, void *arg_drop) {
     // Create the pending query object
@@ -366,7 +365,6 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg) {
     _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
     if (reply->_tag == Z_REPLY_TAG_DATA) {
         _z_reply_data_t *rd = (_z_reply_data_t *)z_malloc(sizeof(_z_reply_data_t));
-        rd->replier_kind = reply->data.replier_kind;
         _z_bytes_copy(&rd->replier_id, &reply->data.replier_id);
         rd->sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
         _z_bytes_copy(&rd->sample.payload, &reply->data.sample.payload);

@@ -119,20 +119,6 @@ typedef enum {
 } z_encoding_prefix_t;
 
 /**
- * Queryable kind values, defined as a bitmask.
- *
- * Enumerators:
- *     Z_QUERYABLE_ALL_KINDS: Bitmask to filter for ``all kinds``.
- *     Z_QUERYABLE_STORAGE: Bitmask to filter for ``storages``.
- *     Z_QUERYABLE_EVAL: Bitmask to filter for ``eval``.
- */
-typedef enum {
-    Z_QUERYABLE_ALL_KINDS = 0x01,  // 1 << 0
-    Z_QUERYABLE_STORAGE = 0x02,    // 1 << 1
-    Z_QUERYABLE_EVAL = 0x04        // 1 << 2
-} z_queryable_kind_t;
-
-/**
  * Consolidation mode values.
  *
  * Enumerators:
