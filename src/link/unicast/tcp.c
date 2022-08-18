@@ -12,11 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/link/config/tcp.h"
-
-#include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/link/config/tcp.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/tcp.h"

@@ -13,6 +13,7 @@
 //
 
 #include <esp_heap_caps.h>
+#include <stddef.h>
 #include <sys/time.h>
 
 #include "zenoh-pico/config.h"

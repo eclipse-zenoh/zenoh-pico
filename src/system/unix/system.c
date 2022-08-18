@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <sys/random.h>
 #include <sys/time.h>

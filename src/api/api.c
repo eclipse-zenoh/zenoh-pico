@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <stddef.h>
 #include <stdbool.h>
 
 #include "zenoh-pico/api/primitives.h"

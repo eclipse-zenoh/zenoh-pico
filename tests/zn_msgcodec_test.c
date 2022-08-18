@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/collections/bytes.h"

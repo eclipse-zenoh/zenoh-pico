@@ -13,6 +13,7 @@
 //
 
 #include <netdb.h>
+#include <stddef.h>
 #include <sys/socket.h>
 
 #include "zenoh-pico/collections/string.h"

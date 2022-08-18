@@ -14,6 +14,7 @@
 
 #include <random/rand32.h>
 #include <sys/time.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <zephyr.h>
 

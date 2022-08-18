@@ -11,8 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/net/primitives.h"
+#include <stddef.h>
 
+#include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"

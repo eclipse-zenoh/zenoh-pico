@@ -12,9 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/manager.h"
-
+#include <stddef.h>
 #include <stdlib.h>
+
+#include "zenoh-pico/transport/manager.h"
 
 _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_pid) {
     _z_transport_p_result_t ret;

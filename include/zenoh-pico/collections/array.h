@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ARRAY_H
 #define ZENOH_PICO_COLLECTIONS_ARRAY_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*------------------ Internal Array Macros ------------------*/

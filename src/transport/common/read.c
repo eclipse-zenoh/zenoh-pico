@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/transport/link/task/read.h"
 
 int _z_read(_z_transport_t *zt) {

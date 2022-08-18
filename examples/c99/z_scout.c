@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <stdio.h>
+#include <stddef.h>
 
 #include "zenoh-pico.h"
 

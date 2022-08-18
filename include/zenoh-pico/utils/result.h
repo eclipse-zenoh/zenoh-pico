@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_UTILS_RESULT_H
 #define ZENOH_PICO_UTILS_RESULT_H
 
+#include <stddef.h>
 #include <stdlib.h>
 
 /*------------------ Result Enums ------------------*/

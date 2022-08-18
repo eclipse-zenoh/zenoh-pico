@@ -16,8 +16,10 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+#include <stddef.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>

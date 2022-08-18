@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"

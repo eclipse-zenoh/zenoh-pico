@@ -15,6 +15,7 @@
 #include <Arduino.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
+#include <stddef.h>
 #include <string.h>
 
 extern "C" {

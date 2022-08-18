@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/protocol/keyexpr.h"

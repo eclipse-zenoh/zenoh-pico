@@ -14,6 +14,7 @@
 
 #include <mbed.h>
 #include <randLIB.h>
+#include <stddef.h>
 
 #include "zenoh-pico/config.h"
 

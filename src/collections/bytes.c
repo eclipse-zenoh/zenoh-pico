@@ -12,10 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/collections/bytes.h"
-
+#include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/system/platform.h"
 
 /*-------- bytes --------*/

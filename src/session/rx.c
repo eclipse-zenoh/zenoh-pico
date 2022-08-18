@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/session/query.h"

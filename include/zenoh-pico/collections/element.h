@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ELEMENT_H
 #define ZENOH_PICO_COLLECTIONS_ELEMENT_H
 
+#include <stddef.h>
+
 #include "zenoh-pico/system/platform.h"
 
 /*-------- element functions --------*/

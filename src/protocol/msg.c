@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/msg.h"
+#include <stddef.h>
 
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"

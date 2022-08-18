@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_INTMAP_H
 #define ZENOH_PICO_COLLECTIONS_INTMAP_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"

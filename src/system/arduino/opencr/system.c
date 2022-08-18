@@ -13,6 +13,7 @@
 //
 
 #include <FreeRTOS.h>
+#include <stddef.h>
 #include <hw/driver/delay.h>
 
 #include "zenoh-pico/config.h"
