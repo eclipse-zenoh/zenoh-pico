@@ -14,8 +14,12 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+
+#if defined(ZENOH_LINUX)
 #include <sys/random.h>
 #include <sys/time.h>
+#endif
+
 #include <unistd.h>
 
 #include "zenoh-pico/config.h"
@@ -27,7 +31,7 @@ uint8_t z_random_u8(void) {
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint8_t), 0) <= 0)
         ;
-#elif defined(ZENOH_MACOS)
+#elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = z_random_u32();
 #endif
 
@@ -39,7 +43,7 @@ uint16_t z_random_u16(void) {
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint16_t), 0) <= 0)
         ;
-#elif defined(ZENOH_MACOS)
+#elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = z_random_u32();
 #endif
 
@@ -51,7 +55,7 @@ uint32_t z_random_u32(void) {
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint32_t), 0) <= 0)
         ;
-#elif defined(ZENOH_MACOS)
+#elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = arc4random();
 #endif
 
@@ -63,7 +67,7 @@ uint64_t z_random_u64(void) {
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint64_t), 0) <= 0)
         ;
-#elif defined(ZENOH_MACOS)
+#elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret |= z_random_u32();
     ret |= z_random_u32() << 8;
 #endif
@@ -75,7 +79,7 @@ void z_random_fill(void *buf, size_t len) {
 #if defined(ZENOH_LINUX)
     while (getrandom(buf, len, 0) <= 0)
         ;
-#elif defined(ZENOH_MACOS)
+#elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     arc4random_buf(buf, len);
 #endif
 }
