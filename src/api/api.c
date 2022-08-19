@@ -329,7 +329,7 @@ z_put_options_t z_put_options_default(void) {
 }
 
 z_delete_options_t z_delete_options_default(void) {
-    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP};
+    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
 }
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,

@@ -232,12 +232,12 @@ typedef struct {
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
- *   uint8_t priority: The priority of this message.
+ *   z_priority_t priority: The priority of this message when routed.
  */
 typedef struct {
     z_encoding_t encoding;
     z_congestion_control_t congestion_control;
-    uint8_t priority;
+    z_priority_t priority;
 } z_put_options_t;
 
 /**
@@ -246,9 +246,11 @@ typedef struct {
  *
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
+ *   z_priority_t priority: The priority of this message when router.
  */
 typedef struct {
-    uint8_t congestion_control;
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
 } z_delete_options_t;
 
 /**
