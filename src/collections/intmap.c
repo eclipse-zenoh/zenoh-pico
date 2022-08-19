@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/collections/intmap.h"
 
 /*-------- int-void map --------*/

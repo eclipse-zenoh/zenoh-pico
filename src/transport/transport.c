@@ -12,10 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/transport.h"
-
+#include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"

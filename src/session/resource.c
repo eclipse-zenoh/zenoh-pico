@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/session/resource.h"
+#include <stddef.h>
 
+#include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/utils/logging.h"
 

@@ -16,8 +16,10 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+#include <stddef.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -76,7 +78,7 @@ void *_z_open_tcp(void *arg, uint32_t tout) {
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) goto _Z_OPEN_TCP_ERROR_2;
 
-#if defined(ZENOH_MACOS)
+#if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
 #endif
 
@@ -358,7 +360,7 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)
         goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 
-#if defined(ZENOH_MACOS)
+#if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     if (bind(sock, raddr->ai_addr, raddr->ai_addrlen) < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 #elif defined(ZENOH_LINUX)
     if (raddr->ai_family == AF_INET) {

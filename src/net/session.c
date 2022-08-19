@@ -11,8 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/net/session.h"
+#include <stddef.h>
 
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/lease.h"

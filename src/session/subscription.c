@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/session/subscription.h"
+#include <stddef.h>
 
+#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/protocol/keyexpr.h"

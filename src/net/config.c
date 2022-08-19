@@ -11,8 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/config.h"
+#include <stddef.h>
 
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 
 _z_config_t *_z_config_empty() {

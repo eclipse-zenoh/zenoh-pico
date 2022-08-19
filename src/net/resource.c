@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/net/resource.h"
 
 _z_keyexpr_t _z_rid(unsigned long rid) {

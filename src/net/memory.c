@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <stddef.h>
+
 #include "zenoh-pico/net/memory.h"
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {

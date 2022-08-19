@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
 #include "zenoh-pico/link/manager.h"
 
 _z_link_manager_t *_z_link_manager_init() {
