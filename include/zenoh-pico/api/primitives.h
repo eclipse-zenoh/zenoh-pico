@@ -318,6 +318,14 @@ const char *zp_config_get(z_config_t *config, unsigned int key);
 int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 
 /**
+ * Constructs a known :c:type:`z_encoding_t`.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_encoding_t`.
+ */
+z_encoding_t z_encoding(z_encoding_prefix_t prefix);
+
+/**
  * Constructs a default encoding.
  *
  * Returns:
@@ -1040,6 +1048,14 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
  */
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options);
+
+/**
+ * Constructs the default values for the query reply operation.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_query_reply_options_t`.
+ */
+z_query_reply_options_t z_query_reply_options_default(void);
 
 /**
  * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.

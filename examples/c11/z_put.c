@@ -13,15 +13,14 @@
 //
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     z_init_logger();
 
     char *keyexpr = "demo/example/zenoh-pico-put";
@@ -29,7 +28,7 @@ int main(int argc, char **argv)
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -42,9 +41,9 @@ int main(int argc, char **argv)
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
                 }
                 return 1;
             default:
@@ -79,7 +78,7 @@ int main(int argc, char **argv)
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
-    options.encoding.prefix = Z_ENCODING_PREFIX_TEXT_PLAIN;
+    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }

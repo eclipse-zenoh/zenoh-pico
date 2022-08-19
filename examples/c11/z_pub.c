@@ -13,15 +13,14 @@
 //
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     z_init_logger();
 
     char *keyexpr = "demo/example/zenoh-pico-pub";
@@ -29,7 +28,7 @@ int main(int argc, char **argv)
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -42,9 +41,9 @@ int main(int argc, char **argv)
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
                 }
                 return 1;
             default:
@@ -79,12 +78,12 @@ int main(int argc, char **argv)
 
     char buf[256];
     for (int idx = 0; 1; ++idx) {
-        sleep(1);
+        z_sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
-        options.encoding.prefix = Z_ENCODING_PREFIX_TEXT_PLAIN;
+        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
         z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 

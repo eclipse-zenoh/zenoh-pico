@@ -217,9 +217,12 @@ typedef struct {
 /**
  * Represents the set of options that can be applied to a query reply,
  * sent via :c:func:`z_query_reply`.
+ *
+ * Members:
+ *   z_encoding_t encoding: The encoding of the payload.
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+    z_encoding_t encoding;
 } z_query_reply_options_t;
 
 /**
