@@ -377,10 +377,33 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
 
     // Join the multicast group
     if (raddr->ai_family == AF_INET) {
+        struct ifaddrs *l_ifaddr = NULL;
+        if (getifaddrs(&l_ifaddr) < 0) {
+            goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        }
+
+	unsigned long l_iface_ip = htonl(INADDR_ANY);
+        struct ifaddrs *tmp = NULL;
+        for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next) {
+            if (_z_str_eq(tmp->ifa_name, iface)) {
+                if (tmp->ifa_addr->sa_family == raddr->ai_family) {
+                    if (tmp->ifa_addr->sa_family == AF_INET) {
+                        l_iface_ip = ((struct sockaddr_in*)tmp->ifa_addr)->sin_addr.s_addr;
+                    }
+                    else {
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+        }
+        freeifaddrs(l_ifaddr);
+
         struct ip_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
-        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        mreq.imr_interface.s_addr = l_iface_ip;
         if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
             goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
     } else if (raddr->ai_family == AF_INET6) {
