@@ -122,11 +122,11 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value) 
     return _zp_config_insert(config, key, value);
 }
 
-z_encoding_t z_encoding(z_encoding_prefix_t prefix) {
-    return (_z_encoding_t){.prefix = prefix, .suffix = _z_bytes_make(0)};
+z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
+    return (_z_encoding_t){.prefix = prefix, .suffix = _z_bytes_wrap((const uint8_t *)suffix, strlen(suffix))};
 }
 
-z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY); }
+z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
 

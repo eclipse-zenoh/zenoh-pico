@@ -318,12 +318,16 @@ const char *zp_config_get(z_config_t *config, unsigned int key);
 int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 
 /**
- * Constructs a known :c:type:`z_encoding_t`.
+ * Constructs a :c:type:`z_encoding_t`.
+ *
+ * Parameters:
+ *   prefix: A known :c:type:`z_encoding_prefix_t`.
+ *   suffix: A custom suffix to be appended to the prefix.
  *
  * Returns:
  *   Returns the constructed :c:type:`z_encoding_t`.
  */
-z_encoding_t z_encoding(z_encoding_prefix_t prefix);
+z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 
 /**
  * Constructs a default encoding.
