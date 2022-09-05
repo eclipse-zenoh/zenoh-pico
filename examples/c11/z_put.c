@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
+    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }

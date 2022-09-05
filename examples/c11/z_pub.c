@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
-        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
+        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
         z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 
