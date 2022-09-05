@@ -246,7 +246,7 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
  */
-z_owned_config_t zp_config_new(void);
+z_owned_config_t z_config_new(void);
 
 /**
  * Return a new, zenoh-allocated, empty configuration.
@@ -268,7 +268,7 @@ z_owned_config_t zp_config_new(void);
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
  */
-z_owned_config_t zp_config_empty(void);
+z_owned_config_t z_config_empty(void);
 
 /**
  * Return a new, zenoh-allocated, default configuration.
@@ -290,7 +290,7 @@ z_owned_config_t zp_config_empty(void);
  * Returns:
  *   Returns a new, zenoh-allocated, default configuration.
  */
-z_owned_config_t zp_config_default(void);
+z_owned_config_t z_config_default(void);
 
 /**
  * Gets the property with the given integer key from the configuration.

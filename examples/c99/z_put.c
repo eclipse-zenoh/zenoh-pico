@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_owned_config_t config = zp_config_default();
+    z_owned_config_t config = z_config_default();
     if (locator != NULL) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }

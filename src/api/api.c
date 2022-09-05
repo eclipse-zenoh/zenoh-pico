@@ -110,11 +110,11 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
     return true;
 }
 
-z_owned_config_t zp_config_new(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
+z_owned_config_t z_config_new(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
 
-z_owned_config_t zp_config_empty(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
+z_owned_config_t z_config_empty(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
 
-z_owned_config_t zp_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
+z_owned_config_t z_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
 
 const char *zp_config_get(z_config_t *config, unsigned int key) { return _z_config_get(config, key); }
 

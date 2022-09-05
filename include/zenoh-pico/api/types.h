@@ -76,9 +76,9 @@ typedef _z_keyexpr_t z_keyexpr_t;
  *
  * Operations over :c:type:`z_config_t` must be done using the provided functions:
  *
- *   - :c:func:`zp_config_new`
- *   - :c:func:`zp_config_empty`
- *   - :c:func:`zp_config_default`
+ *   - :c:func:`z_config_new`
+ *   - :c:func:`z_config_empty`
+ *   - :c:func:`z_config_default`
  *   - :c:func:`zp_keyexpr_resolve`
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`

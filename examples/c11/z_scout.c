@@ -13,13 +13,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "zenoh-pico.h"
 
-void fprintpid(FILE *stream, z_bytes_t pid)
-{
+void fprintpid(FILE *stream, z_bytes_t pid) {
     if (pid.start == NULL) {
         fprintf(stream, "None");
     } else {
@@ -31,8 +30,7 @@ void fprintpid(FILE *stream, z_bytes_t pid)
     }
 }
 
-void fprintwhatami(FILE *stream, unsigned int whatami)
-{
+void fprintwhatami(FILE *stream, unsigned int whatami) {
     if (whatami == Z_WHATAMI_ROUTER) {
         fprintf(stream, "\"Router\"");
     } else if (whatami == Z_WHATAMI_PEER) {
@@ -42,8 +40,7 @@ void fprintwhatami(FILE *stream, unsigned int whatami)
     }
 }
 
-void fprintlocators(FILE *stream, const z_str_array_t *locs)
-{
+void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "[");
     for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
         fprintf(stream, "\"");
@@ -56,8 +53,7 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs)
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t *hello)
-{
+void fprinthello(FILE *stream, const z_hello_t *hello) {
     fprintf(stream, "Hello { pid: ");
     fprintpid(stream, hello->pid);
     fprintf(stream, ", whatami: ");
@@ -67,14 +63,13 @@ void fprinthello(FILE *stream, const z_hello_t *hello)
     fprintf(stream, " }");
 }
 
-int main(int argc, char **argv)
-{
-    (void) (argc);
-    (void) (argv);
+int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
 
     z_init_logger();
 
-    z_owned_config_t config = zp_config_default();
+    z_owned_config_t config = z_config_default();
 
     printf("Scouting...\n");
     z_owned_hello_array_t hellos = z_scout(Z_WHATAMI_ROUTER | Z_WHATAMI_PEER, z_move(config), 1000);
