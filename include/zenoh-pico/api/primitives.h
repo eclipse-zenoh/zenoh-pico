@@ -405,7 +405,7 @@ z_query_consolidation_t z_query_consolidation_none(void);
  * Returns:
  *   Returns the value selector wrapped as a :c:type:`z_bytes_t`, since value selector is a user-defined representation.
  */
-z_bytes_t z_query_value_selector(z_query_t *query);
+z_bytes_t z_query_parameters(z_query_t *query);
 
 /**
  * Get a query's key by aliasing it.
@@ -731,14 +731,14 @@ z_get_options_t z_get_options_default(void);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` through where data will be put.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
- *   value_selector: Pointer to the value_selector as a null-terminated string.
+ *   parameters: Pointer to the parameters as a null-terminated string.
  *   callback: A moved instance of :c:type:`z_owned_closure_reply_t` containg the callbacks to be called.
  *   options: The get options to be aplied in the distributed query.
  *
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback,
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options);
 
 /**

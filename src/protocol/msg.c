@@ -12,9 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/protocol/msg.h"
+
 #include <stddef.h>
 
-#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
@@ -336,12 +337,12 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
 void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_zint_t qid, z_query_target_t target,
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
                                      z_consolidation_mode_t consolidation) {
     _z_zenoh_message_t msg;
 
     msg._body._query._key = key;
-    msg._body._query._value_selector = value_selector;
+    msg._body._query._parameters = parameters;
     msg._body._query._qid = qid;
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
@@ -358,7 +359,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *value_selector, _z_
 
 void _z_msg_clear_query(_z_msg_query_t *msg) {
     _z_keyexpr_clear(&msg->_key);
-    _z_str_clear(msg->_value_selector);
+    _z_str_clear(msg->_parameters);
 }
 
 /*------------------ Reply Message ------------------*/

@@ -132,7 +132,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
     q._zn = zn;
     q._qid = query->_qid;
     q._key = key;
-    q._value_selector = query->_value_selector;
+    q._parameters = query->_parameters;
 
     _z_questionable_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
     _z_questionable_list_t *xs = qles;

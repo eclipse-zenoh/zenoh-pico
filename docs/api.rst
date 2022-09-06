@@ -244,7 +244,7 @@ Primitives
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_consolidation_reception
-.. autocfunction:: primitives.h::z_query_value_selector
+.. autocfunction:: primitives.h::z_query_parameters
 .. autocfunction:: primitives.h::z_query_keyexpr
 .. autocfunction:: primitives.h::z_closure_sample
 .. autocfunction:: primitives.h::z_closure_query

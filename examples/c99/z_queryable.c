@@ -25,7 +25,7 @@ char *value = "Queryable from Pico!";
 void query_handler(z_query_t *query, void *ctx) {
     (void)(ctx);
     char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
-    z_bytes_t pred = z_query_value_selector(query);
+    z_bytes_t pred = z_query_parameters(query);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", keystr, (int)pred.len, pred.start);
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);

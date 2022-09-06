@@ -139,7 +139,7 @@ typedef void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg);
 typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    char *_value_selector;
+    char *_parameters;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
