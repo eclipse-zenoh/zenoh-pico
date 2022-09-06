@@ -203,7 +203,7 @@ ERR_1:
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete,
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_questionable_t *rq = (_z_questionable_t *)z_malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);

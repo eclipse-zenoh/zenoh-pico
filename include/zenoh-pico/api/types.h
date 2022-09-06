@@ -208,10 +208,10 @@ typedef struct {
  * upon its declaration via :c:func:`z_declare_queryable`.
  *
  * Members:
- *   uint8_t complete: The completeness of the queryable.
+ *   bool complete: The completeness of the queryable.
  */
 typedef struct {
-    uint8_t complete;
+    bool complete;
 } z_queryable_options_t;
 
 /**

@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_SESSION_TYPES_H
 #define ZENOH_PICO_SESSION_TYPES_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
@@ -106,7 +108,7 @@ typedef void (*_z_questionable_handler_t)(z_query_t *query, void *arg);
 typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    uint8_t _complete;
+    bool _complete;
     _z_questionable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
