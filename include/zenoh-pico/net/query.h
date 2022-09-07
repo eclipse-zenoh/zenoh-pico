@@ -24,7 +24,7 @@ typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _qid;
     _z_keyexpr_t _key;
-    char *_value_selector;
+    char *_parameters;
 } z_query_t;
 
 /**

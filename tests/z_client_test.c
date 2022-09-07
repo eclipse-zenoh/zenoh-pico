@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <assert.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "zenoh-pico.h"
 
@@ -44,7 +44,7 @@ void query_handler(z_query_t *query, void *arg) {
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
     assert(_z_str_eq(query->_key._suffix, res));
-    assert(_z_str_eq(query->_value_selector, ""));
+    assert(_z_str_eq(query->_parameters, ""));
 
     z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res), NULL);
     queries++;
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
-    z_owned_config_t config = zp_config_default();
+    z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    config = zp_config_default();
+    config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
 
     z_owned_session_t s2 = z_open(z_move(config));

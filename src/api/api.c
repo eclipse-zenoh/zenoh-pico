@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
@@ -110,11 +110,11 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
     return true;
 }
 
-z_owned_config_t zp_config_new(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
+z_owned_config_t z_config_new(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
 
-z_owned_config_t zp_config_empty(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
+z_owned_config_t z_config_empty(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
 
-z_owned_config_t zp_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
+z_owned_config_t z_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
 
 const char *zp_config_get(z_config_t *config, unsigned int key) { return _z_config_get(config, key); }
 
@@ -122,9 +122,12 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value) 
     return _zp_config_insert(config, key, value);
 }
 
-z_encoding_t z_encoding_default(void) {
-    return (_z_encoding_t){.prefix = Z_ENCODING_PREFIX_EMPTY, .suffix = _z_bytes_make(0)};
+z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
+    return (_z_encoding_t){.prefix = prefix,
+                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, suffix == NULL ? 0 : strlen(suffix))};
 }
+
+z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
 
@@ -146,9 +149,9 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
-z_bytes_t z_query_value_selector(z_query_t *query) {
-    z_bytes_t value_selector = _z_bytes_wrap((uint8_t *)query->_value_selector, strlen(query->_value_selector));
-    return value_selector;
+z_bytes_t z_query_parameters(z_query_t *query) {
+    z_bytes_t parameters = _z_bytes_wrap((uint8_t *)query->_parameters, strlen(query->_parameters));
+    return parameters;
 }
 
 z_keyexpr_t z_query_keyexpr(z_query_t *query) { return query->_key; }
@@ -327,7 +330,7 @@ z_put_options_t z_put_options_default(void) {
 }
 
 z_delete_options_t z_delete_options_default(void) {
-    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP};
+    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
 }
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
@@ -364,7 +367,7 @@ void __z_reply_handler(_z_reply_t *reply, void *arg) {
     wrapped_ctx->user_call(oreply, wrapped_ctx->ctx);
 }
 
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback,
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options) {
     void *ctx = callback->context;
     callback->context = NULL;
@@ -379,7 +382,7 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     }
 
     if (consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
-        if (strstr(value_selector, Z_SELECTOR_TIME) != NULL)
+        if (strstr(parameters, Z_SELECTOR_TIME) != NULL)
             consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
         else
             consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
@@ -392,8 +395,8 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    return _z_query(zs, keyexpr, value_selector, target, consolidation.mode, __z_reply_handler, wrapped_ctx,
-                    callback->drop, ctx);
+    return _z_query(zs, keyexpr, parameters, target, consolidation.mode, __z_reply_handler, wrapped_ctx, callback->drop,
+                    ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t *zs, z_keyexpr_t keyexpr) {
@@ -579,7 +582,9 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
     return 0;
 }
 
-z_query_reply_options_t z_query_reply_options_default(void) { return (z_query_reply_options_t){}; }
+z_query_reply_options_t z_query_reply_options_default(void) {
+    return (z_query_reply_options_t){.encoding = z_encoding_default()};
+}
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {

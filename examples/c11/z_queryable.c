@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -22,24 +22,24 @@
 char *keyexpr = "demo/example/zenoh-pico-queryable";
 char *value = "Queryable from Pico!";
 
-void query_handler(z_query_t *query, void *ctx)
-{
-    (void) (ctx);
+void query_handler(z_query_t *query, void *ctx) {
+    (void)(ctx);
     char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
-    z_bytes_t pred = z_query_value_selector(query);
+    z_bytes_t pred = z_query_parameters(query);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", keystr, (int)pred.len, pred.start);
-    z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), NULL);
+    z_query_reply_options_t options = z_query_reply_options_default();
+    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
     free(keystr);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     z_init_logger();
 
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "k:v:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -52,9 +52,9 @@ int main(int argc, char **argv)
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
                 }
                 return 1;
             default:
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         }
     }
 
-    z_owned_config_t config = zp_config_default();
+    z_owned_config_t config = z_config_default();
     if (locator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }

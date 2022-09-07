@@ -15,9 +15,9 @@
 #define ZENOH_PICO_TEST_H
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/collections/bytes.h"
@@ -1325,7 +1325,7 @@ void pull_message(void) {
 /*------------------ Query message ------------------*/
 _z_zenoh_message_t gen_query_message(void) {
     _z_keyexpr_t key = gen_res_key();
-    char *value_selector = gen_str(gen_uint8() % 16);
+    char *parameters = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 
     z_query_target_t target;
@@ -1340,7 +1340,7 @@ _z_zenoh_message_t gen_query_message(void) {
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    return _z_msg_make_query(key, value_selector, qid, target, consolidation);
+    return _z_msg_make_query(key, parameters, qid, target, consolidation);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {
@@ -1348,8 +1348,8 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     assert_eq_res_key(&left->_key, &right->_key, header);
     printf("\n");
 
-    printf("   Predicate (%s:%s)", left->_value_selector, right->_value_selector);
-    assert(_z_str_eq(left->_value_selector, right->_value_selector));
+    printf("   Predicate (%s:%s)", left->_parameters, right->_parameters);
+    assert(_z_str_eq(left->_parameters, right->_parameters));
     printf("\n");
 
     printf("   Query ID (%zu:%zu)", left->_qid, right->_qid);

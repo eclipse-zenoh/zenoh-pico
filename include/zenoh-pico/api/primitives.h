@@ -246,7 +246,7 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
  */
-z_owned_config_t zp_config_new(void);
+z_owned_config_t z_config_new(void);
 
 /**
  * Return a new, zenoh-allocated, empty configuration.
@@ -268,7 +268,7 @@ z_owned_config_t zp_config_new(void);
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
  */
-z_owned_config_t zp_config_empty(void);
+z_owned_config_t z_config_empty(void);
 
 /**
  * Return a new, zenoh-allocated, default configuration.
@@ -290,7 +290,7 @@ z_owned_config_t zp_config_empty(void);
  * Returns:
  *   Returns a new, zenoh-allocated, default configuration.
  */
-z_owned_config_t zp_config_default(void);
+z_owned_config_t z_config_default(void);
 
 /**
  * Gets the property with the given integer key from the configuration.
@@ -316,6 +316,18 @@ const char *zp_config_get(z_config_t *config, unsigned int key);
  *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
  */
 int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
+
+/**
+ * Constructs a :c:type:`z_encoding_t`.
+ *
+ * Parameters:
+ *   prefix: A known :c:type:`z_encoding_prefix_t`.
+ *   suffix: A custom suffix to be appended to the prefix.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_encoding_t`.
+ */
+z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 
 /**
  * Constructs a default encoding.
@@ -393,7 +405,7 @@ z_query_consolidation_t z_query_consolidation_none(void);
  * Returns:
  *   Returns the value selector wrapped as a :c:type:`z_bytes_t`, since value selector is a user-defined representation.
  */
-z_bytes_t z_query_value_selector(z_query_t *query);
+z_bytes_t z_query_parameters(z_query_t *query);
 
 /**
  * Get a query's key by aliasing it.
@@ -719,14 +731,14 @@ z_get_options_t z_get_options_default(void);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` through where data will be put.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
- *   value_selector: Pointer to the value_selector as a null-terminated string.
+ *   parameters: Pointer to the parameters as a null-terminated string.
  *   callback: A moved instance of :c:type:`z_owned_closure_reply_t` containg the callbacks to be called.
  *   options: The get options to be aplied in the distributed query.
  *
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *value_selector, z_owned_closure_reply_t *callback,
+int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options);
 
 /**
@@ -1040,6 +1052,14 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
  */
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options);
+
+/**
+ * Constructs the default values for the query reply operation.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_query_reply_options_t`.
+ */
+z_query_reply_options_t z_query_reply_options_default(void);
 
 /**
  * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.
