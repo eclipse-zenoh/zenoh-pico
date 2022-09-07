@@ -449,7 +449,7 @@ void _z_transport_free(_z_transport_t **zt) {
         _z_transport_multicast_clear(&ptr->_transport._multicast);
     else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     z_free(ptr);
     *zt = NULL;

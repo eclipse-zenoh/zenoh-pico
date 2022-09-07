@@ -39,7 +39,7 @@ _z_session_t *__z_open_inner(char *locator, int mode) {
         zn->_tp->_transport._multicast._session = zn;
     else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     return zn;
 
@@ -120,7 +120,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
         }
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     return ps;
 }
@@ -162,7 +162,7 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
         zn->_tp->_transport._multicast._read_task_running = 0;
     else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     return 0;
 }
@@ -199,7 +199,7 @@ int8_t _zp_stop_lease_task(_z_session_t *zn) {
         zn->_tp->_transport._multicast._lease_task_running = 0;
     else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     return 0;
 }

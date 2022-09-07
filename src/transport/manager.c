@@ -42,7 +42,7 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
         zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     ret._tag = _Z_RES_OK;
     ret._value._transport = zt;
@@ -81,7 +81,7 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
         zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        asm("nop");
+        __asm__("nop");
 
     ret._tag = _Z_RES_OK;
     ret._value._transport = zt;

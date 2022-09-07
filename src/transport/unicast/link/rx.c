@@ -78,7 +78,7 @@ EXIT_SRCV_PROC:
     // Release the lock
     _z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
-    asm("nop");
+    __asm__("nop");
 }
 
 _z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu) {
