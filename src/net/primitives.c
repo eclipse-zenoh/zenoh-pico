@@ -11,9 +11,10 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/net/primitives.h"
+
 #include <stddef.h>
 
-#include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
@@ -202,7 +203,7 @@ ERR_1:
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, uint8_t complete,
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_questionable_t *rq = (_z_questionable_t *)z_malloc(sizeof(_z_questionable_t));
     rq->_id = _z_get_entity_id(zn);
@@ -315,6 +316,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
                     const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl) {
+    // @TODO: accept `const z_priority_t priority` as additional parameter
     // Data info
     _z_data_info_t info;
     info._flags = 0;
@@ -337,14 +339,14 @@ int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t 
 }
 
 /*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_selector, const z_query_target_t target,
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
                 _z_drop_handler_t dropper, void *arg_drop) {
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
     pq->_id = _z_get_query_id(zn);
     pq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    pq->_value_selector = _z_str_clone(value_selector);
+    pq->_parameters = _z_str_clone(parameters);
     pq->_target = target;
     pq->_consolidation = consolidation;
     pq->_callback = callback;
@@ -356,8 +358,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *value_select
     // Add the pending query to the current session
     _z_register_pending_query(zn, pq);
 
-    _z_zenoh_message_t z_msg =
-        _z_msg_make_query(keyexpr, pq->_value_selector, pq->_id, pq->_target, pq->_consolidation);
+    _z_zenoh_message_t z_msg = _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation);
 
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 }

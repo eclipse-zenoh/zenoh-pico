@@ -13,24 +13,21 @@
 //
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "zenoh-pico.h"
 
-void data_handler(const z_sample_t *sample, void *arg)
-{
-    (void) (arg);
+void data_handler(const z_sample_t *sample, void *arg) {
+    (void)(arg);
     char *keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n",
-           keystr, (int)sample->payload.len, sample->payload.start);
+    printf(">> [Subscriber] Received ('%s': '%.*s')\n", keystr, (int)sample->payload.len, sample->payload.start);
     free(keystr);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     z_init_logger();
 
     char *keyexpr = "demo/example/**";
@@ -51,9 +48,9 @@ int main(int argc, char **argv)
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm') {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
                 }
                 return 1;
             default:
@@ -61,7 +58,7 @@ int main(int argc, char **argv)
         }
     }
 
-    z_owned_config_t config = zp_config_default();
+    z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
@@ -76,7 +73,8 @@ int main(int argc, char **argv)
 
     z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
+    z_owned_subscriber_t sub =
+        z_declare_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
     if (!z_subscriber_check(&sub)) {
         printf("Unable to declare subscriber.\n");
         exit(-1);
