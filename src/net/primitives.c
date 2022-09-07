@@ -203,21 +203,21 @@ ERR_1:
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
-    _z_questionable_t *rq = (_z_questionable_t *)z_malloc(sizeof(_z_questionable_t));
-    rq->_id = _z_get_entity_id(zn);
-    rq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rq->_complete = complete;
-    rq->_callback = callback;
-    rq->_dropper = dropper;
-    rq->_arg = arg;
-    if (_z_register_questionable(zn, rq) < 0) {
+    _z_questionable_t q;
+    q._id = _z_get_entity_id(zn);
+    q._key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    q._complete = complete;
+    q._callback = callback;
+    q._dropper = dropper;
+    q._arg = arg;
+    if (_z_register_questionable(zn, &q) < 0) {
         goto ERR_1;
     }
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] =
-        _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -226,7 +226,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, boo
 
     _z_queryable_t *queryable = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
     queryable->_zn = zn;
-    queryable->_id = rq->_id;
+    queryable->_id = q._id;
 
     return queryable;
 
@@ -234,20 +234,19 @@ ERR_2:
     _z_msg_clear(&z_msg);
 
 ERR_1:
-    _z_keyexpr_clear(&rq->_key);
-    z_free(rq);
+    _z_questionable_clear(&q);
     return NULL;
 }
 
 int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
-    _z_questionable_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
+    _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
     if (q == NULL) {
         goto ERR_1;
     }
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key));
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr._key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;

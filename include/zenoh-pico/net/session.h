@@ -42,7 +42,7 @@ typedef struct {
     _z_subscription_sptr_list_t *_remote_subscriptions;
 
     // Session queryables
-    _z_questionable_list_t *_local_questionable;
+    _z_questionable_sptr_list_t *_local_questionable;
     _z_pending_query_list_t *_pending_queries;
 
     // Session transport.
