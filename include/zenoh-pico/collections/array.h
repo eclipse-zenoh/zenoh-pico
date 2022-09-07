@@ -27,7 +27,8 @@
     static inline name##_array_t name##_array_make(size_t capacity) {                               \
         name##_array_t a;                                                                           \
         a._len = capacity;                                                                          \
-        a._val = (type *)z_malloc(capacity * sizeof(type));                                         \
+        a._val = NULL;                                                                              \
+        if (capacity > 0) { a._val = (type *)z_malloc(capacity * sizeof(type)); }                   \
         return a;                                                                                   \
     }                                                                                               \
     static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) {                \
