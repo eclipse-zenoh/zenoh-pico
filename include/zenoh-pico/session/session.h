@@ -17,11 +17,12 @@
 
 #include <stdbool.h>
 
-#include "zenoh-pico/collections/list.h"
-#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/manager.h"
+#include "zenoh-pico/collections/pointer.h"
+#include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/string.h"
 
 /**
  * The callback signature of the cleanup functions.
@@ -92,8 +93,10 @@ typedef struct {
 int _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
+_Z_POINTER_DEFINE(_z_subscription, _z_subscription);
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_subscriber, _z_subscription_t)
+_Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t, _z_noop_size, _z_subscription_sptr_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t)
 
 typedef struct {
     _z_zint_t _id;
