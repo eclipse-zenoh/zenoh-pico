@@ -147,22 +147,6 @@ To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check
 
   A zenoh-allocated :c:type:`z_queryable_t`.
 
-.. c:type:: z_owned_encoding_t
-
-  A zenoh-allocated :c:type:`z_encoding_t`.
-
-.. c:type:: z_owned_query_target_t
-
-  A zenoh-allocated :c:type:`z_query_target_t`.
-
-.. c:type:: z_owned_query_consolidation_t
-
-  A zenoh-allocated :c:type:`z_query_consolidation_t`.
-
-.. c:type:: z_owned_reply_data_t
-
-  A zenoh-allocated :c:type:`z_reply_data_t`.
-
 .. c:type:: z_owned_reply_t
 
   A zenoh-allocated :c:type:`z_reply_t`.

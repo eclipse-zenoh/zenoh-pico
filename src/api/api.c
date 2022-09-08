@@ -191,7 +191,6 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
 _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
-
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free,
@@ -202,19 +201,7 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publishe
                                     _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free,
                                     _z_owner_noop_copy)
-
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_encoding_t, z_owned_encoding_t, encoding, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_target_t, z_owned_query_target_t, query_target, _z_owner_noop_free,
-                                    _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_query_consolidation_t, z_owned_query_consolidation_t, query_consolidation,
-                                    _z_owner_noop_free, _z_owner_noop_copy)
-
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_data_t, z_owned_reply_data_t, reply_data, _z_reply_data_free,
-                                    _z_owner_noop_copy)
-
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free,
                                     _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free,

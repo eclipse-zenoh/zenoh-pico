@@ -374,24 +374,13 @@ _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, repl
 _OWNED_TYPE(z_bytes_t, bytes)
 _OWNED_TYPE(z_string_t, string)
 _OWNED_TYPE(z_keyexpr_t, keyexpr)
-
 _OWNED_TYPE(z_config_t, config)
 _OWNED_TYPE(z_session_t, session)
 _OWNED_TYPE(z_subscriber_t, subscriber)
 _OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
 _OWNED_TYPE(z_publisher_t, publisher)
 _OWNED_TYPE(z_queryable_t, queryable)
-
-_OWNED_TYPE(z_encoding_t, encoding)
-_OWNED_TYPE(z_query_target_t, query_target)
-_OWNED_TYPE(z_query_consolidation_t, query_consolidation)
-_OWNED_TYPE(z_put_options_t, put_options)
-
-_OWNED_TYPE(z_sample_t, sample)
-_OWNED_TYPE(z_hello_t, hello)
 _OWNED_TYPE(z_reply_t, reply)
-_OWNED_TYPE(z_reply_data_t, reply_data)
-
 _OWNED_TYPE(z_str_array_t, str_array)
 _OWNED_TYPE(z_hello_array_t, hello_array)
 _OWNED_TYPE(z_reply_data_array_t, reply_data_array)
