@@ -43,11 +43,18 @@ void query_handler(z_query_t *query, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
-    assert(_z_str_eq(query->_key._suffix, res));
-    assert(_z_str_eq(query->_parameters, ""));
+
+    char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
+    assert(_z_str_eq(k_str, res));
+
+    z_bytes_t pred = z_query_parameters(query);
+    assert(pred.len == strlen(""));
+    assert(strncmp((const char *)pred.start, "", strlen("")) == 0);
 
     z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res), NULL);
+
     queries++;
+    free(k_str);
 }
 
 volatile unsigned int replies = 0;
@@ -56,12 +63,15 @@ void reply_handler(z_owned_reply_t oreply, void *arg) {
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(&oreply)) {
         z_sample_t sample = z_reply_ok(&oreply);
-        printf(">> Received reply data: %s %s\t(%u/%u)\n", res, z_keyexpr_to_string(sample.keyexpr), replies, total);
+        printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
+
+        char *k_str = z_keyexpr_to_string(sample.keyexpr);
         assert(sample.payload.len == strlen(res));
         assert(strncmp(res, (const char *)sample.payload.start, strlen(res)) == 0);
-        assert(strlen(z_keyexpr_to_string(sample.keyexpr)) == strlen(res));
-        assert(strncmp(res, z_keyexpr_to_string(sample.keyexpr), strlen(res)) == 0);
+        assert(_z_str_eq(k_str, res));
+
         replies++;
+        free(k_str);
     } else {
         printf(">> Received an error\n");
     }
@@ -73,12 +83,12 @@ void data_handler(const z_sample_t *sample, void *arg) {
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
+    char *k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(strlen(sample->keyexpr._suffix) == strlen(res));
-    assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
-    (void)(sample);
+    assert(_z_str_eq(k_str, res));
 
     datas++;
+    free(k_str);
 }
 
 int main(int argc, char **argv) {

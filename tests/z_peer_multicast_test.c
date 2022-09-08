@@ -40,12 +40,14 @@ void data_handler(const z_sample_t *sample, void *arg) {
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
+    char *k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(strlen(sample->keyexpr._suffix) == strlen(res));
-    assert(strncmp(res, sample->keyexpr._suffix, strlen(res)) == 0);
+    assert(strlen(k_str) == strlen(res));
+    assert(strncmp(res, k_str, strlen(res)) == 0);
     (void)(sample);
 
     datas++;
+    free(k_str);
 }
 
 int main(int argc, char **argv) {
