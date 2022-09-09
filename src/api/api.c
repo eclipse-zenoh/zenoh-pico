@@ -607,7 +607,10 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 /**************** Tasks ****************/
-int8_t zp_start_read_task(z_session_t *zs) {
+zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){}; }
+
+int8_t zp_start_read_task(z_session_t *zs, const zp_task_read_options_t *options) {
+    (void)(options);
 #if Z_MULTI_THREAD == 1
     return _zp_start_read_task(zs);
 #else
@@ -625,7 +628,10 @@ int8_t zp_stop_read_task(z_session_t *zs) {
 #endif
 }
 
-int8_t zp_start_lease_task(z_session_t *zs) {
+zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){}; }
+
+int8_t zp_start_lease_task(z_session_t *zs, const zp_task_lease_options_t *options) {
+    (void)(options);
 #if Z_MULTI_THREAD == 1
     return _zp_start_lease_task(zs);
 #else
@@ -643,6 +649,23 @@ int8_t zp_stop_lease_task(z_session_t *zs) {
 #endif
 }
 
-int8_t zp_read(z_session_t *zs) { return _zp_read(zs); }
+zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){}; }
 
-int8_t zp_send_keep_alive(z_session_t *zs) { return _zp_send_keep_alive(zs); }
+int8_t zp_read(z_session_t *zs, const zp_read_options_t *options) {
+    (void)(options);
+    return _zp_read(zs);
+}
+
+zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) { return (zp_send_keep_alive_options_t){}; }
+
+int8_t zp_send_keep_alive(z_session_t *zs, const zp_send_keep_alive_options_t *options) {
+    (void)(options);
+    return _zp_send_keep_alive(zs);
+}
+
+zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){}; }
+
+int8_t zp_send_join(z_session_t *zs, const zp_send_join_options_t *options) {
+    (void)(options);
+    return _zp_send_join(zs);
+}

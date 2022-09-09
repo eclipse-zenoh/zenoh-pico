@@ -19,7 +19,7 @@
 
 #if Z_MULTICAST_TRANSPORT == 1
 
-int _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     // FIXME: make transport aware of qos configuration
     _z_conduit_sn_list_t next_sns;
     next_sns._is_qos = 0;

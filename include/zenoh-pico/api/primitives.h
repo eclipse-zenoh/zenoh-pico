@@ -1104,17 +1104,27 @@ z_value_t z_reply_err(const z_owned_reply_t *reply);
 
 /************* Multi Thread Taks helpers **************/
 /**
+ * Constructs the default values for the session read task.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`zp_task_read_options_t`.
+ */
+zp_task_read_options_t zp_task_read_options_default(void);
+
+/**
  * Start a separate task to read from the network and process the messages as soon as they are received.
  *
  * Note that the task can be implemented in form of thread, process, etc. and its implementation is platform-dependent.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to start the read task.
+ *   options: The options to apply when starting the read task. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   Returns ``0`` if the read task started successfully, or a ``negative value`` otherwise.
  */
-int8_t zp_start_read_task(z_session_t *zs);
+int8_t zp_start_read_task(z_session_t *zs, const zp_task_read_options_t *options);
 
 /**
  * Stop the read task.
@@ -1130,6 +1140,14 @@ int8_t zp_start_read_task(z_session_t *zs);
 int8_t zp_stop_read_task(z_session_t *zs);
 
 /**
+ * Constructs the default values for the session lease task.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`zp_task_lease_options_t`.
+ */
+zp_task_lease_options_t zp_task_lease_options_default(void);
+
+/**
  * Start a separate task to handle the session lease.
  *
  * This task will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
@@ -1138,11 +1156,13 @@ int8_t zp_stop_read_task(z_session_t *zs);
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to start the lease task.
+ *   options: The options to apply when starting the lease task. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   Returns ``0`` if the lease task started successfully, or a ``negative value`` otherwise.
  */
-int8_t zp_start_lease_task(z_session_t *zs);
+int8_t zp_start_lease_task(z_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
  * Stop the lease task.
@@ -1159,28 +1179,70 @@ int8_t zp_stop_lease_task(z_session_t *zs);
 
 /************* Single Thread helpers **************/
 /**
+ * Constructs the default values for the reading procedure.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`zp_read_options_t`.
+ */
+zp_read_options_t zp_read_options_default(void);
+
+/**
  * Triggers a single execution of reading procedure from the network and processes of any received the message.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where trigger the reading procedure.
+ *   options: The options to apply to the read. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   Returns ``0`` if the reading procedure was executed successfully, or a ``negative value`` otherwise.
  */
-int8_t zp_read(z_session_t *zs);
+int8_t zp_read(z_session_t *zs, const zp_read_options_t *options);
 
 /**
- * Triggers a single execution of leasing procedure from the network.
+ * Constructs the default values for sending the keep alive.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`zp_send_keep_alive_options_t`.
+ */
+zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void);
+
+/**
+ * Triggers a single execution of keep alive procedure.
  *
  * It will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
- * When operating over a multicast transport, it also sends the ``Join`` messages when needed.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where trigger the leasing procedure.
+ *   options: The options to apply to the send of a ``KeepAlive`` messages. If ``NULL`` is passed, the default options will be
+ * applied.
  *
  * Returns:
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
  */
-int8_t zp_send_keep_alive(z_session_t *zs);
+int8_t zp_send_keep_alive(z_session_t *zs, const zp_send_keep_alive_options_t *options);
+
+/**
+ * Constructs the default values for sending the join.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`zp_send_join_options_t`.
+ */
+zp_send_join_options_t zp_send_join_options_default(void);
+
+/**
+ * Triggers a single execution of join procedure.
+ *
+ * It will send ``Join`` messages.
+ *
+ * Parameters:
+ *   zs: A loaned instance of the the :c:type:`z_session_t` where trigger the leasing procedure.
+ *   options: The options to apply to the send of a ``Join`` messages. If ``NULL`` is passed, the default options will be
+ * applied.
+ *
+ * Returns:
+ *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
+ */
+int8_t zp_send_join(z_session_t *zs, const zp_send_join_options_t *options);
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

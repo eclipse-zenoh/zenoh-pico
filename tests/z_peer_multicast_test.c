@@ -70,8 +70,8 @@ int main(int argc, char **argv) {
     _z_string_clear(&pid1);
 
     // Start the read session session lease loops
-    zp_start_read_task(z_loan(s1));
-    zp_start_lease_task(z_loan(s1));
+    zp_start_read_task(z_loan(s1), NULL);
+    zp_start_lease_task(z_loan(s1), NULL);
 
     z_sleep_s(SLEEP);
 
@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
     _z_string_clear(&pid2);
 
     // Start the read session session lease loops
-    zp_start_read_task(z_loan(s2));
-    zp_start_lease_task(z_loan(s2));
+    zp_start_read_task(z_loan(s2), NULL);
+    zp_start_lease_task(z_loan(s2), NULL);
 
     z_sleep_s(SLEEP * 5);
 

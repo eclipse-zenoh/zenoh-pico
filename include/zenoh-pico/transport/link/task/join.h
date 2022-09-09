@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/transport/transport.h"
 
-int _zp_send_join(_z_transport_t *zt);
-int _zp_multicast_send_join(_z_transport_multicast_t *ztm);
+int8_t _z_send_join(_z_transport_t *zt);
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_JOIN_H */

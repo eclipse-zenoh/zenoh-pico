@@ -286,6 +286,46 @@ typedef struct {
 } z_get_options_t;
 
 /**
+ * Represents the set of options that can be applied to the read task,
+ * whenever issued via :c:func:`zp_start_read_task`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} zp_task_read_options_t;
+
+/**
+ * Represents the set of options that can be applied to the lease task,
+ * whenever issued via :c:func:`zp_start_lease_task`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} zp_task_lease_options_t;
+
+/**
+ * Represents the set of options that can be applied to the read operation,
+ * whenever issued via :c:func:`zp_read`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} zp_read_options_t;
+
+/**
+ * Represents the set of options that can be applied to the keep alive send,
+ * whenever issued via :c:func:`zp_send_keep_alive`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} zp_send_keep_alive_options_t;
+
+/**
+ * Represents the set of options that can be applied to the join send,
+ * whenever issued via :c:func:`zp_send_join`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} zp_send_join_options_t;
+
+/**
  * Represents a data sample.
  *
  * A sample is the value associated to a given :c:type:`z_keyexpr_t` at a given point in time.

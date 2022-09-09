@@ -82,8 +82,9 @@ int main(int argc, char **argv) {
             now = z_clock_now();
         }
 
-        zp_read(z_loan(s));
-        zp_send_keep_alive(z_loan(s));
+        zp_read(z_loan(s), NULL);
+        zp_send_keep_alive(z_loan(s), NULL);
+        zp_send_join(z_loan(s), NULL);
     }
 
     z_undeclare_publisher(z_move(pub));

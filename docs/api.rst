@@ -66,6 +66,10 @@ Data Structures
 .. autoctype:: types.h::z_hello_t
 .. autoctype:: types.h::z_reply_t
 .. autoctype:: types.h::z_reply_data_t
+.. autoctype:: types.h::zp_task_read_options_t
+.. autoctype:: types.h::zp_task_lease_options_t
+.. autoctype:: types.h::zp_read_options_t
+.. autoctype:: types.h::zp_send_keep_alive_options_t
 
 Arrays
 ~~~~~~
@@ -284,9 +288,13 @@ Primitives
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
 .. autocfunction:: primitives.h::z_reply_err
+.. autocfunction:: primitives.h::zp_task_read_options_default
 .. autocfunction:: primitives.h::zp_start_read_task
 .. autocfunction:: primitives.h::zp_stop_read_task
+.. autocfunction:: primitives.h::zp_task_lease_options_default
 .. autocfunction:: primitives.h::zp_start_lease_task
 .. autocfunction:: primitives.h::zp_stop_lease_task
+.. autocfunction:: primitives.h::zp_read_options_default
 .. autocfunction:: primitives.h::zp_read
+.. autocfunction:: primitives.h::zp_send_keep_alive_options_default
 .. autocfunction:: primitives.h::zp_send_keep_alive

@@ -18,6 +18,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
+#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/utils/logging.h"
 
 _z_session_t *__z_open_inner(char *locator, int mode) {
@@ -128,6 +129,8 @@ _z_config_t *_z_info(const _z_session_t *zn) {
 int8_t _zp_read(_z_session_t *zn) { return _z_read(zn->_tp); }
 
 int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(zn->_tp); }
+
+int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(zn->_tp); }
 
 #if Z_MULTI_THREAD == 1
 int8_t _zp_start_read_task(_z_session_t *zn) {

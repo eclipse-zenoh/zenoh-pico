@@ -104,6 +104,16 @@ int8_t _zp_read(_z_session_t *z);
  */
 int8_t _zp_send_keep_alive(_z_session_t *z);
 
+/**
+ * Send a Join message.
+ *
+ * Parameters:
+ *     session: The zenoh-net session. The caller keeps its ownership.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int8_t _zp_send_join(_z_session_t *z);
+
 #if Z_MULTI_THREAD == 1
 /**
  * Start a separate task to read from the network and process the messages

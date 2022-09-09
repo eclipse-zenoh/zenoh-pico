@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_session_loan(&s)) < 0 || zp_start_lease_task(z_session_loan(&s)) < 0) {
+    if (zp_start_read_task(z_session_loan(&s), NULL) < 0 || zp_start_lease_task(z_session_loan(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
         exit(-1);
     }
