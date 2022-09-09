@@ -74,7 +74,7 @@ _z_hello_array_t __z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 // Allocate or expand the vector
                 if (ls._val) {
                     _z_hello_t *val = (_z_hello_t *)z_malloc((ls._len + 1) * sizeof(_z_hello_t));
-                    memcpy(val, ls._val, ls._len);
+                    memcpy(val, ls._val, ls._len * sizeof(_z_hello_t));
                     z_free(ls._val);
                     ls._val = val;
                 } else {
@@ -129,9 +129,9 @@ ERR_1:
     return ls;
 }
 
-_z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config, const uint32_t scout_period,
+_z_hello_array_t _z_scout_inner(const uint8_t what, const char *locator, const uint32_t timeout,
                                 const int exit_on_first) {
-    _z_hello_array_t locs = _z_hello_array_make(0);
+    _z_hello_array_t locs;
 
     // Create the buffer to serialize the scout message on
     _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, 0);
@@ -144,8 +144,9 @@ _z_hello_array_t _z_scout_inner(const _z_zint_t what, const _z_config_t *config,
 
     // Scout on multicast
 #if Z_MULTICAST_TRANSPORT == 1
-    const char *locator = _z_config_get(config, Z_CONFIG_MULTICAST_ADDRESS_KEY);
-    locs = __z_scout_loop(&wbf, locator, scout_period, exit_on_first);
+    locs = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
+#else
+    locs = _z_hello_array_make(0);
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);

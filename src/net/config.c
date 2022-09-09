@@ -33,8 +33,7 @@ _z_config_t *_z_config_client(const char *locator) {
     } else {
         // The locator is not provided, we should perform scouting
         _zp_config_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
-        _zp_config_insert(ps, Z_CONFIG_MULTICAST_ADDRESS_KEY, z_string_make(Z_CONFIG_MULTICAST_ADDRESS_DEFAULT));
-        _zp_config_insert(ps, Z_CONFIG_MULTICAST_INTERFACE_KEY, z_string_make(Z_CONFIG_MULTICAST_INTERFACE_DEFAULT));
+        _zp_config_insert(ps, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
         _zp_config_insert(ps, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
     }
     return ps;

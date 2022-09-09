@@ -18,7 +18,6 @@
 /*------------------ Runtime configuration properties ------------------*/
 /**
  * The library mode.
- * String key : `"mode"`.
  * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
@@ -29,7 +28,6 @@
 
 /**
  * The locator of a peer to connect to.
- * String key : `"peer"`.
  * Accepted values : `<locator>` (ex: `"tcp/10.10.10.10:7447"`).
  * Default value : None.
  * Multiple values are not accepted in zenoh-pico.
@@ -38,7 +36,6 @@
 
 /**
  * A locator to listen on.
- * String key : `"listener"`.
  * Accepted values : `<locator>` (ex: `"tcp/10.10.10.10:7447"`).
  * Default value : None.
  * Multiple values accepted.
@@ -47,7 +44,6 @@
 
 /**
  * The user name to use for authentication.
- * String key : `"user"`.
  * Accepted values : `<string>`.
  * Default value : None.
  */
@@ -55,7 +51,6 @@
 
 /**
  * The password to use for authentication.
- * String key : `"password"`.
  * Accepted values : `<string>`.
  * Default value : None.
  */
@@ -63,45 +58,40 @@
 
 /**
  * Activates/Desactivates multicast scouting.
- * String key : `"multicast_scouting"`.
- * Accepted values : `0`, `1`.
- * Default value : `1`.
+ * Accepted values : `false`, `true`.
+ * Default value : `true`.
  */
 #define Z_CONFIG_MULTICAST_SCOUTING_KEY 0x45
 #define Z_CONFIG_MULTICAST_SCOUTING_DEFAULT "true"
 
 /**
- * The network interface to use for multicast scouting.
- * String key : `"multicast_interface"`.
- * Accepted values : `"auto"`, `<ip address>`, `<interface name>`.
- * Default value : `"auto"`.
- */
-#define Z_CONFIG_MULTICAST_INTERFACE_KEY 0x46
-#define Z_CONFIG_MULTICAST_INTERFACE_DEFAULT "auto"
-
-/**
  * The multicast address and ports to use for multicast scouting.
- * String key : `"multicast_address"`.
  * Accepted values : `<ip address>:<port>`.
  * Default value : `"224.0.0.224:7447"`.
  */
-#define Z_CONFIG_MULTICAST_ADDRESS_KEY 0x47
-#define Z_CONFIG_MULTICAST_ADDRESS_DEFAULT "udp/224.0.0.224:7447"
+#define Z_CONFIG_MULTICAST_LOCATOR_KEY 0x46
+#define Z_CONFIG_MULTICAST_LOCATOR_DEFAULT "udp/224.0.0.224:7447"
 
 /**
  * In client mode, the period dedicated to scouting a router before failing.
- * String key : `"scouting_timeout"`.
  * Accepted values : `<int in milliseconds>`.
  * Default value : `"3000"`.
  */
-#define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x48
+#define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x47
 #define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3000"
 
 /**
+ * The entities to find in the multicast scouting, defined as a bitwise value.
+ * Accepted values : [0-7]. Bitwise value are defined in :c:enum:`z_whatami_t`.
+ * Default value : `3`.
+ */
+#define Z_CONFIG_SCOUTING_WHAT_KEY 0x48
+#define Z_CONFIG_SCOUTING_WHAT_DEFAULT "3"
+
+/**
  * Indicates if data messages should be timestamped.
- * String key : `"add_timestamp"`.
- * Accepted values : `0`, `1`.
- * Default value : `0`.
+ * Accepted values : `false`, `true`.
+ * Default value : `false`.
  */
 #define Z_CONFIG_ADD_TIMESTAMP_KEY 0x4A
 #define Z_CONFIG_ADD_TIMESTAMP_DEFAULT "false"

@@ -15,6 +15,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "zenoh-pico.h"
 
@@ -63,25 +64,33 @@ void fprinthello(FILE *stream, const z_hello_t *hello) {
     fprintf(stream, " }");
 }
 
+void callback(z_owned_hello_t hello, void *context) {
+    fprinthello(stdout, hello._value);
+    fprintf(stdout, "\n");
+    (*(int *)context)++;
+}
+
+void drop(void *context) {
+    int count = *(int *)context;
+    free(context);
+    if (!count) {
+        printf("Did not find any zenoh process.\n");
+    } else {
+        printf("Dropping scout results.\n");
+    }
+}
+
 int main(int argc, char **argv) {
     (void)(argc);
     (void)(argv);
 
     z_init_logger();
-
-    z_owned_config_t config = z_config_default();
-
+    int *context = malloc(sizeof(int));
+    *context = 0;
+    z_owned_scouting_config_t config = z_scouting_config_default();
+    z_owned_closure_hello_t closure = z_closure(callback, drop, context);
     printf("Scouting...\n");
-    z_owned_hello_array_t hellos = z_scout(Z_WHATAMI_ROUTER | Z_WHATAMI_PEER, z_move(config), 1000);
-    if (z_hello_array_len(z_loan(hellos)) > 0) {
-        for (unsigned int i = 0; i < z_hello_array_len(z_loan(hellos)); ++i) {
-            fprinthello(stdout, z_hello_array_get(z_loan(hellos), i));
-            fprintf(stdout, "\n");
-        }
-    } else {
-        printf("Did not find any zenoh process.\n");
-    }
-
-    z_drop(z_move(hellos));
+    z_scout(z_move(config), z_move(closure));
+    sleep(1);
     return 0;
 }

@@ -29,14 +29,25 @@
  *
  * Parameters:
  *     what: A whatami bitmask of zenoh entities kind to scout for.
- *     config: A set of properties to configure the scouting.
- *     scout_period: The time that should be spent scouting before returnng the results.
+ *     locator: The locator where to scout.
+ *     timeout: The time that should be spent scouting before returnng the results.
  *
  * Returns:
  *     An array of :c:type:`_z_t_msg_hello_t` messages.
  *     The caller gets its ownership, thus must be released using :c:function:`_z_hello_array_free`.
  */
-_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, const uint32_t timeout);
+_z_hello_array_t _z_scout(const uint8_t what, const char *locator, const uint32_t timeout);
+
+/**
+ * Scout for routers and/or peers.
+ *
+ * Parameters:
+ *     what: A whatami bitmask of zenoh entities kind to scout for.
+ *     locator: The locator where to scout.
+ *     timeout: The time that should be spent scouting before returnng the results.
+ */
+void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback, 
+                       void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
 
