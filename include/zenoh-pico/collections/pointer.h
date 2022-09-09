@@ -23,13 +23,14 @@
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_POINTER_DEFINE(name, type)                                                        \
     typedef struct {                                                                         \
-        type##_t ptr;                                                                        \
+        type##_t *ptr;                                                                       \
         atomic_uint *_cnt;                                                                   \
     } name##_sptr_t;                                                                         \
-    static inline name##_sptr_t name##_sptr_new(type##_t ptr)                                \
+    static inline name##_sptr_t name##_sptr_new(type##_t val)                                \
     {                                                                                        \
         name##_sptr_t p;                                                                     \
-        p.ptr = ptr;                                                                         \
+        p.ptr = (type##_t*)z_malloc(sizeof(type##_t));                                       \
+        *p.ptr = val;                                                                        \
         p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                               \
         atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                              \
         return p;                                                                            \
@@ -44,7 +45,7 @@
     }                                                                                        \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p)                  \
     {                                                                                        \
-        name##_sptr_t *c = (name##_sptr_t *)malloc(sizeof(name##_sptr_t));                   \
+        name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                 \
         c->_cnt = p->_cnt;                                                                   \
         c->ptr = p->ptr;                                                                     \
         atomic_fetch_add_explicit(p->_cnt, 1, memory_order_relaxed);                         \
@@ -52,7 +53,7 @@
     }                                                                                        \
     static inline int name##_sptr_eq(const name##_sptr_t *left, const name##_sptr_t *right)  \
     {                                                                                        \
-        return name##_eq(&left->ptr, &right->ptr);                                           \
+        return (left->ptr == right->ptr);                                                    \
     }                                                                                        \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p)                                   \
     {                                                                                        \
@@ -60,7 +61,8 @@
         _Bool dropped = c == 1;                                                              \
         if (dropped) {                                                                       \
             atomic_thread_fence(memory_order_acquire);                                       \
-            type##_clear(&p->ptr);                                                           \
+            type##_clear(p->ptr);                                                            \
+            z_free(p->ptr);                                                                  \
             z_free(p->_cnt);                                                                 \
         }                                                                                    \
         return dropped;                                                                      \
@@ -69,13 +71,14 @@
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_POINTER_DEFINE(name, type)                                                        \
     typedef struct {                                                                         \
-        type##_t ptr;                                                                        \
+        type##_t *ptr;                                                                       \
         volatile uint8_t *_cnt;                                                              \
     } name##_sptr_t;                                                                         \
-    static inline name##_sptr_t name##_sptr_new(type##_t ptr)                                \
+    static inline name##_sptr_t name##_sptr_new(type##_t val)                                \
     {                                                                                        \
         name##_sptr_t p;                                                                     \
-        p.ptr = ptr;                                                                         \
+        p.ptr = (type##_t*)z_malloc(sizeof(type##_t));                                       \
+        *p.ptr = val;                                                                        \
         p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                       \
         *p._cnt = 1;                                                                         \
         return p;                                                                            \
@@ -90,7 +93,7 @@
     }                                                                                        \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p)                  \
     {                                                                                        \
-        name##_sptr_t *c = (name##_sptr_t *)malloc(sizeof(name##_sptr_t));                   \
+        name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                 \
         c->_cnt = p->_cnt;                                                                   \
         c->ptr = p->ptr;                                                                     \
         *p->_cnt += 1;                                                                       \
@@ -98,15 +101,16 @@
     }                                                                                        \
     static inline int name##_sptr_eq(const name##_sptr_t *left, const name##_sptr_t *right)  \
     {                                                                                        \
-        return name##_eq(&left->ptr, &right->ptr);                                           \
+        return (left->ptr == right->ptr);                                                    \
     }                                                                                        \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p)                                   \
     {                                                                                        \
         *p->_cnt -= 1;                                                                       \
-        _Bool dropped = p->_cnt == 0;                                                        \
+        _Bool dropped = *p->_cnt == 0;                                                       \
         if (dropped) {                                                                       \
-            type##_clear(&p->ptr);                                                           \
-            z_free((void*)p->_cnt);                                                          \
+            type##_clear(p->ptr);                                                            \
+            z_free(p->ptr);                                                                  \
+            z_free((void *)p->_cnt);                                                         \
         }                                                                                    \
         return dropped;                                                                      \
     }

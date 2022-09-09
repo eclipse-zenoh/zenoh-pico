@@ -1019,7 +1019,7 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
  * Returns:
  *   Returns ``0`` if the pull operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_pull(const z_pull_subscriber_t *sub);
+int8_t z_subscriber_pull(const z_pull_subscriber_t *sub);
 
 /**
  * Constructs the default values for the queryable entity.

@@ -193,7 +193,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr._key));
+    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -256,7 +256,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr._key));
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -394,17 +394,15 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg) {
 }
 
 /*------------------ Pull ------------------*/
-int8_t _z_pull(const _z_subscriber_t *sub) {
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL) {
-        return -1;
-    }
+    if (s == NULL) { return -1; }
 
     _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
     _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample
     int is_final = 1;
 
-    _z_zenoh_message_t z_msg = _z_msg_make_pull(s->ptr._key, pull_id, max_samples, is_final);
+    _z_zenoh_message_t z_msg = _z_msg_make_pull(s->ptr->_key, pull_id, max_samples, is_final);
 
     return _z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 }

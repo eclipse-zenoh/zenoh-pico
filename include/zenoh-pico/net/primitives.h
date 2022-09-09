@@ -210,7 +210,7 @@ int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t 
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_pull(const _z_subscriber_t *sub);
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
 
 /**
  * Query data from the matching queryables in the system.
