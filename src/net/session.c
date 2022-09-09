@@ -55,13 +55,20 @@ _z_session_t *_z_open(_z_config_t *config) {
     char *locator = NULL;
     // Scout if peer is not configured
     if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {
-        // Z_CONFIG_SCOUTING_TIMEOUT_KEY is expressed in milliseconds as a string
-        char *tout_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-        if (tout_as_str == NULL) tout_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
-        uint32_t tout = strtoul(tout_as_str, NULL, 10);
+        char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
+        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        uint8_t what = strtol(opt_as_str, NULL, 10);
+
+        opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+        char *mcast_locator = opt_as_str;
+
+        opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
         // Scout and return upon the first result
-        _z_hello_array_t locs = _z_scout_inner(Z_WHATAMI_ROUTER, config, tout, 1);
+        _z_hello_array_t locs = _z_scout_inner(what, mcast_locator, timeout, 1);
         if (locs._len > 0) {
             if (locs._val[0].locators._len > 0)
                 locator = _z_str_clone(locs._val[0].locators._val[0]);
@@ -77,8 +84,9 @@ _z_session_t *_z_open(_z_config_t *config) {
 
             return NULL;
         }
-    } else
+    } else {
         locator = _z_str_clone(_z_config_get(config, Z_CONFIG_PEER_KEY));
+    }
 
     // @TODO: check invalid configurations
     // For example, client mode in multicast links

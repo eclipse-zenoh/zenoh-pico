@@ -20,6 +20,12 @@
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
 
+/* Owned types */
+#define _OWNED_TYPE(type, name) \
+    typedef struct {            \
+        type *_value;           \
+    } z_owned_##name##_t;
+
 /**
  * Represents a variable-length encoding unsigned integer.
  *
@@ -35,6 +41,7 @@ typedef _z_zint_t z_zint_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 typedef _z_bytes_t z_bytes_t;
+_OWNED_TYPE(z_bytes_t, bytes)
 
 /**
  * Represents a Zenoh ID.
@@ -56,6 +63,7 @@ typedef struct {
  *   const char *val: A pointer to the string.
  */
 typedef _z_string_t z_string_t;
+_OWNED_TYPE(z_string_t, string)
 
 /**
  * Represents a key expression in Zenoh.
@@ -68,6 +76,7 @@ typedef _z_string_t z_string_t;
  *   - :c:func:`zp_keyexpr_resolve`
  */
 typedef _z_keyexpr_t z_keyexpr_t;
+_OWNED_TYPE(z_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration.
@@ -79,16 +88,32 @@ typedef _z_keyexpr_t z_keyexpr_t;
  *   - :c:func:`z_config_new`
  *   - :c:func:`z_config_empty`
  *   - :c:func:`z_config_default`
- *   - :c:func:`zp_keyexpr_resolve`
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
 typedef _z_config_t z_config_t;
+_OWNED_TYPE(z_config_t, config)
+
+/**
+ * Represents a scouting configuration.
+ *
+ * Configurations are usually used to set the parameters of the scouting procedure.
+ *
+ * Operations over :c:type:`z_scouting_config_t` must be done using the provided functions:
+ *
+ *   - :c:func:`z_scouting_config_default`
+ *   - :c:func:`z_scouting_config_from`
+ *   - :c:func:`zp_scouting_config_get`
+ *   - :c:func:`zp_scouting_config_insert`
+ */
+typedef _z_config_t z_scouting_config_t;
+_OWNED_TYPE(z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh session.
  */
 typedef _z_session_t z_session_t;
+_OWNED_TYPE(z_session_t, session)
 
 /**
  * Represents a Zenoh (push) Subscriber entity.
@@ -99,6 +124,7 @@ typedef _z_session_t z_session_t;
  *   - :c:func:`z_undeclare_subscriber`
  */
 typedef _z_subscriber_t z_subscriber_t;
+_OWNED_TYPE(z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Pull Subscriber entity.
@@ -110,6 +136,7 @@ typedef _z_subscriber_t z_subscriber_t;
  *   - :c:func:`z_subscriber_pull`
  */
 typedef _z_subscriber_t z_pull_subscriber_t;
+_OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -122,6 +149,7 @@ typedef _z_subscriber_t z_pull_subscriber_t;
  *   - :c:func:`z_publisher_delete`
  */
 typedef _z_publisher_t z_publisher_t;
+_OWNED_TYPE(z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -132,6 +160,7 @@ typedef _z_publisher_t z_publisher_t;
  *   - :c:func:`z_undeclare_queryable`
  */
 typedef _z_queryable_t z_queryable_t;
+_OWNED_TYPE(z_queryable_t, queryable)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
@@ -308,6 +337,7 @@ typedef _z_sample_t z_sample_t;
  *   z_str_array_t locators: The locators of the scouted entity.
  */
 typedef _z_hello_t z_hello_t;
+_OWNED_TYPE(z_hello_t, hello)
 
 /**
  * Represents the content of a reply to a query.
@@ -325,6 +355,7 @@ typedef _z_reply_data_t z_reply_data_t;
  *   z_reply_data_t data: the content of the reply.
  */
 typedef _z_reply_t z_reply_t;
+_OWNED_TYPE(z_reply_t, reply)
 
 #define _TYPEDEF_ARRAY(type, alias, elem, name)                                                                \
     typedef type alias;                                                                                        \
@@ -342,6 +373,7 @@ typedef _z_reply_t z_reply_t;
  *   - ``uint8_t z_str_array_array_is_empty(z_str_array_t *a);``
  */
 _TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
+_OWNED_TYPE(z_str_array_t, str_array)
 
 /**
  * Represents an array of ``z_hello_t``.
@@ -353,6 +385,7 @@ _TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
  *   - ``uint8_t z_hello_array_array_is_empty(z_hello_array_t *a);``
  */
 _TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
+_OWNED_TYPE(z_hello_array_t, hello_array)
 
 /**
  * Represents an array of ``z_reply_data_t``.
@@ -364,25 +397,6 @@ _TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
  *   - ``uint8_t z_reply_data_array_array_is_empty(z_reply_data_array_t *a);``
  */
 _TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, reply_data)
-
-/* Owned types */
-#define _OWNED_TYPE(type, name) \
-    typedef struct {            \
-        type *_value;           \
-    } z_owned_##name##_t;
-
-_OWNED_TYPE(z_bytes_t, bytes)
-_OWNED_TYPE(z_string_t, string)
-_OWNED_TYPE(z_keyexpr_t, keyexpr)
-_OWNED_TYPE(z_config_t, config)
-_OWNED_TYPE(z_session_t, session)
-_OWNED_TYPE(z_subscriber_t, subscriber)
-_OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
-_OWNED_TYPE(z_publisher_t, publisher)
-_OWNED_TYPE(z_queryable_t, queryable)
-_OWNED_TYPE(z_reply_t, reply)
-_OWNED_TYPE(z_str_array_t, str_array)
-_OWNED_TYPE(z_hello_array_t, hello_array)
 _OWNED_TYPE(z_reply_data_array_t, reply_data_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
@@ -436,6 +450,24 @@ typedef struct {
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_reply_t;
+
+typedef void (*z_owned_hello_handler_t)(const z_owned_hello_t hello, void *arg);
+
+/**
+ * Represents the Zenoh ID callback closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
+ *   void *context: a pointer to an arbitrary state.
+ *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the callback function.
+ *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ */
+typedef struct {
+    void *context;
+    z_owned_hello_handler_t call;
+    _z_dropper_handler_t drop;
+} z_owned_closure_hello_t;
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 

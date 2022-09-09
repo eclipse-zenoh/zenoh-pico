@@ -33,7 +33,8 @@
              : z_bytes_loan, z_owned_string_t                     \
              : z_string_loan, z_owned_keyexpr_t                   \
              : z_keyexpr_loan, z_owned_config_t                   \
-             : z_config_loan, z_owned_session_t                   \
+             : z_config_loan, z_owned_scouting_config_t           \
+             : z_scouting_config_loan, z_owned_session_t          \
              : z_session_loan, z_owned_subscriber_t               \
              : z_subscriber_loan, z_owned_pull_subscriber_t       \
              : z_pull_subscriber_loan, z_owned_publisher_t        \
@@ -55,7 +56,8 @@
              : z_bytes_drop, z_owned_string_t                     \
              : z_string_drop, z_owned_keyexpr_t                   \
              : z_keyexpr_drop, z_owned_config_t                   \
-             : z_config_drop, z_owned_session_t                   \
+             : z_config_drop, z_owned_scouting_config_t           \
+             : z_scouting_config_drop, z_owned_session_t          \
              : z_session_drop, z_owned_subscriber_t               \
              : z_subscriber_drop, z_owned_pull_subscriber_t       \
              : z_pull_subscriber_drop, z_owned_publisher_t        \
@@ -81,7 +83,8 @@
              : z_string_check, z_owned_keyexpr_t                   \
              : z_keyexpr_check, z_keyexpr_t                        \
              : z_keyexpr_is_valid, z_owned_config_t                \
-             : z_config_check, z_owned_session_t                   \
+             : z_config_check, z_owned_scouting_config_t           \
+             : z_scouting_config_check, z_owned_session_t          \
              : z_session_check, z_owned_subscriber_t               \
              : z_subscriber_check, z_owned_pull_subscriber_t       \
              : z_pull_subscriber_check, z_owned_publisher_t        \
@@ -106,7 +109,8 @@
              : z_bytes_move, z_owned_string_t                     \
              : z_string_move, z_owned_keyexpr_t                   \
              : z_keyexpr_move, z_owned_config_t                   \
-             : z_config_move, z_owned_session_t                   \
+             : z_config_move, z_owned_scouting_config_t           \
+             : z_scouting_config_move, z_owned_session_t          \
              : z_session_move, z_owned_subscriber_t               \
              : z_subscriber_move, z_owned_pull_subscriber_t       \
              : z_pull_subscriber_move, z_owned_publisher_t        \
@@ -118,7 +122,8 @@
              : z_reply_data_array_move, z_owned_closure_sample_t  \
              : z_closure_sample_move, z_owned_closure_query_t     \
              : z_closure_query_move, z_owned_closure_reply_t      \
-             : z_closure_reply_move, z_owned_closure_zid_t        \
+             : z_closure_reply_move, z_owned_closure_hello_t      \
+             : z_closure_hello_move, z_owned_closure_zid_t        \
              : z_closure_zid_move)(&x)
 
 /**

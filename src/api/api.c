@@ -39,7 +39,7 @@ z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     if (keyexpr._id != Z_RESOURCE_ID_NONE) return NULL;
 
-    char *ret = (char *)malloc(strlen(keyexpr._suffix) + 1);
+    char *ret = (char *)z_malloc(strlen(keyexpr._suffix) + 1);
     strcpy(ret, keyexpr._suffix);
 
     return ret;
@@ -122,6 +122,52 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value) 
     return _zp_config_insert(config, key, value);
 }
 
+z_owned_scouting_config_t z_scouting_config_default(void) {
+    z_scouting_config_t *sc = (z_scouting_config_t *)z_malloc(sizeof(z_scouting_config_t));
+    _z_str_intmap_init(sc);
+
+    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+
+    return (z_owned_scouting_config_t){._value = sc };
+}
+
+z_owned_scouting_config_t z_scouting_config_from(z_config_t *c) {
+    z_scouting_config_t *sc = (z_scouting_config_t *)z_malloc(sizeof(z_scouting_config_t));
+    _z_str_intmap_init(sc);
+
+    char *opt;
+    opt = _z_config_get(c, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+    if (opt == NULL) {
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+    } else {
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(opt));
+    }
+
+    opt = _z_config_get(c, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+    if (opt == NULL) {
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+    } else {
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(opt));
+    }
+
+    opt = _z_config_get(c, Z_CONFIG_SCOUTING_WHAT_KEY);
+    if (opt == NULL) {
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+    } else {
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(opt));
+    }
+
+    return (z_owned_scouting_config_t){._value = sc };
+}
+
+const char *zp_scouting_config_get(z_scouting_config_t *sc, unsigned int key) { return _z_config_get(sc, key); }
+
+int8_t zp_scouting_config_insert(z_scouting_config_t *sc, unsigned int key, z_string_t value) {
+    return _zp_config_insert(sc, key, value);
+}
+
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){.prefix = prefix,
                            .suffix = _z_bytes_wrap((const uint8_t *)suffix, suffix == NULL ? 0 : strlen(suffix))};
@@ -192,6 +238,7 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
 _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_owner_noop_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free,
                                     _z_owner_noop_copy)
@@ -231,18 +278,39 @@ z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_q
 
 z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply) { return closure_reply; }
 
+z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello) { return closure_hello; }
+
 z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid) { return closure_zid; }
 
 /************* Primitives **************/
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t timeout) {
-    z_owned_hello_array_t hellos;
-    hellos._value = (z_hello_array_t *)z_malloc(sizeof(z_hello_array_t));
-    *hellos._value = _z_scout(what, config->_value, timeout);
+typedef struct {
+    z_owned_hello_handler_t user_call;
+    void *ctx;
+} __z_hello_handler_wrapper_t;
 
-    z_config_drop(config);
+void __z_hello_handler(_z_hello_t *hello, void *arg) {
+    z_owned_hello_t ohello = {._value = hello};
+
+    __z_hello_handler_wrapper_t *wrapped_ctx = (__z_hello_handler_wrapper_t *)arg;
+    wrapped_ctx->user_call(ohello, wrapped_ctx->ctx);
+}
+
+void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
+    // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
+    //                to enclose the z_reply_t into a z_owned_reply_t.
+    __z_hello_handler_wrapper_t *wrapped_ctx =
+        (__z_hello_handler_wrapper_t *)z_malloc(sizeof(__z_hello_handler_wrapper_t));
+    wrapped_ctx->user_call = callback->call;
+    wrapped_ctx->ctx = ctx;
+
+    _z_scout_callback(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10), _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
+                      strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10), __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+
+    z_scouting_config_drop(config);
     config->_value = NULL;
-
-    return hellos;
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {

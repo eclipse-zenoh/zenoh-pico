@@ -168,4 +168,9 @@ typedef struct {
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 
+/**
+ * The callback signature of the functions handling hello messages.
+ */
+typedef void (*_z_hello_handler_t)(_z_hello_t *hello, void *arg);
+
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

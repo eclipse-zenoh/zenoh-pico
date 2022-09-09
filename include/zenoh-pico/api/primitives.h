@@ -318,6 +318,28 @@ const char *zp_config_get(z_config_t *config, unsigned int key);
 int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 
 /**
+ * Return a new, zenoh-allocated, default scouting configuration.
+ * It consists in a default set of properties for scouting configuration.
+ *
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it using
+ * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_config_loan(&val)``.
+ *
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
+ *
+ * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ *
+ * Returns:
+ *   Returns a new, zenoh-allocated, default scouting configuration.
+ */
+z_owned_scouting_config_t z_scouting_config_default(void);
+
+/**
  * Constructs a :c:type:`z_encoding_t`.
  *
  * Parameters:
@@ -500,6 +522,33 @@ z_owned_closure_query_t z_closure_query(_z_questionable_handler_t call, _z_dropp
 z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
+ * Return a new hello closure.
+ * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_hello_t` by loaning it using
+ * ``z_closure_hello_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
+ * is equivalent to writing ``z_closure_hello_loan(&val)``.
+ *
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
+ *
+ * To check if ``val`` is still valid, you may use ``z_closure_hello_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ *
+ * Parameters:
+ *   call: the typical callback function. ``context`` will be passed as its last argument.
+ *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
+ *   context: a pointer to an arbitrary state.
+ *
+ * Returns:
+ *   Returns a new hello closure.
+ */
+z_owned_closure_hello_t z_closure_hello(z_owned_hello_handler_t call, _z_dropper_handler_t drop, void *context);
+
+/**
  * Return a new zid closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -545,11 +594,13 @@ _MUTABLE_OWNED_FUNCTIONS(z_bytes_t, z_owned_bytes_t, bytes)
 _MUTABLE_OWNED_FUNCTIONS(z_string_t, z_owned_string_t, string)
 _IMMUTABLE_OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
 _MUTABLE_OWNED_FUNCTIONS(z_config_t, z_owned_config_t, config)
+_MUTABLE_OWNED_FUNCTIONS(z_scouting_config_t, z_owned_scouting_config_t, scouting_config)
 _MUTABLE_OWNED_FUNCTIONS(z_session_t, z_owned_session_t, session)
 _MUTABLE_OWNED_FUNCTIONS(z_subscriber_t, z_owned_subscriber_t, subscriber)
 _MUTABLE_OWNED_FUNCTIONS(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber)
 _MUTABLE_OWNED_FUNCTIONS(z_publisher_t, z_owned_publisher_t, publisher)
 _MUTABLE_OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
+_MUTABLE_OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _MUTABLE_OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _MUTABLE_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 _MUTABLE_OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
@@ -558,6 +609,7 @@ _MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply
 z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
 z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
 z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
+z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello);
 z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
 
 /************* Primitives **************/
@@ -578,15 +630,14 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
  * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
- *   what: A whatami bitmask of zenoh entities kind to scout for. :c:type:`z_whatami_t` defines the available masks.
- *   config: A moved instance of :c:type:`z_owned_config_t` containing the set properties to configure the scouting.
- *   scout_period: The time that should be spent scouting before returning the results.
+ *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the scouting.
+ *   callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
  *
  * Returns:
  *   An array of :c:type:`z_owned_hello_array_t` messages containing the found entities.
  *   The user must release it using ``z_drop(val)`` or ``z_hello_array_drop(&val)``.
  */
-z_owned_hello_array_t z_scout(z_zint_t what, z_owned_config_t *config, uint32_t timeout);
+void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
  * Opens a Zenoh session.

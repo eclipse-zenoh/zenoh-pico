@@ -25,8 +25,18 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Scouting ------------------*/
-_z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, uint32_t timeout) {
-    return _z_scout_inner(what, config, timeout, 0);
+_z_hello_array_t _z_scout(const uint8_t what, const char *locator, uint32_t timeout) {
+    return _z_scout_inner(what, locator, timeout, 0);
+}
+
+void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback, 
+                       void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+    _z_hello_array_t hellos = _z_scout_inner(what, locator, timeout, 0);
+    for (unsigned int i = 0; i < _z_hello_array_len(&hellos); ++i) {
+        (*callback)(_z_hello_array_get(&hellos, i), arg_call);
+    }
+
+    (*dropper)(arg_drop);
 }
 
 /*------------------ Resource Declaration ------------------*/
