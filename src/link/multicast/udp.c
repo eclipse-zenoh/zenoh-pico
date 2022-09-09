@@ -91,12 +91,9 @@ int _z_f_link_listen_udp_multicast(void *arg) {
 
     self->_socket._udp._msock =
         _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._msock == NULL) goto ERR_2;
+    if (self->_socket._udp._msock == NULL) goto ERR_1;
 
     return 0;
-
-ERR_2:
-    _z_close_udp_multicast(self->_socket._udp._sock, self->_socket._udp._msock, self->_socket._udp._raddr);
 
 ERR_1:
     return -1;

@@ -25,10 +25,11 @@ int main(int argc, char **argv) {
 
     char *keyexpr = "demo/example/zenoh-pico-pub";
     char *value = "Pub from Pico!";
+    char *mode = "client";
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:")) != -1) {
+    while ((opt = getopt (argc, argv, "k:v:e:m:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -39,8 +40,11 @@ int main(int argc, char **argv) {
             case 'e':
                 locator = optarg;
                 break;
+            case 'm':
+                mode = optarg;
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -52,6 +56,7 @@ int main(int argc, char **argv) {
     }
 
     z_owned_config_t config = z_config_default();
+    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }

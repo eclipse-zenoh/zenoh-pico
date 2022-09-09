@@ -255,38 +255,47 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char *iface) {
-    __z_net_socket *ret = (__z_net_socket *)z_malloc(sizeof(__z_net_socket));
-    struct addrinfo *raddr = (struct addrinfo *)arg_1;
-    struct addrinfo *laddr = NULL;
+unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr)
+{
     unsigned int addrlen = 0;
-
     struct ifaddrs *l_ifaddr = NULL;
-    if (getifaddrs(&l_ifaddr) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if (getifaddrs(&l_ifaddr) < 0) { return 0; }
 
-    struct sockaddr *lsockaddr = NULL;
     struct ifaddrs *tmp = NULL;
     for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next) {
         if (_z_str_eq(tmp->ifa_name, iface)) {
-            if (tmp->ifa_addr->sa_family == raddr->ai_family) {
+            if (tmp->ifa_addr->sa_family == sa_family) {
                 if (tmp->ifa_addr->sa_family == AF_INET) {
-                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-                    memset(lsockaddr, 0, sizeof(struct sockaddr_in));
-                    memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
+                    *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
+                    memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
+                    memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
                     addrlen = sizeof(struct sockaddr_in);
                 } else if (tmp->ifa_addr->sa_family == AF_INET6) {
-                    lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-                    memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
-                    memcpy(lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
+                    *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
+                    memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
+                    memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
                     addrlen = sizeof(struct sockaddr_in6);
-                } else
+                } else {
                     continue;
+                }
 
                 break;
             }
         }
     }
     freeifaddrs(l_ifaddr);
+
+    return addrlen;
+}
+
+void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char *iface) {
+    __z_net_socket *ret = (__z_net_socket *)z_malloc(sizeof(__z_net_socket));
+    struct addrinfo *raddr = (struct addrinfo *)arg_1;
+    struct addrinfo *laddr = NULL;
+
+    struct sockaddr *lsockaddr = NULL;
+    unsigned int addrlen = __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
+    if (lsockaddr == NULL) { goto _Z_OPEN_UDP_MULTICAST_ERROR_1; }
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_2;
@@ -375,26 +384,38 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
     goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 #endif
 
+    struct sockaddr *lsockaddr = NULL;
+    __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
+    if (lsockaddr == NULL) { goto _Z_LISTEN_UDP_MULTICAST_ERROR_2; }
+
     // Join the multicast group
     if (raddr->ai_family == AF_INET) {
         struct ip_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)raddr->ai_addr)->sin_addr.s_addr;
-        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-        if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
-            goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        mreq.imr_interface.s_addr = ((struct sockaddr_in *)lsockaddr)->sin_addr.s_addr;
+        if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+            goto _Z_LISTEN_UDP_MULTICAST_ERROR_3;
+        }
     } else if (raddr->ai_family == AF_INET6) {
         struct ipv6_mreq mreq;
         memset(&mreq, 0, sizeof(mreq));
         memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr, sizeof(struct in6_addr));
         mreq.ipv6mr_interface = if_nametoindex(iface);
-        if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
-            goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
-    } else
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0) {
+            goto _Z_LISTEN_UDP_MULTICAST_ERROR_3;
+        }
+    } else {
+        goto _Z_LISTEN_UDP_MULTICAST_ERROR_3;
+    }
+
+    z_free(lsockaddr);
 
     ret->_fd = sock;
     return ret;
+
+_Z_LISTEN_UDP_MULTICAST_ERROR_3:
+    z_free(lsockaddr);
 
 _Z_LISTEN_UDP_MULTICAST_ERROR_2:
     close(sock);
