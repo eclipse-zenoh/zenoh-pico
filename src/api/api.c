@@ -268,6 +268,10 @@ z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper
     return (z_owned_closure_reply_t){.call = call, .drop = drop, .context = context};
 }
 
+z_owned_closure_hello_t z_closure_hello(z_owned_hello_handler_t call, _z_dropper_handler_t drop, void *context) {
+    return (z_owned_closure_hello_t){.call = call, .drop = drop, .context = context};
+}
+
 z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_zid_t){.call = call, .drop = drop, .context = context};
 }
