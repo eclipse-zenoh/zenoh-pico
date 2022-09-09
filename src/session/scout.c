@@ -74,7 +74,7 @@ _z_hello_array_t __z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 // Allocate or expand the vector
                 if (ls._val) {
                     _z_hello_t *val = (_z_hello_t *)z_malloc((ls._len + 1) * sizeof(_z_hello_t));
-                    memcpy(val, ls._val, ls._len);
+                    memcpy(val, ls._val, ls._len * sizeof(_z_hello_t));
                     z_free(ls._val);
                     ls._val = val;
                 } else {
