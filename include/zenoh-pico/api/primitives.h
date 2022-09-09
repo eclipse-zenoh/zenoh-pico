@@ -340,6 +340,56 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
 z_owned_scouting_config_t z_scouting_config_default(void);
 
 /**
+ * Return a new, zenoh-allocated, scouting configuration extracted from a :c:type:`z_owned_config_t`.
+ * It consists in a default set of properties for scouting configuration.
+ *
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it using
+ * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_config_loan(&val)``.
+ *
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
+ *
+ * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ *
+ * Parameters:
+ *   config: A loaned instance of :c:type:`z_owned_config_t`.
+ *
+ * Returns:
+ *   Returns a new, zenoh-allocated, default scouting configuration.
+ */
+z_owned_scouting_config_t z_scouting_config_from(z_config_t *config);
+
+/**
+ * Gets the property with the given integer key from the configuration.
+ *
+ * Parameters:
+ *   config: A loaned instance of :c:type:`z_owned_scouting_config_t`.
+ *   key: Integer key for the requested property.
+ *
+ * Returns:
+ *   Returns the property with the given integer key from the configuration.
+ */
+const char *zp_scouting_config_get(z_scouting_config_t *config, unsigned int key);
+
+/**
+ * Inserts or replaces the property with the given integer key in the configuration.
+ *
+ * Parameters:
+ *   config: A loaned instance of :c:type:`z_owned_scouting_config_t`.
+ *   key: Integer key for the property to be inserted.
+ *   value: Property value to be inserted.
+ *
+ * Returns:
+ *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
+ */
+int8_t zp_scouting_config_insert(z_scouting_config_t *config, unsigned int key, z_string_t value);
+
+/**
  * Constructs a :c:type:`z_encoding_t`.
  *
  * Parameters:
