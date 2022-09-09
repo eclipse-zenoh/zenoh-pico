@@ -19,14 +19,16 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/pointer.h"
 
 /*-------- Single-linked List --------*/
+
 /**
- * A single-linked list.
+ * A single-linked list holding pointers.
  *
  *  Members:
- *   void *lal: The pointer to the inner value.
- *   struct z_list *tail: A pointer to the next element in the list.
+ *   void *_val: The pointer to the inner value.
+ *   struct _z_list_t *_tail: A pointer to the next element in the list.
  */
 typedef struct _z_l_t {
     void *_val;
@@ -69,9 +71,61 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline name##_list_t *name##_list_clone(name##_list_t *l) { return _z_list_clone(l, name##_elem_clone); } \
     static inline void name##_list_free(name##_list_t **l) { _z_list_free(l, name##_elem_free); }
 
-typedef struct _z_ls_t {
-    void *_val;
-    struct _z_ls_t *_tail;
-} _z_list_sptr_t;
+/**
+ * A single-linked list holding smart pointers.
+ *
+ *  Members:
+ *   _z_elem_sptr_t _val: The smart pointer to the inner value.
+ *   struct _z_sptr_list_t *_tail: A pointer to the next element in the list.
+ */
+typedef struct _z_sl_t {
+    _z_elem_sptr_t _val;
+    struct _z_sl_t *_tail;
+} _z_sptr_list_t;
+
+_z_sptr_list_t *_z_list_sptr_of(_z_elem_sptr_t x);
+
+size_t _z_list_sptr_len(const _z_sptr_list_t *xs);
+uint8_t _z_list_sptr_is_empty(const _z_sptr_list_t *xs);
+
+_z_elem_sptr_t _z_list_sptr_head(const _z_sptr_list_t *xs);
+_z_sptr_list_t *_z_sptr_list_tail(const _z_sptr_list_t *xs);
+
+_z_sptr_list_t *_z_list_sptr_push(_z_sptr_list_t *xs, _z_elem_sptr_t x);
+_z_sptr_list_t *_z_list_sptr_pop(_z_sptr_list_t *xs, z_element_free_f f_f);
+
+_z_sptr_list_t *_z_list_sptr_find(const _z_sptr_list_t *xs, _z_elem_sptr_t *e);
+
+_z_sptr_list_t *_z_list_sptr_drop_filter(_z_sptr_list_t *xs, z_element_free_f f_f, _z_elem_sptr_t *left);
+
+_z_sptr_list_t *_z_list_sptr_clone(const _z_sptr_list_t *xs);
+void _z_list_sptr_free(_z_sptr_list_t **xs, z_element_free_f f_f);
+
+#define _Z_LIST_SPTR_DEFINE(name)                                                                                     \
+    typedef _z_sptr_list_t name##_sptr_list_t;                                                                        \
+    static inline name##_sptr_list_t *name##_sptr_list_new(void) { return NULL; }                                     \
+    static inline size_t name##_sptr_list_len(const name##_sptr_list_t *l) { return _z_list_sptr_len(l); }            \
+    static inline uint8_t name##_sptr_list_is_empty(const name##_sptr_list_t *l) { return _z_list_sptr_is_empty(l); } \
+    static inline name##_sptr_t name##_sptr_list_head(const name##_sptr_list_t *l) {                                  \
+        return (name##_sptr_t)_z_list_sptr_head(l);                                                                   \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_tail(const name##_sptr_list_t *l) {                            \
+        return _z_sptr_list_tail(l);                                                                                  \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_push(name##_sptr_list_t *l, name##_sptr_t e) {                 \
+        return _z_list_sptr_push(l, e);                                                                               \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_pop(name##_sptr_list_t *l) {                                   \
+        return _z_list_sptr_pop(l, name##_elem_free);                                                                 \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_find(const name##_sptr_list_t *l, name##_eq_f c_f,             \
+                                                            name##_sptr_t *e) {                                       \
+        return _z_list_sptr_find(l, e);                                                                               \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_drop_filter(name##_sptr_list_t *l, name##_sptr_t *e) {         \
+        return _z_list_sptr_drop_filter(l, name##_elem_free, e);                                                      \
+    }                                                                                                                 \
+    static inline name##_sptr_list_t *name##_sptr_list_clone(name##_sptr_list_t *l) { return _z_list_sptr_clone(l); } \
+    static inline void name##_sptr_list_free(name##_sptr_list_t **l) { _z_list_sptr_free(l, name##_elem_free); }
 
 #endif /* ZENOH_PICO_COLLECTIONS_LIST_H */
