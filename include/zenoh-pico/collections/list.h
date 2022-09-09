@@ -69,4 +69,9 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline name##_list_t *name##_list_clone(name##_list_t *l) { return _z_list_clone(l, name##_elem_clone); } \
     static inline void name##_list_free(name##_list_t **l) { _z_list_free(l, name##_elem_free); }
 
+typedef struct _z_ls_t {
+    void *_val;
+    struct _z_ls_t *_tail;
+} _z_list_sptr_t;
+
 #endif /* ZENOH_PICO_COLLECTIONS_LIST_H */
