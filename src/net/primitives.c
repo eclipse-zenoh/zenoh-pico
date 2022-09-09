@@ -11,19 +11,18 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/net/primitives.h"
-
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/logger.h"
+#include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/memory.h"
-#include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/session/query.h"
-#include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Scouting ------------------*/
 _z_hello_array_t _z_scout(const _z_zint_t what, const _z_config_t *config, uint32_t timeout) {
@@ -142,14 +141,14 @@ ERR_1:
 /*------------------ Subscriber Declaration ------------------*/
 _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
-    _z_subscription_t *rs = (_z_subscription_t *)z_malloc(sizeof(_z_subscription_t));
-    rs->_id = _z_get_entity_id(zn);
-    rs->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rs->_info = sub_info;
-    rs->_callback = callback;
-    rs->_dropper = dropper;
-    rs->_arg = arg;
-    if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, rs) < 0) {
+    _z_subscription_t s;
+    s._id = _z_get_entity_id(zn);
+    s._key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    s._info = sub_info;
+    s._callback = callback;
+    s._dropper = dropper;
+    s._arg = arg;
+    if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, &s) < 0) {
         goto ERR_1;
     }
 
@@ -164,7 +163,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 
     _z_subscriber_t *subscriber = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
     subscriber->_zn = zn;
-    subscriber->_id = rs->_id;
+    subscriber->_id = s._id;
 
     return subscriber;
 
@@ -172,20 +171,19 @@ ERR_2:
     _z_msg_clear(&z_msg);
 
 ERR_1:
-    _z_keyexpr_clear(&rs->_key);
-    z_free(rs);
+    _z_subscription_clear(&s);
     return NULL;
 }
 
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
-    _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s == NULL) {
         goto ERR_1;
     }
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->_key));
+    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -205,21 +203,21 @@ ERR_1:
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
-    _z_questionable_t *rq = (_z_questionable_t *)z_malloc(sizeof(_z_questionable_t));
-    rq->_id = _z_get_entity_id(zn);
-    rq->_key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    rq->_complete = complete;
-    rq->_callback = callback;
-    rq->_dropper = dropper;
-    rq->_arg = arg;
-    if (_z_register_questionable(zn, rq) < 0) {
+    _z_questionable_t q;
+    q._id = _z_get_entity_id(zn);
+    q._key = _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    q._complete = complete;
+    q._callback = callback;
+    q._dropper = dropper;
+    q._arg = arg;
+    if (_z_register_questionable(zn, &q) < 0) {
         goto ERR_1;
     }
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] =
-        _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), rq->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -228,7 +226,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, boo
 
     _z_queryable_t *queryable = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
     queryable->_zn = zn;
-    queryable->_id = rq->_id;
+    queryable->_id = q._id;
 
     return queryable;
 
@@ -236,20 +234,19 @@ ERR_2:
     _z_msg_clear(&z_msg);
 
 ERR_1:
-    _z_keyexpr_clear(&rq->_key);
-    z_free(rq);
+    _z_questionable_clear(&q);
     return NULL;
 }
 
 int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
-    _z_questionable_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
+    _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
     if (q == NULL) {
         goto ERR_1;
     }
 
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->_key));
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
         goto ERR_2;
@@ -388,14 +385,14 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg) {
 
 /*------------------ Pull ------------------*/
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
-    _z_subscription_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL) return -1;
+    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+    if (s == NULL) { return -1; }
 
     _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
     _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample
     int is_final = 1;
 
-    _z_zenoh_message_t z_msg = _z_msg_make_pull(s->_key, pull_id, max_samples, is_final);
+    _z_zenoh_message_t z_msg = _z_msg_make_pull(s->ptr->_key, pull_id, max_samples, is_final);
 
     return _z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 }

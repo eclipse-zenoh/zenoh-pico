@@ -167,23 +167,25 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
 
+        // Cache most recent reply
         pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
         pen_rep->_reply = reply;
         pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
-
-        // Trigger the handler
-        if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)
-            pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
-
         pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
-    } else if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_NONE) {
-        pen_qry->_callback(reply, pen_qry->_call_arg);
-        _z_reply_free(&reply);
     }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
+
+    // Trigger the user callback
+    if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
+        pen_qry->_callback(reply, pen_qry->_call_arg);
+    }
+
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_NONE) {
+        _z_reply_free(&reply);
+    }
 
     return 0;
 

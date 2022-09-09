@@ -29,26 +29,26 @@ void _z_questionable_clear(_z_questionable_t *qle) {
 }
 
 /*------------------ Queryable ------------------*/
-_z_questionable_t *__z_get_questionable_by_id(_z_questionable_list_t *qles, const _z_zint_t id) {
-    _z_questionable_t *qle = NULL;
+_z_questionable_sptr_t *__z_get_questionable_by_id(_z_questionable_sptr_list_t *qles, const _z_zint_t id) {
+    _z_questionable_sptr_t *qle = NULL;
     while (qles != NULL) {
-        qle = _z_questionable_list_head(qles);
-        if (id == qle->_id) return qle;
+        qle = _z_questionable_sptr_list_head(qles);
+        if (id == qle->ptr->_id) return qle;
 
-        qles = _z_questionable_list_tail(qles);
+        qles = _z_questionable_sptr_list_tail(qles);
     }
 
     return qle;
 }
 
-_z_questionable_list_t *__z_get_questionable_by_key(_z_questionable_list_t *qles, const _z_keyexpr_t key) {
-    _z_questionable_list_t *xs = NULL;
+_z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_list_t *qles, const _z_keyexpr_t key) {
+    _z_questionable_sptr_list_t *xs = NULL;
     while (qles != NULL) {
-        _z_questionable_t *qle = _z_questionable_list_head(qles);
-        if (_z_keyexpr_intersect(qle->_key._suffix, strlen(qle->_key._suffix), key._suffix, strlen(key._suffix)))
-            xs = _z_questionable_list_push(xs, qle);
+        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
+        if (_z_keyexpr_intersect(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix, strlen(key._suffix)))
+            xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
 
-        qles = _z_questionable_list_tail(qles);
+        qles = _z_questionable_sptr_list_tail(qles);
     }
 
     return xs;
@@ -59,8 +59,8 @@ _z_questionable_list_t *__z_get_questionable_by_key(_z_questionable_list_t *qles
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_questionable_t *__unsafe_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _z_questionable_list_t *qles = zn->_local_questionable;
+_z_questionable_sptr_t *__unsafe_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
+    _z_questionable_sptr_list_t *qles = zn->_local_questionable;
     return __z_get_questionable_by_id(qles, id);
 }
 
@@ -69,17 +69,17 @@ _z_questionable_t *__unsafe_z_get_questionable_by_id(_z_session_t *zn, const _z_
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_questionable_list_t *__unsafe_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key) {
-    _z_questionable_list_t *qles = zn->_local_questionable;
+_z_questionable_sptr_list_t *__unsafe_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key) {
+    _z_questionable_sptr_list_t *qles = zn->_local_questionable;
     return __z_get_questionable_by_key(qles, key);
 }
 
-_z_questionable_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
+_z_questionable_sptr_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_questionable_t *qle = __unsafe_z_get_questionable_by_id(zn, id);
+    _z_questionable_sptr_t *qle = __unsafe_z_get_questionable_by_id(zn, id);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -88,13 +88,13 @@ _z_questionable_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t i
     return qle;
 }
 
-_z_questionable_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+_z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
-    _z_questionable_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
+    _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -103,14 +103,16 @@ _z_questionable_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_ke
     return qles;
 }
 
-int _z_register_questionable(_z_session_t *zn, _z_questionable_t *qle) {
+int _z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
     _Z_DEBUG(">>> Allocating queryable for (%lu:%s,%u)\n", qle->_key._id, qle->_key._suffix);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    zn->_local_questionable = _z_questionable_list_push(zn->_local_questionable, qle);
+    _z_questionable_sptr_t *qle = (_z_questionable_sptr_t *)z_malloc(sizeof(_z_questionable_sptr_t));
+    *qle = _z_questionable_sptr_new(*q);
+    zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, qle);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -125,21 +127,42 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 #endif  // Z_MULTI_THREAD == 1
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
-    if (key._suffix == NULL) goto ERR_1;
+    if (key._suffix == NULL) {
+        goto ERR_1;
+    }
 
-    // Build the query
-    z_query_t q;
-    q._zn = zn;
-    q._qid = query->_qid;
-    q._key = key;
-    q._parameters = query->_parameters;
+    // This two step approach allows the lock to be released while in the user callback
+    // Scoped because of the previous goto ERR
+    {
+        _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
+        _z_questionable_sptr_list_t *xs = qles;
+        size_t len = _z_questionable_sptr_list_len(xs);
+        _z_questionable_handler_t callbacks[len];
+        void *callbacks_args[len];
+        size_t i = 0;
+        while (xs != NULL) {
+            _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
+            callbacks[i] = qle->ptr->_callback;
+            callbacks_args[i++] = qle->ptr->_arg;
+            xs = _z_questionable_sptr_list_tail(xs);
+        }
 
-    _z_questionable_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
-    _z_questionable_list_t *xs = qles;
-    while (xs != NULL) {
-        _z_questionable_t *qle = _z_questionable_list_head(xs);
-        qle->_callback(&q, qle->_arg);
-        xs = _z_questionable_list_tail(xs);
+#if Z_MULTI_THREAD == 1
+        _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+        // Build the query
+        z_query_t q;
+        q._zn = zn;
+        q._qid = query->_qid;
+        q._key = key;
+        q._parameters = query->_parameters;
+        for (i = 0; i < len; i++) {
+            callbacks[i](&q, callbacks_args[i]);
+        }
+
+        _z_keyexpr_clear(&key);
+        _z_questionable_sptr_list_free(&qles);
     }
 
     // Send the final reply
@@ -161,9 +184,6 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
     }
     _z_msg_clear(&z_msg);
 
-    _z_keyexpr_clear(&key);
-    _z_list_free(&qles, _z_noop_free);
-
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
@@ -172,8 +192,6 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 
 ERR_2:
     _z_msg_clear(&z_msg);
-    _z_keyexpr_clear(&key);
-    _z_list_free(&qles, _z_noop_free);
 
 ERR_1:
 #if Z_MULTI_THREAD == 1
@@ -182,12 +200,12 @@ ERR_1:
     return -1;
 }
 
-void _z_unregister_questionable(_z_session_t *zn, _z_questionable_t *qle) {
+void _z_unregister_questionable(_z_session_t *zn, _z_questionable_sptr_t *qle) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    zn->_local_questionable = _z_questionable_list_drop_filter(zn->_local_questionable, _z_questionable_eq, qle);
+    zn->_local_questionable = _z_questionable_sptr_list_drop_filter(zn->_local_questionable, _z_questionable_sptr_eq, qle);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -199,7 +217,7 @@ void _z_flush_questionables(_z_session_t *zn) {
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_questionable_list_free(&zn->_local_questionable);
+    _z_questionable_sptr_list_free(&zn->_local_questionable);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

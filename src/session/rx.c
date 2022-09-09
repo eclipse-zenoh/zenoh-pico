@@ -71,21 +71,27 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _Z_INFO("Received declare-subscriber message\n");
                         _z_keyexpr_t key =
                             _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._sub._key);
-                        _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
-                        if (subs != NULL) break;
+                        _z_subscription_sptr_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
+                        if (subs != NULL) {
+                            break;
+                        }
 
-                        _z_subscription_t *rs = (_z_subscription_t *)z_malloc(sizeof(_z_subscription_t));
-                        rs->_id = _z_get_entity_id(zn);
-                        rs->_key = key;
-                        rs->_info = decl._body._sub._subinfo;
-                        rs->_callback = NULL;
-                        rs->_dropper = NULL;
-                        rs->_arg = NULL;
-                        _z_register_subscription(zn, _Z_RESOURCE_IS_REMOTE, rs);
+                        _z_subscription_t s;
+                        s._id = _z_get_entity_id(zn);
+                        s._key = key;
+                        s._info = decl._body._sub._subinfo;
+                        s._callback = NULL;
+                        s._dropper = NULL;
+                        s._arg = NULL;
+
+                        if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, &s) < 0) {
+                            _z_subscription_clear(&s);
+                            break;
+                        }
 
                         _z_list_free(&subs, _z_noop_free);
                         break;
-                    }
+                        }
                     case _Z_DECL_QUERYABLE: {
                         _Z_INFO("Received declare-queryable message\n");
                         // TODO: not supported yet
@@ -108,13 +114,13 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _Z_INFO("Received forget-subscriber message\n");
                         _z_keyexpr_t key =
                             _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._forget_sub._key);
-                        _z_subscriber_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
+                        _z_subscription_sptr_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
 
-                        _z_subscriber_list_t *xs = subs;
+                        _z_subscription_sptr_list_t *xs = subs;
                         while (xs != NULL) {
-                            _z_subscription_t *sub = _z_subscriber_list_head(xs);
+                            _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
                             _z_unregister_subscription(zn, _Z_RESOURCE_IS_REMOTE, sub);
-                            xs = _z_subscriber_list_tail(xs);
+                            xs = _z_subscription_sptr_list_tail(xs);
                         }
                         _z_list_free(&subs, _z_noop_free);
                         _z_keyexpr_clear(&key);
