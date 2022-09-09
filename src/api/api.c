@@ -548,7 +548,7 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub) {
     return 0;
 }
 
-int8_t z_pull(const z_pull_subscriber_t *sub) { return _z_pull(sub); }
+int8_t z_subscriber_pull(const z_pull_subscriber_t *sub) { return _z_subscriber_pull(sub); }
 
 z_queryable_options_t z_queryable_options_default(void) {
     return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};

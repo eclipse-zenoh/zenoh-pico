@@ -384,11 +384,9 @@ void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg) {
 }
 
 /*------------------ Pull ------------------*/
-int8_t _z_pull(const _z_subscriber_t *sub) {
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL) {
-        return -1;
-    }
+    if (s == NULL) { return -1; }
 
     _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
     _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample

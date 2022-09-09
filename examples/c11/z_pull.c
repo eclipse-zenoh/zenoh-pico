@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
         if (c == 'q') {
             break;
         }
-        z_pull(z_loan(sub));
+        z_subscriber_pull(z_loan(sub));
     }
 
     z_undeclare_pull_subscriber(z_move(sub));
