@@ -39,7 +39,7 @@ _z_subscription_sptr_t *__z_get_subscription_by_id(_z_subscription_sptr_list_t *
     _z_subscription_sptr_t *sub = NULL;
     while (subs != NULL) {
         sub = _z_subscription_sptr_list_head(subs);
-        if (id == sub->ptr._id) {
+        if (id == sub->ptr->_id) {
             return sub;
         }
 
@@ -53,7 +53,7 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
     _z_subscription_sptr_list_t *xs = NULL;
     while (subs != NULL) {
         _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
-        if (_z_keyexpr_intersect(sub->ptr._key._suffix, strlen(sub->ptr._key._suffix), key._suffix, strlen(key._suffix))) {
+        if (_z_keyexpr_intersect(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix, strlen(key._suffix))) {
             xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
         }
 
@@ -166,8 +166,8 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
         size_t i = 0;
         while (xs != NULL) {
             _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
-            callbacks[i] = sub->ptr._callback;
-            callbacks_args[i++] = sub->ptr._arg;
+            callbacks[i] = sub->ptr->_callback;
+            callbacks_args[i++] = sub->ptr->_arg;
             xs = _z_subscription_sptr_list_tail(xs);
         }
 
