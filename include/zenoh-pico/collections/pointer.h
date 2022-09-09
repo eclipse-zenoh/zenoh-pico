@@ -27,7 +27,7 @@ typedef struct {
     atomic_uint *_cnt;
 } _z_elem_sptr_t;
 
-_z_elem_sptr_t _z_elem_sptr_null();
+_z_elem_sptr_t _z_elem_sptr_null(void);
 _z_elem_sptr_t _z_elem_sptr_new(void *val);
 void *_z_elem_sptr_get(_z_elem_sptr_t *p);
 _z_elem_sptr_t _z_elem_sptr_clone(const _z_elem_sptr_t *p);

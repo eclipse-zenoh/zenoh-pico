@@ -118,8 +118,7 @@ void _z_list_sptr_free(_z_sptr_list_t **xs, z_element_free_f f_f);
     static inline name##_sptr_list_t *name##_sptr_list_pop(name##_sptr_list_t *l) {                                   \
         return _z_list_sptr_pop(l, name##_elem_free);                                                                 \
     }                                                                                                                 \
-    static inline name##_sptr_list_t *name##_sptr_list_find(const name##_sptr_list_t *l, name##_eq_f c_f,             \
-                                                            name##_sptr_t *e) {                                       \
+    static inline name##_sptr_list_t *name##_sptr_list_find(const name##_sptr_list_t *l, name##_sptr_t *e) {          \
         return _z_list_sptr_find(l, e);                                                                               \
     }                                                                                                                 \
     static inline name##_sptr_list_t *name##_sptr_list_drop_filter(name##_sptr_list_t *l, name##_sptr_t *e) {         \

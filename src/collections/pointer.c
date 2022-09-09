@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/collections/element.h"
 
-_z_elem_sptr_t _z_elem_sptr_null() {
+_z_elem_sptr_t _z_elem_sptr_null(void) {
     _z_elem_sptr_t p;
     p._ptr = NULL;
     p._cnt = NULL;
