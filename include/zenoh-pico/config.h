@@ -67,10 +67,10 @@
 /**
  * The multicast address and ports to use for multicast scouting.
  * Accepted values : `<ip address>:<port>`.
- * Default value : `"224.0.0.224:7447"`.
+ * Default value : `"224.0.0.224:7446"`.
  */
 #define Z_CONFIG_MULTICAST_LOCATOR_KEY 0x46
-#define Z_CONFIG_MULTICAST_LOCATOR_DEFAULT "udp/224.0.0.224:7447"
+#define Z_CONFIG_MULTICAST_LOCATOR_DEFAULT "udp/224.0.0.224:7446"
 
 /**
  * In client mode, the period dedicated to scouting a router before failing.
