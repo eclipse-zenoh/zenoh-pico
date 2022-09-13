@@ -28,7 +28,7 @@ for INTERFACE in $(echo $INTERFACES | xargs); do
     fi
 done
 
-LOCATORS="udp/224.0.0.225:7446#iface=$INTERFACE"
+LOCATORS="udp/224.0.0.225:7447#iface=$INTERFACE"
 for LOCATOR in $(echo $LOCATORS | xargs); do
     sleep 1
 
@@ -47,7 +47,7 @@ for INTERFACE in $(echo $INTERFACES | xargs); do
     fi
 done
 
-LOCATORS="udp/[ff10::1234]:7446#iface=$INTERFACE"
+LOCATORS="udp/[ff10::1234]:7447#iface=$INTERFACE"
 for LOCATOR in $(echo $LOCATORS | xargs); do
     sleep 1
 
