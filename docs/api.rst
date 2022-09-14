@@ -83,26 +83,6 @@ Arrays
     - ``size_t z_str_array_len(z_str_array_t *a);``
     - ``uint8_t z_str_array_array_is_empty(z_str_array_t *a);``
 
-.. c:type:: z_hello_array_t
-
-  Represents an array of ``z_hello_t``.
-
-  Operations over :c:type:`z_hello_array_t` must be done using the provided functions:
-
-    - ``z_hello_t *z_hello_array_get(z_hello_array_t *a, size_t k);``
-    - ``size_t z_hello_array_len(z_hello_array_t *a);``
-    - ``uint8_t z_hello_array_array_is_empty(z_hello_array_t *a);``
-
-.. c:type:: z_reply_data_array_t
-
-  Represents an array of ``z_reply_data_t``.
-
-  Operations over :c:type:`z_reply_data_array_t` must be done using the provided functions:
-
-    - ``z_reply_data_t *z_reply_data_array_get(z_reply_data_array_t *a, size_t k);``
-    - ``size_t z_reply_data_array_len(z_reply_data_array_t *a);``
-    - ``uint8_t z_reply_data_array_array_is_empty(z_reply_data_array_t *a);``
-
 Owned Types
 ~~~~~~~~~~~
 
@@ -158,14 +138,6 @@ To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check
 .. c:type:: z_owned_str_array_t
 
   A zenoh-allocated :c:type:`z_str_array_t`.
-
-.. c:type:: z_owned_hello_array_t
-
-  A zenoh-allocated :c:type:`z_hello_array_t`.
-
-.. c:type:: z_owned_reply_data_array_t
-
-  A zenoh-allocated :c:type:`z_reply_data_array_t`.
 
 Closures
 ~~~~~~~~
@@ -244,6 +216,7 @@ Primitives
 .. autocfunction:: primitives.h::z_closure_reply
 .. autocfunction:: primitives.h::z_closure_hello
 .. autocfunction:: primitives.h::z_closure_zid
+.. autocfunction:: primitives.h::z_hello_null
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
@@ -275,6 +248,7 @@ Primitives
 .. autocfunction:: primitives.h::z_declare_queryable
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_query_reply
+.. autocfunction:: primitives.h::z_reply_null
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
 .. autocfunction:: primitives.h::z_reply_err

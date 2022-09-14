@@ -24,10 +24,10 @@ void reply_dropper(void *ctx) {
     printf(">> Received query final notification\n");
 }
 
-void reply_handler(z_owned_reply_t oreply, void *ctx) {
+void reply_handler(z_owned_reply_t *reply, void *ctx) {
     (void)(ctx);
-    if (z_reply_is_ok(&oreply)) {
-        z_sample_t sample = z_reply_ok(&oreply);
+    if (z_reply_is_ok(reply)) {
+        z_sample_t sample = z_reply_ok(reply);
         char *keystr = z_keyexpr_to_string(sample.keyexpr);
         printf(">> Received ('%s': '%.*s')\n", keystr, (int)sample.payload.len, sample.payload.start);
         free(keystr);

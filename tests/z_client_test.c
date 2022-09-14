@@ -58,11 +58,11 @@ void query_handler(z_query_t *query, void *arg) {
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(z_owned_reply_t oreply, void *arg) {
+void reply_handler(z_owned_reply_t *reply, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
-    if (z_reply_is_ok(&oreply)) {
-        z_sample_t sample = z_reply_ok(&oreply);
+    if (z_reply_is_ok(reply)) {
+        z_sample_t sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
         char *k_str = z_keyexpr_to_string(sample.keyexpr);

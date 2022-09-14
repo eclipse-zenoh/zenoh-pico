@@ -27,32 +27,4 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 void _z_sample_clear(_z_sample_t *sample);
 void _z_sample_free(_z_sample_t **sample);
 
-/**
- * Free an array of :c:type:`_z_t_msg_hello_t` messages and it's contained :c:type:`_z_t_msg_hello_t` messages
- * recursively.
- *
- * Parameters:
- *     strs: The array of :c:type:`_z_t_msg_hello_t` messages to free.
- */
-void _z_hello_array_clear(_z_hello_array_t *hellos);
-void _z_hello_array_free(_z_hello_array_t **hellos);
-
-/**
- * Free a :c:type:`_z_reply_data_t`, including its internal fields.
- *
- * Parameters:
- *     replies: The :c:type:`_z_reply_data_t` to free.
- */
-void _z_reply_data_clear(_z_reply_data_t *reply_data);
-void _z_reply_data_free(_z_reply_data_t **reply_data);
-
-/**
- * Free a :c:type:`_z_reply_data_array_t` and it's contained replies.
- *
- * Parameters:
- *     replies: The :c:type:`_z_reply_data_array_t` to free.
- */
-void _z_reply_data_array_clear(_z_reply_data_array_t *replies);
-void _z_reply_data_array_free(_z_reply_data_array_t **replies);
-
 #endif /* ZENOH_PICO_MEMORY_NETAPI_H */

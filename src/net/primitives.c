@@ -25,15 +25,22 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Scouting ------------------*/
-_z_hello_array_t _z_scout(const uint8_t what, const char *locator, uint32_t timeout) {
+_z_hello_list_t *_z_scout(const uint8_t what, const char *locator, uint32_t timeout) {
     return _z_scout_inner(what, locator, timeout, 0);
 }
 
 void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback, 
                        void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
-    _z_hello_array_t hellos = _z_scout_inner(what, locator, timeout, 0);
-    for (unsigned int i = 0; i < _z_hello_array_len(&hellos); ++i) {
-        (*callback)(_z_hello_array_get(&hellos, i), arg_call);
+    _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, 0);
+
+    while (hellos != NULL) {
+        _z_hello_t *hello = _z_hello_list_head(hellos);
+        (*callback)(&hello, arg_call);
+        if (hello != NULL) {
+            hellos = _z_hello_list_pop(hellos);
+        } else {
+            hellos = _z_list_pop(hellos, _z_noop_free);
+        }
     }
 
     (*dropper)(arg_drop);
@@ -368,29 +375,6 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     _z_zenoh_message_t z_msg = _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation);
 
     return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
-}
-
-void _z_reply_collect_handler(const _z_reply_t *reply, const void *arg) {
-    _z_pending_query_collect_t *pqc = (_z_pending_query_collect_t *)arg;
-    if (reply->_tag == Z_REPLY_TAG_DATA) {
-        _z_reply_data_t *rd = (_z_reply_data_t *)z_malloc(sizeof(_z_reply_data_t));
-        _z_bytes_copy(&rd->replier_id, &reply->data.replier_id);
-        rd->sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
-        _z_bytes_copy(&rd->sample.payload, &reply->data.sample.payload);
-        rd->sample.encoding.prefix = reply->data.sample.encoding.prefix;
-        _z_bytes_copy(&rd->sample.encoding.suffix, &reply->data.sample.encoding.suffix);
-        rd->sample.kind = reply->data.sample.kind;
-        rd->sample.timestamp = _z_timestamp_duplicate(&reply->data.sample.timestamp);
-
-        pqc->_replies = _z_reply_data_list_push(pqc->_replies, rd);
-    } else {
-#if Z_MULTI_THREAD == 1
-        // Signal that we have received all the replies
-        _z_mutex_lock(&pqc->_mutex);  // Avoid condvar signal to be triggered before wait
-        _z_condvar_signal(&pqc->_cond_var);
-        _z_mutex_unlock(&pqc->_mutex);
-#endif  // Z_MULTI_THREAD == 1
-    }
 }
 
 /*------------------ Pull ------------------*/

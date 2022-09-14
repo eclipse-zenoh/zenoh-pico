@@ -390,6 +390,16 @@ const char *zp_scouting_config_get(z_scouting_config_t *config, unsigned int key
 int8_t zp_scouting_config_insert(z_scouting_config_t *config, unsigned int key, z_string_t value);
 
 /**
+ * Constructs a gravestone value for hello, useful to steal one from a callback.
+ * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_scout`:
+ *
+ *     - copy the value of the callback's argument's pointee,
+ *     - overwrite the pointee with this function's return value,
+ *     - you are now responsible for dropping your copy of the hello.
+ */
+z_owned_hello_t z_hello_null(void);
+
+/**
  * Constructs a :c:type:`z_encoding_t`.
  *
  * Parameters:
@@ -489,6 +499,17 @@ z_bytes_t z_query_parameters(z_query_t *query);
  *   Returns the :c:type:`z_keyexpr_t` associated to the query.
  */
 z_keyexpr_t z_query_keyexpr(z_query_t *query);
+
+/**
+ * Returns an invalidated :c:type:`z_owned_reply_t`.
+ *
+ * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_get`:
+ *
+ *     - copy the value of the callback's argument's pointee,
+ *     - overwrite the pointee with this function's return value,
+ *     - you are now responsible for dropping your copy of the reply.
+ */
+z_owned_reply_t z_reply_null(void);
 
 /**
  * Return a new sample closure.
@@ -653,8 +674,6 @@ _MUTABLE_OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 _MUTABLE_OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _MUTABLE_OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _MUTABLE_OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
-_MUTABLE_OWNED_FUNCTIONS(z_hello_array_t, z_owned_hello_array_t, hello_array)
-_MUTABLE_OWNED_FUNCTIONS(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array)
 
 z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
 z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
@@ -666,26 +685,9 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
 /**
  * Looks for other Zenoh-enabled entities like routers and/or peers.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_hello_array_t` by loaning it using
- * ``z_hello_array_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_hello_array_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_hello_array_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
  *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the scouting.
  *   callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
- *
- * Returns:
- *   An array of :c:type:`z_owned_hello_array_t` messages containing the found entities.
- *   The user must release it using ``z_drop(val)`` or ``z_hello_array_drop(&val)``.
  */
 void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 

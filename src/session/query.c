@@ -26,6 +26,7 @@ void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
     _z_reply_t *ptr = *reply;
+    if (*reply == NULL) { return; }
     _z_reply_clear(ptr);
 
     z_free(ptr);
@@ -45,11 +46,8 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
 }
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
-    if (pen_qry->_dropper != NULL) pen_qry->_dropper(pen_qry->_drop_arg);
+    if (pen_qry->_dropper != NULL) { pen_qry->_dropper(pen_qry->_drop_arg); }
 
-    // TODO[API-NET]: When API and NET are a single layer, there is no need to release the _call_arg.
-    //       Currently, this release is required because we are wrapping the user callback and args
-    //       to enclose the z_reply_t into a z_owned_reply_t.
     z_free(pen_qry->_call_arg);
 
     _z_keyexpr_clear(&pen_qry->_key);
@@ -169,7 +167,16 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
 
         // Cache most recent reply
         pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
-        pen_rep->_reply = reply;
+        if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
+            // No need to store the whole reply in the monotonic mode.
+            _z_reply_t *partial_reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+            memset(partial_reply, 0, sizeof(_z_reply_t)); // Avoid warnings on uninitialised values on the reply
+            partial_reply->data.sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
+            pen_rep->_reply = partial_reply;
+        } else {
+            // Store the whole reply in the latest mode
+            pen_rep->_reply = reply;
+        }
         pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
         pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
@@ -180,11 +187,10 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
 
     // Trigger the user callback
     if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
-        pen_qry->_callback(reply, pen_qry->_call_arg);
-    }
-
-    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_NONE) {
-        _z_reply_free(&reply);
+        pen_qry->_callback(&reply, pen_qry->_call_arg);
+        if (reply != NULL) {
+            _z_reply_free(&reply);
+        }
     }
 
     return 0;
@@ -213,19 +219,12 @@ int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *rep
 
     // The reply is the final one, apply consolidation if needed
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
-        _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
-        _z_pending_reply_t *pen_rep = NULL;
-        while (pen_rps != NULL) {
-            pen_rep = _z_pending_reply_list_head(pen_rps);
+        while (pen_qry->_pending_replies != NULL) {
+            _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
-            // Check if this is the same resource key
             // Trigger the query handler
-            if (_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
-                                     pen_rep->_reply->data.sample.keyexpr._suffix,
-                                     strlen(pen_rep->_reply->data.sample.keyexpr._suffix)))
-                pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
-
-            pen_rps = _z_pending_reply_list_tail(pen_rps);
+            pen_qry->_callback(&pen_rep->_reply, pen_qry->_call_arg);
+            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies);
         }
     }
 
