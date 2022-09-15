@@ -11,9 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <stddef.h>
-
 #include "zenoh-pico/net/memory.h"
+
+#include <stddef.h>
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     dst->keyexpr._id = src->keyexpr._id;          // FIXME: call the z_keyexpr_move

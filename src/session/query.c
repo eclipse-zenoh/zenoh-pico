@@ -26,7 +26,9 @@ void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
     _z_reply_t *ptr = *reply;
-    if (*reply == NULL) { return; }
+    if (*reply == NULL) {
+        return;
+    }
     _z_reply_clear(ptr);
 
     z_free(ptr);
@@ -46,7 +48,9 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
 }
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
-    if (pen_qry->_dropper != NULL) { pen_qry->_dropper(pen_qry->_drop_arg); }
+    if (pen_qry->_dropper != NULL) {
+        pen_qry->_dropper(pen_qry->_drop_arg);
+    }
 
     z_free(pen_qry->_call_arg);
 
@@ -133,8 +137,8 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     if (pen_qry == NULL) goto ERR_1;
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
-    if (!_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
-                              keyexpr._suffix, strlen(keyexpr._suffix))) {
+    if (!_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix), keyexpr._suffix,
+                              strlen(keyexpr._suffix))) {
         goto ERR_2;
     }
 
@@ -176,7 +180,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
         if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
             // No need to store the whole reply in the monotonic mode.
             _z_reply_t *partial_reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
-            memset(partial_reply, 0, sizeof(_z_reply_t)); // Avoid warnings on uninitialised values on the reply
+            memset(partial_reply, 0, sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
             partial_reply->data.sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
             pen_rep->_reply = partial_reply;
         } else {

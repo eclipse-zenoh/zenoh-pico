@@ -12,9 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/transport/link/rx.h"
+
 #include <stddef.h>
 
-#include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Reception helper ------------------*/

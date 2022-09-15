@@ -12,10 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/link/config/serial.h"
+
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/link/config/serial.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/serial.h"

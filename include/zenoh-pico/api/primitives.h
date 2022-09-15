@@ -321,9 +321,10 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
  * Return a new, zenoh-allocated, default scouting configuration.
  * It consists in a default set of properties for scouting configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it using
- * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_config_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it
+ * using
+ * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
+ * is equivalent to writing ``z_config_loan(&val)``.
  *
  * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
  * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
@@ -331,8 +332,8 @@ int8_t zp_config_insert(z_config_t *config, unsigned int key, z_string_t value);
  * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
  * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your
+ * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Returns:
  *   Returns a new, zenoh-allocated, default scouting configuration.
@@ -343,9 +344,10 @@ z_owned_scouting_config_t z_scouting_config_default(void);
  * Return a new, zenoh-allocated, scouting configuration extracted from a :c:type:`z_owned_config_t`.
  * It consists in a default set of properties for scouting configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it using
- * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_config_loan(&val)``.
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it
+ * using
+ * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
+ * is equivalent to writing ``z_config_loan(&val)``.
  *
  * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
  * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
@@ -353,8 +355,8 @@ z_owned_scouting_config_t z_scouting_config_default(void);
  * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
  * is valid.
  *
- * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your
+ * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
  *
  * Parameters:
  *   config: A loaned instance of :c:type:`z_owned_config_t`.
@@ -686,8 +688,8 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
  * Looks for other Zenoh-enabled entities like routers and/or peers.
  *
  * Parameters:
- *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the scouting.
- *   callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
+ *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the
+ * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
  */
 void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
@@ -1307,8 +1309,8 @@ zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void);
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where trigger the leasing procedure.
- *   options: The options to apply to the send of a ``KeepAlive`` messages. If ``NULL`` is passed, the default options will be
- * applied.
+ *   options: The options to apply to the send of a ``KeepAlive`` messages. If ``NULL`` is passed, the default options
+ * will be applied.
  *
  * Returns:
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
@@ -1330,8 +1332,8 @@ zp_send_join_options_t zp_send_join_options_default(void);
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where trigger the leasing procedure.
- *   options: The options to apply to the send of a ``Join`` messages. If ``NULL`` is passed, the default options will be
- * applied.
+ *   options: The options to apply to the send of a ``Join`` messages. If ``NULL`` is passed, the default options will
+ * be applied.
  *
  * Returns:
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.

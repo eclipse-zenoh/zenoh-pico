@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stddef.h>
-
 #include "zenoh-pico/transport/link/task/read.h"
+
+#include <stddef.h>
 
 int _z_read(_z_transport_t *zt) {
 #if Z_UNICAST_TRANSPORT == 1

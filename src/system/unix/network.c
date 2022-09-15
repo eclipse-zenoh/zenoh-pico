@@ -16,10 +16,10 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <net/if.h>
-#include <netinet/in.h>
 #include <netdb.h>
-#include <string.h>
+#include <netinet/in.h>
 #include <stddef.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -255,11 +255,12 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr)
-{
+unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr) {
     unsigned int addrlen = 0;
     struct ifaddrs *l_ifaddr = NULL;
-    if (getifaddrs(&l_ifaddr) < 0) { return 0; }
+    if (getifaddrs(&l_ifaddr) < 0) {
+        return 0;
+    }
 
     struct ifaddrs *tmp = NULL;
     for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next) {
@@ -295,7 +296,9 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
 
     struct sockaddr *lsockaddr = NULL;
     unsigned int addrlen = __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
-    if (lsockaddr == NULL) { goto _Z_OPEN_UDP_MULTICAST_ERROR_1; }
+    if (lsockaddr == NULL) {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_2;
@@ -386,7 +389,9 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
 
     struct sockaddr *lsockaddr = NULL;
     __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
-    if (lsockaddr == NULL) { goto _Z_LISTEN_UDP_MULTICAST_ERROR_2; }
+    if (lsockaddr == NULL) {
+        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+    }
 
     // Join the multicast group
     if (raddr->ai_family == AF_INET) {

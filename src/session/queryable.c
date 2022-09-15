@@ -45,7 +45,8 @@ _z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_li
     _z_questionable_sptr_list_t *xs = NULL;
     while (qles != NULL) {
         _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
-        if (_z_keyexpr_intersect(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix, strlen(key._suffix)))
+        if (_z_keyexpr_intersect(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
+                                 strlen(key._suffix)))
             xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
 
         qles = _z_questionable_sptr_list_tail(qles);
@@ -205,7 +206,8 @@ void _z_unregister_questionable(_z_session_t *zn, _z_questionable_sptr_t *qle) {
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    zn->_local_questionable = _z_questionable_sptr_list_drop_filter(zn->_local_questionable, _z_questionable_sptr_eq, qle);
+    zn->_local_questionable =
+        _z_questionable_sptr_list_drop_filter(zn->_local_questionable, _z_questionable_sptr_eq, qle);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

@@ -12,11 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/collections/vec.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
-
-#include "zenoh-pico/collections/vec.h"
 
 /*-------- vec --------*/
 inline _z_vec_t _z_vec_make(size_t capacity) {

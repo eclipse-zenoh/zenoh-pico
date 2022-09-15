@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stddef.h>
-
 #include "zenoh-pico/transport/link/task/lease.h"
+
+#include <stddef.h>
 
 int _z_send_keep_alive(_z_transport_t *zt) {
 #if Z_UNICAST_TRANSPORT == 1

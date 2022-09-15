@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stddef.h>
-
 #include "zenoh-pico/collections/intmap.h"
+
+#include <stddef.h>
 
 /*-------- int-void map --------*/
 int _z_int_void_map_entry_key_eq(const void *left, const void *right) {

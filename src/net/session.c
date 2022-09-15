@@ -11,14 +11,15 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/net/session.h"
+
 #include <stddef.h>
 
-#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
-#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/utils/logging.h"
 
 _z_session_t *__z_open_inner(char *locator, int mode) {

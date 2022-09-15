@@ -12,10 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/collections/string.h"
+
 #include <stddef.h>
 #include <string.h>
-
-#include "zenoh-pico/collections/string.h"
 
 /*-------- string --------*/
 _z_string_t z_string_make(const char *value) {

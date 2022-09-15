@@ -120,7 +120,8 @@ typedef struct {
 } _z_period_t;
 
 /**
- * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created :c:type:`_z_subscription_sptr_t`.
+ * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created
+ * :c:type:`_z_subscription_sptr_t`.
  *
  * Members:
  *     z_reliability_t reliability: The subscription reliability.

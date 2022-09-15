@@ -11,10 +11,11 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/link/config/bt.h"
+
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/link/config/bt.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/bt.h"
