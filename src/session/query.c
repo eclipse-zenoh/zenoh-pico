@@ -132,11 +132,17 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
     if (pen_qry == NULL) goto ERR_1;
 
+    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
+    if (!_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
+                              keyexpr._suffix, strlen(keyexpr._suffix))) {
+        goto ERR_2;
+    }
+
     // Build the reply
     _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
     reply->_tag = Z_REPLY_TAG_DATA;
     _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
-    reply->data.sample.keyexpr = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
+    reply->data.sample.keyexpr = expanded_ke;
     _z_bytes_copy(&reply->data.sample.payload, &payload);
     reply->data.sample.encoding.prefix = encoding.prefix;
     _z_bytes_copy(&reply->data.sample.encoding.suffix, &encoding.suffix);
@@ -154,7 +160,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix)) {
                 if (timestamp._time <= pen_rep->_tstamp._time)
-                    goto ERR_2;
+                    goto ERR_3;
                 else {
                     pen_qry->_pending_replies =
                         _z_pending_reply_list_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
@@ -195,8 +201,13 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
 
     return 0;
 
-ERR_2:
+ERR_3:
     _z_reply_free(&reply);
+    goto ERR_1;
+
+ERR_2:
+    _z_keyexpr_clear(&expanded_ke);
+
 ERR_1:
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
