@@ -222,12 +222,11 @@ typedef struct {
  * upon its declaration via :c:func:`z_declare_publisher`.
  *
  * Members:
- *   int8_t local_routing: ``0``: disabled, ``1``: enabled, ``-1``: apply session level config.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
- * publisher. z_priority_t priority: The priority of messages issued by this publisher.
+ * publisher.
+ *   z_priority_t priority: The priority of messages issued by this publisher.
  */
 typedef struct {
-    int8_t local_routing;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
 } z_publisher_options_t;
@@ -476,8 +475,8 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the
+ * callback function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
 typedef struct {
     void *context;

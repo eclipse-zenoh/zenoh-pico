@@ -130,7 +130,7 @@ z_owned_scouting_config_t z_scouting_config_default(void) {
     _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
     _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
 
-    return (z_owned_scouting_config_t){._value = sc };
+    return (z_owned_scouting_config_t){._value = sc};
 }
 
 z_owned_scouting_config_t z_scouting_config_from(z_config_t *c) {
@@ -159,7 +159,7 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t *c) {
         _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(opt));
     }
 
-    return (z_owned_scouting_config_t){._value = sc };
+    return (z_owned_scouting_config_t){._value = sc};
 }
 
 const char *zp_scouting_config_get(z_scouting_config_t *sc, unsigned int key) { return _z_config_get(sc, key); }
@@ -242,7 +242,8 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
 _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,
+                                    _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free,
                                     _z_owner_noop_copy)
@@ -315,8 +316,10 @@ void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callbac
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    _z_scout_callback(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10), _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
-                      strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10), __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+    _z_scout_callback(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10),
+                      _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
+                      strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10),
+                      __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
     z_free(wrapped_ctx);
     z_scouting_config_drop(config);
@@ -486,8 +489,7 @@ int8_t z_undeclare_keyexpr(z_session_t *zs, z_owned_keyexpr_t *keyexpr) {
 }
 
 z_publisher_options_t z_publisher_options_default(void) {
-    return (z_publisher_options_t){
-        .local_routing = -1, .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
+    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
 }
 
 z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_publisher_options_t *options) {
@@ -506,13 +508,12 @@ z_owned_publisher_t z_declare_publisher(z_session_t *zs, z_keyexpr_t keyexpr, z_
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     if (options != NULL) {
-        return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, options->local_routing,
-                                                                    options->congestion_control, options->priority)};
+        return (z_owned_publisher_t){._value =
+                                         _z_declare_publisher(zs, key, options->congestion_control, options->priority)};
     }
 
     z_publisher_options_t opt = z_publisher_options_default();
-    return (z_owned_publisher_t){
-        ._value = _z_declare_publisher(zs, key, opt.local_routing, opt.congestion_control, opt.priority)};
+    return (z_owned_publisher_t){._value = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority)};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {

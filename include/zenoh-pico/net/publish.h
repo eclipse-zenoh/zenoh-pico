@@ -24,7 +24,6 @@ typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    int8_t _local_routing;
     z_congestion_control_t _congestion_control;
     z_priority_t _priority;
 } _z_publisher_t;

@@ -11,25 +11,26 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/net/primitives.h"
+
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/primitives.h"
-#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/logger.h"
-#include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 
 /*------------------ Scouting ------------------*/
 _z_hello_list_t *_z_scout(const uint8_t what, const char *locator, uint32_t timeout) {
     return _z_scout_inner(what, locator, timeout, 0);
 }
 
-void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback, 
+void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
                        void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, 0);
 
@@ -112,8 +113,8 @@ ERR_1:
 }
 
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing,
-                                     z_congestion_control_t congestion_control, z_priority_t priority) {
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_congestion_control_t congestion_control,
+                                     z_priority_t priority) {
     // Build the declare message to send on the wire
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
@@ -127,7 +128,6 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int
     pub->_zn = zn;
     pub->_key = _z_keyexpr_duplicate(&keyexpr);
     pub->_id = _z_get_entity_id(zn);
-    pub->_local_routing = local_routing;
     pub->_congestion_control = congestion_control;
     pub->_priority = priority;
 
@@ -380,7 +380,9 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 /*------------------ Pull ------------------*/
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s == NULL) { return -1; }
+    if (s == NULL) {
+        return -1;
+    }
 
     _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
     _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample

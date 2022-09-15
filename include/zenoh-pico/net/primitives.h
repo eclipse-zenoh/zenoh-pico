@@ -46,7 +46,7 @@ _z_hello_list_t *_z_scout(const uint8_t what, const char *locator, const uint32_
  *     locator: The locator where to scout.
  *     timeout: The time that should be spent scouting before returnng the results.
  */
-void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback, 
+void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
                        void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
@@ -95,8 +95,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, int8_t local_routing,
-                                     z_congestion_control_t congestion_control, z_priority_t priority);
+_z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_congestion_control_t congestion_control,
+                                     z_priority_t priority);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
