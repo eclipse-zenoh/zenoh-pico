@@ -33,10 +33,10 @@
  *     timeout: The time that should be spent scouting before returnng the results.
  *
  * Returns:
- *     An array of :c:type:`_z_t_msg_hello_t` messages.
- *     The caller gets its ownership, thus must be released using :c:function:`_z_hello_array_free`.
+ *     The pointer to the list of :c:type:`_z_t_msg_hello_t` messages.
+ *     The caller gets its ownership, thus must be released using :c:function:`_z_hello_list_free`.
  */
-_z_hello_array_t _z_scout(const uint8_t what, const char *locator, const uint32_t timeout);
+_z_hello_list_t *_z_scout(const uint8_t what, const char *locator, const uint32_t timeout);
 
 /**
  * Scout for routers and/or peers.

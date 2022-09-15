@@ -40,10 +40,9 @@
              : z_pull_subscriber_loan, z_owned_publisher_t        \
              : z_publisher_loan, z_owned_queryable_t              \
              : z_queryable_loan, z_owned_reply_t                  \
-             : z_reply_loan, z_owned_str_array_t                  \
-             : z_str_array_loan, z_owned_hello_array_t            \
-             : z_hello_array_loan, z_owned_reply_data_array_t     \
-             : z_reply_data_array_loan)(&x)
+             : z_reply_loan, z_owned_hello_t                      \
+             : z_hello_loan, z_owned_str_array_t                  \
+             : z_str_array_loan)(&x)
 
 /**
  * Defines a generic function for droping any of the ``z_owned_X_t`` types.
@@ -63,10 +62,9 @@
              : z_pull_subscriber_drop, z_owned_publisher_t        \
              : z_publisher_drop, z_owned_queryable_t              \
              : z_queryable_drop, z_owned_reply_t                  \
-             : z_reply_drop, z_owned_str_array_t                  \
-             : z_str_array_drop, z_owned_hello_array_t            \
-             : z_hello_array_drop, z_owned_reply_data_array_t     \
-             : z_reply_data_array_drop)(x)
+             : z_reply_drop, z_owned_hello_t                      \
+             : z_hello_drop, z_owned_str_array_t                  \
+             : z_str_array_drop)(x)
 
 /**
  * Defines a generic function for checking the validity of any of the ``z_owned_X_t`` types.
@@ -90,10 +88,9 @@
              : z_pull_subscriber_check, z_owned_publisher_t        \
              : z_publisher_check, z_owned_queryable_t              \
              : z_queryable_check, z_owned_reply_t                  \
-             : z_reply_check, z_owned_str_array_t                  \
-             : z_str_array_check, z_owned_hello_array_t            \
-             : z_hello_array_check, z_owned_reply_data_array_t     \
-             : z_reply_data_array_check)(&x)
+             : z_reply_check, z_owned_hello_t                      \
+             : z_hello_check, z_owned_str_array_t                  \
+             : z_str_array_check)(&x)
 
 /**
  * Defines a generic function for moving any of the ``z_owned_X_t`` types.
@@ -116,10 +113,9 @@
              : z_pull_subscriber_move, z_owned_publisher_t        \
              : z_publisher_move, z_owned_queryable_t              \
              : z_queryable_move, z_owned_reply_t                  \
-             : z_reply_move, z_owned_str_array_t                  \
-             : z_str_array_move, z_owned_hello_array_t            \
-             : z_hello_array_move, z_owned_reply_data_array_t     \
-             : z_reply_data_array_move, z_owned_closure_sample_t  \
+             : z_reply_move, z_owned_hello_t                      \
+             : z_hello_move, z_owned_str_array_t                  \
+             : z_str_array_move, z_owned_closure_sample_t         \
              : z_closure_sample_move, z_owned_closure_query_t     \
              : z_closure_query_move, z_owned_closure_reply_t      \
              : z_closure_reply_move, z_owned_closure_hello_t      \
@@ -146,10 +142,9 @@
              : z_pull_subscriber_clone, z_owned_publisher_t        \
              : z_publisher_clone, z_owned_queryable_t              \
              : z_queryable_clone, z_owned_reply_t                  \
-             : z_reply_clone, z_owned_str_array_t                  \
-             : z_str_array_clone, z_owned_hello_array_t            \
-             : z_hello_array_clone, z_owned_reply_data_array_t     \
-             : z_reply_data_array_clone)(&x)
+             : z_reply_clone, z_owned_hello_t                      \
+             : z_hello_clone, z_owned_str_array_t                  \
+             : z_str_array_clone)(&x)
 
 #define _z_closure_overloader(callback, droper, ctx, ...) \
     { .call = callback, .drop = droper, .context = ctx }

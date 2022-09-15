@@ -102,5 +102,6 @@ char *_z_config_get(const _z_config_t *ps, unsigned int key);
  *
  */
 #define _z_config_free _z_str_intmap_free
+#define _z_scouting_config_free _z_str_intmap_free
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

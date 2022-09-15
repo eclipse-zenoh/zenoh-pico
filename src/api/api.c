@@ -168,6 +168,8 @@ int8_t zp_scouting_config_insert(z_scouting_config_t *sc, unsigned int key, z_st
     return _zp_config_insert(sc, key, value);
 }
 
+z_owned_hello_t z_hello_null(void) { return (z_owned_hello_t){._value = NULL}; }
+
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){.prefix = prefix,
                            .suffix = _z_bytes_wrap((const uint8_t *)suffix, suffix == NULL ? 0 : strlen(suffix))};
@@ -201,6 +203,8 @@ z_bytes_t z_query_parameters(z_query_t *query) {
 }
 
 z_keyexpr_t z_query_keyexpr(z_query_t *query) { return query->_key; }
+
+z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
 
 /**************** Loans ****************/
 #define _MUTABLE_OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy) \
@@ -238,7 +242,7 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_bytes_t, z_owned_bytes_t, bytes, _z_bytes_
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_string_t, z_owned_string_t, string, _z_string_free, _z_owner_noop_copy)
 _IMMUTABLE_OWNED_FUNCTIONS_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_owner_noop_free,
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,
                                     _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_free,
@@ -249,13 +253,10 @@ _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publishe
                                     _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_free,
                                     _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_owner_noop_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
+_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 _MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free,
                                     _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_hello_array_t, z_owned_hello_array_t, hello_array, _z_hello_array_free,
-                                    _z_owner_noop_copy)
-_MUTABLE_OWNED_FUNCTIONS_DEFINITION(z_reply_data_array_t, z_owned_reply_data_array_t, reply_data_array,
-                                    _z_reply_data_array_free, _z_owner_noop_copy)
 
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};
@@ -293,11 +294,15 @@ typedef struct {
     void *ctx;
 } __z_hello_handler_wrapper_t;
 
-void __z_hello_handler(_z_hello_t *hello, void *arg) {
-    z_owned_hello_t ohello = {._value = hello};
+void __z_hello_handler(_z_hello_t **hello, void *arg) {
+    z_owned_hello_t ohello = {._value = *hello};
 
     __z_hello_handler_wrapper_t *wrapped_ctx = (__z_hello_handler_wrapper_t *)arg;
-    wrapped_ctx->user_call(ohello, wrapped_ctx->ctx);
+    wrapped_ctx->user_call(&ohello, wrapped_ctx->ctx);
+
+    if (ohello._value == NULL) {
+        *hello = NULL;
+    }
 }
 
 void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
@@ -316,6 +321,7 @@ void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callbac
                       strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10),
                       __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
+    z_free(wrapped_ctx);
     z_scouting_config_drop(config);
     config->_value = NULL;
 }
@@ -422,11 +428,15 @@ typedef struct {
     void *ctx;
 } __z_reply_handler_wrapper_t;
 
-void __z_reply_handler(_z_reply_t *reply, void *arg) {
-    z_owned_reply_t oreply = {._value = reply};
+void __z_reply_handler(_z_reply_t **reply, void *arg) {
+    z_owned_reply_t oreply = {._value = *reply};
 
     __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t *)arg;
-    wrapped_ctx->user_call(oreply, wrapped_ctx->ctx);
+    wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
+
+    if (oreply._value == NULL) {
+        *reply = NULL;
+    }
 }
 
 int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
@@ -649,7 +659,23 @@ z_query_reply_options_t z_query_reply_options_default(void) {
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {
     (void)(options);
+    z_keyexpr_t q_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &query->_key);
+    z_keyexpr_t r_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+
+    if (!_z_keyexpr_intersect(q_ke._suffix, strlen(q_ke._suffix),
+                              r_ke._suffix, strlen(r_ke._suffix))) {
+        goto ERR;
+    }
+
+    _z_keyexpr_clear(&q_ke);
+    _z_keyexpr_clear(&r_ke);
     return _z_send_reply(query, keyexpr, payload, payload_len);
+
+ERR:
+    _z_keyexpr_clear(&q_ke);
+    _z_keyexpr_clear(&r_ke);
+
+    return -1;
 }
 
 _Bool z_reply_is_ok(const z_owned_reply_t *reply) {

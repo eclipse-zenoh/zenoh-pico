@@ -69,17 +69,19 @@ _z_session_t *_z_open(_z_config_t *config) {
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
         // Scout and return upon the first result
-        _z_hello_array_t locs = _z_scout_inner(what, mcast_locator, timeout, 1);
-        if (locs._len > 0) {
-            if (locs._val[0].locators._len > 0)
-                locator = _z_str_clone(locs._val[0].locators._val[0]);
-            else {
-                _z_hello_array_clear(&locs);
-                return NULL;
+        _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, 1);
+        _z_hello_list_t *xs = hellos;
+        while (xs != NULL) {
+            _z_hello_t *hello = _z_hello_list_head(xs);
+            if (hello->locators._len > 0) {
+                locator = _z_str_clone(hello->locators._val[0]);
             }
 
-            _z_hello_array_clear(&locs);
-        } else {
+            xs = _z_hello_list_tail(xs);
+        }
+        _z_hello_list_free(&hellos);
+
+        if (locator == NULL) {
             _Z_INFO("Unable to scout a zenoh router\n");
             _Z_ERROR("Please make sure at least one router is running on your network!\n");
 

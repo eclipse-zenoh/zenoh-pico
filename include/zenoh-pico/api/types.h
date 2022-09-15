@@ -414,30 +414,6 @@ _OWNED_TYPE(z_reply_t, reply)
 _TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
 _OWNED_TYPE(z_str_array_t, str_array)
 
-/**
- * Represents an array of ``z_hello_t``.
- *
- * Operations over :c:type:`z_hello_array_t` must be done using the provided functions:
- *
- *   - ``z_hello_t *z_hello_array_get(z_hello_array_t *a, size_t k);``
- *   - ``size_t z_hello_array_len(z_hello_array_t *a);``
- *   - ``uint8_t z_hello_array_array_is_empty(z_hello_array_t *a);``
- */
-_TYPEDEF_ARRAY(_z_hello_array_t, z_hello_array_t, z_hello_t, hello)
-_OWNED_TYPE(z_hello_array_t, hello_array)
-
-/**
- * Represents an array of ``z_reply_data_t``.
- *
- * Operations over :c:type:`z_reply_data_array_t` must be done using the provided functions:
- *
- *   - ``z_reply_data_t *z_reply_data_array_get(z_reply_data_array_t *a, size_t k);``
- *   - ``size_t z_reply_data_array_len(z_reply_data_array_t *a);``
- *   - ``uint8_t z_reply_data_array_array_is_empty(z_reply_data_array_t *a);``
- */
-_TYPEDEF_ARRAY(_z_reply_data_array_t, z_reply_data_array_t, z_reply_data_t, reply_data)
-_OWNED_TYPE(z_reply_data_array_t, reply_data_array)
-
 typedef void (*_z_dropper_handler_t)(void *arg);
 
 /**
@@ -472,7 +448,7 @@ typedef struct {
     _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
-typedef void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg);
+typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
 
 /**
  * Represents the query reply callback closure.
@@ -490,7 +466,7 @@ typedef struct {
     _z_dropper_handler_t drop;
 } z_owned_closure_reply_t;
 
-typedef void (*z_owned_hello_handler_t)(const z_owned_hello_t hello, void *arg);
+typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 
 /**
  * Represents the Zenoh ID callback closure.

@@ -64,6 +64,8 @@ typedef struct {
     z_reply_tag_t _tag;
     _z_reply_data_t data;
 } _z_reply_t;
+void _z_reply_clear(_z_reply_t *src);
+void _z_reply_free(_z_reply_t **hello);
 
 typedef struct {
     _z_zint_t _id;
@@ -139,7 +141,7 @@ _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t **reply, void *arg);
 
 typedef struct {
     _z_zint_t _id;
@@ -171,6 +173,6 @@ typedef struct {
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t *hello, void *arg);
+typedef void (*_z_hello_handler_t)(_z_hello_t **hello, void *arg);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */
