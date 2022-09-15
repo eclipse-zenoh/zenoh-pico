@@ -26,7 +26,7 @@ elif framework == 'arduino':
                 "-<system/arduino/opencr>",
                 "-<system/unix/>",
                 "-<system/zephyr/>"]
-    cppdefines=["ZENOH_ARDUINO_ESP32"]
+    cppdefines=["ZENOH_ARDUINO_ESP32", "ZENOH_C_STANDARD=99"]
   if platform == 'ststm32':
     board = env.get("PIOENV")
     if board == 'opencr':
@@ -38,7 +38,7 @@ elif framework == 'arduino':
                   "-<system/arduino/esp32>",
                   "-<system/unix/>",
                   "-<system/zephyr/>"]
-      cppdefines=["ZENOH_ARDUINO_OPENCR"]
+      cppdefines=["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_MULTI_THREAD=0"]
 
 elif framework == 'espidf':
   src_filter=["+<*>",
@@ -58,7 +58,7 @@ elif framework == 'mbed':
               "-<system/unix/>",
               "-<system/arduino/>",
               "-<system/zephyr/>"]
-  cppdefines=["ZENOH_MBED"]
+  cppdefines=["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
 
 env.Append(SRC_FILTER=src_filter)
 env.Append(CPPDEFINES=cppdefines)
