@@ -12,9 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/link/link.h"
+
 #include <stddef.h>
 
-#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"

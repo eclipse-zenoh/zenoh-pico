@@ -12,10 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/utils/config.h"
+
 #include <stddef.h>
 #include <string.h>
-
-#include "zenoh-pico/utils/config.h"
 
 int _z_config_init(_z_config_t *ps) {
     _z_str_intmap_init(ps);

@@ -12,13 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/session/subscription.h"
+
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/net/resource.h"
+#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
 int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this) {
@@ -53,7 +54,8 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
     _z_subscription_sptr_list_t *xs = NULL;
     while (subs != NULL) {
         _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
-        if (_z_keyexpr_intersect(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix, strlen(key._suffix))) {
+        if (_z_keyexpr_intersect(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
+                                 strlen(key._suffix))) {
             xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
         }
 
@@ -78,7 +80,8 @@ _z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t key) {
+_z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, int is_local,
+                                                                 const _z_keyexpr_t key) {
     _z_subscription_sptr_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscriptions_by_key(subs, key);
 }
@@ -119,7 +122,7 @@ int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
-    if (subs != NULL) // A subscription for this name already exists
+    if (subs != NULL)  // A subscription for this name already exists
         goto ERR;
 
     // Register the subscription
@@ -206,9 +209,11 @@ void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_
 #endif  // Z_MULTI_THREAD == 1
 
     if (is_local)
-        zn->_local_subscriptions = _z_subscription_sptr_list_drop_filter(zn->_local_subscriptions, _z_subscription_sptr_eq, sub);
+        zn->_local_subscriptions =
+            _z_subscription_sptr_list_drop_filter(zn->_local_subscriptions, _z_subscription_sptr_eq, sub);
     else
-        zn->_remote_subscriptions = _z_subscription_sptr_list_drop_filter(zn->_remote_subscriptions, _z_subscription_sptr_eq, sub);
+        zn->_remote_subscriptions =
+            _z_subscription_sptr_list_drop_filter(zn->_remote_subscriptions, _z_subscription_sptr_eq, sub);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

@@ -13,8 +13,8 @@
 //
 
 #include <assert.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "zenoh-pico/collections/string.h"
 

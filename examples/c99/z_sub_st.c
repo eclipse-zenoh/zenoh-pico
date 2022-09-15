@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt (argc, argv, "k:e:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;

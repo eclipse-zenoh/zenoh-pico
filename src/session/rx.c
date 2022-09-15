@@ -71,7 +71,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _Z_INFO("Received declare-subscriber message\n");
                         _z_keyexpr_t key =
                             _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._sub._key);
-                        _z_subscription_sptr_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
+                        _z_subscription_sptr_list_t *subs =
+                            _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
                         if (subs != NULL) {
                             break;
                         }
@@ -91,7 +92,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
                         _z_list_free(&subs, _z_noop_free);
                         break;
-                        }
+                    }
                     case _Z_DECL_QUERYABLE: {
                         _Z_INFO("Received declare-queryable message\n");
                         // TODO: not supported yet
@@ -114,7 +115,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _Z_INFO("Received forget-subscriber message\n");
                         _z_keyexpr_t key =
                             _z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &decl._body._forget_sub._key);
-                        _z_subscription_sptr_list_t *subs = _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
+                        _z_subscription_sptr_list_t *subs =
+                            _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
 
                         _z_subscription_sptr_list_t *xs = subs;
                         while (xs != NULL) {

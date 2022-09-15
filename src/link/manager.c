@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stddef.h>
-
 #include "zenoh-pico/link/manager.h"
+
+#include <stddef.h>
 
 _z_link_manager_t *_z_link_manager_init() {
     _z_link_manager_t *zlm = (_z_link_manager_t *)z_malloc(sizeof(_z_link_manager_t));

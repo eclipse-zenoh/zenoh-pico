@@ -12,11 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/protocol/iobuf.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/config.h"
 
 /*------------------ IOSli ------------------*/
