@@ -209,8 +209,6 @@ typedef struct {
  * Represents the replies consolidation to apply on replies to a :c:func:`z_get`.
  *
  * Members:
- *   z_query_consolidation_tag_t tag: Defines if the replies consolidation strategy is automatically
- *                                    or manually applied.
  *   z_consolidation_mode_t mode: Defines the consolidation mode to apply to the replies.
  */
 typedef struct {

@@ -434,7 +434,7 @@ z_query_target_t z_query_target_default(void);
  *
  * A query consolidation strategy will automatically be selected depending the query selector.
  * If the selector contains time range properties, no consolidation is performed.
- * Otherwise the :c:func:`z_query_consolidation_reception` strategy is used.
+ * Otherwise the :c:func:`z_query_consolidation_latest` strategy is used.
  *
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
