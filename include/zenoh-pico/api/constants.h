@@ -15,6 +15,7 @@
 #define ZENOH_PICO_API_CONSTANTS_H
 
 #define Z_SELECTOR_TIME "_time="
+#define Z_SELECTOR_QUERY_MATCH "_anyke"
 
 /**
  * Whatami values, defined as a bitmask.
