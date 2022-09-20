@@ -172,8 +172,8 @@ typedef enum { Z_CONGESTION_CONTROL_BLOCK = 0, Z_CONGESTION_CONTROL_DROP = 1 } z
  * Priority of Zenoh messages values.
  *
  * Enumerators:
- *     Z_PRIORITY_CONTROL: Priority for ``Control`` messages.
- *     Z_PRIORITY_REALTIME: Priority for ``RealTime`` messages.
+ *     _Z_PRIORITY_CONTROL: Priority for ``Control`` messages.
+ *     Z_PRIORITY_REAL_TIME: Priority for ``RealTime`` messages.
  *     Z_PRIORITY_INTERACTIVE_HIGH: Highest priority for ``Interactive`` messages.
  *     Z_PRIORITY_INTERACTIVE_LOW: Lowest priority for ``Interactive`` messages.
  *     Z_PRIORITY_DATA_HIGH: Highest priority for ``Data`` messages.
@@ -182,8 +182,8 @@ typedef enum { Z_CONGESTION_CONTROL_BLOCK = 0, Z_CONGESTION_CONTROL_DROP = 1 } z
  *     Z_PRIORITY_BACKGROUND: Priority for ``Background traffic`` messages.
  */
 typedef enum {
-    Z_PRIORITY_CONTROL = 0,
-    Z_PRIORITY_REALTIME = 1,
+    _Z_PRIORITY_CONTROL = 0,
+    Z_PRIORITY_REAL_TIME = 1,
     Z_PRIORITY_INTERACTIVE_HIGH = 2,
     Z_PRIORITY_INTERACTIVE_LOW = 3,
     Z_PRIORITY_DATA_HIGH = 4,
