@@ -238,6 +238,7 @@ Primitives
 .. autocfunction:: primitives.h::z_subscriber_options_default
 .. autocfunction:: primitives.h::z_declare_subscriber
 .. autocfunction:: primitives.h::z_undeclare_subscriber
+.. autocfunction:: primitives.h::z_pull_subscriber_options_default
 .. autocfunction:: primitives.h::z_declare_pull_subscriber
 .. autocfunction:: primitives.h::z_undeclare_pull_subscriber
 .. autocfunction:: primitives.h::z_subscriber_pull

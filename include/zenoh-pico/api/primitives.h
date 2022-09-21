@@ -1019,6 +1019,14 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
 /**
+ * Constructs the default values for the pull subscriber entity.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_pull_subscriber_options_t`.
+ */
+z_pull_subscriber_options_t z_pull_subscriber_options_default(void);
+
+/**
  * Declares a pull subscriber for the given keyexpr.
  *
  * Data can be pulled with this subscriber with the help of the
