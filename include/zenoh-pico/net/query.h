@@ -25,6 +25,7 @@ typedef struct {
     _z_zint_t _qid;
     _z_keyexpr_t _key;
     char *_parameters;
+    _Bool _anyke;
 } z_query_t;
 
 /**

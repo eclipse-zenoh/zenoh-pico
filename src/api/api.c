@@ -444,6 +444,10 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_own
     void *ctx = callback->context;
     callback->context = NULL;
 
+    if (parameters == NULL) {
+        parameters = "";
+    }
+
     // Default consolidation is full
     z_query_consolidation_t consolidation = z_query_consolidation_default();
     z_query_target_t target = z_query_target_default();
@@ -659,22 +663,7 @@ z_query_reply_options_t z_query_reply_options_default(void) {
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {
     (void)(options);
-    z_keyexpr_t q_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &query->_key);
-    z_keyexpr_t r_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-
-    if (!_z_keyexpr_intersect(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix))) {
-        goto ERR;
-    }
-
-    _z_keyexpr_clear(&q_ke);
-    _z_keyexpr_clear(&r_ke);
     return _z_send_reply(query, keyexpr, payload, payload_len);
-
-ERR:
-    _z_keyexpr_clear(&q_ke);
-    _z_keyexpr_clear(&r_ke);
-
-    return -1;
 }
 
 _Bool z_reply_is_ok(const z_owned_reply_t *reply) {

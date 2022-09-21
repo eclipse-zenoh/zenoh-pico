@@ -46,8 +46,9 @@ _z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_li
     while (qles != NULL) {
         _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
         if (_z_keyexpr_intersect(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
-                                 strlen(key._suffix)))
+                                 strlen(key._suffix))) {
             xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
+        }
 
         qles = _z_questionable_sptr_list_tail(qles);
     }
@@ -158,6 +159,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         q._qid = query->_qid;
         q._key = key;
         q._parameters = query->_parameters;
+        q._anyke = strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL ? false : true;
         for (i = 0; i < len; i++) {
             callbacks[i](&q, callbacks_args[i]);
         }
