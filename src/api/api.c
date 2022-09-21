@@ -50,7 +50,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr) {
     return (char *)ekey._suffix;  // ekey will be out of scope so, suffix can be safely casted as non-const
 }
 
-_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr) {
+_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
     if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL) return true;
 
     return false;

@@ -82,7 +82,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
  */
-_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
+_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr);
 
 /**
  * Check if a given keyexpr is valid and in its canonical form.

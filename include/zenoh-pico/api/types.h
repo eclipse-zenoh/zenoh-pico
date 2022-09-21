@@ -71,7 +71,7 @@ _OWNED_TYPE(z_string_t, string)
  * Operations over :c:type:`z_keyexpr_t` must be done using the provided functions:
  *
  *   - :c:func:`z_keyexpr`
- *   - :c:func:`z_keyexpr_is_valid`
+ *   - :c:func:`z_keyexpr_is_initialized`
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
  */

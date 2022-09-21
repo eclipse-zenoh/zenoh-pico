@@ -80,7 +80,7 @@
              : z_bytes_check, z_owned_string_t               \
              : z_string_check, z_owned_keyexpr_t             \
              : z_keyexpr_check, z_keyexpr_t                  \
-             : z_keyexpr_is_valid, z_owned_config_t          \
+             : z_keyexpr_is_initialized, z_owned_config_t    \
              : z_config_check, z_owned_scouting_config_t     \
              : z_scouting_config_check, z_owned_session_t    \
              : z_session_check, z_owned_subscriber_t         \
