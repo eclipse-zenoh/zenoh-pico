@@ -44,7 +44,9 @@ void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t t
         }
     }
 
-    (*dropper)(arg_drop);
+    if (dropper != NULL) {
+        (*dropper)(arg_drop);
+    }
 }
 
 /*------------------ Resource Declaration ------------------*/

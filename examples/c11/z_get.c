@@ -37,8 +37,6 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *keyexpr = "demo/example/**";
     char *locator = NULL;
 

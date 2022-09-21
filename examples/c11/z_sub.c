@@ -28,8 +28,6 @@ void data_handler(const z_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *keyexpr = "demo/example/**";
     char *mode = "client";
     char *locator = NULL;

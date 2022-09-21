@@ -27,12 +27,6 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 
-/*************** Logging ***************/
-_Bool z_init_logger(void) {
-    _z_init_logger();
-    return true;
-}
-
 /********* Data Types Handlers *********/
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
@@ -50,7 +44,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr) {
     return (char *)ekey._suffix;  // ekey will be out of scope so, suffix can be safely casted as non-const
 }
 
-_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr) {
+_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
     if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL) return true;
 
     return false;
@@ -305,7 +299,7 @@ void __z_hello_handler(_z_hello_t **hello, void *arg) {
     }
 }
 
-void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
+int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -324,6 +318,8 @@ void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callbac
     z_free(wrapped_ctx);
     z_scouting_config_drop(config);
     config->_value = NULL;
+
+    return 0;
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
@@ -345,7 +341,7 @@ int8_t z_close(z_owned_session_t *zs) {
     return 0;
 }
 
-void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) {
+int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) {
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -364,9 +360,11 @@ void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) {
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) callback->drop(ctx);
+
+    return 0;
 }
 
-void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) {
+int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) {
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -382,6 +380,8 @@ void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) 
 #endif  // Z_UNICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) callback->drop(ctx);
+
+    return 0;
 }
 
 z_id_t z_info_zid(const z_session_t *zs) {

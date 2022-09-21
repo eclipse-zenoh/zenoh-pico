@@ -176,11 +176,10 @@ Macros
 Primitives
 ~~~~~~~~~~
 
-.. autocfunction:: primitives.h::z_init_logger
 .. autocfunction:: primitives.h::z_keyexpr
 .. autocfunction:: primitives.h::z_keyexpr_to_string
 .. autocfunction:: primitives.h::zp_keyexpr_resolve
-.. autocfunction:: primitives.h::z_keyexpr_is_valid
+.. autocfunction:: primitives.h::z_keyexpr_is_initialized
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
 .. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_canonize
@@ -239,6 +238,7 @@ Primitives
 .. autocfunction:: primitives.h::z_subscriber_options_default
 .. autocfunction:: primitives.h::z_declare_subscriber
 .. autocfunction:: primitives.h::z_undeclare_subscriber
+.. autocfunction:: primitives.h::z_pull_subscriber_options_default
 .. autocfunction:: primitives.h::z_declare_pull_subscriber
 .. autocfunction:: primitives.h::z_undeclare_pull_subscriber
 .. autocfunction:: primitives.h::z_subscriber_pull

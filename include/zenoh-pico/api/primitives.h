@@ -23,15 +23,6 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 
-/*************** Logging ***************/
-/**
- * Initialises the zenoh runtime logger.
- *
- * Returns:
- *   Returns ``true`` if the logger is successfully initialized, or ``false`` otherwise.
- */
-_Bool z_init_logger(void);
-
 /********* Data Types Handlers *********/
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
@@ -82,7 +73,7 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
  */
-_Bool z_keyexpr_is_valid(z_keyexpr_t *keyexpr);
+_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr);
 
 /**
  * Check if a given keyexpr is valid and in its canonical form.
@@ -690,8 +681,11 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
  * Parameters:
  *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the
  * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the scouting is successful triggered, or a ``negative value`` otherwise.
  */
-void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
+int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
  * Opens a Zenoh session.
@@ -725,7 +719,7 @@ z_owned_session_t z_open(z_owned_config_t *config);
  *   zs: A moved instance of the the :c:type:`z_owned_session_t` to close.
  *
  * Returns:
- *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
+ *   Returns ``0`` if the session is successful closed, or a ``negative value`` otherwise.
  */
 int8_t z_close(z_owned_session_t *zs);
 
@@ -738,8 +732,11 @@ int8_t z_close(z_owned_session_t *zs);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
  *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
-void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
  * Fetches the Zenoh IDs of all connected routers.
@@ -750,8 +747,11 @@ void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
  *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
-void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
  * Get the local Zenoh ID associated to a given Zenoh session.
@@ -1017,6 +1017,14 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
  *   Returns ``0`` if the undeclare (push) subscriber operation is successful, or a ``negative value`` otherwise.
  */
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
+
+/**
+ * Constructs the default values for the pull subscriber entity.
+ *
+ * Returns:
+ *   Returns the constructed :c:type:`z_pull_subscriber_options_t`.
+ */
+z_pull_subscriber_options_t z_pull_subscriber_options_default(void);
 
 /**
  * Declares a pull subscriber for the given keyexpr.

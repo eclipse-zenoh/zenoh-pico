@@ -34,8 +34,6 @@ void query_handler(z_query_t *query, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *locator = NULL;
 
     int opt;
@@ -81,7 +79,7 @@ int main(int argc, char **argv) {
     }
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_keyexpr_is_valid(&ke)) {
+    if (!z_keyexpr_is_initialized(&ke)) {
         printf("%s is not a valid key expression", keyexpr);
         exit(-1);
     }
