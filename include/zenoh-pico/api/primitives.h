@@ -681,8 +681,11 @@ z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
  * Parameters:
  *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the
  * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the scouting is successful triggered, or a ``negative value`` otherwise.
  */
-void z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
+int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
  * Opens a Zenoh session.
@@ -716,7 +719,7 @@ z_owned_session_t z_open(z_owned_config_t *config);
  *   zs: A moved instance of the the :c:type:`z_owned_session_t` to close.
  *
  * Returns:
- *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
+ *   Returns ``0`` if the session is successful closed, or a ``negative value`` otherwise.
  */
 int8_t z_close(z_owned_session_t *zs);
 
@@ -729,8 +732,11 @@ int8_t z_close(z_owned_session_t *zs);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
  *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
-void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
  * Fetches the Zenoh IDs of all connected routers.
@@ -741,8 +747,11 @@ void z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
  *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *
+ * Returns:
+ *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
-void z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
+int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
  * Get the local Zenoh ID associated to a given Zenoh session.
