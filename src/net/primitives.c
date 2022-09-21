@@ -285,7 +285,7 @@ ERR_1:
 int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len) {
     _z_keyexpr_t q_ke;
     _z_keyexpr_t r_ke;
-    if (strstr(query->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL) {
+    if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &query->_key);
         r_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (!_z_keyexpr_intersect(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix))) {
@@ -380,6 +380,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     pq->_parameters = _z_str_clone(parameters);
     pq->_target = target;
     pq->_consolidation = consolidation;
+    pq->_anykey = strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL ? false : true;
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;

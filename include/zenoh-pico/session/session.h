@@ -150,6 +150,7 @@ typedef struct {
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
     _z_pending_reply_list_t *_pending_replies;
+    _Bool _anykey;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_call_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer

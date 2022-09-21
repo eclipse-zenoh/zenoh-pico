@@ -137,9 +137,8 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     if (pen_qry == NULL) goto ERR_1;
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
-    if (strstr(pen_qry->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL &&
-        !_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix), keyexpr._suffix,
-                              strlen(keyexpr._suffix))) {
+    if (pen_qry->_anykey == false && !_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
+                                                           keyexpr._suffix, strlen(keyexpr._suffix))) {
         goto ERR_2;
     }
 
