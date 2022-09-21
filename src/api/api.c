@@ -27,12 +27,6 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 
-/*************** Logging ***************/
-_Bool z_init_logger(void) {
-    _z_init_logger();
-    return true;
-}
-
 /********* Data Types Handlers *********/
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 

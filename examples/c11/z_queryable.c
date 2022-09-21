@@ -34,8 +34,6 @@ void query_handler(z_query_t *query, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *locator = NULL;
 
     int opt;

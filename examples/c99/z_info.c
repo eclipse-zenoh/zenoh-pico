@@ -29,8 +29,6 @@ void print_zid(const z_id_t *id, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *mode = "client";
     char *locator = NULL;
 

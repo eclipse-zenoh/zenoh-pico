@@ -21,8 +21,6 @@
 #include "zenoh-pico.h"
 
 int main(int argc, char **argv) {
-    z_init_logger();
-
     char *keyexpr = "demo/example/zenoh-pico-pub";
     char *value = "Pub from Pico!";
     char *mode = "client";

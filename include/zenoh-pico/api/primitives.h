@@ -23,15 +23,6 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 
-/*************** Logging ***************/
-/**
- * Initialises the zenoh runtime logger.
- *
- * Returns:
- *   Returns ``true`` if the logger is successfully initialized, or ``false`` otherwise.
- */
-_Bool z_init_logger(void);
-
 /********* Data Types Handlers *********/
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
