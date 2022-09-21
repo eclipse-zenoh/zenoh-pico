@@ -444,6 +444,10 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_own
     void *ctx = callback->context;
     callback->context = NULL;
 
+    if (parameters == NULL) {
+        parameters = "";
+    }
+
     // Default consolidation is full
     z_query_consolidation_t consolidation = z_query_consolidation_default();
     z_query_target_t target = z_query_target_default();
