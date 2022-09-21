@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 #
 # Contributors:
-#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+# ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
 cmake_minimum_required(VERSION 3.8)
 
@@ -170,7 +170,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
 if(BUILD_EXAMPLES)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
 
-  if (CMAKE_C_STANDARD MATCHES "99")
+  if(CMAKE_C_STANDARD MATCHES "99")
     add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/c99/z_put.c)
     add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/c99/z_pub.c)
     add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/c99/z_pub_st.c)
@@ -194,16 +194,16 @@ if(BUILD_EXAMPLES)
     add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/c11/z_scout.c)
   endif()
 
-    target_link_libraries(z_put ${Libname})
-    target_link_libraries(z_pub ${Libname})
-    target_link_libraries(z_pub_st ${Libname})
-    target_link_libraries(z_sub ${Libname})
-    target_link_libraries(z_sub_st ${Libname})
-    target_link_libraries(z_pull ${Libname})
-    target_link_libraries(z_get ${Libname})
-    target_link_libraries(z_queryable ${Libname})
-    target_link_libraries(z_info ${Libname})
-    target_link_libraries(z_scout ${Libname})
+  target_link_libraries(z_put ${Libname})
+  target_link_libraries(z_pub ${Libname})
+  target_link_libraries(z_pub_st ${Libname})
+  target_link_libraries(z_sub ${Libname})
+  target_link_libraries(z_sub_st ${Libname})
+  target_link_libraries(z_pull ${Libname})
+  target_link_libraries(z_get ${Libname})
+  target_link_libraries(z_queryable ${Libname})
+  target_link_libraries(z_info ${Libname})
+  target_link_libraries(z_scout ${Libname})
 endif()
 
 if(BUILD_TOOLS)
@@ -220,12 +220,14 @@ if(BUILD_TESTING)
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
   add_executable(z_keyexpr_test ${PROJECT_SOURCE_DIR}/tests/z_keyexpr_test.c)
+  add_executable(z_api_alignment ${PROJECT_SOURCE_DIR}/tests/z_api_alignment.c)
 
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(zn_msgcodec_test ${Libname})
   target_link_libraries(z_keyexpr_test ${Libname})
+  target_link_libraries(z_api_alignment ${Libname})
 
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
@@ -233,6 +235,7 @@ if(BUILD_TESTING)
   add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
   add_test(z_keyexpr_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_keyexpr_test)
+  add_test(z_api_alignment ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_alignment)
 endif()
 
 if(BUILD_MULTICAST)
