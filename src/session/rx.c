@@ -74,6 +74,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _z_subscription_sptr_list_t *subs =
                             _z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_REMOTE, &key);
                         if (subs != NULL) {
+                            _z_keyexpr_clear(&key);
+                            _z_subscription_sptr_list_free(&subs);
                             break;
                         }
 
@@ -85,12 +87,12 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         s._dropper = NULL;
                         s._arg = NULL;
 
-                        if (_z_register_subscription(zn, _Z_RESOURCE_IS_LOCAL, &s) < 0) {
+                        if (_z_register_subscription(zn, _Z_RESOURCE_IS_REMOTE, &s) < 0) {
                             _z_subscription_clear(&s);
                             break;
                         }
 
-                        _z_list_free(&subs, _z_noop_free);
+                        _z_subscription_sptr_list_free(&subs);
                         break;
                     }
                     case _Z_DECL_QUERYABLE: {
@@ -124,7 +126,8 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                             _z_unregister_subscription(zn, _Z_RESOURCE_IS_REMOTE, sub);
                             xs = _z_subscription_sptr_list_tail(xs);
                         }
-                        _z_list_free(&subs, _z_noop_free);
+
+                        _z_subscription_sptr_list_free(&subs);
                         _z_keyexpr_clear(&key);
                         break;
                     }
