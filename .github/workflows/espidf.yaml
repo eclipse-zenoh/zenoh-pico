@@ -1,0 +1,129 @@
+#
+# Copyright (c) 2022 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: espidf
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install requirements
+      run: |
+        echo "No requirements need to be installed"
+
+    - name: Install PlatformIO
+      run: |
+        python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+        . $HOME/.platformio/penv/bin/activate
+        platformio update
+
+    - name: Set up project
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        mkdir -p $ESPIDF_BASE
+        cd $ESPIDF_BASE
+        platformio init -b az-delivery-devkit-v4 --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF"
+
+        cd $ESPIDF_BASE/lib
+        ln -s $ZENOH_PICO_BASE
+
+        cd $ESPIDF_BASE
+
+    - name: Build z_pub example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_pub.c
+
+        cd $ESPIDF_BASE
+        platformio run
+
+    - name: Build z_sub example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_sub.c
+
+        cd $ESPIDF_BASE
+        platformio run
+
+    - name: Build z_pull example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_pull.c
+
+        cd $ESPIDF_BASE
+        platformio run
+
+    - name: Build z_get example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_get.c
+
+        cd $ESPIDF_BASE
+        platformio run
+
+    - name: Build z_queryable example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_queryable.c
+
+        cd $ESPIDF_BASE
+        platformio run
