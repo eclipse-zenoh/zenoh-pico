@@ -56,14 +56,74 @@ jobs:
         cd $ARDUINO_BASE/lib
         ln -s $ZENOH_PICO_BASE
 
+        cd $ARDUINO_BASE
+
+    - name: Build z_pub example
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
         cd $ARDUINO_BASE/src
         ln -s $ZENOH_PICO_BASE/examples/arduino/z_pub.ino
 
         cd $ARDUINO_BASE
+        platformio run
 
-    - name: Build
+    - name: Build z_sub example
       run: |
+        cd $HOME
         export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
         . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_sub.ino
+
+        cd $ARDUINO_BASE
+        platformio run
+
+    - name: Build z_pull example
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_pull.ino
+
+        cd $ARDUINO_BASE
+        platformio run
+
+    - name: Build z_get example
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_get.ino
+
+        cd $ARDUINO_BASE
+        platformio run
+
+    - name: Build z_queryable example
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_queryable.ino
+
         cd $ARDUINO_BASE
         platformio run
