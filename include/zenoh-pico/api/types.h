@@ -86,7 +86,6 @@ _OWNED_TYPE(z_keyexpr_t, keyexpr)
  * Operations over :c:type:`z_config_t` must be done using the provided functions:
  *
  *   - :c:func:`z_config_new`
- *   - :c:func:`z_config_empty`
  *   - :c:func:`z_config_default`
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
