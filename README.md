@@ -135,7 +135,7 @@ or just include the following line in platformio.ini:
   ```
 
 Finally, your code should go into project_dir/src/main.c.
-Check the examples provided in [zenoh-pico examples](https://github.com/ZettaScaleLabs/zenoh-pico-examples) directory.
+Check the examples provided in examples directory.
 
 To build and upload the code into the board, run the following command:
 
@@ -179,7 +179,7 @@ or just include the following line in platformio.ini:
   ```
 
 Finally, your code should go into project_dir/src/main.ino.
-Check the examples provided in [zenoh-pico examples](https://github.com/ZettaScaleLabs/zenoh-pico-examples) directory.
+Check the examples provided in examples directory.
 
 To build and upload the code into the board, run the following command:
 
@@ -226,7 +226,7 @@ or just include the following line in platformio.ini:
   ```
 
 Finally, your code should go into project_dir/src/main.ino.
-Check the examples provided in [zenoh-pico examples](https://github.com/ZettaScaleLabs/zenoh-pico-examples) directory.
+Check the examples provided in examples directory.
 
 To build and upload the code into the board, run the following command:
 
@@ -268,7 +268,7 @@ or just include the following line in platformio.ini:
   ```
 
 Finally, your code should go into project_dir/src/main.ino.
-Check the examples provided in [zenoh-pico examples](https://github.com/ZettaScaleLabs/zenoh-pico-examples) directory.
+Check the examples provided in examples directory.
 
 To build and upload the code into the board, run the following command:
 
@@ -313,7 +313,7 @@ or just include the following line in platformio.ini:
   ```
 
 Finally, your code should go into project_dir/src/main.ino.
-Check the examples provided in [zenoh-pico examples](https://github.com/ZettaScaleLabs/zenoh-pico-examples) directory.
+Check the examples provided in examples directory.
 
 To build and upload the code into the board, run the following command:
 
