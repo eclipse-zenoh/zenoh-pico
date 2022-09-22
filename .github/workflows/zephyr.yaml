@@ -132,3 +132,17 @@ jobs:
 
         cd $ZEPHYR_BASE
         platformio run
+
+    - name: Build z_scout example
+      run: |
+        cd $HOME
+        export ZEPHYR_BASE=$HOME/work/zephyrproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ZEPHYR_BASE/src/*
+        cd $ZEPHYR_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_scout.c
+
+        cd $ZEPHYR_BASE
+        platformio run

@@ -127,3 +127,17 @@ jobs:
 
         cd $ARDUINO_BASE
         platformio run
+
+    - name: Build z_scout example
+      run: |
+        cd $HOME
+        export ARDUINO_BASE=$HOME/work/arduino_esp32project/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ARDUINO_BASE/src/*
+        cd $ARDUINO_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_scout.ino
+
+        cd $ARDUINO_BASE
+        platformio run

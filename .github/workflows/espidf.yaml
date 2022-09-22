@@ -127,3 +127,17 @@ jobs:
 
         cd $ESPIDF_BASE
         platformio run
+
+    - name: Build z_scout example
+      run: |
+        cd $HOME
+        export ESPIDF_BASE=$HOME/work/espidfproject/
+        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+        . $HOME/.platformio/penv/bin/activate
+
+        rm -rf $ESPIDF_BASE/src/*
+        cd $ESPIDF_BASE/src
+        ln -s $ZENOH_PICO_BASE/examples/espidf/z_scout.c
+
+        cd $ESPIDF_BASE
+        platformio run
