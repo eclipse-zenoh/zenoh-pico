@@ -60,7 +60,7 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE/src
         cd $ZEPHYR_BASE/src
-        wget https://raw.githubusercontent.com/ZettaScaleLabs/zenoh-pico-examples/api-changes/zephyr/z_pub.c
+        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pub.c
 
         cd $ZEPHYR_BASE
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini

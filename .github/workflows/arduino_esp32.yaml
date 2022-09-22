@@ -57,7 +57,7 @@ jobs:
         ln -s $ZENOH_PICO_BASE
 
         cd $ARDUINO_BASE/src
-        wget https://raw.githubusercontent.com/ZettaScaleLabs/zenoh-pico-examples/api-changes/arduino/z_pub.ino
+        ln -s $ZENOH_PICO_BASE/examples/arduino/z_pub.ino
 
         cd $ARDUINO_BASE
 
