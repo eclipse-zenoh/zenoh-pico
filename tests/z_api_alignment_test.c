@@ -153,9 +153,6 @@ int main(int argc, char **argv) {
     z_owned_config_t _ret_config = z_config_new();
     assert(z_check(_ret_config));
     z_drop(z_move(_ret_config));
-    _ret_config = z_config_empty();
-    assert(z_check(_ret_config));
-    z_drop(z_move(_ret_config));
     _ret_config = z_config_default();
     assert(z_check(_ret_config));
 #ifdef ZENOH_PICO

@@ -240,28 +240,6 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 z_owned_config_t z_config_new(void);
 
 /**
- * Return a new, zenoh-allocated, empty configuration.
- * It consists in an empty set of properties for zenoh session configuration.
- *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
- * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_config_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
- * Returns:
- *   Returns a new, zenoh-allocated, empty configuration.
- */
-z_owned_config_t z_config_empty(void);
-
-/**
  * Return a new, zenoh-allocated, default configuration.
  * It consists in a default set of properties for zenoh session configuration.
  *

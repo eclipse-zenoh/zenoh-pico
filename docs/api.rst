@@ -191,7 +191,6 @@ Primitives
 .. autocfunction:: primitives.h::z_keyexpr_equals
 .. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
 .. autocfunction:: primitives.h::z_config_new
-.. autocfunction:: primitives.h::z_config_empty
 .. autocfunction:: primitives.h::z_config_default
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert
