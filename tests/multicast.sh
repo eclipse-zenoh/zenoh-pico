@@ -16,7 +16,7 @@
 TESTBIN=$1
 TESTDIR=$(dirname "$0")
 
-cd "$TESTDIR"
+cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
 

@@ -16,7 +16,7 @@
 TESTBIN=$1
 TESTDIR=$(dirname "$0")
 
-cd "$TESTDIR"
+cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
 
@@ -24,13 +24,13 @@ sleep 5
 
 if [ ! -f zenohd ]; then
     git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
-    cd zenoh-git
+    cd zenoh-git || exit
     if [ -n "$ZENOH_BRANCH" ]; then
         git switch "$ZENOH_BRANCH"
     fi
     cargo build
     cp ./target/debug/zenohd "$TESTDIR"/
-    cd "$TESTDIR"
+    cd "$TESTDIR" || exit
 fi
 
 chmod +x zenohd
@@ -40,7 +40,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
-    RUST_LOG=debug ./zenohd -l "$LOCATOR" &> zenohd."$TESTBIN".log &
+    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$TESTBIN".log 2>&1 &
     ZPID=$!
 
     sleep 5
