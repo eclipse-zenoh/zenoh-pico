@@ -15,9 +15,9 @@ name: arduino_esp32
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ master ]
+    branches: [ '**' ]
 
 jobs:
   build:
@@ -57,7 +57,7 @@ jobs:
         ln -s $ZENOH_PICO_BASE
 
         cd $ARDUINO_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/net/esp32/zn_pub.ino zn_pub.ino
+        wget https://raw.githubusercontent.com/ZettaScaleLabs/zenoh-pico-examples/main/arduino/z_pub.ino
 
         cd $ARDUINO_BASE
 

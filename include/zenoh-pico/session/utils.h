@@ -15,16 +15,18 @@
 #ifndef ZENOH_PICO_SESSION_UTILS_H
 #define ZENOH_PICO_SESSION_UTILS_H
 
-#include "zenoh-pico/api/session.h"
+#include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
-zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period, const int exit_on_first);
+_z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const uint32_t timeout,
+                                const int exit_on_first);
 
-zn_session_t *_zn_session_init(void);
-int _zn_session_close(zn_session_t *zn, uint8_t reason);
-void _zn_session_free(zn_session_t **zn);
+_z_session_t *_z_session_init(void);
+int _z_session_close(_z_session_t *zn, uint8_t reason);
+void _z_session_free(_z_session_t **zn);
 
-int _zn_handle_zenoh_message(zn_session_t *zn, _zn_zenoh_message_t *z_msg);
-int _zn_send_z_msg(zn_session_t *zn, _zn_zenoh_message_t *z_msg, zn_reliability_t reliability, zn_congestion_control_t cong_ctrl);
+int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *z_msg);
+int _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                  z_congestion_control_t cong_ctrl);
 
 #endif /* ZENOH_PICO_SESSION_UTILS_H */

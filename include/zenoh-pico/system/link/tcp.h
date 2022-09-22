@@ -16,25 +16,25 @@
 #define ZENOH_PICO_SYSTEM_LINK_TCP_H
 
 #include <stdint.h>
+
 #include "zenoh-pico/collections/string.h"
 
-#if ZN_LINK_TCP == 1
+#if Z_LINK_TCP == 1
 
-typedef struct
-{
-    void *sock;
-    void *raddr;
-} _zn_tcp_socket_t;
+typedef struct {
+    void *_sock;
+    void *_raddr;
+} _z_tcp_socket_t;
 
-void *_zn_create_endpoint_tcp(const z_str_t s_addr, const z_str_t port);
-void _zn_free_endpoint_tcp(void *addr_arg);
+void *_z_create_endpoint_tcp(const char *s_addr, const char *port);
+void _z_free_endpoint_tcp(void *addr_arg);
 
-void *_zn_open_tcp(void *raddr_arg, unsigned long tout);
-void *_zn_listen_tcp(void *raddr_arg);
-void _zn_close_tcp(void *sock_arg);
-size_t _zn_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len);
-size_t _zn_read_tcp(void *sock_arg, uint8_t *ptr, size_t len);
-size_t _zn_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len);
+void *_z_open_tcp(void *raddr_arg, uint32_t tout);
+void *_z_listen_tcp(void *raddr_arg);
+void _z_close_tcp(void *sock_arg);
+size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len);
+size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len);
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_TCP_H */

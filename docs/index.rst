@@ -12,9 +12,9 @@
 ..   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 ..
 
-*******
+**********
 zenoh-pico
-*******
+**********
 
 The *libzenoh-pico* library provides a C client API for the zenoh protocol.
 

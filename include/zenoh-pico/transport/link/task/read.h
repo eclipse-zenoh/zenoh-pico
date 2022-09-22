@@ -17,12 +17,12 @@
 
 #include "zenoh-pico/transport/transport.h"
 
-int _znp_read(_zn_transport_t *zt);
-int _znp_unicast_read(_zn_transport_unicast_t *ztu);
-int _znp_multicast_read(_zn_transport_multicast_t *ztm);
+int _z_read(_z_transport_t *zt);
+int _zp_unicast_read(_z_transport_unicast_t *ztu);
+int _zp_multicast_read(_z_transport_multicast_t *ztm);
 
-void *_znp_read_task(void *arg);
-void *_znp_unicast_read_task(void *arg);
-void *_znp_multicast_read_task(void *arg);
+void *_zp_read_task(void *arg);
+void *_zp_unicast_read_task(void *arg);
+void *_zp_multicast_read_task(void *arg);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H */

@@ -15,14 +15,14 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#include "zenoh-pico/api/logger.h"
-#include "zenoh-pico/api/config.h"
-#include "zenoh-pico/api/session.h"
+#define ZENOH_PICO "0.6.0"
+#define ZENOH_PICO_MAJOR 0
+#define ZENOH_PICO_MINOR 6
+#define ZENOH_PICO_PATCH 0
+
+#include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/resource.h"
-#include "zenoh-pico/api/query.h"
-#include "zenoh-pico/api/subscribe.h"
-#include "zenoh-pico/api/publish.h"
-#include "zenoh-pico/api/memory.h"
+#include "zenoh-pico/api/types.h"
 
 #endif /* ZENOH_PICO_H */

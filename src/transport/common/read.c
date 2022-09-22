@@ -14,24 +14,34 @@
 
 #include "zenoh-pico/transport/link/task/read.h"
 
-int _znp_read(_zn_transport_t *zt)
-{
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _znp_unicast_read(&zt->transport.unicast);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_read(&zt->transport.multicast);
+#include <stddef.h>
+
+int _z_read(_z_transport_t *zt) {
+#if Z_UNICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_read(&zt->_transport._unicast);
     else
+#endif  // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_read(&zt->_transport._multicast);
+    else
+#endif  // Z_MULTICAST_TRANSPORT == 1
         return -1;
 }
 
-void *_znp_read_task(void *arg)
-{
-    _zn_transport_t *zt = (_zn_transport_t *)arg;
+void *_zp_read_task(void *arg) {
+    _z_transport_t *zt = (_z_transport_t *)arg;
 
-    if (zt->type == _ZN_TRANSPORT_UNICAST_TYPE)
-        return _znp_unicast_read_task(&zt->transport.unicast);
-    else if (zt->type == _ZN_TRANSPORT_MULTICAST_TYPE)
-        return _znp_multicast_read_task(&zt->transport.multicast);
+#if Z_UNICAST_TRANSPORT == 1
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+        return _zp_unicast_read_task(&zt->_transport._unicast);
     else
+#endif  // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        return _zp_multicast_read_task(&zt->_transport._multicast);
+    else
+#endif  // Z_MULTICAST_TRANSPORT == 1
         return NULL;
 }

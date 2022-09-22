@@ -24,8 +24,8 @@ on:
 jobs:
   build:
 
-    name: Build on ubuntu-latest
-    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -53,3 +53,4 @@ jobs:
       run: make test
       env:
         ARGS: -V
+        ZENOH_BRANCH: master

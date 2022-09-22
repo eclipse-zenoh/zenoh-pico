@@ -21,13 +21,12 @@
 
 /*------------------ IOSli ------------------*/
 
-typedef struct
-{
-    uint8_t *buf;
-    size_t r_pos;
-    size_t w_pos;
-    size_t capacity;
-    uint8_t is_alloc;
+typedef struct {
+    uint8_t *_buf;
+    size_t _r_pos;
+    size_t _w_pos;
+    size_t _capacity;
+    uint8_t _is_alloc;
 } _z_iosli_t;
 
 _z_iosli_t _z_iosli_make(size_t capacity);
@@ -45,7 +44,7 @@ void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, siz
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
 void _z_iosli_reset(_z_iosli_t *ios);
 
-z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
+_z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
@@ -57,9 +56,8 @@ _Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_cop
 _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/
-typedef struct
-{
-    _z_iosli_t ios;
+typedef struct {
+    _z_iosli_t _ios;
 } _z_zbuf_t;
 
 _z_zbuf_t _z_zbuf_make(size_t capacity);
@@ -88,13 +86,12 @@ void _z_zbuf_clear(_z_zbuf_t *zbf);
 void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
-typedef struct
-{
-    _z_iosli_vec_t ioss;
-    size_t r_idx;
-    size_t w_idx;
-    size_t capacity;
-    uint8_t is_expandable;
+typedef struct {
+    _z_iosli_vec_t _ioss;
+    size_t _r_idx;
+    size_t _w_idx;
+    size_t _capacity;
+    uint8_t _is_expandable;
 } _z_wbuf_t;
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable);

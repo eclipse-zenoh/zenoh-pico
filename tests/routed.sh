@@ -25,6 +25,9 @@ sleep 5
 if [ ! -f zenohd ]; then
     git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
     cd zenoh-git
+    if [ -n "$ZENOH_BRANCH" ]; then
+        git switch $ZENOH_BRANCH
+    fi
     cargo build
     cp ./target/debug/zenohd $TESTDIR/
     cd $TESTDIR

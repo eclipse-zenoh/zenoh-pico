@@ -16,75 +16,97 @@
 #define ZENOH_PICO_LINK_H
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 
-#if ZN_LINK_TCP == 1
+#if Z_LINK_TCP == 1
 #include "zenoh-pico/system/link/tcp.h"
 #endif
 
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/system/link/udp.h"
 #endif
 
-#if ZN_LINK_BLUETOOTH == 1
+#if Z_LINK_BLUETOOTH == 1
 #include "zenoh-pico/system/link/bt.h"
+#endif
+
+#if Z_LINK_SERIAL == 1
+#include "zenoh-pico/system/link/serial.h"
 #endif
 
 #include "zenoh-pico/utils/result.h"
 
-/*------------------ Link ------------------*/
-typedef int (*_zn_f_link_open)(void *arg);
-typedef int (*_zn_f_link_listen)(void *arg);
-typedef void (*_zn_f_link_close)(void *arg);
-typedef size_t (*_zn_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_zn_f_link_read)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
-typedef size_t (*_zn_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, z_bytes_t *addr);
-typedef void (*_zn_f_link_free)(void *arg);
+/**
+ * Link capabilities values, defined as a bitmask.
+ *
+ * Enumerators:
+ *     Z_LINK_CAPABILITY_NONE: Bitmask to define that link has no capabilities.
+ *     Z_LINK_CAPABILITY_RELIEABLE: Bitmask to define and check if link is reliable.
+ *     Z_LINK_CAPABILITY_STREAMED: Bitmask to define and check if link is streamed.
+ *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
+ */
+typedef enum {
+    Z_LINK_CAPABILITY_NONE = 0x00,       // 0
+    Z_LINK_CAPABILITY_RELIEABLE = 0x01,  // 1 << 0
+    Z_LINK_CAPABILITY_STREAMED = 0x02,   // 1 << 1
+    Z_LINK_CAPABILITY_MULTICAST = 0x04   // 1 << 2
+} _z_link_capabilities_t;
 
-typedef struct
-{
-    _zn_endpoint_t endpoint;
+#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIEABLE) == Z_LINK_CAPABILITY_RELIEABLE)
+#define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
+#define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
 
-    union
-    {
-#if ZN_LINK_TCP == 1
-        _zn_tcp_socket_t tcp;
+typedef int (*_z_f_link_open)(void *arg);
+typedef int (*_z_f_link_listen)(void *arg);
+typedef void (*_z_f_link_close)(void *arg);
+typedef size_t (*_z_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_read)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef size_t (*_z_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef void (*_z_f_link_free)(void *arg);
+
+typedef struct {
+    _z_endpoint_t _endpoint;
+
+    union {
+#if Z_LINK_TCP == 1
+        _z_tcp_socket_t _tcp;
 #endif
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
-        _zn_udp_socket_t udp;
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+        _z_udp_socket_t _udp;
 #endif
-#if ZN_LINK_BLUETOOTH == 1
-        _zn_bt_socket_t bt;
+#if Z_LINK_BLUETOOTH == 1
+        _z_bt_socket_t _bt;
 #endif
-    } socket;
+#if Z_LINK_SERIAL == 1
+        _z_serial_socket_t _serial;
+#endif
+    } _socket;
 
-    _zn_f_link_open open_f;
-    _zn_f_link_listen listen_f;
-    _zn_f_link_close close_f;
-    _zn_f_link_write write_f;
-    _zn_f_link_write_all write_all_f;
-    _zn_f_link_read read_f;
-    _zn_f_link_read_exact read_exact_f;
-    _zn_f_link_free free_f;
+    _z_f_link_open _open_f;
+    _z_f_link_listen _listen_f;
+    _z_f_link_close _close_f;
+    _z_f_link_write _write_f;
+    _z_f_link_write_all _write_all_f;
+    _z_f_link_read _read_f;
+    _z_f_link_read_exact _read_exact_f;
+    _z_f_link_free _free_f;
 
-    uint16_t mtu;
-    uint8_t is_reliable;
-    uint8_t is_streamed;
-    uint8_t is_multicast;
-} _zn_link_t;
+    uint16_t _mtu;
+    uint8_t _capabilities;
+} _z_link_t;
 
-_ZN_RESULT_DECLARE(_zn_link_t, link)
-_ZN_P_RESULT_DECLARE(_zn_link_t, link)
+_Z_RESULT_DECLARE(_z_link_t, link)
+_Z_P_RESULT_DECLARE(_z_link_t, link)
 
-void _zn_link_free(_zn_link_t **zn);
-_zn_link_p_result_t _zn_open_link(const z_str_t locator);
-_zn_link_p_result_t _zn_listen_link(const z_str_t locator);
+void _z_link_free(_z_link_t **zn);
+_z_link_p_result_t _z_open_link(const char *locator);
+_z_link_p_result_t _z_listen_link(const char *locator);
 
-int _zn_link_send_wbuf(const _zn_link_t *link, const _z_wbuf_t *wbf);
-size_t _zn_link_recv_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, z_bytes_t *addr);
-size_t _zn_link_recv_exact_zbuf(const _zn_link_t *link, _z_zbuf_t *zbf, size_t len, z_bytes_t *addr);
+int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf);
+size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr);
+size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_bytes_t *addr);
 
 #endif /* ZENOH_PICO_LINK_H */

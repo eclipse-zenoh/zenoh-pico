@@ -14,16 +14,16 @@
 
 #include "zenoh-pico/link/manager.h"
 
-_zn_link_manager_t *_zn_link_manager_init()
-{
-    _zn_link_manager_t *zlm = (_zn_link_manager_t *)z_malloc(sizeof(_zn_link_manager_t));
+#include <stddef.h>
+
+_z_link_manager_t *_z_link_manager_init() {
+    _z_link_manager_t *zlm = (_z_link_manager_t *)z_malloc(sizeof(_z_link_manager_t));
 
     return zlm;
 }
 
-void _zn_link_manager_free(_zn_link_manager_t **zlm)
-{
-    _zn_link_manager_t *ptr = *zlm;
+void _z_link_manager_free(_z_link_manager_t **zlm) {
+    _z_link_manager_t *ptr = *zlm;
     z_free(ptr);
     *zlm = NULL;
 }

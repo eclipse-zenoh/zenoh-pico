@@ -12,148 +12,141 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
+
+#include <stddef.h>
+
+#include "zenoh-pico/config.h"
+#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/link/task/join.h"
+#include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_zint_t _zn_get_minimum_lease(_zn_transport_peer_entry_list_t *peers, z_zint_t local_lease)
-{
-    z_zint_t ret = local_lease;
+#if Z_MULTICAST_TRANSPORT == 1
 
-    _zn_transport_peer_entry_list_t *it = peers;
-    while (it != NULL)
-    {
-        z_zint_t lease = ((_zn_transport_peer_entry_t *)it->val)->lease;
-        if (lease < ret)
-            ret = lease;
+_z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
+    _z_zint_t ret = local_lease;
 
-        it = it->tail;
+    _z_transport_peer_entry_list_t *it = peers;
+    while (it != NULL) {
+        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(it);
+        _z_zint_t lease = val->_lease;
+        if (lease < ret) ret = lease;
+
+        it = _z_transport_peer_entry_list_tail(it);
     }
 
     return ret;
 }
 
-z_zint_t _zn_get_next_lease(_zn_transport_peer_entry_list_t *peers)
-{
-    z_zint_t ret = SIZE_MAX;
+_z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
+    _z_zint_t ret = SIZE_MAX;
 
-    _zn_transport_peer_entry_list_t *it = peers;
-    while (it != NULL)
-    {
-        z_zint_t next_lease = ((_zn_transport_peer_entry_t *)it->val)->next_lease;
-        if (next_lease < ret)
-            ret = next_lease;
+    _z_transport_peer_entry_list_t *it = peers;
+    while (it != NULL) {
+        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(it);
+        _z_zint_t next_lease = val->_next_lease;
+        if (next_lease < ret) ret = next_lease;
 
-        it = it->tail;
+        it = _z_transport_peer_entry_list_tail(it);
     }
 
     return ret;
 }
 
-int _znp_multicast_send_keep_alive(_zn_transport_multicast_t *ztm)
-{
-    z_bytes_t pid = _z_bytes_wrap(((zn_session_t *)ztm->session)->tp_manager->local_pid.val, ((zn_session_t *)ztm->session)->tp_manager->local_pid.len);
-    _zn_transport_message_t t_msg = _zn_t_msg_make_keep_alive(pid);
+int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
+    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start,
+                                   ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
+    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(pid);
 
-    return _zn_multicast_send_t_msg(ztm, &t_msg);
+    return _z_multicast_send_t_msg(ztm, &t_msg);
 }
 
-void *_znp_multicast_lease_task(void *arg)
-{
-    _zn_transport_multicast_t *ztm = (_zn_transport_multicast_t *)arg;
-
-    ztm->lease_task_running = 1;
-    ztm->transmitted = 0;
+void *_zp_multicast_lease_task(void *arg) {
+    (void)(arg);
+#if Z_MULTI_THREAD == 1
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
+    ztm->_lease_task_running = 1;
+    ztm->_transmitted = 0;
 
     // From all peers, get the next lease time (minimum)
-    z_zint_t next_lease = _zn_get_minimum_lease(ztm->peers, ztm->lease);
-    z_zint_t next_keep_alive = next_lease / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
-    z_zint_t next_join = ZN_JOIN_INTERVAL;
+    _z_zint_t next_lease = _z_get_minimum_lease(ztm->_peers, ztm->_lease);
+    _z_zint_t next_keep_alive = next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+    _z_zint_t next_join = Z_JOIN_INTERVAL;
 
-    _zn_transport_peer_entry_list_t *it = NULL;
-    while (ztm->lease_task_running)
-    {
-        z_mutex_lock(&ztm->mutex_peer);
-        if (next_lease <= 0)
-        {
-            it = ztm->peers;
-            while (it != NULL)
-            {
-                _zn_transport_peer_entry_t *entry = it->val;
-                if (entry->received == 1)
-                {
+    _z_transport_peer_entry_list_t *it = NULL;
+    while (ztm->_lease_task_running) {
+        _z_mutex_lock(&ztm->_mutex_peer);
+
+        if (next_lease <= 0) {
+            it = ztm->_peers;
+            while (it != NULL) {
+                _z_transport_peer_entry_t *entry = _z_transport_peer_entry_list_head(it);
+                if (entry->_received == 1) {
                     // Reset the lease parameters
-                    entry->received = 0;
-                    entry->next_lease = entry->lease;
-                    it = it->tail;
-                }
-                else
-                {
-                    _Z_INFO("Remove peer from know list because it has expired after %zums\n", entry->lease);
-                    ztm->peers = _zn_transport_peer_entry_list_drop_filter(ztm->peers, _zn_transport_peer_entry_eq, entry);
-                    it = ztm->peers;
+                    entry->_received = 0;
+                    entry->_next_lease = entry->_lease;
+                    it = _z_transport_peer_entry_list_tail(it);
+                } else {
+                    _Z_INFO("Remove peer from know list because it has expired after %zums\n", entry->_lease);
+                    ztm->_peers =
+                        _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
+                    it = ztm->_peers;
                 }
             }
         }
 
-        if (next_join <= 0)
-        {
-            _znp_multicast_send_join(ztm);
-            ztm->transmitted = 1;
+        if (next_join <= 0) {
+            _zp_multicast_send_join(ztm);
+            ztm->_transmitted = 1;
 
             // Reset the join parameters
-            next_join = ZN_JOIN_INTERVAL;
+            next_join = Z_JOIN_INTERVAL;
         }
 
-        if (next_keep_alive <= 0)
-        {
+        if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztm->transmitted == 0)
-                _znp_multicast_send_keep_alive(ztm);
+            if (ztm->_transmitted == 0) _zp_multicast_send_keep_alive(ztm);
 
             // Reset the keep alive parameters
-            ztm->transmitted = 0;
-            next_keep_alive = _zn_get_minimum_lease(ztm->peers, ztm->lease) / ZN_TRANSPORT_LEASE_EXPIRE_FACTOR;
+            ztm->_transmitted = 0;
+            next_keep_alive = _z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
         }
 
         // Compute the target interval to sleep
-        z_zint_t interval;
-        if (next_lease > 0)
-        {
+        _z_zint_t interval;
+        if (next_lease > 0) {
             interval = next_lease;
-            if (next_keep_alive < interval)
-                interval = next_keep_alive;
-            if (next_join < interval)
-                interval = next_join;
-        }
-        else
-        {
+            if (next_keep_alive < interval) interval = next_keep_alive;
+            if (next_join < interval) interval = next_join;
+        } else {
             interval = next_keep_alive;
-            if (next_join < interval)
-                interval = next_join;
+            if (next_join < interval) interval = next_join;
         }
 
-        z_mutex_unlock(&ztm->mutex_peer);
+        _z_mutex_unlock(&ztm->_mutex_peer);
 
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);
 
         // Decrement all intervals
-        z_mutex_lock(&ztm->mutex_peer);
-        it = ztm->peers;
-        while (it != NULL)
-        {
-            _zn_transport_peer_entry_t *entry = it->val;
-            entry->next_lease -= interval;
-            it = it->tail;
+        _z_mutex_lock(&ztm->_mutex_peer);
+
+        it = ztm->_peers;
+        while (it != NULL) {
+            _z_transport_peer_entry_t *entry = _z_transport_peer_entry_list_head(it);
+            entry->_next_lease -= interval;
+            it = _z_transport_peer_entry_list_tail(it);
         }
-        next_lease = _zn_get_next_lease(ztm->peers);
+        next_lease = _z_get_next_lease(ztm->_peers);
         next_keep_alive -= interval;
         next_join -= interval;
-        z_mutex_unlock(&ztm->mutex_peer);
+
+        _z_mutex_unlock(&ztm->_mutex_peer);
     }
+#endif  // Z_MULTI_THREAD == 1
 
     return 0;
 }
+
+#endif  // Z_MULTICAST_TRANSPORT == 1

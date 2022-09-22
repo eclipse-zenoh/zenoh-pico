@@ -15,9 +15,9 @@ name: zephyr
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ master ]
+    branches: [ '**' ]
 
 jobs:
   build:
@@ -60,7 +60,7 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE/src
         cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/net/zn_pub.c zn_pub.c
+        wget https://raw.githubusercontent.com/ZettaScaleLabs/zenoh-pico-examples/main/zephyr/z_pub.c
 
         cd $ZEPHYR_BASE
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini

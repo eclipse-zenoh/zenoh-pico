@@ -9,16 +9,23 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 #
 # Contributors:
-#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+# ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
 cmake_minimum_required(VERSION 3.8)
 
 project(libzenohpico VERSION 0.6.0 LANGUAGES C)
 
-# Default to C99
 if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
+  if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
+    set(CMAKE_C_STANDARD 11)
+    message(STATUS "Setting C11 as the C Standard")
+  else()
+    set(CMAKE_C_STANDARD 99)
+    message(STATUS "Setting C99 as the C Standard")
+  endif()
 endif()
+
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -28,44 +35,54 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
+
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
-option (PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
+option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
 message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
 
-option (BUILD_EXAMPLES "Use this to also build the examples." ON)
+option(BUILD_EXAMPLES "Use this to also build the examples." ON)
 message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 
-option (BUILD_TESTING "Use this to also build tests." ON)
+option(BUILD_TOOLS "Use this to also build the tools." ON)
+message(STATUS "Build examples: ${BUILD_TOOLS}")
+
+option(BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
-option (BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
-option (ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
+option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definitions(-DZENOH_LINUX)
   set(JNI_PLATFORM_NAME "linux")
+elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
+  add_definitions(-DZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_definitions(-DZENOH_MACOS)
   set(MACOSX_RPATH "ON")
-  set(JNI_PLATFORM_NAME "darwin")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
   add_definitions(-DZENOH_WIN)
-  set(JNI_PLATFORM_NAME "win32")
+  return()
+else()
+  message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
+  return()
 endif()
 
 add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
+add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
-if (SKBUILD)
+if(SKBUILD)
   set(INSTALL_RPATH "zenoh")
   set(INSTALL_NAME_DIR "zenoh")
   set(INSTALL_INCLUDE_NAME_DIR "zenoh/include")
@@ -74,52 +91,54 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pipe -g -O0)
-elseif (CMAKE_BUILD_TYPE MATCHES "RELEASE")
+elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   add_compile_options(-pipe -O3)
 endif()
 
 set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
-                        "include/zenoh-pico/*.h"
-                        "include/zenoh-pico/api/*.h"
-                        "include/zenoh-pico/collections/*.h"
-                        "include/zenoh-pico/link/*.h"
-                        "include/zenoh-pico/link/config/*.h"
-                        "include/zenoh-pico/protocol/*.h"
-                        "include/zenoh-pico/session/*.h"
-                        "include/zenoh-pico/system/*.h"
-                        "include/zenoh-pico/system/link/*.h"
-                        "include/zenoh-pico/transport/*.h"
-                        "include/zenoh-pico/utils/*.h"
+  "include/zenoh-pico/*.h"
+  "include/zenoh-pico/api/*.h"
+  "include/zenoh-pico/collections/*.h"
+  "include/zenoh-pico/link/*.h"
+  "include/zenoh-pico/link/config/*.h"
+  "include/zenoh-pico/protocol/*.h"
+  "include/zenoh-pico/session/*.h"
+  "include/zenoh-pico/system/*.h"
+  "include/zenoh-pico/system/link/*.h"
+  "include/zenoh-pico/transport/*.h"
+  "include/zenoh-pico/utils/*.h"
 )
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-if (UNIX)
+if(UNIX)
   file(GLOB Sources "src/*.c"
-                    "src/api/*.c"
-                    "src/collections/*.c"
-                    "src/link/*.c"
-                    "src/link/config/*.c"
-                    "src/link/unicast/*.c"
-                    "src/link/multicast/*.c"
-                    "src/protocol/*.c"
-                    "src/session/*.c"
-                    "src/system/*.c"
-                    "src/system/unix/*.c"
-                    "src/transport/*.c"
-                    "src/transport/common/*.c"
-                    "src/transport/unicast/*.c"
-                    "src/transport/unicast/link/*.c"
-                    "src/transport/unicast/link/task/*.c"
-                    "src/transport/multicast/*.c"
-                    "src/transport/multicast/link/*.c"
-                    "src/transport/multicast/link/task/*.c"
+    "src/api/*.c"
+    "src/net/*.c"
+    "src/collections/*.c"
+    "src/link/*.c"
+    "src/link/config/*.c"
+    "src/link/unicast/*.c"
+    "src/link/multicast/*.c"
+    "src/protocol/*.c"
+    "src/protocol/keyexpr/*.c"
+    "src/session/*.c"
+    "src/system/*.c"
+    "src/system/unix/*.c"
+    "src/transport/*.c"
+    "src/transport/common/*.c"
+    "src/transport/unicast/*.c"
+    "src/transport/unicast/link/*.c"
+    "src/transport/unicast/link/task/*.c"
+    "src/transport/multicast/*.c"
+    "src/transport/multicast/link/*.c"
+    "src/transport/multicast/link/task/*.c"
+    "src/utils/*.c"
   )
 endif()
 
@@ -135,47 +154,62 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 install(TARGETS ${Libname}
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib
-          COMPONENT Library
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  COMPONENT Library
 )
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-          DESTINATION include
-          COMPONENT Headers
+  DESTINATION include
+  COMPONENT Headers
 )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
-          DESTINATION include
-          COMPONENT Headers
+  DESTINATION include
+  COMPONENT Headers
 )
 
-if (BUILD_EXAMPLES)
+if(BUILD_EXAMPLES)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
 
-  add_executable(zn_write ${PROJECT_SOURCE_DIR}/examples/net/zn_write.c)
-  add_executable(zn_pub ${PROJECT_SOURCE_DIR}/examples/net/zn_pub.c)
-  add_executable(zn_sub ${PROJECT_SOURCE_DIR}/examples/net/zn_sub.c)
-  add_executable(zn_peer_sub ${PROJECT_SOURCE_DIR}/examples/net/zn_peer_sub.c)
-  add_executable(zn_peer_pub ${PROJECT_SOURCE_DIR}/examples/net/zn_peer_pub.c)
-  add_executable(zn_pull ${PROJECT_SOURCE_DIR}/examples/net/zn_pull.c)
-  add_executable(zn_query ${PROJECT_SOURCE_DIR}/examples/net/zn_query.c)
-  add_executable(zn_eval ${PROJECT_SOURCE_DIR}/examples/net/zn_eval.c)
-  add_executable(zn_info ${PROJECT_SOURCE_DIR}/examples/net/zn_info.c)
-  add_executable(zn_pub_thr ${PROJECT_SOURCE_DIR}/examples/net/zn_pub_thr.c)
-  add_executable(zn_sub_thr ${PROJECT_SOURCE_DIR}/examples/net/zn_sub_thr.c)
-  add_executable(zn_scout ${PROJECT_SOURCE_DIR}/examples/net/zn_scout.c)
+  if(CMAKE_C_STANDARD MATCHES "99")
+    add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/c99/z_put.c)
+    add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/c99/z_pub.c)
+    add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/c99/z_pub_st.c)
+    add_executable(z_sub ${PROJECT_SOURCE_DIR}/examples/c99/z_sub.c)
+    add_executable(z_sub_st ${PROJECT_SOURCE_DIR}/examples/c99/z_sub_st.c)
+    add_executable(z_pull ${PROJECT_SOURCE_DIR}/examples/c99/z_pull.c)
+    add_executable(z_get ${PROJECT_SOURCE_DIR}/examples/c99/z_get.c)
+    add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/c99/z_queryable.c)
+    add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/c99/z_info.c)
+    add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/c99/z_scout.c)
+  else()
+    add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/c11/z_put.c)
+    add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/c11/z_pub.c)
+    add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/c11/z_pub_st.c)
+    add_executable(z_sub ${PROJECT_SOURCE_DIR}/examples/c11/z_sub.c)
+    add_executable(z_sub_st ${PROJECT_SOURCE_DIR}/examples/c11/z_sub_st.c)
+    add_executable(z_pull ${PROJECT_SOURCE_DIR}/examples/c11/z_pull.c)
+    add_executable(z_get ${PROJECT_SOURCE_DIR}/examples/c11/z_get.c)
+    add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/c11/z_queryable.c)
+    add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/c11/z_info.c)
+    add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/c11/z_scout.c)
+  endif()
 
-  target_link_libraries(zn_write ${Libname})
-  target_link_libraries(zn_pub ${Libname})
-  target_link_libraries(zn_sub ${Libname})
-  target_link_libraries(zn_peer_sub ${Libname})
-  target_link_libraries(zn_peer_pub ${Libname})
-  target_link_libraries(zn_pull ${Libname})
-  target_link_libraries(zn_query ${Libname})
-  target_link_libraries(zn_eval ${Libname})
-  target_link_libraries(zn_info ${Libname})
-  target_link_libraries(zn_pub_thr ${Libname})
-  target_link_libraries(zn_sub_thr ${Libname})
-  target_link_libraries(zn_scout ${Libname})
+  target_link_libraries(z_put ${Libname})
+  target_link_libraries(z_pub ${Libname})
+  target_link_libraries(z_pub_st ${Libname})
+  target_link_libraries(z_sub ${Libname})
+  target_link_libraries(z_sub_st ${Libname})
+  target_link_libraries(z_pull ${Libname})
+  target_link_libraries(z_get ${Libname})
+  target_link_libraries(z_queryable ${Libname})
+  target_link_libraries(z_info ${Libname})
+  target_link_libraries(z_scout ${Libname})
+endif()
+
+if(BUILD_TOOLS)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tools)
+  add_executable(z_keyexpr_canonizer ${PROJECT_SOURCE_DIR}/tools/z_keyexpr_canonizer.c)
+  target_link_libraries(z_keyexpr_canonizer ${Libname})
 endif()
 
 if(BUILD_TESTING)
@@ -183,54 +217,53 @@ if(BUILD_TESTING)
 
   add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
   add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
-  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)  
-  add_executable(zn_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/zn_msgcodec_test.c)
-  add_executable(z_mvar_test ${PROJECT_SOURCE_DIR}/tests/z_mvar_test.c)  
-  add_executable(zn_rname_test ${PROJECT_SOURCE_DIR}/tests/zn_rname_test.c)
-  
+  add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
+  add_executable(z_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/z_msgcodec_test.c)
+  add_executable(z_keyexpr_test ${PROJECT_SOURCE_DIR}/tests/z_keyexpr_test.c)
+  add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
+
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
-  target_link_libraries(zn_msgcodec_test ${Libname})
-  target_link_libraries(z_mvar_test ${Libname})
-  target_link_libraries(zn_rname_test ${Libname})  
+  target_link_libraries(z_msgcodec_test ${Libname})
+  target_link_libraries(z_keyexpr_test ${Libname})
+  target_link_libraries(z_api_alignment_test ${Libname})
 
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
   add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
-  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)    
-  add_test(zn_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_msgcodec_test)
-  add_test(zn_rname_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zn_rname_test)
+  add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
+  add_test(z_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_msgcodec_test)
+  add_test(z_keyexpr_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_keyexpr_test)
+  add_test(z_api_alignment_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_alignment_test)
 endif()
 
 if(BUILD_MULTICAST)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
-  add_executable(zn_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/zn_peer_multicast_test.c)
-
-  target_link_libraries(zn_peer_multicast_test ${Libname})
+  add_executable(z_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/z_peer_multicast_test.c)
+  target_link_libraries(z_peer_multicast_test ${Libname})
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/multicast.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh COPYONLY)
 
   enable_testing()
-  add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh zn_peer_multicast_test)
+  add_test(z_peer_multicast_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh z_peer_multicast_test)
 endif()
 
 if(BUILD_INTEGRATION)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
-  add_executable(zn_client_test ${PROJECT_SOURCE_DIR}/tests/zn_client_test.c)
-
-  target_link_libraries(zn_client_test ${Libname})
+  add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
+  target_link_libraries(z_client_test ${Libname})
 
   configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
 
   enable_testing()
-  add_test(zn_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh zn_client_test)
+  add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
 endif()
 
 # For packaging
-if (PACKAGING)
+if(PACKAGING)
   set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
   set(CPACK_COMPONENTS_ALL Library Headers)
@@ -253,43 +286,45 @@ if (PACKAGING)
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
-        set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
+      set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
     endif()
 
     message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")
+
     if(CPACK_GENERATOR)
-        set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
+      set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
     else()
-        set(CPACK_GENERATOR "DEB")
+      set(CPACK_GENERATOR "DEB")
     endif()
 
     # DEB package
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ADLINK zenoh team, <zenoh@adlink-labs.tech>")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ZettaScale Zenoh Team, <zenoh@zettascale.tech>")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
     set(CPACK_DEB_COMPONENT_INSTALL ON)
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
     set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${PROJECT_VERSION})")
   endif()
 
   if(PACKAGING MATCHES "RPM")
     if(NOT RPMARCH)
-        set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
+      set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
     endif()
 
     message(STATUS "Configure RPM packaging for Linux ${RPMARCH}")
+
     if(CPACK_GENERATOR)
-        set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
+      set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
     else()
-        set(CPACK_GENERATOR "RPM")
+      set(CPACK_GENERATOR "RPM")
     endif()
 
     # RPM package
     set(CPACK_RPM_PACKAGE_ARCHITECTURE ${RPMARCH})
     set(CPACK_RPM_COMPONENT_INSTALL ON)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
-    set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME})   # avoid "-lib" suffix for "lib" package
+    set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
     set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
   endif()
 

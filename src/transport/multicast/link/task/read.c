@@ -13,115 +13,107 @@
 //
 
 #include "zenoh-pico/transport/link/task/read.h"
+
+#include <stddef.h>
+
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _znp_multicast_read(_zn_transport_multicast_t *ztm)
-{
-    z_bytes_t addr;
-    _zn_transport_message_result_t r_s = _zn_multicast_recv_t_msg(ztm, &addr);
-    if (r_s.tag == _z_res_t_ERR)
-        goto ERR;
+#if Z_MULTICAST_TRANSPORT == 1
 
-    int res = _zn_multicast_handle_transport_message(ztm, &r_s.value.transport_message, &addr);
-    _zn_t_msg_clear(&r_s.value.transport_message);
+int _zp_multicast_read(_z_transport_multicast_t *ztm) {
+    _z_bytes_t addr;
+    _z_transport_message_result_t r_s = _z_multicast_recv_t_msg(ztm, &addr);
+    if (r_s._tag == _Z_RES_ERR) goto ERR;
+
+    int res = _z_multicast_handle_transport_message(ztm, &r_s._value._transport_message, &addr);
+    _z_t_msg_clear(&r_s._value._transport_message);
 
     return res;
 
 ERR:
-    return _z_res_t_ERR;
+    return _Z_RES_ERR;
 }
 
-void *_znp_multicast_read_task(void *arg)
-{
-    _zn_transport_multicast_t *ztm = (_zn_transport_multicast_t *)arg;
+void *_zp_multicast_read_task(void *arg) {
+    (void)(arg);
+#if Z_MULTI_THREAD == 1
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
 
-    ztm->read_task_running = 1;
+    ztm->_read_task_running = 1;
 
-    _zn_transport_message_result_t r;
+    _z_transport_message_result_t r;
 
     // Acquire and keep the lock
-    z_mutex_lock(&ztm->mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
-    _z_zbuf_reset(&ztm->zbuf);
+    _z_zbuf_reset(&ztm->_zbuf);
 
-    z_bytes_t addr = _z_bytes_wrap(NULL, 0);
-    while (ztm->read_task_running)
-    {
+    _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
+    while (ztm->_read_task_running) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (ztm->link->is_streamed == 1)
-        {
-            if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
-            {
-                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
-                if (_z_zbuf_len(&ztm->zbuf) < _ZN_MSG_LEN_ENC_SIZE)
-                {
+        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities)) {
+            if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
+                if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_bytes_clear(&addr);
                     continue;
                 }
             }
 
-            for (int i = 0; i < _ZN_MSG_LEN_ENC_SIZE; i++)
-                to_read |= _z_zbuf_read(&ztm->zbuf) << (i * 8);
+            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
 
-            if (_z_zbuf_len(&ztm->zbuf) < to_read)
-            {
-                _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, NULL);
-                if (_z_zbuf_len(&ztm->zbuf) < to_read)
-                {
-                    _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) - _ZN_MSG_LEN_ENC_SIZE);
+            if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
+                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, NULL);
+                if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
+                    _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     continue;
                 }
             }
-        }
-        else
-        {
-            to_read = _zn_link_recv_zbuf(ztm->link, &ztm->zbuf, &addr);
-            if (to_read == SIZE_MAX)
-                continue;
+        } else {
+            to_read = _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
+            if (to_read == SIZE_MAX) continue;
         }
 
         // Wrap the main buffer for to_read bytes
-        _z_zbuf_t zbuf = _z_zbuf_view(&ztm->zbuf, to_read);
+        _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
-        while (_z_zbuf_len(&zbuf) > 0)
-        {
+        while (_z_zbuf_len(&zbuf) > 0) {
             // Decode one session message
-            _zn_transport_message_decode_na(&zbuf, &r);
+            _z_transport_message_decode_na(&zbuf, &r);
 
-            if (r.tag == _z_res_t_OK)
-            {
-                int res = _zn_multicast_handle_transport_message(ztm, &r.value.transport_message, &addr);
+            if (r._tag == _Z_RES_OK) {
+                int res = _z_multicast_handle_transport_message(ztm, &r._value._transport_message, &addr);
 
-                if (res == _z_res_t_OK)
-                {
-                    _zn_t_msg_clear(&r.value.transport_message);
+                if (res == _Z_RES_OK) {
+                    _z_t_msg_clear(&r._value._transport_message);
                     _z_bytes_clear(&addr);
-                }
-                else
+                } else
                     goto EXIT_RECV_LOOP;
-            }
-            else
-            {
+            } else {
                 _Z_ERROR("Connection closed due to malformed message\n");
                 goto EXIT_RECV_LOOP;
             }
         }
 
         // Move the read position of the read buffer
-        _z_zbuf_set_rpos(&ztm->zbuf, _z_zbuf_get_rpos(&ztm->zbuf) + to_read);
-        _z_zbuf_compact(&ztm->zbuf);
+        _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
+        _z_zbuf_compact(&ztm->_zbuf);
     }
 
 EXIT_RECV_LOOP:
-    if (ztm)
-    {
-        ztm->read_task_running = 0;
+    if (ztm) {
+        ztm->_read_task_running = 0;
+
         // Release the lock
-        z_mutex_unlock(&ztm->mutex_rx);
+        _z_mutex_unlock(&ztm->_mutex_rx);
     }
+#endif  // Z_MULTI_THREAD == 1
 
     return 0;
 }
+
+#endif  // Z_MULTICAST_TRANSPORT == 1

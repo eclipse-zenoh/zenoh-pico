@@ -12,168 +12,132 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/msgcodec.h"
+#include <stddef.h>
+
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if ZN_SCOUTING_UDP == 1 && ZN_LINK_UDP_UNICAST == 0
-    #error "Scouting UDP requires UDP unicast links to be enabled (ZN_LINK_UDP_UNICAST = 1 in config.h)"
+#if Z_SCOUTING_UDP == 1 && Z_LINK_UDP_UNICAST == 0
+#error "Scouting UDP requires UDP unicast links to be enabled (Z_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-zn_hello_array_t __zn_scout_loop(
-    const _z_wbuf_t *wbf,
-    const z_str_t locator,
-    unsigned long period,
-    int exit_on_first)
-{
+_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsigned long period, int exit_on_first) {
     // Define an empty array
-    zn_hello_array_t ls;
-    ls.len = 0;
-    ls.val = NULL;
+    _z_hello_list_t *hellos = NULL;
 
-    _zn_endpoint_result_t ep_res = _zn_endpoint_from_str(locator);
-    if (ep_res.tag == _z_res_t_ERR)
-        goto ERR_1;
-    _zn_endpoint_t endpoint = ep_res.value.endpoint;
+    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
+    if (ep_res._tag == _Z_RES_ERR) goto ERR_1;
+    _z_endpoint_t endpoint = ep_res._value._endpoint;
 
-#if ZN_SCOUTING_UDP == 1
-    if (_z_str_eq(endpoint.locator.protocol, UDP_SCHEMA))
-    {
+#if Z_SCOUTING_UDP == 1
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
         // Do nothing
-    }
-    else
+    } else
 #endif
         goto ERR_2;
-    _zn_endpoint_clear(&endpoint);
+    _z_endpoint_clear(&endpoint);
 
-    _zn_link_p_result_t r_scout = _zn_open_link(locator);
-    if (r_scout.tag == _z_res_t_ERR)
-        return ls;
+    _z_link_p_result_t r_scout = _z_open_link(locator);
+    if (r_scout._tag == _Z_RES_ERR) return hellos;
 
     // Send the scout message
-    int res = _zn_link_send_wbuf(r_scout.value.link, wbf);
-    if (res < 0)
-    {
+    int res = _z_link_send_wbuf(r_scout._value._link, wbf);
+    if (res < 0) {
         _Z_INFO("Unable to send scout message\n");
-        return ls;
+        return hellos;
     }
 
     // The receiving buffer
-    _z_zbuf_t zbf = _z_zbuf_make(ZN_BATCH_SIZE);
+    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
     z_time_t start = z_time_now();
-    while (z_time_elapsed_ms(&start) < period)
-    {
+    while (z_time_elapsed_ms(&start) < period) {
         // Eventually read hello messages
         _z_zbuf_reset(&zbf);
 
         // Read bytes from the socket
-        size_t len = _zn_link_recv_zbuf(r_scout.value.link, &zbf, NULL);
-        if (len == SIZE_MAX)
-            continue;
+        size_t len = _z_link_recv_zbuf(r_scout._value._link, &zbf, NULL);
+        if (len == SIZE_MAX) continue;
 
-        _zn_transport_message_result_t r_hm = _zn_transport_message_decode(&zbf);
-        if (r_hm.tag == _z_res_t_ERR)
-        {
+        _z_transport_message_result_t r_hm = _z_transport_message_decode(&zbf);
+        if (r_hm._tag == _Z_RES_ERR) {
             _Z_ERROR("Scouting loop received malformed message\n");
             continue;
         }
 
-        _zn_transport_message_t t_msg = r_hm.value.transport_message;
-        switch (_ZN_MID(t_msg.header))
-        {
-        case _ZN_MID_HELLO:
-        {
-            _Z_INFO("Received _ZN_HELLO message\n");
-            // Allocate or expand the vector
-            if (ls.val)
-            {
-                zn_hello_t *val = (zn_hello_t *)z_malloc((ls.len + 1) * sizeof(zn_hello_t));
-                memcpy(val, ls.val, ls.len);
-                z_free((zn_hello_t *)ls.val);
-                ls.val = val;
-            }
-            else
-            {
-                ls.val = (zn_hello_t *)z_malloc(sizeof(zn_hello_t));
-            }
-            ls.len++;
+        _z_transport_message_t t_msg = r_hm._value._transport_message;
+        switch (_Z_MID(t_msg._header)) {
+            case _Z_MID_HELLO: {
+                _Z_INFO("Received _Z_HELLO message\n");
+                // Get current element to fill
+                _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
 
-            // Get current element to fill
-            zn_hello_t *sc = (zn_hello_t *)&ls.val[ls.len - 1];
+                if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_I)
+                    _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
+                else
+                    _z_bytes_reset(&hello->pid);
 
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_I)
-                _z_bytes_copy(&sc->pid, &t_msg.body.hello.pid);
-            else
-                _z_bytes_reset(&sc->pid);
+                if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_W)
+                    hello->whatami = t_msg._body._hello._whatami;
+                else
+                    hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
 
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_W)
-                sc->whatami = t_msg.body.hello.whatami;
-            else
-                sc->whatami = ZN_ROUTER; // Default value is from a router
-
-            if _ZN_HAS_FLAG (t_msg.header, _ZN_FLAG_T_L)
-            {
-                z_str_array_t la = _z_str_array_make(t_msg.body.hello.locators.len);
-                for (size_t i = 0; i < la.len; i++)
-                {
-                    la.val[i] = _zn_locator_to_str(&t_msg.body.hello.locators.val[i]);
+                if _Z_HAS_FLAG (t_msg._header, _Z_FLAG_T_L) {
+                    hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
+                    for (size_t i = 0; i < hello->locators._len; i++)
+                        hello->locators._val[i] = _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
+                } else {
+                    // @TODO: construct the locator departing from the sock address
+                    hello->locators._len = 0;
+                    hello->locators._val = NULL;
                 }
-                _z_str_array_move(&sc->locators, &la);
+
+                hellos = _z_hello_list_push(hellos, hello);
+
+                break;
             }
-            else
-            {
-                // @TODO: construct the locator departing from the sock address
-                sc->locators.len = 0;
-                sc->locators.val = NULL;
+            default: {
+                _Z_ERROR("Scouting loop received unexpected message\n");
+                break;
             }
-
-            break;
-        }
-        default:
-        {
-            _Z_ERROR("Scouting loop received unexpected message\n");
-            break;
-        }
         }
 
-        _zn_t_msg_clear(&t_msg);
+        _z_t_msg_clear(&t_msg);
 
-        if (ls.len > 0 && exit_on_first)
-            break;
+        if (_z_hello_list_len(hellos) > 0 && exit_on_first) break;
     }
 
-    _zn_link_free(&r_scout.value.link);
+    _z_link_free(&r_scout._value._link);
     _z_zbuf_clear(&zbf);
 
-    return ls;
+    return hellos;
 
 ERR_2:
-    _zn_endpoint_clear(&endpoint);
+    _z_endpoint_clear(&endpoint);
 ERR_1:
-    return ls;
+    return hellos;
 }
 
-zn_hello_array_t _zn_scout(const unsigned int what, const zn_properties_t *config, const unsigned long scout_period, const int exit_on_first)
-{
-    zn_hello_array_t locs;
-    locs.len = 0;
-    locs.val = NULL;
+_z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const uint32_t timeout,
+                                const int exit_on_first) {
+    _z_hello_list_t *hellos = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(ZN_BATCH_SIZE, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, 0);
 
     // Create and encode the scout message
     int request_id = 1;
-    _zn_transport_message_t scout = _zn_t_msg_make_scout((z_zint_t)what, request_id);
+    _z_transport_message_t scout = _z_t_msg_make_scout((_z_zint_t)what, request_id);
 
-    _zn_transport_message_encode(&wbf, &scout);
+    _z_transport_message_encode(&wbf, &scout);
 
     // Scout on multicast
-    const z_str_t locator = zn_properties_get(config, ZN_CONFIG_MULTICAST_ADDRESS_KEY).val;
-    locs = __zn_scout_loop(&wbf, locator, scout_period, exit_on_first);
+#if Z_MULTICAST_TRANSPORT == 1
+    hellos = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
+#endif  // Z_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);
 
-    return locs;
+    return hellos;
 }

@@ -12,47 +12,45 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
+
+#include "zenoh-pico/config.h"
+#include "zenoh-pico/net/resource.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _zn_queryable_eq(const _zn_queryable_t *one, const _zn_queryable_t *two)
-{
-    return one->id == two->id;
-}
+int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two) { return one->_id == two->_id; }
 
-void _zn_queryable_clear(_zn_queryable_t *qle)
-{
-    _z_str_clear(qle->rname);
+void _z_questionable_clear(_z_questionable_t *qle) {
+    if (qle->_dropper != NULL) qle->_dropper(qle->_arg);
+    _z_keyexpr_clear(&qle->_key);
 }
 
 /*------------------ Queryable ------------------*/
-_zn_queryable_t *__zn_get_queryable_by_id(_zn_queryable_list_t *qles, const z_zint_t id)
-{
-    _zn_queryable_t *qle = NULL;
-    while (qles != NULL)
-    {
-        qle = _zn_queryable_list_head(qles);
-        if (id == qle->id)
-            return qle;
+_z_questionable_sptr_t *__z_get_questionable_by_id(_z_questionable_sptr_list_t *qles, const _z_zint_t id) {
+    _z_questionable_sptr_t *qle = NULL;
+    while (qles != NULL) {
+        qle = _z_questionable_sptr_list_head(qles);
+        if (id == qle->ptr->_id) return qle;
 
-        qles = _zn_queryable_list_tail(qles);
+        qles = _z_questionable_sptr_list_tail(qles);
     }
 
     return qle;
 }
 
-_zn_queryable_list_t *__zn_get_queryables_by_name(_zn_queryable_list_t *qles, const z_str_t rname)
-{
-    _zn_queryable_list_t *xs = NULL;
-    while (qles != NULL)
-    {
-        _zn_queryable_t *qle = _zn_queryable_list_head(qles);
-        if (zn_rname_intersect(qle->rname, rname))
-            xs = _zn_queryable_list_push(xs, qle);
+_z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_list_t *qles, const _z_keyexpr_t key) {
+    _z_questionable_sptr_list_t *xs = NULL;
+    while (qles != NULL) {
+        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
+        if (_z_keyexpr_intersect(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
+                                 strlen(key._suffix))) {
+            xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
+        }
 
-        qles = _zn_queryable_list_tail(qles);
+        qles = _z_questionable_sptr_list_tail(qles);
     }
 
     return xs;
@@ -61,133 +59,171 @@ _zn_queryable_list_t *__zn_get_queryables_by_name(_zn_queryable_list_t *qles, co
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
-_zn_queryable_t *__unsafe_zn_get_queryable_by_id(zn_session_t *zn, const z_zint_t id)
-{
-    _zn_queryable_list_t *qles = zn->local_queryables;
-    return __zn_get_queryable_by_id(qles, id);
+_z_questionable_sptr_t *__unsafe_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
+    _z_questionable_sptr_list_t *qles = zn->_local_questionable;
+    return __z_get_questionable_by_id(qles, id);
 }
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
-_zn_queryable_list_t *__unsafe_zn_get_queryables_by_name(zn_session_t *zn, const z_str_t rname)
-{
-    _zn_queryable_list_t *qles = zn->local_queryables;
-    return __zn_get_queryables_by_name(qles, rname);
+_z_questionable_sptr_list_t *__unsafe_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key) {
+    _z_questionable_sptr_list_t *qles = zn->_local_questionable;
+    return __z_get_questionable_by_key(qles, key);
 }
 
-_zn_queryable_t *_zn_get_queryable_by_id(zn_session_t *zn, const z_zint_t id)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    _zn_queryable_t *qle = __unsafe_zn_get_queryable_by_id(zn, id);
-    z_mutex_unlock(&zn->mutex_inner);
+_z_questionable_sptr_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_questionable_sptr_t *qle = __unsafe_z_get_questionable_by_id(zn, id);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return qle;
 }
 
-_zn_queryable_list_t *_zn_get_queryables_by_name(zn_session_t *zn, const z_str_t rname)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    _zn_queryable_list_t *qles = __unsafe_zn_get_queryables_by_name(zn, rname);
-    z_mutex_unlock(&zn->mutex_inner);
+_z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
+    _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return qles;
 }
 
-_zn_queryable_list_t *_zn_get_queryables_by_key(zn_session_t *zn, const zn_reskey_t *reskey)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_IS_LOCAL, reskey);
-    _zn_queryable_list_t *qles = __unsafe_zn_get_queryables_by_name(zn, rname);
-    z_mutex_unlock(&zn->mutex_inner);
+int _z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
+    _Z_DEBUG(">>> Allocating queryable for (%lu:%s)\n", q->_key._id, q->_key._suffix);
 
-    _z_str_clear(rname);
-    return qles;
-}
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
-int _zn_register_queryable(zn_session_t *zn, _zn_queryable_t *qle)
-{
-    _Z_DEBUG(">>> Allocating queryable for (%s,%u)\n", qle->rname, qle->kind);
-    z_mutex_lock(&zn->mutex_inner);
+    _z_questionable_sptr_t *qle = (_z_questionable_sptr_t *)z_malloc(sizeof(_z_questionable_sptr_t));
+    *qle = _z_questionable_sptr_new(*q);
+    zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, qle);
 
-    zn->local_queryables = _zn_queryable_list_push(zn->local_queryables, qle);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
-    z_mutex_unlock(&zn->mutex_inner);
     return 0;
 }
 
-int _zn_trigger_queryables(zn_session_t *zn, const _zn_query_t *query)
-{
-    z_mutex_lock(&zn->mutex_inner);
+int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
-    z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &query->key);
-    if (rname == NULL)
-        goto ERR;
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
+    if (key._suffix == NULL) {
+        goto ERR_1;
+    }
 
-    // Build the query
-    zn_query_t q;
-    q.zn = zn;
-    q.qid = query->qid;
-    q.rname = rname;
-    q.predicate = query->predicate;
-
-    _zn_queryable_list_t *qles = __unsafe_zn_get_queryables_by_name(zn, rname);
-    _zn_queryable_list_t *xs = qles;
-    while (xs != NULL)
+    // This two step approach allows the lock to be released while in the user callback
+    // Scoped because of the previous goto ERR
     {
-        _zn_queryable_t *qle = _zn_queryable_list_head(xs);
-        if (((query->target.kind & ZN_QUERYABLE_ALL_KINDS) | (query->target.kind & qle->kind)) != 0)
-        {
-            q.kind = qle->kind;
-            qle->callback(&q, qle->arg);
+        _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
+        _z_questionable_sptr_list_t *xs = qles;
+        size_t len = _z_questionable_sptr_list_len(xs);
+        _z_questionable_handler_t callbacks[len];
+        void *callbacks_args[len];
+        size_t i = 0;
+        while (xs != NULL) {
+            _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
+            callbacks[i] = qle->ptr->_callback;
+            callbacks_args[i++] = qle->ptr->_arg;
+            xs = _z_questionable_sptr_list_tail(xs);
         }
 
-        xs = _zn_queryable_list_tail(xs);
+#if Z_MULTI_THREAD == 1
+        _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+        // Build the query
+        z_query_t q;
+        q._zn = zn;
+        q._qid = query->_qid;
+        q._key = key;
+        q._parameters = query->_parameters;
+        q._anyke = strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL ? false : true;
+        for (i = 0; i < len; i++) {
+            callbacks[i](&q, callbacks_args[i]);
+        }
+
+        _z_keyexpr_clear(&key);
+        _z_questionable_sptr_list_free(&qles);
     }
 
     // Send the final reply
-    // Final flagged reply context does not encode the PID or replier kind
-    z_bytes_t pid;
-    _z_bytes_reset(&pid);
-    z_zint_t replier_kind = 0;
+    // Final flagged reply context does not encode the ZID
+    _z_bytes_t zid;
+    _z_bytes_reset(&zid);
     int is_final = 1;
-    _zn_reply_context_t *rctx = _zn_z_msg_make_reply_context(query->qid, pid, replier_kind, is_final);
+    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
 
     // Congestion control
     int can_be_dropped = 0;
 
     // Create the final reply
-    _zn_zenoh_message_t z_msg = _zn_z_msg_make_unit(can_be_dropped);
-    z_msg.reply_context = rctx;
+    _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
+    z_msg._reply_context = rctx;
 
-    if (_zn_send_z_msg(zn, &z_msg, zn_reliability_t_RELIABLE, zn_congestion_control_t_BLOCK) != 0)
-    {
-        // @TODO: retransmission
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
+        goto ERR_2;
     }
-    _zn_z_msg_clear(&z_msg);
+    _z_msg_clear(&z_msg);
 
-    _z_str_clear(rname);
-    _z_list_free(&qles, _zn_noop_free);
-    z_mutex_unlock(&zn->mutex_inner);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return 0;
 
-ERR:
-    z_mutex_unlock(&zn->mutex_inner);
+ERR_2:
+    _z_msg_clear(&z_msg);
+
+ERR_1:
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
     return -1;
 }
 
-void _zn_unregister_queryable(zn_session_t *zn, _zn_queryable_t *qle)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    zn->local_queryables = _zn_queryable_list_drop_filter(zn->local_queryables, _zn_queryable_eq, qle);
-    z_mutex_unlock(&zn->mutex_inner);
+void _z_unregister_questionable(_z_session_t *zn, _z_questionable_sptr_t *qle) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    zn->_local_questionable =
+        _z_questionable_sptr_list_drop_filter(zn->_local_questionable, _z_questionable_sptr_eq, qle);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 }
 
-void _zn_flush_queryables(zn_session_t *zn)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    _zn_queryable_list_free(&zn->local_queryables);
-    z_mutex_unlock(&zn->mutex_inner);
+void _z_flush_questionables(_z_session_t *zn) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_questionable_sptr_list_free(&zn->_local_questionable);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 }

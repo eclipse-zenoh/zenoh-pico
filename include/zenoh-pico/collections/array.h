@@ -15,44 +15,44 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ARRAY_H
 #define ZENOH_PICO_COLLECTIONS_ARRAY_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_ARRAY_DEFINE(name, type)                                                \
-    typedef struct                                                                 \
-    {                                                                              \
-        size_t len;                                                                \
-        type *val;                                                                 \
-    } name##_array_t;                                                              \
-    static inline name##_array_t name##_array_make(size_t capacity)                \
-    {                                                                              \
-        name##_array_t a;                                                          \
-        a.len = capacity;                                                          \
-        a.val = (type *)z_malloc(capacity * sizeof(type));                         \
-        return a;                                                                  \
-    }                                                                              \
-    static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) \
-    {                                                                              \
-        dst->len = src->len;                                                       \
-        dst->val = src->val;                                                       \
-        src->len = 0;                                                              \
-        src->val = NULL;                                                           \
-    }                                                                              \
-    static inline int name##_array_is_empty(const name##_array_t *a)               \
-    {                                                                              \
-        return a->len == 0;                                                        \
-    }                                                                              \
-    static inline void name##_array_clear(name##_array_t *a)                       \
-    {                                                                              \
-        for (size_t i = 0; i < a->len; i++)                                        \
-            name##_elem_clear(&a->val[i]);                                         \
-        z_free(a->val);                                                            \
-        a->len = 0;                                                                \
-        a->val = NULL;                                                             \
-    }                                                                              \
-    static inline void name##_array_free(name##_array_t **a)                       \
-    {                                                                              \
-        name##_array_t *ptr = *a;                                                  \
-        name##_array_clear(ptr);                                                   \
-        *a = NULL;                                                                 \
+#define _Z_ARRAY_DEFINE(name, type)                                                                 \
+    typedef struct {                                                                                \
+        size_t _len;                                                                                \
+        type *_val;                                                                                 \
+    } name##_array_t;                                                                               \
+    static inline name##_array_t name##_array_make(size_t capacity) {                               \
+        name##_array_t a;                                                                           \
+        a._len = capacity;                                                                          \
+        a._val = NULL;                                                                              \
+        if (capacity > 0) {                                                                         \
+            a._val = (type *)z_malloc(capacity * sizeof(type));                                     \
+        }                                                                                           \
+        return a;                                                                                   \
+    }                                                                                               \
+    static inline void name##_array_move(name##_array_t *dst, name##_array_t *src) {                \
+        dst->_len = src->_len;                                                                      \
+        dst->_val = src->_val;                                                                      \
+        src->_len = 0;                                                                              \
+        src->_val = NULL;                                                                           \
+    }                                                                                               \
+    static inline type *name##_array_get(const name##_array_t *a, size_t k) { return &a->_val[k]; } \
+    static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
+    static inline uint8_t name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }   \
+    static inline void name##_array_clear(name##_array_t *a) {                                      \
+        for (size_t i = 0; i < a->_len; i++) name##_elem_clear(&a->_val[i]);                        \
+        z_free(a->_val);                                                                            \
+        a->_len = 0;                                                                                \
+        a->_val = NULL;                                                                             \
+    }                                                                                               \
+    static inline void name##_array_free(name##_array_t **a) {                                      \
+        name##_array_t *ptr = *a;                                                                   \
+        name##_array_clear(ptr);                                                                    \
+        z_free(ptr);                                                                                \
+        *a = NULL;                                                                                  \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARRAY_H */

@@ -18,7 +18,7 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#if ZN_LINK_UDP_UNICAST == 1 || ZN_LINK_UDP_MULTICAST == 1
+#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 
 #define UDP_CONFIG_IFACE_KEY 0x01
 #define UDP_CONFIG_IFACE_STR "iface"
@@ -26,21 +26,21 @@
 #define UDP_CONFIG_TOUT_KEY 0x02
 #define UDP_CONFIG_TOUT_STR "tout"
 
-#define UDP_CONFIG_MAPPING_BUILD        \
-    int argc = 2;                       \
-    _z_str_intmapping_t args[argc];     \
-    args[0].key = UDP_CONFIG_IFACE_KEY; \
-    args[0].str = UDP_CONFIG_IFACE_STR; \
-    args[1].key = UDP_CONFIG_TOUT_KEY;  \
-    args[1].str = UDP_CONFIG_TOUT_STR;
+#define UDP_CONFIG_MAPPING_BUILD         \
+    int argc = 2;                        \
+    _z_str_intmapping_t args[argc];      \
+    args[0]._key = UDP_CONFIG_IFACE_KEY; \
+    args[0]._str = UDP_CONFIG_IFACE_STR; \
+    args[1]._key = UDP_CONFIG_TOUT_KEY;  \
+    args[1]._str = UDP_CONFIG_TOUT_STR;
 
-size_t _zn_udp_config_strlen(const _z_str_intmap_t *s);
+size_t _z_udp_config_strlen(const _z_str_intmap_t *s);
 
-void _zn_udp_config_onto_str(z_str_t dst, const _z_str_intmap_t *s);
-z_str_t _zn_udp_config_to_str(const _z_str_intmap_t *s);
+void _z_udp_config_onto_str(char *dst, const _z_str_intmap_t *s);
+char *_z_udp_config_to_str(const _z_str_intmap_t *s);
 
-_z_str_intmap_result_t _zn_udp_config_from_str(const z_str_t s);
-_z_str_intmap_result_t _zn_udp_config_from_strn(const z_str_t s, size_t n);
+_z_str_intmap_result_t _z_udp_config_from_str(const char *s);
+_z_str_intmap_result_t _z_udp_config_from_strn(const char *s, size_t n);
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_UDP_H */

@@ -15,7 +15,9 @@
 #ifndef ZENOH_PICO_SYSTEM_COMMON_H
 #define ZENOH_PICO_SYSTEM_COMMON_H
 
-#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS)
+#include "zenoh-pico/config.h"
+
+#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_ESPIDF)
 #include "zenoh-pico/system/platform/espidf.h"
@@ -44,26 +46,28 @@ void *z_malloc(size_t size);
 void *z_realloc(void *ptr, size_t size);
 void z_free(void *ptr);
 
+#if Z_MULTI_THREAD == 1
 /*------------------ Thread ------------------*/
-int z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int z_task_join(z_task_t *task);
-int z_task_cancel(z_task_t *task);
-void z_task_free(z_task_t **task);
+int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+int _z_task_join(_z_task_t *task);
+int _z_task_cancel(_z_task_t *task);
+void _z_task_free(_z_task_t **task);
 
 /*------------------ Mutex ------------------*/
-int z_mutex_init(z_mutex_t *m);
-int z_mutex_free(z_mutex_t *m);
+int _z_mutex_init(_z_mutex_t *m);
+int _z_mutex_free(_z_mutex_t *m);
 
-int z_mutex_lock(z_mutex_t *m);
-int z_mutex_trylock(z_mutex_t *m);
-int z_mutex_unlock(z_mutex_t *m);
+int _z_mutex_lock(_z_mutex_t *m);
+int _z_mutex_trylock(_z_mutex_t *m);
+int _z_mutex_unlock(_z_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
-int z_condvar_init(z_condvar_t *cv);
-int z_condvar_free(z_condvar_t *cv);
+int _z_condvar_init(_z_condvar_t *cv);
+int _z_condvar_free(_z_condvar_t *cv);
 
-int z_condvar_signal(z_condvar_t *cv);
-int z_condvar_wait(z_condvar_t *cv, z_mutex_t *m);
+int _z_condvar_signal(_z_condvar_t *cv);
+int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
+#endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time);

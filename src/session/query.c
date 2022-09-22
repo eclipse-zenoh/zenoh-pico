@@ -12,70 +12,66 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/utils.h"
 #include "zenoh-pico/session/query.h"
+
+#include <stddef.h>
+
+#include "zenoh-pico/config.h"
+#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
-void _zn_reply_clear(zn_reply_t *reply)
-{
-    _z_str_clear(reply->data.data.key.val);
-    _z_bytes_clear(&reply->data.data.value);
-    _z_bytes_clear(&reply->data.replier_id);
-}
+void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
-void _zn_reply_free(zn_reply_t **reply)
-{
-    zn_reply_t *ptr = *reply;
-    _zn_reply_clear(ptr);
+void _z_reply_free(_z_reply_t **reply) {
+    _z_reply_t *ptr = *reply;
+    if (*reply == NULL) {
+        return;
+    }
+    _z_reply_clear(ptr);
 
     z_free(ptr);
     *reply = NULL;
 }
 
-int _zn_pending_reply_eq(const _zn_pending_reply_t *one, const _zn_pending_reply_t *two)
-{
-    return one->tstamp.time == two->tstamp.time; // FIXME: better comparison
+int _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
+    return one->_tstamp._time == two->_tstamp._time;
 }
 
-void _zn_pending_reply_clear(_zn_pending_reply_t *pr)
-{
+void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     // Free reply
-    _zn_reply_free(&pr->reply);
+    _z_reply_free(&pr->_reply);
 
     // Free the timestamp
-    _z_bytes_clear(&pr->tstamp.id);
+    _z_bytes_clear(&pr->_tstamp._id);
 }
 
-void _zn_pending_query_clear(_zn_pending_query_t *pen_qry)
-{
-    _zn_reskey_clear(&pen_qry->key);
-    _z_str_clear(pen_qry->predicate);
+void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
+    if (pen_qry->_dropper != NULL) {
+        pen_qry->_dropper(pen_qry->_drop_arg);
+    }
 
-    _zn_pending_reply_list_free(&pen_qry->pending_replies);
+    z_free(pen_qry->_call_arg);
+
+    _z_keyexpr_clear(&pen_qry->_key);
+    _z_str_clear(pen_qry->_parameters);
+
+    _z_pending_reply_list_free(&pen_qry->_pending_replies);
 }
 
-int _zn_pending_query_eq(const _zn_pending_query_t *one, const _zn_pending_query_t *two)
-{
-    return one->id == two->id; // FIXME: better comparison
-}
+int _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
 
 /*------------------ Query ------------------*/
-z_zint_t _zn_get_query_id(zn_session_t *zn)
-{
-    return zn->query_id++;
-}
+_z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
 
-_zn_pending_query_t *__zn_get_pending_query_by_id(_zn_pending_query_list_t *pqls, const z_zint_t id)
-{
-    _zn_pending_query_t *pql = NULL;
-    while (pqls != NULL)
-    {
-        pql = _zn_pending_query_list_head(pqls);
-        if (pql->id == id)
-            return pql;
+_z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_list_t *pqls, const _z_zint_t id) {
+    _z_pending_query_t *pql = NULL;
+    while (pqls != NULL) {
+        pql = _z_pending_query_list_head(pqls);
+        if (pql->_id == id) return pql;
 
-        pqls = _zn_pending_query_list_tail(pqls);
+        pqls = _z_pending_query_list_tail(pqls);
     }
 
     return NULL;
@@ -84,194 +80,206 @@ _zn_pending_query_t *__zn_get_pending_query_by_id(_zn_pending_query_list_t *pqls
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
- *  - zn->mutex_inner
+ *  - zn->_mutex_inner
  */
-_zn_pending_query_t *__unsafe_zn_get_pending_query_by_id(zn_session_t *zn, const z_zint_t id)
-{
-    _zn_pending_query_list_t *pqls = zn->pending_queries;
-    return __zn_get_pending_query_by_id(pqls, id);
+_z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
+    _z_pending_query_list_t *pqls = zn->_pending_queries;
+    return __z_get_pending_query_by_id(pqls, id);
 }
 
-_zn_pending_query_t *_zn_get_pending_query_by_id(zn_session_t *zn, const z_zint_t id)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    _zn_pending_query_t *pql = __unsafe_zn_get_pending_query_by_id(zn, id);
-    z_mutex_unlock(&zn->mutex_inner);
+_z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
     return pql;
 }
 
-int _zn_register_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
-{
-    _Z_DEBUG(">>> Allocating query for (%lu,%s,%s)\n", pen_qry->key.rid, pen_qry->key.rname, pen_qry->predicate);
-    z_mutex_lock(&zn->mutex_inner);
+int _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
+    _Z_DEBUG(">>> Allocating query for (%lu:%s,%s)\n", pen_qry->_key._id, pen_qry->_key._suffix, pen_qry->_parameters);
 
-    _zn_pending_query_t *pql = __unsafe_zn_get_pending_query_by_id(zn, pen_qry->id);
-    if (pql != NULL) // A query for this id already exists
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, pen_qry->_id);
+    if (pql != NULL)  // A query for this id already exists
         goto ERR;
 
     // Register the query
-    zn->pending_queries = _zn_pending_query_list_push(zn->pending_queries, pen_qry);
+    zn->_pending_queries = _z_pending_query_list_push(zn->_pending_queries, pen_qry);
 
-    z_mutex_unlock(&zn->mutex_inner);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return 0;
 
 ERR:
     return -1;
 }
 
-int _zn_trigger_query_reply_partial(zn_session_t *zn,
-                                    const _zn_reply_context_t *reply_context,
-                                    const zn_reskey_t reskey,
-                                    const z_bytes_t payload,
-                                    const _zn_data_info_t data_info)
-{
-    z_mutex_lock(&zn->mutex_inner);
+int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context,
+                                   const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding,
+                                   const _z_zint_t kind, const _z_timestamp_t timestamp) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
-    if (_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
-        goto ERR_1;
+    if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F)) goto ERR_1;
 
-    _zn_pending_query_t *pen_qry = __unsafe_zn_get_pending_query_by_id(zn, reply_context->qid);
-    if (pen_qry == NULL)
-        goto ERR_1;
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
+    if (pen_qry == NULL) goto ERR_1;
 
-    // Partial reply received from an unknown target
-    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->replier_kind) == 0)
-        goto ERR_1;
-
-    // Take the right timestamp, or default to none
-    z_timestamp_t ts;
-    if _ZN_HAS_FLAG (data_info.flags, _ZN_DATA_INFO_TSTAMP)
-        z_timestamp_duplicate(&ts);
-    else
-        z_timestamp_reset(&ts);
+    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
+    if (pen_qry->_anykey == false && !_z_keyexpr_intersect(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
+                                                           keyexpr._suffix, strlen(keyexpr._suffix))) {
+        goto ERR_2;
+    }
 
     // Build the reply
-    zn_reply_t *reply = (zn_reply_t *)z_malloc(sizeof(zn_reply_t));
-    reply->tag = zn_reply_t_Tag_DATA;
-    _z_bytes_copy(&reply->data.data.value, &payload);
-    if (reskey.rid == ZN_RESOURCE_ID_NONE)
-        reply->data.data.key.val = _z_str_clone(reskey.rname);
-    else
-        reply->data.data.key.val = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &reskey);
-    reply->data.data.key.len = strlen(reply->data.data.key.val);
-    _z_bytes_copy(&reply->data.replier_id, &reply_context->replier_id);
-    reply->data.replier_kind = reply_context->replier_kind;
+    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+    reply->_tag = Z_REPLY_TAG_DATA;
+    _z_bytes_copy(&reply->data.replier_id, &reply_context->_replier_id);
+    reply->data.sample.keyexpr = expanded_ke;
+    _z_bytes_copy(&reply->data.sample.payload, &payload);
+    reply->data.sample.encoding.prefix = encoding.prefix;
+    _z_bytes_copy(&reply->data.sample.encoding.suffix, &encoding.suffix);
+    reply->data.sample.kind = kind;
+    reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
-    if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL || pen_qry->consolidation.reception == zn_consolidation_mode_t_LAZY)
-    {
-        _zn_pending_reply_list_t *pen_rps = pen_qry->pending_replies;
-        _zn_pending_reply_t *pen_rep = NULL;
-        while (pen_rps != NULL)
-        {
-            pen_rep = _zn_pending_reply_list_head(pen_rps);
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST ||
+        pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
+        _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
+        _z_pending_reply_t *pen_rep = NULL;
+        while (pen_rps != NULL) {
+            pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->reply->data.data.key.val, reply->data.data.key.val))
-            {
-                if (ts.time <= pen_rep->tstamp.time)
-                    goto ERR_2;
-                else
-                {
-                    pen_qry->pending_replies = _zn_pending_reply_list_drop_filter(pen_qry->pending_replies, _zn_pending_reply_eq, pen_rep);
+            if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix)) {
+                if (timestamp._time <= pen_rep->_tstamp._time)
+                    goto ERR_3;
+                else {
+                    pen_qry->_pending_replies =
+                        _z_pending_reply_list_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
                     break;
                 }
             }
 
-            pen_rps = _zn_pending_reply_list_tail(pen_rps);
+            pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
 
-        pen_rep = (_zn_pending_reply_t *)z_malloc(sizeof(_zn_pending_reply_t));
-        pen_rep->reply = reply;
-        pen_rep->tstamp = ts;
-
-        // Trigger the handler
-        if (pen_qry->consolidation.reception == zn_consolidation_mode_t_LAZY)
-            pen_qry->callback(*pen_rep->reply, pen_qry->arg);
-        else
-            pen_qry->pending_replies = _zn_pending_reply_list_push(pen_qry->pending_replies, pen_rep);
+        // Cache most recent reply
+        pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
+        if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
+            // No need to store the whole reply in the monotonic mode.
+            _z_reply_t *partial_reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+            memset(partial_reply, 0, sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
+            partial_reply->data.sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
+            pen_rep->_reply = partial_reply;
+        } else {
+            // Store the whole reply in the latest mode
+            pen_rep->_reply = reply;
+        }
+        pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
+        pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
     }
-    else if (pen_qry->consolidation.reception == zn_consolidation_mode_t_NONE)
-    {
-        pen_qry->callback(*reply, pen_qry->arg);
-        _zn_reply_free(&reply);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    // Trigger the user callback
+    if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
+        pen_qry->_callback(&reply, pen_qry->_call_arg);
+        if (reply != NULL) {
+            _z_reply_free(&reply);
+        }
     }
 
-    z_mutex_unlock(&zn->mutex_inner);
     return 0;
 
+ERR_3:
+    _z_reply_free(&reply);
+    goto ERR_1;
+
 ERR_2:
-    _zn_reply_free(&reply);
+    _z_keyexpr_clear(&expanded_ke);
+
 ERR_1:
-    z_mutex_unlock(&zn->mutex_inner);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return -1;
 }
 
-int _zn_trigger_query_reply_final(zn_session_t *zn, const _zn_reply_context_t *reply_context)
-{
-    z_mutex_lock(&zn->mutex_inner);
+int _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *reply_context) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
     // Final reply received with invalid final flag
-    if (!_ZN_HAS_FLAG(reply_context->header, _ZN_FLAG_Z_F))
-        goto ERR;
+    if (!_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F)) goto ERR;
 
     // Final reply received for unknown query id
-    _zn_pending_query_t *pen_qry = __unsafe_zn_get_pending_query_by_id(zn, reply_context->qid);
-    if (pen_qry == NULL)
-        goto ERR;
-
-    // Final reply received from an unknown target
-    if (pen_qry->target.kind != ZN_QUERYABLE_ALL_KINDS && (pen_qry->target.kind & reply_context->replier_kind) == 0)
-        goto ERR;
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
+    if (pen_qry == NULL) goto ERR;
 
     // The reply is the final one, apply consolidation if needed
-    if (pen_qry->consolidation.reception == zn_consolidation_mode_t_FULL)
-    {
-        z_str_t rname = __unsafe_zn_get_resource_name_from_key(zn, _ZN_RESOURCE_REMOTE, &pen_qry->key);
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
+        while (pen_qry->_pending_replies != NULL) {
+            _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
-        _zn_pending_reply_list_t *pen_rps = pen_qry->pending_replies;
-        _zn_pending_reply_t *pen_rep = NULL;
-        while (pen_rps != NULL)
-        {
-            pen_rep = _zn_pending_reply_list_head(pen_rps);
-
-            // Check if this is the same resource key
             // Trigger the query handler
-            if (zn_rname_intersect(rname, pen_rep->reply->data.data.key.val))
-                pen_qry->callback(*pen_rep->reply, pen_qry->arg);
-
-            pen_rps = _zn_pending_reply_list_tail(pen_rps);
+            pen_qry->_callback(&pen_rep->_reply, pen_qry->_call_arg);
+            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies);
         }
-
-        _z_str_clear(rname);
     }
 
-    // Trigger the final query handler
-    zn_reply_t freply;
-    memset(&freply, 0, sizeof(zn_reply_t));
-    freply.tag = zn_reply_t_Tag_FINAL;
-    pen_qry->callback(freply, pen_qry->arg);
+    // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL tag
+    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
-    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 
-    z_mutex_unlock(&zn->mutex_inner);
     return 0;
 
 ERR:
-    z_mutex_unlock(&zn->mutex_inner);
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
     return -1;
 }
 
-void _zn_unregister_pending_query(zn_session_t *zn, _zn_pending_query_t *pen_qry)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    zn->pending_queries = _zn_pending_query_list_drop_filter(zn->pending_queries, _zn_pending_query_eq, pen_qry);
-    z_mutex_unlock(&zn->mutex_inner);
+void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 }
 
-void _zn_flush_pending_queries(zn_session_t *zn)
-{
-    z_mutex_lock(&zn->mutex_inner);
-    _zn_pending_query_list_free(&zn->pending_queries);
-    z_mutex_unlock(&zn->mutex_inner);
+void _z_flush_pending_queries(_z_session_t *zn) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+
+    _z_pending_query_list_free(&zn->_pending_queries);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
 }
