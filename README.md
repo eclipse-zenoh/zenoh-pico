@@ -37,8 +37,8 @@ The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** 
 Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
 There are 2 kind of packages:
 
- - **libzenohpico**: only contains the library file (.so)
- - **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
+- **libzenohpico**: only contains the library file (.so)
+- **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
 
 For other platforms - like RTOS for embedded systems / microcontrollers -, you will need to clone and build the sources. Check [below](#how-to-build-for-microcontrollers) for more details.
 

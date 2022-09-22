@@ -5,11 +5,11 @@ Thanks for your interest in this project.
 ## Project description
 
 Eclipse zenoh provides is a stack  designed to
-  1. minimize network overhead,
-  2. support extremely constrained devices,
-  3. supports devices with low duty-cycle by allowing the negotiation of data exchange modes and schedules,
-  4. provide a rich set of abstraction for distributing, querying and storing data along the entire system, and
-  5. provide extremely low latency and high throughput.
+1. minimize network overhead,
+2. support extremely constrained devices,
+3. supports devices with low duty-cycle by allowing the negotiation of data exchange modes and schedules,
+4. provide a rich set of abstraction for distributing, querying and storing data along the entire system, and
+5. provide extremely low latency and high throughput.
 
 * https://projects.eclipse.org/projects/iot.zenoh
 
