@@ -30,7 +30,7 @@
 #define KEYEXPR "demo/example/zenoh-pico-queryable"
 #define VALUE "[STSTM32]{nucleo-F767ZI} Queryable from Zenoh-Pico!"
 
-void query_handler(z_query_t *query, void *ctx) {
+void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
     const char *res = z_keyexpr_to_string(z_query_keyexpr(query));
     z_bytes_t pred = z_query_parameters(query);

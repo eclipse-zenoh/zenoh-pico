@@ -37,7 +37,7 @@ extern "C" {
 #define KEYEXPR "demo/example/zenoh-pico-queryable"
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
-void query_handler(z_query_t *query, void *arg) {
+void query_handler(const z_query_t *query, void *arg) {
     const char *res = z_keyexpr_to_string(z_query_keyexpr(query));
     Serial.print(" >> [Queryable handler] Replying Data ('");
     Serial.print(res);

@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
         buffer = realloc(buffer, len + 1);
         strcpy(buffer, argv[i]);
         buffer[len] = 0;
-        z_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(buffer);
+        zp_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(buffer);
 
         switch (status) {
             case Z_KEYEXPR_CANON_SUCCESS:

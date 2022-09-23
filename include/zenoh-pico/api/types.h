@@ -41,7 +41,6 @@ typedef _z_zint_t z_zint_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 typedef _z_bytes_t z_bytes_t;
-_OWNED_TYPE(z_bytes_t, bytes)
 
 /**
  * Represents a Zenoh ID.
@@ -63,7 +62,6 @@ typedef struct {
  *   const char *val: A pointer to the string.
  */
 typedef _z_string_t z_string_t;
-_OWNED_TYPE(z_string_t, string)
 
 /**
  * Represents a key expression in Zenoh.
@@ -90,8 +88,10 @@ _OWNED_TYPE(z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
-typedef _z_config_t z_config_t;
-_OWNED_TYPE(z_config_t, config)
+typedef struct {
+    _z_scouting_config_t *_val;
+} z_config_t;
+_OWNED_TYPE(_z_scouting_config_t, config)
 
 /**
  * Represents a scouting configuration.
@@ -105,14 +105,18 @@ _OWNED_TYPE(z_config_t, config)
  *   - :c:func:`zp_scouting_config_get`
  *   - :c:func:`zp_scouting_config_insert`
  */
-typedef _z_config_t z_scouting_config_t;
-_OWNED_TYPE(z_scouting_config_t, scouting_config)
+typedef struct {
+    _z_config_t *_val;
+} z_scouting_config_t;
+_OWNED_TYPE(_z_config_t, scouting_config)
 
 /**
  * Represents a Zenoh session.
  */
-typedef _z_session_t z_session_t;
-_OWNED_TYPE(z_session_t, session)
+typedef struct {
+    _z_session_t *_val;
+} z_session_t;
+_OWNED_TYPE(_z_session_t, session)
 
 /**
  * Represents a Zenoh (push) Subscriber entity.
@@ -122,8 +126,10 @@ _OWNED_TYPE(z_session_t, session)
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
-typedef _z_subscriber_t z_subscriber_t;
-_OWNED_TYPE(z_subscriber_t, subscriber)
+typedef struct {
+    _z_subscriber_t *_val;
+} z_subscriber_t;
+_OWNED_TYPE(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Pull Subscriber entity.
@@ -134,8 +140,10 @@ _OWNED_TYPE(z_subscriber_t, subscriber)
  *   - :c:func:`z_undeclare_pull_subscriber`
  *   - :c:func:`z_subscriber_pull`
  */
-typedef _z_subscriber_t z_pull_subscriber_t;
-_OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
+typedef struct {
+    _z_pull_subscriber_t *_val;
+} z_pull_subscriber_t;
+_OWNED_TYPE(_z_pull_subscriber_t, pull_subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -147,8 +155,10 @@ _OWNED_TYPE(z_pull_subscriber_t, pull_subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
-typedef _z_publisher_t z_publisher_t;
-_OWNED_TYPE(z_publisher_t, publisher)
+typedef struct {
+    _z_publisher_t *_val;
+} z_publisher_t;
+_OWNED_TYPE(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -158,8 +168,10 @@ _OWNED_TYPE(z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
-typedef _z_queryable_t z_queryable_t;
-_OWNED_TYPE(z_queryable_t, queryable)
+typedef struct {
+    _z_queryable_t *_val;
+} z_queryable_t;
+_OWNED_TYPE(_z_queryable_t, queryable)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
