@@ -105,21 +105,19 @@ int main(int argc, char **argv) {
     _Bool _ret_bool = z_keyexpr_is_initialized(&key);
     assert(_ret_bool == true);
 
-    _ret_bool =
-        z_keyexpr_includes("demo/example/**", strlen("demo/example/**"), "demo/example/a", strlen("demo/example/a"));
+    _ret_bool = z_keyexpr_includes(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
     assert(_ret_bool == true);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
     assert(_ret_bool == true);
 #endif
-    _ret_bool =
-        z_keyexpr_intersect("demo/example/**", strlen("demo/example/**"), "demo/example/a", strlen("demo/example/a"));
+    _ret_bool = z_keyexpr_intersects(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
     assert(_ret_bool == true);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
     assert(_ret_bool == true);
 #endif
-    _ret_bool = z_keyexpr_equals("demo/example/**", strlen("demo/example/**"), "demo/example/", strlen("demo/example"));
+    _ret_bool = z_keyexpr_equals(z_keyexpr("demo/example/**"), z_keyexpr("demo/example"));
     assert(_ret_bool == false);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
@@ -132,19 +130,19 @@ int main(int argc, char **argv) {
     char *keyexpr_str = (char *)malloc(keyexpr_len + 1);
     memcpy(keyexpr_str, URI, keyexpr_len);
     keyexpr_str[keyexpr_len] = '\0';
-    z_keyexpr_canon_status_t _ret_cstatus = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
-    assert(_ret_cstatus < 0);
+    int8_t _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
+    assert(_ret_int8 < 0);
 
 #ifdef ZENOH_PICO
-    _ret_cstatus = zp_keyexpr_is_canon_null_terminated(keyexpr_str);
-    assert(_ret_cstatus < 0);
+    _ret_int8 = zp_keyexpr_is_canon_null_terminated(keyexpr_str);
+    assert(_ret_int8 < 0);
 #endif
-    _ret_cstatus = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
-    assert(_ret_cstatus == 0);
+    _ret_int8 = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
+    assert(_ret_int8 == 0);
     assert(strlen(URI) == keyexpr_len);
 #ifdef ZENOH_PICO
-    _ret_cstatus = zp_keyexpr_canonize_null_terminated(keyexpr_str);
-    assert(_ret_cstatus == 0);
+    _ret_int8 = zp_keyexpr_canonize_null_terminated(keyexpr_str);
+    assert(_ret_int8 == 0);
     assert(strlen(URI) == keyexpr_len);
 #endif
 
@@ -156,7 +154,7 @@ int main(int argc, char **argv) {
     _ret_config = z_config_default();
     assert(z_check(_ret_config));
 #ifdef ZENOH_PICO
-    int8_t _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
     assert(_ret_int8 == 0);
     const char *_ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_PEER_KEY);
     assert(strlen(_ret_cstr) == strlen(argv[1]));

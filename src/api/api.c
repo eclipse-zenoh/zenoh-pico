@@ -50,46 +50,56 @@ _Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
     return false;
 }
 
-z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
+int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
 
-z_keyexpr_canon_status_t zp_keyexpr_is_canon_null_terminated(const char *start) {
-    return _z_keyexpr_is_canon(start, strlen(start));
-}
+int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexpr_is_canon(start, strlen(start)); }
 
-z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
+int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
-z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start) {
+int8_t zp_keyexpr_canonize_null_terminated(char *start) {
     size_t len = strlen(start);
     size_t newlen = len;
-    z_keyexpr_canon_status_t result = _z_keyexpr_canonize(start, &newlen);
+    zp_keyexpr_canon_status_t result = _z_keyexpr_canonize(start, &newlen);
     if (newlen < len) {
         start[newlen] = '\0';
     }
     return result;
 }
 
-_Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen) {
-    return _z_keyexpr_includes(l, llen, r, rlen);
+int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r) {
+    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+        return -1;
+    }
+    return _z_keyexpr_includes(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix));
 }
 
 _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
     return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
 }
 
-_Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen) {
-    return _z_keyexpr_intersect(l, llen, r, rlen);
+int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r) {
+    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+        return -1;
+    }
+
+    return _z_keyexpr_intersects(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix));
 }
 
 _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
-    return _z_keyexpr_intersect(l, strlen(l), r, strlen(r));
+    return _z_keyexpr_intersects(l, strlen(l), r, strlen(r));
 }
 
-_Bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen) {
-    if (llen != rlen) {
+int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
+    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+        return -1;
+    }
+
+    size_t llen = strlen(l._suffix);
+    if (llen != strlen(r._suffix)) {
         return false;
     }
 
-    if (strncmp(l, r, llen) != 0) {
+    if (strncmp(l._suffix, r._suffix, llen) != 0) {
         return false;
     }
 

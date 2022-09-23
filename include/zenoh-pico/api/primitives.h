@@ -84,9 +84,9 @@ _Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr);
  *
  * Returns:
  *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`z_keyexpr_canon_status_t`.
+ *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len);
+int8_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
  * Check if a given keyexpr is valid and in its canonical form.
@@ -97,9 +97,9 @@ z_keyexpr_canon_status_t z_keyexpr_is_canon(const char *start, size_t len);
  *
  * Returns:
  *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`z_keyexpr_canon_status_t`.
+ *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-z_keyexpr_canon_status_t zp_keyexpr_is_canon_null_terminated(const char *start);
+int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
 
 /**
  * Canonization of a given keyexpr in its its string representation.
@@ -111,9 +111,9 @@ z_keyexpr_canon_status_t zp_keyexpr_is_canon_null_terminated(const char *start);
  *
  * Returns:
  *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`z_keyexpr_canon_status_t`.
+ *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len);
+int8_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
  * Canonization of a given keyexpr in its its string representation.
@@ -125,24 +125,22 @@ z_keyexpr_canon_status_t z_keyexpr_canonize(char *start, size_t *len);
  *
  * Returns:
  *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`z_keyexpr_canon_status_t`.
+ *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-z_keyexpr_canon_status_t zp_keyexpr_canonize_null_terminated(char *start);
+int8_t zp_keyexpr_canonize_null_terminated(char *start);
 
 /**
  * Check if a given keyexpr contains another keyexpr in its set.
  *
  * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   rlen: Number of characters in ``r``.
+ *   l: The first keyexpr.
+ *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, it returns ``false``.
+ *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, it returns a ``negative value``.
  */
-_Bool z_keyexpr_includes(const char *l, size_t llen, const char *r, size_t rlen);
+int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
  * Check if a given keyexpr contains another keyexpr in its set.
@@ -163,16 +161,14 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  * Check if a given keyexpr intersects with another keyexpr.
  *
  * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   rlen: Number of characters in ``r``.
+ *   l: The first keyexpr.
+ *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns ``false``.
+ *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, it returns ``negative value``.
  */
-_Bool z_keyexpr_intersect(const char *l, size_t llen, const char *r, size_t rlen);
+int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -193,15 +189,13 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  * Check if a two keyexprs are equal.
  *
  * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a non-null terminated string.
- *   rlen: Number of characters in ``r``.
+ *   l: The first keyexpr.
+ *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``true`` if both ``l`` and ``r`` are equal, or ``false`` otherwise.
+ *   Returns ``0`` if both ``l`` and ``r`` are equal, or ``negative value`` otherwise.
  */
-_Bool z_keyexpr_equals(const char *l, size_t llen, const char *r, size_t rlen);
+int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
  * Check if a two keyexprs are equal.

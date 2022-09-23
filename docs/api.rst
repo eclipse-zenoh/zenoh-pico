@@ -23,7 +23,7 @@ Enums
 ~~~~~
 
 .. autocenum:: constants.h::z_whatami_t
-.. autocenum:: constants.h::z_keyexpr_canon_status_t
+.. autocenum:: constants.h::zp_keyexpr_canon_status_t
 .. autocenum:: constants.h::z_sample_kind_t
 .. autocenum:: constants.h::z_encoding_prefix_t
 .. autocenum:: constants.h::z_consolidation_mode_t
@@ -186,7 +186,7 @@ Primitives
 .. autocfunction:: primitives.h::zp_keyexpr_canonize_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_includes
 .. autocfunction:: primitives.h::zp_keyexpr_includes_null_terminated
-.. autocfunction:: primitives.h::z_keyexpr_intersect
+.. autocfunction:: primitives.h::z_keyexpr_intersects
 .. autocfunction:: primitives.h::zp_keyexpr_intersect_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_equals
 .. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
