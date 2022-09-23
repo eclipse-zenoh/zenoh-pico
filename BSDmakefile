@@ -33,6 +33,10 @@ BUILD_MULTICAST?=OFF
 # Accepted values: ON, OFF
 BUILD_INTEGRATION?=OFF
 
+# Build integration tests. This sets the BUILD_TOOLS variable.
+# Accepted values: ON, OFF
+BUILD_TOOLS?=OFF
+
 # Debug level. This sets the ZENOH_DEBUG variable.
 # Accepted values:
 #  0: NONE
