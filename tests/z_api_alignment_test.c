@@ -39,7 +39,7 @@ void hello_handler(z_owned_hello_t *hello, void *arg) {
 }
 
 volatile unsigned int queries = 0;
-void query_handler(z_query_t *query, void *arg) {
+void query_handler(const z_query_t *query, void *arg) {
     queries++;
 
     char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));

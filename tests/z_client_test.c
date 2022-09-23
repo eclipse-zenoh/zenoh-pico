@@ -39,7 +39,7 @@ z_owned_keyexpr_t rids2[SET];
 volatile unsigned int total = 0;
 
 volatile unsigned int queries = 0;
-void query_handler(z_query_t *query, void *arg) {
+void query_handler(const z_query_t *query, void *arg) {
     char res[64];
     sprintf(res, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);

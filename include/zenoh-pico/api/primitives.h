@@ -452,7 +452,7 @@ z_query_consolidation_t z_query_consolidation_none(void);
  * Returns:
  *   Returns the value selector wrapped as a :c:type:`z_bytes_t`, since value selector is a user-defined representation.
  */
-z_bytes_t z_query_parameters(z_query_t *query);
+z_bytes_t z_query_parameters(const z_query_t *query);
 
 /**
  * Get a query's key by aliasing it.
@@ -463,7 +463,7 @@ z_bytes_t z_query_parameters(z_query_t *query);
  * Returns:
  *   Returns the :c:type:`z_keyexpr_t` associated to the query.
  */
-z_keyexpr_t z_query_keyexpr(z_query_t *query);
+z_keyexpr_t z_query_keyexpr(const z_query_t *query);
 
 /**
  * Returns an invalidated :c:type:`z_owned_reply_t`.

@@ -197,12 +197,12 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
-z_bytes_t z_query_parameters(z_query_t *query) {
+z_bytes_t z_query_parameters(const z_query_t *query) {
     z_bytes_t parameters = _z_bytes_wrap((uint8_t *)query->_parameters, strlen(query->_parameters));
     return parameters;
 }
 
-z_keyexpr_t z_query_keyexpr(z_query_t *query) { return query->_key; }
+z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
 
 z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
 

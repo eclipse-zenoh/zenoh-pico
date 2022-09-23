@@ -108,7 +108,7 @@ typedef struct {
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_questionable_handler_t)(z_query_t *query, void *arg);
+typedef void (*_z_questionable_handler_t)(const z_query_t *query, void *arg);
 
 typedef struct {
     _z_zint_t _id;
