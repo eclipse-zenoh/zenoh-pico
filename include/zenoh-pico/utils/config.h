@@ -30,6 +30,7 @@
  * Zenoh-net properties are represented as int-string map.
  */
 typedef _z_str_intmap_t _z_config_t;
+typedef _z_str_intmap_t _z_scouting_config_t;
 
 /**
  * Returns a new empty map of properties.

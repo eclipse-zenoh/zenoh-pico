@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t pid1 = _z_string_from_bytes(&z_loan(s1)->_tp_manager->_local_pid);
+    z_string_t pid1 = _z_string_from_bytes(&z_loan(s1)._val->_tp_manager->_local_pid);
     printf("Session 1 with PID: %s\n", pid1.val);
     _z_string_clear(&pid1);
 
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t pid2 = _z_string_from_bytes(&z_loan(s2)->_tp_manager->_local_pid);
+    z_string_t pid2 = _z_string_from_bytes(&z_loan(s2)._val->_tp_manager->_local_pid);
     printf("Session 2 with PID: %s\n", pid2.val);
     _z_string_clear(&pid2);
 
@@ -156,8 +156,8 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)->_id, z_loan(rids2[i])._id,
-               "");
+        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)._val->_id,
+               z_loan(rids2[i])._id, "");
         subs2 = _z_list_push(subs2, sub);
     }
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
-        printf("Declared queryable on session 2: %zu %lu %s\n", z_loan(*qle)->_id, (z_zint_t)0, s1_res);
+        printf("Declared queryable on session 2: %zu %lu %s\n", qle->_value->_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         z_owned_publisher_t *pub = (z_owned_publisher_t *)z_malloc(sizeof(z_owned_publisher_t));
         *pub = z_declare_publisher(z_loan(s1), z_loan(rids1[i]), NULL);
-        if (!z_check(*pub)) printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
+        if (!z_check(*pub)) printf("Declared publisher on session 1: %zu\n", z_loan(*pub)._val->_id);
         pubs1 = _z_list_push(pubs1, pub);
     }
 
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
     // Undeclare publishers on first session
     while (pubs1) {
         z_owned_publisher_t *pub = _z_list_head(pubs1);
-        printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)->_id);
+        printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)._val->_id);
         z_undeclare_publisher(z_move(*pub));
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free);
     }
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %zu\n", z_loan(*sub)->_id);
+        printf("Undeclared subscriber on session 2: %zu\n", sub->_value->_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free);
     }
@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
 
     while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
-        printf("Undeclared queryable on session 2: %zu\n", z_loan(*qle)->_id);
+        printf("Undeclared queryable on session 2: %zu\n", qle->_value->_id);
         z_undeclare_queryable(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free);
     }

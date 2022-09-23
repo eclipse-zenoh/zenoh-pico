@@ -45,7 +45,7 @@ void fprintwhatami(unsigned int whatami) {
     }
 }
 
-void fprintlocators(z_str_array_t *locs) {
+void fprintlocators(const z_str_array_t *locs) {
     Serial.print("[");
     size_t len = z_str_array_len(locs);
     for (unsigned int i = 0; i < len; i++) {
@@ -59,13 +59,13 @@ void fprintlocators(z_str_array_t *locs) {
     Serial.print("]");
 }
 
-void fprinthello(z_hello_t *hello) {
+void fprinthello(const z_hello_t hello) {
     Serial.print(" >> Hello { pid: ");
-    fprintpid(hello->pid);
+    fprintpid(hello.pid);
     Serial.print(", whatami: ");
-    fprintwhatami(hello->whatami);
+    fprintwhatami(hello.whatami);
     Serial.print(", locators: ");
-    fprintlocators(&hello->locators);
+    fprintlocators(&hello.locators);
     Serial.println(" }");
 }
 

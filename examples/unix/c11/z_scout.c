@@ -54,13 +54,13 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t *hello) {
+void fprinthello(FILE *stream, const z_hello_t hello) {
     fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello->pid);
+    fprintpid(stream, hello.pid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello->whatami);
+    fprintwhatami(stream, hello.whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello->locators);
+    fprintlocators(stream, &hello.locators);
     fprintf(stream, " }");
 }
 

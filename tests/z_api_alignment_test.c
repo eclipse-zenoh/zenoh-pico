@@ -45,7 +45,7 @@ void query_handler(z_query_t *query, void *arg) {
     char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
 #ifdef ZENOH_PICO
     if (k_str == NULL) {
-        k_str = zp_keyexpr_resolve((z_session_t *)arg, z_query_keyexpr(query));
+        k_str = zp_keyexpr_resolve(*(z_session_t *)arg, z_query_keyexpr(query));
     }
 #endif
 
@@ -67,7 +67,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
         char *k_str = z_keyexpr_to_string(sample.keyexpr);
 #ifdef ZENOH_PICO
         if (k_str == NULL) {
-            k_str = zp_keyexpr_resolve((z_session_t *)arg, sample.keyexpr);
+            k_str = zp_keyexpr_resolve(*(z_session_t *)arg, sample.keyexpr);
         }
 #endif
         free(k_str);
@@ -86,7 +86,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
 #ifdef ZENOH_PICO
     if (k_str == NULL) {
-        k_str = zp_keyexpr_resolve((z_session_t *)arg, sample->keyexpr);
+        k_str = zp_keyexpr_resolve(*(z_session_t *)arg, sample->keyexpr);
     }
 #endif
     free(k_str);
@@ -241,7 +241,8 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    z_owned_closure_sample_t _ret_closure_sample = z_closure(data_handler, NULL, z_loan(s1));
+    z_session_t ls1 = z_loan(s1);
+    z_owned_closure_sample_t _ret_closure_sample = z_closure(data_handler, NULL, &ls1);
     z_subscriber_options_t _ret_sub_opt = z_subscriber_options_default();
     z_owned_subscriber_t _ret_sub =
         z_declare_subscriber(z_loan(s2), z_keyexpr(keyexpr_str), z_move(_ret_closure_sample), &_ret_sub_opt);
@@ -278,7 +279,7 @@ int main(int argc, char **argv) {
     _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
     assert(_ret_int8 == 0);
 
-    z_owned_closure_sample_t _ret_closure_sample2 = z_closure(data_handler, NULL, z_loan(s1));
+    z_owned_closure_sample_t _ret_closure_sample2 = z_closure(data_handler, NULL, &ls1);
     z_pull_subscriber_options_t _ret_psub_opt = z_pull_subscriber_options_default();
     z_owned_pull_subscriber_t _ret_psub =
         z_declare_pull_subscriber(z_loan(s2), z_keyexpr(keyexpr_str), z_move(_ret_closure_sample2), &_ret_psub_opt);
@@ -320,7 +321,7 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    z_owned_closure_query_t _ret_closure_query = z_closure(query_handler, NULL, z_loan(s1));
+    z_owned_closure_query_t _ret_closure_query = z_closure(query_handler, NULL, &ls1);
     z_queryable_options_t _ret_qle_opt = z_queryable_options_default();
     z_owned_queryable_t qle =
         z_declare_queryable(z_loan(s1), z_keyexpr(s1_res), z_move(_ret_closure_query), &_ret_qle_opt);
@@ -328,7 +329,8 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    z_owned_closure_reply_t _ret_closure_reply = z_closure(reply_handler, NULL, z_loan(s2));
+    z_session_t ls2 = z_loan(s2);
+    z_owned_closure_reply_t _ret_closure_reply = z_closure(reply_handler, NULL, &ls2);
     z_get_options_t _ret_get_opt = z_get_options_default();
     _ret_get_opt.target = z_query_target_default();
     _ret_get_opt.consolidation = z_query_consolidation_auto();
