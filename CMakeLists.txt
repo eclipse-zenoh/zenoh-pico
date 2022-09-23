@@ -221,19 +221,11 @@ if(BUILD_TESTING)
   add_executable(z_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/z_msgcodec_test.c)
   add_executable(z_keyexpr_test ${PROJECT_SOURCE_DIR}/tests/z_keyexpr_test.c)
 
-  if(CMAKE_C_STANDARD MATCHES "11")
-    add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
-  endif()
-
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(z_msgcodec_test ${Libname})
   target_link_libraries(z_keyexpr_test ${Libname})
-
-  if(CMAKE_C_STANDARD MATCHES "11")
-    target_link_libraries(z_api_alignment_test ${Libname})
-  endif()
 
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
@@ -241,10 +233,6 @@ if(BUILD_TESTING)
   add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(z_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_msgcodec_test)
   add_test(z_keyexpr_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_keyexpr_test)
-
-  if(CMAKE_C_STANDARD MATCHES "11")
-    add_test(z_api_alignment_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_alignment_test)
-  endif()
 endif()
 
 if(BUILD_MULTICAST)
@@ -266,12 +254,16 @@ if(BUILD_INTEGRATION)
 
   if(CMAKE_C_STANDARD MATCHES "11")
     add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
+    add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
     target_link_libraries(z_client_test ${Libname})
+    target_link_libraries(z_api_alignment_test ${Libname})
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
 
     enable_testing()
     add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
+    add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
   endif()
 endif()
 
