@@ -419,7 +419,7 @@ z_query_consolidation_t z_query_consolidation_auto(void);
 z_query_consolidation_t z_query_consolidation_default(void);
 
 /**
- * Full consolidation performed everywhere.
+ * Latest consolidation.
  *
  * This strategy optimizes bandwidth on all links in the system but will provide a very poor latency.
  *
@@ -429,7 +429,7 @@ z_query_consolidation_t z_query_consolidation_default(void);
 z_query_consolidation_t z_query_consolidation_latest(void);
 
 /**
- * Lazy consolidation performed at all stages.
+ * Monotonic consolidation.
  *
  * This strategy offers the best latency. Replies are directly transmitted to the application when received
  * without needing to wait for all replies. This mode does not garantee that there will be no duplicates.
@@ -440,7 +440,7 @@ z_query_consolidation_t z_query_consolidation_latest(void);
 z_query_consolidation_t z_query_consolidation_monotonic(void);
 
 /**
- * No consolidation performed.
+ * No consolidation.
  *
  * This strategy is usefull when querying timeseries data bases or when using quorums.
  *
