@@ -270,7 +270,7 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
     int psize = 0;
     do {
         psize = sock->parsePacket();
-    } while (psize < 1);
+    } while (psize == 0);
 
     if (psize > len) return 0;
 
