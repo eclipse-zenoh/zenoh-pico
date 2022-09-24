@@ -32,12 +32,24 @@ typedef struct {
 } __z_tcp_addr_t;
 
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_tcp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     __z_tcp_addr_t *addr = (__z_tcp_addr_t *)z_malloc(sizeof(__z_tcp_addr_t));
-    addr->_ipaddr.fromString(s_addr);
-    addr->_port = atoi(port);
+    if (!addr->_ipaddr.fromString(s_addr)) {
+        goto ERR;
+    }
+
+    // Parse and check the validity of the port
+    int port = atoi(s_port);
+    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+        goto ERR;
+    }
+    addr->_port = port;
 
     return addr;
+
+ERR:
+    z_free(addr);
+    return NULL;
 }
 
 void _z_free_endpoint_tcp(void *addr_arg) {
@@ -112,12 +124,24 @@ typedef struct {
 } __z_udp_addr_t;
 
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     __z_udp_addr_t *addr = (__z_udp_addr_t *)z_malloc(sizeof(__z_udp_addr_t));
-    addr->_ipaddr.fromString(s_addr);
-    addr->_port = atoi(port);
+    if (!addr->_ipaddr.fromString(s_addr)) {
+        goto ERR;
+    }
+
+    // Parse and check the validity of the port
+    int port = atoi(s_port);
+    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+        goto ERR;
+    }
+    addr->_port = port;
 
     return addr;
+
+ERR:
+    z_free(addr);
+    return NULL;
 }
 
 void _z_free_endpoint_udp(void *addr_arg) {

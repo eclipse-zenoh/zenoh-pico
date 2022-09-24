@@ -28,9 +28,18 @@ extern "C" {
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-void *_z_create_endpoint_tcp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
+    // Parse and check the validity of the port
+    int port = atoi(s_port);
+    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+        goto ERR;
+    }
+
     SocketAddress *addr = new SocketAddress(s_addr, atoi(port));
     return addr;
+
+ERR:
+    return NULL;
 }
 
 void _z_free_endpoint_tcp(void *addr_arg) {
@@ -100,9 +109,18 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
+    // Parse and check the validity of the port
+    int port = atoi(s_port);
+    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+        goto ERR;
+    }
+
     SocketAddress *addr = new SocketAddress(s_addr, atoi(port));
     return addr;
+
+ERR:
+    return NULL;
 }
 
 void _z_free_endpoint_udp(void *addr_arg) {

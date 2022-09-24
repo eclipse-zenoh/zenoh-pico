@@ -28,7 +28,7 @@ typedef struct {
     void *_laddr;
 } _z_udp_socket_t;
 
-void *_z_create_endpoint_udp(const char *s_addr, const char *port);
+void *_z_create_endpoint_udp(const char *s_addr, const char *s_port);
 void _z_free_endpoint_udp(void *addr_arg);
 
 // Unicast

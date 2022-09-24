@@ -27,7 +27,7 @@ typedef struct {
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-void *_z_create_endpoint_tcp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
@@ -37,7 +37,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *port) {
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0) return NULL;
+    if (getaddrinfo(s_addr, s_port, &hints, &addr) < 0) return NULL;
 
     return addr;
 }
@@ -130,7 +130,7 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const char *s_addr, const char *port) {
+void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
@@ -140,7 +140,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *port) {
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_UDP;
 
-    if (getaddrinfo(s_addr, port, &hints, &addr) < 0) return NULL;
+    if (getaddrinfo(s_addr, s_port, &hints, &addr) < 0) return NULL;
 
     return addr;
 }
