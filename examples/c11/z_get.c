@@ -86,9 +86,10 @@ int main(int argc, char **argv) {
     }
 
     printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = 0;
+    char c = '\0';
     while (1) {
-        c = getchar();
+        fflush(stdin);
+        scanf("%c", &c);
         if (c == 'q') {
             break;
         }
