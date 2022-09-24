@@ -323,10 +323,10 @@ To build and upload the code into the board, run the following command:
   ```
 
 ## 3. Running the Examples
-The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see http://zenoh.io/docs/getting-started/quick-test/) and then to run the examples on your machine.
+The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
 
 ### 3.1. Starting the zenoh Network Service
-Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container)), then simply do:
+Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 
 ```bash
 $ docker run --init -net host eclipse/zenoh:master
