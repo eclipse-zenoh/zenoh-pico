@@ -98,15 +98,15 @@ typedef enum { _Z_RES_OK = 0, _Z_RES_ERR = -1 } _z_res_t;
 
 #define _ASSERT_RESULT(r, msg)  \
     if (r._tag == _Z_RES_ERR) { \
-        printf(msg);            \
-        printf("\n");           \
+        _Z_ERROR(msg);          \
+        _Z_ERROR("\n");         \
         exit(r._value._error);  \
     }
 
 #define _ASSERT_P_RESULT(r, msg) \
     if (r._tag == _Z_RES_ERR) {  \
-        printf(msg);             \
-        printf("\n");            \
+        _Z_ERROR(msg);           \
+        _Z_ERROR("\n");          \
         exit(r._value._error);   \
     }
 
