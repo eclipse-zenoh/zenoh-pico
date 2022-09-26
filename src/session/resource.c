@@ -55,11 +55,11 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
     _z_str_list_t *strs = NULL;
-    size_t len = 0;
+    size_t ke_len = 1;  // Start with space for the null-terminator
 
     // Append suffix as the right-most segment
     if (keyexpr->_suffix != NULL) {
-        len += strlen(keyexpr->_suffix);
+        ke_len += strlen(keyexpr->_suffix);
         strs = _z_str_list_push(strs, (char *)keyexpr->_suffix);  // Warning: list must be release with
                                                                   //   _z_list_free(&strs, _z_noop_free);
                                                                   //   or will release the suffix as well
@@ -72,7 +72,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         if (res == NULL) goto ERR;
 
         if (res->_key._suffix != NULL) {
-            len += strlen(res->_key._suffix);
+            ke_len += strlen(res->_key._suffix);
             strs = _z_str_list_push(strs, (char *)res->_key._suffix);  // Warning: list must be release with
                                                                        //   _z_list_free(&strs, _z_noop_free);
                                                                        //   or will release the suffix as well
@@ -82,13 +82,13 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     }
 
     // Concatenate all the partial resource names
-    char *rname = (char *)z_malloc(len + 1);
+    char *rname = (char *)z_malloc(ke_len);
     rname[0] = '\0';  // NULL terminator must be set (required to strcat)
 
     _z_str_list_t *xstr = strs;
     while (xstr != NULL) {
         char *s = _z_str_list_head(xstr);
-        strcat(rname, s);
+        strncat(rname, s, strlen(s));
         xstr = _z_str_list_tail(xstr);
     }
 

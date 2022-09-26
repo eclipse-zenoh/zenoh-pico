@@ -122,19 +122,19 @@ void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int ar
     for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
-            if (strlen(dst) != 0) strncat(dst, &lsep, 1);  // List separator
-            strcat(dst, argv[i]._str);                     // Key
-            strncat(dst, &ksep, 1);                        // KeyValue separator
-            strcat(dst, v);                                // Value
+            if (strlen(dst) != 0) strncat(dst, &lsep, 1);      // List separator
+            strncat(dst, argv[i]._str, strlen(argv[i]._str));  // Key
+            strncat(dst, &ksep, 1);                            // KeyValue separator
+            strncat(dst, v, strlen(v));                        // Value
         }
     }
 }
 
 char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {
     // Calculate the string length to allocate
-    size_t len = _z_str_intmap_strlen(s, argc, argv);
+    size_t len = _z_str_intmap_strlen(s, argc, argv) + 1;
     // Build the string
-    char *dst = (char *)z_malloc(len + 1);
+    char *dst = (char *)z_malloc(len);
     _z_str_intmap_onto_str(dst, s, argc, argv);
     return dst;
 }

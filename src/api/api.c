@@ -33,8 +33,9 @@ z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     if (keyexpr._id != Z_RESOURCE_ID_NONE) return NULL;
 
-    char *ret = (char *)z_malloc(strlen(keyexpr._suffix) + 1);
-    strcpy(ret, keyexpr._suffix);
+    size_t ke_len = strlen(keyexpr._suffix);
+    char *ret = (char *)z_malloc(ke_len + 1);
+    strncpy(ret, keyexpr._suffix, ke_len);
 
     return ret;
 }
