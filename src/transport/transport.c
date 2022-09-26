@@ -211,9 +211,9 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     switch (_Z_MID(iam._header)) {
         case _Z_MID_INIT: {
             _Z_INFO("Received Z_INIT(Ack)\n");
-            if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_A) {
+            if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A)) {
                 // Handle SN resolution option if present
-                if _Z_HAS_FLAG (iam._header, _Z_FLAG_T_S) {
+                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S)) {
                     // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
                     // otherwise the InitAck message is considered invalid and it should be treated as a
                     // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.

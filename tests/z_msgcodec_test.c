@@ -521,38 +521,38 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right) {
     printf("Flags (%zu:%zu), ", left->_flags, right->_flags);
     assert(left->_flags == right->_flags);
 
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_KIND) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_KIND)) {
         printf("Kind (%zu:%zu), ", left->_kind, right->_kind);
         assert(left->_kind == right->_kind);
     }
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_ENC) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_ENC)) {
         printf("Encoding (%u %.*s:%u %.*s), ", left->_encoding.prefix, (int)left->_encoding.suffix.len,
                left->_encoding.suffix.start, right->_encoding.prefix, (int)right->_encoding.suffix.len,
                right->_encoding.suffix.start);
         assert(left->_encoding.prefix == right->_encoding.prefix);
         assert_eq_uint8_array(&left->_encoding.suffix, &right->_encoding.suffix);
     }
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_TSTAMP) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_TSTAMP)) {
         printf("Tstamp -> ");
         assert_eq_timestamp(&left->_tstamp, &right->_tstamp);
         printf(", ");
     }
 
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_SRC_ID) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_ID)) {
         printf("Src ID -> ");
         assert_eq_uint8_array(&left->_source_id, &right->_source_id);
         printf(", ");
     }
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_SRC_SN) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_SN)) {
         printf("Src SN (%zu:%zu), ", left->_source_sn, right->_source_sn);
         assert(left->_source_sn == right->_source_sn);
     }
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_RTR_ID) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_ID)) {
         printf("Rtr ID -> ");
         assert_eq_uint8_array(&left->_first_router_id, &right->_first_router_id);
         printf(", ");
     }
-    if _Z_HAS_FLAG (left->_flags, _Z_DATA_INFO_RTR_SN) {
+    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_SN)) {
         printf("Rtr SN (%zu:%zu), ", left->_first_router_sn, right->_first_router_sn);
         assert(left->_first_router_sn == right->_first_router_sn);
     }
@@ -820,7 +820,7 @@ _z_sub_decl_t gen_subscriber_declaration(uint8_t *header) {
 
 void assert_eq_subscriber_declaration(_z_sub_decl_t *left, _z_sub_decl_t *right, uint8_t header) {
     assert_eq_res_key(&left->_key, &right->_key, header);
-    if _Z_HAS_FLAG (header, _Z_FLAG_Z_S) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S)) {
         printf(", ");
         assert_eq_subinfo(&left->_subinfo, &right->_subinfo);
     }
@@ -874,7 +874,7 @@ _z_qle_decl_t gen_queryable_declaration(uint8_t *header) {
 void assert_eq_queryable_declaration(_z_qle_decl_t *left, _z_qle_decl_t *right, uint8_t header) {
     assert_eq_res_key(&left->_key, &right->_key, header);
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_Z_I) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I)) {
         printf("Complete (%zu:%zu), ", left->_complete, right->_complete);
         assert(left->_complete == right->_complete);
         printf("Distance (%zu:%zu), ", left->_distance, right->_distance);
@@ -1226,7 +1226,7 @@ void assert_eq_data_message(_z_msg_data_t *left, _z_msg_data_t *right, uint8_t h
     printf("   ");
     assert_eq_res_key(&left->_key, &right->_key, header);
     printf("\n");
-    if _Z_HAS_FLAG (header, _Z_FLAG_Z_I) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I)) {
         printf("   ");
         assert_eq_data_info(&left->_info, &right->_info);
         printf("\n");
@@ -1285,7 +1285,7 @@ void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right, uint8_t h
     assert(left->_pull_id == right->_pull_id);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_Z_N) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N)) {
         printf("   Max samples (%zu:%zu)", left->_max_samples, right->_max_samples);
         assert(left->_max_samples == right->_max_samples);
         printf("\n");
@@ -1356,7 +1356,7 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     assert(left->_qid == right->_qid);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_Z_T) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T)) {
         printf("Target (%u:%u), ", left->_target, right->_target);
         assert(left->_target == right->_target);
         printf("\n");
@@ -1563,7 +1563,7 @@ _z_transport_message_t gen_scout_message(void) {
 }
 
 void assert_eq_scout_message(_z_t_msg_scout_t *left, _z_t_msg_scout_t *right, uint8_t header) {
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_W) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
         printf("   What (%zu:%zu)\n", left->_what, right->_what);
         assert(left->_what == right->_what);
     }
@@ -1612,17 +1612,17 @@ _z_transport_message_t gen_hello_message(void) {
 }
 
 void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, uint8_t header) {
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_I) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
         printf("   ");
         assert_eq_uint8_array(&left->_pid, &right->_pid);
         printf("\n");
     }
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_W) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
         printf("   What (%zu:%zu)", left->_whatami, right->_whatami);
         assert(left->_whatami == right->_whatami);
         printf("\n");
     }
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_L) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L)) {
         printf("   ");
         assert_eq_locator_array(&left->_locators, &right->_locators);
         printf("\n");
@@ -1700,7 +1700,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     assert_eq_uint8_array(&left->_pid, &right->_pid);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_S) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
         printf("   SN Resolution (%zu:%zu)", left->_sn_resolution, right->_sn_resolution);
         assert(left->_sn_resolution == right->_sn_resolution);
         printf("\n");
@@ -1711,7 +1711,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     printf("   Next SNs: ");
-    if _Z_HAS_FLAG (left->_options, _Z_OPT_JOIN_QOS) {
+    if (_Z_HAS_FLAG(left->_options, _Z_OPT_JOIN_QOS)) {
         assert(left->_next_sns._is_qos == 1);
         assert(right->_next_sns._is_qos == 1);
 
@@ -1793,13 +1793,13 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
     assert_eq_uint8_array(&left->_pid, &right->_pid);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_S) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
         printf("   SN Resolution (%zu:%zu)", left->_sn_resolution, right->_sn_resolution);
         assert(left->_sn_resolution == right->_sn_resolution);
         printf("\n");
     }
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_A) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
         printf("   ");
         assert_eq_uint8_array(&left->_cookie, &right->_cookie);
         printf("\n");
@@ -1909,7 +1909,7 @@ _z_transport_message_t gen_close_message(void) {
 }
 
 void assert_eq_close_message(_z_t_msg_close_t *left, _z_t_msg_close_t *right, uint8_t header) {
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_I) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
         printf("   ");
         assert_eq_uint8_array(&left->_pid, &right->_pid);
         printf("\n");
@@ -2014,7 +2014,7 @@ void assert_eq_ack_nack_message(_z_t_msg_ack_nack_t *left, _z_t_msg_ack_nack_t *
     assert(left->_sn == right->_sn);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_M) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M)) {
         printf("   Mask (%zu:%zu)", left->_mask, right->_mask);
         assert(left->_mask == right->_mask);
         printf("\n");
@@ -2059,7 +2059,7 @@ _z_transport_message_t gen_keep_alive_message(void) {
 }
 
 void assert_eq_keep_alive_message(_z_t_msg_keep_alive_t *left, _z_t_msg_keep_alive_t *right, uint8_t header) {
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_I) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
         printf("   ");
         assert_eq_uint8_array(&left->_pid, &right->_pid);
         printf("\n");
@@ -2169,7 +2169,7 @@ void assert_eq_frame_message(_z_t_msg_frame_t *left, _z_t_msg_frame_t *right, ui
     assert(left->_sn == right->_sn);
     printf("\n");
 
-    if _Z_HAS_FLAG (header, _Z_FLAG_T_F) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F)) {
         printf("   ");
         assert_eq_payload(&left->_payload._fragment, &right->_payload._fragment);
         printf("\n");
