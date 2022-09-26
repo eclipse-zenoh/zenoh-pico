@@ -27,7 +27,7 @@
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) {
-    uint8_t ret;
+    uint8_t ret = 0;
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint8_t), 0) <= 0)
         ;
@@ -39,7 +39,7 @@ uint8_t z_random_u8(void) {
 }
 
 uint16_t z_random_u16(void) {
-    uint16_t ret;
+    uint16_t ret = 0;
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint16_t), 0) <= 0)
         ;
@@ -51,7 +51,7 @@ uint16_t z_random_u16(void) {
 }
 
 uint32_t z_random_u32(void) {
-    uint32_t ret;
+    uint32_t ret = 0;
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint32_t), 0) <= 0)
         ;
