@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     char s1_res[64];
-    sprintf(s1_res, "%s/chunk/%d", keyexpr_str, 1);
+    snprintf(s1_res, 64, "%s/chunk/%d", keyexpr_str, 1);
     z_owned_keyexpr_t _ret_expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
     assert(z_check(_ret_expr));
     z_put_options_t _ret_put_opt = z_put_options_default();

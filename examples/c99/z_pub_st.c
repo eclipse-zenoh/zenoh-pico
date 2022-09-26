@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     z_clock_t now = z_clock_now();
     for (int idx = 0; 1;) {
         if (z_clock_elapsed_ms(&now) > 1000) {
-            sprintf(buf, "[%4d] %s", idx, value);
+            snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
             z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
             ++idx;

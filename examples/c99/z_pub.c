@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     char buf[256];
     for (int idx = 0; 1; ++idx) {
         sleep(1);
-        sprintf(buf, "[%4d] %s", idx, value);
+        snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);

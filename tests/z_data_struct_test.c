@@ -29,7 +29,7 @@ int main(void) {
     assert(_z_str_vec_is_empty(&vec));
 
     for (size_t i = 0; i < len; i++) {
-        sprintf(s, "%zu", i);
+        snprintf(s, 64, "%zu", i);
 
         _z_str_vec_append(&vec, _z_str_clone(s));
         char *e = _z_str_vec_get(&vec, i);
@@ -55,7 +55,7 @@ int main(void) {
     assert(_z_str_list_is_empty(list));
 
     for (size_t i = 0; i < len; i++) {
-        sprintf(s, "%zu", i);
+        snprintf(s, 64, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
 
         char *e = _z_str_list_head(list);
@@ -67,14 +67,14 @@ int main(void) {
     assert(_z_str_list_len(list) == len);
 
     for (size_t i = 0; i < len; i++) {
-        sprintf(s, "%zu", i);
+        snprintf(s, 64, "%zu", i);
         list = _z_str_list_pop(list);
         assert(_z_str_list_len(list) == len - (i + 1));
     }
     assert(_z_str_list_is_empty(list));
 
     for (size_t i = 0; i < len; i++) {
-        sprintf(s, "%zu", i);
+        snprintf(s, 64, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
         assert(_z_str_eq(s, _z_str_list_head(list)));
     }
@@ -89,7 +89,7 @@ int main(void) {
     assert(_z_str_intmap_is_empty(&map));
 
     for (size_t i = 0; i < len; i++) {
-        sprintf(s, "%zu", i);
+        snprintf(s, 64, "%zu", i);
         _z_str_intmap_insert(&map, i, _z_str_clone(s));
 
         char *e = _z_str_intmap_get(&map, i);

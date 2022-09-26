@@ -37,7 +37,7 @@ volatile unsigned int total = 0;
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
     char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     // Declare subscribers on second session
     char s1_res[64];
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {
         for (unsigned int i = 0; i < SET; i++) {
-            sprintf(s1_res, "%s%d", uri, i);
+            snprintf(s1_res, 64, "%s%d", uri, i);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);

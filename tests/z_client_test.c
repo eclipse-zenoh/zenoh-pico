@@ -41,7 +41,7 @@ volatile unsigned int total = 0;
 volatile unsigned int queries = 0;
 void query_handler(z_query_t *query, void *arg) {
     char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
     char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
@@ -60,7 +60,7 @@ void query_handler(z_query_t *query, void *arg) {
 volatile unsigned int replies = 0;
 void reply_handler(z_owned_reply_t *reply, void *arg) {
     char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
@@ -80,7 +80,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
     char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     // Declare resources on both sessions
     char s1_res[64];
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
         printf("Declared resource on session 1: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids1[i] = expr;
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s2), z_keyexpr(s1_res));
         printf("Declared resource on session 2: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids2[i] = expr;
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
     total = QRY * SET;
     for (unsigned int n = 0; n < QRY; n++) {
         for (unsigned int i = 0; i < SET; i++) {
-            sprintf(s1_res, "%s%d", uri, i);
+            snprintf(s1_res, 64, "%s%d", uri, i);
             z_owned_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
             z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
             printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
