@@ -16,13 +16,6 @@
 
 #include <stddef.h>
 
-_z_keyexpr_t _z_rid(unsigned long rid) {
-    _z_keyexpr_t rk;
-    rk._id = rid;
-    rk._suffix = NULL;
-    return rk;
-}
-
 _z_keyexpr_t _z_rname(const char *rname) {
     _z_keyexpr_t rk;
     rk._id = Z_RESOURCE_ID_NONE;

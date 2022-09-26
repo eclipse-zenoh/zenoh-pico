@@ -148,14 +148,6 @@ void _z_subinfo_clear(_z_subinfo_t *si) {
     // Nothing to clear
 }
 
-void _z_subinfo_free(_z_subinfo_t **si) {
-    _z_subinfo_t *ptr = (_z_subinfo_t *)*si;
-    _z_subinfo_clear(ptr);
-
-    z_free(ptr);
-    *si = NULL;
-}
-
 void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl) {
     _z_keyexpr_clear(&dcl->_key);
     _z_subinfo_clear(&dcl->_subinfo);

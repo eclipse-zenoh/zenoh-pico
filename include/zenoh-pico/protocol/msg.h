@@ -317,7 +317,6 @@ void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
 // +---------------+
 //
 void _z_subinfo_clear(_z_subinfo_t *si);
-void _z_subinfo_free(_z_subinfo_t **si);
 
 /*------------------ Subscriber Declaration ------------------*/
 //  7 6 5 4 3 2 1 0

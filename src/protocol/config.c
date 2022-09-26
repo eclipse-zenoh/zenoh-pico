@@ -22,12 +22,6 @@ int _z_config_init(_z_config_t *ps) {
     return 0;
 }
 
-_z_config_t _z_config_make() {
-    _z_config_t ps;
-    _z_config_init(&ps);
-    return ps;
-}
-
 int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value) {
     char *res = _z_str_intmap_insert(ps, key, value.val);
     if (res != value.val) return -1;

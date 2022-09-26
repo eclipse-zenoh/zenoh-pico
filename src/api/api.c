@@ -309,10 +309,10 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    _z_scout_callback(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10),
-                      _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
-                      strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10),
-                      __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+    _z_scout(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10),
+             _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
+             strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10), __z_hello_handler,
+             wrapped_ctx, callback->drop, ctx);
 
     z_free(wrapped_ctx);
     z_scouting_config_drop(config);
@@ -344,11 +344,11 @@ int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) 
     void *ctx = callback->context;
     callback->context = NULL;
 
-    z_id_t id;
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_transport_peer_entry_list_t *l = zs->_tp->_transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
+            z_id_t id;
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
             if (val->_remote_pid.len > sizeof(id.id)) {
                 continue;
@@ -370,27 +370,23 @@ int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback
     void *ctx = callback->context;
     callback->context = NULL;
 
-    z_id_t id;
 #if Z_UNICAST_TRANSPORT == 1
     if (zs->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        if (zs->_tp->_transport._unicast._remote_pid.len > sizeof(id.id)) {
-            goto ERR;
-        }
-        memcpy(&id.id[0], zs->_tp->_transport._unicast._remote_pid.start, zs->_tp->_transport._unicast._remote_pid.len);
-        memset(&id.id[zs->_tp->_transport._unicast._remote_pid.len], 0,
-               sizeof(id.id) - zs->_tp->_transport._unicast._remote_pid.len);
+        z_id_t id;
+        if (zs->_tp->_transport._unicast._remote_pid.len <= sizeof(id.id)) {
+            memcpy(&id.id[0], zs->_tp->_transport._unicast._remote_pid.start,
+                   zs->_tp->_transport._unicast._remote_pid.len);
+            memset(&id.id[zs->_tp->_transport._unicast._remote_pid.len], 0,
+                   sizeof(id.id) - zs->_tp->_transport._unicast._remote_pid.len);
 
-        callback->call(&id, ctx);
+            callback->call(&id, ctx);
+        }
     }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) callback->drop(ctx);
 
     return 0;
-
-ERR:
-    if (callback->drop != NULL) callback->drop(ctx);
-    return -1;
 }
 
 z_id_t z_info_zid(const z_session_t *zs) {
@@ -420,19 +416,18 @@ z_delete_options_t z_delete_options_default(void) {
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
              const z_put_options_t *options) {
     if (options != NULL)
-        return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, payload_len, options->encoding, Z_SAMPLE_KIND_PUT,
-                            options->congestion_control);
+        return _z_write(zs, keyexpr, (const uint8_t *)payload, payload_len, options->encoding, Z_SAMPLE_KIND_PUT,
+                        options->congestion_control);
 
-    return _z_write_ext(zs, keyexpr, (const uint8_t *)payload, payload_len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
-                        Z_CONGESTION_CONTROL_DROP);
+    return _z_write(zs, keyexpr, (const uint8_t *)payload, payload_len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
+                    Z_CONGESTION_CONTROL_DROP);
 }
 
 int8_t z_delete(z_session_t *zs, z_keyexpr_t keyexpr, const z_delete_options_t *options) {
     if (options != NULL)
-        return _z_write_ext(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                            options->congestion_control);
+        return _z_write(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, options->congestion_control);
 
-    return _z_write_ext(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, Z_CONGESTION_CONTROL_DROP);
+    return _z_write(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, Z_CONGESTION_CONTROL_DROP);
 }
 
 z_get_options_t z_get_options_default(void) {
@@ -555,17 +550,16 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void) { return (
 int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
     if (options != NULL)
-        return _z_write_ext(pub->_zn, pub->_key, payload, len, options->encoding, Z_SAMPLE_KIND_PUT,
-                            pub->_congestion_control);
-
-    return _z_write_ext(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
+        return _z_write(pub->_zn, pub->_key, payload, len, options->encoding, Z_SAMPLE_KIND_PUT,
                         pub->_congestion_control);
+
+    return _z_write(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
+                    pub->_congestion_control);
 }
 
 int8_t z_publisher_delete(const z_publisher_t *pub, const z_publisher_delete_options_t *options) {
     (void)(options);
-    return _z_write_ext(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                        pub->_congestion_control);
+    return _z_write(pub->_zn, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, pub->_congestion_control);
 }
 
 z_subscriber_options_t z_subscriber_options_default(void) {

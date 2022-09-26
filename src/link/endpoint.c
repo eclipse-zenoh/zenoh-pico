@@ -413,7 +413,9 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     s[0] = '\0';
 
     strncat(s, locator, strlen(locator));
-    strncat(s, config, strlen(config));
+    if (config != NULL) {
+        strncat(s, config, strlen(config));
+    }
 
     return s;
 

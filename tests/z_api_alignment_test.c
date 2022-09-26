@@ -262,6 +262,7 @@ int main(int argc, char **argv) {
     z_put_options_t _ret_put_opt = z_put_options_default();
     _ret_put_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_encoding_t _ret_encoding = z_encoding_default();
+    (void)(_ret_encoding);
     _ret_encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     _ret_put_opt.encoding = _ret_encoding;
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), (const uint8_t *)value, strlen(value), &_ret_put_opt);
@@ -309,6 +310,7 @@ int main(int argc, char **argv) {
 
     z_publisher_delete_options_t _ret_pdelete_opt = z_publisher_delete_options_default();
     _ret_int8 = z_publisher_delete(z_loan(_ret_pub), &_ret_pdelete_opt);
+    assert(_ret_int8 == 0);
 
     z_sleep_s(SLEEP);
 
@@ -319,6 +321,7 @@ int main(int argc, char **argv) {
     assert(datas == 4);
 
     _ret_int8 = z_undeclare_publisher(z_move(_ret_pub));
+    assert(_ret_int8 == 0);
     assert(!z_check(_ret_pub));
 
     _ret_int8 = z_undeclare_pull_subscriber(z_move(_ret_psub));
@@ -338,10 +341,15 @@ int main(int argc, char **argv) {
     z_get_options_t _ret_get_opt = z_get_options_default();
     _ret_get_opt.target = z_query_target_default();
     _ret_get_opt.consolidation = z_query_consolidation_auto();
+    (void)(_ret_get_opt.consolidation);
     _ret_get_opt.consolidation = z_query_consolidation_default();
+    (void)(_ret_get_opt.consolidation);
     _ret_get_opt.consolidation = z_query_consolidation_latest();
+    (void)(_ret_get_opt.consolidation);
     _ret_get_opt.consolidation = z_query_consolidation_monotonic();
+    (void)(_ret_get_opt.consolidation);
     _ret_get_opt.consolidation = z_query_consolidation_none();
+    (void)(_ret_get_opt.consolidation);
     _ret_int8 = z_get(z_loan(s2), z_keyexpr(s1_res), "", z_move(_ret_closure_reply), &_ret_get_opt);
     assert(_ret_int8 == 0);
 

@@ -76,7 +76,6 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             // head removal
             if (this == xs) {
                 xs = xs->_tail;
-                previous = xs;
             }
             // tail removal
             else if (this->_tail == NULL) {
@@ -86,8 +85,6 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             else {
                 previous->_tail = this->_tail;
             }
-
-            current = this->_tail;
 
             f_f(&this->_val);
             z_free(this);

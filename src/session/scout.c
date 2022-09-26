@@ -35,7 +35,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
         // Do nothing
     } else
 #endif
+    {
         goto ERR_2;
+    }
     _z_endpoint_clear(&endpoint);
 
     _z_link_p_result_t r_scout = _z_open_link(locator);

@@ -69,7 +69,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
     s.len = 2 * bs->len;
     char *s_val = (char *)z_malloc(s.len * sizeof(char) + 1);
 
-    char c[] = "0123456789ABCDEF";
+    const char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++) {
         s_val[2 * i] = c[(bs->start[i] & 0xF0) >> 4];
         s_val[2 * i + 1] = c[bs->start[i] & 0x0F];
@@ -83,10 +83,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
 /*-------- str --------*/
 size_t _z_str_size(const char *src) { return strlen(src) + 1; }
 
-void _z_str_clear(char *src) {
-    z_free(src);
-    src = NULL;
-}
+void _z_str_clear(char *src) { z_free(src); }
 
 void _z_str_free(char **src) {
     char *ptr = *src;

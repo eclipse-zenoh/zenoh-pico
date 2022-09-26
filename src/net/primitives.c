@@ -26,12 +26,8 @@
 #include "zenoh-pico/session/utils.h"
 
 /*------------------ Scouting ------------------*/
-_z_hello_list_t *_z_scout(const uint8_t what, const char *locator, uint32_t timeout) {
-    return _z_scout_inner(what, locator, timeout, 0);
-}
-
-void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
-                       void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+void _z_scout(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
+              void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, 0);
 
     while (hellos != NULL) {
@@ -329,26 +325,8 @@ ERR:
 }
 
 /*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len) {
-    // Empty data info
-    _z_data_info_t info;
-    info._flags = 0;
-
-    // Payload
-    _z_payload_t pld;
-    pld.len = len;
-    pld.start = payload;
-
-    // Congestion control
-    int can_be_dropped = Z_CONGESTION_CONTROL_DROP;
-
-    _z_zenoh_message_t z_msg = _z_msg_make_data(keyexpr, info, pld, can_be_dropped);
-
-    return _z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_DROP);
-}
-
-int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                    const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl) {
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl) {
     // @TODO: accept `const z_priority_t priority` as additional parameter
     // Data info
     _z_data_info_t info;

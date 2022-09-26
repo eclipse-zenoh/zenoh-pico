@@ -117,10 +117,9 @@ size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_tcp(sock_arg, ptr, n);
+        size_t rb = _z_read_tcp(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -214,10 +213,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_unicast(sock_arg, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -425,9 +423,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
     struct sockaddr_storage raddr;
     unsigned int raddrlen = sizeof(struct sockaddr_storage);
 
-    size_t rb = 0;
     do {
-        rb = recvfrom(sock->_fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
+        size_t rb = recvfrom(sock->_fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
 
         if (rb == SIZE_MAX) return rb;
 
@@ -463,10 +460,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
 
 size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg, _z_bytes_t *addr) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
+        size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;

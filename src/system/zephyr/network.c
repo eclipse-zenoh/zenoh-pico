@@ -109,10 +109,9 @@ size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_tcp(sock_arg, ptr, n);
+        size_t rb = _z_read_tcp(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -206,10 +205,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_unicast(sock_arg, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -254,8 +252,9 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
         c_laddr->sin6_addr = in6addr_any;
         c_laddr->sin6_port = htons(INADDR_ANY);
         //        c_laddr->sin6_scope_id; // Not needed to be defined
-    } else
+    } else {
         goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
     int sock = socket(raddr->ai_family, raddr->ai_socktype, raddr->ai_protocol);
     if (sock < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_2;
@@ -428,11 +427,11 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
     struct sockaddr_storage raddr;
     unsigned int raddrlen = sizeof(struct sockaddr_storage);
 
-    size_t rb = 0;
+    ssize_t rb = 0;
     do {
         rb = recvfrom(sock->_fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
 
-        if (rb == SIZE_MAX) return rb;
+        if (rb < 0) return rb;
 
         if (laddr->ai_family == AF_INET) {
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
@@ -467,10 +466,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
 
 size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg, _z_bytes_t *addr) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
+        size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;

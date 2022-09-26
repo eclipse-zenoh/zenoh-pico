@@ -315,6 +315,7 @@ int main(void) {
     for (int i = 0; i < N; i++) {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
+        memset(canon, 0, 128);
         strncpy(canon, ke, 128);
         size_t canon_len = strlen(canon);
         z_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
@@ -331,6 +332,7 @@ int main(void) {
     for (int i = 0; i < N; i++) {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
+        memset(canon, 0, 128);
         strncpy(canon, ke, 128);
         size_t canon_len = strlen(canon);
         z_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(canon);

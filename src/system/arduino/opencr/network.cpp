@@ -33,13 +33,16 @@ typedef struct {
 
 /*------------------ UDP sockets ------------------*/
 void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
-    __z_tcp_addr_t *addr = (__z_tcp_addr_t *)z_malloc(sizeof(__z_tcp_addr_t));
+    __z_tcp_addr_t *addr = new __z_tcp_addr_t();
+    int port = 0;
+
+    // Parse and check the validity of the IP address
     if (!addr->_ipaddr.fromString(s_addr)) {
         goto ERR;
     }
 
     // Parse and check the validity of the port
-    int port = atoi(s_port);
+    port = atoi(s_port);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
@@ -48,17 +51,18 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     return addr;
 
 ERR:
-    z_free(addr);
+    delete addr;
     return NULL;
 }
 
 void _z_free_endpoint_tcp(void *addr_arg) {
-    __z_tcp_addr_t *addr = (__z_tcp_addr_t *)addr_arg;
-    z_free(addr);
+    __z_tcp_addr_t *addr = static_cast<__z_tcp_addr_t *>(addr_arg);
+
+    delete addr;
 }
 
 void *_z_open_tcp(void *raddr_arg, uint32_t tout) {
-    __z_tcp_addr_t *raddr = (__z_tcp_addr_t *)raddr_arg;
+    __z_tcp_addr_t *raddr = static_cast<__z_tcp_addr_t *>(raddr_arg);
 
     WiFiClient *sock = new WiFiClient();
     if (!sock->connect(raddr->_ipaddr, raddr->_port)) return NULL;
@@ -67,7 +71,8 @@ void *_z_open_tcp(void *raddr_arg, uint32_t tout) {
 }
 
 void *_z_listen_tcp(void *laddr_arg, uint32_t tout) {
-    __z_tcp_addr_t *laddr = (__z_tcp_addr_t *)laddr_arg;
+    __z_tcp_addr_t *laddr = static_cast<__z_tcp_addr_t *>(laddr_arg);
+    (void)(laddr);
 
     // @TODO: To be implemented
 
@@ -75,7 +80,7 @@ void *_z_listen_tcp(void *laddr_arg, uint32_t tout) {
 }
 
 void _z_close_tcp(void *sock_arg) {
-    WiFiClient *sock = (WiFiClient *)sock_arg;
+    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
     if (sock == NULL) return;
 
     sock->stop();
@@ -83,7 +88,7 @@ void _z_close_tcp(void *sock_arg) {
 }
 
 size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
-    WiFiClient *sock = (WiFiClient *)sock_arg;
+    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
 
     if (!sock->available()) return 0;
 
@@ -92,10 +97,9 @@ size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_tcp(sock_arg, ptr, n);
+        size_t rb = _z_read_tcp(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -105,9 +109,8 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     return len;
 }
 
-size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    WiFiClient *sock = (WiFiClient *)sock_arg;
-    __z_tcp_addr_t *raddr = (__z_tcp_addr_t *)raddr_arg;
+size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
+    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
 
     sock->write(ptr, len);
 
@@ -125,13 +128,16 @@ typedef struct {
 
 /*------------------ UDP sockets ------------------*/
 void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
-    __z_udp_addr_t *addr = (__z_udp_addr_t *)z_malloc(sizeof(__z_udp_addr_t));
+    __z_udp_addr_t *addr = new __z_udp_addr_t();
+    int port = 0;
+
+    // Parse and check the validity of the IP address
     if (!addr->_ipaddr.fromString(s_addr)) {
         goto ERR;
     }
 
     // Parse and check the validity of the port
-    int port = atoi(s_port);
+    port = atoi(s_port);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
@@ -140,20 +146,22 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     return addr;
 
 ERR:
-    z_free(addr);
+    delete addr;
     return NULL;
 }
 
 void _z_free_endpoint_udp(void *addr_arg) {
-    __z_udp_addr_t *addr = (__z_udp_addr_t *)addr_arg;
-    z_free(addr);
+    __z_udp_addr_t *addr = static_cast<__z_udp_addr_t *>(addr_arg);
+
+    delete addr;
 }
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1
 
 void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
-    __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
+    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
+    (void)(raddr);
 
     WiFiUDP *sock = new WiFiUDP();
     if (!sock->begin(7447))  // FIXME: make it random
@@ -163,7 +171,8 @@ void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
 }
 
 void *_z_listen_udp_unicast(void *laddr_arg, uint32_t tout) {
-    __z_udp_addr_t *laddr = (__z_udp_addr_t *)laddr_arg;
+    __z_udp_addr_t *laddr = static_cast<__z_udp_addr_t *>(laddr_arg);
+    (void)(laddr);
 
     // @TODO: To be implemented
 
@@ -171,7 +180,7 @@ void *_z_listen_udp_unicast(void *laddr_arg, uint32_t tout) {
 }
 
 void _z_close_udp_unicast(void *sock_arg) {
-    WiFiUDP *sock = (WiFiUDP *)sock_arg;
+    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
     if (sock == NULL) return;
 
     sock->stop();
@@ -179,7 +188,7 @@ void _z_close_udp_unicast(void *sock_arg) {
 }
 
 size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
-    WiFiUDP *sock = (WiFiUDP *)sock_arg;
+    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
 
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
@@ -197,10 +206,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_unicast(sock_arg, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -211,8 +219,8 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    WiFiUDP *sock = (WiFiUDP *)sock_arg;
-    __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
+    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
+    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
 
     sock->beginPacket(raddr->_ipaddr, 7447);
     sock->write(ptr, len);
@@ -224,9 +232,9 @@ size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void 
 
 #if Z_LINK_UDP_MULTICAST == 1
 void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, const char *iface) {
-    __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
-    __z_udp_addr_t *laddr = NULL;  // Multicast messages are not self-consumed,
-                                   // so no need to save the local address
+    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
+    (void)(raddr);
+    // __z_udp_addr_t *laddr = NULL;  // Multicast messages are not self-consumed, so no need to save the local address
 
     WiFiUDP *sock = new WiFiUDP();
     if (!sock->begin(55555))  // FIXME: make it random
@@ -235,18 +243,18 @@ void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, co
     return sock;
 }
 
-void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface) {
-    __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
+void *_z_listen_udp_multicast(void *laddr_arg, uint32_t tout, const char *iface) {
+    __z_udp_addr_t *laddr = static_cast<__z_udp_addr_t *>(laddr_arg);
 
     WiFiUDP *sock = new WiFiUDP();
-    if (!sock->beginMulticast(raddr->_ipaddr, raddr->_port)) return NULL;
+    if (!sock->beginMulticast(laddr->_ipaddr, laddr->_port)) return NULL;
 
     return sock;
 }
 
 void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *arg) {
-    WiFiUDP *sockrecv = (WiFiUDP *)sockrecv_arg;
-    WiFiUDP *socksend = (WiFiUDP *)socksend_arg;
+    WiFiUDP *sockrecv = static_cast<WiFiUDP *>(sockrecv_arg);
+    WiFiUDP *socksend = static_cast<WiFiUDP *>(socksend_arg);
 
     // Both sockrecv and socksend must be compared to NULL,
     //  because we dont know if the close is trigger by a normal close
@@ -263,7 +271,7 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *arg) {
 }
 
 size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr) {
-    WiFiUDP *sock = (WiFiUDP *)sock_arg;
+    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
 
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
@@ -285,10 +293,10 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
                               strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
         int offset = 0;
         for (int i = 0; i < 4; i++) {
-            memcpy((uint8_t *)addr->start + offset, &rip[i], strlen((const char *)&rip[i]));
+            memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
             offset += strlen((const char *)&rip[i]);
         }
-        memcpy((uint8_t *)addr->start + offset, &rport, sizeof(uint16_t));
+        memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
     }
 
     return psize;
@@ -296,10 +304,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
 size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_multicast(sock_arg, ptr, n, laddr_arg, addr);
+        size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, laddr_arg, addr);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -310,8 +317,8 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 }
 
 size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    WiFiUDP *sock = (WiFiUDP *)sock_arg;
-    __z_udp_addr_t *raddr = (__z_udp_addr_t *)raddr_arg;
+    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
+    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
 
     sock->beginPacket(raddr->_ipaddr, 7447);
     sock->write(ptr, len);

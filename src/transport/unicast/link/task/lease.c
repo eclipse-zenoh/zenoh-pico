@@ -41,7 +41,7 @@ void *_zp_unicast_lease_task(void *arg) {
     _z_zint_t next_lease = ztu->_lease;
     _z_zint_t next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
     while (ztu->_lease_task_running) {
-        if (next_lease <= 0) {
+        if (next_lease == 0) {
             // Check if received data
             if (ztu->_received == 1) {
                 // Reset the lease parameters
@@ -66,11 +66,14 @@ void *_zp_unicast_lease_task(void *arg) {
 
         // Compute the target interval
         _z_zint_t interval;
-        if (next_lease > 0) {
-            interval = next_lease;
-            if (next_keep_alive < interval) interval = next_keep_alive;
-        } else
+        if (next_lease == 0) {
             interval = next_keep_alive;
+        } else {
+            interval = next_lease;
+            if (next_keep_alive < interval) {
+                interval = next_keep_alive;
+            }
+        }
 
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);

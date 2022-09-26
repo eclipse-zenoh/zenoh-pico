@@ -19,17 +19,6 @@
 #include "zenoh-pico/protocol/core.h"
 
 /**
- * Create a resource key from a resource id.
- *
- * Parameters:
- *     rid: The resource id.
- *
- * Returns:
- *     A :c:type:`_z_keyexpr_t` containing a new resource key.
- */
-_z_keyexpr_t _z_rid(unsigned long rid);
-
-/**
  * Create a resource key from a resource name.
  *
  * Parameters:

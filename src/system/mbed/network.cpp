@@ -35,21 +35,20 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
         goto ERR;
     }
 
-    SocketAddress *addr = new SocketAddress(s_addr, atoi(port));
-    return addr;
+    return new SocketAddress(s_addr, port);
 
 ERR:
     return NULL;
 }
 
 void _z_free_endpoint_tcp(void *addr_arg) {
-    SocketAddress *addr = (SocketAddress *)addr_arg;
+    SocketAddress *addr = static_cast<SocketAddress *>(addr_arg);
     delete addr;
 }
 
 TCPSocket *_z_open_tcp(void *raddr_arg, uint32_t tout) {
     NetworkInterface *net = NetworkInterface::get_default_instance();
-    SocketAddress *raddr = (SocketAddress *)raddr_arg;
+    SocketAddress *raddr = static_cast<SocketAddress *>(raddr_arg);
 
     TCPSocket *sock = new TCPSocket();
     sock->set_timeout(tout);
@@ -71,7 +70,7 @@ TCPSocket *_z_listen_tcp(void *raddr_arg) {
 }
 
 void _z_close_tcp(void *sock_arg) {
-    TCPSocket *sock = (TCPSocket *)sock_arg;
+    TCPSocket *sock = static_cast<TCPSocket *>(sock_arg);
     if (sock == NULL) return;
 
     sock->close();
@@ -79,7 +78,7 @@ void _z_close_tcp(void *sock_arg) {
 }
 
 size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
-    TCPSocket *sock = (TCPSocket *)sock_arg;
+    TCPSocket *sock = static_cast<TCPSocket *>(sock_arg);
     nsapi_size_or_error_t rb = sock->recv(ptr, len);
     if (rb < 0) return SIZE_MAX;
 
@@ -88,10 +87,9 @@ size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_tcp(sock_arg, ptr, n);
+        size_t rb = _z_read_tcp(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -102,7 +100,7 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
-    TCPSocket *sock = (TCPSocket *)sock_arg;
+    TCPSocket *sock = static_cast<TCPSocket *>(sock_arg);
     return sock->send(ptr, len);
 }
 #endif
@@ -116,15 +114,14 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
         goto ERR;
     }
 
-    SocketAddress *addr = new SocketAddress(s_addr, atoi(port));
-    return addr;
+    return new SocketAddress(s_addr, port);
 
 ERR:
     return NULL;
 }
 
 void _z_free_endpoint_udp(void *addr_arg) {
-    SocketAddress *addr = (SocketAddress *)addr_arg;
+    SocketAddress *addr = static_cast<SocketAddress *>(addr_arg);
     delete addr;
 }
 #endif
@@ -151,7 +148,7 @@ UDPSocket *_z_listen_udp_unicast(void *raddr_arg, uint32_t tout) {
 }
 
 void _z_close_udp_unicast(void *sock_arg) {
-    UDPSocket *sock = (UDPSocket *)sock_arg;
+    UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
     if (sock == NULL) return;
 
     sock->close();
@@ -159,7 +156,7 @@ void _z_close_udp_unicast(void *sock_arg) {
 }
 
 size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
-    UDPSocket *sock = (UDPSocket *)sock_arg;
+    UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
 
     SocketAddress raddr;
     nsapi_size_or_error_t rb = sock->recvfrom(&raddr, ptr, len);
@@ -170,10 +167,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
 size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_unicast(sock_arg, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -184,8 +180,8 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    UDPSocket *sock = (UDPSocket *)sock_arg;
-    SocketAddress *raddr = (SocketAddress *)raddr_arg;
+    UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
+    SocketAddress *raddr = static_cast<SocketAddress *>(raddr_arg);
 
     int sb = sock->sendto(*raddr, ptr, len);
     return sb;
@@ -212,7 +208,7 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
 
 UDPSocket *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface) {
     NetworkInterface *net = NetworkInterface::get_default_instance();
-    SocketAddress *raddr = (SocketAddress *)raddr_arg;
+    SocketAddress *raddr = static_cast<SocketAddress *>(raddr_arg);
 
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout);
@@ -230,9 +226,9 @@ _Z_OPEN_UDP_MULTICAST_ERROR_1:
 }
 
 void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_arg) {
-    UDPSocket *sockrecv = (UDPSocket *)sockrecv_arg;
-    UDPSocket *socksend = (UDPSocket *)socksend_arg;
-    SocketAddress *raddr = (SocketAddress *)raddr_arg;
+    UDPSocket *sockrecv = static_cast<UDPSocket *>(sockrecv_arg);
+    UDPSocket *socksend = static_cast<UDPSocket *>(socksend_arg);
+    SocketAddress *raddr = static_cast<SocketAddress *>(raddr_arg);
 
     // Both sockrecv and socksend must be compared to NULL,
     //  because we dont know if the close is trigger by a normal close
@@ -251,7 +247,7 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_
 }
 
 size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr) {
-    UDPSocket *sock = (UDPSocket *)sock_arg;
+    UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
     SocketAddress raddr;
     nsapi_size_or_error_t rb = 0;
 
@@ -261,15 +257,15 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
         if (raddr.get_ip_version() == NSAPI_IPv4) {
             *addr = _z_bytes_make(NSAPI_IPv4_BYTES + sizeof(uint16_t));
-            memcpy((void *)addr->start, raddr.get_ip_bytes(), NSAPI_IPv4_BYTES);
+            memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv4_BYTES);
             uint16_t port = raddr.get_port();
-            memcpy((void *)(addr->start + NSAPI_IPv4_BYTES), &port, sizeof(uint16_t));
+            memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv4_BYTES), &port, sizeof(uint16_t));
             break;
         } else if (raddr.get_ip_version() == NSAPI_IPv6) {
             *addr = _z_bytes_make(NSAPI_IPv6_BYTES + sizeof(uint16_t));
-            memcpy((void *)addr->start, raddr.get_ip_bytes(), NSAPI_IPv6_BYTES);
+            memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv6_BYTES);
             uint16_t port = raddr.get_port();
-            memcpy((void *)(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
+            memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
             break;
         }
     } while (1);
@@ -279,10 +275,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
 size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg, _z_bytes_t *addr) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
+        size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
         if (rb == SIZE_MAX) return rb;
 
         n -= rb;
@@ -293,8 +288,8 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 }
 
 size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    UDPSocket *sock = (UDPSocket *)sock_arg;
-    SocketAddress *raddr = (SocketAddress *)raddr_arg;
+    UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
+    SocketAddress *raddr = static_cast<SocketAddress *>(raddr_arg);
 
     int wb = sock->sendto(*raddr, ptr, len);
     return wb;
@@ -320,14 +315,14 @@ void *_z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
 void *_z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate) { return NULL; }
 
 void _z_close_serial(void *sock_arg) {
-    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+    BufferedSerial *sock = static_cast<BufferedSerial *>(sock_arg);
     delete sock;
 }
 
 size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
-    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+    BufferedSerial *sock = static_cast<BufferedSerial *>(sock_arg);
 
-    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t *before_cobs = new uint8_t[_Z_SERIAL_MAX_COBS_BUF_SIZE]();
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         sock->read(&before_cobs[i], 1);
@@ -337,7 +332,7 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
         }
     }
 
-    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MFS_SIZE]();
     int trb = _z_cobs_decode(before_cobs, rb, after_cobs);
 
     size_t i = 0;
@@ -379,10 +374,9 @@ ERR:
 
 size_t _z_read_exact_serial(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_serial(sock_arg, ptr, n);
+        size_t rb = _z_read_serial(sock_arg, ptr, n);
         if (rb == SIZE_MAX) {
             return rb;
         }
@@ -395,9 +389,9 @@ size_t _z_read_exact_serial(void *sock_arg, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
-    BufferedSerial *sock = (BufferedSerial *)sock_arg;
+    BufferedSerial *sock = static_cast<BufferedSerial *>(sock_arg);
 
-    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *before_cobs = new uint8_t[_Z_SERIAL_MFS_SIZE]();
     size_t i = 0;
     for (; i < sizeof(uint16_t); ++i) {
         before_cobs[i] = (len >> (i * 8)) & 0XFF;
@@ -411,7 +405,7 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
         before_cobs[i] = (crc >> (j * 8)) & 0XFF;
     }
 
-    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MAX_COBS_BUF_SIZE]();
     int twb = _z_cobs_encode(before_cobs, i, after_cobs);
     after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
 

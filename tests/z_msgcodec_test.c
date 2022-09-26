@@ -482,7 +482,6 @@ _z_data_info_t gen_data_info(void) {
     if (gen_bool()) {
         di._encoding.prefix = gen_zint();
         if (gen_bool()) {
-            di._encoding.suffix = _z_bytes_make(8);
             di._encoding.suffix = gen_bytes(8);
         } else
             di._encoding.suffix = _z_bytes_make(0);
@@ -2177,7 +2176,7 @@ void assert_eq_frame_message(_z_t_msg_frame_t *left, _z_t_msg_frame_t *right, ui
         size_t l_len = _z_vec_len(&left->_payload._messages);
         size_t r_len = _z_vec_len(&right->_payload._messages);
         printf("   Lenght (%zu:%zu)", l_len, r_len);
-        assert(r_len == r_len);
+        assert(l_len == r_len);
 
         for (size_t i = 0; i < l_len; i++)
             assert_eq_zenoh_message((_z_zenoh_message_t *)_z_vec_get(&left->_payload._messages, i),
@@ -2510,7 +2509,6 @@ void fragmentation(void) {
     print_wbuf(&fbf);
 
     printf(" - Start fragmenting\n");
-    int res = 0;
     while (_z_wbuf_len(&fbf) > 0) {
         // Clear the buffer for serialization
         _z_wbuf_prepare(&wbf);
@@ -2519,7 +2517,7 @@ void fragmentation(void) {
         sn = (sn + 1) % sn_resolution;
 
         size_t written = _z_wbuf_len(&fbf);
-        res = _z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
+        int res = _z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == 0);
         (void)(res);
         written -= _z_wbuf_len(&fbf);

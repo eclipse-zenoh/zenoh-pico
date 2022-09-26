@@ -156,10 +156,9 @@ int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++) {
         _z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
-        size_t wb;
         do {
             _Z_DEBUG("Sending wbuf on socket...");
-            wb = link->_write_f(link, bs.start, n);
+            size_t wb = link->_write_f(link, bs.start, n);
             _Z_DEBUG(" sent %lu bytes\n", wb);
             if (wb == SIZE_MAX) {
                 _Z_DEBUG("Error while sending data over socket [%lu]\n", wb);
