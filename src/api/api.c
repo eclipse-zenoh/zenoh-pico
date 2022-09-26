@@ -350,8 +350,11 @@ int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) 
         _z_transport_peer_entry_list_t *l = zs->_tp->_transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+            if (val->_remote_pid.len > sizeof(id.id)) {
+                continue;
+            }
             memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
-            memset(&id.id[val->_remote_pid.len], 0, sizeof(id) - val->_remote_pid.len);
+            memset(&id.id[val->_remote_pid.len], 0, sizeof(id.id) - val->_remote_pid.len);
 
             callback->call(&id, ctx);
         }
@@ -370,9 +373,12 @@ int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback
     z_id_t id;
 #if Z_UNICAST_TRANSPORT == 1
     if (zs->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
+        if (zs->_tp->_transport._unicast._remote_pid.len > sizeof(id.id)) {
+            goto ERR;
+        }
         memcpy(&id.id[0], zs->_tp->_transport._unicast._remote_pid.start, zs->_tp->_transport._unicast._remote_pid.len);
         memset(&id.id[zs->_tp->_transport._unicast._remote_pid.len], 0,
-               sizeof(id) - zs->_tp->_transport._unicast._remote_pid.len);
+               sizeof(id.id) - zs->_tp->_transport._unicast._remote_pid.len);
 
         callback->call(&id, ctx);
     }
@@ -381,13 +387,24 @@ int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback
     if (callback->drop != NULL) callback->drop(ctx);
 
     return 0;
+
+ERR:
+    if (callback->drop != NULL) callback->drop(ctx);
+    return -1;
 }
 
 z_id_t z_info_zid(const z_session_t *zs) {
     z_id_t id;
+    if (zs->_tp_manager->_local_pid.len > sizeof(id.id)) {
+        goto ERR;
+    }
     memcpy(&id.id[0], zs->_tp_manager->_local_pid.start, zs->_tp_manager->_local_pid.len);
-    memset(&id.id[zs->_tp_manager->_local_pid.len], 0, sizeof(id) - zs->_tp_manager->_local_pid.len);
+    memset(&id.id[zs->_tp_manager->_local_pid.len], 0, sizeof(id.id) - zs->_tp_manager->_local_pid.len);
 
+    return id;
+
+ERR:
+    memset(&id.id[0], 0, sizeof(id.id) - zs->_tp_manager->_local_pid.len);
     return id;
 }
 
