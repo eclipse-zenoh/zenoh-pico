@@ -40,7 +40,7 @@ volatile unsigned int total = 0;
 
 volatile unsigned int queries = 0;
 void query_handler(z_query_t *query, void *arg) {
-    char res[64];
+    char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
@@ -55,11 +55,12 @@ void query_handler(z_query_t *query, void *arg) {
 
     queries++;
     free(k_str);
+    free(res);
 }
 
 volatile unsigned int replies = 0;
 void reply_handler(z_owned_reply_t *reply, void *arg) {
-    char res[64];
+    char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
@@ -75,11 +76,12 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
     } else {
         printf(">> Received an error\n");
     }
+    free(res);
 }
 
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
-    char res[64];
+    char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
@@ -89,6 +91,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
 
     datas++;
     free(k_str);
+    free(res);
 }
 
 int main(int argc, char **argv) {
@@ -131,7 +134,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     // Declare resources on both sessions
-    char s1_res[64];
+    char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
@@ -321,6 +324,8 @@ int main(int argc, char **argv) {
 
     z_free((uint8_t *)payload);
     payload = NULL;
+
+    free(s1_res);
 
     return 0;
 }

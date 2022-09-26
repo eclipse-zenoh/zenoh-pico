@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    char buf[256];
+    char *buf = (char *)malloc(256);
     z_clock_t now = z_clock_now();
     for (int idx = 0; 1;) {
         if (z_clock_elapsed_ms(&now) > 1000) {
@@ -94,5 +94,6 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
 
+    free(buf);
     return 0;
 }

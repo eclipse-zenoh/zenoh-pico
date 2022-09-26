@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    char s1_res[64];
+    char *s1_res = (char *)malloc(64);
     snprintf(s1_res, 64, "%s/chunk/%d", keyexpr_str, 1);
     z_owned_keyexpr_t _ret_expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
     assert(z_check(_ret_expr));
@@ -369,6 +369,7 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP * 5);
 
+    free(s1_res);
     free(keyexpr_str);
 
     return 0;

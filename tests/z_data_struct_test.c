@@ -19,7 +19,7 @@
 #include "zenoh-pico/collections/string.h"
 
 int main(void) {
-    char s[64];
+    char *s = (char *)malloc(64);
     size_t len = 128;
 
     // str-vec

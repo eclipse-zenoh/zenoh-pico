@@ -36,7 +36,7 @@ volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
-    char res[64];
+    char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
@@ -48,6 +48,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
 
     datas++;
     free(k_str);
+    free(res);
 }
 
 int main(int argc, char **argv) {
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
-    char s1_res[64];
+    char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%d", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
@@ -166,6 +167,8 @@ int main(int argc, char **argv) {
 
     z_free((uint8_t *)payload);
     payload = NULL;
+
+    free(s1_res);
 
     return 0;
 }

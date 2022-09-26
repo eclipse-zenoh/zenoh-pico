@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    char buf[256];
+    char *buf = (char *)malloc(256);
     for (int idx = 0; 1; ++idx) {
         sleep(1);
         snprintf(buf, 256, "[%4d] %s", idx, value);
@@ -97,5 +97,6 @@ int main(int argc, char **argv) {
 
     z_close(z_session_move(&s));
 
+    free(buf);
     return 0;
 }

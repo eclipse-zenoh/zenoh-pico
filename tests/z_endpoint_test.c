@@ -22,7 +22,7 @@
 
 int main(void) {
 #if Z_LINK_UDP_UNICAST == 1
-    char s[64];
+    char *s = (char *)malloc(64);
 
     // Locator
     printf(">>> Testing locators...\n");
