@@ -94,11 +94,11 @@ void _z_str_free(char **src) {
     *src = NULL;
 }
 
-void _z_str_copy(char *dst, const char *src) { strcpy(dst, src); }
-
 char *_z_str_clone(const char *src) {
-    char *dst = (char *)z_malloc(_z_str_size(src));
-    _z_str_copy(dst, src);
+    size_t str_len = _z_str_size(src);
+    char *dst = (char *)z_malloc(str_len);
+    strncpy(dst, src, str_len - 1);
+
     return dst;
 }
 
