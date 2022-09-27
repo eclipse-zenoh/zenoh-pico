@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
         memset(s1_res, 0, 64);
-        snprintf(s1_res, 64, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     for (unsigned int n = 0; n < MSG; n++) {
         for (unsigned int i = 0; i < SET; i++) {
             memset(s1_res, 0, 64);
-            snprintf(s1_res, 64, "%s%d", uri, i);
+            snprintf(s1_res, 64, "%s%u", uri, i);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
