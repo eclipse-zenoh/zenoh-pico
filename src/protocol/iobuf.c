@@ -73,7 +73,7 @@ uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos) {
 size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_w_pos; }
 
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
-    assert(_z_iosli_writable(ios) >= 1);
+    assert(_z_iosli_writable(ios) >= (size_t)1);
     ios->_buf[ios->_w_pos++] = b;
 }
 
@@ -292,7 +292,7 @@ void _z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t len
         } else {
             wbf->_r_idx++;
         }
-    } while (length > 0);
+    } while (length > (size_t)0);
 }
 
 uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {

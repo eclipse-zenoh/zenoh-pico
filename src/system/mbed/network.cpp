@@ -31,7 +31,7 @@ extern "C" {
 void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
 
@@ -94,7 +94,7 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -110,7 +110,7 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
 
@@ -174,7 +174,7 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -282,7 +282,7 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -326,22 +326,22 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         sock->read(&before_cobs[i], 1);
-        rb = rb + 1;
-        if (before_cobs[i] == 0x00) {
+        rb = rb + (size_t)1;
+        if (before_cobs[i] == (uint8_t)0x00) {
             break;
         }
     }
 
     uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MFS_SIZE]();
-    int trb = _z_cobs_decode(before_cobs, rb, after_cobs);
+    size_t trb = _z_cobs_decode(before_cobs, rb, after_cobs);
 
     size_t i = 0;
     uint16_t payload_len = 0;
     for (; i < sizeof(payload_len); i++) {
-        payload_len |= (after_cobs[i] << (i * 8));
+        payload_len |= (after_cobs[i] << ((uint8_t)i * (uint8_t)8));
     }
 
-    if (trb < payload_len + 6) {
+    if (trb < ((size_t)payload_len + (size_t)6)) {
         goto ERR;
     }
 
@@ -350,8 +350,8 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
 
     {  // Limit the scope of CRC checks
         uint32_t crc = 0;
-        for (unsigned int j = 0; j < sizeof(crc); i++, j++) {
-            crc |= (after_cobs[i] << (j * 8));
+        for (uint8_t j = 0; j < sizeof(crc); i++, j++) {
+            crc |= (after_cobs[i] << ((uint8_t)j * (uint8_t)8));
         }
 
         uint32_t c_crc = _z_crc32(ptr, payload_len);
@@ -383,7 +383,7 @@ size_t _z_read_exact_serial(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -394,15 +394,15 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
     uint8_t *before_cobs = new uint8_t[_Z_SERIAL_MFS_SIZE]();
     size_t i = 0;
     for (; i < sizeof(uint16_t); ++i) {
-        before_cobs[i] = (len >> (i * 8)) & 0XFF;
+        before_cobs[i] = (len >> (i * (size_t)8)) & (size_t)0XFF;
     }
 
     memcpy(&before_cobs[i], ptr, len);
     i = i + len;
 
     uint32_t crc = _z_crc32(ptr, len);
-    for (unsigned int j = 0; j < sizeof(crc); i++, j++) {
-        before_cobs[i] = (crc >> (j * 8)) & 0XFF;
+    for (uint32_t j = 0; j < sizeof(crc); i++, j++) {
+        before_cobs[i] = (crc >> (j * (uint32_t)8)) & (uint32_t)0XFF;
     }
 
     uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MAX_COBS_BUF_SIZE]();

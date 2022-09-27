@@ -83,7 +83,7 @@ char *_z_locator_protocol_from_str(const char *s) {
     if (p_start == p_end) goto ERR;
 
     size_t p_len = p_end - p_start;
-    char *protocol = (char *)z_malloc((p_len + 1) * sizeof(char));
+    char *protocol = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
     strncpy(protocol, p_start, p_len);
     protocol[p_len] = '\0';
 
@@ -105,7 +105,7 @@ char *_z_locator_address_from_str(const char *s) {
     if (p_start == p_end) goto ERR;
 
     size_t p_len = p_end - p_start;
-    char *address = (char *)z_malloc((p_len + 1) * sizeof(char));
+    char *address = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
     strncpy(address, p_start, p_len);
     address[p_len] = '\0';
 
@@ -189,14 +189,14 @@ size_t _z_locator_strlen(const _z_locator_t *l) {
     size_t len = 0;
 
     len += strlen(l->_protocol);  // Locator protocol
-    len += 1;                     // Locator protocol separator
+    len += (size_t)1;             // Locator protocol separator
     len += strlen(l->_address);   // Locator address
 
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&l->_metadata);
     if (md_len > 0) {
-        len += 1;       // Locator metadata separator
-        len += md_len;  // Locator medatada content
+        len += (size_t)1;  // Locator metadata separator
+        len += md_len;     // Locator medatada content
     }
 
     return len;
@@ -241,7 +241,7 @@ void __z_locator_onto_str(char *dst, const _z_locator_t *loc) {
  *   The pointer to the stringified :c:type:`_z_locator_t`.
  */
 char *_z_locator_to_str(const _z_locator_t *l) {
-    size_t loc_len = _z_locator_strlen(l) + 1;
+    size_t loc_len = _z_locator_strlen(l) + (size_t)1;
     char *dst = (char *)z_malloc(loc_len);
     __z_locator_onto_str(dst, l);
     return dst;
@@ -405,7 +405,7 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
 
     char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
     if (config != NULL) {
-        loc_len += 1;               // Config separator
+        loc_len += (size_t)1;       // Config separator
         loc_len += strlen(config);  // Config content
     }
 

@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
     assert(hellos == 1);
 
     uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
-    z_sleep_s(_scouting_timeout / 1000);
+    z_sleep_ms(_scouting_timeout);
     z_sleep_s(SLEEP);
 
     z_owned_session_t s1 = z_open(z_move(_ret_config));

@@ -67,7 +67,7 @@ void _z_string_free(_z_string_t **str) {
 _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
     _z_string_t s;
     s.len = 2 * bs->len;
-    char *s_val = (char *)z_malloc(s.len * sizeof(char) + 1);
+    char *s_val = (char *)z_malloc((s.len + (size_t)1) * (size_t)sizeof(char));
 
     const char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++) {
@@ -94,7 +94,7 @@ void _z_str_free(char **src) {
 char *_z_str_clone(const char *src) {
     size_t str_len = _z_str_size(src);
     char *dst = (char *)z_malloc(str_len);
-    strncpy(dst, src, str_len - 1);
+    strncpy(dst, src, str_len - (size_t)1);
 
     return dst;
 }
@@ -118,7 +118,7 @@ char **_z_str_array_get(const _z_str_array_t *sa, size_t pos) { return &sa->_val
 
 size_t _z_str_array_len(const _z_str_array_t *sa) { return sa->_len; }
 
-uint8_t _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->_len == 0; }
+uint8_t _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->_len == (size_t)0; }
 
 void _z_str_array_clear(_z_str_array_t *sa) {
     for (size_t i = 0; i < sa->_len; i++) z_free(sa->_val[i]);

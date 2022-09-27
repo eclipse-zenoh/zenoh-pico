@@ -72,25 +72,25 @@ z_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                     if (in_dollar) {
                         return Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR;
                     }
-                    in_dollar += 1;
+                    in_dollar += (unsigned char)1;
                     break;
 
                 case '*':
-                    if (in_dollar != 1) {
+                    if (in_dollar != (unsigned char)1) {
                         return Z_KEYEXPR_CANON_STARS_IN_CHUNK;
                     }
-                    in_dollar += 2;
+                    in_dollar += (unsigned char)2;
                     break;
 
                 default:
-                    if (in_dollar == 1) {
+                    if (in_dollar == (unsigned char)1) {
                         return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
                     }
                     in_dollar = 0;
             }
         }
 
-        if (in_dollar == 1) {
+        if (in_dollar == (unsigned char)1) {
             return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
         }
 
@@ -568,18 +568,18 @@ z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                     if (in_dollar) {
                         return Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR;
                     }
-                    in_dollar += 1;
+                    in_dollar += (unsigned char)1;
                     break;
 
                 case '*':
-                    if (in_dollar != 1) {
+                    if (in_dollar != (unsigned char)1) {
                         return Z_KEYEXPR_CANON_STARS_IN_CHUNK;
                     }
-                    in_dollar += 2;
+                    in_dollar += (unsigned char)2;
                     break;
 
                 default:
-                    if (in_dollar == 1) {
+                    if (in_dollar == (unsigned char)1) {
                         return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
                     }
                     in_dollar = 0;

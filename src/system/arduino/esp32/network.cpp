@@ -122,7 +122,7 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -166,8 +166,8 @@ void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
     if (sock < 0) goto _Z_OPEN_UDP_UNICAST_ERROR_1;
 
     z_time_t tv;
-    tv.tv_sec = tout / 1000;
-    tv.tv_usec = (tout % 1000) * 1000;
+    tv.tv_sec = tout / (uint32_t)1000;
+    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) goto _Z_OPEN_UDP_UNICAST_ERROR_2;
 
     ret->_fd = sock;
@@ -218,7 +218,7 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -264,8 +264,8 @@ void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, co
     if (sock < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_2;
 
     z_time_t tv;
-    tv.tv_sec = tout / 1000;
-    tv.tv_usec = (tout % 1000) * 1000;
+    tv.tv_sec = tout / (uint32_t)1000;
+    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
 
     if (bind(sock, lsockaddr, addrlen) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
@@ -341,8 +341,8 @@ void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
     if (sock < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_1;
 
     z_time_t tv;
-    tv.tv_sec = tout / 1000;
-    tv.tv_usec = (tout % 1000) * 1000;
+    tv.tv_sec = tout / (uint32_t)1000;
+    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 
     optflag = 1;
@@ -474,7 +474,7 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -570,7 +570,7 @@ size_t _z_read_exact_bt(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }

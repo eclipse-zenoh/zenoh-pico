@@ -40,7 +40,8 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed) {
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, int is_streamed) {
     if (is_streamed == 1) {
         size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) _z_wbuf_put(buf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(buf, (uint8_t)((len >> (size_t)8 * i) & (uint8_t)0xFF), i);
     }
 }
 
@@ -118,7 +119,8 @@ int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
     // Write the message legnth in the reserved space if needed
     if (_Z_LINK_IS_STREAMED(zl->_capabilities)) {
         size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) _z_wbuf_put(&wbf, (uint8_t)((len >> 8 * i) & 0xFF), i);
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
+            _z_wbuf_put(&wbf, (uint8_t)((len >> (size_t)8 * i) & (uint8_t)0xFF), i);
     }
 
     // Send the wbuf on the socket

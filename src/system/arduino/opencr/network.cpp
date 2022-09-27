@@ -43,7 +43,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
 
     // Parse and check the validity of the port
     port = strtoul(s_port, NULL, 10);
-    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
     addr->_port = port;
@@ -104,7 +104,7 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -138,7 +138,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
 
     // Parse and check the validity of the port
     port = strtoul(s_port, NULL, 10);
-    if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
+    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
     addr->_port = port;
@@ -291,10 +291,10 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
         *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
                               strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
-        int offset = 0;
-        for (int i = 0; i < 4; i++) {
+        uint8_t offset = 0;
+        for (uint8_t i = 0; i < 4; i++) {
             memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
-            offset += strlen((const char *)&rip[i]);
+            offset += (uint8_t)strlen((const char *)&rip[i]);
         }
         memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
     }
@@ -311,7 +311,7 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }

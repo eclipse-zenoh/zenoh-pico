@@ -122,7 +122,7 @@ void _z_transport_manager_free(_z_transport_manager_t **ztm) {
 
 _z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, uint8_t mode) {
     _z_transport_p_result_t ret;
-    if (mode == 0)  // FIXME: use enum
+    if (mode == (uint8_t)0)  // FIXME: use enum
         ret = _z_new_transport_client(locator, ztm->_local_pid);
     else
         ret = _z_new_transport_peer(locator, ztm->_local_pid);

@@ -443,7 +443,7 @@ void wbuf_reusable_write_zbuf_read(void) {
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);
         for (size_t z = 0; z < len; z++) {
-            _z_wbuf_write(&wbf, (uint8_t)(z % 255));
+            _z_wbuf_write(&wbf, z % (uint8_t)255);
         }
 
         printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
@@ -455,7 +455,7 @@ void wbuf_reusable_write_zbuf_read(void) {
         printf("    Reading %zu bytes\n", len);
         printf("    [");
         for (uint8_t j = 0; j < len; j++) {
-            uint8_t l = (uint8_t)(j % 255);
+            uint8_t l = j % (uint8_t)255;
             uint8_t r = _z_zbuf_read(&zbf);
             printf(" %02x:%02x", l, r);
             assert(l == r);

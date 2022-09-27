@@ -31,7 +31,7 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
         if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) goto ERR;
 
         size_t len = 0;
-        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) len |= _z_zbuf_read(&zbf) << (i * 8);
+        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) len |= (size_t)_z_zbuf_read(&zbf) << (size_t)(i * 8);
 
         size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);
         if (writable < len) goto ERR;
