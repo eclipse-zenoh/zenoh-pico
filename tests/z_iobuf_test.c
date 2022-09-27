@@ -150,8 +150,8 @@ void iosli_writable_readable(void) {
     assert(_z_iosli_readable(cios) == 0);
 
     printf("  - IOSli bytes\n");
-    uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)payload, 1, len * sizeof(uint8_t));
+    uint8_t *payload = (uint8_t *)z_malloc(len);
+    memset((uint8_t *)payload, 1, len);
 
     for (size_t i = 0; i < len; i++) {
         payload[i] = gen_uint8();
@@ -168,8 +168,8 @@ void iosli_writable_readable(void) {
         assert(readable == i + 1);
     }
 
-    uint8_t *buffer = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)buffer, 1, len * sizeof(uint8_t));
+    uint8_t *buffer = (uint8_t *)z_malloc(len);
+    memset((uint8_t *)buffer, 1, len);
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
     _z_iosli_read_bytes(&ios, buffer, 0, len);
@@ -378,7 +378,7 @@ void wbuf_write_zbuf_read_bytes(void) {
     print_wbuf_overview(&wbf);
 
     printf("    Writing %zu bytes\n", len);
-    uint8_t *buf01 = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    uint8_t *buf01 = (uint8_t *)z_malloc(len);
     for (size_t i = 0; i < len; i++) {
         buf01[i] = (uint8_t)i % 255;
     }

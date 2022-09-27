@@ -131,7 +131,7 @@ _z_payload_t gen_payload(size_t len) {
     _z_payload_t pld;
     pld._is_alloc = 1;
     pld.len = len;
-    pld.start = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    pld.start = (uint8_t *)z_malloc(len);
     z_random_fill((uint8_t *)pld.start, pld.len);
 
     return pld;

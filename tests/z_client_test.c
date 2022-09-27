@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    const uint8_t *payload = (uint8_t *)z_malloc(len);
     memset((uint8_t *)payload, 1, MSG_LEN);
 
     total = MSG * SET;

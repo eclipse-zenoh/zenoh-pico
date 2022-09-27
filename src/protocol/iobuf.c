@@ -195,7 +195,7 @@ void _z_zbuf_compact(_z_zbuf_t *zbf) {
     if (zbf->_ios._r_pos == 0 && zbf->_ios._w_pos == 0) return;
 
     size_t len = _z_iosli_readable(&zbf->_ios);
-    memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len * sizeof(uint8_t));
+    memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
     _z_zbuf_set_rpos(zbf, 0);
     _z_zbuf_set_wpos(zbf, len);
 }
