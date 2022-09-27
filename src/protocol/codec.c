@@ -128,7 +128,7 @@ int _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     size_t len = strlen(s);
     _Z_EC(_z_zint_encode(wbf, len))
     // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (uint8_t *)s, 0, len);
+    return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
 }
 
 _z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
