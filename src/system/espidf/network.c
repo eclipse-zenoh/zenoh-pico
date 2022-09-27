@@ -472,10 +472,11 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
     struct sockaddr_storage raddr;
     unsigned int raddrlen = sizeof(struct sockaddr_storage);
 
+    ssize_t rb = 0;
     do {
-        size_t rb = recvfrom(sock->_fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
+        rb = recvfrom(sock->_fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
 
-        if (rb == SIZE_MAX) {
+        if (rb < SIZE_MAX) {
             return rb;
         }
 

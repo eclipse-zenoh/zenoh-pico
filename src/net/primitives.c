@@ -286,7 +286,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &query->_key);
         r_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-        if (!_z_keyexpr_intersect(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix))) {
+        if (!_z_keyexpr_intersects(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix))) {
             goto ERR;
         }
         _z_keyexpr_clear(&q_ke);

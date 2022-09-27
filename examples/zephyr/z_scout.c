@@ -11,11 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <stddef.h>
 #include <stdio.h>
-#include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void fprintpid(FILE *stream, z_bytes_t pid) {
     if (pid.start == NULL) {
@@ -52,13 +49,13 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t *hello) {
+void fprinthello(FILE *stream, const z_hello_t hello) {
     fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello->pid);
+    fprintpid(stream, hello.pid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello->whatami);
+    fprintwhatami(stream, hello.whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello->locators);
+    fprintlocators(stream, &hello.locators);
     fprintf(stream, " }");
 }
 
@@ -78,16 +75,15 @@ void drop(void *context) {
     }
 }
 
-int main(int argc, char **argv) {
-    (void)(argc);
-    (void)(argv);
+int main(void) {
+    sleep(5);
 
-    int *context = malloc(sizeof(int));
+    int *context = (int *)malloc(sizeof(int));
     *context = 0;
     z_owned_scouting_config_t config = z_scouting_config_default();
     z_owned_closure_hello_t closure = z_closure_hello(callback, drop, context);
     printf("Scouting...\n");
     z_scout(z_scouting_config_move(&config), z_closure_hello_move(&closure));
-    sleep(1);
+
     return 0;
 }

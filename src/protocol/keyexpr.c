@@ -18,7 +18,7 @@
 #include <string.h>
 
 /*------------------ Canonize helpers ------------------*/
-z_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
+zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     _Bool in_big_wild = false;
     char const *chunk_start = start;
     const char *end = start + *len;
@@ -449,7 +449,7 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
     }
 }
 
-_Bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+_Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     _Bool streq = (llen == rlen) && (strncmp(lstart, rstart, llen) == 0);
     if (streq) {
         return true;
@@ -490,10 +490,10 @@ _Bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rs
     }
 }
 
-z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
+zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     __zp_singleify(start, len, "$*");
     size_t canon_len = *len;
-    z_keyexpr_canon_status_t prefix_canon_state = __zp_canon_prefix(start, &canon_len);
+    zp_keyexpr_canon_status_t prefix_canon_state = __zp_canon_prefix(start, &canon_len);
     switch (prefix_canon_state) {
         case Z_KEYEXPR_CANON_LONE_DOLLAR_STAR:
         case Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR:
@@ -606,4 +606,4 @@ z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     return Z_KEYEXPR_CANON_SUCCESS;
 }
 
-z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len) { return __zp_canon_prefix(start, &len); }
+zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len) { return __zp_canon_prefix(start, &len); }

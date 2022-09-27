@@ -28,20 +28,16 @@
  * Returns:
  *   Returns the loaned type associated with `x`.
  */
-#define z_loan(x)                                           \
-    _Generic((x), z_owned_bytes_t                           \
-             : z_bytes_loan, z_owned_string_t               \
-             : z_string_loan, z_owned_keyexpr_t             \
-             : z_keyexpr_loan, z_owned_config_t             \
-             : z_config_loan, z_owned_scouting_config_t     \
-             : z_scouting_config_loan, z_owned_session_t    \
-             : z_session_loan, z_owned_subscriber_t         \
-             : z_subscriber_loan, z_owned_pull_subscriber_t \
-             : z_pull_subscriber_loan, z_owned_publisher_t  \
-             : z_publisher_loan, z_owned_queryable_t        \
-             : z_queryable_loan, z_owned_reply_t            \
-             : z_reply_loan, z_owned_hello_t                \
-             : z_hello_loan, z_owned_str_array_t            \
+#define z_loan(x)                                          \
+    _Generic((x), z_owned_keyexpr_t                        \
+             : z_keyexpr_loan, z_owned_config_t            \
+             : z_config_loan, z_owned_scouting_config_t    \
+             : z_scouting_config_loan, z_owned_session_t   \
+             : z_session_loan, z_owned_pull_subscriber_t   \
+             : z_pull_subscriber_loan, z_owned_publisher_t \
+             : z_publisher_loan, z_owned_reply_t           \
+             : z_reply_loan, z_owned_hello_t               \
+             : z_hello_loan, z_owned_str_array_t           \
              : z_str_array_loan)(&x)
 
 /**
@@ -51,9 +47,7 @@
  *   x: The instance to drop.
  */
 #define z_drop(x)                                           \
-    _Generic((*x), z_owned_bytes_t                          \
-             : z_bytes_drop, z_owned_string_t               \
-             : z_string_drop, z_owned_keyexpr_t             \
+    _Generic((*x), z_owned_keyexpr_t                        \
              : z_keyexpr_drop, z_owned_config_t             \
              : z_config_drop, z_owned_scouting_config_t     \
              : z_scouting_config_drop, z_owned_session_t    \
@@ -76,9 +70,7 @@
  *   Returns ``true`` if valid, or ``false`` otherwise.
  */
 #define z_check(x)                                           \
-    _Generic((x), z_owned_bytes_t                            \
-             : z_bytes_check, z_owned_string_t               \
-             : z_string_check, z_owned_keyexpr_t             \
+    _Generic((x), z_owned_keyexpr_t                          \
              : z_keyexpr_check, z_keyexpr_t                  \
              : z_keyexpr_is_initialized, z_owned_config_t    \
              : z_config_check, z_owned_scouting_config_t     \
@@ -102,9 +94,7 @@
  *   Returns the instance associated with `x`.
  */
 #define z_move(x)                                             \
-    _Generic((x), z_owned_bytes_t                             \
-             : z_bytes_move, z_owned_string_t                 \
-             : z_string_move, z_owned_keyexpr_t               \
+    _Generic((x), z_owned_keyexpr_t                           \
              : z_keyexpr_move, z_owned_config_t               \
              : z_config_move, z_owned_scouting_config_t       \
              : z_scouting_config_move, z_owned_session_t      \
@@ -132,9 +122,7 @@
  *   Returns the cloned instance of `x`.
  */
 #define z_clone(x)                                           \
-    _Generic((x), z_owned_bytes_t                            \
-             : z_bytes_clone, z_owned_string_t               \
-             : z_string_clone, z_owned_keyexpr_t             \
+    _Generic((x), z_owned_keyexpr_t                          \
              : z_keyexpr_clone, z_owned_config_t             \
              : z_config_clone, z_owned_session_t             \
              : z_session_clone, z_owned_subscriber_t         \

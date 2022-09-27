@@ -15,83 +15,85 @@
 #include <stdio.h>
 
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 int main(void) {
-    assert(z_keyexpr_intersect("a", strlen("a"), "a", strlen("a")));
-    assert(z_keyexpr_intersect("a/b", strlen("a/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "abc", strlen("abc")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "abc", strlen("abc")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "abc", strlen("abc")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "xxx", strlen("xxx")));
-    assert(z_keyexpr_intersect("ab$*", strlen("ab$*"), "abcd", strlen("abcd")));
-    assert(z_keyexpr_intersect("ab$*d", strlen("ab$*d"), "abcd", strlen("abcd")));
-    assert(z_keyexpr_intersect("ab$*", strlen("ab$*"), "ab", strlen("ab")));
-    assert(!z_keyexpr_intersect("ab/*", strlen("ab/*"), "ab", strlen("ab")));
-    assert(z_keyexpr_intersect("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/e", strlen("a/b/c/d/e")));
-    assert(z_keyexpr_intersect("a/**/d/**/l", strlen("a/**/d/**/l"), "a/b/c/d/e/f/g/h/i/l",
-                               strlen("a/b/c/d/e/f/g/h/i/l")));
-    assert(z_keyexpr_intersect("a/**/d/**/l", strlen("a/**/d/**/l"), "a/d/foo/l", strlen("a/d/foo/l")));
-    assert(z_keyexpr_intersect("a/$*b/c/$*d/e", strlen("a/$*b/c/$*d/e"), "a/xb/c/xd/e", strlen("a/xb/c/xd/e")));
-    assert(!z_keyexpr_intersect("a/*/c/*/e", strlen("a/*/c/*/e"), "a/c/e", strlen("a/c/e")));
-    assert(!z_keyexpr_intersect("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/x/e", strlen("a/b/c/d/x/e")));
-    assert(!z_keyexpr_intersect("ab$*cd", strlen("ab$*cd"), "abxxcxxd", strlen("abxxcxxd")));
-    assert(z_keyexpr_intersect("ab$*cd", strlen("ab$*cd"), "abxxcxxcd", strlen("abxxcxxcd")));
-    assert(!z_keyexpr_intersect("ab$*cd", strlen("ab$*cd"), "abxxcxxcdx", strlen("abxxcxxcdx")));
-    assert(z_keyexpr_intersect("**", strlen("**"), "abc", strlen("abc")));
-    assert(z_keyexpr_intersect("**", strlen("**"), "a/b/c", strlen("a/b/c")));
-    assert(z_keyexpr_intersect("ab/**", strlen("ab/**"), "ab", strlen("ab")));
-    assert(z_keyexpr_intersect("**/xyz", strlen("**/xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
+    assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
+    assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "xxx", strlen("xxx")));
+    assert(_z_keyexpr_intersects("ab$*", strlen("ab$*"), "abcd", strlen("abcd")));
+    assert(_z_keyexpr_intersects("ab$*d", strlen("ab$*d"), "abcd", strlen("abcd")));
+    assert(_z_keyexpr_intersects("ab$*", strlen("ab$*"), "ab", strlen("ab")));
+    assert(!_z_keyexpr_intersects("ab/*", strlen("ab/*"), "ab", strlen("ab")));
+    assert(_z_keyexpr_intersects("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/e", strlen("a/b/c/d/e")));
+    assert(_z_keyexpr_intersects("a/**/d/**/l", strlen("a/**/d/**/l"), "a/b/c/d/e/f/g/h/i/l",
+                                 strlen("a/b/c/d/e/f/g/h/i/l")));
+    assert(_z_keyexpr_intersects("a/**/d/**/l", strlen("a/**/d/**/l"), "a/d/foo/l", strlen("a/d/foo/l")));
+    assert(_z_keyexpr_intersects("a/$*b/c/$*d/e", strlen("a/$*b/c/$*d/e"), "a/xb/c/xd/e", strlen("a/xb/c/xd/e")));
+    assert(!_z_keyexpr_intersects("a/*/c/*/e", strlen("a/*/c/*/e"), "a/c/e", strlen("a/c/e")));
+    assert(!_z_keyexpr_intersects("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/x/e", strlen("a/b/c/d/x/e")));
+    assert(!_z_keyexpr_intersects("ab$*cd", strlen("ab$*cd"), "abxxcxxd", strlen("abxxcxxd")));
+    assert(_z_keyexpr_intersects("ab$*cd", strlen("ab$*cd"), "abxxcxxcd", strlen("abxxcxxcd")));
+    assert(!_z_keyexpr_intersects("ab$*cd", strlen("ab$*cd"), "abxxcxxcdx", strlen("abxxcxxcdx")));
+    assert(_z_keyexpr_intersects("**", strlen("**"), "abc", strlen("abc")));
+    assert(_z_keyexpr_intersects("**", strlen("**"), "a/b/c", strlen("a/b/c")));
+    assert(_z_keyexpr_intersects("ab/**", strlen("ab/**"), "ab", strlen("ab")));
+    assert(_z_keyexpr_intersects("**/xyz", strlen("**/xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
     assert(
-        !z_keyexpr_intersect("**/xyz$*xyz", strlen("**/xyz$*xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
-    assert(z_keyexpr_intersect("a/**/c/**/e", strlen("a/**/c/**/e"), "a/b/b/b/c/d/d/d/e", strlen("a/b/b/b/c/d/d/d/e")));
-    assert(z_keyexpr_intersect("a/**/c/**/e", strlen("a/**/c/**/e"), "a/c/e", strlen("a/c/e")));
-    assert(z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/e/f",
-                               strlen("a/b/b/b/c/d/d/c/d/e/f")));
-    assert(!z_keyexpr_intersect("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/d/e/f",
-                                strlen("a/b/b/b/c/d/d/c/d/d/e/f")));
-    assert(!z_keyexpr_intersect("ab$*cd", strlen("ab$*cd"), "abxxcxxcdx", strlen("abxxcxxcdx")));
-    assert(z_keyexpr_intersect("x/abc", strlen("x/abc"), "x/abc", strlen("x/abc")));
-    assert(!z_keyexpr_intersect("x/abc", strlen("x/abc"), "abc", strlen("abc")));
-    assert(z_keyexpr_intersect("x/*", strlen("x/*"), "x/abc", strlen("x/abc")));
-    assert(!z_keyexpr_intersect("x/*", strlen("x/*"), "abc", strlen("abc")));
-    assert(!z_keyexpr_intersect("*", strlen("*"), "x/abc", strlen("x/abc")));
-    assert(z_keyexpr_intersect("x/*", strlen("x/*"), "x/abc$*", strlen("x/abc$*")));
-    assert(z_keyexpr_intersect("x/$*abc", strlen("x/$*abc"), "x/abc$*", strlen("x/abc$*")));
-    assert(z_keyexpr_intersect("x/a$*", strlen("x/a$*"), "x/abc$*", strlen("x/abc$*")));
-    assert(z_keyexpr_intersect("x/a$*de", strlen("x/a$*de"), "x/abc$*de", strlen("x/abc$*de")));
-    assert(z_keyexpr_intersect("x/a$*d$*e", strlen("x/a$*d$*e"), "x/a$*e", strlen("x/a$*e")));
-    assert(z_keyexpr_intersect("x/a$*d$*e", strlen("x/a$*d$*e"), "x/a$*c$*e", strlen("x/a$*c$*e")));
-    assert(z_keyexpr_intersect("x/a$*d$*e", strlen("x/a$*d$*e"), "x/ade", strlen("x/ade")));
-    assert(!z_keyexpr_intersect("x/c$*", strlen("x/c$*"), "x/abc$*", strlen("x/abc$*")));
-    assert(!z_keyexpr_intersect("x/$*d", strlen("x/$*d"), "x/$*e", strlen("x/$*e")));
-    assert(z_keyexpr_intersect("a", strlen("a"), "a", strlen("a")));
-    assert(z_keyexpr_intersect("a/b", strlen("a/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "a", strlen("a")));
-    assert(z_keyexpr_intersect("a", strlen("a"), "*", strlen("*")));
-    assert(z_keyexpr_intersect("*", strlen("*"), "aaaaa", strlen("aaaaa")));
-    assert(z_keyexpr_intersect("**", strlen("**"), "a", strlen("a")));
-    assert(z_keyexpr_intersect("a", strlen("a"), "**", strlen("**")));
-    assert(z_keyexpr_intersect("**", strlen("**"), "a", strlen("a")));
-    assert(z_keyexpr_intersect("a/a/a/a", strlen("a/a/a/a"), "**", strlen("**")));
-    assert(z_keyexpr_intersect("a/*", strlen("a/*"), "a/b", strlen("a/b")));
-    assert(!z_keyexpr_intersect("a/*/b", strlen("a/*/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/**/b", strlen("a/**/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/b$*", strlen("a/b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/$*b$*", strlen("a/$*b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/$*b", strlen("a/$*b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/b$*", strlen("a/b$*"), "a/bc", strlen("a/bc")));
-    assert(z_keyexpr_intersect("a/$*b$*", strlen("a/$*b$*"), "a/ebc", strlen("a/ebc")));
-    assert(z_keyexpr_intersect("a/$*b", strlen("a/$*b"), "a/cb", strlen("a/cb")));
-    assert(!z_keyexpr_intersect("a/b$*", strlen("a/b$*"), "a/ebc", strlen("a/ebc")));
-    assert(!z_keyexpr_intersect("a/$*b", strlen("a/$*b"), "a/cbc", strlen("a/cbc")));
-    assert(z_keyexpr_intersect("a/**/b$*", strlen("a/**/b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/**/$*b$*", strlen("a/**/$*b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/**/$*b", strlen("a/**/$*b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_intersect("a/**/b$*", strlen("a/**/b$*"), "a/bc", strlen("a/bc")));
-    assert(z_keyexpr_intersect("a/**/$*b$*", strlen("a/**/$*b$*"), "a/ebc", strlen("a/ebc")));
-    assert(z_keyexpr_intersect("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
-    assert(!z_keyexpr_intersect("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
-    assert(!z_keyexpr_intersect("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
+        !_z_keyexpr_intersects("**/xyz$*xyz", strlen("**/xyz$*xyz"), "a/b/xyz/d/e/f/xyz", strlen("a/b/xyz/d/e/f/xyz")));
+    assert(
+        _z_keyexpr_intersects("a/**/c/**/e", strlen("a/**/c/**/e"), "a/b/b/b/c/d/d/d/e", strlen("a/b/b/b/c/d/d/d/e")));
+    assert(_z_keyexpr_intersects("a/**/c/**/e", strlen("a/**/c/**/e"), "a/c/e", strlen("a/c/e")));
+    assert(_z_keyexpr_intersects("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/e/f",
+                                 strlen("a/b/b/b/c/d/d/c/d/e/f")));
+    assert(!_z_keyexpr_intersects("a/**/c/*/e/*", strlen("a/**/c/*/e/*"), "a/b/b/b/c/d/d/c/d/d/e/f",
+                                  strlen("a/b/b/b/c/d/d/c/d/d/e/f")));
+    assert(!_z_keyexpr_intersects("ab$*cd", strlen("ab$*cd"), "abxxcxxcdx", strlen("abxxcxxcdx")));
+    assert(_z_keyexpr_intersects("x/abc", strlen("x/abc"), "x/abc", strlen("x/abc")));
+    assert(!_z_keyexpr_intersects("x/abc", strlen("x/abc"), "abc", strlen("abc")));
+    assert(_z_keyexpr_intersects("x/*", strlen("x/*"), "x/abc", strlen("x/abc")));
+    assert(!_z_keyexpr_intersects("x/*", strlen("x/*"), "abc", strlen("abc")));
+    assert(!_z_keyexpr_intersects("*", strlen("*"), "x/abc", strlen("x/abc")));
+    assert(_z_keyexpr_intersects("x/*", strlen("x/*"), "x/abc$*", strlen("x/abc$*")));
+    assert(_z_keyexpr_intersects("x/$*abc", strlen("x/$*abc"), "x/abc$*", strlen("x/abc$*")));
+    assert(_z_keyexpr_intersects("x/a$*", strlen("x/a$*"), "x/abc$*", strlen("x/abc$*")));
+    assert(_z_keyexpr_intersects("x/a$*de", strlen("x/a$*de"), "x/abc$*de", strlen("x/abc$*de")));
+    assert(_z_keyexpr_intersects("x/a$*d$*e", strlen("x/a$*d$*e"), "x/a$*e", strlen("x/a$*e")));
+    assert(_z_keyexpr_intersects("x/a$*d$*e", strlen("x/a$*d$*e"), "x/a$*c$*e", strlen("x/a$*c$*e")));
+    assert(_z_keyexpr_intersects("x/a$*d$*e", strlen("x/a$*d$*e"), "x/ade", strlen("x/ade")));
+    assert(!_z_keyexpr_intersects("x/c$*", strlen("x/c$*"), "x/abc$*", strlen("x/abc$*")));
+    assert(!_z_keyexpr_intersects("x/$*d", strlen("x/$*d"), "x/$*e", strlen("x/$*e")));
+    assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
+    assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "a", strlen("a")));
+    assert(_z_keyexpr_intersects("a", strlen("a"), "*", strlen("*")));
+    assert(_z_keyexpr_intersects("*", strlen("*"), "aaaaa", strlen("aaaaa")));
+    assert(_z_keyexpr_intersects("**", strlen("**"), "a", strlen("a")));
+    assert(_z_keyexpr_intersects("a", strlen("a"), "**", strlen("**")));
+    assert(_z_keyexpr_intersects("**", strlen("**"), "a", strlen("a")));
+    assert(_z_keyexpr_intersects("a/a/a/a", strlen("a/a/a/a"), "**", strlen("**")));
+    assert(_z_keyexpr_intersects("a/*", strlen("a/*"), "a/b", strlen("a/b")));
+    assert(!_z_keyexpr_intersects("a/*/b", strlen("a/*/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/**/b", strlen("a/**/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/b$*", strlen("a/b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/$*b$*", strlen("a/$*b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/$*b", strlen("a/$*b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/b$*", strlen("a/b$*"), "a/bc", strlen("a/bc")));
+    assert(_z_keyexpr_intersects("a/$*b$*", strlen("a/$*b$*"), "a/ebc", strlen("a/ebc")));
+    assert(_z_keyexpr_intersects("a/$*b", strlen("a/$*b"), "a/cb", strlen("a/cb")));
+    assert(!_z_keyexpr_intersects("a/b$*", strlen("a/b$*"), "a/ebc", strlen("a/ebc")));
+    assert(!_z_keyexpr_intersects("a/$*b", strlen("a/$*b"), "a/cbc", strlen("a/cbc")));
+    assert(_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/**/$*b$*", strlen("a/**/$*b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/bc", strlen("a/bc")));
+    assert(_z_keyexpr_intersects("a/**/$*b$*", strlen("a/**/$*b$*"), "a/ebc", strlen("a/ebc")));
+    assert(_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
+    assert(!_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
+    assert(!_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
 
     assert(zp_keyexpr_intersect_null_terminated("a", "a"));
     assert(zp_keyexpr_intersect_null_terminated("a/b", "a/b"));
@@ -165,39 +167,39 @@ int main(void) {
     assert(!zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/ebc"));
     assert(!zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cbc"));
 
-    assert(z_keyexpr_includes("a", strlen("a"), "a", strlen("a")));
-    assert(z_keyexpr_includes("a/b", strlen("a/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("*", strlen("*"), "a", strlen("a")));
-    assert(!z_keyexpr_includes("a", strlen("a"), "*", strlen("*")));
-    assert(z_keyexpr_includes("*", strlen("*"), "aaaaa", strlen("aaaaa")));
-    assert(z_keyexpr_includes("**", strlen("**"), "a", strlen("a")));
-    assert(!z_keyexpr_includes("a", strlen("a"), "**", strlen("**")));
-    assert(z_keyexpr_includes("**", strlen("**"), "a", strlen("a")));
-    assert(z_keyexpr_includes("**", strlen("**"), "a/a/a/a", strlen("a/a/a/a")));
-    assert(z_keyexpr_includes("**", strlen("**"), "*/**", strlen("*/**")));
-    assert(z_keyexpr_includes("*/**", strlen("*/**"), "*/**", strlen("*/**")));
-    assert(!z_keyexpr_includes("*/**", strlen("*/**"), "**", strlen("**")));
-    assert(!z_keyexpr_includes("a/a/a/a", strlen("a/a/a/a"), "**", strlen("**")));
-    assert(z_keyexpr_includes("a/*", strlen("a/*"), "a/b", strlen("a/b")));
-    assert(!z_keyexpr_includes("a/*/b", strlen("a/*/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/**/b", strlen("a/**/b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/b", strlen("a/b")));
-    assert(!z_keyexpr_includes("a/b", strlen("a/b"), "a/b$*", strlen("a/b$*")));
-    assert(z_keyexpr_includes("a/$*b$*", strlen("a/$*b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/bc", strlen("a/bc")));
-    assert(z_keyexpr_includes("a/$*b$*", strlen("a/$*b$*"), "a/ebc", strlen("a/ebc")));
-    assert(z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/cb", strlen("a/cb")));
-    assert(!z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/ebc", strlen("a/ebc")));
-    assert(!z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/cbc", strlen("a/cbc")));
-    assert(z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/**/$*b$*", strlen("a/**/$*b$*"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/b", strlen("a/b")));
-    assert(z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/bc", strlen("a/bc")));
-    assert(z_keyexpr_includes("a/**/$*b$*", strlen("a/**/$*b$*"), "a/ebc", strlen("a/ebc")));
-    assert(z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
-    assert(!z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
-    assert(!z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
+    assert(_z_keyexpr_includes("a", strlen("a"), "a", strlen("a")));
+    assert(_z_keyexpr_includes("a/b", strlen("a/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("*", strlen("*"), "a", strlen("a")));
+    assert(!_z_keyexpr_includes("a", strlen("a"), "*", strlen("*")));
+    assert(_z_keyexpr_includes("*", strlen("*"), "aaaaa", strlen("aaaaa")));
+    assert(_z_keyexpr_includes("**", strlen("**"), "a", strlen("a")));
+    assert(!_z_keyexpr_includes("a", strlen("a"), "**", strlen("**")));
+    assert(_z_keyexpr_includes("**", strlen("**"), "a", strlen("a")));
+    assert(_z_keyexpr_includes("**", strlen("**"), "a/a/a/a", strlen("a/a/a/a")));
+    assert(_z_keyexpr_includes("**", strlen("**"), "*/**", strlen("*/**")));
+    assert(_z_keyexpr_includes("*/**", strlen("*/**"), "*/**", strlen("*/**")));
+    assert(!_z_keyexpr_includes("*/**", strlen("*/**"), "**", strlen("**")));
+    assert(!_z_keyexpr_includes("a/a/a/a", strlen("a/a/a/a"), "**", strlen("**")));
+    assert(_z_keyexpr_includes("a/*", strlen("a/*"), "a/b", strlen("a/b")));
+    assert(!_z_keyexpr_includes("a/*/b", strlen("a/*/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/**/b", strlen("a/**/b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/b", strlen("a/b")));
+    assert(!_z_keyexpr_includes("a/b", strlen("a/b"), "a/b$*", strlen("a/b$*")));
+    assert(_z_keyexpr_includes("a/$*b$*", strlen("a/$*b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/bc", strlen("a/bc")));
+    assert(_z_keyexpr_includes("a/$*b$*", strlen("a/$*b$*"), "a/ebc", strlen("a/ebc")));
+    assert(_z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/cb", strlen("a/cb")));
+    assert(!_z_keyexpr_includes("a/b$*", strlen("a/b$*"), "a/ebc", strlen("a/ebc")));
+    assert(!_z_keyexpr_includes("a/$*b", strlen("a/$*b"), "a/cbc", strlen("a/cbc")));
+    assert(_z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/**/$*b$*", strlen("a/**/$*b$*"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/b", strlen("a/b")));
+    assert(_z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/bc", strlen("a/bc")));
+    assert(_z_keyexpr_includes("a/**/$*b$*", strlen("a/**/$*b$*"), "a/ebc", strlen("a/ebc")));
+    assert(_z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
+    assert(!_z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
+    assert(!_z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
 
     assert(zp_keyexpr_includes_null_terminated("a", "a"));
     assert(zp_keyexpr_includes_null_terminated("a/b", "a/b"));
@@ -260,32 +262,32 @@ int main(void) {
                             "greetings/**/*/e#",
                             "greetings/**/*/e$",
                             "greetings/**/*/$e"};
-    const z_keyexpr_canon_status_t expected[N] = {Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_SUCCESS,
-                                                  Z_KEYEXPR_CANON_STARS_IN_CHUNK,
-                                                  Z_KEYEXPR_CANON_EMPTY_CHUNK,
-                                                  Z_KEYEXPR_CANON_EMPTY_CHUNK,
-                                                  Z_KEYEXPR_CANON_EMPTY_CHUNK,
-                                                  Z_KEYEXPR_CANON_EMPTY_CHUNK,
-                                                  Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
-                                                  Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
-                                                  Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR,
-                                                  Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR};
+    const zp_keyexpr_canon_status_t expected[N] = {Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_STARS_IN_CHUNK,
+                                                   Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                                   Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                                   Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                                   Z_KEYEXPR_CANON_EMPTY_CHUNK,
+                                                   Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
+                                                   Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK,
+                                                   Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR,
+                                                   Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR};
     const char *canonized[N] = {"greetings/hello/there",
                                 "greetings/good/*/morning",
                                 "greetings/*",
@@ -319,7 +321,7 @@ int main(void) {
         memset(canon, 0, 128);
         strncpy(canon, ke, 128);
         size_t canon_len = strlen(canon);
-        z_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
+        zp_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
@@ -336,7 +338,7 @@ int main(void) {
         memset(canon, 0, 128);
         strncpy(canon, ke, 128);
         size_t canon_len = strlen(canon);
-        z_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(canon);
+        zp_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(canon);
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
@@ -347,10 +349,9 @@ int main(void) {
         printf("\n");
     }
 
-    assert(!z_keyexpr_equals("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
-    assert(!z_keyexpr_equals("a/bc", strlen("a/bc"), "a/cb", strlen("a/cb")));
-    assert(z_keyexpr_equals("greetings/hello/there", strlen("greetings/hello/there"), "greetings/hello/there",
-                            strlen("greetings/hello/there")));
+    assert(!z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")));
+    assert(!z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")));
+    assert(z_keyexpr_equals(z_keyexpr("greetings/hello/there"), z_keyexpr("greetings/hello/there")));
     assert(!zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb"));
     assert(!zp_keyexpr_equals_null_terminated("a/bc", "a/cb"));
     assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there"));

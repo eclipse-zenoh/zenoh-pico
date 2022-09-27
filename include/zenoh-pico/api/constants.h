@@ -58,7 +58,7 @@ typedef enum {
     Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR = -6,
     Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK = -7,
     Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR = -8
-} z_keyexpr_canon_status_t;
+} zp_keyexpr_canon_status_t;
 
 /**
  * Sample kind values.

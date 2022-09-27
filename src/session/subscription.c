@@ -54,8 +54,8 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
     _z_subscription_sptr_list_t *xs = NULL;
     while (subs != NULL) {
         _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
-        if (_z_keyexpr_intersect(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
-                                 strlen(key._suffix))) {
+        if (_z_keyexpr_intersects(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
+                                  strlen(key._suffix))) {
             xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
         }
 

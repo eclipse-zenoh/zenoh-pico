@@ -19,10 +19,10 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 
-z_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
-z_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
+zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
+zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
 _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
-_Bool _z_keyexpr_intersect(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
+_Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);

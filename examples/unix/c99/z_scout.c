@@ -1,4 +1,3 @@
-
 //
 // Copyright (c) 2022 ZettaScale Technology
 //
@@ -11,7 +10,6 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-//
 
 #include <stddef.h>
 #include <stdio.h>
@@ -54,18 +52,18 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t *hello) {
+void fprinthello(FILE *stream, const z_hello_t hello) {
     fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello->pid);
+    fprintpid(stream, hello.pid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello->whatami);
+    fprintwhatami(stream, hello.whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello->locators);
+    fprintlocators(stream, &hello.locators);
     fprintf(stream, " }");
 }
 
 void callback(z_owned_hello_t *hello, void *context) {
-    fprinthello(stdout, z_loan(*hello));
+    fprinthello(stdout, z_hello_loan(hello));
     fprintf(stdout, "\n");
     (*(int *)context)++;
 }
@@ -84,12 +82,12 @@ int main(int argc, char **argv) {
     (void)(argc);
     (void)(argv);
 
-    int *context = malloc(sizeof(int));
+    int *context = (int *)malloc(sizeof(int));
     *context = 0;
     z_owned_scouting_config_t config = z_scouting_config_default();
-    z_owned_closure_hello_t closure = z_closure(callback, drop, context);
+    z_owned_closure_hello_t closure = z_closure_hello(callback, drop, context);
     printf("Scouting...\n");
-    z_scout(z_move(config), z_move(closure));
+    z_scout(z_scouting_config_move(&config), z_closure_hello_move(&closure));
     sleep(1);
     return 0;
 }
