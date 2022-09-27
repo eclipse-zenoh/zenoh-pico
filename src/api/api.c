@@ -35,9 +35,10 @@ char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
         return NULL;
     }
 
-    size_t ke_len = strlen(keyexpr._suffix) + (size_t)1;
-    char *ret = (char *)z_malloc(ke_len);
+    size_t ke_len = strlen(keyexpr._suffix);
+    char *ret = (char *)z_malloc(ke_len + (size_t)1);
     strncpy(ret, keyexpr._suffix, ke_len);
+    ret[ke_len] = '\0';
 
     return ret;
 }
