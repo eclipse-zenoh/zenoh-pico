@@ -845,7 +845,7 @@ void _z_pull_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pull_result_t *r) {
     r->_value._pull._pull_id = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N)) {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
+        r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._pull._max_samples = r_zint._value._zint;
     }
@@ -1404,7 +1404,7 @@ void _z_sync_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sync_result_t *r) {
     r->_value._sync._sn = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_R) && _Z_HAS_FLAG(header, _Z_FLAG_T_C)) {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
+        r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._sync._count = r_zint._value._zint;
     }
@@ -1438,7 +1438,7 @@ void _z_ack_nack_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_ack_nack_result_t 
     r->_value._ack_nack._sn = r_zint._value._zint;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_M)) {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
+        r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._ack_nack._mask = r_zint._value._zint;
     }
