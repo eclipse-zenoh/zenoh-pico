@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -60,13 +60,13 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_config_move(&config));
     if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan(&s), NULL) < 0 || zp_start_lease_task(z_session_loan(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
         z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
     if (!z_pull_subscriber_check(&sub)) {
         printf("Unable to declare subscriber.\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Enter any key to pull data or 'q' to quit...\n");

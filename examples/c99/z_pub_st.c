@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -63,14 +63,14 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_config_move(&config));
     if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(keyexpr), NULL);
     if (!z_publisher_check(&pub)) {
         printf("Unable to declare publisher for key expression!\n");
-        exit(-1);
+        return -1;
     }
 
     char *buf = (char *)malloc(256);
