@@ -21,9 +21,9 @@
 #include "zenoh-pico.h"
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/zenoh-pico-put";
-    char *value = "Pub from Pico!";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/zenoh-pico-put";
+    const char *value = "Pub from Pico!";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;

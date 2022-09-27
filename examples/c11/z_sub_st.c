@@ -28,8 +28,8 @@ void data_handler(const z_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/**";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/**";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;

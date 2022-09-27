@@ -27,7 +27,7 @@ void data_handler(const z_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/**";
+    const char *keyexpr = "demo/example/**";
     char *locator = NULL;
 
     int opt;

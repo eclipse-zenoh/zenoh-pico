@@ -25,7 +25,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "demo/example/";
+const char *uri = "demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -190,8 +190,8 @@ int main(int argc, char **argv) {
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)z_malloc(len);
-    memset((uint8_t *)payload, 1, MSG_LEN);
+    uint8_t *payload = (uint8_t *)z_malloc(len);
+    memset(payload, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {

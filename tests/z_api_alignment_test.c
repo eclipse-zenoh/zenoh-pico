@@ -18,10 +18,9 @@
 #include "zenoh-pico.h"
 
 #define SLEEP 1
-#define URI "demo/example/**/*"
 #define SCOUTING_TIMEOUT "1000"
 
-char *value = "Test value";
+const char *value = "Test value";
 
 volatile unsigned int zids = 0;
 void zid_handler(const z_id_t *id, void *arg) {
@@ -128,9 +127,9 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    size_t keyexpr_len = strlen(URI);
+    size_t keyexpr_len = strlen("demo/example/**/*");
     char *keyexpr_str = (char *)malloc(keyexpr_len + 1);
-    memcpy(keyexpr_str, URI, keyexpr_len);
+    memcpy(keyexpr_str, "demo/example/**/*", keyexpr_len);
     keyexpr_str[keyexpr_len] = '\0';
     z_keyexpr_canon_status_t _ret_cstatus = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
     assert(_ret_cstatus < 0);
@@ -141,11 +140,11 @@ int main(int argc, char **argv) {
 #endif
     _ret_cstatus = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
     assert(_ret_cstatus == 0);
-    assert(strlen(URI) == keyexpr_len);
+    assert(strlen("demo/example/**/*") == keyexpr_len);
 #ifdef ZENOH_PICO
     _ret_cstatus = zp_keyexpr_canonize_null_terminated(keyexpr_str);
     assert(_ret_cstatus == 0);
-    assert(strlen(URI) == keyexpr_len);
+    assert(strlen("demo/example/**/*") == keyexpr_len);
 #endif
 
     z_sleep_s(SLEEP);

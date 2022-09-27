@@ -37,7 +37,7 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/**";
+    const char *keyexpr = "demo/example/**";
     char *locator = NULL;
 
     int opt;

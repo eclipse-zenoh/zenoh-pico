@@ -29,7 +29,7 @@ void print_zid(const z_id_t *id, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *mode = "client";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;

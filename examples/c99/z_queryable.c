@@ -19,8 +19,8 @@
 
 #include "zenoh-pico.h"
 
-char *keyexpr = "demo/example/zenoh-pico-queryable";
-char *value = "Queryable from Pico!";
+const char *keyexpr = "demo/example/zenoh-pico-queryable";
+const char *value = "Queryable from Pico!";
 
 void query_handler(z_query_t *query, void *ctx) {
     (void)(ctx);
