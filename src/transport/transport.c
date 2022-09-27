@@ -55,16 +55,18 @@ int _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int l
 
 int _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only) {
 #if Z_UNICAST_TRANSPORT == 1
-    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         return _z_unicast_send_close(&zt->_transport._unicast, reason, link_only);
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         return _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         return -1;
+    }
 }
 
 #if Z_UNICAST_TRANSPORT == 1
@@ -349,7 +351,9 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
 
     _z_t_msg_clear(&jsm);
 
-    if (res != 0) goto ERR_1;
+    if (res != 0) {
+        goto ERR_1;
+    }
 
     ret._tag = _Z_RES_OK;
     ret._value._transport_multicast_establish_param = param;
@@ -403,7 +407,9 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     // Clean up PIDs
     _z_bytes_clear(&ztu->_remote_pid);
 
-    if (ztu->_link != NULL) _z_link_free((_z_link_t **)&ztu->_link);
+    if (ztu->_link != NULL) {
+        _z_link_free((_z_link_t **)&ztu->_link);
+    }
 }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
@@ -433,7 +439,9 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
     // Clean up peer list
     _z_transport_peer_entry_list_free(&ztm->_peers);
 
-    if (ztm->_link != NULL) _z_link_free((_z_link_t **)&ztm->_link);
+    if (ztm->_link != NULL) {
+        _z_link_free((_z_link_t **)&ztm->_link);
+    }
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
@@ -441,16 +449,18 @@ void _z_transport_free(_z_transport_t **zt) {
     _z_transport_t *ptr = *zt;
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (ptr->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (ptr->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_transport_unicast_clear(&ptr->_transport._unicast);
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_transport_multicast_clear(&ptr->_transport._multicast);
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         __asm__("nop");
+    }
 
     z_free(ptr);
     *zt = NULL;

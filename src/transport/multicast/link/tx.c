@@ -115,7 +115,9 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
 
         // Send the wbuf on the socket
         res = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
-        if (res == 0) ztm->_transmitted = 1;
+        if (res == 0) {
+            ztm->_transmitted = 1;
+        }
     } else {
         // The message does not fit in the current batch, let's fragment it
         // Create an expandable wbuf for fragmentation
@@ -132,7 +134,9 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
         int is_first = 1;
         while (_z_wbuf_len(&fbf) > 0) {
             // Get the fragment sequence number
-            if (!is_first) sn = __unsafe_z_multicast_get_sn(ztm, reliability);
+            if (!is_first) {
+                sn = __unsafe_z_multicast_get_sn(ztm, reliability);
+            }
             is_first = 0;
 
             // Clear the buffer for serialization

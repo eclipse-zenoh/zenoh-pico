@@ -31,7 +31,9 @@ _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t 
     while (it != NULL) {
         _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(it);
         _z_zint_t lease = val->_lease;
-        if (lease < ret) ret = lease;
+        if (lease < ret) {
+            ret = lease;
+        }
 
         it = _z_transport_peer_entry_list_tail(it);
     }
@@ -46,7 +48,9 @@ _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
     while (it != NULL) {
         _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(it);
         _z_zint_t next_lease = val->_next_lease;
-        if (next_lease < ret) ret = next_lease;
+        if (next_lease < ret) {
+            ret = next_lease;
+        }
 
         it = _z_transport_peer_entry_list_tail(it);
     }
@@ -105,7 +109,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztm->_transmitted == 0) _zp_multicast_send_keep_alive(ztm);
+            if (ztm->_transmitted == 0) {
+                _zp_multicast_send_keep_alive(ztm);
+            }
 
             // Reset the keep alive parameters
             ztm->_transmitted = 0;
@@ -116,11 +122,17 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         _z_zint_t interval;
         if (next_lease > 0) {
             interval = next_lease;
-            if (next_keep_alive < interval) interval = next_keep_alive;
-            if (next_join < interval) interval = next_join;
+            if (next_keep_alive < interval) {
+                interval = next_keep_alive;
+            }
+            if (next_join < interval) {
+                interval = next_join;
+            }
         } else {
             interval = next_keep_alive;
-            if (next_join < interval) interval = next_join;
+            if (next_join < interval) {
+                interval = next_join;
+            }
         }
 
         _z_mutex_unlock(&ztm->_mutex_peer);

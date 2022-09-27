@@ -24,7 +24,9 @@
 int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two) { return one->_id == two->_id; }
 
 void _z_questionable_clear(_z_questionable_t *qle) {
-    if (qle->_dropper != NULL) qle->_dropper(qle->_arg);
+    if (qle->_dropper != NULL) {
+        qle->_dropper(qle->_arg);
+    }
     _z_keyexpr_clear(&qle->_key);
 }
 
@@ -33,7 +35,9 @@ _z_questionable_sptr_t *__z_get_questionable_by_id(_z_questionable_sptr_list_t *
     _z_questionable_sptr_t *qle = NULL;
     while (qles != NULL) {
         qle = _z_questionable_sptr_list_head(qles);
-        if (id == qle->ptr->_id) return qle;
+        if (id == qle->ptr->_id) {
+            return qle;
+        }
 
         qles = _z_questionable_sptr_list_tail(qles);
     }

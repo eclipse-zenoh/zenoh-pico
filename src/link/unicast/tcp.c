@@ -25,7 +25,9 @@
 
 char *_z_parse_port_segment_tcp(char *address) {
     char *p_start = strrchr(address, ':');
-    if (p_start == NULL) return NULL;
+    if (p_start == NULL) {
+        return NULL;
+    }
     p_start++;
 
     char *p_end = &address[strlen(address)];
@@ -71,10 +73,14 @@ int _z_f_link_open_tcp(void *arg) {
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
-    if (tout_as_str != NULL) tout = strtoul(tout_as_str, NULL, 10);
+    if (tout_as_str != NULL) {
+        tout = strtoul(tout_as_str, NULL, 10);
+    }
 
     self->_socket._tcp._sock = _z_open_tcp(self->_socket._tcp._raddr, tout);
-    if (self->_socket._tcp._sock == NULL) goto ERR;
+    if (self->_socket._tcp._sock == NULL) {
+        goto ERR;
+    }
 
     return 0;
 
@@ -86,7 +92,9 @@ int _z_f_link_listen_tcp(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     self->_socket._tcp._sock = _z_listen_tcp(self->_socket._tcp._raddr);
-    if (self->_socket._tcp._sock == NULL) goto ERR;
+    if (self->_socket._tcp._sock == NULL) {
+        goto ERR;
+    }
 
     return 0;
 

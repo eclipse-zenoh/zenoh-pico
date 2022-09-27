@@ -32,7 +32,9 @@ _z_zint_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id) {
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_id == id) return r;
+        if (r->_id == id) {
+            return r;
+        }
 
         xs = _z_resource_list_tail(xs);
     }
@@ -43,7 +45,9 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id
 _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_key._id == keyexpr->_id && _z_str_eq(r->_key._suffix, keyexpr->_suffix) == 1) return r;
+        if (r->_key._id == keyexpr->_id && _z_str_eq(r->_key._suffix, keyexpr->_suffix) == 1) {
+            return r;
+        }
 
         xs = _z_resource_list_tail(xs);
     }
@@ -69,7 +73,9 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     _z_zint_t id = keyexpr->_id;
     while (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
-        if (res == NULL) goto ERR;
+        if (res == NULL) {
+            goto ERR;
+        }
 
         if (res->_key._suffix != NULL) {
             ke_len += strlen(res->_key._suffix);
@@ -181,14 +187,16 @@ int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res) {
 
     // FIXME: check by keyexpr instead
     _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->_id);
-    if (r != NULL)  // Inconsistent declarations have been found
+    if (r != NULL) {  // Inconsistent declarations have been found
         goto ERR;
+    }
 
     // Register the resource
-    if (is_local)
+    if (is_local) {
         zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
-    else
+    } else {
         zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -209,10 +217,11 @@ void _z_unregister_resource(_z_session_t *zn, int is_local, _z_resource_t *res) 
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (is_local)
+    if (is_local) {
         zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
-    else
+    } else {
         zn->_remote_resources = _z_resource_list_drop_filter(zn->_remote_resources, _z_resource_eq, res);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

@@ -56,7 +56,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztu->_transmitted == 0) _zp_unicast_send_keep_alive(ztu);
+            if (ztu->_transmitted == 0) {
+                _zp_unicast_send_keep_alive(ztu);
+            }
 
             // Reset the keep alive parameters
             ztu->_transmitted = 0;

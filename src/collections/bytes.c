@@ -47,7 +47,9 @@ void _z_bytes_reset(_z_bytes_t *bs) {
 }
 
 void _z_bytes_clear(_z_bytes_t *bs) {
-    if (!bs->_is_alloc) return;
+    if (!bs->_is_alloc) {
+        return;
+    }
 
     z_free((uint8_t *)bs->start);
     _z_bytes_reset(bs);

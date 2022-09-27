@@ -27,14 +27,15 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_DATA: {
             _Z_INFO("Received _Z_MID_DATA message %d\n", msg->_header);
-            if (msg->_reply_context)  // This is some data from a query
+            if (msg->_reply_context) {  // This is some data from a query
                 _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key,
                                                msg->_body._data._payload, msg->_body._data._info._encoding,
                                                msg->_body._data._info._kind, msg->_body._data._info._tstamp);
-            else  // This is pure data
+            } else {  // This is pure data
                 _z_trigger_subscriptions(zn, msg->_body._data._key, msg->_body._data._payload,
                                          msg->_body._data._info._encoding, msg->_body._data._info._kind,
                                          msg->_body._data._info._tstamp);
+            }
 
             return _Z_RES_OK;
         }
@@ -104,7 +105,9 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         _Z_INFO("Received forget-resource message\n");
                         _z_resource_t *rd =
                             _z_get_resource_by_id(zn, _Z_RESOURCE_IS_REMOTE, decl._body._forget_res._rid);
-                        if (rd != NULL) _z_unregister_resource(zn, _Z_RESOURCE_IS_REMOTE, rd);
+                        if (rd != NULL) {
+                            _z_unregister_resource(zn, _Z_RESOURCE_IS_REMOTE, rd);
+                        }
 
                         break;
                     }
@@ -161,7 +164,9 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
         case _Z_MID_UNIT: {
             _Z_INFO("Received _Z_UNIT message\n");
             // This might be the final reply
-            if (msg->_reply_context) _z_trigger_query_reply_final(zn, msg->_reply_context);
+            if (msg->_reply_context) {
+                _z_trigger_query_reply_final(zn, msg->_reply_context);
+            }
 
             return _Z_RES_OK;
         }

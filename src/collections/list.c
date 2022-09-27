@@ -59,7 +59,9 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL) {
         void *head = _z_list_head(l);
-        if (c_f(e, head)) return l;
+        if (c_f(e, head)) {
+            return l;
+        }
         l = _z_list_tail(l);
     }
     return NULL;
@@ -117,7 +119,9 @@ _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
  */
 void _z_list_free(_z_list_t **xs, z_element_free_f f) {
     _z_list_t *ptr = (_z_list_t *)*xs;
-    while (ptr != NULL) ptr = _z_list_pop(ptr, f);
+    while (ptr != NULL) {
+        ptr = _z_list_pop(ptr, f);
+    }
 
     *xs = NULL;
 }

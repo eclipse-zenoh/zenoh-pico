@@ -18,10 +18,11 @@
 
 int8_t _z_send_join(_z_transport_t *zt) {
     // Join task only applies to multicast transports
-    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         return _zp_multicast_send_join(&zt->_transport._multicast);
-    else
+    } else {
         return -1;
+    }
 }
 
 #endif  // Z_MULTICAST_TRANSPORT == 1

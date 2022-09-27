@@ -90,7 +90,9 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
 
     do {
         size_t rb = _z_read_tcp(sock_arg, ptr, n);
-        if (rb == SIZE_MAX) return rb;
+        if (rb == SIZE_MAX) {
+            return rb;
+        }
 
         n -= rb;
         ptr = ptr + (len - n);
@@ -170,7 +172,9 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
     do {
         size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
-        if (rb == SIZE_MAX) return rb;
+        if (rb == SIZE_MAX) {
+            return rb;
+        }
 
         n -= rb;
         ptr = ptr + (len - n);
@@ -278,7 +282,9 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
 
     do {
         size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, arg, addr);
-        if (rb == SIZE_MAX) return rb;
+        if (rb == SIZE_MAX) {
+            return rb;
+        }
 
         n -= rb;
         ptr = ptr + (len - n);

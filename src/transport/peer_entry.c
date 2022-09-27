@@ -45,9 +45,13 @@ size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {
 }
 
 int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
-    if (left->_remote_pid.len != right->_remote_pid.len) return 0;  // False
+    if (left->_remote_pid.len != right->_remote_pid.len) {
+        return 0;  // False
+    }
 
-    if (memcmp(left->_remote_pid.start, right->_remote_pid.start, left->_remote_pid.len) != 0) return 0;  // False
+    if (memcmp(left->_remote_pid.start, right->_remote_pid.start, left->_remote_pid.len) != 0) {
+        return 0;  // False
+    }
 
     return 1;  // True
 }

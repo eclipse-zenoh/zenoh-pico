@@ -26,10 +26,11 @@ _z_string_t z_string_make(const char *value) {
 }
 
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
-    if (src->val)
+    if (src->val) {
         dst->val = _z_str_clone(src->val);
-    else
+    } else {
         dst->val = NULL;
+    }
     dst->len = src->len;
 }
 
@@ -121,7 +122,9 @@ size_t _z_str_array_len(const _z_str_array_t *sa) { return sa->_len; }
 uint8_t _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->_len == (size_t)0; }
 
 void _z_str_array_clear(_z_str_array_t *sa) {
-    for (size_t i = 0; i < sa->_len; i++) z_free(sa->_val[i]);
+    for (size_t i = 0; i < sa->_len; i++) {
+        z_free(sa->_val[i]);
+    }
     z_free(sa->_val);
 }
 
@@ -134,7 +137,9 @@ void _z_str_array_free(_z_str_array_t **sa) {
 
 void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src) {
     _z_str_array_init(dst, src->_len);
-    for (size_t i = 0; i < src->_len; i++) dst->_val[i] = _z_str_clone(src->_val[i]);
+    for (size_t i = 0; i < src->_len; i++) {
+        dst->_val[i] = _z_str_clone(src->_val[i]);
+    }
     dst->_len = src->_len;
 }
 

@@ -24,7 +24,9 @@
 
 int _zp_unicast_read(_z_transport_unicast_t *ztu) {
     _z_transport_message_result_t r_s = _z_unicast_recv_t_msg(ztu);
-    if (r_s._tag == _Z_RES_ERR) goto ERR;
+    if (r_s._tag == _Z_RES_ERR) {
+        goto ERR;
+    }
 
     int res = _z_unicast_handle_transport_message(ztu, &r_s._value._transport_message);
     _z_t_msg_clear(&r_s._value._transport_message);
@@ -54,10 +56,14 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities)) {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
-                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) continue;
+                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    continue;
+                }
             }
 
-            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
+            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
+            }
 
             if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                 _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
@@ -68,7 +74,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             }
         } else {
             to_read = _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
-            if (to_read == SIZE_MAX) continue;
+            if (to_read == SIZE_MAX) {
+                continue;
+            }
         }
 
         // Wrap the main buffer for to_read bytes
@@ -82,10 +90,11 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
         if (r._tag == _Z_RES_OK) {
             int res = _z_unicast_handle_transport_message(ztu, &r._value._transport_message);
-            if (res == _Z_RES_OK)
+            if (res == _Z_RES_OK) {
                 _z_t_msg_clear(&r._value._transport_message);
-            else
+            } else {
                 goto EXIT_RECV_LOOP;
+            }
         } else {
             _Z_ERROR("Connection closed due to malformed message\n\n\n");
             goto EXIT_RECV_LOOP;

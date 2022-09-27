@@ -39,9 +39,13 @@ size_t _z_int_void_map_capacity(const _z_int_void_map_t *map) { return map->_cap
 size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
     size_t len = 0;
 
-    if (map->_vals == NULL) return len;
+    if (map->_vals == NULL) {
+        return len;
+    }
 
-    for (size_t idx = 0; idx < map->_capacity; idx++) len += _z_list_len(map->_vals[idx]);
+    for (size_t idx = 0; idx < map->_capacity; idx++) {
+        len += _z_list_len(map->_vals[idx]);
+    }
 
     return len;
 }
@@ -49,7 +53,9 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
 uint8_t _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == 0; }
 
 void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f) {
-    if (map->_vals == NULL) return;
+    if (map->_vals == NULL) {
+        return;
+    }
 
     size_t idx = k % map->_capacity;
     _z_int_void_map_entry_t e;
@@ -65,7 +71,9 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
         map->_vals = (_z_list_t **)z_malloc(map->_capacity * sizeof(_z_list_t *));
         // memset(map->vals, 0, map->capacity * sizeof(_z_list_t *));
 
-        for (size_t idx = 0; idx < map->_capacity; idx++) map->_vals[idx] = NULL;
+        for (size_t idx = 0; idx < map->_capacity; idx++) {
+            map->_vals[idx] = NULL;
+        }
     }
 
     // Free any old value
@@ -83,7 +91,9 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
 }
 
 void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
-    if (map->_vals == NULL) return NULL;
+    if (map->_vals == NULL) {
+        return NULL;
+    }
 
     size_t idx = k % map->_capacity;
 
@@ -101,9 +111,13 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
 }
 
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
-    if (map->_vals == NULL) return;
+    if (map->_vals == NULL) {
+        return;
+    }
 
-    for (size_t idx = 0; idx < map->_capacity; idx++) _z_list_free(&map->_vals[idx], f_f);
+    for (size_t idx = 0; idx < map->_capacity; idx++) {
+        _z_list_free(&map->_vals[idx], f_f);
+    }
 
     z_free(map->_vals);
     map->_vals = NULL;

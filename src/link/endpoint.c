@@ -63,10 +63,14 @@ int _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
     int res = 0;
 
     res = _z_str_eq(left->_protocol, right->_protocol);
-    if (!res) return res;
+    if (!res) {
+        return res;
+    }
 
     res = _z_str_eq(left->_address, right->_address);
-    if (!res) return res;
+    if (!res) {
+        return res;
+    }
 
     // @TODO: implement eq for metadata
 
@@ -75,12 +79,18 @@ int _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
 
 char *_z_locator_protocol_from_str(const char *s) {
     const char *p_start = &s[0];
-    if (p_start == NULL) goto ERR;
+    if (p_start == NULL) {
+        goto ERR;
+    }
 
     const char *p_end = strchr(s, LOCATOR_PROTOCOL_SEPARATOR);
-    if (p_end == NULL) goto ERR;
+    if (p_end == NULL) {
+        goto ERR;
+    }
 
-    if (p_start == p_end) goto ERR;
+    if (p_start == p_end) {
+        goto ERR;
+    }
 
     size_t p_len = p_end - p_start;
     char *protocol = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
@@ -95,14 +105,22 @@ ERR:
 
 char *_z_locator_address_from_str(const char *s) {
     const char *p_start = strchr(s, LOCATOR_PROTOCOL_SEPARATOR);
-    if (p_start == NULL) goto ERR;
+    if (p_start == NULL) {
+        goto ERR;
+    }
     p_start++;
 
     const char *p_end = strchr(s, LOCATOR_METADATA_SEPARATOR);
-    if (p_end == NULL) p_end = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
-    if (p_end == NULL) p_end = &s[strlen(s)];
+    if (p_end == NULL) {
+        p_end = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
+    }
+    if (p_end == NULL) {
+        p_end = &s[strlen(s)];
+    }
 
-    if (p_start == p_end) goto ERR;
+    if (p_start == p_end) {
+        goto ERR;
+    }
 
     size_t p_len = p_end - p_start;
     char *address = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
@@ -122,13 +140,19 @@ _z_str_intmap_result_t _z_locator_metadata_from_str(const char *s) {
     res._value._str_intmap = _z_str_intmap_make();
 
     const char *p_start = strchr(s, LOCATOR_METADATA_SEPARATOR);
-    if (p_start == NULL) return res;
+    if (p_start == NULL) {
+        return res;
+    }
     p_start++;
 
     const char *p_end = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
-    if (p_end == NULL) p_end = &s[strlen(s)];
+    if (p_end == NULL) {
+        p_end = &s[strlen(s)];
+    }
 
-    if (p_start == p_end) goto ERR;
+    if (p_start == p_end) {
+        goto ERR;
+    }
 
     size_t p_len = p_end - p_start;
 
@@ -154,23 +178,31 @@ void _z_locator_metadata_onto_str(char *dst, const _z_str_intmap_t *s) {
 _z_locator_result_t _z_locator_from_str(const char *s) {
     _z_locator_result_t res;
 
-    if (s == NULL) goto ERR;
+    if (s == NULL) {
+        goto ERR;
+    }
 
     res._tag = _Z_RES_OK;
     _z_locator_init(&res._value._locator);
 
     // Parse protocol
     res._value._locator._protocol = _z_locator_protocol_from_str(s);
-    if (res._value._locator._protocol == NULL) goto ERR;
+    if (res._value._locator._protocol == NULL) {
+        goto ERR;
+    }
 
     // Parse address
     res._value._locator._address = _z_locator_address_from_str(s);
-    if (res._value._locator._address == NULL) goto ERR;
+    if (res._value._locator._address == NULL) {
+        goto ERR;
+    }
 
     // Parse metadata
     _z_str_intmap_result_t tmp_res;
     tmp_res = _z_locator_metadata_from_str(s);
-    if (tmp_res._tag == _Z_RES_ERR) goto ERR;
+    if (tmp_res._tag == _Z_RES_ERR) {
+        goto ERR;
+    }
     res._value._locator._metadata = tmp_res._value._str_intmap;
 
     return res;
@@ -183,7 +215,9 @@ ERR:
 }
 
 size_t _z_locator_strlen(const _z_locator_t *l) {
-    if (l == NULL) goto ERR;
+    if (l == NULL) {
+        goto ERR;
+    }
 
     // Calculate the string length to allocate
     size_t len = 0;
@@ -273,31 +307,35 @@ _z_str_intmap_result_t _z_endpoint_config_from_str(const char *s, const char *pr
     res._value._str_intmap = _z_str_intmap_make();
 
     char *p_start = strchr(s, ENDPOINT_CONFIG_SEPARATOR);
-    if (p_start == NULL) return res;
+    if (p_start == NULL) {
+        return res;
+    }
     p_start++;
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA))
+    if (_z_str_eq(proto, TCP_SCHEMA)) {
         res = _z_tcp_config_from_str(p_start);
-    else
+    } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA))
+        if (_z_str_eq(proto, UDP_SCHEMA)) {
         res = _z_udp_config_from_str(p_start);
-    else
+    } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA))
+        if (_z_str_eq(proto, BT_SCHEMA)) {
         res = _z_bt_config_from_str(p_start);
-    else
+    } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA))
+        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
         res = _z_serial_config_from_str(p_start);
-    else
+    } else
 #endif
+    {
         goto ERR;
+    }
 
     return res;
 
@@ -312,26 +350,28 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA))
+    if (_z_str_eq(proto, TCP_SCHEMA)) {
         len = _z_tcp_config_strlen(s);
-    else
+    } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA))
+        if (_z_str_eq(proto, UDP_SCHEMA)) {
         len = _z_udp_config_strlen(s);
-    else
+    } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA))
+        if (_z_str_eq(proto, BT_SCHEMA)) {
         len = _z_bt_config_strlen(s);
-    else
+    } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA))
+        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
         len = _z_serial_config_strlen(s);
-    else
+    } else
 #endif
+    {
         goto ERR;
+    }
 
     return len;
 
@@ -345,26 +385,28 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA))
+    if (_z_str_eq(proto, TCP_SCHEMA)) {
         res = _z_tcp_config_to_str(s);
-    else
+    } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA))
+        if (_z_str_eq(proto, UDP_SCHEMA)) {
         res = _z_udp_config_to_str(s);
-    else
+    } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA))
+        if (_z_str_eq(proto, BT_SCHEMA)) {
         res = _z_bt_config_to_str(s);
-    else
+    } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA))
+        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
         res = _z_serial_config_to_str(s);
-    else
+    } else
 #endif
+    {
         goto ERR;
+    }
 
     return res;
 
@@ -380,11 +422,15 @@ _z_endpoint_result_t _z_endpoint_from_str(const char *s) {
     _z_endpoint_init(&res._value._endpoint);
 
     _z_locator_result_t loc_res = _z_locator_from_str(s);
-    if (loc_res._tag == _Z_RES_ERR) goto ERR;
+    if (loc_res._tag == _Z_RES_ERR) {
+        goto ERR;
+    }
     res._value._endpoint._locator = loc_res._value._locator;
 
     _z_str_intmap_result_t conf_res = _z_endpoint_config_from_str(s, res._value._endpoint._locator._protocol);
-    if (conf_res._tag == _Z_RES_ERR) goto ERR;
+    if (conf_res._tag == _Z_RES_ERR) {
+        goto ERR;
+    }
     res._value._endpoint._config = conf_res._value._str_intmap;
 
     return res;
@@ -398,7 +444,9 @@ ERR:
 
 char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *locator = _z_locator_to_str(&endpoint->_locator);
-    if (locator == NULL) goto ERR;
+    if (locator == NULL) {
+        goto ERR;
+    }
 
     size_t loc_len = 1;  // Start with space for the null-terminator
     loc_len += strlen(locator);

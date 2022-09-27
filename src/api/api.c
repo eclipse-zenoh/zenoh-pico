@@ -31,7 +31,9 @@
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
 char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
-    if (keyexpr._id != Z_RESOURCE_ID_NONE) return NULL;
+    if (keyexpr._id != Z_RESOURCE_ID_NONE) {
+        return NULL;
+    }
 
     size_t ke_len = strlen(keyexpr._suffix) + (size_t)1;
     char *ret = (char *)z_malloc(ke_len);
@@ -46,7 +48,9 @@ char *zp_keyexpr_resolve(z_session_t *zs, z_keyexpr_t keyexpr) {
 }
 
 _Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
-    if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL) return true;
+    if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL) {
+        return true;
+    }
 
     return false;
 }
@@ -361,7 +365,9 @@ int8_t z_info_peers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback) 
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
-    if (callback->drop != NULL) callback->drop(ctx);
+    if (callback->drop != NULL) {
+        callback->drop(ctx);
+    }
 
     return 0;
 }
@@ -384,7 +390,9 @@ int8_t z_info_routers_zid(const z_session_t *zs, z_owned_closure_zid_t *callback
     }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
-    if (callback->drop != NULL) callback->drop(ctx);
+    if (callback->drop != NULL) {
+        callback->drop(ctx);
+    }
 
     return 0;
 }
@@ -415,17 +423,19 @@ z_delete_options_t z_delete_options_default(void) {
 
 int8_t z_put(z_session_t *zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
              const z_put_options_t *options) {
-    if (options != NULL)
+    if (options != NULL) {
         return _z_write(zs, keyexpr, (const uint8_t *)payload, payload_len, options->encoding, Z_SAMPLE_KIND_PUT,
                         options->congestion_control);
+    }
 
     return _z_write(zs, keyexpr, (const uint8_t *)payload, payload_len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
                     Z_CONGESTION_CONTROL_DROP);
 }
 
 int8_t z_delete(z_session_t *zs, z_keyexpr_t keyexpr, const z_delete_options_t *options) {
-    if (options != NULL)
+    if (options != NULL) {
         return _z_write(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, options->congestion_control);
+    }
 
     return _z_write(zs, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, Z_CONGESTION_CONTROL_DROP);
 }
@@ -469,10 +479,11 @@ int8_t z_get(z_session_t *zs, z_keyexpr_t keyexpr, const char *parameters, z_own
     }
 
     if (consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
-        if (strstr(parameters, Z_SELECTOR_TIME) != NULL)
+        if (strstr(parameters, Z_SELECTOR_TIME) != NULL) {
             consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
-        else
+        } else {
             consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
+        }
     }
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
@@ -549,9 +560,10 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void) { return (
 
 int8_t z_publisher_put(const z_publisher_t *pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
-    if (options != NULL)
+    if (options != NULL) {
         return _z_write(pub->_zn, pub->_key, payload, len, options->encoding, Z_SAMPLE_KIND_PUT,
                         pub->_congestion_control);
+    }
 
     return _z_write(pub->_zn, pub->_key, payload, len, z_encoding_default(), Z_SAMPLE_KIND_PUT,
                     pub->_congestion_control);
@@ -582,12 +594,16 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t *zs, z_keyexpr_t keyexpr, 
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-        if (r == NULL) key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+        if (r == NULL) {
+            key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+        }
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     _z_subinfo_t subinfo = _z_subinfo_push_default();
-    if (options != NULL) subinfo.reliability = options->reliability;
+    if (options != NULL) {
+        subinfo.reliability = options->reliability;
+    }
 
     return (z_owned_subscriber_t){._value =
                                       _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx)};
@@ -603,10 +619,14 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t *zs, z_keyexpr_t
 
     z_keyexpr_t key = keyexpr;
     _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    if (r == NULL) key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+    if (r == NULL) {
+        key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+    }
 
     _z_subinfo_t subinfo = _z_subinfo_pull_default();
-    if (options != NULL) subinfo.reliability = options->reliability;
+    if (options != NULL) {
+        subinfo.reliability = options->reliability;
+    }
 
     return (z_owned_pull_subscriber_t){
         ._value = _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx)};
@@ -645,11 +665,14 @@ z_owned_queryable_t z_declare_queryable(z_session_t *zs, z_keyexpr_t keyexpr, z_
 
     z_keyexpr_t key = keyexpr;
     _z_resource_t *r = _z_get_resource_by_key(zs, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    if (r == NULL) key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+    if (r == NULL) {
+        key = _z_rid_with_suffix(_z_declare_resource(zs, keyexpr), NULL);
+    }
 
-    if (options != NULL)
+    if (options != NULL) {
         return (z_owned_queryable_t){
             ._value = _z_declare_queryable(zs, key, options->complete, callback->call, callback->drop, ctx)};
+    }
 
     z_queryable_options_t opt = z_queryable_options_default();
     return (z_owned_queryable_t){._value =

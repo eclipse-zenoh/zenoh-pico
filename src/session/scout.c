@@ -27,7 +27,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     _z_hello_list_t *hellos = NULL;
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    if (ep_res._tag == _Z_RES_ERR) goto ERR_1;
+    if (ep_res._tag == _Z_RES_ERR) {
+        goto ERR_1;
+    }
     _z_endpoint_t endpoint = ep_res._value._endpoint;
 
 #if Z_SCOUTING_UDP == 1
@@ -41,7 +43,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     _z_endpoint_clear(&endpoint);
 
     _z_link_p_result_t r_scout = _z_open_link(locator);
-    if (r_scout._tag == _Z_RES_ERR) return hellos;
+    if (r_scout._tag == _Z_RES_ERR) {
+        return hellos;
+    }
 
     // Send the scout message
     int res = _z_link_send_wbuf(r_scout._value._link, wbf);
@@ -60,7 +64,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
 
         // Read bytes from the socket
         size_t len = _z_link_recv_zbuf(r_scout._value._link, &zbf, NULL);
-        if (len == SIZE_MAX) continue;
+        if (len == SIZE_MAX) {
+            continue;
+        }
 
         _z_transport_message_result_t r_hm = _z_transport_message_decode(&zbf);
         if (r_hm._tag == _Z_RES_ERR) {
@@ -110,7 +116,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
 
         _z_t_msg_clear(&t_msg);
 
-        if (_z_hello_list_len(hellos) > 0 && exit_on_first) break;
+        if (_z_hello_list_len(hellos) > 0 && exit_on_first) {
+            break;
+        }
     }
 
     _z_link_free(&r_scout._value._link);

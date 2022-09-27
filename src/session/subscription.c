@@ -122,16 +122,18 @@ int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
-    if (subs != NULL)  // A subscription for this name already exists
+    if (subs != NULL) {  // A subscription for this name already exists
         goto ERR;
+    }
 
     // Register the subscription
     _z_subscription_sptr_t *sub = (_z_subscription_sptr_t *)z_malloc(sizeof(_z_subscription_sptr_t));
     *sub = _z_subscription_sptr_new(*s);
-    if (is_local)
+    if (is_local) {
         zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, sub);
-    else
+    } else {
         zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, sub);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -208,12 +210,13 @@ void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (is_local)
+    if (is_local) {
         zn->_local_subscriptions =
             _z_subscription_sptr_list_drop_filter(zn->_local_subscriptions, _z_subscription_sptr_eq, sub);
-    else
+    } else {
         zn->_remote_subscriptions =
             _z_subscription_sptr_list_drop_filter(zn->_remote_subscriptions, _z_subscription_sptr_eq, sub);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

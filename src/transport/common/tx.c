@@ -27,7 +27,9 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed) {
     _z_wbuf_reset(buf);
 
     if (is_streamed == 1) {
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) _z_wbuf_put(buf, 0, i);
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+            _z_wbuf_put(buf, 0, i);
+        }
         _z_wbuf_set_wpos(buf, _Z_MSG_LEN_ENC_SIZE);
     }
 }
@@ -40,8 +42,9 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed) {
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, int is_streamed) {
     if (is_streamed == 1) {
         size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
             _z_wbuf_put(buf, (uint8_t)((len >> (size_t)8 * i) & (uint8_t)0xFF), i);
+        }
     }
 }
 
@@ -91,16 +94,18 @@ int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliab
 
 int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
 #if Z_UNICAST_TRANSPORT == 1
-    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         return _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         return _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         return -1;
+    }
 }
 
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
@@ -109,18 +114,23 @@ int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg)
     uint16_t mtu = zl->_mtu < Z_BATCH_SIZE_TX ? zl->_mtu : Z_BATCH_SIZE_TX;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
     if (_Z_LINK_IS_STREAMED(zl->_capabilities)) {
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) _z_wbuf_put(&wbf, 0, i);
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+            _z_wbuf_put(&wbf, 0, i);
+        }
         _z_wbuf_set_wpos(&wbf, _Z_MSG_LEN_ENC_SIZE);
     }
 
     // Encode the session message
-    if (_z_transport_message_encode(&wbf, t_msg) != 0) goto ERR;
+    if (_z_transport_message_encode(&wbf, t_msg) != 0) {
+        goto ERR;
+    }
 
     // Write the message legnth in the reserved space if needed
     if (_Z_LINK_IS_STREAMED(zl->_capabilities)) {
         size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
-        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++)
+        for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
             _z_wbuf_put(&wbf, (uint8_t)((len >> (size_t)8 * i) & (uint8_t)0xFF), i);
+        }
     }
 
     // Send the wbuf on the socket

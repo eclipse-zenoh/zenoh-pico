@@ -25,7 +25,9 @@
 
 char *_z_parse_port_segment_udp_multicast(const char *address) {
     const char *p_start = strrchr(address, ':');
-    if (p_start == NULL) return NULL;
+    if (p_start == NULL) {
+        return NULL;
+    }
     p_start++;
 
     const char *p_end = &address[strlen(address)];
@@ -67,13 +69,19 @@ int _z_f_link_open_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    if (iface == NULL) goto ERR;
+    if (iface == NULL) {
+        goto ERR;
+    }
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
-    if (tout_as_str != NULL) tout = strtoul(tout_as_str, NULL, 10);
+    if (tout_as_str != NULL) {
+        tout = strtoul(tout_as_str, NULL, 10);
+    }
 
-    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, tout, iface) == NULL) goto ERR;
+    if (_z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, tout, iface) == NULL) {
+        goto ERR;
+    }
 
     return 0;
 
@@ -85,14 +93,20 @@ int _z_f_link_listen_udp_multicast(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    if (iface == NULL) goto ERR_1;
+    if (iface == NULL) {
+        goto ERR_1;
+    }
 
     self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._raddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._sock == NULL) goto ERR_1;
+    if (self->_socket._udp._sock == NULL) {
+        goto ERR_1;
+    }
 
     self->_socket._udp._msock =
         _z_open_udp_multicast(self->_socket._udp._raddr, &self->_socket._udp._laddr, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._msock == NULL) goto ERR_1;
+    if (self->_socket._udp._msock == NULL) {
+        goto ERR_1;
+    }
 
     return 0;
 

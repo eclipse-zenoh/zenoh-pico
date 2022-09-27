@@ -26,22 +26,26 @@ _z_session_t *__z_open_inner(char *locator, int mode) {
     _z_session_t *zn = _z_session_init();
 
     _z_transport_p_result_t res = _z_new_transport(zn->_tp_manager, locator, mode);
-    if (res._tag == _Z_RES_ERR) goto ERR;
+    if (res._tag == _Z_RES_ERR) {
+        goto ERR;
+    }
 
     // Attach session and transport to one another
     zn->_tp = res._value._transport;
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._session = zn;
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         zn->_tp->_transport._multicast._session = zn;
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         __asm__("nop");
+    }
 
     return zn;
 
@@ -52,21 +56,29 @@ ERR:
 }
 
 _z_session_t *_z_open(_z_config_t *config) {
-    if (config == NULL) return NULL;
+    if (config == NULL) {
+        return NULL;
+    }
 
     char *locator = NULL;
     // Scout if peer is not configured
     if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {
         char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
-        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        }
         uint8_t what = strtol(opt_as_str, NULL, 10);
 
         opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+        }
         char *mcast_locator = opt_as_str;
 
         opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-        if (opt_as_str == NULL) opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        }
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
         // Scout and return upon the first result
@@ -98,10 +110,11 @@ _z_session_t *_z_open(_z_config_t *config) {
     // Check operation mode
     char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
     int mode = 0;  // By default, zenoh-pico will operate as a client
-    if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT))
+    if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT)) {
         mode = 0;
-    else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER))
+    } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER)) {
         mode = 1;
+    }
 
     _z_session_t *zn = __z_open_inner(locator, mode);
 
@@ -132,7 +145,9 @@ _z_config_t *_z_info(const _z_session_t *zn) {
         }
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         __asm__("nop");
+    }
 
     return ps;
 }
@@ -173,16 +188,18 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
 
 int8_t _zp_stop_read_task(_z_session_t *zn) {
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._read_task_running = 0;
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         zn->_tp->_transport._multicast._read_task_running = 0;
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         __asm__("nop");
+    }
 
     return 0;
 }
@@ -216,16 +233,18 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
 
 int8_t _zp_stop_lease_task(_z_session_t *zn) {
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE)
+    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._lease_task_running = 0;
-    else
+    } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE)
+        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         zn->_tp->_transport._multicast._lease_task_running = 0;
-    else
+    } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
+    {
         __asm__("nop");
+    }
 
     return 0;
 }

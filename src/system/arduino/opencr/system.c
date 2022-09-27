@@ -35,7 +35,9 @@ uint64_t z_random_u64(void) {
 }
 
 void z_random_fill(void *buf, size_t len) {
-    for (int i = 0; i < len; i++) *((uint8_t *)buf) = z_random_u8();
+    for (int i = 0; i < len; i++) {
+        *((uint8_t *)buf) = z_random_u8();
+    }
 }
 
 /*------------------ Memory ------------------*/

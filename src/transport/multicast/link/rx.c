@@ -26,9 +26,13 @@
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
     for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
         _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-        if (val->_remote_addr.len != remote_addr->len) continue;
+        if (val->_remote_addr.len != remote_addr->len) {
+            continue;
+        }
 
-        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) return val;
+        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
+            return val;
+        }
     }
 
     return NULL;
@@ -56,7 +60,9 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
         }
 
         size_t len = 0;
-        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) len |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
+        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+            len |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
+        }
 
         _Z_DEBUG(">> \t msg len = %zu\n", len);
         size_t writable = _z_zbuf_capacity(&ztm->_zbuf) - _z_zbuf_len(&ztm->_zbuf);
@@ -131,7 +137,9 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         case _Z_MID_JOIN: {
             _Z_INFO("Received _Z_JOIN message\n");
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_A)) {
-                if (t_msg->_body._join._version != Z_PROTO_VERSION) break;
+                if (t_msg->_body._join._version != Z_PROTO_VERSION) {
+                    break;
+                }
             }
 
             if (entry == NULL)  // New peer
@@ -139,10 +147,11 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 entry->_remote_addr = _z_bytes_duplicate(addr);
                 entry->_remote_pid = _z_bytes_duplicate(&t_msg->_body._join._pid);
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S))
+                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S)) {
                     entry->_sn_resolution = t_msg->_body._join._sn_resolution;
-                else
+                } else {
                     entry->_sn_resolution = Z_SN_RESOLUTION;
+                }
                 entry->_sn_resolution_half = entry->_sn_resolution / 2;
 
                 _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
@@ -186,13 +195,16 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
         case _Z_MID_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer\n");
 
-            if (entry == NULL) break;
+            if (entry == NULL) {
+                break;
+            }
 
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I)) {
                 // Check if the Peer ID matches the remote address in the knonw peer list
                 if (entry->_remote_pid.len != t_msg->_body._close._pid.len ||
-                    memcmp(entry->_remote_pid.start, t_msg->_body._close._pid.start, entry->_remote_pid.len) != 0)
+                    memcmp(entry->_remote_pid.start, t_msg->_body._close._pid.start, entry->_remote_pid.len) != 0) {
                     break;
+                }
             }
             ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
 
@@ -211,7 +223,9 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
 
         case _Z_MID_KEEP_ALIVE: {
             _Z_INFO("Received _Z_KEEP_ALIVE message\n");
-            if (entry == NULL) break;
+            if (entry == NULL) {
+                break;
+            }
             entry->_received = 1;
 
             break;
@@ -224,7 +238,9 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
 
         case _Z_MID_FRAME: {
             _Z_INFO("Received _Z_FRAME message\n");
-            if (entry == NULL) break;
+            if (entry == NULL) {
+                break;
+            }
             entry->_received = 1;
 
             // Check if the SN is correct
@@ -232,18 +248,18 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._reliable,
-                                   t_msg->_body._frame._sn))
+                                   t_msg->_body._frame._sn)) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
-                else {
+                } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
                     _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
             } else {
                 if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._best_effort,
-                                   t_msg->_body._frame._sn))
+                                   t_msg->_body._frame._sn)) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
-                else {
+                } else {
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
@@ -298,9 +314,10 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
             } else {
                 // Handle all the zenoh message, one by one
                 unsigned int len = _z_vec_len(&t_msg->_body._frame._payload._messages);
-                for (unsigned int i = 0; i < len; i++)
+                for (unsigned int i = 0; i < len; i++) {
                     _z_handle_zenoh_message(
                         ztm->_session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._payload._messages, i));
+                }
             }
             break;
         }
