@@ -95,10 +95,11 @@ void data_handler(const z_sample_t *sample, void *arg) {
 }
 
 int main(int argc, char **argv) {
+    setvbuf(stdout, NULL, _IOLBF, 1024);
+
     assert(argc == 2);
     (void)(argc);
 
-    setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();

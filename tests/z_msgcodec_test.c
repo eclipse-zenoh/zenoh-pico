@@ -2567,7 +2567,7 @@ void fragmentation(void) {
 /*            Main             */
 /*=============================*/
 int main(void) {
-    setbuf(stdout, NULL);
+    setvbuf(stdout, NULL, _IOLBF, 1024);
 
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);

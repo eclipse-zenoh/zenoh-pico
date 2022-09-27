@@ -94,7 +94,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
 int main(int argc, char **argv) {
     assert(argc == 2);
     (void)(argc);
-    setbuf(stdout, NULL);
+    setvbuf(stdout, NULL, _IOLBF, 1024);
 
 #ifdef ZENOH_C
     zc_init_logger();
