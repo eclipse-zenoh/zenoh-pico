@@ -45,7 +45,7 @@
     _z_str_intmapping_t args[argc];            \
     args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY; \
     args[0]._str = SERIAL_CONFIG_BAUDRATE_STR;
-/* args[1]._key = SERIAL_CONFIG_DATABITS_KEY;     \
+// args[1]._key = SERIAL_CONFIG_DATABITS_KEY;     \
 // args[1]._str = SERIAL_CONFIG_DATABITS_STR;     \
 // args[2]._key = SERIAL_CONFIG_FLOWCONTROL_KEY;  \
 // args[2]._str = SERIAL_CONFIG_FLOWCONTROL_STR;  \
@@ -54,7 +54,7 @@
 // args[4]._key = SERIAL_CONFIG_STOPBITS_KEY;     \
 // args[4]._str = SERIAL_CONFIG_STOPBITS_STR;     \
 // args[5]._key = SERIAL_CONFIG_TOUT_KEY;         \
-// args[5]._str = SERIAL_CONFIG_TOUT_STR;*/
+// args[5]._str = SERIAL_CONFIG_TOUT_STR;
 
 size_t _z_serial_config_strlen(const _z_str_intmap_t *s);
 
