@@ -116,13 +116,13 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
     _Bool right_after_needle = false;
     char *reader = start;
     while (reader < end) {
-        size_t len = __zp_starts_with(reader, needle);
-        if (len) {
+        size_t pos = __zp_starts_with(reader, needle);
+        if (pos) {
             if (right_after_needle) {
                 break;
             }
             right_after_needle = true;
-            reader += len;
+            reader += pos;
         } else {
             right_after_needle = false;
             reader++;
@@ -131,16 +131,16 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
 
     char *writer = reader;
     while (reader < end) {
-        size_t len = __zp_starts_with(reader, needle);
-        if (len) {
+        size_t pos = __zp_starts_with(reader, needle);
+        if (pos) {
             if (!right_after_needle) {
-                for (size_t i = 0; i < len; i++) {
+                for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
                 }
-                writer += len;
+                writer += pos;
             }
             right_after_needle = true;
-            reader += len;
+            reader += pos;
         } else {
             right_after_needle = false;
             *writer++ = *reader++;
