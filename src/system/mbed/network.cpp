@@ -30,7 +30,7 @@ extern "C" {
 /*------------------ TCP sockets ------------------*/
 void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
-    int port = atoi(s_port);
+    uint32_t port = strtoul(s_port, NULL, 10);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
@@ -109,7 +109,7 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 /*------------------ UDP sockets ------------------*/
 void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
-    int port = atoi(s_port);
+    uint32_t port = strtoul(s_port, NULL, 10);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }

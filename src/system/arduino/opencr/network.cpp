@@ -34,7 +34,7 @@ typedef struct {
 /*------------------ UDP sockets ------------------*/
 void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     __z_tcp_addr_t *addr = new __z_tcp_addr_t();
-    int port = 0;
+    uint32_t port = 0;
 
     // Parse and check the validity of the IP address
     if (!addr->_ipaddr.fromString(s_addr)) {
@@ -42,7 +42,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     }
 
     // Parse and check the validity of the port
-    port = atoi(s_port);
+    port = strtoul(s_port, NULL, 10);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
@@ -129,7 +129,7 @@ typedef struct {
 /*------------------ UDP sockets ------------------*/
 void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     __z_udp_addr_t *addr = new __z_udp_addr_t();
-    int port = 0;
+    uint32_t port = 0;
 
     // Parse and check the validity of the IP address
     if (!addr->_ipaddr.fromString(s_addr)) {
@@ -137,7 +137,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     }
 
     // Parse and check the validity of the port
-    port = atoi(s_port);
+    port = strtoul(s_port, NULL, 10);
     if (port < 1 || port > 65355) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }

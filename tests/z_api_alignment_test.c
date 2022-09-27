@@ -182,12 +182,7 @@ int main(int argc, char **argv) {
     assert(_ret_int8 == 0);
     assert(hellos == 1);
 
-    int _scouting_timeout = atoi(SCOUTING_TIMEOUT);
-    if (_scouting_timeout < 0) {
-        printf("Error: SCOUTING_TIMEOUT cannot be a negative value.");
-        assert(false);
-        return -1;
-    }
+    uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
     z_sleep_s(_scouting_timeout / 1000);
     z_sleep_s(SLEEP);
 
