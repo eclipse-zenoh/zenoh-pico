@@ -35,10 +35,9 @@ ERR:
     return _Z_RES_ERR;
 }
 
-void *_zp_unicast_read_task(void *arg) {
-    (void)(arg);
+void *_zp_unicast_read_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
-    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
     ztu->_read_task_running = 1;
 
     _z_transport_message_result_t r;

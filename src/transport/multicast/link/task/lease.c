@@ -62,10 +62,9 @@ int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     return _z_multicast_send_t_msg(ztm, &t_msg);
 }
 
-void *_zp_multicast_lease_task(void *arg) {
-    (void)(arg);
+void *_zp_multicast_lease_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
-    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
     ztm->_lease_task_running = 1;
     ztm->_transmitted = 0;
 

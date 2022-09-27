@@ -30,8 +30,8 @@ int _z_send_keep_alive(_z_transport_t *zt) {
         return -1;
 }
 
-void *_zp_lease_task(void *arg) {
-    _z_transport_t *zt = (_z_transport_t *)arg;
+void *_zp_lease_task(void *zt_arg) {
+    _z_transport_t *zt = (_z_transport_t *)zt_arg;
 
 #if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE)

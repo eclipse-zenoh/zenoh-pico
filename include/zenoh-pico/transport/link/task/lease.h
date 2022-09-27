@@ -21,8 +21,8 @@ int _z_send_keep_alive(_z_transport_t *zt);
 int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu);
 int _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm);
 
-void *_zp_lease_task(void *arg);
-void *_zp_unicast_lease_task(void *arg);
-void *_zp_multicast_lease_task(void *arg);
+void *_zp_lease_task(void *zt_arg);             // The argument is void* to avoid incompatible pointer types in tasks
+void *_zp_unicast_lease_task(void *ztu_arg);    // The argument is void* to avoid incompatible pointer types in tasks
+void *_zp_multicast_lease_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_LEASE_H */

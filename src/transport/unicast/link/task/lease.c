@@ -29,10 +29,9 @@ int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     return _z_unicast_send_t_msg(ztu, &t_msg);
 }
 
-void *_zp_unicast_lease_task(void *arg) {
-    (void)(arg);
+void *_zp_unicast_lease_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
-    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
     ztu->_lease_task_running = 1;
     ztu->_received = 0;

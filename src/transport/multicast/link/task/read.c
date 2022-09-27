@@ -36,10 +36,9 @@ ERR:
     return _Z_RES_ERR;
 }
 
-void *_zp_multicast_read_task(void *arg) {
-    (void)(arg);
+void *_zp_multicast_read_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
-    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)arg;
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     ztm->_read_task_running = 1;
 
