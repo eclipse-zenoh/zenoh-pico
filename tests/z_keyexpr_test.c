@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "zenoh-pico/api/primitives.h"
 

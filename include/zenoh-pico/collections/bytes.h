@@ -15,8 +15,8 @@
 #ifndef ZENOH_PICO_COLLECTIONS_BYTES_H
 #define ZENOH_PICO_COLLECTIONS_BYTES_H
 
+#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 /*-------- Bytes --------*/
 /**
