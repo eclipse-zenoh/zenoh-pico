@@ -17,6 +17,7 @@
 
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/msg.h"

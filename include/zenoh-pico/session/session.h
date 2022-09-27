@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/pointer.h"
 #include "zenoh-pico/collections/string.h"

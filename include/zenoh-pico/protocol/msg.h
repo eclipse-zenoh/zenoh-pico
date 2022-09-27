@@ -16,6 +16,7 @@
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
 #include "zenoh-pico/collections/array.h"
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/query.h"

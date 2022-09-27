@@ -16,6 +16,7 @@
 #define ZENOH_PICO_TRANSPORT_TYPES_H
 
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
