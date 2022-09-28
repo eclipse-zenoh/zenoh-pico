@@ -352,8 +352,11 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
         _z_transport_peer_entry_list_t *l = zs._val->_tp->_transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-            memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
-            memset(&id.id[val->_remote_pid.len], 0, sizeof(id) - val->_remote_pid.len);
+            _z_bytes_t bs = val->_remote_pid;
+            for (unsigned long i = 0; i < bs.len; i++) {
+                id.id[i] = bs.start[bs.len - i - 1];
+            }
+            memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
             callback->call(&id, ctx);
         }
@@ -372,10 +375,11 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     z_id_t id;
 #if Z_UNICAST_TRANSPORT == 1
     if (zs._val->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        memcpy(&id.id[0], zs._val->_tp->_transport._unicast._remote_pid.start,
-               zs._val->_tp->_transport._unicast._remote_pid.len);
-        memset(&id.id[zs._val->_tp->_transport._unicast._remote_pid.len], 0,
-               sizeof(id) - zs._val->_tp->_transport._unicast._remote_pid.len);
+        _z_bytes_t bs = zs._val->_tp->_transport._unicast._remote_pid;
+        for (unsigned long i = 0; i < bs.len; i++) {
+            id.id[i] = bs.start[bs.len - i - 1];
+        }
+        memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
         callback->call(&id, ctx);
     }
@@ -388,8 +392,11 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) {
     z_id_t id;
-    memcpy(&id.id[0], zs._val->_tp_manager->_local_pid.start, zs._val->_tp_manager->_local_pid.len);
-    memset(&id.id[zs._val->_tp_manager->_local_pid.len], 0, sizeof(id) - zs._val->_tp_manager->_local_pid.len);
+    _z_bytes_t bs = zs._val->_tp_manager->_local_pid;
+    for (unsigned long i = 0; i < bs.len; i++) {
+        id.id[i] = bs.start[bs.len - i - 1];
+    }
+    memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
     return id;
 }
