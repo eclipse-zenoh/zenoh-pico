@@ -559,8 +559,9 @@ void *_z_open_bt(char *gname, uint8_t mode, uint8_t profile) {
                         __asm__("nop");
                     }
                 }
-            } else
+            } else {
                 return NULL;
+            }
 
             return sbt;
         } break;
@@ -586,8 +587,9 @@ void *_z_listen_bt(char *gname, uint8_t mode, uint8_t profile) {
                         __asm__("nop");
                     }
                 }
-            } else
+            } else {
                 return NULL;
+            }
 
             return sbt;
         } break;

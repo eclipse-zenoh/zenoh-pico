@@ -417,7 +417,9 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
     }
 
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
-    if (bind(sock, raddr->ai_addr, raddr->ai_addrlen) < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+    if (bind(sock, raddr->ai_addr, raddr->ai_addrlen) < 0) {
+        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+    }
 #elif defined(ZENOH_LINUX)
     if (raddr->ai_family == AF_INET) {
         struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)raddr->ai_addr)->sin_port, {0}, {0}};
