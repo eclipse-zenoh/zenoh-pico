@@ -29,10 +29,15 @@ int _z_f_link_open_serial(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
-    self->_socket._serial._sock =
-        _z_open_serial(strtoul(self->_endpoint._locator._address, &p_dot, 10), strtoul(p_dot + 1, NULL, 10),
-                       strtoul(_z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY), NULL, 10));
-    if (self->_socket._serial._sock == NULL) goto ERR;
+    uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
+    uint32_t rxpin = strtoul(p_dot + 1, NULL, 10);
+    const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
+    uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
+
+    self->_socket._serial._sock = _z_open_serial(txpin, rxpin, baudrate);
+    if (self->_socket._serial._sock == NULL) {
+        goto ERR;
+    }
 
     return 0;
 
@@ -44,7 +49,9 @@ int _z_f_link_listen_serial(void *arg) {
     _z_link_t *self = (_z_link_t *)arg;
 
     self->_socket._serial._sock = _z_listen_serial(0, 0, 0);
-    if (self->_socket._serial._sock == NULL) goto ERR;
+    if (self->_socket._serial._sock == NULL) {
+        goto ERR;
+    }
 
     return 0;
 

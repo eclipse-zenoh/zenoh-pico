@@ -356,8 +356,9 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
 
     {  // Limit the scope of CRC checks
         uint32_t crc = 0;
-        for (uint8_t j = 0; j < sizeof(crc); i++, j++) {
+        for (uint8_t j = 0; j < sizeof(crc); j++) {
             crc |= (after_cobs[i] << ((uint8_t)j * (uint8_t)8));
+            i += 1;
         }
 
         uint32_t c_crc = _z_crc32(ptr, payload_len);
@@ -407,8 +408,9 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
     i = i + len;
 
     uint32_t crc = _z_crc32(ptr, len);
-    for (uint32_t j = 0; j < sizeof(crc); i++, j++) {
+    for (uint32_t j = 0; j < sizeof(crc); j++) {
         before_cobs[i] = (crc >> (j * (uint32_t)8)) & (uint32_t)0XFF;
+        i += 1;
     }
 
     uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MAX_COBS_BUF_SIZE]();

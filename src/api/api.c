@@ -177,8 +177,9 @@ int8_t zp_scouting_config_insert(z_scouting_config_t sc, unsigned int key, z_str
 z_owned_hello_t z_hello_null(void) { return (z_owned_hello_t){._value = NULL}; }
 
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
-    return (_z_encoding_t){.prefix = prefix,
-                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
+    return (_z_encoding_t){
+        .prefix = prefix,
+        .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
 }
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
@@ -317,10 +318,12 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    _z_scout(strtol(_z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY), NULL, 10),
-             _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY),
-             strtoul(_z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY), NULL, 10), __z_hello_handler,
-             wrapped_ctx, callback->drop, ctx);
+    char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
+    uint8_t what = strtol(what_str, NULL, 10);
+    char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+    char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+    uint32_t tout = strtoul(tout_str, NULL, 10);
+    _z_scout(what, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
     z_free(wrapped_ctx);
     z_scouting_config_drop(config);
@@ -506,7 +509,8 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
     key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
-    *key._value = _z_rid_with_suffix(_z_declare_resource(zs._val, keyexpr), NULL);
+    _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+    *key._value = _z_rid_with_suffix(id, NULL);
 
     return key;
 }
@@ -534,7 +538,8 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_p
     if (zs._val->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
-            key = _z_rid_with_suffix(_z_declare_resource(zs._val, keyexpr), NULL);
+            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            key = _z_rid_with_suffix(id, NULL);
         }
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
@@ -602,7 +607,8 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     if (zs._val->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
-            key = _z_rid_with_suffix(_z_declare_resource(zs._val, keyexpr), NULL);
+            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            key = _z_rid_with_suffix(id, NULL);
         }
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
@@ -627,7 +633,8 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
     z_keyexpr_t key = keyexpr;
     _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     if (r == NULL) {
-        key = _z_rid_with_suffix(_z_declare_resource(zs._val, keyexpr), NULL);
+        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+        key = _z_rid_with_suffix(id, NULL);
     }
 
     _z_subinfo_t subinfo = _z_subinfo_pull_default();
@@ -673,7 +680,8 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     z_keyexpr_t key = keyexpr;
     _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     if (r == NULL) {
-        key = _z_rid_with_suffix(_z_declare_resource(zs._val, keyexpr), NULL);
+        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+        key = _z_rid_with_suffix(id, NULL);
     }
 
     if (options != NULL) {

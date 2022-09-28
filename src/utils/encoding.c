@@ -44,7 +44,8 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
     const uint8_t *byte = input;
     uint8_t *output_initial_ptr = output;
 
-    for (uint8_t code = 0xFF, block = 0; byte < (input + input_len); --block) {
+    uint8_t code = 0xFF;
+    for (uint8_t block = 0; byte < (input + input_len); --block) {
         if (block) {
             *output = *byte;
             output++;
