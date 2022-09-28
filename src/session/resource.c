@@ -70,13 +70,11 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     }
 
     // Recursevely go through all the RIDs
-    _Bool err = false;
     _z_zint_t id = keyexpr->_id;
     while (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
         if (res == NULL) {
-            err = true;
-            break;
+            goto ERR;
         }
 
         if (res->_key._suffix != NULL) {
@@ -87,10 +85,6 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         }
 
         id = res->_key._id;
-    }
-
-    if (err == true) {
-        goto ERR;
     }
 
     // Concatenate all the partial resource names
