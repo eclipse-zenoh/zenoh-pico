@@ -178,7 +178,7 @@ z_owned_hello_t z_hello_null(void) { return (z_owned_hello_t){._value = NULL}; }
 
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){.prefix = prefix,
-                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? 0 : strlen(suffix))};
+                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
 }
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
