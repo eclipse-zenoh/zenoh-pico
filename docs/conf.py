@@ -46,3 +46,6 @@ if platform == "darwin":
 
 elif platform == "win32":
     raise ValueError("Windows not supported yet for building docs.")
+
+else:
+    Config.set_library_file('/usr/lib/llvm-6.0/lib/libclang.so.1') # Required for readthedocs
