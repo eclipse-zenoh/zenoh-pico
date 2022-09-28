@@ -172,7 +172,8 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
         while (xs != NULL) {
             _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
             callbacks[i] = sub->ptr->_callback;
-            callbacks_args[i++] = sub->ptr->_arg;
+            callbacks_args[i] = sub->ptr->_arg;
+            i += 1;
             xs = _z_subscription_sptr_list_tail(xs);
         }
 

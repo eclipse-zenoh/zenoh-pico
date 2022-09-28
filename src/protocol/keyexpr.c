@@ -143,7 +143,9 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
             reader += pos;
         } else {
             right_after_needle = false;
-            *writer++ = *reader++;
+            *writer = *reader;
+            writer++;
+            reader++;
         }
     }
     *len = writer - start;
@@ -151,7 +153,8 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
 
 void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const char *write_start) {
     if (*writer != write_start) {
-        *(*writer)++ = '/';
+        *(*writer) = '/';
+        (*writer)++;
     }
 
     (void)memcpy(*writer, chunk, len);
@@ -161,8 +164,10 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 /*------------------ Inclusion helpers ------------------*/
 _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while ((lstart < lend) && (rstart < rend)) {
-        char l = *lstart++;
-        char r = *rstart++;
+        char l = *lstart;
+        lstart++;
+        char r = *rstart;
+        rstart++;
         if (l == '$') {
             if (++lstart == lend) {
                 return true;
@@ -280,8 +285,10 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
 /*------------------ Intersection helpers ------------------*/
 _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while ((lstart < lend) && (rstart < rend)) {
-        char l = *lstart++;
-        char r = *rstart++;
+        char l = *lstart;
+        lstart++;
+        char r = *rstart;
+        rstart++;
         if (l == '$') {
             if (++lstart == lend) {
                 return true;
@@ -519,7 +526,8 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                 break;
 
             case '$':  // if the chunk is $*, replace it with *.
-                *writer++ = '*';
+                *writer = '*';
+                writer++;
                 break;
 
             default:

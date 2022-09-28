@@ -16,7 +16,8 @@
 
 size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
     uint8_t *output_initial_ptr = output;
-    uint8_t *codep = output++;
+    uint8_t *codep = output;
+    output++;
     uint8_t code = 1;
 
     for (const uint8_t *byte = input; input_len--; ++byte) {
@@ -52,9 +53,11 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
             byte++;
         } else {
             if (code != (uint8_t)0xff) {
-                *output++ = 0;
+                *output = 0;
+                output++;
             }
-            block = code = *byte++;
+            block = code = *byte;
+            byte++;
             if (code == (uint8_t)0x00) {
                 break;
             }

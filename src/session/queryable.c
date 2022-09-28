@@ -149,7 +149,8 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         while (xs != NULL) {
             _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
             callbacks[i] = qle->ptr->_callback;
-            callbacks_args[i++] = qle->ptr->_arg;
+            callbacks_args[i] = qle->ptr->_arg;
+            i += 1;
             xs = _z_questionable_sptr_list_tail(xs);
         }
 

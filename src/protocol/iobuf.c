@@ -74,7 +74,8 @@ size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_
 
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
     assert(_z_iosli_writable(ios) >= (size_t)1);
-    ios->_buf[ios->_w_pos++] = b;
+    ios->_buf[ios->_w_pos] = b;
+    ios->_w_pos += 1;
 }
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
