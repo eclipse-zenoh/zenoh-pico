@@ -60,15 +60,13 @@ void _z_locator_copy(_z_locator_t *dst, const _z_locator_t *src) {
 }
 
 int _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
-    int res = 0;
-
-    res = _z_str_eq(left->_protocol, right->_protocol);
-    if (!res) {
+    int res = _z_str_eq(left->_protocol, right->_protocol);
+    if (res == 0) {
         return res;
     }
 
     res = _z_str_eq(left->_address, right->_address);
-    if (!res) {
+    if (res == 0) {
         return res;
     }
 
@@ -314,22 +312,22 @@ _z_str_intmap_result_t _z_endpoint_config_from_str(const char *s, const char *pr
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA)) {
+    if (_z_str_eq(proto, TCP_SCHEMA) != 0) {
         res = _z_tcp_config_from_str(p_start);
     } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA)) {
+        if (_z_str_eq(proto, UDP_SCHEMA) != 0) {
         res = _z_udp_config_from_str(p_start);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA)) {
+        if (_z_str_eq(proto, BT_SCHEMA) != 0) {
         res = _z_bt_config_from_str(p_start);
     } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
+        if (_z_str_eq(proto, SERIAL_SCHEMA) != 0) {
         res = _z_serial_config_from_str(p_start);
     } else
 #endif
@@ -350,22 +348,22 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA)) {
+    if (_z_str_eq(proto, TCP_SCHEMA) != 0) {
         len = _z_tcp_config_strlen(s);
     } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA)) {
+        if (_z_str_eq(proto, UDP_SCHEMA) != 0) {
         len = _z_udp_config_strlen(s);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA)) {
+        if (_z_str_eq(proto, BT_SCHEMA) != 0) {
         len = _z_bt_config_strlen(s);
     } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
+        if (_z_str_eq(proto, SERIAL_SCHEMA) != 0) {
         len = _z_serial_config_strlen(s);
     } else
 #endif
@@ -385,22 +383,22 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
 
     // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(proto, TCP_SCHEMA)) {
+    if (_z_str_eq(proto, TCP_SCHEMA) != 0) {
         res = _z_tcp_config_to_str(s);
     } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-        if (_z_str_eq(proto, UDP_SCHEMA)) {
+        if (_z_str_eq(proto, UDP_SCHEMA) != 0) {
         res = _z_udp_config_to_str(s);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(proto, BT_SCHEMA)) {
+        if (_z_str_eq(proto, BT_SCHEMA) != 0) {
         res = _z_bt_config_to_str(s);
     } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(proto, SERIAL_SCHEMA)) {
+        if (_z_str_eq(proto, SERIAL_SCHEMA) != 0) {
         res = _z_serial_config_to_str(s);
     } else
 #endif

@@ -39,7 +39,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
     _z_zint_t next_lease = ztu->_lease;
     _z_zint_t next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
-    while (ztu->_lease_task_running) {
+    while (ztu->_lease_task_running == 1) {
         if (next_lease == 0) {
             // Check if received data
             if (ztu->_received == 1) {

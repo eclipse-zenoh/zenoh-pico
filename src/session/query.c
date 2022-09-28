@@ -134,7 +134,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F)) {
+    if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) != 0) {
         goto ERR_1;
     }
 
@@ -169,7 +169,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix)) {
+            if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix) != 0) {
                 if (timestamp._time <= pen_rep->_tstamp._time) {
                     goto ERR_3;
                 } else {

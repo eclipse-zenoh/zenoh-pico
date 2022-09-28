@@ -99,7 +99,7 @@ void _z_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_subinfo_result_t *r
     r->_tag = _Z_RES_OK;
 
     // Decode the header
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R) != 0) {
         r->_value._subinfo.reliability = Z_RELIABILITY_RELIABLE;
     } else {
         r->_value._subinfo.reliability = Z_RELIABILITY_BEST_EFFORT;
@@ -111,7 +111,7 @@ void _z_subinfo_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_subinfo_result_t *r
 
     uint8_t mode = r_uint8._value._uint8;
     r->_value._subinfo.mode = _Z_MID(mode);
-    if (_Z_HAS_FLAG(mode, _Z_FLAG_Z_P)) {
+    if (_Z_HAS_FLAG(mode, _Z_FLAG_Z_P) != 0) {
         _z_period_result_t r_tp = _z_period_decode(zbf);
         _ASSURE_P_RESULT(r_tp, r, _Z_ERR_PARSE_PERIOD)
         r->_value._subinfo.period = r_tp._value._period;
@@ -132,7 +132,7 @@ int _z_keyexpr_encode(_z_wbuf_t *wbf, uint8_t header, const _z_keyexpr_t *fld) {
 
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, fld->_id))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K) != 0) {
         _Z_EC(_z_str_encode(wbf, fld->_suffix))
     }
     return 0;
@@ -147,7 +147,7 @@ void _z_keyexpr_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keyexpr_result_t *r
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._keyexpr._id = r_zint._value._zint;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K) != 0) {
         _z_str_result_t r_str = _z_str_decode(zbf);
         _ASSURE_P_RESULT(r_str, r, _Z_ERR_PARSE_STRING)
         r->_value._keyexpr._suffix = r_str._value._str;
@@ -232,7 +232,7 @@ void _z_attachment_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_attachment_p_res
     // Decode the body
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Return error in case the payload is sliced.
-    if (_Z_HAS_FLAG(r->_value._attachment->_header, _Z_FLAG_T_Z)) {
+    if (_Z_HAS_FLAG(r->_value._attachment->_header, _Z_FLAG_T_Z) != 0) {
         r->_tag = _Z_RES_ERR;
         r->_value._error = _Z_ERR_PARSE_PAYLOAD;
         return;
@@ -259,7 +259,7 @@ int _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
 
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, msg->_qid))
-    if (!_Z_HAS_FLAG(msg->_header, _Z_FLAG_Z_F)) {
+    if (_Z_HAS_FLAG(msg->_header, _Z_FLAG_Z_F) == 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_replier_id))
     }
 
@@ -278,7 +278,7 @@ void _z_reply_context_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_reply_context
     _ASSURE_FREE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT, reply_context);
     r->_value._reply_context->_qid = r_zint._value._zint;
 
-    if (!_Z_HAS_FLAG(header, _Z_FLAG_Z_F)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_F) == 0) {
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_FREE_P_RESULT(r_arr, r, _Z_ERR_PARSE_BYTES, reply_context)
         r->_value._reply_context->_replier_id = _z_bytes_duplicate(&r_arr._value._bytes);
@@ -354,7 +354,7 @@ int _z_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_sub_decl_t *dcl)
 
     // Encode the body
     _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S) != 0) {
         return _z_subinfo_encode(wbf, &dcl->_subinfo);
     }
 
@@ -370,7 +370,7 @@ void _z_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sub_decl_result_t 
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
     r->_value._sub_decl._key = r_res._value._keyexpr;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S) != 0) {
         _z_subinfo_result_t r_smd = _z_subinfo_decode(zbf, header);
         _ASSURE_P_RESULT(r_smd, r, _Z_ERR_PARSE_SUBMODE)
         r->_value._sub_decl._subinfo = r_smd._value._subinfo;
@@ -378,7 +378,7 @@ void _z_sub_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sub_decl_result_t 
         // Default subscription mode is non-periodic PUSH
         r->_value._sub_decl._subinfo.mode = Z_SUBMODE_PUSH;
         r->_value._sub_decl._subinfo.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
-        if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R)) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R) != 0) {
             r->_value._sub_decl._subinfo.reliability = Z_RELIABILITY_RELIABLE;
         } else {
             r->_value._sub_decl._subinfo.reliability = Z_RELIABILITY_BEST_EFFORT;
@@ -399,7 +399,7 @@ int _z_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_qle_decl_t *dcl)
     // Encode the body
     _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key));
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q) != 0) {
         _Z_EC(_z_zint_encode(wbf, dcl->_complete));
         _Z_EC(_z_zint_encode(wbf, dcl->_distance));
     }
@@ -416,7 +416,7 @@ void _z_qle_decl_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_qle_decl_result_t 
     _ASSURE_P_RESULT(r_res, r, _Z_ERR_PARSE_RESKEY)
     r->_value._qle_decl._key = r_res._value._keyexpr;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q) != 0) {
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._qle_decl._complete = r_zint._value._zint;
@@ -688,27 +688,26 @@ int _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld) {
     _Z_EC(_z_zint_encode(wbf, fld->_flags & ~_Z_DATA_INFO_SLICED))
 
     // Encode the body
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_KIND)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_KIND) != 0) {
         _Z_EC(_z_zint_encode(wbf, fld->_kind))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_ENC)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_ENC) != 0) {
         _Z_EC(_z_zint_encode(wbf, fld->_encoding.prefix))
         _Z_EC(_z_bytes_encode(wbf, &fld->_encoding.suffix))
     }
-
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_TSTAMP)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_TSTAMP) != 0) {
         _Z_EC(_z_timestamp_encode(wbf, &fld->_tstamp))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_ID)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_ID) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &fld->_source_id))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_SN)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_SN) != 0) {
         _Z_EC(_z_zint_encode(wbf, fld->_source_sn))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_ID)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_ID) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &fld->_first_router_id))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_SN)) {
+    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_SN) != 0) {
         _Z_EC(_z_zint_encode(wbf, fld->_first_router_sn))
     }
     return 0;
@@ -726,13 +725,13 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r) {
     // Decode the body
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Return error in case the payload is sliced.
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SLICED)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SLICED) != 0) {
         r->_tag = _Z_RES_ERR;
         r->_value._error = _Z_ERR_PARSE_PAYLOAD;
         return;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_KIND)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_KIND) != 0) {
         _z_zint_result_t r_knd = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_knd, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._kind = r_knd._value._zint;
@@ -740,7 +739,7 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r) {
         r->_value._data_info._kind = Z_SAMPLE_KIND_PUT;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_ENC)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_ENC) != 0) {
         _z_zint_result_t r_enc = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_enc, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._encoding.prefix = r_enc._value._zint;
@@ -750,7 +749,7 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r) {
         r->_value._data_info._encoding.suffix = r_bytes._value._bytes;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_TSTAMP)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_TSTAMP) != 0) {
         _z_timestamp_result_t r_tsp = _z_timestamp_decode(zbf);
         _ASSURE_P_RESULT(r_tsp, r, _Z_ERR_PARSE_TIMESTAMP)
         r->_value._data_info._tstamp = r_tsp._value._timestamp;
@@ -758,25 +757,25 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r) {
         _z_timestamp_reset(&r->_value._data_info._tstamp);
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SRC_ID)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SRC_ID) != 0) {
         _z_bytes_result_t r_sid = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_sid, r, _Z_ERR_PARSE_BYTES)
         r->_value._data_info._source_id = r_sid._value._bytes;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SRC_SN)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_SRC_SN) != 0) {
         _z_zint_result_t r_ssn = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_ssn, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._source_sn = r_ssn._value._zint;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_RTR_ID)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_RTR_ID) != 0) {
         _z_bytes_result_t r_rid = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_rid, r, _Z_ERR_PARSE_BYTES)
         r->_value._data_info._first_router_id = r_rid._value._bytes;
     }
 
-    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_RTR_SN)) {
+    if (_Z_HAS_FLAG(r->_value._data_info._flags, _Z_DATA_INFO_RTR_SN) != 0) {
         _z_zint_result_t r_rsn = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_rsn, r, _Z_ERR_PARSE_ZINT)
         r->_value._data_info._first_router_sn = r_rsn._value._zint;
@@ -796,7 +795,7 @@ int _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg) {
     // Encode the body
     _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) != 0) {
         _Z_EC(_z_data_info_encode(wbf, &msg->_info))
     }
     _Z_EC(_z_payload_encode(wbf, &msg->_payload))
@@ -813,7 +812,7 @@ void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r) {
     _ASSURE_P_RESULT(r_key, r, _Z_ERR_PARSE_RESKEY)
     r->_value._data._key = r_key._value._keyexpr;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) != 0) {
         _z_data_info_result_t r_dti = _z_data_info_decode(zbf);
         _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_ZENOH_MESSAGE)
         r->_value._data._info = r_dti._value._data_info;
@@ -841,7 +840,7 @@ int _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg) {
 
     _Z_EC(_z_zint_encode(wbf, msg->_pull_id))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_max_samples))
     }
     return 0;
@@ -860,7 +859,7 @@ void _z_pull_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_pull_result_t *r) {
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._pull._pull_id = r_zint._value._zint;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N) != 0) {
         r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._pull._max_samples = r_zint._value._zint;
@@ -898,7 +897,7 @@ int _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg) {
 
     _Z_EC(_z_zint_encode(wbf, msg->_qid))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) != 0) {
         _Z_EC(_z_msg_query_target_encode(wbf, &msg->_target))
     }
     return _z_query_consolidation_encode(wbf, &msg->_consolidation);
@@ -956,7 +955,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r) {
     _ASSURE_P_RESULT(r_qid, r, _Z_ERR_PARSE_ZINT)
     r->_value._query._qid = r_qid._value._zint;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) != 0) {
         _z_query_target_result_t r_qt = _z_msg_query_target_decode(zbf);
         _ASSURE_P_RESULT(r_qt, r, _Z_ERR_PARSE_ZINT)
         r->_value._query._target = r_qt._value._query_target;
@@ -978,10 +977,10 @@ _z_query_result_t _z_query_decode(_z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Zenoh Message ------------------*/
 int _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
     // Encode the decorators if present
-    if (msg->_attachment) {
+    if (msg->_attachment != NULL) {
         _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
     }
-    if (msg->_reply_context) {
+    if (msg->_reply_context != NULL) {
         _Z_EC(_z_reply_context_encode(wbf, msg->_reply_context))
     }
 
@@ -1097,7 +1096,7 @@ int _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg)
     _Z_DEBUG("Encoding _Z_MID_SCOUT\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_what))
     }
     return 0;
@@ -1108,7 +1107,7 @@ void _z_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_scout_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) != 0) {
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._scout._what = r_zint._value._zint;
@@ -1126,13 +1125,13 @@ int _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *msg)
     _Z_DEBUG("Encoding _Z_MID_HELLO\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
     }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_whatami))
     }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) != 0) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
     }
     return 0;
@@ -1143,19 +1142,19 @@ void _z_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_hello_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _Z_ERR_PARSE_BYTES)
         r->_value._hello._pid = r_arr._value._bytes;
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) != 0) {
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._hello._whatami = r_zint._value._zint;
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) != 0) {
         _z_locator_array_result_t r_locs = _z_locators_decode(zbf);
         _ASSURE_P_RESULT(r_locs, r, _Z_ERR_PARSE_BYTES)
         _z_locator_array_move(&r->_value._hello._locators, &r_locs._value._locator_array);
@@ -1173,23 +1172,23 @@ int _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg) {
     _Z_DEBUG("Encoding _Z_MID_JOIN\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_options))
     }
     _Z_EC(_z_uint8_encode(wbf, msg->_version))
     _Z_EC(_z_zint_encode(wbf, msg->_whatami))
     _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_sn_resolution))
     }
-    if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS)) {
+    if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) != 0) {
         for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
             _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._qos[i]._reliable))
             _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._qos[i]._best_effort))
@@ -1207,7 +1206,7 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) != 0) {
         _z_zint_result_t r_opts = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_opts, r, _Z_ERR_PARSE_ZINT)
         r->_value._join._options = r_opts._value._zint;
@@ -1230,17 +1229,17 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
     _z_zint_result_t r_lease = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_lease, r, _Z_ERR_PARSE_ZINT)
     r->_value._join._lease = r_lease._value._zint;
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) != 0) {
         r->_value._join._lease *= 1000;
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) != 0) {
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._join._sn_resolution = r_zint._value._zint;
     }
 
-    if (_Z_HAS_FLAG(r->_value._join._options, _Z_OPT_JOIN_QOS)) {
+    if (_Z_HAS_FLAG(r->_value._join._options, _Z_OPT_JOIN_QOS) != 0) {
         r->_value._join._next_sns._is_qos = 1;
 
         for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
@@ -1276,18 +1275,18 @@ int _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg) {
     _Z_DEBUG("Encoding _Z_MID_INIT\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_options))
     }
-    if (!_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == 0) {
         _Z_EC(_z_wbuf_write(wbf, msg->_version))
     }
     _Z_EC(_z_zint_encode(wbf, msg->_whatami))
     _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_sn_resolution))
     }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
     }
     return 0;
@@ -1298,7 +1297,7 @@ void _z_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_init_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) != 0) {
         _z_zint_result_t r_opts = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_opts, r, _Z_ERR_PARSE_ZINT)
         r->_value._init._options = r_opts._value._zint;
@@ -1306,7 +1305,7 @@ void _z_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_init_result_t *r) {
         r->_value._init._options = 0;
     }
 
-    if (!_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == 0) {
         _z_uint8_result_t r_uint8 = _z_uint8_decode(zbf);
         _ASSURE_P_RESULT(r_uint8, r, _Z_ERR_PARSE_UINT8)
         r->_value._init._version = r_uint8._value._uint8;
@@ -1320,13 +1319,13 @@ void _z_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_init_result_t *r) {
     _ASSURE_P_RESULT(r_pid, r, _Z_ERR_PARSE_BYTES)
     r->_value._init._pid = r_pid._value._bytes;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) != 0) {
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._init._sn_resolution = r_zint._value._zint;
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) != 0) {
         _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_cke, r, _Z_ERR_PARSE_BYTES)
         r->_value._init._cookie = r_cke._value._bytes;
@@ -1344,14 +1343,14 @@ int _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg) {
     _Z_DEBUG("Encoding _Z_MID_OPEN\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
     _Z_EC(_z_zint_encode(wbf, msg->_initial_sn))
-    if (!_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
     }
     return 0;
@@ -1365,7 +1364,7 @@ void _z_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_open_result_t *r) {
     _z_zint_result_t r_lease = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_lease, r, _Z_ERR_PARSE_ZINT)
     r->_value._open._lease = r_lease._value._zint;
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2) != 0) {
         r->_value._open._lease *= 1000;
     }
 
@@ -1373,7 +1372,7 @@ void _z_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_open_result_t *r) {
     _ASSURE_P_RESULT(r_isn, r, _Z_ERR_PARSE_ZINT)
     r->_value._open._initial_sn = r_isn._value._zint;
 
-    if (!_Z_HAS_FLAG(header, _Z_FLAG_T_A)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == 0) {
         _z_bytes_result_t r_cke = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_cke, r, _Z_ERR_PARSE_BYTES)
         r->_value._open._cookie = r_cke._value._bytes;
@@ -1391,7 +1390,7 @@ int _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *msg)
     _Z_DEBUG("Encoding _Z_MID_CLOSE\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
     }
     return _z_wbuf_write(wbf, msg->_reason);
@@ -1402,7 +1401,7 @@ void _z_close_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_close_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _Z_ERR_PARSE_BYTES)
         r->_value._close._pid = r_arr._value._bytes;
@@ -1426,7 +1425,7 @@ int _z_sync_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_sync_t *msg) {
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_C)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_C) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_count))
     }
     return 0;
@@ -1441,7 +1440,7 @@ void _z_sync_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sync_result_t *r) {
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._sync._sn = r_zint._value._zint;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_R) && _Z_HAS_FLAG(header, _Z_FLAG_T_C)) {
+    if ((_Z_HAS_FLAG(header, _Z_FLAG_T_R) != 0) && (_Z_HAS_FLAG(header, _Z_FLAG_T_C) != 0)) {
         r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._sync._count = r_zint._value._zint;
@@ -1461,7 +1460,7 @@ int _z_ack_nack_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_ack_nack_t
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M) != 0) {
         _Z_EC(_z_zint_encode(wbf, msg->_mask))
     }
     return 0;
@@ -1476,7 +1475,7 @@ void _z_ack_nack_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_ack_nack_result_t 
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._ack_nack._sn = r_zint._value._zint;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M) != 0) {
         r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._ack_nack._mask = r_zint._value._zint;
@@ -1494,7 +1493,7 @@ int _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_ali
     _Z_DEBUG("Encoding _Z_MID_KEEP_ALIVE\n");
 
     // Encode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
     }
     return 0;
@@ -1505,7 +1504,7 @@ void _z_keep_alive_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_keep_alive_resul
     r->_tag = _Z_RES_OK;
 
     // Decode the body
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
         _z_bytes_result_t r_arr = _z_bytes_decode(zbf);
         _ASSURE_P_RESULT(r_arr, r, _Z_ERR_PARSE_BYTES)
         r->_value._keep_alive._pid = r_arr._value._bytes;
@@ -1549,7 +1548,7 @@ int _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg)
     // Encode the body
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) != 0) {
         // Do not write the fragment as _z_bytes_t since the total frame length
         // is eventually prepended to the frame. There is no need to encode the fragment length.
         return _z_wbuf_write_bytes(wbf, msg->_payload._fragment.start, 0, msg->_payload._fragment.len);
@@ -1572,7 +1571,7 @@ void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r) {
     r->_value._frame._sn = r_zint._value._zint;
 
     // Decode the payload
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) != 0) {
         // Read all the remaining bytes in the buffer as the fragment
         r->_value._frame._payload._fragment = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), _z_zbuf_len(zbf));
 
@@ -1580,7 +1579,7 @@ void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r) {
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));
     } else {
         r->_value._frame._payload._messages = _z_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-        while (_z_zbuf_len(zbf)) {
+        while (_z_zbuf_len(zbf) > 0) {
             // Mark the reading position of the iobfer
             size_t r_pos = _z_zbuf_get_rpos(zbf);
             _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(zbf);
@@ -1606,7 +1605,7 @@ _z_frame_result_t _z_frame_decode(_z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Transport Message ------------------*/
 int _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg) {
     // Encode the decorators if present
-    if (msg->_attachment) {
+    if (msg->_attachment != NULL) {
         _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
     }
 

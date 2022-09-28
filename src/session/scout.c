@@ -81,19 +81,19 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 // Get current element to fill
                 _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
 
-                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I)) {
+                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) != 0) {
                     _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
                 } else {
                     _z_bytes_reset(&hello->pid);
                 }
 
-                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W)) {
+                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) != 0) {
                     hello->whatami = t_msg._body._hello._whatami;
                 } else {
                     hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
                 }
 
-                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L)) {
+                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) != 0) {
                     hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
                     for (size_t i = 0; i < hello->locators._len; i++) {
                         hello->locators._val[i] = _z_locator_to_str(&t_msg._body._hello._locators._val[i]);

@@ -69,7 +69,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                     return Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK;
 
                 case '$':
-                    if (in_dollar) {
+                    if (in_dollar != (unsigned char)0) {
                         return Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR;
                     }
                     in_dollar += (unsigned char)1;
@@ -117,7 +117,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
     char *reader = start;
     while (reader < end) {
         size_t pos = __zp_starts_with(reader, needle);
-        if (pos) {
+        if (pos != 0) {
             if (right_after_needle) {
                 break;
             }
@@ -132,7 +132,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
     char *writer = reader;
     while (reader < end) {
         size_t pos = __zp_starts_with(reader, needle);
-        if (pos) {
+        if (pos != 0) {
             if (!right_after_needle) {
                 for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
@@ -538,7 +538,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         assert(false);  // anything before "$*" or "**" must be part of the canon prefix
     }
 
-    while (next_slash) {
+    while (next_slash != NULL) {
         reader = next_slash + 1;
         next_slash = memchr(reader, '/', end - reader);
         chunk_end = next_slash ? next_slash : end;
@@ -573,7 +573,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                     return Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK;
 
                 case '$':
-                    if (in_dollar) {
+                    if (in_dollar != (unsigned char)0) {
                         return Z_KEYEXPR_CANON_DOLLAR_AFTER_DOLLAR_OR_STAR;
                     }
                     in_dollar += (unsigned char)1;

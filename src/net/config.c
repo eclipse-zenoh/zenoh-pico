@@ -28,7 +28,7 @@ _z_config_t *_z_config_default() { return _z_config_client(NULL); }
 _z_config_t *_z_config_client(const char *locator) {
     _z_config_t *ps = _z_config_empty();
     _zp_config_insert(ps, Z_CONFIG_MODE_KEY, z_string_make(Z_CONFIG_MODE_CLIENT));
-    if (locator) {
+    if (locator != NULL) {
         // Connect only to the provided locator
         _zp_config_insert(ps, Z_CONFIG_PEER_KEY, z_string_make(locator));
     } else {

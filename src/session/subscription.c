@@ -55,7 +55,7 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
     while (subs != NULL) {
         _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
         if (_z_keyexpr_intersects(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
-                                  strlen(key._suffix))) {
+                                  strlen(key._suffix)) == true) {
             xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
         }
 
@@ -129,7 +129,7 @@ int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *
     // Register the subscription
     _z_subscription_sptr_t *sub = (_z_subscription_sptr_t *)z_malloc(sizeof(_z_subscription_sptr_t));
     *sub = _z_subscription_sptr_new(*s);
-    if (is_local) {
+    if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, sub);
     } else {
         zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, sub);
@@ -211,7 +211,7 @@ void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (is_local) {
+    if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_subscriptions =
             _z_subscription_sptr_list_drop_filter(zn->_local_subscriptions, _z_subscription_sptr_eq, sub);
     } else {

@@ -26,7 +26,7 @@ _z_string_t z_string_make(const char *value) {
 }
 
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
-    if (src->val) {
+    if (src->val != NULL) {
         dst->val = _z_str_clone(src->val);
     } else {
         dst->val = NULL;

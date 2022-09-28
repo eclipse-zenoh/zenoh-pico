@@ -107,7 +107,7 @@ size_t _z_iosli_size(const _z_iosli_t *ios) {
 }
 
 void _z_iosli_clear(_z_iosli_t *ios) {
-    if (ios->_is_alloc) {
+    if (ios->_is_alloc != 0) {
         z_free(ios->_buf);
         ios->_buf = NULL;
     }
@@ -229,7 +229,7 @@ size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable) {
     _z_wbuf_t wbf;
-    if (is_expandable) {
+    if (is_expandable != 0) {
         // Preallocate 4 slots, this is usually what we expect
         // when fragmenting a zenoh data message with attachment
         wbf._ioss = _z_iosli_vec_make(4);
@@ -324,7 +324,7 @@ int _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
         return 0;
     }
 
-    if (wbf->_is_expandable) {
+    if (wbf->_is_expandable != 0) {
         ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
         _z_wbuf_add_iosli(wbf, ios);
         _z_iosli_write(ios, b);
@@ -342,7 +342,7 @@ int _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t
         return 0;
     }
 
-    if (wbf->_is_expandable) {
+    if (wbf->_is_expandable != 0) {
         _z_iosli_write_bytes(ios, bs, offset, writable);
         length -= writable;
         offset += writable;

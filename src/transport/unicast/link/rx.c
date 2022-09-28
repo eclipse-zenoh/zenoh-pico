@@ -35,7 +35,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities)) {
+    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) != 0) {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
             r->_tag = _Z_RES_ERR;
@@ -141,10 +141,10 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
         case _Z_MID_FRAME: {
             _Z_INFO("Received Z_FRAME message\n");
             // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R)) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) != 0) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
-                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn)) {
+                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) != 0) {
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
@@ -152,7 +152,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                     break;
                 }
             } else {
-                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn)) {
+                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) != 0) {
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
@@ -161,7 +161,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                 }
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F)) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F) != 0) {
                 // Select the right defragmentation buffer
                 _z_wbuf_t *dbuf =
                     _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &ztu->_dbuf_reliable : &ztu->_dbuf_best_effort;
@@ -180,7 +180,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                 }
 
                 // Check if this is the last fragment
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E)) {
+                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) != 0) {
                     // Drop message if it is bigger the max buffer size
                     if (drop == 1) {
                         _z_wbuf_reset(dbuf);

@@ -50,7 +50,7 @@ _z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_li
     while (qles != NULL) {
         _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
         if (_z_keyexpr_intersects(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
-                                  strlen(key._suffix))) {
+                                  strlen(key._suffix)) == true) {
             xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
         }
 

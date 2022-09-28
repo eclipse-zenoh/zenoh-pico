@@ -110,9 +110,9 @@ _z_session_t *_z_open(_z_config_t *config) {
     // Check operation mode
     char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
     int mode = 0;  // By default, zenoh-pico will operate as a client
-    if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT)) {
+    if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT) != 0) {
         mode = 0;
-    } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER)) {
+    } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) != 0) {
         mode = 1;
     }
 

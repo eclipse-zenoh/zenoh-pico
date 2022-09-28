@@ -216,11 +216,17 @@ UDPSocket *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *i
 
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout);
-    if (sock->open(net) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if (sock->open(net) < 0) {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
-    if (sock->bind(raddr->get_port()) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if (sock->bind(raddr->get_port()) < 0) {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
-    if (sock->join_multicast_group(*raddr)) goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if (sock->join_multicast_group(*raddr) < 0) {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
     return sock;
 

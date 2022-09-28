@@ -293,7 +293,7 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockad
 
     struct ifaddrs *tmp = NULL;
     for (tmp = l_ifaddr; tmp != NULL; tmp = tmp->ifa_next) {
-        if (_z_str_eq(tmp->ifa_name, iface)) {
+        if (_z_str_eq(tmp->ifa_name, iface) != 0) {
             if (tmp->ifa_addr->sa_family == sa_family) {
                 if (tmp->ifa_addr->sa_family == AF_INET) {
                     *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));

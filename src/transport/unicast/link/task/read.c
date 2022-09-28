@@ -50,10 +50,10 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    while (ztu->_read_task_running) {
+    while (ztu->_read_task_running == 1) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities)) {
+        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) != 0) {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
                 if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -106,7 +106,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     }
 
 EXIT_RECV_LOOP:
-    if (ztu) {
+    if (ztu != NULL) {
         ztu->_read_task_running = 0;
 
         // Release the lock

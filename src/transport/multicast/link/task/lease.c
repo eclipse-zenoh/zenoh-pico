@@ -78,7 +78,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
     _z_zint_t next_join = Z_JOIN_INTERVAL;
 
     _z_transport_peer_entry_list_t *it = NULL;
-    while (ztm->_lease_task_running) {
+    while (ztm->_lease_task_running == 1) {
         _z_mutex_lock(&ztm->_mutex_peer);
 
         if (next_lease <= 0) {

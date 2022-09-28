@@ -27,7 +27,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_DATA: {
             _Z_INFO("Received _Z_MID_DATA message %d\n", msg->_header);
-            if (msg->_reply_context) {  // This is some data from a query
+            if (msg->_reply_context != NULL) {  // This is some data from a query
                 _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key,
                                                msg->_body._data._payload, msg->_body._data._info._encoding,
                                                msg->_body._data._info._kind, msg->_body._data._info._tstamp);
@@ -164,7 +164,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
         case _Z_MID_UNIT: {
             _Z_INFO("Received _Z_UNIT message\n");
             // This might be the final reply
-            if (msg->_reply_context) {
+            if (msg->_reply_context != NULL) {
                 _z_trigger_query_reply_final(zn, msg->_reply_context);
             }
 

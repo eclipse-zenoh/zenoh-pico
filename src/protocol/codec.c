@@ -50,7 +50,7 @@ int _z_uint8_encode(_z_wbuf_t *wbf, uint8_t v) { return _z_wbuf_write(wbf, v); }
 _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
     _z_uint8_result_t r;
 
-    if (_z_zbuf_can_read(zbf)) {
+    if (_z_zbuf_can_read(zbf) != 0) {
         r._tag = _Z_RES_OK;
         r._value._uint8 = _z_zbuf_read(zbf);
     } else {

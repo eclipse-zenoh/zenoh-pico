@@ -38,7 +38,7 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities)) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities) != 0) {
         _z_transport_multicast_establish_param_result_t res_tp_param =
             _z_transport_multicast_open_client(res_zl._value._link, local_pid);
         if (res_tp_param._tag == _Z_RES_ERR) {
@@ -85,7 +85,7 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities)) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities) != 0) {
         _z_transport_multicast_establish_param_result_t res_tp_param =
             _z_transport_multicast_open_peer(res_zl._value._link, local_pid);
         if (res_tp_param._tag == _Z_RES_ERR) {

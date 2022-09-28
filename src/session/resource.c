@@ -192,7 +192,7 @@ int _z_register_resource(_z_session_t *zn, int is_local, _z_resource_t *res) {
     }
 
     // Register the resource
-    if (is_local) {
+    if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
     } else {
         zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
@@ -217,7 +217,7 @@ void _z_unregister_resource(_z_session_t *zn, int is_local, _z_resource_t *res) 
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (is_local) {
+    if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
     } else {
         zn->_remote_resources = _z_resource_list_drop_filter(zn->_remote_resources, _z_resource_eq, res);

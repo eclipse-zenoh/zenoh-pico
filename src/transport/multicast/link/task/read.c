@@ -53,10 +53,10 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_zbuf_reset(&ztm->_zbuf);
 
     _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
-    while (ztm->_read_task_running) {
+    while (ztm->_read_task_running == 1) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities)) {
+        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) != 0) {
             if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -111,7 +111,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     }
 
 EXIT_RECV_LOOP:
-    if (ztm) {
+    if (ztm != NULL) {
         ztm->_read_task_running = 0;
 
         // Release the lock
