@@ -341,7 +341,7 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
 
             default:
                 lclen = lcend - lstart;
-                streq = lclen == (size_t)(rcend - rstart) && strncmp(lstart, rstart, lclen) == 0;
+                streq = (lclen == (size_t)(rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
                 if (!(streq || __zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }

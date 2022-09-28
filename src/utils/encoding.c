@@ -37,7 +37,7 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
     }
     *codep = code;
 
-    return (size_t)(output - output_initial_ptr);
+    return output - output_initial_ptr;
 }
 
 size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
@@ -60,5 +60,5 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
         }
     }
 
-    return (size_t)(output - output_initial_ptr);
+    return output - output_initial_ptr;
 }

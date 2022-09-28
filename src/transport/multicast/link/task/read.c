@@ -65,8 +65,8 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 }
             }
 
-            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
             }
 
             if (_z_zbuf_len(&ztm->_zbuf) < to_read) {

@@ -61,8 +61,8 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 }
             }
 
-            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
             }
 
             if (_z_zbuf_len(&ztu->_zbuf) < to_read) {

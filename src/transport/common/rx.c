@@ -33,8 +33,8 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
         }
 
         size_t len = 0;
-        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            len |= (size_t)_z_zbuf_read(&zbf) << (size_t)(i * 8);
+        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+            len |= (size_t)(_z_zbuf_read(&zbf) << (i * (uint8_t)8));
         }
 
         size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);

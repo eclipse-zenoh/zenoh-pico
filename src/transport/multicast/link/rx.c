@@ -60,8 +60,8 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
         }
 
         size_t len = 0;
-        for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            len |= _z_zbuf_read(&ztm->_zbuf) << (i * 8);
+        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+            len |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
         }
 
         _Z_DEBUG(">> \t msg len = %zu\n", len);
