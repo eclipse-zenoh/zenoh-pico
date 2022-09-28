@@ -56,7 +56,8 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
                 *output = 0;
                 output++;
             }
-            block = code = *byte;
+            code = *byte;
+            block = *byte;
             byte++;
             if (code == (uint8_t)0x00) {
                 break;
