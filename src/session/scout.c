@@ -116,7 +116,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
 
         _z_t_msg_clear(&t_msg);
 
-        if (_z_hello_list_len(hellos) > 0 && exit_on_first) {
+        if ((_z_hello_list_len(hellos) > 0) && exit_on_first) {
             break;
         }
     }

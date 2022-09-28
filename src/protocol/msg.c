@@ -200,8 +200,8 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t c
 
     decl._body._qle._complete = complete;
     decl._body._qle._distance = distance;
-    if (decl._body._qle._complete != _Z_QUERYABLE_COMPLETE_DEFAULT ||
-        decl._body._qle._distance != _Z_QUERYABLE_DISTANCE_DEFAULT) {
+    if ((decl._body._qle._complete != _Z_QUERYABLE_COMPLETE_DEFAULT) ||
+        (decl._body._qle._distance != _Z_QUERYABLE_DISTANCE_DEFAULT)) {
         _Z_SET_FLAG(decl._header, _Z_FLAG_Z_Q);
     }
 
@@ -527,7 +527,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z
     msg._body._join._pid = pid;
 
     msg._header = _Z_MID_JOIN;
-    if (lease % 1000 == 0) {
+    if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_T1);
     }
     if (sn_resolution != Z_SN_RESOLUTION) {
@@ -638,7 +638,7 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
     msg._body._open._cookie = cookie;
 
     msg._header = _Z_MID_OPEN;
-    if (lease % 1000 == 0) {
+    if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
     }
 
@@ -656,7 +656,7 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
 
     msg._header = _Z_MID_OPEN;
     _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
-    if (lease % 1000 == 0) {
+    if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
     }
 

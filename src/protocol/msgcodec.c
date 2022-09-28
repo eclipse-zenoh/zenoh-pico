@@ -81,13 +81,13 @@ int _z_subinfo_encode(_z_wbuf_t *wbf, const _z_subinfo_t *fld) {
 
     // Encode the header
     uint8_t header = fld->mode;
-    if (fld->period.origin != 0 || fld->period.period != 0 || fld->period.duration != 0) {
+    if ((fld->period.origin != 0) || (fld->period.period != 0) || (fld->period.duration != 0)) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_P);
     }
     _Z_EC(_z_wbuf_write(wbf, header))
 
     // Encode the body
-    if (fld->period.origin != 0 || fld->period.period != 0 || fld->period.duration != 0) {
+    if ((fld->period.origin != 0) || (fld->period.period != 0) || (fld->period.duration != 0)) {
         return _z_period_encode(wbf, &fld->period);
     }
 

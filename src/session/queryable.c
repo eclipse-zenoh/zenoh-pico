@@ -163,7 +163,7 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         q._qid = query->_qid;
         q._key = key;
         q._parameters = query->_parameters;
-        q._anyke = strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL ? false : true;
+        q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         for (i = 0; i < len; i++) {
             callbacks[i](&q, callbacks_args[i]);
         }

@@ -49,7 +49,7 @@ char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
 }
 
 _Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
-    if (keyexpr->_id != Z_RESOURCE_ID_NONE || keyexpr->_suffix != NULL) {
+    if ((keyexpr->_id != Z_RESOURCE_ID_NONE) || (keyexpr->_suffix != NULL)) {
         return true;
     }
 
@@ -73,7 +73,7 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start) {
 }
 
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r) {
-    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+    if ((l._id != Z_RESOURCE_ID_NONE) || (r._id != Z_RESOURCE_ID_NONE)) {
         return -1;
     }
     return _z_keyexpr_includes(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix));
@@ -84,7 +84,7 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
 }
 
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r) {
-    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+    if ((l._id != Z_RESOURCE_ID_NONE) || (r._id != Z_RESOURCE_ID_NONE)) {
         return -1;
     }
 
@@ -96,7 +96,7 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
 }
 
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
-    if (l._id != Z_RESOURCE_ID_NONE || r._id != Z_RESOURCE_ID_NONE) {
+    if ((l._id != Z_RESOURCE_ID_NONE) || (r._id != Z_RESOURCE_ID_NONE)) {
         return -1;
     }
 
@@ -178,7 +178,7 @@ z_owned_hello_t z_hello_null(void) { return (z_owned_hello_t){._value = NULL}; }
 
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){.prefix = prefix,
-                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, suffix == NULL ? 0 : strlen(suffix))};
+                           .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? 0 : strlen(suffix))};
 }
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }

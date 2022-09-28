@@ -43,7 +43,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
 
     // Parse and check the validity of the port
     port = strtoul(s_port, NULL, 10);
-    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
+    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
     addr->_port = port;
@@ -140,7 +140,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
 
     // Parse and check the validity of the port
     port = strtoul(s_port, NULL, 10);
-    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
+    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
     addr->_port = port;

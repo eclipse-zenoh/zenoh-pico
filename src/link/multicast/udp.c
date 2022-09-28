@@ -44,7 +44,7 @@ char *_z_parse_address_segment_udp_multicast(const char *address) {
     const char *p_start = &address[0];
     const char *p_end = strrchr(address, ':');
 
-    if (*p_start == '[' && *(p_end - 1) == ']') {
+    if ((*p_start == '[') && (*(p_end - 1) == ']')) {
         p_start++;
         p_end--;
         int len = p_end - p_start;

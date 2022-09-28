@@ -81,7 +81,7 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
 #endif  // Z_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
-    uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
+    uint16_t mtu = (link->_mtu < Z_BATCH_SIZE_TX) ? link->_mtu : Z_BATCH_SIZE_TX;
     zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, 0);
     zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
@@ -144,7 +144,7 @@ _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multica
 #endif  // Z_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
-    uint16_t mtu = link->_mtu < Z_BATCH_SIZE_TX ? link->_mtu : Z_BATCH_SIZE_TX;
+    uint16_t mtu = (link->_mtu < Z_BATCH_SIZE_TX) ? link->_mtu : Z_BATCH_SIZE_TX;
     zt->_transport._multicast._wbuf = _z_wbuf_make(mtu, 0);
     zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 

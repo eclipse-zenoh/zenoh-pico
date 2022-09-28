@@ -144,8 +144,8 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     }
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
-    if (pen_qry->_anykey == false && !_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
-                                                            keyexpr._suffix, strlen(keyexpr._suffix))) {
+    if ((pen_qry->_anykey == false) && !_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
+                                                              keyexpr._suffix, strlen(keyexpr._suffix))) {
         goto ERR_2;
     }
 
@@ -161,8 +161,8 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
     reply->data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
-    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST ||
-        pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
+    if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
+        (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
         while (pen_rps != NULL) {

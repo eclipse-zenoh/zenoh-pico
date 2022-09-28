@@ -16,9 +16,9 @@
 
 int _z_sn_precedes(const _z_zint_t sn_resolution_half, const _z_zint_t sn_left, const _z_zint_t sn_right) {
     if (sn_right > sn_left) {
-        return (sn_right - sn_left <= sn_resolution_half);
+        return ((sn_right - sn_left) <= sn_resolution_half);
     } else {
-        return (sn_left - sn_right > sn_resolution_half);
+        return ((sn_left - sn_right) > sn_resolution_half);
     }
 }
 

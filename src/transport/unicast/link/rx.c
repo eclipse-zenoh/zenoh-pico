@@ -167,7 +167,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                     _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &ztu->_dbuf_reliable : &ztu->_dbuf_best_effort;
 
                 uint8_t drop = 0;
-                if (_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len > Z_FRAG_MAX_SIZE) {
+                if ((_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len) > Z_FRAG_MAX_SIZE) {
                     // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                     // Otherwise, last (smaller) fragments can be understood as a complete message
                     _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0,

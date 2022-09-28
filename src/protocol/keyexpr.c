@@ -33,7 +33,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                 return Z_KEYEXPR_CANON_EMPTY_CHUNK;
 
             case 1:
-                if (in_big_wild && *chunk_start == '*') {
+                if (in_big_wild && (*chunk_start == '*')) {
                     *len = chunk_start - start - 3;
                     return Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR;
                 }
@@ -98,7 +98,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
         in_big_wild = false;
     } while (chunk_start < end);
 
-    return chunk_start > end ? Z_KEYEXPR_CANON_SUCCESS : Z_KEYEXPR_CANON_EMPTY_CHUNK;
+    return (chunk_start > end) ? Z_KEYEXPR_CANON_SUCCESS : Z_KEYEXPR_CANON_EMPTY_CHUNK;
 }
 
 size_t __zp_starts_with(const char *s, const char *needle) {
@@ -160,7 +160,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 
 /*------------------ Inclusion helpers ------------------*/
 _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
-    while (lstart < lend && rstart < rend) {
+    while ((lstart < lend) && (rstart < rend)) {
         char l = *lstart++;
         char r = *rstart++;
         if (l == '$') {
@@ -174,7 +174,7 @@ _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char 
         }
     }
 
-    return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$');
+    return ((lstart == lend) && (rstart == rend)) || (((lend - lstart) == 2) && (lstart[0] == '$'));
 }
 
 _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
@@ -222,7 +222,7 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
         if (!lns) {
             return !rns;
         } else if (!rns) {
-            return !lns || (lend - lns == 3 && lns[1] == '*');
+            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
         }
 
         lstart = lns + 1;
@@ -261,7 +261,7 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                if ((lcend - lstart != rcend - rstart) || strncmp(lstart, rstart, lcend - lstart)) {
+                if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
                     return false;
                 }
         }
@@ -269,7 +269,7 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
         if (!lns) {
             return !rns;
         } else if (!rns) {
-            return !lns || (lend - lns == 3 && lns[1] == '*');
+            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
         }
 
         lstart = lns + 1;
@@ -279,7 +279,7 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
 
 /*------------------ Intersection helpers ------------------*/
 _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
-    while (lstart < lend && rstart < rend) {
+    while ((lstart < lend) && (rstart < rend)) {
         char l = *lstart++;
         char r = *rstart++;
         if (l == '$') {
@@ -301,8 +301,8 @@ _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, cha
         }
     }
 
-    return (lstart == lend && rstart == rend) || (lend - lstart == 2 && lstart[0] == '$') ||
-           (rend - rstart == 2 && rstart[0] == '$');
+    return ((lstart == lend) && (rstart == rend)) || (((lend - lstart) == 2) && (lstart[0] == '$')) ||
+           (((rend - rstart) == 2) && (rstart[0] == '$'));
 }
 
 _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
@@ -348,9 +348,9 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
         }
 
         if (!lns) {
-            return !rns || (rend - rns == 3 && rns[1] == '*');
+            return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
-            return !lns || (lend - lns == 3 && lns[1] == '*');
+            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
         }
         lstart = lns + 1;
         rstart = rns + 1;
@@ -392,15 +392,15 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                if ((lcend - lstart != rcend - rstart) || strncmp(lstart, rstart, lcend - lstart)) {
+                if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
                     return false;
                 }
         }
 
         if (!lns) {
-            return !rns || (rend - rns == 3 && rns[1] == '*');
+            return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
-            return !lns || (lend - lns == 3 && lns[1] == '*');
+            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
         }
 
         lstart = lns + 1;
@@ -428,7 +428,7 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
     }
 
     end = rstart + rlen;
-    for (char const *c = rstart; contains < 3 && c < end; c++) {
+    for (char const *c = rstart; (contains < 3) && (c < end); c++) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -469,7 +469,7 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
     }
 
     end = rstart + rlen;
-    for (char const *c = rstart; contains < 3 && c < end; c++) {
+    for (char const *c = rstart; (contains < 3) && (c < end); c++) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -512,7 +512,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     char const *chunk_end = next_slash ? next_slash : end;
 
     _Bool in_big_wild = false;
-    if (chunk_end - reader == 2 && reader[1] == '*') {
+    if (((chunk_end - reader) == 2) && (reader[1] == '*')) {
         switch (*reader) {
             case '*':
                 in_big_wild = true;

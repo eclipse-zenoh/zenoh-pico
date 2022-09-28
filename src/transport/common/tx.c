@@ -84,7 +84,7 @@ int __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliab
                 continue;
             }
             // Write the fragment
-            size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
+            size_t to_copy = (bytes_left <= space_left) ? bytes_left : space_left;
             return _z_wbuf_siphon(dst, src, to_copy);
         } else {
             return 0;
@@ -111,7 +111,7 @@ int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
 int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     // Create and prepare the buffer to serialize the message on
-    uint16_t mtu = zl->_mtu < Z_BATCH_SIZE_TX ? zl->_mtu : Z_BATCH_SIZE_TX;
+    uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE_TX) ? zl->_mtu : Z_BATCH_SIZE_TX;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
     if (_Z_LINK_IS_STREAMED(zl->_capabilities)) {
         for (size_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {

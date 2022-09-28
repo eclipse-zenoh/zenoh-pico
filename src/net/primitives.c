@@ -360,7 +360,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     pq->_parameters = _z_str_clone(parameters);
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anykey = strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL ? false : true;
+    pq->_anykey = (strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;

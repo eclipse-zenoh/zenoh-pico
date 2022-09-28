@@ -31,7 +31,7 @@ extern "C" {
 void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
+    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
 
@@ -112,7 +112,7 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if (port < (uint32_t)1 || port > (uint32_t)65355) {  // Port numbers should range from 1 to 65355
+    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
 
@@ -416,7 +416,7 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
     after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
 
     int wb = sock->write(after_cobs, twb + 1);
-    if (wb != twb + 1) {
+    if (wb != (twb + 1)) {
         goto ERR;
     }
 

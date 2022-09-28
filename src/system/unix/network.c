@@ -526,25 +526,25 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
         if (laddr->ai_family == AF_INET) {
             struct sockaddr_in *a = ((struct sockaddr_in *)laddr->ai_addr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
-            if (!(a->sin_port == b->sin_port && a->sin_addr.s_addr == b->sin_addr.s_addr)) {
+            if (!((a->sin_port == b->sin_port) && (a->sin_addr.s_addr == b->sin_addr.s_addr))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make(sizeof(in_addr_t) + sizeof(in_port_t));
-                    (void)memcpy((void *)addr->start, &b->sin_addr.s_addr, sizeof(in_addr_t));
-                    (void)memcpy((void *)(addr->start + sizeof(in_addr_t)), &b->sin_port, sizeof(in_port_t));
+                    (void)memcpy((uint8_t *)addr->start, &b->sin_addr.s_addr, sizeof(in_addr_t));
+                    (void)memcpy((uint8_t *)(addr->start + sizeof(in_addr_t)), &b->sin_port, sizeof(in_port_t));
                 }
                 break;
             }
         } else if (laddr->ai_family == AF_INET6) {
             struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr->ai_addr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
-            if (!(a->sin6_port == b->sin6_port &&
-                  memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(struct in6_addr)) == 0)) {
+            if (!((a->sin6_port == b->sin6_port) &&
+                  (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(struct in6_addr)) == 0))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make(sizeof(struct in6_addr) + sizeof(in_port_t));
-                    (void)memcpy((void *)addr->start, &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
-                    (void)memcpy((void *)(addr->start + sizeof(struct in6_addr)), &b->sin6_port, sizeof(in_port_t));
+                    (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
+                    (void)memcpy((uint8_t *)(addr->start + sizeof(struct in6_addr)), &b->sin6_port, sizeof(in_port_t));
                 }
                 break;
             }

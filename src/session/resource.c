@@ -45,7 +45,7 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id
 _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_key._id == keyexpr->_id && _z_str_eq(r->_key._suffix, keyexpr->_suffix) == 1) {
+        if ((r->_key._id == keyexpr->_id) && (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == 1)) {
             return r;
         }
 

@@ -22,7 +22,7 @@
 
 /*------------------ IOSli ------------------*/
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos) {
-    assert(r_pos <= w_pos && w_pos <= length);
+    assert((r_pos <= w_pos) && (w_pos <= length));
     _z_iosli_t ios;
     ios._r_pos = 0;
     ios._w_pos = length;
@@ -192,7 +192,7 @@ void _z_zbuf_reset(_z_zbuf_t *zbf) { _z_iosli_reset(&zbf->_ios); }
 void _z_zbuf_clear(_z_zbuf_t *zbf) { _z_iosli_clear(&zbf->_ios); }
 
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
-    if (zbf->_ios._r_pos == 0 && zbf->_ios._w_pos == 0) {
+    if ((zbf->_ios._r_pos == 0) && (zbf->_ios._w_pos == 0)) {
         return;
     }
 
@@ -287,7 +287,7 @@ void _z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t len
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_r_idx);
         size_t readable = _z_iosli_readable(ios);
         if (readable > 0) {
-            size_t to_read = readable <= length ? readable : length;
+            size_t to_read = (readable <= length) ? readable : length;
             _z_iosli_read_bytes(ios, dest, offset, to_read);
             offset += to_read;
             length -= to_read;
@@ -445,7 +445,7 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos) {
         assert(i <= _z_iosli_vec_len(&wbf->_ioss));
 
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
-        if (pos <= ios->_capacity && pos >= ios->_r_pos) {
+        if ((pos <= ios->_capacity) && (pos >= ios->_r_pos)) {
             wbf->_w_idx = i;
             ios->_w_pos = pos;
             return;

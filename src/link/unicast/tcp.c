@@ -45,7 +45,7 @@ char *_z_parse_address_segment_tcp(char *address) {
     char *p_end = strrchr(address, ':');
 
     // IPv6
-    if (*p_start == '[' && *(p_end - 1) == ']') {
+    if ((*p_start == '[') && (*(p_end - 1) == ']')) {
         p_start++;
         p_end--;
         int len = p_end - p_start;

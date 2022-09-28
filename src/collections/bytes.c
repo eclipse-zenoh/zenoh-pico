@@ -65,7 +65,7 @@ void _z_bytes_free(_z_bytes_t **bs) {
 
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     _z_bytes_init(dst, src->len);
-    (void)memcpy((uint8_t *)dst->start, src->start, dst->len > src->len ? src->len : dst->len);
+    (void)memcpy((uint8_t *)dst->start, src->start, (dst->len > src->len) ? src->len : dst->len);
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
