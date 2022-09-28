@@ -1,0 +1,2 @@
+sphinx_c_autodoc
+clang==14
