@@ -72,7 +72,9 @@ void *_z_open_tcp(void *raddr_arg, uint32_t tout) {
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) goto _Z_OPEN_TCP_ERROR_2;
+    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        goto _Z_OPEN_TCP_ERROR_2;
+    }
 #endif
 
     for (struct addrinfo *it = raddr; it != NULL; it = it->ai_next) {
@@ -552,9 +554,11 @@ void *_z_open_bt(char *gname, uint8_t mode, uint8_t profile) {
             } else if (mode == _Z_BT_MODE_MASTER) {
                 sbt->begin(gname, true);
                 uint8_t connected = sbt->connect(gname);
-                if (!connected)
-                    while (!sbt->connected(10000))
-                        ;
+                if (!connected) {
+                    while (!sbt->connected(10000)) {
+                        __asm__("nop");
+                    }
+                }
             } else
                 return NULL;
 
@@ -562,8 +566,9 @@ void *_z_open_bt(char *gname, uint8_t mode, uint8_t profile) {
         } break;
 
         case _Z_BT_PROFILE_UNSUPPORTED:
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
@@ -576,9 +581,11 @@ void *_z_listen_bt(char *gname, uint8_t mode, uint8_t profile) {
             } else if (mode == _Z_BT_MODE_MASTER) {
                 sbt->begin(gname, true);
                 uint8_t connected = sbt->connect(gname);
-                if (!connected)
-                    while (!sbt->connected(10000))
-                        ;
+                if (!connected) {
+                    while (!sbt->connected(10000)) {
+                        __asm__("nop");
+                    }
+                }
             } else
                 return NULL;
 
@@ -586,14 +593,17 @@ void *_z_listen_bt(char *gname, uint8_t mode, uint8_t profile) {
         } break;
 
         case _Z_BT_PROFILE_UNSUPPORTED:
-        default:
+        default: {
             return NULL;
+        }
     }
 }
 
 void _z_close_bt(void *sock_arg) {
     BluetoothSerial *sock = static_cast<BluetoothSerial *>(sock_arg);
-    if (sock == NULL) return;
+    if (sock == NULL) {
+        return;
+    }
 
     sock->end();
     delete sock;
@@ -619,7 +629,9 @@ size_t _z_read_exact_bt(void *sock_arg, uint8_t *ptr, size_t len) {
 
     do {
         size_t rb = _z_read_bt(sock, ptr, n);
-        if (rb == SIZE_MAX) return rb;
+        if (rb == SIZE_MAX) {
+            return rb;
+        }
 
         n -= rb;
         ptr = ptr + (len - n);

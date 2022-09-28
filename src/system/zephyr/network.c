@@ -63,7 +63,9 @@ void *_z_open_tcp(void *arg, uint32_t tout) {
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) goto _Z_OPEN_TCP_ERROR_2;
+    if (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        goto _Z_OPEN_TCP_ERROR_2;
+    }
 #endif
 
     struct addrinfo *it = NULL;

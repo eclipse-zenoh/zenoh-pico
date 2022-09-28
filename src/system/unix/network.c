@@ -421,12 +421,17 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
 #elif defined(ZENOH_LINUX)
     if (raddr->ai_family == AF_INET) {
         struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)raddr->ai_addr)->sin_port, {0}, {0}};
-        if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0) {
+            goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        }
     } else if (raddr->ai_family == AF_INET6) {
         struct sockaddr_in6 address = {AF_INET6, ((struct sockaddr_in6 *)raddr->ai_addr)->sin6_port, 0, {{{0}}}, 0};
-        if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0) goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
-    } else
+        if (bind(sock, (struct sockaddr *)&address, sizeof address) < 0) {
+            goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        }
+    } else {
         goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+    }
 #else
     goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
 #endif

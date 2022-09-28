@@ -52,9 +52,13 @@ TCPSocket *_z_open_tcp(void *raddr_arg, uint32_t tout) {
 
     TCPSocket *sock = new TCPSocket();
     sock->set_timeout(tout);
-    if (sock->open(net) < 0) goto _Z_OPEN_TCP_UNICAST_ERROR_1;
+    if (sock->open(net) < 0) {
+        goto _Z_OPEN_TCP_UNICAST_ERROR_1;
+    }
 
-    if (sock->connect(*raddr) < 0) goto _Z_OPEN_TCP_UNICAST_ERROR_1;
+    if (sock->connect(*raddr) < 0) {
+        goto _Z_OPEN_TCP_UNICAST_ERROR_1;
+    }
 
     return sock;
 
@@ -71,7 +75,9 @@ TCPSocket *_z_listen_tcp(void *raddr_arg) {
 
 void _z_close_tcp(void *sock_arg) {
     TCPSocket *sock = static_cast<TCPSocket *>(sock_arg);
-    if (sock == NULL) return;
+    if (sock == NULL) {
+        return;
+    }
 
     sock->close();
     delete sock;
@@ -80,7 +86,9 @@ void _z_close_tcp(void *sock_arg) {
 size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     TCPSocket *sock = static_cast<TCPSocket *>(sock_arg);
     nsapi_size_or_error_t rb = sock->recv(ptr, len);
-    if (rb < 0) return SIZE_MAX;
+    if (rb < 0) {
+        return SIZE_MAX;
+    }
 
     return rb;
 }
@@ -134,7 +142,9 @@ UDPSocket *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
 
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout);
-    if (sock->open(net) < 0) goto _Z_OPEN_UDP_UNICAST_ERROR_1;
+    if (sock->open(net) < 0) {
+        goto _Z_OPEN_UDP_UNICAST_ERROR_1;
+    }
 
     return sock;
 
@@ -151,7 +161,9 @@ UDPSocket *_z_listen_udp_unicast(void *raddr_arg, uint32_t tout) {
 
 void _z_close_udp_unicast(void *sock_arg) {
     UDPSocket *sock = static_cast<UDPSocket *>(sock_arg);
-    if (sock == NULL) return;
+    if (sock == NULL) {
+        return;
+    }
 
     sock->close();
     delete sock;
@@ -162,7 +174,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
     SocketAddress raddr;
     nsapi_size_or_error_t rb = sock->recvfrom(&raddr, ptr, len);
-    if (rb < 0) return SIZE_MAX;
+    if (rb < 0) {
+        return SIZE_MAX;
+    }
 
     return rb;
 }
@@ -201,7 +215,9 @@ UDPSocket *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tou
 
     UDPSocket *sock = new UDPSocket();
     sock->set_timeout(tout);
-    if (sock->open(net) < 0) goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if (sock->open(net) < 0) {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    }
 
     return sock;
 
@@ -263,7 +279,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
     do {
         rb = sock->recvfrom(&raddr, ptr, len);
-        if (rb < 0) return SIZE_MAX;
+        if (rb < 0) {
+            return SIZE_MAX;
+        }
 
         if (raddr.get_ip_version() == NSAPI_IPv4) {
             *addr = _z_bytes_make(NSAPI_IPv4_BYTES + sizeof(uint16_t));

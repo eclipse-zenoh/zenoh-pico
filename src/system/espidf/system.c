@@ -64,7 +64,9 @@ int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), vo
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
     z_arg->_fun = fun;
     z_arg->_arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 2560, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) return -1;
+    if (xTaskCreate(z_task_wrapper, "", 2560, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) {
+        return -1;
+    }
 
     return 0;
 }

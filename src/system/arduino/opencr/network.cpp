@@ -65,7 +65,9 @@ void *_z_open_tcp(void *raddr_arg, uint32_t tout) {
     __z_tcp_addr_t *raddr = static_cast<__z_tcp_addr_t *>(raddr_arg);
 
     WiFiClient *sock = new WiFiClient();
-    if (!sock->connect(raddr->_ipaddr, raddr->_port)) return NULL;
+    if (!sock->connect(raddr->_ipaddr, raddr->_port)) {
+        return NULL;
+    }
 
     return sock;
 }
@@ -81,7 +83,9 @@ void *_z_listen_tcp(void *laddr_arg, uint32_t tout) {
 
 void _z_close_tcp(void *sock_arg) {
     WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
-    if (sock == NULL) return;
+    if (sock == NULL) {
+        return;
+    }
 
     sock->stop();
     delete sock;
@@ -90,7 +94,9 @@ void _z_close_tcp(void *sock_arg) {
 size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
 
-    if (!sock->available()) return 0;
+    if (!sock->available()) {
+        return 0;
+    }
 
     return sock->read(ptr, len);
 }
@@ -165,9 +171,11 @@ void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
     __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
     (void)(raddr);
 
+    // FIXME: make it random
     WiFiUDP *sock = new WiFiUDP();
-    if (!sock->begin(7447))  // FIXME: make it random
+    if (!sock->begin(7447)) {
         return NULL;
+    }
 
     return sock;
 }
@@ -183,7 +191,9 @@ void *_z_listen_udp_unicast(void *laddr_arg, uint32_t tout) {
 
 void _z_close_udp_unicast(void *sock_arg) {
     WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-    if (sock == NULL) return;
+    if (sock == NULL) {
+        return;
+    }
 
     sock->stop();
     delete sock;
@@ -203,7 +213,9 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
         return 0;
     }
 
-    if (sock->read(ptr, psize) != psize) return 0;
+    if (sock->read(ptr, psize) != psize) {
+        return 0;
+    }
 
     return psize;
 }
@@ -242,9 +254,11 @@ void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, co
     (void)(raddr);
     // __z_udp_addr_t *laddr = NULL;  // Multicast messages are not self-consumed, so no need to save the local address
 
+    // FIXME: make it random
     WiFiUDP *sock = new WiFiUDP();
-    if (!sock->begin(55555))  // FIXME: make it random
+    if (sock->begin(55555) == 0) {
         return NULL;
+    }
 
     return sock;
 }
@@ -253,7 +267,9 @@ void *_z_listen_udp_multicast(void *laddr_arg, uint32_t tout, const char *iface)
     __z_udp_addr_t *laddr = static_cast<__z_udp_addr_t *>(laddr_arg);
 
     WiFiUDP *sock = new WiFiUDP();
-    if (!sock->beginMulticast(laddr->_ipaddr, laddr->_port)) return NULL;
+    if (sock->beginMulticast(laddr->_ipaddr, laddr->_port) == 0) {
+        return NULL;
+    }
 
     return sock;
 }
@@ -290,7 +306,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
         return 0;
     }
 
-    if (sock->read(ptr, psize) != psize) return 0;
+    if (sock->read(ptr, psize) != psize) {
+        return 0;
+    }
 
     // If addr is not NULL, it means that the raddr was requested by the upper-layers
     if (addr != NULL) {
