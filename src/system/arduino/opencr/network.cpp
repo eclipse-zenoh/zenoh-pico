@@ -301,10 +301,10 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
                               strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
         uint8_t offset = 0;
         for (uint8_t i = 0; i < 4; i++) {
-            memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
+            (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
             offset += (uint8_t)strlen((const char *)&rip[i]);
         }
-        memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
+        (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
     }
 
     return psize;

@@ -94,7 +94,7 @@ char *_z_locator_protocol_from_str(const char *s) {
 
     size_t p_len = p_end - p_start;
     char *protocol = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
-    strncpy(protocol, p_start, p_len);
+    (void)strncpy(protocol, p_start, p_len);
     protocol[p_len] = '\0';
 
     return protocol;
@@ -124,7 +124,7 @@ char *_z_locator_address_from_str(const char *s) {
 
     size_t p_len = p_end - p_start;
     char *address = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
-    strncpy(address, p_start, p_len);
+    (void)strncpy(address, p_start, p_len);
     address[p_len] = '\0';
 
     return address;
@@ -253,14 +253,14 @@ void __z_locator_onto_str(char *dst, const _z_locator_t *loc) {
     const char psep = LOCATOR_PROTOCOL_SEPARATOR;
     const char msep = LOCATOR_METADATA_SEPARATOR;
 
-    strncat(dst, loc->_protocol, strlen(loc->_protocol));  // Locator protocol
-    strncat(dst, &psep, 1);                                // Locator protocol separator
-    strncat(dst, loc->_address, strlen(loc->_address));    // Locator address
+    (void)strncat(dst, loc->_protocol, strlen(loc->_protocol));  // Locator protocol
+    (void)strncat(dst, &psep, 1);                                // Locator protocol separator
+    (void)strncat(dst, loc->_address, strlen(loc->_address));    // Locator address
 
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&loc->_metadata);
     if (md_len > 0) {
-        strncat(dst, &msep, 1);  // Locator metadata separator
+        (void)strncat(dst, &msep, 1);  // Locator metadata separator
         _z_locator_metadata_onto_str(&dst[strlen(dst)], &loc->_metadata);
     }
 }
@@ -460,9 +460,9 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *s = (char *)z_malloc(loc_len);
     s[0] = '\0';
 
-    strncat(s, locator, strlen(locator));
+    (void)strncat(s, locator, strlen(locator));
     if (config != NULL) {
-        strncat(s, config, strlen(config));
+        (void)strncat(s, config, strlen(config));
     }
 
     return s;

@@ -94,7 +94,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     _z_str_list_t *xstr = strs;
     while (xstr != NULL) {
         char *s = _z_str_list_head(xstr);
-        strncat(rname, s, strlen(s));
+        (void)strncat(rname, s, strlen(s));
         xstr = _z_str_list_tail(xstr);
     }
 

@@ -73,7 +73,7 @@ void _z_vec_append(_z_vec_t *v, void *e) {
         // Allocate a new vector
         size_t _capacity = (v->_capacity << 1) | 0x01;
         void **_val = (void **)z_malloc(_capacity * sizeof(void *));
-        memcpy(_val, v->_val, v->_capacity * sizeof(void *));
+        (void)memcpy(_val, v->_val, v->_capacity * sizeof(void *));
 
         // Free the old vector
         z_free(v->_val);

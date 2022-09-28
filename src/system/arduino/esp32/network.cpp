@@ -35,7 +35,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
-    memset(&hints, 0, sizeof(hints));
+    (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
@@ -154,7 +154,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
-    memset(&hints, 0, sizeof(hints));
+    (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0;
@@ -398,7 +398,7 @@ void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
     // Join the multicast group
     if (raddr->ai_family == AF_INET) {
         struct ip_mreq mreq;
-        memset(&mreq, 0, sizeof(mreq));
+        (void)memset(&mreq, 0, sizeof(mreq));
         mreq.imr_multiaddr.s_addr = reinterpret_cast<struct sockaddr_in *>(raddr->ai_addr)->sin_addr.s_addr;
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
         if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
@@ -406,9 +406,9 @@ void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
         }
     } else if (raddr->ai_family == AF_INET6) {
         struct ipv6_mreq mreq;
-        memset(&mreq, 0, sizeof(mreq));
-        memcpy(&mreq.ipv6mr_multiaddr, &reinterpret_cast<struct sockaddr_in6 *>(raddr->ai_addr)->sin6_addr,
-               sizeof(struct in6_addr));
+        (void)memset(&mreq, 0, sizeof(mreq));
+        (void)memcpy(&mreq.ipv6mr_multiaddr, &reinterpret_cast<struct sockaddr_in6 *>(raddr->ai_addr)->sin6_addr,
+                     sizeof(struct in6_addr));
         mreq.ipv6mr_interface = 1;  // FIXME: 0 is supposed to be the default interface,
                                     //        but it fails on the setsockopt.
                                     //        1 seems to be a working value on the WiFi interface
@@ -443,15 +443,15 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_
     if (sockrecv != NULL) {
         if (raddr->ai_family == AF_INET) {
             struct ip_mreq mreq;
-            memset(&mreq, 0, sizeof(mreq));
+            (void)memset(&mreq, 0, sizeof(mreq));
             mreq.imr_multiaddr.s_addr = reinterpret_cast<struct sockaddr_in *>(raddr->ai_addr)->sin_addr.s_addr;
             mreq.imr_interface.s_addr = htonl(INADDR_ANY);
             setsockopt(sockrecv->_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
         } else if (raddr->ai_family == AF_INET6) {
             struct ipv6_mreq mreq;
-            memset(&mreq, 0, sizeof(mreq));
-            memcpy(&mreq.ipv6mr_multiaddr, &reinterpret_cast<struct sockaddr_in6 *>(raddr->ai_addr)->sin6_addr,
-                   sizeof(struct in6_addr));
+            (void)memset(&mreq, 0, sizeof(mreq));
+            (void)memcpy(&mreq.ipv6mr_multiaddr, &reinterpret_cast<struct sockaddr_in6 *>(raddr->ai_addr)->sin6_addr,
+                         sizeof(struct in6_addr));
             mreq.ipv6mr_interface = 1;  // FIXME: 0 is supposed to be the default interface,
                                         //        but it fails on the setsockopt.
                                         //        1 seems to be a working value on the WiFi interface
@@ -490,8 +490,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make(sizeof(in_addr_t) + sizeof(in_port_t));
-                    memcpy(const_cast<uint8_t *>(addr->start), &b->sin_addr.s_addr, sizeof(in_addr_t));
-                    memcpy(const_cast<uint8_t *>(addr->start + sizeof(in_addr_t)), &b->sin_port, sizeof(in_port_t));
+                    (void)memcpy(const_cast<uint8_t *>(addr->start), &b->sin_addr.s_addr, sizeof(in_addr_t));
+                    (void)memcpy(const_cast<uint8_t *>(addr->start + sizeof(in_addr_t)), &b->sin_port,
+                                 sizeof(in_port_t));
                 }
                 break;
             }
@@ -502,9 +503,9 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make(sizeof(struct in6_addr) + sizeof(in_port_t));
-                    memcpy(const_cast<uint8_t *>(addr->start), &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
-                    memcpy(const_cast<uint8_t *>(addr->start + sizeof(struct in6_addr)), &b->sin6_port,
-                           sizeof(in_port_t));
+                    (void)memcpy(const_cast<uint8_t *>(addr->start), &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
+                    (void)memcpy(const_cast<uint8_t *>(addr->start + sizeof(struct in6_addr)), &b->sin6_port,
+                                 sizeof(in_port_t));
                 }
                 break;
             }

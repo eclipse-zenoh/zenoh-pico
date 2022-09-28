@@ -154,7 +154,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
         *(*writer)++ = '/';
     }
 
-    memcpy(*writer, chunk, len);
+    (void)memcpy(*writer, chunk, len);
     *writer += len;
 }
 

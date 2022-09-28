@@ -187,7 +187,7 @@ int _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *r
         if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
             // No need to store the whole reply in the monotonic mode.
             _z_reply_t *partial_reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
-            memset(partial_reply, 0, sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
+            (void)memset(partial_reply, 0, sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
             partial_reply->data.sample.keyexpr = _z_keyexpr_duplicate(&reply->data.sample.keyexpr);
             pen_rep->_reply = partial_reply;
         } else {

@@ -818,7 +818,7 @@ void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r) {
         _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_ZENOH_MESSAGE)
         r->_value._data._info = r_dti._value._data_info;
     } else {
-        memset(&r->_value._data._info, 0, sizeof(_z_data_info_t));
+        (void)memset(&r->_value._data._info, 0, sizeof(_z_data_info_t));
     }
 
     _z_payload_result_t r_pld = _z_payload_decode(zbf);
@@ -1586,7 +1586,7 @@ void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r) {
             _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(zbf);
             if (r_zm._tag == _Z_RES_OK) {
                 _z_zenoh_message_t *zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
-                memcpy(zm, &r_zm._value._zenoh_message, sizeof(_z_zenoh_message_t));
+                (void)memcpy(zm, &r_zm._value._zenoh_message, sizeof(_z_zenoh_message_t));
                 _z_zenoh_message_vec_append(&r->_value._frame._payload._messages, zm);
             } else {
                 // Restore the reading position of the iobfer

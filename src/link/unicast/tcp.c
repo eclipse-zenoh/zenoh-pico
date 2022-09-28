@@ -34,7 +34,7 @@ char *_z_parse_port_segment_tcp(char *address) {
 
     int len = p_end - p_start;
     char *port = (char *)z_malloc((len + 1) * (int)sizeof(char));
-    strncpy(port, p_start, len);
+    (void)strncpy(port, p_start, len);
     port[len] = '\0';
 
     return port;
@@ -50,7 +50,7 @@ char *_z_parse_address_segment_tcp(char *address) {
         p_end--;
         int len = p_end - p_start;
         char *ip6_addr = (char *)z_malloc((len + 1) * (int)sizeof(char));
-        strncpy(ip6_addr, p_start, len);
+        (void)strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
         return ip6_addr;
@@ -59,7 +59,7 @@ char *_z_parse_address_segment_tcp(char *address) {
     else {
         int len = p_end - p_start;
         char *ip4_addr_or_domain = (char *)z_malloc((len + 1) * (int)sizeof(char));
-        strncpy(ip4_addr_or_domain, p_start, len);
+        (void)strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 
         return ip4_addr_or_domain;

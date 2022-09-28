@@ -813,7 +813,7 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable,
     msg._body._frame._sn = sn;
 
     // Reset payload content
-    memset(&msg._body._frame._payload, 0, sizeof(_z_frame_payload_t));
+    (void)memset(&msg._body._frame._payload, 0, sizeof(_z_frame_payload_t));
 
     msg._header = _Z_MID_FRAME;
     if (is_reliable) {

@@ -61,7 +61,7 @@ uint8_t _z_iosli_read(_z_iosli_t *ios) {
 
 void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t length) {
     assert(_z_iosli_readable(ios) >= length);
-    memcpy(dst + offset, ios->_buf + ios->_r_pos, length);
+    (void)memcpy(dst + offset, ios->_buf + ios->_r_pos, length);
     ios->_r_pos += length;
 }
 
@@ -79,7 +79,7 @@ void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
     assert(_z_iosli_writable(ios) >= length);
-    memcpy(ios->_buf + ios->_w_pos, bs + offset, length);
+    (void)memcpy(ios->_buf + ios->_w_pos, bs + offset, length);
     ios->_w_pos += length;
 }
 
@@ -127,7 +127,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
     dst->_is_alloc = src->_is_alloc;
     if (dst->_is_alloc == 1) {
         dst->_buf = (uint8_t *)z_malloc(src->_capacity);
-        memcpy(dst->_buf, src->_buf, src->_capacity);
+        (void)memcpy(dst->_buf, src->_buf, src->_capacity);
     } else {
         dst->_buf = src->_buf;
     }
@@ -197,7 +197,7 @@ void _z_zbuf_compact(_z_zbuf_t *zbf) {
     }
 
     size_t len = _z_iosli_readable(&zbf->_ios);
-    memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
+    (void)memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
     _z_zbuf_set_rpos(zbf, 0);
     _z_zbuf_set_wpos(zbf, len);
 }

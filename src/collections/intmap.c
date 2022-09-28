@@ -69,7 +69,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     if (map->_vals == NULL) {
         // Lazily allocate and initialize to NULL all the pointers
         map->_vals = (_z_list_t **)z_malloc(map->_capacity * sizeof(_z_list_t *));
-        // memset(map->vals, 0, map->capacity * sizeof(_z_list_t *));
+        // (void)memset(map->vals, 0, map->capacity * sizeof(_z_list_t *));
 
         for (size_t idx = 0; idx < map->_capacity; idx++) {
             map->_vals[idx] = NULL;

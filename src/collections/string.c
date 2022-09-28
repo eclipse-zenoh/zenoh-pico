@@ -95,7 +95,7 @@ void _z_str_free(char **src) {
 char *_z_str_clone(const char *src) {
     size_t str_len = _z_str_size(src);
     char *dst = (char *)z_malloc(str_len);
-    strncpy(dst, src, str_len - (size_t)1);
+    (void)(void)strncpy(dst, src, str_len - (size_t)1);
     dst[str_len - (size_t)1] = '\0';
 
     return dst;

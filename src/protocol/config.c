@@ -81,7 +81,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
 
         size_t p_value_len = p_value_end - p_value_start;
         char *p_value = (char *)z_malloc((p_value_len + (size_t)1) * (size_t)sizeof(char));
-        strncpy(p_value, p_value_start, p_value_len);
+        (void)strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
         _z_str_intmap_insert(&res._value._str_intmap, key, p_value);
@@ -131,11 +131,11 @@ void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int ar
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
             if (strlen(dst) != 0) {
-                strncat(dst, &lsep, 1);  // List separator
+                (void)strncat(dst, &lsep, 1);  // List separator
             }
-            strncat(dst, argv[i]._str, strlen(argv[i]._str));  // Key
-            strncat(dst, &ksep, 1);                            // KeyValue separator
-            strncat(dst, v, strlen(v));                        // Value
+            (void)strncat(dst, argv[i]._str, strlen(argv[i]._str));  // Key
+            (void)strncat(dst, &ksep, 1);                            // KeyValue separator
+            (void)strncat(dst, v, strlen(v));                        // Value
         }
     }
 }

@@ -261,15 +261,15 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
         if (raddr.get_ip_version() == NSAPI_IPv4) {
             *addr = _z_bytes_make(NSAPI_IPv4_BYTES + sizeof(uint16_t));
-            memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv4_BYTES);
+            (void)memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv4_BYTES);
             uint16_t port = raddr.get_port();
-            memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv4_BYTES), &port, sizeof(uint16_t));
+            (void)memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv4_BYTES), &port, sizeof(uint16_t));
             break;
         } else if (raddr.get_ip_version() == NSAPI_IPv6) {
             *addr = _z_bytes_make(NSAPI_IPv6_BYTES + sizeof(uint16_t));
-            memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv6_BYTES);
+            (void)memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv6_BYTES);
             uint16_t port = raddr.get_port();
-            memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
+            (void)memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
             break;
         }
     } while (1);
@@ -351,7 +351,7 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
         goto ERR;
     }
 
-    memcpy(ptr, &after_cobs[i], payload_len);
+    (void)memcpy(ptr, &after_cobs[i], payload_len);
     i = i + payload_len;
 
     {  // Limit the scope of CRC checks
@@ -403,7 +403,7 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
         before_cobs[i] = (len >> (i * (size_t)8)) & (size_t)0XFF;
     }
 
-    memcpy(&before_cobs[i], ptr, len);
+    (void)memcpy(&before_cobs[i], ptr, len);
     i = i + len;
 
     uint32_t crc = _z_crc32(ptr, len);

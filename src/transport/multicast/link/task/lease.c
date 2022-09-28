@@ -110,7 +110,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
             if (ztm->_transmitted == 0) {
-                _zp_multicast_send_keep_alive(ztm);
+                if (_zp_multicast_send_keep_alive(ztm) < 0) {
+                    // TODO: Handle retransmission or error
+                }
             }
 
             // Reset the keep alive parameters

@@ -31,7 +31,7 @@ void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
-    memset(&hints, 0, sizeof(hints));
+    (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
@@ -146,7 +146,7 @@ void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     struct addrinfo hints;
     struct addrinfo *addr = NULL;
 
-    memset(&hints, 0, sizeof(hints));
+    (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0;
@@ -258,7 +258,7 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
     struct sockaddr *lsockaddr = NULL;
     if (raddr->ai_family == AF_INET) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        memset(lsockaddr, 0, sizeof(struct sockaddr_in));
+        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
         addrlen = sizeof(struct sockaddr_in);
 
         struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
@@ -267,7 +267,7 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
         c_laddr->sin_port = htons(INADDR_ANY);
     } else if (raddr->ai_family == AF_INET6) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
+        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
         addrlen = sizeof(struct sockaddr_in6);
 
         struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
@@ -334,7 +334,7 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
 
     if (raddr->ai_family == AF_INET) {
         laddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        memset(laddr, 0, sizeof(struct sockaddr_in));
+        (void)memset(laddr, 0, sizeof(struct sockaddr_in));
         addrlen = sizeof(struct sockaddr_in);
 
         struct sockaddr_in *c_laddr = (struct sockaddr_in *)laddr;
@@ -343,7 +343,7 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
         c_laddr->sin_port = ((struct sockaddr_in *)raddr->ai_addr)->sin_port;
     } else if (raddr->ai_family == AF_INET6) {
         laddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        memset(laddr, 0, sizeof(struct sockaddr_in6));
+        (void)memset(laddr, 0, sizeof(struct sockaddr_in6));
         addrlen = sizeof(struct sockaddr_in6);
 
         struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)laddr;
@@ -494,8 +494,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make(sizeof(uint32_t) + sizeof(uint16_t));
-                    memcpy((void *)addr->start, &b->sin_addr.s_addr, sizeof(uint32_t));
-                    memcpy((void *)(addr->start + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
+                    (void)memcpy((void *)addr->start, &b->sin_addr.s_addr, sizeof(uint32_t));
+                    (void)memcpy((void *)(addr->start + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
                 }
                 break;
             }
@@ -507,8 +507,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
                     *addr = _z_bytes_make((sizeof(uint32_t) * 4) + sizeof(uint16_t));
-                    memcpy((void *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
-                    memcpy((void *)(addr->start + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
+                    (void)memcpy((void *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
+                    (void)memcpy((void *)(addr->start + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
                 }
                 break;
             }

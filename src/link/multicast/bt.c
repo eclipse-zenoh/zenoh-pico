@@ -93,7 +93,7 @@ size_t _z_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *
     size_t rb = _z_read_bt(self->_socket._bt._sock, ptr, len);
     if (rb > 0 && addr != NULL) {
         *addr = _z_bytes_make(strlen(self->_socket._bt._gname));
-        memcpy((void *)addr->start, self->_socket._bt._gname, addr->len);
+        (void)memcpy((void *)addr->start, self->_socket._bt._gname, addr->len);
     }
 
     return rb;
@@ -105,7 +105,7 @@ size_t _z_f_link_read_exact_bt(const void *arg, uint8_t *ptr, size_t len, _z_byt
     size_t rb = _z_read_exact_bt(self->_socket._bt._sock, ptr, len);
     if (rb == len && addr != NULL) {
         *addr = _z_bytes_make(strlen(self->_socket._bt._gname));
-        memcpy((void *)addr->start, self->_socket._bt._gname, addr->len);
+        (void)memcpy((void *)addr->start, self->_socket._bt._gname, addr->len);
     }
 
     return rb;
