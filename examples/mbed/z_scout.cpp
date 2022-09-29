@@ -13,6 +13,7 @@
 
 #include <EthernetInterface.h>
 #include <mbed.h>
+#include <randLIB.h>
 
 extern "C" {
 #include <zenoh-pico.h>
@@ -80,6 +81,8 @@ void drop(void *context) {
 }
 
 int main(void) {
+    randLIB_seed_random();
+
     EthernetInterface net;
     net.set_network("192.168.11.2", "255.255.255.0", "192.168.11.1");
     net.connect();
