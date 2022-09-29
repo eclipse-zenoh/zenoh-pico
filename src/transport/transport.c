@@ -271,6 +271,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
             } else {
                 goto ERR_2;
             }
+            break;
         }
 
         default: {

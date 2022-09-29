@@ -56,8 +56,12 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                                 in_big_wild = true;
                                 continue;
                             }
+                        default:
+                            break;
                     }
                 }
+                break;
+            default:
                 break;
         }
 
@@ -87,6 +91,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                         return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
                     }
                     in_dollar = 0;
+                    break;
             }
         }
 
@@ -225,6 +230,7 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
                 if (!streq && !__zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
                     return false;
                 }
+                break;
         }
 
         if (!lns) {
@@ -275,6 +281,7 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
                 if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
                     return false;
                 }
+                break;
         }
 
         if (!lns) {
@@ -364,6 +371,7 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
                 if (!(streq || __zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }
+                break;
         }
 
         if (!lns) {
@@ -418,6 +426,7 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
                 if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
                     return false;
                 }
+                break;
         }
 
         if (!lns) {
@@ -579,8 +588,12 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                         case '*':
                             in_big_wild = true;
                             continue;
+                        default:
+                            break;
                     }
                 }
+                break;
+            default:
                 break;
         }
 
@@ -610,6 +623,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                         return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
                     }
                     in_dollar = 0;
+                    break;
             }
         }
 
