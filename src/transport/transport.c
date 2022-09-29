@@ -210,73 +210,67 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     }
 
     _z_transport_message_t iam = r_iam._value._transport_message;
-    switch (_Z_MID(iam._header)) {
-        case _Z_MID_INIT: {
-            _Z_INFO("Received Z_INIT(Ack)\n");
-            if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A) != 0) {
-                // Handle SN resolution option if present
-                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S) != 0) {
-                    // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
-                    // otherwise the InitAck message is considered invalid and it should be treated as a
-                    // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                    if (iam._body._init._sn_resolution <= param._sn_resolution) {
-                        param._sn_resolution = iam._body._init._sn_resolution;
-                    } else {
-                        goto ERR_2;
-                    }
-                }
+    if (_Z_MID(iam._header) != _Z_MID_INIT) {
+        goto ERR_2;
+    }
 
-                // The initial SN at TX side
-                z_random_fill(&param._initial_sn_tx, sizeof(param._initial_sn_tx));
-                param._initial_sn_tx = param._initial_sn_tx % param._sn_resolution;
-
-                // Initialize the Local and Remote Peer IDs
-                _z_bytes_copy(&param._remote_pid, &iam._body._init._pid);
-
-                // Create the OpenSyn message
-                _z_zint_t lease = Z_TRANSPORT_LEASE;
-                _z_zint_t initial_sn = param._initial_sn_tx;
-                _z_bytes_t cookie = iam._body._init._cookie;
-
-                _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
-
-                // Encode and send the message
-                _Z_INFO("Sending Z_OPEN(Syn)\n");
-                res = _z_link_send_t_msg(zl, &osm);
-
-                if (res != 0) {
-                    goto ERR_3;
-                }
-
-                _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
-                if (r_oam._tag == _Z_RES_ERR) {
-                    goto ERR_3;
-                }
-                _z_transport_message_t oam = r_oam._value._transport_message;
-                _Z_INFO("Received Z_OPEN(Ack)\n");
-
-                if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) != 0) {
-                    // The session lease
-                    param._lease = oam._body._open._lease;
-
-                    // The initial SN at RX side. Initialize the session as we had already received
-                    // a message with a SN equal to initial_sn - 1.
-                    param._initial_sn_rx = _z_sn_decrement(param._sn_resolution, oam._body._open._initial_sn);
-                } else {
-                    goto ERR_3;
-                }
-
-                _z_t_msg_clear(&oam);
-                break;
+    _Z_INFO("Received Z_INIT(Ack)\n");
+    if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A) != 0) {
+        // Handle SN resolution option if present
+        if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S) != 0) {
+            // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
+            // otherwise the InitAck message is considered invalid and it should be treated as a
+            // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+            if (iam._body._init._sn_resolution <= param._sn_resolution) {
+                param._sn_resolution = iam._body._init._sn_resolution;
             } else {
                 goto ERR_2;
             }
-            break;
         }
 
-        default: {
-            goto ERR_2;
+        // The initial SN at TX side
+        z_random_fill(&param._initial_sn_tx, sizeof(param._initial_sn_tx));
+        param._initial_sn_tx = param._initial_sn_tx % param._sn_resolution;
+
+        // Initialize the Local and Remote Peer IDs
+        _z_bytes_copy(&param._remote_pid, &iam._body._init._pid);
+
+        // Create the OpenSyn message
+        _z_zint_t lease = Z_TRANSPORT_LEASE;
+        _z_zint_t initial_sn = param._initial_sn_tx;
+        _z_bytes_t cookie = iam._body._init._cookie;
+
+        _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
+
+        // Encode and send the message
+        _Z_INFO("Sending Z_OPEN(Syn)\n");
+        res = _z_link_send_t_msg(zl, &osm);
+
+        if (res != 0) {
+            goto ERR_3;
         }
+
+        _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
+        if (r_oam._tag == _Z_RES_ERR) {
+            goto ERR_3;
+        }
+        _z_transport_message_t oam = r_oam._value._transport_message;
+        _Z_INFO("Received Z_OPEN(Ack)\n");
+
+        if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) != 0) {
+            // The session lease
+            param._lease = oam._body._open._lease;
+
+            // The initial SN at RX side. Initialize the session as we had already received
+            // a message with a SN equal to initial_sn - 1.
+            param._initial_sn_rx = _z_sn_decrement(param._sn_resolution, oam._body._open._initial_sn);
+        } else {
+            goto ERR_3;
+        }
+
+        _z_t_msg_clear(&oam);
+    } else {
+        goto ERR_2;
     }
 
     _z_t_msg_clear(&iam);

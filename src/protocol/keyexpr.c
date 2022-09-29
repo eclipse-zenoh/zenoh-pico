@@ -580,19 +580,19 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
 
             case 2:
                 if (reader[1] == '*') {
-                    switch (*reader) {
-                        case (char)'$':
-                            __zp_ke_write_chunk(&writer, "*", 1, write_start);
-                            continue;
-
-                        case (char)'*':
-                            in_big_wild = true;
-                            continue;
-                        default:
-                            break;
+                    if (*reader == '$') {
+                        __zp_ke_write_chunk(&writer, "*", 1, write_start);
+                        continue;
+                    } else if (*reader == (char)'*') {
+                        in_big_wild = true;
+                        continue;
+                    } else {
+                        // Do nothing.
+                        // Required to be compliant with MISRA 15.7 rule
                     }
                 }
                 break;
+
             default:
                 break;
         }
