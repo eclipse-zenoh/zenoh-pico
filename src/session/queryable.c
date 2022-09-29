@@ -141,18 +141,6 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
     // Scoped because of the previous goto ERR
     {
         _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
-        _z_questionable_sptr_list_t *xs = qles;
-        size_t len = _z_questionable_sptr_list_len(xs);
-        _z_questionable_handler_t callbacks[len];
-        void *callbacks_args[len];
-        size_t i = 0;
-        while (xs != NULL) {
-            _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
-            callbacks[i] = qle->ptr->_callback;
-            callbacks_args[i] = qle->ptr->_arg;
-            i += 1;
-            xs = _z_questionable_sptr_list_tail(xs);
-        }
 
 #if Z_MULTI_THREAD == 1
         _z_mutex_unlock(&zn->_mutex_inner);
@@ -165,8 +153,11 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         q._key = key;
         q._parameters = query->_parameters;
         q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
-        for (i = 0; i < len; i++) {
-            callbacks[i](&q, callbacks_args[i]);
+        _z_questionable_sptr_list_t *xs = qles;
+        while (xs != NULL) {
+            _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
+            qle->ptr->_callback(&q, qle->ptr->_arg);
+            xs = _z_questionable_sptr_list_tail(xs);
         }
 
         _z_keyexpr_clear(&key);

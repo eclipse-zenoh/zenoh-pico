@@ -164,18 +164,6 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
     // Scoped because of the previous goto ERR
     {
         _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
-        _z_subscription_sptr_list_t *xs = subs;
-        size_t len = _z_subscription_sptr_list_len(xs);
-        _z_data_handler_t callbacks[len];
-        void *callbacks_args[len];
-        size_t i = 0;
-        while (xs != NULL) {
-            _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
-            callbacks[i] = sub->ptr->_callback;
-            callbacks_args[i] = sub->ptr->_arg;
-            i += 1;
-            xs = _z_subscription_sptr_list_tail(xs);
-        }
 
 #if Z_MULTI_THREAD == 1
         _z_mutex_unlock(&zn->_mutex_inner);
@@ -188,8 +176,11 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
-        for (i = 0; i < len; i++) {
-            callbacks[i](&s, callbacks_args[i]);
+        _z_subscription_sptr_list_t *xs = subs;
+        while (xs != NULL) {
+            _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
+            sub->ptr->_callback(&s, sub->ptr->_arg);
+            xs = _z_subscription_sptr_list_tail(xs);
         }
 
         _z_keyexpr_clear(&key);
