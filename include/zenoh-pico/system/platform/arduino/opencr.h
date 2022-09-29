@@ -16,7 +16,7 @@
 #define ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
 
 #include <stddef.h>
-#include <time.h>
+#include <sys/time.h>
 
 #include "zenoh-pico/config.h"
 
