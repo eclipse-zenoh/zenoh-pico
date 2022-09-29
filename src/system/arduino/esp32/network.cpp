@@ -12,9 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#if Z_LINK_BLUETOOTH == 1
 #include <BluetoothSerial.h>
-#endif
 
 extern "C" {
 #include <netdb.h>

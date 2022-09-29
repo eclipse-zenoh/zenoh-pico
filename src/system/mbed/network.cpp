@@ -12,13 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <mbed.h>
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-#include <EthernetInterface.h>
-#endif
-#if Z_LINK_SERIAL == 1
+#include <NetworkInterface.h>
 #include <USBSerial.h>
-#endif
+#include <mbed.h>
 
 extern "C" {
 #include <netdb.h>
