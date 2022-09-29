@@ -318,6 +318,9 @@ void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, co
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0) {
             goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
         }
+    } else {
+        // Do nothing. It must never not enter here, as it was already checked above.
+        // Required to be compliant with MISRA 15.7 rule
     }
 
     // Create laddr endpoint
@@ -419,7 +422,8 @@ void *_z_listen_udp_multicast(void *raddr_arg, uint32_t tout, const char *iface)
             goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
         }
     } else {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        // Do nothing. It must never not enter here, as it was already checked above.
+        // Required to be compliant with MISRA 15.7 rule
     }
 
     ret->_fd = sock;
@@ -459,6 +463,9 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_
                                         //        1 seems to be a working value on the WiFi interface
                                         //        which is the one available by default in ESP32
             setsockopt(sockrecv->_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        } else {
+            // Do nothing. It must never not enter here.
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         close(sockrecv->_fd);
@@ -512,6 +519,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
                 }
                 break;
             }
+        } else {
+            continue;  // FIXME: support error report on invalid packet to the upper layer
         }
     } while (1);
 

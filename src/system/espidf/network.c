@@ -323,6 +323,8 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0) {
             goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
         }
+    } else {
+        goto _Z_OPEN_UDP_MULTICAST_ERROR_3;
     }
 
     // Create laddr endpoint
@@ -421,7 +423,8 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
             goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
         }
     } else {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        // Do nothing. It must never not enter here, as it was already checked above.
+        // Required to be compliant with MISRA 15.7 rule
     }
 
     ret->_fd = sock;
@@ -457,6 +460,9 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_
                          sizeof(struct in6_addr));
             // mreq.ipv6mr_interface = ifindex;
             setsockopt(sockrecv->_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
+        } else {
+            // Do nothing. It must never not enter here.
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         close(sockrecv->_fd);
@@ -508,6 +514,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
                 }
                 break;
             }
+        } else {
+            continue;  // FIXME: support error report on invalid packet to the upper layer
         }
     } while (1);
 

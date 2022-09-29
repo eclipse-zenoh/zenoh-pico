@@ -176,6 +176,9 @@ _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char 
                    __zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
         } else if (l != r) {
             return false;
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
     }
 
@@ -228,6 +231,9 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
             return !rns;
         } else if (!rns) {
             return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         lstart = lns + 1;
@@ -275,6 +281,9 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
             return !rns;
         } else if (!rns) {
             return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         lstart = lns + 1;
@@ -305,6 +314,9 @@ _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, cha
                    __zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
         } else if (l != r) {
             return false;
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
     }
 
@@ -358,7 +370,11 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
             return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
             return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
+
         lstart = lns + 1;
         rstart = rns + 1;
     }
@@ -408,6 +424,9 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
             return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
             return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+        } else {
+            // Do nothing. Continue...
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         lstart = lns + 1;

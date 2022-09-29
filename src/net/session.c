@@ -114,12 +114,18 @@ _z_session_t *_z_open(_z_config_t *config) {
         mode = 0;
     } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) != 0) {
         mode = 1;
+    } else {
+        goto ERR;
     }
 
     _z_session_t *zn = __z_open_inner(locator, mode);
 
     z_free(locator);
     return zn;
+
+ERR:
+    z_free(locator);
+    return NULL;
 }
 
 void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }

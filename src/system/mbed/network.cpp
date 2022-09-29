@@ -295,6 +295,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
             uint16_t port = raddr.get_port();
             (void)memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
             break;
+        } else {
+            continue;  // FIXME: support error report on invalid packet to the upper layer
         }
     } while (1);
 

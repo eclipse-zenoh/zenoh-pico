@@ -403,7 +403,8 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
         }
         net_if_ipv6_maddr_join(mcast);
     } else {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
+        // Do nothing. It must never not enter here, as it was already checked above.
+        // Required to be compliant with MISRA 15.7 rule
     }
 
     ret->_fd = sock;
@@ -452,6 +453,9 @@ void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *raddr_
 
             net_if_ipv6_maddr_leave(mcast);
             net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)raddr->ai_addr)->sin6_addr);
+        } else {
+            // Do nothing. It must never not enter here.
+            // Required to be compliant with MISRA 15.7 rule
         }
 
         close(sockrecv->_fd);
@@ -514,6 +518,8 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
                 }
                 break;
             }
+        } else {
+            continue;  // FIXME: support error report on invalid packet to the upper layer
         }
     } while (1);
 
