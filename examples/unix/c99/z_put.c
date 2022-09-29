@@ -17,8 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-put";

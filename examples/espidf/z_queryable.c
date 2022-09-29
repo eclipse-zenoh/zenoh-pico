@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <zenoh-pico.h>
 
 #define ESP_WIFI_SSID "SSID"
 #define ESP_WIFI_PASS "PASS"
@@ -33,8 +34,6 @@
 static bool s_is_wifi_connected = false;
 static EventGroupHandle_t s_event_group_handler;
 static int s_retry_count = 0;
-
-#include <zenoh-pico.h>
 
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0

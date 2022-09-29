@@ -16,7 +16,7 @@
 #include <WiFi.h>
 
 extern "C" {
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 }
 
 // WiFi-specific parameters

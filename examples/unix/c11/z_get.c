@@ -16,8 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void reply_dropper(void *ctx) {
     (void)(ctx);

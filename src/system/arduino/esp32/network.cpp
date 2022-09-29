@@ -12,7 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if Z_LINK_BLUETOOTH == 1
 #include <BluetoothSerial.h>
+#endif
 
 extern "C" {
 #include <netdb.h>
@@ -22,6 +24,7 @@ extern "C" {
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/link/bt.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -552,7 +555,6 @@ size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, voi
 #endif
 
 #if Z_LINK_BLUETOOTH == 1
-#include "zenoh-pico/system/link/bt.h"
 /*------------------ Bluetooth sockets ------------------*/
 void *_z_open_bt(char *gname, uint8_t mode, uint8_t profile) {
     switch (profile) {

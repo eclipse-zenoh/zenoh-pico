@@ -17,8 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);

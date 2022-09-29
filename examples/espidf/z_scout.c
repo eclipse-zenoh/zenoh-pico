@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <zenoh-pico.h>
 
 #define ESP_WIFI_SSID "ATOPlay"
 #define ESP_WIFI_PASS "A70L@bsR0ck5!!"
@@ -32,8 +33,6 @@
 static bool s_is_wifi_connected = false;
 static EventGroupHandle_t s_event_group_handler;
 static int s_retry_count = 0;
-
-#include <zenoh-pico.h>
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {

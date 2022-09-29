@@ -16,8 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";

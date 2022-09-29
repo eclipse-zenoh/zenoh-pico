@@ -12,9 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <EthernetInterface.h>
-#include <USBSerial.h>
 #include <mbed.h>
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#include <EthernetInterface.h>
+#endif
+#if Z_LINK_SERIAL == 1
+#include <USBSerial.h>
+#endif
 
 extern "C" {
 #include <netdb.h>
@@ -23,7 +27,10 @@ extern "C" {
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/checksum.h"
+#include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_LINK_TCP == 1
@@ -329,10 +336,6 @@ size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, voi
 #endif
 
 #if Z_LINK_SERIAL == 1
-
-#include "zenoh-pico/system/link/serial.h"
-#include "zenoh-pico/utils/checksum.h"
-#include "zenoh-pico/utils/encoding.h"
 
 void *_z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     BufferedSerial *sock = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
