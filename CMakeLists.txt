@@ -13,7 +13,7 @@
 #
 cmake_minimum_required(VERSION 3.8)
 
-project(libzenohpico VERSION 0.6.0 LANGUAGES C)
+project(libzenohpico VERSION 0.6.0.1 LANGUAGES C)
 
 if(NOT CMAKE_C_STANDARD)
   if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)

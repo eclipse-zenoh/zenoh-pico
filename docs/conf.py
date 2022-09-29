@@ -21,7 +21,7 @@ from pathlib import Path
 project = 'zenoh-pico'
 copyright = '2017, 2022 ZettaScale Technology Inc'
 author = 'ZettaScale Zenoh team'
-release = '0.6.0'
+release = '0.6.0-beta.1'
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'
