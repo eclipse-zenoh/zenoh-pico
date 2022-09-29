@@ -67,7 +67,7 @@ int _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
     while (v > 0x7f) {
         uint8_t c = (v & 0x7f) | 0x80;
         _Z_EC(_z_wbuf_write(wbf, (uint8_t)c))
-        v = v >> 7;
+        v = v >> (_z_zint_t)7;
     }
     return _z_wbuf_write(wbf, (uint8_t)v);
 }

@@ -342,8 +342,8 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
         const char *lcend = lns ? lns : lend;
         const char *rns = memchr(rstart, '/', rend - rstart);
         const char *rcend = rns ? rns : rend;
-        char lwildness = 0;
-        char rwildness = 0;
+        unsigned char lwildness = 0;
+        unsigned char rwildness = 0;
         if (*lstart == '*') {
             lwildness = lcend - lstart;
         }
@@ -353,7 +353,7 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
         switch (lwildness | rwildness) {
             case 2:
             case 3:
-                if (lwildness == 2) {
+                if (lwildness == (unsigned char)2) {
                     return !lns || __zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
                            (rns && __zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 } else {
@@ -396,8 +396,8 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
         const char *lcend = lns ? lns : lend;
         const char *rns = memchr(rstart, '/', rend - rstart);
         const char *rcend = rns ? rns : rend;
-        char lwildness = 0;
-        char rwildness = 0;
+        unsigned char lwildness = 0;
+        unsigned char rwildness = 0;
 
         if (*lstart == '*') {
             lwildness = lcend - lstart;
@@ -410,7 +410,7 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
         switch (lwildness | rwildness) {
             case 2:
             case 3:
-                if (lwildness == 2) {
+                if (lwildness == (unsigned char)2) {
                     return !lns || __zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
                            (rns && __zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
                 } else {
