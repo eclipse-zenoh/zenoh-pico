@@ -43,11 +43,11 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
             case 2:
                 if (chunk_start[1] == '*') {
                     switch (*chunk_start) {
-                        case '$':
+                        case (char)'$':
                             *len = chunk_start - start;
                             return Z_KEYEXPR_CANON_LONE_DOLLAR_STAR;
 
-                        case '*':
+                        case (char)'*':
                             if (in_big_wild) {
                                 *len = chunk_start - start - 3;
                                 return Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR;
@@ -581,11 +581,11 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
             case 2:
                 if (reader[1] == '*') {
                     switch (*reader) {
-                        case '$':
+                        case (char)'$':
                             __zp_ke_write_chunk(&writer, "*", 1, write_start);
                             continue;
 
-                        case '*':
+                        case (char)'*':
                             in_big_wild = true;
                             continue;
                         default:
