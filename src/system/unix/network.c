@@ -325,7 +325,7 @@ void *_z_open_udp_multicast(void *arg_1, void **arg_2, uint32_t tout, const char
 
     struct sockaddr *lsockaddr = NULL;
     unsigned int addrlen = __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
-    if (addrlen == 0) {
+    if (addrlen == 0U) {
         goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
     }
 
@@ -442,7 +442,7 @@ void *_z_listen_udp_multicast(void *arg, uint32_t tout, const char *iface) {
 
     struct sockaddr *lsockaddr = NULL;
     unsigned int addrlen = __get_ip_from_iface(iface, raddr->ai_family, &lsockaddr);
-    if (addrlen == 0) {
+    if (addrlen == 0U) {
         goto _Z_LISTEN_UDP_MULTICAST_ERROR_2;
     }
 

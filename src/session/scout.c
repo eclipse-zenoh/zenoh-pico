@@ -137,7 +137,7 @@ _z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const u
     _z_hello_list_t *hellos = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
 
     // Create and encode the scout message
     int request_id = 1;

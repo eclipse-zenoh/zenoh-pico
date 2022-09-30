@@ -20,7 +20,7 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
     output++;
     uint8_t code = 1;
 
-    for (const uint8_t *byte = input; input_len != 0; byte++) {
+    for (const uint8_t *byte = input; input_len != (size_t)0; byte++) {
         if (*byte != (uint8_t)0x00) {
             *output = *byte;
             output++;

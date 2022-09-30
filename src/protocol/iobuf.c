@@ -27,7 +27,7 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t
     ios._r_pos = 0;
     ios._w_pos = length;
     ios._capacity = length;
-    ios._is_alloc = 0;
+    ios._is_alloc = false;
     ios._buf = (uint8_t *)buf;
     return ios;
 }
@@ -36,7 +36,7 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
     ios->_r_pos = 0;
     ios->_w_pos = 0;
     ios->_capacity = capacity;
-    ios->_is_alloc = 1;
+    ios->_is_alloc = true;
     ios->_buf = (uint8_t *)z_malloc(capacity);
 }
 
@@ -107,7 +107,7 @@ size_t _z_iosli_size(const _z_iosli_t *ios) {
 }
 
 void _z_iosli_clear(_z_iosli_t *ios) {
-    if (ios->_is_alloc != 0) {
+    if (ios->_is_alloc == true) {
         z_free(ios->_buf);
         ios->_buf = NULL;
     }
@@ -126,7 +126,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
     dst->_w_pos = src->_w_pos;
     dst->_capacity = src->_capacity;
     dst->_is_alloc = src->_is_alloc;
-    if (dst->_is_alloc == 1) {
+    if (dst->_is_alloc == true) {
         dst->_buf = (uint8_t *)z_malloc(src->_capacity);
         (void)memcpy(dst->_buf, src->_buf, src->_capacity);
     } else {
@@ -160,7 +160,7 @@ size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf-
 
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
-int _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > 0; }
+int _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
 
@@ -227,9 +227,9 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) { return _z_iosl
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_ioss); }
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable) {
+_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
     _z_wbuf_t wbf;
-    if (is_expandable != 0) {
+    if (is_expandable == true) {
         // Preallocate 4 slots, this is usually what we expect
         // when fragmenting a zenoh data message with attachment
         wbf._ioss = _z_iosli_vec_make(4);
@@ -274,7 +274,7 @@ uint8_t _z_wbuf_read(_z_wbuf_t *wbf) {
         assert(wbf->_r_idx <= wbf->_w_idx);
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_r_idx);
         size_t readable = _z_iosli_readable(ios);
-        if (readable > 0) {
+        if (readable > (size_t)0) {
             return _z_iosli_read(ios);
         } else {
             wbf->_r_idx++;
@@ -287,7 +287,7 @@ void _z_wbuf_read_bytes(_z_wbuf_t *wbf, uint8_t *dest, size_t offset, size_t len
         assert(wbf->_r_idx <= wbf->_w_idx);
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_r_idx);
         size_t readable = _z_iosli_readable(ios);
-        if (readable > 0) {
+        if (readable > (size_t)0) {
             size_t to_read = (readable <= length) ? readable : length;
             _z_iosli_read_bytes(ios, dest, offset, to_read);
             offset += to_read;
@@ -319,12 +319,12 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
 int _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
-    if (writable >= 1) {
+    if (writable >= (size_t)1) {
         _z_iosli_write(ios, b);
         return 0;
     }
 
-    if (wbf->_is_expandable != 0) {
+    if (wbf->_is_expandable == true) {
         ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
         _z_wbuf_add_iosli(wbf, ios);
         _z_iosli_write(ios, b);
@@ -342,11 +342,11 @@ int _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t
         return 0;
     }
 
-    if (wbf->_is_expandable != 0) {
+    if (wbf->_is_expandable == true) {
         _z_iosli_write_bytes(ios, bs, offset, writable);
         length -= writable;
         offset += writable;
-        while (length > 0) {
+        while (length > (size_t)0) {
             ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
             _z_wbuf_add_iosli(wbf, ios);
 
@@ -494,7 +494,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf) {
     // Reset to default iosli allocation
     for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
-        if (ios->_is_alloc == 0) {
+        if (ios->_is_alloc == false) {
             _z_iosli_vec_remove(&wbf->_ioss, i);
         } else {
             _z_iosli_reset(ios);

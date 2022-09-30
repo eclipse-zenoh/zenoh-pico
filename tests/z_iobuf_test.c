@@ -27,7 +27,7 @@
 void print_zbuf_overview(_z_zbuf_t *zbf) { printf("    ZBuf => Capacity: %zu\n", zbf->_ios._capacity); }
 
 void print_wbuf_overview(_z_wbuf_t *wbf) {
-    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable, wbf->_capacity);
+    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable == true ? 1 : 0, wbf->_capacity);
 }
 
 void print_iosli(_z_iosli_t *ios) {
@@ -58,7 +58,7 @@ _z_wbuf_t gen_wbuf(size_t len) {
     int is_expandable = 0;
 
     if (gen_bool()) {
-        is_expandable = 1;
+        is_expandable = true;
         len = 1 + (gen_size_t() % len);
     }
 
@@ -312,7 +312,7 @@ void zbuf_view(void) {
 
 void wbuf_writable_readable(void) {
     size_t len = 128;
-    _z_wbuf_t wbf = _z_wbuf_make(len, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(len, false);
     printf("\n>>> WBuf => Writable and Readable\n");
 
     size_t writable = _z_wbuf_space_left(&wbf);
@@ -508,7 +508,7 @@ void wbuf_set_pos_wbuf_get_pos(void) {
 
 void wbuf_add_iosli(void) {
     uint8_t len = 16;
-    _z_wbuf_t wbf = _z_wbuf_make(len, 1);
+    _z_wbuf_t wbf = _z_wbuf_make(len, true);
     printf("\n>>> WBuf => Add IOSli\n");
     print_wbuf_overview(&wbf);
 

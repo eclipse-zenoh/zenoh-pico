@@ -121,7 +121,7 @@ int _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_relia
     } else {
         // The message does not fit in the current batch, let's fragment it
         // Create an expandable wbuf for fragmentation
-        _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, 1);
+        _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
 
         // Encode the message on the expandable wbuf
         res = _z_zenoh_message_encode(&fbf, z_msg);

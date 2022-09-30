@@ -377,13 +377,13 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
     }
 
     (void)memcpy(ptr, &after_cobs[i], payload_len);
-    i = i + payload_len;
+    i = i + (size_t)payload_len;
 
     {  // Limit the scope of CRC checks
         uint32_t crc = 0;
         for (uint8_t j = 0; j < sizeof(crc); j++) {
-            crc |= (after_cobs[i] << ((uint8_t)j * (uint8_t)8));
-            i += 1;
+            crc |= (uint32_t)(after_cobs[i] << (j * (uint8_t)8));
+            i += (size_t)1;
         }
 
         uint32_t c_crc = _z_crc32(ptr, payload_len);
@@ -433,17 +433,17 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
     i = i + len;
 
     uint32_t crc = _z_crc32(ptr, len);
-    for (uint32_t j = 0; j < sizeof(crc); j++) {
-        before_cobs[i] = (crc >> (j * (uint32_t)8)) & (uint32_t)0XFF;
-        i += 1;
+    for (uint8_t j = 0; j < sizeof(crc); j++) {
+        before_cobs[i] = (crc >> (j * (uint8_t)8)) & (uint32_t)0XFF;
+        i += (size_t)1;
     }
 
     uint8_t *after_cobs = new uint8_t[_Z_SERIAL_MAX_COBS_BUF_SIZE]();
-    int twb = _z_cobs_encode(before_cobs, i, after_cobs);
+    ssize_t twb = _z_cobs_encode(before_cobs, i, after_cobs);
     after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
 
-    int wb = sock->write(after_cobs, twb + 1);
-    if (wb != (twb + 1)) {
+    ssize_t wb = sock->write(after_cobs, twb + (ssize_t)1);
+    if (wb != (twb + (ssize_t)1)) {
         goto ERR;
     }
 

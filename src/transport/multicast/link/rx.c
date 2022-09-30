@@ -158,11 +158,11 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 _z_conduit_sn_list_decrement(entry->_sn_resolution, &entry->_sn_rx_sns);
 
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
-                entry->_dbuf_reliable = _z_wbuf_make(0, 1);
-                entry->_dbuf_best_effort = _z_wbuf_make(0, 1);
+                entry->_dbuf_reliable = _z_wbuf_make(0, true);
+                entry->_dbuf_best_effort = _z_wbuf_make(0, true);
 #else
-                entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
-                entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, 0);
+                entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
+                entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
 #endif
 
                 // Update lease time (set as ms during)
@@ -287,7 +287,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 // Check if this is the last fragment
                 if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) != 0) {
                     // Drop message if it is bigger the max buffer size
-                    if (drop == 1) {
+                    if (drop == (uint8_t)1) {
                         _z_wbuf_reset(dbuf);
                         break;
                     }

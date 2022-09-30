@@ -112,7 +112,7 @@ int _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
 int _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE_TX) ? zl->_mtu : Z_BATCH_SIZE_TX;
-    _z_wbuf_t wbf = _z_wbuf_make(mtu, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(mtu, false);
     if (_Z_LINK_IS_STREAMED(zl->_capabilities) != 0) {
         for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
             _z_wbuf_put(&wbf, 0, i);

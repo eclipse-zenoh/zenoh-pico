@@ -204,10 +204,10 @@ size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
-    int psize = 0;
+    size_t psize = 0;
     do {
         psize = sock->parsePacket();
-    } while (psize < 1);
+    } while (psize < (size_t)1);
 
     if (psize > len) {
         return 0;
@@ -231,7 +231,7 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
 
         n -= rb;
         ptr = ptr + (len - n);
-    } while (n > 0);
+    } while (n > (size_t)0);
 
     return len;
 }
@@ -297,10 +297,10 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
 
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
-    int psize = 0;
+    size_t psize = 0;
     do {
         psize = sock->parsePacket();
-    } while (psize == 0);
+    } while (psize == (size_t)0);
 
     if (psize > len) {
         return 0;
@@ -318,7 +318,7 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
         *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
                               strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
         uint8_t offset = 0;
-        for (uint8_t i = 0; i < 4; i++) {
+        for (uint8_t i = 0; i < (uint8_t)4; i++) {
             (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
             offset += (uint8_t)strlen((const char *)&rip[i]);
         }

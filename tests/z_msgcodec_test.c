@@ -120,7 +120,7 @@ _z_wbuf_t gen_wbuf(size_t len) {
     int is_expandable = 0;
 
     if (gen_bool()) {
-        is_expandable = 1;
+        is_expandable = true;
         len = 1 + (gen_zint() % len);
     }
 
@@ -129,7 +129,7 @@ _z_wbuf_t gen_wbuf(size_t len) {
 
 _z_payload_t gen_payload(size_t len) {
     _z_payload_t pld;
-    pld._is_alloc = 1;
+    pld._is_alloc = true;
     pld.len = len;
     pld.start = (uint8_t *)z_malloc(len);
     z_random_fill((uint8_t *)pld.start, pld.len);
@@ -139,7 +139,7 @@ _z_payload_t gen_payload(size_t len) {
 
 _z_bytes_t gen_bytes(size_t len) {
     _z_bytes_t arr;
-    arr._is_alloc = 1;
+    arr._is_alloc = true;
     arr.len = len;
     arr.start = NULL;
     if (len == 0) return arr;
@@ -2481,9 +2481,9 @@ int _z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable,
 void fragmentation(void) {
     printf("\n>> Fragmentation\n");
     size_t len = 16;
-    _z_wbuf_t wbf = _z_wbuf_make(len, 0);
-    _z_wbuf_t fbf = _z_wbuf_make(len, 1);
-    _z_wbuf_t dbf = _z_wbuf_make(0, 1);
+    _z_wbuf_t wbf = _z_wbuf_make(len, false);
+    _z_wbuf_t fbf = _z_wbuf_make(len, true);
+    _z_wbuf_t dbf = _z_wbuf_make(0, true);
 
     _z_zenoh_message_t e_zm;
 

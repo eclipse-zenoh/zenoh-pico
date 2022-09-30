@@ -122,7 +122,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
     char *reader = start;
     while (reader < end) {
         size_t pos = __zp_starts_with(reader, needle);
-        if (pos != 0) {
+        if (pos != (size_t)0) {
             if (right_after_needle) {
                 break;
             }
@@ -137,7 +137,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
     char *writer = reader;
     while (reader < end) {
         size_t pos = __zp_starts_with(reader, needle);
-        if (pos != 0) {
+        if (pos != (size_t)0) {
             if (!right_after_needle) {
                 for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
@@ -191,7 +191,7 @@ _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char 
 }
 
 _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    size_t lclen;
+    ssize_t lclen;
     _Bool streq;
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
@@ -226,7 +226,7 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
 
             default:
                 lclen = lcend - lstart;
-                streq = (lclen == (size_t)(rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
+                streq = (lclen == (rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
                 if (!streq && !__zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
                     return false;
                 }
@@ -332,7 +332,7 @@ _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, cha
 }
 
 _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    size_t lclen;
+    ssize_t lclen;
     _Bool streq;
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
@@ -367,7 +367,7 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
 
             default:
                 lclen = lcend - lstart;
-                streq = (lclen == (size_t)(rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
+                streq = (lclen == (rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
                 if (!(streq || __zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }
@@ -627,7 +627,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
             }
         }
 
-        if (in_dollar == 1) {
+        if (in_dollar == (unsigned char)1) {
             return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
         }
 

@@ -622,7 +622,7 @@ void _z_close_bt(void *sock_arg) {
 
 size_t _z_read_bt(void *sock_arg, uint8_t *ptr, size_t len) {
     BluetoothSerial *sock = static_cast<BluetoothSerial *>(sock_arg);
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         int c = sock->read();
         if (c == -1) {
             delay(1);  // FIXME: without this, the read task is blocking the other tasks

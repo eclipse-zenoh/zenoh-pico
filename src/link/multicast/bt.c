@@ -104,7 +104,7 @@ size_t _z_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *
     const _z_link_t *self = (const _z_link_t *)arg;
 
     size_t rb = _z_read_bt(self->_socket._bt._sock, ptr, len);
-    if ((rb > 0) && (addr != NULL)) {
+    if ((rb > (size_t)0) && (addr != NULL)) {
         *addr = _z_bytes_make(strlen(self->_socket._bt._gname));
         (void)memcpy((uint8_t *)addr->start, self->_socket._bt._gname, addr->len);
     }

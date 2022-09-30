@@ -72,8 +72,8 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
 
     const char c[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bs->len; i++) {
-        s_val[2 * i] = c[(bs->start[i] & 0xF0) >> 4];
-        s_val[(2 * i) + 1] = c[bs->start[i] & 0x0F];
+        s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
+        s_val[(i * (size_t)2) + (size_t)1] = c[bs->start[i] & (uint8_t)0x0F];
     }
     s_val[s.len] = '\0';
     s.val = s_val;
@@ -82,7 +82,7 @@ _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
 }
 
 /*-------- str --------*/
-size_t _z_str_size(const char *src) { return strlen(src) + 1; }
+size_t _z_str_size(const char *src) { return strlen(src) + (size_t)1; }
 
 void _z_str_clear(char *src) { z_free(src); }
 

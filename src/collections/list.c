@@ -44,7 +44,7 @@ size_t _z_list_len(const _z_list_t *xs) {
     return len;
 }
 
-uint8_t _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == 0; }
+uint8_t _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
 
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f) {
     _z_list_t *head = xs;

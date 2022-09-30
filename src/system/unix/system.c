@@ -136,7 +136,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return z_sleep_us(1000 * time); }
+int z_sleep_ms(unsigned int time) { return z_sleep_us(time * 1000U); }
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 

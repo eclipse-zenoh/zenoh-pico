@@ -226,7 +226,7 @@ size_t _z_locator_strlen(const _z_locator_t *l) {
 
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&l->_metadata);
-    if (md_len > 0) {
+    if (md_len > (size_t)0) {
         len += (size_t)1;  // Locator metadata separator
         len += md_len;     // Locator medatada content
     }
@@ -257,7 +257,7 @@ void __z_locator_onto_str(char *dst, const _z_locator_t *loc) {
 
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&loc->_metadata);
-    if (md_len > 0) {
+    if (md_len > (size_t)0) {
         (void)strncat(dst, &msep, 1);  // Locator metadata separator
         _z_locator_metadata_onto_str(&dst[strlen(dst)], &loc->_metadata);
     }

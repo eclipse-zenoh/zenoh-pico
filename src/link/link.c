@@ -170,7 +170,7 @@ int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
             }
             n -= wb;
             bs.start += bs.len - n;
-        } while (n > 0);
+        } while (n > (size_t)0);
     }
 
     return 0;

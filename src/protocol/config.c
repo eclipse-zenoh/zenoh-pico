@@ -109,7 +109,7 @@ size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_
     for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
-            if (len != 0) {
+            if (len != (size_t)0) {
                 len += (size_t)1;  // List separator
             }
             len += strlen(argv[i]._str);  // Key
@@ -130,7 +130,7 @@ void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int ar
     for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
-            if (strlen(dst) != 0) {
+            if (strlen(dst) != (size_t)0) {
                 (void)strncat(dst, &lsep, 1);  // List separator
             }
             (void)strncat(dst, argv[i]._str, strlen(argv[i]._str));  // Key

@@ -509,12 +509,12 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *arg
             struct sockaddr_in6 *a = ((struct sockaddr_in6 *)laddr->ai_addr);
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (!((a->sin6_port == b->sin6_port) &&
-                  (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4) == 0))) {
+                  (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL) == 0))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_bytes_make((sizeof(uint32_t) * 4) + sizeof(uint16_t));
-                    (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4);
-                    (void)memcpy((uint8_t *)(addr->start + (sizeof(uint32_t) * 4)), &b->sin6_port, sizeof(uint16_t));
+                    *addr = _z_bytes_make((sizeof(uint32_t) * 4UL) + sizeof(uint16_t));
+                    (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL);
+                    (void)memcpy((uint8_t *)(addr->start + (sizeof(uint32_t) * 4UL)), &b->sin6_port, sizeof(uint16_t));
                 }
                 break;
             }

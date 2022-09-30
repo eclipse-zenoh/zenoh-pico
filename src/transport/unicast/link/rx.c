@@ -182,7 +182,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                 // Check if this is the last fragment
                 if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) != 0) {
                     // Drop message if it is bigger the max buffer size
-                    if (drop == 1) {
+                    if (drop == (uint8_t)1) {
                         _z_wbuf_reset(dbuf);
                         break;
                     }

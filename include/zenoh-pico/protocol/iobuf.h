@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_PROTOCOL_IOBUF_H
 #define ZENOH_PICO_PROTOCOL_IOBUF_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/vec.h"
@@ -26,7 +28,7 @@ typedef struct {
     size_t _r_pos;
     size_t _w_pos;
     size_t _capacity;
-    uint8_t _is_alloc;
+    _Bool _is_alloc;
 } _z_iosli_t;
 
 _z_iosli_t _z_iosli_make(size_t capacity);
@@ -91,10 +93,10 @@ typedef struct {
     size_t _r_idx;
     size_t _w_idx;
     size_t _capacity;
-    uint8_t _is_expandable;
+    _Bool _is_expandable;
 } _z_wbuf_t;
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, int is_expandable);
+_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
 size_t _z_wbuf_len(const _z_wbuf_t *wbf);
