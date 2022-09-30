@@ -392,14 +392,14 @@ size_t _z_read_serial(void *sock_arg, uint8_t *ptr, size_t len) {
         }
     }
 
-    free(before_cobs);
-    free(after_cobs);
+    delete before_cobs;
+    delete after_cobs;
 
     return payload_len;
 
 ERR:
-    free(before_cobs);
-    free(after_cobs);
+    delete before_cobs;
+    delete after_cobs;
 
     return SIZE_MAX;
 }
@@ -447,13 +447,13 @@ size_t _z_send_serial(void *sock_arg, const uint8_t *ptr, size_t len) {
         goto ERR;
     }
 
-    free(before_cobs);
-    free(after_cobs);
+    delete before_cobs;
+    delete after_cobs;
     return len;
 
 ERR:
-    free(before_cobs);
-    free(after_cobs);
+    delete before_cobs;
+    delete after_cobs;
 
     return SIZE_MAX;
 }
