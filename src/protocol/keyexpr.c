@@ -25,7 +25,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     char const *next_slash;
 
     do {
-        next_slash = memchr(chunk_start, '/', end - chunk_start);
+        next_slash = strchr(chunk_start, '/');
         const char *chunk_end = next_slash ? next_slash : end;
         size_t chunk_len = chunk_end - chunk_start;
         switch (chunk_len) {
@@ -197,9 +197,9 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
     const char *rend = rstart + rlen;
 
     for (;;) {
-        const char *lns = memchr(lstart, '/', lend - lstart);
+        const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
-        const char *rns = memchr(rstart, '/', rend - rstart);
+        const char *rns = strchr(rstart, '/');
         const char *rcend = rns ? rns : rend;
         char lwildness = 0;
         char rwildness = 0;
@@ -251,9 +251,9 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
     for (;;) {
-        const char *lns = memchr(lstart, '/', lend - lstart);
+        const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
-        const char *rns = memchr(rstart, '/', rend - rstart);
+        const char *rns = strchr(rstart, '/');
         const char *rcend = rns ? rns : rend;
         char lwildness = 0;
         char rwildness = 0;
@@ -338,9 +338,9 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
     const char *rend = rstart + rlen;
 
     for (;;) {
-        const char *lns = memchr(lstart, '/', lend - lstart);
+        const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
-        const char *rns = memchr(rstart, '/', rend - rstart);
+        const char *rns = strchr(rstart, '/');
         const char *rcend = rns ? rns : rend;
         unsigned char lwildness = 0;
         unsigned char rwildness = 0;
@@ -392,9 +392,9 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
     const char *lend = lstart + llen;
     const char *rend = rstart + rlen;
     for (;;) {
-        const char *lns = memchr(lstart, '/', lend - lstart);
+        const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
-        const char *rns = memchr(rstart, '/', rend - rstart);
+        const char *rns = strchr(rstart, '/');
         const char *rcend = rns ? rns : rend;
         unsigned char lwildness = 0;
         unsigned char rwildness = 0;
@@ -543,7 +543,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     char *reader = start + canon_len;
     const char *write_start = reader;
     char *writer = reader;
-    char *next_slash = memchr(reader, '/', end - reader);
+    char *next_slash = strchr(reader, '/');
     char const *chunk_end = next_slash ? next_slash : end;
 
     _Bool in_big_wild = false;
@@ -568,7 +568,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
 
     while (next_slash != NULL) {
         reader = next_slash + 1;
-        next_slash = memchr(reader, '/', end - reader);
+        next_slash = strchr(reader, '/');
         chunk_end = next_slash ? next_slash : end;
         switch (chunk_end - reader) {
             case 0:
