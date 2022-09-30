@@ -93,7 +93,7 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
 /*------------------ uint8_array ------------------*/
 int _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     _Z_EC(_z_zint_encode(wbf, bs->len))
-    if (wbf->_is_expandable == true && (bs->len > Z_TSID_LENGTH)) {
+    if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
         return _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
         return _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
