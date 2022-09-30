@@ -1062,7 +1062,7 @@ void _z_zenoh_message_decode_na(_z_zbuf_t *zbf, _z_zenoh_message_result_t *r) {
             case _Z_MID_PRIORITY: {
                 // Ignore the priority decorator for the time being since zenoh-pico does not
                 // perform any routing. Hence, priority information does not need to be propagated.
-                continue;
+                break;
             }
             case _Z_MID_LINK_STATE_LIST: {
                 _Z_DEBUG("WARNING: Link state not supported in zenoh-pico\n");

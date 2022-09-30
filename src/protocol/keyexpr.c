@@ -39,6 +39,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                 }
                 chunk_start = chunk_end + 1;
                 continue;
+                break;  // It MUST never be here. Required by MISRA 16.3 rule
 
             case 2:
                 if (chunk_start[1] == '*') {
@@ -56,6 +57,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                                 in_big_wild = true;
                                 continue;
                             }
+                            break;  // It MUST never be here. Required by MISRA 16.3 rule
                         default:
                             break;
                     }
@@ -577,6 +579,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
             case 1:
                 __zp_ke_write_chunk(&writer, "*", 1, write_start);
                 continue;
+                break;  // It MUST never be here. Required by MISRA 16.3 rule
 
             case 2:
                 if (reader[1] == '*') {
