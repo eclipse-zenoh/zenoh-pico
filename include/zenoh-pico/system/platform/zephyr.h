@@ -30,4 +30,22 @@ typedef pthread_cond_t _z_condvar_t;
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
+typedef struct {
+    _Bool _err;
+    union {
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+        int _fd;
+#endif
+    };
+} _z_sys_net_socket_t;
+
+typedef struct {
+    _Bool _err;
+    union {
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+        struct addrinfo *_addr;
+#endif
+    };
+} _z_sys_net_endpoint_t;
+
 #endif /* ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H */

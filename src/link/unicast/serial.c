@@ -20,14 +20,13 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/serial.h"
+#include "zenoh-pico/utils/pointers.h"
 
 #if Z_LINK_SERIAL == 1
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int _z_f_link_open_serial(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_open_serial(_z_link_t *self) {
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
     uint32_t rxpin = strtoul(_z_cptr_char_offset(p_dot, 1), NULL, 10);
@@ -35,7 +34,7 @@ int _z_f_link_open_serial(void *arg) {
     uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
 
     self->_socket._serial._sock = _z_open_serial(txpin, rxpin, baudrate);
-    if (self->_socket._serial._sock == NULL) {
+    if (self->_socket._serial._sock._err == true) {
         goto ERR;
     }
 
@@ -45,11 +44,9 @@ ERR:
     return -1;
 }
 
-int _z_f_link_listen_serial(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_listen_serial(_z_link_t *self) {
     self->_socket._serial._sock = _z_listen_serial(0, 0, 0);
-    if (self->_socket._serial._sock == NULL) {
+    if (self->_socket._serial._sock._err == true) {
         goto ERR;
     }
 
@@ -59,40 +56,25 @@ ERR:
     return -1;
 }
 
-void _z_f_link_close_serial(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
+void _z_f_link_close_serial(_z_link_t *self) { _z_close_serial(self->_socket._serial._sock); }
 
-    _z_close_serial(self->_socket._serial._sock);
-}
+void _z_f_link_free_serial(_z_link_t *self) { (void)(self); }
 
-void _z_f_link_free_serial(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-    (void)(self);
-}
-
-size_t _z_f_link_write_serial(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_serial(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_write_all_serial(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_all_serial(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_read_serial(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_serial(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_exact_serial(self->_socket._serial._sock, ptr, len);
 }
 
@@ -105,8 +87,7 @@ _z_link_t *_z_new_link_serial(_z_endpoint_t endpoint) {
     lt->_mtu = _z_get_link_mtu_serial();
 
     lt->_endpoint = endpoint;
-
-    lt->_socket._serial._sock = NULL;
+    lt->_socket._serial._sock._err = true;
 
     lt->_open_f = _z_f_link_open_serial;
     lt->_listen_f = _z_f_link_listen_serial;

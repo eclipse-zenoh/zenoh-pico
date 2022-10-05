@@ -19,6 +19,7 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
 #if Z_LINK_SERIAL == 1
 
@@ -28,15 +29,15 @@
     1516  // Max On-the-wire length for an MFS/MTU of 1510/1500 (MFS + Overhead Byte (OHB) + End of packet (EOP))
 
 typedef struct {
-    void *_sock;
+    _z_sys_net_socket_t _sock;
 } _z_serial_socket_t;
 
-void *_z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-void *_z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-void _z_close_serial(void *);
-size_t _z_read_exact_serial(void *, uint8_t *ptr, size_t len);
-size_t _z_read_serial(void *, uint8_t *ptr, size_t len);
-size_t _z_send_serial(void *, const uint8_t *ptr, size_t len);
+_z_sys_net_socket_t _z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+_z_sys_net_socket_t _z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+void _z_close_serial(_z_sys_net_socket_t sock);
+size_t _z_read_exact_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_read_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_send_serial(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
 #endif
 

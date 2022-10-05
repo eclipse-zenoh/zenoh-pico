@@ -69,17 +69,15 @@ char *_z_parse_address_segment_udp_unicast(char *address) {
     return NULL;
 }
 
-int _z_f_link_open_udp_unicast(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_open_udp_unicast(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
         tout = strtoul(tout_as_str, NULL, 10);
     }
 
-    self->_socket._udp._sock = _z_open_udp_unicast(self->_socket._udp._raddr, tout);
-    if (self->_socket._udp._sock == NULL) {
+    self->_socket._udp._sock = _z_open_udp_unicast(self->_socket._udp._rep, tout);
+    if (self->_socket._udp._sock._err == true) {
         goto ERR;
     }
 
@@ -89,17 +87,15 @@ ERR:
     return -1;
 }
 
-int _z_f_link_listen_udp_unicast(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_listen_udp_unicast(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
         tout = strtoul(tout_as_str, NULL, 10);
     }
 
-    self->_socket._udp._sock = _z_listen_udp_unicast(self->_socket._udp._raddr, tout);
-    if (self->_socket._udp._sock == NULL) {
+    self->_socket._udp._sock = _z_listen_udp_unicast(self->_socket._udp._rep, tout);
+    if (self->_socket._udp._sock._err == true) {
         goto ERR;
     }
 
@@ -109,41 +105,25 @@ ERR:
     return -1;
 }
 
-void _z_f_link_close_udp_unicast(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
+void _z_f_link_close_udp_unicast(_z_link_t *self) { _z_close_udp_unicast(self->_socket._udp._sock); }
 
-    _z_close_udp_unicast(self->_socket._udp._sock);
+void _z_f_link_free_udp_unicast(_z_link_t *self) { _z_free_endpoint_udp(self->_socket._udp._rep); }
+
+size_t _z_f_link_write_udp_unicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._rep);
 }
 
-void _z_f_link_free_udp_unicast(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
-    _z_free_endpoint_udp(self->_socket._udp._raddr);
+size_t _z_f_link_write_all_udp_unicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._rep);
 }
 
-size_t _z_f_link_write_udp_unicast(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
-    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._raddr);
-}
-
-size_t _z_f_link_write_all_udp_unicast(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
-    return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._raddr);
-}
-
-size_t _z_f_link_read_udp_unicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_udp_unicast(self->_socket._udp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_udp_unicast(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_exact_udp_unicast(self->_socket._udp._sock, ptr, len);
 }
 
@@ -160,12 +140,12 @@ _z_link_t *_z_new_link_udp_unicast(_z_endpoint_t endpoint) {
 
     lt->_endpoint = endpoint;
 
-    lt->_socket._udp._sock = NULL;
-    lt->_socket._udp._msock = NULL;
+    lt->_socket._udp._sock._err = true;
+    lt->_socket._udp._msock._err = true;
     char *s_addr = _z_parse_address_segment_udp_unicast(endpoint._locator._address);
     char *s_port = _z_parse_port_segment_udp_unicast(endpoint._locator._address);
-    lt->_socket._udp._raddr = _z_create_endpoint_udp(s_addr, s_port);
-    lt->_socket._udp._laddr = NULL;
+    lt->_socket._udp._rep = _z_create_endpoint_udp(s_addr, s_port);
+    lt->_socket._udp._lep._err = true;
     z_free(s_addr);
     z_free(s_port);
 

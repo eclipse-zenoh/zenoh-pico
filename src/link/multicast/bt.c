@@ -24,15 +24,13 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int _z_f_link_open_bt(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_open_bt(_z_link_t *self) {
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
     uint8_t profile = (strcmp(profile_str, "spp") == 0) ? _Z_BT_PROFILE_SPP : _Z_BT_PROFILE_UNSUPPORTED;
     self->_socket._bt._sock = _z_open_bt(self->_endpoint._locator._address, mode, profile);
-    if (self->_socket._bt._sock == NULL) {
+    if (self->_socket._bt._sock._err == true) {
         goto ERR;
     }
 
@@ -44,9 +42,7 @@ ERR:
     return -1;
 }
 
-int _z_f_link_listen_bt(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_listen_bt(_z_link_t *self) {
     uint8_t mode = 0;
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     if (strcmp(mode_str, "master") == 0) {
@@ -66,7 +62,7 @@ int _z_f_link_listen_bt(void *arg) {
     }
 
     self->_socket._bt._sock = _z_listen_bt(self->_endpoint._locator._address, mode, profile);
-    if (self->_socket._bt._sock == NULL) {
+    if (self->_socket._bt._sock._err == true) {
         goto ERR;
     }
     self->_socket._bt._gname = self->_endpoint._locator._address;
@@ -77,32 +73,19 @@ ERR:
     return -1;
 }
 
-void _z_f_link_close_bt(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
+void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(self->_socket._bt._sock); }
 
-    _z_close_bt(self->_socket._bt._sock);
-}
+void _z_f_link_free_bt(_z_link_t *self) { _z_str_free(&self->_socket._bt._gname); }
 
-void _z_f_link_free_bt(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-    _z_str_free(&self->_socket._bt._gname);
-}
-
-size_t _z_f_link_write_bt(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_bt(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_bt(self->_socket._bt._sock, ptr, len);
 }
 
-size_t _z_f_link_write_all_bt(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_all_bt(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_bt(self->_socket._bt._sock, ptr, len);
 }
 
-size_t _z_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_read_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     size_t rb = _z_read_bt(self->_socket._bt._sock, ptr, len);
     if ((rb > (size_t)0) && (addr != NULL)) {
         *addr = _z_bytes_make(strlen(self->_socket._bt._gname));
@@ -112,9 +95,7 @@ size_t _z_f_link_read_bt(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *
     return rb;
 }
 
-size_t _z_f_link_read_exact_bt(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     size_t rb = _z_read_exact_bt(self->_socket._bt._sock, ptr, len);
     if ((rb == len) && (addr != NULL)) {
         *addr = _z_bytes_make(strlen(self->_socket._bt._gname));
@@ -133,8 +114,7 @@ _z_link_t *_z_new_link_bt(_z_endpoint_t endpoint) {
     lt->_mtu = _z_get_link_mtu_bt();
 
     lt->_endpoint = endpoint;
-
-    lt->_socket._bt._sock = NULL;
+    lt->_socket._bt._sock._err = true;
 
     lt->_open_f = _z_f_link_open_bt;
     lt->_listen_f = _z_f_link_listen_bt;

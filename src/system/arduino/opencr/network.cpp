@@ -15,6 +15,7 @@
 #include <Arduino.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -27,86 +28,83 @@ extern "C" {
 
 #if Z_LINK_TCP == 1
 
-typedef struct {
-    IPAddress _ipaddr;
-    uint16_t _port;
-} __z_tcp_addr_t;
-
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
-    __z_tcp_addr_t *addr = new __z_tcp_addr_t();
-    uint32_t port = 0;
+_z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
+    _z_sys_net_endpoint_t ep;
 
     // Parse and check the validity of the IP address
-    if (!addr->_ipaddr.fromString(s_addr)) {
+    ep._iptcp._addr = new IPAddress();
+    if (!ep._iptcp._addr->fromString(s_addr)) {
         goto ERR;
     }
 
     // Parse and check the validity of the port
-    port = strtoul(s_port, NULL, 10);
-    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+    ep._iptcp._port = strtoul(s_port, NULL, 10);
+    if ((ep._iptcp._port < (uint32_t)1) ||
+        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
-    addr->_port = port;
 
-    return addr;
+    ep._err = true;
+    return ep;
 
 ERR:
-    delete addr;
-    return NULL;
+    delete ep._iptcp._addr;
+    ep._err = false;
+    return ep;
 }
 
-void _z_free_endpoint_tcp(void *addr_arg) {
-    __z_tcp_addr_t *addr = static_cast<__z_tcp_addr_t *>(addr_arg);
+void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep) { delete ep._iptcp._addr; }
 
-    delete addr;
-}
+_z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
+    _z_sys_net_socket_t sock;
 
-void *_z_open_tcp(void *raddr_arg, uint32_t tout) {
-    __z_tcp_addr_t *raddr = static_cast<__z_tcp_addr_t *>(raddr_arg);
-
-    WiFiClient *sock = new WiFiClient();
-    if (!sock->connect(raddr->_ipaddr, raddr->_port)) {
-        return NULL;
+    sock._tcp = new WiFiClient();
+    if (!sock._tcp->connect(*rep._iptcp._addr, rep._iptcp._port)) {
+        goto ERR;
     }
 
+    sock._err = false;
+    return sock;
+
+ERR:
+    delete sock._tcp;
+    sock._err = true;
     return sock;
 }
 
-void *_z_listen_tcp(void *laddr_arg, uint32_t tout) {
-    __z_tcp_addr_t *laddr = static_cast<__z_tcp_addr_t *>(laddr_arg);
-    (void)(laddr);
+_z_sys_net_socket_t _z_listen_tcp(_z_sys_net_endpoint_t lep) {
+    _z_sys_net_socket_t sock;
+    (void)lep;
 
     // @TODO: To be implemented
 
-    return NULL;
+    sock._err = true;
+    return sock;
 }
 
-void _z_close_tcp(void *sock_arg) {
-    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
-    if (sock == NULL) {
+void _z_close_tcp(_z_sys_net_socket_t sock) {
+    if (sock._err == true) {
         return;
     }
 
-    sock->stop();
-    delete sock;
+    sock._tcp->stop();
+    delete sock._tcp;
 }
 
-size_t _z_read_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
-    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
-
-    if (!sock->available()) {
+size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    if (!sock._tcp->available()) {
         return 0;
     }
 
-    return sock->read(ptr, len);
+    return sock._tcp->read(ptr, len);
 }
 
-size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
+size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t n = len;
 
     do {
-        size_t rb = _z_read_tcp(sock_arg, ptr, n);
+        size_t rb = _z_read_tcp(sock, ptr, n);
         if (rb == SIZE_MAX) {
             return rb;
         }
@@ -118,11 +116,8 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
     return len;
 }
 
-size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
-    WiFiClient *sock = static_cast<WiFiClient *>(sock_arg);
-
-    sock->write(ptr, len);
-
+size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    sock._tcp->write(ptr, len);
     return len;
 }
 
@@ -130,102 +125,100 @@ size_t _z_send_tcp(void *sock_arg, const uint8_t *ptr, size_t len) {
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 
-typedef struct {
-    IPAddress _ipaddr;
-    uint16_t _port;
-} __z_udp_addr_t;
-
 /*------------------ UDP sockets ------------------*/
-void *_z_create_endpoint_udp(const char *s_addr, const char *s_port) {
-    __z_udp_addr_t *addr = new __z_udp_addr_t();
-    uint32_t port = 0;
+_z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_port) {
+    _z_sys_net_endpoint_t ep;
 
     // Parse and check the validity of the IP address
-    if (!addr->_ipaddr.fromString(s_addr)) {
+    ep._iptcp._addr = new IPAddress();
+    if (!ep._iptcp._addr->fromString(s_addr)) {
         goto ERR;
     }
 
     // Parse and check the validity of the port
-    port = strtoul(s_port, NULL, 10);
-    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+    ep._iptcp._port = strtoul(s_port, NULL, 10);
+    if ((ep._iptcp._port < (uint32_t)1) ||
+        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         goto ERR;
     }
-    addr->_port = port;
 
-    return addr;
+    ep._err = true;
+    return ep;
 
 ERR:
-    delete addr;
-    return NULL;
+    delete ep._iptcp._addr;
+    ep._err = false;
+    return ep;
 }
 
-void _z_free_endpoint_udp(void *addr_arg) {
-    __z_udp_addr_t *addr = static_cast<__z_udp_addr_t *>(addr_arg);
-
-    delete addr;
-}
+void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) { delete ep._iptcp._addr; }
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1
 
-void *_z_open_udp_unicast(void *raddr_arg, uint32_t tout) {
-    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
-    (void)(raddr);
+_z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout) {
+    _z_sys_net_socket_t sock;
+    (void)(rep);
 
     // FIXME: make it random
-    WiFiUDP *sock = new WiFiUDP();
-    if (!sock->begin(7447)) {
-        return NULL;
+    sock._udp = new WiFiUDP();
+    if (!sock._udp->begin(7447)) {
+        goto ERR;
     }
 
+    sock._err = false;
+    return sock;
+
+ERR:
+    delete sock._udp;
+    sock._err = true;
     return sock;
 }
 
-void *_z_listen_udp_unicast(void *laddr_arg, uint32_t tout) {
-    __z_udp_addr_t *laddr = static_cast<__z_udp_addr_t *>(laddr_arg);
-    (void)(laddr);
+_z_sys_net_socket_t _z_listen_udp_unicast(_z_sys_net_endpoint_t lep, uint32_t tout) {
+    _z_sys_net_socket_t sock;
+    (void)lep;
+    (void)tout;
 
     // @TODO: To be implemented
 
-    return NULL;
+    sock._err = false;
+    return sock;
 }
 
-void _z_close_udp_unicast(void *sock_arg) {
-    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-    if (sock == NULL) {
+void _z_close_udp_unicast(_z_sys_net_socket_t sock) {
+    if (sock._err == true) {
         return;
     }
 
-    sock->stop();
-    delete sock;
+    sock._udp->stop();
+    delete sock._udp;
 }
 
-size_t _z_read_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
-    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-
+size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
     size_t psize = 0;
     do {
-        psize = sock->parsePacket();
+        psize = sock._udp->parsePacket();
     } while (psize < (size_t)1);
 
     if (psize > len) {
         return 0;
     }
 
-    if (sock->read(ptr, psize) != psize) {
+    if (sock._udp->read(ptr, psize) != psize) {
         return 0;
     }
 
     return psize;
 }
 
-size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
+size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t n = len;
 
     do {
-        size_t rb = _z_read_udp_unicast(sock_arg, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock, ptr, n);
         if (rb == SIZE_MAX) {
             return rb;
         }
@@ -237,84 +230,90 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
     return len;
 }
 
-size_t _z_send_udp_unicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
-
-    sock->beginPacket(raddr->_ipaddr, 7447);
-    sock->write(ptr, len);
-    sock->endPacket();
+size_t _z_send_udp_unicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {
+    sock._udp->beginPacket(*rep._iptcp._addr, rep._iptcp._port);
+    sock._udp->write(ptr, len);
+    sock._udp->endPacket();
 
     return len;
 }
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-void *_z_open_udp_multicast(void *raddr_arg, void **laddr_arg, uint32_t tout, const char *iface) {
-    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
-    (void)(raddr);
-    // __z_udp_addr_t *laddr = NULL;  // Multicast messages are not self-consumed, so no need to save the local address
+_z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep, uint32_t tout,
+                                          const char *iface) {
+    _z_sys_net_socket_t sock;
+    (void)(rep);
+    (void)(lep);  // Multicast messages are not self-consumed, so no need to save the local address
 
     // FIXME: make it random
-    WiFiUDP *sock = new WiFiUDP();
-    if (sock->begin(55555) == 0) {
-        return NULL;
+    sock._udp = new WiFiUDP();
+    if (sock._udp->begin(55555) == 0) {
+        goto ERR;
     }
 
+    sock._err = false;
+    return sock;
+
+ERR:
+    delete sock._udp;
+    sock._err = true;
     return sock;
 }
 
-void *_z_listen_udp_multicast(void *laddr_arg, uint32_t tout, const char *iface) {
-    __z_udp_addr_t *laddr = static_cast<__z_udp_addr_t *>(laddr_arg);
+_z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t tout, const char *iface) {
+    _z_sys_net_socket_t sock;
 
-    WiFiUDP *sock = new WiFiUDP();
-    if (sock->beginMulticast(laddr->_ipaddr, laddr->_port) == 0) {
-        return NULL;
+    sock._udp = new WiFiUDP();
+    if (sock._udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port) == 0) {
+        goto ERR;
     }
 
+    sock._err = false;
+    return sock;
+
+ERR:
+    delete sock._udp;
+    sock._err = true;
     return sock;
 }
 
-void _z_close_udp_multicast(void *sockrecv_arg, void *socksend_arg, void *arg) {
-    WiFiUDP *sockrecv = static_cast<WiFiUDP *>(sockrecv_arg);
-    WiFiUDP *socksend = static_cast<WiFiUDP *>(socksend_arg);
-
-    // Both sockrecv and socksend must be compared to NULL,
+void _z_close_udp_multicast(_z_sys_net_socket_t sockrecv, _z_sys_net_socket_t socksend, _z_sys_net_endpoint_t rep) {
+    // Both sockrecv and socksend must be compared to err,
     //  because we dont know if the close is trigger by a normal close
     //  or some of the sockets failed during the opening/listening procedure.
-    if (sockrecv != NULL) {
-        sockrecv->stop();
-        delete sockrecv;
+    if (sockrecv._err != true) {
+        sockrecv._udp->stop();
+        delete sockrecv._udp;
     }
 
-    if (socksend != NULL) {
-        socksend->stop();
-        delete socksend;
+    if (socksend._err != true) {
+        socksend._udp->stop();
+        delete socksend._udp;
     }
 }
 
-size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr) {
-    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-
+size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, _z_sys_net_endpoint_t lep,
+                             _z_bytes_t *addr) {
     // Block until something to read
     // FIXME; provide blocking and non-blocking functions
     size_t psize = 0;
     do {
-        psize = sock->parsePacket();
+        psize = sock._udp->parsePacket();
     } while (psize == (size_t)0);
 
     if (psize > len) {
         return 0;
     }
 
-    if (sock->read(ptr, psize) != psize) {
+    if (sock._udp->read(ptr, psize) != psize) {
         return 0;
     }
 
     // If addr is not NULL, it means that the raddr was requested by the upper-layers
     if (addr != NULL) {
-        IPAddress rip = sock->remoteIP();
-        uint16_t rport = sock->remotePort();
+        IPAddress rip = sock._udp->remoteIP();
+        uint16_t rport = sock._udp->remotePort();
 
         *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
                               strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
@@ -329,11 +328,12 @@ size_t _z_read_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *lad
     return psize;
 }
 
-size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, void *laddr_arg, _z_bytes_t *addr) {
+size_t _z_read_exact_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, _z_sys_net_endpoint_t lep,
+                                   _z_bytes_t *addr) {
     size_t n = len;
 
     do {
-        size_t rb = _z_read_udp_multicast(sock_arg, ptr, n, laddr_arg, addr);
+        size_t rb = _z_read_udp_multicast(sock, ptr, n, lep, addr);
         if (rb == SIZE_MAX) {
             return rb;
         }
@@ -345,13 +345,10 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
     return len;
 }
 
-size_t _z_send_udp_multicast(void *sock_arg, const uint8_t *ptr, size_t len, void *raddr_arg) {
-    WiFiUDP *sock = static_cast<WiFiUDP *>(sock_arg);
-    __z_udp_addr_t *raddr = static_cast<__z_udp_addr_t *>(raddr_arg);
-
-    sock->beginPacket(raddr->_ipaddr, 7447);
-    sock->write(ptr, len);
-    sock->endPacket();
+size_t _z_send_udp_multicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {
+    sock._udp->beginPacket(*rep._iptcp._addr, rep._iptcp._port);
+    sock._udp->write(ptr, len);
+    sock._udp->endPacket();
 
     return len;
 }

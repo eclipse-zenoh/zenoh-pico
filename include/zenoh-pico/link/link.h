@@ -58,16 +58,18 @@ typedef enum {
 #define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
 #define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
 
-typedef int (*_z_f_link_open)(void *arg);
-typedef int (*_z_f_link_listen)(void *arg);
-typedef void (*_z_f_link_close)(void *arg);
-typedef size_t (*_z_f_link_write)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_z_f_link_write_all)(const void *arg, const uint8_t *ptr, size_t len);
-typedef size_t (*_z_f_link_read)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
-typedef size_t (*_z_f_link_read_exact)(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr);
-typedef void (*_z_f_link_free)(void *arg);
+struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
 
-typedef struct {
+typedef int (*_z_f_link_open)(struct _z_link_t *self);
+typedef int (*_z_f_link_listen)(struct _z_link_t *self);
+typedef void (*_z_f_link_close)(struct _z_link_t *self);
+typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef void (*_z_f_link_free)(struct _z_link_t *self);
+
+typedef struct _z_link_t {
     _z_endpoint_t _endpoint;
 
     union {

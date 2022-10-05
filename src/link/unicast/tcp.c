@@ -69,17 +69,15 @@ char *_z_parse_address_segment_tcp(char *address) {
     return NULL;
 }
 
-int _z_f_link_open_tcp(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
+int _z_f_link_open_tcp(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
         tout = strtoul(tout_as_str, NULL, 10);
     }
 
-    self->_socket._tcp._sock = _z_open_tcp(self->_socket._tcp._raddr, tout);
-    if (self->_socket._tcp._sock == NULL) {
+    self->_socket._tcp._sock = _z_open_tcp(self->_socket._tcp._rep, tout);
+    if (self->_socket._tcp._sock._err == true) {
         goto ERR;
     }
 
@@ -89,11 +87,9 @@ ERR:
     return -1;
 }
 
-int _z_f_link_listen_tcp(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
-    self->_socket._tcp._sock = _z_listen_tcp(self->_socket._tcp._raddr);
-    if (self->_socket._tcp._sock == NULL) {
+int _z_f_link_listen_tcp(_z_link_t *self) {
+    self->_socket._tcp._sock = _z_listen_tcp(self->_socket._tcp._rep);
+    if (self->_socket._tcp._sock._err == true) {
         goto ERR;
     }
 
@@ -103,41 +99,25 @@ ERR:
     return -1;
 }
 
-void _z_f_link_close_tcp(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
+void _z_f_link_close_tcp(_z_link_t *self) { _z_close_tcp(self->_socket._tcp._sock); }
 
-    _z_close_tcp(self->_socket._tcp._sock);
-}
+void _z_f_link_free_tcp(_z_link_t *self) { _z_free_endpoint_tcp(self->_socket._tcp._rep); }
 
-void _z_f_link_free_tcp(void *arg) {
-    _z_link_t *self = (_z_link_t *)arg;
-
-    _z_free_endpoint_tcp(self->_socket._tcp._raddr);
-}
-
-size_t _z_f_link_write_tcp(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_tcp(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_tcp(self->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_write_all_tcp(const void *arg, const uint8_t *ptr, size_t len) {
-    const _z_link_t *self = (const _z_link_t *)arg;
-
+size_t _z_f_link_write_all_tcp(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_tcp(self->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_tcp(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_tcp(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_tcp(self->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_tcp(const void *arg, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_tcp(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
     (void)(addr);
-    const _z_link_t *self = (const _z_link_t *)arg;
-
     return _z_read_exact_tcp(self->_socket._tcp._sock, ptr, len);
 }
 
@@ -154,10 +134,10 @@ _z_link_t *_z_new_link_tcp(_z_endpoint_t endpoint) {
 
     lt->_endpoint = endpoint;
 
-    lt->_socket._tcp._sock = NULL;
+    lt->_socket._tcp._sock._err = true;
     char *s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
     char *s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
-    lt->_socket._tcp._raddr = _z_create_endpoint_tcp(s_addr, s_port);
+    lt->_socket._tcp._rep = _z_create_endpoint_tcp(s_addr, s_port);
     z_free(s_addr);
     z_free(s_port);
 
