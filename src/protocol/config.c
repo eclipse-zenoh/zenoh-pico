@@ -17,6 +17,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/pointers.h"
+
 int _z_config_init(_z_config_t *ps) {
     _z_str_intmap_init(ps);
     return 0;
@@ -52,7 +54,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
         }
 
         // Verify the key is valid based on the provided mapping
-        size_t p_key_len = p_key_end - p_key_start;
+        size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
         int found = 0;
         unsigned int key;
         for (unsigned int i = 0; i < argc; i++) {
@@ -73,21 +75,21 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
         }
 
         // Read and populate the value
-        const char *p_value_start = p_key_end + 1;
+        const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
         const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
         if (p_value_end == NULL) {
             p_value_end = end;
         }
 
-        size_t p_value_len = p_value_end - p_value_start;
-        char *p_value = (char *)z_malloc((p_value_len + (size_t)1) * (size_t)sizeof(char));
+        size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
+        char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
         (void)strncpy(p_value, p_value_start, p_value_len);
         p_value[p_value_len] = '\0';
 
         _z_str_intmap_insert(&res._value._str_intmap, key, p_value);
 
         // Process next key value
-        start = p_value_end + 1;
+        start = _z_cptr_char_offset(p_value_end, 1);
     }
 
     return res;

@@ -14,16 +14,18 @@
 
 #include "zenoh-pico/utils/encoding.h"
 
+#include "zenoh-pico/utils/pointers.h"
+
 size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
     uint8_t *output_initial_ptr = output;
     uint8_t *codep = output;
-    output++;
     uint8_t code = 1;
 
+    output = _z_ptr_u8_offset(output, 1);
     for (const uint8_t *byte = input; input_len != (size_t)0; byte++) {
         if (*byte != (uint8_t)0x00) {
             *output = *byte;
-            output++;
+            output = _z_ptr_u8_offset(output, 1);
             code++;
         }
 
@@ -32,7 +34,7 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
             code = 1;
             codep = output;
             if (!*byte || input_len) {
-                ++output;
+                output = _z_ptr_u8_offset(output, 1);
             }
         }
 
@@ -40,7 +42,7 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
     }
     *codep = code;
 
-    return output - output_initial_ptr;
+    return _z_ptr_u8_diff(output, output_initial_ptr);
 }
 
 size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
@@ -48,24 +50,25 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
     uint8_t *output_initial_ptr = output;
 
     uint8_t code = (uint8_t)0xFF;
-    for (uint8_t block = (uint8_t)0x00; byte < (input + input_len); block--) {
+    const uint8_t *input_end_ptr = _z_cptr_u8_offset(input, input_len);
+    for (uint8_t block = (uint8_t)0x00; byte < input_end_ptr; block--) {
         if (block != (uint8_t)0x00) {
             *output = *byte;
-            output++;
-            byte++;
+            output = _z_ptr_u8_offset(output, 1);
+            byte = _z_cptr_u8_offset(byte, 1);
         } else {
             if (code != (uint8_t)0xFF) {
                 *output = (uint8_t)0x00;
-                output++;
+                output = _z_ptr_u8_offset(output, 1);
             }
             code = *byte;
             block = *byte;
-            byte++;
+            byte = _z_cptr_u8_offset(byte, 1);
             if (code == (uint8_t)0x00) {
                 break;
             }
         }
     }
 
-    return output - output_initial_ptr;
+    return _z_ptr_u8_diff(output, output_initial_ptr);
 }

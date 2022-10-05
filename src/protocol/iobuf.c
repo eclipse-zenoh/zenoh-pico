@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/pointers.h"
 
 /*------------------ IOSli ------------------*/
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos) {
@@ -61,7 +62,7 @@ uint8_t _z_iosli_read(_z_iosli_t *ios) {
 
 void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t length) {
     assert(_z_iosli_readable(ios) >= length);
-    (void)memcpy(dst + offset, ios->_buf + ios->_r_pos, length);
+    (void)memcpy(_z_ptr_u8_offset(dst, offset), ios->_buf + ios->_r_pos, length);
     ios->_r_pos += length;
 }
 
@@ -80,7 +81,7 @@ void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
     assert(_z_iosli_writable(ios) >= length);
-    (void)memcpy(ios->_buf + ios->_w_pos, bs + offset, length);
+    (void)memcpy(_z_ptr_u8_offset(ios->_buf, ios->_w_pos), _z_cptr_u8_offset(bs, offset), length);
     ios->_w_pos += length;
 }
 
@@ -92,7 +93,7 @@ void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos) {
 _z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios) {
     _z_bytes_t a;
     a.len = _z_iosli_readable(ios);
-    a.start = ios->_buf + ios->_r_pos;
+    a.start = _z_cptr_u8_offset(ios->_buf, ios->_r_pos);
     return a;
 }
 

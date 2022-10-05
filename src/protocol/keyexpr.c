@@ -17,43 +17,45 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/pointers.h"
+
 /*------------------ Canonize helpers ------------------*/
 zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     _Bool in_big_wild = false;
     char const *chunk_start = start;
-    const char *end = start + *len;
+    const char *end = _z_cptr_char_offset(start, *len);
     char const *next_slash;
 
     do {
         next_slash = strchr(chunk_start, '/');
         const char *chunk_end = next_slash ? next_slash : end;
-        size_t chunk_len = chunk_end - chunk_start;
+        size_t chunk_len = _z_ptr_char_diff(chunk_end, chunk_start);
         switch (chunk_len) {
             case 0:
                 return Z_KEYEXPR_CANON_EMPTY_CHUNK;
 
             case 1:
-                if (in_big_wild && (*chunk_start == '*')) {
-                    *len = chunk_start - start - 3;
+                if (in_big_wild && (chunk_start[0] == '*')) {
+                    *len = _z_ptr_char_diff(chunk_start, start) - (size_t)3;
                     return Z_KEYEXPR_CANON_SINGLE_STAR_AFTER_DOUBLE_STAR;
                 }
-                chunk_start = chunk_end + 1;
+                chunk_start = _z_cptr_char_offset(chunk_end, 1);
                 continue;
                 break;  // It MUST never be here. Required by MISRA 16.3 rule
 
             case 2:
                 if (chunk_start[1] == '*') {
-                    switch (*chunk_start) {
+                    switch (chunk_start[0]) {
                         case (char)'$':
-                            *len = chunk_start - start;
+                            *len = _z_ptr_char_diff(chunk_start, start);
                             return Z_KEYEXPR_CANON_LONE_DOLLAR_STAR;
 
                         case (char)'*':
                             if (in_big_wild) {
-                                *len = chunk_start - start - 3;
+                                *len = _z_ptr_char_diff(chunk_start, start) - (size_t)3;
                                 return Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR;
                             } else {
-                                chunk_start = chunk_end + 1;
+                                chunk_start = _z_cptr_char_offset(chunk_end, 1);
                                 in_big_wild = true;
                                 continue;
                             }
@@ -68,8 +70,8 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
         }
 
         unsigned char in_dollar = 0;
-        for (char const *c = chunk_start; c < chunk_end; c++) {
-            switch (*c) {
+        for (char const *c = chunk_start; c < chunk_end; c = _z_cptr_char_offset(c, 1)) {
+            switch (c[0]) {
                 case '#':
                 case '?':
                     return Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK;
@@ -101,7 +103,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
             return Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR;
         }
 
-        chunk_start = chunk_end + 1;
+        chunk_start = _z_cptr_char_offset(chunk_end, 1);
         in_big_wild = false;
     } while (chunk_start < end);
 
@@ -119,7 +121,7 @@ size_t __zp_starts_with(const char *s, const char *needle) {
     return i;
 }
 void __zp_singleify(char *start, size_t *len, const char *needle) {
-    const char *end = start + *len;
+    const char *end = _z_cptr_char_offset(start, *len);
     _Bool right_after_needle = false;
     char *reader = start;
     while (reader < end) {
@@ -129,10 +131,10 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 break;
             }
             right_after_needle = true;
-            reader += pos;
+            reader = _z_ptr_char_offset(reader, pos);
         } else {
             right_after_needle = false;
-            reader++;
+            reader = _z_ptr_char_offset(reader, 1);
         }
     }
 
@@ -144,43 +146,44 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
                 }
-                writer += pos;
+                writer = _z_ptr_char_offset(writer, pos);
             }
             right_after_needle = true;
-            reader += pos;
+            reader = _z_ptr_char_offset(reader, pos);
         } else {
             right_after_needle = false;
             *writer = *reader;
-            writer++;
-            reader++;
+            writer = _z_ptr_char_offset(writer, 1);
+            reader = _z_ptr_char_offset(reader, 1);
         }
     }
-    *len = writer - start;
+    *len = _z_ptr_char_diff(writer, start);
 }
 
 void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const char *write_start) {
     if (*writer != write_start) {
-        *(*writer) = '/';
-        (*writer)++;
+        writer[0][0] = '/';
+        writer[0] = _z_ptr_char_offset(writer[0], 1);
     }
 
     (void)memcpy(*writer, chunk, len);
-    *writer += len;
+    writer[0] = _z_ptr_char_offset(writer[0], len);
 }
 
 /*------------------ Inclusion helpers ------------------*/
 _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while ((lstart < lend) && (rstart < rend)) {
-        char l = *lstart;
-        lstart++;
-        char r = *rstart;
-        rstart++;
+        char l = lstart[0];
+        lstart = _z_cptr_char_offset(lstart, 1);
+        char r = rstart[0];
+        rstart = _z_cptr_char_offset(rstart, 1);
         if (l == '$') {
-            if (++lstart == lend) {
+            lstart = _z_cptr_char_offset(lstart, 1);
+            if (lstart == lend) {
                 return true;
             }
-            return __zp_ke_includes_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   __zp_ke_includes_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return __zp_ke_includes_stardsl_chunk(lstart, lend, _z_cptr_char_offset(rstart, -1), rend) ||
+                   __zp_ke_includes_stardsl_chunk(_z_cptr_char_offset(lstart, -2), lend, rstart, rend);
         } else if (l != r) {
             return false;
         } else {
@@ -189,16 +192,16 @@ _Bool __zp_ke_includes_stardsl_chunk(char const *lstart, const char *lend, char 
         }
     }
 
-    return ((lstart == lend) && (rstart == rend)) || (((lend - lstart) == 2) && (lstart[0] == '$'));
+    return ((lstart == lend) && (rstart == rend)) || ((_z_ptr_char_diff(lend, lstart) == 2) && (lstart[0] == '$'));
 }
 
 _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    ssize_t lclen;
+    size_t lclen;
     _Bool streq;
-    const char *lend = lstart + llen;
-    const char *rend = rstart + rlen;
+    const char *lend = _z_cptr_char_offset(lstart, llen);
+    const char *rend = _z_cptr_char_offset(rstart, rlen);
 
-    for (;;) {
+    while (true) {
         const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
         const char *rns = strchr(rstart, '/');
@@ -207,11 +210,11 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
         char rwildness = 0;
 
         if (*lstart == '*') {
-            lwildness = lcend - lstart;
+            lwildness = _z_ptr_char_diff(lcend, lstart);
         }
 
         if (*rstart == '*') {
-            rwildness = rcend - rstart;
+            rwildness = _z_ptr_char_diff(rcend, rstart);
         }
 
         if (rwildness > lwildness) {
@@ -220,15 +223,20 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
 
         switch (lwildness) {
             case 2:
-                return !lns || __zp_ke_includes_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                       (rns && __zp_ke_includes_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                return !lns ||
+                       __zp_ke_includes_stardsl(_z_cptr_char_offset(lns, 1),
+                                                _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)), rstart,
+                                                _z_ptr_char_diff(rend, rstart)) ||
+                       (rns &&
+                        __zp_ke_includes_stardsl(lstart, _z_ptr_char_diff(lend, lstart), _z_cptr_char_offset(rns, 1),
+                                                 _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1))));
 
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                lclen = lcend - lstart;
-                streq = (lclen == (rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
+                lclen = _z_ptr_char_diff(lcend, lstart);
+                streq = (lclen == _z_ptr_char_diff(rcend, rstart)) && (strncmp(lstart, rstart, lclen) == 0);
                 if (!streq && !__zp_ke_includes_stardsl_chunk(lstart, lcend, rstart, rcend)) {
                     return false;
                 }
@@ -238,21 +246,21 @@ _Bool __zp_ke_includes_stardsl(char const *lstart, const size_t llen, char const
         if (!lns) {
             return !rns;
         } else if (!rns) {
-            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+            return !lns || ((_z_ptr_char_diff(lend, lns) == 3) && (lns[1] == '*'));
         } else {
             // Do nothing. Continue...
             // Required to be compliant with MISRA 15.7 rule
         }
 
-        lstart = lns + 1;
-        rstart = rns + 1;
+        lstart = _z_cptr_char_offset(lns, 1);
+        rstart = _z_cptr_char_offset(rns, 1);
     }
 }
 
 _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    const char *lend = lstart + llen;
-    const char *rend = rstart + rlen;
-    for (;;) {
+    const char *lend = _z_cptr_char_offset(lstart, llen);
+    const char *rend = _z_cptr_char_offset(rstart, rlen);
+    while (true) {
         const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
         const char *rns = strchr(rstart, '/');
@@ -260,11 +268,11 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
         char lwildness = 0;
         char rwildness = 0;
         if (*lstart == '*') {
-            lwildness = lcend - lstart;
+            lwildness = _z_ptr_char_diff(lcend, lstart);
         }
 
         if (*rstart == '*') {
-            rwildness = rcend - rstart;
+            rwildness = _z_ptr_char_diff(rcend, rstart);
         }
 
         if (rwildness > lwildness) {
@@ -273,14 +281,20 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
 
         switch (lwildness) {
             case 2:
-                return !lns || __zp_ke_includes_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                       (rns && __zp_ke_includes_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                return !lns ||
+                       __zp_ke_includes_nodsl(_z_cptr_char_offset(lns, 1),
+                                              _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)), rstart,
+                                              _z_ptr_char_diff(rend, rstart)) ||
+                       (rns &&
+                        __zp_ke_includes_nodsl(lstart, _z_ptr_char_diff(lend, lstart), _z_cptr_char_offset(rns, 1),
+                                               _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1))));
 
             case 1:
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
+                if ((_z_ptr_char_diff(lcend, lstart) != _z_ptr_char_diff(rcend, rstart)) ||
+                    strncmp(lstart, rstart, _z_ptr_char_diff(lcend, lstart))) {
                     return false;
                 }
                 break;
@@ -289,14 +303,14 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
         if (!lns) {
             return !rns;
         } else if (!rns) {
-            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+            return !lns || ((_z_ptr_char_diff(lend, lns) == 3) && (lns[1] == '*'));
         } else {
             // Do nothing. Continue...
             // Required to be compliant with MISRA 15.7 rule
         }
 
-        lstart = lns + 1;
-        rstart = rns + 1;
+        lstart = _z_cptr_char_offset(lns, 1);
+        rstart = _z_cptr_char_offset(rns, 1);
     }
 }
 
@@ -304,23 +318,25 @@ _Bool __zp_ke_includes_nodsl(char const *lstart, const size_t llen, char const *
 _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, char const *rstart, const char *rend) {
     while ((lstart < lend) && (rstart < rend)) {
         char l = *lstart;
-        lstart++;
+        lstart = _z_cptr_char_offset(lstart, 1);
         char r = *rstart;
-        rstart++;
+        rstart = _z_cptr_char_offset(rstart, 1);
         if (l == '$') {
-            if (++lstart == lend) {
+            lstart = _z_cptr_char_offset(lstart, 1);
+            if (lstart == lend) {
                 return true;
             }
 
-            return __zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 1, rend) ||
-                   __zp_ke_intersects_stardsl_chunk(lstart - 2, lend, rstart, rend);
+            return __zp_ke_intersects_stardsl_chunk(lstart, lend, _z_cptr_char_offset(rstart, -1), rend) ||
+                   __zp_ke_intersects_stardsl_chunk(_z_cptr_char_offset(lstart, -2), lend, rstart, rend);
         } else if (r == '$') {
-            if (++rstart == rend) {
+            rstart = _z_cptr_char_offset(rstart, 1);
+            if (rstart == rend) {
                 return true;
             }
 
-            return __zp_ke_intersects_stardsl_chunk(lstart - 1, lend, rstart, rend) ||
-                   __zp_ke_intersects_stardsl_chunk(lstart, lend, rstart - 2, rend);
+            return __zp_ke_intersects_stardsl_chunk(_z_cptr_char_offset(lstart, -1), lend, rstart, rend) ||
+                   __zp_ke_intersects_stardsl_chunk(lstart, lend, _z_cptr_char_offset(rstart, -2), rend);
         } else if (l != r) {
             return false;
         } else {
@@ -329,17 +345,17 @@ _Bool __zp_ke_intersects_stardsl_chunk(char const *lstart, const char *lend, cha
         }
     }
 
-    return ((lstart == lend) && (rstart == rend)) || (((lend - lstart) == 2) && (lstart[0] == '$')) ||
-           (((rend - rstart) == 2) && (rstart[0] == '$'));
+    return ((lstart == lend) && (rstart == rend)) || ((_z_ptr_char_diff(lend, lstart) == 2) && (lstart[0] == '$')) ||
+           (((_z_ptr_char_diff(rend, rstart)) == 2) && (rstart[0] == '$'));
 }
 
 _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    ssize_t lclen;
+    size_t lclen;
     _Bool streq;
-    const char *lend = lstart + llen;
-    const char *rend = rstart + rlen;
+    const char *lend = _z_cptr_char_offset(lstart, llen);
+    const char *rend = _z_cptr_char_offset(rstart, rlen);
 
-    for (;;) {
+    while (true) {
         const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
         const char *rns = strchr(rstart, '/');
@@ -347,20 +363,30 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
         unsigned char lwildness = 0;
         unsigned char rwildness = 0;
         if (*lstart == '*') {
-            lwildness = lcend - lstart;
+            lwildness = _z_ptr_char_diff(lcend, lstart);
         }
         if (*rstart == '*') {
-            rwildness = rcend - rstart;
+            rwildness = _z_ptr_char_diff(rcend, rstart);
         }
         switch (lwildness | rwildness) {
             case 2:
             case 3:
                 if (lwildness == (unsigned char)2) {
-                    return !lns || __zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && __zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns ||
+                           __zp_ke_intersects_stardsl(_z_cptr_char_offset(lns, 1),
+                                                      _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)), rstart,
+                                                      _z_ptr_char_diff(rend, rstart)) ||
+                           (rns && __zp_ke_intersects_stardsl(lstart, _z_ptr_char_diff(lend, lstart),
+                                                              _z_cptr_char_offset(rns, 1),
+                                                              _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1))));
                 } else {
-                    return !rns || __zp_ke_intersects_stardsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && __zp_ke_intersects_stardsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns || __zp_ke_intersects_stardsl(
+                                       lstart, _z_ptr_char_diff(lend, lstart), _z_cptr_char_offset(rns, 1),
+                                       _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1)) ||
+                                           (lns && __zp_ke_intersects_stardsl(
+                                                       _z_cptr_char_offset(lns, 1),
+                                                       _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)), rstart,
+                                                       _z_ptr_char_diff(rend, rstart))));
                 }
                 break;
 
@@ -368,8 +394,8 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                lclen = lcend - lstart;
-                streq = (lclen == (rcend - rstart)) && (strncmp(lstart, rstart, lclen) == 0);
+                lclen = _z_ptr_char_diff(lcend, lstart);
+                streq = (lclen == _z_ptr_char_diff(rcend, rstart)) && (strncmp(lstart, rstart, lclen) == 0);
                 if (!(streq || __zp_ke_intersects_stardsl_chunk(lstart, lcend, rstart, rcend))) {
                     return false;
                 }
@@ -377,23 +403,23 @@ _Bool __zp_ke_intersects_stardsl(char const *lstart, const size_t llen, char con
         }
 
         if (!lns) {
-            return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
+            return !rns || ((_z_ptr_char_diff(rend, rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
-            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+            return !lns || ((_z_ptr_char_diff(lend, lns) == 3) && (lns[1] == '*'));
         } else {
             // Do nothing. Continue...
             // Required to be compliant with MISRA 15.7 rule
         }
 
-        lstart = lns + 1;
-        rstart = rns + 1;
+        lstart = _z_cptr_char_offset(lns, 1);
+        rstart = _z_cptr_char_offset(rns, 1);
     }
 }
 
 _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const *rstart, const size_t rlen) {
-    const char *lend = lstart + llen;
-    const char *rend = rstart + rlen;
-    for (;;) {
+    const char *lend = _z_cptr_char_offset(lstart, llen);
+    const char *rend = _z_cptr_char_offset(rstart, rlen);
+    while (true) {
         const char *lns = strchr(lstart, '/');
         const char *lcend = lns ? lns : lend;
         const char *rns = strchr(rstart, '/');
@@ -402,22 +428,32 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
         unsigned char rwildness = 0;
 
         if (*lstart == '*') {
-            lwildness = lcend - lstart;
+            lwildness = _z_ptr_char_diff(lcend, lstart);
         }
 
         if (*rstart == '*') {
-            rwildness = rcend - rstart;
+            rwildness = _z_ptr_char_diff(rcend, rstart);
         }
 
         switch (lwildness | rwildness) {
             case 2:
             case 3:
                 if (lwildness == (unsigned char)2) {
-                    return !lns || __zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart) ||
-                           (rns && __zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)));
+                    return !lns ||
+                           __zp_ke_intersects_nodsl(_z_cptr_char_offset(lns, 1),
+                                                    _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)), rstart,
+                                                    _z_ptr_char_diff(rend, rstart)) ||
+                           (rns && __zp_ke_intersects_nodsl(lstart, _z_ptr_char_diff(lend, lstart),
+                                                            _z_cptr_char_offset(rns, 1),
+                                                            _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1))));
                 } else {
-                    return !rns || __zp_ke_intersects_nodsl(lstart, lend - lstart, rns + 1, rend - (rns + 1)) ||
-                           (lns && __zp_ke_intersects_nodsl(lns + 1, lend - (lns + 1), rstart, rend - rstart));
+                    return !rns ||
+                           __zp_ke_intersects_nodsl(
+                               lstart, _z_ptr_char_diff(lend, lstart), _z_cptr_char_offset(rns, 1),
+                               _z_ptr_char_diff(rend, _z_cptr_char_offset(rns, 1)) ||
+                                   (lns && __zp_ke_intersects_nodsl(_z_cptr_char_offset(lns, 1),
+                                                                    _z_ptr_char_diff(lend, _z_cptr_char_offset(lns, 1)),
+                                                                    rstart, _z_ptr_char_diff(rend, rstart))));
                 }
                 break;
 
@@ -425,23 +461,24 @@ _Bool __zp_ke_intersects_nodsl(char const *lstart, const size_t llen, char const
                 break;  // if either chunk is a small wild, yet neither is a big wild, just skip this chunk inspection
 
             default:
-                if (((lcend - lstart) != (rcend - rstart)) || strncmp(lstart, rstart, lcend - lstart)) {
+                if ((_z_ptr_char_diff(lcend, lstart) != _z_ptr_char_diff(rcend, rstart)) ||
+                    strncmp(lstart, rstart, _z_ptr_char_diff(lcend, lstart))) {
                     return false;
                 }
                 break;
         }
 
         if (!lns) {
-            return !rns || (((rend - rns) == 3) && (rns[1] == '*'));
+            return !rns || ((_z_ptr_char_diff(rend, rns) == 3) && (rns[1] == '*'));
         } else if (!rns) {
-            return !lns || (((lend - lns) == 3) && (lns[1] == '*'));
+            return !lns || ((_z_ptr_char_diff(lend, lns) == 3) && (lns[1] == '*'));
         } else {
             // Do nothing. Continue...
             // Required to be compliant with MISRA 15.7 rule
         }
 
-        lstart = lns + 1;
-        rstart = rns + 1;
+        lstart = _z_cptr_char_offset(lns, 1);
+        rstart = _z_cptr_char_offset(rns, 1);
     }
 }
 
@@ -453,8 +490,8 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
     }
 
     int contains = 0;  // STAR: 1, DSL: 2
-    char const *end = lstart + llen;
-    for (char const *c = lstart; c < end; c++) {
+    char const *end = _z_cptr_char_offset(lstart, llen);
+    for (char const *c = lstart; c < end; c = _z_cptr_char_offset(c, 1)) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -464,8 +501,8 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
         }
     }
 
-    end = rstart + rlen;
-    for (char const *c = rstart; (contains < 3) && (c < end); c++) {
+    end = _z_cptr_char_offset(rstart, rlen);
+    for (char const *c = rstart; (contains < 3) && (c < end); c = _z_cptr_char_offset(c, 1)) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -493,8 +530,8 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
     }
 
     int contains = 0;  // STAR: 1, DSL: 2
-    char const *end = lstart + llen;
-    for (char const *c = lstart; c < end; c++) {
+    char const *end = _z_cptr_char_offset(lstart, llen);
+    for (char const *c = lstart; c < end; c = _z_cptr_char_offset(c, 1)) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -505,8 +542,8 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
         }
     }
 
-    end = rstart + rlen;
-    for (char const *c = rstart; (contains < 3) && (c < end); c++) {
+    end = _z_cptr_char_offset(rstart, rlen);
+    for (char const *c = rstart; (contains < 3) && (c < end); c = _z_cptr_char_offset(c, 1)) {
         if (*c == '*') {
             contains |= 1;
         }
@@ -541,23 +578,23 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
             return prefix_canon_state;
     }
 
-    const char *end = start + *len;
-    char *reader = start + canon_len;
+    const char *end = _z_cptr_char_offset(start, *len);
+    char *reader = _z_ptr_char_offset(start, canon_len);
     const char *write_start = reader;
     char *writer = reader;
     char *next_slash = strchr(reader, '/');
     char const *chunk_end = next_slash ? next_slash : end;
 
     _Bool in_big_wild = false;
-    if (((chunk_end - reader) == 2) && (reader[1] == '*')) {
+    if ((_z_ptr_char_diff(chunk_end, reader) == 2) && (reader[1] == '*')) {
         switch (*reader) {
             case '*':
                 in_big_wild = true;
                 break;
 
             case '$':  // if the chunk is $*, replace it with *.
-                *writer = '*';
-                writer++;
+                writer[0] = '*';
+                writer = _z_ptr_char_offset(writer, 1);
                 break;
 
             default:
@@ -569,10 +606,10 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
     }
 
     while (next_slash != NULL) {
-        reader = next_slash + 1;
+        reader = _z_ptr_char_offset(next_slash, 1);
         next_slash = strchr(reader, '/');
         chunk_end = next_slash ? next_slash : end;
-        switch (chunk_end - reader) {
+        switch (_z_ptr_char_diff(chunk_end, reader)) {
             case 0:
                 return Z_KEYEXPR_CANON_EMPTY_CHUNK;
 
@@ -583,10 +620,10 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
 
             case 2:
                 if (reader[1] == '*') {
-                    if (*reader == '$') {
+                    if (reader[0] == '$') {
                         __zp_ke_write_chunk(&writer, "*", 1, write_start);
                         continue;
-                    } else if (*reader == (char)'*') {
+                    } else if (reader[0] == (char)'*') {
                         in_big_wild = true;
                         continue;
                     } else {
@@ -601,7 +638,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         }
 
         unsigned char in_dollar = 0;
-        for (char const *c = reader; c < end; c++) {
+        for (char const *c = reader; c < end; c = _z_cptr_char_offset(c, 1)) {
             switch (*c) {
                 case '#':
                 case '?':
@@ -638,14 +675,14 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
             __zp_ke_write_chunk(&writer, "**", 2, write_start);
         }
 
-        __zp_ke_write_chunk(&writer, reader, chunk_end - reader, write_start);
+        __zp_ke_write_chunk(&writer, reader, _z_ptr_char_diff(chunk_end, reader), write_start);
         in_big_wild = false;
     }
 
     if (in_big_wild) {
         __zp_ke_write_chunk(&writer, "**", 2, write_start);
     }
-    *len = writer - start;
+    *len = _z_ptr_char_diff(writer, start);
 
     return Z_KEYEXPR_CANON_SUCCESS;
 }

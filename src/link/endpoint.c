@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/pointers.h"
 #if Z_LINK_TCP == 1
 #include "zenoh-pico/link/config/tcp.h"
 #endif
@@ -90,8 +91,8 @@ char *_z_locator_protocol_from_str(const char *s) {
         goto ERR;
     }
 
-    size_t p_len = p_end - p_start;
-    char *protocol = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
+    size_t p_len = _z_ptr_char_diff(p_end, p_start);
+    char *protocol = (char *)z_malloc(p_len + (size_t)1);
     (void)strncpy(protocol, p_start, p_len);
     protocol[p_len] = '\0';
 
@@ -120,8 +121,8 @@ char *_z_locator_address_from_str(const char *s) {
         goto ERR;
     }
 
-    size_t p_len = p_end - p_start;
-    char *address = (char *)z_malloc((p_len + (size_t)1) * sizeof(char));
+    size_t p_len = _z_ptr_char_diff(p_end, p_start);
+    char *address = (char *)z_malloc(p_len + (size_t)1);
     (void)strncpy(address, p_start, p_len);
     address[p_len] = '\0';
 
@@ -152,7 +153,7 @@ _z_str_intmap_result_t _z_locator_metadata_from_str(const char *s) {
         goto ERR;
     }
 
-    size_t p_len = p_end - p_start;
+    size_t p_len = _z_ptr_char_diff(p_end, p_start);
 
     // @TODO: define protocol-level metadata
     return _z_str_intmap_from_strn(p_start, 0, NULL, p_len);

@@ -30,7 +30,7 @@ int _z_f_link_open_serial(void *arg) {
 
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
-    uint32_t rxpin = strtoul(p_dot + 1, NULL, 10);
+    uint32_t rxpin = strtoul(_z_cptr_char_offset(p_dot, 1), NULL, 10);
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
 

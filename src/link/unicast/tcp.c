@@ -20,20 +20,21 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/tcp.h"
+#include "zenoh-pico/utils/pointers.h"
 
 #if Z_LINK_TCP == 1
 
 char *_z_parse_port_segment_tcp(char *address) {
-    char *p_start = strrchr(address, ':');
+    const char *p_start = strrchr(address, ':');
     if (p_start == NULL) {
         return NULL;
     }
-    p_start++;
+    p_start = _z_cptr_char_offset(p_start, 1);
 
-    char *p_end = &address[strlen(address)];
+    const char *p_end = &address[strlen(address)];
 
-    int len = p_end - p_start;
-    char *port = (char *)z_malloc((len + 1) * (int)sizeof(char));
+    size_t len = _z_ptr_char_diff(p_end, p_start);
+    char *port = (char *)z_malloc(len + (size_t)1);
     (void)strncpy(port, p_start, len);
     port[len] = '\0';
 
@@ -41,15 +42,15 @@ char *_z_parse_port_segment_tcp(char *address) {
 }
 
 char *_z_parse_address_segment_tcp(char *address) {
-    char *p_start = &address[0];
-    char *p_end = strrchr(address, ':');
+    const char *p_start = &address[0];
+    const char *p_end = strrchr(address, ':');
 
     // IPv6
-    if ((*p_start == '[') && (*(p_end - 1) == ']')) {
-        p_start++;
-        p_end--;
-        int len = p_end - p_start;
-        char *ip6_addr = (char *)z_malloc((len + 1) * (int)sizeof(char));
+    if ((p_start[0] == '[') && (p_end[-1] == ']')) {
+        p_start = _z_cptr_char_offset(p_start, 1);
+        p_end = _z_cptr_char_offset(p_end, -1);
+        size_t len = _z_ptr_char_diff(p_end, p_start);
+        char *ip6_addr = (char *)z_malloc(len + (size_t)1);
         (void)strncpy(ip6_addr, p_start, len);
         ip6_addr[len] = '\0';
 
@@ -57,8 +58,8 @@ char *_z_parse_address_segment_tcp(char *address) {
     }
     // IPv4
     else {
-        int len = p_end - p_start;
-        char *ip4_addr_or_domain = (char *)z_malloc((len + 1) * (int)sizeof(char));
+        size_t len = _z_ptr_char_diff(p_end, p_start);
+        char *ip4_addr_or_domain = (char *)z_malloc(len + (size_t)1);
         (void)strncpy(ip4_addr_or_domain, p_start, len);
         ip4_addr_or_domain[len] = '\0';
 

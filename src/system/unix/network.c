@@ -28,6 +28,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 
 typedef struct {
     int _fd;
@@ -154,7 +155,7 @@ size_t _z_read_exact_tcp(void *sock_arg, uint8_t *ptr, size_t len) {
         }
 
         n -= rb;
-        ptr = ptr + (len - n);
+        ptr = _z_ptr_u8_offset(ptr, len - n);
     } while (n > (size_t)0);
 
     return len;
@@ -269,7 +270,7 @@ size_t _z_read_exact_udp_unicast(void *sock_arg, uint8_t *ptr, size_t len) {
         }
 
         n -= rb;
-        ptr = ptr + (len - n);
+        ptr = _z_ptr_u8_offset(ptr, len - n);
     } while (n > (size_t)0);
 
     return len;
@@ -578,7 +579,7 @@ size_t _z_read_exact_udp_multicast(void *sock_arg, uint8_t *ptr, size_t len, voi
         }
 
         n -= rb;
-        ptr = ptr + (len - n);
+        ptr = _z_ptr_u8_offset(ptr, len - n);
     } while (n > (size_t)0);
 
     return len;

@@ -154,7 +154,7 @@ uint64_t gen_time(void) { return (uint64_t)time(NULL); }
 
 char *gen_str(size_t size) {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char *str = (char *)z_malloc((size * sizeof(char)) + 1);
+    char *str = (char *)z_malloc(size + 1);
     for (_z_zint_t i = 0; i < size; i++) {
         int key = z_random_u32() % (int)(sizeof(charset) - 1);
         str[i] = charset[key];
