@@ -52,11 +52,10 @@ typedef struct {
     void *_arg;
 } __z_task_arg;
 
-void z_task_wrapper(void *arg) {
-    __z_task_arg *z_arg = (__z_task_arg *)arg;
-    z_arg->_fun(z_arg->_arg);
+void z_task_wrapper(__z_task_arg *targ) {
+    targ->_fun(targ->_arg);
     vTaskDelete(NULL);
-    z_free(z_arg);
+    z_free(targ);
 }
 
 /*------------------ Task ------------------*/
@@ -64,7 +63,7 @@ int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), vo
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
     z_arg->_fun = fun;
     z_arg->_arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 5120, z_arg, 15, task) != pdPASS) {
+    if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, 15, task) != pdPASS) {
         return -1;
     }
 
