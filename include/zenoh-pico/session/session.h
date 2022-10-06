@@ -139,10 +139,11 @@ void _z_pending_reply_clear(_z_pending_reply_t *res);
 _Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 
+struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_reply_handler_t
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t **reply, void *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t **reply, struct __z_reply_handler_wrapper_t *arg);
 
 typedef struct {
     _z_zint_t _id;
@@ -172,9 +173,10 @@ typedef struct {
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 
+struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hello_handler_t
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t **hello, void *arg);
+typedef void (*_z_hello_handler_t)(_z_hello_t **hello, struct __z_hello_handler_wrapper_t *arg);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

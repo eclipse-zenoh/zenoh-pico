@@ -291,15 +291,14 @@ z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_h
 z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid) { return closure_zid; }
 
 /************* Primitives **************/
-typedef struct {
+typedef struct __z_hello_handler_wrapper_t {
     z_owned_hello_handler_t user_call;
     void *ctx;
 } __z_hello_handler_wrapper_t;
 
-void __z_hello_handler(_z_hello_t **hello, void *arg) {
+void __z_hello_handler(_z_hello_t **hello, __z_hello_handler_wrapper_t *wrapped_ctx) {
     z_owned_hello_t ohello = {._value = *hello};
 
-    __z_hello_handler_wrapper_t *wrapped_ctx = (__z_hello_handler_wrapper_t *)arg;
     wrapped_ctx->user_call(&ohello, wrapped_ctx->ctx);
 
     if (ohello._value == NULL) {
@@ -453,15 +452,14 @@ z_get_options_t z_get_options_default(void) {
     return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
 }
 
-typedef struct {
+typedef struct __z_reply_handler_wrapper_t {
     z_owned_reply_handler_t user_call;
     void *ctx;
 } __z_reply_handler_wrapper_t;
 
-void __z_reply_handler(_z_reply_t **reply, void *arg) {
+void __z_reply_handler(_z_reply_t **reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
     z_owned_reply_t oreply = {._value = *reply};
 
-    __z_reply_handler_wrapper_t *wrapped_ctx = (__z_reply_handler_wrapper_t *)arg;
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
 
     if (oreply._value == NULL) {
