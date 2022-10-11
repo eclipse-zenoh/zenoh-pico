@@ -27,10 +27,10 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     _z_hello_list_t *hellos = NULL;
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    if (ep_res._tag == _Z_RES_ERR) {
+    if (ep_res._tag < _Z_RES_OK) {
         goto ERR_1;
     }
-    _z_endpoint_t endpoint = ep_res._value._endpoint;
+    _z_endpoint_t endpoint = ep_res._value;
 
 #if Z_SCOUTING_UDP == 1
     if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA)) {
@@ -43,12 +43,12 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     _z_endpoint_clear(&endpoint);
 
     _z_link_p_result_t r_scout = _z_open_link(locator);
-    if (r_scout._tag == _Z_RES_ERR) {
+    if (r_scout._tag < _Z_RES_OK) {
         return hellos;
     }
 
     // Send the scout message
-    int res = _z_link_send_wbuf(r_scout._value._link, wbf);
+    int res = _z_link_send_wbuf(r_scout._value, wbf);
     if (res < 0) {
         _Z_INFO("Unable to send scout message\n");
         return hellos;
@@ -63,18 +63,18 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
         _z_zbuf_reset(&zbf);
 
         // Read bytes from the socket
-        size_t len = _z_link_recv_zbuf(r_scout._value._link, &zbf, NULL);
+        size_t len = _z_link_recv_zbuf(r_scout._value, &zbf, NULL);
         if (len == SIZE_MAX) {
             continue;
         }
 
         _z_transport_message_result_t r_hm = _z_transport_message_decode(&zbf);
-        if (r_hm._tag == _Z_RES_ERR) {
+        if (r_hm._tag < _Z_RES_OK) {
             _Z_ERROR("Scouting loop received malformed message\n");
             continue;
         }
 
-        _z_transport_message_t t_msg = r_hm._value._transport_message;
+        _z_transport_message_t t_msg = r_hm._value;
         switch (_Z_MID(t_msg._header)) {
             case _Z_MID_HELLO: {
                 _Z_INFO("Received _Z_HELLO message\n");
@@ -121,7 +121,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
         }
     }
 
-    _z_link_free(&r_scout._value._link);
+    _z_link_free(&r_scout._value);
     _z_zbuf_clear(&zbf);
 
     return hellos;

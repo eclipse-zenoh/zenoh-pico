@@ -33,9 +33,9 @@ void _z_period_decode_na(_z_zbuf_t *buf, _z_period_result_t *r) {
     _z_zint_result_t r_duration = _z_zint_decode(buf);
     _ASSURE_P_RESULT(r_duration, r, _Z_ERR_PARSE_ZINT);
 
-    r->_value._period.origin = r_origin._value._zint;
-    r->_value._period.period = r_period._value._zint;
-    r->_value._period.duration = r_duration._value._zint;
+    r->_value.origin = r_origin._value;
+    r->_value.period = r_period._value;
+    r->_value.duration = r_duration._value;
 }
 
 _z_period_result_t _z_period_decode(_z_zbuf_t *buf) {
@@ -52,10 +52,9 @@ _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
 
     if (_z_zbuf_can_read(zbf) != 0) {
         r._tag = _Z_RES_OK;
-        r._value._uint8 = _z_zbuf_read(zbf);
+        r._value = _z_zbuf_read(zbf);
     } else {
-        r._tag = _Z_RES_ERR;
-        r._value._error = _Z_ERR_PARSE_UINT8;
+        r._tag = _Z_ERR_PARSE_UINT8;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
     }
 
@@ -75,7 +74,7 @@ int _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
 _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
     _z_zint_result_t r;
     r._tag = _Z_RES_OK;
-    r._value._zint = 0;
+    r._value = 0;
 
     int i = 0;
     _z_uint8_result_t r_uint8;
@@ -83,9 +82,9 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
         r_uint8 = _z_uint8_decode(zbf);
         _ASSURE_RESULT(r_uint8, r, _Z_ERR_PARSE_ZINT);
 
-        r._value._zint = r._value._zint | (((_z_zint_t)r_uint8._value._uint8 & 0x7f) << i);
+        r._value = r._value | (((_z_zint_t)r_uint8._value & 0x7f) << i);
         i += 7;
-    } while (r_uint8._value._uint8 > 0x7f);
+    } while (r_uint8._value > 0x7f);
 
     return r;
 }
@@ -105,17 +104,16 @@ void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r) {
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT);
     // Check if we have enought bytes to read
-    if (_z_zbuf_len(zbf) < r_zint._value._zint) {
-        r->_tag = _Z_RES_ERR;
-        r->_value._error = _Z_ERR_PARSE_BYTES;
+    if (_z_zbuf_len(zbf) < r_zint._value) {
+        r->_tag = _Z_ERR_PARSE_BYTES;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
         return;
     }
 
     // Decode without allocating
-    r->_value._bytes = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint._value._zint);
+    r->_value = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint._value);
     // Move the read position
-    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->_value._bytes.len);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->_value.len);
 }
 
 _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf) {
@@ -137,12 +135,11 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
     r._tag = _Z_RES_OK;
     _z_zint_result_t vr = _z_zint_decode(zbf);
     _ASSURE_RESULT(vr, r, _Z_ERR_PARSE_ZINT);
-    size_t len = vr._value._zint;
+    size_t len = vr._value;
 
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len) {
-        r._tag = _Z_RES_ERR;
-        r._value._error = _Z_ERR_PARSE_STRING;
+        r._tag = _Z_ERR_PARSE_STRING;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
         return r;
     }
@@ -151,7 +148,7 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
     char *s = (char *)z_malloc(len + (size_t)1);
     s[len] = '\0';
     _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
-    r._value._str = s;
+    r._value = s;
 
     return r;
 }

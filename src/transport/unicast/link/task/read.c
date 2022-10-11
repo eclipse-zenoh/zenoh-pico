@@ -24,17 +24,17 @@
 
 int _zp_unicast_read(_z_transport_unicast_t *ztu) {
     _z_transport_message_result_t r_s = _z_unicast_recv_t_msg(ztu);
-    if (r_s._tag == _Z_RES_ERR) {
+    if (r_s._tag < _Z_RES_OK) {
         goto ERR;
     }
 
-    int res = _z_unicast_handle_transport_message(ztu, &r_s._value._transport_message);
-    _z_t_msg_clear(&r_s._value._transport_message);
+    int res = _z_unicast_handle_transport_message(ztu, &r_s._value);
+    _z_t_msg_clear(&r_s._value);
 
     return res;
 
 ERR:
-    return _Z_RES_ERR;
+    return _Z_ERR_GENERIC;
 }
 
 void *_zp_unicast_read_task(void *ztu_arg) {
@@ -89,9 +89,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         _z_transport_message_decode_na(&zbuf, &r);
 
         if (r._tag == _Z_RES_OK) {
-            int res = _z_unicast_handle_transport_message(ztu, &r._value._transport_message);
+            int res = _z_unicast_handle_transport_message(ztu, &r._value);
             if (res == _Z_RES_OK) {
-                _z_t_msg_clear(&r._value._transport_message);
+                _z_t_msg_clear(&r._value);
             } else {
                 goto EXIT_RECV_LOOP;
             }

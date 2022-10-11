@@ -205,11 +205,11 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     _z_t_msg_clear(&ism);
 
     _z_transport_message_result_t r_iam = _z_link_recv_t_msg(zl);
-    if (r_iam._tag == _Z_RES_ERR) {
+    if (r_iam._tag < _Z_RES_OK) {
         goto ERR_1;
     }
 
-    _z_transport_message_t iam = r_iam._value._transport_message;
+    _z_transport_message_t iam = r_iam._value;
     if (_Z_MID(iam._header) != _Z_MID_INIT) {
         goto ERR_2;
     }
@@ -251,10 +251,10 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
         }
 
         _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
-        if (r_oam._tag == _Z_RES_ERR) {
+        if (r_oam._tag < _Z_RES_OK) {
             goto ERR_3;
         }
-        _z_transport_message_t oam = r_oam._value._transport_message;
+        _z_transport_message_t oam = r_oam._value;
         _Z_INFO("Received Z_OPEN(Ack)\n");
 
         if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) != 0) {
@@ -276,7 +276,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
     _z_t_msg_clear(&iam);
 
     ret._tag = _Z_RES_OK;
-    ret._value._transport_unicast_establish_param = param;
+    ret._value = param;
     return ret;
 
 ERR_3:
@@ -284,8 +284,7 @@ ERR_3:
 ERR_2:
     _z_t_msg_clear(&iam);
 ERR_1:
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }
 #endif  // Z_UNICAST_TRANSPORT == 1
@@ -296,8 +295,7 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_clie
     (void)(zl);
     (void)(local_pid);
     _z_transport_multicast_establish_param_result_t ret;
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
 
     // @TODO: not implemented
 
@@ -311,8 +309,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
     (void)(zl);
     (void)(local_pid);
     _z_transport_unicast_establish_param_result_t ret;
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
 
     // @TODO: not implemented
 
@@ -351,12 +348,11 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
     }
 
     ret._tag = _Z_RES_OK;
-    ret._value._transport_multicast_establish_param = param;
+    ret._value = param;
     return ret;
 
 ERR_1:
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1

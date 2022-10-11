@@ -38,8 +38,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) != 0) {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
-            r->_tag = _Z_RES_ERR;
-            r->_value._error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
 
@@ -51,21 +50,18 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
         _Z_DEBUG(">> \t msg len = %zu\n", len);
         size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
         if (writable < len) {
-            r->_tag = _Z_RES_ERR;
-            r->_value._error = _Z_ERR_IOBUF_NO_SPACE;
+            r->_tag = _Z_ERR_IOBUF_NO_SPACE;
             goto EXIT_SRCV_PROC;
         }
 
         // Read enough bytes to decode the message
         if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, len, NULL) != len) {
-            r->_tag = _Z_RES_ERR;
-            r->_value._error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     } else {
         if (_z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
-            r->_tag = _Z_RES_ERR;
-            r->_value._error = _Z_ERR_IO_GENERIC;
+            r->_tag = _Z_ERR_IO_GENERIC;
             goto EXIT_SRCV_PROC;
         }
     }
@@ -193,7 +189,7 @@ int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transpor
                     // Decode the zenoh message
                     _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(&zbf);
                     if (r_zm._tag == _Z_RES_OK) {
-                        _z_zenoh_message_t d_zm = r_zm._value._zenoh_message;
+                        _z_zenoh_message_t d_zm = r_zm._value;
                         _z_handle_zenoh_message(ztu->_session, &d_zm);
 
                         // Clear must be explicitly called for fragmented zenoh messages.

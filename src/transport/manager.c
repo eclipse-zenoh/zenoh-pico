@@ -22,30 +22,30 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
     _z_transport_t *zt = NULL;
 
     _z_link_p_result_t res_zl = _z_open_link(locator);
-    if (res_zl._tag == _Z_RES_ERR) {
+    if (res_zl._tag < _Z_RES_OK) {
         goto ERR_1;
     }
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (!_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities)) {
+    if (!_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities)) {
         _z_transport_unicast_establish_param_result_t res_tp_param =
-            _z_transport_unicast_open_client(res_zl._value._link, local_pid);
-        if (res_tp_param._tag == _Z_RES_ERR) {
+            _z_transport_unicast_open_client(res_zl._value, local_pid);
+        if (res_tp_param._tag < _Z_RES_OK) {
             goto ERR_2;
         }
 
-        zt = _z_transport_unicast_new(res_zl._value._link, res_tp_param._value._transport_unicast_establish_param);
+        zt = _z_transport_unicast_new(res_zl._value, res_tp_param._value);
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities) != 0) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) != 0) {
         _z_transport_multicast_establish_param_result_t res_tp_param =
-            _z_transport_multicast_open_client(res_zl._value._link, local_pid);
-        if (res_tp_param._tag == _Z_RES_ERR) {
+            _z_transport_multicast_open_client(res_zl._value, local_pid);
+        if (res_tp_param._tag < _Z_RES_OK) {
             goto ERR_2;
         }
 
-        zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
+        zt = _z_transport_multicast_new(res_zl._value, res_tp_param._value);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
@@ -53,14 +53,13 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
     }
 
     ret._tag = _Z_RES_OK;
-    ret._value._transport = zt;
+    ret._value = zt;
     return ret;
 
 ERR_2:
-    _z_link_free(&res_zl._value._link);
+    _z_link_free(&res_zl._value);
 ERR_1:
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }
 
@@ -69,30 +68,30 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
     _z_transport_t *zt = NULL;
 
     _z_link_p_result_t res_zl = _z_listen_link(locator);
-    if (res_zl._tag == _Z_RES_ERR) {
+    if (res_zl._tag < _Z_RES_OK) {
         goto ERR_1;
     }
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (!_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities)) {
+    if (!_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities)) {
         _z_transport_unicast_establish_param_result_t res_tp_param =
-            _z_transport_unicast_open_peer(res_zl._value._link, local_pid);
-        if (res_tp_param._tag == _Z_RES_ERR) {
+            _z_transport_unicast_open_peer(res_zl._value, local_pid);
+        if (res_tp_param._tag < _Z_RES_OK) {
             goto ERR_2;
         }
 
-        zt = _z_transport_unicast_new(res_zl._value._link, res_tp_param._value._transport_unicast_establish_param);
+        zt = _z_transport_unicast_new(res_zl._value, res_tp_param._value);
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value._link->_capabilities) != 0) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) != 0) {
         _z_transport_multicast_establish_param_result_t res_tp_param =
-            _z_transport_multicast_open_peer(res_zl._value._link, local_pid);
-        if (res_tp_param._tag == _Z_RES_ERR) {
+            _z_transport_multicast_open_peer(res_zl._value, local_pid);
+        if (res_tp_param._tag < _Z_RES_OK) {
             goto ERR_2;
         }
 
-        zt = _z_transport_multicast_new(res_zl._value._link, res_tp_param._value._transport_multicast_establish_param);
+        zt = _z_transport_multicast_new(res_zl._value, res_tp_param._value);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
@@ -100,14 +99,13 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
     }
 
     ret._tag = _Z_RES_OK;
-    ret._value._transport = zt;
+    ret._value = zt;
     return ret;
 
 ERR_2:
-    _z_link_free(&res_zl._value._link);
+    _z_link_free(&res_zl._value);
 ERR_1:
-    ret._tag = _Z_RES_ERR;
-    ret._value._error = -1;
+    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }
 

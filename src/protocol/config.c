@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/utils/config.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -40,7 +41,7 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
     _z_str_intmap_result_t res;
 
     res._tag = _Z_RES_OK;
-    res._value._str_intmap = _z_str_intmap_make();
+    res._value = _z_str_intmap_make();
 
     // Check the string contains only the right
     const char *start = s;
@@ -49,55 +50,45 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
         const char *p_key_start = start;
         const char *p_key_end = strchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR);
 
-        if (p_key_end == NULL) {
-            goto ERR;
-        }
+        if (p_key_end != NULL) {
+            // Verify the key is valid based on the provided mapping
+            size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
+            _Bool found = false;
+            unsigned int key;
+            for (unsigned int i = 0; i < argc; i++) {
+                if (p_key_len != strlen(argv[i]._str)) {
+                    continue;
+                }
+                if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0) {
+                    continue;
+                }
 
-        // Verify the key is valid based on the provided mapping
-        size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
-        int found = 0;
-        unsigned int key;
-        for (unsigned int i = 0; i < argc; i++) {
-            if (p_key_len != strlen(argv[i]._str)) {
-                continue;
+                found = true;
+                key = argv[i]._key;
+                break;
             }
-            if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0) {
-                continue;
+
+            if (found == true) {
+                // Read and populate the value
+                const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
+                const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
+                if (p_value_end == NULL) {
+                    p_value_end = end;
+                }
+
+                size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
+                char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
+                (void)strncpy(p_value, p_value_start, p_value_len);
+                p_value[p_value_len] = '\0';
+
+                _z_str_intmap_insert(&res._value, key, p_value);
+
+                // Process next key value
+                start = _z_cptr_char_offset(p_value_end, 1);
             }
-
-            found = 1;
-            key = argv[i]._key;
-            break;
         }
-
-        if (!found) {
-            goto ERR;
-        }
-
-        // Read and populate the value
-        const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
-        const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
-        if (p_value_end == NULL) {
-            p_value_end = end;
-        }
-
-        size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
-        char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
-        (void)strncpy(p_value, p_value_start, p_value_len);
-        p_value[p_value_len] = '\0';
-
-        _z_str_intmap_insert(&res._value._str_intmap, key, p_value);
-
-        // Process next key value
-        start = _z_cptr_char_offset(p_value_end, 1);
     }
 
-    return res;
-
-ERR:
-    _z_str_intmap_clear(&res._value._str_intmap);
-    res._tag = _Z_RES_ERR;
-    res._value._error = _Z_ERR_PARSE_STRING;
     return res;
 }
 

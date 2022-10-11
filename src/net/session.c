@@ -26,12 +26,12 @@ _z_session_t *__z_open_inner(char *locator, int mode) {
     _z_session_t *zn = _z_session_init();
 
     _z_transport_p_result_t res = _z_new_transport(zn->_tp_manager, locator, mode);
-    if (res._tag == _Z_RES_ERR) {
+    if (res._tag < _Z_RES_OK) {
         goto ERR;
     }
 
     // Attach session and transport to one another
-    zn->_tp = res._value._transport;
+    zn->_tp = res._value;
 
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {

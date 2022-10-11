@@ -141,7 +141,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                     }
                     default: {
                         _Z_INFO("Unknown declaration message ID");
-                        return _Z_RES_ERR;
+                        return _Z_ERR_GENERIC;
                     }
                 }
             }
@@ -173,7 +173,7 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
         default: {
             _Z_ERROR("Unknown zenoh message ID\n");
-            return _Z_RES_ERR;
+            return _Z_ERR_GENERIC;
         }
     }
 }

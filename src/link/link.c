@@ -25,40 +25,40 @@ _z_link_p_result_t _z_open_link(const char *locator) {
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value._endpoint;
+    _z_endpoint_t endpoint = ep_res._value;
 
     // TODO[peer]: when peer unicast mode is supported, this must be revisited
     // Create transport link
 #if Z_LINK_TCP == 1
     if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA) != 0) {
-        r._value._link = _z_new_link_tcp(endpoint);
+        r._value = _z_new_link_tcp(endpoint);
     } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
         if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) != 0) {
-        r._value._link = _z_new_link_udp_unicast(endpoint);
+        r._value = _z_new_link_udp_unicast(endpoint);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
         if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) != 0) {
-        r._value._link = _z_new_link_bt(endpoint);
+        r._value = _z_new_link_bt(endpoint);
     } else
 #endif
 #if Z_LINK_SERIAL == 1
         if (_z_str_eq(endpoint._locator._protocol, SERIAL_SCHEMA) != 0) {
-        r._value._link = _z_new_link_serial(endpoint);
+        r._value = _z_new_link_serial(endpoint);
     } else
 #endif
     {
         goto ERR_2;
     }
 
-    if (r._value._link == NULL) {
+    if (r._value == NULL) {
         goto ERR_2;
     }
 
     // Open transport link for communication
-    if (r._value._link->_open_f(r._value._link) < 0) {
+    if (r._value->_open_f(r._value) < 0) {
         goto ERR_3;
     }
 
@@ -66,16 +66,16 @@ _z_link_p_result_t _z_open_link(const char *locator) {
     return r;
 
 ERR_3:
-    _z_link_free(&r._value._link);
-    r._value._error = -1;
+    _z_link_free(&r._value);
+    r._tag = -1;
     goto ERR_1;  // _z_link_free is releasing the endpoint
 
 ERR_2:
-    r._value._error = _Z_ERR_INVALID_LOCATOR;
+    r._tag = _Z_ERR_INVALID_LOCATOR;
     _z_endpoint_clear(&endpoint);
 
 ERR_1:
-    r._tag = _Z_RES_ERR;
+    r._tag = _Z_ERR_GENERIC;
     return r;
 }
 
@@ -84,30 +84,30 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value._endpoint;
+    _z_endpoint_t endpoint = ep_res._value;
 
     // TODO[peer]: when peer unicast mode is supported, this must be revisited
     // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
     if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) != 0) {
-        r._value._link = _z_new_link_udp_multicast(endpoint);
+        r._value = _z_new_link_udp_multicast(endpoint);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
         if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) != 0) {
-        r._value._link = _z_new_link_bt(endpoint);
+        r._value = _z_new_link_bt(endpoint);
     } else
 #endif
     {
         goto ERR_2;
     }
 
-    if (r._value._link == NULL) {
+    if (r._value == NULL) {
         goto ERR_2;
     }
 
     // Open transport link for listening
-    if (r._value._link->_listen_f(r._value._link) < 0) {
+    if (r._value->_listen_f(r._value) < 0) {
         goto ERR_3;
     }
 
@@ -115,17 +115,15 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
     return r;
 
 ERR_3:
-    _z_link_free(&r._value._link);
-    r._value._error = _Z_ERR_INVALID_LOCATOR;
+    _z_link_free(&r._value);
+    r._tag = _Z_ERR_INVALID_LOCATOR;
     goto ERR_1;  // _z_link_free is releasing the endpoint
 
 ERR_2:
     _z_endpoint_clear(&endpoint);
 
 ERR_1:
-    r._tag = _Z_RES_ERR;
-    r._value._error = -1;
-
+    r._tag = _Z_ERR_GENERIC;
     return r;
 }
 
