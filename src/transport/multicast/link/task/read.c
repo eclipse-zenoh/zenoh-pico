@@ -22,20 +22,19 @@
 
 #if Z_MULTICAST_TRANSPORT == 1
 
-int _zp_multicast_read(_z_transport_multicast_t *ztm) {
+int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
+    int8_t ret = _Z_RES_OK;
+
     _z_bytes_t addr;
     _z_transport_message_result_t r_s = _z_multicast_recv_t_msg(ztm, &addr);
-    if (r_s._tag < _Z_RES_OK) {
-        goto ERR;
+    if (r_s._tag == _Z_RES_OK) {
+        ret = _z_multicast_handle_transport_message(ztm, &r_s._value, &addr);
+        _z_t_msg_clear(&r_s._value);
+    } else {
+        ret = r_s._tag;
     }
 
-    int res = _z_multicast_handle_transport_message(ztm, &r_s._value, &addr);
-    _z_t_msg_clear(&r_s._value);
-
-    return res;
-
-ERR:
-    return _Z_ERR_GENERIC;
+    return ret;
 }
 
 void *_zp_multicast_read_task(void *ztm_arg) {
@@ -97,11 +96,13 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                     _z_t_msg_clear(&r._value);
                     _z_bytes_clear(&addr);
                 } else {
-                    goto EXIT_RECV_LOOP;
+                    ztm->_read_task_running = 0;
+                    continue;
                 }
             } else {
                 _Z_ERROR("Connection closed due to malformed message\n");
-                goto EXIT_RECV_LOOP;
+                ztm->_read_task_running = 0;
+                continue;
             }
         }
 
@@ -110,13 +111,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         _z_zbuf_compact(&ztm->_zbuf);
     }
 
-EXIT_RECV_LOOP:
-    if (ztm != NULL) {
-        ztm->_read_task_running = 0;
-
-        // Release the lock
-        _z_mutex_unlock(&ztm->_mutex_rx);
-    }
+    _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
     return 0;

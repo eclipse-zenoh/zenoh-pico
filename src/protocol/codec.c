@@ -17,7 +17,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ period ------------------*/
-int _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
+int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
     _Z_EC(_z_zint_encode(buf, tp->origin))
     _Z_EC(_z_zint_encode(buf, tp->period))
     return _z_zint_encode(buf, tp->duration);
@@ -45,7 +45,7 @@ _z_period_result_t _z_period_decode(_z_zbuf_t *buf) {
 }
 
 /*------------------ uint8 -------------------*/
-int _z_uint8_encode(_z_wbuf_t *wbf, uint8_t v) { return _z_wbuf_write(wbf, v); }
+int8_t _z_uint8_encode(_z_wbuf_t *wbf, uint8_t v) { return _z_wbuf_write(wbf, v); }
 
 _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
     _z_uint8_result_t r;
@@ -62,7 +62,7 @@ _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
 }
 
 /*------------------ z_zint ------------------*/
-int _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
+int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
     while (v > 0x7f) {
         uint8_t c = (v & 0x7f) | 0x80;
         _Z_EC(_z_wbuf_write(wbf, (uint8_t)c))
@@ -90,30 +90,31 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
 }
 
 /*------------------ uint8_array ------------------*/
-int _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
+int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
+    int8_t ret = _Z_RES_OK;
+
     _Z_EC(_z_zint_encode(wbf, bs->len))
     if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
-        return _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
+        ret = _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
-        return _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
+        ret = _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     }
+
+    return ret;
 }
 
 void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r) {
     r->_tag = _Z_RES_OK;
     _z_zint_result_t r_zint = _z_zint_decode(zbf);
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT);
-    // Check if we have enought bytes to read
-    if (_z_zbuf_len(zbf) < r_zint._value) {
+
+    if (_z_zbuf_len(zbf) >= r_zint._value) {                              // Check if we have enought bytes to read
+        r->_value = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint._value);  // Decode without allocating
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->_value.len);     // Move the read position
+    } else {
         r->_tag = _Z_ERR_PARSE_BYTES;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        return;
     }
-
-    // Decode without allocating
-    r->_value = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint._value);
-    // Move the read position
-    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->_value.len);
 }
 
 _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf) {
@@ -123,7 +124,7 @@ _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf) {
 }
 
 /*------------------ string with null terminator ------------------*/
-int _z_str_encode(_z_wbuf_t *wbf, const char *s) {
+int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     size_t len = strlen(s);
     _Z_EC(_z_zint_encode(wbf, len))
     // Note that this does not put the string terminator on the wire.
@@ -137,18 +138,15 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
     _ASSURE_RESULT(vr, r, _Z_ERR_PARSE_ZINT);
     size_t len = vr._value;
 
-    // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
+    if (_z_zbuf_len(zbf) >= len) {                    // Check if we have enough bytes to read
+        char *s = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
+        s[len] = '\0';
+        _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
+        r._value = s;
+    } else {
         r._tag = _Z_ERR_PARSE_STRING;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        return r;
     }
-
-    // Allocate space for the string terminator
-    char *s = (char *)z_malloc(len + (size_t)1);
-    s[len] = '\0';
-    _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
-    r._value = s;
 
     return r;
 }

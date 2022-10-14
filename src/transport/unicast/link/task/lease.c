@@ -19,14 +19,17 @@
 
 #if Z_UNICAST_TRANSPORT == 1
 
-int _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
-    // Do not send the PID on unicast links
+int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+    int8_t ret = _Z_RES_OK;
+
     _z_bytes_t pid;
-    _z_bytes_reset(&pid);
+    _z_bytes_reset(&pid);  // Do not send the PID on unicast links
 
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(pid);
+    ret = _z_unicast_send_t_msg(ztu, &t_msg);
+    // FIXME: double check why we dont clear t_msg
 
-    return _z_unicast_send_t_msg(ztu, &t_msg);
+    return ret;
 }
 
 void *_zp_unicast_lease_task(void *ztu_arg) {

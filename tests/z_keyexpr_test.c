@@ -349,12 +349,12 @@ int main(void) {
         printf("\n");
     }
 
-    assert(!z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")));
-    assert(!z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")));
-    assert(z_keyexpr_equals(z_keyexpr("greetings/hello/there"), z_keyexpr("greetings/hello/there")));
-    assert(!zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb"));
-    assert(!zp_keyexpr_equals_null_terminated("a/bc", "a/cb"));
-    assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there"));
+    assert(z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")) < 0);
+    assert(z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")) < 0);
+    assert(z_keyexpr_equals(z_keyexpr("greetings/hello/there"), z_keyexpr("greetings/hello/there")) == 0);
+    assert(zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb") == false);
+    assert(zp_keyexpr_equals_null_terminated("a/bc", "a/cb") == false);
+    assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there") == true);
 
     return 0;
 }

@@ -22,19 +22,18 @@
 
 #if Z_UNICAST_TRANSPORT == 1
 
-int _zp_unicast_read(_z_transport_unicast_t *ztu) {
+int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
+    int8_t ret = _Z_RES_OK;
+
     _z_transport_message_result_t r_s = _z_unicast_recv_t_msg(ztu);
-    if (r_s._tag < _Z_RES_OK) {
-        goto ERR;
+    if (r_s._tag == _Z_RES_OK) {
+        ret = _z_unicast_handle_transport_message(ztu, &r_s._value);
+        _z_t_msg_clear(&r_s._value);
+    } else {
+        ret = r_s._tag;
     }
 
-    int res = _z_unicast_handle_transport_message(ztu, &r_s._value);
-    _z_t_msg_clear(&r_s._value);
-
-    return res;
-
-ERR:
-    return _Z_ERR_GENERIC;
+    return ret;
 }
 
 void *_zp_unicast_read_task(void *ztu_arg) {
@@ -93,11 +92,13 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             if (res == _Z_RES_OK) {
                 _z_t_msg_clear(&r._value);
             } else {
-                goto EXIT_RECV_LOOP;
+                ztu->_read_task_running = 0;
+                continue;
             }
         } else {
             _Z_ERROR("Connection closed due to malformed message\n\n\n");
-            goto EXIT_RECV_LOOP;
+            ztu->_read_task_running = 0;
+            continue;
         }
 
         // Move the read position of the read buffer
@@ -105,13 +106,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         _z_zbuf_compact(&ztu->_zbuf);
     }
 
-EXIT_RECV_LOOP:
-    if (ztu != NULL) {
-        ztu->_read_task_running = 0;
-
-        // Release the lock
-        _z_mutex_unlock(&ztu->_mutex_rx);
-    }
+    _z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
     return 0;

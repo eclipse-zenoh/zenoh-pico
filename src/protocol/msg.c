@@ -869,42 +869,53 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_SCOUT:
+        case _Z_MID_SCOUT: {
             // _z_t_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
-            break;
-        case _Z_MID_HELLO:
+        } break;
+
+        case _Z_MID_HELLO: {
             // _z_t_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
-            break;
-        case _Z_MID_JOIN:
+        } break;
+
+        case _Z_MID_JOIN: {
             _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
-            break;
-        case _Z_MID_INIT:
+        } break;
+
+        case _Z_MID_INIT: {
             _z_t_msg_copy_init(&clone->_body._init, &msg->_body._init);
-            break;
-        case _Z_MID_OPEN:
+        } break;
+
+        case _Z_MID_OPEN: {
             _z_t_msg_copy_open(&clone->_body._open, &msg->_body._open);
-            break;
-        case _Z_MID_CLOSE:
+        } break;
+
+        case _Z_MID_CLOSE: {
             // _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
-            break;
-        case _Z_MID_SYNC:
+        } break;
+
+        case _Z_MID_SYNC: {
             // _z_t_msg_copy_sync(&clone->_body._sync, (&msg->_body._sync);
-            break;
-        case _Z_MID_ACK_NACK:
+        } break;
+
+        case _Z_MID_ACK_NACK: {
             // _z_t_msg_copy_ack_nack(&clone->_body._ack_nack, g->body._ack_nack);
-            break;
-        case _Z_MID_KEEP_ALIVE:
+        } break;
+
+        case _Z_MID_KEEP_ALIVE: {
             // _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, >body._keep_alive);
-            break;
-        case _Z_MID_PING_PONG:
+        } break;
+
+        case _Z_MID_PING_PONG: {
             // _z_t_msg_copy_ping_pong(&clone->_body._ping_pong, ->body._ping_pong);
-            break;
-        case _Z_MID_FRAME:
+        } break;
+
+        case _Z_MID_FRAME: {
             // _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
-            break;
-        default:
+        } break;
+
+        default: {
             _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
-            break;
+        } break;
     }
 }
 
@@ -916,41 +927,52 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_SCOUT:
+        case _Z_MID_SCOUT: {
             _z_t_msg_clear_scout(&msg->_body._scout, msg->_header);
-            break;
-        case _Z_MID_HELLO:
+        } break;
+
+        case _Z_MID_HELLO: {
             _z_t_msg_clear_hello(&msg->_body._hello, msg->_header);
-            break;
-        case _Z_MID_JOIN:
+        } break;
+
+        case _Z_MID_JOIN: {
             _z_t_msg_clear_join(&msg->_body._join, msg->_header);
-            break;
-        case _Z_MID_INIT:
+        } break;
+
+        case _Z_MID_INIT: {
             _z_t_msg_clear_init(&msg->_body._init, msg->_header);
-            break;
-        case _Z_MID_OPEN:
+        } break;
+
+        case _Z_MID_OPEN: {
             _z_t_msg_clear_open(&msg->_body._open, msg->_header);
-            break;
-        case _Z_MID_CLOSE:
+        } break;
+
+        case _Z_MID_CLOSE: {
             _z_t_msg_clear_close(&msg->_body._close, msg->_header);
-            break;
-        case _Z_MID_SYNC:
+        } break;
+
+        case _Z_MID_SYNC: {
             _z_t_msg_clear_sync(&msg->_body._sync, msg->_header);
-            break;
-        case _Z_MID_ACK_NACK:
+        } break;
+
+        case _Z_MID_ACK_NACK: {
             _z_t_msg_clear_ack_nack(&msg->_body._ack_nack, msg->_header);
-            break;
-        case _Z_MID_KEEP_ALIVE:
+        } break;
+
+        case _Z_MID_KEEP_ALIVE: {
             _z_t_msg_clear_keep_alive(&msg->_body._keep_alive, msg->_header);
-            break;
-        case _Z_MID_PING_PONG:
+        } break;
+
+        case _Z_MID_PING_PONG: {
             _z_t_msg_clear_ping_pong(&msg->_body._ping_pong, msg->_header);
-            break;
-        case _Z_MID_FRAME:
+        } break;
+
+        case _Z_MID_FRAME: {
             _z_t_msg_clear_frame(&msg->_body._frame, msg->_header);
-            return;
-        default:
+        } break;
+
+        default: {
             _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
-            return;
+        } break;
     }
 }

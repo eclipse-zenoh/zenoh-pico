@@ -21,7 +21,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two) { return one->_id == two->_id; }
+_Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two) { return one->_id == two->_id; }
 
 void _z_questionable_clear(_z_questionable_t *qle) {
     if (qle->_dropper != NULL) {
@@ -32,17 +32,18 @@ void _z_questionable_clear(_z_questionable_t *qle) {
 
 /*------------------ Queryable ------------------*/
 _z_questionable_sptr_t *__z_get_questionable_by_id(_z_questionable_sptr_list_t *qles, const _z_zint_t id) {
-    _z_questionable_sptr_t *qle = NULL;
+    _z_questionable_sptr_t *ret = NULL;
     while (qles != NULL) {
-        qle = _z_questionable_sptr_list_head(qles);
+        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
         if (id == qle->ptr->_id) {
-            return qle;
+            ret = qle;
+            break;
         }
 
         qles = _z_questionable_sptr_list_tail(qles);
     }
 
-    return qle;
+    return ret;
 }
 
 _z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_list_t *qles, const _z_keyexpr_t key) {
@@ -109,37 +110,34 @@ _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const 
     return qles;
 }
 
-int _z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
+_z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
     _Z_DEBUG(">>> Allocating queryable for (%lu:%s)\n", q->_key._id, q->_key._suffix);
+    _z_questionable_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_questionable_sptr_t *qle = (_z_questionable_sptr_t *)z_malloc(sizeof(_z_questionable_sptr_t));
-    *qle = _z_questionable_sptr_new(*q);
-    zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, qle);
+    ret = (_z_questionable_sptr_t *)z_malloc(sizeof(_z_questionable_sptr_t));
+    *ret = _z_questionable_sptr_new(*q);
+    zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, ret);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    return 0;
+    return ret;
 }
 
-int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
+int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
+    int8_t ret = _Z_RES_OK;
+
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
-    if (key._suffix == NULL) {
-        goto ERR_1;
-    }
-
-    // This two step approach allows the lock to be released while in the user callback
-    // Scoped because of the previous goto ERR
-    {
+    if (key._suffix != NULL) {
         _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
 
 #if Z_MULTI_THREAD == 1
@@ -162,41 +160,35 @@ int _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 
         _z_keyexpr_clear(&key);
         _z_questionable_sptr_list_free(&qles);
-    }
 
-    // Send the final reply
-    // Final flagged reply context does not encode the ZID
-    _z_bytes_t zid;
-    _z_bytes_reset(&zid);
-    int is_final = 1;
-    _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
+        // Send the final reply
+        // Final flagged reply context does not encode the ZID
+        _z_bytes_t zid;
+        _z_bytes_reset(&zid);
+        int is_final = 1;
+        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
 
-    // Congestion control
-    int can_be_dropped = 0;
+        // Congestion control
+        int can_be_dropped = 0;
 
-    // Create the final reply
-    _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
-    z_msg._reply_context = rctx;
+        // Create the final reply
+        _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
+        z_msg._reply_context = rctx;
 
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
-        goto ERR_2;
-    }
-    _z_msg_clear(&z_msg);
-
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
+            ret = _Z_ERR_TX_CONNECTION;
+        }
+        _z_msg_clear(&z_msg);
+    } else {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+        _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    return 0;
+        ret = _Z_ERR_UNKNOWN_KEYEXPR;
+        _z_keyexpr_clear(&key);
+    }
 
-ERR_2:
-    _z_msg_clear(&z_msg);
-
-ERR_1:
-#if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
-    return -1;
+    return ret;
 }
 
 void _z_unregister_questionable(_z_session_t *zn, _z_questionable_sptr_t *qle) {

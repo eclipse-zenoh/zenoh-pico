@@ -43,7 +43,7 @@ typedef struct {
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
-int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
+_Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)

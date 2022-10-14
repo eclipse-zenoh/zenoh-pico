@@ -23,7 +23,7 @@
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
     bs->start = (uint8_t *)z_malloc(capacity * sizeof(uint8_t));
     bs->len = capacity;
-    bs->_is_alloc = 1;
+    bs->_is_alloc = true;
 }
 
 _z_bytes_t _z_bytes_make(size_t capacity) {
@@ -36,23 +36,21 @@ _z_bytes_t _z_bytes_wrap(const uint8_t *p, size_t len) {
     _z_bytes_t bs;
     bs.start = p;
     bs.len = len;
-    bs._is_alloc = 0;
+    bs._is_alloc = false;
     return bs;
 }
 
 void _z_bytes_reset(_z_bytes_t *bs) {
     bs->start = NULL;
     bs->len = 0;
-    bs->_is_alloc = 0;
+    bs->_is_alloc = false;
 }
 
 void _z_bytes_clear(_z_bytes_t *bs) {
-    if (!bs->_is_alloc) {
-        return;
+    if (bs->_is_alloc == true) {
+        z_free((uint8_t *)bs->start);
+        _z_bytes_reset(bs);
     }
-
-    z_free((uint8_t *)bs->start);
-    _z_bytes_reset(bs);
 }
 
 void _z_bytes_free(_z_bytes_t **bs) {

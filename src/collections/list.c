@@ -90,7 +90,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
             f_f(&this->_val);
             z_free(this);
-            return xs;
+            break;
         } else {
             previous = current;
             current = current->_tail;

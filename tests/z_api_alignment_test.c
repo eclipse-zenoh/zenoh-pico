@@ -112,20 +112,20 @@ int main(int argc, char **argv) {
     _Bool _ret_bool = z_keyexpr_is_initialized(&key);
     assert(_ret_bool == true);
 
-    _ret_bool = z_keyexpr_includes(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert(_ret_bool == true);
+    int8_t _ret_int8 = z_keyexpr_includes(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
+    assert(_ret_int8 == 0);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
     assert(_ret_bool == true);
 #endif
     _ret_bool = z_keyexpr_intersects(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert(_ret_bool == true);
+    assert(_ret_int8 == 0);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
     assert(_ret_bool == true);
 #endif
     _ret_bool = z_keyexpr_equals(z_keyexpr("demo/example/**"), z_keyexpr("demo/example"));
-    assert(_ret_bool == false);
+    assert(_ret_int8 == 0);
 #ifdef ZENOH_PICO
     _ret_bool = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
     assert(_ret_bool == false);
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     char *keyexpr_str = (char *)malloc(keyexpr_len + 1);
     memcpy(keyexpr_str, "demo/example/**/*", keyexpr_len);
     keyexpr_str[keyexpr_len] = '\0';
-    int8_t _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
+    _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
     assert(_ret_int8 < 0);
 
 #ifdef ZENOH_PICO

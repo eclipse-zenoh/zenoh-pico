@@ -60,8 +60,8 @@ typedef enum {
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
 
-typedef int (*_z_f_link_open)(struct _z_link_t *self);
-typedef int (*_z_f_link_listen)(struct _z_link_t *self);
+typedef int8_t (*_z_f_link_open)(struct _z_link_t *self);
+typedef int8_t (*_z_f_link_listen)(struct _z_link_t *self);
 typedef void (*_z_f_link_close)(struct _z_link_t *self);
 typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
 typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
@@ -107,7 +107,7 @@ void _z_link_free(_z_link_t **zn);
 _z_link_p_result_t _z_open_link(const char *locator);
 _z_link_p_result_t _z_listen_link(const char *locator);
 
-int _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf);
+int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr);
 size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_bytes_t *addr);
 

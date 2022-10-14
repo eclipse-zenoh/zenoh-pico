@@ -235,7 +235,7 @@ void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right) {
         printf("%s:%s", l, r);
         if (i < left->_len - 1) printf(" ");
 
-        assert(_z_str_eq(l, r));
+        assert(_z_str_eq(l, r) == true);
     }
     printf(")");
 }
@@ -259,7 +259,7 @@ void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right
         z_free(ls);
         z_free(rs);
 
-        assert(_z_locator_eq(l, r));
+        assert(_z_locator_eq(l, r) == true);
     }
     printf(")");
 }
@@ -433,7 +433,7 @@ void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header) 
     printf("Name (");
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K)) {
         printf("%s:%s", left->_suffix, right->_suffix);
-        assert(_z_str_eq(left->_suffix, right->_suffix));
+        assert(_z_str_eq(left->_suffix, right->_suffix) == true);
     } else {
         printf("NULL:NULL");
     }
@@ -1348,7 +1348,7 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     printf("\n");
 
     printf("   Predicate (%s:%s)", left->_parameters, right->_parameters);
-    assert(_z_str_eq(left->_parameters, right->_parameters));
+    assert(_z_str_eq(left->_parameters, right->_parameters) == true);
     printf("\n");
 
     printf("   Query ID (%zu:%zu)", left->_qid, right->_qid);
@@ -2336,8 +2336,8 @@ void transport_message(void) {
     printf("\n");
 
     // Encode
-    int res = _z_transport_message_encode(&wbf, &e_tm);
-    assert(res == 0);
+    int8_t res = _z_transport_message_encode(&wbf, &e_tm);
+    assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
@@ -2370,7 +2370,7 @@ void batch(void) {
         // Initialize random transport message
         e_tm[i] = gen_transport_message(0);
         // Encode
-        int res = _z_transport_message_encode(&wbf, &e_tm[i]);
+        int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == 0);
         (void)(res);
     }
@@ -2378,16 +2378,16 @@ void batch(void) {
         // Initialize a frame message
         e_tm[i] = gen_frame_message(0);
         // Encode
-        int res = _z_transport_message_encode(&wbf, &e_tm[i]);
-        assert(res == 0);
+        int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
+        assert(res == _Z_RES_OK);
         (void)(res);
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++) {
         // Initialize random transport message
         e_tm[i] = gen_transport_message(0);
         // Encode
-        int res = _z_transport_message_encode(&wbf, &e_tm[i]);
-        assert(res == 0);
+        int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
+        assert(res == _Z_RES_OK);
         (void)(res);
     }
 
@@ -2455,8 +2455,8 @@ int _z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, int is_reliable,
         // Get the frame header
         _z_transport_message_t f_hdr = _z_frame_header(is_reliable, 1, is_final, sn);
         // Encode the frame header
-        int res = _z_transport_message_encode(dst, &f_hdr);
-        if (res == 0) {
+        int8_t res = _z_transport_message_encode(dst, &f_hdr);
+        if (res == _Z_RES_OK) {
             size_t space_left = _z_wbuf_space_left(dst);
             size_t bytes_left = _z_wbuf_len(src);
             // Check if it is really the final fragment

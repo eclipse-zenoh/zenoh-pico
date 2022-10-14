@@ -24,25 +24,26 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int _z_f_link_open_bt(_z_link_t *self) {
+int8_t _z_f_link_open_bt(_z_link_t *self) {
+    int8_t ret = 0;
+
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
     uint8_t profile = (strcmp(profile_str, "spp") == 0) ? _Z_BT_PROFILE_SPP : _Z_BT_PROFILE_UNSUPPORTED;
-    self->_socket._bt._sock = _z_open_bt(self->_endpoint._locator._address, mode, profile);
-    if (self->_socket._bt._sock._err == true) {
-        goto ERR;
-    }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
+    self->_socket._bt._sock = _z_open_bt(self->_endpoint._locator._address, mode, profile);
+    if (self->_socket._bt._sock._err == true) {
+        ret = -1;
+    }
 
-    return 0;
-
-ERR:
-    return -1;
+    return ret;
 }
 
-int _z_f_link_listen_bt(_z_link_t *self) {
+int8_t _z_f_link_listen_bt(_z_link_t *self) {
+    int8_t ret = 0;
+
     uint8_t mode = 0;
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     if (strcmp(mode_str, "master") == 0) {
@@ -50,7 +51,7 @@ int _z_f_link_listen_bt(_z_link_t *self) {
     } else if (strcmp(mode_str, "slave") == 0) {
         mode = _Z_BT_MODE_SLAVE;
     } else {
-        goto ERR;
+        ret = -1;
     }
 
     uint8_t profile = 0;
@@ -58,19 +59,16 @@ int _z_f_link_listen_bt(_z_link_t *self) {
     if (strcmp(profile_str, "spp") == 0) {
         profile = _Z_BT_PROFILE_SPP;
     } else {
-        goto ERR;
+        ret = -1;
     }
 
+    self->_socket._bt._gname = self->_endpoint._locator._address;
     self->_socket._bt._sock = _z_listen_bt(self->_endpoint._locator._address, mode, profile);
     if (self->_socket._bt._sock._err == true) {
-        goto ERR;
+        ret = -1;
     }
-    self->_socket._bt._gname = self->_endpoint._locator._address;
 
-    return 0;
-
-ERR:
-    return -1;
+    return ret;
 }
 
 void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(self->_socket._bt._sock); }

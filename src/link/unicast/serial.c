@@ -26,7 +26,9 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int _z_f_link_open_serial(_z_link_t *self) {
+int8_t _z_f_link_open_serial(_z_link_t *self) {
+    int8_t ret = 0;
+
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
     uint32_t rxpin = strtoul(_z_cptr_char_offset(p_dot, 1), NULL, 10);
@@ -35,19 +37,18 @@ int _z_f_link_open_serial(_z_link_t *self) {
 
     self->_socket._serial._sock = _z_open_serial(txpin, rxpin, baudrate);
     if (self->_socket._serial._sock._err == true) {
-        goto ERR;
+        ret = -1;
     }
 
-    return 0;
-
-ERR:
-    return -1;
+    return ret;
 }
 
-int _z_f_link_listen_serial(_z_link_t *self) {
+int8_t _z_f_link_listen_serial(_z_link_t *self) {
+    int8_t ret = 0;
+
     self->_socket._serial._sock = _z_listen_serial(0, 0, 0);
     if (self->_socket._serial._sock._err == true) {
-        goto ERR;
+        ret = -1;
     }
 
     return 0;

@@ -24,6 +24,8 @@
 #if Z_MULTICAST_TRANSPORT == 1
 
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
+    _z_transport_peer_entry_t *ret = NULL;
+
     for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
         _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
         if (val->_remote_addr.len != remote_addr->len) {
@@ -31,17 +33,17 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
         }
 
         if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
-            return val;
+            ret = val;
         }
     }
 
-    return NULL;
+    return ret;
 }
 
 /*------------------ Reception helper ------------------*/
 void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_result_t *r, _z_bytes_t *addr) {
-    _Z_DEBUG(">> recv session msg\n");
     r->_tag = _Z_RES_OK;
+    _Z_DEBUG(">> recv session msg\n");
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock
@@ -54,43 +56,38 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) != 0) {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE) {
-            r->_tag = _Z_ERR_IO_GENERIC;
-            goto EXIT_SRCV_PROC;
-        }
+            size_t len = 0;
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                len |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
+            }
 
-        size_t len = 0;
-        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            len |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-        }
-
-        _Z_DEBUG(">> \t msg len = %zu\n", len);
-        size_t writable = _z_zbuf_capacity(&ztm->_zbuf) - _z_zbuf_len(&ztm->_zbuf);
-        if (writable < len) {
-            r->_tag = _Z_ERR_IOBUF_NO_SPACE;
-            goto EXIT_SRCV_PROC;
-        }
-
-        // Read enough bytes to decode the message
-        if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, len, addr) != len) {
-            r->_tag = _Z_ERR_IO_GENERIC;
-            goto EXIT_SRCV_PROC;
+            _Z_DEBUG(">> \t msg len = %zu\n", len);
+            size_t writable = _z_zbuf_capacity(&ztm->_zbuf) - _z_zbuf_len(&ztm->_zbuf);
+            if (writable < len) {
+                // Read enough bytes to decode the message
+                if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, len, addr) != len) {
+                    r->_tag = _Z_ERR_RX_CONNECTION;
+                }
+            } else {
+                r->_tag = _Z_ERR_IOBUF_NO_SPACE;
+            }
+        } else {
+            r->_tag = _Z_ERR_RX_CONNECTION;
         }
     } else {
         if (_z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX) {
-            r->_tag = _Z_ERR_IO_GENERIC;
-            goto EXIT_SRCV_PROC;
+            r->_tag = _Z_ERR_RX_CONNECTION;
         }
     }
 
     _Z_DEBUG(">> \t transport_message_decode\n");
-    _z_transport_message_decode_na(&ztm->_zbuf, r);
+    if (r->_tag == _Z_RES_OK) {
+        _z_transport_message_decode_na(&ztm->_zbuf, r);
+    }
 
-EXIT_SRCV_PROC:
 #if Z_MULTI_THREAD == 1
-    // Release the lock
     _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
-    __asm__("nop");
 }
 
 _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_bytes_t *addr) {
@@ -244,7 +241,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._reliable,
-                                   t_msg->_body._frame._sn) != 0) {
+                                   t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
@@ -253,7 +250,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 }
             } else {
                 if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._best_effort,
-                                   t_msg->_body._frame._sn) != 0) {
+                                   t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_best_effort);

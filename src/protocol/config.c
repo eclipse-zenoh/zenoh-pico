@@ -26,12 +26,14 @@ int _z_config_init(_z_config_t *ps) {
 }
 
 int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value) {
+    int8_t ret = _Z_RES_OK;
+
     char *res = _z_str_intmap_insert(ps, key, value.val);
     if (res != value.val) {
-        return -1;
+        ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
 
-    return 0;
+    return ret;
 }
 
 char *_z_config_get(const _z_config_t *ps, unsigned int key) { return _z_str_intmap_get(ps, key); }
@@ -68,24 +70,26 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
                 break;
             }
 
-            if (found == true) {
-                // Read and populate the value
-                const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
-                const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
-                if (p_value_end == NULL) {
-                    p_value_end = end;
-                }
-
-                size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
-                char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
-                (void)strncpy(p_value, p_value_start, p_value_len);
-                p_value[p_value_len] = '\0';
-
-                _z_str_intmap_insert(&res._value, key, p_value);
-
-                // Process next key value
-                start = _z_cptr_char_offset(p_value_end, 1);
+            if (found == false) {
+                break;
             }
+
+            // Read and populate the value
+            const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
+            const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
+            if (p_value_end == NULL) {
+                p_value_end = end;
+            }
+
+            size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
+            char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
+            (void)strncpy(p_value, p_value_start, p_value_len);
+            p_value[p_value_len] = '\0';
+
+            _z_str_intmap_insert(&res._value, key, p_value);
+
+            // Process next key value
+            start = _z_cptr_char_offset(p_value_end, 1);
         }
     }
 

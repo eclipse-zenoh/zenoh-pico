@@ -64,9 +64,9 @@ _Z_RESULT_DECLARE(_z_msg_query_t, query)
 _Z_RESULT_DECLARE(_z_zenoh_message_t, zenoh_message)
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-#define _Z_DECLARE_ENCODE(name) int _z_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _z_##name##_t *m)
+#define _Z_DECLARE_ENCODE(name) int8_t _z_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _z_##name##_t *m)
 
-#define _Z_DECLARE_ENCODE_NOH(name) int _z_##name##_encode(_z_wbuf_t *wbf, const _z_##name##_t *m)
+#define _Z_DECLARE_ENCODE_NOH(name) int8_t _z_##name##_encode(_z_wbuf_t *wbf, const _z_##name##_t *m)
 
 #define _Z_DECLARE_DECODE(name)                                              \
     _z_##name##_result_t _z_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \

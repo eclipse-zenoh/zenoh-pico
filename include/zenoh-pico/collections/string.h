@@ -25,7 +25,7 @@
 char *_z_str_clone(const char *src);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
-int _z_str_eq(const char *left, const char *right);
+_Bool _z_str_eq(const char *left, const char *right);
 
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);

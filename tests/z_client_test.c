@@ -45,7 +45,7 @@ void query_handler(const z_query_t *query, void *arg) {
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
     char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
-    assert(_z_str_eq(k_str, res));
+    assert(_z_str_eq(k_str, res) == true);
 
     z_bytes_t pred = z_query_parameters(query);
     assert(pred.len == strlen(""));
@@ -69,7 +69,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
         char *k_str = z_keyexpr_to_string(sample.keyexpr);
         assert(sample.payload.len == strlen(res));
         assert(strncmp(res, (const char *)sample.payload.start, strlen(res)) == 0);
-        assert(_z_str_eq(k_str, res));
+        assert(_z_str_eq(k_str, res) == true);
 
         replies++;
         free(k_str);
@@ -87,7 +87,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
 
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(_z_str_eq(k_str, res));
+    assert(_z_str_eq(k_str, res) == true);
 
     datas++;
     free(k_str);

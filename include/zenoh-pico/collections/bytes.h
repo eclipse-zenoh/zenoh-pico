@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_BYTES_H
 #define ZENOH_PICO_COLLECTIONS_BYTES_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -29,7 +30,7 @@
 typedef struct {
     const uint8_t *start;
     size_t len;
-    uint8_t _is_alloc;
+    _Bool _is_alloc;
 } _z_bytes_t;
 
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity);

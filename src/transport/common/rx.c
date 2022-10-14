@@ -20,7 +20,7 @@
 
 /*------------------ Reception helper ------------------*/
 _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
-    _z_transport_message_result_t ret;
+    _z_transport_message_result_t ret = {._tag = _Z_RES_OK};
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
@@ -28,44 +28,35 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
 
     if (_Z_LINK_IS_STREAMED(zl->_capabilities) != 0) {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
-            goto ERR;
-        }
+        if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) == _Z_MSG_LEN_ENC_SIZE) {
+            size_t len = 0;
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                len |= (size_t)(_z_zbuf_read(&zbf) << (i * (uint8_t)8));
+            }
 
-        size_t len = 0;
-        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            len |= (size_t)(_z_zbuf_read(&zbf) << (i * (uint8_t)8));
-        }
-
-        size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);
-        if (writable < len) {
-            goto ERR;
-        }
-
-        // Read enough bytes to decode the message
-        if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len) {
-            goto ERR;
+            size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);
+            if (writable >= len) {
+                // Read enough bytes to decode the message
+                if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len) {
+                    ret._tag = _Z_ERR_RX_CONNECTION;
+                }
+            } else {
+                ret._tag = _Z_ERR_IOBUF_NO_SPACE;
+            }
+        } else {
+            ret._tag = _Z_ERR_RX_CONNECTION;
         }
     } else {
         if (_z_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX) {
-            goto ERR;
+            ret._tag = _Z_ERR_RX_CONNECTION;
         }
     }
 
-    _z_transport_message_result_t res = _z_transport_message_decode(&zbf);
-    if (res._tag < _Z_RES_OK) {
-        goto ERR;
+    if (ret._tag == _Z_RES_OK) {
+        _z_transport_message_result_t res = _z_transport_message_decode(&zbf);
+        _z_t_msg_copy(&ret._value, &res._value);
     }
-
-    _z_t_msg_copy(&ret._value, &res._value);
-
-    _z_zbuf_clear(&zbf);
-    ret._tag = _Z_RES_OK;
-    return ret;
-
-ERR:
     _z_zbuf_clear(&zbf);
 
-    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }

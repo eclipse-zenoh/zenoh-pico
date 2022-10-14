@@ -95,13 +95,13 @@ void _z_str_free(char **src) {
 char *_z_str_clone(const char *src) {
     size_t str_len = _z_str_size(src);
     char *dst = (char *)z_malloc(str_len);
-    (void)(void)strncpy(dst, src, str_len - (size_t)1);
+    (void)strncpy(dst, src, str_len - (size_t)1);
     dst[str_len - (size_t)1] = '\0';
 
     return dst;
 }
 
-int _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
+_Bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
 
 /*-------- str_array --------*/
 void _z_str_array_init(_z_str_array_t *sa, size_t len) {

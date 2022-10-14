@@ -24,49 +24,53 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_UNICAST_TRANSPORT == 1
-int _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_only) {
+int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_only) {
+    int8_t ret = _Z_RES_OK;
+
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.start,
                                    ((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.len);
     _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
 
-    int res = _z_unicast_send_t_msg(ztu, &cm);
-
-    // Free the message
+    ret = _z_unicast_send_t_msg(ztu, &cm);
     _z_t_msg_clear(&cm);
 
-    return res;
+    return ret;
 }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
 #if Z_MULTICAST_TRANSPORT == 1
-int _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int link_only) {
+int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int link_only) {
+    int8_t ret = _Z_RES_OK;
+
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start,
                                    ((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.len);
     _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
 
-    int res = _z_multicast_send_t_msg(ztm, &cm);
-
-    // Free the message
+    ret = _z_multicast_send_t_msg(ztm, &cm);
     _z_t_msg_clear(&cm);
 
-    return res;
+    return ret;
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
-int _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only) {
+int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only) {
+    int8_t ret = _Z_RES_OK;
+
 #if Z_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        return _z_unicast_send_close(&zt->_transport._unicast, reason, link_only);
+        ret = _z_unicast_send_close(&zt->_transport._unicast, reason, link_only);
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        return _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
+        ret = _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
-        return -1;
+        ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
+
+    return ret;
 }
 
 #if Z_UNICAST_TRANSPORT == 1
@@ -192,101 +196,86 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
 
     _z_bytes_t pid = _z_bytes_wrap(local_pid.start, local_pid.len);
     _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+    param._sn_resolution = ism._body._init._sn_resolution;  // The announced sn resolution
 
     // Encode and send the message
     _Z_INFO("Sending Z_INIT(Syn)\n");
-    int res = _z_link_send_t_msg(zl, &ism);
-    if (res != 0) {
-        goto ERR_1;
-    }
-
-    // The announced sn resolution
-    param._sn_resolution = ism._body._init._sn_resolution;
+    int8_t err = _z_link_send_t_msg(zl, &ism);
     _z_t_msg_clear(&ism);
+    if (err == _Z_RES_OK) {
+        _z_transport_message_result_t r_iam = _z_link_recv_t_msg(zl);
+        if (r_iam._tag == _Z_RES_OK) {
+            _z_transport_message_t iam = r_iam._value;
+            if (_Z_MID(iam._header) == _Z_MID_INIT) {
+                _Z_INFO("Received Z_INIT(Ack)\n");
+                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A) == true) {
+                    // Handle SN resolution option if present
+                    if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S) == true) {
+                        // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
+                        // otherwise the InitAck message is considered invalid and it should be treated as a
+                        // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+                        if (iam._body._init._sn_resolution <= param._sn_resolution) {
+                            param._sn_resolution = iam._body._init._sn_resolution;
+                        } else {
+                            err = _Z_ERR_OPEN_FAILED_SN_RESOLUTION;
+                        }
+                    }
 
-    _z_transport_message_result_t r_iam = _z_link_recv_t_msg(zl);
-    if (r_iam._tag < _Z_RES_OK) {
-        goto ERR_1;
-    }
+                    if (err == _Z_RES_OK) {
+                        // The initial SN at TX side
+                        z_random_fill(&param._initial_sn_tx, sizeof(param._initial_sn_tx));
+                        param._initial_sn_tx = param._initial_sn_tx % param._sn_resolution;
 
-    _z_transport_message_t iam = r_iam._value;
-    if (_Z_MID(iam._header) != _Z_MID_INIT) {
-        goto ERR_2;
-    }
+                        // Initialize the Local and Remote Peer IDs
+                        _z_bytes_copy(&param._remote_pid, &iam._body._init._pid);
 
-    _Z_INFO("Received Z_INIT(Ack)\n");
-    if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A) != 0) {
-        // Handle SN resolution option if present
-        if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S) != 0) {
-            // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
-            // otherwise the InitAck message is considered invalid and it should be treated as a
-            // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-            if (iam._body._init._sn_resolution <= param._sn_resolution) {
-                param._sn_resolution = iam._body._init._sn_resolution;
-            } else {
-                goto ERR_2;
+                        // Create the OpenSyn message
+                        _z_zint_t lease = Z_TRANSPORT_LEASE;
+                        _z_zint_t initial_sn = param._initial_sn_tx;
+                        _z_bytes_t cookie = iam._body._init._cookie;
+
+                        _z_transport_message_t osm = _z_t_msg_make_open_syn(
+                            lease, initial_sn, cookie);  // FIXME: double check that osm does not need to be cleared
+
+                        // Encode and send the message
+                        _Z_INFO("Sending Z_OPEN(Syn)\n");
+                        err = _z_link_send_t_msg(zl, &osm);
+                        if (err == _Z_RES_OK) {
+                            _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
+                            if (r_oam._tag == _Z_RES_OK) {
+                                _Z_INFO("Received Z_OPEN(Ack)\n");
+
+                                _z_transport_message_t oam = r_oam._value;
+                                if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) == true) {
+                                    param._lease = oam._body._open._lease;  // The session lease
+
+                                    // The initial SN at RX side. Initialize the session as we had already received a
+                                    // message with a SN equal to initial_sn - 1.
+                                    param._initial_sn_rx =
+                                        _z_sn_decrement(param._sn_resolution, oam._body._open._initial_sn);
+                                } else {
+                                    _z_bytes_clear(&param._remote_pid);
+                                }
+                                _z_t_msg_clear(&oam);
+                            }
+                        } else {
+                            _z_bytes_clear(&param._remote_pid);
+                        }
+                    }
+                } else {
+                    err = _Z_ERR_UNEXPECTED_MESSAGE;
+                }
             }
+
+            _z_t_msg_clear(&iam);
         }
-
-        // The initial SN at TX side
-        z_random_fill(&param._initial_sn_tx, sizeof(param._initial_sn_tx));
-        param._initial_sn_tx = param._initial_sn_tx % param._sn_resolution;
-
-        // Initialize the Local and Remote Peer IDs
-        _z_bytes_copy(&param._remote_pid, &iam._body._init._pid);
-
-        // Create the OpenSyn message
-        _z_zint_t lease = Z_TRANSPORT_LEASE;
-        _z_zint_t initial_sn = param._initial_sn_tx;
-        _z_bytes_t cookie = iam._body._init._cookie;
-
-        _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
-
-        // Encode and send the message
-        _Z_INFO("Sending Z_OPEN(Syn)\n");
-        res = _z_link_send_t_msg(zl, &osm);
-
-        if (res != 0) {
-            goto ERR_3;
-        }
-
-        _z_transport_message_result_t r_oam = _z_link_recv_t_msg(zl);
-        if (r_oam._tag < _Z_RES_OK) {
-            goto ERR_3;
-        }
-        _z_transport_message_t oam = r_oam._value;
-        _Z_INFO("Received Z_OPEN(Ack)\n");
-
-        if (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) != 0) {
-            // The session lease
-            param._lease = oam._body._open._lease;
-
-            // The initial SN at RX side. Initialize the session as we had already received
-            // a message with a SN equal to initial_sn - 1.
-            param._initial_sn_rx = _z_sn_decrement(param._sn_resolution, oam._body._open._initial_sn);
-        } else {
-            goto ERR_3;
-        }
-
-        _z_t_msg_clear(&oam);
-    } else {
-        goto ERR_2;
     }
 
-    _z_t_msg_clear(&iam);
-
-    ret._tag = _Z_RES_OK;
+    ret._tag = err;
     ret._value = param;
     return ret;
-
-ERR_3:
-    _z_bytes_clear(&param._remote_pid);
-ERR_2:
-    _z_t_msg_clear(&iam);
-ERR_1:
-    ret._tag = _Z_ERR_GENERIC;
-    return ret;
 }
+
 #endif  // Z_UNICAST_TRANSPORT == 1
 
 #if Z_MULTICAST_TRANSPORT == 1
@@ -295,7 +284,7 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_clie
     (void)(zl);
     (void)(local_pid);
     _z_transport_multicast_establish_param_result_t ret;
-    ret._tag = _Z_ERR_GENERIC;
+    ret._tag = _Z_ERR_UNSUPPORTED_CLIENT_MULTICAST;
 
     // @TODO: not implemented
 
@@ -309,7 +298,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
     (void)(zl);
     (void)(local_pid);
     _z_transport_unicast_establish_param_result_t ret;
-    ret._tag = _Z_ERR_GENERIC;
+    ret._tag = _Z_ERR_UNSUPPORTED_PEER_UNICAST;
 
     // @TODO: not implemented
 
@@ -321,6 +310,8 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
 _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer(const _z_link_t *zl,
                                                                                  const _z_bytes_t local_pid) {
     _z_transport_multicast_establish_param_result_t ret;
+    int8_t err = _Z_RES_OK;
+
     _z_transport_multicast_establish_param_t param;
     param._is_qos = 0;  // FIXME: make transport aware of qos configuration
     param._initial_sn_tx = 0;
@@ -339,20 +330,11 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");
-    int res = _z_link_send_t_msg(zl, &jsm);
-
+    err = _z_link_send_t_msg(zl, &jsm);
     _z_t_msg_clear(&jsm);
 
-    if (res != 0) {
-        goto ERR_1;
-    }
-
-    ret._tag = _Z_RES_OK;
+    ret._tag = err;
     ret._value = param;
-    return ret;
-
-ERR_1:
-    ret._tag = _Z_ERR_GENERIC;
     return ret;
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1
