@@ -66,7 +66,7 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f free_f) {
 
 size_t _z_vec_len(const _z_vec_t *v) { return v->_len; }
 
-uint8_t _z_vec_is_empty(const _z_vec_t *v) { return v->_len == 0; }
+_Bool _z_vec_is_empty(const _z_vec_t *v) { return v->_len == 0; }
 
 void _z_vec_append(_z_vec_t *v, void *e) {
     if (v->_len == v->_capacity) {

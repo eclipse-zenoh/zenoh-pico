@@ -19,10 +19,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
-void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, int is_streamed);
-void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, int is_streamed);
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
-_z_transport_message_t _z_frame_header(z_reliability_t reliability, int is_fragment, int is_final, _z_zint_t sn);
+_z_transport_message_t _z_frame_header(z_reliability_t reliability, _Bool is_fragment, _Bool is_final, _z_zint_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,

@@ -22,7 +22,7 @@
 #error "Scouting UDP requires UDP unicast links to be enabled (Z_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsigned long period, int exit_on_first) {
+_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsigned long period, _Bool exit_on_first) {
     // Define an empty array
     _z_hello_list_t *ret = NULL;
     int8_t err = _Z_RES_OK;
@@ -46,7 +46,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     if (err == _Z_RES_OK && r_scout._tag == _Z_RES_OK) {
         // Send the scout message
         int8_t res = _z_link_send_wbuf(r_scout._value, wbf);
-        if (res == 0) {
+        if (res == _Z_RES_OK) {
             // The receiving buffer
             _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
@@ -74,19 +74,19 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                         // Get current element to fill
                         _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
 
-                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) != 0) {
+                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
                             _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
                         } else {
                             _z_bytes_reset(&hello->pid);
                         }
 
-                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) != 0) {
+                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
                             hello->whatami = t_msg._body._hello._whatami;
                         } else {
                             hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
                         }
 
-                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) != 0) {
+                        if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
                             hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
                             for (size_t i = 0; i < hello->locators._len; i++) {
                                 hello->locators._val[i] = _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
@@ -109,7 +109,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 }
                 _z_t_msg_clear(&t_msg);
 
-                if ((_z_hello_list_len(ret) > 0) && exit_on_first) {
+                if ((_z_hello_list_len(ret) > 0) && (exit_on_first == true)) {
                     break;
                 }
             }
@@ -127,16 +127,16 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const uint32_t timeout,
-                                const int exit_on_first) {
+_z_hello_list_t *_z_scout_inner(const z_whatami_t what, const char *locator, const uint32_t timeout,
+                                const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
     _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
 
     // Create and encode the scout message
-    int request_id = 1;
-    _z_transport_message_t scout = _z_t_msg_make_scout((_z_zint_t)what, request_id);
+    _Bool request_pid = true;
+    _z_transport_message_t scout = _z_t_msg_make_scout(what, request_pid);
 
     _z_transport_message_encode(&wbf, &scout);
 

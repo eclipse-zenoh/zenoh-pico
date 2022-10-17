@@ -55,14 +55,14 @@ void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_payload); }
 
 /*------------------ ReplyContext Decorator ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, int is_final) {
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final) {
     _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
 
     rctx->_qid = qid;
     rctx->_replier_id = replier_id;
 
     rctx->_header = _Z_MID_REPLY_CONTEXT;
-    if (is_final != 0) {
+    if (is_final == true) {
         _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
     }
 
@@ -70,7 +70,7 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_
 }
 
 void _z_msg_clear_reply_context(_z_reply_context_t *rc) {
-    if (_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F) == 0) {
+    if (_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F) == false) {
         _z_bytes_clear(&rc->_replier_id);
     }
 }
@@ -283,25 +283,25 @@ void _z_data_info_clear(_z_data_info_t *di) {
     //   - source_sn
     //   - first_router_sn
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC) != 0) {
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC) == true) {
         _z_bytes_clear(&di->_encoding.suffix);
     }
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID) != 0) {
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID) == true) {
         _z_bytes_clear(&di->_source_id);
     }
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID) != 0) {
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID) == true) {
         _z_bytes_clear(&di->_first_router_id);
     }
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP) != 0) {
+    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP) == true) {
         _z_timestamp_clear(&di->_tstamp);
     }
 }
 
 /*------------------ Data Message ------------------*/
-_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped) {
+_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped) {
     _z_zenoh_message_t msg;
 
     msg._body._data._key = key;
@@ -315,7 +315,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
     if (msg._body._data._key._suffix != NULL) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
     }
-    if (can_be_dropped != 0) {
+    if (can_be_dropped == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
 
@@ -332,11 +332,11 @@ void _z_msg_clear_data(_z_msg_data_t *msg) {
 }
 
 /*------------------ Unit Message ------------------*/
-_z_zenoh_message_t _z_msg_make_unit(int can_be_dropped) {
+_z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped) {
     _z_zenoh_message_t msg;
 
     msg._header = _Z_MID_UNIT;
-    if (can_be_dropped != 0) {
+    if (can_be_dropped == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
 
@@ -349,7 +349,7 @@ _z_zenoh_message_t _z_msg_make_unit(int can_be_dropped) {
 void _z_msg_clear_unit(_z_msg_unit_t *unt) { (void)(unt); }
 
 /*------------------ Pull Message ------------------*/
-_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final) {
+_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final) {
     _z_zenoh_message_t msg;
 
     msg._body._pull._key = key;
@@ -357,10 +357,10 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
     msg._body._pull._max_samples = max_samples;
 
     msg._header = _Z_MID_PULL;
-    if (is_final != 0) {
+    if (is_final == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_F);
     }
-    if (max_samples != 0) {
+    if (max_samples == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_N);
     }
     if (msg._body._pull._key._suffix != NULL) {
@@ -406,7 +406,7 @@ void _z_msg_clear_query(_z_msg_query_t *msg) {
 }
 
 /*------------------ Reply Message ------------------*/
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped,
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
                                      _z_reply_context_t *rctx) {
     _z_zenoh_message_t msg = _z_msg_make_data(key, info, payload, can_be_dropped);
     msg._reply_context = rctx;
@@ -452,15 +452,16 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(_z_zint_t what, int request_pid) {
+_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid) {
     _z_transport_message_t msg;
 
     msg._body._scout._what = what;
 
     msg._header = _Z_MID_SCOUT;
-    if (request_pid != 0) {
+    if (request_pid == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
+
     if (what != Z_WHATAMI_ROUTER) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     }
@@ -477,7 +478,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header) {
 }
 
 /*------------------ Hello Message ------------------*/
-_z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z_locator_array_t locators) {
+_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, _z_locator_array_t locators) {
     _z_transport_message_t msg;
 
     msg._body._hello._whatami = whatami;
@@ -488,10 +489,10 @@ _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z
     if (whatami != Z_WHATAMI_ROUTER) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     }
-    if (_z_bytes_is_empty(&pid) == 0) {
+    if (_z_bytes_is_empty(&pid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
-    if (_z_locator_array_is_empty(&locators) == 0) {
+    if (_z_locator_array_is_empty(&locators) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_L);
     }
 
@@ -501,18 +502,18 @@ _z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z
 }
 
 void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         _z_bytes_clear(&msg->_pid);
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
         _z_locators_clear(&msg->_locators);
     }
 }
 
 /*------------------ Join Message ------------------*/
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z_zint_t lease, _z_zint_t sn_resolution,
-                                          _z_bytes_t pid, _z_conduit_sn_list_t next_sns) {
+_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
+                                          _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns) {
     _z_transport_message_t msg;
 
     msg._body._join._options = 0;
@@ -558,12 +559,12 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header) {
 }
 
 /*------------------ Init Message ------------------*/
-_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, int is_qos) {
+_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, _Bool is_qos) {
     _z_transport_message_t msg;
 
     msg._body._init._options = 0;
-    if (is_qos != 0) {
+    if (is_qos == true) {
         _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
     }
     msg._body._init._version = version;
@@ -585,12 +586,12 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _z_bytes_t cookie, int is_qos) {
+_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, _z_bytes_t cookie, _Bool is_qos) {
     _z_transport_message_t msg;
 
     msg._body._init._options = 0;
-    if (is_qos != 0) {
+    if (is_qos == true) {
         _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
     }
     msg._body._init._version = version;
@@ -624,7 +625,7 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
 
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header) {
     _z_bytes_clear(&msg->_pid);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == true) {
         _z_bytes_clear(&msg->_cookie);
     }
 }
@@ -672,23 +673,23 @@ void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
 }
 
 void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
         _z_bytes_clear(&msg->_cookie);
     }
 }
 
 /*------------------ Close Message ------------------*/
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int link_only) {
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool link_only) {
     _z_transport_message_t msg;
 
     msg._body._close._reason = reason;
     msg._body._close._pid = pid;
 
     msg._header = _Z_MID_CLOSE;
-    if (_z_bytes_is_empty(&pid) == 0) {
+    if (_z_bytes_is_empty(&pid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
-    if (link_only != 0) {
+    if (link_only == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_K);
     }
 
@@ -698,20 +699,20 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int l
 }
 
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         _z_bytes_clear(&msg->_pid);
     }
 }
 
 /*------------------ Sync Message ------------------*/
-_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, int is_reliable, _z_zint_t count) {
+_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count) {
     _z_transport_message_t msg;
 
     msg._body._sync._sn = sn;
     msg._body._sync._count = count;
 
     msg._header = _Z_MID_SYNC;
-    if (is_reliable != 0) {
+    if (is_reliable == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
         if (count != 0) {
             _Z_SET_FLAG(msg._header, _Z_FLAG_T_C);
@@ -759,7 +760,7 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid) {
     msg._body._keep_alive._pid = pid;
 
     msg._header = _Z_MID_KEEP_ALIVE;
-    if (_z_bytes_is_empty(&pid) == 0) {
+    if (_z_bytes_is_empty(&pid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
 
@@ -769,7 +770,7 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid) {
 }
 
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         _z_bytes_clear(&msg->_pid);
     }
 }
@@ -807,7 +808,7 @@ void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header) {
 }
 
 /*------------------ Frame Message ------------------*/
-_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable, int is_fragment, int is_final) {
+_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable, _Bool is_fragment, _Bool is_final) {
     _z_transport_message_t msg;
 
     msg._body._frame._sn = sn;
@@ -816,12 +817,12 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable,
     (void)memset(&msg._body._frame._payload, 0, sizeof(_z_frame_payload_t));
 
     msg._header = _Z_MID_FRAME;
-    if (is_reliable != 0) {
+    if (is_reliable == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
     }
-    if (is_fragment != 0) {
+    if (is_fragment == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
-        if (is_final != 0) {
+        if (is_final == true) {
             _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
         }
     }
@@ -831,20 +832,20 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable,
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, int is_reliable, int is_fragment,
-                                           int is_final) {
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,
+                                           _Bool is_fragment, _Bool is_final) {
     _z_transport_message_t msg;
 
     msg._body._frame._sn = sn;
     msg._body._frame._payload = payload;
 
     msg._header = _Z_MID_FRAME;
-    if (is_reliable != 0) {
+    if (is_reliable == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
     }
-    if (is_fragment != 0) {
+    if (is_fragment == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
-        if (is_final != 0) {
+        if (is_final == true) {
             _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
         }
     }
@@ -855,7 +856,7 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
 }
 
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) != 0) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
         _z_payload_clear(&msg->_payload._fragment);
     } else {
         _z_zenoh_message_vec_clear(&msg->_payload._messages);

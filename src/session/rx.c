@@ -42,7 +42,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
         case _Z_MID_DECLARE: {
             _Z_INFO("Received _Z_DECLARE message\n");
-            for (unsigned int i = 0; i < msg->_body._declare._declarations._len; i++) {
+            for (size_t i = 0; i < msg->_body._declare._declarations._len; i++) {
                 _z_declaration_t decl = msg->_body._declare._declarations._val[i];
                 switch (_Z_MID(decl._header)) {
                     case _Z_DECL_RESOURCE: {

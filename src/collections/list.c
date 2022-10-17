@@ -44,7 +44,7 @@ size_t _z_list_len(const _z_list_t *xs) {
     return len;
 }
 
-uint8_t _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
+_Bool _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
 
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f) {
     _z_list_t *head = xs;
@@ -59,7 +59,7 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL) {
         void *head = _z_list_head(l);
-        if (c_f(e, head) != 0) {
+        if (c_f(e, head) == true) {
             return l;
         }
         l = _z_list_tail(l);
@@ -72,7 +72,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
     _z_list_t *current = xs;
 
     while (current != NULL) {
-        if (c_f(left, current->_val) != 0) {
+        if (c_f(left, current->_val) == true) {
             _z_list_t *this = current;
 
             // head removal

@@ -69,7 +69,7 @@ char *_z_parse_address_segment_tcp(char *address) {
 }
 
 int8_t _z_f_link_open_tcp(_z_link_t *self) {
-    int8_t ret = 0;
+    int8_t ret = _Z_RES_OK;
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, TCP_CONFIG_TOUT_KEY);
@@ -86,7 +86,7 @@ int8_t _z_f_link_open_tcp(_z_link_t *self) {
 }
 
 int8_t _z_f_link_listen_tcp(_z_link_t *self) {
-    int8_t ret = 0;
+    int8_t ret = _Z_RES_OK;
 
     self->_socket._tcp._sock = _z_listen_tcp(self->_socket._tcp._rep);
     if (self->_socket._tcp._sock._err == true) {

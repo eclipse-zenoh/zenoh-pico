@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(datas == expected);
     else
         assert(datas >= expected);
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
         printf("Waiting for queries... %u/%u\n", queries, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(queries == expected);
     else
         assert(queries >= expected);
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
         printf("Waiting for replies... %u/%u\n", replies, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(replies == expected);
     else
         assert(replies >= expected);

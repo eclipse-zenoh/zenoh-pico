@@ -79,12 +79,12 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
     // TODO[peer]: when peer unicast mode is supported, this must be revisited
     // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) != 0) {
+    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) == true) {
         r._value = _z_new_link_udp_multicast(endpoint);
     } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) != 0) {
+        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) == true) {
         r._value = _z_new_link_bt(endpoint);
     } else
 #endif

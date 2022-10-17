@@ -26,7 +26,7 @@ int main(void) {
     printf(">>> str-vec\n");
 
     _z_str_vec_t vec = _z_str_vec_make(1);
-    assert(_z_str_vec_is_empty(&vec));
+    assert(_z_str_vec_is_empty(&vec) == true);
 
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
@@ -46,13 +46,13 @@ int main(void) {
     assert(_z_str_vec_len(&vec) == len);
 
     _z_str_vec_clear(&vec);
-    assert(_z_str_vec_is_empty(&vec));
+    assert(_z_str_vec_is_empty(&vec) == true);
 
     // str-list
     printf(">>> str-list\n");
 
     _z_str_list_t *list = _z_str_list_new();
-    assert(_z_str_list_is_empty(list));
+    assert(_z_str_list_is_empty(list) == true);
 
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
@@ -71,7 +71,7 @@ int main(void) {
         list = _z_str_list_pop(list);
         assert(_z_str_list_len(list) == len - (i + 1));
     }
-    assert(_z_str_list_is_empty(list));
+    assert(_z_str_list_is_empty(list) == true);
 
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
@@ -80,13 +80,13 @@ int main(void) {
     }
     assert(_z_str_list_len(list) == len);
     _z_str_list_free(&list);
-    assert(_z_str_list_is_empty(list));
+    assert(_z_str_list_is_empty(list) == true);
 
     // str-intmap
     printf(">>> str-intmap\n");
 
     _z_str_intmap_t map = _z_str_intmap_make();
-    assert(_z_str_intmap_is_empty(&map));
+    assert(_z_str_intmap_is_empty(&map) == true);
 
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
@@ -105,10 +105,10 @@ int main(void) {
         assert(_z_str_intmap_get(&map, i) == NULL);
         assert(_z_str_intmap_len(&map) == (len - 1) - i);
     }
-    assert(_z_str_intmap_is_empty(&map));
+    assert(_z_str_intmap_is_empty(&map) == true);
 
     _z_str_intmap_clear(&map);
-    assert(_z_str_intmap_is_empty(&map));
+    assert(_z_str_intmap_is_empty(&map) == true);
 
     return 0;
 }

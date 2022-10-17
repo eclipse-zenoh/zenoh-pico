@@ -335,7 +335,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     wrapped_ctx->ctx = ctx;
 
     char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
-    uint8_t what = strtol(what_str, NULL, 10);
+    z_whatami_t what = strtol(what_str, NULL, 10);
     char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
     char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
     uint32_t tout = strtoul(tout_str, NULL, 10);

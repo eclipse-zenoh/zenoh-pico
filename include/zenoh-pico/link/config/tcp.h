@@ -25,7 +25,7 @@
 #define TCP_CONFIG_TOUT_STR "tout"
 
 #define TCP_CONFIG_MAPPING_BUILD        \
-    int argc = 1;                       \
+    uint8_t argc = 1;                   \
     _z_str_intmapping_t args[argc];     \
     args[0]._key = TCP_CONFIG_TOUT_KEY; \
     args[0]._str = TCP_CONFIG_TOUT_STR;

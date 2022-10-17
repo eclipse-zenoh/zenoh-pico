@@ -24,7 +24,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_UNICAST_TRANSPORT == 1
-int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int link_only) {
+int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_tp_manager->_local_pid.start,
@@ -39,7 +39,7 @@ int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, int li
 #endif  // Z_UNICAST_TRANSPORT == 1
 
 #if Z_MULTICAST_TRANSPORT == 1
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, int link_only) {
+int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
     _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_tp_manager->_local_pid.start,
@@ -53,7 +53,7 @@ int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, in
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
-int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, int link_only) {
+int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_UNICAST_TRANSPORT == 1
@@ -112,9 +112,9 @@ _z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_e
 
 #if Z_MULTI_THREAD == 1
     // Tasks
-    zt->_transport._unicast._read_task_running = 0;
+    zt->_transport._unicast._read_task_running = false;
     zt->_transport._unicast._read_task = NULL;
-    zt->_transport._unicast._lease_task_running = 0;
+    zt->_transport._unicast._lease_task_running = false;
     zt->_transport._unicast._lease_task = NULL;
 #endif  // Z_MULTI_THREAD == 1
 
@@ -164,16 +164,16 @@ _z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multica
 
 #if Z_MULTI_THREAD == 1
     // Tasks
-    zt->_transport._multicast._read_task_running = 0;
+    zt->_transport._multicast._read_task_running = false;
     zt->_transport._multicast._read_task = NULL;
-    zt->_transport._multicast._lease_task_running = 0;
+    zt->_transport._multicast._lease_task_running = false;
     zt->_transport._multicast._lease_task = NULL;
 #endif  // Z_MULTI_THREAD == 1
 
     zt->_transport._multicast._lease = Z_TRANSPORT_LEASE;
 
     // Notifiers
-    zt->_transport._multicast._transmitted = 0;
+    zt->_transport._multicast._transmitted = false;
 
     // Transport link for unicast
     zt->_transport._multicast._link = link;
@@ -190,9 +190,9 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
 
     // Build the open message
     uint8_t version = Z_PROTO_VERSION;
-    _z_zint_t whatami = Z_WHATAMI_CLIENT;
+    z_whatami_t whatami = Z_WHATAMI_CLIENT;
     _z_zint_t sn_resolution = Z_SN_RESOLUTION;
-    int is_qos = 0;
+    _Bool is_qos = false;
 
     _z_bytes_t pid = _z_bytes_wrap(local_pid.start, local_pid.len);
     _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
@@ -340,18 +340,18 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
 #if Z_UNICAST_TRANSPORT == 1
-int _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason) {
-    return _z_unicast_send_close(ztu, reason, 0);
+int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason) {
+    return _z_unicast_send_close(ztu, reason, false);
 }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
 #if Z_MULTICAST_TRANSPORT == 1
-int _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason) {
-    return _z_multicast_send_close(ztm, reason, 0);
+int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason) {
+    return _z_multicast_send_close(ztm, reason, false);
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
-int _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, 0); }
+int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, false); }
 
 #if Z_UNICAST_TRANSPORT == 1
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {

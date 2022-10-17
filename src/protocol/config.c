@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/utils/pointers.h"
 
-int _z_config_init(_z_config_t *ps) {
+int8_t _z_config_init(_z_config_t *ps) {
     _z_str_intmap_init(ps);
     return 0;
 }

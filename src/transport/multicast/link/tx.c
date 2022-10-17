@@ -58,7 +58,7 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
         // Send the wbuf on the socket
         ret = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);
         if (ret == _Z_RES_OK) {
-            ztm->_transmitted = 1;  // Mark the session that we have transmitted data
+            ztm->_transmitted = true;  // Mark the session that we have transmitted data
         }
     }
 
@@ -109,7 +109,7 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
                 ret = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);  // Send the wbuf on the socket
                 if (ret == _Z_RES_OK) {
-                    ztm->_transmitted = 1;  // Mark the session that we have transmitted data
+                    ztm->_transmitted = true;  // Mark the session that we have transmitted data
                 }
             } else {
                 // The message does not fit in the current batch, let's fragment it
@@ -118,12 +118,12 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
                 ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
-                    int is_first = 1;  // Fragment and send the message
+                    _Bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {
-                        if (!is_first) {  // Get the fragment sequence number
+                        if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_multicast_get_sn(ztm, reliability);
                         }
-                        is_first = 0;
+                        is_first = false;
 
                         // Clear the buffer for serialization
                         __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link->_capabilities));
@@ -136,7 +136,7 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
                             ret = _z_link_send_wbuf(ztm->_link, &ztm->_wbuf);  // Send the wbuf on the socket
                             if (ret == _Z_RES_OK) {
-                                ztm->_transmitted = 1;  // Mark the session that we have transmitted data
+                                ztm->_transmitted = true;  // Mark the session that we have transmitted data
                             }
                         }
                     }

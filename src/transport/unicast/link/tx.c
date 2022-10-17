@@ -58,7 +58,7 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
         // Send the wbuf on the socket
         ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
         if (ret == _Z_RES_OK) {
-            ztu->_transmitted = 1;  // Mark the session that we have transmitted data
+            ztu->_transmitted = true;  // Mark the session that we have transmitted data
         }
     }
 
@@ -109,7 +109,7 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
 
                 ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
                 if (ret == _Z_RES_OK) {
-                    ztu->_transmitted = 1;  // Mark the session that we have transmitted data
+                    ztu->_transmitted = true;  // Mark the session that we have transmitted data
                 }
             } else {
                 // The message does not fit in the current batch, let's fragment it
@@ -118,12 +118,12 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
 
                 ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
-                    int is_first = 1;  // Fragment and send the message
-                    while (_z_wbuf_len(&fbf) > 0) {
-                        if (!is_first) {  // Get the fragment sequence number
+                    _Bool is_first = true;  // Fragment and send the message
+                    while (_z_wbuf_len(&fbf) > (size_t)0) {
+                        if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_unicast_get_sn(ztu, reliability);
                         }
-                        is_first = 0;
+                        is_first = false;
 
                         // Clear the buffer for serialization
                         __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
@@ -136,7 +136,7 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
 
                             ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
                             if (ret == _Z_RES_OK) {
-                                ztu->_transmitted = 1;  // Mark the session that we have transmitted data
+                                ztu->_transmitted = true;  // Mark the session that we have transmitted data
                             }
                         }
                     }

@@ -61,7 +61,7 @@ _z_session_t *_z_open(_z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
             }
-            uint8_t what = strtol(opt_as_str, NULL, 10);
+            z_whatami_t what = strtol(opt_as_str, NULL, 10);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
             if (opt_as_str == NULL) {
@@ -76,7 +76,7 @@ _z_session_t *_z_open(_z_config_t *config) {
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, 1);
+            _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
             _z_hello_list_t *xs = hellos;
             while (xs != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(xs);
@@ -195,12 +195,12 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        zn->_tp->_transport._unicast._read_task_running = 0;
+        zn->_tp->_transport._unicast._read_task_running = false;
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
         if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        zn->_tp->_transport._multicast._read_task_running = 0;
+        zn->_tp->_transport._multicast._read_task_running = false;
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
@@ -244,12 +244,12 @@ int8_t _zp_stop_lease_task(_z_session_t *zn) {
 
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        zn->_tp->_transport._unicast._lease_task_running = 0;
+        zn->_tp->_transport._unicast._lease_task_running = false;
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
         if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        zn->_tp->_transport._multicast._lease_task_running = 0;
+        zn->_tp->_transport._multicast._lease_task_running = false;
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {

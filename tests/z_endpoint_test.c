@@ -35,7 +35,7 @@ int main(void) {
     assert(lres._tag == _Z_RES_OK);
     assert(_z_str_eq(lres._value._protocol, "tcp") == true);
     assert(_z_str_eq(lres._value._address, "127.0.0.1:7447") == true);
-    assert(_z_str_intmap_is_empty(&lres._value._metadata));
+    assert(_z_str_intmap_is_empty(&lres._value._metadata) == true);
     _z_locator_clear(&lres._value);
 
     s[0] = '\0';  // snprintf(s, "");
@@ -85,8 +85,8 @@ int main(void) {
     assert(eres._tag == _Z_RES_OK);
     assert(_z_str_eq(eres._value._locator._protocol, "tcp") == true);
     assert(_z_str_eq(eres._value._locator._address, "127.0.0.1:7447") == true);
-    assert(_z_str_intmap_is_empty(&eres._value._locator._metadata));
-    assert(_z_str_intmap_is_empty(&eres._value._config));
+    assert(_z_str_intmap_is_empty(&eres._value._locator._metadata) == true);
+    assert(_z_str_intmap_is_empty(&eres._value._config) == true);
     _z_endpoint_clear(&eres._value);
 
     s[0] = '\0';  // snprintf(s, "");
@@ -131,7 +131,7 @@ int main(void) {
     assert(eres._tag == _Z_RES_OK);
     assert(_z_str_eq(eres._value._locator._protocol, "udp") == true);
     assert(_z_str_eq(eres._value._locator._address, "127.0.0.1:7447") == true);
-    assert(_z_str_intmap_is_empty(&eres._value._locator._metadata));
+    assert(_z_str_intmap_is_empty(&eres._value._locator._metadata) == true);
     assert(_z_str_intmap_len(&eres._value._config) == 1);
     char *p = _z_str_intmap_get(&eres._value._config, UDP_CONFIG_IFACE_KEY);
     assert(_z_str_eq(p, "eth0") == true);

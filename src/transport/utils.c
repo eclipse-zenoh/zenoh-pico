@@ -46,7 +46,7 @@ void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list
         dst->_val._plain._best_effort = src->_val._plain._best_effort;
         dst->_val._plain._reliable = src->_val._plain._reliable;
     } else {
-        for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
+        for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
             dst->_val._qos[i]._best_effort = src->_val._qos[i]._best_effort;
             dst->_val._qos[i]._reliable = src->_val._qos[i]._reliable;
         }
@@ -58,7 +58,7 @@ void _z_conduit_sn_list_decrement(const _z_zint_t sn_resolution, _z_conduit_sn_l
         sns->_val._plain._best_effort = _z_sn_decrement(sn_resolution, sns->_val._plain._best_effort);
         sns->_val._plain._reliable = _z_sn_decrement(sn_resolution, sns->_val._plain._reliable);
     } else {
-        for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
+        for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
             sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._best_effort);
             sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._reliable);
         }

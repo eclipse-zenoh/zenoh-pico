@@ -31,7 +31,7 @@
 #define BT_CONFIG_TOUT_STR "tout"
 
 #define BT_CONFIG_MAPPING_BUILD           \
-    int argc = 3;                         \
+    uint8_t argc = 3;                     \
     _z_str_intmapping_t args[argc];       \
     args[0]._key = BT_CONFIG_MODE_KEY;    \
     args[0]._str = BT_CONFIG_MODE_STR;    \

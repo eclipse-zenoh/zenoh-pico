@@ -67,7 +67,7 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
-int _z_zbuf_can_read(const _z_zbuf_t *zbf);
+_Bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf);

@@ -28,8 +28,8 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl);
 void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_result_t *r);
 void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_result_t *r, _z_bytes_t *addr);
 
-int _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
-int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                          _z_bytes_t *addr);
+int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
+int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
+                                             _z_bytes_t *addr);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_RX_H */

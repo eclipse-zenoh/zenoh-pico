@@ -55,7 +55,7 @@
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
         unsigned int c = atomic_fetch_sub_explicit(p->_cnt, 1, memory_order_release);           \
         _Bool dropped = c == 1;                                                                 \
-        if (dropped) {                                                                          \
+        if (dropped == true) {                                                                  \
             atomic_thread_fence(memory_order_acquire);                                          \
             type##_clear(p->ptr);                                                               \
             z_free(p->ptr);                                                                     \
@@ -98,7 +98,7 @@
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
         *p->_cnt -= 1;                                                                          \
         _Bool dropped = *p->_cnt == 0;                                                          \
-        if (dropped) {                                                                          \
+        if (dropped == true) {                                                                  \
             type##_clear(p->ptr);                                                               \
             z_free(p->ptr);                                                                     \
             z_free((void *)p->_cnt);                                                            \

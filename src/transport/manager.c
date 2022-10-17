@@ -23,7 +23,7 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
     _z_link_p_result_t res_zl = _z_open_link(locator);
     if (res_zl._tag == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
-        if (!_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities)) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == false) {
             _z_transport_unicast_establish_param_result_t res_tp_param =
                 _z_transport_unicast_open_client(res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
@@ -35,7 +35,7 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) != 0) {
+            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == true) {
             _z_transport_multicast_establish_param_result_t res_tp_param =
                 _z_transport_multicast_open_client(res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
@@ -63,7 +63,7 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
     _z_link_p_result_t res_zl = _z_listen_link(locator);
     if (res_zl._tag == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
-        if (!_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities)) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == false) {
             _z_transport_unicast_establish_param_result_t res_tp_param =
                 _z_transport_unicast_open_peer(res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
@@ -75,7 +75,7 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) != 0) {
+            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == true) {
             _z_transport_multicast_establish_param_result_t res_tp_param =
                 _z_transport_multicast_open_peer(res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {

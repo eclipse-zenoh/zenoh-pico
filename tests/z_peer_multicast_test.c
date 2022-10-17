@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     assert(argc == 2);
     (void)(argc);
 
-    int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
+    _Bool is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(datas == expected);
     else
         assert(datas >= expected);

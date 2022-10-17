@@ -27,7 +27,7 @@
 void print_zbuf_overview(_z_zbuf_t *zbf) { printf("    ZBuf => Capacity: %zu\n", zbf->_ios._capacity); }
 
 void print_wbuf_overview(_z_wbuf_t *wbf) {
-    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable == true ? 1 : 0, wbf->_capacity);
+    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable, wbf->_capacity);
 }
 
 void print_iosli(_z_iosli_t *ios) {
@@ -55,9 +55,9 @@ size_t gen_size_t(void) {
 _z_zbuf_t gen_zbuf(size_t len) { return _z_zbuf_make(len); }
 
 _z_wbuf_t gen_wbuf(size_t len) {
-    int is_expandable = 0;
+    _Bool is_expandable = false;
 
-    if (gen_bool()) {
+    if (gen_bool() == true) {
         is_expandable = true;
         len = 1 + (gen_size_t() % len);
     }

@@ -53,7 +53,7 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) != 0) {
+    if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) == true) {
         // Read the message length
         if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE) {
             size_t len = 0;
@@ -97,8 +97,8 @@ _z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *
     return r;
 }
 
-int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                          _z_bytes_t *addr) {
+int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
+                                             _z_bytes_t *addr) {
 #if Z_MULTI_THREAD == 1
     // Acquire and keep the lock
     _z_mutex_lock(&ztm->_mutex_peer);
@@ -129,7 +129,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
 
         case _Z_MID_JOIN: {
             _Z_INFO("Received _Z_JOIN message\n");
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_A) != 0) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_A) == true) {
                 if (t_msg->_body._join._version != Z_PROTO_VERSION) {
                     break;
                 }
@@ -140,7 +140,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 entry->_remote_addr = _z_bytes_duplicate(addr);
                 entry->_remote_pid = _z_bytes_duplicate(&t_msg->_body._join._pid);
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) != 0) {
+                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) {
                     entry->_sn_resolution = t_msg->_body._join._sn_resolution;
                 } else {
                     entry->_sn_resolution = Z_SN_RESOLUTION;
@@ -161,15 +161,15 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 // Update lease time (set as ms during)
                 entry->_lease = t_msg->_body._join._lease;
                 entry->_next_lease = entry->_lease;
-                entry->_received = 1;
+                entry->_received = true;
 
                 ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
             } else  // Existing peer
             {
-                entry->_received = 1;
+                entry->_received = true;
 
                 // Check if the sn resolution remains the same
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) &&
+                if ((_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) &&
                     (entry->_sn_resolution != t_msg->_body._join._sn_resolution)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     break;
@@ -192,7 +192,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 break;
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I) != 0) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I) == true) {
                 // Check if the Peer ID matches the remote address in the knonw peer list
                 if ((entry->_remote_pid.len != t_msg->_body._close._pid.len) ||
                     (memcmp(entry->_remote_pid.start, t_msg->_body._close._pid.start, entry->_remote_pid.len) != 0)) {
@@ -219,7 +219,7 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
             if (entry == NULL) {
                 break;
             }
-            entry->_received = 1;
+            entry->_received = true;
 
             break;
         }
@@ -234,10 +234,10 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
             if (entry == NULL) {
                 break;
             }
-            entry->_received = 1;
+            entry->_received = true;
 
             // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) != 0) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._reliable,
@@ -259,18 +259,18 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 }
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F) != 0) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F) == true) {
                 // Select the right defragmentation buffer
-                _z_wbuf_t *dbuf =
-                    _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &entry->_dbuf_reliable : &entry->_dbuf_best_effort;
+                _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true ? &entry->_dbuf_reliable
+                                                                                   : &entry->_dbuf_best_effort;
 
-                uint8_t drop = 0;
+                _Bool drop = false;
                 if ((_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len) > Z_FRAG_MAX_SIZE) {
                     // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
                     // Otherwise, last (smaller) fragments can be understood as a complete message
                     _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0,
                                         _z_wbuf_space_left(dbuf));
-                    drop = 1;
+                    drop = true;
                 } else {
                     // Add the fragment to the defragmentation buffer
                     _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0,
@@ -278,9 +278,9 @@ int _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_tran
                 }
 
                 // Check if this is the last fragment
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) != 0) {
+                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) == true) {
                     // Drop message if it is bigger the max buffer size
-                    if (drop == (uint8_t)1) {
+                    if (drop == true) {
                         _z_wbuf_reset(dbuf);
                         break;
                     }

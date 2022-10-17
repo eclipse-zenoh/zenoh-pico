@@ -165,11 +165,11 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         // Final flagged reply context does not encode the ZID
         _z_bytes_t zid;
         _z_bytes_reset(&zid);
-        int is_final = 1;
+        _Bool is_final = true;
         _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
 
         // Congestion control
-        int can_be_dropped = 0;
+        _Bool can_be_dropped = false;
 
         // Create the final reply
         _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);

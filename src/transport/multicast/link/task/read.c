@@ -41,7 +41,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
-    ztm->_read_task_running = 1;
+    ztm->_read_task_running = true;
 
     _z_transport_message_result_t r;
 
@@ -52,10 +52,10 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_zbuf_reset(&ztm->_zbuf);
 
     _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
-    while (ztm->_read_task_running == 1) {
+    while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) != 0) {
+        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) == true) {
             if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -90,18 +90,18 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             _z_transport_message_decode_na(&zbuf, &r);
 
             if (r._tag == _Z_RES_OK) {
-                int res = _z_multicast_handle_transport_message(ztm, &r._value, &addr);
+                int8_t res = _z_multicast_handle_transport_message(ztm, &r._value, &addr);
 
                 if (res == _Z_RES_OK) {
                     _z_t_msg_clear(&r._value);
                     _z_bytes_clear(&addr);
                 } else {
-                    ztm->_read_task_running = 0;
+                    ztm->_read_task_running = false;
                     continue;
                 }
             } else {
                 _Z_ERROR("Connection closed due to malformed message\n");
-                ztm->_read_task_running = 0;
+                ztm->_read_task_running = false;
                 continue;
             }
         }
@@ -114,7 +114,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
-    return 0;
+    return NULL;
 }
 
 #endif  // Z_MULTICAST_TRANSPORT == 1

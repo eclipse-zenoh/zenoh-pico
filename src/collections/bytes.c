@@ -80,4 +80,4 @@ _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
     return dst;
 }
 
-uint8_t _z_bytes_is_empty(const _z_bytes_t *bs) { return bs->len == 0; }
+_Bool _z_bytes_is_empty(const _z_bytes_t *bs) { return bs->len == 0; }

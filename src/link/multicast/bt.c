@@ -25,7 +25,7 @@
 #define SPP_MAXIMUM_PAYLOAD 128
 
 int8_t _z_f_link_open_bt(_z_link_t *self) {
-    int8_t ret = 0;
+    int8_t ret = _Z_RES_OK;
 
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
@@ -42,7 +42,7 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
 }
 
 int8_t _z_f_link_listen_bt(_z_link_t *self) {
-    int8_t ret = 0;
+    int8_t ret = _Z_RES_OK;
 
     uint8_t mode = 0;
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);

@@ -94,7 +94,7 @@ _z_str_array_t _z_str_array_make(size_t len);
 void _z_str_array_init(_z_str_array_t *sa, size_t len);
 char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);
 size_t _z_str_array_len(const _z_str_array_t *sa);
-uint8_t _z_str_array_is_empty(const _z_str_array_t *sa);
+_Bool _z_str_array_is_empty(const _z_str_array_t *sa);
 void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
 void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
 void _z_str_array_clear(_z_str_array_t *sa);

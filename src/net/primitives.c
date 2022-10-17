@@ -26,9 +26,9 @@
 #include "zenoh-pico/session/utils.h"
 
 /*------------------ Scouting ------------------*/
-void _z_scout(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
+void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
               void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
-    _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, 0);
+    _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, false);
 
     while (hellos != NULL) {
         _z_hello_t *hello = _z_hello_list_head(hellos);
@@ -55,12 +55,12 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
         _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
         r->_id = _z_get_resource_id(zn);
         r->_key = _z_keyexpr_duplicate(&keyexpr);
-        if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) == 0) {
+        if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) == _Z_RES_OK) {
             // Build the declare message to send on the wire
             _z_declaration_array_t declarations = _z_declaration_array_make(1);
             declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&keyexpr));
             _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-            if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+            if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 ret = r->_id;
             } else {
                 _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
@@ -83,7 +83,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid) {
         _z_declaration_array_t declarations = _z_declaration_array_make(1);
         declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TX_CONNECTION;
         }
         _z_msg_clear(&z_msg);
@@ -104,7 +104,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
         ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
         ret->_zn = zn;
         ret->_key = _z_keyexpr_duplicate(&keyexpr);
@@ -126,7 +126,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     _z_declaration_array_t declarations = _z_declaration_array_make(1);
     declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         ret = _Z_ERR_TX_CONNECTION;
     }
     _z_msg_clear(&z_msg);
@@ -155,7 +155,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
         _z_declaration_array_t declarations = _z_declaration_array_make(1);
         declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
             ret->_zn = zn;
             ret->_id = s._id;
@@ -178,7 +178,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         _z_declaration_array_t declarations = _z_declaration_array_make(1);
         declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             // Only if message is successfully send, local subscription state can be removed
             _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
         } else {
@@ -215,7 +215,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, boo
         declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), q._complete,
                                                                  _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
             ret->_zn = zn;
             ret->_id = q._id;
@@ -238,7 +238,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
         _z_declaration_array_t declarations = _z_declaration_array_make(1);
         declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == 0) {
+        if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             // Only if message is successfully send, local queryable state can be removed
             _z_unregister_questionable(qle->_zn, q);
         } else {
@@ -272,14 +272,14 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
         // Build the reply context decorator. This is NOT the final reply._
         _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_tp_manager->_local_pid.start,
                                        ((_z_session_t *)query->_zn)->_tp_manager->_local_pid.len);
-        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, 0);
+        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, false);
 
         _z_data_info_t di = {._flags = 0};                  // Empty data info
         _z_payload_t pld = {.len = len, .start = payload};  // Payload
-        int can_be_dropped = 0;                             // Congestion control
+        _Bool can_be_dropped = false;                       // Congestion control
         _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
 
-        if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TX_CONNECTION;
         }
 
@@ -301,11 +301,11 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
     _Z_SET_FLAG(info._flags, _Z_DATA_INFO_ENC);
     _Z_SET_FLAG(info._flags, _Z_DATA_INFO_KIND);
 
-    _z_payload_t pld = {.len = len, .start = payload};            // Payload
-    int can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;  // Congestion control
+    _z_payload_t pld = {.len = len, .start = payload};              // Payload
+    _Bool can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;  // Congestion control
     _z_zenoh_message_t z_msg = _z_msg_make_data(keyexpr, info, pld, can_be_dropped);
 
-    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != 0) {
+    if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
         ret = _Z_ERR_TX_CONNECTION;
     }
 
@@ -337,7 +337,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         _z_zenoh_message_t z_msg =
             _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation);
 
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             _z_unregister_pending_query(zn, pq);
             ret = _Z_ERR_TX_CONNECTION;
         }
@@ -356,10 +356,10 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     if (s != NULL) {
         _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
         _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample
-        int is_final = 1;
+        _Bool is_final = true;
         _z_zenoh_message_t z_msg = _z_msg_make_pull(s->ptr->_key, pull_id, max_samples, is_final);
 
-        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != 0) {
+        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TX_CONNECTION;
         }
     } else {

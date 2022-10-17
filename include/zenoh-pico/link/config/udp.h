@@ -27,7 +27,7 @@
 #define UDP_CONFIG_TOUT_STR "tout"
 
 #define UDP_CONFIG_MAPPING_BUILD         \
-    int argc = 2;                        \
+    uint8_t argc = 2;                    \
     _z_str_intmapping_t args[argc];      \
     args[0]._key = UDP_CONFIG_IFACE_KEY; \
     args[0]._str = UDP_CONFIG_IFACE_STR; \

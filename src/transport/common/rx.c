@@ -26,7 +26,7 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
     _z_zbuf_reset(&zbf);
 
-    if (_Z_LINK_IS_STREAMED(zl->_capabilities) != 0) {
+    if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {
         // Read the message length
         if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) == _Z_MSG_LEN_ENC_SIZE) {
             size_t len = 0;

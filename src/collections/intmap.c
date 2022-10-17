@@ -48,7 +48,7 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
     return len;
 }
 
-uint8_t _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }
+_Bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }
 
 void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f) {
     if (map->_vals != NULL) {

@@ -73,8 +73,8 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 void *_zp_multicast_lease_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-    ztm->_lease_task_running = 1;
-    ztm->_transmitted = 0;
+    ztm->_lease_task_running = true;
+    ztm->_transmitted = false;
 
     // From all peers, get the next lease time (minimum)
     _z_zint_t next_lease = _z_get_minimum_lease(ztm->_peers, ztm->_lease);
@@ -82,16 +82,16 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
     _z_zint_t next_join = Z_JOIN_INTERVAL;
 
     _z_transport_peer_entry_list_t *it = NULL;
-    while (ztm->_lease_task_running == 1) {
+    while (ztm->_lease_task_running == true) {
         _z_mutex_lock(&ztm->_mutex_peer);
 
         if (next_lease <= 0) {
             it = ztm->_peers;
             while (it != NULL) {
                 _z_transport_peer_entry_t *entry = _z_transport_peer_entry_list_head(it);
-                if (entry->_received == 1) {
+                if (entry->_received == true) {
                     // Reset the lease parameters
-                    entry->_received = 0;
+                    entry->_received = false;
                     entry->_next_lease = entry->_lease;
                     it = _z_transport_peer_entry_list_tail(it);
                 } else {
@@ -105,7 +105,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         if (next_join <= 0) {
             _zp_multicast_send_join(ztm);
-            ztm->_transmitted = 1;
+            ztm->_transmitted = true;
 
             // Reset the join parameters
             next_join = Z_JOIN_INTERVAL;
@@ -113,14 +113,14 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztm->_transmitted == 0) {
+            if (ztm->_transmitted == false) {
                 if (_zp_multicast_send_keep_alive(ztm) < 0) {
                     // TODO: Handle retransmission or error
                 }
             }
 
             // Reset the keep alive parameters
-            ztm->_transmitted = 0;
+            ztm->_transmitted = false;
             next_keep_alive = _z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
         }
 

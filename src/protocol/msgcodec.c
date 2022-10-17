@@ -976,7 +976,7 @@ _z_query_consolidation_result_t _z_query_consolidation_decode(_z_zbuf_t *zbf) {
     _z_zint_result_t r_con = _z_zint_decode(zbf);
     _ASSURE_RESULT(r_con, r, _Z_ERR_PARSE_ZINT)
 
-    unsigned int mode = r_con._value & 0x03;
+    uint8_t mode = r_con._value & 0x03;
     switch (mode) {
         case Z_CONSOLIDATION_MODE_NONE:
         case Z_CONSOLIDATION_MODE_MONOTONIC:
@@ -1174,7 +1174,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *m
 
     // Encode the body
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_what))
+        _Z_EC(_z_uint8_encode(wbf, msg->_what))
     }
 
     return ret;
@@ -1185,9 +1185,9 @@ void _z_scout_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_scout_result_t *r) {
     r->_tag = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
-        r->_value._what = r_zint._value;
+        _z_uint8_result_t r_wami = _z_uint8_decode(zbf);
+        _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_UINT8)
+        r->_value._what = r_wami._value;
     }
 }
 
@@ -1207,7 +1207,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *m
         _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_whatami))
+        _Z_EC(_z_uint8_encode(wbf, msg->_whatami))
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
@@ -1227,9 +1227,9 @@ void _z_hello_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_hello_result_t *r) {
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _z_zint_result_t r_zint = _z_zint_decode(zbf);
-        _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
-        r->_value._whatami = r_zint._value;
+        _z_uint8_result_t r_wami = _z_uint8_decode(zbf);
+        _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_UINT8)
+        r->_value._whatami = r_wami._value;
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
@@ -1255,7 +1255,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
         _Z_EC(_z_zint_encode(wbf, msg->_options))
     }
     _Z_EC(_z_uint8_encode(wbf, msg->_version))
-    _Z_EC(_z_zint_encode(wbf, msg->_whatami))
+    _Z_EC(_z_uint8_encode(wbf, msg->_whatami))
     _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
@@ -1296,8 +1296,8 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
     _ASSURE_P_RESULT(r_ver, r, _Z_ERR_PARSE_UINT8)
     r->_value._version = r_ver._value;
 
-    _z_zint_result_t r_wami = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_ZINT)
+    _z_uint8_result_t r_wami = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_UINT8)
     r->_value._whatami = r_wami._value;
 
     _z_bytes_result_t r_pid = _z_bytes_decode(zbf);
@@ -1390,8 +1390,8 @@ void _z_init_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_init_result_t *r) {
         r->_value._version = r_uint8._value;
     }
 
-    _z_zint_result_t r_wami = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_ZINT)
+    _z_uint8_result_t r_wami = _z_uint8_decode(zbf);
+    _ASSURE_P_RESULT(r_wami, r, _Z_ERR_PARSE_UINT8)
     r->_value._whatami = r_wami._value;
 
     _z_bytes_result_t r_pid = _z_bytes_decode(zbf);
@@ -1523,7 +1523,7 @@ void _z_sync_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_sync_result_t *r) {
     _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
     r->_value._sn = r_zint._value;
 
-    if ((_Z_HAS_FLAG(header, _Z_FLAG_T_R) != 0) && (_Z_HAS_FLAG(header, _Z_FLAG_T_C) != 0)) {
+    if ((_Z_HAS_FLAG(header, _Z_FLAG_T_R) == true) && (_Z_HAS_FLAG(header, _Z_FLAG_T_C) == true)) {
         r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
         r->_value._count = r_zint._value;

@@ -120,7 +120,7 @@ char **_z_str_array_get(const _z_str_array_t *sa, size_t pos) { return &sa->_val
 
 size_t _z_str_array_len(const _z_str_array_t *sa) { return sa->_len; }
 
-uint8_t _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->_len == (size_t)0; }
+_Bool _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->_len == (size_t)0; }
 
 void _z_str_array_clear(_z_str_array_t *sa) {
     for (size_t i = 0; i < sa->_len; i++) {
