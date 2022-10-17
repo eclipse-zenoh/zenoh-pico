@@ -155,7 +155,7 @@ typedef struct {
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
-    uint8_t _is_qos;
+    _Bool _is_qos;
     _z_zint_t _lease;
 } _z_transport_unicast_establish_param_t;
 
@@ -164,7 +164,7 @@ _Z_RESULT_DECLARE(_z_transport_unicast_establish_param_t, transport_unicast_esta
 typedef struct {
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_tx;
-    uint8_t _is_qos;
+    _Bool _is_qos;
 } _z_transport_multicast_establish_param_t;
 
 _Z_RESULT_DECLARE(_z_transport_multicast_establish_param_t, transport_multicast_establish_param)

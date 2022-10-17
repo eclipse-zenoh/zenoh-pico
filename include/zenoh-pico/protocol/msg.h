@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_PROTOCOL_MSG_H
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
@@ -680,7 +682,7 @@ typedef struct {
         _z_coundit_sn_t _plain;
         _z_coundit_sn_t _qos[Z_PRIORITIES_NUM];
     } _val;
-    uint8_t _is_qos;
+    _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
     _z_zint_t _options;

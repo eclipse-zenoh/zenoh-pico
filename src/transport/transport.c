@@ -313,14 +313,14 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer
     int8_t err = _Z_RES_OK;
 
     _z_transport_multicast_establish_param_t param;
-    param._is_qos = 0;  // FIXME: make transport aware of qos configuration
+    param._is_qos = false;  // FIXME: make transport aware of qos configuration
     param._initial_sn_tx = 0;
     param._sn_resolution = Z_SN_RESOLUTION;
 
     // Explicitly send a JOIN message upon startup
     // FIXME: make transport aware of qos configuration
     _z_conduit_sn_list_t next_sns;
-    next_sns._is_qos = 0;
+    next_sns._is_qos = false;
     next_sns._val._plain._best_effort = param._initial_sn_tx;
     next_sns._val._plain._reliable = param._initial_sn_tx;
 

@@ -516,7 +516,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z
     _z_transport_message_t msg;
 
     msg._body._join._options = 0;
-    if (next_sns._is_qos != 0) {
+    if (next_sns._is_qos == true) {
         _Z_SET_FLAG(msg._body._join._options, _Z_OPT_JOIN_QOS);
     }
     msg._body._join._version = version;

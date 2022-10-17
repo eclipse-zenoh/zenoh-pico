@@ -1668,13 +1668,13 @@ _z_transport_message_t gen_join_message(void) {
 
     _z_conduit_sn_list_t next_sns;
     if (gen_bool()) {
-        next_sns._is_qos = 1;
+        next_sns._is_qos = true;
         for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
             next_sns._val._qos[i]._reliable = gen_zint();
             next_sns._val._qos[i]._best_effort = gen_zint();
         }
     } else {
-        next_sns._is_qos = 0;
+        next_sns._is_qos = false;
         next_sns._val._plain._reliable = gen_zint();
         next_sns._val._plain._best_effort = gen_zint();
     }
@@ -1711,8 +1711,8 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
 
     printf("   Next SNs: ");
     if (_Z_HAS_FLAG(left->_options, _Z_OPT_JOIN_QOS)) {
-        assert(left->_next_sns._is_qos == 1);
-        assert(right->_next_sns._is_qos == 1);
+        assert(left->_next_sns._is_qos == true);
+        assert(right->_next_sns._is_qos == true);
 
         for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
             printf("R:%zu:%zu ", left->_next_sns._val._qos[i]._reliable, right->_next_sns._val._qos[i]._reliable);
@@ -1722,8 +1722,8 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
         }
         printf("\n");
     } else {
-        assert(left->_next_sns._is_qos == 0);
-        assert(right->_next_sns._is_qos == 0);
+        assert(left->_next_sns._is_qos == false);
+        assert(right->_next_sns._is_qos == false);
 
         printf("R: %zu:%zu", left->_next_sns._val._plain._reliable, right->_next_sns._val._plain._reliable);
         assert(left->_next_sns._val._plain._reliable == right->_next_sns._val._plain._reliable);

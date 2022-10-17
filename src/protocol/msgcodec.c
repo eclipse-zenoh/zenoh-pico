@@ -1318,7 +1318,7 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
     }
 
     if (_Z_HAS_FLAG(r->_value._options, _Z_OPT_JOIN_QOS) == true) {
-        r->_value._next_sns._is_qos = 1;
+        r->_value._next_sns._is_qos = true;
 
         for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
             _z_zint_result_t r_zint = _z_zint_decode(zbf);
@@ -1330,7 +1330,7 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
             r->_value._next_sns._val._qos[i]._best_effort = r_zint._value;
         }
     } else {
-        r->_value._next_sns._is_qos = 0;
+        r->_value._next_sns._is_qos = false;
 
         _z_zint_result_t r_zint = _z_zint_decode(zbf);
         _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT)
