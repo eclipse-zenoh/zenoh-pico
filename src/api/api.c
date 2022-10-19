@@ -449,8 +449,8 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     z_put_options_t opt = z_put_options_default();
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
-        opt.encoding = opt.encoding;
-        opt.priority = opt.priority;
+        opt.encoding = options->encoding;
+        opt.priority = options->priority;
     }
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    opt.congestion_control);
@@ -495,10 +495,6 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     void *ctx = callback->context;
     callback->context = NULL;
 
-    if (parameters == NULL) {
-        parameters = "";
-    }
-
     z_get_options_t opt = z_get_options_default();
     if (options != NULL) {
         opt.consolidation = options->consolidation;
@@ -506,7 +502,8 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
-        if (strstr(parameters, Z_SELECTOR_TIME) != NULL) {
+        const char *lp = (parameters == NULL) ? "" : parameters;
+        if (strstr(lp, Z_SELECTOR_TIME) != NULL) {
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
         } else {
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;

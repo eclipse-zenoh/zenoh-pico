@@ -84,7 +84,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid) {
         declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
         if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
 
@@ -112,7 +112,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
         ret->_congestion_control = congestion_control;
         ret->_priority = priority;
     } else {
-        // ret = _Z_ERR_TX_CONNECTION;
+        // ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_msg_clear(&z_msg);
 
@@ -127,7 +127,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
     _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
     if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        ret = _Z_ERR_TX_CONNECTION;
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_msg_clear(&z_msg);
 
@@ -160,7 +160,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
             ret->_zn = zn;
             ret->_id = s._id;
         } else {
-            // ret = _Z_ERR_TX_CONNECTION;
+            // ret = _Z_ERR_TRANSPORT_TX_FAILED;
             _z_unregister_subscription(zn, _Z_RESOURCE_IS_LOCAL, sp_s);
         }
         _z_msg_clear(&z_msg);
@@ -182,12 +182,12 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
             // Only if message is successfully send, local subscription state can be removed
             _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
         } else {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
 
     } else {
-        ret = _Z_ERR_UNKNOWN_SUBSCRIPTION;
+        ret = _Z_ERR_SUBSCRIPTION_UNKNOWN;
     }
 
     return ret;
@@ -220,7 +220,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, boo
             ret->_zn = zn;
             ret->_id = q._id;
         } else {
-            // ret = _Z_ERR_TX_CONNECTION;
+            // ret = _Z_ERR_TRANSPORT_TX_FAILED;
             _z_unregister_questionable(zn, sp_q);
         }
         _z_msg_clear(&z_msg);
@@ -242,12 +242,12 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
             // Only if message is successfully send, local queryable state can be removed
             _z_unregister_questionable(qle->_zn, q);
         } else {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
 
     } else {
-        ret = _Z_ERR_UNKNOWN_QUERYABLE;
+        ret = _Z_ERR_QUERYABLE_UNKNOWN;
     }
 
     return ret;
@@ -280,7 +280,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
         _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
 
         if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
 
         z_free(rctx);
@@ -306,7 +306,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
     _z_zenoh_message_t z_msg = _z_msg_make_data(keyexpr, info, pld, can_be_dropped);
 
     if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
-        ret = _Z_ERR_TX_CONNECTION;
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
     return ret;
@@ -339,7 +339,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 
         if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             _z_unregister_pending_query(zn, pq);
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
     } else {
         _z_pending_query_clear(pq);
@@ -360,10 +360,10 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
         _z_zenoh_message_t z_msg = _z_msg_make_pull(s->ptr->_key, pull_id, max_samples, is_final);
 
         if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
     } else {
-        ret = _Z_ERR_UNKNOWN_SUBSCRIPTION;
+        ret = _Z_ERR_SUBSCRIPTION_UNKNOWN;
     }
 
     return ret;

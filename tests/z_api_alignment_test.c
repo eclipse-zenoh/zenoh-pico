@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
     z_owned_closure_hello_t _ret_closure_hello = z_closure(hello_handler, NULL, NULL);
     _ret_int8 = z_scout(z_move(_ret_sconfig), z_move(_ret_closure_hello));
     assert(_ret_int8 == 0);
-    assert(hellos == 1);
+    assert(hellos >= 1);
 
     uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
     z_sleep_ms(_scouting_timeout);

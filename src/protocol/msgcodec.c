@@ -589,7 +589,7 @@ int8_t _z_declaration_encode(_z_wbuf_t *wbf, _z_declaration_t *dcl) {
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode declaration with unknown ID(%d)\n", did);
-            ret = _Z_ERR_UNKNOWN_MESSAGE;
+            ret = _Z_ERR_MESSAGE_UNKNOWN;
         } break;
     }
 
@@ -1067,7 +1067,7 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
-            ret = _Z_ERR_UNKNOWN_MESSAGE;
+            ret = _Z_ERR_MESSAGE_UNKNOWN;
         } break;
     }
 
@@ -1750,7 +1750,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
-            ret = _Z_ERR_UNKNOWN_MESSAGE;
+            ret = _Z_ERR_MESSAGE_UNKNOWN;
         } break;
     }
 

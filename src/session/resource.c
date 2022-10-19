@@ -36,9 +36,10 @@ _z_zint_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
 _z_zint_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 
 /*------------------ Resource ------------------*/
-_z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id) {
+_z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, const _z_zint_t id) {
     _z_resource_t *ret = NULL;
 
+    _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
         if (r->_id == id) {
@@ -52,9 +53,10 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *xs, const _z_zint_t id
     return ret;
 }
 
-_z_resource_t *__z_get_resource_by_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
+_z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_t *keyexpr) {
     _z_resource_t *ret = NULL;
 
+    _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
         if ((r->_key._id == keyexpr->_id) && (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == true)) {
@@ -102,19 +104,17 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         id = res->_key._id;
     }
 
-    if (ke_len != 0) {
+    if (ke_len != (size_t)0) {
         char *rname = NULL;
-        if (ke_len != 0) {
-            // Concatenate all the partial resource names
-            rname = (char *)z_malloc(ke_len);
-            rname[0] = '\0';  // NULL terminator must be set (required to strcat)
+        rname = (char *)z_malloc(ke_len);
+        rname[0] = '\0';  // NULL terminator must be set (required to strcat)
 
-            _z_str_list_t *xstr = strs;
-            while (xstr != NULL) {
-                char *s = _z_str_list_head(xstr);
-                (void)strncat(rname, s, strlen(s));
-                xstr = _z_str_list_tail(xstr);
-            }
+        // Concatenate all the partial resource names
+        _z_str_list_t *xstr = strs;
+        while (xstr != NULL) {
+            char *s = _z_str_list_head(xstr);
+            (void)strncat(rname, s, strlen(s));
+            xstr = _z_str_list_tail(xstr);
         }
         ret._suffix = rname;
     }
@@ -130,7 +130,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
  *  - zn->_mutex_inner
  */
 _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local, _z_zint_t id) {
-    _z_resource_list_t *decls = is_local == _Z_RESOURCE_IS_LOCAL ? zn->_local_resources : zn->_remote_resources;
+    _z_resource_list_t *decls = (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_id(decls, id);
 }
 
@@ -140,7 +140,7 @@ _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local,
  *  - zn->_mutex_inner
  */
 _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = is_local == _Z_RESOURCE_IS_LOCAL ? zn->_local_resources : zn->_remote_resources;
+    _z_resource_list_t *decls = (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_key(decls, keyexpr);
 }
 
@@ -150,7 +150,7 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local
  *  - zn->_mutex_inner
  */
 _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = is_local == _Z_RESOURCE_IS_LOCAL ? zn->_local_resources : zn->_remote_resources;
+    _z_resource_list_t *decls = (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_resources : zn->_remote_resources;
     return __z_get_expanded_key_from_key(decls, keyexpr);
 }
 
@@ -215,7 +215,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
             zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
         }
     } else {
-        ret = _Z_ERR_FAILED_REGISTER_KEYEXPR;
+        ret = _Z_ERR_DECLARE_KEYEXPR;
     }
 
 #if Z_MULTI_THREAD == 1

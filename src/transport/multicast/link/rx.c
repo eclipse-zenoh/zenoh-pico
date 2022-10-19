@@ -26,8 +26,9 @@
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
 
-    for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
-        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+    _z_transport_peer_entry_list_t *xs = l;
+    for (; xs != NULL; xs = _z_transport_peer_entry_list_tail(xs)) {
+        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(xs);
         if (val->_remote_addr.len != remote_addr->len) {
             continue;
         }
@@ -66,17 +67,17 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
             if (writable < len) {
                 // Read enough bytes to decode the message
                 if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, len, addr) != len) {
-                    r->_tag = _Z_ERR_RX_CONNECTION;
+                    r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
                 r->_tag = _Z_ERR_IOBUF_NO_SPACE;
             }
         } else {
-            r->_tag = _Z_ERR_RX_CONNECTION;
+            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
         if (_z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX) {
-            r->_tag = _Z_ERR_RX_CONNECTION;
+            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 
@@ -261,8 +262,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F) == true) {
                 // Select the right defragmentation buffer
-                _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true ? &entry->_dbuf_reliable
-                                                                                   : &entry->_dbuf_best_effort;
+                _z_wbuf_t *dbuf = (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true) ? &entry->_dbuf_reliable
+                                                                                     : &entry->_dbuf_best_effort;
 
                 _Bool drop = false;
                 if ((_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len) > Z_FRAG_MAX_SIZE) {

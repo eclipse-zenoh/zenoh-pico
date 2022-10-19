@@ -48,17 +48,17 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
             if (writable < len) {
                 // Read enough bytes to decode the message
                 if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, len, NULL) != len) {
-                    r->_tag = _Z_ERR_RX_CONNECTION;
+                    r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
                 r->_tag = _Z_ERR_IOBUF_NO_SPACE;
             }
         } else {
-            r->_tag = _Z_ERR_RX_CONNECTION;
+            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
         if (_z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
-            r->_tag = _Z_ERR_RX_CONNECTION;
+            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 

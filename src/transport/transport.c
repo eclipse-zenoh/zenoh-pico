@@ -217,7 +217,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
                         if (iam._body._init._sn_resolution <= param._sn_resolution) {
                             param._sn_resolution = iam._body._init._sn_resolution;
                         } else {
-                            err = _Z_ERR_OPEN_FAILED_SN_RESOLUTION;
+                            err = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                         }
                     }
 
@@ -263,7 +263,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(c
                         }
                     }
                 } else {
-                    err = _Z_ERR_UNEXPECTED_MESSAGE;
+                    err = _Z_ERR_MESSAGE_UNEXPECTED;
                 }
             }
 
@@ -284,7 +284,7 @@ _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_clie
     (void)(zl);
     (void)(local_pid);
     _z_transport_multicast_establish_param_result_t ret;
-    ret._tag = _Z_ERR_UNSUPPORTED_CLIENT_MULTICAST;
+    ret._tag = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
 
     // @TODO: not implemented
 
@@ -298,7 +298,7 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
     (void)(zl);
     (void)(local_pid);
     _z_transport_unicast_establish_param_result_t ret;
-    ret._tag = _Z_ERR_UNSUPPORTED_PEER_UNICAST;
+    ret._tag = _Z_ERR_CONFIG_UNSUPPORTED_PEER_UNICAST;
 
     // @TODO: not implemented
 

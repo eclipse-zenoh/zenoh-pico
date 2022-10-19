@@ -39,32 +39,35 @@ _z_zint_t _z_get_pull_id(_z_session_t *zn) { return zn->_pull_id++; }
 _z_subscription_sptr_t *__z_get_subscription_by_id(_z_subscription_sptr_list_t *subs, const _z_zint_t id) {
     _z_subscription_sptr_t *ret = NULL;
 
-    while (subs != NULL) {
-        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
+    _z_subscription_sptr_list_t *xs = subs;
+    while (xs != NULL) {
+        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
         if (id == sub->ptr->_id) {
             ret = sub;
             break;
         }
 
-        subs = _z_subscription_sptr_list_tail(subs);
+        xs = _z_subscription_sptr_list_tail(xs);
     }
 
     return ret;
 }
 
 _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_list_t *subs, const _z_keyexpr_t key) {
-    _z_subscription_sptr_list_t *xs = NULL;
-    while (subs != NULL) {
-        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
+    _z_subscription_sptr_list_t *ret = NULL;
+
+    _z_subscription_sptr_list_t *xs = subs;
+    while (xs != NULL) {
+        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
         if (_z_keyexpr_intersects(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
-            xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
+            ret = _z_subscription_sptr_list_push(ret, _z_subscription_sptr_clone_as_ptr(sub));
         }
 
-        subs = _z_subscription_sptr_list_tail(subs);
+        xs = _z_subscription_sptr_list_tail(xs);
     }
 
-    return xs;
+    return ret;
 }
 
 /**
@@ -74,7 +77,7 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
  */
 _z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
     _z_subscription_sptr_list_t *subs =
-        is_local == _Z_RESOURCE_IS_LOCAL ? zn->_local_subscriptions : zn->_remote_subscriptions;
+        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscription_by_id(subs, id);
 }
 
@@ -86,7 +89,7 @@ _z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint
 _z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
                                                                  const _z_keyexpr_t key) {
     _z_subscription_sptr_list_t *subs =
-        is_local == _Z_RESOURCE_IS_LOCAL ? zn->_local_subscriptions : zn->_remote_subscriptions;
+        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscriptions_by_key(subs, key);
 }
 
@@ -177,7 +180,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_keyexpr_clear(&key);
         _z_subscription_sptr_list_free(&subs);
     } else {
-        ret = _Z_ERR_UNKNOWN_KEYEXPR;
+        ret = _Z_ERR_DECLARE_KEYEXPR;
     }
 
     return ret;

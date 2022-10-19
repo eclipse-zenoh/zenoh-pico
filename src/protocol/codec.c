@@ -63,12 +63,16 @@ _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
 
 /*------------------ z_zint ------------------*/
 int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
-    while (v > 0x7f) {
-        uint8_t c = (v & 0x7f) | 0x80;
-        _Z_EC(_z_wbuf_write(wbf, (uint8_t)c))
-        v = v >> (_z_zint_t)7;
+    _z_zint_t lv = v;
+
+    while (lv > 0x7f) {
+        uint8_t c = (lv & 0x7f) | 0x80;
+        _Z_EC(_z_wbuf_write(wbf, c))
+        lv = lv >> (_z_zint_t)7;
     }
-    return _z_wbuf_write(wbf, (uint8_t)v);
+
+    uint8_t c = lv & 0xff;
+    return _z_wbuf_write(wbf, c);
 }
 
 _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
@@ -83,7 +87,7 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
         _ASSURE_RESULT(r_uint8, r, _Z_ERR_PARSE_ZINT);
 
         r._value = r._value | (((_z_zint_t)r_uint8._value & 0x7f) << i);
-        i += 7;
+        i += (uint8_t)7;
     } while (r_uint8._value > 0x7f);
 
     return r;

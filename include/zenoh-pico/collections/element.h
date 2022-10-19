@@ -46,6 +46,7 @@ typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
 
 /*------------------ void ----------------*/
 typedef void _z_noop_t;
+
 static inline size_t _z_noop_size(void *s) {
     (void)(s);
     return 0;

@@ -52,14 +52,14 @@ _z_link_p_result_t _z_open_link(const char *locator) {
     } else
 #endif
     {
-        r._tag = _Z_ERR_INVALID_LOCATOR;
+        r._tag = _Z_ERR_LOCATOR_INVALID;
         _z_endpoint_clear(&endpoint);
     }
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for communication
         if (r._value->_open_f(r._value) < 0) {
-            r._tag = _Z_ERR_OPEN_TRANSPORT_FAILED;
+            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
             _z_link_free(&r._value);
         }
     }
@@ -89,14 +89,14 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
     } else
 #endif
     {
-        r._tag = _Z_ERR_INVALID_LOCATOR;
+        r._tag = _Z_ERR_LOCATOR_INVALID;
         _z_endpoint_clear(&endpoint);
     }
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for listening
         if (r._value->_listen_f(r._value) < 0) {
-            r._tag = _Z_ERR_OPEN_TRANSPORT_FAILED;
+            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
             _z_link_free(&r._value);
         }
     }
@@ -143,7 +143,7 @@ int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
             _Z_DEBUG(" sent %lu bytes\n", wb);
             if (wb == SIZE_MAX) {
                 _Z_DEBUG("Error while sending data over socket [%lu]\n", wb);
-                ret = _Z_ERR_TX_CONNECTION;
+                ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }
             n -= wb;

@@ -38,17 +38,17 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
             if (writable >= len) {
                 // Read enough bytes to decode the message
                 if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len) {
-                    ret._tag = _Z_ERR_RX_CONNECTION;
+                    ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
                 ret._tag = _Z_ERR_IOBUF_NO_SPACE;
             }
         } else {
-            ret._tag = _Z_ERR_RX_CONNECTION;
+            ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
         if (_z_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX) {
-            ret._tag = _Z_ERR_RX_CONNECTION;
+            ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 

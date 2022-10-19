@@ -67,14 +67,15 @@ _z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
 _z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_list_t *pqls, const _z_zint_t id) {
     _z_pending_query_t *ret = NULL;
 
-    while (pqls != NULL) {
-        _z_pending_query_t *pql = _z_pending_query_list_head(pqls);
+    _z_pending_query_list_t *xs = pqls;
+    while (xs != NULL) {
+        _z_pending_query_t *pql = _z_pending_query_list_head(xs);
         if (pql->_id == id) {
             ret = pql;
             break;
         }
 
-        pqls = _z_pending_query_list_tail(pqls);
+        xs = _z_pending_query_list_tail(xs);
     }
 
     return ret;
@@ -116,7 +117,7 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
         zn->_pending_queries = _z_pending_query_list_push(zn->_pending_queries, pen_qry);
     } else {
-        ret = _Z_ERR_FAILED_REGISTER_QUERY;
+        ret = _Z_ERR_REGISTER_QUERY;
     }
 
 #if Z_MULTI_THREAD == 1
@@ -132,10 +133,10 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                                       const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
 
-    if (ret == _Z_RES_OK &&
-        _Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) == true) {  // FIXME: to be checked, but this will might happen
-                                                                     // with the current version of the protocol
-        ret = _Z_ERR_UNEXPECTED_MESSAGE_FLAG;
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) ==
+                               true)) {  // FIXME: to be checked, but this will might happen
+                                         // with the current version of the protocol
+        ret = _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
     }
 
 #if Z_MULTI_THREAD == 1
@@ -143,15 +144,15 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 #endif  // Z_MULTI_THREAD == 1
 
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
-    if (ret == _Z_RES_OK && pen_qry == NULL) {
-        ret = _Z_ERR_UNKNOWN_QUERY;
+    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
+        ret = _Z_ERR_QUERY_UNKNOWN;
     }
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
-    if (ret == _Z_RES_OK &&
-        ((pen_qry->_anykey == false) && !_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
-                                                               keyexpr._suffix, strlen(keyexpr._suffix)))) {
-        ret = _Z_ERR_NOT_MATCHING_QUERY;
+    if ((ret == _Z_RES_OK) &&
+        ((pen_qry->_anykey == false) && (_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
+                                                               keyexpr._suffix, strlen(keyexpr._suffix)) == false))) {
+        ret = _Z_ERR_QUERY_NOT_MATCH;
     }
 
     // Build the reply
@@ -176,7 +177,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply->data.sample.keyexpr._suffix) == true) {
                 if (timestamp._time <= pen_rep->_tstamp._time) {
-                    ret = _Z_ERR_OLDER_DATA_QUERY;
+                    ret = _Z_ERR_QUERY_OLDER_DATA;
                 } else {
                     pen_qry->_pending_replies =
                         _z_pending_reply_list_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
@@ -211,7 +212,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 #endif  // Z_MULTI_THREAD == 1
 
     // Trigger the user callback
-    if (ret == _Z_RES_OK && pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
+    if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
         pen_qry->_callback(&reply, pen_qry->_call_arg);
         if (reply != NULL) {
             _z_reply_free(&reply);
@@ -228,20 +229,20 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (ret == _Z_RES_OK &&
-        _Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) == false) {  // FIXME: to be checked, but this might never
-                                                                      // happen with the current version of the protocol
-        ret = _Z_ERR_UNEXPECTED_MESSAGE_FLAG;
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) ==
+                               false)) {  // FIXME: to be checked, but this might never
+                                          // happen with the current version of the protocol
+        ret = _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
     }
 
     // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
-    if (ret == _Z_RES_OK && pen_qry == NULL) {
-        ret = _Z_ERR_UNKNOWN_QUERY;
+    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
+        ret = _Z_ERR_QUERY_UNKNOWN;
     }
 
     // The reply is the final one, apply consolidation if needed
-    if (ret == _Z_RES_OK && pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
+    if ((ret == _Z_RES_OK) && (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST)) {
         while (pen_qry->_pending_replies != NULL) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 

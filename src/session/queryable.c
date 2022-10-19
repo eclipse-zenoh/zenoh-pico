@@ -33,32 +33,36 @@ void _z_questionable_clear(_z_questionable_t *qle) {
 /*------------------ Queryable ------------------*/
 _z_questionable_sptr_t *__z_get_questionable_by_id(_z_questionable_sptr_list_t *qles, const _z_zint_t id) {
     _z_questionable_sptr_t *ret = NULL;
-    while (qles != NULL) {
-        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
+
+    _z_questionable_sptr_list_t *xs = qles;
+    while (xs != NULL) {
+        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
         if (id == qle->ptr->_id) {
             ret = qle;
             break;
         }
 
-        qles = _z_questionable_sptr_list_tail(qles);
+        xs = _z_questionable_sptr_list_tail(xs);
     }
 
     return ret;
 }
 
 _z_questionable_sptr_list_t *__z_get_questionable_by_key(_z_questionable_sptr_list_t *qles, const _z_keyexpr_t key) {
-    _z_questionable_sptr_list_t *xs = NULL;
-    while (qles != NULL) {
-        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(qles);
+    _z_questionable_sptr_list_t *ret = NULL;
+
+    _z_questionable_sptr_list_t *xs = qles;
+    while (xs != NULL) {
+        _z_questionable_sptr_t *qle = _z_questionable_sptr_list_head(xs);
         if (_z_keyexpr_intersects(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
-            xs = _z_questionable_sptr_list_push(xs, _z_questionable_sptr_clone_as_ptr(qle));
+            ret = _z_questionable_sptr_list_push(ret, _z_questionable_sptr_clone_as_ptr(qle));
         }
 
-        qles = _z_questionable_sptr_list_tail(qles);
+        xs = _z_questionable_sptr_list_tail(xs);
     }
 
-    return xs;
+    return ret;
 }
 
 /**
@@ -176,7 +180,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         z_msg._reply_context = rctx;
 
         if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
-            ret = _Z_ERR_TX_CONNECTION;
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
     } else {
@@ -184,7 +188,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-        ret = _Z_ERR_UNKNOWN_KEYEXPR;
+        ret = _Z_ERR_DECLARE_KEYEXPR;
         _z_keyexpr_clear(&key);
     }
 

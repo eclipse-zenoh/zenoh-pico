@@ -78,13 +78,15 @@ _Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
 char *_z_locator_protocol_from_str(const char *str) {
     char *ret = NULL;
 
-    const char *p_start = &str[0];
-    const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
-    if ((p_start != NULL) && (p_end != NULL) && (p_start != p_end)) {
-        size_t p_len = _z_ptr_char_diff(p_end, p_start);
-        ret = (char *)z_malloc(p_len + (size_t)1);
-        (void)strncpy(ret, p_start, p_len);
-        ret[p_len] = '\0';
+    if (str != NULL) {
+        const char *p_start = &str[0];
+        const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
+        if ((p_end != NULL) && (p_start != p_end)) {
+            size_t p_len = _z_ptr_char_diff(p_end, p_start);
+            ret = (char *)z_malloc(p_len + (size_t)1);
+            (void)strncpy(ret, p_start, p_len);
+            ret[p_len] = '\0';
+        }
     }
 
     return ret;
@@ -258,41 +260,35 @@ void _z_endpoint_free(_z_endpoint_t **ep) {
 }
 
 _z_str_intmap_result_t _z_endpoint_config_from_str(const char *str, const char *proto) {
-    _z_str_intmap_result_t res;
-    res._tag = _Z_RES_OK;
-    res._value = _z_str_intmap_make();
+    _z_str_intmap_result_t res = {._tag = _Z_RES_OK, ._value = _z_str_intmap_make()};
 
     char *p_start = strchr(str, ENDPOINT_CONFIG_SEPARATOR);
     if (p_start != NULL) {
-        p_start++;
+        p_start = _z_ptr_char_offset(p_start, 1);
 
         // Call the right configuration parser depending on the protocol
 #if Z_LINK_TCP == 1
         if (_z_str_eq(proto, TCP_SCHEMA) == true) {
-            res._tag = _Z_RES_OK;
             res = _z_tcp_config_from_str(p_start);
         } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
             if (_z_str_eq(proto, UDP_SCHEMA) == true) {
-            res._tag = _Z_RES_OK;
             res = _z_udp_config_from_str(p_start);
         } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
             if (_z_str_eq(proto, BT_SCHEMA) == true) {
-            res._tag = _Z_RES_OK;
             res = _z_bt_config_from_str(p_start);
         } else
 #endif
 #if Z_LINK_SERIAL == 1
             if (_z_str_eq(proto, SERIAL_SCHEMA) == true) {
-            res._tag = _Z_RES_OK;
             res = _z_serial_config_from_str(p_start);
         } else
 #endif
         {
-            res._tag = _Z_ERR_UNKNOWN_SCHEMA;
+            res._tag = _Z_ERR_LOCATOR_UNKNOWN_SCHEMA;
         }
     } else {
         res._tag = _Z_ERR_PARSE_STRING;

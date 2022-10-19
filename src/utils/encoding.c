@@ -17,49 +17,50 @@
 #include "zenoh-pico/utils/pointers.h"
 
 size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
-    uint8_t *output_initial_ptr = output;
+    size_t len = input_len;
+    uint8_t *pos = output;
     uint8_t *codep = output;
     uint8_t code = 1;
 
-    output = _z_ptr_u8_offset(output, 1);
-    for (const uint8_t *byte = input; input_len != (size_t)0; byte++) {
+    pos = _z_ptr_u8_offset(pos, 1);
+    for (const uint8_t *byte = input; len != (size_t)0; byte++) {
         if (*byte != (uint8_t)0x00) {
-            *output = *byte;
-            output = _z_ptr_u8_offset(output, 1);
+            *pos = *byte;
+            pos = _z_ptr_u8_offset(pos, 1);
             code++;
         }
 
         if (!*byte || (code == (uint8_t)0xFF)) {
             *codep = code;
             code = 1;
-            codep = output;
-            if (!*byte || input_len) {
-                output = _z_ptr_u8_offset(output, 1);
+            codep = pos;
+            if (!*byte || len) {
+                pos = _z_ptr_u8_offset(pos, 1);
             }
         }
 
-        input_len--;
+        len--;
     }
     *codep = code;
 
-    return _z_ptr_u8_diff(output, output_initial_ptr);
+    return _z_ptr_u8_diff(pos, output);
 }
 
 size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
     const uint8_t *byte = input;
-    uint8_t *output_initial_ptr = output;
+    uint8_t *pos = output;
 
     uint8_t code = (uint8_t)0xFF;
     const uint8_t *input_end_ptr = _z_cptr_u8_offset(input, input_len);
     for (uint8_t block = (uint8_t)0x00; byte < input_end_ptr; block--) {
         if (block != (uint8_t)0x00) {
-            *output = *byte;
-            output = _z_ptr_u8_offset(output, 1);
+            *pos = *byte;
+            pos = _z_ptr_u8_offset(pos, 1);
             byte = _z_cptr_u8_offset(byte, 1);
         } else {
             if (code != (uint8_t)0xFF) {
-                *output = (uint8_t)0x00;
-                output = _z_ptr_u8_offset(output, 1);
+                *pos = (uint8_t)0x00;
+                pos = _z_ptr_u8_offset(pos, 1);
             }
             code = *byte;
             block = *byte;
@@ -70,5 +71,5 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
         }
     }
 
-    return _z_ptr_u8_diff(output, output_initial_ptr);
+    return _z_ptr_u8_diff(pos, output);
 }

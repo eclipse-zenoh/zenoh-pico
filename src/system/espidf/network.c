@@ -125,19 +125,21 @@ size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    size_t n = len;
+    size_t n = 0;
+    uint8_t *pos = &ptr[0];
 
     do {
-        size_t rb = _z_read_tcp(sock, ptr, n);
+        size_t rb = _z_read_tcp(sock, pos, len - n);
         if (rb == SIZE_MAX) {
-            return rb;
+            n = rb;
+            break;
         }
 
-        n -= rb;
-        ptr = _z_ptr_u8_offset(ptr, len - n);
-    } while (n > (size_t)0);
+        n += rb;
+        pos = _z_ptr_u8_offset(pos, n);
+    } while (n != len);
 
-    return len;
+    return n;
 }
 
 size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) { return send(sock._fd, ptr, len, 0); }
@@ -237,19 +239,21 @@ size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
 }
 
 size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    size_t n = len;
+    size_t n = 0;
+    uint8_t *pos = &ptr[0];
 
     do {
-        size_t rb = _z_read_udp_unicast(sock, ptr, n);
+        size_t rb = _z_read_udp_unicast(sock, pos, len - n);
         if (rb == SIZE_MAX) {
-            return rb;
+            n = rb;
+            break;
         }
 
-        n -= rb;
-        ptr = _z_ptr_u8_offset(ptr, len - n);
-    } while (n > (size_t)0);
+        n += rb;
+        pos = _z_ptr_u8_offset(pos, n);
+    } while (n != len);
 
-    return len;
+    return n;
 }
 
 size_t _z_send_udp_unicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {
@@ -523,19 +527,21 @@ size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
 
 size_t _z_read_exact_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, _z_sys_net_endpoint_t lep,
                                    _z_bytes_t *addr) {
-    size_t n = len;
+    size_t n = 0;
+    uint8_t *pos = &ptr[0];
 
     do {
-        size_t rb = _z_read_udp_multicast(sock, ptr, n, lep, addr);
+        size_t rb = _z_read_udp_multicast(sock, pos, len - n, lep, addr);
         if (rb == SIZE_MAX) {
-            return rb;
+            n = rb;
+            break;
         }
 
-        n -= rb;
-        ptr = _z_ptr_u8_offset(ptr, len - n);
-    } while (n > (size_t)0);
+        n += rb;
+        pos = _z_ptr_u8_offset(pos, n);
+    } while (n != len);
 
-    return len;
+    return n;
 }
 
 size_t _z_send_udp_multicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {

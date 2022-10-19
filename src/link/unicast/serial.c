@@ -31,13 +31,14 @@ int8_t _z_f_link_open_serial(_z_link_t *self) {
 
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
-    uint32_t rxpin = strtoul(_z_cptr_char_offset(p_dot, 1), NULL, 10);
+    p_dot = _z_cptr_char_offset(p_dot, 1);
+    uint32_t rxpin = strtoul(p_dot, NULL, 10);
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
 
     self->_socket._serial._sock = _z_open_serial(txpin, rxpin, baudrate);
     if (self->_socket._serial._sock._err == true) {
-        ret = -1;
+        ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
     }
 
     return ret;
@@ -48,13 +49,10 @@ int8_t _z_f_link_listen_serial(_z_link_t *self) {
 
     self->_socket._serial._sock = _z_listen_serial(0, 0, 0);
     if (self->_socket._serial._sock._err == true) {
-        ret = -1;
+        ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
     }
 
-    return 0;
-
-ERR:
-    return -1;
+    return ret;
 }
 
 void _z_f_link_close_serial(_z_link_t *self) { _z_close_serial(self->_socket._serial._sock); }
