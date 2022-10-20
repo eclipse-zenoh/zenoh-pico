@@ -32,7 +32,7 @@
 
 size_t _z_tcp_config_strlen(const _z_str_intmap_t *s);
 
-void _z_tcp_config_onto_str(char *dst, const _z_str_intmap_t *s);
+void _z_tcp_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s);
 char *_z_tcp_config_to_str(const _z_str_intmap_t *s);
 
 _z_str_intmap_result_t _z_tcp_config_from_str(const char *s);

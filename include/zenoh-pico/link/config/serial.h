@@ -41,7 +41,7 @@
 // #define SERIAL_CONFIG_TOUT_STR         "tout"
 
 #define SERIAL_CONFIG_MAPPING_BUILD            \
-    uint8_t argc = 1;                              \
+    uint8_t argc = 1;                          \
     _z_str_intmapping_t args[argc];            \
     args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY; \
     args[0]._str = SERIAL_CONFIG_BAUDRATE_STR;
@@ -58,7 +58,7 @@
 
 size_t _z_serial_config_strlen(const _z_str_intmap_t *s);
 
-void _z_serial_config_onto_str(char *dst, const _z_str_intmap_t *s);
+void _z_serial_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s);
 char *_z_serial_config_to_str(const _z_str_intmap_t *s);
 
 _z_str_intmap_result_t _z_serial_config_from_str(const char *s);

@@ -76,11 +76,11 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
     _z_str_list_t *strs = NULL;
-    size_t ke_len = 1;  // Start with space for the null-terminator
+    size_t len = 1;  // Start with space for the null-terminator
 
     // Append suffix as the right-most segment
     if (keyexpr->_suffix != NULL) {
-        ke_len += strlen(keyexpr->_suffix);
+        len += strlen(keyexpr->_suffix);
         strs = _z_str_list_push(strs, (char *)keyexpr->_suffix);  // Warning: list must be release with
                                                                   //   _z_list_free(&strs, _z_noop_free);
                                                                   //   or will release the suffix as well
@@ -91,12 +91,12 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     while (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = __z_get_resource_by_id(xs, id);
         if (res == NULL) {
-            ke_len = 0;
+            len = 0;
             break;
         }
 
         if (res->_key._suffix != NULL) {
-            ke_len += strlen(res->_key._suffix);
+            len += strlen(res->_key._suffix);
             strs = _z_str_list_push(strs, (char *)res->_key._suffix);  // Warning: list must be release with
                                                                        //   _z_list_free(&strs, _z_noop_free);
                                                                        //   or will release the suffix as well
@@ -104,16 +104,20 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         id = res->_key._id;
     }
 
-    if (ke_len != (size_t)0) {
+    if (len != (size_t)0) {
         char *rname = NULL;
-        rname = (char *)z_malloc(ke_len);
+        rname = (char *)z_malloc(len);
         rname[0] = '\0';  // NULL terminator must be set (required to strcat)
+        len = len - 1;
 
         // Concatenate all the partial resource names
         _z_str_list_t *xstr = strs;
         while (xstr != NULL) {
             char *s = _z_str_list_head(xstr);
-            (void)strncat(rname, s, strlen(s));
+            if (len > 0) {
+                (void)strncat(rname, s, len);
+                len = len - strlen(s);
+            }
             xstr = _z_str_list_tail(xstr);
         }
         ret._suffix = rname;

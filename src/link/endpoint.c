@@ -148,9 +148,9 @@ size_t _z_locator_metadata_strlen(const _z_str_intmap_t *s) {
     return _z_str_intmap_strlen(s, 0, NULL);
 }
 
-void _z_locator_metadata_onto_str(char *dst, const _z_str_intmap_t *s) {
+void _z_locator_metadata_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     // @TODO: define protocol-level metadata
-    _z_str_intmap_onto_str(dst, s, 0, NULL);
+    _z_str_intmap_onto_str(dst, dst_len, s, 0, NULL);
 }
 
 _z_locator_result_t _z_locator_from_str(const char *str) {
@@ -206,21 +206,41 @@ size_t _z_locator_strlen(const _z_locator_t *l) {
  *   dst: Pointer to the destination string. It MUST be already allocated with enough space to store the locator in
  * its string format. loc: :c:type:`_z_locator_t` to be converted into its string format.
  */
-void __z_locator_onto_str(char *dst, const _z_locator_t *loc) {
-    dst[0] = '\0';
-
+void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
+    size_t len = dst_len;
     const char psep = LOCATOR_PROTOCOL_SEPARATOR;
     const char msep = LOCATOR_METADATA_SEPARATOR;
 
-    (void)strncat(dst, loc->_protocol, strlen(loc->_protocol));  // Locator protocol
-    (void)strncat(dst, &psep, 1);                                // Locator protocol separator
-    (void)strncat(dst, loc->_address, strlen(loc->_address));    // Locator address
+    dst[0] = '\0';
+    len = len - 1;
+
+    if (len > 0) {
+        (void)strncat(dst, loc->_protocol, dst_len);  // Locator protocol
+        len = len - strlen(loc->_protocol);
+    }
+
+    if (len > 0) {
+        (void)strncat(dst, &psep, 1);  // Locator protocol separator
+        len = len - 1;
+    }
+
+    if (len > 0) {
+        (void)strncat(dst, loc->_address, len);  // Locator address
+        len = len - strlen(loc->_address);
+    }
 
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&loc->_metadata);
     if (md_len > (size_t)0) {
-        (void)strncat(dst, &msep, 1);  // Locator metadata separator
-        _z_locator_metadata_onto_str(&dst[strlen(dst)], &loc->_metadata);
+        if (len > 0) {
+            (void)strncat(dst, &msep, 1);  // Locator metadata separator
+            len = len - 1;
+        }
+
+        if (len > 0) {
+            _z_locator_metadata_onto_str(&dst[strlen(dst)], len, &loc->_metadata);
+            len = len - md_len;
+        }
     }
 }
 
@@ -234,9 +254,9 @@ void __z_locator_onto_str(char *dst, const _z_locator_t *loc) {
  *   The pointer to the stringified :c:type:`_z_locator_t`.
  */
 char *_z_locator_to_str(const _z_locator_t *l) {
-    size_t loc_len = _z_locator_strlen(l) + (size_t)1;
-    char *dst = (char *)z_malloc(loc_len);
-    __z_locator_onto_str(dst, l);
+    size_t len = _z_locator_strlen(l) + (size_t)1;
+    char *dst = (char *)z_malloc(len);
+    __z_locator_onto_str(dst, len, l);
     return dst;
 }
 
@@ -387,21 +407,29 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
 
     char *locator = _z_locator_to_str(&endpoint->_locator);
     if (locator != NULL) {
-        size_t loc_len = 1;  // Start with space for the null-terminator
-        loc_len += strlen(locator);
+        size_t len = 1;  // Start with space for the null-terminator
+        len += strlen(locator);
 
         char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
         if (config != NULL) {
-            loc_len += (size_t)1;       // Config separator
-            loc_len += strlen(config);  // Config content
+            len += (size_t)1;       // Config separator
+            len += strlen(config);  // Config content
         }
 
-        ret = (char *)z_malloc(loc_len);
+        ret = (char *)z_malloc(len);
         ret[0] = '\0';
+        len = len - 1;
 
-        (void)strncat(ret, locator, strlen(locator));
+        if (len > 0) {
+            (void)strncat(ret, locator, len);
+            len = len - strlen(locator);
+        }
+
         if (config != NULL) {
-            (void)strncat(ret, config, strlen(config));
+            if (len > 0) {
+                (void)strncat(ret, config, len);
+                len = len - strlen(config);
+            }
         }
     }
 

@@ -49,7 +49,8 @@ _Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
 
 size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
-void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, unsigned int argc,
+                            _z_str_intmapping_t argv[]);
 char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
 _z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[]);

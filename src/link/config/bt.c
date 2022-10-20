@@ -23,10 +23,10 @@ size_t _z_bt_config_strlen(const _z_str_intmap_t *s) {
     return _z_str_intmap_strlen(s, argc, args);
 }
 
-void _z_bt_config_onto_str(char *dst, const _z_str_intmap_t *s) {
+void _z_bt_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_onto_str(dst, s, argc, args);
+    return _z_str_intmap_onto_str(dst, dst_len, s, argc, args);
 }
 
 char *_z_bt_config_to_str(const _z_str_intmap_t *s) {

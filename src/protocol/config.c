@@ -118,21 +118,33 @@ size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_
     return len;
 }
 
-void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {
-    // Build the string
-    dst[0] = '\0';
-
+void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, unsigned int argc,
+                            _z_str_intmapping_t argv[]) {
+    size_t len = dst_len;
     const char lsep = INT_STR_MAP_LIST_SEPARATOR;
     const char ksep = INT_STR_MAP_KEYVALUE_SEPARATOR;
+
+    dst[0] = '\0';
     for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
-            if (strlen(dst) != (size_t)0) {
+            if (len > 0) {
                 (void)strncat(dst, &lsep, 1);  // List separator
+                len = len - 1;
             }
-            (void)strncat(dst, argv[i]._str, strlen(argv[i]._str));  // Key
-            (void)strncat(dst, &ksep, 1);                            // KeyValue separator
-            (void)strncat(dst, v, strlen(v));                        // Value
+
+            if (len > 0) {
+                (void)strncat(dst, argv[i]._str, len);  // Key
+                len = len - strlen(argv[i]._str);
+            }
+            if (len > 0) {
+                (void)strncat(dst, &ksep, 1);  // KeyValue separator
+                len = len - 1;
+            }
+            if (len > 0) {
+                (void)strncat(dst, v, len);  // Value
+                len = len - strlen(v);
+            }
         }
     }
 }
@@ -142,6 +154,6 @@ char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_i
     size_t len = _z_str_intmap_strlen(s, argc, argv) + (size_t)1;
     // Build the string
     char *dst = (char *)z_malloc(len);
-    _z_str_intmap_onto_str(dst, s, argc, argv);
+    _z_str_intmap_onto_str(dst, len, s, argc, argv);
     return dst;
 }
