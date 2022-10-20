@@ -13,26 +13,25 @@
 #
 
 Import('env', 'projenv')
-from os.path import join, realpath
 
-src_filter = []
-cppdefines = []
+SRC_FILTER = []
+CPPDEFINES = []
 
-framework = env.get("PIOFRAMEWORK")[0]
-if framework == 'zephyr':
-    src_filter=["+<*>",
+FRAMEWORK = env.get("PIOFRAMEWORK")[0]
+if FRAMEWORK == 'zephyr':
+    SRC_FILTER=["+<*>",
                 "-<tests/>",
                 "-<example/>",
                 "-<system/espidf/>",
                 "-<system/mbed/>",
                 "-<system/unix/>",
                 "-<system/arduino/>"]
-    cppdefines=["ZENOH_ZEPHYR"]
+    CPPDEFINES=["ZENOH_ZEPHYR"]
 
-elif framework == 'arduino':
-    platform = env.get("PIOPLATFORM")
-    if platform == 'espressif32':
-        src_filter=["+<*>",
+elif FRAMEWORK == 'arduino':
+    PLATFORM = env.get("PIOPLATFORM")
+    if PLATFORM == 'espressif32':
+        SRC_FILTER=["+<*>",
                     "-<tests/>",
                     "-<example/>",
                     "-<system/espidf>",
@@ -40,11 +39,11 @@ elif framework == 'arduino':
                     "-<system/arduino/opencr>",
                     "-<system/unix/>",
                     "-<system/zephyr/>"]
-        cppdefines=["ZENOH_ARDUINO_ESP32", "ZENOH_C_STANDARD=99"]
-    if platform == 'ststm32':
-        board = env.get("PIOENV")
-        if board == 'opencr':
-            src_filter=["+<*>",
+        CPPDEFINES=["ZENOH_ARDUINO_ESP32", "ZENOH_C_STANDARD=99"]
+    if PLATFORM == 'ststm32':
+        BOARD = env.get("PIOENV")
+        if BOARD == 'opencr':
+            SRC_FILTER=["+<*>",
                         "-<tests/>",
                         "-<example/>",
                         "-<system/espidf>",
@@ -52,34 +51,34 @@ elif framework == 'arduino':
                         "-<system/arduino/esp32>",
                         "-<system/unix/>",
                         "-<system/zephyr/>"]
-            cppdefines=["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_MULTI_THREAD=0"]
+            CPPDEFINES=["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_MULTI_THREAD=0"]
 
-elif framework == 'espidf':
-    src_filter=["+<*>",
+elif FRAMEWORK == 'espidf':
+    SRC_FILTER=["+<*>",
                 "-<tests/>",
                 "-<example/>",
                 "-<system/mbed/>",
                 "-<system/unix/>",
                 "-<system/arduino/>",
                 "-<system/zephyr/>"]
-    cppdefines=["ZENOH_ESPIDF"]
+    CPPDEFINES=["ZENOH_ESPIDF"]
 
-elif framework == 'mbed':
-    src_filter=["+<*>",
+elif FRAMEWORK == 'mbed':
+    SRC_FILTER=["+<*>",
                 "-<tests/>",
                 "-<example/>",
                 "-<system/espidf/>",
                 "-<system/unix/>",
                 "-<system/arduino/>",
                 "-<system/zephyr/>"]
-    cppdefines=["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
+    CPPDEFINES=["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
 
-env.Append(SRC_FILTER=src_filter)
-env.Append(CPPDEFINES=cppdefines)
+env.Append(SRC_FILTER=SRC_FILTER)
+env.Append(CPPDEFINES=CPPDEFINES)
 
 # pass flags to the main project environment
-projenv.Append(CPPDEFINES=cppdefines)
+projenv.Append(CPPDEFINES=CPPDEFINES)
 
 # pass flags to a global build environment (for all libraries, etc)
 global_env = DefaultEnvironment()
-global_env.Append(CPPDEFINES=cppdefines)
+global_env.Append(CPPDEFINES=CPPDEFINES)
