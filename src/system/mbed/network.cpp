@@ -35,20 +35,16 @@ extern "C" {
 /*------------------ TCP sockets ------------------*/
 _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     _z_sys_net_endpoint_t ep;
+    ep._err = false;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        goto ERR;
+    if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+        ep._addr = new SocketAddress(s_addr, port);
+    } else {
+        ep._err = false;
     }
 
-    ep._addr = new SocketAddress(s_addr, port);
-
-    ep._err = true;
-    return ep;
-
-ERR:
-    ep._err = false;
     return ep;
 }
 
@@ -56,25 +52,24 @@ void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep) { delete ep._addr; }
 
 _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
 
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     sock._tcp = new TCPSocket();
     sock._tcp->set_timeout(tout);
-    if (sock._tcp->open(net) < 0) {
-        goto _Z_OPEN_TCP_ERROR_1;
+    if ((sock._err == true) || (sock._tcp->open(net) < 0)) {
+        sock._err = true;
     }
 
-    if (sock._tcp->connect(*rep._addr) < 0) {
-        goto _Z_OPEN_TCP_ERROR_1;
+    if ((sock._err == true) || (sock._tcp->connect(*rep._addr) < 0)) {
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._tcp;
+    }
 
-_Z_OPEN_TCP_ERROR_1:
-    delete sock._tcp;
-    sock._err = true;
     return sock;
 }
 
@@ -89,18 +84,16 @@ _z_sys_net_socket_t _z_listen_tcp(_z_sys_net_endpoint_t lep) {
 }
 
 void _z_close_tcp(_z_sys_net_socket_t sock) {
-    if (sock._err == true) {
-        return;
+    if (sock._err == false) {
+        sock._tcp->close();
+        delete sock._tcp;
     }
-
-    sock._tcp->close();
-    delete sock._tcp;
 }
 
 size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     nsapi_size_or_error_t rb = sock._tcp->recv(ptr, len);
     if (rb < 0) {
-        return SIZE_MAX;
+        rb = SIZE_MAX;
     }
 
     return rb;
@@ -131,48 +124,40 @@ size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) { r
 /*------------------ UDP sockets ------------------*/
 _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     _z_sys_net_endpoint_t ep;
+    ep._err = false;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
-    if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        goto ERR;
+    if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+        ep._addr = new SocketAddress(s_addr, port);
+    } else {
+        ep._err = false;
     }
 
-    ep._addr = new SocketAddress(s_addr, port);
-
-    ep._err = true;
-    return ep;
-
-ERR:
-    ep._err = false;
     return ep;
 }
 
-void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) {
-    SocketAddress *addr = reinterpret_cast<SocketAddress *>(ep._addr);
-    delete addr;
-}
+void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) { delete ep._addr; }
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1
 _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
     (void)(rep);
 
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if (sock._udp->open(net) < 0) {
-        goto _Z_OPEN_UDP_UNICAST_ERROR_1;
+    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._tcp;
+    }
 
-_Z_OPEN_UDP_UNICAST_ERROR_1:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
@@ -188,19 +173,17 @@ _z_sys_net_socket_t _z_listen_udp_unicast(_z_sys_net_endpoint_t lep, uint32_t to
 }
 
 void _z_close_udp_unicast(_z_sys_net_socket_t sock) {
-    if (sock._err == true) {
-        return;
+    if (sock._err == false) {
+        sock._udp->close();
+        delete sock._udp;
     }
-
-    sock._udp->close();
-    delete sock._udp;
 }
 
 size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     SocketAddress raddr;
     nsapi_size_or_error_t rb = sock._udp->recvfrom(&raddr, ptr, len);
     if (rb < 0) {
-        return SIZE_MAX;
+        rb = SIZE_MAX;
     }
 
     return rb;
@@ -234,50 +217,48 @@ size_t _z_send_udp_unicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t 
 _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep, uint32_t tout,
                                           const char *iface) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
     (void)(lep);  // Multicast messages are not self-consumed, so no need to save the local address
 
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if (sock._udp->open(net) < 0) {
-        goto _Z_OPEN_UDP_MULTICAST_ERROR_1;
+    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._tcp;
+    }
 
-_Z_OPEN_UDP_MULTICAST_ERROR_1:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
 _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t tout, const char *iface) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
 
     NetworkInterface *net = NetworkInterface::get_default_instance();
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if (sock._udp->open(net) < 0) {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_1;
+    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+        sock._err = true;
     }
 
-    if (sock._udp->bind(rep._addr->get_port()) < 0) {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_1;
+    if ((sock._err == true) || (sock._udp->bind(rep._addr->get_port()) < 0)) {
+        sock._err = true;
     }
 
-    if (sock._udp->join_multicast_group(*rep._addr) < 0) {
-        goto _Z_LISTEN_UDP_MULTICAST_ERROR_1;
+    if ((sock._err == true) || (sock._udp->join_multicast_group(*rep._addr) < 0)) {
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._tcp;
+    }
 
-_Z_LISTEN_UDP_MULTICAST_ERROR_1:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
@@ -285,13 +266,13 @@ void _z_close_udp_multicast(_z_sys_net_socket_t sockrecv, _z_sys_net_socket_t so
     // Both sockrecv and socksend must be compared to err,
     //  because we dont know if the close is trigger by a normal close
     //  or some of the sockets failed during the opening/listening procedure.
-    if (sockrecv._err != true) {
+    if (sockrecv._err == false) {
         sockrecv._udp->leave_multicast_group(*rep._addr);
         sockrecv._udp->close();
         delete sockrecv._udp;
     }
 
-    if (socksend._err != true) {
+    if (socksend._err == false) {
         socksend._udp->close();
         delete socksend._udp;
     }
@@ -305,7 +286,8 @@ size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
     do {
         rb = sock._udp->recvfrom(&raddr, ptr, len);
         if (rb < 0) {
-            return SIZE_MAX;
+            rb = SIZE_MAX;
+            break;
         }
 
         if (raddr.get_ip_version() == NSAPI_IPv4) {
@@ -348,8 +330,7 @@ size_t _z_read_exact_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_
 }
 
 size_t _z_send_udp_multicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {
-    int wb = sock._udp->sendto(*rep._addr, ptr, len);
-    return wb;
+    return sock._udp->sendto(*rep._addr, ptr, len);
 }
 #endif
 
@@ -357,14 +338,17 @@ size_t _z_send_udp_multicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_
 
 _z_sys_net_socket_t _z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     _z_sys_net_socket_t sock;
-    sock._serial = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
-
-    sock._serial->set_format(8, BufferedSerial::None, 1);  // Default in Zenoh Rust
-    sock._serial->enable_input(true);
-    sock._serial->enable_output(true);
-
-    sock._serial = sock._serial;
     sock._err = false;
+
+    sock._serial = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
+    if (sock._serial != NULL) {
+        sock._serial->set_format(8, BufferedSerial::None, 1);  // Default in Zenoh Rust
+        sock._serial->enable_input(true);
+        sock._serial->enable_output(true);
+    } else {
+        sock._err = true;
+    }
+
     return sock;
 }
 
@@ -379,11 +363,9 @@ _z_sys_net_socket_t _z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t ba
 }
 
 void _z_close_serial(_z_sys_net_socket_t sock) {
-    if (sock._err == true) {
-        return;
+    if (sock._err == false) {
+        delete sock._serial;
     }
-
-    delete sock._serial;
 }
 
 size_t _z_read_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -406,14 +388,10 @@ size_t _z_read_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
         payload_len |= (after_cobs[i] << ((uint8_t)i * (uint8_t)8));
     }
 
-    if (trb < ((size_t)payload_len + (size_t)6)) {
-        goto ERR;
-    }
+    if (trb == ((size_t)payload_len + (size_t)6)) {
+        (void)memcpy(ptr, &after_cobs[i], payload_len);
+        i = i + (size_t)payload_len;
 
-    (void)memcpy(ptr, &after_cobs[i], payload_len);
-    i = i + (size_t)payload_len;
-
-    {  // Limit the scope of CRC checks
         uint32_t crc = 0;
         for (uint8_t j = 0; j < sizeof(crc); j++) {
             crc |= (uint32_t)(after_cobs[i] << (j * (uint8_t)8));
@@ -422,20 +400,21 @@ size_t _z_read_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
 
         uint32_t c_crc = _z_crc32(ptr, payload_len);
         if (c_crc != crc) {
-            goto ERR;
+            sock._err = true;
         }
+    } else {
+        sock._err = true;
     }
 
     delete before_cobs;
     delete after_cobs;
 
-    return payload_len;
+    rb = payload_len;
+    if (sock._err == true) {
+        rb = SIZE_MAX;
+    }
 
-ERR:
-    delete before_cobs;
-    delete after_cobs;
-
-    return SIZE_MAX;
+    return rb;
 }
 
 size_t _z_read_exact_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -478,18 +457,18 @@ size_t _z_send_serial(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) 
 
     ssize_t wb = sock._serial->write(after_cobs, twb + (ssize_t)1);
     if (wb != (twb + (ssize_t)1)) {
-        goto ERR;
+        sock._err = true;
     }
 
     delete before_cobs;
     delete after_cobs;
-    return len;
 
-ERR:
-    delete before_cobs;
-    delete after_cobs;
+    size_t sb = len;
+    if (sock._err == true) {
+        sb = SIZE_MAX;
+    }
 
-    return SIZE_MAX;
+    return sb;
 }
 #endif
 

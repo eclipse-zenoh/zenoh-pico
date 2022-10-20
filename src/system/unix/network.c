@@ -449,9 +449,7 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
             sock._err = true;
         }
 
-        if (sock._err == true) {
-            z_free(lsockaddr);
-        }
+        z_free(lsockaddr);
     } else {
         sock._err = true;
     }

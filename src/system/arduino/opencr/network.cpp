@@ -31,26 +31,25 @@ extern "C" {
 /*------------------ UDP sockets ------------------*/
 _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_port) {
     _z_sys_net_endpoint_t ep;
+    ep._err = false;
 
     // Parse and check the validity of the IP address
     ep._iptcp._addr = new IPAddress();
     if (!ep._iptcp._addr->fromString(s_addr)) {
-        goto ERR;
+        ep._err = true;
     }
 
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep._iptcp._port < (uint32_t)1) ||
         (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        goto ERR;
+        ep._err = true;
     }
 
-    ep._err = true;
-    return ep;
+    if (ep._err == true) {
+        delete ep._iptcp._addr;
+    }
 
-ERR:
-    delete ep._iptcp._addr;
-    ep._err = false;
     return ep;
 }
 
@@ -58,18 +57,17 @@ void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep) { delete ep._iptcp._addr; }
 
 _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
 
     sock._tcp = new WiFiClient();
     if (!sock._tcp->connect(*rep._iptcp._addr, rep._iptcp._port)) {
-        goto ERR;
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._tcp;
+    }
 
-ERR:
-    delete sock._tcp;
-    sock._err = true;
     return sock;
 }
 
@@ -84,20 +82,18 @@ _z_sys_net_socket_t _z_listen_tcp(_z_sys_net_endpoint_t lep) {
 }
 
 void _z_close_tcp(_z_sys_net_socket_t sock) {
-    if (sock._err == true) {
-        return;
+    if (sock._err == false) {
+        sock._tcp->stop();
+        delete sock._tcp;
     }
-
-    sock._tcp->stop();
-    delete sock._tcp;
 }
 
 size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    if (!sock._tcp->available()) {
-        return 0;
+    size_t sb = 0;
+    if (sock._tcp->available()) {
+        sb = sock._tcp->read(ptr, len);
     }
-
-    return sock._tcp->read(ptr, len);
+    return sb;
 }
 
 size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -130,26 +126,25 @@ size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
 /*------------------ UDP sockets ------------------*/
 _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_port) {
     _z_sys_net_endpoint_t ep;
+    ep._err = false;
 
     // Parse and check the validity of the IP address
     ep._iptcp._addr = new IPAddress();
     if (!ep._iptcp._addr->fromString(s_addr)) {
-        goto ERR;
+        ep._err = true;
     }
 
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep._iptcp._port < (uint32_t)1) ||
         (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        goto ERR;
+        ep._err = true;
     }
 
-    ep._err = true;
-    return ep;
+    if (ep._err == true) {
+        delete ep._iptcp._addr;
+    }
 
-ERR:
-    delete ep._iptcp._addr;
-    ep._err = false;
     return ep;
 }
 
@@ -160,20 +155,19 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) { delete ep._iptcp._addr; }
 
 _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
     (void)(rep);
 
     // FIXME: make it random
     sock._udp = new WiFiUDP();
     if (!sock._udp->begin(7447)) {
-        goto ERR;
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._udp;
+    }
 
-ERR:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
@@ -189,31 +183,27 @@ _z_sys_net_socket_t _z_listen_udp_unicast(_z_sys_net_endpoint_t lep, uint32_t to
 }
 
 void _z_close_udp_unicast(_z_sys_net_socket_t sock) {
-    if (sock._err == true) {
-        return;
+    if (sock._err == false) {
+        sock._udp->stop();
+        delete sock._udp;
     }
-
-    sock._udp->stop();
-    delete sock._udp;
 }
 
 size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // Block until something to read
-    // FIXME; provide blocking and non-blocking functions
-    size_t psize = 0;
+    // FIXME: provide somekind of timeout functionality
+    ssize_t rb = 0;
     do {
-        psize = sock._udp->parsePacket();
-    } while (psize < (size_t)1);
+        rb = sock._udp->parsePacket();
+    } while (rb == (ssize_t)0);
 
-    if (psize > len) {
-        return 0;
+    if (rb <= len) {
+        if (sock._udp->read(ptr, rb) != rb) {
+            rb = 0;
+        }
     }
 
-    if (sock._udp->read(ptr, psize) != psize) {
-        return 0;
-    }
-
-    return psize;
+    return rb;
 }
 
 size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -247,38 +237,35 @@ size_t _z_send_udp_unicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t 
 _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep, uint32_t tout,
                                           const char *iface) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
     (void)(rep);
     (void)(lep);  // Multicast messages are not self-consumed, so no need to save the local address
 
-    // FIXME: make it random
     sock._udp = new WiFiUDP();
-    if (sock._udp->begin(55555) == 0) {
-        goto ERR;
+    if (sock._udp->begin(55555) == false) {  // FIXME: make port to be random
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._udp;
+    }
 
-ERR:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
 _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t tout, const char *iface) {
     _z_sys_net_socket_t sock;
+    sock._err = false;
 
     sock._udp = new WiFiUDP();
-    if (sock._udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port) == 0) {
-        goto ERR;
+    if (sock._udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port) == false) {
+        sock._err = true;
     }
 
-    sock._err = false;
-    return sock;
+    if (sock._err == true) {
+        delete sock._udp;
+    }
 
-ERR:
-    delete sock._udp;
-    sock._err = true;
     return sock;
 }
 
@@ -286,12 +273,12 @@ void _z_close_udp_multicast(_z_sys_net_socket_t sockrecv, _z_sys_net_socket_t so
     // Both sockrecv and socksend must be compared to err,
     //  because we dont know if the close is trigger by a normal close
     //  or some of the sockets failed during the opening/listening procedure.
-    if (sockrecv._err != true) {
+    if (sockrecv._err == false) {
         sockrecv._udp->stop();
         delete sockrecv._udp;
     }
 
-    if (socksend._err != true) {
+    if (socksend._err == false) {
         socksend._udp->stop();
         delete socksend._udp;
     }
@@ -300,36 +287,33 @@ void _z_close_udp_multicast(_z_sys_net_socket_t sockrecv, _z_sys_net_socket_t so
 size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, _z_sys_net_endpoint_t lep,
                              _z_bytes_t *addr) {
     // Block until something to read
-    // FIXME; provide blocking and non-blocking functions
-    size_t psize = 0;
+    // FIXME: provide somekind of timeout functionality
+    ssize_t rb = 0;
     do {
-        psize = sock._udp->parsePacket();
-    } while (psize == (size_t)0);
+        rb = sock._udp->parsePacket();
+    } while (rb == (ssize_t)0);
 
-    if (psize > len) {
-        return 0;
-    }
+    if (rb <= len) {
+        if (sock._udp->read(ptr, rb) == rb) {
+            if (addr != NULL) {  // If addr is not NULL, it means that the raddr was requested by the upper-layers
+                IPAddress rip = sock._udp->remoteIP();
+                uint16_t rport = sock._udp->remotePort();
 
-    if (sock._udp->read(ptr, psize) != psize) {
-        return 0;
-    }
-
-    // If addr is not NULL, it means that the raddr was requested by the upper-layers
-    if (addr != NULL) {
-        IPAddress rip = sock._udp->remoteIP();
-        uint16_t rport = sock._udp->remotePort();
-
-        *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
-                              strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
-        uint8_t offset = 0;
-        for (uint8_t i = 0; i < (uint8_t)4; i++) {
-            (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
-            offset += (uint8_t)strlen((const char *)&rip[i]);
+                *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
+                                      strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
+                uint8_t offset = 0;
+                for (uint8_t i = 0; i < (uint8_t)4; i++) {
+                    (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
+                    offset += (uint8_t)strlen((const char *)&rip[i]);
+                }
+                (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
+            }
+        } else {
+            rb = 0;
         }
-        (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
     }
 
-    return psize;
+    return rb;
 }
 
 size_t _z_read_exact_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, _z_sys_net_endpoint_t lep,
