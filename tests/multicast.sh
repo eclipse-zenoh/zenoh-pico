@@ -13,7 +13,7 @@
 #   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
 
-TESTBIN=$1
+TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
 cd "$TESTDIR" || exit
