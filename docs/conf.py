@@ -13,9 +13,9 @@
 #
 
 # Configuration file for the Sphinx documentation builder.
-from clang.cindex import Config
 from sys import platform
 from pathlib import Path
+from clang.cindex import Config
 
 # -- Project information -----------------------------------------------------
 project = 'zenoh-pico'
