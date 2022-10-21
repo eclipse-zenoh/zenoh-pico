@@ -28,3 +28,17 @@ _z_subinfo_t _z_subinfo_pull_default() {
     si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
     return si;
 }
+
+void _z_subscriber_clear(_z_subscriber_t *sub) {
+    // Nothing to clear
+    (void)(sub);
+}
+
+void _z_subscriber_free(_z_subscriber_t **sub) {
+    _z_subscriber_t *ptr = *sub;
+
+    _z_subscriber_clear(ptr);
+
+    z_free(ptr);
+    *sub = NULL;
+}

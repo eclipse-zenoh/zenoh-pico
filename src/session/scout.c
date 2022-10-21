@@ -34,7 +34,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
 
 #if Z_SCOUTING_UDP == 1
     if ((err == _Z_RES_OK) && (_z_str_eq(ep_res._value._locator._protocol, UDP_SCHEMA) == true)) {
-        // Do nothing. We did not invert, so that we can also give an error in case scouting is not enabled.
+        _z_endpoint_clear(&ep_res._value);
     } else
 #endif
         if (err == _Z_RES_OK) {

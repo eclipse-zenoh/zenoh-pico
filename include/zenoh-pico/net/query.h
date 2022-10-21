@@ -36,4 +36,7 @@ typedef struct {
     _z_zint_t _id;
 } _z_queryable_t;
 
+void _z_queryable_clear(_z_queryable_t *qbl);
+void _z_queryable_free(_z_queryable_t **qbl);
+
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */
