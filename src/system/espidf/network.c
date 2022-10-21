@@ -54,7 +54,7 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
     sock._fd = socket(rep._addr->ai_family, rep._addr->ai_socktype, rep._addr->ai_protocol);
     if (sock._fd != -1) {
         int optflag = 1;
-        if ((sock._err == true) ||
+        if ((sock._err == false) &&
             (setsockopt(sock._fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&optflag, sizeof(optflag)) < 0)) {
             sock._err = true;
         }
@@ -63,14 +63,14 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-        if ((sock._err == true) ||
+        if ((sock._err == false) &&
             (setsockopt(sock._fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
             sock._err = true;
         }
 #endif
 
         for (struct addrinfo *it = rep._addr; it != NULL; it = it->ai_next) {
-            if ((sock._err == true) || (connect(sock._fd, it->ai_addr, it->ai_addrlen) < 0)) {
+            if ((sock._err == false) && (connect(sock._fd, it->ai_addr, it->ai_addrlen) < 0)) {
                 if (it->ai_next == NULL) {
                     sock._err = true;
                     break;
@@ -170,7 +170,7 @@ _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout
         z_time_t tv;
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-        if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             sock._err = true;
         }
 
@@ -273,27 +273,27 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
             z_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-            if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 sock._err = true;
             }
 
-            if ((sock._err == true) || (bind(sock._fd, lsockaddr, addrlen) < 0)) {
+            if ((sock._err == false) && (bind(sock._fd, lsockaddr, addrlen) < 0)) {
                 sock._err = true;
             }
 
-            if ((sock._err == true) || (getsockname(sock._fd, lsockaddr, &addrlen) == -1)) {
+            if ((sock._err == false) && (getsockname(sock._fd, lsockaddr, &addrlen) == -1)) {
                 sock._err = true;
             }
 
             if (lsockaddr->sa_family == AF_INET) {
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr,
                                 sizeof(struct in_addr)) < 0)) {
                     sock._err = true;
                 }
             } else if (lsockaddr->sa_family == AF_INET6) {
                 int ifindex = 0;
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)) {
                     sock._err = true;
                 }
@@ -368,17 +368,17 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
             z_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-            if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 sock._err = true;
             }
 
             int optflag = 1;
-            if ((sock._err == true) ||
+            if ((sock._err == false) &&
                 (setsockopt(sock._fd, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)) {
                 sock._err = true;
             }
 
-            if ((sock._err == true) || (bind(sock._fd, lsockaddr, addrlen) < 0)) {
+            if ((sock._err == false) && (bind(sock._fd, lsockaddr, addrlen) < 0)) {
                 sock._err = true;
             }
 
@@ -388,7 +388,7 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
                 (void)memset(&mreq, 0, sizeof(mreq));
                 mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)rep._addr->ai_addr)->sin_addr.s_addr;
                 mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)) {
                     sock._err = true;
                 }
@@ -401,7 +401,7 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
                                             //        but it fails on the setsockopt.
                                             //        1 seems to be a working value on the WiFi interface
                                             //        which is the one available by default in ESP32
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
                     sock._err = true;
                 }

@@ -64,12 +64,12 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
         z_time_t tv;
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-        if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             sock._err = true;
         }
 
         int flags = 1;
-        if ((sock._err == true) ||
+        if ((sock._err == false) &&
             (setsockopt(sock._fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
             sock._err = true;
         }
@@ -77,7 +77,7 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-        if ((sock._err == true) ||
+        if ((sock._err == false) &&
             (setsockopt(sock._fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
             sock._err = true;
         }
@@ -88,7 +88,7 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
 
         struct addrinfo *it = NULL;
         for (it = rep._addr; it != NULL; it = it->ai_next) {
-            if ((sock._err == true) || (connect(sock._fd, it->ai_addr, it->ai_addrlen) < 0)) {
+            if ((sock._err == false) && (connect(sock._fd, it->ai_addr, it->ai_addrlen) < 0)) {
                 if (it->ai_next == NULL) {
                     sock._err = true;
                     break;
@@ -194,7 +194,7 @@ _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout
         z_time_t tv;
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-        if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             sock._err = true;
         }
 
@@ -307,28 +307,28 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
             z_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-            if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 sock._err = true;
             }
 
-            if ((sock._err == true) || (bind(sock._fd, lsockaddr, addrlen) < 0)) {
+            if ((sock._err == false) && (bind(sock._fd, lsockaddr, addrlen) < 0)) {
                 sock._err = true;
             }
 
             // Get the randomly assigned port used to discard loopback messages
-            if ((sock._err == true) || (getsockname(sock._fd, lsockaddr, &addrlen) < 0)) {
+            if ((sock._err == false) && (getsockname(sock._fd, lsockaddr, &addrlen) < 0)) {
                 sock._err = true;
             }
 
             if (lsockaddr->sa_family == AF_INET) {
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr,
                                 sizeof(struct in_addr)) < 0)) {
                     sock._err = true;
                 }
             } else if (lsockaddr->sa_family == AF_INET6) {
                 int ifindex = if_nametoindex(iface);
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)) {
                     sock._err = true;
                 }
@@ -387,30 +387,30 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
             z_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-            if ((sock._err == true) || (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 sock._err = true;
             }
 
             int optflag = 1;
-            if ((sock._err == true) ||
+            if ((sock._err == false) &&
                 (setsockopt(sock._fd, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)) {
                 sock._err = true;
             }
 
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
-            if ((sock._err == true) || (bind(sock._fd, rep._addr->ai_addr, rep._addr->ai_addrlen) < 0)) {
+            if ((sock._err == false) && (bind(sock._fd, rep._addr->ai_addr, rep._addr->ai_addrlen) < 0)) {
                 sock._err = true;
             }
 #elif defined(ZENOH_LINUX)
             if (rep._addr->ai_family == AF_INET) {
                 struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)rep._addr->ai_addr)->sin_port, {0}, {0}};
-                if ((sock._err == true) || (bind(sock._fd, (struct sockaddr *)&address, sizeof address) < 0)) {
+                if ((sock._err == false) && (bind(sock._fd, (struct sockaddr *)&address, sizeof address) < 0)) {
                     sock._err = true;
                 }
             } else if (rep._addr->ai_family == AF_INET6) {
                 struct sockaddr_in6 address = {
                     AF_INET6, ((struct sockaddr_in6 *)rep._addr->ai_addr)->sin6_port, 0, {{{0}}}, 0};
-                if ((sock._err == true) || (bind(sock._fd, (struct sockaddr *)&address, sizeof address) < 0)) {
+                if ((sock._err == false) && (bind(sock._fd, (struct sockaddr *)&address, sizeof address) < 0)) {
                     sock._err = true;
                 }
             } else {
@@ -424,7 +424,7 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
                 (void)memset(&mreq, 0, sizeof(mreq));
                 mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)rep._addr->ai_addr)->sin_addr.s_addr;
                 mreq.imr_interface.s_addr = ((struct sockaddr_in *)lsockaddr)->sin_addr.s_addr;
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)) {
                     sock._err = true;
                 }
@@ -434,7 +434,7 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
                 (void)memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)rep._addr->ai_addr)->sin6_addr,
                              sizeof(struct in6_addr));
                 mreq.ipv6mr_interface = if_nametoindex(iface);
-                if ((sock._err == true) ||
+                if ((sock._err == false) &&
                     (setsockopt(sock._fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
                     sock._err = true;
                 }

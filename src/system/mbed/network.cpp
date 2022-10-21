@@ -58,11 +58,11 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
 
     sock._tcp = new TCPSocket();
     sock._tcp->set_timeout(tout);
-    if ((sock._err == true) || (sock._tcp->open(net) < 0)) {
+    if ((sock._err == false) && (sock._tcp->open(net) < 0)) {
         sock._err = true;
     }
 
-    if ((sock._err == true) || (sock._tcp->connect(*rep._addr) < 0)) {
+    if ((sock._err == false) && (sock._tcp->connect(*rep._addr) < 0)) {
         sock._err = true;
     }
 
@@ -150,7 +150,7 @@ _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+    if ((sock._err == false) && (sock._udp->open(net) < 0)) {
         sock._err = true;
     }
 
@@ -224,7 +224,7 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+    if ((sock._err == false) && (sock._udp->open(net) < 0)) {
         sock._err = true;
     }
 
@@ -243,15 +243,15 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
 
     sock._udp = new UDPSocket();
     sock._udp->set_timeout(tout);
-    if ((sock._err == true) || (sock._udp->open(net) < 0)) {
+    if ((sock._err == false) && (sock._udp->open(net) < 0)) {
         sock._err = true;
     }
 
-    if ((sock._err == true) || (sock._udp->bind(rep._addr->get_port()) < 0)) {
+    if ((sock._err == false) && (sock._udp->bind(rep._addr->get_port()) < 0)) {
         sock._err = true;
     }
 
-    if ((sock._err == true) || (sock._udp->join_multicast_group(*rep._addr) < 0)) {
+    if ((sock._err == false) && (sock._udp->join_multicast_group(*rep._addr) < 0)) {
         sock._err = true;
     }
 
