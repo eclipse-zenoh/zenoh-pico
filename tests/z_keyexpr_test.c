@@ -26,6 +26,7 @@ int main(void) {
     assert(_z_keyexpr_intersects("*", strlen("*"), "xxx", strlen("xxx")));
     assert(_z_keyexpr_intersects("ab$*", strlen("ab$*"), "abcd", strlen("abcd")));
     assert(_z_keyexpr_intersects("ab$*d", strlen("ab$*d"), "abcd", strlen("abcd")));
+    assert(!_z_keyexpr_intersects("ab$*d", strlen("ab$*d"), "abcde", strlen("abcde")));
     assert(_z_keyexpr_intersects("ab$*", strlen("ab$*"), "ab", strlen("ab")));
     assert(!_z_keyexpr_intersects("ab/*", strlen("ab/*"), "ab", strlen("ab")));
     assert(_z_keyexpr_intersects("a/*/c/*/e", strlen("a/*/c/*/e"), "a/b/c/d/e", strlen("a/b/c/d/e")));
