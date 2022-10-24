@@ -90,7 +90,7 @@ void _z_close_tcp(_z_sys_net_socket_t sock) {
 
 size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t sb = 0;
-    if (sock._tcp->available()) {
+    if (sock._tcp->available() > 0) {
         sb = sock._tcp->read(ptr, len);
     }
     return sb;
@@ -197,7 +197,7 @@ size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
         rb = sock._udp->parsePacket();
     } while (rb == (ssize_t)0);
 
-    if (rb <= len) {
+    if (rb <= (ssize_t)len) {
         if (sock._udp->read(ptr, rb) != rb) {
             rb = 0;
         }
@@ -293,7 +293,7 @@ size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
         rb = sock._udp->parsePacket();
     } while (rb == (ssize_t)0);
 
-    if (rb <= len) {
+    if (rb <= ((ssize_t))len) {
         if (sock._udp->read(ptr, rb) == rb) {
             if (addr != NULL) {  // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 IPAddress rip = sock._udp->remoteIP();

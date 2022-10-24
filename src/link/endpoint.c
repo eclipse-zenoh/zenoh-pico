@@ -212,19 +212,19 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
     const char msep = LOCATOR_METADATA_SEPARATOR;
 
     dst[0] = '\0';
-    len = len - 1;
+    len = len - (size_t)1;
 
-    if (len > 0) {
+    if (len > (size_t)0) {
         (void)strncat(dst, loc->_protocol, dst_len);  // Locator protocol
         len = len - strlen(loc->_protocol);
     }
 
-    if (len > 0) {
+    if (len > (size_t)0) {
         (void)strncat(dst, &psep, 1);  // Locator protocol separator
-        len = len - 1;
+        len = len - (size_t)1;
     }
 
-    if (len > 0) {
+    if (len > (size_t)0) {
         (void)strncat(dst, loc->_address, len);  // Locator address
         len = len - strlen(loc->_address);
     }
@@ -232,12 +232,12 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
     // @TODO: define protocol-level metadata
     size_t md_len = _z_locator_metadata_strlen(&loc->_metadata);
     if (md_len > (size_t)0) {
-        if (len > 0) {
+        if (len > (size_t)0) {
             (void)strncat(dst, &msep, 1);  // Locator metadata separator
-            len = len - 1;
+            len = len - (size_t)1;
         }
 
-        if (len > 0) {
+        if (len > (size_t)0) {
             _z_locator_metadata_onto_str(&dst[strlen(dst)], len, &loc->_metadata);
             len = len - md_len;
         }
@@ -418,15 +418,15 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
 
         ret = (char *)z_malloc(len);
         ret[0] = '\0';
-        len = len - 1;
+        len = len - (size_t)1;
 
-        if (len > 0) {
+        if (len > (size_t)0) {
             (void)strncat(ret, locator, len);
             len = len - strlen(locator);
         }
 
         if (config != NULL) {
-            if (len > 0) {
+            if (len > (size_t)0) {
                 (void)strncat(ret, config, len);
                 len = len - strlen(config);
             }

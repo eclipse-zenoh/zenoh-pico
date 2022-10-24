@@ -108,13 +108,13 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         char *rname = NULL;
         rname = (char *)z_malloc(len);
         rname[0] = '\0';  // NULL terminator must be set (required to strcat)
-        len = len - 1;
+        len = len - (size_t)1;
 
         // Concatenate all the partial resource names
         _z_str_list_t *xstr = strs;
         while (xstr != NULL) {
             char *s = _z_str_list_head(xstr);
-            if (len > 0) {
+            if (len > (size_t)0) {
                 (void)strncat(rname, s, len);
                 len = len - strlen(s);
             }
