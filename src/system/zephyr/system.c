@@ -57,14 +57,15 @@ static int thread_index = 0;
 
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    _z_task_attr_t *lattr = NULL;
     _z_task_attr_t tmp;
     if (attr == NULL) {
         (void)pthread_attr_init(&tmp);
         (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++], Z_PTHREAD_STACK_SIZE_DEFAULT);
-        attr = &tmp;
+        lattr = &tmp;
     }
 
-    return pthread_create(task, attr, fun, arg);
+    return pthread_create(task, lattr, fun, arg);
 }
 
 int _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }

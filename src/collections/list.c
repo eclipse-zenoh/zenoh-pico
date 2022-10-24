@@ -47,12 +47,13 @@ size_t _z_list_len(const _z_list_t *xs) {
 _Bool _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
 
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f) {
+    _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *head = xs;
-    xs = head->_tail;
+    l = head->_tail;
     f_f(&head->_val);
     z_free(head);
 
-    return xs;
+    return l;
 }
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
@@ -70,6 +71,7 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
 }
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, void *left) {
+    _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *previous = xs;
     _z_list_t *current = xs;
 
@@ -78,8 +80,8 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             _z_list_t *this = current;
 
             // head removal
-            if (this == xs) {
-                xs = xs->_tail;
+            if (this == l) {
+                l = l->_tail;
             }
             // tail removal
             else if (this->_tail == NULL) {
@@ -99,7 +101,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
         }
     }
 
-    return xs;
+    return l;
 }
 
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
