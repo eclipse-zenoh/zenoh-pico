@@ -57,14 +57,16 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f) {
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
     _z_list_t *l = (_z_list_t *)xs;
+    _z_list_t *ret = NULL;
     while (l != NULL) {
         void *head = _z_list_head(l);
         if (c_f(e, head) == true) {
-            return l;
+            ret = l;
+            break;
         }
         l = _z_list_tail(l);
     }
-    return NULL;
+    return ret;
 }
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, void *left) {

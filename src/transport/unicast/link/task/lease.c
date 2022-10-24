@@ -50,8 +50,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 ztu->_received = false;
             } else {
                 _Z_INFO("Closing session because it has expired after %zums\n", ztu->_lease);
+                ztu->_lease_task_running = false;
                 _z_transport_unicast_close(ztu, _Z_CLOSE_EXPIRED);
-                return 0;
+                break;
             }
 
             next_lease = ztu->_lease;
