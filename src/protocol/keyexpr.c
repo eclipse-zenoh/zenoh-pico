@@ -63,7 +63,11 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
                             in_big_wild = true;
                             continue;
                         }
+                    } else {
+                        // Do nothing. Required to be compliant with MISRA 15.7 rule
                     }
+                } else {
+                    // Do nothing. Required to be compliant with MISRA 15.7 rule
                 }
                 break;
 
@@ -566,7 +570,8 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
                         } else if ((lchunk.start != NULL) && (rchunk.start != NULL)) {
                             result = chunk_intersector(lchunk, rchunk);
                         } else {
-                            // Guaranteed not to happen, as both iterators contain a `**` which will break iteration.
+                            // Guaranteed not to happen, as both iterators contain a `**` which will break
+                            // iteration.
                         }
                     } else {
                         // Guaranteed not to happen, as both iterators contain a `**` which will break iteration.
@@ -671,6 +676,8 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                         } else if (reader[0] == (char)'*') {
                             in_big_wild = true;
                             continue;
+                        } else {
+                            // Do nothing. Required to be compliant with MISRA 15.7 rule
                         }
                     }
                 } break;
