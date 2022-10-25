@@ -62,8 +62,8 @@ void _z_bytes_free(_z_bytes_t **bs) {
 }
 
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
-    _z_bytes_init(dst, src->len);
-    (void)memcpy((uint8_t *)dst->start, src->start, (dst->len > src->len) ? src->len : dst->len);
+    _z_bytes_init(dst, src->len);  // FIXME: it should check if dst is already initialized. Otherwise it will leak
+    (void)memcpy((uint8_t *)dst->start, src->start, src->len);
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {

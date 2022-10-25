@@ -214,9 +214,11 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
         pen_qry->_callback(&reply, pen_qry->_call_arg);
-        if (reply != NULL) {
-            _z_reply_free(&reply);
-        }
+        _z_reply_free(&reply);
+    }
+
+    if (ret != _Z_RES_OK) {
+        _z_reply_free(&reply);
     }
 
     return ret;

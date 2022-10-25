@@ -42,7 +42,7 @@ _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_p
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep._iptcp._port < (uint32_t)1) ||
-        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+        (ep._iptcp._port > 65355)) {  // Port numbers should range from 1 to 65355
         ep._err = true;
     }
 
@@ -107,7 +107,7 @@ size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
             break;
         }
 
-        n += rb;
+        n = n + rb;
         pos = _z_ptr_u8_offset(pos, n);
     } while (n != len);
 
@@ -137,7 +137,7 @@ _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_p
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep._iptcp._port < (uint32_t)1) ||
-        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+        (ep._iptcp._port > 65355)) {  // Port numbers should range from 1 to 65355
         ep._err = true;
     }
 
@@ -195,7 +195,7 @@ size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = 0;
     do {
         rb = sock._udp->parsePacket();
-    } while (rb == (ssize_t)0);
+    } while (rb == 0);
 
     if (rb <= (ssize_t)len) {
         if (sock._udp->read(ptr, rb) != rb) {
@@ -217,7 +217,7 @@ size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t 
             break;
         }
 
-        n += rb;
+        n = n + rb;
         pos = _z_ptr_u8_offset(pos, n);
     } while (n != len);
 
@@ -291,9 +291,9 @@ size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
     ssize_t rb = 0;
     do {
         rb = sock._udp->parsePacket();
-    } while (rb == (ssize_t)0);
+    } while (rb == 0);
 
-    if (rb <= ((ssize_t))len) {
+    if (rb <= (ssize_t)len) {
         if (sock._udp->read(ptr, rb) == rb) {
             if (addr != NULL) {  // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 IPAddress rip = sock._udp->remoteIP();
@@ -304,7 +304,7 @@ size_t _z_read_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
                 uint8_t offset = 0;
                 for (uint8_t i = 0; i < (uint8_t)4; i++) {
                     (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));
-                    offset += (uint8_t)strlen((const char *)&rip[i]);
+                    offset = offset + (uint8_t)strlen((const char *)&rip[i]);
                 }
                 (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rport, sizeof(uint16_t));
             }
@@ -328,7 +328,7 @@ size_t _z_read_exact_udp_multicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_
             break;
         }
 
-        n += rb;
+        n = n + rb;
         pos = _z_ptr_u8_offset(pos, n);
     } while (n != len);
 

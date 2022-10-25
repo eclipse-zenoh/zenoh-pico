@@ -28,7 +28,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     int8_t err = _Z_RES_OK;
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    if ((err == _Z_RES_OK) && (ep_res._tag < _Z_RES_OK)) {
+    if ((err == _Z_RES_OK) && (ep_res._tag != _Z_RES_OK)) {
         err = _Z_ERR_LOCATOR_INVALID;
     }
 
@@ -63,7 +63,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     }
 
                     _z_transport_message_result_t r_hm = _z_transport_message_decode(&zbf);
-                    if (r_hm._tag < _Z_RES_OK) {
+                    if (r_hm._tag != _Z_RES_OK) {
                         _Z_ERROR("Scouting loop received malformed message\n");
                         continue;
                     }

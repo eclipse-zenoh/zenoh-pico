@@ -80,7 +80,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
 
     // Append suffix as the right-most segment
     if (keyexpr->_suffix != NULL) {
-        len += strlen(keyexpr->_suffix);
+        len = len + strlen(keyexpr->_suffix);
         strs = _z_str_list_push(strs, (char *)keyexpr->_suffix);  // Warning: list must be release with
                                                                   //   _z_list_free(&strs, _z_noop_free);
                                                                   //   or will release the suffix as well
@@ -96,7 +96,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         }
 
         if (res->_key._suffix != NULL) {
-            len += strlen(res->_key._suffix);
+            len = len + strlen(res->_key._suffix);
             strs = _z_str_list_push(strs, (char *)res->_key._suffix);  // Warning: list must be release with
                                                                        //   _z_list_free(&strs, _z_noop_free);
                                                                        //   or will release the suffix as well

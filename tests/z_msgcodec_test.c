@@ -2524,7 +2524,7 @@ void fragmentation(void) {
         int8_t res = _z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == _Z_RES_OK);
         (void)(res);
-        written -= _z_wbuf_len(&fbf);
+        written = written - _z_wbuf_len(&fbf);
 
         printf("  -Encoded Fragment: ");
         print_wbuf(&wbf);

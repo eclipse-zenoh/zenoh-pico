@@ -47,7 +47,7 @@ typedef struct {
 } _z_sys_net_socket_t;
 
 typedef struct {
-    IPAddress *_addr;
+    IPAddress *_addr;  // As pointer to cross the boundary between C and C++
     uint16_t _port;
 } __z_net_iptcp_addr_t;
 

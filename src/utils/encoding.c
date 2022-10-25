@@ -24,10 +24,10 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
 
     pos = _z_ptr_u8_offset(pos, 1);
     for (const uint8_t *byte = input; len != (size_t)0; byte++) {
-        if (*byte != (uint8_t)0x00) {
+        if (*byte != 0x00) {
             *pos = *byte;
             pos = _z_ptr_u8_offset(pos, 1);
-            code++;
+            code = code + (uint8_t)1;
         }
 
         if (!*byte || (code == (uint8_t)0xFF)) {
@@ -39,7 +39,7 @@ size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output) {
             }
         }
 
-        len--;
+        len = len - (size_t)1;
     }
     *codep = code;
 

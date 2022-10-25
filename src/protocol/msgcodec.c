@@ -1308,7 +1308,7 @@ void _z_join_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_join_result_t *r) {
     _ASSURE_P_RESULT(r_lease, r, _Z_ERR_PARSE_ZINT)
     r->_value._lease = r_lease._value;
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
-        r->_value._lease *= 1000;
+        r->_value._lease = r->_value._lease * 1000;
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
@@ -1445,7 +1445,7 @@ void _z_open_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_open_result_t *r) {
     _ASSURE_P_RESULT(r_lease, r, _Z_ERR_PARSE_ZINT)
     r->_value._lease = r_lease._value;
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2) == true) {
-        r->_value._lease *= 1000;
+        r->_value._lease = r->_value._lease * 1000;
     }
 
     _z_zint_result_t r_isn = _z_zint_decode(zbf);

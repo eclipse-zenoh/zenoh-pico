@@ -179,7 +179,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
         z_msg._reply_context = rctx;
 
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) < 0) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
@@ -189,7 +189,6 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 #endif  // Z_MULTI_THREAD == 1
 
         ret = _Z_ERR_DECLARE_KEYEXPR;
-        _z_keyexpr_clear(&key);
     }
 
     return ret;

@@ -58,7 +58,7 @@ _z_link_p_result_t _z_open_link(const char *locator) {
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for communication
-        if (r._value->_open_f(r._value) < 0) {
+        if (r._value->_open_f(r._value) != _Z_RES_OK) {
             r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
             _z_link_free(&r._value);
         }
@@ -95,7 +95,7 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for listening
-        if (r._value->_listen_f(r._value) < 0) {
+        if (r._value->_listen_f(r._value) != _Z_RES_OK) {
             r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
             _z_link_free(&r._value);
         }
@@ -146,8 +146,8 @@ int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }
-            n -= wb;
-            bs.start += bs.len - n;
+            n = n - wb;
+            bs.start = bs.start + (bs.len - n);
         } while (n > (size_t)0);
     }
 

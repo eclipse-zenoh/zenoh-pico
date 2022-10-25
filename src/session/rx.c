@@ -54,7 +54,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
                         ret = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
-                        if (ret < _Z_RES_OK) {
+                        if (ret != _Z_RES_OK) {
                             _z_resource_free(&r);
                         }
                     } break;

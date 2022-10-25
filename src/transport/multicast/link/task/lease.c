@@ -152,12 +152,12 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         it = ztm->_peers;
         while (it != NULL) {
             _z_transport_peer_entry_t *entry = _z_transport_peer_entry_list_head(it);
-            entry->_next_lease -= interval;
+            entry->_next_lease = entry->_next_lease - interval;
             it = _z_transport_peer_entry_list_tail(it);
         }
         next_lease = _z_get_next_lease(ztm->_peers);
-        next_keep_alive -= interval;
-        next_join -= interval;
+        next_keep_alive = next_keep_alive - interval;
+        next_join = next_join - interval;
 
         _z_mutex_unlock(&ztm->_mutex_peer);
     }

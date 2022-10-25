@@ -65,7 +65,7 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexp
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
 int8_t zp_keyexpr_canonize_null_terminated(char *start) {
-    zp_keyexpr_canon_status_t ret = 0;
+    zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;
 
     size_t len = strlen(start);
     size_t newlen = len;
@@ -115,6 +115,7 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
 
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
     int8_t ret = -1;
+
     if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
         size_t llen = strlen(l._suffix);
         if (llen == strlen(r._suffix)) {
@@ -375,13 +376,12 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
             z_id_t id;
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-            if (val->_remote_pid.len > sizeof(id.id)) {
-                continue;
-            }
-            (void)memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
-            (void)memset(&id.id[val->_remote_pid.len], 0, sizeof(id.id) - val->_remote_pid.len);
+            if (val->_remote_pid.len <= sizeof(id.id)) {
+                (void)memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
+                (void)memset(&id.id[val->_remote_pid.len], 0, sizeof(id.id) - val->_remote_pid.len);
 
-            callback->call(&id, ctx);
+                callback->call(&id, ctx);
+            }
         }
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
@@ -551,11 +551,13 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_p
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
             _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
+#if Z_MULTICAST_TRANSPORT == 1
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 

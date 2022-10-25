@@ -228,7 +228,7 @@ void zbuf_writable_readable(void) {
         for (size_t i = 0; i < to_read; i++) {
             _z_zbuf_read(&zbf);
         }
-        read += to_read;
+        read = read + to_read;
 
         writable = _z_zbuf_space_left(&zbf);
         printf("    Writable: %zu\n", writable);
@@ -329,7 +329,7 @@ void wbuf_writable_readable(void) {
         for (size_t i = 0; i < to_write; i++) {
             _z_wbuf_write(&wbf, 0);
         }
-        written += to_write;
+        written = written + to_write;
 
         writable = _z_wbuf_space_left(&wbf);
         printf("    Writable: %zu\n", writable);
@@ -523,7 +523,7 @@ void wbuf_add_iosli(void) {
             _z_wbuf_write(&wbf, counter);
             counter++;
         }
-        written += to_write;
+        written = written + to_write;
     }
 
     printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);

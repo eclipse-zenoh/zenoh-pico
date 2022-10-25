@@ -33,8 +33,6 @@
  */
 #define Z_PRIORITIES_NUM 8
 
-
-
 /**
  * A variable-length encoding unsigned integer.
  */

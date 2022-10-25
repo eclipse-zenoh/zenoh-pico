@@ -56,7 +56,7 @@ typedef struct {
     _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
-        SocketAddress *_addr;  // As pointer to cross the boundary between C and C++
+        SocketAddress *_iptcp;  // As pointer to cross the boundary between C and C++
 #endif
     };
 } _z_sys_net_endpoint_t;

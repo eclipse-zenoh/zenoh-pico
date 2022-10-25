@@ -54,7 +54,11 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
 
     if (ret._tag == _Z_RES_OK) {
         _z_transport_message_result_t res = _z_transport_message_decode(&zbf);
-        _z_t_msg_copy(&ret._value, &res._value);
+        if (res._tag == _Z_RES_OK) {
+            _z_t_msg_copy(&ret._value, &res._value);
+        } else {
+            ret._tag = res._tag;
+        }
     }
     _z_zbuf_clear(&zbf);
 

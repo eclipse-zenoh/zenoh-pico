@@ -125,7 +125,7 @@ _z_str_intmap_result_t _z_locator_metadata_from_str(const char *str) {
 
     const char *p_start = strchr(str, LOCATOR_METADATA_SEPARATOR);
     if (p_start != NULL) {
-        p_start++;
+        p_start = _z_cptr_char_offset(p_start, 1);
 
         const char *p_end = strchr(str, ENDPOINT_CONFIG_SEPARATOR);
         if (p_end == NULL) {
@@ -173,7 +173,7 @@ _z_locator_result_t _z_locator_from_str(const char *str) {
         }
     }
 
-    if (ret._tag < _Z_RES_OK) {
+    if (ret._tag != _Z_RES_OK) {
         _z_locator_clear(&ret._value);
     }
 
@@ -185,15 +185,15 @@ size_t _z_locator_strlen(const _z_locator_t *l) {
 
     if (l != NULL) {
         // Calculate the string length to allocate
-        ret += strlen(l->_protocol);  // Locator protocol
-        ret += (size_t)1;             // Locator protocol separator
-        ret += strlen(l->_address);   // Locator address
+        ret = ret + strlen(l->_protocol);  // Locator protocol
+        ret = ret + (size_t)1;             // Locator protocol separator
+        ret = ret + strlen(l->_address);   // Locator address
 
         // @TODO: define protocol-level metadata
         size_t md_len = _z_locator_metadata_strlen(&l->_metadata);
         if (md_len > (size_t)0) {
-            ret += (size_t)1;  // Locator metadata separator
-            ret += md_len;     // Locator medatada content
+            ret = ret + (size_t)1;  // Locator metadata separator
+            ret = ret + md_len;     // Locator medatada content
         }
     }
     return ret;
@@ -395,7 +395,7 @@ _z_endpoint_result_t _z_endpoint_from_str(const char *str) {
         }  // Config is optional in locator, if its absense still means successful parsing
     }
 
-    if (ret._tag < _Z_RES_OK) {
+    if (ret._tag != _Z_RES_OK) {
         _z_endpoint_clear(&ret._value);
     }
 
@@ -408,12 +408,12 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *locator = _z_locator_to_str(&endpoint->_locator);
     if (locator != NULL) {
         size_t len = 1;  // Start with space for the null-terminator
-        len += strlen(locator);
+        len = len + strlen(locator);
 
         char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
         if (config != NULL) {
-            len += (size_t)1;       // Config separator
-            len += strlen(config);  // Config content
+            len = len + (size_t)1;       // Config separator
+            len = len + strlen(config);  // Config content
         }
 
         ret = (char *)z_malloc(len);

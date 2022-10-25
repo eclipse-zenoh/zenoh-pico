@@ -87,7 +87,7 @@ _z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
         _ASSURE_RESULT(r_uint8, r, _Z_ERR_PARSE_ZINT);
 
         r._value = r._value | (((_z_zint_t)r_uint8._value & 0x7f) << i);
-        i += (uint8_t)7;
+        i = i + (uint8_t)7;
     } while (r_uint8._value > 0x7f);
 
     return r;

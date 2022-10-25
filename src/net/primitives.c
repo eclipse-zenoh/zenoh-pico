@@ -83,13 +83,14 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid) {
         _z_declaration_array_t declarations = _z_declaration_array_make(1);
         declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
         _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+            _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);  // Only if message is send, local resource is removed
+        } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
-
-        // Only if message is successfully send, local resource state can be removed
-        _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
+    } else {
+        ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
     return ret;
@@ -261,7 +262,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &query->_key);
         r_ke = _z_get_expanded_key_from_key(query->_zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-        if (!_z_keyexpr_intersects(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix))) {
+        if (_z_keyexpr_intersects(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix)) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }
         _z_keyexpr_clear(&q_ke);

@@ -29,7 +29,7 @@ typedef struct {
     _z_sys_net_endpoint_t _lep;
 } _z_udp_socket_t;
 
-_z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_ep, const char *s_port);
+_z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_port);
 void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep);
 
 // Unicast

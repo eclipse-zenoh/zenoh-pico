@@ -107,11 +107,11 @@ size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
             if (len != (size_t)0) {
-                len += (size_t)1;  // List separator
+                len = len + (size_t)1;  // List separator
             }
-            len += strlen(argv[i]._str);  // Key
-            len += (size_t)1;             // KeyValue separator
-            len += strlen(v);             // Value
+            len = len + strlen(argv[i]._str);  // Key
+            len = len + (size_t)1;             // KeyValue separator
+            len = len + strlen(v);             // Value
         }
     }
 

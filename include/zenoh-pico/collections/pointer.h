@@ -82,21 +82,21 @@
         name##_sptr_t c;                                                                        \
         c._cnt = p->_cnt;                                                                       \
         c.ptr = p->ptr;                                                                         \
-        *p->_cnt += 1;                                                                          \
+        *p->_cnt = *p->_cnt + (uint8_t)1;                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
         name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                    \
         c->_cnt = p->_cnt;                                                                      \
         c->ptr = p->ptr;                                                                        \
-        *p->_cnt += 1;                                                                          \
+        *p->_cnt = *p->_cnt + (uint8_t)1;                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline _Bool name##_sptr_eq(const name##_sptr_t *left, const name##_sptr_t *right) { \
         return (left->ptr == right->ptr);                                                       \
     }                                                                                           \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
-        *p->_cnt -= 1;                                                                          \
+        *p->_cnt = *p->_cnt - 1;                                                                \
         _Bool dropped = *p->_cnt == 0;                                                          \
         if (dropped == true) {                                                                  \
             type##_clear(p->ptr);                                                               \

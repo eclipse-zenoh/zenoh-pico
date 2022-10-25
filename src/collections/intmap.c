@@ -41,7 +41,7 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
 
     if (map->_vals != NULL) {
         for (size_t idx = 0; idx < map->_capacity; idx++) {
-            len += _z_list_len(map->_vals[idx]);
+            len = len + _z_list_len(map->_vals[idx]);
         }
     }
 

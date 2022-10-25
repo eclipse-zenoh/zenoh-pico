@@ -38,7 +38,7 @@ size_t _z_list_len(const _z_list_t *xs) {
     size_t len = 0;
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL) {
-        len += (size_t)1;
+        len = len + (size_t)1;
         l = _z_list_tail(l);
     }
     return len;

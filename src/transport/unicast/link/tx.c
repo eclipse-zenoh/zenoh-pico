@@ -119,7 +119,7 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
                 ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
                     _Bool is_first = true;  // Fragment and send the message
-                    while (_z_wbuf_len(&fbf) > (size_t)0) {
+                    while (_z_wbuf_len(&fbf) > 0) {
                         if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_unicast_get_sn(ztu, reliability);
                         }

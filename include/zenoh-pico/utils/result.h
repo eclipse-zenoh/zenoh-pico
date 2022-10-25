@@ -106,33 +106,33 @@ typedef enum {
     }
 
 #define _ASSURE_RESULT(in_r, out_r, e) \
-    if (in_r._tag < _Z_RES_OK) {       \
+    if (in_r._tag != _Z_RES_OK) {      \
         out_r._tag = _Z_ERR_GENERIC;   \
         return out_r;                  \
     }
 
 #define _ASSURE_P_RESULT(in_r, out_r, e) \
-    if (in_r._tag < _Z_RES_OK) {         \
+    if (in_r._tag != _Z_RES_OK) {        \
         out_r->_tag = _Z_ERR_GENERIC;    \
         return;                          \
     }
 
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
-    if (in_r._tag < _Z_RES_OK) {                    \
+    if (in_r._tag != _Z_RES_OK) {                   \
         z_free(out_r->_value);                      \
         out_r->_tag = _Z_ERR_GENERIC;               \
         return;                                     \
     }
 
 #define _ASSERT_RESULT(r, msg) \
-    if (r._tag < _Z_RES_OK) {  \
+    if (r._tag != _Z_RES_OK) { \
         _Z_ERROR(msg);         \
         _Z_ERROR("\n");        \
         exit(r._tag);          \
     }
 
 #define _ASSERT_P_RESULT(r, msg) \
-    if (r._tag < _Z_RES_OK) {    \
+    if (r._tag != _Z_RES_OK) {   \
         _Z_ERROR(msg);           \
         _Z_ERROR("\n");          \
         exit(r._tag);            \

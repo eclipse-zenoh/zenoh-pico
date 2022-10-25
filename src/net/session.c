@@ -42,7 +42,7 @@ _z_session_t *__z_open_inner(char *locator, z_whatami_t mode) {
         } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
         {
-            __asm__("nop");
+            _z_session_free(&ret);
         }
     } else {
         _z_session_free(&ret);
@@ -110,10 +110,10 @@ _z_session_t *_z_open(_z_config_t *config) {
 
             if (mode != 255) {
                 ret = __z_open_inner(locator, mode);
-                z_free(locator);
             } else {
                 _Z_ERROR("Trying to configure an invalid mode.\n");
             }
+            z_free(locator);
         } else {
             _Z_DEBUG("Unable to scout a zenoh router\n");
             _Z_ERROR("Please make sure at least one router is running on your network!\n");
@@ -171,21 +171,24 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._read_task = task;
-        if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp->_transport._unicast) != 0) {
+        if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp->_transport._unicast) != _Z_RES_OK) {
             ret = _Z_ERR_TASK_START_FAILED;
+            z_free(task);
         }
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
         if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         zn->_tp->_transport._multicast._read_task = task;
-        if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp->_transport._multicast) != 0) {
+        if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp->_transport._multicast) != _Z_RES_OK) {
             ret = _Z_ERR_TASK_START_FAILED;
+            z_free(task);
         }
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+        z_free(task);
     }
 
     return ret;
@@ -193,6 +196,7 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
 
 int8_t _zp_stop_read_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
+
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._read_task_running = false;
@@ -219,21 +223,24 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
 #if Z_UNICAST_TRANSPORT == 1
     if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         zn->_tp->_transport._unicast._lease_task = task;
-        if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp->_transport._unicast) != 0) {
+        if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp->_transport._unicast) != _Z_RES_OK) {
             ret = _Z_ERR_TASK_START_FAILED;
+            z_free(task);
         }
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
         if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         zn->_tp->_transport._multicast._lease_task = task;
-        if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp->_transport._multicast) != 0) {
+        if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp->_transport._multicast) != _Z_RES_OK) {
             ret = _Z_ERR_TASK_START_FAILED;
+            z_free(task);
         }
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+        z_free(task);
     }
 
     return ret;

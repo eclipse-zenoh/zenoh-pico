@@ -84,7 +84,7 @@ void _z_vec_append(_z_vec_t *v, void *e) {
     }
 
     v->_val[v->_len] = e;
-    v->_len++;
+    v->_len = v->_len + 1;
 }
 
 void *_z_vec_get(const _z_vec_t *v, size_t i) {
@@ -109,5 +109,5 @@ void _z_vec_remove(_z_vec_t *v, size_t pos, z_element_free_f free_f) {
     }
 
     v->_val[v->_len] = NULL;
-    v->_len--;
+    v->_len = v->_len - 1;
 }

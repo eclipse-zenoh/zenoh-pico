@@ -85,8 +85,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         // The keep alive and lease intervals are expressed in milliseconds
         z_sleep_ms(interval);
 
-        next_lease -= interval;
-        next_keep_alive -= interval;
+        next_lease = next_lease - interval;
+        next_keep_alive = next_keep_alive - interval;
     }
 #endif  // Z_MULTI_THREAD == 1
 
