@@ -55,7 +55,8 @@ _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            sock._err = true;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
+            // sock._err = true;
         }
 
 #if LWIP_SO_LINGER == 1
@@ -171,7 +172,8 @@ _z_sys_net_socket_t _z_open_udp_unicast(_z_sys_net_endpoint_t rep, uint32_t tout
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            sock._err = true;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
+            // sock._err = true;
         }
 
         if (sock._err == true) {
@@ -274,7 +276,8 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
             if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-                sock._err = true;
+                // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
+                // sock._err = true;
             }
 
             if ((sock._err == false) && (bind(sock._fd, lsockaddr, addrlen) < 0)) {
@@ -359,7 +362,8 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((sock._err == false) && (setsockopt(sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            sock._err = true;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
+            // sock._err = true;
         }
 
         if ((sock._err == false) && (bind(sock._fd, lsockaddr, addrlen) < 0)) {
