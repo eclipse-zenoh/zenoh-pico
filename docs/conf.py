@@ -21,7 +21,7 @@ from clang.cindex import Config
 project = 'zenoh-pico'
 copyright = '2017, 2022 ZettaScale Technology Inc'
 author = 'ZettaScale Zenoh team'
-release = '0.6.0'
+release = '0.6.0-beta.1'
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'
@@ -46,3 +46,6 @@ if platform == "darwin":
 
 elif platform == "win32":
     raise ValueError("Windows not supported yet for building docs.")
+
+else:
+    Config.set_library_file('/usr/lib/llvm-6.0/lib/libclang.so.1') # Required for readthedocs

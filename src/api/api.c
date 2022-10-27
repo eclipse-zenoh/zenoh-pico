@@ -376,9 +376,13 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
             z_id_t id;
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+
             if (val->_remote_pid.len <= sizeof(id.id)) {
-                (void)memcpy(&id.id[0], val->_remote_pid.start, val->_remote_pid.len);
-                (void)memset(&id.id[val->_remote_pid.len], 0, sizeof(id.id) - val->_remote_pid.len);
+                _z_bytes_t bs = val->_remote_pid;
+                for (size_t i = 0; i < bs.len; i++) {
+                    id.id[i] = bs.start[bs.len - i - 1];
+                }
+                memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
                 callback->call(&id, ctx);
             }
@@ -401,10 +405,11 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     if (zs._val->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         z_id_t id;
         if (zs._val->_tp->_transport._unicast._remote_pid.len <= sizeof(id.id)) {
-            (void)memcpy(&id.id[0], zs._val->_tp->_transport._unicast._remote_pid.start,
-                         zs._val->_tp->_transport._unicast._remote_pid.len);
-            (void)memset(&id.id[zs._val->_tp->_transport._unicast._remote_pid.len], 0,
-                         sizeof(id.id) - zs._val->_tp->_transport._unicast._remote_pid.len);
+            _z_bytes_t bs = zs._val->_tp->_transport._unicast._remote_pid;
+            for (size_t i = 0; i < bs.len; i++) {
+                id.id[i] = bs.start[bs.len - i - 1];
+            }
+            memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
             callback->call(&id, ctx);
         }
@@ -421,9 +426,11 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 z_id_t z_info_zid(const z_session_t zs) {
     z_id_t id;
     if (zs._val->_tp_manager->_local_pid.len <= sizeof(id.id)) {
-        (void)memcpy(&id.id[0], zs._val->_tp_manager->_local_pid.start, zs._val->_tp_manager->_local_pid.len);
-        (void)memset(&id.id[zs._val->_tp_manager->_local_pid.len], 0,
-                     sizeof(id.id) - zs._val->_tp_manager->_local_pid.len);
+        _z_bytes_t bs = zs._val->_tp_manager->_local_pid;
+        for (size_t i = 0; i < bs.len; i++) {
+            id.id[i] = bs.start[bs.len - i - 1];
+        }
+        memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
     } else {
         (void)memset(&id.id[0], 0, sizeof(id.id));
     }

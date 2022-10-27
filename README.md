@@ -3,7 +3,7 @@
 ![Build](https://github.com/eclipse-zenoh/zenoh-pico/workflows/build/badge.svg)
 ![Crossbuild](https://github.com/eclipse-zenoh/zenoh-pico/workflows/crossbuild/badge.svg)
 ![integration](https://github.com/eclipse-zenoh/zenoh-pico/workflows/integration/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/zenoh-c/badge/?version=latest)](https://zenoh-c.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/zenoh-pico/badge/?version=latest)](https://zenoh-pico.readthedocs.io/en/latest/?badge=latest)
 [![Discussion](https://img.shields.io/badge/discussion-on%20github-blue)](https://github.com/eclipse-zenoh/roadmap/discussions)
 [![Discord](https://img.shields.io/badge/chat-on%20discord-blue)](https://discord.gg/vSDSpqnbkm)
 [![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
