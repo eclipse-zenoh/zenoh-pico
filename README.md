@@ -37,8 +37,8 @@ The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** 
 Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
 There are 2 kind of packages:
 
- - **libzenohpico**: only contains the library file (.so)
- - **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
+- **libzenohpico**: only contains the library file (.so)
+- **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
 
 For other platforms - like RTOS for embedded systems / microcontrollers -, you will need to clone and build the sources. Check [below](#how-to-build-for-microcontrollers) for more details.
 
@@ -323,10 +323,10 @@ To build and upload the code into the board, run the following command:
   ```
 
 ## 3. Running the Examples
-The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see http://zenoh.io/docs/getting-started/quick-test/) and then to run the examples on your machine.
+The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
 
 ### 3.1. Starting the zenoh Network Service
-Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container)), then simply do:
+Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 
 ```bash
 $ docker run --init -net host eclipse/zenoh:master

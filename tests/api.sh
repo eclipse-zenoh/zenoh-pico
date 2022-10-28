@@ -13,10 +13,10 @@
 #   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
 
-TESTBIN=$1
-TESTDIR=$(dirname $0)
+TESTBIN="$1"
+TESTDIR=$(dirname "$0")
 
-cd $TESTDIR
+cd "$TESTDIR"|| exit
 
 echo "------------------ Running test $TESTBIN -------------------"
 
@@ -24,41 +24,41 @@ sleep 5
 
 if [ ! -f zenohd ]; then
     git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
-    cd zenoh-git
+    cd zenoh-git || exit
     if [ -n "$ZENOH_BRANCH" ]; then
-        git switch $ZENOH_BRANCH
+        git switch "$ZENOH_BRANCH"
     fi
     cargo build
-    cp ./target/debug/zenohd $TESTDIR/
-    cd $TESTDIR
+    cp ./target/debug/zenohd "$TESTDIR"/
+    cd "$TESTDIR"|| exit
 fi
 
 chmod +x zenohd
 
 LOCATORS="tcp/127.0.0.1:7447"
-for LOCATOR in $(echo $LOCATORS | xargs); do
+for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
-    RUST_LOG=debug ./zenohd -l $LOCATOR &> zenohd.$TESTBIN.log &
+    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$TESTBIN".log 2>&1 &
     ZPID=$!
 
     sleep 5
 
     echo "> Running $TESTBIN ..."
-    ./$TESTBIN $LOCATOR
+    ./"$TESTBIN" "$LOCATOR"
     RETCODE=$?
 
     echo "> Stopping zenohd ..."
-    kill -9 $ZPID
+    kill -9 "$ZPID"
 
     sleep 1
 
     echo "> Logs of zenohd ..."
-    cat zenohd.$TESTBIN.log
+    cat zenohd."$TESTBIN".log
 
-    [ $RETCODE -lt 0 ] && exit $RETCODE
+    [ "$RETCODE" -lt 0 ] && exit "$RETCODE"
 done
 
 echo "> Done ($RETCODE)."
-exit $RETCODE
+exit "$RETCODE"

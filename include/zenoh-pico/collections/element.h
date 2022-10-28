@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_ELEMENT_H
 #define ZENOH_PICO_COLLECTIONS_ELEMENT_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "zenoh-pico/system/platform.h"
@@ -25,10 +26,10 @@ typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void *(*z_element_clone_f)(const void *e);
-typedef int (*z_element_eq_f)(const void *left, const void *right);
+typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
 
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f)                                     \
-    typedef int (*name##_eq_f)(const type *left, const type *right);                                           \
+    typedef _Bool (*name##_eq_f)(const type *left, const type *right);                                         \
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
         type *ptr = (type *)*e;                                                                                \
@@ -45,6 +46,7 @@ typedef int (*z_element_eq_f)(const void *left, const void *right);
 
 /*------------------ void ----------------*/
 typedef void _z_noop_t;
+
 static inline size_t _z_noop_size(void *s) {
     (void)(s);
     return 0;

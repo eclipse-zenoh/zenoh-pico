@@ -22,7 +22,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
-int _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this) {
+_Bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this) {
     return this->_id == other->_id;
 }
 
@@ -37,32 +37,37 @@ void _z_subscription_clear(_z_subscription_t *sub) {
 _z_zint_t _z_get_pull_id(_z_session_t *zn) { return zn->_pull_id++; }
 
 _z_subscription_sptr_t *__z_get_subscription_by_id(_z_subscription_sptr_list_t *subs, const _z_zint_t id) {
-    _z_subscription_sptr_t *sub = NULL;
-    while (subs != NULL) {
-        sub = _z_subscription_sptr_list_head(subs);
+    _z_subscription_sptr_t *ret = NULL;
+
+    _z_subscription_sptr_list_t *xs = subs;
+    while (xs != NULL) {
+        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
         if (id == sub->ptr->_id) {
-            return sub;
+            ret = sub;
+            break;
         }
 
-        subs = _z_subscription_sptr_list_tail(subs);
+        xs = _z_subscription_sptr_list_tail(xs);
     }
 
-    return sub;
+    return ret;
 }
 
 _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_list_t *subs, const _z_keyexpr_t key) {
-    _z_subscription_sptr_list_t *xs = NULL;
-    while (subs != NULL) {
-        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(subs);
+    _z_subscription_sptr_list_t *ret = NULL;
+
+    _z_subscription_sptr_list_t *xs = subs;
+    while (xs != NULL) {
+        _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
         if (_z_keyexpr_intersects(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
-                                  strlen(key._suffix))) {
-            xs = _z_subscription_sptr_list_push(xs, _z_subscription_sptr_clone_as_ptr(sub));
+                                  strlen(key._suffix)) == true) {
+            ret = _z_subscription_sptr_list_push(ret, _z_subscription_sptr_clone_as_ptr(sub));
         }
 
-        subs = _z_subscription_sptr_list_tail(subs);
+        xs = _z_subscription_sptr_list_tail(xs);
     }
 
-    return xs;
+    return ret;
 }
 
 /**
@@ -70,8 +75,9 @@ _z_subscription_sptr_list_t *__z_get_subscriptions_by_key(_z_subscription_sptr_l
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id) {
-    _z_subscription_sptr_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
+_z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
+    _z_subscription_sptr_list_t *subs =
+        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscription_by_id(subs, id);
 }
 
@@ -80,13 +86,14 @@ _z_subscription_sptr_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, int 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, int is_local,
+_z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
                                                                  const _z_keyexpr_t key) {
-    _z_subscription_sptr_list_t *subs = is_local ? zn->_local_subscriptions : zn->_remote_subscriptions;
+    _z_subscription_sptr_list_t *subs =
+        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscriptions_by_key(subs, key);
 }
 
-_z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local, const _z_zint_t id) {
+_z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
@@ -100,7 +107,7 @@ _z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, int is_local
     return sub;
 }
 
-_z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, int is_local, const _z_keyexpr_t *key) {
+_z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
@@ -114,65 +121,43 @@ _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, int i
     return subs;
 }
 
-int _z_register_subscription(_z_session_t *zn, int is_local, _z_subscription_t *s) {
+_z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *s) {
     _Z_DEBUG(">>> Allocating sub decl for (%lu:%s)\n", s->_key._id, s->_key._suffix);
+    _z_subscription_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
-    if (subs != NULL)  // A subscription for this name already exists
-        goto ERR;
-
-    // Register the subscription
-    _z_subscription_sptr_t *sub = (_z_subscription_sptr_t *)z_malloc(sizeof(_z_subscription_sptr_t));
-    *sub = _z_subscription_sptr_new(*s);
-    if (is_local)
-        zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, sub);
-    else
-        zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, sub);
+    if (subs == NULL) {  // A subscription for this name does not yet exists
+        ret = (_z_subscription_sptr_t *)z_malloc(sizeof(_z_subscription_sptr_t));
+        *ret = _z_subscription_sptr_new(*s);
+        if (is_local == _Z_RESOURCE_IS_LOCAL) {
+            zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, ret);
+        } else {
+            zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, ret);
+        }
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    return 0;
-
-ERR:
-#if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
-
-    return -1;
+    return ret;
 }
 
-int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                             const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp) {
+int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp) {
+    int8_t ret = _Z_RES_OK;
+
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
-    if (key._suffix == NULL) {
-        goto ERR;
-    }
-
-    // This two step approach allows the lock to be released while in the user callback
-    // Scoped because of the previous goto ERR
-    {
+    if (key._suffix != NULL) {
         _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
-        _z_subscription_sptr_list_t *xs = subs;
-        size_t len = _z_subscription_sptr_list_len(xs);
-        _z_data_handler_t callbacks[len];
-        void *callbacks_args[len];
-        size_t i = 0;
-        while (xs != NULL) {
-            _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
-            callbacks[i] = sub->ptr->_callback;
-            callbacks_args[i++] = sub->ptr->_arg;
-            xs = _z_subscription_sptr_list_tail(xs);
-        }
 
 #if Z_MULTI_THREAD == 1
         _z_mutex_unlock(&zn->_mutex_inner);
@@ -185,35 +170,34 @@ int _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
-        for (i = 0; i < len; i++) {
-            callbacks[i](&s, callbacks_args[i]);
+        _z_subscription_sptr_list_t *xs = subs;
+        while (xs != NULL) {
+            _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
+            sub->ptr->_callback(&s, sub->ptr->_arg);
+            xs = _z_subscription_sptr_list_tail(xs);
         }
 
         _z_keyexpr_clear(&key);
         _z_subscription_sptr_list_free(&subs);
+    } else {
+        ret = _Z_ERR_DECLARE_KEYEXPR;
     }
 
-    return 0;
-
-ERR:
-#if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
-
-    return -1;
+    return ret;
 }
 
-void _z_unregister_subscription(_z_session_t *zn, int is_local, _z_subscription_sptr_t *sub) {
+void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_sptr_t *sub) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if (is_local)
+    if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_subscriptions =
             _z_subscription_sptr_list_drop_filter(zn->_local_subscriptions, _z_subscription_sptr_eq, sub);
-    else
+    } else {
         zn->_remote_subscriptions =
             _z_subscription_sptr_list_drop_filter(zn->_remote_subscriptions, _z_subscription_sptr_eq, sub);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

@@ -18,31 +18,32 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/config.h"
+#include "zenoh-pico/utils/result.h"
 
-#define _Z_EC(fn)  \
-    if (fn != 0) { \
-        return -1; \
+#define _Z_EC(fn)          \
+    if (fn != _Z_RES_OK) { \
+        return -1;         \
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
 _Z_RESULT_DECLARE(uint8_t, uint8)
-int _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
+int8_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
 _z_uint8_result_t _z_uint8_decode(_z_zbuf_t *buf);
 
 _Z_RESULT_DECLARE(_z_zint_t, zint)
-int _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
+int8_t _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
 _z_zint_result_t _z_zint_decode(_z_zbuf_t *buf);
 
 _Z_RESULT_DECLARE(_z_bytes_t, bytes)
-int _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
+int8_t _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
 _z_bytes_result_t _z_bytes_decode(_z_zbuf_t *buf);
 
 _Z_RESULT_DECLARE(char *, str)
-int _z_str_encode(_z_wbuf_t *buf, const char *s);
+int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
 _z_str_result_t _z_str_decode(_z_zbuf_t *buf);
 
 _Z_RESULT_DECLARE(_z_period_t, period)
-int _z_period_encode(_z_wbuf_t *wbf, const _z_period_t *m);
+int8_t _z_period_encode(_z_wbuf_t *wbf, const _z_period_t *m);
 _z_period_result_t _z_period_decode(_z_zbuf_t *zbf);
 void _z_period_decode_na(_z_zbuf_t *zbf, _z_period_result_t *r);
 

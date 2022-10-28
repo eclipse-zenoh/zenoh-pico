@@ -35,7 +35,9 @@ uint64_t z_random_u64(void) {
 }
 
 void z_random_fill(void *buf, size_t len) {
-    for (int i = 0; i < len; i++) *((uint8_t *)buf) = z_random_u8();
+    for (size_t i = 0; i < len; i++) {
+        ((uint8_t *)buf)[i] = z_random_u8();
+    }
 }
 
 /*------------------ Memory ------------------*/
@@ -104,13 +106,13 @@ int z_sleep_ms(unsigned int time) {
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
+int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000U); }
 
 /*------------------ Instant ------------------*/
 void __z_clock_gettime(z_clock_t *ts) {
     uint64_t m = millis();
-    ts->tv_sec = m / 1000000;
-    ts->tv_nsec = (m % 1000000) * 1000;
+    ts->tv_sec = m / (uint64_t)1000000;
+    ts->tv_nsec = (m % (uint64_t)1000000) * (uint64_t)1000;
 }
 
 z_clock_t z_clock_now(void) {

@@ -55,10 +55,10 @@ size_t gen_size_t(void) {
 _z_zbuf_t gen_zbuf(size_t len) { return _z_zbuf_make(len); }
 
 _z_wbuf_t gen_wbuf(size_t len) {
-    int is_expandable = 0;
+    _Bool is_expandable = false;
 
-    if (gen_bool()) {
-        is_expandable = 1;
+    if (gen_bool() == true) {
+        is_expandable = true;
         len = 1 + (gen_size_t() % len);
     }
 
@@ -150,8 +150,8 @@ void iosli_writable_readable(void) {
     assert(_z_iosli_readable(cios) == 0);
 
     printf("  - IOSli bytes\n");
-    uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)payload, 1, len * sizeof(uint8_t));
+    uint8_t *payload = (uint8_t *)z_malloc(len);
+    memset((uint8_t *)payload, 1, len);
 
     for (size_t i = 0; i < len; i++) {
         payload[i] = gen_uint8();
@@ -168,8 +168,8 @@ void iosli_writable_readable(void) {
         assert(readable == i + 1);
     }
 
-    uint8_t *buffer = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)buffer, 1, len * sizeof(uint8_t));
+    uint8_t *buffer = (uint8_t *)z_malloc(len);
+    memset((uint8_t *)buffer, 1, len);
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
     _z_iosli_read_bytes(&ios, buffer, 0, len);
@@ -228,7 +228,7 @@ void zbuf_writable_readable(void) {
         for (size_t i = 0; i < to_read; i++) {
             _z_zbuf_read(&zbf);
         }
-        read += to_read;
+        read = read + to_read;
 
         writable = _z_zbuf_space_left(&zbf);
         printf("    Writable: %zu\n", writable);
@@ -312,7 +312,7 @@ void zbuf_view(void) {
 
 void wbuf_writable_readable(void) {
     size_t len = 128;
-    _z_wbuf_t wbf = _z_wbuf_make(len, 0);
+    _z_wbuf_t wbf = _z_wbuf_make(len, false);
     printf("\n>>> WBuf => Writable and Readable\n");
 
     size_t writable = _z_wbuf_space_left(&wbf);
@@ -329,7 +329,7 @@ void wbuf_writable_readable(void) {
         for (size_t i = 0; i < to_write; i++) {
             _z_wbuf_write(&wbf, 0);
         }
-        written += to_write;
+        written = written + to_write;
 
         writable = _z_wbuf_space_left(&wbf);
         printf("    Writable: %zu\n", writable);
@@ -378,7 +378,7 @@ void wbuf_write_zbuf_read_bytes(void) {
     print_wbuf_overview(&wbf);
 
     printf("    Writing %zu bytes\n", len);
-    uint8_t *buf01 = (uint8_t *)z_malloc(len * sizeof(uint8_t));
+    uint8_t *buf01 = (uint8_t *)z_malloc(len);
     for (size_t i = 0; i < len; i++) {
         buf01[i] = (uint8_t)i % 255;
     }
@@ -442,7 +442,9 @@ void wbuf_reusable_write_zbuf_read(void) {
         printf("\n>>> WBuf => Write and Read\n");
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);
-        for (size_t i = 0; i < len; i++) _z_wbuf_write(&wbf, (uint8_t)i % 255);
+        for (size_t z = 0; z < len; z++) {
+            _z_wbuf_write(&wbf, z % (uint8_t)255);
+        }
 
         printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
         printf("    Written: %zu, Readable: %zu\n", len, _z_wbuf_len(&wbf));
@@ -452,8 +454,8 @@ void wbuf_reusable_write_zbuf_read(void) {
         assert(_z_zbuf_len(&zbf) == len);
         printf("    Reading %zu bytes\n", len);
         printf("    [");
-        for (uint8_t i = 0; i < len; i++) {
-            uint8_t l = (uint8_t)i % 255;
+        for (uint8_t j = 0; j < len; j++) {
+            uint8_t l = j % (uint8_t)255;
             uint8_t r = _z_zbuf_read(&zbf);
             printf(" %02x:%02x", l, r);
             assert(l == r);
@@ -506,7 +508,7 @@ void wbuf_set_pos_wbuf_get_pos(void) {
 
 void wbuf_add_iosli(void) {
     uint8_t len = 16;
-    _z_wbuf_t wbf = _z_wbuf_make(len, 1);
+    _z_wbuf_t wbf = _z_wbuf_make(len, true);
     printf("\n>>> WBuf => Add IOSli\n");
     print_wbuf_overview(&wbf);
 
@@ -521,7 +523,7 @@ void wbuf_add_iosli(void) {
             _z_wbuf_write(&wbf, counter);
             counter++;
         }
-        written += to_write;
+        written = written + to_write;
     }
 
     printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);

@@ -16,8 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void reply_dropper(void *ctx) {
     (void)(ctx);
@@ -37,8 +36,8 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/**";
-    char *locator = NULL;
+    const char *keyexpr = "demo/example/**";
+    const char *locator = NULL;
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:")) != -1) {
@@ -57,7 +56,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -70,25 +69,26 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
     if (!z_check(ke)) {
         printf("%s is not a valid key expression", keyexpr);
-        exit(-1);
+        return -1;
     }
 
     printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = 0;
+    char c = '\0';
     while (1) {
-        c = getchar();
+        fflush(stdin);
+        scanf("%c", &c);
         if (c == 'q') {
             break;
         }
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
         if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
             printf("Unable to send query.\n");
-            exit(-1);
+            return -1;
         }
     }
 

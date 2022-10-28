@@ -26,7 +26,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "demo/example/";
+const char *uri = "demo/example/";
 unsigned int idx[SET];
 
 // The active subscribers
@@ -36,8 +36,8 @@ volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
-    char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    char *res = (char *)malloc(64);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
@@ -48,14 +48,16 @@ void data_handler(const z_sample_t *sample, void *arg) {
 
     datas++;
     free(k_str);
+    free(res);
 }
 
 int main(int argc, char **argv) {
+    setvbuf(stdout, NULL, _IOLBF, 1024);
+
     assert(argc == 2);
     (void)(argc);
 
-    setbuf(stdout, NULL);
-    int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
+    _Bool is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
@@ -92,9 +94,10 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
-    char s1_res[64];
+    char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        memset(s1_res, 0, 64);
+        snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
@@ -106,13 +109,14 @@ int main(int argc, char **argv) {
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)payload, 1, MSG_LEN);
+    uint8_t *payload = (uint8_t *)z_malloc(len);
+    memset(payload, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {
         for (unsigned int i = 0; i < SET; i++) {
-            sprintf(s1_res, "%s%d", uri, i);
+            memset(s1_res, 0, 64);
+            snprintf(s1_res, 64, "%s%u", uri, i);
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
@@ -129,7 +133,7 @@ int main(int argc, char **argv) {
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(datas == expected);
     else
         assert(datas >= expected);
@@ -167,6 +171,8 @@ int main(int argc, char **argv) {
 
     z_free((uint8_t *)payload);
     payload = NULL;
+
+    free(s1_res);
 
     return 0;
 }

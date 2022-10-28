@@ -22,24 +22,24 @@
 
 #if Z_UNICAST_TRANSPORT == 1
 
-int _zp_unicast_read(_z_transport_unicast_t *ztu) {
+int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
+    int8_t ret = _Z_RES_OK;
+
     _z_transport_message_result_t r_s = _z_unicast_recv_t_msg(ztu);
-    if (r_s._tag == _Z_RES_ERR) goto ERR;
+    if (r_s._tag == _Z_RES_OK) {
+        ret = _z_unicast_handle_transport_message(ztu, &r_s._value);
+        _z_t_msg_clear(&r_s._value);
+    } else {
+        ret = r_s._tag;
+    }
 
-    int res = _z_unicast_handle_transport_message(ztu, &r_s._value._transport_message);
-    _z_t_msg_clear(&r_s._value._transport_message);
-
-    return res;
-
-ERR:
-    return _Z_RES_ERR;
+    return ret;
 }
 
-void *_zp_unicast_read_task(void *arg) {
-    (void)(arg);
+void *_zp_unicast_read_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
-    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)arg;
-    ztu->_read_task_running = 1;
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+    ztu->_read_task_running = true;
 
     _z_transport_message_result_t r;
 
@@ -49,16 +49,20 @@ void *_zp_unicast_read_task(void *arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    while (ztu->_read_task_running) {
+    while (ztu->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities)) {
+        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) == true) {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
-                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) continue;
+                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    continue;
+                }
             }
 
-            for (int i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * 8);
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
+            }
 
             if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                 _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
@@ -69,27 +73,32 @@ void *_zp_unicast_read_task(void *arg) {
             }
         } else {
             to_read = _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
-            if (to_read == SIZE_MAX) continue;
+            if (to_read == SIZE_MAX) {
+                continue;
+            }
         }
 
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_zbuf, to_read);
 
         // Mark the session that we have received data
-        ztu->_received = 1;
+        ztu->_received = true;
 
         // Decode one session message
         _z_transport_message_decode_na(&zbuf, &r);
 
         if (r._tag == _Z_RES_OK) {
-            int res = _z_unicast_handle_transport_message(ztu, &r._value._transport_message);
-            if (res == _Z_RES_OK)
-                _z_t_msg_clear(&r._value._transport_message);
-            else
-                goto EXIT_RECV_LOOP;
+            int8_t res = _z_unicast_handle_transport_message(ztu, &r._value);
+            if (res == _Z_RES_OK) {
+                _z_t_msg_clear(&r._value);
+            } else {
+                ztu->_read_task_running = false;
+                continue;
+            }
         } else {
             _Z_ERROR("Connection closed due to malformed message\n\n\n");
-            goto EXIT_RECV_LOOP;
+            ztu->_read_task_running = false;
+            continue;
         }
 
         // Move the read position of the read buffer
@@ -97,16 +106,10 @@ void *_zp_unicast_read_task(void *arg) {
         _z_zbuf_compact(&ztu->_zbuf);
     }
 
-EXIT_RECV_LOOP:
-    if (ztu) {
-        ztu->_read_task_running = 0;
-
-        // Release the lock
-        _z_mutex_unlock(&ztu->_mutex_rx);
-    }
+    _z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
-    return 0;
+    return NULL;
 }
 
 #endif  // Z_UNICAST_TRANSPORT == 1

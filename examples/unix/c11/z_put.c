@@ -17,13 +17,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/zenoh-pico-put";
-    char *value = "Pub from Pico!";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/zenoh-pico-put";
+    const char *value = "Pub from Pico!";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -63,20 +62,20 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
     z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
     if (!z_check(ke)) {
         printf("Unable to declare key expression!\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);

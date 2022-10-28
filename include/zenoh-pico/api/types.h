@@ -409,7 +409,7 @@ _OWNED_TYPE(z_reply_t, reply)
     typedef type alias;                                                                                        \
     static inline elem *z_##name##_array_get(const alias *a, size_t k) { return _z_##name##_array_get(a, k); } \
     static inline size_t z_##name##_array_len(const alias *a) { return _z_##name##_array_len(a); }             \
-    static inline uint8_t z_##name##_array_is_empty(const alias *a) { return _z_##name##_array_is_empty(a); }
+    static inline _Bool z_##name##_array_is_empty(const alias *a) { return _z_##name##_array_is_empty(a); }
 
 /**
  * Represents an array of ``char *``.
@@ -418,7 +418,7 @@ _OWNED_TYPE(z_reply_t, reply)
  *
  *   - ``char *z_str_array_get(z_str_array_t *a, size_t k);``
  *   - ``size_t z_str_array_len(z_str_array_t *a);``
- *   - ``uint8_t z_str_array_array_is_empty(z_str_array_t *a);``
+ *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
 _TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
 _OWNED_TYPE(z_str_array_t, str_array)

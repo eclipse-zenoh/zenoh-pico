@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/pointer.h"
 #include "zenoh-pico/collections/string.h"
@@ -72,8 +73,9 @@ typedef struct {
     _z_keyexpr_t _key;
 } _z_resource_t;
 
-int _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
+_Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
 void _z_resource_clear(_z_resource_t *res);
+void _z_resource_free(_z_resource_t **res);
 
 _Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
@@ -92,7 +94,7 @@ typedef struct {
     void *_arg;
 } _z_subscription_t;
 
-int _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
+_Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_POINTER_DEFINE(_z_subscription, _z_subscription);
@@ -119,7 +121,7 @@ typedef struct {
     void *_arg;
 } _z_questionable_t;
 
-int _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
+_Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
 void _z_questionable_clear(_z_questionable_t *res);
 
 _Z_POINTER_DEFINE(_z_questionable, _z_questionable);
@@ -132,16 +134,17 @@ typedef struct {
     _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
-int _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
+_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
 void _z_pending_reply_clear(_z_pending_reply_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 
+struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_reply_handler_t
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t **reply, void *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t **reply, struct __z_reply_handler_wrapper_t *arg);
 
 typedef struct {
     _z_zint_t _id;
@@ -157,7 +160,7 @@ typedef struct {
     void *_drop_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
 } _z_pending_query_t;
 
-int _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
+_Bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
 void _z_pending_query_clear(_z_pending_query_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy)
@@ -171,9 +174,10 @@ typedef struct {
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 
+struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hello_handler_t
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t **hello, void *arg);
+typedef void (*_z_hello_handler_t)(_z_hello_t **hello, struct __z_hello_handler_wrapper_t *arg);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

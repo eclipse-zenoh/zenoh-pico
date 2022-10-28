@@ -33,14 +33,9 @@ typedef _z_str_intmap_t _z_config_t;
 typedef _z_str_intmap_t _z_scouting_config_t;
 
 /**
- * Returns a new empty map of properties.
- */
-_z_config_t _z_config_make(void);
-
-/**
  * Initialize a new empty map of properties.
  */
-int _z_config_init(_z_config_t *ps);
+int8_t _z_config_init(_z_config_t *ps);
 
 /**
  * Insert a property with a given key to a properties map.

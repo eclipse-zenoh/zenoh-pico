@@ -16,8 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
@@ -29,7 +28,7 @@ void print_zid(const z_id_t *id, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *mode = "client";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -63,13 +62,13 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     z_id_t self_id = z_info_zid(z_loan(s));

@@ -15,7 +15,10 @@
 #ifndef ZENOH_PICO_PROTOCOL_MSG_H
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/collections/array.h"
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/query.h"
@@ -317,7 +320,6 @@ void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
 // +---------------+
 //
 void _z_subinfo_clear(_z_subinfo_t *si);
-void _z_subinfo_free(_z_subinfo_t **si);
 
 /*------------------ Subscriber Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -553,7 +555,7 @@ _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear,
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, int is_final);
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final);
 _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
@@ -563,12 +565,12 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance);
 _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key);
 _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
-_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped);
-_z_zenoh_message_t _z_msg_make_unit(int can_be_dropped);
-_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, int is_final);
+_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped);
+_z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
+_z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
                                      z_consolidation_mode_t consolidation);
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, int can_be_dropped,
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
                                      _z_reply_context_t *rctx);
 
 /*=============================*/
@@ -593,7 +595,7 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 // - if I==1 then the sender is asking for hello replies that contain a peer_id.
 //
 typedef struct {
-    _z_zint_t _what;
+    z_whatami_t _what;
 } _z_t_msg_scout_t;
 void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 
@@ -628,7 +630,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 // +---------------+
 //
 typedef struct {
-    _z_zint_t _whatami;
+    z_whatami_t _whatami;
     _z_bytes_t _pid;
     _z_locator_array_t _locators;
 } _z_t_msg_hello_t;
@@ -680,11 +682,11 @@ typedef struct {
         _z_coundit_sn_t _plain;
         _z_coundit_sn_t _qos[Z_PRIORITIES_NUM];
     } _val;
-    uint8_t _is_qos;
+    _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
     _z_zint_t _options;
-    _z_zint_t _whatami;
+    z_whatami_t _whatami;
     _z_zint_t _lease;
     _z_zint_t _sn_resolution;
     _z_bytes_t _pid;
@@ -731,7 +733,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 //
 typedef struct {
     _z_zint_t _options;
-    _z_zint_t _whatami;
+    z_whatami_t _whatami;
     _z_zint_t _sn_resolution;
     _z_bytes_t _pid;
     _z_bytes_t _cookie;
@@ -960,25 +962,25 @@ typedef struct {
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(_z_zint_t what, int request_pid);
-_z_transport_message_t _z_t_msg_make_hello(_z_zint_t whatami, _z_bytes_t pid, _z_locator_array_t locators);
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, _z_zint_t whatami, _z_zint_t lease, _z_zint_t sn_resolution,
-                                          _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
-_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, int is_qos);
-_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, _z_zint_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _z_bytes_t cookie, int is_qos);
+_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid);
+_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, _z_locator_array_t locators);
+_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
+                                          _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
+_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, _Bool is_qos);
+_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
+                                              _z_bytes_t pid, _z_bytes_t cookie, _Bool is_qos);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, int link_only);
-_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, int is_reliable, _z_zint_t count);
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool link_only);
+_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
 _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
 _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid);
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, int is_reliable, int is_fragment,
-                                           int is_final);
-_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, int is_reliable, int is_fragment, int is_final);
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,
+                                           _Bool is_fragment, _Bool is_final);
+_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable, _Bool is_fragment, _Bool is_final);
 
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers

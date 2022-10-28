@@ -16,11 +16,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <zenoh-pico.h>
 
-#include "zenoh-pico.h"
-
-char *keyexpr = "demo/example/zenoh-pico-queryable";
-char *value = "Queryable from Pico!";
+const char *keyexpr = "demo/example/zenoh-pico-queryable";
+const char *value = "Queryable from Pico!";
 
 void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
@@ -56,7 +55,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -69,19 +68,19 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     z_keyexpr_t ke = z_keyexpr(keyexpr);
     if (!z_check(ke)) {
         printf("%s is not a valid key expression", keyexpr);
-        exit(-1);
+        return -1;
     }
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
@@ -89,13 +88,14 @@ int main(int argc, char **argv) {
     z_owned_queryable_t qable = z_declare_queryable(z_loan(s), ke, z_move(callback), NULL);
     if (!z_check(qable)) {
         printf("Unable to create queryable.\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Enter 'q' to quit...\n");
-    char c = 0;
+    char c = '\0';
     while (c != 'q') {
-        c = getchar();
+        fflush(stdin);
+        scanf("%c", &c);
     }
 
     z_undeclare_queryable(z_move(qable));

@@ -52,21 +52,24 @@ typedef struct {
     void *_arg;
 } __z_task_arg;
 
-void z_task_wrapper(void *arg) {
-    __z_task_arg *z_arg = (__z_task_arg *)arg;
-    z_arg->_fun(z_arg->_arg);
+void z_task_wrapper(__z_task_arg *targ) {
+    targ->_fun(targ->_arg);
     vTaskDelete(NULL);
-    z_free(z_arg);
+    z_free(targ);
 }
 
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    int ret = 0;
+
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
     z_arg->_fun = fun;
     z_arg->_arg = arg;
-    if (xTaskCreate(z_task_wrapper, "", 5120, z_arg, 15, task) != pdPASS) return -1;
+    if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) {
+        ret = -1;
+    }
 
-    return 0;
+    return ret;
 }
 
 int _z_task_join(_z_task_t *task) {
@@ -109,7 +112,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return usleep(1000 * time); }
+int z_sleep_ms(unsigned int time) { return usleep(time * 1000U); }
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 

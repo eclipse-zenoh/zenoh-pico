@@ -16,8 +16,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void fprintpid(FILE *stream, z_bytes_t pid) {
     if (pid.start == NULL) {

@@ -79,7 +79,9 @@ void _z_session_free(_z_session_t **zn) {
 
     // Clean up transports and manager
     _z_transport_manager_free(&ptr->_tp_manager);
-    if (ptr->_tp != NULL) _z_transport_free(&ptr->_tp);
+    if (ptr->_tp != NULL) {
+        _z_transport_free(&ptr->_tp);
+    }
 
     // Clean up the entities
     _z_flush_resources(ptr);
@@ -96,7 +98,10 @@ void _z_session_free(_z_session_t **zn) {
     *zn = NULL;
 }
 
-int _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int res = _z_transport_close(zn->_tp, reason);
-    return res;
+int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
+    int8_t ret = _Z_RES_OK;
+
+    ret = _z_transport_close(zn->_tp, reason);
+
+    return ret;
 }

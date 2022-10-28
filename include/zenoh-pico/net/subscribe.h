@@ -43,4 +43,7 @@ _z_subinfo_t _z_subinfo_push_default(void);
  */
 _z_subinfo_t _z_subinfo_pull_default(void);
 
+void _z_subscriber_clear(_z_subscriber_t *sub);
+void _z_subscriber_free(_z_subscriber_t **sub);
+
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

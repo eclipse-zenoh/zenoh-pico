@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_SYSTEM_COMMON_H
 #define ZENOH_PICO_SYSTEM_COMMON_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/config.h"
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)

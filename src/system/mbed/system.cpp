@@ -81,7 +81,7 @@ int _z_mutex_lock(_z_mutex_t *m) {
     return 0;
 }
 
-int _z_mutex_trylock(_z_mutex_t *m) { return ((Mutex *)*m)->trylock() == true ? 0 : -1; }
+int _z_mutex_trylock(_z_mutex_t *m) { return (((Mutex *)*m)->trylock() == true) ? 0 : -1; }
 
 int _z_mutex_unlock(_z_mutex_t *m) {
     ((Mutex *)*m)->unlock();

@@ -17,8 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
@@ -28,8 +27,8 @@ void data_handler(const z_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/**";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/**";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
@@ -52,7 +51,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -66,13 +65,13 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     z_owned_closure_sample_t callback = z_closure(data_handler);
@@ -80,7 +79,7 @@ int main(int argc, char **argv) {
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber.\n");
-        exit(-1);
+        return -1;
     }
 
     while (1) {

@@ -25,7 +25,7 @@
 char *_z_str_clone(const char *src);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
-int _z_str_eq(const char *left, const char *right);
+_Bool _z_str_eq(const char *left, const char *right);
 
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
@@ -49,7 +49,8 @@ _Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
 
 size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
-void _z_str_intmap_onto_str(char *dst, const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, unsigned int argc,
+                            _z_str_intmapping_t argv[]);
 char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
 _z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[]);
@@ -94,7 +95,7 @@ _z_str_array_t _z_str_array_make(size_t len);
 void _z_str_array_init(_z_str_array_t *sa, size_t len);
 char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);
 size_t _z_str_array_len(const _z_str_array_t *sa);
-uint8_t _z_str_array_is_empty(const _z_str_array_t *sa);
+_Bool _z_str_array_is_empty(const _z_str_array_t *sa);
 void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
 void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
 void _z_str_array_clear(_z_str_array_t *sa);

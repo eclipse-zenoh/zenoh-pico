@@ -41,7 +41,7 @@
     }                                                                                               \
     static inline type *name##_array_get(const name##_array_t *a, size_t k) { return &a->_val[k]; } \
     static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
-    static inline uint8_t name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }   \
+    static inline _Bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }     \
     static inline void name##_array_clear(name##_array_t *a) {                                      \
         for (size_t i = 0; i < a->_len; i++) name##_elem_clear(&a->_val[i]);                        \
         z_free(a->_val);                                                                            \

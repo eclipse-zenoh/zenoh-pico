@@ -16,7 +16,7 @@
 #define ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
 
 #include <stddef.h>
-#include <time.h>
+#include <sys/time.h>
 
 #include "zenoh-pico/config.h"
 
@@ -29,5 +29,35 @@ typedef void *_z_condvar_t;
 
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
+
+typedef struct IPAddress IPAddress;    // Forward declaration to be used in __z_net_iptcp_addr_t
+typedef struct WiFiClient WiFiClient;  // Forward declaration to be used in _z_sys_net_socket_t
+typedef struct WiFiUDP WiFiUDP;        // Forward declaration to be used in _z_sys_net_socket_t
+
+typedef struct {
+    _Bool _err;
+    union {
+#if Z_LINK_TCP == 1
+        WiFiClient *_tcp;  // As pointer to cross the boundary between C and C++
+#endif
+#if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+        WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
+#endif
+    };
+} _z_sys_net_socket_t;
+
+typedef struct {
+    IPAddress *_addr;  // As pointer to cross the boundary between C and C++
+    uint16_t _port;
+} __z_net_iptcp_addr_t;
+
+typedef struct {
+    _Bool _err;
+    union {
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+        __z_net_iptcp_addr_t _iptcp;
+#endif
+    };
+} _z_sys_net_endpoint_t;
 
 #endif /* ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H */

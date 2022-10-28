@@ -23,25 +23,26 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
+int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
+    int8_t ret = _Z_RES_OK;
+
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_DATA: {
             _Z_INFO("Received _Z_MID_DATA message %d\n", msg->_header);
-            if (msg->_reply_context)  // This is some data from a query
-                _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key,
-                                               msg->_body._data._payload, msg->_body._data._info._encoding,
-                                               msg->_body._data._info._kind, msg->_body._data._info._tstamp);
-            else  // This is pure data
-                _z_trigger_subscriptions(zn, msg->_body._data._key, msg->_body._data._payload,
-                                         msg->_body._data._info._encoding, msg->_body._data._info._kind,
-                                         msg->_body._data._info._tstamp);
-
-            return _Z_RES_OK;
-        }
+            if (msg->_reply_context != NULL) {  // This is some data from a query
+                ret = _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key,
+                                                     msg->_body._data._payload, msg->_body._data._info._encoding,
+                                                     msg->_body._data._info._kind, msg->_body._data._info._tstamp);
+            } else {  // This is pure data
+                ret = _z_trigger_subscriptions(zn, msg->_body._data._key, msg->_body._data._payload,
+                                               msg->_body._data._info._encoding, msg->_body._data._info._kind,
+                                               msg->_body._data._info._tstamp);
+            }
+        } break;
 
         case _Z_MID_DECLARE: {
             _Z_INFO("Received _Z_DECLARE message\n");
-            for (unsigned int i = 0; i < msg->_body._declare._declarations._len; i++) {
+            for (size_t i = 0; i < msg->_body._declare._declarations._len; i++) {
                 _z_declaration_t decl = msg->_body._declare._declarations._val[i];
                 switch (_Z_MID(decl._header)) {
                     case _Z_DECL_RESOURCE: {
@@ -52,20 +53,16 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         r->_id = decl._body._res._id;
                         r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
-                        int res = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
-                        if (res != 0) {
-                            _z_resource_clear(r);
-                            z_free(r);
+                        ret = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
+                        if (ret != _Z_RES_OK) {
+                            _z_resource_free(&r);
                         }
-
-                        break;
-                    }
+                    } break;
 
                     case _Z_DECL_PUBLISHER: {
                         _Z_INFO("Received declare-publisher message\n");
                         // TODO: not supported yet
-                        break;
-                    }
+                    } break;
 
                     case _Z_DECL_SUBSCRIBER: {
                         _Z_INFO("Received declare-subscriber message\n");
@@ -87,32 +84,37 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                         s._dropper = NULL;
                         s._arg = NULL;
 
-                        if (_z_register_subscription(zn, _Z_RESOURCE_IS_REMOTE, &s) < 0) {
-                            _z_subscription_clear(&s);
+                        _z_subscription_sptr_t *sp_s = _z_register_subscription(
+                            zn, _Z_RESOURCE_IS_REMOTE, &s);  // This a pointer to the entry stored at session-level.
+                                                             // Do not drop it by the end of this function.
+                        if (sp_s == NULL) {
+                            _z_unregister_subscription(zn, _Z_RESOURCE_IS_REMOTE, sp_s);
                             break;
                         }
 
                         _z_subscription_sptr_list_free(&subs);
-                        break;
-                    }
+                    } break;
+
                     case _Z_DECL_QUERYABLE: {
                         _Z_INFO("Received declare-queryable message\n");
                         // TODO: not supported yet
-                        break;
-                    }
+                    } break;
+
                     case _Z_DECL_FORGET_RESOURCE: {
                         _Z_INFO("Received forget-resource message\n");
                         _z_resource_t *rd =
                             _z_get_resource_by_id(zn, _Z_RESOURCE_IS_REMOTE, decl._body._forget_res._rid);
-                        if (rd != NULL) _z_unregister_resource(zn, _Z_RESOURCE_IS_REMOTE, rd);
+                        if (rd != NULL) {
+                            _z_unregister_resource(zn, _Z_RESOURCE_IS_REMOTE, rd);
+                        }
+                    } break;
 
-                        break;
-                    }
                     case _Z_DECL_FORGET_PUBLISHER: {
                         _Z_INFO("Received forget-publisher message\n");
                         // TODO: not supported yet
-                        break;
-                    }
+
+                    } break;
+
                     case _Z_DECL_FORGET_SUBSCRIBER: {
                         _Z_INFO("Received forget-subscriber message\n");
                         _z_keyexpr_t key =
@@ -129,46 +131,44 @@ int _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
                         _z_subscription_sptr_list_free(&subs);
                         _z_keyexpr_clear(&key);
-                        break;
-                    }
+                    } break;
+
                     case _Z_DECL_FORGET_QUERYABLE: {
                         _Z_INFO("Received forget-queryable message\n");
                         // TODO: not supported yet
-                        break;
-                    }
+                    } break;
+
                     default: {
                         _Z_INFO("Unknown declaration message ID");
-                        return _Z_RES_ERR;
-                    }
+                        ret = _Z_ERR_MESSAGE_DECLARATION_UNEXPECTED;
+                    } break;
                 }
             }
-
-            return _Z_RES_OK;
-        }
+        } break;
 
         case _Z_MID_PULL: {
             _Z_INFO("Received _Z_PULL message\n");
             // TODO: not supported yet
-            return _Z_RES_OK;
-        }
+        } break;
 
         case _Z_MID_QUERY: {
             _Z_INFO("Received _Z_QUERY message\n");
             _z_trigger_queryables(zn, &msg->_body._query);
-            return _Z_RES_OK;
-        }
+        } break;
 
         case _Z_MID_UNIT: {
             _Z_INFO("Received _Z_UNIT message\n");
             // This might be the final reply
-            if (msg->_reply_context) _z_trigger_query_reply_final(zn, msg->_reply_context);
-
-            return _Z_RES_OK;
-        }
+            if (msg->_reply_context != NULL) {
+                _z_trigger_query_reply_final(zn, msg->_reply_context);
+            }
+        } break;
 
         default: {
             _Z_ERROR("Unknown zenoh message ID\n");
-            return _Z_RES_ERR;
+            ret = _Z_ERR_MESSAGE_UNKNOWN;
         }
     }
+
+    return ret;
 }

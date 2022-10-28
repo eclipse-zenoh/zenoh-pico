@@ -38,7 +38,8 @@ _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t
     return sn;
 }
 
-int _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
+int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
+    int8_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message\n");
 
 #if Z_MULTI_THREAD == 1
@@ -50,33 +51,33 @@ int _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_messag
     __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
 
     // Encode the session message
-    int res = _z_transport_message_encode(&ztu->_wbuf, t_msg);
-    if (res == 0) {
+    ret = _z_transport_message_encode(&ztu->_wbuf, t_msg);
+    if (ret == _Z_RES_OK) {
         // Write the message legnth in the reserved space if needed
         __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
         // Send the wbuf on the socket
-        res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
-        // Mark the session that we have transmitted data
-        ztu->_transmitted = 1;
-    } else {
-        _Z_INFO("Dropping session message because it is too large\n");
+        ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
+        if (ret == _Z_RES_OK) {
+            ztu->_transmitted = true;  // Mark the session that we have transmitted data
+        }
     }
 
 #if Z_MULTI_THREAD == 1
-    // Release the lock
     _z_mutex_unlock(&ztu->_mutex_tx);
 #endif  // Z_MULTI_THREAD == 1
 
-    return res;
+    return ret;
 }
 
-int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
-                          z_congestion_control_t cong_ctrl) {
+int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                             z_congestion_control_t cong_ctrl) {
+    int8_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send zenoh message\n");
 
     _z_transport_unicast_t *ztu = &zn->_tp->_transport._unicast;
 
     // Acquire the lock and drop the message if needed
+    _Bool drop = false;
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
 #if Z_MULTI_THREAD == 1
         _z_mutex_lock(&ztu->_mutex_tx);
@@ -87,90 +88,70 @@ int _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliabi
         if (locked != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control\n");
             // We failed to acquire the lock, drop the message
-            return 0;
+            drop = true;
         }
 #endif  // Z_MULTI_THREAD == 1
     }
 
-    // Prepare the buffer eventually reserving space for the message length
-    __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
+    if (drop == false) {
+        // Prepare the buffer eventually reserving space for the message length
+        __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
 
-    // Get the next sequence number
-    _z_zint_t sn = __unsafe_z_unicast_get_sn(ztu, reliability);
-    // Create the frame header that carries the zenoh message
-    _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
+        _z_zint_t sn = __unsafe_z_unicast_get_sn(ztu, reliability);  // Get the next sequence number
 
-    // Encode the frame header
-    int res = _z_transport_message_encode(&ztu->_wbuf, &t_msg);
-    if (res != 0) {
-        _Z_INFO("Dropping zenoh message because the session frame can not be encoded\n");
-        goto EXIT_ZSND_PROC;
-    }
+        _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
+        ret = _z_transport_message_encode(&ztu->_wbuf, &t_msg);  // Encode the frame header
+        if (ret == _Z_RES_OK) {
+            ret = _z_zenoh_message_encode(&ztu->_wbuf, z_msg);  // Encode the zenoh message
+            if (ret == _Z_RES_OK) {
+                // Write the message legnth in the reserved space if needed
+                __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
 
-    // Encode the zenoh message
-    res = _z_zenoh_message_encode(&ztu->_wbuf, z_msg);
-    if (res == 0) {
-        // Write the message legnth in the reserved space if needed
-        __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
+                ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                if (ret == _Z_RES_OK) {
+                    ztu->_transmitted = true;  // Mark the session that we have transmitted data
+                }
+            } else {
+                // The message does not fit in the current batch, let's fragment it
+                // Create an expandable wbuf for fragmentation
+                _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
 
-        // Send the wbuf on the socket
-        res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
-        if (res == 0) ztu->_transmitted = 1;
-    } else {
-        // The message does not fit in the current batch, let's fragment it
-        // Create an expandable wbuf for fragmentation
-        _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, 1);
+                ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
+                if (ret == _Z_RES_OK) {
+                    _Bool is_first = true;  // Fragment and send the message
+                    while (_z_wbuf_len(&fbf) > 0) {
+                        if (is_first == false) {  // Get the fragment sequence number
+                            sn = __unsafe_z_unicast_get_sn(ztu, reliability);
+                        }
+                        is_first = false;
 
-        // Encode the message on the expandable wbuf
-        res = _z_zenoh_message_encode(&fbf, z_msg);
-        if (res != 0) {
-            _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
-            goto EXIT_FRAG_PROC;
+                        // Clear the buffer for serialization
+                        __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
+
+                        // Serialize one fragment
+                        ret = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, &fbf, reliability, sn);
+                        if (ret == _Z_RES_OK) {
+                            // Write the message length in the reserved space if needed
+                            __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
+
+                            ret = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                            if (ret == _Z_RES_OK) {
+                                ztu->_transmitted = true;  // Mark the session that we have transmitted data
+                            }
+                        }
+                    }
+                }
+
+                _z_wbuf_clear(&fbf);  // Free the fragmentation buffer memory
+            }
         }
 
-        // Fragment and send the message
-        int is_first = 1;
-        while (_z_wbuf_len(&fbf) > 0) {
-            // Get the fragment sequence number
-            if (!is_first) sn = __unsafe_z_unicast_get_sn(ztu, reliability);
-            is_first = 0;
-
-            // Clear the buffer for serialization
-            __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
-
-            // Serialize one fragment
-            res = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, &fbf, reliability, sn);
-            if (res != 0) {
-                _Z_INFO("Dropping zenoh message because it can not be fragmented\n");
-                goto EXIT_FRAG_PROC;
-            }
-
-            // Write the message length in the reserved space if needed
-            __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link->_capabilities));
-
-            // Send the wbuf on the socket
-            res = _z_link_send_wbuf(ztu->_link, &ztu->_wbuf);
-            if (res != 0) {
-                _Z_INFO("Dropping zenoh message because it can not sent\n");
-                goto EXIT_FRAG_PROC;
-            }
-
-            // Mark the session that we have transmitted data
-            ztu->_transmitted = 1;
-        }
-
-    EXIT_FRAG_PROC:
-        // Free the fragmentation buffer memory
-        _z_wbuf_clear(&fbf);
-    }
-
-EXIT_ZSND_PROC:
 #if Z_MULTI_THREAD == 1
-    // Release the lock
-    _z_mutex_unlock(&ztu->_mutex_tx);
+        _z_mutex_unlock(&ztu->_mutex_tx);
 #endif  // Z_MULTI_THREAD == 1
+    }
 
-    return res;
+    return ret;
 }
 
 #endif  // Z_UNICAST_TRANSPORT == 1

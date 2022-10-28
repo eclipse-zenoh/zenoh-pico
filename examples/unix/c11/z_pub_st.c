@@ -17,13 +17,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/zenoh-pico-pub";
-    char *value = "Pub from Pico!";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/zenoh-pico-pub";
+    const char *value = "Pub from Pico!";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -63,21 +62,21 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_move(config));
     if (!z_check(s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
     if (!z_check(pub)) {
         printf("Unable to declare publisher for key expression!\n");
-        exit(-1);
+        return -1;
     }
 
-    char buf[256];
+    char *buf = (char *)malloc(256);
     z_clock_t now = z_clock_now();
     for (int idx = 0; 1;) {
         if (z_clock_elapsed_ms(&now) > 1000) {
-            sprintf(buf, "[%4d] %s", idx, value);
+            snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
             z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
             ++idx;
@@ -94,5 +93,6 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
 
+    free(buf);
     return 0;
 }

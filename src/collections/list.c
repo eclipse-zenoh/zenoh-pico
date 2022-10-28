@@ -38,45 +38,50 @@ size_t _z_list_len(const _z_list_t *xs) {
     size_t len = 0;
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL) {
-        len += 1;
+        len = len + (size_t)1;
         l = _z_list_tail(l);
     }
     return len;
 }
 
-uint8_t _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == 0; }
+_Bool _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
 
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f) {
+    _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *head = xs;
-    xs = head->_tail;
+    l = head->_tail;
     f_f(&head->_val);
     z_free(head);
 
-    return xs;
+    return l;
 }
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, void *e) {
     _z_list_t *l = (_z_list_t *)xs;
+    _z_list_t *ret = NULL;
     while (l != NULL) {
         void *head = _z_list_head(l);
-        if (c_f(e, head)) return l;
+        if (c_f(e, head) == true) {
+            ret = l;
+            break;
+        }
         l = _z_list_tail(l);
     }
-    return NULL;
+    return ret;
 }
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, void *left) {
+    _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *previous = xs;
     _z_list_t *current = xs;
 
     while (current != NULL) {
-        if (c_f(left, current->_val)) {
+        if (c_f(left, current->_val) == true) {
             _z_list_t *this = current;
 
             // head removal
-            if (this == xs) {
-                xs = xs->_tail;
-                previous = xs;
+            if (this == l) {
+                l = l->_tail;
             }
             // tail removal
             else if (this->_tail == NULL) {
@@ -87,18 +92,16 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
                 previous->_tail = this->_tail;
             }
 
-            current = this->_tail;
-
             f_f(&this->_val);
             z_free(this);
-            return xs;
+            break;
         } else {
             previous = current;
             current = current->_tail;
         }
     }
 
-    return xs;
+    return l;
 }
 
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
@@ -120,7 +123,9 @@ _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
  */
 void _z_list_free(_z_list_t **xs, z_element_free_f f) {
     _z_list_t *ptr = (_z_list_t *)*xs;
-    while (ptr != NULL) ptr = _z_list_pop(ptr, f);
+    while (ptr != NULL) {
+        ptr = _z_list_pop(ptr, f);
+    }
 
     *xs = NULL;
 }

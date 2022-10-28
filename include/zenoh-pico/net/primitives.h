@@ -31,23 +31,9 @@
  *     what: A whatami bitmask of zenoh entities kind to scout for.
  *     locator: The locator where to scout.
  *     timeout: The time that should be spent scouting before returnng the results.
- *
- * Returns:
- *     The pointer to the list of :c:type:`_z_t_msg_hello_t` messages.
- *     The caller gets its ownership, thus must be released using :c:function:`_z_hello_list_free`.
  */
-_z_hello_list_t *_z_scout(const uint8_t what, const char *locator, const uint32_t timeout);
-
-/**
- * Scout for routers and/or peers.
- *
- * Parameters:
- *     what: A whatami bitmask of zenoh entities kind to scout for.
- *     locator: The locator where to scout.
- *     timeout: The time that should be spent scouting before returnng the results.
- */
-void _z_scout_callback(const uint8_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
-                       void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
+              void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
 
@@ -169,19 +155,6 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
 /*------------------ Operations ------------------*/
 
 /**
- * Write data corresponding to a given resource key.
- *
- * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
-
-/**
  * Write data corresponding to a given resource key, allowing the definition of
  * additional properties.
  *
@@ -198,8 +171,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write_ext(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                    const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided

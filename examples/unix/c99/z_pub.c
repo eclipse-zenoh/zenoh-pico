@@ -17,13 +17,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "zenoh-pico.h"
+#include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/zenoh-pico-pub";
-    char *value = "Pub from Pico!";
-    char *mode = "client";
+    const char *keyexpr = "demo/example/zenoh-pico-pub";
+    const char *value = "Pub from Pico!";
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
                 }
                 return 1;
             default:
-                exit(-1);
+                return -1;
         }
     }
 
@@ -63,26 +62,26 @@ int main(int argc, char **argv) {
     z_owned_session_t s = z_open(z_config_move(&config));
     if (!z_session_check(&s)) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan(&s), NULL) < 0 || zp_start_lease_task(z_session_loan(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(keyexpr), NULL);
     if (!z_publisher_check(&pub)) {
         printf("Unable to declare publisher for key expression!\n");
-        exit(-1);
+        return -1;
     }
 
-    char buf[256];
+    char *buf = (char *)malloc(256);
     for (int idx = 0; 1; ++idx) {
         sleep(1);
-        sprintf(buf, "[%4d] %s", idx, value);
+        snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
@@ -97,5 +96,6 @@ int main(int argc, char **argv) {
 
     z_close(z_session_move(&s));
 
+    free(buf);
     return 0;
 }

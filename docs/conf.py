@@ -13,9 +13,9 @@
 #
 
 # Configuration file for the Sphinx documentation builder.
-from clang.cindex import Config
 from sys import platform
 from pathlib import Path
+from clang.cindex import Config
 
 # -- Project information -----------------------------------------------------
 project = 'zenoh-pico'
@@ -35,14 +35,14 @@ html_theme = 'sphinx_rtd_theme'
 breathe_debug_trace_directives = True
 
 if platform == "darwin":
-    libclang_file = Path("/Library/Developer/CommandLineTools/usr/lib/libclang.dylib")
-    libclang_cellar = Path("/usr/local/Cellar/llvm/14.0.6/lib/libclang.dylib")
-    if libclang_file.is_file():
-        Config.set_library_file(libclang_file)
-    elif libclang_cellar.is_file():
-        Config.set_library_file(libclang_cellar)
+    LIBCLANG_FILE = Path("/Library/Developer/CommandLineTools/usr/lib/libclang.dylib")
+    LIBCLANG_CELLAR = Path("/usr/local/Cellar/llvm/14.0.6/lib/libclang.dylib")
+    if LIBCLANG_FILE.is_file():
+        Config.set_library_file(LIBCLANG_FILE)
+    elif LIBCLANG_CELLAR.is_file():
+        Config.set_library_file(LIBCLANG_CELLAR)
     else:
-        raise ValueError(f"libclang not found. \nTried: \n {libclang_file}\n {libclang_cellar}")
+        raise ValueError(f"libclang not found. \nTried: \n {LIBCLANG_FILE}\n {LIBCLANG_CELLAR}")
 
 elif platform == "win32":
     raise ValueError("Windows not supported yet for building docs.")

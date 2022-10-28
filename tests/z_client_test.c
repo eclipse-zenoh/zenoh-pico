@@ -25,7 +25,7 @@
 #define SLEEP 1
 #define TIMEOUT 60
 
-char *uri = "demo/example/";
+const char *uri = "demo/example/";
 unsigned int idx[SET];
 
 // The active resource, subscriber, queryable declarations
@@ -40,12 +40,12 @@ volatile unsigned int total = 0;
 
 volatile unsigned int queries = 0;
 void query_handler(const z_query_t *query, void *arg) {
-    char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    char *res = (char *)malloc(64);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
     char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
-    assert(_z_str_eq(k_str, res));
+    assert(_z_str_eq(k_str, res) == true);
 
     z_bytes_t pred = z_query_parameters(query);
     assert(pred.len == strlen(""));
@@ -55,12 +55,13 @@ void query_handler(const z_query_t *query, void *arg) {
 
     queries++;
     free(k_str);
+    free(res);
 }
 
 volatile unsigned int replies = 0;
 void reply_handler(z_owned_reply_t *reply, void *arg) {
-    char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    char *res = (char *)malloc(64);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
@@ -68,34 +69,37 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
         char *k_str = z_keyexpr_to_string(sample.keyexpr);
         assert(sample.payload.len == strlen(res));
         assert(strncmp(res, (const char *)sample.payload.start, strlen(res)) == 0);
-        assert(_z_str_eq(k_str, res));
+        assert(_z_str_eq(k_str, res) == true);
 
         replies++;
         free(k_str);
     } else {
         printf(">> Received an error\n");
     }
+    free(res);
 }
 
 volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
-    char res[64];
-    sprintf(res, "%s%u", uri, *(unsigned int *)arg);
+    char *res = (char *)malloc(64);
+    snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     char *k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(_z_str_eq(k_str, res));
+    assert(_z_str_eq(k_str, res) == true);
 
     datas++;
     free(k_str);
+    free(res);
 }
 
 int main(int argc, char **argv) {
+    setvbuf(stdout, NULL, _IOLBF, 1024);
+
     assert(argc == 2);
     (void)(argc);
 
-    setbuf(stdout, NULL);
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();
@@ -131,9 +135,9 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     // Declare resources on both sessions
-    char s1_res[64];
+    char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
         printf("Declared resource on session 1: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids1[i] = expr;
@@ -142,7 +146,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s2), z_keyexpr(s1_res));
         printf("Declared resource on session 2: %lu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids2[i] = expr;
@@ -164,7 +168,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        sprintf(s1_res, "%s%d", uri, i);
+        snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
@@ -187,8 +191,8 @@ int main(int argc, char **argv) {
 
     // Write data from firt session
     size_t len = MSG_LEN;
-    const uint8_t *payload = (uint8_t *)z_malloc(len * sizeof(uint8_t));
-    memset((uint8_t *)payload, 1, MSG_LEN);
+    uint8_t *payload = (uint8_t *)z_malloc(len);
+    memset(payload, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {
@@ -209,7 +213,7 @@ int main(int argc, char **argv) {
         printf("Waiting for datas... %u/%u\n", datas, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(datas == expected);
     else
         assert(datas >= expected);
@@ -221,7 +225,7 @@ int main(int argc, char **argv) {
     total = QRY * SET;
     for (unsigned int n = 0; n < QRY; n++) {
         for (unsigned int i = 0; i < SET; i++) {
-            sprintf(s1_res, "%s%d", uri, i);
+            snprintf(s1_res, 64, "%s%u", uri, i);
             z_owned_closure_reply_t callback = z_closure(reply_handler, NULL, &idx[i]);
             z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
             printf("Queried data from session 1: %lu %s\n", (z_zint_t)0, s1_res);
@@ -236,7 +240,7 @@ int main(int argc, char **argv) {
         printf("Waiting for queries... %u/%u\n", queries, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(queries == expected);
     else
         assert(queries >= expected);
@@ -249,7 +253,7 @@ int main(int argc, char **argv) {
         printf("Waiting for replies... %u/%u\n", replies, expected);
         z_sleep_s(SLEEP);
     }
-    if (is_reliable)
+    if (is_reliable == true)
         assert(replies == expected);
     else
         assert(replies >= expected);
@@ -321,6 +325,8 @@ int main(int argc, char **argv) {
 
     z_free((uint8_t *)payload);
     payload = NULL;
+
+    free(s1_res);
 
     return 0;
 }

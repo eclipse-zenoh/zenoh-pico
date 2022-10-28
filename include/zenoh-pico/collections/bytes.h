@@ -15,8 +15,9 @@
 #ifndef ZENOH_PICO_COLLECTIONS_BYTES_H
 #define ZENOH_PICO_COLLECTIONS_BYTES_H
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 /*-------- Bytes --------*/
 /**
@@ -29,7 +30,7 @@
 typedef struct {
     const uint8_t *start;
     size_t len;
-    uint8_t _is_alloc;
+    _Bool _is_alloc;
 } _z_bytes_t;
 
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity);
@@ -40,9 +41,9 @@ void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_reset(_z_bytes_t *bs);
-uint8_t _z_bytes_is_empty(const _z_bytes_t *bs);
+_Bool _z_bytes_is_empty(const _z_bytes_t *bs);
 
-int _z_bytes_eq(const _z_bytes_t *left, const _z_bytes_t *right);
+_Bool _z_bytes_eq(const _z_bytes_t *left, const _z_bytes_t *right);
 void _z_bytes_clear(_z_bytes_t *bs);
 void _z_bytes_free(_z_bytes_t **bs);
 

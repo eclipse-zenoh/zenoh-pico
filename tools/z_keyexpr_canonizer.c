@@ -31,8 +31,8 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         size_t len = strlen(argv[i]);
         buffer = realloc(buffer, len + 1);
-        strcpy(buffer, argv[i]);
-        buffer[len] = 0;
+        strncpy(buffer, argv[i], len);
+        buffer[len] = '\0';
         zp_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(buffer);
 
         switch (status) {

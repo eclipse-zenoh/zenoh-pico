@@ -27,10 +27,11 @@
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) {
-    uint8_t ret;
+    uint8_t ret = 0;
 #if defined(ZENOH_LINUX)
-    while (getrandom(&ret, sizeof(uint8_t), 0) <= 0)
-        ;
+    while (getrandom(&ret, sizeof(uint8_t), 0) <= 0) {
+        __asm__("nop");
+    }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = z_random_u32();
 #endif
@@ -39,10 +40,11 @@ uint8_t z_random_u8(void) {
 }
 
 uint16_t z_random_u16(void) {
-    uint16_t ret;
+    uint16_t ret = 0;
 #if defined(ZENOH_LINUX)
-    while (getrandom(&ret, sizeof(uint16_t), 0) <= 0)
-        ;
+    while (getrandom(&ret, sizeof(uint16_t), 0) <= 0) {
+        __asm__("nop");
+    }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = z_random_u32();
 #endif
@@ -51,10 +53,11 @@ uint16_t z_random_u16(void) {
 }
 
 uint32_t z_random_u32(void) {
-    uint32_t ret;
+    uint32_t ret = 0;
 #if defined(ZENOH_LINUX)
-    while (getrandom(&ret, sizeof(uint32_t), 0) <= 0)
-        ;
+    while (getrandom(&ret, sizeof(uint32_t), 0) <= 0) {
+        __asm__("nop");
+    }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret = arc4random();
 #endif
@@ -65,8 +68,9 @@ uint32_t z_random_u32(void) {
 uint64_t z_random_u64(void) {
     uint64_t ret = 0;
 #if defined(ZENOH_LINUX)
-    while (getrandom(&ret, sizeof(uint64_t), 0) <= 0)
-        ;
+    while (getrandom(&ret, sizeof(uint64_t), 0) <= 0) {
+        __asm__("nop");
+    }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret |= z_random_u32();
     ret |= z_random_u32() << 8;
@@ -77,8 +81,9 @@ uint64_t z_random_u64(void) {
 
 void z_random_fill(void *buf, size_t len) {
 #if defined(ZENOH_LINUX)
-    while (getrandom(buf, len, 0) <= 0)
-        ;
+    while (getrandom(buf, len, 0) <= 0) {
+        __asm__("nop");
+    }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     arc4random_buf(buf, len);
 #endif
@@ -131,7 +136,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return z_sleep_us(1000 * time); }
+int z_sleep_ms(unsigned int time) { return z_sleep_us(time * 1000U); }
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 

@@ -57,14 +57,15 @@ static int thread_index = 0;
 
 /*------------------ Task ------------------*/
 int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    _z_task_attr_t *lattr = NULL;
+    _z_task_attr_t tmp;
     if (attr == NULL) {
-        _z_task_attr_t tmp;
         (void)pthread_attr_init(&tmp);
         (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++], Z_PTHREAD_STACK_SIZE_DEFAULT);
-        attr = &tmp;
+        lattr = &tmp;
     }
 
-    return pthread_create(task, attr, fun, arg);
+    return pthread_create(task, lattr, fun, arg);
 }
 
 int _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }
@@ -101,7 +102,7 @@ int _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return usleep(1000 * time); }
+int z_sleep_ms(unsigned int time) { return usleep(time * 1000U); }
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 

@@ -3,6 +3,7 @@ build
 
 # vscode
 .vscode 
+.clang-format
 
 # IntelliJ / CLion 
 .idea 
@@ -61,3 +62,4 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+.cache

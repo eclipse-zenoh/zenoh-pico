@@ -80,7 +80,7 @@ Arrays
 
     - ``char *z_str_array_get(z_str_array_t *a, size_t k);``
     - ``size_t z_str_array_len(z_str_array_t *a);``
-    - ``uint8_t z_str_array_array_is_empty(z_str_array_t *a);``
+    - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
 
 Owned Types
 ~~~~~~~~~~~

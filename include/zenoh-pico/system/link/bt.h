@@ -32,16 +32,16 @@ extern "C" {
 #define _Z_BT_PROFILE_SPP 0
 
 typedef struct {
-    void *_sock;
+    _z_sys_net_socket_t _sock;
     char *_gname;
 } _z_bt_socket_t;
 
-void *_z_open_bt(char *gname, uint8_t mode, uint8_t profile);
-void *_z_listen_bt(char *gname, uint8_t mode, uint8_t profile);
-void _z_close_bt(void *sock_arg);
-size_t _z_read_exact_bt(void *sock_arg, uint8_t *ptr, size_t len);
-size_t _z_read_bt(void *sock_arg, uint8_t *ptr, size_t len);
-size_t _z_send_bt(void *sock_arg, const uint8_t *ptr, size_t len);
+_z_sys_net_socket_t _z_open_bt(const char *gname, uint8_t mode, uint8_t profile);
+_z_sys_net_socket_t _z_listen_bt(const char *gname, uint8_t mode, uint8_t profile);
+void _z_close_bt(_z_sys_net_socket_t sock);
+size_t _z_read_exact_bt(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_read_bt(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_send_bt(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
 #ifdef __cplusplus
 }

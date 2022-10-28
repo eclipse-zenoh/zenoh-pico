@@ -16,6 +16,7 @@
 #define ZENOH_PICO_TRANSPORT_TYPES_H
 
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
@@ -36,13 +37,13 @@ typedef struct {
 
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
-    volatile int _received;
+    volatile _Bool _received;
 } _z_transport_peer_entry_t;
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
-int _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
+_Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
@@ -77,13 +78,13 @@ typedef struct {
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
-    volatile int _received;
-    volatile int _transmitted;
+    volatile _Bool _received;
+    volatile _Bool _transmitted;
 
 #if Z_MULTI_THREAD == 1
-    volatile int _read_task_running;
+    volatile _Bool _read_task_running;
     _z_task_t *_read_task;
-    volatile int _lease_task_running;
+    volatile _Bool _lease_task_running;
     _z_task_t *_lease_task;
 #endif  // Z_MULTI_THREAD == 1
 
@@ -118,12 +119,12 @@ typedef struct {
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
-    volatile int _transmitted;
+    volatile _Bool _transmitted;
 
 #if Z_MULTI_THREAD == 1
-    volatile int _read_task_running;
+    volatile _Bool _read_task_running;
     _z_task_t *_read_task;
-    volatile int _lease_task_running;
+    volatile _Bool _lease_task_running;
     _z_task_t *_lease_task;
 #endif  // Z_MULTI_THREAD == 1
 
@@ -150,11 +151,11 @@ _Z_P_RESULT_DECLARE(_z_transport_t, transport)
 
 typedef struct {
     _z_bytes_t _remote_pid;
-    unsigned int _whatami;
+    z_whatami_t _whatami;
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
-    uint8_t _is_qos;
+    _Bool _is_qos;
     _z_zint_t _lease;
 } _z_transport_unicast_establish_param_t;
 
@@ -163,7 +164,7 @@ _Z_RESULT_DECLARE(_z_transport_unicast_establish_param_t, transport_unicast_esta
 typedef struct {
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_tx;
-    uint8_t _is_qos;
+    _Bool _is_qos;
 } _z_transport_multicast_establish_param_t;
 
 _Z_RESULT_DECLARE(_z_transport_multicast_establish_param_t, transport_multicast_establish_param)
@@ -180,9 +181,9 @@ _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(con
 _z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer(const _z_link_t *zl,
                                                                                  const _z_bytes_t local_pid);
 
-int _z_transport_close(_z_transport_t *zt, uint8_t reason);
-int _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);
-int _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason);
+int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
+int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);
+int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason);
 
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu);
 void _z_transport_multicast_clear(_z_transport_multicast_t *ztm);
