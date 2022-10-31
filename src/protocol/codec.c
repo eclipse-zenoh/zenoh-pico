@@ -144,9 +144,13 @@ _z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
 
     if (_z_zbuf_len(zbf) >= len) {                    // Check if we have enough bytes to read
         char *s = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
-        s[len] = '\0';
-        _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
-        r._value = s;
+        if (s != NULL) {
+            s[len] = '\0';
+            _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
+            r._value = s;
+        } else {
+            r._tag = _Z_ERR_OUT_OF_MEMORY;
+        }
     } else {
         r._tag = _Z_ERR_PARSE_STRING;
         _Z_DEBUG("WARNING: Not enough bytes to read\n");

@@ -1673,6 +1673,7 @@ void _z_frame_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_frame_result_t *r) {
             _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(zbf);
             if (r_zm._tag == _Z_RES_OK) {
                 _z_zenoh_message_t *zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
+                 // TODO: check if NULL and cleanup if so.
                 (void)memcpy(zm, &r_zm._value, sizeof(_z_zenoh_message_t));
                 _z_zenoh_message_vec_append(&r->_value._payload._messages, zm);
             } else {

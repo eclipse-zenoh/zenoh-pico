@@ -22,8 +22,13 @@
 /*-------- bytes --------*/
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
     bs->start = (uint8_t *)z_malloc(capacity * sizeof(uint8_t));
-    bs->len = capacity;
-    bs->_is_alloc = true;
+    if (bs->start != NULL) {
+        bs->len = capacity;
+        bs->_is_alloc = true;
+    } else {
+        bs->len = 0;
+        bs->_is_alloc = false;
+    }
 }
 
 _z_bytes_t _z_bytes_make(size_t capacity) {

@@ -48,28 +48,30 @@ void _z_timestamp_reset(_z_timestamp_t *tstamp) {
 _z_session_t *_z_session_init(void) {
     _z_session_t *zn = (_z_session_t *)z_malloc(sizeof(_z_session_t));
 
-    // Initialize the counters to 1
-    zn->_entity_id = 1;
-    zn->_resource_id = 1;
-    zn->_query_id = 1;
-    zn->_pull_id = 1;
+    if (zn != NULL) {
+        // Initialize the counters to 1
+        zn->_entity_id = 1;
+        zn->_resource_id = 1;
+        zn->_query_id = 1;
+        zn->_pull_id = 1;
 
-    // Initialize the data structs
-    zn->_local_resources = NULL;
-    zn->_remote_resources = NULL;
-    zn->_local_subscriptions = NULL;
-    zn->_remote_subscriptions = NULL;
-    zn->_local_questionable = NULL;
-    zn->_pending_queries = NULL;
+        // Initialize the data structs
+        zn->_local_resources = NULL;
+        zn->_remote_resources = NULL;
+        zn->_local_subscriptions = NULL;
+        zn->_remote_subscriptions = NULL;
+        zn->_local_questionable = NULL;
+        zn->_pending_queries = NULL;
 
-    // Associate a transport with the session
-    zn->_tp = NULL;
-    zn->_tp_manager = _z_transport_manager_init();
+        // Associate a transport with the session
+        zn->_tp = NULL;
+        zn->_tp_manager = _z_transport_manager_init();
 
 #if Z_MULTI_THREAD == 1
-    // Initialize the mutexes
-    _z_mutex_init(&zn->_mutex_inner);
+        // Initialize the mutexes
+        _z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
+    }
 
     return zn;
 }

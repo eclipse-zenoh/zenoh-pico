@@ -272,14 +272,18 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockad
                 if (tmp->ifa_addr->sa_family == sa_family) {
                     if (tmp->ifa_addr->sa_family == AF_INET) {
                         *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-                        (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
-                        (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
-                        addrlen = sizeof(struct sockaddr_in);
+                        if (lsockaddr != NULL) {
+                            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
+                            (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
+                            addrlen = sizeof(struct sockaddr_in);
+                        }
                     } else if (tmp->ifa_addr->sa_family == AF_INET6) {
                         *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-                        (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
-                        (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
-                        addrlen = sizeof(struct sockaddr_in6);
+                        if (lsockaddr != NULL) {
+                            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
+                            (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
+                            addrlen = sizeof(struct sockaddr_in6);
+                        }
                     } else {
                         continue;
                     }
@@ -339,23 +343,27 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
             // Create lep endpoint
             if (sock._err == false) {
                 struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
-                laddr->ai_flags = 0;
-                laddr->ai_family = rep._iptcp->ai_family;
-                laddr->ai_socktype = rep._iptcp->ai_socktype;
-                laddr->ai_protocol = rep._iptcp->ai_protocol;
-                laddr->ai_addrlen = addrlen;
-                laddr->ai_addr = lsockaddr;
-                laddr->ai_canonname = NULL;
-                laddr->ai_next = NULL;
-                lep->_iptcp = laddr;
+                if (laddr != NULL) {
+                    laddr->ai_flags = 0;
+                    laddr->ai_family = rep._iptcp->ai_family;
+                    laddr->ai_socktype = rep._iptcp->ai_socktype;
+                    laddr->ai_protocol = rep._iptcp->ai_protocol;
+                    laddr->ai_addrlen = addrlen;
+                    laddr->ai_addr = lsockaddr;
+                    laddr->ai_canonname = NULL;
+                    laddr->ai_next = NULL;
+                    lep->_iptcp = laddr;
 
-                // This is leaking 16 bytes according to valgrind, but it is a know problem on some libc6
-                // implementations:
-                //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
-                // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
-                //#if defined(ZENOH_LINUX)
-                //    z_free(lsockaddr);
-                //#endif
+                    // This is leaking 16 bytes according to valgrind, but it is a know problem on some libc6
+                    // implementations:
+                    //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
+                    // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
+                    //#if defined(ZENOH_LINUX)
+                    //    z_free(lsockaddr);
+                    //#endif
+                } else {
+                    sock._err = true;
+                }
             }
 
             if (sock._err == true) {

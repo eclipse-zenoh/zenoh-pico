@@ -26,10 +26,11 @@
     } name##_array_t;                                                                               \
     static inline name##_array_t name##_array_make(size_t capacity) {                               \
         name##_array_t a;                                                                           \
-        a._len = capacity;                                                                          \
-        a._val = NULL;                                                                              \
-        if (capacity > 0) {                                                                         \
-            a._val = (type *)z_malloc(capacity * sizeof(type));                                     \
+        a._val = (type *)z_malloc(capacity * sizeof(type));                                         \
+        if (a._val != NULL) {                                                                       \
+            a._len = capacity;                                                                      \
+        } else {                                                                                    \
+            a._len = 0;                                                                             \
         }                                                                                           \
         return a;                                                                                   \
     }                                                                                               \

@@ -130,7 +130,7 @@ _Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t, _z_noop_size, _z_qu
 _Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t)
 
 typedef struct {
-    _z_reply_t *_reply;
+    _z_reply_t _reply;
     _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
@@ -144,7 +144,7 @@ struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_rep
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t **reply, struct __z_reply_handler_wrapper_t *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t *reply, struct __z_reply_handler_wrapper_t *arg);
 
 typedef struct {
     _z_zint_t _id;
@@ -178,6 +178,6 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t **hello, struct __z_hello_handler_wrapper_t *arg);
+typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

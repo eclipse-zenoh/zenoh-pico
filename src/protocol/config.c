@@ -83,13 +83,17 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
 
             size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
             char *p_value = (char *)z_malloc(p_value_len + (size_t)1);
-            (void)strncpy(p_value, p_value_start, p_value_len);
-            p_value[p_value_len] = '\0';
+            if (p_value != NULL) {
+                (void)strncpy(p_value, p_value_start, p_value_len);
+                p_value[p_value_len] = '\0';
 
-            _z_str_intmap_insert(&res._value, key, p_value);
+                _z_str_intmap_insert(&res._value, key, p_value);
 
-            // Process next key value
-            start = _z_cptr_char_offset(p_value_end, 1);
+                // Process next key value
+                start = _z_cptr_char_offset(p_value_end, 1);
+            } else {
+                res._tag = _Z_ERR_OUT_OF_MEMORY;
+            }
         }
     }
 
@@ -154,6 +158,8 @@ char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_i
     size_t len = _z_str_intmap_strlen(s, argc, argv) + (size_t)1;
     // Build the string
     char *dst = (char *)z_malloc(len);
-    _z_str_intmap_onto_str(dst, len, s, argc, argv);
+    if (dst != NULL) {
+        _z_str_intmap_onto_str(dst, len, s, argc, argv);
+    }
     return dst;
 }

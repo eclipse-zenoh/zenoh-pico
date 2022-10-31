@@ -132,11 +132,13 @@ _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_lo
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
     if (subs == NULL) {  // A subscription for this name does not yet exists
         ret = (_z_subscription_sptr_t *)z_malloc(sizeof(_z_subscription_sptr_t));
-        *ret = _z_subscription_sptr_new(*s);
-        if (is_local == _Z_RESOURCE_IS_LOCAL) {
-            zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, ret);
-        } else {
-            zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, ret);
+        if (ret != NULL) {
+            *ret = _z_subscription_sptr_new(*s);
+            if (is_local == _Z_RESOURCE_IS_LOCAL) {
+                zn->_local_subscriptions = _z_subscription_sptr_list_push(zn->_local_subscriptions, ret);
+            } else {
+                zn->_remote_subscriptions = _z_subscription_sptr_list_push(zn->_remote_subscriptions, ret);
+            }
         }
     }
 

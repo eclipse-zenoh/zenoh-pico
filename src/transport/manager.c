@@ -98,13 +98,29 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
 }
 
 _z_transport_manager_t *_z_transport_manager_init() {
+    _Bool err = false;
+
     _z_transport_manager_t *ztm = (_z_transport_manager_t *)z_malloc(sizeof(_z_transport_manager_t));
+    if (ztm != NULL) {
+        // Randomly generate a peer ID
+        ztm->_local_pid = _z_bytes_make(Z_ZID_LENGTH);
+        if (ztm->_local_pid._is_alloc == true) {
+            z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
+        } else {
+            err = true;
+        }
 
-    // Randomly generate a peer ID
-    ztm->_local_pid = _z_bytes_make(Z_ZID_LENGTH);
-    z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
+        ztm->_link_manager = _z_link_manager_init();
+        if (ztm->_link_manager == NULL) {
+            err = true;
+        }
+    } else {
+        err = true;
+    }
 
-    ztm->_link_manager = _z_link_manager_init();
+    if (err == true) {
+        _z_transport_manager_free(&ztm);
+    }
 
     return ztm;
 }

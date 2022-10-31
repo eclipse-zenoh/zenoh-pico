@@ -246,23 +246,31 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
     unsigned int addrlen = 0;
     if (rep._iptcp->ai_family == AF_INET) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
-        addrlen = sizeof(struct sockaddr_in);
+        if (lsockaddr != NULL) {
+            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
+            addrlen = sizeof(struct sockaddr_in);
 
-        struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
-        c_laddr->sin_family = AF_INET;
-        c_laddr->sin_addr.s_addr = INADDR_ANY;
-        c_laddr->sin_port = htons(INADDR_ANY);
+            struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
+            c_laddr->sin_family = AF_INET;
+            c_laddr->sin_addr.s_addr = INADDR_ANY;
+            c_laddr->sin_port = htons(INADDR_ANY);
+        } else {
+            sock._err = true;
+        }
     } else if (rep._iptcp->ai_family == AF_INET6) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
-        addrlen = sizeof(struct sockaddr_in6);
+        if (lsockaddr != NULL) {
+            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
+            addrlen = sizeof(struct sockaddr_in6);
 
-        struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
-        c_laddr->sin6_family = AF_INET6;
-        c_laddr->sin6_addr = in6addr_any;
-        c_laddr->sin6_port = htons(INADDR_ANY);
-        //        c_laddr->sin6_scope_id; // Not needed to be defined
+            struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
+            c_laddr->sin6_family = AF_INET6;
+            c_laddr->sin6_addr = in6addr_any;
+            c_laddr->sin6_port = htons(INADDR_ANY);
+            //        c_laddr->sin6_scope_id; // Not needed to be defined
+        } else {
+            sock._err = true;
+        }
     } else {
         sock._err = true;
     }
@@ -304,15 +312,19 @@ _z_sys_net_socket_t _z_open_udp_multicast(_z_sys_net_endpoint_t rep, _z_sys_net_
             // Create laddr endpoint
             if (sock._err == false) {
                 struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
-                laddr->ai_flags = 0;
-                laddr->ai_family = rep._iptcp->ai_family;
-                laddr->ai_socktype = rep._iptcp->ai_socktype;
-                laddr->ai_protocol = rep._iptcp->ai_protocol;
-                laddr->ai_addrlen = addrlen;
-                laddr->ai_addr = lsockaddr;
-                laddr->ai_canonname = NULL;
-                laddr->ai_next = NULL;
-                lep->_iptcp = laddr;
+                if (laddr != NULL) {
+                    laddr->ai_flags = 0;
+                    laddr->ai_family = rep._iptcp->ai_family;
+                    laddr->ai_socktype = rep._iptcp->ai_socktype;
+                    laddr->ai_protocol = rep._iptcp->ai_protocol;
+                    laddr->ai_addrlen = addrlen;
+                    laddr->ai_addr = lsockaddr;
+                    laddr->ai_canonname = NULL;
+                    laddr->ai_next = NULL;
+                    lep->_iptcp = laddr;
+                } else {
+                    sock._err = true;
+                }
             }
 
             if (sock._err == true) {
@@ -340,24 +352,32 @@ _z_sys_net_socket_t _z_listen_udp_multicast(_z_sys_net_endpoint_t rep, uint32_t 
     unsigned int addrlen = 0;
     if (rep._iptcp->ai_family == AF_INET) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
-        addrlen = sizeof(struct sockaddr_in);
+        if (lsockaddr != NULL) {
+            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
+            addrlen = sizeof(struct sockaddr_in);
 
-        struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
-        c_laddr->sin_family = AF_INET;
-        c_laddr->sin_addr.s_addr = INADDR_ANY;
-        c_laddr->sin_port = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port;
+            struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
+            c_laddr->sin_family = AF_INET;
+            c_laddr->sin_addr.s_addr = INADDR_ANY;
+            c_laddr->sin_port = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port;
+        } else {
+            sock._err = true;
+        }
     } else if (rep._iptcp->ai_family == AF_INET6) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
-        addrlen = sizeof(struct sockaddr_in6);
+        if (lsockaddr != NULL) {
+            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
+            addrlen = sizeof(struct sockaddr_in6);
 
-        struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
-        c_laddr->sin6_family = AF_INET6;
-        c_laddr->sin6_addr = in6addr_any;
-        c_laddr->sin6_port = htons(INADDR_ANY);
-        c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
-        //        c_laddr->sin6_scope_id; // Not needed to be defined
+            struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
+            c_laddr->sin6_family = AF_INET6;
+            c_laddr->sin6_addr = in6addr_any;
+            c_laddr->sin6_port = htons(INADDR_ANY);
+            c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
+            //        c_laddr->sin6_scope_id; // Not needed to be defined
+        } else {
+            sock._err = true;
+        }
     } else {
         sock._err = true;
     }

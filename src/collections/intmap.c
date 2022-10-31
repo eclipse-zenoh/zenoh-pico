@@ -15,6 +15,7 @@
 #include "zenoh-pico/collections/intmap.h"
 
 #include <stddef.h>
+#include <string.h>
 
 /*-------- int-void map --------*/
 _Bool _z_int_void_map_entry_key_eq(const void *left, const void *right) {
@@ -64,24 +65,27 @@ void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f
 void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f_f) {
     if (map->_vals == NULL) {
         // Lazily allocate and initialize to NULL all the pointers
-        map->_vals = (_z_list_t **)z_malloc(map->_capacity * sizeof(_z_list_t *));
-        // (void)memset(map->vals, 0, map->capacity * sizeof(_z_list_t *));
-
-        for (size_t idx = 0; idx < map->_capacity; idx++) {
-            map->_vals[idx] = NULL;
+        size_t len = map->_capacity * sizeof(_z_list_t *);
+        map->_vals = (_z_list_t **)z_malloc(len);
+        if (map->_vals != NULL) {
+            (void)memset(map->_vals, 0, len);
         }
     }
 
-    // Free any old value
-    _z_int_void_map_remove(map, k, f_f);
+    if (map->_vals != NULL) {
+        // Free any old value
+        _z_int_void_map_remove(map, k, f_f);
 
-    // Insert the element
-    _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)z_malloc(sizeof(_z_int_void_map_entry_t));
-    entry->_key = k;
-    entry->_val = v;
+        // Insert the element
+        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)z_malloc(sizeof(_z_int_void_map_entry_t));
+        if (entry != NULL) {
+            entry->_key = k;
+            entry->_val = v;
 
-    size_t idx = k % map->_capacity;
-    map->_vals[idx] = _z_list_push(map->_vals[idx], entry);
+            size_t idx = k % map->_capacity;
+            map->_vals[idx] = _z_list_push(map->_vals[idx], entry);
+        }
+    }
 
     return v;
 }

@@ -60,13 +60,14 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_paylo
 /*------------------ ReplyContext Decorator ------------------*/
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final) {
     _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
+    if (rctx != NULL) {
+        rctx->_qid = qid;
+        rctx->_replier_id = replier_id;
 
-    rctx->_qid = qid;
-    rctx->_replier_id = replier_id;
-
-    rctx->_header = _Z_MID_REPLY_CONTEXT;
-    if (is_final == true) {
-        _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
+        rctx->_header = _Z_MID_REPLY_CONTEXT;
+        if (is_final == true) {
+            _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
+        }
     }
 
     return rctx;

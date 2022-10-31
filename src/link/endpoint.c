@@ -87,8 +87,10 @@ char *_z_locator_protocol_from_str(const char *str) {
         if ((p_end != NULL) && (p_start != p_end)) {
             size_t p_len = _z_ptr_char_diff(p_end, p_start);
             ret = (char *)z_malloc(p_len + (size_t)1);
-            (void)strncpy(ret, p_start, p_len);
-            ret[p_len] = '\0';
+            if (ret != NULL) {
+                (void)strncpy(ret, p_start, p_len);
+                ret[p_len] = '\0';
+            }
         }
     }
 
@@ -113,8 +115,10 @@ char *_z_locator_address_from_str(const char *str) {
         if (p_start != p_end) {
             size_t a_len = _z_ptr_char_diff(p_end, p_start);
             ret = (char *)z_malloc(a_len + (size_t)1);
-            (void)strncpy(ret, p_start, a_len);
-            ret[a_len] = '\0';
+            if (ret != NULL) {
+                (void)strncpy(ret, p_start, a_len);
+                ret[a_len] = '\0';
+            }
         }
     }
 
@@ -259,7 +263,9 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
 char *_z_locator_to_str(const _z_locator_t *l) {
     size_t len = _z_locator_strlen(l) + (size_t)1;
     char *dst = (char *)z_malloc(len);
-    __z_locator_onto_str(dst, len, l);
+    if (dst != NULL) {
+        __z_locator_onto_str(dst, len, l);
+    }
     return dst;
 }
 
@@ -423,19 +429,22 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
             len = len + strlen(config);  // Config content
         }
 
+        // Reconstruct the endpoint as a string
         ret = (char *)z_malloc(len);
-        ret[0] = '\0';
-        len = len - (size_t)1;
+        if (ret != NULL) {
+            ret[0] = '\0';
+            len = len - (size_t)1;
 
-        if (len > (size_t)0) {
-            (void)strncat(ret, locator, len);
-            len = len - strlen(locator);
-        }
-
-        if (config != NULL) {
             if (len > (size_t)0) {
-                (void)strncat(ret, config, len);
-                len = len - strlen(config);
+                (void)strncat(ret, locator, len);
+                len = len - strlen(locator);
+            }
+
+            if (config != NULL) {
+                if (len > (size_t)0) {
+                    (void)strncat(ret, config, len);
+                    len = len - strlen(config);
+                }
             }
         }
     }

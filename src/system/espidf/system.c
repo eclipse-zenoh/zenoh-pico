@@ -63,9 +63,13 @@ int _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), vo
     int ret = 0;
 
     __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
-    z_arg->_fun = fun;
-    z_arg->_arg = arg;
-    if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) {
+    if (z_arg != NULL) {
+        z_arg->_fun = fun;
+        z_arg->_arg = arg;
+        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) {
+            ret = -1;
+        }
+    } else {
         ret = -1;
     }
 

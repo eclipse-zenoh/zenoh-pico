@@ -72,33 +72,34 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     switch (_Z_MID(t_msg._header)) {
                         case _Z_MID_HELLO: {
                             _Z_INFO("Received _Z_HELLO message\n");
-                            // Get current element to fill
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
-
-                            if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
-                                _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
-                            } else {
-                                _z_bytes_reset(&hello->pid);
-                            }
-
-                            if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
-                                hello->whatami = t_msg._body._hello._whatami;
-                            } else {
-                                hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
-                            }
-
-                            if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
-                                hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
-                                for (size_t i = 0; i < hello->locators._len; i++) {
-                                    hello->locators._val[i] = _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
+                            if (hello != NULL) {
+                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
+                                    _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
+                                } else {
+                                    _z_bytes_reset(&hello->pid);
                                 }
-                            } else {
-                                // @TODO: construct the locator departing from the sock address
-                                hello->locators._len = 0;
-                                hello->locators._val = NULL;
-                            }
 
-                            ret = _z_hello_list_push(ret, hello);
+                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
+                                    hello->whatami = t_msg._body._hello._whatami;
+                                } else {
+                                    hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
+                                }
+
+                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
+                                    hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
+                                    for (size_t i = 0; i < hello->locators._len; i++) {
+                                        hello->locators._val[i] =
+                                            _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
+                                    }
+                                } else {
+                                    // @TODO: construct the locator departing from the sock address
+                                    hello->locators._len = 0;
+                                    hello->locators._val = NULL;
+                                }
+
+                                ret = _z_hello_list_push(ret, hello);
+                            }
 
                             break;
                         }

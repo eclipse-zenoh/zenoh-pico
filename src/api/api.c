@@ -36,8 +36,10 @@ char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
         size_t ke_len = strlen(keyexpr._suffix);
         ret = (char *)z_malloc(ke_len + (size_t)1);
-        (void)strncpy(ret, keyexpr._suffix, ke_len);
-        ret[ke_len] = '\0';
+        if (ret != NULL) {
+            (void)strncpy(ret, keyexpr._suffix, ke_len);
+            ret[ke_len] = '\0';
+        }
     }
 
     return ret;
@@ -239,7 +241,9 @@ z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
     ownedtype z_##name##_clone(ownedtype *val) {                                           \
         ownedtype ret;                                                                     \
         ret._value = (type *)z_malloc(sizeof(type));                                       \
-        f_copy(ret._value, val->_value);                                                   \
+        if (ret._value != NULL) {                                                          \
+            f_copy(ret._value, val->_value);                                               \
+        }                                                                                  \
         return ret;                                                                        \
     }                                                                                      \
     void z_##name##_drop(ownedtype *val) { f_free(&val->_value); }
@@ -251,7 +255,9 @@ z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
     ownedtype z_##name##_clone(ownedtype *val) {                                       \
         ownedtype ret;                                                                 \
         ret._value = (_##type *)z_malloc(sizeof(_##type));                             \
-        f_copy(ret._value, val->_value);                                               \
+        if (ret._value != NULL) {                                                      \
+            f_copy(ret._value, val->_value);                                           \
+        }                                                                              \
         return ret;                                                                    \
     }                                                                                  \
     void z_##name##_drop(ownedtype *val) { f_free(&val->_value); }
@@ -312,17 +318,14 @@ typedef struct __z_hello_handler_wrapper_t {
     void *ctx;
 } __z_hello_handler_wrapper_t;
 
-void __z_hello_handler(_z_hello_t **hello, __z_hello_handler_wrapper_t *wrapped_ctx) {
-    z_owned_hello_t ohello = {._value = *hello};
-
+void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_ctx) {
+    z_owned_hello_t ohello = {._value = hello};
     wrapped_ctx->user_call(&ohello, wrapped_ctx->ctx);
-
-    if (ohello._value == NULL) {
-        *hello = NULL;
-    }
 }
 
 int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
+    int8_t ret = _Z_RES_OK;
+
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -330,21 +333,25 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_hello_handler_wrapper_t *wrapped_ctx =
         (__z_hello_handler_wrapper_t *)z_malloc(sizeof(__z_hello_handler_wrapper_t));
-    wrapped_ctx->user_call = callback->call;
-    wrapped_ctx->ctx = ctx;
+    if (wrapped_ctx != NULL) {
+        wrapped_ctx->user_call = callback->call;
+        wrapped_ctx->ctx = ctx;
 
-    char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
-    z_whatami_t what = strtol(what_str, NULL, 10);
-    char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-    char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-    uint32_t tout = strtoul(tout_str, NULL, 10);
-    _z_scout(what, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+        char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
+        z_whatami_t what = strtol(what_str, NULL, 10);
+        char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        uint32_t tout = strtoul(tout_str, NULL, 10);
+        _z_scout(what, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
-    z_free(wrapped_ctx);
-    z_scouting_config_drop(config);
-    config->_value = NULL;
+        z_free(wrapped_ctx);
+        z_scouting_config_drop(config);
+        config->_value = NULL;
+    } else {
+        ret = _Z_ERR_OUT_OF_MEMORY;
+    }
 
-    return 0;
+    return ret;
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
@@ -485,18 +492,16 @@ typedef struct __z_reply_handler_wrapper_t {
     void *ctx;
 } __z_reply_handler_wrapper_t;
 
-void __z_reply_handler(_z_reply_t **reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
-    z_owned_reply_t oreply = {._value = *reply};
+void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
+    z_owned_reply_t oreply = {._value = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
-
-    if (oreply._value == NULL) {
-        *reply = NULL;
-    }
 }
 
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options) {
+    int8_t ret = _Z_RES_OK;
+
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -519,18 +524,25 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_reply_handler_wrapper_t *wrapped_ctx =
         (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
-    wrapped_ctx->user_call = callback->call;
-    wrapped_ctx->ctx = ctx;
+    if (wrapped_ctx != NULL) {
+        wrapped_ctx->user_call = callback->call;
+        wrapped_ctx->ctx = ctx;
 
-    return _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, __z_reply_handler, wrapped_ctx,
-                    callback->drop, ctx);
+        ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, __z_reply_handler, wrapped_ctx,
+                       callback->drop, ctx);
+    }
+
+    return ret;
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
+
     key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
-    _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
-    *key._value = _z_rid_with_suffix(id, NULL);
+    if (key._value != NULL) {
+        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+        *key._value = _z_rid_with_suffix(id, NULL);
+    }
 
     return key;
 }

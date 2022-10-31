@@ -19,8 +19,10 @@
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x) {
     _z_list_t *xs = (_z_list_t *)z_malloc(sizeof(_z_list_t));
-    xs->_val = x;
-    xs->_tail = NULL;
+    if (xs != NULL) {
+        xs->_val = x;
+        xs->_tail = NULL;
+    }
     return xs;
 }
 

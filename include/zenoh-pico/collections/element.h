@@ -42,7 +42,9 @@ typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
     static inline void name##_elem_copy(void *dst, const void *src) { elem_copy_f((type *)dst, (type *)src); } \
     static inline void *name##_elem_clone(const void *src) {                                                   \
         type *dst = (type *)z_malloc(elem_size_f((type *)src));                                                \
-        elem_copy_f(dst, (type *)src);                                                                         \
+        if (dst != NULL) {                                                                                     \
+            elem_copy_f(dst, (type *)src);                                                                     \
+        }                                                                                                      \
         return dst;                                                                                            \
     }
 
