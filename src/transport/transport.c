@@ -381,7 +381,7 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     _z_bytes_clear(&ztu->_remote_pid);
 
     if (ztu->_link != NULL) {
-        _z_link_free((_z_link_t **)&ztu->_link);
+        _z_link_free(&ztu->_link);
     }
 }
 #endif  // Z_UNICAST_TRANSPORT == 1
@@ -413,7 +413,7 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
     _z_transport_peer_entry_list_free(&ztm->_peers);
 
     if (ztm->_link != NULL) {
-        _z_link_free((_z_link_t **)&ztm->_link);
+        _z_link_free(&ztm->_link);
     }
 }
 #endif  // Z_MULTICAST_TRANSPORT == 1

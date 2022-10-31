@@ -74,7 +74,7 @@ typedef struct {
 
     // ----------- Link related -----------
     // TX and RX buffers
-    const _z_link_t *_link;
+    _z_link_t *_link;
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
@@ -115,7 +115,7 @@ typedef struct {
 
     // ----------- Link related -----------
     // TX and RX buffers
-    const _z_link_t *_link;
+    _z_link_t *_link;
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
