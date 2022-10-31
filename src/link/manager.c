@@ -24,6 +24,9 @@ _z_link_manager_t *_z_link_manager_init() {
 
 void _z_link_manager_free(_z_link_manager_t **zlm) {
     _z_link_manager_t *ptr = *zlm;
-    z_free(ptr);
-    *zlm = NULL;
+
+    if (ptr != NULL) {
+        z_free(ptr);
+        *zlm = NULL;
+    }
 }

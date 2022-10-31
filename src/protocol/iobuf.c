@@ -111,7 +111,7 @@ size_t _z_iosli_size(const _z_iosli_t *ios) {
 }
 
 void _z_iosli_clear(_z_iosli_t *ios) {
-    if (ios->_is_alloc == true) {
+    if (ios->_is_alloc == true && ios->_buf != NULL) {
         z_free(ios->_buf);
         ios->_buf = NULL;
     }
@@ -119,10 +119,13 @@ void _z_iosli_clear(_z_iosli_t *ios) {
 
 void _z_iosli_free(_z_iosli_t **ios) {
     _z_iosli_t *ptr = *ios;
-    _z_iosli_clear(ptr);
 
-    z_free(ptr);
-    *ios = NULL;
+    if (ptr != NULL) {
+        _z_iosli_clear(ptr);
+
+        z_free(ptr);
+        *ios = NULL;
+    }
 }
 
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
@@ -207,10 +210,13 @@ void _z_zbuf_compact(_z_zbuf_t *zbf) {
 
 void _z_zbuf_free(_z_zbuf_t **zbf) {
     _z_zbuf_t *ptr = *zbf;
-    _z_iosli_clear(&ptr->_ios);
 
-    z_free(ptr);
-    *zbf = NULL;
+    if (ptr != NULL) {
+        _z_iosli_clear(&ptr->_ios);
+
+        z_free(ptr);
+        *zbf = NULL;
+    }
 }
 
 /*------------------ WBuf ------------------*/
@@ -527,8 +533,11 @@ void _z_wbuf_clear(_z_wbuf_t *wbf) { _z_iosli_vec_clear(&wbf->_ioss); }
 
 void _z_wbuf_free(_z_wbuf_t **wbf) {
     _z_wbuf_t *ptr = *wbf;
-    _z_wbuf_clear(ptr);
 
-    z_free(ptr);
-    *wbf = NULL;
+    if (ptr != NULL) {
+        _z_wbuf_clear(ptr);
+
+        z_free(ptr);
+        *wbf = NULL;
+    }
 }

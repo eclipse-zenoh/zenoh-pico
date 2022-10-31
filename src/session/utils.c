@@ -77,25 +77,25 @@ _z_session_t *_z_session_init(void) {
 void _z_session_free(_z_session_t **zn) {
     _z_session_t *ptr = *zn;
 
-    // Clean up transports and manager
-    _z_transport_manager_free(&ptr->_tp_manager);
-    if (ptr->_tp != NULL) {
+    if (ptr != NULL) {
+        // Clean up transports and manager
+        _z_transport_manager_free(&ptr->_tp_manager);
         _z_transport_free(&ptr->_tp);
-    }
 
-    // Clean up the entities
-    _z_flush_resources(ptr);
-    _z_flush_subscriptions(ptr);
-    _z_flush_questionables(ptr);
-    _z_flush_pending_queries(ptr);
+        // Clean up the entities
+        _z_flush_resources(ptr);
+        _z_flush_subscriptions(ptr);
+        _z_flush_questionables(ptr);
+        _z_flush_pending_queries(ptr);
 
 #if Z_MULTI_THREAD == 1
-    // Clean up the mutexes
-    _z_mutex_free(&ptr->_mutex_inner);
+        // Clean up the mutexes
+        _z_mutex_free(&ptr->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    z_free(ptr);
-    *zn = NULL;
+        z_free(ptr);
+        *zn = NULL;
+    }
 }
 
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {

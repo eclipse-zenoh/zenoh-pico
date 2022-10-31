@@ -58,10 +58,13 @@ void _z_vec_clear(_z_vec_t *v, z_element_free_f free_f) {
 
 void _z_vec_free(_z_vec_t **v, z_element_free_f free_f) {
     _z_vec_t *ptr = (_z_vec_t *)*v;
-    _z_vec_clear(ptr, free_f);
 
-    z_free(ptr);
-    *v = NULL;
+    if (ptr != NULL) {
+        _z_vec_clear(ptr, free_f);
+
+        z_free(ptr);
+        *v = NULL;
+    }
 }
 
 size_t _z_vec_len(const _z_vec_t *v) { return v->_len; }

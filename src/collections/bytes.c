@@ -47,18 +47,21 @@ void _z_bytes_reset(_z_bytes_t *bs) {
 }
 
 void _z_bytes_clear(_z_bytes_t *bs) {
-    if (bs->_is_alloc == true) {
+    if (bs->_is_alloc == true && bs->start != NULL) {
         z_free((uint8_t *)bs->start);
-        _z_bytes_reset(bs);
     }
+    _z_bytes_reset(bs);
 }
 
 void _z_bytes_free(_z_bytes_t **bs) {
-    _z_bytes_t *ptr = (_z_bytes_t *)*bs;
-    _z_bytes_clear(ptr);
+    _z_bytes_t *ptr = *bs;
 
-    z_free(ptr);
-    *bs = NULL;
+    if (ptr != NULL) {
+        _z_bytes_clear(ptr);
+
+        z_free(ptr);
+        *bs = NULL;
+    }
 }
 
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {

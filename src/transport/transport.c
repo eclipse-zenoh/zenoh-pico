@@ -421,20 +421,22 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
 void _z_transport_free(_z_transport_t **zt) {
     _z_transport_t *ptr = *zt;
 
+    if (ptr != NULL) {
 #if Z_UNICAST_TRANSPORT == 1
-    if (ptr->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_transport_unicast_clear(&ptr->_transport._unicast);
-    } else
+        if (ptr->_type == _Z_TRANSPORT_UNICAST_TYPE) {
+            _z_transport_unicast_clear(&ptr->_transport._unicast);
+        } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        _z_transport_multicast_clear(&ptr->_transport._multicast);
-    } else
+            if (ptr->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            _z_transport_multicast_clear(&ptr->_transport._multicast);
+        } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-    {
-        __asm__("nop");
-    }
+        {
+            __asm__("nop");
+        }
 
-    z_free(ptr);
-    *zt = NULL;
+        z_free(ptr);
+        *zt = NULL;
+    }
 }

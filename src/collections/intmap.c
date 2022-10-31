@@ -119,8 +119,10 @@ void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
 
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f) {
     _z_int_void_map_t *ptr = *map;
-    _z_int_void_map_clear(ptr, f);
+    if (ptr != NULL) {
+        _z_int_void_map_clear(ptr, f);
 
-    z_free(ptr);
-    *map = NULL;
+        z_free(ptr);
+        *map = NULL;
+    }
 }

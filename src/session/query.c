@@ -26,6 +26,7 @@ void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
     _z_reply_t *ptr = *reply;
+
     if (*reply != NULL) {
         _z_reply_clear(ptr);
 

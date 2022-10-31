@@ -122,7 +122,7 @@ _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
  * the inner void * to the element of the list.
  */
 void _z_list_free(_z_list_t **xs, z_element_free_f f) {
-    _z_list_t *ptr = (_z_list_t *)*xs;
+    _z_list_t *ptr = *xs;
     while (ptr != NULL) {
         ptr = _z_list_pop(ptr, f);
     }

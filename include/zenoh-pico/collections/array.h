@@ -43,16 +43,20 @@
     static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
     static inline _Bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }     \
     static inline void name##_array_clear(name##_array_t *a) {                                      \
-        for (size_t i = 0; i < a->_len; i++) name##_elem_clear(&a->_val[i]);                        \
+        for (size_t i = 0; i < a->_len; i++) {                                                      \
+            name##_elem_clear(&a->_val[i]);                                                         \
+        }                                                                                           \
         z_free(a->_val);                                                                            \
         a->_len = 0;                                                                                \
         a->_val = NULL;                                                                             \
     }                                                                                               \
     static inline void name##_array_free(name##_array_t **a) {                                      \
         name##_array_t *ptr = *a;                                                                   \
-        name##_array_clear(ptr);                                                                    \
-        z_free(ptr);                                                                                \
-        *a = NULL;                                                                                  \
+        if (ptr != NULL) {                                                                          \
+            name##_array_clear(ptr);                                                                \
+            z_free(ptr);                                                                            \
+            *a = NULL;                                                                              \
+        }                                                                                           \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARRAY_H */

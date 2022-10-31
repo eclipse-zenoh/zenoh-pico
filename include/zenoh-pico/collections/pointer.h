@@ -57,9 +57,11 @@
         _Bool dropped = c == 1;                                                                 \
         if (dropped == true) {                                                                  \
             atomic_thread_fence(memory_order_acquire);                                          \
-            type##_clear(p->ptr);                                                               \
-            z_free(p->ptr);                                                                     \
-            z_free(p->_cnt);                                                                    \
+            if (p->ptr != NULL) {                                                               \
+                type##_clear(p->ptr);                                                           \
+                z_free(p->ptr);                                                                 \
+                z_free(p->_cnt);                                                                \
+            }                                                                                   \
         }                                                                                       \
         return dropped;                                                                         \
     }
@@ -99,9 +101,11 @@
         *p->_cnt = *p->_cnt - 1;                                                                \
         _Bool dropped = *p->_cnt == 0;                                                          \
         if (dropped == true) {                                                                  \
-            type##_clear(p->ptr);                                                               \
-            z_free(p->ptr);                                                                     \
-            z_free((void *)p->_cnt);                                                            \
+            if (p->ptr != NULL) {                                                               \
+                type##_clear(p->ptr);                                                           \
+                z_free(p->ptr);                                                                 \
+                z_free((void*)p->_cnt);                                                                \
+            }                                                                                   \
         }                                                                                       \
         return dropped;                                                                         \
     }

@@ -25,9 +25,13 @@ void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
 
 void _z_resource_free(_z_resource_t **res) {
     _z_resource_t *ptr = *res;
-    _z_resource_clear(ptr);
-    z_free(ptr);
-    *res = NULL;
+
+    if (ptr != NULL) {
+        _z_resource_clear(ptr);
+
+        z_free(ptr);
+        *res = NULL;
+    }
 }
 
 /*------------------ Entity ------------------*/

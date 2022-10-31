@@ -33,9 +33,11 @@ typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
         type *ptr = (type *)*e;                                                                                \
-        elem_clear_f(ptr);                                                                                     \
-        z_free(ptr);                                                                                           \
-        *e = NULL;                                                                                             \
+        if (ptr != NULL) {                                                                                     \
+            elem_clear_f(ptr);                                                                                 \
+            z_free(ptr);                                                                                       \
+            *e = NULL;                                                                                         \
+        }                                                                                                      \
     }                                                                                                          \
     static inline void name##_elem_copy(void *dst, const void *src) { elem_copy_f((type *)dst, (type *)src); } \
     static inline void *name##_elem_clone(const void *src) {                                                   \

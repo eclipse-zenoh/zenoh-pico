@@ -101,8 +101,10 @@ typedef enum {
     }                                                                                     \
                                                                                           \
     inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) { \
-        z_free(r->_value);                                                                \
-        r->_value = NULL;                                                                 \
+        if (r->_value != NULL) {                                                          \
+            z_free(r->_value);                                                            \
+            r->_value = NULL;                                                             \
+        }                                                                                 \
     }
 
 #define _ASSURE_RESULT(in_r, out_r, e) \
@@ -119,9 +121,11 @@ typedef enum {
 
 #define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
     if (in_r._tag != _Z_RES_OK) {                   \
-        z_free(out_r->_value);                      \
-        out_r->_tag = _Z_ERR_GENERIC;               \
-        return;                                     \
+        if (out_r->_value != NULL) {                \
+            z_free(out_r->_value);                  \
+            out_r->_tag = _Z_ERR_GENERIC;           \
+            return;                                 \
+        }                                           \
     }
 
 #define _ASSERT_RESULT(r, msg) \

@@ -107,12 +107,14 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
 void _z_link_free(_z_link_t **zn) {
     _z_link_t *ptr = *zn;
 
-    ptr->_close_f(ptr);
-    ptr->_free_f(ptr);
-    _z_endpoint_clear(&ptr->_endpoint);
+    if (ptr != NULL) {
+        ptr->_close_f(ptr);
+        ptr->_free_f(ptr);
+        _z_endpoint_clear(&ptr->_endpoint);
 
-    z_free(ptr);
-    *zn = NULL;
+        z_free(ptr);
+        *zn = NULL;
+    }
 }
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {

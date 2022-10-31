@@ -58,11 +58,13 @@ void _z_string_clear(_z_string_t *str) {
 }
 
 void _z_string_free(_z_string_t **str) {
-    _z_string_t *ptr = (_z_string_t *)*str;
-    _z_string_clear(ptr);
+    _z_string_t *ptr = *str;
+    if (ptr != NULL) {
+        _z_string_clear(ptr);
 
-    z_free(ptr);
-    *str = NULL;
+        z_free(ptr);
+        *str = NULL;
+    }
 }
 
 _z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
@@ -88,8 +90,10 @@ void _z_str_clear(char *src) { z_free(src); }
 
 void _z_str_free(char **src) {
     char *ptr = *src;
-    _z_str_clear(ptr);
-    *src = NULL;
+    if (ptr != NULL) {
+        _z_str_clear(ptr);
+        *src = NULL;
+    }
 }
 
 char *_z_str_clone(const char *src) {
@@ -131,9 +135,11 @@ void _z_str_array_clear(_z_str_array_t *sa) {
 
 void _z_str_array_free(_z_str_array_t **sa) {
     _z_str_array_t *ptr = *sa;
-    _z_str_array_clear(ptr);
-    z_free(ptr);
-    *sa = NULL;
+    if (ptr != NULL) {
+        _z_str_array_clear(ptr);
+        z_free(ptr);
+        *sa = NULL;
+    }
 }
 
 void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src) {

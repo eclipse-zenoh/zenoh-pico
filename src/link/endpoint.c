@@ -47,10 +47,13 @@ void _z_locator_clear(_z_locator_t *lc) {
 
 void _z_locator_free(_z_locator_t **lc) {
     _z_locator_t *ptr = *lc;
-    _z_locator_clear(ptr);
 
-    z_free(ptr);
-    *lc = NULL;
+    if (ptr != NULL) {
+        _z_locator_clear(ptr);
+
+        z_free(ptr);
+        *lc = NULL;
+    }
 }
 
 void _z_locator_copy(_z_locator_t *dst, const _z_locator_t *src) {
@@ -273,10 +276,14 @@ void _z_endpoint_clear(_z_endpoint_t *ep) {
 
 void _z_endpoint_free(_z_endpoint_t **ep) {
     _z_endpoint_t *ptr = *ep;
-    _z_locator_clear(&ptr->_locator);
-    _z_str_intmap_clear(&ptr->_config);
-    z_free(ptr);
-    *ep = NULL;
+
+    if (ptr != NULL) {
+        _z_locator_clear(&ptr->_locator);
+        _z_str_intmap_clear(&ptr->_config);
+
+        z_free(ptr);
+        *ep = NULL;
+    }
 }
 
 _z_str_intmap_result_t _z_endpoint_config_from_str(const char *str, const char *proto) {

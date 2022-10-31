@@ -38,11 +38,14 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk) {
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
-    _z_keyexpr_t *ptr = (_z_keyexpr_t *)*rk;
-    _z_keyexpr_clear(ptr);
+    _z_keyexpr_t *ptr = *rk;
 
-    z_free(ptr);
-    *rk = NULL;
+    if (ptr != NULL) {
+        _z_keyexpr_clear(ptr);
+
+        z_free(ptr);
+        *rk = NULL;
+    }
 }
 
 /*------------------ Locators Field ------------------*/

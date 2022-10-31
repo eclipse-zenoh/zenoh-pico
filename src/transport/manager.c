@@ -112,14 +112,13 @@ _z_transport_manager_t *_z_transport_manager_init() {
 void _z_transport_manager_free(_z_transport_manager_t **ztm) {
     _z_transport_manager_t *ptr = *ztm;
 
-    // Clean up PIDs
-    _z_bytes_clear(&ptr->_local_pid);
+    if (ptr != NULL) {
+        _z_bytes_clear(&ptr->_local_pid);
+        _z_link_manager_free(&ptr->_link_manager);
 
-    // Clean up managers
-    _z_link_manager_free(&ptr->_link_manager);
-
-    z_free(ptr);
-    *ztm = NULL;
+        z_free(ptr);
+        *ztm = NULL;
+    }
 }
 
 _z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, z_whatami_t mode) {
