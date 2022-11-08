@@ -76,7 +76,7 @@ void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
-_z_string_t _z_string_from_bytes(_z_bytes_t *bs);
+_z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
 
 /*-------- str_array --------*/
 /**

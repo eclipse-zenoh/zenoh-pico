@@ -98,6 +98,7 @@ void _z_str_free(char **src) {
     char *ptr = *src;
     if (ptr != NULL) {
         _z_str_clear(ptr);
+
         *src = NULL;
     }
 }
