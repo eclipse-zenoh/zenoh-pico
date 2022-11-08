@@ -106,25 +106,23 @@ size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, 
 uint16_t _z_get_link_mtu_bt(void) { return SPP_MAXIMUM_PAYLOAD; }
 
 _z_link_t *_z_new_link_bt(_z_endpoint_t endpoint) {
-    _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
+    _z_link_t l;
 
-    if (lt != NULL) {
-        lt->_capabilities = Z_LINK_CAPABILITY_STREAMED | Z_LINK_CAPABILITY_MULTICAST;
-        lt->_mtu = _z_get_link_mtu_bt();
+    l._capabilities = Z_LINK_CAPABILITY_STREAMED | Z_LINK_CAPABILITY_MULTICAST;
+    l._mtu = _z_get_link_mtu_bt();
 
-        lt->_endpoint = endpoint;
-        lt->_socket._bt._sock._err = true;
+    l._endpoint = endpoint;
+    l._socket._bt._sock._err = true;
 
-        lt->_open_f = _z_f_link_open_bt;
-        lt->_listen_f = _z_f_link_listen_bt;
-        lt->_close_f = _z_f_link_close_bt;
-        lt->_free_f = _z_f_link_free_bt;
+    l._open_f = _z_f_link_open_bt;
+    l._listen_f = _z_f_link_listen_bt;
+    l._close_f = _z_f_link_close_bt;
+    l._free_f = _z_f_link_free_bt;
 
-        lt->_write_f = _z_f_link_write_bt;
-        lt->_write_all_f = _z_f_link_write_all_bt;
-        lt->_read_f = _z_f_link_read_bt;
-        lt->_read_exact_f = _z_f_link_read_exact_bt;
-    }
+    l._write_f = _z_f_link_write_bt;
+    l._write_all_f = _z_f_link_write_all_bt;
+    l._read_f = _z_f_link_read_bt;
+    l._read_exact_f = _z_f_link_read_exact_bt;
 
     return lt;
 }

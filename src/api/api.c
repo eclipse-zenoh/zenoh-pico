@@ -378,8 +378,8 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     callback->context = NULL;
 
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        _z_transport_peer_entry_list_t *l = zs._val->_tp->_transport._multicast._peers;
+    if (zs._val->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        _z_transport_peer_entry_list_t *l = zs._val->_tp._transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
             z_id_t id;
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
@@ -409,10 +409,10 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     callback->context = NULL;
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (zs._val->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         z_id_t id;
-        if (zs._val->_tp->_transport._unicast._remote_pid.len <= sizeof(id.id)) {
-            _z_bytes_t bs = zs._val->_tp->_transport._unicast._remote_pid;
+        if (zs._val->_tp._transport._unicast._remote_pid.len <= sizeof(id.id)) {
+            _z_bytes_t bs = zs._val->_tp._transport._unicast._remote_pid;
             for (size_t i = 0; i < bs.len; i++) {
                 id.id[i] = bs.start[bs.len - i - 1];
             }
@@ -432,8 +432,8 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) {
     z_id_t id;
-    if (zs._val->_tp_manager->_local_pid.len <= sizeof(id.id)) {
-        _z_bytes_t bs = zs._val->_tp_manager->_local_pid;
+    if (zs._val->_tp_manager._local_pid.len <= sizeof(id.id)) {
+        _z_bytes_t bs = zs._val->_tp_manager._local_pid;
         for (size_t i = 0; i < bs.len; i++) {
             id.id[i] = bs.start[bs.len - i - 1];
         }
@@ -569,7 +569,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_p
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
 #endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
@@ -645,7 +645,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp->_type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
             _z_zint_t id = _z_declare_resource(zs._val, keyexpr);

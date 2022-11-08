@@ -47,8 +47,8 @@ typedef struct {
 
     // Session transport.
     // Zenoh-pico is considering a single transport per session.
-    _z_transport_t *_tp;
-    _z_transport_manager_t *_tp_manager;
+    _z_transport_t _tp;
+    _z_transport_manager_t _tp_manager;
 } _z_session_t;
 
 /**

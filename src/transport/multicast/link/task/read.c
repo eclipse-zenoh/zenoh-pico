@@ -55,9 +55,9 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) == true) {
+        if (_Z_LINK_IS_STREAMED(ztm->_link._capabilities) == true) {
             if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
+                _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_bytes_clear(&addr);
                     continue;
@@ -69,14 +69,14 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             }
 
             if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
-                _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, NULL);
+                _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     continue;
                 }
             }
         } else {
-            to_read = _z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, &addr);
+            to_read = _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
             if (to_read == SIZE_MAX) {
                 continue;
             }

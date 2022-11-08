@@ -23,22 +23,20 @@
 #include "zenoh-pico/utils/logging.h"
 
 _z_session_t *__z_open_inner(char *locator, z_whatami_t mode) {
-    _z_session_t *ret = NULL;
-
-    ret = _z_session_init();
-    _z_transport_p_result_t res = _z_new_transport(ret->_tp_manager, locator, mode);
+    _z_session_t *ret = _z_session_init();
+    _z_transport_result_t res = _z_new_transport(&ret->_tp_manager, locator, mode);
     if (res._tag == _Z_RES_OK) {
         // Attach session and transport to one another
         ret->_tp = res._value;
 
 #if Z_UNICAST_TRANSPORT == 1
-        if (ret->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-            ret->_tp->_transport._unicast._session = ret;
+        if (ret->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+            ret->_tp._transport._unicast._session = ret;
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (ret->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            ret->_tp->_transport._multicast._session = ret;
+            if (ret->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            ret->_tp._transport._multicast._session = ret;
         } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
         {
@@ -131,17 +129,17 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager->_local_pid));
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager._local_pid));
 
 #if Z_UNICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
+        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY,
-                              _z_string_from_bytes(&zn->_tp->_transport._unicast._remote_pid));
+                              _z_string_from_bytes(&zn->_tp._transport._unicast._remote_pid));
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            _z_transport_peer_entry_list_t *xs = zn->_tp->_transport._multicast._peers;
+            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            _z_transport_peer_entry_list_t *xs = zn->_tp._transport._multicast._peers;
             while (xs != NULL) {
                 _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
                 _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
@@ -158,11 +156,11 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     return ps;
 }
 
-int8_t _zp_read(_z_session_t *zn) { return _z_read(zn->_tp); }
+int8_t _zp_read(_z_session_t *zn) { return _z_read(&zn->_tp); }
 
-int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(zn->_tp); }
+int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_tp); }
 
-int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(zn->_tp); }
+int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_MULTI_THREAD == 1
 int8_t _zp_start_read_task(_z_session_t *zn) {
@@ -173,18 +171,18 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
         (void)memset(task, 0, sizeof(_z_task_t));
 
 #if Z_UNICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-            zn->_tp->_transport._unicast._read_task = task;
-            if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp->_transport._unicast) != _Z_RES_OK) {
+        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+            zn->_tp._transport._unicast._read_task = task;
+            if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
                 ret = _Z_ERR_TASK_START_FAILED;
                 z_free(task);
             }
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            zn->_tp->_transport._multicast._read_task = task;
-            if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp->_transport._multicast) != _Z_RES_OK) {
+            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            zn->_tp._transport._multicast._read_task = task;
+            if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
                 ret = _Z_ERR_TASK_START_FAILED;
                 z_free(task);
             }
@@ -203,13 +201,13 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        zn->_tp->_transport._unicast._read_task_running = false;
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        zn->_tp._transport._unicast._read_task_running = false;
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        zn->_tp->_transport._multicast._read_task_running = false;
+        if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        zn->_tp._transport._multicast._read_task_running = false;
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
@@ -227,18 +225,18 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
         (void)memset(task, 0, sizeof(_z_task_t));
 
 #if Z_UNICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-            zn->_tp->_transport._unicast._lease_task = task;
-            if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp->_transport._unicast) != _Z_RES_OK) {
+        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+            zn->_tp._transport._unicast._lease_task = task;
+            if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
                 ret = _Z_ERR_TASK_START_FAILED;
                 z_free(task);
             }
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            zn->_tp->_transport._multicast._lease_task = task;
-            if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp->_transport._multicast) != _Z_RES_OK) {
+            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            zn->_tp._transport._multicast._lease_task = task;
+            if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
                 ret = _Z_ERR_TASK_START_FAILED;
                 z_free(task);
             }
@@ -257,13 +255,13 @@ int8_t _zp_stop_lease_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        zn->_tp->_transport._unicast._lease_task_running = false;
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        zn->_tp._transport._unicast._lease_task_running = false;
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        zn->_tp->_transport._multicast._lease_task_running = false;
+        if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        zn->_tp._transport._multicast._lease_task_running = false;
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {

@@ -19,27 +19,20 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 
-typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-} _z_link_manager_t;
-
-_z_link_manager_t *_z_link_manager_init(void);
-void _z_link_manager_free(_z_link_manager_t **ztm);
-
 #if Z_LINK_TCP == 1
-_z_link_t *_z_new_link_tcp(_z_endpoint_t endpoint);
+_z_link_t _z_new_link_tcp(_z_endpoint_t endpoint);
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-_z_link_t *_z_new_link_udp_unicast(_z_endpoint_t endpoint);
+_z_link_t _z_new_link_udp_unicast(_z_endpoint_t endpoint);
 #endif
 #if Z_LINK_UDP_MULTICAST == 1
-_z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint);
+_z_link_t _z_new_link_udp_multicast(_z_endpoint_t endpoint);
 #endif
 #if Z_LINK_BLUETOOTH == 1
-_z_link_t *_z_new_link_bt(_z_endpoint_t endpoint);
+_z_link_t _z_new_link_bt(_z_endpoint_t endpoint);
 #endif
 #if Z_LINK_SERIAL == 1
-_z_link_t *_z_new_link_serial(_z_endpoint_t endpoint);
+_z_link_t _z_new_link_serial(_z_endpoint_t endpoint);
 #endif
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

@@ -43,10 +43,10 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     }
 
     if (err == _Z_RES_OK) {
-        _z_link_p_result_t r_scout = _z_open_link(locator);
+        _z_link_result_t r_scout = _z_open_link(locator);
         if (r_scout._tag == _Z_RES_OK) {
             // Send the scout message
-            int8_t res = _z_link_send_wbuf(r_scout._value, wbf);
+            int8_t res = _z_link_send_wbuf(&r_scout._value, wbf);
             if (res == _Z_RES_OK) {
                 // The receiving buffer
                 _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
@@ -57,7 +57,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     _z_zbuf_reset(&zbf);
 
                     // Read bytes from the socket
-                    size_t len = _z_link_recv_zbuf(r_scout._value, &zbf, NULL);
+                    size_t len = _z_link_recv_zbuf(&r_scout._value, &zbf, NULL);
                     if (len == SIZE_MAX) {
                         continue;
                     }
@@ -116,11 +116,11 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     }
                 }
 
-                _z_link_free(&r_scout._value);
+                _z_link_clear(&r_scout._value);
                 _z_zbuf_clear(&zbf);
             } else {
                 // err = _Z_ERR_TRANSPORT_TX_FAILED;
-                _z_link_free(&r_scout._value);
+                _z_link_clear(&r_scout._value);
             }
         } else {
             // err = _Z_ERR_TRANSPORT_OPEN_FAILED;

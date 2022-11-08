@@ -103,9 +103,10 @@ typedef struct _z_link_t {
 _Z_RESULT_DECLARE(_z_link_t, link)
 _Z_P_RESULT_DECLARE(_z_link_t, link)
 
+void _z_link_clear(_z_link_t *zn);
 void _z_link_free(_z_link_t **zn);
-_z_link_p_result_t _z_open_link(const char *locator);
-_z_link_p_result_t _z_listen_link(const char *locator);
+_z_link_result_t _z_open_link(const char *locator);
+_z_link_result_t _z_listen_link(const char *locator);
 
 int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr);

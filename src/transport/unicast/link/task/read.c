@@ -52,9 +52,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     while (ztu->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) == true) {
+        if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
+                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                 if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     continue;
                 }
@@ -65,14 +65,14 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             }
 
             if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
+                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                     _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     continue;
                 }
             }
         } else {
-            to_read = _z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL);
+            to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
             if (to_read == SIZE_MAX) {
                 continue;
             }

@@ -54,9 +54,9 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    if (_Z_LINK_IS_STREAMED(ztm->_link->_capabilities) == true) {
+    if (_Z_LINK_IS_STREAMED(ztm->_link._capabilities) == true) {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE) {
+        if (_z_link_recv_exact_zbuf(&ztm->_link, &ztm->_zbuf, _Z_MSG_LEN_ENC_SIZE, addr) != _Z_MSG_LEN_ENC_SIZE) {
             size_t len = 0;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 len |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
@@ -66,7 +66,7 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
             size_t writable = _z_zbuf_capacity(&ztm->_zbuf) - _z_zbuf_len(&ztm->_zbuf);
             if (writable < len) {
                 // Read enough bytes to decode the message
-                if (_z_link_recv_exact_zbuf(ztm->_link, &ztm->_zbuf, len, addr) != len) {
+                if (_z_link_recv_exact_zbuf(&ztm->_link, &ztm->_zbuf, len, addr) != len) {
                     r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
@@ -76,7 +76,7 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
             r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
-        if (_z_link_recv_zbuf(ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX) {
+        if (_z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX) {
             r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }

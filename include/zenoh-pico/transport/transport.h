@@ -74,7 +74,7 @@ typedef struct {
 
     // ----------- Link related -----------
     // TX and RX buffers
-    _z_link_t *_link;
+    _z_link_t _link;
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
@@ -115,7 +115,7 @@ typedef struct {
 
     // ----------- Link related -----------
     // TX and RX buffers
-    _z_link_t *_link;
+    _z_link_t _link;
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
@@ -169,8 +169,8 @@ typedef struct {
 
 _Z_RESULT_DECLARE(_z_transport_multicast_establish_param_t, transport_multicast_establish_param)
 
-_z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_establish_param_t param);
-_z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multicast_establish_param_t param);
+_z_transport_t _z_transport_unicast(_z_link_t zl, _z_transport_unicast_establish_param_t param);
+_z_transport_t _z_transport_multicast(_z_link_t zl, _z_transport_multicast_establish_param_t param);
 
 _z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(const _z_link_t *zl,
                                                                                const _z_bytes_t local_pid);
@@ -188,6 +188,7 @@ int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reaso
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu);
 void _z_transport_multicast_clear(_z_transport_multicast_t *ztm);
 
+void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 void _z_transport_unicast_free(_z_transport_unicast_t **ztu);
 void _z_transport_multicast_free(_z_transport_multicast_t **ztm);

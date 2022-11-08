@@ -25,6 +25,7 @@ _z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const u
 
 _z_session_t *_z_session_init(void);
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason);
+void _z_session_clear(_z_session_t *zn);
 void _z_session_free(_z_session_t **zn);
 
 int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *z_msg);

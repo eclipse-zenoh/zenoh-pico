@@ -67,7 +67,7 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
-_z_string_t _z_string_from_bytes(_z_bytes_t *bs) {
+_z_string_t _z_string_from_bytes(const _z_bytes_t *bs) {
     _z_string_t s;
     size_t len = bs->len * (size_t)2;
     char *s_val = (char *)z_malloc((len + (size_t)1) * sizeof(char));
@@ -148,6 +148,7 @@ void _z_str_array_free(_z_str_array_t **sa) {
     _z_str_array_t *ptr = *sa;
     if (ptr != NULL) {
         _z_str_array_clear(ptr);
+
         z_free(ptr);
         *sa = NULL;
     }

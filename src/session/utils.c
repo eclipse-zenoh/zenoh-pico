@@ -64,7 +64,6 @@ _z_session_t *_z_session_init(void) {
         zn->_pending_queries = NULL;
 
         // Associate a transport with the session
-        zn->_tp = NULL;
         zn->_tp_manager = _z_transport_manager_init();
 
 #if Z_MULTI_THREAD == 1
@@ -76,24 +75,28 @@ _z_session_t *_z_session_init(void) {
     return zn;
 }
 
+void _z_session_clear(_z_session_t *zn) {
+    // Clean up transports and manager
+    _z_transport_manager_clear(&zn->_tp_manager);
+    _z_transport_clear(&zn->_tp);
+
+    // Clean up the entities
+    _z_flush_resources(zn);
+    _z_flush_subscriptions(zn);
+    _z_flush_questionables(zn);
+    _z_flush_pending_queries(zn);
+
+#if Z_MULTI_THREAD == 1
+    // Clean up the mutexes
+    _z_mutex_free(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+}
+
 void _z_session_free(_z_session_t **zn) {
     _z_session_t *ptr = *zn;
 
     if (ptr != NULL) {
-        // Clean up transports and manager
-        _z_transport_manager_free(&ptr->_tp_manager);
-        _z_transport_free(&ptr->_tp);
-
-        // Clean up the entities
-        _z_flush_resources(ptr);
-        _z_flush_subscriptions(ptr);
-        _z_flush_questionables(ptr);
-        _z_flush_pending_queries(ptr);
-
-#if Z_MULTI_THREAD == 1
-        // Clean up the mutexes
-        _z_mutex_free(&ptr->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+        _z_session_clear(ptr);
 
         z_free(ptr);
         *zn = NULL;
@@ -103,7 +106,7 @@ void _z_session_free(_z_session_t **zn) {
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_transport_close(zn->_tp, reason);
+    ret = _z_transport_close(&zn->_tp, reason);
 
     return ret;
 }

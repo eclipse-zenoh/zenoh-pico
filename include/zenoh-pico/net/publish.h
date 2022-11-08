@@ -15,13 +15,14 @@
 #ifndef ZENOH_PICO_PUBLISH_NETAPI_H
 #define ZENOH_PICO_PUBLISH_NETAPI_H
 
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
 /**
  * Return type when declaring a publisher.
  */
 typedef struct {
-    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_session_t *_zn;
     _z_zint_t _id;
     _z_keyexpr_t _key;
     z_congestion_control_t _congestion_control;

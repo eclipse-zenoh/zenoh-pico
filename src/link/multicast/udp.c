@@ -140,35 +140,33 @@ uint16_t _z_get_link_mtu_udp_multicast(void) {
     return 1450;
 }
 
-_z_link_t *_z_new_link_udp_multicast(_z_endpoint_t endpoint) {
-    _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
+_z_link_t _z_new_link_udp_multicast(_z_endpoint_t endpoint) {
+    _z_link_t l;
 
-    if (lt != NULL) {
-        lt->_capabilities = Z_LINK_CAPABILITY_MULTICAST;
-        lt->_mtu = _z_get_link_mtu_udp_multicast();
+    l._capabilities = Z_LINK_CAPABILITY_MULTICAST;
+    l._mtu = _z_get_link_mtu_udp_multicast();
 
-        lt->_endpoint = endpoint;
-        lt->_socket._udp._sock._err = true;
-        lt->_socket._udp._msock._err = true;
-        char *s_addr = _z_parse_address_segment_udp_multicast(endpoint._locator._address);
-        char *s_port = _z_parse_port_segment_udp_multicast(endpoint._locator._address);
-        lt->_socket._udp._rep = _z_create_endpoint_udp(s_addr, s_port);
-        lt->_socket._udp._lep._err = true;
-        z_free(s_addr);
-        z_free(s_port);
+    l._endpoint = endpoint;
+    l._socket._udp._sock._err = true;
+    l._socket._udp._msock._err = true;
+    char *s_addr = _z_parse_address_segment_udp_multicast(endpoint._locator._address);
+    char *s_port = _z_parse_port_segment_udp_multicast(endpoint._locator._address);
+    l._socket._udp._rep = _z_create_endpoint_udp(s_addr, s_port);
+    l._socket._udp._lep._err = true;
+    z_free(s_addr);
+    z_free(s_port);
 
-        lt->_open_f = _z_f_link_open_udp_multicast;
-        lt->_listen_f = _z_f_link_listen_udp_multicast;
-        lt->_close_f = _z_f_link_close_udp_multicast;
-        lt->_free_f = _z_f_link_free_udp_multicast;
+    l._open_f = _z_f_link_open_udp_multicast;
+    l._listen_f = _z_f_link_listen_udp_multicast;
+    l._close_f = _z_f_link_close_udp_multicast;
+    l._free_f = _z_f_link_free_udp_multicast;
 
-        lt->_write_f = _z_f_link_write_udp_multicast;
-        lt->_write_all_f = _z_f_link_write_all_udp_multicast;
-        lt->_read_f = _z_f_link_read_udp_multicast;
-        lt->_read_exact_f = _z_f_link_read_exact_udp_multicast;
-    }
+    l._write_f = _z_f_link_write_udp_multicast;
+    l._write_all_f = _z_f_link_write_all_udp_multicast;
+    l._read_f = _z_f_link_read_udp_multicast;
+    l._read_exact_f = _z_f_link_read_exact_udp_multicast;
 
-    return lt;
+    return l;
 }
 
 #endif

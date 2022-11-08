@@ -35,9 +35,9 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) == true) {
+    if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
+        if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
             size_t len = 0;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 len |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
@@ -47,7 +47,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
             size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
             if (writable < len) {
                 // Read enough bytes to decode the message
-                if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, len, NULL) != len) {
+                if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, len, NULL) != len) {
                     r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
@@ -57,7 +57,7 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
             r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
-        if (_z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
+        if (_z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
             r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }

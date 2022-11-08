@@ -20,10 +20,9 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_link_p_result_t _z_open_link(const char *locator) {
-    _z_link_p_result_t r;
+_z_link_result_t _z_open_link(const char *locator) {
+    _z_link_result_t r;
     r._tag = _Z_RES_OK;
-    r._value = NULL;
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
@@ -58,19 +57,18 @@ _z_link_p_result_t _z_open_link(const char *locator) {
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for communication
-        if (r._value->_open_f(r._value) != _Z_RES_OK) {
+        if (r._value._open_f(&r._value) != _Z_RES_OK) {
             r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_free(&r._value);
+            _z_link_clear(&r._value);
         }
     }
 
     return r;
 }
 
-_z_link_p_result_t _z_listen_link(const char *locator) {
-    _z_link_p_result_t r;
+_z_link_result_t _z_listen_link(const char *locator) {
+    _z_link_result_t r;
     r._tag = _Z_RES_OK;
-    r._value = NULL;
 
     _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
     _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
@@ -95,25 +93,29 @@ _z_link_p_result_t _z_listen_link(const char *locator) {
 
     if (r._tag == _Z_RES_OK) {
         // Open transport link for listening
-        if (r._value->_listen_f(r._value) != _Z_RES_OK) {
+        if (r._value._listen_f(&r._value) != _Z_RES_OK) {
             r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_free(&r._value);
+            _z_link_clear(&r._value);
         }
     }
 
     return r;
 }
 
-void _z_link_free(_z_link_t **zn) {
-    _z_link_t *ptr = *zn;
+void _z_link_clear(_z_link_t *l) {
+    l->_close_f(l);
+    l->_free_f(l);
+    _z_endpoint_clear(&l->_endpoint);
+}
+
+void _z_link_free(_z_link_t **l) {
+    _z_link_t *ptr = *l;
 
     if (ptr != NULL) {
-        ptr->_close_f(ptr);
-        ptr->_free_f(ptr);
-        _z_endpoint_clear(&ptr->_endpoint);
+        _z_link_clear(ptr);
 
         z_free(ptr);
-        *zn = NULL;
+        *l = NULL;
     }
 }
 

@@ -17,37 +17,38 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-_z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_pid) {
-    _z_transport_p_result_t ret = {._tag = _Z_RES_OK, ._value = NULL};
+_z_transport_result_t _z_new_transport_client(char *locator, _z_bytes_t local_pid) {
+    _z_transport_result_t ret;
+    ret._tag = _Z_RES_OK;
 
-    _z_link_p_result_t res_zl = _z_open_link(locator);
+    _z_link_result_t res_zl = _z_open_link(locator);
     if (res_zl._tag == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == false) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value._capabilities) == false) {
             _z_transport_unicast_establish_param_result_t res_tp_param =
-                _z_transport_unicast_open_client(res_zl._value, local_pid);
+                _z_transport_unicast_open_client(&res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
-                ret._value = _z_transport_unicast_new(res_zl._value, res_tp_param._value);
+                ret._value = _z_transport_unicast(res_zl._value, res_tp_param._value);
             } else {
-                _z_link_free(&res_zl._value);
+                _z_link_clear(&res_zl._value);
                 ret._tag = res_tp_param._tag;
             }
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == true) {
+            if (_Z_LINK_IS_MULTICAST(res_zl._value._capabilities) == true) {
             _z_transport_multicast_establish_param_result_t res_tp_param =
-                _z_transport_multicast_open_client(res_zl._value, local_pid);
+                _z_transport_multicast_open_client(&res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
-                ret._value = _z_transport_multicast_new(res_zl._value, res_tp_param._value);
+                ret._value = _z_transport_multicast(res_zl._value, res_tp_param._value);
             } else {
-                _z_link_free(&res_zl._value);
+                _z_link_clear(&res_zl._value);
                 ret._tag = res_tp_param._tag;
             }
         } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
         {
-            _z_link_free(&res_zl._value);
+            _z_link_clear(&res_zl._value);
             ret._tag = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
         }
     } else {
@@ -57,37 +58,38 @@ _z_transport_p_result_t _z_new_transport_client(char *locator, _z_bytes_t local_
     return ret;
 }
 
-_z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pid) {
-    _z_transport_p_result_t ret = {._tag = _Z_RES_OK, ._value = NULL};
+_z_transport_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pid) {
+    _z_transport_result_t ret;
+    ret._tag = _Z_RES_OK;
 
-    _z_link_p_result_t res_zl = _z_listen_link(locator);
+    _z_link_result_t res_zl = _z_listen_link(locator);
     if (res_zl._tag == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
-        if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == false) {
+        if (_Z_LINK_IS_MULTICAST(res_zl._value._capabilities) == false) {
             _z_transport_unicast_establish_param_result_t res_tp_param =
-                _z_transport_unicast_open_peer(res_zl._value, local_pid);
+                _z_transport_unicast_open_peer(&res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
-                ret._value = _z_transport_unicast_new(res_zl._value, res_tp_param._value);
+                ret._value = _z_transport_unicast(res_zl._value, res_tp_param._value);
             } else {
-                _z_link_free(&res_zl._value);
+                _z_link_clear(&res_zl._value);
                 ret._tag = res_tp_param._tag;
             }
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (_Z_LINK_IS_MULTICAST(res_zl._value->_capabilities) == true) {
+            if (_Z_LINK_IS_MULTICAST(res_zl._value._capabilities) == true) {
             _z_transport_multicast_establish_param_result_t res_tp_param =
-                _z_transport_multicast_open_peer(res_zl._value, local_pid);
+                _z_transport_multicast_open_peer(&res_zl._value, local_pid);
             if (res_tp_param._tag == _Z_RES_OK) {
-                ret._value = _z_transport_multicast_new(res_zl._value, res_tp_param._value);
+                ret._value = _z_transport_multicast(res_zl._value, res_tp_param._value);
             } else {
-                _z_link_free(&res_zl._value);
+                _z_link_clear(&res_zl._value);
                 ret._tag = res_tp_param._tag;
             }
         } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
         {
-            _z_link_free(&res_zl._value);
+            _z_link_clear(&res_zl._value);
             ret._tag = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
         }
     } else {
@@ -97,48 +99,36 @@ _z_transport_p_result_t _z_new_transport_peer(char *locator, _z_bytes_t local_pi
     return ret;
 }
 
-_z_transport_manager_t *_z_transport_manager_init() {
+_z_transport_manager_t _z_transport_manager_init() {
     _Bool err = false;
 
-    _z_transport_manager_t *ztm = (_z_transport_manager_t *)z_malloc(sizeof(_z_transport_manager_t));
-    if (ztm != NULL) {
-        // Randomly generate a peer ID
-        ztm->_local_pid = _z_bytes_make(Z_ZID_LENGTH);
-        if (ztm->_local_pid._is_alloc == true) {
-            z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
-        } else {
-            err = true;
-        }
-
-        ztm->_link_manager = _z_link_manager_init();
-        if (ztm->_link_manager == NULL) {
-            err = true;
-        }
+    _z_transport_manager_t ztm;
+    // Randomly generate a peer ID
+    ztm._local_pid = _z_bytes_make(Z_ZID_LENGTH);
+    if (ztm._local_pid._is_alloc == true) {
+        z_random_fill((uint8_t *)ztm._local_pid.start, ztm._local_pid.len);
     } else {
         err = true;
-    }
-
-    if (err == true) {
-        _z_transport_manager_free(&ztm);
     }
 
     return ztm;
 }
 
+void _z_transport_manager_clear(_z_transport_manager_t *ztm) { _z_bytes_clear(&ztm->_local_pid); }
+
 void _z_transport_manager_free(_z_transport_manager_t **ztm) {
     _z_transport_manager_t *ptr = *ztm;
 
     if (ptr != NULL) {
-        _z_bytes_clear(&ptr->_local_pid);
-        _z_link_manager_free(&ptr->_link_manager);
+        _z_transport_manager_clear(ptr);
 
         z_free(ptr);
         *ztm = NULL;
     }
 }
 
-_z_transport_p_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, z_whatami_t mode) {
-    _z_transport_p_result_t ret;
+_z_transport_result_t _z_new_transport(_z_transport_manager_t *ztm, char *locator, z_whatami_t mode) {
+    _z_transport_result_t ret;
 
     if (mode == Z_WHATAMI_CLIENT) {
         ret = _z_new_transport_client(locator, ztm->_local_pid);

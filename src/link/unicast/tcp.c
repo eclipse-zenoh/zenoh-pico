@@ -129,32 +129,29 @@ uint16_t _z_get_link_mtu_tcp(void) {
     return 65535;
 }
 
-_z_link_t *_z_new_link_tcp(_z_endpoint_t endpoint) {
-    _z_link_t *lt = (_z_link_t *)z_malloc(sizeof(_z_link_t));
+_z_link_t _z_new_link_tcp(_z_endpoint_t endpoint) {
+    _z_link_t l;
+    l._capabilities = Z_LINK_CAPABILITY_RELIEABLE | Z_LINK_CAPABILITY_STREAMED;
+    l._mtu = _z_get_link_mtu_tcp();
 
-    if (lt != NULL) {
-        lt->_capabilities = Z_LINK_CAPABILITY_RELIEABLE | Z_LINK_CAPABILITY_STREAMED;
-        lt->_mtu = _z_get_link_mtu_tcp();
+    l._endpoint = endpoint;
+    l._socket._tcp._sock._err = true;
+    char *s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
+    char *s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
+    l._socket._tcp._rep = _z_create_endpoint_tcp(s_addr, s_port);
+    z_free(s_addr);
+    z_free(s_port);
 
-        lt->_endpoint = endpoint;
-        lt->_socket._tcp._sock._err = true;
-        char *s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
-        char *s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
-        lt->_socket._tcp._rep = _z_create_endpoint_tcp(s_addr, s_port);
-        z_free(s_addr);
-        z_free(s_port);
+    l._open_f = _z_f_link_open_tcp;
+    l._listen_f = _z_f_link_listen_tcp;
+    l._close_f = _z_f_link_close_tcp;
+    l._free_f = _z_f_link_free_tcp;
 
-        lt->_open_f = _z_f_link_open_tcp;
-        lt->_listen_f = _z_f_link_listen_tcp;
-        lt->_close_f = _z_f_link_close_tcp;
-        lt->_free_f = _z_f_link_free_tcp;
+    l._write_f = _z_f_link_write_tcp;
+    l._write_all_f = _z_f_link_write_all_tcp;
+    l._read_f = _z_f_link_read_tcp;
+    l._read_exact_f = _z_f_link_read_exact_tcp;
 
-        lt->_write_f = _z_f_link_write_tcp;
-        lt->_write_all_f = _z_f_link_write_all_tcp;
-        lt->_read_f = _z_f_link_read_tcp;
-        lt->_read_exact_f = _z_f_link_read_exact_tcp;
-    }
-
-    return lt;
+    return l;
 }
 #endif

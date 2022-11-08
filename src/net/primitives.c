@@ -45,7 +45,7 @@ void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeou
 _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
     _z_zint_t ret = Z_RESOURCE_ID_NONE;
 
-    if (zn->_tp->_type ==
+    if (zn->_tp._type ==
         _Z_TRANSPORT_UNICAST_TYPE) {  // FIXME: remove when resource declaration is implemented for multicast transport
 
         _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
@@ -280,8 +280,8 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
 
     if (ret == _Z_RES_OK) {
         // Build the reply context decorator. This is NOT the final reply._
-        _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_tp_manager->_local_pid.start,
-                                       ((_z_session_t *)query->_zn)->_tp_manager->_local_pid.len);
+        _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_tp_manager._local_pid.start,
+                                       ((_z_session_t *)query->_zn)->_tp_manager._local_pid.len);
         _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, false);
 
         _z_data_info_t di = {._flags = 0};                  // Empty data info
