@@ -79,24 +79,24 @@ size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t l
 
 uint16_t _z_get_link_mtu_serial(void) { return _Z_SERIAL_MTU_SIZE; }
 
-_z_link_t *_z_new_link_serial(_z_endpoint_t endpoint) {
-    _z_link_t l;
+_z_link_t _z_new_link_serial(_z_endpoint_t endpoint) {
+    _z_link_t lt;
 
-    l._capabilities = Z_LINK_CAPABILITY_NONE;
-    l._mtu = _z_get_link_mtu_serial();
+    lt._capabilities = Z_LINK_CAPABILITY_NONE;
+    lt._mtu = _z_get_link_mtu_serial();
 
-    l._endpoint = endpoint;
-    l._socket._serial._sock._err = true;
+    lt._endpoint = endpoint;
+    lt._socket._serial._sock._err = true;
 
-    l._open_f = _z_f_link_open_serial;
-    l._listen_f = _z_f_link_listen_serial;
-    l._close_f = _z_f_link_close_serial;
-    l._free_f = _z_f_link_free_serial;
+    lt._open_f = _z_f_link_open_serial;
+    lt._listen_f = _z_f_link_listen_serial;
+    lt._close_f = _z_f_link_close_serial;
+    lt._free_f = _z_f_link_free_serial;
 
-    l._write_f = _z_f_link_write_serial;
-    l._write_all_f = _z_f_link_write_all_serial;
-    l._read_f = _z_f_link_read_serial;
-    l._read_exact_f = _z_f_link_read_exact_serial;
+    lt._write_f = _z_f_link_write_serial;
+    lt._write_all_f = _z_f_link_write_all_serial;
+    lt._read_f = _z_f_link_read_serial;
+    lt._read_exact_f = _z_f_link_read_exact_serial;
 
     return lt;
 }

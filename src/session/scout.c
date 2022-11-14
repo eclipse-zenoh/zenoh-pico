@@ -27,27 +27,26 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     _z_hello_list_t *ret = NULL;
     int8_t err = _Z_RES_OK;
 
-    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    if ((err == _Z_RES_OK) && (ep_res._tag != _Z_RES_OK)) {
-        err = _Z_ERR_LOCATOR_INVALID;
-    }
+    _z_endpoint_t ep;
+    err = _z_endpoint_from_str(&ep, locator);
 
 #if Z_SCOUTING_UDP == 1
-    if ((err == _Z_RES_OK) && (_z_str_eq(ep_res._value._locator._protocol, UDP_SCHEMA) == true)) {
-        _z_endpoint_clear(&ep_res._value);
+    if ((err == _Z_RES_OK) && (_z_str_eq(ep._locator._protocol, UDP_SCHEMA) == true)) {
+        _z_endpoint_clear(&ep);
     } else
 #endif
         if (err == _Z_RES_OK) {
-        _z_endpoint_clear(&ep_res._value);
+        _z_endpoint_clear(&ep);
         err = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
 
     if (err == _Z_RES_OK) {
-        _z_link_result_t r_scout = _z_open_link(locator);
-        if (r_scout._tag == _Z_RES_OK) {
+        _z_link_t zl;
+        err = _z_open_link(&zl, locator);
+        if (err == _Z_RES_OK) {
             // Send the scout message
-            int8_t res = _z_link_send_wbuf(&r_scout._value, wbf);
-            if (res == _Z_RES_OK) {
+            err = _z_link_send_wbuf(&zl, wbf);
+            if (err == _Z_RES_OK) {
                 // The receiving buffer
                 _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
 
@@ -57,18 +56,18 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     _z_zbuf_reset(&zbf);
 
                     // Read bytes from the socket
-                    size_t len = _z_link_recv_zbuf(&r_scout._value, &zbf, NULL);
+                    size_t len = _z_link_recv_zbuf(&zl, &zbf, NULL);
                     if (len == SIZE_MAX) {
                         continue;
                     }
 
-                    _z_transport_message_result_t r_hm = _z_transport_message_decode(&zbf);
-                    if (r_hm._tag != _Z_RES_OK) {
+                    _z_transport_message_t t_msg;
+                    err = _z_transport_message_decode(&t_msg, &zbf);
+                    if (err != _Z_RES_OK) {
                         _Z_ERROR("Scouting loop received malformed message\n");
                         continue;
                     }
 
-                    _z_transport_message_t t_msg = r_hm._value;
                     switch (_Z_MID(t_msg._header)) {
                         case _Z_MID_HELLO: {
                             _Z_INFO("Received _Z_HELLO message\n");
@@ -104,7 +103,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             break;
                         }
                         default: {
-                            // err = _Z_ERR_MESSAGE_UNEXPECTED;
+                            err = _Z_ERR_MESSAGE_UNEXPECTED;
                             _Z_ERROR("Scouting loop received unexpected message\n");
                             break;
                         }
@@ -116,14 +115,14 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     }
                 }
 
-                _z_link_clear(&r_scout._value);
+                _z_link_clear(&zl);
                 _z_zbuf_clear(&zbf);
             } else {
-                // err = _Z_ERR_TRANSPORT_TX_FAILED;
-                _z_link_clear(&r_scout._value);
+                err = _Z_ERR_TRANSPORT_TX_FAILED;
+                _z_link_clear(&zl);
             }
         } else {
-            // err = _Z_ERR_TRANSPORT_OPEN_FAILED;
+            err = _Z_ERR_TRANSPORT_OPEN_FAILED;
         }
     }
 

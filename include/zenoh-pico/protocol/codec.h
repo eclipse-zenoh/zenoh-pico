@@ -26,25 +26,30 @@
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-_Z_RESULT_DECLARE(uint8_t, uint8)
+int8_t _z_enum_encode(_z_wbuf_t *wbf, int en);
+int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf);
+
+int8_t _z_uint_encode(_z_wbuf_t *buf, unsigned int v);
+int8_t _z_uint_decode(unsigned int *u, _z_zbuf_t *buf);
+
 int8_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
-_z_uint8_result_t _z_uint8_decode(_z_zbuf_t *buf);
+int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *buf);
 
-_Z_RESULT_DECLARE(_z_zint_t, zint)
+int8_t _z_uint64_encode(_z_wbuf_t *buf, uint64_t v);
+int8_t _z_uint64_decode(uint64_t *u8, _z_zbuf_t *buf);
+
 int8_t _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
-_z_zint_result_t _z_zint_decode(_z_zbuf_t *buf);
+int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
-_Z_RESULT_DECLARE(_z_bytes_t, bytes)
 int8_t _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
-_z_bytes_result_t _z_bytes_decode(_z_zbuf_t *buf);
+int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
+int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *buf);
 
-_Z_RESULT_DECLARE(char *, str)
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
-_z_str_result_t _z_str_decode(_z_zbuf_t *buf);
+int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
 
-_Z_RESULT_DECLARE(_z_period_t, period)
 int8_t _z_period_encode(_z_wbuf_t *wbf, const _z_period_t *m);
-_z_period_result_t _z_period_decode(_z_zbuf_t *zbf);
-void _z_period_decode_na(_z_zbuf_t *zbf, _z_period_result_t *r);
+int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *zbf);
+int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *zbf);
 
 #endif /* ZENOH_PICO_PROTOCOL_CODEC_H */

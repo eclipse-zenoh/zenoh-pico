@@ -19,8 +19,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Reception helper ------------------*/
-_z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
-    _z_transport_message_result_t ret = {._tag = _Z_RES_OK};
+int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
+    uint8_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
@@ -38,26 +38,25 @@ _z_transport_message_result_t _z_link_recv_t_msg(const _z_link_t *zl) {
             if (writable >= len) {
                 // Read enough bytes to decode the message
                 if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len) {
-                    ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
+                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                ret._tag = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_IOBUF_NO_SPACE;
             }
         } else {
-            ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
         if (_z_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX) {
-            ret._tag = _Z_ERR_TRANSPORT_RX_FAILED;
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 
-    if (ret._tag == _Z_RES_OK) {
-        _z_transport_message_result_t res = _z_transport_message_decode(&zbf);
-        if (res._tag == _Z_RES_OK) {
-            _z_t_msg_copy(&ret._value, &res._value);
-        } else {
-            ret._tag = res._tag;
+    if (ret == _Z_RES_OK) {
+        _z_transport_message_t l_t_msg;
+        ret = _z_transport_message_decode(&l_t_msg, &zbf);
+        if (ret == _Z_RES_OK) {
+            _z_t_msg_copy(t_msg, &l_t_msg);
         }
     }
     _z_zbuf_clear(&zbf);

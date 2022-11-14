@@ -355,11 +355,16 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
-    z_owned_session_t zs;
-    zs._value = _z_open(config->_value);
+    z_owned_session_t zs = {._value = (_z_session_t *)z_malloc(sizeof(_z_session_t))};
+    if (zs._value != NULL) {
+        if (_z_open(zs._value, config->_value) != _Z_RES_OK) {
+            z_free(zs._value);
+            zs._value = NULL;
+        }
 
-    z_config_drop(config);
-    config->_value = NULL;
+        z_config_drop(config);
+        config->_value = NULL;
+    }
 
     return zs;
 }

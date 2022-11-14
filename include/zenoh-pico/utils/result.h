@@ -25,15 +25,36 @@ typedef enum {
     _Z_ERR_PARSE_ZINT = -2,
     _Z_ERR_PARSE_BYTES = -3,
     _Z_ERR_PARSE_STRING = -4,
+    _Z_ERR_PARSE_LOCATOR = -4,
     _Z_ERR_PARSE_CONSOLIDATION = -5,
     _Z_ERR_PARSE_DECLARATION = -6,
     _Z_ERR_PARSE_PAYLOAD = -7,
     _Z_ERR_PARSE_PERIOD = -8,
     _Z_ERR_PARSE_PROPERTIES = -9,
     _Z_ERR_PARSE_PROPERTY = -10,
-    _Z_ERR_PARSE_RESKEY = -11,
-    _Z_ERR_PARSE_SUBMODE = -12,
+    _Z_ERR_PARSE_KEYEXPR = -11,
+    _Z_ERR_PARSE_SUBINFO = -12,
+    _Z_ERR_PARSE_DATAINFO = -12,
     _Z_ERR_PARSE_TIMESTAMP = -13,
+    _Z_ERR_PARSE_ATTACHMENT = -13,
+    _Z_ERR_PARSE_REPLY_CONTEXT = -13,
+    _Z_ERR_PARSE_JOIN_MESSAGE = -13,
+    _Z_ERR_PARSE_SCOUT_MESSAGE = -13,
+    _Z_ERR_PARSE_HELLO_MESSAGE = -13,
+    _Z_ERR_PARSE_INIT_MESSAGE = -13,
+    _Z_ERR_PARSE_OPEN_MESSAGE = -13,
+    _Z_ERR_PARSE_CLOSE_MESSAGE = -13,
+    _Z_ERR_PARSE_SYNC_MESSAGE = -13,
+    _Z_ERR_PARSE_ACK_NACK_MESSAGE = -13,
+    _Z_ERR_PARSE_KEEP_ALIVE_MESSAGE = -13,
+    _Z_ERR_PARSE_PING_PONG_MESSAGE = -13,
+    _Z_ERR_PARSE_FRAME_MESSAGE = -13,
+    _Z_ERR_PARSE_DECLARE_MESSAGE = -14,
+    _Z_ERR_PARSE_DATA_MESSAGE = -14,
+    _Z_ERR_PARSE_QUERY_MESSAGE = -14,
+    _Z_ERR_PARSE_PULL_MESSAGE = -14,
+    _Z_ERR_PARSE_UNIT_MESSAGE = -14,
+    _Z_ERR_PARSE_LINK_STATE_LIST_MESSAGE = -14,
     _Z_ERR_PARSE_ZENOH_MESSAGE = -14,
     _Z_ERR_PARSE_TRANSPORT_MESSAGE = -15,
 
@@ -77,78 +98,13 @@ typedef enum {
     _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST = -47,
     _Z_ERR_CONFIG_UNSUPPORTED_PEER_UNICAST = -48,
 
+    _Z_ERR_SCOUT_NONE = -48,
+
     _Z_ERR_TASK_START_FAILED = -49,
 
     _Z_ERR_OUT_OF_MEMORY = -125,
     _Z_ERR_IO_GENERIC = -126,
     _Z_ERR_GENERIC = -127
 } _z_res_t;
-
-/*------------------ Internal Result Macros ------------------*/
-#define _RESULT_DECLARE(type, name, prefix) \
-    typedef struct {                        \
-        _z_res_t _tag;                      \
-        type _value;                        \
-    } prefix##_##name##_result_t;
-
-#define _P_RESULT_DECLARE(type, name, prefix)                                             \
-    typedef struct {                                                                      \
-        _z_res_t _tag;                                                                    \
-        type *_value;                                                                     \
-    } prefix##_##name##_p_result_t;                                                       \
-                                                                                          \
-    inline static void prefix##_##name##_p_result_init(prefix##_##name##_p_result_t *r) { \
-        r->_value = (type *)z_malloc(sizeof(type));                                       \
-    }                                                                                     \
-                                                                                          \
-    inline static void prefix##_##name##_p_result_free(prefix##_##name##_p_result_t *r) { \
-        if (r->_value != NULL) {                                                          \
-            z_free(r->_value);                                                            \
-            r->_value = NULL;                                                             \
-        }                                                                                 \
-    }
-
-#define _ASSURE_RESULT(in_r, out_r, e) \
-    if (in_r._tag != _Z_RES_OK) {      \
-        out_r._tag = _Z_ERR_GENERIC;   \
-        return out_r;                  \
-    }
-
-#define _ASSURE_P_RESULT(in_r, out_r, e) \
-    if (in_r._tag != _Z_RES_OK) {        \
-        out_r->_tag = _Z_ERR_GENERIC;    \
-        return;                          \
-    }
-
-#define _ASSURE_FREE_P_RESULT(in_r, out_r, e, name) \
-    if (in_r._tag != _Z_RES_OK) {                   \
-        if (out_r->_value != NULL) {                \
-            z_free(out_r->_value);                  \
-            out_r->_tag = _Z_ERR_GENERIC;           \
-            return;                                 \
-        }                                           \
-    }
-
-#define _ASSERT_RESULT(r, msg) \
-    if (r._tag != _Z_RES_OK) { \
-        _Z_ERROR(msg);         \
-        _Z_ERROR("\n");        \
-        exit(r._tag);          \
-    }
-
-#define _ASSERT_P_RESULT(r, msg) \
-    if (r._tag != _Z_RES_OK) {   \
-        _Z_ERROR(msg);           \
-        _Z_ERROR("\n");          \
-        exit(r._tag);            \
-    }
-
-/*------------------ Internal Zenoh Results ------------------*/
-#define _Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, _z)
-#define _Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, _z)
-
-/*------------------ Internal Zenoh Results ------------------*/
-#define Z_RESULT_DECLARE(type, name) _RESULT_DECLARE(type, name, z)
-#define Z_P_RESULT_DECLARE(type, name) _P_RESULT_DECLARE(type, name, z)
 
 #endif /* ZENOH_PICO_UTILS_RESULT_H */

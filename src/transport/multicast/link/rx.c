@@ -42,9 +42,9 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
 }
 
 /*------------------ Reception helper ------------------*/
-void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_result_t *r, _z_bytes_t *addr) {
-    r->_tag = _Z_RES_OK;
+int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
     _Z_DEBUG(">> recv session msg\n");
+    uint8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock
@@ -67,35 +67,34 @@ void _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_mess
             if (writable < len) {
                 // Read enough bytes to decode the message
                 if (_z_link_recv_exact_zbuf(&ztm->_link, &ztm->_zbuf, len, addr) != len) {
-                    r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                r->_tag = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_IOBUF_NO_SPACE;
             }
         } else {
-            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
         if (_z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr) == SIZE_MAX) {
-            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 
     _Z_DEBUG(">> \t transport_message_decode\n");
-    if (r->_tag == _Z_RES_OK) {
-        _z_transport_message_decode_na(&ztm->_zbuf, r);
+    if (ret == _Z_RES_OK) {
+        _z_transport_message_decode_na(t_msg, &ztm->_zbuf);
     }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
+
+    return ret;
 }
 
-_z_transport_message_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_bytes_t *addr) {
-    _z_transport_message_result_t r;
-
-    _z_multicast_recv_t_msg_na(ztm, &r, addr);
-    return r;
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+    return _z_multicast_recv_t_msg_na(ztm, t_msg, addr);
 }
 
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
@@ -295,14 +294,14 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
                     // Decode the zenoh message
-                    _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(&zbf);
-                    if (r_zm._tag == _Z_RES_OK) {
-                        _z_zenoh_message_t d_zm = r_zm._value;
-                        _z_handle_zenoh_message(ztm->_session, &d_zm);
+                    _z_zenoh_message_t zm;
+                    int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                    if (ret == _Z_RES_OK) {
+                        _z_handle_zenoh_message(ztm->_session, &zm);
 
                         // Clear must be explicitly called for fragmented zenoh messages.
                         // Non-fragmented zenoh messages are released when their transport message is released.
-                        _z_msg_clear(&d_zm);
+                        _z_msg_clear(&zm);
                     }
 
                     // Free the decoding buffer

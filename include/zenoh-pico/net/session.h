@@ -56,12 +56,13 @@ typedef struct {
  *
  * Parameters:
  *     config: A set of properties. The caller keeps its ownership.
+ *     zn: A pointer of A :c:type:`_z_session_t` used as a return value.
  *
  * Returns:
- *     A pointer of A :c:type:`_z_session_t` containing the created zenoh-net
- *     session or null if the creation did not succeed.
+ *     ``0`` in case of success, or a ``negative value`` in case of failure.
+ *
  */
-_z_session_t *_z_open(_z_config_t *config);
+int8_t _z_open(_z_session_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.

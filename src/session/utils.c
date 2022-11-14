@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/session/utils.h"
+
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
@@ -45,34 +47,38 @@ void _z_timestamp_reset(_z_timestamp_t *tstamp) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-_z_session_t *_z_session_init(void) {
-    _z_session_t *zn = (_z_session_t *)z_malloc(sizeof(_z_session_t));
+int8_t _z_session_init(_z_session_t *zn) {
+    int8_t ret = _Z_RES_OK;
 
-    if (zn != NULL) {
-        // Initialize the counters to 1
-        zn->_entity_id = 1;
-        zn->_resource_id = 1;
-        zn->_query_id = 1;
-        zn->_pull_id = 1;
+    // Initialize the counters to 1
+    zn->_entity_id = 1;
+    zn->_resource_id = 1;
+    zn->_query_id = 1;
+    zn->_pull_id = 1;
 
-        // Initialize the data structs
-        zn->_local_resources = NULL;
-        zn->_remote_resources = NULL;
-        zn->_local_subscriptions = NULL;
-        zn->_remote_subscriptions = NULL;
-        zn->_local_questionable = NULL;
-        zn->_pending_queries = NULL;
+    // Initialize the data structs
+    zn->_local_resources = NULL;
+    zn->_remote_resources = NULL;
+    zn->_local_subscriptions = NULL;
+    zn->_remote_subscriptions = NULL;
+    zn->_local_questionable = NULL;
+    zn->_pending_queries = NULL;
 
-        // Associate a transport with the session
-        zn->_tp_manager = _z_transport_manager_init();
-
+    // Associate a transport with the session
+    ret = _z_transport_manager_init(&zn->_tp_manager);
+    if (ret == _Z_RES_OK) {
 #if Z_MULTI_THREAD == 1
-        // Initialize the mutexes
-        _z_mutex_init(&zn->_mutex_inner);
+        ret = _z_mutex_init(&zn->_mutex_inner);
+        if (ret != _Z_RES_OK) {
+            _z_transport_manager_clear(&zn->_tp_manager);
+            z_free(&zn);
+        }
 #endif  // Z_MULTI_THREAD == 1
+    } else {
+        z_free(&zn);
     }
 
-    return zn;
+    return ret;
 }
 
 void _z_session_clear(_z_session_t *zn) {
@@ -87,7 +93,6 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_pending_queries(zn);
 
 #if Z_MULTI_THREAD == 1
-    // Clean up the mutexes
     _z_mutex_free(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }

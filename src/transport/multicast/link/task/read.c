@@ -26,12 +26,11 @@ int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     int8_t ret = _Z_RES_OK;
 
     _z_bytes_t addr;
-    _z_transport_message_result_t r_s = _z_multicast_recv_t_msg(ztm, &addr);
-    if (r_s._tag == _Z_RES_OK) {
-        ret = _z_multicast_handle_transport_message(ztm, &r_s._value, &addr);
-        _z_t_msg_clear(&r_s._value);
-    } else {
-        ret = r_s._tag;
+    _z_transport_message_t t_msg;
+    ret = _z_multicast_recv_t_msg(ztm, &t_msg, &addr);
+    if (ret == _Z_RES_OK) {
+        ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
+        _z_t_msg_clear(&t_msg);
     }
 
     return ret;
@@ -42,8 +41,6 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     ztm->_read_task_running = true;
-
-    _z_transport_message_result_t r;
 
     // Acquire and keep the lock
     _z_mutex_lock(&ztm->_mutex_rx);
@@ -60,6 +57,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_bytes_clear(&addr);
+                    _z_zbuf_compact(&ztm->_zbuf);
                     continue;
                 }
             }
@@ -72,10 +70,12 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                    _z_zbuf_compact(&ztm->_zbuf);
                     continue;
                 }
             }
         } else {
+            _z_zbuf_compact(&ztm->_zbuf);
             to_read = _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
             if (to_read == SIZE_MAX) {
                 continue;
@@ -86,14 +86,16 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
         while (_z_zbuf_len(&zbuf) > 0) {
+            int8_t ret = _Z_RES_OK;
+
             // Decode one session message
-            _z_transport_message_decode_na(&zbuf, &r);
+            _z_transport_message_t t_msg;
+            ret = _z_transport_message_decode_na(&t_msg, &zbuf);
+            if (ret == _Z_RES_OK) {
+                ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
 
-            if (r._tag == _Z_RES_OK) {
-                int8_t res = _z_multicast_handle_transport_message(ztm, &r._value, &addr);
-
-                if (res == _Z_RES_OK) {
-                    _z_t_msg_clear(&r._value);
+                if (ret == _Z_RES_OK) {
+                    _z_t_msg_clear(&t_msg);
                     _z_bytes_clear(&addr);
                 } else {
                     ztm->_read_task_running = false;
@@ -108,7 +110,6 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
-        _z_zbuf_compact(&ztm->_zbuf);
     }
 
     _z_mutex_unlock(&ztm->_mutex_rx);

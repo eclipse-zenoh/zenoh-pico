@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_ARRAY_DEFINE(name, type)                                                                 \

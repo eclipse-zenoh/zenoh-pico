@@ -36,15 +36,15 @@ char *_z_serial_config_to_str(const _z_str_intmap_t *s) {
     return _z_str_intmap_to_str(s, argc, args);
 }
 
-_z_str_intmap_result_t _z_serial_config_from_strn(const char *s, size_t n) {
+int8_t _z_serial_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     SERIAL_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_from_strn(s, argc, args, n);
+    return _z_str_intmap_from_strn(strint, s, argc, args, n);
 }
 
-_z_str_intmap_result_t _z_serial_config_from_str(const char *s) {
+int8_t _z_serial_config_from_str(_z_str_intmap_t *strint, const char *s) {
     SERIAL_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_from_str(s, argc, args);
+    return _z_str_intmap_from_str(strint, s, argc, args);
 }
 #endif

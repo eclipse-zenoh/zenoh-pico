@@ -23,7 +23,7 @@
 _z_hello_list_t *_z_scout_inner(const uint8_t what, const char *locator, const uint32_t timeout,
                                 const _Bool exit_on_first);
 
-_z_session_t *_z_session_init(void);
+int8_t _z_session_init(_z_session_t *zn);
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason);
 void _z_session_clear(_z_session_t *zn);
 void _z_session_free(_z_session_t **zn);

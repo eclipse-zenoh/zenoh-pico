@@ -20,86 +20,92 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_link_result_t _z_open_link(const char *locator) {
-    _z_link_result_t r;
-    r._tag = _Z_RES_OK;
+int8_t _z_open_link(_z_link_t *zl, const char *locator) {
+    int8_t ret = _Z_RES_OK;
 
-    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value;
-
-    // TODO[peer]: when peer unicast mode is supported, this must be revisited
-    // Create transport link
+    _z_endpoint_t ep;
+    ret = _z_endpoint_from_str(&ep, locator);
+    if (ret == _Z_RES_OK) {
+        // TODO[peer]: when peer unicast mode is supported, this must be revisited
+        // Create transport link
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA) == true) {
-        r._value = _z_new_link_tcp(endpoint);
-    } else
+        if (_z_str_eq(ep._locator._protocol, TCP_SCHEMA) == true) {
+            *zl = _z_new_link_tcp(ep);
+        } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-        if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) == true) {
-        r._value = _z_new_link_udp_unicast(endpoint);
-    } else
+            if (_z_str_eq(ep._locator._protocol, UDP_SCHEMA) == true) {
+            *zl = _z_new_link_udp_unicast(ep);
+        } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) == true) {
-        r._value = _z_new_link_bt(endpoint);
-    } else
+            if (_z_str_eq(ep._locator._protocol, BT_SCHEMA) == true) {
+            *zl = _z_new_link_bt(ep);
+        } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(endpoint._locator._protocol, SERIAL_SCHEMA) == true) {
-        r._value = _z_new_link_serial(endpoint);
-    } else
+            if (_z_str_eq(ep._locator._protocol, SERIAL_SCHEMA) == true) {
+            *zl = _z_new_link_serial(ep);
+        } else
 #endif
-    {
-        r._tag = _Z_ERR_LOCATOR_INVALID;
-        _z_endpoint_clear(&endpoint);
-    }
-
-    if (r._tag == _Z_RES_OK) {
-        // Open transport link for communication
-        if (r._value._open_f(&r._value) != _Z_RES_OK) {
-            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_clear(&r._value);
+        {
+            ret = _Z_ERR_LOCATOR_INVALID;
         }
+
+        if (ret == _Z_RES_OK) {
+            // Open transport link for communication
+            if (zl->_open_f(zl) != _Z_RES_OK) {
+                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+                _z_link_clear(zl);
+            }
+        } else {
+            _z_endpoint_clear(&ep);
+        }
+    } else {
+        _z_endpoint_clear(&ep);
+        ret = _Z_ERR_LOCATOR_INVALID;
     }
 
-    return r;
+    return ret;
 }
 
-_z_link_result_t _z_listen_link(const char *locator) {
-    _z_link_result_t r;
-    r._tag = _Z_RES_OK;
+int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
+    int8_t ret = _Z_RES_OK;
 
-    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value;
-
-    // TODO[peer]: when peer unicast mode is supported, this must be revisited
-    // Create transport link
+    _z_endpoint_t ep;
+    ret = _z_endpoint_from_str(&ep, locator);
+    if (ret == _Z_RES_OK) {
+        // TODO[peer]: when peer unicast mode is supported, this must be revisited
+        // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) == true) {
-        r._value = _z_new_link_udp_multicast(endpoint);
-    } else
+        if (_z_str_eq(ep._locator._protocol, UDP_SCHEMA) == true) {
+            *zl = _z_new_link_udp_multicast(ep);
+        } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) == true) {
-        r._value = _z_new_link_bt(endpoint);
-    } else
+            if (_z_str_eq(ep._locator._protocol, BT_SCHEMA) == true) {
+            *zl = _z_new_link_bt(ep);
+        } else
 #endif
-    {
-        r._tag = _Z_ERR_LOCATOR_INVALID;
-        _z_endpoint_clear(&endpoint);
-    }
-
-    if (r._tag == _Z_RES_OK) {
-        // Open transport link for listening
-        if (r._value._listen_f(&r._value) != _Z_RES_OK) {
-            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_clear(&r._value);
+        {
+            ret = _Z_ERR_LOCATOR_INVALID;
         }
+
+        if (ret == _Z_RES_OK) {
+            // Open transport link for listening
+            if (zl->_listen_f(zl) != _Z_RES_OK) {
+                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+                _z_link_clear(zl);
+            }
+        } else {
+            _z_endpoint_clear(&ep);
+        }
+    } else {
+        _z_endpoint_clear(&ep);
+        ret = _Z_ERR_LOCATOR_INVALID;
     }
 
-    return r;
+    return ret;
 }
 
 void _z_link_clear(_z_link_t *l) {

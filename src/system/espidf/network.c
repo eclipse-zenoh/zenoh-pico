@@ -45,7 +45,11 @@ _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_p
     return ep;
 }
 
-void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep) { freeaddrinfo(ep._iptcp); }
+void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep) {
+    if (ep._err == false) {
+        freeaddrinfo(ep._iptcp);
+    }
+}
 
 _z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout) {
     _z_sys_net_socket_t sock;
@@ -157,7 +161,11 @@ _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_p
     return ep;
 }
 
-void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) { freeaddrinfo(ep._iptcp); }
+void _z_free_endpoint_udp(_z_sys_net_endpoint_t ep) {
+    if (ep._err == false) {
+        freeaddrinfo(ep._iptcp);
+    }
+}
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1

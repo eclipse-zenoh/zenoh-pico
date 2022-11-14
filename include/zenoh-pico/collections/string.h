@@ -45,7 +45,6 @@ typedef struct {
     unsigned int _key;
     char *_str;
 } _z_str_intmapping_t;
-_Z_RESULT_DECLARE(_z_str_intmap_t, str_intmap)
 
 size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
@@ -53,8 +52,9 @@ void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s,
                             _z_str_intmapping_t argv[]);
 char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
 
-_z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[]);
-_z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc, _z_str_intmapping_t argv[], size_t n);
+int8_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]);
+int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
+                               size_t n);
 
 /*-------- string --------*/
 /**

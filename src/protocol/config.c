@@ -39,11 +39,10 @@ int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value) {
 char *_z_config_get(const _z_config_t *ps, unsigned int key) { return _z_str_intmap_get(ps, key); }
 
 /*------------------ int-string map ------------------*/
-_z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc, _z_str_intmapping_t argv[], size_t n) {
-    _z_str_intmap_result_t res;
-
-    res._tag = _Z_RES_OK;
-    res._value = _z_str_intmap_make();
+int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
+                               size_t n) {
+    int8_t ret = _Z_RES_OK;
+    *strint = _z_str_intmap_make();
 
     // Check the string contains only the right
     const char *start = s;
@@ -87,21 +86,21 @@ _z_str_intmap_result_t _z_str_intmap_from_strn(const char *s, unsigned int argc,
                 (void)strncpy(p_value, p_value_start, p_value_len);
                 p_value[p_value_len] = '\0';
 
-                _z_str_intmap_insert(&res._value, key, p_value);
+                _z_str_intmap_insert(strint, key, p_value);
 
                 // Process next key value
                 start = _z_cptr_char_offset(p_value_end, 1);
             } else {
-                res._tag = _Z_ERR_OUT_OF_MEMORY;
+                ret = _Z_ERR_OUT_OF_MEMORY;
             }
         }
     }
 
-    return res;
+    return ret;
 }
 
-_z_str_intmap_result_t _z_str_intmap_from_str(const char *s, unsigned int argc, _z_str_intmapping_t argv[]) {
-    return _z_str_intmap_from_strn(s, argc, argv, strlen(s));
+int8_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]) {
+    return _z_str_intmap_from_strn(strint, s, argc, argv, strlen(s));
 }
 
 size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]) {

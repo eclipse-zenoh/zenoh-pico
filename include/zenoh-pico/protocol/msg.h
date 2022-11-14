@@ -448,13 +448,13 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 // - if options & (1 << 5) then the payload is sliced
 typedef struct {
     _z_zint_t _flags;
-    _z_zint_t _kind;
     _z_encoding_t _encoding;
     _z_timestamp_t _tstamp;
     _z_bytes_t _source_id;
     _z_zint_t _source_sn;
     _z_bytes_t _first_router_id;
     _z_zint_t _first_router_sn;
+    uint8_t _kind;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
 

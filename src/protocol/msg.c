@@ -277,7 +277,7 @@ void _z_msg_clear_declaration(_z_declaration_t *dcl) {
     }
 }
 
-void _z_msg_clear_declare(_z_msg_declare_t *dcl) { _z_declaration_array_clear(&dcl->_declarations); }
+void _z_msg_clear_declare(_z_msg_declare_t *msg) { _z_declaration_array_clear(&msg->_declarations); }
 
 /*------------------ Data Info Field ------------------*/
 // @TODO: implement builder for _z_data_info_t
@@ -447,7 +447,7 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
             _z_msg_clear_unit(&msg->_body._unit);
             break;
         default:
-            _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear message with unknown ID(%d)\n", mid);
             break;
     }
 }

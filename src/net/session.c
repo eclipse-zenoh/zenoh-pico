@@ -22,35 +22,38 @@
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_session_t *__z_open_inner(char *locator, z_whatami_t mode) {
-    _z_session_t *ret = _z_session_init();
-    _z_transport_result_t res = _z_new_transport(&ret->_tp_manager, locator, mode);
-    if (res._tag == _Z_RES_OK) {
-        // Attach session and transport to one another
-        ret->_tp = res._value;
+int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
+    int8_t ret = _Z_RES_OK;
+
+    ret = _z_session_init(zn);
+    if (ret == _Z_RES_OK) {
+        _z_transport_t zt;
+        ret = _z_new_transport(&zt, &zn->_tp_manager, locator, mode);
+        if (ret == _Z_RES_OK) {
+            // Attach session and transport to one another
+            zn->_tp = zt;
 
 #if Z_UNICAST_TRANSPORT == 1
-        if (ret->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-            ret->_tp._transport._unicast._session = ret;
-        } else
+            if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+                zn->_tp._transport._unicast._session = zn;
+            } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-            if (ret->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            ret->_tp._transport._multicast._session = ret;
-        } else
+                if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+                zn->_tp._transport._multicast._session = zn;
+            } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        {
-            _z_session_free(&ret);
+            {
+                ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+            }
         }
-    } else {
-        _z_session_free(&ret);
     }
 
     return ret;
 }
 
-_z_session_t *_z_open(_z_config_t *config) {
-    _z_session_t *ret = NULL;
+int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
+    int8_t ret = _Z_RES_OK;
 
     if (config != NULL) {
         char *locator = NULL;
@@ -107,12 +110,13 @@ _z_session_t *_z_open(_z_config_t *config) {
             }
 
             if (mode != 255) {
-                ret = __z_open_inner(locator, mode);
+                ret = __z_open_inner(zn, locator, mode);
             } else {
                 _Z_ERROR("Trying to configure an invalid mode.\n");
             }
             z_free(locator);
         } else {
+            ret = _Z_ERR_SCOUT_NONE;
             _Z_DEBUG("Unable to scout a zenoh router\n");
             _Z_ERROR("Please make sure at least one router is running on your network!\n");
         }
