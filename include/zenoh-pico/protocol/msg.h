@@ -88,6 +88,7 @@
 #define _Z_FLAG_T_X 0x00  // Unused flags are set to zero
 
 /* Zenoh message flags */
+#define _Z_FLAG_Z_B 0x40  // 1 << 6 | QueryPayload      if B==1 then QueryPayload is present
 #define _Z_FLAG_Z_D 0x20  // 1 << 5 | Dropping          if D==1 then the message can be dropped
 #define _Z_FLAG_Z_F \
     0x20  // 1 << 5 | Final             if F==1 then this is the final message (e.g., ReplyContext, Pull)
@@ -514,7 +515,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 /*------------------ Query Message ------------------*/
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |K|X|T|  QUERY  |
+// |K|B|T|  QUERY  |
 // +-+-+-+---------+
 // ~    ResKey     ~ if K==1 then keyexpr is string
 // +---------------+
@@ -526,13 +527,27 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 // +---------------+
 // ~ consolidation ~
 // +---------------+
+// ~   QueryBody   ~ if B==1
+// +---------------+
 //
+// where, QueryBody data structure is optionally included in Query messages
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+---------+
+// ~    DataInfo   ~
+// +---------------+
+// ~    Payload    ~
+// +---------------+
+// ```
+
 typedef struct {
     _z_keyexpr_t _key;
     char *_parameters;
     _z_zint_t _qid;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
+    _z_data_info_t _info;
+    _z_payload_t _payload;
 } _z_msg_query_t;
 void _z_msg_clear_query(_z_msg_query_t *msg);
 
@@ -569,7 +584,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
 _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
-                                     z_consolidation_mode_t consolidation);
+                                     z_consolidation_mode_t consolidation, _z_value_t query_body);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
                                      _z_reply_context_t *rctx);
 

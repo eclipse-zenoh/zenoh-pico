@@ -202,6 +202,10 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
 
+z_value_t z_value(const char *payload, size_t payload_len, z_encoding_t encoding) {
+    return (z_value_t){.payload = {.start = (const uint8_t *)payload, .len = payload_len}, .encoding = encoding};
+}
+
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
@@ -477,7 +481,9 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
 }
 
 z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
+    return (z_get_options_t){.target = z_query_target_default(),
+                             .consolidation = z_query_consolidation_default(),
+                             .query_body = {.encoding = z_encoding_default(), .payload = _z_bytes_make(0)}};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -504,6 +510,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     if (options != NULL) {
         opt.consolidation = options->consolidation;
         opt.target = options->target;
+        opt.query_body = options->query_body;
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -522,8 +529,8 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     wrapped_ctx->user_call = callback->call;
     wrapped_ctx->ctx = ctx;
 
-    return _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, __z_reply_handler, wrapped_ctx,
-                    callback->drop, ctx);
+    return _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.query_body, __z_reply_handler,
+                    wrapped_ctx, callback->drop, ctx);
 }
 
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {

@@ -864,7 +864,7 @@ void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r) {
     }
 
     _z_payload_result_t r_pld = _z_payload_decode(zbf);
-    _ASSURE_P_RESULT(r_pld, r, _Z_ERR_PARSE_ZINT)
+    _ASSURE_P_RESULT(r_pld, r, _Z_ERR_PARSE_PAYLOAD)
     r->_value._payload = r_pld._value;
 }
 
@@ -953,6 +953,11 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg
     }
     ret = _z_query_consolidation_encode(wbf, &msg->_consolidation);
 
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
+        _Z_EC(_z_data_info_encode(wbf, &msg->_info))
+        _Z_EC(_z_payload_encode(wbf, &msg->_payload))
+    }
+
     return ret;
 }
 
@@ -1019,6 +1024,19 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r) {
     _z_query_consolidation_result_t r_con = _z_query_consolidation_decode(zbf);
     _ASSURE_P_RESULT(r_con, r, _Z_ERR_PARSE_CONSOLIDATION)
     r->_value._consolidation = r_con._value;
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
+        _z_data_info_result_t r_dti = _z_data_info_decode(zbf);
+        _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_ZENOH_MESSAGE)
+        r->_value._info = r_dti._value;
+
+        _z_payload_result_t r_pld = _z_payload_decode(zbf);
+        _ASSURE_P_RESULT(r_pld, r, _Z_ERR_PARSE_PAYLOAD)
+        r->_value._payload = r_pld._value;
+    } else {
+        (void)memset(&r->_value._info, 0, sizeof(_z_data_info_t));
+        r->_value._payload = _z_bytes_make(0);
+    }
 }
 
 _z_query_result_t _z_query_decode(_z_zbuf_t *zbf, uint8_t header) {
