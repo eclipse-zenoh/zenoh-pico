@@ -317,7 +317,7 @@ typedef struct {
 typedef struct {
     z_query_target_t target;
     z_query_consolidation_t consolidation;
-    z_value_t query_body;
+    z_value_t with_value;
 } z_get_options_t;
 
 /**

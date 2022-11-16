@@ -182,7 +182,7 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
-_z_value_t gen_query_body(void) {
+_z_value_t gen_with_value(void) {
     _z_value_t val;
     val.encoding.prefix = gen_zint();
     if (gen_bool()) {
@@ -1352,16 +1352,16 @@ _z_zenoh_message_t gen_query_message(void) {
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    _z_value_t query_body;
+    _z_value_t with_value;
     if (gen_bool()) {
-        query_body = gen_query_body();
+        with_value = gen_with_value();
     } else {
-        query_body.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
-        query_body.encoding.suffix = _z_bytes_make(0);
-        query_body.payload = _z_bytes_make(0);
+        with_value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
+        with_value.encoding.suffix = _z_bytes_make(0);
+        with_value.payload = _z_bytes_make(0);
     }
 
-    return _z_msg_make_query(key, parameters, qid, target, consolidation, query_body);
+    return _z_msg_make_query(key, parameters, qid, target, consolidation, with_value);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {

@@ -377,7 +377,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
-                                     z_consolidation_mode_t consolidation, _z_value_t query_body) {
+                                     z_consolidation_mode_t consolidation, _z_value_t with_value) {
     _z_zenoh_message_t msg;
 
     msg._body._query._key = key;
@@ -386,8 +386,8 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
     memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
-    msg._body._query._info._encoding = query_body.encoding;
-    msg._body._query._payload = query_body.payload;
+    msg._body._query._info._encoding = with_value.encoding;
+    msg._body._query._payload = with_value.payload;
 
     msg._header = _Z_MID_QUERY;
     if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) {
