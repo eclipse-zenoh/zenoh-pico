@@ -455,6 +455,17 @@ z_query_consolidation_t z_query_consolidation_none(void);
 z_bytes_t z_query_parameters(const z_query_t *query);
 
 /**
+ * Get a query's payload value by aliasing it.
+ *
+ * Parameters:
+ *   query: Pointer to the query to get the value selector from.
+ *
+ * Returns:
+ *   Returns the payload value wrapped as a :c:type:`z_value_t`, since payload value is a user-defined representation.
+ */
+z_value_t z_query_payload_value(const z_query_t *query);
+
+/**
  * Get a query's key by aliasing it.
  *
  * Parameters:
