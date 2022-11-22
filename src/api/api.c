@@ -231,11 +231,21 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
     return parameters;
 }
 
-z_value_t z_query_payload_value(const z_query_t *query) { return query->_with_value; }
+z_value_t z_query_value(const z_query_t *query) { return query->_with_value; }
 
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
 
 z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
+
+_Bool z_value_is_initialized(z_value_t *value) {
+    _Bool ret = false;
+
+    if ((value->payload.start != NULL)) {
+        ret = true;
+    }
+
+    return ret;
+}
 
 /**************** Loans ****************/
 #define _OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(type, ownedtype, name, f_free, f_copy) \
@@ -485,7 +495,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
 z_get_options_t z_get_options_default(void) {
     return (z_get_options_t){.target = z_query_target_default(),
                              .consolidation = z_query_consolidation_default(),
-                             .with_value = {.encoding = z_encoding_default(), .payload = _z_bytes_make(0)}};
+                             .with_value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -759,7 +769,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply) {
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);
-    return (z_value_t){.payload = _z_bytes_make(0), .encoding = z_encoding_default()};
+    return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 
 z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }

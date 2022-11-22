@@ -182,15 +182,20 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
-_z_value_t gen_with_value(void) {
+_z_value_t gen_value(void) {
     _z_value_t val;
     val.encoding.prefix = gen_zint();
     if (gen_bool()) {
         val.encoding.suffix = gen_bytes(8);
     } else {
-        val.encoding.suffix = _z_bytes_make(0);
+        val.encoding.suffix = _z_bytes_empty();
     }
-    val.payload = _z_bytes_make(0);
+
+    if (gen_bool()) {
+        val.payload = _z_bytes_empty();
+    } else {
+        val.payload = _z_bytes_make(16);
+    }
 
     return val;
 }
@@ -497,7 +502,7 @@ _z_data_info_t gen_data_info(void) {
         if (gen_bool()) {
             di._encoding.suffix = gen_bytes(8);
         } else
-            di._encoding.suffix = _z_bytes_make(0);
+            di._encoding.suffix = _z_bytes_empty();
 
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_ENC);
     }
@@ -1354,11 +1359,11 @@ _z_zenoh_message_t gen_query_message(void) {
 
     _z_value_t with_value;
     if (gen_bool()) {
-        with_value = gen_with_value();
+        with_value = gen_value();
     } else {
         with_value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
-        with_value.encoding.suffix = _z_bytes_make(0);
-        with_value.payload = _z_bytes_make(0);
+        with_value.encoding.suffix = _z_bytes_empty();
+        with_value.payload = _z_bytes_empty();
     }
 
     return _z_msg_make_query(key, parameters, qid, target, consolidation, with_value);

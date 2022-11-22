@@ -463,7 +463,7 @@ z_bytes_t z_query_parameters(const z_query_t *query);
  * Returns:
  *   Returns the payload value wrapped as a :c:type:`z_value_t`, since payload value is a user-defined representation.
  */
-z_value_t z_query_payload_value(const z_query_t *query);
+z_value_t z_query_value(const z_query_t *query);
 
 /**
  * Get a query's key by aliasing it.
@@ -1178,6 +1178,17 @@ z_sample_t z_reply_ok(z_owned_reply_t *reply);
  *   Returns the :c:type:`z_value_t` wrapped in the query reply.
  */
 z_value_t z_reply_err(const z_owned_reply_t *reply);
+
+/**
+ * Checks if a given value is valid.
+ *
+ * Parameters:
+ *   value: A loaned instance of :c:type:`z_value_t` to be checked.
+ *
+ * Returns:
+ *   Returns ``true`` if the value is valid, or ``false`` otherwise.
+ */
+_Bool z_value_is_initialized(z_value_t *value);
 
 /************* Multi Thread Taks helpers **************/
 /**

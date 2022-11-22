@@ -33,6 +33,7 @@ typedef struct {
     _Bool _is_alloc;
 } _z_bytes_t;
 
+_z_bytes_t _z_bytes_empty(void);
 void _z_bytes_init(_z_bytes_t *bs, size_t capacity);
 _z_bytes_t _z_bytes_make(size_t capacity);
 _z_bytes_t _z_bytes_wrap(const uint8_t *bs, size_t len);

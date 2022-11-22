@@ -857,7 +857,7 @@ void _z_data_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_data_result_t *r) {
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         _z_data_info_result_t r_dti = _z_data_info_decode(zbf);
-        _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_ZENOH_MESSAGE)
+        _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_DATA_INFO)
         r->_value._info = r_dti._value;
     } else {
         (void)memset(&r->_value._info, 0, sizeof(_z_data_info_t));
@@ -1027,7 +1027,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r) {
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
         _z_data_info_result_t r_dti = _z_data_info_decode(zbf);
-        _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_ZENOH_MESSAGE)
+        _ASSURE_P_RESULT(r_dti, r, _Z_ERR_PARSE_DATA_INFO)
         r->_value._info = r_dti._value;
 
         _z_payload_result_t r_pld = _z_payload_decode(zbf);
@@ -1035,7 +1035,7 @@ void _z_query_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_query_result_t *r) {
         r->_value._payload = r_pld._value;
     } else {
         (void)memset(&r->_value._info, 0, sizeof(_z_data_info_t));
-        r->_value._payload = _z_bytes_make(0);
+        r->_value._payload = _z_bytes_empty();
     }
 }
 

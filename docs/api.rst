@@ -207,6 +207,8 @@ Primitives
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_parameters
 .. autocfunction:: primitives.h::z_query_keyexpr
+.. autocfunction:: primitives.h::z_query_value
+.. autocfunction:: primitives.h::z_value_is_initialized
 .. autocfunction:: primitives.h::z_closure_sample
 .. autocfunction:: primitives.h::z_closure_query
 .. autocfunction:: primitives.h::z_closure_reply
