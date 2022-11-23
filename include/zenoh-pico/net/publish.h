@@ -22,9 +22,9 @@
  * Return type when declaring a publisher.
  */
 typedef struct {
-    _z_session_t *_zn;
-    _z_zint_t _id;
     _z_keyexpr_t _key;
+    _z_zint_t _id;
+    _z_session_t *_zn;
     z_congestion_control_t _congestion_control;
     z_priority_t _priority;
 } _z_publisher_t;

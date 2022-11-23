@@ -42,15 +42,15 @@ _Z_INT_MAP_DEFINE(_z_str, char)
 #define INT_STR_MAP_LIST_SEPARATOR ';'
 
 typedef struct {
-    unsigned int _key;
     char *_str;
+    uint8_t _key;
 } _z_str_intmapping_t;
 
-size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, uint8_t argc, _z_str_intmapping_t argv[]);
 
-void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, unsigned int argc,
+void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, uint8_t argc,
                             _z_str_intmapping_t argv[]);
-char *_z_str_intmap_to_str(const _z_str_intmap_t *s, unsigned int argc, _z_str_intmapping_t argv[]);
+char *_z_str_intmap_to_str(const _z_str_intmap_t *s, uint8_t argc, _z_str_intmapping_t argv[]);
 
 int8_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]);
 int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
@@ -65,8 +65,8 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
  *   const char *val: A pointer to the string.
  */
 typedef struct {
-    char *val;
     size_t len;
+    char *val;
 } _z_string_t;
 
 _z_string_t z_string_make(const char *value);
@@ -87,8 +87,8 @@ _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
  *   char **_val: A pointer to the array.
  */
 typedef struct {
-    char **_val;
     size_t _len;
+    char **_val;
 } _z_str_array_t;
 
 _z_str_array_t _z_str_array_make(size_t len);

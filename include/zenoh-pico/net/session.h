@@ -27,6 +27,11 @@ typedef struct {
     _z_mutex_t _mutex_inner;
 #endif  // Z_MULTI_THREAD == 1
 
+    // Session transport.
+    // Zenoh-pico is considering a single transport per session.
+    _z_transport_t _tp;
+    _z_transport_manager_t _tp_manager;
+
     // Session counters
     _z_zint_t _resource_id;
     _z_zint_t _entity_id;
@@ -44,11 +49,6 @@ typedef struct {
     // Session queryables
     _z_questionable_sptr_list_t *_local_questionable;
     _z_pending_query_list_t *_pending_queries;
-
-    // Session transport.
-    // Zenoh-pico is considering a single transport per session.
-    _z_transport_t _tp;
-    _z_transport_manager_t _tp_manager;
 } _z_session_t;
 
 /**

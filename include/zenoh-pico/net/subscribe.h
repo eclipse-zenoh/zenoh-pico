@@ -22,8 +22,8 @@
  * Return type when declaring a subscriber.
  */
 typedef struct {
-    _z_session_t *_zn;
     _z_zint_t _id;
+    _z_session_t *_zn;
 } _z_subscriber_t;
 
 typedef _z_subscriber_t _z_pull_subscriber_t;

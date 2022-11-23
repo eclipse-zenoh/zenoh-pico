@@ -144,9 +144,9 @@ z_owned_config_t z_config_new(void) { return (z_owned_config_t){._value = _z_con
 
 z_owned_config_t z_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
 
-const char *zp_config_get(z_config_t config, unsigned int key) { return _z_config_get(config._val, key); }
+const char *zp_config_get(z_config_t config, uint8_t key) { return _z_config_get(config._val, key); }
 
-int8_t zp_config_insert(z_config_t config, unsigned int key, z_string_t value) {
+int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value) {
     return _zp_config_insert(config._val, key, value);
 }
 
@@ -188,9 +188,9 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t c) {
     return (z_owned_scouting_config_t){._value = sc};
 }
 
-const char *zp_scouting_config_get(z_scouting_config_t sc, unsigned int key) { return _z_config_get(sc._val, key); }
+const char *zp_scouting_config_get(z_scouting_config_t sc, uint8_t key) { return _z_config_get(sc._val, key); }
 
-int8_t zp_scouting_config_insert(z_scouting_config_t sc, unsigned int key, z_string_t value) {
+int8_t zp_scouting_config_insert(z_scouting_config_t sc, uint8_t key, z_string_t value) {
     return _zp_config_insert(sc._val, key, value);
 }
 

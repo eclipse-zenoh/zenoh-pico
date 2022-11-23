@@ -311,8 +311,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 }
             } else {
                 // Handle all the zenoh message, one by one
-                unsigned int len = _z_vec_len(&t_msg->_body._frame._payload._messages);
-                for (unsigned int i = 0; i < len; i++) {
+                size_t len = _z_vec_len(&t_msg->_body._frame._payload._messages);
+                for (size_t i = 0; i < len; i++) {
                     _z_handle_zenoh_message(
                         ztm->_session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._payload._messages, i));
                 }

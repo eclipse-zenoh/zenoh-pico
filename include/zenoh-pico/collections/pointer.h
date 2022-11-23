@@ -36,7 +36,7 @@
                 *p.ptr = val;                                                                   \
                 atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                         \
             } else {                                                                            \
-                z_free (p.ptr);                                                                 \
+                z_free(p.ptr);                                                                  \
             }                                                                                   \
         }                                                                                       \
         return p;                                                                               \
@@ -92,7 +92,7 @@
                 *p.ptr = val;                                                                   \
                 *p._cnt = 1;                                                                    \
             } else {                                                                            \
-                z_free (p.ptr);                                                                 \
+                z_free(p.ptr);                                                                  \
             }                                                                                   \
         }                                                                                       \
         return p;                                                                               \
@@ -125,7 +125,7 @@
                 if (p->ptr != NULL) {                                                           \
                     type##_clear(p->ptr);                                                       \
                     z_free(p->ptr);                                                             \
-                    z_free((void*)p->_cnt);                                                     \
+                    z_free((void *)p->_cnt);                                                    \
                 }                                                                               \
             }                                                                                   \
         }                                                                                       \

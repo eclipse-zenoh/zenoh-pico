@@ -224,8 +224,8 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 // - if F==1 then the message is a REPLY_FINAL
 //
 typedef struct {
-    _z_zint_t _qid;
     _z_bytes_t _replier_id;
+    _z_zint_t _qid;
     uint8_t _header;
 } _z_reply_context_t;
 void _z_msg_clear_reply_context(_z_reply_context_t *rc);
@@ -267,8 +267,8 @@ void _z_keyexpr_free(_z_keyexpr_t **rk);
 // +---------------+
 //
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
+    _z_zint_t _id;
 } _z_res_decl_t;
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 
@@ -447,13 +447,13 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 //
 // - if options & (1 << 5) then the payload is sliced
 typedef struct {
-    _z_zint_t _flags;
-    _z_encoding_t _encoding;
-    _z_timestamp_t _tstamp;
-    _z_bytes_t _source_id;
-    _z_zint_t _source_sn;
     _z_bytes_t _first_router_id;
+    _z_bytes_t _source_id;
+    _z_timestamp_t _tstamp;
+    _z_zint_t _flags;
     _z_zint_t _first_router_sn;
+    _z_zint_t _source_sn;
+    _z_encoding_t _encoding;
     uint8_t _kind;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
@@ -473,8 +473,8 @@ void _z_data_info_clear(_z_data_info_t *di);
 // - if D==1 then the message can be dropped for congestion control reasons.
 //
 typedef struct {
-    _z_keyexpr_t _key;
     _z_data_info_t _info;
+    _z_keyexpr_t _key;
     _z_payload_t _payload;
 } _z_msg_data_t;
 void _z_msg_clear_data(_z_msg_data_t *msg);
@@ -529,8 +529,8 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 //
 typedef struct {
     _z_keyexpr_t _key;
-    char *_parameters;
     _z_zint_t _qid;
+    char *_parameters;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
@@ -545,9 +545,9 @@ typedef union {
     _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
 typedef struct {
+    _z_zenoh_body_t _body;
     _z_attachment_t *_attachment;
     _z_reply_context_t *_reply_context;
-    _z_zenoh_body_t _body;
     uint8_t _header;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
@@ -630,9 +630,9 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 // +---------------+
 //
 typedef struct {
-    z_whatami_t _whatami;
     _z_bytes_t _pid;
     _z_locator_array_t _locators;
+    z_whatami_t _whatami;
 } _z_t_msg_hello_t;
 void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
 
@@ -685,12 +685,12 @@ typedef struct {
     _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
+    _z_bytes_t _pid;
     _z_zint_t _options;
-    z_whatami_t _whatami;
     _z_zint_t _lease;
     _z_zint_t _sn_resolution;
-    _z_bytes_t _pid;
     _z_conduit_sn_list_t _next_sns;
+    z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_join_t;
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
@@ -732,11 +732,11 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 // - if Q==1 then the initiator/responder supports QoS.
 //
 typedef struct {
-    _z_zint_t _options;
-    z_whatami_t _whatami;
-    _z_zint_t _sn_resolution;
     _z_bytes_t _pid;
     _z_bytes_t _cookie;
+    _z_zint_t _options;
+    _z_zint_t _sn_resolution;
+    z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_init_t;
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
@@ -935,8 +935,8 @@ typedef union {
     _z_zenoh_message_vec_t _messages;
 } _z_frame_payload_t;
 typedef struct {
-    _z_zint_t _sn;
     _z_frame_payload_t _payload;
+    _z_zint_t _sn;
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header);
 
@@ -955,8 +955,8 @@ typedef union {
     _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
 typedef struct {
-    _z_attachment_t *_attachment;
     _z_transport_body_t _body;
+    _z_attachment_t *_attachment;
     uint8_t _header;
 } _z_transport_message_t;
 void _z_t_msg_clear(_z_transport_message_t *msg);

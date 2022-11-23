@@ -38,9 +38,9 @@
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'
 typedef struct {
+    _z_str_intmap_t _metadata;
     char *_protocol;
     char *_address;
-    _z_str_intmap_t _metadata;
 } _z_locator_t;
 
 _Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);

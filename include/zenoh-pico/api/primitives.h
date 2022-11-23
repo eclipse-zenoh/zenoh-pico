@@ -265,7 +265,7 @@ z_owned_config_t z_config_default(void);
  * Returns:
  *   Returns the property with the given integer key from the configuration.
  */
-const char *zp_config_get(z_config_t config, unsigned int key);
+const char *zp_config_get(z_config_t config, uint8_t key);
 
 /**
  * Inserts or replaces the property with the given integer key in the configuration.
@@ -278,7 +278,7 @@ const char *zp_config_get(z_config_t config, unsigned int key);
  * Returns:
  *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
  */
-int8_t zp_config_insert(z_config_t config, unsigned int key, z_string_t value);
+int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value);
 
 /**
  * Return a new, zenoh-allocated, default scouting configuration.
@@ -339,7 +339,7 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t config);
  * Returns:
  *   Returns the property with the given integer key from the configuration.
  */
-const char *zp_scouting_config_get(z_scouting_config_t config, unsigned int key);
+const char *zp_scouting_config_get(z_scouting_config_t config, uint8_t key);
 
 /**
  * Inserts or replaces the property with the given integer key in the configuration.
@@ -352,7 +352,7 @@ const char *zp_scouting_config_get(z_scouting_config_t config, unsigned int key)
  * Returns:
  *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
  */
-int8_t zp_scouting_config_insert(z_scouting_config_t config, unsigned int key, z_string_t value);
+int8_t zp_scouting_config_insert(z_scouting_config_t config, uint8_t key, z_string_t value);
 
 /**
  * Constructs a gravestone value for hello, useful to steal one from a callback.

@@ -27,16 +27,17 @@ typedef struct {
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 
-    // SN numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
-    _z_conduit_sn_list_t _sn_rx_sns;
-
     _z_bytes_t _remote_pid;
     _z_bytes_t _remote_addr;
 
+    // SN numbers
+    _z_zint_t _sn_resolution;
+    _z_zint_t _sn_resolution_half;
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
+
+    _z_conduit_sn_list_t _sn_rx_sns;
+
     volatile _Bool _received;
 } _z_transport_peer_entry_t;
 
@@ -50,7 +51,6 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 
 typedef struct {
     // Session associated to the transport
-    void *_session;
 
 #if Z_MULTI_THREAD == 1
     // TX and RX mutexes
@@ -58,9 +58,15 @@ typedef struct {
     _z_mutex_t _mutex_tx;
 #endif  // Z_MULTI_THREAD == 1
 
-    // Defragmentation buffers
-    _z_wbuf_t _dbuf_reliable;
-    _z_wbuf_t _dbuf_best_effort;
+    _z_link_t _link;
+
+    // Buffers
+    _z_wbuf_t _dbuf_reliable;     // Defragmentation buffer
+    _z_wbuf_t _dbuf_best_effort;  // Defragmentation buffer
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
+
+    _z_bytes_t _remote_pid;
 
     // SN numbers
     _z_zint_t _sn_resolution;
@@ -69,26 +75,19 @@ typedef struct {
     _z_zint_t _sn_tx_best_effort;
     _z_zint_t _sn_rx_reliable;
     _z_zint_t _sn_rx_best_effort;
+    volatile _z_zint_t _lease;
 
-    _z_bytes_t _remote_pid;
+    void *_session;
 
-    // ----------- Link related -----------
-    // TX and RX buffers
-    _z_link_t _link;
-    _z_wbuf_t _wbuf;
-    _z_zbuf_t _zbuf;
+#if Z_MULTI_THREAD == 1
+    _z_task_t *_read_task;
+    _z_task_t *_lease_task;
+    volatile _Bool _read_task_running;
+    volatile _Bool _lease_task_running;
+#endif  // Z_MULTI_THREAD == 1
 
     volatile _Bool _received;
     volatile _Bool _transmitted;
-
-#if Z_MULTI_THREAD == 1
-    volatile _Bool _read_task_running;
-    _z_task_t *_read_task;
-    volatile _Bool _lease_task_running;
-    _z_task_t *_lease_task;
-#endif  // Z_MULTI_THREAD == 1
-
-    volatile _z_zint_t _lease;
 } _z_transport_unicast_t;
 
 typedef struct {
@@ -104,31 +103,30 @@ typedef struct {
     _z_mutex_t _mutex_peer;
 #endif  // Z_MULTI_THREAD == 1
 
-    // Known valid peers
-    _z_transport_peer_entry_list_t *_peers;
+    _z_link_t _link;
+
+    // TX and RX buffers
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
 
     // SN initial numbers
     _z_zint_t _sn_resolution;
     _z_zint_t _sn_resolution_half;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
+    volatile _z_zint_t _lease;
 
-    // ----------- Link related -----------
-    // TX and RX buffers
-    _z_link_t _link;
-    _z_wbuf_t _wbuf;
-    _z_zbuf_t _zbuf;
-
-    volatile _Bool _transmitted;
+    // Known valid peers
+    _z_transport_peer_entry_list_t *_peers;
 
 #if Z_MULTI_THREAD == 1
-    volatile _Bool _read_task_running;
     _z_task_t *_read_task;
-    volatile _Bool _lease_task_running;
     _z_task_t *_lease_task;
+    volatile _Bool _read_task_running;
+    volatile _Bool _lease_task_running;
 #endif  // Z_MULTI_THREAD == 1
 
-    volatile _z_zint_t _lease;
+    volatile _Bool _transmitted;
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -148,12 +146,12 @@ _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
 typedef struct {
     _z_bytes_t _remote_pid;
-    z_whatami_t _whatami;
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
-    _Bool _is_qos;
     _z_zint_t _lease;
+    z_whatami_t _whatami;
+    _Bool _is_qos;
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {

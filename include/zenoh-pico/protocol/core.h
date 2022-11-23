@@ -42,16 +42,16 @@ typedef size_t _z_zint_t;
  * A zenoh encoding.
  */
 typedef struct {
-    z_encoding_prefix_t prefix;
     _z_bytes_t suffix;
+    z_encoding_prefix_t prefix;
 } _z_encoding_t;
 
 /**
  * A zenoh timestamp.
  */
 typedef struct {
-    uint64_t _time;
     _z_bytes_t _id;
+    uint64_t _time;
 } _z_timestamp_t;
 
 /**
@@ -79,22 +79,22 @@ typedef struct {
 typedef struct {
     _z_keyexpr_t keyexpr;
     _z_bytes_t payload;
+    _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
-    _z_timestamp_t timestamp;
 } _z_sample_t;
 
 /**
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:
- *   _z_str_array_t locators: The locators of the scouted entity.
  *   _z_bytes_t pid: The peer id of the scouted entity (empty if absent).
+ *   _z_str_array_t locators: The locators of the scouted entity.
  *   uint8_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_str_array_t locators;
     _z_bytes_t pid;
+    _z_str_array_t locators;
     uint8_t whatami;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
@@ -125,14 +125,14 @@ typedef struct {
  * :c:type:`_z_subscription_sptr_t`.
  *
  * Members:
+ *     _z_period_t *period: The subscription period.
  *     z_reliability_t reliability: The subscription reliability.
  *     _z_submode_t mode: The subscription mode.
- *     _z_period_t *period: The subscription period.
  */
 typedef struct {
+    _z_period_t period;
     z_reliability_t reliability;
     z_submode_t mode;
-    _z_period_t period;
 } _z_subinfo_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */
