@@ -134,9 +134,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                                       const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) ==
-                               true)) {  // FIXME: to be checked, but this will might happen
-                                         // with the current version of the protocol
+    if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) == true) {
         ret = _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
     }
 

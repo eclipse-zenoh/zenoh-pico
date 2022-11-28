@@ -26,15 +26,15 @@ int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
 int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *buf) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_uint_decode(&p->origin, buf);
+    ret |= _z_uint_decode(&p->origin, buf);
     if (ret == _Z_RES_OK) {
-        ret = _z_uint_decode(&p->period, buf);
+        ret |= _z_uint_decode(&p->period, buf);
     } else {
         p->origin = 0;
     }
 
     if (ret == _Z_RES_OK) {
-        ret = _z_uint_decode(&p->duration, buf);
+        ret |= _z_uint_decode(&p->duration, buf);
     } else {
         p->period = 0;
     }
@@ -59,7 +59,7 @@ int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
         *en = _z_zbuf_read(zbf);
     } else {
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        ret = _Z_ERR_PARSE_UINT8;
+        ret |= _Z_ERR_PARSE_UINT8;
     }
 
     return ret;
@@ -89,7 +89,7 @@ int8_t _z_uint_decode(unsigned int *uint, _z_zbuf_t *zbf) {
             *uint = *uint | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret = _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_PARSE_ZINT;
         }
     } while (u8 > 0x7f);
 
@@ -106,7 +106,7 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
         *u8 = _z_zbuf_read(zbf);
     } else {
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        ret = _Z_ERR_PARSE_UINT8;
+        ret |= _Z_ERR_PARSE_UINT8;
     }
 
     return ret;
@@ -136,7 +136,7 @@ int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *zbf) {
             *u64 = *u64 | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret = _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_PARSE_ZINT;
         }
     } while (u8 > 0x7f);
 
@@ -168,7 +168,7 @@ int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
             *zint = *zint | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret = _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_PARSE_ZINT;
         }
     } while (u8 > 0x7f);
 
@@ -181,9 +181,9 @@ int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
 
     _Z_EC(_z_zint_encode(wbf, bs->len))
     if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
-        ret = _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
-        ret = _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     }
 
     return ret;
@@ -192,7 +192,7 @@ int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
 int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_zint_decode(&bs->len, zbf);
+    ret |= _z_zint_decode(&bs->len, zbf);
     if (ret == _Z_RES_OK) {
         if (_z_zbuf_len(zbf) >= bs->len) {                           // Check if we have enought bytes to read
             *bs = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
@@ -201,7 +201,7 @@ int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
             _Z_DEBUG("WARNING: Not enough bytes to read\n");
             bs->len = 0;
             bs->start = NULL;
-            ret = _Z_ERR_PARSE_BYTES;
+            ret |= _Z_ERR_PARSE_BYTES;
         }
     } else {
         bs->len = 0;
@@ -225,7 +225,7 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t len = 0;
-    ret = _z_zint_decode(&len, zbf);
+    ret |= _z_zint_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
         if (_z_zbuf_len(zbf) >= len) {                      // Check if we have enough bytes to read
             char *tmp = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
@@ -233,17 +233,17 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
                 tmp[len] = '\0';
                 _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
             } else {
-                ret = _Z_ERR_OUT_OF_MEMORY;
+                ret |= _Z_ERR_OUT_OF_MEMORY;
             }
             *str = tmp;
         } else {
             _Z_DEBUG("WARNING: Not enough bytes to read\n");
             *str = NULL;
-            ret = _Z_ERR_PARSE_STRING;
+            ret |= _Z_ERR_PARSE_STRING;
         }
     } else {
         *str = NULL;
-        ret = _Z_ERR_PARSE_STRING;
+        ret |= _Z_ERR_PARSE_STRING;
     }
 
     return ret;

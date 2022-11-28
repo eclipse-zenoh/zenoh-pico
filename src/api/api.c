@@ -767,7 +767,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply) {
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);
-    return (z_value_t){.payload = _z_bytes_make(0), .encoding = z_encoding_default()};
+    return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 
 z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }

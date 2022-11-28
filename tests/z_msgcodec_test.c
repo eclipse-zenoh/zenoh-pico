@@ -483,7 +483,7 @@ _z_data_info_t gen_data_info(void) {
         if (gen_bool()) {
             di._encoding.suffix = gen_bytes(8);
         } else {
-            di._encoding.suffix = _z_bytes_make(0);
+            di._encoding.suffix = _z_bytes_empty();
         }
 
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_ENC);
