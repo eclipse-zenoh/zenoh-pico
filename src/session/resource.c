@@ -225,7 +225,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
             zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
         }
     } else {
-        ret = _Z_ERR_DECLARE_KEYEXPR;
+        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
 #if Z_MULTI_THREAD == 1

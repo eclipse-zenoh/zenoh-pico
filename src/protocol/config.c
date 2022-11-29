@@ -91,7 +91,7 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
                 // Process next key value
                 start = _z_cptr_char_offset(p_value_end, 1);
             } else {
-                ret = _Z_ERR_OUT_OF_MEMORY;
+                ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
         }
     }

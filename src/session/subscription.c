@@ -182,7 +182,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_keyexpr_clear(&key);
         _z_subscription_sptr_list_free(&subs);
     } else {
-        ret = _Z_ERR_DECLARE_KEYEXPR;
+        ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
     return ret;

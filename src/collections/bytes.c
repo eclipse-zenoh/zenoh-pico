@@ -31,15 +31,13 @@ int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
     } else {
         bs->len = 0;
         bs->_is_alloc = false;
-        ret = _Z_ERR_OUT_OF_MEMORY;
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     return ret;
 }
 
-_z_bytes_t _z_bytes_empty(void) {
-    return (_z_bytes_t){.start = NULL, .len = 0, ._is_alloc = false};
-}
+_z_bytes_t _z_bytes_empty(void) { return (_z_bytes_t){.start = NULL, .len = 0, ._is_alloc = false}; }
 
 _z_bytes_t _z_bytes_make(size_t capacity) {
     _z_bytes_t bs;

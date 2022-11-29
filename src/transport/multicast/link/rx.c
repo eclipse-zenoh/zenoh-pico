@@ -70,7 +70,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                ret = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_TRANSPORT_NO_SPACE;
             }
         } else {
             ret = _Z_ERR_TRANSPORT_RX_FAILED;
@@ -167,7 +167,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                     ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
                 } else {
-                    ret = _Z_ERR_OUT_OF_MEMORY;
+                    ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
             } else  // Existing peer
             {

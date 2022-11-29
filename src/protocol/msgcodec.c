@@ -230,7 +230,7 @@ int8_t _z_attachment_decode(_z_attachment_t **atch, _z_zbuf_t *zbf, uint8_t head
             *atch = NULL;
         }
     } else {
-        ret |= _Z_ERR_OUT_OF_MEMORY;
+        ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     return ret;
@@ -281,7 +281,7 @@ int8_t _z_reply_context_decode(_z_reply_context_t **rc, _z_zbuf_t *zbf, uint8_t 
             *rc = NULL;
         }
     } else {
-        ret |= _Z_ERR_OUT_OF_MEMORY;
+        ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     return ret;
@@ -543,7 +543,7 @@ int8_t _z_declaration_encode(_z_wbuf_t *wbf, _z_declaration_t *dcl) {
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode declaration with unknown ID(%d)\n", did);
-            ret |= _Z_ERR_MESSAGE_UNKNOWN;
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         } break;
     }
 
@@ -592,7 +592,7 @@ int8_t _z_declaration_decode_na(_z_declaration_t *decl, _z_zbuf_t *zbf) {
 
             default: {
                 _Z_DEBUG("WARNING: Trying to decode declaration with unknown ID(%d)\n", mid);
-                ret |= _Z_ERR_PARSE_DECLARATION;
+                ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             } break;
         }
     }
@@ -894,7 +894,7 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
-            ret |= _Z_ERR_MESSAGE_UNKNOWN;
+            ret |= _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
         } break;
     }
 
@@ -952,17 +952,16 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
 
                 case _Z_MID_LINK_STATE_LIST: {
                     _Z_DEBUG("WARNING: Link state not supported in zenoh-pico\n");
-                    ret |= _Z_ERR_PARSE_ZENOH_MESSAGE;
+                    is_last = true;
                 } break;
 
                 default: {
                     _Z_DEBUG("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
-                    ret |= _Z_ERR_MESSAGE_UNKNOWN;
+                    ret |= _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
                 } break;
             }
         } else {
             msg->_header = 0xFF;
-            ret |= _Z_ERR_PARSE_ZENOH_MESSAGE;
         }
     } while ((ret == _Z_RES_OK) && (is_last == false));
 
@@ -1393,11 +1392,12 @@ int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header)
                 if (ret == _Z_RES_OK) {
                     _z_zenoh_message_vec_append(&msg->_payload._messages, zm);
                 } else {
+                    _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
+
                     // FIXME: Check for the return error, since not all of them means a decoding error
                     //        in this particular case. As of now, we roll-back the reading position
                     //        and return to the Zenoh transport-level decoder.
-                    _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
-                    if ((ret & _Z_ERR_MESSAGE_UNKNOWN) == _Z_ERR_MESSAGE_UNKNOWN) {
+                    if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
                         ret = _Z_RES_OK;
                     }
                     break;
@@ -1473,7 +1473,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
         default: {
             _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
-            ret |= _Z_ERR_MESSAGE_UNKNOWN;
+            ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
 
@@ -1557,7 +1557,7 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
 
                 default: {
                     _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
-                    ret |= _Z_ERR_PARSE_TRANSPORT_MESSAGE;
+                    ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
                     is_last = true;
                 } break;
             }

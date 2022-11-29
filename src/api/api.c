@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
@@ -348,7 +349,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         z_scouting_config_drop(config);
         config->_value = NULL;
     } else {
-        ret = _Z_ERR_OUT_OF_MEMORY;
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     return ret;

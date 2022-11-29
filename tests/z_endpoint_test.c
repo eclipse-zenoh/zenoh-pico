@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "zenoh-pico/collections/string.h"
@@ -42,27 +43,27 @@ int main(void) {
     s[0] = '\0';  // snprintf(s, "");
     printf("- %s\n", s);
     ret = _z_locator_from_str(&lc, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "/");
     printf("- %s\n", s);
     ret = _z_locator_from_str(&lc, "/");
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp");
     printf("- %s\n", s);
     ret = _z_locator_from_str(&lc, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp/");
     printf("- %s\n", s);
     ret = _z_locator_from_str(&lc, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "127.0.0.1:7447");
     printf("- %s\n", s);
     ret = _z_locator_from_str(&lc, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp/127.0.0.1:7447?");
     printf("- %s\n", s);
@@ -93,27 +94,27 @@ int main(void) {
     s[0] = '\0';  // snprintf(s, "");
     printf("- %s\n", s);
     ret = _z_endpoint_from_str(&ep, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "/");
     printf("- %s\n", s);
     ret = _z_endpoint_from_str(&ep, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp");
     printf("- %s\n", s);
     ret = _z_endpoint_from_str(&ep, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp");
     printf("- %s\n", s);
     ret = _z_endpoint_from_str(&ep, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "127.0.0.1:7447");
     printf("- %s\n", s);
     ret = _z_endpoint_from_str(&ep, s);
-    assert(ret == _Z_ERR_PARSE_STRING);
+    assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
 
     snprintf(s, 64, "tcp/127.0.0.1:7447?");
     printf("- %s\n", s);

@@ -49,7 +49,7 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
         } else
 #endif
         {
-            ret = _Z_ERR_LOCATOR_INVALID;
+            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
 
         if (ret == _Z_RES_OK) {
@@ -63,7 +63,7 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
         }
     } else {
         _z_endpoint_clear(&ep);
-        ret = _Z_ERR_LOCATOR_INVALID;
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     return ret;
@@ -88,7 +88,7 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
         } else
 #endif
         {
-            ret = _Z_ERR_LOCATOR_INVALID;
+            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
 
         if (ret == _Z_RES_OK) {
@@ -102,7 +102,7 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
         }
     } else {
         _z_endpoint_clear(&ep);
-        ret = _Z_ERR_LOCATOR_INVALID;
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     return ret;

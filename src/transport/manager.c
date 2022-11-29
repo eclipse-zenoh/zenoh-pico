@@ -99,7 +99,7 @@ int8_t _z_transport_manager_init(_z_transport_manager_t *ztm) {
     if (ztm->_local_pid._is_alloc == true) {
         z_random_fill((uint8_t *)ztm->_local_pid.start, ztm->_local_pid.len);
     } else {
-        ret = _Z_ERR_OUT_OF_MEMORY;
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     return ret;

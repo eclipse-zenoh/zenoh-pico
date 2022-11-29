@@ -51,7 +51,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                ret = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_TRANSPORT_NO_SPACE;
             }
         } else {
             ret = _Z_ERR_TRANSPORT_RX_FAILED;

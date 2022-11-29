@@ -84,11 +84,8 @@ int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_rel
 
             size_t to_copy = (bytes_left <= space_left) ? bytes_left : space_left;  // Compute bytes to write
             ret = _z_wbuf_siphon(dst, src, to_copy);                                // Write the fragment
-            break;
-        } else {
-            ret = _Z_ERR_SERIALIZING_TRANSPORT_MESSAGE;
-            break;
         }
+        break;
     } while (1);
 
     return ret;

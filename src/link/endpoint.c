@@ -158,7 +158,7 @@ void _z_locator_metadata_onto_str(char *dst, size_t dst_len, const _z_str_intmap
 }
 
 int8_t _z_locator_from_str(_z_locator_t *lc, const char *str) {
-    int8_t ret = _Z_ERR_PARSE_STRING;
+    int8_t ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
 
     // Parse protocol
     lc->_protocol = _z_locator_protocol_from_str(str);
@@ -312,7 +312,7 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
         } else
 #endif
         {
-            ret = _Z_ERR_LOCATOR_UNKNOWN_SCHEMA;
+            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
     }
 

@@ -118,7 +118,7 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
         zn->_pending_queries = _z_pending_query_list_push(zn->_pending_queries, pen_qry);
     } else {
-        ret = _Z_ERR_REGISTER_QUERY;
+        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
 #if Z_MULTI_THREAD == 1
@@ -144,7 +144,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
-        ret = _Z_ERR_QUERY_UNKNOWN;
+        ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
@@ -168,6 +168,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
                                (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC))) {
+        _Bool drop = false;
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
         while (pen_rps != NULL) {
@@ -176,7 +177,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
                 if (timestamp._time <= pen_rep->_tstamp._time) {
-                    ret = _Z_ERR_QUERY_OLDER_DATA;
+                    drop = true;
                 } else {
                     pen_qry->_pending_replies =
                         _z_pending_reply_list_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
@@ -187,7 +188,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
 
-        if (ret == _Z_RES_OK) {
+        if (drop == false) {
             // Cache most recent reply
             pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
             if (pen_rep != NULL) {
@@ -204,7 +205,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                 pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
                 pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
             } else {
-                ret = _Z_ERR_OUT_OF_MEMORY;
+                ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
         }
     }
@@ -242,7 +243,7 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
     // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
-        ret = _Z_ERR_QUERY_UNKNOWN;
+        ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
     // The reply is the final one, apply consolidation if needed

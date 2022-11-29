@@ -354,7 +354,7 @@ int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
         _z_wbuf_add_iosli(wbf, ios);
         _z_iosli_write(ios, b);
     } else {
-        ret = _Z_ERR_IOBUFFER_FAILED_WRITE;
+        ret = _Z_ERR_TRANSPORT_NO_SPACE;
     }
 
     return ret;
@@ -388,7 +388,7 @@ int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, siz
             loffset = loffset + writable;
         }
     } else {
-        ret = _Z_ERR_IOBUFFER_FAILED_WRITE;
+        ret = _Z_ERR_TRANSPORT_NO_SPACE;
     }
 
     return ret;

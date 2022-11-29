@@ -15,6 +15,7 @@
 #include "zenoh-pico/link/config/udp.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"

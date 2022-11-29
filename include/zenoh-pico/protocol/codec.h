@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_PROTOCOL_CODEC_H
 #define ZENOH_PICO_PROTOCOL_CODEC_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/config.h"

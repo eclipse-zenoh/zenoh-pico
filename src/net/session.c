@@ -14,6 +14,7 @@
 #include "zenoh-pico/net/session.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/session/utils.h"
@@ -116,7 +117,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
             z_free(locator);
         } else {
-            ret = _Z_ERR_SCOUT_NONE;
+            ret = _Z_ERR_SCOUT_NO_RESULTS;
             _Z_DEBUG("Unable to scout a zenoh router\n");
             _Z_ERROR("Please make sure at least one router is running on your network!\n");
         }
@@ -178,7 +179,7 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._read_task = task;
             if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
-                ret = _Z_ERR_TASK_START_FAILED;
+                ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
             }
         } else
@@ -187,7 +188,7 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
             if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
             zn->_tp._transport._multicast._read_task = task;
             if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
-                ret = _Z_ERR_TASK_START_FAILED;
+                ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
             }
         } else
@@ -232,7 +233,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._lease_task = task;
             if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
-                ret = _Z_ERR_TASK_START_FAILED;
+                ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
             }
         } else
@@ -241,7 +242,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
             if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
             zn->_tp._transport._multicast._lease_task = task;
             if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
-                ret = _Z_ERR_TASK_START_FAILED;
+                ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
             }
         } else

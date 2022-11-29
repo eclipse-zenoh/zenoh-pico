@@ -41,7 +41,7 @@ int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                ret = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_TRANSPORT_NO_SPACE;
             }
         } else {
             ret = _Z_ERR_TRANSPORT_RX_FAILED;

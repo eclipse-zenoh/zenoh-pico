@@ -59,7 +59,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                                 _z_resource_free(&r);
                             }
                         } else {
-                            ret = _Z_ERR_OUT_OF_MEMORY;
+                            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                         }
                     } break;
 
@@ -144,7 +144,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
                     default: {
                         _Z_INFO("Unknown declaration message ID");
-                        ret = _Z_ERR_MESSAGE_DECLARATION_UNEXPECTED;
+                        ret = _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
                     } break;
                 }
             }
@@ -170,7 +170,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
         default: {
             _Z_ERROR("Unknown zenoh message ID\n");
-            ret = _Z_ERR_MESSAGE_UNKNOWN;
+            ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
         }
     }
 

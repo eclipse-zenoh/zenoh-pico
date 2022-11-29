@@ -59,7 +59,7 @@ int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
         *en = _z_zbuf_read(zbf);
     } else {
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        ret |= _Z_ERR_PARSE_UINT8;
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
     return ret;
@@ -89,7 +89,7 @@ int8_t _z_uint_decode(unsigned int *uint, _z_zbuf_t *zbf) {
             *uint = *uint | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret |= _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } while (u8 > 0x7f);
 
@@ -106,7 +106,7 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
         *u8 = _z_zbuf_read(zbf);
     } else {
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        ret |= _Z_ERR_PARSE_UINT8;
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
     return ret;
@@ -136,7 +136,7 @@ int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *zbf) {
             *u64 = *u64 | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret |= _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } while (u8 > 0x7f);
 
@@ -168,7 +168,7 @@ int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
             *zint = *zint | (((_z_zint_t)u8 & 0x7f) << i);
             i = i + (uint8_t)7;
         } else {
-            ret |= _Z_ERR_PARSE_ZINT;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } while (u8 > 0x7f);
 
@@ -201,7 +201,7 @@ int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
             _Z_DEBUG("WARNING: Not enough bytes to read\n");
             bs->len = 0;
             bs->start = NULL;
-            ret |= _Z_ERR_PARSE_BYTES;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } else {
         bs->len = 0;
@@ -233,17 +233,17 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
                 tmp[len] = '\0';
                 _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
             } else {
-                ret |= _Z_ERR_OUT_OF_MEMORY;
+                ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
             *str = tmp;
         } else {
             _Z_DEBUG("WARNING: Not enough bytes to read\n");
             *str = NULL;
-            ret |= _Z_ERR_PARSE_STRING;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } else {
         *str = NULL;
-        ret |= _Z_ERR_PARSE_STRING;
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
     return ret;

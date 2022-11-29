@@ -190,7 +190,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-        ret = _Z_ERR_DECLARE_KEYEXPR;
+        ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
     return ret;

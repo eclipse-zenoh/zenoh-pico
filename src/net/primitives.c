@@ -192,7 +192,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         _z_msg_clear(&z_msg);
 
     } else {
-        ret = _Z_ERR_SUBSCRIPTION_UNKNOWN;
+        ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
     return ret;
@@ -257,7 +257,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
         _z_msg_clear(&z_msg);
 
     } else {
-        ret = _Z_ERR_QUERYABLE_UNKNOWN;
+        ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
     return ret;
@@ -375,7 +375,7 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
     } else {
-        ret = _Z_ERR_SUBSCRIPTION_UNKNOWN;
+        ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
     return ret;
