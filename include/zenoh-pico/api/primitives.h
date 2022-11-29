@@ -456,6 +456,7 @@ z_bytes_t z_query_parameters(const z_query_t *query);
 
 /**
  * Get a query's payload value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
  *
  * Parameters:
  *   query: Pointer to the query to get the value selector from.
