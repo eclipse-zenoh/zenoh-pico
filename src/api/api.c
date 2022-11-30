@@ -200,9 +200,9 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
         .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
 }
 
-z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
+z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
 
-z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
+z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
     return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
@@ -439,12 +439,13 @@ z_id_t z_info_zid(const z_session_t zs) {
 }
 
 z_put_options_t z_put_options_default(void) {
-    return (z_put_options_t){
-        .encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t){.encoding = z_encoding_default(),
+                             .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
+                             .priority = Z_PRIORITY_DEFAULT};
 }
 
 z_delete_options_t z_delete_options_default(void) {
-    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
 int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
@@ -547,7 +548,7 @@ int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
 }
 
 z_publisher_options_t z_publisher_options_default(void) {
-    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
+    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
 z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_publisher_options_t *options) {
@@ -616,11 +617,11 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
 }
 
 z_subscriber_options_t z_subscriber_options_default(void) {
-    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
+    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
 
 z_pull_subscriber_options_t z_pull_subscriber_options_default(void) {
-    return (z_pull_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
+    return (z_pull_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
 
 z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,
