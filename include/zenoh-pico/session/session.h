@@ -115,7 +115,7 @@ typedef void (*_z_questionable_handler_t)(const z_query_t *query, void *arg);
 typedef struct {
     _z_zint_t _id;
     _z_keyexpr_t _key;
-    bool _complete;
+    _Bool _complete;
     _z_questionable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;

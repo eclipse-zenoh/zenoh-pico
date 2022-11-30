@@ -40,7 +40,7 @@ char const *_z_bstrstr(_z_str_t haystack, _z_str_t needle) {
     char const *result = NULL;
     for (; (result == false) && (haystack.start <= haystack.end);
          haystack.start = _z_cptr_char_offset(haystack.start, 1)) {
-        bool found = true;
+        _Bool found = true;
         char const *n = needle.start;
         char const *h = haystack.start;
         while (_z_ptr_char_diff(needle.end, n) > 0) {
