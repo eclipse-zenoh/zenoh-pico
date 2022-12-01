@@ -186,7 +186,6 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
-
     } else {
         ret = _Z_ERR_SUBSCRIPTION_UNKNOWN;
     }
@@ -195,7 +194,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_queryable_t *ret = NULL;
 

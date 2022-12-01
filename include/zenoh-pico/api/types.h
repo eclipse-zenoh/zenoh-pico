@@ -245,10 +245,10 @@ typedef struct {
  * upon its declaration via :c:func:`z_declare_queryable`.
  *
  * Members:
- *   bool complete: The completeness of the queryable.
+ *   _Bool complete: The completeness of the queryable.
  */
 typedef struct {
-    bool complete;
+    _Bool complete;
 } z_queryable_options_t;
 
 /**

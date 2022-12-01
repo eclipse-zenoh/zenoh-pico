@@ -94,10 +94,8 @@ int main(int argc, char **argv) {
         }
 
         printf("Sending Query '%s'...\n", keyexpr);
-        z_get_options_t opts = z_get_options_default();
-        opts.target = Z_QUERY_TARGET_ALL;
         z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-        if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {
+        if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), NULL) < 0) {
             printf("Unable to send query.\n");
             return -1;
         }
