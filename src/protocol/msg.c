@@ -291,10 +291,6 @@ void _z_data_info_clear(_z_data_info_t *di) {
         _z_bytes_clear(&di->_source_id);
     }
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        _z_bytes_clear(&di->_first_router_id);
-    }
-
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP) == true) {
         _z_timestamp_clear(&di->_tstamp);
     }

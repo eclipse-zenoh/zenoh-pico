@@ -749,12 +749,6 @@ int8_t _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld) {
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_SN) == true) {
         _Z_EC(_z_zint_encode(wbf, fld->_source_sn))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &fld->_first_router_id))
-    }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_SN) == true) {
-        _Z_EC(_z_zint_encode(wbf, fld->_first_router_sn))
-    }
 
     return ret;
 }
@@ -807,18 +801,6 @@ void _z_data_info_decode_na(_z_zbuf_t *zbf, _z_data_info_result_t *r) {
             _z_zint_result_t r_ssn = _z_zint_decode(zbf);
             _ASSURE_P_RESULT(r_ssn, r, _Z_ERR_PARSE_ZINT)
             r->_value._source_sn = r_ssn._value;
-        }
-
-        if (_Z_HAS_FLAG(r->_value._flags, _Z_DATA_INFO_RTR_ID) == true) {
-            _z_bytes_result_t r_rid = _z_bytes_decode(zbf);
-            _ASSURE_P_RESULT(r_rid, r, _Z_ERR_PARSE_BYTES)
-            r->_value._first_router_id = r_rid._value;
-        }
-
-        if (_Z_HAS_FLAG(r->_value._flags, _Z_DATA_INFO_RTR_SN) == true) {
-            _z_zint_result_t r_rsn = _z_zint_decode(zbf);
-            _ASSURE_P_RESULT(r_rsn, r, _Z_ERR_PARSE_ZINT)
-            r->_value._first_router_sn = r_rsn._value;
         }
     } else {
         r->_tag = _Z_ERR_PARSE_PAYLOAD;

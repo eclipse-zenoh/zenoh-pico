@@ -153,8 +153,6 @@
 // Reserved: bits 4-6
 #define _Z_DATA_INFO_SRC_ID 0x80   // 1 << 7
 #define _Z_DATA_INFO_SRC_SN 0x100  // 1 << 8
-#define _Z_DATA_INFO_RTR_ID 0x200  // 1 << 9
-#define _Z_DATA_INFO_RTR_SN 0x400  // 1 << 10
 
 /*------------------ Payload field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -441,10 +439,6 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 // +---------------+
 // ~   source_sn   ~ if options & (1 << 8)
 // +---------------+
-// ~first_router_id~ if options & (1 << 9)
-// +---------------+
-// ~first_router_sn~ if options & (1 << 10)
-// +---------------+
 //
 // - if options & (1 << 5) then the payload is sliced
 typedef struct {
@@ -454,8 +448,6 @@ typedef struct {
     _z_timestamp_t _tstamp;
     _z_bytes_t _source_id;
     _z_zint_t _source_sn;
-    _z_bytes_t _first_router_id;
-    _z_zint_t _first_router_sn;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
 

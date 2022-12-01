@@ -521,14 +521,6 @@ _z_data_info_t gen_data_info(void) {
         di._source_sn = gen_zint();
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_SRC_SN);
     }
-    if (gen_bool()) {
-        di._first_router_id = gen_bytes(16);
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_RTR_ID);
-    }
-    if (gen_bool()) {
-        di._first_router_sn = gen_zint();
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_RTR_SN);
-    }
 
     return di;
 }
@@ -563,15 +555,6 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right) {
     if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_SN) == true) {
         printf("Src SN (%zu:%zu), ", left->_source_sn, right->_source_sn);
         assert(left->_source_sn == right->_source_sn);
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        printf("Rtr ID -> ");
-        assert_eq_uint8_array(&left->_first_router_id, &right->_first_router_id);
-        printf(", ");
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_SN) == true) {
-        printf("Rtr SN (%zu:%zu), ", left->_first_router_sn, right->_first_router_sn);
-        assert(left->_first_router_sn == right->_first_router_sn);
     }
 }
 
