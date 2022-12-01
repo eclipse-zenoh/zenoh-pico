@@ -99,7 +99,6 @@ int main(int argc, char **argv) {
 
         printf("Sending Query '%s'...\n", keyexpr);
         z_get_options_t opts = z_get_options_default();
-        opts.target = Z_QUERY_TARGET_ALL;
         if (value != NULL) {
             opts.with_value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
         }

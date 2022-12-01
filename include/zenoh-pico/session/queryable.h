@@ -15,9 +15,11 @@
 #ifndef ZENOH_PICO_SESSION_QUERYABLE_H
 #define ZENOH_PICO_SESSION_QUERYABLE_H
 
+#include <stdbool.h>
+
 #include "zenoh-pico/net/session.h"
 
-#define _Z_QUERYABLE_COMPLETE_DEFAULT 1
+#define _Z_QUERYABLE_COMPLETE_DEFAULT false
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
 /*------------------ Queryable ------------------*/
