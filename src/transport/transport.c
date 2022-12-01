@@ -254,6 +254,8 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                                 }
                                 _z_t_msg_clear(&oam);
                                 _z_t_msg_clear(&osm);
+                            } else {
+                                _z_t_msg_clear(&osm);
                             }
                         } else {
                             _z_t_msg_clear(&osm);
@@ -264,7 +266,6 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                 }
             }
         }
-        _z_t_msg_clear(&iam);
     }
 
     return ret;
