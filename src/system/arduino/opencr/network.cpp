@@ -41,7 +41,8 @@ _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_p
 
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
-    if ((ep._iptcp._port < (uint32_t)1) || (ep._iptcp._port > 65355)) {  // Port numbers should range from 1 to 65355
+    if ((ep._iptcp._port < (uint32_t)1) ||
+        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         ep._err = true;
     }
 
@@ -139,7 +140,8 @@ _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_p
 
     // Parse and check the validity of the port
     ep._iptcp._port = strtoul(s_port, NULL, 10);
-    if ((ep._iptcp._port < (uint32_t)1) || (ep._iptcp._port > 65355)) {  // Port numbers should range from 1 to 65355
+    if ((ep._iptcp._port < (uint32_t)1) ||
+        (ep._iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         ep._err = true;
     }
 

@@ -24,6 +24,20 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
+int8_t _z_endpoint_bt_valid(_z_endpoint_t *endpoint) {
+    int8_t ret = _Z_RES_OK;
+
+    if (_z_str_eq(endpoint->_locator._protocol, BT_SCHEMA) != true) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    if (strlen(endpoint->_address) == 0) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    return ret;
+}
+
 int8_t _z_f_link_open_bt(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 

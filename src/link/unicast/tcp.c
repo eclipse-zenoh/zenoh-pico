@@ -25,7 +25,7 @@
 
 #if Z_LINK_TCP == 1
 
-char *_z_parse_port_segment_tcp(char *address) {
+char *__z_parse_port_segment_tcp(char *address) {
     char *ret = NULL;
 
     const char *p_start = strrchr(address, ':');
@@ -45,7 +45,7 @@ char *_z_parse_port_segment_tcp(char *address) {
     return ret;
 }
 
-char *_z_parse_address_segment_tcp(char *address) {
+char *__z_parse_address_segment_tcp(char *address) {
     char *ret = NULL;
 
     const char *p_start = &address[0];
@@ -70,6 +70,34 @@ char *_z_parse_address_segment_tcp(char *address) {
             (void)strncpy(ret, p_start, len);
             ret[len] = '\0';
         }
+    }
+
+    return ret;
+}
+
+int8_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
+    int8_t ret = _Z_RES_OK;
+
+    if (_z_str_eq(endpoint->_locator._protocol, TCP_SCHEMA) != true) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    char *s_addr = __z_parse_address_segment_tcp(endpoint->_locator._address);
+    if (s_addr == NULL) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    } else {
+        z_free(s_addr);
+    }
+
+    char *s_port = __z_parse_port_segment_tcp(endpoint->_locator._address);
+    if (s_port == NULL) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    } else {
+        uint32_t port = strtoul(s_port, NULL, 10);
+        if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        }
+        z_free(s_port);
     }
 
     return ret;
@@ -137,8 +165,8 @@ _z_link_t _z_new_link_tcp(_z_endpoint_t endpoint) {
 
     l._endpoint = endpoint;
     l._socket._tcp._sock._err = true;
-    char *s_addr = _z_parse_address_segment_tcp(endpoint._locator._address);
-    char *s_port = _z_parse_port_segment_tcp(endpoint._locator._address);
+    char *s_addr = __z_parse_address_segment_tcp(endpoint._locator._address);
+    char *s_port = __z_parse_port_segment_tcp(endpoint._locator._address);
     l._socket._tcp._rep = _z_create_endpoint_tcp(s_addr, s_port);
     z_free(s_addr);
     z_free(s_port);

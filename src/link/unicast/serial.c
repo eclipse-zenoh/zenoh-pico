@@ -26,6 +26,25 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
+int8_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
+    int8_t ret = _Z_RES_OK;
+
+    if (_z_str_eq(endpoint->_locator._protocol, SERIAL_SCHEMA) != true) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    char *p_dot = strchr(endpoint->_locator._address, '.');
+    if (p_dot != NULL) {
+        if (strlen(p_dot) == 1) {  // If dot is the last character
+            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        }
+    } else {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    return ret;
+}
+
 int8_t _z_f_link_open_serial(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 

@@ -25,7 +25,7 @@
 
 #if Z_LINK_UDP_UNICAST == 1
 
-char *_z_parse_port_segment_udp_unicast(char *address) {
+char *__z_parse_port_segment_udp_unicast(char *address) {
     char *ret = NULL;
 
     const char *p_start = strrchr(address, ':');
@@ -45,7 +45,7 @@ char *_z_parse_port_segment_udp_unicast(char *address) {
     return ret;
 }
 
-char *_z_parse_address_segment_udp_unicast(char *address) {
+char *__z_parse_address_segment_udp_unicast(char *address) {
     char *ret = NULL;
 
     const char *p_start = &address[0];
@@ -70,6 +70,34 @@ char *_z_parse_address_segment_udp_unicast(char *address) {
             (void)strncpy(ret, p_start, len);
             ret[len] = '\0';
         }
+    }
+
+    return ret;
+}
+
+int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
+    int8_t ret = _Z_RES_OK;
+
+    if (_z_str_eq(endpoint->_locator._protocol, UDP_SCHEMA) != true) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    char *s_addr = __z_parse_address_segment_udp_unicast(endpoint->_locator._address);
+    if (s_addr == NULL) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    } else {
+        z_free(s_addr);
+    }
+
+    char *s_port = __z_parse_port_segment_udp_unicast(endpoint->_locator._address);
+    if (s_port == NULL) {
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    } else {
+        uint32_t port = strtoul(s_port, NULL, 10);
+        if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        }
+        z_free(s_port);
     }
 
     return ret;
@@ -145,8 +173,8 @@ _z_link_t _z_new_link_udp_unicast(_z_endpoint_t endpoint) {
     l._endpoint = endpoint;
     l._socket._udp._sock._err = true;
     l._socket._udp._msock._err = true;
-    char *s_addr = _z_parse_address_segment_udp_unicast(endpoint._locator._address);
-    char *s_port = _z_parse_port_segment_udp_unicast(endpoint._locator._address);
+    char *s_addr = __z_parse_address_segment_udp_unicast(endpoint._locator._address);
+    char *s_port = __z_parse_port_segment_udp_unicast(endpoint._locator._address);
     l._socket._udp._rep = _z_create_endpoint_udp(s_addr, s_port);
     l._socket._udp._lep._err = true;
     z_free(s_addr);
