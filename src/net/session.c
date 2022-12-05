@@ -106,11 +106,11 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                 } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) == true) {
                     mode = Z_WHATAMI_PEER;
                 } else {
-                    mode = 255;
+                    ret = _Z_ERR_CONFIG_INVALID_MODE;
                 }
             }
 
-            if (mode != 255) {
+            if (ret == _Z_RES_OK) {
                 ret = __z_open_inner(zn, locator, mode);
             } else {
                 _Z_ERROR("Trying to configure an invalid mode.\n");
