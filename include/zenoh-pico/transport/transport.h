@@ -160,17 +160,17 @@ typedef struct {
     _Bool _is_qos;
 } _z_transport_multicast_establish_param_t;
 
-_z_transport_t _z_transport_unicast(_z_link_t *zl, _z_transport_unicast_establish_param_t *param);
-_z_transport_t _z_transport_multicast(_z_link_t *zl, _z_transport_multicast_establish_param_t *param);
+int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param);
+int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
 
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t local_pid);
+                                        const _z_bytes_t *local_pid);
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_bytes_t local_pid);
+                                          const _z_bytes_t *local_pid);
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_bytes_t local_pid);
+                                      const _z_bytes_t *local_pid);
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t local_pid);
+                                        const _z_bytes_t *local_pid);
 
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);

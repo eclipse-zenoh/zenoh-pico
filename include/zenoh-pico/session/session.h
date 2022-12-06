@@ -180,4 +180,6 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
  */
 typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
+int8_t _z_session_generate_pid(_z_bytes_t *bs, uint8_t size);
+
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

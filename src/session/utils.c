@@ -46,8 +46,21 @@ void _z_timestamp_reset(_z_timestamp_t *tstamp) {
     tstamp->_time = 0;
 }
 
+int8_t _z_session_generate_pid(_z_bytes_t *bs, uint8_t size) {
+    int8_t ret = _Z_RES_OK;
+
+    *bs = _z_bytes_make(size);
+    if (bs->_is_alloc == true) {
+        z_random_fill((uint8_t *)bs->start, bs->len);
+    } else {
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    return ret;
+}
+
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn) {
+int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid, _z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
@@ -64,26 +77,40 @@ int8_t _z_session_init(_z_session_t *zn) {
     zn->_local_questionable = NULL;
     zn->_pending_queries = NULL;
 
-    // Associate a transport with the session
-    ret = _z_transport_manager_init(&zn->_tp_manager);
-    if (ret == _Z_RES_OK) {
 #if Z_MULTI_THREAD == 1
-        ret = _z_mutex_init(&zn->_mutex_inner);
-        if (ret != _Z_RES_OK) {
-            _z_transport_manager_clear(&zn->_tp_manager);
-            z_free(&zn);
-        }
+    ret = _z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
+
+    if (ret == _Z_RES_OK) {
+        zn->_local_pid = _z_bytes_empty();
+        _z_bytes_move(&zn->_local_pid, pid);
+        zn->_tp = *zt;
+#if Z_UNICAST_TRANSPORT == 1
+        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+            zn->_tp._transport._unicast._session = zn;
+        } else
+#endif  // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            zn->_tp._transport._multicast._session = zn;
+        } else
+#endif  // Z_MULTICAST_TRANSPORT == 1
+        {
+            // Do nothing. Required to be here because of the #if directive
+        }
     } else {
-        z_free(&zn);
+        _z_transport_clear(zt);
+        _z_bytes_clear(&zn->_local_pid);
     }
 
     return ret;
 }
 
 void _z_session_clear(_z_session_t *zn) {
-    // Clean up transports and manager
-    _z_transport_manager_clear(&zn->_tp_manager);
+    // Clear Zenoh PID
+    _z_bytes_clear(&zn->_local_pid);
+
+    // Clean up transports
     _z_transport_clear(&zn->_tp);
 
     // Clean up the entities

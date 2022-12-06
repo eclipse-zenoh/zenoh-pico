@@ -438,8 +438,8 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) {
     z_id_t id;
-    if (zs._val->_tp_manager._local_pid.len <= sizeof(id.id)) {
-        _z_bytes_t bs = zs._val->_tp_manager._local_pid;
+    if (zs._val->_local_pid.len <= sizeof(id.id)) {
+        _z_bytes_t bs = zs._val->_local_pid;
         for (size_t i = 0; i < bs.len; i++) {
             id.id[i] = bs.start[bs.len - i - 1];
         }

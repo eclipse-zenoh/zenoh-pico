@@ -26,28 +26,24 @@
 int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_session_init(zn);
+    _z_transport_t zt;
+#if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
+    _z_bytes_t local_pid = _z_bytes_empty();
+    ret = _z_session_generate_pid(&local_pid, Z_ZID_LENGTH);
     if (ret == _Z_RES_OK) {
-        _z_transport_t zt;
-        ret = _z_new_transport(&zt, &zn->_tp_manager, locator, mode);
-        if (ret == _Z_RES_OK) {
-            // Attach session and transport to one another
-            zn->_tp = zt;
-
-#if Z_UNICAST_TRANSPORT == 1
-            if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-                zn->_tp._transport._unicast._session = zn;
-            } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
-                if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-                zn->_tp._transport._multicast._session = zn;
-            } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
-            {
-                ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-            }
+        ret = _z_new_transport(&zt, &local_pid, locator, mode);
+        if (ret != _Z_RES_OK) {
+            _z_bytes_clear(&local_pid);
         }
+    } else {
+        _z_bytes_clear(&local_pid);
+    }
+#else
+    ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+#endif
+
+    if (ret == _Z_RES_OK) {
+        ret = _z_session_init(zn, &local_pid, &zt);
     }
 
     return ret;
@@ -134,7 +130,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_tp_manager._local_pid));
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_local_pid));
 
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
