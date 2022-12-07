@@ -42,7 +42,7 @@ _z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_p
     if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         ep._iptcp = new SocketAddress(s_addr, port);
     } else {
-        ep._err = false;
+        ep._err = true;
     }
 
     return ep;
@@ -135,7 +135,7 @@ _z_sys_net_endpoint_t _z_create_endpoint_udp(const char *s_addr, const char *s_p
     if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
         ep._iptcp = new SocketAddress(s_addr, port);
     } else {
-        ep._err = false;
+        ep._err = true;
     }
 
     return ep;
