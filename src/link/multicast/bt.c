@@ -24,14 +24,14 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int8_t _z_endpoint_bt_valid(_z_endpoint_t *endpoint) {
+int8_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
     int8_t ret = _Z_RES_OK;
 
-    if (_z_str_eq(endpoint->_locator._protocol, BT_SCHEMA) != true) {
+    if (_z_str_eq(ep->_locator._protocol, BT_SCHEMA) != true) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    if (strlen(endpoint->_address) == 0) {
+    if (strlen(ep->_locator._address) == 0) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
@@ -47,10 +47,7 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
     uint8_t profile = (strcmp(profile_str, "spp") == 0) ? _Z_BT_PROFILE_SPP : _Z_BT_PROFILE_UNSUPPORTED;
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
-    self->_socket._bt._sock = _z_open_bt(self->_endpoint._locator._address, mode, profile);
-    if (self->_socket._bt._sock._err == true) {
-        ret = -1;
-    }
+    ret = _z_open_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile);
 
     return ret;
 }
@@ -77,15 +74,12 @@ int8_t _z_f_link_listen_bt(_z_link_t *self) {
     }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
-    self->_socket._bt._sock = _z_listen_bt(self->_endpoint._locator._address, mode, profile);
-    if (self->_socket._bt._sock._err == true) {
-        ret = -1;
-    }
+    ret = _z_listen_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile);
 
     return ret;
 }
 
-void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(self->_socket._bt._sock); }
+void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(&self->_socket._bt._sock); }
 
 void _z_f_link_free_bt(_z_link_t *self) { _z_str_free(&self->_socket._bt._gname); }
 
@@ -119,25 +113,24 @@ size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, 
 
 uint16_t _z_get_link_mtu_bt(void) { return SPP_MAXIMUM_PAYLOAD; }
 
-_z_link_t *_z_new_link_bt(_z_endpoint_t endpoint) {
-    _z_link_t l;
+int8_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
+    int8_t ret = _Z_RES_OK;
 
-    l._capabilities = Z_LINK_CAPABILITY_STREAMED | Z_LINK_CAPABILITY_MULTICAST;
-    l._mtu = _z_get_link_mtu_bt();
+    zl->_capabilities = Z_LINK_CAPABILITY_STREAMED | Z_LINK_CAPABILITY_MULTICAST;
+    zl->_mtu = _z_get_link_mtu_bt();
 
-    l._endpoint = endpoint;
-    l._socket._bt._sock._err = true;
+    zl->_endpoint = endpoint;
 
-    l._open_f = _z_f_link_open_bt;
-    l._listen_f = _z_f_link_listen_bt;
-    l._close_f = _z_f_link_close_bt;
-    l._free_f = _z_f_link_free_bt;
+    zl->_open_f = _z_f_link_open_bt;
+    zl->_listen_f = _z_f_link_listen_bt;
+    zl->_close_f = _z_f_link_close_bt;
+    zl->_free_f = _z_f_link_free_bt;
 
-    l._write_f = _z_f_link_write_bt;
-    l._write_all_f = _z_f_link_write_all_bt;
-    l._read_f = _z_f_link_read_bt;
-    l._read_exact_f = _z_f_link_read_exact_bt;
+    zl->_write_f = _z_f_link_write_bt;
+    zl->_write_all_f = _z_f_link_write_all_bt;
+    zl->_read_f = _z_f_link_read_bt;
+    zl->_read_exact_f = _z_f_link_read_exact_bt;
 
-    return lt;
+    return ret;
 }
 #endif

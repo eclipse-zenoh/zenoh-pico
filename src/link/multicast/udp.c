@@ -118,10 +118,8 @@ int8_t _z_f_link_open_udp_multicast(_z_link_t *self) {
     }
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    self->_socket._udp._sock = _z_open_udp_multicast(self->_socket._udp._rep, &self->_socket._udp._lep, tout, iface);
-    if (self->_socket._udp._sock._err == true) {
-        ret = -1;
-    }
+    ret = _z_open_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, &self->_socket._udp._lep, tout,
+                                iface);
 
     return ret;
 }
@@ -130,27 +128,20 @@ int8_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    self->_socket._udp._sock = _z_listen_udp_multicast(self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._sock._err == true) {
-        ret = -1;
-    }
-
-    self->_socket._udp._msock =
-        _z_open_udp_multicast(self->_socket._udp._rep, &self->_socket._udp._lep, Z_CONFIG_SOCKET_TIMEOUT, iface);
-    if (self->_socket._udp._msock._err == true) {
-        ret = -1;
-    }
+    ret = _z_listen_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface);
+    ret = _z_open_udp_multicast(&self->_socket._udp._msock, self->_socket._udp._rep, &self->_socket._udp._lep,
+                                Z_CONFIG_SOCKET_TIMEOUT, iface);
 
     return ret;
 }
 
 void _z_f_link_close_udp_multicast(_z_link_t *self) {
-    _z_close_udp_multicast(self->_socket._udp._sock, self->_socket._udp._msock, self->_socket._udp._rep);
+    _z_close_udp_multicast(&self->_socket._udp._sock, &self->_socket._udp._msock, self->_socket._udp._rep);
 }
 
 void _z_f_link_free_udp_multicast(_z_link_t *self) {
-    _z_free_endpoint_udp(self->_socket._udp._lep);
-    _z_free_endpoint_udp(self->_socket._udp._rep);
+    _z_free_endpoint_udp(&self->_socket._udp._lep);
+    _z_free_endpoint_udp(&self->_socket._udp._rep);
 }
 
 size_t _z_f_link_write_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
@@ -174,33 +165,30 @@ uint16_t _z_get_link_mtu_udp_multicast(void) {
     return 1450;
 }
 
-_z_link_t _z_new_link_udp_multicast(_z_endpoint_t endpoint) {
-    _z_link_t l;
+int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
+    int8_t ret = _Z_RES_OK;
 
-    l._capabilities = Z_LINK_CAPABILITY_MULTICAST;
-    l._mtu = _z_get_link_mtu_udp_multicast();
+    zl->_capabilities = Z_LINK_CAPABILITY_MULTICAST;
+    zl->_mtu = _z_get_link_mtu_udp_multicast();
 
-    l._endpoint = endpoint;
-    l._socket._udp._sock._err = true;
-    l._socket._udp._msock._err = true;
+    zl->_endpoint = endpoint;
     char *s_addr = __z_parse_address_segment_udp_multicast(endpoint._locator._address);
     char *s_port = __z_parse_port_segment_udp_multicast(endpoint._locator._address);
-    l._socket._udp._rep = _z_create_endpoint_udp(s_addr, s_port);
-    l._socket._udp._lep._err = true;
+    ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_addr, s_port);
     z_free(s_addr);
     z_free(s_port);
 
-    l._open_f = _z_f_link_open_udp_multicast;
-    l._listen_f = _z_f_link_listen_udp_multicast;
-    l._close_f = _z_f_link_close_udp_multicast;
-    l._free_f = _z_f_link_free_udp_multicast;
+    zl->_open_f = _z_f_link_open_udp_multicast;
+    zl->_listen_f = _z_f_link_listen_udp_multicast;
+    zl->_close_f = _z_f_link_close_udp_multicast;
+    zl->_free_f = _z_f_link_free_udp_multicast;
 
-    l._write_f = _z_f_link_write_udp_multicast;
-    l._write_all_f = _z_f_link_write_all_udp_multicast;
-    l._read_f = _z_f_link_read_udp_multicast;
-    l._read_exact_f = _z_f_link_read_exact_udp_multicast;
+    zl->_write_f = _z_f_link_write_udp_multicast;
+    zl->_write_all_f = _z_f_link_write_all_udp_multicast;
+    zl->_read_f = _z_f_link_read_udp_multicast;
+    zl->_read_exact_f = _z_f_link_read_exact_udp_multicast;
 
-    return l;
+    return ret;
 }
 
 #endif

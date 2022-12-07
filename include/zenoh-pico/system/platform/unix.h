@@ -39,7 +39,6 @@ typedef struct {
         int _fd;
 #endif
     };
-    _Bool _err;
 } _z_sys_net_socket_t;
 
 typedef struct {
@@ -48,7 +47,6 @@ typedef struct {
         struct addrinfo *_iptcp;
 #endif
     };
-    _Bool _err;
 } _z_sys_net_endpoint_t;
 
 #endif /* ZENOH_PICO_SYSTEM_UNIX_TYPES_H */

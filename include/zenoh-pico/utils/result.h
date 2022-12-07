@@ -25,7 +25,7 @@
 
 /*------------------ Result Enums ------------------*/
 typedef enum {
-    _Z_RES_OK = 0x00,
+    _Z_RES_OK = 0,
 
     _Z_ERR_MESSAGE_DESERIALIZATION_FAILED = -119,
     _Z_ERR_MESSAGE_SERIALIZATION_FAILED = -118,

@@ -401,6 +401,8 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
             }
         }
     }
+#else
+    (void)zs;
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) {

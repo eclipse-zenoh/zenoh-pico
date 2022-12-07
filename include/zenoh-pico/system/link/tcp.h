@@ -27,15 +27,15 @@ typedef struct {
     _z_sys_net_endpoint_t _rep;
 } _z_tcp_socket_t;
 
-_z_sys_net_endpoint_t _z_create_endpoint_tcp(const char *s_addr, const char *s_port);
-void _z_free_endpoint_tcp(_z_sys_net_endpoint_t ep);
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port);
+void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep);
 
-_z_sys_net_socket_t _z_open_tcp(_z_sys_net_endpoint_t rep, uint32_t tout);
-_z_sys_net_socket_t _z_listen_tcp(_z_sys_net_endpoint_t rep);
-void _z_close_tcp(_z_sys_net_socket_t sock);
-size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
+int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
+int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep);
+void _z_close_tcp(_z_sys_net_socket_t *sock);
+size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_TCP_H */

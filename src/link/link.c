@@ -30,22 +30,22 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
         // Create transport link
 #if Z_LINK_TCP == 1
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_tcp(ep);
+            ret = _z_new_link_tcp(zl, &ep);
         } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
             if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_udp_unicast(ep);
+            ret = _z_new_link_udp_unicast(zl, ep);
         } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
             if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_bt(ep);
+            ret = _z_new_link_bt(zl, ep);
         } else
 #endif
 #if Z_LINK_SERIAL == 1
             if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_serial(ep);
+            ret = _z_new_link_serial(zl, ep);
         } else
 #endif
         {
@@ -79,12 +79,12 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
         // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
         if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_udp_multicast(ep);
+            ret = _z_new_link_udp_multicast(zl, ep);
         } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
             if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
-            *zl = _z_new_link_bt(ep);
+            ret = _z_new_link_bt(zl, ep);
         } else
 #endif
         {
@@ -148,11 +148,8 @@ int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
         _z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
         do {
-            _Z_DEBUG("Sending wbuf on socket...");
             size_t wb = link->_write_f(link, bs.start, n);
-            _Z_DEBUG(" sent %lu bytes\n", wb);
             if (wb == SIZE_MAX) {
-                _Z_DEBUG("Error while sending data over socket [%lu]\n", wb);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }

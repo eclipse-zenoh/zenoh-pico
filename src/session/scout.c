@@ -145,6 +145,10 @@ _z_hello_list_t *_z_scout_inner(const z_whatami_t what, const char *locator, con
     // Scout on multicast
 #if Z_MULTICAST_TRANSPORT == 1
     ret = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
+#else
+    (void)(locator);
+    (void)(timeout);
+    (void)(exit_on_first);
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);

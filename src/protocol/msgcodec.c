@@ -830,7 +830,7 @@ int8_t _z_query_consolidation_decode(z_consolidation_mode_t *qcm, _z_zbuf_t *zbf
     _Z_DEBUG("Decoding _QUERY_CONSOLIDATION\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_enum_decode(qcm, zbf);
+    ret |= _z_enum_decode((int *)qcm, zbf);
 
     return ret;
 }

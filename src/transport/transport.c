@@ -113,8 +113,10 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
+#if Z_MULTI_THREAD == 1
             _z_mutex_free(&zt->_transport._unicast._mutex_tx);
             _z_mutex_free(&zt->_transport._unicast._mutex_rx);
+#endif  // Z_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
             _z_zbuf_clear(&zt->_transport._unicast._zbuf);
@@ -199,9 +201,11 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
             (_z_zbuf_capacity(&zt->_transport._multicast._zbuf) != Z_BATCH_SIZE_RX)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
+#if Z_MULTI_THREAD == 1
             _z_mutex_free(&zt->_transport._multicast._mutex_tx);
             _z_mutex_free(&zt->_transport._multicast._mutex_rx);
             _z_mutex_free(&zt->_transport._multicast._mutex_peer);
+#endif  // Z_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._multicast._wbuf);
             _z_zbuf_clear(&zt->_transport._multicast._zbuf);
