@@ -18,11 +18,11 @@
 
 #include "zenoh-pico.h"
 
-#define MSG 1
+#define MSG 1000
 #define MSG_LEN 1024
-#define QRY 1
-#define QRY_CLT 1
-#define SET 1
+#define QRY 100
+#define QRY_CLT 10
+#define SET 100
 #define SLEEP 1
 #define TIMEOUT 60
 
