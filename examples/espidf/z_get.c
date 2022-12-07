@@ -46,6 +46,7 @@ static int s_retry_count = 0;
 #endif
 
 #define KEYEXPR "demo/example/**"
+#define VALUE ""
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
@@ -151,8 +152,12 @@ void app_main() {
     while (1) {
         sleep(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
+        z_get_options_t opts = z_get_options_default();
+        if (strcmp(VALUE, "") != 0) {
+            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+        }
         z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
-        if (z_get(z_loan(s), z_keyexpr(KEYEXPR), "", z_move(callback), NULL) < 0) {
+        if (z_get(z_loan(s), z_keyexpr(KEYEXPR), "", z_move(callback), &opts) < 0) {
             printf("Unable to send query.\n");
             exit(-1);
         }

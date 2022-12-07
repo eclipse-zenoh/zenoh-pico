@@ -186,13 +186,10 @@ typedef _z_encoding_t z_encoding_t;
  * Represents a Zenoh value.
  *
  * Members:
- *   z_bytes_t payload: The payload of this zenoh value.
  *   z_encoding_t encoding: The encoding of the `payload`.
+ *   z_bytes_t payload: The payload of this zenoh value.
  */
-typedef struct {
-    z_bytes_t payload;
-    z_encoding_t encoding;
-} z_value_t;
+typedef _z_value_t z_value_t;
 
 /**
  * Represents the set of options that can be applied to a (push) subscriber,
@@ -316,10 +313,13 @@ typedef struct {
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
+ *   z_value_t with_value: The payload to include in the query. Note: This parameter has been marked as unstable: it
+ * works as advertised, but we may change it in a future release.
  */
 typedef struct {
     z_query_target_t target;
     z_query_consolidation_t consolidation;
+    z_value_t with_value;
 } z_get_options_t;
 
 /**

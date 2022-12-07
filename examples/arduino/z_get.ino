@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #define KEYEXPR "demo/example/**"
+#define VALUE ""
 
 z_owned_session_t s;
 
@@ -108,8 +109,12 @@ void loop() {
     Serial.print("Sending Query ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
+    z_get_options_t opts = z_get_options_default();
+    if (strcmp(VALUE, "") != 0) {
+        opts.with_value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+    }
     z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-    if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), NULL) < 0) {
+    if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
         Serial.println("Unable to send query.");
     }
 }

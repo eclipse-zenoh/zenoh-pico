@@ -182,6 +182,24 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
+_z_value_t gen_value(void) {
+    _z_value_t val;
+    val.encoding.prefix = gen_zint();
+    if (gen_bool()) {
+        val.encoding.suffix = gen_bytes(8);
+    } else {
+        val.encoding.suffix = _z_bytes_empty();
+    }
+
+    if (gen_bool()) {
+        val.payload = _z_bytes_empty();
+    } else {
+        val.payload = _z_bytes_make(16);
+    }
+
+    return val;
+}
+
 /*=============================*/
 /*     Asserting functions     */
 /*=============================*/
@@ -484,7 +502,7 @@ _z_data_info_t gen_data_info(void) {
         if (gen_bool()) {
             di._encoding.suffix = gen_bytes(8);
         } else
-            di._encoding.suffix = _z_bytes_make(0);
+            di._encoding.suffix = _z_bytes_empty();
 
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_ENC);
     }
@@ -502,14 +520,6 @@ _z_data_info_t gen_data_info(void) {
     if (gen_bool()) {
         di._source_sn = gen_zint();
         _Z_SET_FLAG(di._flags, _Z_DATA_INFO_SRC_SN);
-    }
-    if (gen_bool()) {
-        di._first_router_id = gen_bytes(16);
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_RTR_ID);
-    }
-    if (gen_bool()) {
-        di._first_router_sn = gen_zint();
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_RTR_SN);
     }
 
     return di;
@@ -545,15 +555,6 @@ void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right) {
     if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_SN) == true) {
         printf("Src SN (%zu:%zu), ", left->_source_sn, right->_source_sn);
         assert(left->_source_sn == right->_source_sn);
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        printf("Rtr ID -> ");
-        assert_eq_uint8_array(&left->_first_router_id, &right->_first_router_id);
-        printf(", ");
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_RTR_SN) == true) {
-        printf("Rtr SN (%zu:%zu), ", left->_first_router_sn, right->_first_router_sn);
-        assert(left->_first_router_sn == right->_first_router_sn);
     }
 }
 
@@ -1339,7 +1340,16 @@ _z_zenoh_message_t gen_query_message(void) {
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    return _z_msg_make_query(key, parameters, qid, target, consolidation);
+    _z_value_t with_value;
+    if (gen_bool()) {
+        with_value = gen_value();
+    } else {
+        with_value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
+        with_value.encoding.suffix = _z_bytes_empty();
+        with_value.payload = _z_bytes_empty();
+    }
+
+    return _z_msg_make_query(key, parameters, qid, target, consolidation, with_value);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {
@@ -1364,6 +1374,15 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     printf("   Consolidation ( %u:%u)", left->_consolidation, right->_consolidation);
     assert(left->_consolidation == right->_consolidation);
     printf("\n");
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
+        printf("   ");
+        assert_eq_data_info(&left->_info, &right->_info);
+        printf("\n");
+        printf("   ");
+        assert_eq_payload(&left->_payload, &right->_payload);
+        printf("\n");
+    }
 }
 
 void query_message(void) {

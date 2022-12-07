@@ -314,8 +314,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
-                _z_drop_handler_t dropper, void *arg_drop) {
+                const z_consolidation_mode_t consolidation, _z_value_t with_value, _z_reply_handler_t callback,
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
@@ -335,7 +335,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
     if (ret == _Z_RES_OK) {
         _z_zenoh_message_t z_msg =
-            _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation);
+            _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation, with_value);
 
         if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             _z_unregister_pending_query(zn, pq);

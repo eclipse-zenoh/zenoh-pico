@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 #define KEYEXPR "demo/example/**"
+#define VALUE ""
 
 void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"); }
 
@@ -74,8 +75,12 @@ int main(int argc, char **argv) {
     while (1) {
         z_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
+        z_get_options_t opts = z_get_options_default();
+        if (strcmp(VALUE, "") != 0) {
+            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+        }
         z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-        if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), NULL) < 0) {
+        if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
             printf("Unable to send query.\n");
             exit(-1);
         }

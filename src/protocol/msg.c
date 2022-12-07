@@ -291,10 +291,6 @@ void _z_data_info_clear(_z_data_info_t *di) {
         _z_bytes_clear(&di->_source_id);
     }
 
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        _z_bytes_clear(&di->_first_router_id);
-    }
-
     if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP) == true) {
         _z_timestamp_clear(&di->_tstamp);
     }
@@ -377,7 +373,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
-                                     z_consolidation_mode_t consolidation) {
+                                     z_consolidation_mode_t consolidation, _z_value_t with_value) {
     _z_zenoh_message_t msg;
 
     msg._body._query._key = key;
@@ -385,6 +381,9 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._qid = qid;
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
+    memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
+    msg._body._query._info._encoding = with_value.encoding;
+    msg._body._query._payload = with_value.payload;
 
     msg._header = _Z_MID_QUERY;
     if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) {
@@ -392,6 +391,9 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     }
     if (msg._body._query._key._suffix != NULL) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
+    }
+    if (msg._body._query._payload.len > 0) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_B);
     }
 
     msg._attachment = NULL;
