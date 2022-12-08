@@ -41,6 +41,10 @@
         src->_len = 0;                                                                              \
         src->_val = NULL;                                                                           \
     }                                                                                               \
+    static inline void name##_array_copy(name##_array_t *dst, name##_array_t *src) {                \
+        dst->_len = src->_len;                                                                      \
+        memcpy(&dst->_val, &src->_val, src->_len);                                                  \
+    }                                                                                               \
     static inline type *name##_array_get(const name##_array_t *a, size_t k) { return &a->_val[k]; } \
     static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
     static inline _Bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }     \

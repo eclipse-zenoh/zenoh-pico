@@ -985,17 +985,16 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-// void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
-// void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
-void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *join);
-void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *init);
-void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *open);
-// void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
-// void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
-// void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
-// void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
-// void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
-// void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
-// void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
+void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg);
+void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg);
+void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg);
+void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg);
+void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg);
+void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg);
+void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *msg);
+void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *msg);
+void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg);
+void _z_t_msg_copy_ping_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *msg);
+void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg, uint8_t header);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */
