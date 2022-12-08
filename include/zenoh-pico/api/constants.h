@@ -30,6 +30,7 @@ typedef enum {
     Z_WHATAMI_PEER = 0x02,    // 1 << 1
     Z_WHATAMI_CLIENT = 0x04   // 1 << 2
 } z_whatami_t;
+#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
 
 /**
  * Status values for keyexpr canonization operation.
@@ -68,6 +69,7 @@ typedef enum {
  *     Z_SAMPLE_KIND_DELETE: The Sample was issued by a ``delete`` operation.
  */
 typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t;
+#define Z_SAMPLE_KIND_DEFAULT Z_SAMPLE_KIND_PUT
 
 /**
  * Zenoh encoding values.
@@ -118,6 +120,7 @@ typedef enum {
     Z_ENCODING_PREFIX_IMAGE_PNG = 19,
     Z_ENCODING_PREFIX_IMAGE_GIF = 20
 } z_encoding_prefix_t;
+#define Z_ENCODING_PREFIX_DEFAULT Z_ENCODING_PREFIX_EMPTY
 
 /**
  * Consolidation mode values.
@@ -138,6 +141,7 @@ typedef enum {
     Z_CONSOLIDATION_MODE_MONOTONIC = 1,
     Z_CONSOLIDATION_MODE_LATEST = 2,
 } z_consolidation_mode_t;
+#define Z_CONSOLIDATION_MODE_DEFAULT Z_CONSOLIDATION_MODE_AUTO
 
 /**
  * Reliability values.
@@ -147,6 +151,7 @@ typedef enum {
  *     Z_RELIABILITY_RELIABLE: Defines reliability as ``RELIABLE``
  */
 typedef enum { Z_RELIABILITY_BEST_EFFORT = 0, Z_RELIABILITY_RELIABLE = 1 } z_reliability_t;
+#define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
 
 /**
  * Reply tag values.
@@ -168,6 +173,7 @@ typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
  *         of congestion control.
  */
 typedef enum { Z_CONGESTION_CONTROL_BLOCK = 0, Z_CONGESTION_CONTROL_DROP = 1 } z_congestion_control_t;
+#define Z_CONGESTION_CONTROL_DEFAULT Z_CONGESTION_CONTROL_BLOCK
 
 /**
  * Priority of Zenoh messages values.
@@ -192,6 +198,7 @@ typedef enum {
     Z_PRIORITY_DATA_LOW = 6,
     Z_PRIORITY_BACKGROUND = 7
 } z_priority_t;
+#define Z_PRIORITY_DEFAULT Z_PRIORITY_DATA
 
 /**
  * Subscription mode values.
@@ -201,6 +208,7 @@ typedef enum {
  *     Z_SUBMODE_PULL: Defines the subscription with a pull paradigm.
  */
 typedef enum { Z_SUBMODE_PUSH = 0, Z_SUBMODE_PULL = 1 } z_submode_t;
+#define Z_SUBMODE_DEFAULT Z_SUBMODE_PUSH
 
 /**
  * Query target values.
@@ -215,5 +223,6 @@ typedef enum {
     Z_QUERY_TARGET_ALL = 1,
     Z_QUERY_TARGET_ALL_COMPLETE = 2
 } z_query_target_t;
+#define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
 
 #endif /* ZENOH_PICO_API_CONSTANTS_H */

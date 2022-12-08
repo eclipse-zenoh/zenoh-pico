@@ -85,6 +85,18 @@ typedef struct {
 } _z_sample_t;
 
 /**
+ * Represents a Zenoh value.
+ *
+ * Members:
+ *   _z_encoding_t encoding: The encoding of the `payload`.
+ *   _z_bytes_t payload: The payload of this zenoh value.
+ */
+typedef struct {
+    _z_bytes_t payload;
+    _z_encoding_t encoding;
+} _z_value_t;
+
+/**
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:

@@ -203,9 +203,13 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
         .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
 }
 
-z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_EMPTY, NULL); }
+z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
 
-z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_BEST_MATCHING; }
+z_value_t z_value(const char *payload, size_t payload_len, z_encoding_t encoding) {
+    return (z_value_t){.payload = {.start = (const uint8_t *)payload, .len = payload_len}, .encoding = encoding};
+}
+
+z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
     return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
@@ -230,9 +234,21 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
     return parameters;
 }
 
+z_value_t z_query_value(const z_query_t *query) { return query->_with_value; }
+
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
 
 z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
+
+_Bool z_value_is_initialized(z_value_t *value) {
+    _Bool ret = false;
+
+    if ((value->payload.start != NULL)) {
+        ret = true;
+    }
+
+    return ret;
+}
 
 /**************** Loans ****************/
 #define _OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(type, ownedtype, name, f_free, f_copy) \
@@ -454,12 +470,13 @@ z_id_t z_info_zid(const z_session_t zs) {
 }
 
 z_put_options_t z_put_options_default(void) {
-    return (z_put_options_t){
-        .encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_put_options_t){.encoding = z_encoding_default(),
+                             .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
+                             .priority = Z_PRIORITY_DEFAULT};
 }
 
 z_delete_options_t z_delete_options_default(void) {
-    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA};
+    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
 int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
@@ -492,7 +509,9 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
 }
 
 z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t){.target = z_query_target_default(), .consolidation = z_query_consolidation_default()};
+    return (z_get_options_t){.target = z_query_target_default(),
+                             .consolidation = z_query_consolidation_default(),
+                             .with_value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -517,6 +536,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     if (options != NULL) {
         opt.consolidation = options->consolidation;
         opt.target = options->target;
+        opt.with_value = options->with_value;
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -535,11 +555,10 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     if (wrapped_ctx != NULL) {
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
-
-        ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, __z_reply_handler, wrapped_ctx,
-                       callback->drop, ctx);
     }
 
+    ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.with_value, __z_reply_handler,
+                   wrapped_ctx, callback->drop, ctx);
     return ret;
 }
 
@@ -567,7 +586,7 @@ int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
 }
 
 z_publisher_options_t z_publisher_options_default(void) {
-    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DROP, .priority = Z_PRIORITY_DATA_HIGH};
+    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
 z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_publisher_options_t *options) {
@@ -636,11 +655,11 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
 }
 
 z_subscriber_options_t z_subscriber_options_default(void) {
-    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
+    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
 
 z_pull_subscriber_options_t z_pull_subscriber_options_default(void) {
-    return (z_pull_subscriber_options_t){.reliability = Z_RELIABILITY_RELIABLE};
+    return (z_pull_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
 
 z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,

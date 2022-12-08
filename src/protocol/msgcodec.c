@@ -815,6 +815,11 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg
     }
     ret |= _z_query_consolidation_encode(wbf, &msg->_consolidation);
 
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
+        _Z_EC(_z_data_info_encode(wbf, &msg->_info))
+        _Z_EC(_z_payload_encode(wbf, &msg->_payload))
+    }
+
     return ret;
 }
 
@@ -840,6 +845,19 @@ int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_target = Z_QUERY_TARGET_BEST_MATCHING;
     }
     ret |= _z_query_consolidation_decode(&msg->_consolidation, zbf);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
+        ret |= _z_data_info_decode(&msg->_info, zbf);
+        ret |= _z_payload_decode(&msg->_payload, zbf);
+    } else {
+        msg->_info._flags = 0;
+        msg->_info._kind = Z_SAMPLE_KIND_PUT;
+        msg->_info._encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
+        msg->_info._encoding.suffix = _z_bytes_empty();
+        msg->_info._source_id = _z_bytes_empty();
+        msg->_info._source_sn = 0;
+        _z_timestamp_reset(&msg->_info._tstamp);
+        msg->_payload = _z_bytes_empty();
+    }
 
     return ret;
 }

@@ -182,6 +182,24 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
+_z_value_t gen_value(void) {
+    _z_value_t val;
+    val.encoding.prefix = gen_zint();
+    if (gen_bool()) {
+        val.encoding.suffix = gen_bytes(8);
+    } else {
+        val.encoding.suffix = _z_bytes_empty();
+    }
+
+    if (gen_bool()) {
+        val.payload = _z_bytes_empty();
+    } else {
+        val.payload = _z_bytes_make(16);
+    }
+
+    return val;
+}
+
 /*=============================*/
 /*     Asserting functions     */
 /*=============================*/
@@ -1353,7 +1371,16 @@ _z_zenoh_message_t gen_query_message(void) {
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    return _z_msg_make_query(key, parameters, qid, target, consolidation);
+    _z_value_t with_value;
+    if (gen_bool()) {
+        with_value = gen_value();
+    } else {
+        with_value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
+        with_value.encoding.suffix = _z_bytes_empty();
+        with_value.payload = _z_bytes_empty();
+    }
+
+    return _z_msg_make_query(key, parameters, qid, target, consolidation, with_value);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {
@@ -1378,6 +1405,15 @@ void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_
     printf("   Consolidation ( %u:%u)", left->_consolidation, right->_consolidation);
     assert(left->_consolidation == right->_consolidation);
     printf("\n");
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
+        printf("   ");
+        assert_eq_data_info(&left->_info, &right->_info);
+        printf("\n");
+        printf("   ");
+        assert_eq_payload(&left->_payload, &right->_payload);
+        printf("\n");
+    }
 }
 
 void query_message(void) {

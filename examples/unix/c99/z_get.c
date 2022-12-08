@@ -37,16 +37,20 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
-    char *locator = NULL;
+    const char *locator = NULL;
+    const char *value = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:v:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
                 break;
             case 'e':
                 locator = optarg;
+                break;
+            case 'v':
+                value = optarg;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e') {
@@ -95,7 +99,9 @@ int main(int argc, char **argv) {
 
         printf("Sending Query '%s'...\n", keyexpr);
         z_get_options_t opts = z_get_options_default();
-        opts.target = Z_QUERY_TARGET_ALL;
+        if (value != NULL) {
+            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+        }
         z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
         if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {
             printf("Unable to send query.\n");

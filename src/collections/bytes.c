@@ -21,10 +21,12 @@
 #include "zenoh-pico/utils/result.h"
 
 /*-------- bytes --------*/
+_z_bytes_t _z_bytes_empty(void) { return (_z_bytes_t){.start = NULL, .len = 0, ._is_alloc = false}; }
+
 int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
     int8_t ret = _Z_RES_OK;
 
-    bs->start = (uint8_t *)z_malloc(capacity * sizeof(uint8_t));
+    bs->start = (uint8_t *)z_malloc(capacity);
     if (bs->start != NULL) {
         bs->len = capacity;
         bs->_is_alloc = true;
@@ -36,8 +38,6 @@ int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
 
     return ret;
 }
-
-_z_bytes_t _z_bytes_empty(void) { return (_z_bytes_t){.start = NULL, .len = 0, ._is_alloc = false}; }
 
 _z_bytes_t _z_bytes_make(size_t capacity) {
     _z_bytes_t bs;

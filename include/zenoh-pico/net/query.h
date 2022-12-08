@@ -21,6 +21,7 @@
  * The query to be answered by a queryable.
  */
 typedef struct {
+    _z_value_t _with_value;
     _z_keyexpr_t _key;
     _z_zint_t _qid;
     void *_zn;  // FIXME: _z_session_t *zn;

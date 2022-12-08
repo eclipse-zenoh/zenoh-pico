@@ -190,7 +190,6 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
-
     } else {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -199,7 +198,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 }
 
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, bool complete,
+_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_questionable_t q;
     q._id = _z_get_entity_id(zn);
@@ -279,9 +278,9 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     }
 
     if (ret == _Z_RES_OK) {
-        // Build the reply context decorator. This is NOT the final reply._
-        _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)query->_zn)->_local_pid.start,
-                                       ((_z_session_t *)query->_zn)->_local_pid.len);
+        // Build the reply context decorator. This is NOT the final reply.
+        _z_bytes_t pid =
+            _z_bytes_wrap(((_z_session_t *)query->_zn)->_local_pid.start, ((_z_session_t *)query->_zn)->_local_pid.len);
         _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, false);
 
         _z_data_info_t di = {._flags = 0};                  // Empty data info
@@ -324,8 +323,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, _z_reply_handler_t callback, void *arg_call,
-                _z_drop_handler_t dropper, void *arg_drop) {
+                const z_consolidation_mode_t consolidation, _z_value_t with_value, _z_reply_handler_t callback,
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
@@ -346,7 +345,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
             _z_zenoh_message_t z_msg =
-                _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation);
+                _z_msg_make_query(keyexpr, pq->_parameters, pq->_id, pq->_target, pq->_consolidation, with_value);
 
             if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);

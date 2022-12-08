@@ -59,6 +59,8 @@ void query_handler(const z_query_t *query, void *arg) {
 
     z_bytes_t pred = z_query_parameters(query);
     (void)(pred);
+    z_value_t payload_value = z_query_value(query);
+    (void)(payload_value);
     z_query_reply_options_t _ret_qreply_opt = z_query_reply_options_default();
     z_query_reply(query, z_keyexpr(k_str), (const uint8_t *)value, strlen(value), &_ret_qreply_opt);
 
