@@ -447,11 +447,9 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 //
 // - if options & (1 << 5) then the payload is sliced
 typedef struct {
-    _z_bytes_t _first_router_id;
     _z_bytes_t _source_id;
     _z_timestamp_t _tstamp;
     _z_zint_t _flags;
-    _z_zint_t _first_router_sn;
     _z_zint_t _source_sn;
     _z_encoding_t _encoding;
     uint8_t _kind;
@@ -597,7 +595,7 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 typedef struct {
     z_whatami_t _what;
 } _z_t_msg_scout_t;
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
+void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -634,7 +632,7 @@ typedef struct {
     _z_locator_array_t _locators;
     z_whatami_t _whatami;
 } _z_t_msg_hello_t;
-void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
+void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
 
 /*------------------ Join Message ------------------*/
 // # Join message
@@ -693,7 +691,7 @@ typedef struct {
     z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_join_t;
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
+void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 
 /*------------------ Init Message ------------------*/
 // # Init message
@@ -739,7 +737,7 @@ typedef struct {
     z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_init_t;
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
+void _z_t_msg_clear_init(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -769,7 +767,7 @@ typedef struct {
     _z_zint_t _initial_sn;
     _z_bytes_t _cookie;
 } _z_t_msg_open_t;
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
+void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -799,7 +797,7 @@ typedef struct {
     _z_bytes_t _pid;
     uint8_t _reason;
 } _z_t_msg_close_t;
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header);
+void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
 
 /*------------------ Sync Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -828,7 +826,7 @@ typedef struct {
     _z_zint_t _sn;
     _z_zint_t _count;
 } _z_t_msg_sync_t;
-void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header);
+void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg);
 
 /*------------------ AckNack Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -853,7 +851,7 @@ typedef struct {
     _z_zint_t _sn;
     _z_zint_t _mask;
 } _z_t_msg_ack_nack_t;
-void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
+void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg);
 
 /*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -875,7 +873,7 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
 typedef struct {
     _z_bytes_t _pid;
 } _z_t_msg_keep_alive_t;
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
+void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
 
 /*------------------ PingPong Messages ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -896,7 +894,7 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
 typedef struct {
     _z_zint_t _hash;
 } _z_t_msg_ping_pong_t;
-void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
+void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length

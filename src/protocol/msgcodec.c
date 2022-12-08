@@ -664,12 +664,6 @@ int8_t _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld) {
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_SRC_SN) == true) {
         _Z_EC(_z_zint_encode(wbf, fld->_source_sn))
     }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &fld->_first_router_id))
-    }
-    if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_RTR_SN) == true) {
-        _Z_EC(_z_zint_encode(wbf, fld->_first_router_sn))
-    }
 
     return ret;
 }
@@ -704,18 +698,14 @@ int8_t _z_data_info_decode_na(_z_data_info_t *di, _z_zbuf_t *zbf) {
 
         if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID) == true) {
             ret |= _z_bytes_decode(&di->_source_id, zbf);
+        } else {
+            di->_source_id = _z_bytes_empty();
         }
 
         if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_SN) == true) {
             ret |= _z_zint_decode(&di->_source_sn, zbf);
-        }
-
-        if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_ID) == true) {
-            ret |= _z_bytes_decode(&di->_first_router_id, zbf);
-        }
-
-        if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_RTR_SN) == true) {
-            ret |= _z_zint_decode(&di->_first_router_sn, zbf);
+        } else {
+            di->_source_sn = 0;
         }
     }
 
@@ -751,6 +741,8 @@ int8_t _z_data_decode_na(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_info._kind = Z_SAMPLE_KIND_PUT;
         msg->_info._encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
         msg->_info._encoding.suffix = _z_bytes_empty();
+        msg->_info._source_id = _z_bytes_empty();
+        msg->_info._source_sn = 0;
         _z_timestamp_reset(&msg->_info._tstamp);
     }
     ret |= _z_payload_decode(&msg->_payload, zbf);
@@ -1101,6 +1093,8 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         ret |= _z_zint_decode(&msg->_sn_resolution, zbf);
+    } else {
+        msg->_sn_resolution = Z_SN_RESOLUTION;
     }
     if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
         msg->_next_sns._is_qos = true;
@@ -1155,14 +1149,20 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
         ret |= _z_uint8_decode(&msg->_version, zbf);
+    } else {
+        msg->_version = Z_PROTO_VERSION;
     }
     ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
     ret |= _z_bytes_decode(&msg->_pid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         ret |= _z_zint_decode(&msg->_sn_resolution, zbf);
+    } else {
+        msg->_sn_resolution = Z_SN_RESOLUTION;
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == true) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
+    } else {
+        msg->_cookie = _z_bytes_empty();
     }
 
     return ret;
@@ -1202,6 +1202,8 @@ int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     ret |= _z_zint_decode(&msg->_initial_sn, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
+    } else {
+        msg->_cookie = _z_bytes_empty();
     }
 
     return ret;
@@ -1230,6 +1232,8 @@ int8_t _z_close_decode_na(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header)
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         ret |= _z_bytes_decode(&msg->_pid, zbf);
+    } else {
+        msg->_pid = _z_bytes_empty();
     }
     ret |= _z_uint8_decode(&msg->_reason, zbf);
 
@@ -1322,6 +1326,8 @@ int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         ret |= _z_bytes_decode(&msg->_pid, zbf);
+    } else {
+        msg->_pid = _z_bytes_empty();
     }
 
     return ret;
