@@ -104,7 +104,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
     close(sock->_fd);
 }
 
-size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < 0) {
         rb = SIZE_MAX;
@@ -113,7 +113,7 @@ size_t _z_read_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     return rb;
 }
 
-size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 
@@ -131,7 +131,9 @@ size_t _z_read_exact_tcp(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     return n;
 }
 
-size_t _z_send_tcp(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) { return send(sock._fd, ptr, len, 0); }
+size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    return send(sock._fd, ptr, len, 0);
+}
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
@@ -194,7 +196,7 @@ int8_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 
 void _z_close_udp_unicast(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
-size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     struct sockaddr_storage raddr;
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
@@ -206,7 +208,7 @@ size_t _z_read_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     return rb;
 }
 
-size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 
@@ -224,7 +226,8 @@ size_t _z_read_exact_udp_unicast(_z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     return n;
 }
 
-size_t _z_send_udp_unicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t rep) {
+size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                           const _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
 #endif
@@ -516,7 +519,8 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
     return n;
 }
 
-size_t _z_send_udp_multicast(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, _z_sys_net_endpoint_t rep) {
+size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                             _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
 #endif
