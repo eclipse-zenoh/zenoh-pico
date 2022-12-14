@@ -174,20 +174,19 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
 #if Z_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = _z_mutex_init(&zt->_transport._multicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = _z_mutex_init(&zt->_transport._multicast._mutex_rx);
         if (ret == _Z_RES_OK) {
             ret = _z_mutex_init(&zt->_transport._multicast._mutex_peer);
             if (ret != _Z_RES_OK) {
-                _z_mutex_free(&zt->_transport._unicast._mutex_tx);
-                _z_mutex_free(&zt->_transport._unicast._mutex_rx);
+                _z_mutex_free(&zt->_transport._multicast._mutex_tx);
+                _z_mutex_free(&zt->_transport._multicast._mutex_rx);
             }
         } else {
-            _z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_free(&zt->_transport._multicast._mutex_tx);
         }
     }
-
 #endif  // Z_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
@@ -237,7 +236,7 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
         // Notifiers
         zt->_transport._multicast._transmitted = false;
 
-        // Transport link for unicast
+        // Transport link for multicast
         zt->_transport._multicast._link = *zl;
     }
 
