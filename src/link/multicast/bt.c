@@ -81,7 +81,7 @@ int8_t _z_f_link_listen_bt(_z_link_t *self) {
 
 void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(&self->_socket._bt._sock); }
 
-void _z_f_link_free_bt(_z_link_t *self) { _z_str_free(&self->_socket._bt._gname); }
+void _z_f_link_free_bt(_z_link_t *self) {}
 
 size_t _z_f_link_write_bt(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_bt(self->_socket._bt._sock, ptr, len);
