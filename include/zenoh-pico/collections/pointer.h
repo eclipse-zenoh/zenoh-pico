@@ -61,7 +61,7 @@
         return (left->ptr == right->ptr);                                                       \
     }                                                                                           \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
-        _Bool dropped = true;                                                                   \
+        _Bool dropped = false;                                                                  \
         if (p->_cnt != NULL) {                                                                  \
             unsigned int c = atomic_fetch_sub_explicit(p->_cnt, 1, memory_order_release);       \
             dropped = c == 1;                                                                   \

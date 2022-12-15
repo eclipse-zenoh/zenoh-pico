@@ -1421,6 +1421,7 @@ int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header)
                     // FIXME: Check for the return error, since not all of them means a decoding error
                     //        in this particular case. As of now, we roll-back the reading position
                     //        and return to the Zenoh transport-level decoder.
+                    //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
                     if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
                         ret = _Z_RES_OK;
                     }

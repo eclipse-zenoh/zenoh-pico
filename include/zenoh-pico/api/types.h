@@ -27,7 +27,7 @@
     } z_owned_##name##_t;
 
 /**
- * Represents a variable-length encoding uint8_teger.
+ * Represents a variable-length encoding unsigned integer.
  *
  * It is equivalent to the size of a ``size_t``.
  */

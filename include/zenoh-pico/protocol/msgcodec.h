@@ -75,9 +75,7 @@ int8_t _z_keyexpr_decode_na(_z_keyexpr_t *ke, _z_zbuf_t *buf, uint8_t header);
 
 int8_t _z_data_info_encode(_z_wbuf_t *buf, const _z_data_info_t *di);
 int8_t _z_data_info_decode(_z_data_info_t *di, _z_zbuf_t *buf);
-int8_t _z_data_info_decode_v2(_z_data_info_t *di, _z_zbuf_t *buf);
 int8_t _z_data_info_decode_na(_z_data_info_t *di, _z_zbuf_t *buf);
-int8_t _z_data_info_decode_na_v2(_z_data_info_t *di, _z_zbuf_t *buf);
 
 // /*------------------ Zenoh Message ------------------*/
 int8_t _z_res_decl_encode(_z_wbuf_t *buf, uint8_t header, const _z_res_decl_t *dcl);
