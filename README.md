@@ -329,13 +329,13 @@ The simplest way to run some of the example is to get a Docker image of the **ze
 Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 
 ```bash
-$ docker run --init -net host eclipse/zenoh:master
+$ docker run --init --net host eclipse/zenoh:master
 ```
 
 To see the zenoh manual page, simply do:
 
 ```bash
-$ docker run --init -net host eclipse/zenoh:master --help
+$ docker run --init --net host eclipse/zenoh:master --help
 ```
 
 ### 3.2. Basic Pub/Sub Example
