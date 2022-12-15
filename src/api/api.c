@@ -263,7 +263,11 @@ _Bool z_value_is_initialized(z_value_t *value) {
         }                                                                                  \
         return ret;                                                                        \
     }                                                                                      \
-    void z_##name##_drop(ownedtype *val) { f_free(&val->_value); }
+    void z_##name##_drop(ownedtype *val) {                                                 \
+        if (val->_value != NULL) {                                                         \
+            f_free(&val->_value);                                                          \
+        }                                                                                  \
+    }
 
 #define OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)              \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; }       \
@@ -277,7 +281,11 @@ _Bool z_value_is_initialized(z_value_t *value) {
         }                                                                              \
         return ret;                                                                    \
     }                                                                                  \
-    void z_##name##_drop(ownedtype *val) { f_free(&val->_value); }
+    void z_##name##_drop(ownedtype *val) {                                             \
+        if (val->_value != NULL) {                                                     \
+            f_free(&val->_value);                                                      \
+        }                                                                              \
+    }
 
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
