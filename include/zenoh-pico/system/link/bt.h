@@ -36,8 +36,8 @@ typedef struct {
     char *_gname;
 } _z_bt_socket_t;
 
-int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile);
-int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile);
+int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile, uint32_t tout);
+int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile, uint32_t tout);
 void _z_close_bt(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_bt(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_read_bt(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);

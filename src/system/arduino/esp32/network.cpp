@@ -539,7 +539,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 
 #if Z_LINK_BLUETOOTH == 1
 /*------------------ Bluetooth sockets ------------------*/
-int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile) {
+int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
 
     if (profile == _Z_BT_PROFILE_SPP) {
@@ -550,7 +550,7 @@ int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, ui
             sock->_bts->begin(gname, true);
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
-                while (!sock->_bts->connected(10000)) {
+                while (!sock->_bts->connected(tout)) {
                     __asm__("nop");
                 }
             }
@@ -565,7 +565,7 @@ int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, ui
     return ret;
 }
 
-int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile) {
+int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, uint8_t profile, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
 
     if (profile == _Z_BT_PROFILE_SPP) {
@@ -576,7 +576,7 @@ int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, 
             sock->_bts->begin(gname, true);
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
-                while (!sock->_bts->connected(10000)) {
+                while (!sock->_bts->connected(tout)) {
                     __asm__("nop");
                 }
             }

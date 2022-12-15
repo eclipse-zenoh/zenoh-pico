@@ -45,9 +45,14 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
     uint8_t profile = (strcmp(profile_str, "spp") == 0) ? _Z_BT_PROFILE_SPP : _Z_BT_PROFILE_UNSUPPORTED;
+    uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
+    char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_TOUT_KEY);
+    if (tout_as_str != NULL) {
+        tout = strtoul(tout_as_str, NULL, 10);
+    }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
-    ret = _z_open_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile);
+    ret = _z_open_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile, tout);
 
     return ret;
 }
@@ -55,26 +60,18 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
 int8_t _z_f_link_listen_bt(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 
-    uint8_t mode = 0;
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
-    if (strcmp(mode_str, "master") == 0) {
-        mode = _Z_BT_MODE_MASTER;
-    } else if (strcmp(mode_str, "slave") == 0) {
-        mode = _Z_BT_MODE_SLAVE;
-    } else {
-        ret = -1;
-    }
-
-    uint8_t profile = 0;
+    uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
-    if (strcmp(profile_str, "spp") == 0) {
-        profile = _Z_BT_PROFILE_SPP;
-    } else {
-        ret = -1;
+    uint8_t profile = (strcmp(profile_str, "spp") == 0) ? _Z_BT_PROFILE_SPP : _Z_BT_PROFILE_UNSUPPORTED;
+    uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
+    char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_TOUT_KEY);
+    if (tout_as_str != NULL) {
+        tout = strtoul(tout_as_str, NULL, 10);
     }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
-    ret = _z_listen_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile);
+    ret = _z_listen_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile, tout);
 
     return ret;
 }
