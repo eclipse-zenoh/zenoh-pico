@@ -234,12 +234,15 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                              uint32_t tout, const char *iface) {
     int8_t ret = _Z_RES_OK;
     (void)(rep);
-    (void)(lep);  // Multicast messages are not self-consumed, so no need to save the local address
 
     sock->_udp = new WiFiUDP();
-    if (sock->_udp->begin(55555) == false) {  // FIXME: make port to be random
+    if (!sock->_udp->begin(55555)) {  // FIXME: make port to be random
         ret = _Z_ERR_GENERIC;
     }
+
+    // Multicast messages are not self-consumed.
+    // However, the clean-up process requires both rep and lep to be initialized.
+    lep->_iptcp._addr = new IPAddress();
 
     if (ret != _Z_RES_OK) {
         delete sock->_udp;
@@ -253,7 +256,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     int8_t ret = _Z_RES_OK;
 
     sock->_udp = new WiFiUDP();
-    if (sock->_udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port) == false) {
+    if (!sock->_udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port)) {
         ret = _Z_ERR_GENERIC;
     }
 
