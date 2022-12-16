@@ -149,7 +149,7 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) { delete ep->_iptcp._addr; 
 
 #if Z_LINK_UDP_UNICAST == 1
 
-int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, _z_sys_net_endpoint_t rep, uint32_t tout) {
+int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
     (void)sock;
     (void)rep;

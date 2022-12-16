@@ -291,7 +291,7 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockad
     return addrlen;
 }
 
-int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
                              uint32_t tout, const char *iface) {
     int8_t ret = _Z_RES_OK;
 
@@ -375,7 +375,8 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, _z_sys_net_endpoint_t re
     return ret;
 }
 
-int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, _z_sys_net_endpoint_t rep, uint32_t tout, const char *iface) {
+int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                               const char *iface) {
     int8_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
