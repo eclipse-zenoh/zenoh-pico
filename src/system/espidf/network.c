@@ -304,7 +304,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
             }
 
             // Create laddr endpoint
-            if (ret != _Z_RES_OK) {
+            if (ret == _Z_RES_OK) {
                 struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
                 if (laddr != NULL) {
                     laddr->ai_flags = 0;
