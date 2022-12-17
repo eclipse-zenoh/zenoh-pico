@@ -182,6 +182,9 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_keyexpr_clear(&key);
         _z_subscription_sptr_list_free(&subs);
     } else {
+#if Z_MULTI_THREAD == 1
+        _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
