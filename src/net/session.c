@@ -26,12 +26,11 @@
 int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
-    _z_transport_t zt;
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
     _z_bytes_t local_pid = _z_bytes_empty();
     ret = _z_session_generate_pid(&local_pid, Z_ZID_LENGTH);
     if (ret == _Z_RES_OK) {
-        ret = _z_new_transport(&zt, &local_pid, locator, mode);
+        ret = _z_new_transport(&zn->_tp, &local_pid, locator, mode);
         if (ret != _Z_RES_OK) {
             _z_bytes_clear(&local_pid);
         }
@@ -43,7 +42,7 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
 #endif
 
     if (ret == _Z_RES_OK) {
-        ret = _z_session_init(zn, &local_pid, &zt);
+        ret = _z_session_init(zn, &local_pid);
     }
 
     return ret;

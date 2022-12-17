@@ -60,7 +60,7 @@ int8_t _z_session_generate_pid(_z_bytes_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid, _z_transport_t *zt) {
+int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid) {
     int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
@@ -80,11 +80,9 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid, _z_transport_t *zt) {
 #if Z_MULTI_THREAD == 1
     ret = _z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-
     if (ret == _Z_RES_OK) {
         zn->_local_pid = _z_bytes_empty();
         _z_bytes_move(&zn->_local_pid, pid);
-        zn->_tp = *zt;
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._session = zn;
@@ -99,7 +97,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid, _z_transport_t *zt) {
             // Do nothing. Required to be here because of the #if directive
         }
     } else {
-        _z_transport_clear(zt);
+        _z_transport_clear(&zn->_tp);
         _z_bytes_clear(&zn->_local_pid);
     }
 
