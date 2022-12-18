@@ -68,13 +68,13 @@ int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
 int8_t _z_uint_encode(_z_wbuf_t *wbf, unsigned int uint) {
     unsigned int lv = uint;
 
-    while (lv > 0x7f) {
-        uint8_t c = (lv & 0x7f) | 0x80;
+    while (lv > (unsigned int)0x7f) {
+        uint8_t c = (uint8_t)(lv & (unsigned int)0x7f) | (uint8_t)0x80;
         _Z_EC(_z_wbuf_write(wbf, c))
-        lv = lv >> (_z_zint_t)7;
+        lv = lv >> (unsigned int)7;
     }
 
-    uint8_t c = lv & 0xff;
+    uint8_t c = (uint8_t)(lv & (unsigned int)0xff);
     return _z_wbuf_write(wbf, c);
 }
 
@@ -86,12 +86,12 @@ int8_t _z_uint_decode(unsigned int *uint, _z_zbuf_t *zbf) {
     uint8_t u8 = 0;
     do {
         if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
-            *uint = *uint | (((_z_zint_t)u8 & 0x7f) << i);
+            *uint = *uint | (((unsigned int)u8 & (unsigned int)0x7f) << (unsigned int)i);
             i = i + (uint8_t)7;
         } else {
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-    } while (u8 > 0x7f);
+    } while (u8 > (uint8_t)0x7f);
 
     return ret;
 }
@@ -115,13 +115,13 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
 int8_t _z_uint64_encode(_z_wbuf_t *wbf, uint64_t u64) {
     uint64_t lv = u64;
 
-    while (lv > 0x7f) {
-        uint8_t c = (lv & 0x7f) | 0x80;
+    while (lv > (uint64_t)0x7f) {
+        uint8_t c = (uint8_t)(lv & (uint64_t)0x7f) | (uint8_t)0x80;
         _Z_EC(_z_wbuf_write(wbf, c))
         lv = lv >> (_z_zint_t)7;
     }
 
-    uint8_t c = lv & 0xff;
+    uint8_t c = lv & (uint64_t)0xff;
     return _z_wbuf_write(wbf, c);
 }
 
@@ -138,7 +138,7 @@ int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *zbf) {
         } else {
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-    } while (u8 > 0x7f);
+    } while (u8 > (uint8_t)0x7f);
 
     return ret;
 }
@@ -170,7 +170,7 @@ int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
         } else {
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-    } while (u8 > 0x7f);
+    } while (u8 > (uint8_t)0x7f);
 
     return ret;
 }

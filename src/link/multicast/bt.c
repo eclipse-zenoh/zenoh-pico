@@ -31,7 +31,7 @@ int8_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    if (strlen(ep->_locator._address) == 0) {
+    if (strlen(ep->_locator._address) == (size_t)0) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 

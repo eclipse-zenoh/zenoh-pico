@@ -78,8 +78,7 @@ int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *),
 
 int8_t _z_task_join(_z_task_t *task) {
     // Note: task/thread join not supported on FreeRTOS API, so we force its deletion instead.
-    _z_task_cancel(task);
-    return 0;
+    return _z_task_cancel(task);
 }
 
 int8_t _z_task_cancel(_z_task_t *task) {

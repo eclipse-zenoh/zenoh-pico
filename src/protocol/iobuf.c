@@ -113,7 +113,7 @@ size_t _z_iosli_size(const _z_iosli_t *ios) {
 }
 
 void _z_iosli_clear(_z_iosli_t *ios) {
-    if (ios->_is_alloc == true && ios->_buf != NULL) {
+    if ((ios->_is_alloc == true) && (ios->_buf != NULL)) {
         z_free(ios->_buf);
         ios->_buf = NULL;
     }

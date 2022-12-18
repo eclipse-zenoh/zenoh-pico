@@ -419,7 +419,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
                 for (size_t i = 0; i < bs.len; i++) {
                     id.id[i] = bs.start[bs.len - i - 1];
                 }
-                memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
+                (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
                 callback->call(&id, ctx);
             }
@@ -448,7 +448,7 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
             for (size_t i = 0; i < bs.len; i++) {
                 id.id[i] = bs.start[bs.len - i - 1];
             }
-            memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
+            (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
 
             callback->call(&id, ctx);
         }
@@ -469,7 +469,7 @@ z_id_t z_info_zid(const z_session_t zs) {
         for (size_t i = 0; i < bs.len; i++) {
             id.id[i] = bs.start[bs.len - i - 1];
         }
-        memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
+        (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
     } else {
         (void)memset(&id.id[0], 0, sizeof(id.id));
     }

@@ -126,6 +126,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
         }
     }
 
+    (void)(err);
     return ret;
 }
 

@@ -373,7 +373,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._qid = qid;
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
-    memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
+    (void)memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
     msg._body._query._info._encoding = with_value.encoding;
     msg._body._query._payload = with_value.payload;
 

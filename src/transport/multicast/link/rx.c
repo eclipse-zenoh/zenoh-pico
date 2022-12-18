@@ -295,7 +295,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                     // Decode the zenoh message
                     _z_zenoh_message_t zm;
-                    int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                    ret = _z_zenoh_message_decode(&zm, &zbf);
                     if (ret == _Z_RES_OK) {
                         _z_handle_zenoh_message(ztm->_session, &zm);
 

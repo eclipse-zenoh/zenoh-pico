@@ -56,7 +56,7 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
 
 // NOTE: the following headers are for unit testing only
 #ifdef ZENOH_PICO_TEST_H
-// /*------------------ Message Fields ------------------*/
+// ------------------ Message Fields ------------------
 int8_t _z_payload_encode(_z_wbuf_t *buf, const _z_payload_t *pld);
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *buf);
 int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *buf);
@@ -77,7 +77,7 @@ int8_t _z_data_info_encode(_z_wbuf_t *buf, const _z_data_info_t *di);
 int8_t _z_data_info_decode(_z_data_info_t *di, _z_zbuf_t *buf);
 int8_t _z_data_info_decode_na(_z_data_info_t *di, _z_zbuf_t *buf);
 
-// /*------------------ Zenoh Message ------------------*/
+// ------------------ Zenoh Message ------------------
 int8_t _z_res_decl_encode(_z_wbuf_t *buf, uint8_t header, const _z_res_decl_t *dcl);
 int8_t _z_res_decl_decode(_z_res_decl_t *dcl, _z_zbuf_t *buf, uint8_t header);
 int8_t _z_res_decl_decode_na(_z_res_decl_t *dcl, _z_zbuf_t *buf, uint8_t header);
@@ -134,7 +134,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg
 int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
-// /*------------------ Transport Message ------------------*/
+// ------------------ Transport Message ------------------
 int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg);
 int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header);
@@ -171,7 +171,7 @@ int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *m
 int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
-// /*------------------ Discovery Message ------------------*/
+// ------------------ Discovery Message ------------------
 int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg);
 int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_scout_decode(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);

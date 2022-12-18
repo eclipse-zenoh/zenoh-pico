@@ -36,7 +36,7 @@ int8_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
 
     char *p_dot = strchr(endpoint->_locator._address, '.');
     if (p_dot != NULL) {
-        if (strlen(p_dot) == 1) {  // If dot is the last character
+        if (strlen(p_dot) == (size_t)1) {  // If dot is the last character
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         }
     } else {
