@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/protocol/keyexpr.h"

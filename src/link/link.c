@@ -20,99 +20,109 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_link_p_result_t _z_open_link(const char *locator) {
-    _z_link_p_result_t r;
-    r._tag = _Z_RES_OK;
-    r._value = NULL;
+int8_t _z_open_link(_z_link_t *zl, const char *locator) {
+    int8_t ret = _Z_RES_OK;
 
-    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value;
-
-    // TODO[peer]: when peer unicast mode is supported, this must be revisited
-    // Create transport link
+    _z_endpoint_t ep;
+    ret = _z_endpoint_from_str(&ep, locator);
+    if (ret == _Z_RES_OK) {
+        // TODO[peer]: when peer unicast mode is supported, this must be revisited
+        // Create transport link
 #if Z_LINK_TCP == 1
-    if (_z_str_eq(endpoint._locator._protocol, TCP_SCHEMA) == true) {
-        r._value = _z_new_link_tcp(endpoint);
-    } else
+        if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tcp(zl, &ep);
+        } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-        if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) == true) {
-        r._value = _z_new_link_udp_unicast(endpoint);
-    } else
+            if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_udp_unicast(zl, ep);
+        } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) == true) {
-        r._value = _z_new_link_bt(endpoint);
-    } else
+            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_bt(zl, ep);
+        } else
 #endif
 #if Z_LINK_SERIAL == 1
-        if (_z_str_eq(endpoint._locator._protocol, SERIAL_SCHEMA) == true) {
-        r._value = _z_new_link_serial(endpoint);
-    } else
+            if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_serial(zl, ep);
+        } else
 #endif
-    {
-        r._tag = _Z_ERR_LOCATOR_INVALID;
-        _z_endpoint_clear(&endpoint);
-    }
-
-    if (r._tag == _Z_RES_OK) {
-        // Open transport link for communication
-        if (r._value->_open_f(r._value) != _Z_RES_OK) {
-            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_free(&r._value);
+        {
+            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
+
+        if (ret == _Z_RES_OK) {
+            // Open transport link for communication
+            if (zl->_open_f(zl) != _Z_RES_OK) {
+                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+                _z_link_clear(zl);
+            }
+        } else {
+            _z_endpoint_clear(&ep);
+        }
+    } else {
+        _z_endpoint_clear(&ep);
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    return r;
+    return ret;
 }
 
-_z_link_p_result_t _z_listen_link(const char *locator) {
-    _z_link_p_result_t r;
-    r._tag = _Z_RES_OK;
-    r._value = NULL;
+int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
+    int8_t ret = _Z_RES_OK;
 
-    _z_endpoint_result_t ep_res = _z_endpoint_from_str(locator);
-    _ASSURE_RESULT(ep_res, r, _Z_ERR_INVALID_LOCATOR)
-    _z_endpoint_t endpoint = ep_res._value;
-
-    // TODO[peer]: when peer unicast mode is supported, this must be revisited
-    // Create transport link
+    _z_endpoint_t ep;
+    ret = _z_endpoint_from_str(&ep, locator);
+    if (ret == _Z_RES_OK) {
+        // TODO[peer]: when peer unicast mode is supported, this must be revisited
+        // Create transport link
 #if Z_LINK_UDP_MULTICAST == 1
-    if (_z_str_eq(endpoint._locator._protocol, UDP_SCHEMA) == true) {
-        r._value = _z_new_link_udp_multicast(endpoint);
-    } else
+        if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_udp_multicast(zl, ep);
+        } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-        if (_z_str_eq(endpoint._locator._protocol, BT_SCHEMA) == true) {
-        r._value = _z_new_link_bt(endpoint);
-    } else
+            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_bt(zl, ep);
+        } else
 #endif
-    {
-        r._tag = _Z_ERR_LOCATOR_INVALID;
-        _z_endpoint_clear(&endpoint);
-    }
-
-    if (r._tag == _Z_RES_OK) {
-        // Open transport link for listening
-        if (r._value->_listen_f(r._value) != _Z_RES_OK) {
-            r._tag = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            _z_link_free(&r._value);
+        {
+            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
+
+        if (ret == _Z_RES_OK) {
+            // Open transport link for listening
+            if (zl->_listen_f(zl) != _Z_RES_OK) {
+                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+                _z_link_clear(zl);
+            }
+        } else {
+            _z_endpoint_clear(&ep);
+        }
+    } else {
+        _z_endpoint_clear(&ep);
+        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    return r;
+    return ret;
 }
 
-void _z_link_free(_z_link_t **zn) {
-    _z_link_t *ptr = *zn;
+void _z_link_clear(_z_link_t *l) {
+    l->_close_f(l);
+    l->_free_f(l);
+    _z_endpoint_clear(&l->_endpoint);
+}
 
-    ptr->_close_f(ptr);
-    ptr->_free_f(ptr);
-    _z_endpoint_clear(&ptr->_endpoint);
+void _z_link_free(_z_link_t **l) {
+    _z_link_t *ptr = *l;
 
-    z_free(ptr);
-    *zn = NULL;
+    if (ptr != NULL) {
+        _z_link_clear(ptr);
+
+        z_free(ptr);
+        *l = NULL;
+    }
 }
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
@@ -138,11 +148,8 @@ int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
         _z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
         do {
-            _Z_DEBUG("Sending wbuf on socket...");
             size_t wb = link->_write_f(link, bs.start, n);
-            _Z_DEBUG(" sent %lu bytes\n", wb);
             if (wb == SIZE_MAX) {
-                _Z_DEBUG("Error while sending data over socket [%lu]\n", wb);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }

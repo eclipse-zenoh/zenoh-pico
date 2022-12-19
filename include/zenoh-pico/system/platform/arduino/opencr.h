@@ -35,7 +35,6 @@ typedef struct WiFiClient WiFiClient;  // Forward declaration to be used in _z_s
 typedef struct WiFiUDP WiFiUDP;        // Forward declaration to be used in _z_sys_net_socket_t
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1
         WiFiClient *_tcp;  // As pointer to cross the boundary between C and C++
@@ -43,6 +42,7 @@ typedef struct {
 #if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
 #endif
+    _Bool _err;
     };
 } _z_sys_net_socket_t;
 
@@ -52,12 +52,12 @@ typedef struct {
 } __z_net_iptcp_addr_t;
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         __z_net_iptcp_addr_t _iptcp;
 #endif
     };
+    _Bool _err;
 } _z_sys_net_endpoint_t;
 
 #endif /* ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H */

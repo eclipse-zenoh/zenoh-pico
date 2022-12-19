@@ -223,8 +223,8 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 // - if F==1 then the message is a REPLY_FINAL
 //
 typedef struct {
-    _z_zint_t _qid;
     _z_bytes_t _replier_id;
+    _z_zint_t _qid;
     uint8_t _header;
 } _z_reply_context_t;
 void _z_msg_clear_reply_context(_z_reply_context_t *rc);
@@ -266,8 +266,8 @@ void _z_keyexpr_free(_z_keyexpr_t **rk);
 // +---------------+
 //
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
+    _z_zint_t _id;
 } _z_res_decl_t;
 void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 
@@ -442,12 +442,12 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 //
 // - if options & (1 << 5) then the payload is sliced
 typedef struct {
-    _z_zint_t _flags;
-    _z_zint_t _kind;
-    _z_encoding_t _encoding;
-    _z_timestamp_t _tstamp;
     _z_bytes_t _source_id;
+    _z_timestamp_t _tstamp;
+    _z_zint_t _flags;
     _z_zint_t _source_sn;
+    _z_encoding_t _encoding;
+    uint8_t _kind;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
 
@@ -466,8 +466,8 @@ void _z_data_info_clear(_z_data_info_t *di);
 // - if D==1 then the message can be dropped for congestion control reasons.
 //
 typedef struct {
-    _z_keyexpr_t _key;
     _z_data_info_t _info;
+    _z_keyexpr_t _key;
     _z_payload_t _payload;
 } _z_msg_data_t;
 void _z_msg_clear_data(_z_msg_data_t *msg);
@@ -534,8 +534,8 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    char *_parameters;
     _z_zint_t _qid;
+    char *_parameters;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
     _z_data_info_t _info;
@@ -552,9 +552,9 @@ typedef union {
     _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
 typedef struct {
+    _z_zenoh_body_t _body;
     _z_attachment_t *_attachment;
     _z_reply_context_t *_reply_context;
-    _z_zenoh_body_t _body;
     uint8_t _header;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
@@ -599,12 +599,12 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 // ~      what     ~ if W==1 -- Otherwise implicitly scouting for Routers
 // +---------------+
 //
-// - if I==1 then the sender is asking for hello replies that contain a peer_id.
+// - if I==1 then the sender is asking for hello replies that contain a Zenoh ID.
 //
 typedef struct {
     z_whatami_t _what;
 } _z_t_msg_scout_t;
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
+void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -629,7 +629,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 // +-+-+-+-+-+-+-+-+
 // |L|W|I|  HELLO  |
 // +-+-+-+-+-------+
-// ~    peer-id    ~ if I==1
+// ~   zenoh_id    ~ if I==1
 // +---------------+
 // ~    whatami    ~ if W==1 -- Otherwise it is from a Router
 // +---------------+
@@ -637,11 +637,11 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header);
 // +---------------+
 //
 typedef struct {
-    z_whatami_t _whatami;
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     _z_locator_array_t _locators;
+    z_whatami_t _whatami;
 } _z_t_msg_hello_t;
-void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
+void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
 
 /*------------------ Join Message ------------------*/
 // # Join message
@@ -664,7 +664,7 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header);
 // +-------+-------+
 // ~    whatami    ~ -- Router, Peer or a combination of them
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the JOIN message
+// ~   zenoh_id    ~ -- PID of the sender of the JOIN message
 // +---------------+
 // ~     lease     ~ -- Lease period of the sender of the JOIN message(*)
 // +---------------+
@@ -692,15 +692,15 @@ typedef struct {
     _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
+    _z_bytes_t _zid;
     _z_zint_t _options;
-    z_whatami_t _whatami;
     _z_zint_t _lease;
     _z_zint_t _sn_resolution;
-    _z_bytes_t _pid;
     _z_conduit_sn_list_t _next_sns;
+    z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_join_t;
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
+void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 
 /*------------------ Init Message ------------------*/
 // # Init message
@@ -726,7 +726,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 // +-------+-------+
 // ~    whatami    ~ -- Client, Router, Peer or a combination of them
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the INIT message
+// ~   zenoh_id    ~ -- PID of the sender of the INIT message
 // +---------------+
 // ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
 // +---------------+
@@ -739,14 +739,14 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header);
 // - if Q==1 then the initiator/responder supports QoS.
 //
 typedef struct {
-    _z_zint_t _options;
-    z_whatami_t _whatami;
-    _z_zint_t _sn_resolution;
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     _z_bytes_t _cookie;
+    _z_zint_t _options;
+    _z_zint_t _sn_resolution;
+    z_whatami_t _whatami;
     uint8_t _version;
 } _z_t_msg_init_t;
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header);
+void _z_t_msg_clear_init(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -776,7 +776,7 @@ typedef struct {
     _z_zint_t _initial_sn;
     _z_bytes_t _cookie;
 } _z_t_msg_open_t;
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
+void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -793,7 +793,7 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
 // +-+-+-+-+-+-+-+-+
 // |X|K|I|  CLOSE  |
 // +-+-+-+-+-------+
-// ~    peer_id    ~  if I==1 -- PID of the target peer.
+// ~   zenoh_id    ~  if I==1 -- PID of the target peer.
 // +---------------+
 // |     reason    |
 // +---------------+
@@ -803,10 +803,10 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header);
 //           keep the whole session open. NOTE: the session will be automatically closed when
 //           the session's lease period expires.
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     uint8_t _reason;
 } _z_t_msg_close_t;
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header);
+void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
 
 /*------------------ Sync Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -835,7 +835,7 @@ typedef struct {
     _z_zint_t _sn;
     _z_zint_t _count;
 } _z_t_msg_sync_t;
-void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header);
+void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg);
 
 /*------------------ AckNack Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -860,7 +860,7 @@ typedef struct {
     _z_zint_t _sn;
     _z_zint_t _mask;
 } _z_t_msg_ack_nack_t;
-void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
+void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg);
 
 /*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -876,13 +876,13 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header);
 // +-+-+-+-+-+-+-+-+
 // |X|X|I| K_ALIVE |
 // +-+-+-+-+-------+
-// ~    peer_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
+// ~   zenoh_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
 // +---------------+
 //
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
 } _z_t_msg_keep_alive_t;
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
+void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
 
 /*------------------ PingPong Messages ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -903,7 +903,7 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header);
 typedef struct {
     _z_zint_t _hash;
 } _z_t_msg_ping_pong_t;
-void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header);
+void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -942,8 +942,8 @@ typedef union {
     _z_zenoh_message_vec_t _messages;
 } _z_frame_payload_t;
 typedef struct {
-    _z_zint_t _sn;
     _z_frame_payload_t _payload;
+    _z_zint_t _sn;
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header);
 
@@ -962,27 +962,27 @@ typedef union {
     _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
 typedef struct {
-    _z_attachment_t *_attachment;
     _z_transport_body_t _body;
+    _z_attachment_t *_attachment;
     uint8_t _header;
 } _z_transport_message_t;
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid);
-_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, _z_locator_array_t locators);
+_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid);
+_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
 _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
-                                          _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
+                                          _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
 _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _Bool is_qos);
+                                              _z_bytes_t zid, _Bool is_qos);
 _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _z_bytes_t cookie, _Bool is_qos);
+                                              _z_bytes_t zid, _z_bytes_t cookie, _Bool is_qos);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool link_only);
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
 _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
-_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid);
+_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,
@@ -992,17 +992,16 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 /*------------------ Copy ------------------*/
 // @TODO: implement the remaining copyers
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-// void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *scout);
-// void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *hello);
-void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *join);
-void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *init);
-void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *open);
-// void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *close);
-// void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *sync);
-// void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *ack);
-// void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *keep_alive);
-// void _z_t_msg_copy_ping(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *ping);
-// void _z_t_msg_copy_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *pong);
-// void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *frame);
+void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg);
+void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg);
+void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg);
+void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg);
+void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg);
+void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg);
+void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *msg);
+void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *msg);
+void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg);
+void _z_t_msg_copy_ping_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *msg);
+void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg, uint8_t header);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

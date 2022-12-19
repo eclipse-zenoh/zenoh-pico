@@ -62,15 +62,15 @@ _Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
  *
  */
 typedef struct {
-    z_reply_tag_t _tag;
     _z_reply_data_t data;
+    z_reply_tag_t _tag;
 } _z_reply_t;
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
+    _z_zint_t _id;
 } _z_resource_t;
 
 _Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
@@ -86,12 +86,12 @@ _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
-    _z_subinfo_t _info;
+    _z_zint_t _id;
     _z_data_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
+    _z_subinfo_t _info;
 } _z_subscription_t;
 
 _Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
@@ -103,8 +103,8 @@ _Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t, _z_noop_size, _z_su
 _Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t)
 
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
+    _z_zint_t _id;
 } _z_publication_t;
 
 /**
@@ -113,12 +113,12 @@ typedef struct {
 typedef void (*_z_questionable_handler_t)(const z_query_t *query, void *arg);
 
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
-    _Bool _complete;
+    _z_zint_t _id;
     _z_questionable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
+    _Bool _complete;
 } _z_questionable_t;
 
 _Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
@@ -130,7 +130,7 @@ _Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t, _z_noop_size, _z_qu
 _Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t)
 
 typedef struct {
-    _z_reply_t *_reply;
+    _z_reply_t _reply;
     _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
@@ -144,20 +144,20 @@ struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_rep
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t **reply, struct __z_reply_handler_wrapper_t *arg);
+typedef void (*_z_reply_handler_t)(_z_reply_t *reply, struct __z_reply_handler_wrapper_t *arg);
 
 typedef struct {
-    _z_zint_t _id;
     _z_keyexpr_t _key;
-    char *_parameters;
-    z_query_target_t _target;
-    z_consolidation_mode_t _consolidation;
-    _z_pending_reply_list_t *_pending_replies;
-    _Bool _anykey;
+    _z_zint_t _id;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_call_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
     void *_drop_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
+    char *_parameters;
+    _z_pending_reply_list_t *_pending_replies;
+    z_query_target_t _target;
+    z_consolidation_mode_t _consolidation;
+    _Bool _anykey;
 } _z_pending_query_t;
 
 _Bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
@@ -178,6 +178,8 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t **hello, struct __z_hello_handler_wrapper_t *arg);
+typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
+
+int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

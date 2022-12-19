@@ -38,17 +38,16 @@
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'
 typedef struct {
+    _z_str_intmap_t _metadata;
     char *_protocol;
     char *_address;
-    _z_str_intmap_t _metadata;
 } _z_locator_t;
-
-_Z_RESULT_DECLARE(_z_locator_t, locator)
 
 _Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
 
+void _z_locator_init(_z_locator_t *locator);
 char *_z_locator_to_str(const _z_locator_t *l);
-_z_locator_result_t _z_locator_from_str(const char *s);
+int8_t _z_locator_from_str(_z_locator_t *lc, const char *s);
 
 size_t _z_locator_size(_z_locator_t *lc);
 void _z_locator_clear(_z_locator_t *lc);
@@ -56,7 +55,6 @@ _Z_ELEM_DEFINE(_z_locator, _z_locator_t, _z_locator_size, _z_locator_clear, _z_n
 
 /*------------------ Locator array ------------------*/
 _Z_ARRAY_DEFINE(_z_locator, _z_locator_t)
-_Z_RESULT_DECLARE(_z_locator_array_t, locator_array)
 
 /*------------------ Endpoint ------------------*/
 #define ENDPOINT_CONFIG_SEPARATOR '#'
@@ -65,10 +63,9 @@ typedef struct {
     _z_locator_t _locator;
     _z_str_intmap_t _config;
 } _z_endpoint_t;
-_Z_RESULT_DECLARE(_z_endpoint_t, endpoint)
 
 char *_z_endpoint_to_str(const _z_endpoint_t *e);
-_z_endpoint_result_t _z_endpoint_from_str(const char *s);
+int8_t _z_endpoint_from_str(_z_endpoint_t *ep, const char *s);
 void _z_endpoint_clear(_z_endpoint_t *ep);
 void _z_endpoint_free(_z_endpoint_t **ep);
 

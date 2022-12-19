@@ -32,12 +32,12 @@ typedef struct {
     _z_sys_net_socket_t _sock;
 } _z_serial_socket_t;
 
-_z_sys_net_socket_t _z_open_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-_z_sys_net_socket_t _z_listen_serial(uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-void _z_close_serial(_z_sys_net_socket_t sock);
-size_t _z_read_exact_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_read_serial(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_send_serial(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
+int8_t _z_open_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+int8_t _z_listen_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+void _z_close_serial(_z_sys_net_socket_t *sock);
+size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
 #endif
 

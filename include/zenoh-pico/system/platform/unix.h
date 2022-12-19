@@ -34,7 +34,6 @@ typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         int _fd;
@@ -43,7 +42,6 @@ typedef struct {
 } _z_sys_net_socket_t;
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         struct addrinfo *_iptcp;

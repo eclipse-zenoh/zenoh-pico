@@ -37,16 +37,19 @@ void _z_sample_clear(_z_sample_t *sample) {
 }
 
 void _z_sample_free(_z_sample_t **sample) {
-    _z_sample_t *ptr = (_z_sample_t *)*sample;
-    _z_sample_clear(ptr);
+    _z_sample_t *ptr = *sample;
 
-    z_free(ptr);
-    *sample = NULL;
+    if (ptr != NULL) {
+        _z_sample_clear(ptr);
+
+        z_free(ptr);
+        *sample = NULL;
+    }
 }
 
 void _z_hello_clear(_z_hello_t *hello) {
-    if (hello->pid.len > 0) {
-        _z_bytes_clear(&hello->pid);
+    if (hello->zid.len > 0) {
+        _z_bytes_clear(&hello->zid);
     }
     if (hello->locators._len > 0) {
         _z_str_array_clear(&hello->locators);
@@ -54,11 +57,14 @@ void _z_hello_clear(_z_hello_t *hello) {
 }
 
 void _z_hello_free(_z_hello_t **hello) {
-    _z_hello_t *ptr = (_z_hello_t *)*hello;
-    _z_hello_clear(ptr);
+    _z_hello_t *ptr = *hello;
 
-    z_free(ptr);
-    *hello = NULL;
+    if (ptr != NULL) {
+        _z_hello_clear(ptr);
+
+        z_free(ptr);
+        *hello = NULL;
+    }
 }
 
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
@@ -67,9 +73,12 @@ void _z_reply_data_clear(_z_reply_data_t *reply_data) {
 }
 
 void _z_reply_data_free(_z_reply_data_t **reply_data) {
-    _z_reply_data_t *ptr = (_z_reply_data_t *)*reply_data;
-    _z_reply_data_clear(ptr);
+    _z_reply_data_t *ptr = *reply_data;
 
-    z_free(ptr);
-    *reply_data = NULL;
+    if (ptr != NULL) {
+        _z_reply_data_clear(ptr);
+
+        z_free(ptr);
+        *reply_data = NULL;
+    }
 }

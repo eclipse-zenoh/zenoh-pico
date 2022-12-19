@@ -38,11 +38,14 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk) {
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
-    _z_keyexpr_t *ptr = (_z_keyexpr_t *)*rk;
-    _z_keyexpr_clear(ptr);
+    _z_keyexpr_t *ptr = *rk;
 
-    z_free(ptr);
-    *rk = NULL;
+    if (ptr != NULL) {
+        _z_keyexpr_clear(ptr);
+
+        z_free(ptr);
+        *rk = NULL;
+    }
 }
 
 /*------------------ Locators Field ------------------*/
@@ -57,13 +60,14 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_paylo
 /*------------------ ReplyContext Decorator ------------------*/
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final) {
     _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
+    if (rctx != NULL) {
+        rctx->_qid = qid;
+        rctx->_replier_id = replier_id;
 
-    rctx->_qid = qid;
-    rctx->_replier_id = replier_id;
-
-    rctx->_header = _Z_MID_REPLY_CONTEXT;
-    if (is_final == true) {
-        _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
+        rctx->_header = _Z_MID_REPLY_CONTEXT;
+        if (is_final == true) {
+            _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
+        }
     }
 
     return rctx;
@@ -273,27 +277,15 @@ void _z_msg_clear_declaration(_z_declaration_t *dcl) {
     }
 }
 
-void _z_msg_clear_declare(_z_msg_declare_t *dcl) { _z_declaration_array_clear(&dcl->_declarations); }
+void _z_msg_clear_declare(_z_msg_declare_t *msg) { _z_declaration_array_clear(&msg->_declarations); }
 
 /*------------------ Data Info Field ------------------*/
 // @TODO: implement builder for _z_data_info_t
 
 void _z_data_info_clear(_z_data_info_t *di) {
-    // NOTE: the following fields do not involve any heap allocation:
-    //   - source_sn
-    //   - first_router_sn
-
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC) == true) {
-        _z_bytes_clear(&di->_encoding.suffix);
-    }
-
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_SRC_ID) == true) {
-        _z_bytes_clear(&di->_source_id);
-    }
-
-    if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_TSTAMP) == true) {
-        _z_timestamp_clear(&di->_tstamp);
-    }
+    _z_bytes_clear(&di->_encoding.suffix);
+    _z_bytes_clear(&di->_source_id);
+    _z_timestamp_clear(&di->_tstamp);
 }
 
 /*------------------ Data Message ------------------*/
@@ -381,7 +373,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._qid = qid;
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
-    memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
+    (void)memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
     msg._body._query._info._encoding = with_value.encoding;
     msg._body._query._payload = with_value.payload;
 
@@ -445,7 +437,7 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
             _z_msg_clear_unit(&msg->_body._unit);
             break;
         default:
-            _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear message with unknown ID(%d)\n", mid);
             break;
     }
 }
@@ -454,13 +446,13 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid) {
+_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid) {
     _z_transport_message_t msg;
 
     msg._body._scout._what = what;
 
     msg._header = _Z_MID_SCOUT;
-    if (request_pid == true) {
+    if (request_zid == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
 
@@ -473,25 +465,26 @@ _z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid) 
     return msg;
 }
 
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg, uint8_t header) {
+void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg) { clone->_what = msg->_what; }
+
+void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg) {
     // NOTE: scout does not involve any heap allocation
     (void)(msg);
-    (void)(header);
 }
 
 /*------------------ Hello Message ------------------*/
-_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, _z_locator_array_t locators) {
+_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {
     _z_transport_message_t msg;
 
     msg._body._hello._whatami = whatami;
-    msg._body._hello._pid = pid;
+    msg._body._hello._zid = zid;
     msg._body._hello._locators = locators;
 
     msg._header = _Z_MID_HELLO;
     if (whatami != Z_WHATAMI_ROUTER) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     }
-    if (_z_bytes_is_empty(&pid) == false) {
+    if (_z_bytes_is_empty(&zid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
     if (_z_locator_array_is_empty(&locators) == false) {
@@ -503,19 +496,20 @@ _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, 
     return msg;
 }
 
-void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _z_bytes_clear(&msg->_pid);
-    }
+void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg) {
+    _z_locator_array_copy(&clone->_locators, &msg->_locators);
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    clone->_whatami = msg->_whatami;
+}
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
-        _z_locators_clear(&msg->_locators);
-    }
+void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg) {
+    _z_bytes_clear(&msg->_zid);
+    _z_locators_clear(&msg->_locators);
 }
 
 /*------------------ Join Message ------------------*/
 _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
-                                          _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns) {
+                                          _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns) {
     _z_transport_message_t msg;
 
     msg._body._join._options = 0;
@@ -527,7 +521,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, 
     msg._body._join._lease = lease;
     msg._body._join._sn_resolution = sn_resolution;
     msg._body._join._next_sns = next_sns;
-    msg._body._join._pid = pid;
+    msg._body._join._zid = zid;
 
     msg._header = _Z_MID_JOIN;
     if ((lease % 1000) == 0) {
@@ -552,17 +546,14 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_lease = msg->_lease;
     clone->_sn_resolution = msg->_sn_resolution;
     clone->_next_sns = msg->_next_sns;
-    _z_bytes_copy(&clone->_pid, &msg->_pid);
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
 
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg, uint8_t header) {
-    (void)(header);
-    _z_bytes_clear(&msg->_pid);
-}
+void _z_t_msg_clear_join(_z_t_msg_join_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ Init Message ------------------*/
 _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _Bool is_qos) {
+                                              _z_bytes_t zid, _Bool is_qos) {
     _z_transport_message_t msg;
 
     msg._body._init._options = 0;
@@ -572,7 +563,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whata
     msg._body._init._version = version;
     msg._body._init._whatami = whatami;
     msg._body._init._sn_resolution = sn_resolution;
-    msg._body._init._pid = pid;
+    msg._body._init._zid = zid;
     _z_bytes_reset(&msg._body._init._cookie);
 
     msg._header = _Z_MID_INIT;
@@ -589,7 +580,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whata
 }
 
 _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _z_bytes_t cookie, _Bool is_qos) {
+                                              _z_bytes_t zid, _z_bytes_t cookie, _Bool is_qos) {
     _z_transport_message_t msg;
 
     msg._body._init._options = 0;
@@ -599,7 +590,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whata
     msg._body._init._version = version;
     msg._body._init._whatami = whatami;
     msg._body._init._sn_resolution = sn_resolution;
-    msg._body._init._pid = pid;
+    msg._body._init._zid = zid;
     msg._body._init._cookie = cookie;
 
     msg._header = _Z_MID_INIT;
@@ -621,15 +612,13 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
     clone->_version = msg->_version;
     clone->_whatami = msg->_whatami;
     clone->_sn_resolution = msg->_sn_resolution;
-    _z_bytes_copy(&clone->_pid, &msg->_pid);
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
     _z_bytes_copy(&clone->_cookie, &msg->_cookie);
 }
 
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg, uint8_t header) {
-    _z_bytes_clear(&msg->_pid);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == true) {
-        _z_bytes_clear(&msg->_cookie);
-    }
+void _z_t_msg_clear_init(_z_t_msg_init_t *msg) {
+    _z_bytes_clear(&msg->_zid);
+    _z_bytes_clear(&msg->_cookie);
 }
 
 /*------------------ Open Message ------------------*/
@@ -671,24 +660,20 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
     clone->_lease = msg->_lease;
     clone->_initial_sn = msg->_initial_sn;
-    _z_bytes_reset(&clone->_cookie);
+    _z_bytes_copy(&clone->_cookie, &msg->_cookie);
 }
 
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
-        _z_bytes_clear(&msg->_cookie);
-    }
-}
+void _z_t_msg_clear_open(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); }
 
 /*------------------ Close Message ------------------*/
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool link_only) {
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only) {
     _z_transport_message_t msg;
 
     msg._body._close._reason = reason;
-    msg._body._close._pid = pid;
+    msg._body._close._zid = zid;
 
     msg._header = _Z_MID_CLOSE;
-    if (_z_bytes_is_empty(&pid) == false) {
+    if (_z_bytes_is_empty(&zid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
     if (link_only == true) {
@@ -700,11 +685,12 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool
     return msg;
 }
 
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _z_bytes_clear(&msg->_pid);
-    }
+void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) {
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    clone->_reason = msg->_reason;
 }
+
+void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ Sync Message ------------------*/
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count) {
@@ -726,10 +712,14 @@ _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zi
     return msg;
 }
 
-void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg, uint8_t header) {
+void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *msg) {
+    clone->_sn = msg->_sn;
+    clone->_count = msg->_count;
+}
+
+void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg) {
     // NOTE: sync does not involve any heap allocation
     (void)(msg);
-    (void)(header);
 }
 
 /*------------------ AckNack Message ------------------*/
@@ -749,20 +739,24 @@ _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask) {
     return msg;
 }
 
-void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg, uint8_t header) {
+void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *msg) {
+    clone->_sn = msg->_sn;
+    clone->_mask = msg->_mask;
+}
+
+void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg) {
     // NOTE: ack_nack does not involve any heap allocation
     (void)(msg);
-    (void)(header);
 }
 
 /*------------------ Keep Alive Message ------------------*/
-_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid) {
+_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid) {
     _z_transport_message_t msg;
 
-    msg._body._keep_alive._pid = pid;
+    msg._body._keep_alive._zid = zid;
 
     msg._header = _Z_MID_KEEP_ALIVE;
-    if (_z_bytes_is_empty(&pid) == false) {
+    if (_z_bytes_is_empty(&zid) == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
 
@@ -771,11 +765,11 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid) {
     return msg;
 }
 
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _z_bytes_clear(&msg->_pid);
-    }
+void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg) {
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
+
+void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ PingPong Messages ------------------*/
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash) {
@@ -803,9 +797,10 @@ _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash) {
     return msg;
 }
 
-void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg, uint8_t header) {
+void _z_t_msg_copy_ping_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *msg) { clone->_hash = msg->_hash; }
+
+void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg) {
     // NOTE: ping_pong does not involve any heap allocation
-    (void)(header);
     (void)(msg);
 }
 
@@ -857,6 +852,15 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
     return msg;
 }
 
+void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg, uint8_t header) {
+    clone->_sn = msg->_sn;
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
+        _z_bytes_copy(&clone->_payload._fragment, &msg->_payload._fragment);
+    } else {
+        _z_zenoh_message_vec_copy(&clone->_payload._messages, &msg->_payload._messages);
+    }
+}
+
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
         _z_payload_clear(&msg->_payload._fragment);
@@ -873,11 +877,11 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_SCOUT: {
-            // _z_t_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
+            _z_t_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
         } break;
 
         case _Z_MID_HELLO: {
-            // _z_t_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
+            _z_t_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
         } break;
 
         case _Z_MID_JOIN: {
@@ -893,27 +897,27 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
         } break;
 
         case _Z_MID_CLOSE: {
-            // _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
+            _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
         } break;
 
         case _Z_MID_SYNC: {
-            // _z_t_msg_copy_sync(&clone->_body._sync, (&msg->_body._sync);
+            _z_t_msg_copy_sync(&clone->_body._sync, &msg->_body._sync);
         } break;
 
         case _Z_MID_ACK_NACK: {
-            // _z_t_msg_copy_ack_nack(&clone->_body._ack_nack, g->body._ack_nack);
+            _z_t_msg_copy_ack_nack(&clone->_body._ack_nack, &msg->_body._ack_nack);
         } break;
 
         case _Z_MID_KEEP_ALIVE: {
-            // _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, >body._keep_alive);
+            _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, &msg->_body._keep_alive);
         } break;
 
         case _Z_MID_PING_PONG: {
-            // _z_t_msg_copy_ping_pong(&clone->_body._ping_pong, ->body._ping_pong);
+            _z_t_msg_copy_ping_pong(&clone->_body._ping_pong, &msg->_body._ping_pong);
         } break;
 
         case _Z_MID_FRAME: {
-            // _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
+            _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame, clone->_header);
         } break;
 
         default: {
@@ -931,43 +935,43 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_SCOUT: {
-            _z_t_msg_clear_scout(&msg->_body._scout, msg->_header);
+            _z_t_msg_clear_scout(&msg->_body._scout);
         } break;
 
         case _Z_MID_HELLO: {
-            _z_t_msg_clear_hello(&msg->_body._hello, msg->_header);
+            _z_t_msg_clear_hello(&msg->_body._hello);
         } break;
 
         case _Z_MID_JOIN: {
-            _z_t_msg_clear_join(&msg->_body._join, msg->_header);
+            _z_t_msg_clear_join(&msg->_body._join);
         } break;
 
         case _Z_MID_INIT: {
-            _z_t_msg_clear_init(&msg->_body._init, msg->_header);
+            _z_t_msg_clear_init(&msg->_body._init);
         } break;
 
         case _Z_MID_OPEN: {
-            _z_t_msg_clear_open(&msg->_body._open, msg->_header);
+            _z_t_msg_clear_open(&msg->_body._open);
         } break;
 
         case _Z_MID_CLOSE: {
-            _z_t_msg_clear_close(&msg->_body._close, msg->_header);
+            _z_t_msg_clear_close(&msg->_body._close);
         } break;
 
         case _Z_MID_SYNC: {
-            _z_t_msg_clear_sync(&msg->_body._sync, msg->_header);
+            _z_t_msg_clear_sync(&msg->_body._sync);
         } break;
 
         case _Z_MID_ACK_NACK: {
-            _z_t_msg_clear_ack_nack(&msg->_body._ack_nack, msg->_header);
+            _z_t_msg_clear_ack_nack(&msg->_body._ack_nack);
         } break;
 
         case _Z_MID_KEEP_ALIVE: {
-            _z_t_msg_clear_keep_alive(&msg->_body._keep_alive, msg->_header);
+            _z_t_msg_clear_keep_alive(&msg->_body._keep_alive);
         } break;
 
         case _Z_MID_PING_PONG: {
-            _z_t_msg_clear_ping_pong(&msg->_body._ping_pong, msg->_header);
+            _z_t_msg_clear_ping_pong(&msg->_body._ping_pong);
         } break;
 
         case _Z_MID_FRAME: {

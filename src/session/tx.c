@@ -22,12 +22,12 @@ int8_t _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_
     _Z_DEBUG(">> send zenoh message\n");
 
 #if Z_UNICAST_TRANSPORT == 1
-    if (zn->_tp->_type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         ret = _z_unicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
     } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
-        if (zn->_tp->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_multicast_send_z_msg(zn, z_msg, reliability, cong_ctrl);
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1

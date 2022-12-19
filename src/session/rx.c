@@ -50,12 +50,16 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
                         // Register remote resource declaration
                         _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
-                        r->_id = decl._body._res._id;
-                        r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
+                        if (r != NULL) {
+                            r->_id = decl._body._res._id;
+                            r->_key = _z_keyexpr_duplicate(&decl._body._res._key);
 
-                        ret = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
-                        if (ret != _Z_RES_OK) {
-                            _z_resource_free(&r);
+                            ret = _z_register_resource(zn, _Z_RESOURCE_IS_REMOTE, r);
+                            if (ret != _Z_RES_OK) {
+                                _z_resource_free(&r);
+                            }
+                        } else {
+                            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                         }
                     } break;
 
@@ -140,7 +144,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
                     default: {
                         _Z_INFO("Unknown declaration message ID");
-                        ret = _Z_ERR_MESSAGE_DECLARATION_UNEXPECTED;
+                        ret = _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
                     } break;
                 }
             }
@@ -166,7 +170,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
 
         default: {
             _Z_ERROR("Unknown zenoh message ID\n");
-            ret = _Z_ERR_MESSAGE_UNKNOWN;
+            ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
         }
     }
 

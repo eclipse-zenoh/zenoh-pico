@@ -25,9 +25,13 @@ void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
 
 void _z_resource_free(_z_resource_t **res) {
     _z_resource_t *ptr = *res;
-    _z_resource_clear(ptr);
-    z_free(ptr);
-    *res = NULL;
+
+    if (ptr != NULL) {
+        _z_resource_clear(ptr);
+
+        z_free(ptr);
+        *res = NULL;
+    }
 }
 
 /*------------------ Entity ------------------*/
@@ -107,20 +111,22 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     if (len != (size_t)0) {
         char *rname = NULL;
         rname = (char *)z_malloc(len);
-        rname[0] = '\0';  // NULL terminator must be set (required to strcat)
-        len = len - (size_t)1;
+        if (rname != NULL) {
+            rname[0] = '\0';  // NULL terminator must be set (required to strcat)
+            len = len - (size_t)1;
 
-        // Concatenate all the partial resource names
-        _z_str_list_t *xstr = strs;
-        while (xstr != NULL) {
-            char *s = _z_str_list_head(xstr);
-            if (len > (size_t)0) {
-                (void)strncat(rname, s, len);
-                len = len - strlen(s);
+            // Concatenate all the partial resource names
+            _z_str_list_t *xstr = strs;
+            while (xstr != NULL) {
+                char *s = _z_str_list_head(xstr);
+                if (len > (size_t)0) {
+                    (void)strncat(rname, s, len);
+                    len = len - strlen(s);
+                }
+                xstr = _z_str_list_tail(xstr);
             }
-            xstr = _z_str_list_tail(xstr);
+            ret._suffix = rname;
         }
-        ret._suffix = rname;
     }
 
     _z_list_free(&strs, _z_noop_free);
@@ -219,7 +225,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
             zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
         }
     } else {
-        ret = _Z_ERR_DECLARE_KEYEXPR;
+        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
 #if Z_MULTI_THREAD == 1

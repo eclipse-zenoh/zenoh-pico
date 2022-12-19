@@ -37,8 +37,10 @@ void _z_subscriber_clear(_z_subscriber_t *sub) {
 void _z_subscriber_free(_z_subscriber_t **sub) {
     _z_subscriber_t *ptr = *sub;
 
-    _z_subscriber_clear(ptr);
+    if (ptr != NULL) {
+        _z_subscriber_clear(ptr);
 
-    z_free(ptr);
-    *sub = NULL;
+        z_free(ptr);
+        *sub = NULL;
+    }
 }

@@ -24,10 +24,10 @@
 /*------------------ IOSli ------------------*/
 
 typedef struct {
-    uint8_t *_buf;
     size_t _r_pos;
     size_t _w_pos;
     size_t _capacity;
+    uint8_t *_buf;
     _Bool _is_alloc;
 } _z_iosli_t;
 

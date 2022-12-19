@@ -38,13 +38,17 @@ extern "C" {
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
 void query_handler(const z_query_t *query, void *arg) {
-    const char *res = z_keyexpr_to_string(z_query_keyexpr(query));
+    char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
+
     Serial.print(" >> [Queryable handler] Replying Data ('");
-    Serial.print(res);
+    Serial.print(keystr);
     Serial.print("': '");
     Serial.print(VALUE);
     Serial.println("')");
+
     z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+
+    free(keystr);
 }
 
 void setup() {

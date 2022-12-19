@@ -36,7 +36,6 @@ typedef struct timeval z_time_t;
 typedef struct BluetoothSerial BluetoothSerial;  // Forward declaration to be used in _z_sys_net_socket_t
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         int _fd;
@@ -44,15 +43,16 @@ typedef struct {
 #if Z_LINK_BLUETOOTH == 1
         BluetoothSerial *_bts;  // As pointer to cross the boundary between C and C++
 #endif
+    _Bool _err;
     };
 } _z_sys_net_socket_t;
 
 typedef struct {
-    _Bool _err;
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         struct addrinfo *_iptcp;
 #endif
+    _Bool _err;
     };
 } _z_sys_net_endpoint_t;
 

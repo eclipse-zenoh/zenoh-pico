@@ -27,6 +27,12 @@ typedef struct {
     _z_mutex_t _mutex_inner;
 #endif  // Z_MULTI_THREAD == 1
 
+    // Zenoh-pico is considering a single transport per session.
+    _z_transport_t _tp;
+
+    // Zenoh PID
+    _z_bytes_t _local_zid;
+
     // Session counters
     _z_zint_t _resource_id;
     _z_zint_t _entity_id;
@@ -44,11 +50,6 @@ typedef struct {
     // Session queryables
     _z_questionable_sptr_list_t *_local_questionable;
     _z_pending_query_list_t *_pending_queries;
-
-    // Session transport.
-    // Zenoh-pico is considering a single transport per session.
-    _z_transport_t *_tp;
-    _z_transport_manager_t *_tp_manager;
 } _z_session_t;
 
 /**
@@ -56,12 +57,13 @@ typedef struct {
  *
  * Parameters:
  *     config: A set of properties. The caller keeps its ownership.
+ *     zn: A pointer of A :c:type:`_z_session_t` used as a return value.
  *
  * Returns:
- *     A pointer of A :c:type:`_z_session_t` containing the created zenoh-net
- *     session or null if the creation did not succeed.
+ *     ``0`` in case of success, or a ``negative value`` in case of failure.
+ *
  */
-_z_session_t *_z_open(_z_config_t *config);
+int8_t _z_open(_z_session_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.

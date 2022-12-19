@@ -30,9 +30,15 @@
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
-        *p.ptr = val;                                                                           \
-        p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                                  \
-        atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                                 \
+        if (p.ptr != NULL) {                                                                    \
+            p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                              \
+            if (p._cnt != NULL) {                                                               \
+                *p.ptr = val;                                                                   \
+                atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                         \
+            } else {                                                                            \
+                z_free(p.ptr);                                                                  \
+            }                                                                                   \
+        }                                                                                       \
         return p;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t name##_sptr_clone(name##_sptr_t *p) {                           \
@@ -44,22 +50,29 @@
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
         name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                    \
-        c->_cnt = p->_cnt;                                                                      \
-        c->ptr = p->ptr;                                                                        \
-        atomic_fetch_add_explicit(p->_cnt, 1, memory_order_relaxed);                            \
+        if (c != NULL) {                                                                        \
+            c->_cnt = p->_cnt;                                                                  \
+            c->ptr = p->ptr;                                                                    \
+            atomic_fetch_add_explicit(p->_cnt, 1, memory_order_relaxed);                        \
+        }                                                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline _Bool name##_sptr_eq(const name##_sptr_t *left, const name##_sptr_t *right) { \
         return (left->ptr == right->ptr);                                                       \
     }                                                                                           \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
-        unsigned int c = atomic_fetch_sub_explicit(p->_cnt, 1, memory_order_release);           \
-        _Bool dropped = c == 1;                                                                 \
-        if (dropped == true) {                                                                  \
-            atomic_thread_fence(memory_order_acquire);                                          \
-            type##_clear(p->ptr);                                                               \
-            z_free(p->ptr);                                                                     \
-            z_free(p->_cnt);                                                                    \
+        _Bool dropped = false;                                                                  \
+        if (p->_cnt != NULL) {                                                                  \
+            unsigned int c = atomic_fetch_sub_explicit(p->_cnt, 1, memory_order_release);       \
+            dropped = c == 1;                                                                   \
+            if (dropped == true) {                                                              \
+                atomic_thread_fence(memory_order_acquire);                                      \
+                if (p->ptr != NULL) {                                                           \
+                    type##_clear(p->ptr);                                                       \
+                    z_free(p->ptr);                                                             \
+                    z_free(p->_cnt);                                                            \
+                }                                                                               \
+            }                                                                                   \
         }                                                                                       \
         return dropped;                                                                         \
     }
@@ -73,9 +86,15 @@
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
-        *p.ptr = val;                                                                           \
-        p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                          \
-        *p._cnt = 1;                                                                            \
+        if (p.ptr != NULL) {                                                                    \
+            p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                      \
+            if (p._cnt != NULL) {                                                               \
+                *p.ptr = val;                                                                   \
+                *p._cnt = 1;                                                                    \
+            } else {                                                                            \
+                z_free(p.ptr);                                                                  \
+            }                                                                                   \
+        }                                                                                       \
         return p;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t name##_sptr_clone(name##_sptr_t *p) {                           \
@@ -87,21 +106,28 @@
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
         name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                    \
-        c->_cnt = p->_cnt;                                                                      \
-        c->ptr = p->ptr;                                                                        \
-        *p->_cnt = *p->_cnt + (uint8_t)1;                                                       \
+        if (c != NULL) {                                                                        \
+            c->_cnt = p->_cnt;                                                                  \
+            c->ptr = p->ptr;                                                                    \
+            *p->_cnt = *p->_cnt + (uint8_t)1;                                                   \
+        }                                                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline _Bool name##_sptr_eq(const name##_sptr_t *left, const name##_sptr_t *right) { \
         return (left->ptr == right->ptr);                                                       \
     }                                                                                           \
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
-        *p->_cnt = *p->_cnt - 1;                                                                \
-        _Bool dropped = *p->_cnt == 0;                                                          \
-        if (dropped == true) {                                                                  \
-            type##_clear(p->ptr);                                                               \
-            z_free(p->ptr);                                                                     \
-            z_free((void *)p->_cnt);                                                            \
+        _Bool dropped = true;                                                                   \
+        if (p->_cnt != NULL) {                                                                  \
+            *p->_cnt = *p->_cnt - 1;                                                            \
+            dropped = *p->_cnt == 0;                                                            \
+            if (dropped == true) {                                                              \
+                if (p->ptr != NULL) {                                                           \
+                    type##_clear(p->ptr);                                                       \
+                    z_free(p->ptr);                                                             \
+                    z_free((void *)p->_cnt);                                                    \
+                }                                                                               \
+            }                                                                                   \
         }                                                                                       \
         return dropped;                                                                         \
     }

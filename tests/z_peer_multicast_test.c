@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "zenoh-pico.h"
 
@@ -67,9 +68,9 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t pid1 = _z_string_from_bytes(&z_loan(s1)._val->_tp_manager->_local_pid);
-    printf("Session 1 with PID: %s\n", pid1.val);
-    _z_string_clear(&pid1);
+    z_string_t zid1 = _z_string_from_bytes(&z_loan(s1)._val->_local_zid);
+    printf("Session 1 with PID: %s\n", zid1.val);
+    _z_string_clear(&zid1);
 
     // Start the read session session lease loops
     zp_start_read_task(z_loan(s1), NULL);
@@ -83,9 +84,9 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t pid2 = _z_string_from_bytes(&z_loan(s2)._val->_tp_manager->_local_pid);
-    printf("Session 2 with PID: %s\n", pid2.val);
-    _z_string_clear(&pid2);
+    z_string_t zid2 = _z_string_from_bytes(&z_loan(s2)._val->_local_zid);
+    printf("Session 2 with PID: %s\n", zid2.val);
+    _z_string_clear(&zid2);
 
     // Start the read session session lease loops
     zp_start_read_task(z_loan(s2), NULL);

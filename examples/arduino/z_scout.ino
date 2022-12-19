@@ -23,13 +23,13 @@ extern "C" {
 #define SSID "SSID"
 #define PASS "PASS"
 
-void fprintpid(z_bytes_t pid) {
-    if (pid.start == NULL) {
+void fprintzid(z_bytes_t zid) {
+    if (zid.start == NULL) {
         Serial.print("None");
     } else {
         Serial.print("Some(");
-        for (unsigned int i = 0; i < pid.len; i++) {
-            Serial.print(pid.start[i], HEX);
+        for (unsigned int i = 0; i < zid.len; i++) {
+            Serial.print(zid.start[i], HEX);
         }
         Serial.print(")");
     }
@@ -60,8 +60,8 @@ void fprintlocators(const z_str_array_t *locs) {
 }
 
 void fprinthello(const z_hello_t hello) {
-    Serial.print(" >> Hello { pid: ");
-    fprintpid(hello.pid);
+    Serial.print(" >> Hello { zid: ");
+    fprintzid(hello.zid);
     Serial.print(", whatami: ");
     fprintwhatami(hello.whatami);
     Serial.print(", locators: ");

@@ -23,9 +23,9 @@
 
 #if Z_UNICAST_TRANSPORT == 1
 
-void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_result_t *r) {
+int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg\n");
-    r->_tag = _Z_RES_OK;
+    uint8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock
@@ -35,9 +35,9 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
 
-    if (_Z_LINK_IS_STREAMED(ztu->_link->_capabilities) == true) {
+    if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
         // Read the message length
-        if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
+        if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
             size_t len = 0;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 len |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
@@ -47,25 +47,25 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
             size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
             if (writable < len) {
                 // Read enough bytes to decode the message
-                if (_z_link_recv_exact_zbuf(ztu->_link, &ztu->_zbuf, len, NULL) != len) {
-                    r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+                if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, len, NULL) != len) {
+                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
             } else {
-                r->_tag = _Z_ERR_IOBUF_NO_SPACE;
+                ret = _Z_ERR_TRANSPORT_NO_SPACE;
             }
         } else {
-            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     } else {
-        if (_z_link_recv_zbuf(ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
-            r->_tag = _Z_ERR_TRANSPORT_RX_FAILED;
+        if (_z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
+            ret = _Z_ERR_TRANSPORT_RX_FAILED;
         }
     }
 
     // Mark the session that we have received data
-    if (r->_tag == _Z_RES_OK) {
-        _z_transport_message_decode_na(&ztu->_zbuf, r);
-        if (r->_tag == _Z_RES_OK) {
+    if (ret == _Z_RES_OK) {
+        ret = _z_transport_message_decode_na(t_msg, &ztu->_zbuf);
+        if (ret == _Z_RES_OK) {
             ztu->_received = true;
         }
 
@@ -75,13 +75,12 @@ void _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
+
+    return ret;
 }
 
-_z_transport_message_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu) {
-    _z_transport_message_result_t r;
-
-    _z_unicast_recv_t_msg_na(ztu, &r);
-    return r;
+int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+    return _z_unicast_recv_t_msg_na(ztu, t_msg);
 }
 
 int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
@@ -185,14 +184,14 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
 
                     // Decode the zenoh message
-                    _z_zenoh_message_result_t r_zm = _z_zenoh_message_decode(&zbf);
-                    if (r_zm._tag == _Z_RES_OK) {
-                        _z_zenoh_message_t d_zm = r_zm._value;
-                        _z_handle_zenoh_message(ztu->_session, &d_zm);
+                    _z_zenoh_message_t zm;
+                    int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                    if (ret == _Z_RES_OK) {
+                        _z_handle_zenoh_message(ztu->_session, &zm);
 
                         // Clear must be explicitly called for fragmented zenoh messages.
                         // Non-fragmented zenoh messages are released when their transport message is released.
-                        _z_msg_clear(&d_zm);
+                        _z_msg_clear(&zm);
                     }
 
                     // Free the decoding buffer

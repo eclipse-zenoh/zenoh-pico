@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_ARRAY_DEFINE(name, type)                                                                 \
@@ -26,10 +27,11 @@
     } name##_array_t;                                                                               \
     static inline name##_array_t name##_array_make(size_t capacity) {                               \
         name##_array_t a;                                                                           \
-        a._len = capacity;                                                                          \
-        a._val = NULL;                                                                              \
-        if (capacity > 0) {                                                                         \
-            a._val = (type *)z_malloc(capacity * sizeof(type));                                     \
+        a._val = (type *)z_malloc(capacity * sizeof(type));                                         \
+        if (a._val != NULL) {                                                                       \
+            a._len = capacity;                                                                      \
+        } else {                                                                                    \
+            a._len = 0;                                                                             \
         }                                                                                           \
         return a;                                                                                   \
     }                                                                                               \
@@ -39,20 +41,28 @@
         src->_len = 0;                                                                              \
         src->_val = NULL;                                                                           \
     }                                                                                               \
+    static inline void name##_array_copy(name##_array_t *dst, name##_array_t *src) {                \
+        dst->_len = src->_len;                                                                      \
+        memcpy(&dst->_val, &src->_val, src->_len);                                                  \
+    }                                                                                               \
     static inline type *name##_array_get(const name##_array_t *a, size_t k) { return &a->_val[k]; } \
     static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
     static inline _Bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }     \
     static inline void name##_array_clear(name##_array_t *a) {                                      \
-        for (size_t i = 0; i < a->_len; i++) name##_elem_clear(&a->_val[i]);                        \
+        for (size_t i = 0; i < a->_len; i++) {                                                      \
+            name##_elem_clear(&a->_val[i]);                                                         \
+        }                                                                                           \
         z_free(a->_val);                                                                            \
         a->_len = 0;                                                                                \
         a->_val = NULL;                                                                             \
     }                                                                                               \
     static inline void name##_array_free(name##_array_t **a) {                                      \
         name##_array_t *ptr = *a;                                                                   \
-        name##_array_clear(ptr);                                                                    \
-        z_free(ptr);                                                                                \
-        *a = NULL;                                                                                  \
+        if (ptr != NULL) {                                                                          \
+            name##_array_clear(ptr);                                                                \
+            z_free(ptr);                                                                            \
+            *a = NULL;                                                                              \
+        }                                                                                           \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARRAY_H */

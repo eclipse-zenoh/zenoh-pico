@@ -18,47 +18,129 @@
 
 /*------------------ period ------------------*/
 int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
-    _Z_EC(_z_zint_encode(buf, tp->origin))
-    _Z_EC(_z_zint_encode(buf, tp->period))
-    return _z_zint_encode(buf, tp->duration);
+    _Z_EC(_z_uint_encode(buf, tp->origin))
+    _Z_EC(_z_uint_encode(buf, tp->period))
+    return _z_uint_encode(buf, tp->duration);
 }
 
-void _z_period_decode_na(_z_zbuf_t *buf, _z_period_result_t *r) {
-    r->_tag = _Z_RES_OK;
+int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *buf) {
+    int8_t ret = _Z_RES_OK;
 
-    _z_zint_result_t r_origin = _z_zint_decode(buf);
-    _ASSURE_P_RESULT(r_origin, r, _Z_ERR_PARSE_ZINT);
-    _z_zint_result_t r_period = _z_zint_decode(buf);
-    _ASSURE_P_RESULT(r_period, r, _Z_ERR_PARSE_ZINT);
-    _z_zint_result_t r_duration = _z_zint_decode(buf);
-    _ASSURE_P_RESULT(r_duration, r, _Z_ERR_PARSE_ZINT);
-
-    r->_value.origin = r_origin._value;
-    r->_value.period = r_period._value;
-    r->_value.duration = r_duration._value;
-}
-
-_z_period_result_t _z_period_decode(_z_zbuf_t *buf) {
-    _z_period_result_t r;
-    _z_period_decode_na(buf, &r);
-    return r;
-}
-
-/*------------------ uint8 -------------------*/
-int8_t _z_uint8_encode(_z_wbuf_t *wbf, uint8_t v) { return _z_wbuf_write(wbf, v); }
-
-_z_uint8_result_t _z_uint8_decode(_z_zbuf_t *zbf) {
-    _z_uint8_result_t r;
-
-    if (_z_zbuf_can_read(zbf) == true) {
-        r._tag = _Z_RES_OK;
-        r._value = _z_zbuf_read(zbf);
+    ret |= _z_uint_decode(&p->origin, buf);
+    if (ret == _Z_RES_OK) {
+        ret |= _z_uint_decode(&p->period, buf);
     } else {
-        r._tag = _Z_ERR_PARSE_UINT8;
-        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        p->origin = 0;
     }
 
-    return r;
+    if (ret == _Z_RES_OK) {
+        ret |= _z_uint_decode(&p->duration, buf);
+    } else {
+        p->period = 0;
+    }
+
+    if (ret != _Z_RES_OK) {
+        p->duration = 0;
+    }
+
+    return ret;
+}
+
+int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *buf) { return _z_period_decode_na(p, buf); }
+
+/*------------------ uint8 -------------------*/
+int8_t _z_enum_encode(_z_wbuf_t *wbf, int en) { return _z_wbuf_write(wbf, en); }
+
+int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *en = 0;
+
+    if (_z_zbuf_can_read(zbf) == true) {
+        *en = _z_zbuf_read(zbf);
+    } else {
+        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+
+    return ret;
+}
+
+int8_t _z_uint_encode(_z_wbuf_t *wbf, unsigned int uint) {
+    unsigned int lv = uint;
+
+    while (lv > (unsigned int)0x7f) {
+        uint8_t c = (uint8_t)(lv & (unsigned int)0x7f) | (uint8_t)0x80;
+        _Z_EC(_z_wbuf_write(wbf, c))
+        lv = lv >> (unsigned int)7;
+    }
+
+    uint8_t c = (uint8_t)(lv & (unsigned int)0xff);
+    return _z_wbuf_write(wbf, c);
+}
+
+int8_t _z_uint_decode(unsigned int *uint, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *uint = 0;
+
+    uint8_t i = 0;
+    uint8_t u8 = 0;
+    do {
+        if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
+            *uint = *uint | (((unsigned int)u8 & (unsigned int)0x7f) << (unsigned int)i);
+            i = i + (uint8_t)7;
+        } else {
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        }
+    } while (u8 > (uint8_t)0x7f);
+
+    return ret;
+}
+
+int8_t _z_uint8_encode(_z_wbuf_t *wbf, uint8_t u8) { return _z_wbuf_write(wbf, u8); }
+
+int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *u8 = 0;
+
+    if (_z_zbuf_can_read(zbf) == true) {
+        *u8 = _z_zbuf_read(zbf);
+    } else {
+        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+
+    return ret;
+}
+
+int8_t _z_uint64_encode(_z_wbuf_t *wbf, uint64_t u64) {
+    uint64_t lv = u64;
+
+    while (lv > (uint64_t)0x7f) {
+        uint8_t c = (uint8_t)(lv & (uint64_t)0x7f) | (uint8_t)0x80;
+        _Z_EC(_z_wbuf_write(wbf, c))
+        lv = lv >> (_z_zint_t)7;
+    }
+
+    uint8_t c = lv & (uint64_t)0xff;
+    return _z_wbuf_write(wbf, c);
+}
+
+int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *u64 = 0;
+
+    uint8_t i = 0;
+    uint8_t u8 = 0;
+    do {
+        if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
+            *u64 = *u64 | (((_z_zint_t)u8 & 0x7f) << i);
+            i = i + (uint8_t)7;
+        } else {
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        }
+    } while (u8 > (uint8_t)0x7f);
+
+    return ret;
 }
 
 /*------------------ z_zint ------------------*/
@@ -75,22 +157,22 @@ int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
     return _z_wbuf_write(wbf, c);
 }
 
-_z_zint_result_t _z_zint_decode(_z_zbuf_t *zbf) {
-    _z_zint_result_t r;
-    r._tag = _Z_RES_OK;
-    r._value = 0;
+int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *zint = 0;
 
     uint8_t i = 0;
-    _z_uint8_result_t r_uint8;
+    uint8_t u8 = 0;
     do {
-        r_uint8 = _z_uint8_decode(zbf);
-        _ASSURE_RESULT(r_uint8, r, _Z_ERR_PARSE_ZINT);
+        if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
+            *zint = *zint | (((_z_zint_t)u8 & 0x7f) << i);
+            i = i + (uint8_t)7;
+        } else {
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        }
+    } while (u8 > (uint8_t)0x7f);
 
-        r._value = r._value | (((_z_zint_t)r_uint8._value & 0x7f) << i);
-        i = i + (uint8_t)7;
-    } while (r_uint8._value > 0x7f);
-
-    return r;
+    return ret;
 }
 
 /*------------------ uint8_array ------------------*/
@@ -99,33 +181,37 @@ int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
 
     _Z_EC(_z_zint_encode(wbf, bs->len))
     if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
-        ret = _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
-        ret = _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     }
 
     return ret;
 }
 
-void _z_bytes_decode_na(_z_zbuf_t *zbf, _z_bytes_result_t *r) {
-    r->_tag = _Z_RES_OK;
-    _z_zint_result_t r_zint = _z_zint_decode(zbf);
-    _ASSURE_P_RESULT(r_zint, r, _Z_ERR_PARSE_ZINT);
+int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
 
-    if (_z_zbuf_len(zbf) >= r_zint._value) {                              // Check if we have enought bytes to read
-        r->_value = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), r_zint._value);  // Decode without allocating
-        _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + r->_value.len);     // Move the read position
+    ret |= _z_zint_decode(&bs->len, zbf);
+    if (ret == _Z_RES_OK) {
+        if (_z_zbuf_len(zbf) >= bs->len) {                           // Check if we have enought bytes to read
+            *bs = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
+            _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);  // Move the read position
+        } else {
+            _Z_DEBUG("WARNING: Not enough bytes to read\n");
+            bs->len = 0;
+            bs->start = NULL;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        }
     } else {
-        r->_tag = _Z_ERR_PARSE_BYTES;
-        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        bs->len = 0;
+        bs->start = NULL;
     }
+
+    return ret;
 }
 
-_z_bytes_result_t _z_bytes_decode(_z_zbuf_t *zbf) {
-    _z_bytes_result_t r;
-    _z_bytes_decode_na(zbf, &r);
-    return r;
-}
+int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_decode_na(bs, zbf); }
 
 /*------------------ string with null terminator ------------------*/
 int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
@@ -135,22 +221,30 @@ int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
 }
 
-_z_str_result_t _z_str_decode(_z_zbuf_t *zbf) {
-    _z_str_result_t r;
-    r._tag = _Z_RES_OK;
-    _z_zint_result_t vr = _z_zint_decode(zbf);
-    _ASSURE_RESULT(vr, r, _Z_ERR_PARSE_ZINT);
-    size_t len = vr._value;
+int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
 
-    if (_z_zbuf_len(zbf) >= len) {                    // Check if we have enough bytes to read
-        char *s = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
-        s[len] = '\0';
-        _z_zbuf_read_bytes(zbf, (uint8_t *)s, 0, len);
-        r._value = s;
+    _z_zint_t len = 0;
+    ret |= _z_zint_decode(&len, zbf);
+    if (ret == _Z_RES_OK) {
+        if (_z_zbuf_len(zbf) >= len) {                      // Check if we have enough bytes to read
+            char *tmp = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
+            if (tmp != NULL) {
+                tmp[len] = '\0';
+                _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
+            } else {
+                ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            }
+            *str = tmp;
+        } else {
+            _Z_DEBUG("WARNING: Not enough bytes to read\n");
+            *str = NULL;
+            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        }
     } else {
-        r._tag = _Z_ERR_PARSE_STRING;
-        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        *str = NULL;
+        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
-    return r;
+    return ret;
 }

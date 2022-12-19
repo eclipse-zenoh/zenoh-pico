@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/session/utils.h"
+
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
@@ -44,9 +46,22 @@ void _z_timestamp_reset(_z_timestamp_t *tstamp) {
     tstamp->_time = 0;
 }
 
+int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {
+    int8_t ret = _Z_RES_OK;
+
+    *bs = _z_bytes_make(size);
+    if (bs->_is_alloc == true) {
+        z_random_fill((uint8_t *)bs->start, bs->len);
+    } else {
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    return ret;
+}
+
 /*------------------ Init/Free/Close session ------------------*/
-_z_session_t *_z_session_init(void) {
-    _z_session_t *zn = (_z_session_t *)z_malloc(sizeof(_z_session_t));
+int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
+    int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
@@ -62,46 +77,66 @@ _z_session_t *_z_session_init(void) {
     zn->_local_questionable = NULL;
     zn->_pending_queries = NULL;
 
-    // Associate a transport with the session
-    zn->_tp = NULL;
-    zn->_tp_manager = _z_transport_manager_init();
+#if Z_MULTI_THREAD == 1
+    ret = _z_mutex_init(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+    if (ret == _Z_RES_OK) {
+        zn->_local_zid = _z_bytes_empty();
+        _z_bytes_move(&zn->_local_zid, zid);
+#if Z_UNICAST_TRANSPORT == 1
+        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+            zn->_tp._transport._unicast._session = zn;
+        } else
+#endif  // Z_UNICAST_TRANSPORT == 1
+#if Z_MULTICAST_TRANSPORT == 1
+            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+            zn->_tp._transport._multicast._session = zn;
+        } else
+#endif  // Z_MULTICAST_TRANSPORT == 1
+        {
+            // Do nothing. Required to be here because of the #if directive
+        }
+    } else {
+        _z_transport_clear(&zn->_tp);
+        _z_bytes_clear(&zn->_local_zid);
+    }
+
+    return ret;
+}
+
+void _z_session_clear(_z_session_t *zn) {
+    // Clear Zenoh PID
+    _z_bytes_clear(&zn->_local_zid);
+
+    // Clean up transports
+    _z_transport_clear(&zn->_tp);
+
+    // Clean up the entities
+    _z_flush_resources(zn);
+    _z_flush_subscriptions(zn);
+    _z_flush_questionables(zn);
+    _z_flush_pending_queries(zn);
 
 #if Z_MULTI_THREAD == 1
-    // Initialize the mutexes
-    _z_mutex_init(&zn->_mutex_inner);
+    _z_mutex_free(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-
-    return zn;
 }
 
 void _z_session_free(_z_session_t **zn) {
     _z_session_t *ptr = *zn;
 
-    // Clean up transports and manager
-    _z_transport_manager_free(&ptr->_tp_manager);
-    if (ptr->_tp != NULL) {
-        _z_transport_free(&ptr->_tp);
+    if (ptr != NULL) {
+        _z_session_clear(ptr);
+
+        z_free(ptr);
+        *zn = NULL;
     }
-
-    // Clean up the entities
-    _z_flush_resources(ptr);
-    _z_flush_subscriptions(ptr);
-    _z_flush_questionables(ptr);
-    _z_flush_pending_queries(ptr);
-
-#if Z_MULTI_THREAD == 1
-    // Clean up the mutexes
-    _z_mutex_free(&ptr->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
-
-    z_free(ptr);
-    *zn = NULL;
 }
 
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_transport_close(zn->_tp, reason);
+    ret = _z_transport_close(&zn->_tp, reason);
 
     return ret;
 }

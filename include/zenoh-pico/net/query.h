@@ -21,11 +21,11 @@
  * The query to be answered by a queryable.
  */
 typedef struct {
-    void *_zn;  // FIXME: _z_session_t *zn;
-    _z_zint_t _qid;
-    _z_keyexpr_t _key;
-    char *_parameters;
     _z_value_t _with_value;
+    _z_keyexpr_t _key;
+    _z_zint_t _qid;
+    void *_zn;  // FIXME: _z_session_t *zn;
+    char *_parameters;
     _Bool _anyke;
 } z_query_t;
 
@@ -33,8 +33,8 @@ typedef struct {
  * Return type when declaring a queryable.
  */
 typedef struct {
-    void *_zn;  // FIXME: _z_session_t *zn;
     _z_zint_t _id;
+    void *_zn;  // FIXME: _z_session_t *zn;
 } _z_queryable_t;
 
 void _z_queryable_clear(_z_queryable_t *qbl);

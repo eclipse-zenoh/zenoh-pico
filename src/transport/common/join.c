@@ -24,6 +24,7 @@ int8_t _z_send_join(_z_transport_t *zt) {
     } else
 #endif  // Z_MULTICAST_TRANSPORT == 1
     {
+        (void)zt;
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
 

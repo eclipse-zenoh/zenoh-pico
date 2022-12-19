@@ -22,10 +22,10 @@
 int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t pid;
-    _z_bytes_reset(&pid);  // Do not send the PID on unicast links
+    _z_bytes_t zid;
+    _z_bytes_reset(&zid);  // Do not send the PID on unicast links
 
-    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(pid);
+    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(zid);
     ret = _z_unicast_send_t_msg(ztu, &t_msg);
     // FIXME: double check why we dont clear t_msg
 

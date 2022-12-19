@@ -46,7 +46,7 @@ int8_t _z_config_init(_z_config_t *ps);
  *   key: The key of the property to add.
  *   value: The value of the property to add.
  */
-int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value);
+int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, _z_string_t value);
 
 /**
  * Get the property with the given key from a properties map.
@@ -58,7 +58,7 @@ int8_t _zp_config_insert(_z_config_t *ps, unsigned int key, _z_string_t value);
  * Returns:
  *     The value of the property with key ``key`` in properties map ``ps``.
  */
-char *_z_config_get(const _z_config_t *ps, unsigned int key);
+char *_z_config_get(const _z_config_t *ps, uint8_t key);
 
 /**
  * Get the length of the given properties map.

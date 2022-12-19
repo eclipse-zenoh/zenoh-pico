@@ -123,8 +123,10 @@ _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionab
 #endif  // Z_MULTI_THREAD == 1
 
     ret = (_z_questionable_sptr_t *)z_malloc(sizeof(_z_questionable_sptr_t));
-    *ret = _z_questionable_sptr_new(*q);
-    zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, ret);
+    if (ret != NULL) {
+        *ret = _z_questionable_sptr_new(*q);
+        zn->_local_questionable = _z_questionable_sptr_list_push(zn->_local_questionable, ret);
+    }
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -190,7 +192,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-        ret = _Z_ERR_DECLARE_KEYEXPR;
+        ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
     return ret;

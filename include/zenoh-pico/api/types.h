@@ -317,9 +317,9 @@ typedef struct {
  * works as advertised, but we may change it in a future release.
  */
 typedef struct {
-    z_query_target_t target;
-    z_query_consolidation_t consolidation;
     z_value_t with_value;
+    z_query_consolidation_t consolidation;
+    z_query_target_t target;
 } z_get_options_t;
 
 /**
@@ -380,8 +380,8 @@ typedef _z_sample_t z_sample_t;
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
  *
  * Members:
- *   unsigned int whatami: The kind of zenoh entity.
- *   z_bytes_t pid: The Zenoh ID of the scouted entity (empty if absent).
+ *   uint8_t whatami: The kind of zenoh entity.
+ *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */
 typedef _z_hello_t z_hello_t;
@@ -431,14 +431,14 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   void *context: a pointer to an arbitrary state.
  *   _z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
-    void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
+    void *context;
 } z_owned_closure_sample_t;
 
 /**
@@ -447,14 +447,15 @@ typedef struct {
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   void *context: a pointer to an arbitrary state.
  *   _z_questionable_handler_t call: `void (*_z_questionable_handler_t)(z_query_t *query, void *arg)` is the callback
- * function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ * function.
+ *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
-    void *context;
     _z_questionable_handler_t call;
     _z_dropper_handler_t drop;
+    void *context;
 } z_owned_closure_query_t;
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
@@ -465,14 +466,15 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   void *context: a pointer to an arbitrary state.
  *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg)` is the callback
- * function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ * function.
+ *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
-    void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
+    void *context;
 } z_owned_closure_reply_t;
 
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
@@ -483,14 +485,15 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   void *context: a pointer to an arbitrary state.
  *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the
- * callback function. _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ * callback function.
+ *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
-    void *context;
     z_owned_hello_handler_t call;
     _z_dropper_handler_t drop;
+    void *context;
 } z_owned_closure_hello_t;
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
@@ -501,14 +504,14 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   void *context: a pointer to an arbitrary state.
  *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
-    void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;
+    void *context;
 } z_owned_closure_zid_t;
 
 #endif /* ZENOH_PICO_API_TYPES_H */

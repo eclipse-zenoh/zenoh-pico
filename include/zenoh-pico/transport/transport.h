@@ -27,16 +27,17 @@ typedef struct {
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 
+    _z_bytes_t _remote_zid;
+    _z_bytes_t _remote_addr;
+
     // SN numbers
     _z_zint_t _sn_resolution;
     _z_zint_t _sn_resolution_half;
-    _z_conduit_sn_list_t _sn_rx_sns;
-
-    _z_bytes_t _remote_pid;
-    _z_bytes_t _remote_addr;
-
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
+
+    _z_conduit_sn_list_t _sn_rx_sns;
+
     volatile _Bool _received;
 } _z_transport_peer_entry_t;
 
@@ -50,7 +51,6 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 
 typedef struct {
     // Session associated to the transport
-    void *_session;
 
 #if Z_MULTI_THREAD == 1
     // TX and RX mutexes
@@ -58,9 +58,15 @@ typedef struct {
     _z_mutex_t _mutex_tx;
 #endif  // Z_MULTI_THREAD == 1
 
-    // Defragmentation buffers
-    _z_wbuf_t _dbuf_reliable;
-    _z_wbuf_t _dbuf_best_effort;
+    _z_link_t _link;
+
+    // Buffers
+    _z_wbuf_t _dbuf_reliable;     // Defragmentation buffer
+    _z_wbuf_t _dbuf_best_effort;  // Defragmentation buffer
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
+
+    _z_bytes_t _remote_zid;
 
     // SN numbers
     _z_zint_t _sn_resolution;
@@ -69,26 +75,19 @@ typedef struct {
     _z_zint_t _sn_tx_best_effort;
     _z_zint_t _sn_rx_reliable;
     _z_zint_t _sn_rx_best_effort;
+    volatile _z_zint_t _lease;
 
-    _z_bytes_t _remote_pid;
+    void *_session;
 
-    // ----------- Link related -----------
-    // TX and RX buffers
-    const _z_link_t *_link;
-    _z_wbuf_t _wbuf;
-    _z_zbuf_t _zbuf;
+#if Z_MULTI_THREAD == 1
+    _z_task_t *_read_task;
+    _z_task_t *_lease_task;
+    volatile _Bool _read_task_running;
+    volatile _Bool _lease_task_running;
+#endif  // Z_MULTI_THREAD == 1
 
     volatile _Bool _received;
     volatile _Bool _transmitted;
-
-#if Z_MULTI_THREAD == 1
-    volatile _Bool _read_task_running;
-    _z_task_t *_read_task;
-    volatile _Bool _lease_task_running;
-    _z_task_t *_lease_task;
-#endif  // Z_MULTI_THREAD == 1
-
-    volatile _z_zint_t _lease;
 } _z_transport_unicast_t;
 
 typedef struct {
@@ -104,31 +103,30 @@ typedef struct {
     _z_mutex_t _mutex_peer;
 #endif  // Z_MULTI_THREAD == 1
 
-    // Known valid peers
-    _z_transport_peer_entry_list_t *_peers;
+    _z_link_t _link;
+
+    // TX and RX buffers
+    _z_wbuf_t _wbuf;
+    _z_zbuf_t _zbuf;
 
     // SN initial numbers
     _z_zint_t _sn_resolution;
     _z_zint_t _sn_resolution_half;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
+    volatile _z_zint_t _lease;
 
-    // ----------- Link related -----------
-    // TX and RX buffers
-    const _z_link_t *_link;
-    _z_wbuf_t _wbuf;
-    _z_zbuf_t _zbuf;
-
-    volatile _Bool _transmitted;
+    // Known valid peers
+    _z_transport_peer_entry_list_t *_peers;
 
 #if Z_MULTI_THREAD == 1
-    volatile _Bool _read_task_running;
     _z_task_t *_read_task;
-    volatile _Bool _lease_task_running;
     _z_task_t *_lease_task;
+    volatile _Bool _read_task_running;
+    volatile _Bool _lease_task_running;
 #endif  // Z_MULTI_THREAD == 1
 
-    volatile _z_zint_t _lease;
+    volatile _Bool _transmitted;
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -146,20 +144,15 @@ typedef struct {
 _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
-_Z_RESULT_DECLARE(_z_transport_t, transport)
-_Z_P_RESULT_DECLARE(_z_transport_t, transport)
-
 typedef struct {
-    _z_bytes_t _remote_pid;
-    z_whatami_t _whatami;
+    _z_bytes_t _remote_zid;
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
-    _Bool _is_qos;
     _z_zint_t _lease;
+    z_whatami_t _whatami;
+    _Bool _is_qos;
 } _z_transport_unicast_establish_param_t;
-
-_Z_RESULT_DECLARE(_z_transport_unicast_establish_param_t, transport_unicast_establish_param)
 
 typedef struct {
     _z_zint_t _sn_resolution;
@@ -167,19 +160,17 @@ typedef struct {
     _Bool _is_qos;
 } _z_transport_multicast_establish_param_t;
 
-_Z_RESULT_DECLARE(_z_transport_multicast_establish_param_t, transport_multicast_establish_param)
+int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param);
+int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
 
-_z_transport_t *_z_transport_unicast_new(_z_link_t *link, _z_transport_unicast_establish_param_t param);
-_z_transport_t *_z_transport_multicast_new(_z_link_t *link, _z_transport_multicast_establish_param_t param);
-
-_z_transport_unicast_establish_param_result_t _z_transport_unicast_open_client(const _z_link_t *zl,
-                                                                               const _z_bytes_t local_pid);
-_z_transport_multicast_establish_param_result_t _z_transport_multicast_open_client(const _z_link_t *zl,
-                                                                                   const _z_bytes_t local_pid);
-_z_transport_unicast_establish_param_result_t _z_transport_unicast_open_peer(const _z_link_t *zl,
-                                                                             const _z_bytes_t local_pid);
-_z_transport_multicast_establish_param_result_t _z_transport_multicast_open_peer(const _z_link_t *zl,
-                                                                                 const _z_bytes_t local_pid);
+int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                        const _z_bytes_t *local_zid);
+int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                          const _z_bytes_t *local_zid);
+int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                      const _z_bytes_t *local_zid);
+int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                        const _z_bytes_t *local_zid);
 
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);
@@ -188,6 +179,7 @@ int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reaso
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu);
 void _z_transport_multicast_clear(_z_transport_multicast_t *ztm);
 
+void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 void _z_transport_unicast_free(_z_transport_unicast_t **ztu);
 void _z_transport_multicast_free(_z_transport_multicast_t **ztm);
