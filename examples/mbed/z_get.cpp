@@ -39,7 +39,7 @@ void reply_handler(z_owned_reply_t *oreply, void *ctx) {
     if (z_reply_is_ok(oreply)) {
         z_sample_t sample = z_reply_ok(oreply);
         char *keystr = z_keyexpr_to_string(sample.keyexpr);
-        printf(" >> Received ('%s': '%.*s')\n", key, (int)sample.payload.len, sample.payload.start);
+        printf(" >> Received ('%s': '%.*s')\n", keystr, (int)sample.payload.len, sample.payload.start);
         free(keystr);
     } else {
         printf(" >> Received an error\n");
