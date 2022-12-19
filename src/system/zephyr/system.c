@@ -31,7 +31,8 @@ uint32_t z_random_u32(void) { return sys_rand32_get(); }
 uint64_t z_random_u64(void) {
     uint64_t ret = 0;
     ret |= z_random_u32();
-    ret |= z_random_u32() << 8;
+    ret = ret << 32;
+    ret |= z_random_u32();
 
     return ret;
 }

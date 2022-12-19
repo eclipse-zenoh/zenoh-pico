@@ -73,7 +73,8 @@ uint64_t z_random_u64(void) {
     }
 #elif defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     ret |= z_random_u32();
-    ret |= z_random_u32() << 8;
+    ret = ret << 32;
+    ret |= z_random_u32();
 #endif
 
     return ret;
