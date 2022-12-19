@@ -100,12 +100,12 @@ typedef struct {
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:
- *   _z_bytes_t pid: The peer id of the scouted entity (empty if absent).
+ *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   _z_str_array_t locators: The locators of the scouted entity.
  *   uint8_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_bytes_t pid;
+    _z_bytes_t zid;
     _z_str_array_t locators;
     uint8_t whatami;
 } _z_hello_t;

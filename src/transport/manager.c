@@ -17,7 +17,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *local_pid) {
+int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
     _z_link_t zl;
@@ -26,7 +26,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *lo
 #if Z_UNICAST_TRANSPORT == 1
         if (_Z_LINK_IS_MULTICAST(zl._capabilities) == false) {
             _z_transport_unicast_establish_param_t tp_param;
-            ret = _z_transport_unicast_open_client(&tp_param, &zl, local_pid);
+            ret = _z_transport_unicast_open_client(&tp_param, &zl, local_zid);
             if (ret == _Z_RES_OK) {
                 ret = _z_transport_unicast(zt, &zl, &tp_param);
             } else {
@@ -37,7 +37,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *lo
 #if Z_MULTICAST_TRANSPORT == 1
             if (_Z_LINK_IS_MULTICAST(zl._capabilities) == true) {
             _z_transport_multicast_establish_param_t tp_param;
-            ret = _z_transport_multicast_open_client(&tp_param, &zl, local_pid);
+            ret = _z_transport_multicast_open_client(&tp_param, &zl, local_zid);
             if (ret == _Z_RES_OK) {
                 ret = _z_transport_multicast(zt, &zl, &tp_param);
             } else {
@@ -54,7 +54,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *lo
     return ret;
 }
 
-int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_bytes_t *local_pid) {
+int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
     _z_link_t zl;
@@ -63,7 +63,7 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_bytes_t *loca
 #if Z_UNICAST_TRANSPORT == 1
         if (_Z_LINK_IS_MULTICAST(zl._capabilities) == false) {
             _z_transport_unicast_establish_param_t tp_param;
-            ret = _z_transport_unicast_open_peer(&tp_param, &zl, local_pid);
+            ret = _z_transport_unicast_open_peer(&tp_param, &zl, local_zid);
             if (ret == _Z_RES_OK) {
                 ret = _z_transport_unicast(zt, &zl, &tp_param);
             } else {
@@ -74,7 +74,7 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_bytes_t *loca
 #if Z_MULTICAST_TRANSPORT == 1
             if (_Z_LINK_IS_MULTICAST(zl._capabilities) == true) {
             _z_transport_multicast_establish_param_t tp_param;
-            ret = _z_transport_multicast_open_peer(&tp_param, &zl, local_pid);
+            ret = _z_transport_multicast_open_peer(&tp_param, &zl, local_zid);
             if (ret == _Z_RES_OK) {
                 ret = _z_transport_multicast(zt, &zl, &tp_param);
             } else {

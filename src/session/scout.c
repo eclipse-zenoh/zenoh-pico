@@ -74,9 +74,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
                                 if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
-                                    _z_bytes_copy(&hello->pid, &t_msg._body._hello._pid);
+                                    _z_bytes_copy(&hello->zid, &t_msg._body._hello._zid);
                                 } else {
-                                    _z_bytes_reset(&hello->pid);
+                                    _z_bytes_reset(&hello->zid);
                                 }
 
                                 if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
@@ -138,8 +138,8 @@ _z_hello_list_t *_z_scout_inner(const z_whatami_t what, const char *locator, con
     _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
 
     // Create and encode the scout message
-    _Bool request_pid = true;
-    _z_transport_message_t scout = _z_t_msg_make_scout(what, request_pid);
+    _Bool request_zid = true;
+    _z_transport_message_t scout = _z_t_msg_make_scout(what, request_zid);
 
     _z_transport_message_encode(&wbf, &scout);
 

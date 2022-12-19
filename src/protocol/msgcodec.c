@@ -1018,7 +1018,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *m
     _Z_DEBUG("Encoding _Z_MID_HELLO\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
+        _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
         _Z_EC(_z_enum_encode(wbf, msg->_whatami))
@@ -1035,9 +1035,9 @@ int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     int8_t ret = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        ret |= _z_bytes_decode(&msg->_pid, zbf);
+        ret |= _z_bytes_decode(&msg->_zid, zbf);
     } else {
-        msg->_pid = _z_bytes_empty();
+        msg->_zid = _z_bytes_empty();
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
@@ -1069,7 +1069,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     }
     _Z_EC(_z_uint8_encode(wbf, msg->_version))
     _Z_EC(_z_enum_encode(wbf, msg->_whatami))
-    _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
+    _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
@@ -1104,7 +1104,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     }
     ret |= _z_uint8_decode(&msg->_version, zbf);
     ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
-    ret |= _z_bytes_decode(&msg->_pid, zbf);
+    ret |= _z_bytes_decode(&msg->_zid, zbf);
     ret |= _z_zint_decode(&msg->_lease, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
         msg->_lease = msg->_lease * 1000;
@@ -1145,7 +1145,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
         _Z_EC(_z_wbuf_write(wbf, msg->_version))
     }
     _Z_EC(_z_enum_encode(wbf, msg->_whatami))
-    _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
+    _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_sn_resolution))
     }
@@ -1171,7 +1171,7 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_version = Z_PROTO_VERSION;
     }
     ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
-    ret |= _z_bytes_decode(&msg->_pid, zbf);
+    ret |= _z_bytes_decode(&msg->_zid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         ret |= _z_zint_decode(&msg->_sn_resolution, zbf);
     } else {
@@ -1237,7 +1237,7 @@ int8_t _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *m
     _Z_DEBUG("Encoding _Z_MID_CLOSE\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
+        _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     }
     ret |= _z_wbuf_write(wbf, msg->_reason);
 
@@ -1249,9 +1249,9 @@ int8_t _z_close_decode_na(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header)
     int8_t ret = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        ret |= _z_bytes_decode(&msg->_pid, zbf);
+        ret |= _z_bytes_decode(&msg->_zid, zbf);
     } else {
-        msg->_pid = _z_bytes_empty();
+        msg->_zid = _z_bytes_empty();
     }
     ret |= _z_uint8_decode(&msg->_reason, zbf);
 
@@ -1332,7 +1332,7 @@ int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_
     _Z_DEBUG("Encoding _Z_MID_KEEP_ALIVE\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_pid))
+        _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     }
 
     return ret;
@@ -1343,9 +1343,9 @@ int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8
     int8_t ret = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        ret |= _z_bytes_decode(&msg->_pid, zbf);
+        ret |= _z_bytes_decode(&msg->_zid, zbf);
     } else {
-        msg->_pid = _z_bytes_empty();
+        msg->_zid = _z_bytes_empty();
     }
 
     return ret;

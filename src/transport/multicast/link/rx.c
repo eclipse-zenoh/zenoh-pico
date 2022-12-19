@@ -141,7 +141,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 if (entry != NULL) {
                     entry->_remote_addr = _z_bytes_duplicate(addr);
-                    entry->_remote_pid = _z_bytes_duplicate(&t_msg->_body._join._pid);
+                    entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
                     if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) {
                         entry->_sn_resolution = t_msg->_body._join._sn_resolution;
                     } else {
@@ -199,8 +199,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I) == true) {
                 // Check if the Peer ID matches the remote address in the knonw peer list
-                if ((entry->_remote_pid.len != t_msg->_body._close._pid.len) ||
-                    (memcmp(entry->_remote_pid.start, t_msg->_body._close._pid.start, entry->_remote_pid.len) != 0)) {
+                if ((entry->_remote_zid.len != t_msg->_body._close._zid.len) ||
+                    (memcmp(entry->_remote_zid.start, t_msg->_body._close._zid.start, entry->_remote_zid.len) != 0)) {
                     break;
                 }
             }

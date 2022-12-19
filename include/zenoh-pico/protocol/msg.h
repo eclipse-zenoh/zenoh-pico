@@ -599,7 +599,7 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 // ~      what     ~ if W==1 -- Otherwise implicitly scouting for Routers
 // +---------------+
 //
-// - if I==1 then the sender is asking for hello replies that contain a peer_id.
+// - if I==1 then the sender is asking for hello replies that contain a Zenoh ID.
 //
 typedef struct {
     z_whatami_t _what;
@@ -629,7 +629,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 // +-+-+-+-+-+-+-+-+
 // |L|W|I|  HELLO  |
 // +-+-+-+-+-------+
-// ~    peer-id    ~ if I==1
+// ~   zenoh_id    ~ if I==1
 // +---------------+
 // ~    whatami    ~ if W==1 -- Otherwise it is from a Router
 // +---------------+
@@ -637,7 +637,7 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 // +---------------+
 //
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     _z_locator_array_t _locators;
     z_whatami_t _whatami;
 } _z_t_msg_hello_t;
@@ -664,7 +664,7 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
 // +-------+-------+
 // ~    whatami    ~ -- Router, Peer or a combination of them
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the JOIN message
+// ~   zenoh_id    ~ -- PID of the sender of the JOIN message
 // +---------------+
 // ~     lease     ~ -- Lease period of the sender of the JOIN message(*)
 // +---------------+
@@ -692,7 +692,7 @@ typedef struct {
     _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     _z_zint_t _options;
     _z_zint_t _lease;
     _z_zint_t _sn_resolution;
@@ -726,7 +726,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 // +-------+-------+
 // ~    whatami    ~ -- Client, Router, Peer or a combination of them
 // +---------------+
-// ~    peer_id    ~ -- PID of the sender of the INIT message
+// ~   zenoh_id    ~ -- PID of the sender of the INIT message
 // +---------------+
 // ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
 // +---------------+
@@ -739,7 +739,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 // - if Q==1 then the initiator/responder supports QoS.
 //
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     _z_bytes_t _cookie;
     _z_zint_t _options;
     _z_zint_t _sn_resolution;
@@ -793,7 +793,7 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 // +-+-+-+-+-+-+-+-+
 // |X|K|I|  CLOSE  |
 // +-+-+-+-+-------+
-// ~    peer_id    ~  if I==1 -- PID of the target peer.
+// ~   zenoh_id    ~  if I==1 -- PID of the target peer.
 // +---------------+
 // |     reason    |
 // +---------------+
@@ -803,7 +803,7 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 //           keep the whole session open. NOTE: the session will be automatically closed when
 //           the session's lease period expires.
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
     uint8_t _reason;
 } _z_t_msg_close_t;
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
@@ -876,11 +876,11 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg);
 // +-+-+-+-+-+-+-+-+
 // |X|X|I| K_ALIVE |
 // +-+-+-+-+-------+
-// ~    peer_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
+// ~   zenoh_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
 // +---------------+
 //
 typedef struct {
-    _z_bytes_t _pid;
+    _z_bytes_t _zid;
 } _z_t_msg_keep_alive_t;
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
 
@@ -969,20 +969,20 @@ typedef struct {
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_pid);
-_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t pid, _z_locator_array_t locators);
+_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid);
+_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
 _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
-                                          _z_zint_t sn_resolution, _z_bytes_t pid, _z_conduit_sn_list_t next_sns);
+                                          _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
 _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _Bool is_qos);
+                                              _z_bytes_t zid, _Bool is_qos);
 _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t pid, _z_bytes_t cookie, _Bool is_qos);
+                                              _z_bytes_t zid, _z_bytes_t cookie, _Bool is_qos);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t pid, _Bool link_only);
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
 _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
-_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t pid);
+_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,

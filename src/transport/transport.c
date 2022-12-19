@@ -27,9 +27,9 @@
 int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_local_pid.start,
-                                   ((_z_session_t *)ztu->_session)->_local_pid.len);
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
+    _z_bytes_t zid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_local_zid.start,
+                                   ((_z_session_t *)ztu->_session)->_local_zid.len);
+    _z_transport_message_t cm = _z_t_msg_make_close(reason, zid, link_only);
 
     ret = _z_unicast_send_t_msg(ztu, &cm);
     _z_t_msg_clear(&cm);
@@ -42,9 +42,9 @@ int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool 
 int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t pid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_local_pid.start,
-                                   ((_z_session_t *)ztm->_session)->_local_pid.len);
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, pid, link_only);
+    _z_bytes_t zid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_local_zid.start,
+                                   ((_z_session_t *)ztm->_session)->_local_zid.len);
+    _z_transport_message_t cm = _z_t_msg_make_close(reason, zid, link_only);
 
     ret = _z_multicast_send_t_msg(ztm, &cm);
     _z_t_msg_clear(&cm);
@@ -157,9 +157,9 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         zt->_transport._unicast._link = *zl;
 
         // Remote peer PID
-        _z_bytes_move(&zt->_transport._unicast._remote_pid, &param->_remote_pid);
+        _z_bytes_move(&zt->_transport._unicast._remote_zid, &param->_remote_zid);
     } else {
-        _z_bytes_clear(&param->_remote_pid);
+        _z_bytes_clear(&param->_remote_zid);
     }
 
     return ret;
@@ -246,7 +246,7 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_pid) {
+                                        const _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
     // Build the open message
@@ -255,8 +255,8 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
     _z_zint_t sn_resolution = Z_SN_RESOLUTION;
     _Bool is_qos = false;
 
-    _z_bytes_t pid = _z_bytes_wrap(local_pid->start, local_pid->len);
-    _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+    _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
+    _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, zid, is_qos);
     param->_sn_resolution = ism._body._init._sn_resolution;  // The announced sn resolution
 
     // Encode and send the message
@@ -288,7 +288,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                     param->_initial_sn_tx = param->_initial_sn_tx % param->_sn_resolution;
 
                     // Initialize the Local and Remote Peer IDs
-                    _z_bytes_copy(&param->_remote_pid, &iam._body._init._pid);
+                    _z_bytes_copy(&param->_remote_zid, &iam._body._init._zid);
 
                     // Create the OpenSyn message
                     _z_zint_t lease = Z_TRANSPORT_LEASE;
@@ -336,10 +336,10 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
 
 #if Z_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_bytes_t *local_pid) {
+                                          const _z_bytes_t *local_zid) {
     (void)(param);
     (void)(zl);
-    (void)(local_pid);
+    (void)(local_zid);
     int8_t ret = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
 
     // @TODO: not implemented
@@ -350,10 +350,10 @@ int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_bytes_t *local_pid) {
+                                      const _z_bytes_t *local_zid) {
     (void)(param);
     (void)(zl);
-    (void)(local_pid);
+    (void)(local_zid);
     int8_t ret = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
 
     // @TODO: not implemented
@@ -364,7 +364,7 @@ int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *pa
 
 #if Z_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_pid) {
+                                        const _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
     param->_is_qos = false;  // FIXME: make transport aware of qos configuration
@@ -378,9 +378,9 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
     next_sns._val._plain._best_effort = param->_initial_sn_tx;
     next_sns._val._plain._reliable = param->_initial_sn_tx;
 
-    _z_bytes_t pid = _z_bytes_wrap(local_pid->start, local_pid->len);
+    _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
     _z_transport_message_t jsm =
-        _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param->_sn_resolution, pid, next_sns);
+        _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param->_sn_resolution, zid, next_sns);
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");
@@ -430,7 +430,7 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     _z_wbuf_clear(&ztu->_dbuf_best_effort);
 
     // Clean up PIDs
-    _z_bytes_clear(&ztu->_remote_pid);
+    _z_bytes_clear(&ztu->_remote_zid);
     _z_link_clear(&ztu->_link);
 }
 #endif  // Z_UNICAST_TRANSPORT == 1

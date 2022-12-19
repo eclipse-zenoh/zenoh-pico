@@ -27,7 +27,7 @@ typedef struct {
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 
-    _z_bytes_t _remote_pid;
+    _z_bytes_t _remote_zid;
     _z_bytes_t _remote_addr;
 
     // SN numbers
@@ -66,7 +66,7 @@ typedef struct {
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
-    _z_bytes_t _remote_pid;
+    _z_bytes_t _remote_zid;
 
     // SN numbers
     _z_zint_t _sn_resolution;
@@ -145,7 +145,7 @@ _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noo
 _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
 typedef struct {
-    _z_bytes_t _remote_pid;
+    _z_bytes_t _remote_zid;
     _z_zint_t _sn_resolution;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
@@ -164,13 +164,13 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
 
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_pid);
+                                        const _z_bytes_t *local_zid);
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_bytes_t *local_pid);
+                                          const _z_bytes_t *local_zid);
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_bytes_t *local_pid);
+                                      const _z_bytes_t *local_zid);
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_pid);
+                                        const _z_bytes_t *local_zid);
 
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);

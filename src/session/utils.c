@@ -46,7 +46,7 @@ void _z_timestamp_reset(_z_timestamp_t *tstamp) {
     tstamp->_time = 0;
 }
 
-int8_t _z_session_generate_pid(_z_bytes_t *bs, uint8_t size) {
+int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;
 
     *bs = _z_bytes_make(size);
@@ -60,7 +60,7 @@ int8_t _z_session_generate_pid(_z_bytes_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid) {
+int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
     int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
@@ -81,8 +81,8 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid) {
     ret = _z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
     if (ret == _Z_RES_OK) {
-        zn->_local_pid = _z_bytes_empty();
-        _z_bytes_move(&zn->_local_pid, pid);
+        zn->_local_zid = _z_bytes_empty();
+        _z_bytes_move(&zn->_local_zid, zid);
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._session = zn;
@@ -98,7 +98,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid) {
         }
     } else {
         _z_transport_clear(&zn->_tp);
-        _z_bytes_clear(&zn->_local_pid);
+        _z_bytes_clear(&zn->_local_zid);
     }
 
     return ret;
@@ -106,7 +106,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *pid) {
 
 void _z_session_clear(_z_session_t *zn) {
     // Clear Zenoh PID
-    _z_bytes_clear(&zn->_local_pid);
+    _z_bytes_clear(&zn->_local_zid);
 
     // Clean up transports
     _z_transport_clear(&zn->_tp);

@@ -27,22 +27,22 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
-    _z_bytes_t local_pid = _z_bytes_empty();
-    ret = _z_session_generate_pid(&local_pid, Z_ZID_LENGTH);
+    _z_bytes_t local_zid = _z_bytes_empty();
+    ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
     if (ret == _Z_RES_OK) {
-        ret = _z_new_transport(&zn->_tp, &local_pid, locator, mode);
+        ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
         if (ret != _Z_RES_OK) {
-            _z_bytes_clear(&local_pid);
+            _z_bytes_clear(&local_zid);
         }
     } else {
-        _z_bytes_clear(&local_pid);
+        _z_bytes_clear(&local_zid);
     }
 #else
     ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 #endif
 
     if (ret == _Z_RES_OK) {
-        ret = _z_session_init(zn, &local_pid);
+        ret = _z_session_init(zn, &local_zid);
     }
 
     return ret;
@@ -129,12 +129,12 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_local_pid));
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_local_zid));
 
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY,
-                              _z_string_from_bytes(&zn->_tp._transport._unicast._remote_pid));
+                              _z_string_from_bytes(&zn->_tp._transport._unicast._remote_zid));
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
@@ -142,7 +142,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
             _z_transport_peer_entry_list_t *xs = zn->_tp._transport._multicast._peers;
             while (xs != NULL) {
                 _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
-                _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_pid));
+                _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_zid));
 
                 xs = _z_transport_peer_entry_list_tail(xs);
             }

@@ -1607,8 +1607,8 @@ void zenoh_message(void) {
 /*------------------ Scout Message ------------------*/
 _z_transport_message_t gen_scout_message(void) {
     z_whatami_t what = gen_uint8() % 7;
-    _Bool request_pid = gen_bool();
-    return _z_t_msg_make_scout(what, request_pid);
+    _Bool request_zid = gen_bool();
+    return _z_t_msg_make_scout(what, request_zid);
 }
 
 void assert_eq_scout_message(_z_t_msg_scout_t *left, _z_t_msg_scout_t *right, uint8_t header) {
@@ -1649,7 +1649,7 @@ void scout_message(void) {
 /*------------------ Hello Message ------------------*/
 _z_transport_message_t gen_hello_message(void) {
     z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
-    _z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
 
     _z_locator_array_t locators;
     if (gen_bool())
@@ -1657,13 +1657,13 @@ _z_transport_message_t gen_hello_message(void) {
     else
         locators = gen_locator_array(0);
 
-    return _z_t_msg_make_hello(whatami, pid, locators);
+    return _z_t_msg_make_hello(whatami, zid, locators);
 }
 
 void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         printf("   ");
-        assert_eq_uint8_array(&left->_pid, &right->_pid);
+        assert_eq_uint8_array(&left->_zid, &right->_zid);
         printf("\n");
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
@@ -1712,7 +1712,7 @@ void hello_message(void) {
 _z_transport_message_t gen_join_message(void) {
     uint8_t version = gen_uint8();
     z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
-    _z_bytes_t pid = gen_bytes(16);
+    _z_bytes_t zid = gen_bytes(16);
     _z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
     _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
 
@@ -1729,7 +1729,7 @@ _z_transport_message_t gen_join_message(void) {
         next_sns._val._plain._best_effort = gen_zint();
     }
 
-    return _z_t_msg_make_join(version, whatami, lease, sn_resolution, pid, next_sns);
+    return _z_t_msg_make_join(version, whatami, lease, sn_resolution, zid, next_sns);
 }
 
 void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8_t header) {
@@ -1746,7 +1746,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->_pid, &right->_pid);
+    assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
@@ -1818,14 +1818,14 @@ _z_transport_message_t gen_init_message(void) {
     uint8_t version = gen_uint8();
     z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
     _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
-    _z_bytes_t pid = gen_bytes(16);
+    _z_bytes_t zid = gen_bytes(16);
     _Bool is_qos = gen_bool();
 
     if (gen_bool()) {
-        return _z_t_msg_make_init_syn(version, whatami, sn_resolution, pid, is_qos);
+        return _z_t_msg_make_init_syn(version, whatami, sn_resolution, zid, is_qos);
     } else {
         _z_bytes_t cookie = gen_bytes(64);
-        return _z_t_msg_make_init_ack(version, whatami, sn_resolution, pid, cookie, is_qos);
+        return _z_t_msg_make_init_ack(version, whatami, sn_resolution, zid, cookie, is_qos);
     }
 }
 
@@ -1839,7 +1839,7 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->_pid, &right->_pid);
+    assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
@@ -1951,16 +1951,16 @@ void open_message(void) {
 /*------------------ Close Message ------------------*/
 _z_transport_message_t gen_close_message(void) {
     uint8_t reason = gen_uint8();
-    _z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
     _Bool link_only = gen_bool();
 
-    return _z_t_msg_make_close(reason, pid, link_only);
+    return _z_t_msg_make_close(reason, zid, link_only);
 }
 
 void assert_eq_close_message(_z_t_msg_close_t *left, _z_t_msg_close_t *right, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         printf("   ");
-        assert_eq_uint8_array(&left->_pid, &right->_pid);
+        assert_eq_uint8_array(&left->_zid, &right->_zid);
         printf("\n");
     }
 
@@ -2102,15 +2102,15 @@ void ack_nack_message(void) {
 
 /*------------------ KeepAlive Message ------------------*/
 _z_transport_message_t gen_keep_alive_message(void) {
-    _z_bytes_t pid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
 
-    return _z_t_msg_make_keep_alive(pid);
+    return _z_t_msg_make_keep_alive(zid);
 }
 
 void assert_eq_keep_alive_message(_z_t_msg_keep_alive_t *left, _z_t_msg_keep_alive_t *right, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
         printf("   ");
-        assert_eq_uint8_array(&left->_pid, &right->_pid);
+        assert_eq_uint8_array(&left->_zid, &right->_zid);
         printf("\n");
     }
 }

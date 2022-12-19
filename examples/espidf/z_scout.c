@@ -86,13 +86,13 @@ void wifi_init_sta(void) {
     vEventGroupDelete(s_event_group_handler);
 }
 
-void fprintpid(FILE *stream, z_bytes_t pid) {
-    if (pid.start == NULL) {
+void fprintzid(FILE *stream, z_bytes_t zid) {
+    if (zid.start == NULL) {
         fprintf(stream, "None");
     } else {
         fprintf(stream, "Some(");
-        for (unsigned int i = 0; i < pid.len; i++) {
-            fprintf(stream, "%02X", (int)pid.start[i]);
+        for (unsigned int i = 0; i < zid.len; i++) {
+            fprintf(stream, "%02X", (int)zid.start[i]);
         }
         fprintf(stream, ")");
     }
@@ -122,8 +122,8 @@ void fprintlocators(FILE *stream, const z_str_array_t *locs) {
 }
 
 void fprinthello(FILE *stream, const z_hello_t hello) {
-    fprintf(stream, "Hello { pid: ");
-    fprintpid(stream, hello.pid);
+    fprintf(stream, "Hello { zid: ");
+    fprintzid(stream, hello.zid);
     fprintf(stream, ", whatami: ");
     fprintwhatami(stream, hello.whatami);
     fprintf(stream, ", locators: ");

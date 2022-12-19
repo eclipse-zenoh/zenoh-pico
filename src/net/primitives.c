@@ -279,9 +279,9 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
 
     if (ret == _Z_RES_OK) {
         // Build the reply context decorator. This is NOT the final reply.
-        _z_bytes_t pid =
-            _z_bytes_wrap(((_z_session_t *)query->_zn)->_local_pid.start, ((_z_session_t *)query->_zn)->_local_pid.len);
-        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, pid, false);
+        _z_bytes_t zid =
+            _z_bytes_wrap(((_z_session_t *)query->_zn)->_local_zid.start, ((_z_session_t *)query->_zn)->_local_zid.len);
+        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, false);
 
         _z_data_info_t di = {._flags = 0};                  // Empty data info
         _z_payload_t pld = {.len = len, .start = payload};  // Payload
