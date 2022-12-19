@@ -30,8 +30,8 @@
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
-        p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                                  \
         if (p.ptr != NULL) {                                                                    \
+            p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                              \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                         \
@@ -86,8 +86,8 @@
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
-        p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                          \
         if (p.ptr != NULL) {                                                                    \
+            p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                      \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 *p._cnt = 1;                                                                    \
