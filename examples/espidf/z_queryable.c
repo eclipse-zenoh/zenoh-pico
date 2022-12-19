@@ -102,10 +102,11 @@ void wifi_init_sta(void) {
 
 void query_handler(z_query_t *query, void *ctx) {
     (void)(ctx);
-    const char *res = z_keyexpr_to_string(z_query_keyexpr(query));
+    char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
     z_bytes_t pred = z_query_parameters(query);
-    printf(">> [Queryable handler] Received Query '%s%.*s'\n", res, (int)pred.len, pred.start);
+    printf(">> [Queryable handler] Received Query '%s%.*s'\n", keystr, (int)pred.len, pred.start);
     z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+    free(keystr);
 }
 
 void app_main() {

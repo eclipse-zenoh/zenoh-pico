@@ -100,8 +100,10 @@ void wifi_init_sta(void) {
 }
 
 void data_handler(const z_sample_t* sample, void* arg) {
-    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_keyexpr_to_string(sample->keyexpr),
+    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", keystr,
            (int)sample->payload.len, sample->payload.start);
+    free(keystr);
 }
 
 void app_main() {

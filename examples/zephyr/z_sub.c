@@ -29,8 +29,10 @@
 #define KEYEXPR "demo/example/**"
 
 void data_handler(const z_sample_t *sample, void *arg) {
-    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_keyexpr_to_string(sample->keyexpr),
+    char *keyexpr = z_keyexpr_to_string(sample->keyexpr);
+    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", keyexpr,
            (int)sample->payload.len, sample->payload.start);
+    free(keystr);
 }
 
 int main(int argc, char **argv) {
