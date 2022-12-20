@@ -71,9 +71,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_definitions(-DZENOH_MACOS)
   set(MACOSX_RPATH "ON")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
-  add_definitions(-DZENOH_WIN)
-  return()
+  add_definitions(-DZENOH_WINDOWS)
 else()
   message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
   return()
@@ -116,8 +114,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-if(UNIX)
-  file(GLOB Sources "src/*.c"
+file(GLOB Sources "src/*.c"
     "src/api/*.c"
     "src/net/*.c"
     "src/collections/*.c"
@@ -129,7 +126,6 @@ if(UNIX)
     "src/protocol/keyexpr/*.c"
     "src/session/*.c"
     "src/system/*.c"
-    "src/system/unix/*.c"
     "src/transport/*.c"
     "src/transport/common/*.c"
     "src/transport/unicast/*.c"
@@ -140,6 +136,15 @@ if(UNIX)
     "src/transport/multicast/link/task/*.c"
     "src/utils/*.c"
   )
+
+if(UNIX)
+  file (GLOB Sources_Unix "src/system/unix/*.c")
+  list(APPEND Sources ${Sources_Unix})
+endif()
+
+if(WIN32)
+  file (GLOB Sources_Windows "src/system/windows/*.c")
+  list(APPEND Sources ${Sources_Windows})
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
