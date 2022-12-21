@@ -46,4 +46,6 @@ typedef struct {
     };
 } _z_sys_net_endpoint_t;
 
+inline void __asm__(void) { ; }
+
 #endif /* ZENOH_PICO_SYSTEM_VOID_H */

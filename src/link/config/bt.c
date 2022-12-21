@@ -20,30 +20,30 @@
 size_t _z_bt_config_strlen(const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_strlen(s, argc, args);
+    return _z_str_intmap_strlen(s, BT_CONFIG_ARGC, args);
 }
 
 void _z_bt_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_onto_str(dst, dst_len, s, argc, args);
+    return _z_str_intmap_onto_str(dst, dst_len, s, BT_CONFIG_ARGC, args);
 }
 
 char *_z_bt_config_to_str(const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_to_str(s, argc, args);
+    return _z_str_intmap_to_str(s, BT_CONFIG_ARGC, args);
 }
 
 int8_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_from_strn(strint, s, argc, args, n);
+    return _z_str_intmap_from_strn(strint, s, BT_CONFIG_ARGC, args, n);
 }
 
 int8_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s) {
     BT_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_from_str(strint, s, argc, args);
+    return _z_str_intmap_from_str(strint, s, BT_CONFIG_ARGC, args);
 }
 #endif

@@ -50,7 +50,7 @@ void z_free(void *ptr) {
 
 #if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     (void)(task);
     (void)(attr);
     (void)(fun);

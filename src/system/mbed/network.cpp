@@ -33,13 +33,13 @@ extern "C" {
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
     if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        ep->_iptcp = new SocketAddress(s_addr, port);
+        ep->_iptcp = new SocketAddress(s_address, port);
     } else {
         ret = _Z_ERR_GENERIC;
     }
@@ -117,13 +117,13 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
     if ((port > (uint32_t)0) && (port <= (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-        ep->_iptcp = new SocketAddress(s_addr, port);
+        ep->_iptcp = new SocketAddress(s_address, port);
     } else {
         ret = _Z_ERR_GENERIC;
     }

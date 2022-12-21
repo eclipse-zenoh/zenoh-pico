@@ -23,9 +23,9 @@
 #if Z_LINK_TCP == 1
 
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     (void)(ep);
-    (void)(s_addr);
+    (void)(s_address);
     (void)(s_port);
     return -1;
 }
@@ -75,9 +75,9 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     (void)(ep);
-    (void)(s_addr);
+    (void)(s_address);
     (void)(s_port);
     return -1;
 }
@@ -87,16 +87,16 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) { (void)(ep); }
 
 #if Z_LINK_UDP_UNICAST == 1
 int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    (void)sock;
-    (void)lep;
-    (void)tout;
+    (void)(sock);
+    (void)(rep);
+    (void)(tout);
     return -1;
 }
 
 int8_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep, uint32_t tout) {
-    (void)sock;
-    (void)lep;
-    (void)tout;
+    (void)(sock);
+    (void)(lep);
+    (void)(tout);
     return -1;
 }
 

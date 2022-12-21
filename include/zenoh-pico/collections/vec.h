@@ -46,7 +46,7 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f f);
 
 #define _Z_VEC_DEFINE(name, type)                                                                                \
     typedef _z_vec_t name##_vec_t;                                                                               \
-    static inline name##_vec_t name##_vec_make(size_t capacity) { return (name##_vec_t)_z_vec_make(capacity); }  \
+    static inline name##_vec_t name##_vec_make(size_t capacity) { return _z_vec_make(capacity); }                \
     static inline size_t name##_vec_len(const name##_vec_t *v) { return _z_vec_len(v); }                         \
     static inline _Bool name##_vec_is_empty(const name##_vec_t *v) { return _z_vec_is_empty(v); }                \
     static inline void name##_vec_append(name##_vec_t *v, type *e) { return _z_vec_append(v, e); }               \
