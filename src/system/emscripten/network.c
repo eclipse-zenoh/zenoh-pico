@@ -68,10 +68,14 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
         struct addrinfo *it = NULL;
         for (it = rep._ipws; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
-                if (it->ai_next == NULL) {
-                    ret = _Z_ERR_GENERIC;
-                    break;
-                }
+                break;
+                // WARNING: breaking here because connect returns -1 even if the
+                // underlying socket is actually open.
+
+                // if (it->ai_next == NULL) {
+                //     ret = _Z_ERR_GENERIC;
+                //     break;
+                // }
             } else {
                 break;
             }
