@@ -118,7 +118,6 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-
 file(GLOB Sources "src/*.c"
   "src/api/*.c"
   "src/net/*.c"
@@ -142,8 +141,7 @@ file(GLOB Sources "src/*.c"
   "src/utils/*.c"
 )
 
-
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(UNIX)
   file (GLOB Sources_Unix "src/system/unix/*.c")
   list(APPEND Sources ${Sources_Unix})
 endif()
