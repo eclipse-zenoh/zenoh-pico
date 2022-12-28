@@ -12,18 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <arpa/inet.h>
+#include <emscripten/websocket.h>
+#include <netdb.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <unistd.h>
-#include <netdb.h>
-
-#include <emscripten/websocket.h>
-
-
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
@@ -59,7 +56,6 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
 
     sock->_fd = socket(rep._ipws->ai_family, rep._ipws->ai_socktype, rep._ipws->ai_protocol);
     if (sock->_fd != -1) {
-
         // WARNING: commented because setsockopt is not implemented in emscripten
         // if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
         //     ret = _Z_ERR_GENERIC;
@@ -106,9 +102,7 @@ int8_t _z_listen_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) 
     return ret;
 }
 
-void _z_close_ws(_z_sys_net_socket_t *sock) {
-    close(sock->_fd);
-}
+void _z_close_ws(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
 size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // WARNING: workaroud as the socket is non blocking. Try 500 times
@@ -118,7 +112,7 @@ size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
         rb = recv(sock._fd, ptr, len, 0);
         c++;
         z_sleep_ms(50);
-    } while(rb<=0 && c < 500);
+    } while (rb <= 0 && c < 500);
 
     return rb;
 }
@@ -144,17 +138,16 @@ size_t _z_read_exact_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len
 size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     // WARNING: workaroud as the socket is non blocking. Try 500 times
     int c = 0;
-    ssize_t res =  0;
+    ssize_t res = 0;
     do {
         res = send(sock._fd, ptr, len, 0);
         c++;
         z_sleep_ms(50);
-    } while(res <= 0 && c < 500);
+    } while (res <= 0 && c < 500);
     return res;
 }
 
 #endif
-
 
 #if Z_LINK_TCP == 1
 #error "TCP not supported yet on emscripten port of Zenoh-Pico"

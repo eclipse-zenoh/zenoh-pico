@@ -25,8 +25,8 @@
 #define WS_CONFIG_TOUT_STR "tout"
 
 #define WS_CONFIG_MAPPING_BUILD        \
-    uint8_t argc = 1;                   \
-    _z_str_intmapping_t args[argc];     \
+    uint8_t argc = 1;                  \
+    _z_str_intmapping_t args[argc];    \
     args[0]._key = WS_CONFIG_TOUT_KEY; \
     args[0]._str = WS_CONFIG_TOUT_STR;
 

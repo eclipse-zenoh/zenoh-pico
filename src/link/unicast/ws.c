@@ -15,8 +15,8 @@
 #include "zenoh-pico/link/config/ws.h"
 
 #include <stddef.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"

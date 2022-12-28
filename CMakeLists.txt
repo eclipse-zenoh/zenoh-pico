@@ -141,7 +141,7 @@ file(GLOB Sources "src/*.c"
   "src/utils/*.c"
 )
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
   file (GLOB Sources_Unix "src/system/unix/*.c")
   list(APPEND Sources ${Sources_Unix})
 endif()

@@ -315,7 +315,7 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
         } else
 #endif
 #if Z_LINK_WS == 1
-            if (_z_str_eq(proto, WS_SCHEMA) == true ) {
+            if (_z_str_eq(proto, WS_SCHEMA) == true) {
             ret = _z_ws_config_from_str(strint, p_start);
         } else
 #endif
