@@ -28,19 +28,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
+    - uses: jwlawson/actions-setup-cmake@v1.13
     - uses: mymindstorm/setup-emsdk@v11
     - name: Compile debug
       run: |
        mkdir build
-       cd build
-       emcmake ..
-       make
-      env:
-        BUILD_TYPE: Debug
-        BUILD_TESTING: ON
-        BUILD_MULTICAST: OFF
-        BUILD_INTEGRATION: OFF
-        BUILD_TOOLS: OFF
-        BUILD_EXAMPLES: OFF
+       emcmake cmake -Bbuild -DZENOH_DEBUG=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF -DBUILD_MULTICAST=OFF -DBUILD_INTEGRATION=OFF -DBUILD_TOOLS=OFF -H.
+       make -C build
 
 
