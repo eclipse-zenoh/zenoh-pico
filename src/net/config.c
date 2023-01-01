@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/net/config.h"
 
-_z_config_t *_z_config_empty() {
+_z_config_t *_z_config_empty(void) {
     _z_config_t *config = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (config != NULL) {
         _z_config_init(config);
@@ -25,7 +25,7 @@ _z_config_t *_z_config_empty() {
     return config;
 }
 
-_z_config_t *_z_config_default() { return _z_config_client(NULL); }
+_z_config_t *_z_config_default(void) { return _z_config_client(NULL); }
 
 _z_config_t *_z_config_client(const char *locator) {
     _z_config_t *ps = _z_config_empty();
