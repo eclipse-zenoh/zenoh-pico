@@ -80,11 +80,7 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) {
-    if (time > 1000) {
-        emscripten_sleep(time);
-    } else {
-        emscripten_sleep(1);
-    }
+    emscripten_sleep((time / 1000) + (time % 1000 == 0 ? 0 : 1));
     return 0;
 }
 
