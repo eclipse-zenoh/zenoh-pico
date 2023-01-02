@@ -41,20 +41,20 @@ int8_t _z_create_endpoint_ws(_z_sys_net_endpoint_t *ep, const char *s_addr, cons
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_ipws) < 0) {
+    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
     }
 
     return ret;
 }
 
-void _z_free_endpoint_ws(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_ipws); }
+void _z_free_endpoint_ws(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 
 /*------------------ TCP sockets ------------------*/
 int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
 
-    sock->_fd = socket(rep._ipws->ai_family, rep._ipws->ai_socktype, rep._ipws->ai_protocol);
+    sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
         // WARNING: commented because setsockopt is not implemented in emscripten
         // if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -62,7 +62,7 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
         // }
 
         struct addrinfo *it = NULL;
-        for (it = rep._ipws; it != NULL; it = it->ai_next) {
+        for (it = rep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
                 break;
                 // WARNING: breaking here because connect returns -1 even if the
@@ -150,17 +150,17 @@ size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len
 #endif
 
 #if Z_LINK_TCP == 1
-#error "TCP not supported yet on emscripten port of Zenoh-Pico"
+#error "TCP not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
-#error "UDP not supported yet on emscripten port of Zenoh-Pico"
+#error "UDP not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
 #if Z_LINK_BLUETOOTH == 1
-#error "Bluetooth not supported yet on emscripten port of Zenoh-Pico"
+#error "Bluetooth not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
 #if Z_LINK_SERIAL == 1
-#error "Serial not supported yet on emscripten port of Zenoh-Pico"
+#error "Serial not supported yet on Emscripten port of Zenoh-Pico"
 #endif

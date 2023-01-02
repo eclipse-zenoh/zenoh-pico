@@ -41,7 +41,7 @@ typedef struct {
 typedef struct {
     union {
 #if Z_LINK_WS == 1
-        struct addrinfo *_ipws;
+        struct addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
