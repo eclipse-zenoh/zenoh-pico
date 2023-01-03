@@ -46,7 +46,7 @@ jobs:
             IS_RELEASE="true"
             echo "IS_RELEASE=${IS_RELEASE}"
             echo ::set-output name=IS_RELEASE::"${IS_RELEASE}"
-            PKG_VERSION=${ZENOH_VERSION}
+            PKG_VERSION=${GIT_TAG}
           elif [ -n "${GIT_BRANCH}" ]; then
             PKG_VERSION=${GIT_BRANCH}-${GITHUB_SHA:0:8}
           else
@@ -179,7 +179,7 @@ jobs:
           ssh -o "StrictHostKeyChecking=no" ${SSH_TARGET} ls -al
           echo "---- list artifacts to upload:"
           ls -R ARTIFACTS || true
-          DOWNLOAD_DIR=${ECLIPSE_BASE_DIR}/${{ needs.preps.outputs.ZENOH_VERSION }}
+          DOWNLOAD_DIR=${ECLIPSE_BASE_DIR}/${{ needs.preps.outputs.PKG_VERSION }}
           echo "---- copy artifacts into ${DOWNLOAD_DIR}"
           ssh -o "StrictHostKeyChecking=no" ${SSH_TARGET} mkdir -p ${DOWNLOAD_DIR}
           cd ARTIFACTS

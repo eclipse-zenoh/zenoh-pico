@@ -9,10 +9,15 @@
 [![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Eclipse zenoh native C library for constrained devices
+# Eclipse Zenoh
+The Eclipse Zenoh: Zero Overhead Pub/sub, Store/Query and Compute.
 
-[Eclipse zenoh](http://zenoh.io) is an extremely efficient and fault-tolerant [Named Data Networking](http://named-data.net) (NDN) protocol
-that is able to scale down to extremely constrainded devices and networks.
+Zenoh (pronounce _/zeno/_) unifies data in motion, data at rest and computations. It carefully blends traditional pub/sub with geo-distributed storages, queries and computations, while retaining a level of time and space efficiency that is well beyond any of the mainstream stacks.
+
+Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
+
+-------------------------------
+# Zenoh-Pico: native C library for constrained devices
 
 zenoh-pico is the [Eclipse zenoh](http://zenoh.io) implementation that targets constrained devices and offers a native C API.
 It is fully compatible with its main [Rust Zenoh implementation](https://github.com/eclipse-zenoh/zenoh), providing a lightweight implementation of most functionalities.
@@ -46,6 +51,8 @@ WARNING: Note that zenoh-pico has not been ported on Windows yet!
 
 -------------------------------
 ## 2. How to build it
+
+> :warning: **WARNING** :warning: : Zenoh and its ecosystem are under active development. When you build from git, make sure you also build from git any other Zenoh repository you plan to use (e.g. binding, plugin, backend, etc.). It may happen that some changes in git are not compatible with the most recent packaged Zenoh release (e.g. deb, docker, pip). We put particular effort in mantaining compatibility between the various git repositories in the Zenoh project.
 
 ### 2.1 Unix Environments
 To build the **zenoh-pico** library, you need to ensure that [cmake](https://cmake.org) is available
