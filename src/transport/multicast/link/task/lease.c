@@ -78,7 +78,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
     // From all peers, get the next lease time (minimum)
     _z_zint_t next_lease = _z_get_minimum_lease(ztm->_peers, ztm->_lease);
-    _z_zint_t next_keep_alive = next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+    _z_zint_t next_keep_alive = (_z_zint_t)(next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     _z_zint_t next_join = Z_JOIN_INTERVAL;
 
     _z_transport_peer_entry_list_t *it = NULL;
@@ -121,7 +121,8 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
             // Reset the keep alive parameters
             ztm->_transmitted = false;
-            next_keep_alive = _z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+            next_keep_alive =
+                (_z_zint_t)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval to sleep

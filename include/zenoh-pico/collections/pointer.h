@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if ZENOH_C_STANDARD != 99
+#if ZENOH_C_STANDARD != 99 && !defined(ZENOH_NO_STDATOMIC)
 #include <stdatomic.h>
 
 /*------------------ Internal Array Macros ------------------*/

@@ -106,7 +106,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -201,7 +201,7 @@ size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &addrlen);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -462,7 +462,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
     ssize_t rb = 0;
     do {
         rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
-        if (rb < 0) {
+        if (rb < (ssize_t)0) {
             rb = SIZE_MAX;
             break;
         }

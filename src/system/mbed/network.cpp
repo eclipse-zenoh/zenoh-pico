@@ -87,7 +87,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     nsapi_size_or_error_t rb = sock._tcp->recv(ptr, len);
-    if (rb < 0) {
+    if (rb < (nsapi_size_or_error_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -173,7 +173,7 @@ void _z_close_udp_unicast(_z_sys_net_socket_t *sock) {
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     SocketAddress raddr;
     nsapi_size_or_error_t rb = sock._udp->recvfrom(&raddr, ptr, len);
-    if (rb < 0) {
+    if (rb < (nsapi_size_or_error_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -266,7 +266,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
 
     do {
         rb = sock._udp->recvfrom(&raddr, ptr, len);
-        if (rb < 0) {
+        if (rb < (nsapi_size_or_error_t)0) {
             rb = SIZE_MAX;
             break;
         }

@@ -15,11 +15,11 @@
 #include "zenoh-pico/utils/checksum.h"
 
 uint32_t _z_crc32(const uint8_t *message, size_t len) {
-    uint32_t crc = 0xFFFFFFFF;
+    int32_t crc = 0xFFFFFFFF;
     for (size_t i = 0; i < len; i++) {
-        crc = crc ^ (uint32_t)message[i];
+        crc = crc ^ (int32_t)message[i];
         for (int j = 0; j < 8; j++) {
-            crc = (crc >> 1) ^ ((uint32_t)0x04C11DB7 & (-(crc & (uint32_t)1)));
+            crc = (crc >> 1) ^ ((int32_t)0x04C11DB7 & (-(crc & (int32_t)1)));
         }
     }
     return ~crc;

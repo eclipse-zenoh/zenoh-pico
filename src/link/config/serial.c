@@ -27,7 +27,7 @@ size_t _z_serial_config_strlen(const _z_str_intmap_t *s) {
 void _z_serial_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     SERIAL_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_onto_str(dst, dst_len, s, SERIAL_CONFIG_ARGC, args);
+    _z_str_intmap_onto_str(dst, dst_len, s, SERIAL_CONFIG_ARGC, args);
 }
 
 char *_z_serial_config_to_str(const _z_str_intmap_t *s) {

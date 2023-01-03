@@ -97,17 +97,17 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
+int z_sleep_us(size_t time) {
     delay_us(time);
     return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     delay_ms(time);
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000U); }
+int z_sleep_s(size_t time) { return z_sleep_ms(time * 1000U); }
 
 /*------------------ Instant ------------------*/
 void __z_clock_gettime(z_clock_t *ts) {

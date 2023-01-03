@@ -29,7 +29,7 @@ size_t _z_tcp_config_strlen(const _z_str_intmap_t *s) {
 void _z_tcp_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     TCP_CONFIG_MAPPING_BUILD
 
-    return _z_str_intmap_onto_str(dst, dst_len, s, TCP_CONFIG_ARGC, args);
+    _z_str_intmap_onto_str(dst, dst_len, s, TCP_CONFIG_ARGC, args);
 }
 
 char *_z_tcp_config_to_str(const _z_str_intmap_t *s) {

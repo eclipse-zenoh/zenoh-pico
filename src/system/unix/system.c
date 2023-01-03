@@ -135,11 +135,11 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) { return usleep(time); }
+int z_sleep_us(size_t time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return z_sleep_us(time * 1000U); }
+int z_sleep_ms(size_t time) { return z_sleep_us(time * 1000U); }
 
-int z_sleep_s(unsigned int time) { return sleep(time); }
+int z_sleep_s(size_t time) { return sleep(time); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {

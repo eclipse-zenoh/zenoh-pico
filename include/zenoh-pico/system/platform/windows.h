@@ -15,37 +15,37 @@
 #ifndef ZENOH_PICO_SYSTEM_WINDOWS_H
 #define ZENOH_PICO_SYSTEM_WINDOWS_H
 
+#include <sys/timeb.h>
+#include <windows.h>
+
 #include "zenoh-pico/config.h"
 
 #if Z_MULTI_THREAD == 1
-typedef void *_z_task_t;
-typedef void *_z_task_attr_t;
-typedef void *_z_mutex_t;
-typedef void *_z_condvar_t;
+typedef HANDLE *_z_task_t;
+typedef void *_z_task_attr_t;  // Not used in Windows
+typedef SRWLOCK _z_mutex_t;
+typedef CONDITION_VARIABLE _z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
-typedef void *z_clock_t;
-typedef void *z_time_t;
+typedef struct timeb z_clock_t;
+typedef struct timeb z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1
-        void *_tcp;  // As pointer to cross the boundary between C and C++
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+        SOCKET _fd;
 #endif
-#if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
-        void *_udp;  // As pointer to cross the boundary between C and C++
-#endif
-    };
+    } _sock;
 } _z_sys_net_socket_t;
 
 typedef struct {
     union {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
-        void *_iptcp;  // As pointer to cross the boundary between C and C++
+        struct addrinfo *_iptcp;
 #endif
-    };
+    } _ep;
 } _z_sys_net_endpoint_t;
 
-inline void __asm__(void) { ; }
+inline void __asm__(char *asm) { (void)(asm); }
 
 #endif /* ZENOH_PICO_SYSTEM_VOID_H */
