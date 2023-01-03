@@ -19,6 +19,8 @@
 #include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
     const char *keyexpr = "demo/example/zenoh-pico-pub";
     const char *value = "Pub from Pico!";
     const char *mode = "client";

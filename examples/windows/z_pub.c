@@ -19,6 +19,8 @@
 #include <zenoh-pico.h>
 
 int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
     const char *keyexpr = "demo/example/zenoh-pico-pub";
     const char *value = "Pub from Pico!";
     const char *mode = "client";
@@ -52,7 +54,7 @@ int main(int argc, char **argv) {
 
     char *buf = (char *)malloc(256);
     for (int idx = 0; 1; ++idx) {
-        sleep(1);
+        Sleep(1);
         snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 

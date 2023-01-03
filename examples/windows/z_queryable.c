@@ -36,6 +36,8 @@ void query_handler(const z_query_t *query, void *ctx) {
 }
 
 int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
     char *locator = NULL;
 
     z_owned_config_t config = z_config_default();

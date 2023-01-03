@@ -35,8 +35,11 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
     const char *keyexpr = "demo/example/**";
     const char *locator = NULL;
+    const char *value = NULL;
 
     z_owned_config_t config = z_config_default();
     if (locator != NULL) {

@@ -27,6 +27,8 @@ void print_zid(const z_id_t *id, void *ctx) {
 }
 
 int main(int argc, char **argv) {
+    (void)(argc);
+    (void)(argv);
     const char *mode = "client";
     char *locator = NULL;
 
