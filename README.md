@@ -27,6 +27,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |  **(RT)OS** |        **Transport Layer**       |  **Network Layer**  |             **Data Link Layer**            |
 |:-----------:|:--------------------------------:|:-------------------:|:------------------------------------------:|
 |   **Unix**  | UDP (unicast and multicast), TCP | IPv4, IPv6, 6LoWPAN |           WiFi, Ethernet, Thread           |
+| **Windows** | UDP (unicast and multicast), TCP |      IPv4, IPv6     |               WiFi, Ethernet               |
 |  **Zephyr** | UDP (unicast and multicast), TCP | IPv4, IPv6, 6LoWPAN |           WiFi, Ethernet, Thread           |
 | **Arduino** | UDP (unicast and multicast), TCP |      IPv4, IPv6     | WiFi, Ethernet, Bluetooth (Serial profile) |
 | **ESP-IDF** | UDP (unicast and multicast), TCP |      IPv4, IPv6     |               WiFi, Ethernet               |
@@ -46,8 +47,6 @@ There are 2 kind of packages:
 - **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
 
 For other platforms - like RTOS for embedded systems / microcontrollers -, you will need to clone and build the sources. Check [below](#how-to-build-for-microcontrollers) for more details.
-
-WARNING: Note that zenoh-pico has not been ported on Windows yet!
 
 -------------------------------
 ## 2. How to build it
