@@ -26,14 +26,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@v2
     - name: Compile debug
       run: make all
       env:
         BUILD_TYPE: Debug
-        BUILD_TESTING: ON
+        BUILD_EXAMPLES: ON
+        BUILD_TESTING: OFF
         BUILD_MULTICAST: OFF
         BUILD_INTEGRATION: OFF
 
