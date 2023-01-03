@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <iphlpapi.h>
 #include <winsock2.h>
+// The following includes must come after winsock2
+#include <iphlpapi.h>
 #include <ws2tcpip.h>
 
 #include "zenoh-pico/collections/string.h"

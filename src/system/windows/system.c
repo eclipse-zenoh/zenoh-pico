@@ -12,8 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <wincrypt.h>
 #include <windows.h>
+// The following includes must come after winsock2
+#include <wincrypt.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
