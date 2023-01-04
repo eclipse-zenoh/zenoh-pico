@@ -20,16 +20,16 @@
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random_u8(void) { return emscripten_random() * 0xFF; }
+uint8_t z_random_u8(void) { return (emscripten_random() * 255.0); }
 
-uint16_t z_random_u16(void) { return emscripten_random() * 0xFFFF; }
+uint16_t z_random_u16(void) { return (emscripten_random() * 65535.0); }
 
-uint32_t z_random_u32(void) { return emscripten_random() * 0xFFFFFFFF; }
+uint32_t z_random_u32(void) { return (emscripten_random() * 4294967295.0); }
 
-uint64_t z_random_u64(void) { return emscripten_random() * 0xFFFFFFFFFFFFFFFF; }
+uint64_t z_random_u64(void) { return (emscripten_random() * 18446744073709551615.0); }
 
 void z_random_fill(void *buf, size_t len) {
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         *((uint8_t *)buf) = z_random_u8();
     }
 }
@@ -94,16 +94,22 @@ int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) { return z_time_now(); }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant) { return 0; }
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
+    (void)(instant);
+    return 0;
+}
 
-unsigned long z_clock_elapsed_ms(z_clock_t *instant) { z_time_elapsed_ms(instant); }
+unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(instant) * 1000; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
 
-unsigned long z_time_elapsed_us(z_time_t *time) { return 0; }
+unsigned long z_time_elapsed_us(z_time_t *time) {
+    (void)(time);
+    return 0;
+}
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now = emscripten_get_now();
