@@ -110,7 +110,7 @@ size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // WARNING: workaroud implementing here the timeout
     ssize_t rb = 0;
     z_time_t start = z_time_now();
-    while (z_time_elapsed_ms(&start) < sock._ws._tout) {
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (rb == 0)) {
         rb = recv(sock._ws._fd, ptr, len, 0);
     }
     return rb;
@@ -138,7 +138,7 @@ size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len
     // WARNING: workaroud implementing here the timeout
     ssize_t sb = 0;
     z_time_t start = z_time_now();
-    while (z_time_elapsed_ms(&start) < sock._ws._tout) {
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (sb == 0)) {
         sb = send(sock._ws._fd, ptr, len, 0);
     }
     return sb;
