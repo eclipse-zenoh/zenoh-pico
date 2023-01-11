@@ -30,6 +30,8 @@
 
 #if Z_LINK_WS == 1
 
+#define WS_LINK_SLEEP 1
+
 /*------------------ TCP sockets ------------------*/
 int8_t _z_create_endpoint_ws(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
     int8_t ret = _Z_RES_OK;
@@ -111,7 +113,12 @@ size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = 0;
     z_time_t start = z_time_now();
     while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (rb == 0)) {
+        z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         rb = recv(sock._ws._fd, ptr, len, 0);
+    }
+    // WARNING: workaround as the recv returns -1 not only in case of errors
+    if (rb < 0) {
+        rb = 0;
     }
     return rb;
 }
@@ -138,8 +145,13 @@ size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len
     // WARNING: workaroud implementing here the timeout
     ssize_t sb = 0;
     z_time_t start = z_time_now();
-    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (sb == 0)) {
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (sb <= 0)) {
+        z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         sb = send(sock._ws._fd, ptr, len, 0);
+    }
+    // WARNING: workaround as the recv returns -1 not only in case of errors
+    if (sb < 0) {
+        sb = 0;
     }
     return sb;
 }
