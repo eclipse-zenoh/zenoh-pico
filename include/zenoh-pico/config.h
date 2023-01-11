@@ -215,7 +215,7 @@
  */
 #ifndef Z_BATCH_SIZE_RX
 #define Z_BATCH_SIZE_RX \
-    65535  // Warning: changing this value can break the communication
+    20000  // Warning: changing this value can break the communication
            //          with zenohd in the current protocol version.
            //          In the future, it will be possible to negotiate such value.
            // Change it at your own risk.
@@ -225,14 +225,14 @@
  * Defaulf maximum batch size possible to be sent.
  */
 #ifndef Z_BATCH_SIZE_TX
-#define Z_BATCH_SIZE_TX 65535
+#define Z_BATCH_SIZE_TX 1500
 #endif
 
 /**
  * Defaulf maximum size for fragmented messages.
  */
 #ifndef Z_FRAG_MAX_SIZE
-#define Z_FRAG_MAX_SIZE 300000
+#define Z_FRAG_MAX_SIZE 2000
 #endif
 
 /**
