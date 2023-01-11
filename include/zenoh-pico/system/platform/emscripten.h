@@ -33,7 +33,10 @@ typedef double z_time_t;
 typedef struct {
     union {
 #if Z_LINK_WS == 1
-        int _fd;
+        struct {
+            int _fd;
+            uint32_t _tout;
+        } _ws;
 #endif
     };
 } _z_sys_net_socket_t;

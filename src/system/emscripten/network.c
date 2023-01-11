@@ -52,19 +52,22 @@ void _z_free_endpoint_ws(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); 
 
 /*------------------ TCP sockets ------------------*/
 int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    (void)(tout);
     int8_t ret = _Z_RES_OK;
 
-    sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
-    if (sock->_fd != -1) {
+    sock->_ws._fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
+    if (sock->_ws._fd != -1) {
+
+
+
         // WARNING: commented because setsockopt is not implemented in emscripten
-        // if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        // if ((ret == _Z_RES_OK) && (setsockopt(sock->_ws._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
         //     ret = _Z_ERR_GENERIC;
         // }
+        sock->_ws._tout = tout; // We are storing the timeout that we are going to use when sending and receiving
 
         struct addrinfo *it = NULL;
         for (it = rep._iptcp; it != NULL; it = it->ai_next) {
-            if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
+            if ((ret == _Z_RES_OK) && (connect(sock->_ws._fd, it->ai_addr, it->ai_addrlen) < 0)) {
                 break;
                 // WARNING: breaking here because connect returns -1 even if the
                 // underlying socket is actually open.
@@ -78,12 +81,15 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
             }
         }
 
+
+
         // WARNING: workaround as connect returns before the websocket is
         // actually open.
         z_sleep_ms(100);
 
+
         if (ret != _Z_RES_OK) {
-            close(sock->_fd);
+            close(sock->_ws._fd);
         }
     } else {
         ret = _Z_ERR_GENERIC;
@@ -103,18 +109,15 @@ int8_t _z_listen_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) 
     return ret;
 }
 
-void _z_close_ws(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_close_ws(_z_sys_net_socket_t *sock) { close(sock->_ws._fd); }
 
 size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    // WARNING: workaroud as the socket is non blocking. Try 500 times
-    int c = 0;
+    // WARNING: workaroud implementing here the timeout
     ssize_t rb = 0;
-    do {
-        rb = recv(sock._fd, ptr, len, 0);
-        c++;
-        z_sleep_ms(50);
-    } while (rb <= 0 && c < 500);
-
+    z_time_t start = z_time_now();
+    while (z_time_elapsed_ms(&start) < sock._ws._tout) {
+        rb = recv(sock._ws._fd, ptr, len, 0);
+    }
     return rb;
 }
 
@@ -137,15 +140,13 @@ size_t _z_read_exact_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len
 }
 
 size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
-    // WARNING: workaroud as the socket is non blocking. Try 500 times
-    int c = 0;
-    ssize_t res = 0;
-    do {
-        res = send(sock._fd, ptr, len, 0);
-        c++;
-        z_sleep_ms(50);
-    } while (res <= 0 && c < 500);
-    return res;
+    // WARNING: workaroud implementing here the timeout
+    ssize_t sb = 0;
+    z_time_t start = z_time_now();
+    while (z_time_elapsed_ms(&start) < sock._ws._tout) {
+        sb = send(sock._ws._fd, ptr, len, 0);
+    }
+    return sb;
 }
 
 #endif
