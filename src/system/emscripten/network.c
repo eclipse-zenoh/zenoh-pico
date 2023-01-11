@@ -56,14 +56,12 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
 
     sock->_ws._fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_ws._fd != -1) {
-
-
-
         // WARNING: commented because setsockopt is not implemented in emscripten
-        // if ((ret == _Z_RES_OK) && (setsockopt(sock->_ws._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        // if ((ret == _Z_RES_OK) && (setsockopt(sock->_ws._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0))
+        // {
         //     ret = _Z_ERR_GENERIC;
         // }
-        sock->_ws._tout = tout; // We are storing the timeout that we are going to use when sending and receiving
+        sock->_ws._tout = tout;  // We are storing the timeout that we are going to use when sending and receiving
 
         struct addrinfo *it = NULL;
         for (it = rep._iptcp; it != NULL; it = it->ai_next) {
@@ -81,12 +79,9 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
             }
         }
 
-
-
         // WARNING: workaround as connect returns before the websocket is
         // actually open.
         z_sleep_ms(100);
-
 
         if (ret != _Z_RES_OK) {
             close(sock->_ws._fd);

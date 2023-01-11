@@ -94,9 +94,7 @@ int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) { return z_time_now(); }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant) {
-    return z_clock_elapsed_ms(instant) * 1000;
-}
+unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms(instant) * 1000; }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
 
@@ -105,9 +103,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(i
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
 
-unsigned long z_time_elapsed_us(z_time_t *time) {
-    return z_time_elapsed_ms(time) * 1000;
-}
+unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now = emscripten_get_now();
