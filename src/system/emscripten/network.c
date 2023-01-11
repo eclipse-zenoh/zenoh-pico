@@ -112,7 +112,7 @@ size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // WARNING: workaroud implementing here the timeout
     ssize_t rb = 0;
     z_time_t start = z_time_now();
-    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (rb == 0)) {
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (rb <= 0)) {
         z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         rb = recv(sock._ws._fd, ptr, len, 0);
     }
