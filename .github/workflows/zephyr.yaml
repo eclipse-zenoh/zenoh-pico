@@ -49,7 +49,10 @@ jobs:
         export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
         . $HOME/.platformio/penv/bin/activate
 
-        mkdir -p $ZEPHYR_BASE/lib
+        mkdir -p $ZEPHYR_BASE
+        cd $ZEPHYR_BASE
+        pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="build_flags=-DZ_LINK_SERIAL=1"
+
         cd $ZEPHYR_BASE/lib
         ln -s $ZENOH_PICO_BASE
 
@@ -57,11 +60,6 @@ jobs:
         cd $ZEPHYR_BASE/zephyr
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
         ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt CMakeLists.txt
-
-        mkdir -p $ZEPHYR_BASE/src
-
-        cd $ZEPHYR_BASE
-        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/platformio.ini platformio.ini
 
     - name: Build z_pub example
       run: |
