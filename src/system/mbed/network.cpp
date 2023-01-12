@@ -333,7 +333,7 @@ int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint3
     return ret;
 }
 
-int8_t _z_open_serial_from_device(_z_sys_net_socket_t *sock, char *device, uint32_t baudrate) {
+int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *device, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
 
     (void)(sock);
@@ -344,7 +344,7 @@ int8_t _z_open_serial_from_device(_z_sys_net_socket_t *sock, char *device, uint3
     return ret;
 }
 
-int8_t _z_listen_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
     (void)sock;
     (void)txpin;
@@ -352,6 +352,17 @@ int8_t _z_listen_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpi
     (void)baudrate;
 
     // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *device, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+
+    (void)(sock);
+    (void)(device);
+    (void)(baudrate);
     ret = _Z_ERR_GENERIC;
 
     return ret;
