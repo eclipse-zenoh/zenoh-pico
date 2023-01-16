@@ -70,6 +70,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_definitions(-DZENOH_MACOS)
   set(MACOSX_RPATH "ON")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+  add_definitions(-DZENOH_EMSCRIPTEN)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   message(FATAL_ERROR "zenoh-pico is not yet available on Windows platform")
   add_definitions(-DZENOH_WIN)
@@ -116,30 +118,37 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-if(UNIX)
-  file(GLOB Sources "src/*.c"
-    "src/api/*.c"
-    "src/net/*.c"
-    "src/collections/*.c"
-    "src/link/*.c"
-    "src/link/config/*.c"
-    "src/link/unicast/*.c"
-    "src/link/multicast/*.c"
-    "src/protocol/*.c"
-    "src/protocol/keyexpr/*.c"
-    "src/session/*.c"
-    "src/system/*.c"
-    "src/system/unix/*.c"
-    "src/transport/*.c"
-    "src/transport/common/*.c"
-    "src/transport/unicast/*.c"
-    "src/transport/unicast/link/*.c"
-    "src/transport/unicast/link/task/*.c"
-    "src/transport/multicast/*.c"
-    "src/transport/multicast/link/*.c"
-    "src/transport/multicast/link/task/*.c"
-    "src/utils/*.c"
-  )
+file(GLOB Sources "src/*.c"
+  "src/api/*.c"
+  "src/net/*.c"
+  "src/collections/*.c"
+  "src/link/*.c"
+  "src/link/config/*.c"
+  "src/link/unicast/*.c"
+  "src/link/multicast/*.c"
+  "src/protocol/*.c"
+  "src/protocol/keyexpr/*.c"
+  "src/session/*.c"
+  "src/system/*.c"
+  "src/transport/*.c"
+  "src/transport/common/*.c"
+  "src/transport/unicast/*.c"
+  "src/transport/unicast/link/*.c"
+  "src/transport/unicast/link/task/*.c"
+  "src/transport/multicast/*.c"
+  "src/transport/multicast/link/*.c"
+  "src/transport/multicast/link/task/*.c"
+  "src/utils/*.c"
+)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
+  file (GLOB Sources_Unix "src/system/unix/*.c")
+  list(APPEND Sources ${Sources_Unix})
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+  file (GLOB Sources_Emscripten "src/system/emscripten/*.c")
+  list(APPEND Sources ${Sources_Emscripten})
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
