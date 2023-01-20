@@ -536,6 +536,117 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 }
 #endif
 
+#if Z_LINK_TLS == 1
+/*------------------ TLS sockets ------------------*/
+int8_t _z_create_endpoint_tls(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+    int8_t ret = _Z_RES_OK;
+
+    struct addrinfo hints;
+    (void)memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+void _z_free_endpoint_tls(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
+
+int8_t _z_open_tls(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    int8_t ret = _Z_RES_OK;
+
+    sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
+    if (sock->_fd != -1) {
+        int optflag = 1;
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&optflag, sizeof(optflag)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+
+#if LWIP_SO_LINGER == 1
+        struct linger ling;
+        ling.l_onoff = 1;
+        ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+#endif
+
+        for (struct addrinfo *it = rep._iptcp; it != NULL; it = it->ai_next) {
+            if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
+                if (it->ai_next == NULL) {
+                    ret = _Z_ERR_GENERIC;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (ret != _Z_RES_OK) {
+            close(sock->_fd);
+        }
+    } else {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
+    int8_t ret = _Z_RES_OK;
+    (void)sock;
+    (void)lep;
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+void _z_close_tcp(_z_sys_net_socket_t *sock) {
+    shutdown(sock->_fd, SHUT_RDWR);
+    close(sock->_fd);
+}
+
+size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    ssize_t rb = recv(sock._fd, ptr, len, 0);
+    if (rb < 0) {
+        rb = SIZE_MAX;
+    }
+
+    return rb;
+}
+
+size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    size_t n = 0;
+    uint8_t *pos = &ptr[0];
+
+    do {
+        size_t rb = _z_read_tcp(sock, pos, len - n);
+        if (rb == SIZE_MAX) {
+            n = rb;
+            break;
+        }
+
+        n = n + rb;
+        pos = _z_ptr_u8_offset(pos, n);
+    } while (n != len);
+
+    return n;
+}
+
+size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    return send(sock._fd, ptr, len, 0);
+}
+#endif //END TLS sockets
+
 #if Z_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on ESP-IDF port of Zenoh-Pico"
 #endif
