@@ -24,6 +24,10 @@
 #include "zenoh-pico/system/link/tcp.h"
 #endif
 
+#if Z_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
+#endif
+
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/system/link/udp.h"
 #endif
@@ -79,6 +83,9 @@ typedef struct _z_link_t {
     union {
 #if Z_LINK_TCP == 1
         _z_tcp_socket_t _tcp;
+#endif
+#if Z_LINK_TLS == 1
+        _z_tls_socket_t _tls;
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
         _z_udp_socket_t _udp;

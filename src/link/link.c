@@ -33,6 +33,11 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
 #endif
+#if Z_LINK_TLS == 1
+        if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tls(zl, &ep);
+        } else
+#endif
 #if Z_LINK_UDP_UNICAST == 1
             if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);

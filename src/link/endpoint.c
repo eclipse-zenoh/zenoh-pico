@@ -23,6 +23,9 @@
 #if Z_LINK_TCP == 1
 #include "zenoh-pico/link/config/tcp.h"
 #endif
+#if Z_LINK_TLS == 1
+#include "zenoh-pico/link/config/tls.h"
+#endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/link/config/udp.h"
 #endif
@@ -299,6 +302,11 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
             ret = _z_tcp_config_from_str(strint, p_start);
         } else
 #endif
+#if Z_LINK_TLS == 1
+        if (_z_str_eq(proto, TLS_SCHEMA) == true) {
+            ret = _z_tcp_config_from_str(strint, p_start);
+        } else
+#endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
             if (_z_str_eq(proto, UDP_SCHEMA) == true) {
             ret = _z_udp_config_from_str(strint, p_start);
@@ -336,6 +344,11 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
         len = _z_tcp_config_strlen(s);
     } else
 #endif
+#if Z_LINK_TLS == 1
+    if (_z_str_eq(proto, TLS_SCHEMA) == true) {
+        len = _z_tls_config_strlen(s);
+    } else
+#endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
         if (_z_str_eq(proto, UDP_SCHEMA) == true) {
         len = _z_udp_config_strlen(s);
@@ -370,6 +383,11 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
 #if Z_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA) == true) {
         res = _z_tcp_config_to_str(s);
+    } else
+#endif
+#if Z_LINK_TLS == 1
+    if (_z_str_eq(proto, TLS_SCHEMA) == true) {
+        res = _z_tls_config_to_str(s);
     } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1

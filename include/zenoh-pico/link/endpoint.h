@@ -28,6 +28,9 @@
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 #define UDP_SCHEMA "udp"
 #endif
+#if Z_LINK_TLS == 1
+#define TLS_SCHEMA "tls"
+#endif
 #if Z_LINK_BLUETOOTH == 1
 #define BT_SCHEMA "bt"
 #endif

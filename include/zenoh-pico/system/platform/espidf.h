@@ -34,7 +34,7 @@ typedef struct timeval z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1 || Z_LINK_TLS == 1
         int _fd;
 #endif
 #if Z_LINK_BLUETOOTH == 1
@@ -46,7 +46,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1 || Z_LINK_TLS == 1
         struct addrinfo *_iptcp;
 #endif
     };

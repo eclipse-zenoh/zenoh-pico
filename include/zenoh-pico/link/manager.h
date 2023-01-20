@@ -23,6 +23,10 @@
 int8_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
 int8_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *ep);
 #endif
+#if Z_LINK_TLS == 1
+int8_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
+int8_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *ep);
+#endif
 #if Z_LINK_UDP_UNICAST == 1
 int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *ep);
 int8_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t ep);
