@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
@@ -31,24 +32,42 @@
 /********* Data Types Handlers *********/
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
-char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
-    char *ret = NULL;
+z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
+    z_owned_str_t ret = {._value = NULL};
 
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
         size_t ke_len = strlen(keyexpr._suffix);
-        ret = (char *)z_malloc(ke_len + (size_t)1);
-        if (ret != NULL) {
-            (void)strncpy(ret, keyexpr._suffix, ke_len);
-            ret[ke_len] = '\0';
+
+        ret._value = (char **)z_malloc(sizeof(char *));
+        if (ret._value != NULL) {
+            *ret._value = (char *)z_malloc(ke_len + (size_t)1);
+            if (*ret._value != NULL) {
+                (void)strncpy(*ret._value, keyexpr._suffix, ke_len);
+                (*ret._value)[ke_len] = '\0';
+            } else {
+                z_free(ret._value);
+            }
         }
     }
 
     return ret;
 }
 
-char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
+z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
+    z_owned_str_t ret = {._value = NULL};
+
     _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    return (char *)ekey._suffix;  // ekey will be out of scope so, suffix can be safely casted as non-const
+    ret._value = (char **)z_malloc(sizeof(char *));
+    if (ret._value != NULL) {
+        *ret._value = (char *)ekey._suffix;  // ekey will be out of scope so
+                                             //  - suffix can be safely casted as non-const
+                                             //  - suffix does not need to be copied
+        if (*ret._value == NULL) {
+            z_free(ret._value);
+        }
+    }
+
+    return ret;
 }
 
 _Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
@@ -336,6 +355,27 @@ z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_r
 z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello) { return closure_hello; }
 
 z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid) { return closure_zid; }
+
+_Bool z_str_check(const z_owned_str_t *str) { return str->_value != NULL; }
+
+z_str_t z_str_loan(const z_owned_str_t *str) { return *str->_value; }
+
+z_owned_str_t *z_str_move(z_owned_str_t *str) { return str; }
+
+z_owned_str_t z_str_clone(z_owned_str_t *str) {
+    z_owned_str_t ret;
+    ret._value = (_z_str_t *)z_malloc(sizeof(z_str_t));
+    if (ret._value != NULL) {
+        _z_str_copy(*ret._value, *str->_value);
+    }
+    return ret;
+}
+
+void z_str_drop(z_owned_str_t *str) {
+    if (str->_value != NULL) {
+        _z_str_free(str->_value);
+    }
+}
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {

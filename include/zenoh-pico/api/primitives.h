@@ -49,7 +49,7 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
-char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
+z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
@@ -62,7 +62,7 @@ char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
  * Returns:
  *   The string representation of a keyexpr for a given session.
  */
-char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
+z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
 
 /**
  * Checks if a given keyexpr is valid.
@@ -631,6 +631,7 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     ownedtype z_##name##_clone(ownedtype *name);   \
     void z_##name##_drop(ownedtype *name);
 
+_OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
 _OWNED_FUNCTIONS(z_config_t, z_owned_config_t, config)
 _OWNED_FUNCTIONS(z_scouting_config_t, z_owned_scouting_config_t, scouting_config)

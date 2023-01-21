@@ -22,6 +22,8 @@
 #include "zenoh-pico/collections/vec.h"
 
 /*-------- str --------*/
+typedef char *_z_str_t;
+
 char *_z_str_clone(const char *src);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);

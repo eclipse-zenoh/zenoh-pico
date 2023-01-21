@@ -63,6 +63,9 @@ typedef struct {
  */
 typedef _z_string_t z_string_t;
 
+typedef _z_str_t z_str_t;
+_OWNED_TYPE(z_str_t, str)
+
 /**
  * Represents a key expression in Zenoh.
  *

@@ -39,7 +39,7 @@ extern "C" {
 z_owned_pull_subscriber_t sub;
 
 void data_handler(const z_sample_t *sample, void *arg) {
-    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
     std::string val((const char *)sample->payload.start, sample->payload.len);
 
     Serial.print(" >> [Subscription listener] Received (");
@@ -48,7 +48,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
     Serial.print(val.c_str());
     Serial.println(")");
 
-    free(keystr);
+    z_drop(z_move(keystr));
 }
 
 void setup() {

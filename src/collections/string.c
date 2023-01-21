@@ -103,6 +103,8 @@ void _z_str_free(char **src) {
     }
 }
 
+void _z_str_copy(char *dst, const char *src) { strncpy(dst, src, strlen(src)); }
+
 char *_z_str_clone(const char *src) {
     size_t str_len = _z_str_size(src);
     char *dst = (char *)z_malloc(str_len);

@@ -48,7 +48,7 @@ void reply_handler(z_owned_reply_t *oreply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(oreply)) {
         z_sample_t sample = z_reply_ok(oreply);
-        char *keystr = z_keyexpr_to_string(sample.keyexpr);
+        z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
         std::string val((const char *)sample.payload.start, sample.payload.len);
 
         Serial.print(" >> [Get listener] Received (");
@@ -57,7 +57,7 @@ void reply_handler(z_owned_reply_t *oreply, void *ctx) {
         Serial.print(val.c_str());
         Serial.println(")");
 
-        free(keystr);
+        z_drop(z_move(keystr));
     } else {
         Serial.println(" >> Received an error");
     }
