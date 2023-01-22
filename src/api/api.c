@@ -294,12 +294,13 @@ _Bool z_value_is_initialized(z_value_t *value) {
         }                                                                              \
     }
 
-#define OWNED_FUNCTIONS_VAL(type, ownedtype, name, f_free, f_copy)               \
+#define OWNED_FUNCTIONS_STR(type, ownedtype, name, f_free, f_copy)               \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
     type z_##name##_loan(const ownedtype *val) { return val->_value; }           \
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
+        ret._value = (_##type)z_malloc(strlen(val->_value));                     \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value);                                     \
         }                                                                        \
@@ -316,7 +317,7 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(src);
 }
 
-OWNED_FUNCTIONS_VAL(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_copy)
+OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_copy)
 
 OWNED_FUNCTIONS_PTR(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,

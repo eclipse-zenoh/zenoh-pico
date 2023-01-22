@@ -26,7 +26,7 @@
         type *_value;               \
     } z_owned_##name##_t;
 
-#define _OWNED_TYPE_VAL(type, name) \
+#define _OWNED_TYPE_STR(type, name) \
     typedef struct {                \
         type _value;                \
     } z_owned_##name##_t;
@@ -69,7 +69,7 @@ typedef struct {
 typedef _z_string_t z_string_t;
 
 typedef _z_str_t z_str_t;
-_OWNED_TYPE_VAL(z_str_t, str)
+_OWNED_TYPE_STR(z_str_t, str)
 
 /**
  * Represents a key expression in Zenoh.
