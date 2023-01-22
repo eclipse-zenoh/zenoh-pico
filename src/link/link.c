@@ -48,6 +48,11 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
             ret = _z_new_link_serial(zl, ep);
         } else
 #endif
+#if Z_LINK_WS == 1
+            if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_ws(zl, &ep);
+        } else
+#endif
         {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }

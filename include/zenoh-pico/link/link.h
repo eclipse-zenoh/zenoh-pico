@@ -36,6 +36,10 @@
 #include "zenoh-pico/system/link/serial.h"
 #endif
 
+#if Z_LINK_WS == 1
+#include "zenoh-pico/system/link/ws.h"
+#endif
+
 #include "zenoh-pico/utils/result.h"
 
 /**
@@ -84,6 +88,9 @@ typedef struct _z_link_t {
 #endif
 #if Z_LINK_SERIAL == 1
         _z_serial_socket_t _serial;
+#endif
+#if Z_LINK_WS == 1
+        _z_ws_socket_t _ws;
 #endif
     } _socket;
 

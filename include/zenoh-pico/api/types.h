@@ -97,9 +97,9 @@ _OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_insert`
  */
 typedef struct {
-    _z_scouting_config_t *_val;
+    _z_config_t *_val;
 } z_config_t;
-_OWNED_TYPE_PTR(_z_scouting_config_t, config)
+_OWNED_TYPE_PTR(_z_config_t, config)
 
 /**
  * Represents a scouting configuration.
@@ -114,9 +114,9 @@ _OWNED_TYPE_PTR(_z_scouting_config_t, config)
  *   - :c:func:`zp_scouting_config_insert`
  */
 typedef struct {
-    _z_config_t *_val;
+    _z_scouting_config_t *_val;
 } z_scouting_config_t;
-_OWNED_TYPE_PTR(_z_config_t, scouting_config)
+_OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh session.
