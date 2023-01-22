@@ -145,7 +145,7 @@ void app_main() {
     }
     printf("OK\n");
 
-    char buf[strlen(VALUE) + 8];
+    char buf[256];
     for (int idx = 0; 1; ++idx) {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, VALUE);
