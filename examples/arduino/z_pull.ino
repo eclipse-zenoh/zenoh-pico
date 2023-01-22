@@ -43,12 +43,12 @@ void data_handler(const z_sample_t *sample, void *arg) {
     std::string val((const char *)sample->payload.start, sample->payload.len);
 
     Serial.print(" >> [Subscription listener] Received (");
-    Serial.print(keystr);
+    Serial.print(z_str_loan(&keystr));
     Serial.print(", ");
     Serial.print(val.c_str());
     Serial.println(")");
 
-    z_drop(z_move(keystr));
+    z_str_drop(z_str_move(&keystr));
 }
 
 void setup() {

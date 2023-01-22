@@ -52,12 +52,12 @@ void reply_handler(z_owned_reply_t *oreply, void *ctx) {
         std::string val((const char *)sample.payload.start, sample.payload.len);
 
         Serial.print(" >> [Get listener] Received (");
-        Serial.print(keystr);
+        Serial.print(z_str_loan(&keystr));
         Serial.print(", ");
         Serial.print(val.c_str());
         Serial.println(")");
 
-        z_drop(z_move(keystr));
+        z_str_drop(z_str_move(&keystr));
     } else {
         Serial.println(" >> Received an error");
     }
