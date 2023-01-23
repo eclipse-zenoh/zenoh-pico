@@ -21,9 +21,14 @@
 #include "zenoh-pico/protocol/core.h"
 
 /* Owned types */
-#define _OWNED_TYPE(type, name) \
-    typedef struct {            \
-        type *_value;           \
+#define _OWNED_TYPE_PTR(type, name) \
+    typedef struct {                \
+        type *_value;               \
+    } z_owned_##name##_t;
+
+#define _OWNED_TYPE_STR(type, name) \
+    typedef struct {                \
+        type _value;                \
     } z_owned_##name##_t;
 
 /**
@@ -63,6 +68,9 @@ typedef struct {
  */
 typedef _z_string_t z_string_t;
 
+typedef _z_str_t z_str_t;
+_OWNED_TYPE_STR(z_str_t, str)
+
 /**
  * Represents a key expression in Zenoh.
  *
@@ -74,7 +82,7 @@ typedef _z_string_t z_string_t;
  *   - :c:func:`zp_keyexpr_resolve`
  */
 typedef _z_keyexpr_t z_keyexpr_t;
-_OWNED_TYPE(z_keyexpr_t, keyexpr)
+_OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration.
@@ -91,7 +99,7 @@ _OWNED_TYPE(z_keyexpr_t, keyexpr)
 typedef struct {
     _z_config_t *_val;
 } z_config_t;
-_OWNED_TYPE(_z_config_t, config)
+_OWNED_TYPE_PTR(_z_config_t, config)
 
 /**
  * Represents a scouting configuration.
@@ -108,7 +116,7 @@ _OWNED_TYPE(_z_config_t, config)
 typedef struct {
     _z_scouting_config_t *_val;
 } z_scouting_config_t;
-_OWNED_TYPE(_z_scouting_config_t, scouting_config)
+_OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh session.
@@ -116,7 +124,7 @@ _OWNED_TYPE(_z_scouting_config_t, scouting_config)
 typedef struct {
     _z_session_t *_val;
 } z_session_t;
-_OWNED_TYPE(_z_session_t, session)
+_OWNED_TYPE_PTR(_z_session_t, session)
 
 /**
  * Represents a Zenoh (push) Subscriber entity.
@@ -129,7 +137,7 @@ _OWNED_TYPE(_z_session_t, session)
 typedef struct {
     _z_subscriber_t *_val;
 } z_subscriber_t;
-_OWNED_TYPE(_z_subscriber_t, subscriber)
+_OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Pull Subscriber entity.
@@ -143,7 +151,7 @@ _OWNED_TYPE(_z_subscriber_t, subscriber)
 typedef struct {
     _z_pull_subscriber_t *_val;
 } z_pull_subscriber_t;
-_OWNED_TYPE(_z_pull_subscriber_t, pull_subscriber)
+_OWNED_TYPE_PTR(_z_pull_subscriber_t, pull_subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -158,7 +166,7 @@ _OWNED_TYPE(_z_pull_subscriber_t, pull_subscriber)
 typedef struct {
     _z_publisher_t *_val;
 } z_publisher_t;
-_OWNED_TYPE(_z_publisher_t, publisher)
+_OWNED_TYPE_PTR(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -171,7 +179,7 @@ _OWNED_TYPE(_z_publisher_t, publisher)
 typedef struct {
     _z_queryable_t *_val;
 } z_queryable_t;
-_OWNED_TYPE(_z_queryable_t, queryable)
+_OWNED_TYPE_PTR(_z_queryable_t, queryable)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
@@ -385,7 +393,7 @@ typedef _z_sample_t z_sample_t;
  *   z_str_array_t locators: The locators of the scouted entity.
  */
 typedef _z_hello_t z_hello_t;
-_OWNED_TYPE(z_hello_t, hello)
+_OWNED_TYPE_PTR(z_hello_t, hello)
 
 /**
  * Represents the content of a reply to a query.
@@ -403,7 +411,7 @@ typedef _z_reply_data_t z_reply_data_t;
  *   z_reply_data_t data: the content of the reply.
  */
 typedef _z_reply_t z_reply_t;
-_OWNED_TYPE(z_reply_t, reply)
+_OWNED_TYPE_PTR(z_reply_t, reply)
 
 #define _TYPEDEF_ARRAY(type, alias, elem, name)                                                                \
     typedef type alias;                                                                                        \
@@ -421,7 +429,7 @@ _OWNED_TYPE(z_reply_t, reply)
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
 _TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
-_OWNED_TYPE(z_str_array_t, str_array)
+_OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
 

@@ -34,11 +34,10 @@ char *__z_parse_port_segment_tcp(char *address) {
 
         const char *p_end = &address[strlen(address)];
 
-        size_t len = _z_ptr_char_diff(p_end, p_start);
-        ret = (char *)z_malloc(len + (size_t)1);
+        size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
-            (void)strncpy(ret, p_start, len);
-            ret[len] = '\0';
+            _z_str_n_copy(ret, p_start, len);
         }
     }
 
@@ -55,20 +54,18 @@ char *__z_parse_address_segment_tcp(char *address) {
     if ((p_start[0] == '[') && (p_end[-1] == ']')) {
         p_start = _z_cptr_char_offset(p_start, 1);
         p_end = _z_cptr_char_offset(p_end, -1);
-        size_t len = _z_ptr_char_diff(p_end, p_start);
-        ret = (char *)z_malloc(len + (size_t)1);
+        size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
-            (void)strncpy(ret, p_start, len);
-            ret[len] = '\0';
+            _z_str_n_copy(ret, p_start, len);
         }
     }
     // IPv4
     else {
-        size_t len = _z_ptr_char_diff(p_end, p_start);
-        ret = (char *)z_malloc(len + (size_t)1);
+        size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
-            (void)strncpy(ret, p_start, len);
-            ret[len] = '\0';
+            _z_str_n_copy(ret, p_start, len);
         }
     }
 

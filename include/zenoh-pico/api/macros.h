@@ -37,7 +37,8 @@
              : z_pull_subscriber_loan, z_owned_publisher_t \
              : z_publisher_loan, z_owned_reply_t           \
              : z_reply_loan, z_owned_hello_t               \
-             : z_hello_loan, z_owned_str_array_t           \
+             : z_hello_loan, z_owned_str_t                 \
+             : z_str_loan, z_owned_str_array_t             \
              : z_str_array_loan)(&x)
 
 /**
@@ -57,7 +58,8 @@
              : z_publisher_drop, z_owned_queryable_t        \
              : z_queryable_drop, z_owned_reply_t            \
              : z_reply_drop, z_owned_hello_t                \
-             : z_hello_drop, z_owned_str_array_t            \
+             : z_hello_drop, z_owned_str_t                  \
+             : z_str_drop, z_owned_str_array_t              \
              : z_str_array_drop)(x)
 
 /**
@@ -82,7 +84,8 @@
              : z_publisher_check, z_owned_queryable_t        \
              : z_queryable_check, z_owned_reply_t            \
              : z_reply_check, z_owned_hello_t                \
-             : z_hello_check, z_owned_str_array_t            \
+             : z_hello_check, z_owned_str_t                  \
+             : z_str_check, z_owned_str_array_t              \
              : z_str_array_check)(&x)
 
 /**
@@ -105,7 +108,8 @@
              : z_publisher_move, z_owned_queryable_t          \
              : z_queryable_move, z_owned_reply_t              \
              : z_reply_move, z_owned_hello_t                  \
-             : z_hello_move, z_owned_str_array_t              \
+             : z_hello_move, z_owned_str_t                    \
+             : z_str_move, z_owned_str_array_t                \
              : z_str_array_move, z_owned_closure_sample_t     \
              : z_closure_sample_move, z_owned_closure_query_t \
              : z_closure_query_move, z_owned_closure_reply_t  \
@@ -132,7 +136,8 @@
              : z_publisher_clone, z_owned_queryable_t        \
              : z_queryable_clone, z_owned_reply_t            \
              : z_reply_clone, z_owned_hello_t                \
-             : z_hello_clone, z_owned_str_array_t            \
+             : z_hello_clone, z_owned_str_t                  \
+             : z_str_clone, z_owned_str_array_t              \
              : z_str_array_clone)(&x)
 
 #define _z_closure_overloader(callback, droper, ctx, ...) \

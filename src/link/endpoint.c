@@ -88,11 +88,10 @@ char *_z_locator_protocol_from_str(const char *str) {
         const char *p_start = &str[0];
         const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
         if ((p_end != NULL) && (p_start != p_end)) {
-            size_t p_len = _z_ptr_char_diff(p_end, p_start);
-            ret = (char *)z_malloc(p_len + (size_t)1);
+            size_t p_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+            ret = (char *)z_malloc(p_len);
             if (ret != NULL) {
-                (void)strncpy(ret, p_start, p_len);
-                ret[p_len] = '\0';
+                _z_str_n_copy(ret, p_start, p_len);
             }
         }
     }
@@ -116,11 +115,10 @@ char *_z_locator_address_from_str(const char *str) {
         }
 
         if (p_start != p_end) {
-            size_t a_len = _z_ptr_char_diff(p_end, p_start);
-            ret = (char *)z_malloc(a_len + (size_t)1);
+            size_t a_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+            ret = (char *)z_malloc(a_len);
             if (ret != NULL) {
-                (void)strncpy(ret, p_start, a_len);
-                ret[a_len] = '\0';
+                _z_str_n_copy(ret, p_start, a_len);
             }
         }
     }
