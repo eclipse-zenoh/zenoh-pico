@@ -33,6 +33,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |    **MbedOS**   | UDP (unicast and multicast), TCP |      IPv4, IPv6     |           WiFi, Ethernet, Serial           |
 |    **OpenCR**   | UDP (unicast and multicast), TCP |         IPv4        |                    WiFi                    |
 |  **Emscripten** |             Websocket            |      IPv4, IPv6     |               WiFi, Ethernet               |
+
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
 -------------------------------
