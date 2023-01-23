@@ -36,12 +36,11 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        size_t ke_len = strlen(keyexpr._suffix);
+        size_t ke_len = _z_str_size(keyexpr._suffix);
 
-        ret._value = (char *)z_malloc(ke_len + (size_t)1);
+        ret._value = (char *)z_malloc(ke_len);
         if (ret._value != NULL) {
-            (void)strncpy(ret._value, keyexpr._suffix, ke_len);
-            ret._value[ke_len] = '\0';
+            _z_str_n_copy(ret._value, keyexpr._suffix, ke_len);
         }
     }
 
@@ -300,9 +299,10 @@ _Bool z_value_is_initialized(z_value_t *value) {
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
-        ret._value = (_##type)z_malloc(strlen(val->_value));                     \
+        size_t size = _z_str_size(val->_value);                                  \
+        ret._value = (_##type)z_malloc(size);                                    \
         if (ret._value != NULL) {                                                \
-            f_copy(ret._value, val->_value);                                     \
+            f_copy(ret._value, val->_value, size);                               \
         }                                                                        \
         return ret;                                                              \
     }                                                                            \
@@ -317,7 +317,7 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(src);
 }
 
-OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_copy)
+OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_n_copy)
 
 OWNED_FUNCTIONS_PTR(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,
