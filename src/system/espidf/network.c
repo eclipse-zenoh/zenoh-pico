@@ -28,6 +28,10 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
+#if Z_LINK_TLS == 1
+#include "esp_tls.h"
+#endif
+
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
 int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
@@ -540,18 +544,45 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 #endif
 
 #if Z_LINK_TLS == 1
+esp_tls_t *tls;
 /*------------------ TLS sockets ------------------*/
-int8_t _z_create_endpoint_tls(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+//tls.c USES network.c
+/*
+The ESP-TLS component provides a simplified API interface for accessing the
+commonly used TLS functionality. It supports common scenarios like CA certification
+validation, SNI, ALPN negotiation, non-blocking connection among others. All the
+configuration can be specified in the esp_tls_cfg_t data structure. Once done, TLS
+communication can be conducted using the following APIs:
+
+:cpp:func:`esp_tls_init`: for initializing the TLS connection handle.
+:cpp:func:`esp_tls_conn_new_sync`: for opening a new blocking TLS connection.
+:cpp:func:`esp_tls_conn_new_async`: for opening a new non-blocking TLS connection.
+:cpp:func:`esp_tls_conn_read`: for reading from the connection.
+:cpp:func:`esp_tls_conn_write`: for writing into the connection.
+:cpp:func:`esp_tls_conn_destroy`: for freeing up the connection.
+Any application layer protocol like HTTP1, HTTP2 etc can be executed on top of this layer.
+*/
+//int8_t _z_create_endpoint_tls(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port, esp_tls_cfg_t cfg) {
+int8_t _z_tls_init(){ 
     int8_t ret = _Z_RES_OK;
 
-    struct addrinfo hints;
-    (void)memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_TCP;
+{//ESP_TLS uses its own socket underneath
+    // struct addrinfo hints;
+    // (void)memset(&hints, 0, sizeof(hints));
+    // hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
+    // hints.ai_socktype = SOCK_STREAM;
+    // hints.ai_flags = 0;
+    // hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    // if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    //    ret = _Z_ERR_GENERIC;
+    //}
+
+    //what is _iptcp and where is _iptcp? It is in espidf.h
+    //ep->_iptcp;
+}
+    tls = esp_tls_init();
+    if(!tls){
         ret = _Z_ERR_GENERIC;
     }
 
