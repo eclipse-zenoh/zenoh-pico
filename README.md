@@ -27,7 +27,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |    **(RT)OS**   |        **Transport Layer**       |  **Network Layer**  |             **Data Link Layer**            |
 |:---------------:|:--------------------------------:|:-------------------:|:------------------------------------------:|
 |     **Unix**    | UDP (unicast and multicast), TCP | IPv4, IPv6, 6LoWPAN |           WiFi, Ethernet, Thread           |
-|    **Zephyr**   | UDP (unicast and multicast), TCP | IPv4, IPv6, 6LoWPAN |           WiFi, Ethernet, Thread           |
+|    **Zephyr**   | UDP (unicast and multicast), TCP | IPv4, IPv6, 6LoWPAN |       WiFi, Ethernet, Thread, Serial       |
 |   **Arduino**   | UDP (unicast and multicast), TCP |      IPv4, IPv6     | WiFi, Ethernet, Bluetooth (Serial profile) |
 |   **ESP-IDF**   | UDP (unicast and multicast), TCP |      IPv4, IPv6     |           WiFi, Ethernet, Serial           |
 |    **MbedOS**   | UDP (unicast and multicast), TCP |      IPv4, IPv6     |           WiFi, Ethernet, Serial           |
