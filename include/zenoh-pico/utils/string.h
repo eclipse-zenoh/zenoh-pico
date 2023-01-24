@@ -5,10 +5,10 @@
 typedef struct {
     char const *start;
     char const *end;
-} _z_str_t;
+} _z_str_se_t;
 
 typedef struct {
-    _z_str_t s;
+    _z_str_se_t s;
     char const *delimiter;
 } _z_splitstr_t;
 
@@ -31,10 +31,10 @@ char const *_z_rstrstr(const char *haystack_start, const char *haystack_end, con
 char const *_z_strstr(char const *haystack_start, char const *haystack_end, const char *needle_start);
 
 char const *_z_strstr_skipneedle(char const *haystack_start, char const *haystack_end, const char *needle_start);
-char const *_z_bstrstr_skipneedle(_z_str_t haystack, _z_str_t needle);
+char const *_z_bstrstr_skipneedle(_z_str_se_t haystack, _z_str_se_t needle);
 
-_z_str_t _z_splitstr_next(_z_splitstr_t *str);
-_z_str_t _z_splitstr_nextback(_z_splitstr_t *str);
+_z_str_se_t _z_splitstr_next(_z_splitstr_t *str);
+_z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
 
 size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const char *needle_start);
 
