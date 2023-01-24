@@ -35,8 +35,10 @@ typedef struct {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         int _fd;
 #endif
+#if Z_LINK_SERIAL == 1
+        const struct device *_serial;
+#endif
     };
-    _Bool _err;
 } _z_sys_net_socket_t;
 
 typedef struct {
@@ -45,7 +47,6 @@ typedef struct {
         struct addrinfo *_iptcp;
 #endif
     };
-    _Bool _err;
 } _z_sys_net_endpoint_t;
 
 #endif /* ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H */
