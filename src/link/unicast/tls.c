@@ -106,14 +106,15 @@ int8_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
 int8_t _z_f_link_open_tls(_z_link_t *zl) {
     int8_t ret = _Z_RES_OK;
 
+    /*
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&zl->_endpoint._config, tls_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
         tout = strtoul(tout_as_str, NULL, 10);
     }
-
+    
     ret = _z_open_tls(&zl->_socket._tls._sock, zl->_socket._tls._rep, tout);
-
+    */
     return ret;
 }
 
