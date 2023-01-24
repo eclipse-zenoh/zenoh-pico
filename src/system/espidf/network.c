@@ -599,7 +599,7 @@ int8_t _z_open_tls(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
     return ret;
 }
 
-int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
+int8_t _z_listen_tls(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
     int8_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
@@ -610,12 +610,12 @@ int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep)
     return ret;
 }
 
-void _z_close_tcp(_z_sys_net_socket_t *sock) {
+void _z_close_tls(_z_sys_net_socket_t *sock) {
     shutdown(sock->_fd, SHUT_RDWR);
     close(sock->_fd);
 }
 
-size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_tls(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < 0) {
         rb = SIZE_MAX;
@@ -624,12 +624,12 @@ size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     return rb;
 }
 
-size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+size_t _z_read_exact_tls(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 
     do {
-        size_t rb = _z_read_tcp(sock, pos, len - n);
+        size_t rb = _z_read_tls(sock, pos, len - n);
         if (rb == SIZE_MAX) {
             n = rb;
             break;
@@ -642,7 +642,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
     return n;
 }
 
-size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+size_t _z_send_tls(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     return send(sock._fd, ptr, len, 0);
 }
 #endif //END TLS sockets
