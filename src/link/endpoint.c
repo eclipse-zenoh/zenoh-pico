@@ -32,6 +32,9 @@
 #if Z_LINK_SERIAL == 1
 #include "zenoh-pico/link/config/serial.h"
 #endif
+#if Z_LINK_WS == 1
+#include "zenoh-pico/link/config/ws.h"
+#endif
 /*------------------ Locator ------------------*/
 void _z_locator_init(_z_locator_t *locator) {
     locator->_protocol = NULL;
@@ -85,11 +88,10 @@ char *_z_locator_protocol_from_str(const char *str) {
         const char *p_start = &str[0];
         const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
         if ((p_end != NULL) && (p_start != p_end)) {
-            size_t p_len = _z_ptr_char_diff(p_end, p_start);
-            ret = (char *)z_malloc(p_len + (size_t)1);
+            size_t p_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+            ret = (char *)z_malloc(p_len);
             if (ret != NULL) {
-                (void)strncpy(ret, p_start, p_len);
-                ret[p_len] = '\0';
+                _z_str_n_copy(ret, p_start, p_len);
             }
         }
     }
@@ -113,11 +115,10 @@ char *_z_locator_address_from_str(const char *str) {
         }
 
         if (p_start != p_end) {
-            size_t a_len = _z_ptr_char_diff(p_end, p_start);
-            ret = (char *)z_malloc(a_len + (size_t)1);
+            size_t a_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+            ret = (char *)z_malloc(a_len);
             if (ret != NULL) {
-                (void)strncpy(ret, p_start, a_len);
-                ret[a_len] = '\0';
+                _z_str_n_copy(ret, p_start, a_len);
             }
         }
     }
@@ -311,6 +312,11 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
             ret = _z_serial_config_from_str(strint, p_start);
         } else
 #endif
+#if Z_LINK_WS == 1
+            if (_z_str_eq(proto, WS_SCHEMA) == true) {
+            ret = _z_ws_config_from_str(strint, p_start);
+        } else
+#endif
         {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
@@ -343,6 +349,11 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
         len = _z_serial_config_strlen(s);
     } else
 #endif
+#if Z_LINK_WS == 1
+        if (_z_str_eq(proto, WS_SCHEMA) == true) {
+        len = _z_ws_config_strlen(s);
+    } else
+#endif
     {
         __asm__("nop");
     }
@@ -372,6 +383,11 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
 #if Z_LINK_SERIAL == 1
         if (_z_str_eq(proto, SERIAL_SCHEMA) == true) {
         res = _z_serial_config_to_str(s);
+    } else
+#endif
+#if Z_LINK_WS == 1
+        if (_z_str_eq(proto, WS_SCHEMA) == true) {
+        res = _z_ws_config_to_str(s);
     } else
 #endif
     {

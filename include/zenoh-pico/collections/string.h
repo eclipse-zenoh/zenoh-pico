@@ -22,6 +22,8 @@
 #include "zenoh-pico/collections/vec.h"
 
 /*-------- str --------*/
+typedef char *_z_str_t;
+
 char *_z_str_clone(const char *src);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
@@ -29,6 +31,7 @@ _Bool _z_str_eq(const char *left, const char *right);
 
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
+void _z_str_n_copy(char *dst, const char *src, size_t size);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
 // _Z_ARRAY_DEFINE(_z_str, char *)
 // This is here for reference on why
