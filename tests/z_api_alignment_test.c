@@ -50,9 +50,9 @@ volatile unsigned int queries = 0;
 void query_handler(const z_query_t *query, void *arg) {
     queries++;
 
-    char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
+    z_owned_str_t k_str = z_keyexpr_to_string(z_query_keyexpr(query));
 #ifdef ZENOH_PICO
-    if (k_str == NULL) {
+    if (z_check(k_str) == false) {
         k_str = zp_keyexpr_resolve(*(z_session_t *)arg, z_query_keyexpr(query));
     }
 #endif
@@ -62,9 +62,9 @@ void query_handler(const z_query_t *query, void *arg) {
     z_value_t payload_value = z_query_value(query);
     (void)(payload_value);
     z_query_reply_options_t _ret_qreply_opt = z_query_reply_options_default();
-    z_query_reply(query, z_keyexpr(k_str), (const uint8_t *)value, strlen(value), &_ret_qreply_opt);
+    z_query_reply(query, z_keyexpr(z_loan(k_str)), (const uint8_t *)value, strlen(value), &_ret_qreply_opt);
 
-    free(k_str);
+    z_drop(z_move(k_str));
 }
 
 volatile unsigned int replies = 0;
@@ -74,13 +74,13 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
 
-        char *k_str = z_keyexpr_to_string(sample.keyexpr);
+        z_owned_str_t k_str = z_keyexpr_to_string(sample.keyexpr);
 #ifdef ZENOH_PICO
-        if (k_str == NULL) {
+        if (z_check(k_str) == false) {
             k_str = zp_keyexpr_resolve(*(z_session_t *)arg, sample.keyexpr);
         }
 #endif
-        free(k_str);
+        z_drop(z_move(k_str));
     } else {
         z_value_t _ret_zvalue = z_reply_err(reply);
         (void)(_ret_zvalue);
@@ -93,13 +93,13 @@ volatile unsigned int datas = 0;
 void data_handler(const z_sample_t *sample, void *arg) {
     datas++;
 
-    char *k_str = z_keyexpr_to_string(sample->keyexpr);
+    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
 #ifdef ZENOH_PICO
-    if (k_str == NULL) {
+    if (z_check(k_str) == false) {
         k_str = zp_keyexpr_resolve(*(z_session_t *)arg, sample->keyexpr);
     }
 #endif
-    free(k_str);
+    z_drop(z_move(k_str));
 }
 
 int main(int argc, char **argv) {

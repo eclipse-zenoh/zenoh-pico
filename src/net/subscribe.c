@@ -13,7 +13,7 @@
 
 #include "zenoh-pico/net/subscribe.h"
 
-_z_subinfo_t _z_subinfo_push_default() {
+_z_subinfo_t _z_subinfo_push_default(void) {
     _z_subinfo_t si;
     si.reliability = Z_RELIABILITY_RELIABLE;
     si.mode = Z_SUBMODE_PUSH;
@@ -21,7 +21,7 @@ _z_subinfo_t _z_subinfo_push_default() {
     return si;
 }
 
-_z_subinfo_t _z_subinfo_pull_default() {
+_z_subinfo_t _z_subinfo_pull_default(void) {
     _z_subinfo_t si;
     si.reliability = Z_RELIABILITY_RELIABLE;
     si.mode = Z_SUBMODE_PULL;

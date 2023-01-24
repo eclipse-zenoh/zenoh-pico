@@ -103,12 +103,22 @@ void _z_str_free(char **src) {
     }
 }
 
+void _z_str_copy(char *dst, const char *src) {
+    size_t size = _z_str_size(src);
+    strncpy(dst, src, size);
+    dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
+}
+
+void _z_str_n_copy(char *dst, const char *src, size_t size) {
+    strncpy(dst, src, size);
+    dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
+}
+
 char *_z_str_clone(const char *src) {
-    size_t str_len = _z_str_size(src);
-    char *dst = (char *)z_malloc(str_len);
+    size_t len = _z_str_size(src);
+    char *dst = (char *)z_malloc(len);
     if (dst != NULL) {
-        (void)strncpy(dst, src, str_len - (size_t)1);
-        dst[str_len - (size_t)1] = '\0';
+        _z_str_n_copy(dst, src, len);
     }
 
     return dst;

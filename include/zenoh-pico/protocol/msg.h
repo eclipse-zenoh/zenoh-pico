@@ -429,18 +429,18 @@ void _z_timestamp_clear(_z_timestamp_t *ts);
 // +-+-+-+-+-+-+-+-+
 // ~    options    ~
 // +---------------+
-// ~      kind     ~ if options & (1 << 0)
+// ~      kind     ~ if options & (1 << 1)
 // +---------------+
-// ~   encoding    ~ if options & (1 << 1)
+// ~   encoding    ~ if options & (1 << 2)
 // +---------------+
-// ~   timestamp   ~ if options & (1 << 2)
+// ~   timestamp   ~ if options & (1 << 3)
 // +---------------+
 // ~   source_id   ~ if options & (1 << 7)
 // +---------------+
 // ~   source_sn   ~ if options & (1 << 8)
 // +---------------+
 //
-// - if options & (1 << 5) then the payload is sliced
+// - if options & (1 << 0) then the payload is sliced
 typedef struct {
     _z_bytes_t _source_id;
     _z_timestamp_t _tstamp;

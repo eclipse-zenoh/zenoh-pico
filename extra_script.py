@@ -22,10 +22,11 @@ if FRAMEWORK == 'zephyr':
     SRC_FILTER = ["+<*>",
                   "-<tests/>",
                   "-<example/>",
+                  "-<system/arduino/>",
+                  "-<system/emscripten/>",
                   "-<system/espidf/>",
                   "-<system/mbed/>",
-                  "-<system/unix/>",
-                  "-<system/arduino/>"]
+                  "-<system/unix/>"]
     CPPDEFINES = ["ZENOH_ZEPHYR"]
 
 elif FRAMEWORK == 'arduino':
@@ -34,9 +35,10 @@ elif FRAMEWORK == 'arduino':
         SRC_FILTER = ["+<*>",
                       "-<tests/>",
                       "-<example/>",
+                      "-<system/arduino/opencr>",
+                      "-<system/emscripten/>",
                       "-<system/espidf>",
                       "-<system/mbed/>",
-                      "-<system/arduino/opencr>",
                       "-<system/unix/>",
                       "-<system/zephyr/>"]
         CPPDEFINES = ["ZENOH_ARDUINO_ESP32", "ZENOH_C_STANDARD=99"]
@@ -46,9 +48,10 @@ elif FRAMEWORK == 'arduino':
             SRC_FILTER = ["+<*>",
                           "-<tests/>",
                           "-<example/>",
+                          "-<system/arduino/esp32>",
+                          "-<system/emscripten/>",
                           "-<system/espidf>",
                           "-<system/mbed/>",
-                          "-<system/arduino/esp32>",
                           "-<system/unix/>",
                           "-<system/zephyr/>"]
             CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_MULTI_THREAD=0"]
@@ -57,9 +60,10 @@ elif FRAMEWORK == 'espidf':
     SRC_FILTER = ["+<*>",
                   "-<tests/>",
                   "-<example/>",
+                  "-<system/arduino/>",
+                  "-<system/emscripten/>",
                   "-<system/mbed/>",
                   "-<system/unix/>",
-                  "-<system/arduino/>",
                   "-<system/zephyr/>"]
     CPPDEFINES = ["ZENOH_ESPIDF"]
 
@@ -67,9 +71,10 @@ elif FRAMEWORK == 'mbed':
     SRC_FILTER = ["+<*>",
                   "-<tests/>",
                   "-<example/>",
+                  "-<system/arduino/>",
+                  "-<system/emscripten/>",
                   "-<system/espidf/>",
                   "-<system/unix/>",
-                  "-<system/arduino/>",
                   "-<system/zephyr/>"]
     CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
 
