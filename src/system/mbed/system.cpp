@@ -124,7 +124,7 @@ int z_sleep_s(unsigned int time) {
 }
 
 /*------------------ Instant ------------------*/
-z_clock_t z_clock_now() {
+z_clock_t z_clock_now(void) {
     // Not supported by default
     return NULL;
 }
@@ -145,7 +145,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
 }
 
 /*------------------ Time ------------------*/
-z_time_t z_time_now() {
+z_time_t z_time_now(void) {
     struct timeval now;
     gettimeofday(&now, NULL);
     return now;

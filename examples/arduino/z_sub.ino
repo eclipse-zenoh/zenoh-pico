@@ -37,16 +37,16 @@ extern "C" {
 #define KEYEXPR "demo/example/**"
 
 void data_handler(const z_sample_t *sample, void *arg) {
-    char *keystr = z_keyexpr_to_string(sample->keyexpr);
+    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
     std::string val((const char *)sample->payload.start, sample->payload.len);
 
     Serial.print(" >> [Subscription listener] Received (");
-    Serial.print(keystr);
+    Serial.print(z_str_loan(&keystr));
     Serial.print(", ");
     Serial.print(val.c_str());
     Serial.println(")");
 
-    free(keystr);
+    z_str_drop(z_str_move(&keystr));
 }
 
 void setup() {

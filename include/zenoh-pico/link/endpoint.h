@@ -34,6 +34,9 @@
 #if Z_LINK_SERIAL == 1
 #define SERIAL_SCHEMA "serial"
 #endif
+#if Z_LINK_WS == 1
+#define WS_SCHEMA "ws"
+#endif
 
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'

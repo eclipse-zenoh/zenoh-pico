@@ -39,5 +39,9 @@ int8_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t ep);
 int8_t _z_endpoint_serial_valid(_z_endpoint_t *ep);
 int8_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
 #endif
+#if Z_LINK_WS == 1
+int8_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
+int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
+#endif
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

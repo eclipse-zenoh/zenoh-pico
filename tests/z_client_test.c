@@ -45,8 +45,8 @@ void query_handler(const z_query_t *query, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
-    char *k_str = z_keyexpr_to_string(z_query_keyexpr(query));
-    assert(_z_str_eq(k_str, res) == true);
+    z_owned_str_t k_str = z_keyexpr_to_string(z_query_keyexpr(query));
+    assert(_z_str_eq(z_loan(k_str), res) == true);
 
     z_bytes_t pred = z_query_parameters(query);
     assert(pred.len == strlen(""));
@@ -55,7 +55,7 @@ void query_handler(const z_query_t *query, void *arg) {
     z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res), NULL);
 
     queries++;
-    free(k_str);
+    z_drop(z_move(k_str));
     free(res);
 }
 
@@ -67,13 +67,13 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
         z_sample_t sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
-        char *k_str = z_keyexpr_to_string(sample.keyexpr);
+        z_owned_str_t k_str = z_keyexpr_to_string(sample.keyexpr);
         assert(sample.payload.len == strlen(res));
         assert(strncmp(res, (const char *)sample.payload.start, strlen(res)) == 0);
-        assert(_z_str_eq(k_str, res) == true);
+        assert(_z_str_eq(z_loan(k_str), res) == true);
 
         replies++;
-        free(k_str);
+        z_drop(z_move(k_str));
     } else {
         printf(">> Received an error\n");
     }
@@ -86,12 +86,12 @@ void data_handler(const z_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    char *k_str = z_keyexpr_to_string(sample->keyexpr);
+    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(_z_str_eq(k_str, res) == true);
+    assert(_z_str_eq(z_loan(k_str), res) == true);
 
     datas++;
-    free(k_str);
+    z_drop(z_move(k_str));
     free(res);
 }
 

@@ -98,9 +98,9 @@ To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check
 
   A zenoh-allocated :c:type:`z_bytes_t`.
 
-.. c:type:: z_owned_string_t
+.. c:type:: z_owned_str_t
 
-  A zenoh-allocated :c:type:`z_string_t`.
+  A zenoh-allocated :c:type:`char *`.
 
 .. c:type:: z_owned_keyexpr_t
 

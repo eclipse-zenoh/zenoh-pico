@@ -31,6 +31,8 @@
 #include "zenoh-pico/system/platform/arduino/esp32.h"
 #elif defined(ZENOH_ARDUINO_OPENCR)
 #include "zenoh-pico/system/platform/arduino/opencr.h"
+#elif defined(ZENOH_EMSCRIPTEN)
+#include "zenoh-pico/system/platform/emscripten.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"

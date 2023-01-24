@@ -15,6 +15,6 @@
 #include "zenoh-pico/net/logger.h"
 
 /*------------------ Init/Config ------------------*/
-void _z_init_logger() {
+void _z_init_logger(void) {
     // @TODO
 }
