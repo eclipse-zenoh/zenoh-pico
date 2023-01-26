@@ -11,7 +11,7 @@
 # Contributors:
 #   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-name: build
+name: build-static
 
 on:
   push:
@@ -33,9 +33,11 @@ jobs:
       run: make all
       env:
         BUILD_TYPE: Debug
+        BUILD_SHARED_LIBS: OFF
         BUILD_TESTING: ON
-        BUILD_MULTICAST: OFF
-        BUILD_INTEGRATION: OFF
+        BUILD_MULTICAST: ON
+        BUILD_INTEGRATION: ON
+        BUILD_TOOLS: ON
 
   crossbuilds:
     name: Build on ubuntu-latest
@@ -46,3 +48,4 @@ jobs:
       run: make crossbuilds
       env:
         BUILD_TYPE: Debug
+        BUILD_SHARED_LIBS: OFF
