@@ -105,19 +105,14 @@ int8_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
 
 int8_t _z_f_link_open_tls(_z_link_t *zl) {
     int8_t ret = _Z_RES_OK;
+    ret = _z_tls_init();
 
-    /*
-    uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
-    char *tout_as_str = _z_str_intmap_get(&zl->_endpoint._config, tls_CONFIG_TOUT_KEY);
-    if (tout_as_str != NULL) {
-        tout = strtoul(tout_as_str, NULL, 10);
-    }
-    
-    ret = _z_open_tls(&zl->_socket._tls._sock, zl->_socket._tls._rep, tout);
-    */
+    //TODO: connection
+
     return ret;
 }
 
+//don't know if this function makes sense for TLS
 int8_t _z_f_link_listen_tls(_z_link_t *zl) {
     int8_t ret = _Z_RES_OK;
 
@@ -166,15 +161,15 @@ int8_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint) {
     z_free(s_addr);
     z_free(s_port);
 
-    zl->_open_f = _z_f_link_open_tls;
-    zl->_listen_f = _z_f_link_listen_tls;
-    zl->_close_f = _z_f_link_close_tls;
+    zl->_open_f = _z_f_link_open_tls; 
+    // zl->_listen_f = _z_f_link_listen_tls;
+    // zl->_close_f = _z_f_link_close_tls;
     zl->_free_f = _z_f_link_free_tls;
 
     zl->_write_f = _z_f_link_write_tls;
-    zl->_write_all_f = _z_f_link_write_all_tls;
+    // zl->_write_all_f = _z_f_link_write_all_tls;
     zl->_read_f = _z_f_link_read_tls;
-    zl->_read_exact_f = _z_f_link_read_exact_tls;
+    // zl->_read_exact_f = _z_f_link_read_exact_tls;
 
     return ret;
 }
