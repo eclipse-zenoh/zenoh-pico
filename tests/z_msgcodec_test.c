@@ -2464,7 +2464,7 @@ void batch(void) {
 }
 
 /*------------------ Fragmentation ------------------*/
-_z_transport_message_t _z_frame_header(_Bool is_reliable, _Bool is_fragment, _Bool is_final, _z_zint_t sn) {
+_z_transport_message_t z_frame_header(_Bool is_reliable, _Bool is_fragment, _Bool is_final, _z_zint_t sn) {
     // Create the frame session message that carries the zenoh message
     _z_transport_message_t t_msg;
     t_msg._attachment = NULL;
@@ -2493,21 +2493,21 @@ _z_transport_message_t _z_frame_header(_Bool is_reliable, _Bool is_fragment, _Bo
     return t_msg;
 }
 
-void _z_wbuf_prepare(_z_wbuf_t *wbf) {
+void z_wbuf_prepare(_z_wbuf_t *wbf) {
     // Clear the buffer for serialization
     _z_wbuf_reset(wbf);
 
     for (size_t i = 0; i < _z_wbuf_space_left(wbf); i++) _z_wbuf_put(wbf, 0xff, i);
 }
 
-int8_t _z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, _Bool is_reliable, size_t sn) {
+int8_t z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, _Bool is_reliable, size_t sn) {
     // Assume first that this is not the final fragment
     _Bool is_final = false;
     do {
         // Mark the buffer for the writing operation
         size_t w_pos = _z_wbuf_get_wpos(dst);
         // Get the frame header
-        _z_transport_message_t f_hdr = _z_frame_header(is_reliable, true, is_final, sn);
+        _z_transport_message_t f_hdr = z_frame_header(is_reliable, true, is_final, sn);
         // Encode the frame header
         int8_t res = _z_transport_message_encode(dst, &f_hdr);
         if (res == _Z_RES_OK) {
@@ -2565,13 +2565,13 @@ void fragmentation(void) {
     printf(" - Start fragmenting\n");
     while (_z_wbuf_len(&fbf) > 0) {
         // Clear the buffer for serialization
-        _z_wbuf_prepare(&wbf);
+        z_wbuf_prepare(&wbf);
 
         // Get the fragment sequence number
         sn = (sn + 1) % sn_resolution;
 
         size_t written = _z_wbuf_len(&fbf);
-        int8_t res = _z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
+        int8_t res = z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
         assert(res == _Z_RES_OK);
         (void)(res);
         written = written - _z_wbuf_len(&fbf);
