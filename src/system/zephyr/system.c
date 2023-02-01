@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <zephyr.h>
+#include <kernel.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
