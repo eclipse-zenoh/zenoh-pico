@@ -103,7 +103,13 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return usleep(time * 1000U); }
+int z_sleep_ms(unsigned int time) {
+    struct timespec ts;
+    ts.tv_sec = time / 1000ll;
+    ts.tv_nsec = (time - (ts.tv_sec * 1000)) * 1000 * 1000;
+
+    return nanosleep(&ts, NULL);
+}
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 
