@@ -107,7 +107,13 @@ int z_sleep_ms(unsigned int time) {
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000U); }
+int z_sleep_s(unsigned int time)  {
+    for (unsigned int i = 0; i < time; i++) {
+        z_sleep_ms(1000);
+    }
+
+    return 0;
+}
 
 /*------------------ Instant ------------------*/
 void __z_clock_gettime(z_clock_t *ts) {

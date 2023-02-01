@@ -110,7 +110,8 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) {
-    return -1;  // Not supported
+    ThisThread::sleep_for(chrono::milliseconds(((time / 1000) + (time % 1000 == 0 ? 0 : 1))));
+    return 0;
 }
 
 int z_sleep_ms(unsigned int time) {
