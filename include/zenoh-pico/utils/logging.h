@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 
-inline void __z_print_timestamp(void) {
+static inline void __z_print_timestamp(void) {
     char ret[64];
     printf("[%s ", z_time_now_as_str(ret, sizeof(ret)));
 }
