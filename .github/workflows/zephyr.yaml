@@ -51,7 +51,7 @@ jobs:
 
         mkdir -p $ZEPHYR_BASE
         cd $ZEPHYR_BASE
-        pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="build_flags=-DZ_LINK_SERIAL=1"
+        pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="build_flags=-DZ_LINK_SERIAL=1 -DZENOH_DEBUG=3"
 
         cd $ZEPHYR_BASE/lib
         ln -s $ZENOH_PICO_BASE
