@@ -14,6 +14,7 @@
 
 #include <emscripten/emscripten.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
