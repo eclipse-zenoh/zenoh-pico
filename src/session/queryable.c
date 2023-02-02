@@ -115,7 +115,7 @@ _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const 
 }
 
 _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
-    _Z_DEBUG(">>> Allocating queryable for (%lu:%s)\n", q->_key._id, q->_key._suffix);
+    _Z_DEBUG(">>> Allocating queryable for (%zu:%s)\n", q->_key._id, q->_key._suffix);
     _z_questionable_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1

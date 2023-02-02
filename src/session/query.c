@@ -108,7 +108,7 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
 int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG(">>> Allocating query for (%lu:%s,%s)\n", pen_qry->_key._id, pen_qry->_key._suffix, pen_qry->_parameters);
+    _Z_DEBUG(">>> Allocating query for (%zu:%s,%s)\n", pen_qry->_key._id, pen_qry->_key._suffix, pen_qry->_parameters);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);

@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)._val->_id, (z_zint_t)0,
+        printf("Declared subscription on session 2: %zu %zu %s\n", z_subscriber_loan(sub)._val->_id, (z_zint_t)0,
                s1_res);
         subs2 = _z_list_push(subs2, sub);
     }
