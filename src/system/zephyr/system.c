@@ -109,6 +109,8 @@ int z_sleep_ms(unsigned int time) {
     ts.tv_nsec = (time - (ts.tv_sec * 1000)) * 1000 * 1000;
 
     return nanosleep(&ts, NULL);
+
+    return 0;
 }
 
 int z_sleep_s(unsigned int time) { return sleep(time); }

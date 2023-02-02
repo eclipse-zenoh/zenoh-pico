@@ -89,7 +89,13 @@ int z_sleep_ms(unsigned int time) {
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
+int z_sleep_s(unsigned int time)  {
+    for (unsigned int i = 0; i < time; i++) {
+        z_sleep_ms(1000);
+    }
+
+    return 0;
+}
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) { return z_time_now(); }
