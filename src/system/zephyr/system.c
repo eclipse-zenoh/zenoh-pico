@@ -145,6 +145,14 @@ z_time_t z_time_now(void) {
     return now;
 }
 
+char *z_time_now_as_str(char *buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
+}
+
 unsigned long z_time_elapsed_us(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);

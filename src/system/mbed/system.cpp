@@ -146,13 +146,21 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
+char *z_time_now_as_str(char *buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
+}
+
 unsigned long z_time_elapsed_us(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
@@ -160,7 +168,7 @@ unsigned long z_time_elapsed_us(z_time_t *time) {
 }
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
@@ -168,7 +176,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
 }
 
 unsigned long z_time_elapsed_s(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;
