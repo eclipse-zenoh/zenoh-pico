@@ -57,7 +57,7 @@ z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
     return ret;
 }
 
-_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
+_Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr) {
     _Bool ret = false;
 
     if ((keyexpr->_id != Z_RESOURCE_ID_NONE) || (keyexpr->_suffix != NULL)) {
