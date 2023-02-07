@@ -38,6 +38,10 @@
 #error "Unknown platform"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void);
 uint16_t z_random_u16(void);
@@ -89,5 +93,9 @@ z_time_t z_time_now(void);
 unsigned long z_time_elapsed_us(z_time_t *time);
 unsigned long z_time_elapsed_ms(z_time_t *time);
 unsigned long z_time_elapsed_s(z_time_t *time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_COMMON_H */
