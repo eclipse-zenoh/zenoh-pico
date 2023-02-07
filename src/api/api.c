@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/logger.h"
@@ -31,6 +32,10 @@
 
 /********* Data Types Handlers *********/
 z_string_t z_string_make(const char *value) { return _z_string_make(value); }
+
+z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
+size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
+_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
 
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
