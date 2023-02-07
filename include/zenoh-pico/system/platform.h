@@ -86,7 +86,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *time);
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void);
-char *z_time_now_as_str(char *buf, unsigned long buflen);
+const char *z_time_now_as_str(char *const buf, unsigned long buflen);
 unsigned long z_time_elapsed_us(z_time_t *time);
 unsigned long z_time_elapsed_ms(z_time_t *time);
 unsigned long z_time_elapsed_s(z_time_t *time);

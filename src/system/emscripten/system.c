@@ -104,7 +104,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(i
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
 
-char *z_time_now_as_str(char *buf, unsigned long buflen) {
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
     snprintf(buf, buflen, "%f", z_time_now());
     return buf;
 }

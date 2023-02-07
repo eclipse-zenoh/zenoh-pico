@@ -151,7 +151,7 @@ z_time_t z_time_now(void) {
     return now;
 }
 
-char *z_time_now_as_str(char *buf, unsigned long buflen) {
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
     z_time_t tv = z_time_now();
     struct tm ts;
     ts = *localtime(&tv.tv_sec);
