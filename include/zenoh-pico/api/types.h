@@ -20,6 +20,10 @@
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Owned types */
 #define _OWNED_TYPE_PTR(type, name) \
     typedef struct {                \
@@ -521,5 +525,9 @@ typedef struct {
     _z_dropper_handler_t drop;
     void *context;
 } z_owned_closure_zid_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_TYPES_H */

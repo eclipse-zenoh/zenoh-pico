@@ -23,7 +23,23 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /********* Data Types Handlers *********/
+/**
+ * Constructs a :c:type:`z_string_t` departing from a ``const char *``.
+ * It is a loaned key expression that aliases ``value``.
+ *
+ * Parameters:
+ *   value: Pointer to null terminated string.
+ *
+ * Returns:
+ *   The :c:type:`z_string_t` corresponding to the given string.
+ */
+z_string_t z_string_make(const char *value);
+
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
  * It is a loaned key expression that aliases ``name``.
@@ -1334,5 +1350,9 @@ zp_send_join_options_t zp_send_join_options_default(void);
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
  */
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

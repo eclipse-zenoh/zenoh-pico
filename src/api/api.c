@@ -30,6 +30,8 @@
 #include "zenoh-pico/session/utils.h"
 
 /********* Data Types Handlers *********/
+z_string_t z_string_make(const char *value) { return _z_string_make(value); }
+
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
@@ -160,9 +162,9 @@ int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value) {
 z_owned_scouting_config_t z_scouting_config_default(void) {
     _z_scouting_config_t *sc = _z_config_empty();
 
-    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
 
     return (z_owned_scouting_config_t){._value = sc};
 }
@@ -173,23 +175,23 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t c) {
     char *opt;
     opt = _z_config_get(c._val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(opt));
     }
 
     opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(opt));
     }
 
     opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_WHAT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(opt));
     }
 
     return (z_owned_scouting_config_t){._value = sc};

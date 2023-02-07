@@ -20,17 +20,9 @@
 #define ZENOH_PICO_MINOR 7
 #define ZENOH_PICO_PATCH 0
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* ZENOH_PICO_H */

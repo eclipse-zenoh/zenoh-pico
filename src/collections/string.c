@@ -18,7 +18,7 @@
 #include <string.h>
 
 /*-------- string --------*/
-_z_string_t z_string_make(const char *value) {
+_z_string_t _z_string_make(const char *value) {
     _z_string_t s;
     s.val = _z_str_clone(value);
     s.len = strlen(value);
