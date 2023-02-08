@@ -19,19 +19,26 @@
 #include <stdint.h>
 
 #if ZENOH_C_STANDARD != 99
+#ifndef __cplusplus
 #include <stdatomic.h>
+#define z_atomic(X) _Atomic X
+#else
+#include <atomic>
+#define z_atomic(X) std::atomic<X>
+using namespace std;
+#endif
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_POINTER_DEFINE(name, type)                                                           \
     typedef struct {                                                                            \
         type##_t *ptr;                                                                          \
-        atomic_uint *_cnt;                                                                      \
+        z_atomic(unsigned int) * _cnt;                                                          \
     } name##_sptr_t;                                                                            \
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
         if (p.ptr != NULL) {                                                                    \
-            p._cnt = (atomic_uint *)z_malloc(sizeof(atomic_uint));                              \
+            p._cnt = (z_atomic(unsigned int) *)z_malloc(sizeof(z_atomic(unsigned int) *));      \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                         \

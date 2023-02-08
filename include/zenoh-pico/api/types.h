@@ -20,6 +20,10 @@
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Owned types */
 #define _OWNED_TYPE_PTR(type, name) \
     typedef struct {                \
@@ -413,14 +417,8 @@ typedef _z_reply_data_t z_reply_data_t;
 typedef _z_reply_t z_reply_t;
 _OWNED_TYPE_PTR(z_reply_t, reply)
 
-#define _TYPEDEF_ARRAY(type, alias, elem, name)                                                                \
-    typedef type alias;                                                                                        \
-    static inline elem *z_##name##_array_get(const alias *a, size_t k) { return _z_##name##_array_get(a, k); } \
-    static inline size_t z_##name##_array_len(const alias *a) { return _z_##name##_array_len(a); }             \
-    static inline _Bool z_##name##_array_is_empty(const alias *a) { return _z_##name##_array_is_empty(a); }
-
 /**
- * Represents an array of ``char *``.
+ * Represents an array of ``z_str_t``.
  *
  * Operations over :c:type:`z_str_array_t` must be done using the provided functions:
  *
@@ -428,7 +426,10 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``size_t z_str_array_len(z_str_array_t *a);``
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
-_TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
+typedef _z_str_array_t z_str_array_t;
+z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
+size_t z_str_array_len(const z_str_array_t *a);
+_Bool z_str_array_is_empty(const z_str_array_t *a);
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
@@ -521,5 +522,9 @@ typedef struct {
     _z_dropper_handler_t drop;
     void *context;
 } z_owned_closure_zid_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_TYPES_H */

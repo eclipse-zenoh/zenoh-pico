@@ -14,10 +14,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 // WiFi-specific parameters
 #define SSID "SSID"
