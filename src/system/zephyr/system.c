@@ -109,11 +109,37 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) { return usleep(time); }
+int z_sleep_us(unsigned int time) {
+    int32_t rem = time;
+    while (rem > 0) {
+        rem = k_usleep(rem);  // This function is unlikely to work as expected without kernel tuning.
+                              // In particular, because the lower bound on the duration of a sleep is the
+                              // duration of a tick, CONFIG_SYS_CLOCK_TICKS_PER_SEC must be adjusted to
+                              // achieve the resolution desired. The implications of doing this must be
+                              // understood before attempting to use k_usleep(). Use with caution.
+                              // From: https://docs.zephyrproject.org/apidoc/latest/group__thread__apis.html
+    }
 
-int z_sleep_ms(unsigned int time) { return usleep(time * 1000U); }
+    return 0;
+}
 
-int z_sleep_s(unsigned int time) { return sleep(time); }
+int z_sleep_ms(unsigned int time) {
+    int32_t rem = time;
+    while (rem > 0) {
+        rem = k_msleep(rem);
+    }
+
+    return 0;
+}
+
+int z_sleep_s(unsigned int time) {
+    int32_t rem = time;
+    while (rem > 0) {
+        rem = k_sleep(K_SECONDS(rem));
+    }
+
+    return 0;
+}
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {

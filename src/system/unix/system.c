@@ -138,7 +138,18 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 /*------------------ Sleep ------------------*/
 int z_sleep_us(unsigned int time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return z_sleep_us(time * 1000U); }
+int z_sleep_ms(unsigned int time) {
+    z_time_t start = z_time_now();
+
+    // Most sleep APIs promise to sleep at least whatever you asked them to.
+    // This may compound, so this approach may make sleeps longer than expected.
+    // This extra check tries to minimize the amount of extra time it might sleep.
+    while (z_time_elapsed_ms(&start) < time) {
+        z_sleep_us(1000);
+    }
+
+    return 0;
+}
 
 int z_sleep_s(unsigned int time) { return sleep(time); }
 
