@@ -14,6 +14,7 @@
 
 #include <emscripten/emscripten.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
@@ -102,6 +103,11 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(i
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    snprintf(buf, buflen, "%f", z_time_now());
+    return buf;
+}
 
 unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
 

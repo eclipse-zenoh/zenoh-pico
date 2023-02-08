@@ -30,7 +30,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Compile debug
-      run: make all
+      run: ZENOH_DEBUG=3 make all
       env:
         BUILD_TYPE: Debug
         BUILD_SHARED_LIBS: ON
@@ -45,7 +45,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Crosscompile debug
-      run: make crossbuilds
+      run: ZENOH_DEBUG=3 make crossbuilds
       env:
         BUILD_TYPE: Debug
         BUILD_SHARED_LIBS: ON

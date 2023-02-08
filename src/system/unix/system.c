@@ -13,6 +13,7 @@
 //
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #if defined(ZENOH_LINUX)
@@ -177,6 +178,14 @@ z_time_t z_time_now(void) {
     z_time_t now;
     gettimeofday(&now, NULL);
     return now;
+}
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
 }
 
 unsigned long z_time_elapsed_us(z_time_t *time) {
