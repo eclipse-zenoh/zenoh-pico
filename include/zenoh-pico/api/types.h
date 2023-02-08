@@ -392,7 +392,7 @@ typedef _z_sample_t z_sample_t;
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
  *
  * Members:
- *   uint8_t whatami: The kind of zenoh entity.
+ *   z_whatami_t whatami: The kind of zenoh entity.
  *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */

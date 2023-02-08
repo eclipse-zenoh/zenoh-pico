@@ -73,17 +73,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             _Z_INFO("Received _Z_HELLO message\n");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
-                                    _z_bytes_copy(&hello->zid, &t_msg._body._hello._zid);
-                                } else {
-                                    _z_bytes_reset(&hello->zid);
-                                }
-
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
-                                    hello->whatami = t_msg._body._hello._whatami;
-                                } else {
-                                    hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
-                                }
+                                hello->version = t_msg._body._hello._version;
+                                hello->whatami = t_msg._body._hello._whatami;
+                                _z_bytes_copy(&hello->zid, &t_msg._body._hello._zid);
 
                                 if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
                                     hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
@@ -130,16 +122,15 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_whatami_t what, const char *locator, const uint32_t timeout,
-                                const _Bool exit_on_first) {
+_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator,
+                                const uint32_t timeout, const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
     _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
 
     // Create and encode the scout message
-    _Bool request_zid = true;
-    _z_transport_message_t scout = _z_t_msg_make_scout(what, request_zid);
+    _z_transport_message_t scout = _z_t_msg_make_scout(what, zid);
 
     _z_transport_message_encode(&wbf, &scout);
 

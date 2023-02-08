@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
@@ -446,18 +447,16 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid) {
+_z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid) {
     _z_transport_message_t msg;
-
-    msg._body._scout._what = what;
-
     msg._header = _Z_MID_SCOUT;
-    if (request_zid == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    }
 
-    if (what != Z_WHATAMI_ROUTER) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
+    msg._body._scout._version = Z_PROTO_VERSION;
+    msg._body._scout._what = what;
+    msg._body._scout._zid = zid;
+
+    if (_z_bytes_is_empty(&zid) == false) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
     }
 
     msg._attachment = NULL;
@@ -465,12 +464,13 @@ _z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid) 
     return msg;
 }
 
-void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg) { clone->_what = msg->_what; }
-
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg) {
-    // NOTE: scout does not involve any heap allocation
-    (void)(msg);
+void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg) {
+    clone->_what = msg->_what;
+    clone->_version = msg->_version;
+    _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
+
+void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ Hello Message ------------------*/
 _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {

@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/logger.h"
@@ -397,11 +398,12 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         wrapped_ctx->ctx = ctx;
 
         char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
-        z_whatami_t what = strtol(what_str, NULL, 10);
+        z_what_t what = strtol(what_str, NULL, 10);
         char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         uint32_t tout = strtoul(tout_str, NULL, 10);
-        _z_scout(what, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+        _z_bytes_t zid = _z_bytes_empty();  // TODO[protocol]: Check if a ZID is set in the config files
+        _z_scout(what, zid, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
         z_free(wrapped_ctx);
         z_scouting_config_drop(config);

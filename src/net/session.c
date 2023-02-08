@@ -58,7 +58,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
             }
-            z_whatami_t what = strtol(opt_as_str, NULL, 10);
+            z_what_t what = strtol(opt_as_str, NULL, 10);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
             if (opt_as_str == NULL) {
@@ -72,8 +72,10 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
+            _z_bytes_t zid = _z_bytes_empty();  // TODO[protocol]: Check if a ZID is set in the config files
+
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
+            _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             _z_hello_list_t *xs = hellos;
             while (xs != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(xs);

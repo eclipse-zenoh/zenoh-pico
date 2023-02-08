@@ -176,10 +176,9 @@ int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
 }
 
 /*------------------ uint8_array ------------------*/
-int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
+int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_zint_encode(wbf, bs->len))
     if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
         ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
@@ -189,10 +188,18 @@ int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     return ret;
 }
 
-int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_zint_decode(&bs->len, zbf);
+    _Z_EC(_z_zint_encode(wbf, bs->len))
+    _Z_EC(_z_bytes_val_encode(wbf, bs))
+
+    return ret;
+}
+
+int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+
     if (ret == _Z_RES_OK) {
         if (_z_zbuf_len(zbf) >= bs->len) {                           // Check if we have enought bytes to read
             *bs = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
@@ -210,6 +217,17 @@ int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
 
     return ret;
 }
+
+int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_zint_decode(&bs->len, zbf);
+    ret |= _z_bytes_val_decode_na(bs, zbf);
+
+    return ret;
+}
+
+int8_t _z_bytes_val_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_val_decode_na(bs, zbf); }
 
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_decode_na(bs, zbf); }
 

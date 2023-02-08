@@ -43,6 +43,10 @@ int8_t _z_uint64_decode(uint64_t *u8, _z_zbuf_t *buf);
 int8_t _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
 int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
+int8_t _z_bytes_val_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
+int8_t _z_bytes_val_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
+int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf);
+
 int8_t _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
 int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *buf);

@@ -66,6 +66,18 @@
 /*=============================*/
 /*        Message flags        */
 /*=============================*/
+// Scout message flags:
+//      I ZenohID          if I==1 then the ZenohID is present
+//      Z Zenoh properties if Z==1 then Zenoh properties are present
+#define _Z_FLAG_SCOUT_I 0x08  // 1 << 3
+#define _Z_FLAG_SCOUT_Z 0x80  // 1 << 7
+
+// Hello message flags:
+//      L Locators         if L==1 then Locators are present
+//      Z Zenoh properties if Z==1 then Zenoh properties are present
+#define _Z_FLAG_HELLO_L 0x20  // 1 << 5
+#define _Z_FLAG_HELLO_Z 0x80  // 1 << 7
+
 /* Transport message flags */
 #define _Z_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
 #define _Z_FLAG_T_C 0x40  // 1 << 6 | Count            if C==1 then number of unacknowledged messages is present
@@ -594,15 +606,29 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|W|I|  SCOUT  |
-// +-+-+-+-+-------+
-// ~      what     ~ if W==1 -- Otherwise implicitly scouting for Routers
+// |Z|X|X|  SCOUT  |
+// +-+-+-+---------+
+// |    version    |
+// +---------------+
+// |zid_len|I| what| (#)(*)
+// +-+-+-+-+-+-+-+-+
+// ~      [u8]     ~ if Flag(I)==1 -- ZenohID
 // +---------------+
 //
-// - if I==1 then the sender is asking for hello replies that contain a Zenoh ID.
+// (#) ZID length. If Flag(I)==1 it indicates how many bytes are used for the ZenohID bytes.
+//     A ZenohID is minimum 1 byte and maximum 16 bytes. Therefore, the actual lenght is computed as:
+//         real_zid_len := 1 + zid_len
+//
+// (*) What. It indicates a bitmap of WhatAmI interests.
+//    The valid bitflags are:
+//    - 0b001: Router
+//    - 0b010: Peer
+//    - 0b100: Client
 //
 typedef struct {
-    z_whatami_t _what;
+    _z_bytes_t _zid;
+    z_what_t _what;
+    uint8_t _version;
 } _z_t_msg_scout_t;
 void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 
@@ -627,19 +653,29 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
 //
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |L|W|I|  HELLO  |
-// +-+-+-+-+-------+
-// ~   zenoh_id    ~ if I==1
+// |Z|X|L|  HELLO  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-// ~    whatami    ~ if W==1 -- Otherwise it is from a Router
+// |zid_len|X|X|wai| (*)
+// +-+-+-+-+-+-+-+-+
+// ~     [u8]      ~ -- ZenohID
 // +---------------+
-// ~    Locators   ~ if L==1 -- Otherwise src-address is the locator
+// ~   <utf8;z8>   ~ if Flag(L)==1 -- List of locators
 // +---------------+
+//
+// (*) WhatAmI. It indicates the role of the zenoh node sending the HELLO message.
+//    The valid WhatAmI values are:
+//    - 0b00: Router
+//    - 0b01: Peer
+//    - 0b10: Client
+//    - 0b11: Reserved
 //
 typedef struct {
     _z_bytes_t _zid;
     _z_locator_array_t _locators;
     z_whatami_t _whatami;
+    uint8_t _version;
 } _z_t_msg_hello_t;
 void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
 
@@ -969,7 +1005,7 @@ typedef struct {
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_whatami_t what, _Bool request_zid);
+_z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
 _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
                                           _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
@@ -990,7 +1026,6 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable, _Bool is_fragment, _Bool is_final);
 
 /*------------------ Copy ------------------*/
-// @TODO: implement the remaining copyers
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
 void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg);
 void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg);

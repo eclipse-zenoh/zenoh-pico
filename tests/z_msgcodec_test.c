@@ -1606,16 +1606,25 @@ void zenoh_message(void) {
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 _z_transport_message_t gen_scout_message(void) {
-    z_whatami_t what = gen_uint8() % 7;
-    _Bool request_zid = gen_bool();
-    return _z_t_msg_make_scout(what, request_zid);
+    z_what_t what = gen_uint8() % 7;
+    _z_bytes_t zid;
+    if (gen_bool()) {
+        zid = gen_bytes((gen_uint8() % 16) + 1);
+    } else {
+        zid = _z_bytes_empty();
+    }
+    return _z_t_msg_make_scout(what, zid);
 }
 
 void assert_eq_scout_message(_z_t_msg_scout_t *left, _z_t_msg_scout_t *right, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        printf("   What (%u:%u)\n", left->_what, right->_what);
-        assert(left->_what == right->_what);
-    }
+    (void)(header);
+    printf("   Version (%u:%u)\n", left->_version, right->_version);
+    assert(left->_version == right->_version);
+    printf("   What (%u:%u)\n", left->_what, right->_what);
+    assert(left->_what == right->_what);
+    printf("   ");
+    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    printf("\n");
 }
 
 void scout_message(void) {
@@ -1648,11 +1657,11 @@ void scout_message(void) {
 
 /*------------------ Hello Message ------------------*/
 _z_transport_message_t gen_hello_message(void) {
-    z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
-    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
+    z_whatami_t whatami = (gen_uint8() % 2) + 1;
+    _z_bytes_t zid = gen_bytes((gen_uint8() % 16) + 1);
 
     _z_locator_array_t locators;
-    if (gen_bool())
+    if (gen_bool() == true)
         locators = gen_locator_array((gen_uint8() % 4) + 1);
     else
         locators = gen_locator_array(0);
@@ -1661,16 +1670,18 @@ _z_transport_message_t gen_hello_message(void) {
 }
 
 void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        printf("   ");
-        assert_eq_uint8_array(&left->_zid, &right->_zid);
-        printf("\n");
-    }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        printf("   What (%u:%u)", left->_whatami, right->_whatami);
-        assert(left->_whatami == right->_whatami);
-        printf("\n");
-    }
+    printf("   Version (%u:%u)", left->_version, right->_version);
+    assert(left->_version == right->_version);
+    printf("\n");
+
+    printf("   What (%u:%u)", left->_whatami, right->_whatami);
+    assert(left->_whatami == right->_whatami);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    printf("\n");
+
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
         printf("   ");
         assert_eq_locator_array(&left->_locators, &right->_locators);

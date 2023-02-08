@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -986,23 +987,40 @@ int8_t _z_zenoh_message_decode(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) { return
 /*------------------ Scout Message ------------------*/
 int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg) {
     int8_t ret = _Z_RES_OK;
+    (void)(header);
     _Z_DEBUG("Encoding _Z_MID_SCOUT\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_enum_encode(wbf, msg->_what))
+    _Z_EC(_z_uint8_encode(wbf, msg->_version))
+
+    uint8_t cbyte = 0;
+    cbyte |= (msg->_what & 0x07);
+    uint8_t zid_len = msg->_zid.len;
+    if (zid_len > 0) {  // TODO[protocol]: check if ZID > 0 && <= 16
+        _Z_SET_FLAG(cbyte, _Z_FLAG_SCOUT_I);
+        cbyte |= ((zid_len - 1) & 0x0F) << 4;
     }
+    _Z_EC(_z_uint8_encode(wbf, cbyte))
+
+    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
     return ret;
 }
 
 int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_SCOUT\n");
     int8_t ret = _Z_RES_OK;
+    (void)(header);
+    _Z_DEBUG("Decoding _Z_MID_SCOUT\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        ret |= _z_enum_decode((int *)&msg->_what, zbf);
+    ret |= _z_uint8_decode(&msg->_version, zbf);
+
+    uint8_t cbyte;
+    ret |= _z_uint8_decode(&cbyte, zbf);
+    msg->_what = cbyte & 0x07;
+    if (_Z_HAS_FLAG(cbyte, _Z_FLAG_SCOUT_I) == true) {
+        msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
     } else {
-        msg->_what = Z_WHATAMI_ROUTER;
+        msg->_zid = _z_bytes_empty();
     }
 
     return ret;
@@ -1017,13 +1035,15 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *m
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_HELLO\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
-    }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_enum_encode(wbf, msg->_whatami))
-    }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
+    _Z_EC(_z_uint8_encode(wbf, msg->_version))
+
+    uint8_t cbyte = 0;
+    cbyte |= (msg->_whatami & 0x03);
+    cbyte |= ((msg->_zid.len - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    _Z_EC(_z_uint8_encode(wbf, cbyte))
+    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
     }
 
@@ -1034,19 +1054,15 @@ int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     _Z_DEBUG("Decoding _Z_MID_HELLO\n");
     int8_t ret = _Z_RES_OK;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        ret |= _z_bytes_decode(&msg->_zid, zbf);
-    } else {
-        msg->_zid = _z_bytes_empty();
-    }
+    ret |= _z_uint8_decode(&msg->_version, zbf);
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
-    } else {
-        msg->_whatami = Z_WHATAMI_ROUTER;
-    }
+    uint8_t cbyte;
+    ret |= _z_uint8_decode(&cbyte, zbf);
+    msg->_whatami = cbyte & 0x03;
+    msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+    ret |= _z_bytes_val_decode(&msg->_zid, zbf);
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
         ret |= _z_locators_decode(&msg->_locators, zbf);
     } else {
         msg->_locators = _z_locator_array_make(0);

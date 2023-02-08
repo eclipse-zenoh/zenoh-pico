@@ -22,6 +22,20 @@ extern "C" {
 #endif
 
 /**
+ * What values.
+ *
+ * Enumerators:
+ *     Z_WHAT_ROUTER: Router.
+ *     Z_WHAT_PEER: Peer.
+ *     Z_WHAT_CLIENT: Client.
+ */
+typedef enum {
+    Z_WHAT_ROUTER = 0x01,  // Router
+    Z_WHAT_PEER = 0x02,    // Peer
+    Z_WHAT_CLIENT = 0x03   // Client
+} z_what_t;
+
+/**
  * Whatami values, defined as a bitmask.
  *
  * Enumerators:

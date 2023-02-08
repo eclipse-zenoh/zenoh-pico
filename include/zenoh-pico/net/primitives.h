@@ -28,12 +28,13 @@
  * Scout for routers and/or peers.
  *
  * Parameters:
- *     what: A whatami bitmask of zenoh entities kind to scout for.
+ *     what: A what bitmask of zenoh entities kind to scout for.
+ *     zid: The ZenohID of the scouting origin.
  *     locator: The locator where to scout.
  *     timeout: The time that should be spent scouting before returnng the results.
  */
-void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
-              void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+void _z_scout(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+              _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
 

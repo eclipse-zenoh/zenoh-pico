@@ -26,9 +26,9 @@
 #include "zenoh-pico/session/utils.h"
 
 /*------------------ Scouting ------------------*/
-void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeout, _z_hello_handler_t callback,
-              void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
-    _z_hello_list_t *hellos = _z_scout_inner(what, locator, timeout, false);
+void _z_scout(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+              _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+    _z_hello_list_t *hellos = _z_scout_inner(what, zid, locator, timeout, false);
 
     while (hellos != NULL) {
         _z_hello_t *hello = _z_hello_list_head(hellos);

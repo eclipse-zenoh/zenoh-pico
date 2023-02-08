@@ -102,12 +102,13 @@ typedef struct {
  * Members:
  *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   _z_str_array_t locators: The locators of the scouted entity.
- *   uint8_t whatami: The kind of zenoh entity.
+ *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
     _z_bytes_t zid;
     _z_str_array_t locators;
-    uint8_t whatami;
+    z_whatami_t whatami;
+    uint8_t version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
