@@ -11,7 +11,7 @@
 # Contributors:
 # ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.19)
 
 project(libzenohpico VERSION 0.7.0.1 LANGUAGES C)
 
@@ -201,6 +201,10 @@ if(BUILD_EXAMPLES)
     add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_queryable.c)
     add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_info.c)
     add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_scout.c)
+
+    if(ROS_DISTRO) # When ROS_DISTRO is we build the ROS2 IDL/CDR examples
+      add_subdirectory(${PROJECT_SOURCE_DIR}/examples/unix/ros2)
+    endif()
   endif()
 
   target_link_libraries(z_put ${Libname})
