@@ -14,6 +14,7 @@
 
 #include <windows.h>
 // The following includes must come after winsock2
+#include <time.h>
 #include <wincrypt.h>
 
 #include "zenoh-pico/config.h"
