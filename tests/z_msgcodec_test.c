@@ -110,14 +110,20 @@ _Bool gen_bool(void) { return z_random_u8() % 2; }
 
 uint8_t gen_uint8(void) { return z_random_u8() % 255; }
 
-_z_zint_t gen_zint(void) {
-    _z_zint_t ret = 0;
+uint64_t gen_uint64(void) {
+    uint64_t ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
 unsigned int gen_uint(void) {
     unsigned int ret = 0;
+    z_random_fill(&ret, sizeof(ret));
+    return ret;
+}
+
+_z_zint_t gen_zint(void) {
+    _z_zint_t ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
 }
@@ -155,8 +161,6 @@ _z_bytes_t gen_bytes(size_t len) {
 
     return arr;
 }
-
-uint64_t gen_time(void) { return (uint64_t)time(NULL); }
 
 char *gen_str(size_t size) {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -326,7 +330,7 @@ void payload_field(void) {
 /*------------------ Timestamp field ------------------*/
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
-    ts._time = (uint64_t)time(NULL);
+    ts._time = gen_uint64();
     ts._id = gen_bytes(16);
 
     return ts;
