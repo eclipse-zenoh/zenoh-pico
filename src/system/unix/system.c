@@ -136,9 +136,9 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) { return usleep(time); }
+int z_sleep_us(size_t time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.
@@ -151,7 +151,7 @@ int z_sleep_ms(unsigned int time) {
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return sleep(time); }
+int z_sleep_s(size_t time) { return sleep(time); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
