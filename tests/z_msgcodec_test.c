@@ -116,6 +116,12 @@ _z_zint_t gen_zint(void) {
     return ret;
 }
 
+unsigned int gen_uint(void) {
+    unsigned int ret = 0;
+    z_random_fill(&ret, sizeof(ret));
+    return ret;
+}
+
 _z_wbuf_t gen_wbuf(size_t len) {
     _Bool is_expandable = false;
 
@@ -373,9 +379,9 @@ _z_subinfo_t gen_subinfo(void) {
     sm.mode = gen_bool() ? Z_SUBMODE_PUSH : Z_SUBMODE_PULL;
     sm.reliability = gen_bool() ? Z_RELIABILITY_RELIABLE : Z_RELIABILITY_BEST_EFFORT;
     if (gen_bool()) {
-        sm.period.origin = gen_zint();
-        sm.period.period = gen_zint();
-        sm.period.duration = gen_zint();
+        sm.period.origin = gen_uint();
+        sm.period.period = gen_uint();
+        sm.period.duration = gen_uint();
     } else {
         sm.period.origin = 0;
         sm.period.period = 0;
