@@ -12,11 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
-#define ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
+#ifndef ZENOH_PICO_SYSTEM_WASM_TYPES_H
+#define ZENOH_PICO_SYSTEM_WASM_TYPES_H
 
 #include <pthread.h>
-#include <kernel.h>
+#include <stdint.h>
 
 #include "zenoh-pico/config.h"
 
@@ -27,26 +27,26 @@ typedef pthread_mutex_t _z_mutex_t;
 typedef pthread_cond_t _z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef double z_clock_t;
+typedef double z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
-        int _fd;
-#endif
-#if Z_LINK_SERIAL == 1
-        const struct device *_serial;
+#if Z_LINK_WS == 1
+        struct {
+            int _fd;
+            uint32_t _tout;
+        } _ws;
 #endif
     };
 } _z_sys_net_socket_t;
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_LINK_WS == 1
         struct addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
 
-#endif /* ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H */
+#endif /* ZENOH_PICO_SYSTEM_WASM_TYPES_H */

@@ -23,7 +23,23 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /********* Data Types Handlers *********/
+/**
+ * Constructs a :c:type:`z_string_t` departing from a ``const char *``.
+ * It is a loaned key expression that aliases ``value``.
+ *
+ * Parameters:
+ *   value: Pointer to null terminated string.
+ *
+ * Returns:
+ *   The :c:type:`z_string_t` corresponding to the given string.
+ */
+z_string_t z_string_make(const char *value);
+
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
  * It is a loaned key expression that aliases ``name``.
@@ -49,7 +65,7 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
-char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
+z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
@@ -62,7 +78,7 @@ char *z_keyexpr_to_string(z_keyexpr_t keyexpr);
  * Returns:
  *   The string representation of a keyexpr for a given session.
  */
-char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
+z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
 
 /**
  * Checks if a given keyexpr is valid.
@@ -73,7 +89,7 @@ char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
  */
-_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr);
+_Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr);
 
 /**
  * Check if a given keyexpr is valid and in its canonical form.
@@ -631,6 +647,7 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     ownedtype z_##name##_clone(ownedtype *name);   \
     void z_##name##_drop(ownedtype *name);
 
+_OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
 _OWNED_FUNCTIONS(z_config_t, z_owned_config_t, config)
 _OWNED_FUNCTIONS(z_scouting_config_t, z_owned_scouting_config_t, scouting_config)
@@ -1333,5 +1350,9 @@ zp_send_join_options_t zp_send_join_options_default(void);
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
  */
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_PRIMITIVES_H */

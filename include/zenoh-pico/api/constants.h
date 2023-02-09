@@ -17,6 +17,10 @@
 #define Z_SELECTOR_TIME "_time="
 #define Z_SELECTOR_QUERY_MATCH "_anyke"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Whatami values, defined as a bitmask.
  *
@@ -224,5 +228,9 @@ typedef enum {
     Z_QUERY_TARGET_ALL_COMPLETE = 2
 } z_query_target_t;
 #define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_CONSTANTS_H */

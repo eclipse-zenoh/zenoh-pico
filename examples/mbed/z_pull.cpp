@@ -14,10 +14,7 @@
 #include <EthernetInterface.h>
 #include <mbed.h>
 #include <randLIB.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
@@ -33,10 +30,10 @@ extern "C" {
 #define KEYEXPR "demo/example/**"
 
 void data_handler(const z_sample_t *sample, void *arg) {
-    char *keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", keystr,
-           (int)sample->payload.len, sample->payload.start);
-    free(keystr);
+    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample->payload.len,
+           sample->payload.start);
+    z_str_drop(z_str_move(&keystr));
 }
 
 int main(int argc, char **argv) {

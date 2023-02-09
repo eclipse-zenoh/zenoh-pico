@@ -33,9 +33,15 @@
 #include "zenoh-pico/system/platform/arduino/esp32.h"
 #elif defined(ZENOH_ARDUINO_OPENCR)
 #include "zenoh-pico/system/platform/arduino/opencr.h"
+#elif defined(ZENOH_EMSCRIPTEN)
+#include "zenoh-pico/system/platform/emscripten.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /*------------------ Random ------------------*/
@@ -74,9 +80,9 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time);
-int z_sleep_ms(size_t time);
-int z_sleep_s(size_t time);
+int z_sleep_us(unsigned int time);
+int z_sleep_ms(unsigned int time);
+int z_sleep_s(unsigned int time);
 
 /*------------------ Clock ------------------*/
 z_clock_t z_clock_now(void);
@@ -86,8 +92,13 @@ unsigned long z_clock_elapsed_s(z_clock_t *time);
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void);
+const char *z_time_now_as_str(char *const buf, unsigned long buflen);
 unsigned long z_time_elapsed_us(z_time_t *time);
 unsigned long z_time_elapsed_ms(z_time_t *time);
 unsigned long z_time_elapsed_s(z_time_t *time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_COMMON_H */

@@ -51,7 +51,7 @@ jobs:
 
         mkdir -p $ESPIDF_BASE
         cd $ESPIDF_BASE
-        platformio init -b az-delivery-devkit-v4 --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF"
+        platformio init -b az-delivery-devkit-v4 --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF -DZENOH_DEBUG=3"
 
         cd $ESPIDF_BASE/lib
         ln -s $ZENOH_PICO_BASE

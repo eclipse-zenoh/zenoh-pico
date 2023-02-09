@@ -14,10 +14,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 // WiFi-specific parameters
 #define SSID "SSID"
@@ -38,17 +35,17 @@ extern "C" {
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
 void query_handler(const z_query_t *query, void *arg) {
-    char *keystr = z_keyexpr_to_string(z_query_keyexpr(query));
+    z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
 
     Serial.print(" >> [Queryable handler] Replying Data ('");
-    Serial.print(keystr);
+    Serial.print(z_str_loan(&keystr));
     Serial.print("': '");
     Serial.print(VALUE);
     Serial.println("')");
 
     z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
 
-    free(keystr);
+    z_str_drop(z_str_move(&keystr));
 }
 
 void setup() {

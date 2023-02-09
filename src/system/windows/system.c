@@ -156,9 +156,9 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) { return z_sleep_ms((time / 1000) + (time % 1000 == 0 ? 0 : 1)); }
+int z_sleep_us(unsigned int time) { return z_sleep_ms((time / 1000) + (time % 1000 == 0 ? 0 : 1)); }
 
-int z_sleep_ms(size_t time) {
+int z_sleep_ms(unsigned int time) {
     // Guarantees that size_t is split into DWORD segments for Sleep
     uint8_t ratio = sizeof(size_t) / sizeof(DWORD);
     DWORD ratio_time = (DWORD)((time / ratio) + (time % ratio == 0 ? 0 : 1));
@@ -168,10 +168,14 @@ int z_sleep_ms(size_t time) {
     return 0;
 }
 
-int z_sleep_s(size_t time) {
-    // Avoids that time is bigger than size_t maximum value when converting to seconds
-    for (uint16_t i = 0; i < (uint16_t)1000; i++) {
-        z_sleep_ms(time);
+int z_sleep_s(unsigned int time) {
+    z_time_t start = z_time_now();
+
+    // Most sleep APIs promise to sleep at least whatever you asked them to.
+    // This may compound, so this approach may make sleeps longer than expected.
+    // This extra check tries to minimize the amount of extra time it might sleep.
+    while (z_time_elapsed_s(&start) < time) {
+        z_sleep_ms(1000);
     }
 
     return 0;

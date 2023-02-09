@@ -14,8 +14,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/logger.h"
@@ -29,29 +31,40 @@
 #include "zenoh-pico/session/utils.h"
 
 /********* Data Types Handlers *********/
+z_string_t z_string_make(const char *value) { return _z_string_make(value); }
+
+z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
+size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
+_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
+
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
-char *z_keyexpr_to_string(z_keyexpr_t keyexpr) {
-    char *ret = NULL;
+z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
+    z_owned_str_t ret = {._value = NULL};
 
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        size_t ke_len = strlen(keyexpr._suffix);
-        ret = (char *)z_malloc(ke_len + (size_t)1);
-        if (ret != NULL) {
-            (void)strncpy(ret, keyexpr._suffix, ke_len);
-            ret[ke_len] = '\0';
+        size_t ke_len = _z_str_size(keyexpr._suffix);
+
+        ret._value = (char *)z_malloc(ke_len);
+        if (ret._value != NULL) {
+            _z_str_n_copy(ret._value, keyexpr._suffix, ke_len);
         }
     }
 
     return ret;
 }
 
-char *zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
+z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
+    z_owned_str_t ret = {._value = NULL};
+
     _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    return (char *)ekey._suffix;  // ekey will be out of scope so, suffix can be safely casted as non-const
+    ret._value = (char *)ekey._suffix;  // ekey will be out of scope so
+                                        //  - suffix can be safely casted as non-const
+                                        //  - suffix does not need to be copied
+    return ret;
 }
 
-_Bool z_keyexpr_is_initialized(z_keyexpr_t *keyexpr) {
+_Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr) {
     _Bool ret = false;
 
     if ((keyexpr->_id != Z_RESOURCE_ID_NONE) || (keyexpr->_suffix != NULL)) {
@@ -154,9 +167,9 @@ int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value) {
 z_owned_scouting_config_t z_scouting_config_default(void) {
     _z_scouting_config_t *sc = _z_config_empty();
 
-    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
 
     return (z_owned_scouting_config_t){._value = sc};
 }
@@ -167,23 +180,23 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t c) {
     char *opt;
     opt = _z_config_get(c._val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(opt));
     }
 
     opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(opt));
     }
 
     opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_WHAT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, z_string_make(opt));
+        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(opt));
     }
 
     return (z_owned_scouting_config_t){._value = sc};
@@ -251,25 +264,25 @@ _Bool z_value_is_initialized(z_value_t *value) {
 }
 
 /**************** Loans ****************/
-#define _OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(type, ownedtype, name, f_free, f_copy) \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; }           \
-    type z_##name##_loan(const ownedtype *val) { return *val->_value; }                    \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                             \
-    ownedtype z_##name##_clone(ownedtype *val) {                                           \
-        ownedtype ret;                                                                     \
-        ret._value = (type *)z_malloc(sizeof(type));                                       \
-        if (ret._value != NULL) {                                                          \
-            f_copy(ret._value, val->_value);                                               \
-        }                                                                                  \
-        return ret;                                                                        \
-    }                                                                                      \
-    void z_##name##_drop(ownedtype *val) {                                                 \
-        if (val->_value != NULL) {                                                         \
-            f_free(&val->_value);                                                          \
-        }                                                                                  \
+#define OWNED_FUNCTIONS_PTR_INTERNAL(type, ownedtype, name, f_free, f_copy)      \
+    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
+    type z_##name##_loan(const ownedtype *val) { return *val->_value; }          \
+    ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
+    ownedtype z_##name##_clone(ownedtype *val) {                                 \
+        ownedtype ret;                                                           \
+        ret._value = (type *)z_malloc(sizeof(type));                             \
+        if (ret._value != NULL) {                                                \
+            f_copy(ret._value, val->_value);                                     \
+        }                                                                        \
+        return ret;                                                              \
+    }                                                                            \
+    void z_##name##_drop(ownedtype *val) {                                       \
+        if (val->_value != NULL) {                                               \
+            f_free(&val->_value);                                                \
+        }                                                                        \
     }
 
-#define OWNED_FUNCTIONS_DEFINITION(type, ownedtype, name, f_free, f_copy)              \
+#define OWNED_FUNCTIONS_PTR(type, ownedtype, name, f_free, f_copy)                     \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; }       \
     type z_##name##_loan(const ownedtype *val) { return (type){._val = val->_value}; } \
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                         \
@@ -287,25 +300,46 @@ _Bool z_value_is_initialized(z_value_t *value) {
         }                                                                              \
     }
 
+#define OWNED_FUNCTIONS_STR(type, ownedtype, name, f_free, f_copy)               \
+    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
+    type z_##name##_loan(const ownedtype *val) { return val->_value; }           \
+    ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
+    ownedtype z_##name##_clone(ownedtype *val) {                                 \
+        ownedtype ret;                                                           \
+        size_t size = _z_str_size(val->_value);                                  \
+        ret._value = (_##type)z_malloc(size);                                    \
+        if (ret._value != NULL) {                                                \
+            f_copy(ret._value, val->_value, size);                               \
+        }                                                                        \
+        return ret;                                                              \
+    }                                                                            \
+    void z_##name##_drop(ownedtype *val) {                                       \
+        if (val->_value != NULL) {                                               \
+            f_free(&val->_value);                                                \
+        }                                                                        \
+    }
+
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
     (void)(src);
 }
 
-_OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
-OWNED_FUNCTIONS_DEFINITION(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,
-                           _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_subscriber_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_subscriber_free,
-                           _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_publisher_t, z_owned_publisher_t, publisher, _z_publisher_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_DEFINITION(z_queryable_t, z_owned_queryable_t, queryable, _z_queryable_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
-_OWNED_FUNCTIONS_EXPOSE_INTERNAL_DEFINITION(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free,
-                                            _z_owner_noop_copy)
+OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_n_copy)
+
+OWNED_FUNCTIONS_PTR(z_config_t, z_owned_config_t, config, _z_config_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free,
+                    _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_session_t, z_owned_session_t, session, _z_session_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_subscriber_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_subscriber_free,
+                    _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_publisher_t, z_owned_publisher_t, publisher, _z_publisher_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(z_queryable_t, z_owned_queryable_t, queryable, _z_queryable_free, _z_owner_noop_copy)
+
+OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
+OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
 
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};

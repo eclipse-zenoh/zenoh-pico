@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/net/config.h"
 
-_z_config_t *_z_config_empty() {
+_z_config_t *_z_config_empty(void) {
     _z_config_t *config = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (config != NULL) {
         _z_config_init(config);
@@ -25,20 +25,20 @@ _z_config_t *_z_config_empty() {
     return config;
 }
 
-_z_config_t *_z_config_default() { return _z_config_client(NULL); }
+_z_config_t *_z_config_default(void) { return _z_config_client(NULL); }
 
 _z_config_t *_z_config_client(const char *locator) {
     _z_config_t *ps = _z_config_empty();
     if (ps != NULL) {
-        _zp_config_insert(ps, Z_CONFIG_MODE_KEY, z_string_make(Z_CONFIG_MODE_CLIENT));
+        _zp_config_insert(ps, Z_CONFIG_MODE_KEY, _z_string_make(Z_CONFIG_MODE_CLIENT));
         if (locator != NULL) {
             // Connect only to the provided locator
-            _zp_config_insert(ps, Z_CONFIG_PEER_KEY, z_string_make(locator));
+            _zp_config_insert(ps, Z_CONFIG_PEER_KEY, _z_string_make(locator));
         } else {
             // The locator is not provided, we should perform scouting
-            _zp_config_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
-            _zp_config_insert(ps, Z_CONFIG_MULTICAST_LOCATOR_KEY, z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
-            _zp_config_insert(ps, Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+            _zp_config_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, _z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
+            _zp_config_insert(ps, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+            _zp_config_insert(ps, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
         }
     }
     return ps;

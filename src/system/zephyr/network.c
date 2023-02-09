@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <drivers/uart.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -19,7 +20,10 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/checksum.h"
+#include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
@@ -525,10 +529,179 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 }
 #endif
 
-#if Z_LINK_BLUETOOTH == 1
-#error "Bluetooth not supported yet on Zephyr port of Zenoh-Pico"
+#if Z_LINK_SERIAL == 1
+int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    (void)(sock);
+    (void)(txpin);
+    (void)(rxpin);
+    (void)(baudrate);
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+
+    sock->_serial = device_get_binding(dev);
+    if (sock->_serial != NULL) {
+        const struct uart_config config = {
+            .baudrate = baudrate,
+            .parity = UART_CFG_PARITY_NONE,        // Default in Zenoh Rust
+            .stop_bits = UART_CFG_STOP_BITS_1,     // Default in Zenoh Rust
+            .data_bits = UART_CFG_DATA_BITS_8,     // Default in Zenoh Rust
+            .flow_ctrl = UART_CFG_FLOW_CTRL_NONE,  // Default in Zenoh Rust
+        };
+        if (uart_configure(sock->_serial, &config) != 0) {
+            ret = _Z_ERR_GENERIC;
+        }
+    } else {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    (void)(sock);
+    (void)(txpin);
+    (void)(rxpin);
+    (void)(baudrate);
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    (void)(sock);
+    (void)(dev);
+    (void)(baudrate);
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+void _z_close_serial(_z_sys_net_socket_t *sock) {}
+
+size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    int8_t ret = _Z_RES_OK;
+
+    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t rb = 0;
+    for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
+        int res = -1;
+        while (res != 0) {
+            res = uart_poll_in(sock._serial, &before_cobs[i]);
+        }
+
+        rb = rb + (size_t)1;
+        if (before_cobs[i] == (uint8_t)0x00) {
+            break;
+        }
+    }
+
+    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t trb = _z_cobs_decode(before_cobs, rb, after_cobs);
+
+    size_t i = 0;
+    uint16_t payload_len = 0;
+    for (; i < sizeof(payload_len); i++) {
+        payload_len |= (after_cobs[i] << ((uint8_t)i * (uint8_t)8));
+    }
+
+    if (trb == (size_t)(payload_len + (uint16_t)6)) {
+        (void)memcpy(ptr, &after_cobs[i], payload_len);
+        i = i + (size_t)payload_len;
+
+        uint32_t crc = 0;
+        for (uint8_t j = 0; j < sizeof(crc); j++) {
+            crc |= (uint32_t)(after_cobs[i] << (j * (uint8_t)8));
+            i = i + (size_t)1;
+        }
+
+        uint32_t c_crc = _z_crc32(ptr, payload_len);
+        if (c_crc != crc) {
+            ret = _Z_ERR_GENERIC;
+        }
+    } else {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    z_free(before_cobs);
+    z_free(after_cobs);
+
+    rb = payload_len;
+    if (ret != _Z_RES_OK) {
+        rb = SIZE_MAX;
+    }
+
+    return rb;
+}
+
+size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    size_t n = 0;
+    uint8_t *pos = &ptr[0];
+
+    do {
+        size_t rb = _z_read_serial(sock, ptr, len - n);
+        if (rb == SIZE_MAX) {
+            n = rb;
+            break;
+        }
+
+        n = n + rb;
+        pos = _z_ptr_u8_offset(pos, n);
+    } while (n != len);
+
+    return n;
+}
+
+size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    int8_t ret = _Z_RES_OK;
+
+    uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t i = 0;
+    for (; i < sizeof(uint16_t); ++i) {
+        before_cobs[i] = (len >> (i * (size_t)8)) & (size_t)0XFF;
+    }
+
+    (void)memcpy(&before_cobs[i], ptr, len);
+    i = i + len;
+
+    uint32_t crc = _z_crc32(ptr, len);
+    for (uint8_t j = 0; j < sizeof(crc); j++) {
+        before_cobs[i] = (crc >> (j * (uint8_t)8)) & (uint32_t)0XFF;
+        i = i + (size_t)1;
+    }
+
+    uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    ssize_t twb = _z_cobs_encode(before_cobs, i, after_cobs);
+    after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
+    for (ssize_t i = 0; i < (twb + (ssize_t)1); i++) {
+        uart_poll_out(sock._serial, after_cobs[i]);
+    }
+
+    z_free(before_cobs);
+    z_free(after_cobs);
+
+    size_t sb = len;
+    if (ret != _Z_RES_OK) {
+        sb = SIZE_MAX;
+    }
+
+    return sb;
+}
 #endif
 
-#if Z_LINK_SERIAL == 1
-#error "Serial not supported yet on Zephyr port of Zenoh-Pico"
+#if Z_LINK_BLUETOOTH == 1
+#error "Bluetooth not supported yet on Zephyr port of Zenoh-Pico"
 #endif

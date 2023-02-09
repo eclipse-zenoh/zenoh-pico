@@ -14,10 +14,7 @@
 #include <EthernetInterface.h>
 #include <mbed.h>
 #include <randLIB.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 void fprintzid(FILE *stream, z_bytes_t zid) {
     if (zid.start == NULL) {

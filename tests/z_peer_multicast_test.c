@@ -41,14 +41,14 @@ void data_handler(const z_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    char *k_str = z_keyexpr_to_string(sample->keyexpr);
+    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
     assert(sample->payload.len == MSG_LEN);
-    assert(strlen(k_str) == strlen(res));
-    assert(strncmp(res, k_str, strlen(res)) == 0);
+    assert(strlen(z_loan(k_str)) == strlen(res));
+    assert(strncmp(res, z_loan(k_str), strlen(res)) == 0);
     (void)(sample);
 
     datas++;
-    free(k_str);
+    z_drop(z_move(k_str));
     free(res);
 }
 
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %lu %s\n", z_subscriber_loan(sub)._val->_id, (z_zint_t)0,
+        printf("Declared subscription on session 2: %zu %zu %s\n", z_subscriber_loan(sub)._val->_id, (z_zint_t)0,
                s1_res);
         subs2 = _z_list_push(subs2, sub);
     }

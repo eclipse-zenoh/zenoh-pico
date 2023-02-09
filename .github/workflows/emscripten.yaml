@@ -1,0 +1,40 @@
+#
+# Copyright (c) 2022 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: emscripten
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: jwlawson/actions-setup-cmake@v1.13
+    - uses: mymindstorm/setup-emsdk@v11
+    - name: Compile debug
+      run: |
+       mkdir build
+       emcmake cmake -E env CFLAGS="-DZ_LINK_WS=1 -DZ_LINK_TCP=0 -DZ_LINK_UDP_MULTICAST=0 -DZ_LINK_UDP_UNICAST=0 -DZ_SCOUTING_UDP=0" cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_STANDARD=11 -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF -DBUILD_MULTICAST=OFF -DBUILD_INTEGRATION=OFF -DBUILD_TOOLS=OFF -DZENOH_DEBUG=3 -H. -Bbuild
+       make -C build
+
+

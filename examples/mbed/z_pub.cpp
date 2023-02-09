@@ -14,10 +14,7 @@
 #include <EthernetInterface.h>
 #include <mbed.h>
 #include <randLIB.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
@@ -68,7 +65,7 @@ int main(int argc, char **argv) {
     }
     printf("OK\n");
 
-    char buf[strlen(VALUE) + 8];
+    char buf[256];
     for (int idx = 0; 1; ++idx) {
         z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, VALUE);

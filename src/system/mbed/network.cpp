@@ -318,7 +318,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 
 #if Z_LINK_SERIAL == 1
 
-int8_t _z_open_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
 
     sock->_serial = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
@@ -333,7 +333,18 @@ int8_t _z_open_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin,
     return ret;
 }
 
-int8_t _z_listen_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *device, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+
+    (void)(sock);
+    (void)(device);
+    (void)(baudrate);
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
     (void)sock;
     (void)txpin;
@@ -341,6 +352,17 @@ int8_t _z_listen_serial(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpi
     (void)baudrate;
 
     // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *device, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+
+    (void)(sock);
+    (void)(device);
+    (void)(baudrate);
     ret = _Z_ERR_GENERIC;
 
     return ret;
@@ -366,7 +388,7 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) 
 
     size_t i = 0;
     uint16_t payload_len = 0;
-    for (; i < sizeof(payload_len); i++) {
+    for (i = 0; i < sizeof(payload_len); i++) {
         payload_len |= (after_cobs[i] << ((uint8_t)i * (uint8_t)8));
     }
 

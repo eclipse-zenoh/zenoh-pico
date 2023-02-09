@@ -25,7 +25,7 @@
 #include "zenoh-pico/net/subscribe.h"
 
 #if defined(ZENOH_ZEPHYR)
-#include <zephyr.h>
+#include <kernel.h>
 #endif
 
 #endif /* ZENOH_PICO_NET_H */

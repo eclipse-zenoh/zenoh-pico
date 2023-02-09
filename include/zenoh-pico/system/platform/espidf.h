@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_SYSTEM_ESPIDF_TYPES_H
 #define ZENOH_PICO_SYSTEM_ESPIDF_TYPES_H
 
+#include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <pthread.h>
@@ -36,10 +37,9 @@ typedef struct {
 #if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         int _fd;
 #endif
-#if Z_LINK_BLUETOOTH == 1
-        void *_bts;  // As pointer to cross the boundary between C and C++
+#if Z_LINK_SERIAL == 1
+        uart_port_t _serial;
 #endif
-        _Bool _err;
     };
 } _z_sys_net_socket_t;
 
@@ -49,7 +49,6 @@ typedef struct {
         struct addrinfo *_iptcp;
 #endif
     };
-    _Bool _err;
 } _z_sys_net_endpoint_t;
 
 #endif /* ZENOH_PICO_SYSTEM_ESPIDF_TYPES_H */

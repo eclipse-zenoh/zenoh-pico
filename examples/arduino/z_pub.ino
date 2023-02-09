@@ -14,10 +14,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 // WiFi-specific parameters
 #define SSID "SSID"
@@ -96,7 +93,7 @@ void setup() {
 }
 
 void loop() {
-    char buf[strlen(VALUE) + 8];
+    char buf[256];
     sprintf(buf, "[%4d] %s", idx++, VALUE);
     Serial.print("Writing Data ('");
     Serial.print(KEYEXPR);

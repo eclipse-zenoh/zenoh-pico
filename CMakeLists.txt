@@ -70,6 +70,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_definitions(-DZENOH_MACOS)
   set(MACOSX_RPATH "ON")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+  add_definitions(-DZENOH_EMSCRIPTEN)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_definitions(-DZENOH_WINDOWS -D_CRT_SECURE_NO_WARNINGS)
   set(BUILD_SHARED_LIBS "OFF")
@@ -125,34 +127,39 @@ include_directories(
 )
 
 file(GLOB Sources "src/*.c"
-    "src/api/*.c"
-    "src/net/*.c"
-    "src/collections/*.c"
-    "src/link/*.c"
-    "src/link/config/*.c"
-    "src/link/unicast/*.c"
-    "src/link/multicast/*.c"
-    "src/protocol/*.c"
-    "src/protocol/keyexpr/*.c"
-    "src/session/*.c"
-    "src/system/*.c"
-    "src/transport/*.c"
-    "src/transport/common/*.c"
-    "src/transport/unicast/*.c"
-    "src/transport/unicast/link/*.c"
-    "src/transport/unicast/link/task/*.c"
-    "src/transport/multicast/*.c"
-    "src/transport/multicast/link/*.c"
-    "src/transport/multicast/link/task/*.c"
-    "src/utils/*.c"
-  )
+  "src/api/*.c"
+  "src/net/*.c"
+  "src/collections/*.c"
+  "src/link/*.c"
+  "src/link/config/*.c"
+  "src/link/unicast/*.c"
+  "src/link/multicast/*.c"
+  "src/protocol/*.c"
+  "src/protocol/keyexpr/*.c"
+  "src/session/*.c"
+  "src/system/*.c"
+  "src/transport/*.c"
+  "src/transport/common/*.c"
+  "src/transport/unicast/*.c"
+  "src/transport/unicast/link/*.c"
+  "src/transport/unicast/link/task/*.c"
+  "src/transport/multicast/*.c"
+  "src/transport/multicast/link/*.c"
+  "src/transport/multicast/link/task/*.c"
+  "src/utils/*.c"
+)
 
-if(UNIX)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
   file (GLOB Sources_Unix "src/system/unix/*.c")
   list(APPEND Sources ${Sources_Unix})
 endif()
 
-if(MSVC)
+if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+  file (GLOB Sources_Emscripten "src/system/emscripten/*.c")
+  list(APPEND Sources ${Sources_Emscripten})
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   file (GLOB Sources_Windows "src/system/windows/*.c")
   list(APPEND Sources ${Sources_Windows})
 endif()
