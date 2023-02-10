@@ -51,7 +51,7 @@ message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 option(BUILD_TOOLS "Use this to also build the tools." OFF)
 message(STATUS "Build examples: ${BUILD_TOOLS}")
 
-option(BUILD_TESTING "Use this to also build tests." OFF)
+option(BUILD_TESTING "Use this to also build tests." ON)
 message(STATUS "Build tests: ${BUILD_TESTING}")
 
 option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
