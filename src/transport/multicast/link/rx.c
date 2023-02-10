@@ -44,7 +44,7 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
 /*------------------ Reception helper ------------------*/
 int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
     _Z_DEBUG(">> recv session msg\n");
-    uint8_t ret = _Z_RES_OK;
+    int8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock

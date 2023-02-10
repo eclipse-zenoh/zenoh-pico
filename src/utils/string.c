@@ -36,7 +36,7 @@ char const *_z_rstrstr(char const *haystack_start, char const *haystack_end, con
 }
 
 char const *_z_bstrstr(_z_str_se_t haystack, _z_str_se_t needle) {
-    haystack.end = _z_cptr_char_offset(haystack.end, -_z_ptr_char_diff(needle.end, needle.start));
+    haystack.end = _z_cptr_char_offset(haystack.end, -1 * _z_ptr_char_diff(needle.end, needle.start));
     char const *result = NULL;
     for (; (result == false) && (haystack.start <= haystack.end);
          haystack.start = _z_cptr_char_offset(haystack.start, 1)) {
@@ -103,7 +103,7 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str) {
         if (result.start == str->s.start) {
             str->s = (_z_str_se_t){.start = NULL, .end = NULL};
         } else {
-            str->s.end = _z_cptr_char_offset(result.start, -strlen(str->delimiter));
+            str->s.end = _z_cptr_char_offset(result.start, -1 * strlen(str->delimiter));
         }
     }
     return result;

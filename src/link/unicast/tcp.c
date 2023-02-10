@@ -79,11 +79,11 @@ int8_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    char *s_addr = __z_parse_address_segment_tcp(endpoint->_locator._address);
-    if (s_addr == NULL) {
+    char *s_address = __z_parse_address_segment_tcp(endpoint->_locator._address);
+    if (s_address == NULL) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     } else {
-        z_free(s_addr);
+        z_free(s_address);
     }
 
     char *s_port = __z_parse_port_segment_tcp(endpoint->_locator._address);
@@ -156,10 +156,10 @@ int8_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_mtu = _z_get_link_mtu_tcp();
 
     zl->_endpoint = *endpoint;
-    char *s_addr = __z_parse_address_segment_tcp(endpoint->_locator._address);
+    char *s_address = __z_parse_address_segment_tcp(endpoint->_locator._address);
     char *s_port = __z_parse_port_segment_tcp(endpoint->_locator._address);
-    ret = _z_create_endpoint_tcp(&zl->_socket._tcp._rep, s_addr, s_port);
-    z_free(s_addr);
+    ret = _z_create_endpoint_tcp(&zl->_socket._tcp._rep, s_address, s_port);
+    z_free(s_address);
     z_free(s_port);
 
     zl->_open_f = _z_f_link_open_tcp;

@@ -29,7 +29,7 @@
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
@@ -39,7 +39,7 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, con
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
     }
 
@@ -110,7 +110,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -142,7 +142,7 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
@@ -152,7 +152,7 @@ int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, con
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_UDP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
     }
 
@@ -205,7 +205,7 @@ size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &addrlen);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -466,7 +466,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
     ssize_t rb = 0;
     do {
         rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
-        if (rb < 0) {
+        if (rb < (ssize_t)0) {
             rb = SIZE_MAX;
             break;
         }

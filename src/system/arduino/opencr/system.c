@@ -97,17 +97,17 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
+int z_sleep_us(size_t time) {
     delay_us(time);
     return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     delay_ms(time);
     return 0;
 }
 
-int z_sleep_s(unsigned int time) {
+int z_sleep_s(size_t time) {
     z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.

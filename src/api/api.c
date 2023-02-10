@@ -673,7 +673,7 @@ z_publisher_put_options_t z_publisher_put_options_default(void) {
     return (z_publisher_put_options_t){.encoding = z_encoding_default()};
 }
 
-z_publisher_delete_options_t z_publisher_delete_options_default(void) { return (z_publisher_delete_options_t){}; }
+z_publisher_delete_options_t z_publisher_delete_options_default(void) { return (z_publisher_delete_options_t){.__dummy = 0}; }
 
 int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
@@ -837,7 +837,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 /**************** Tasks ****************/
-zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){}; }
+zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){ .__dummy = 0 }; }
 
 int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options) {
     (void)(options);
@@ -858,7 +858,7 @@ int8_t zp_stop_read_task(z_session_t zs) {
 #endif
 }
 
-zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){}; }
+zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){ .__dummy = 0 }; }
 
 int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options) {
     (void)(options);
@@ -879,21 +879,21 @@ int8_t zp_stop_lease_task(z_session_t zs) {
 #endif
 }
 
-zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){}; }
+zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){ .__dummy = 0 }; }
 
 int8_t zp_read(z_session_t zs, const zp_read_options_t *options) {
     (void)(options);
     return _zp_read(zs._val);
 }
 
-zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) { return (zp_send_keep_alive_options_t){}; }
+zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) { return (zp_send_keep_alive_options_t){ .__dummy = 0 }; }
 
 int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *options) {
     (void)(options);
     return _zp_send_keep_alive(zs._val);
 }
 
-zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){}; }
+zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){ .__dummy = 0 }; }
 
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);

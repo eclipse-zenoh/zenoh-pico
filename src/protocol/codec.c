@@ -49,7 +49,7 @@ int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *buf) {
 int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *buf) { return _z_period_decode_na(p, buf); }
 
 /*------------------ uint8 -------------------*/
-int8_t _z_enum_encode(_z_wbuf_t *wbf, int en) { return _z_wbuf_write(wbf, en); }
+int8_t _z_enum_encode(_z_wbuf_t *wbf, int en) { return _z_wbuf_write(wbf, (uint8_t)en); }
 
 int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;

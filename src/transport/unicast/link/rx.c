@@ -25,7 +25,7 @@
 
 int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg\n");
-    uint8_t ret = _Z_RES_OK;
+    int8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
     // Acquire the lock

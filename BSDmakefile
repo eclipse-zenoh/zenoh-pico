@@ -67,10 +67,10 @@ $(BUILD_DIR)/Makefile: CMakeLists.txt
 	cmake $(CMAKE_OPT) -B$(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
 
 install: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) install
+	cmake --install $(BUILD_DIR)
 
 test: $(BUILD_DIR)/Makefile
 	make -C$(BUILD_DIR) test

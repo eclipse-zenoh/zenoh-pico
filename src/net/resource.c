@@ -27,7 +27,7 @@ _z_keyexpr_t _z_rname(const char *rname) {
     return rk;
 }
 
-_z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const char *suffix) {
+_z_keyexpr_t _z_rid_with_suffix(_z_zint_t rid, const char *suffix) {
     _z_keyexpr_t rk;
     rk._id = rid;
     rk._suffix = NULL;
