@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/protocol/ext.h"
 
+#include <stdint.h>
+
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -29,7 +31,7 @@ _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id) {
 
 void _z_msg_ext_clear_unit(_z_msg_ext_unit_t *ext) { (void)(ext); }
 
-void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, _z_msg_ext_unit_t *ext) {
+void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, const _z_msg_ext_unit_t *ext) {
     (void)(clone);
     (void)(ext);
 }
@@ -48,7 +50,7 @@ _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid) {
 
 void _z_msg_ext_clear_zint(_z_msg_ext_zint_t *ext) { (void)(ext); }
 
-void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, _z_msg_ext_zint_t *ext) { clone->_val = ext->_val; }
+void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext) { clone->_val = ext->_val; }
 
 _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, const _z_bytes_t zbuf) {
     _z_msg_ext_t ext;
@@ -64,12 +66,15 @@ _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, const _z_bytes_t zbuf) {
 
 void _z_msg_ext_clear_zbuf(_z_msg_ext_zbuf_t *ext) { _z_bytes_clear(&ext->_val); }
 
-void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, _z_msg_ext_zbuf_t *ext) { _z_bytes_copy(&clone->_val, &ext->_val); }
+void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, const _z_msg_ext_zbuf_t *ext) {
+    _z_bytes_copy(&clone->_val, &ext->_val);
+}
 
-void _z_msg_ext_copy(_z_msg_ext_t *clone, _z_msg_ext_t *ext) {
+void _z_msg_ext_copy(_z_msg_ext_t *clone, const _z_msg_ext_t *ext) {
     clone->_header = ext->_header;
 
-    switch (_Z_EXT_ENC(clone->_header)) {
+    uint8_t enc = _Z_EXT_ENC(clone->_header);
+    switch (enc) {
         case _Z_MSG_EXT_ENC_UNIT: {
             _z_msg_ext_copy_unit(&clone->_body._unit, &ext->_body._unit);
         } break;
@@ -83,13 +88,14 @@ void _z_msg_ext_copy(_z_msg_ext_t *clone, _z_msg_ext_t *ext) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)\n", enc);
         } break;
     }
 }
 
 void _z_msg_ext_clear(_z_msg_ext_t *ext) {
-    switch (_Z_EXT_ENC(ext->_header)) {
+    uint8_t enc = _Z_EXT_ENC(ext->_header);
+    switch (enc) {
         case _Z_MSG_EXT_ENC_UNIT: {
             _z_msg_ext_clear_unit(&ext->_body._unit);
         } break;
@@ -103,7 +109,7 @@ void _z_msg_ext_clear(_z_msg_ext_t *ext) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free message extension with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to free message extension with unknown encoding(%d)\n", enc);
         } break;
     }
 }

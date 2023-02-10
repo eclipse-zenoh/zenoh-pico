@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -460,6 +461,7 @@ _z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid) {
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -492,6 +494,7 @@ _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, 
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -535,6 +538,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, 
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -575,6 +579,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whata
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -603,6 +608,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whata
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -635,6 +641,7 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -653,6 +660,7 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -681,6 +689,7 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -708,6 +717,7 @@ _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zi
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -735,6 +745,7 @@ _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask) {
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -761,6 +772,7 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid) {
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -780,6 +792,7 @@ _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash) {
     msg._header = _Z_MID_PING_PONG;
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -793,6 +806,7 @@ _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash) {
     _Z_SET_FLAG(msg._header, _Z_FLAG_T_P);
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -825,6 +839,7 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -848,6 +863,7 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
     }
 
     msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -873,6 +889,7 @@ void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header) {
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
     clone->_header = msg->_header;
     clone->_attachment = msg->_attachment;
+    _z_msg_ext_vec_copy(&clone->_extensions, &msg->_extensions);
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {

@@ -67,12 +67,10 @@ int8_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) { retur
 int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext) {
     int8_t ret = _Z_RES_OK;
 
-    // if (is_last == false) {
-    //     _Z_EXT_SET_FLAG(ext->_header, _Z_MSG_EXT_FLAG_Z);
-    // }
     _Z_EC(_z_wbuf_write(wbf, ext->_header))
 
-    switch (_Z_EXT_ENC(ext->_header)) {
+    uint8_t enc = _Z_EXT_ENC(ext->_header);
+    switch (enc) {
         case _Z_MSG_EXT_ENC_UNIT: {
             _z_msg_ext_encode_unit(wbf, &ext->_body._unit);
         } break;
@@ -86,7 +84,7 @@ int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)\n", enc);
         } break;
     }
 
@@ -98,7 +96,8 @@ int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf) {
 
     ret |= _z_uint8_decode(&ext->_header, zbf);  // Decode the header
     if (ret == _Z_RES_OK) {
-        switch (_Z_EXT_ENC(ext->_header)) {
+        uint8_t enc = _Z_EXT_ENC(ext->_header);
+        switch (enc) {
             case _Z_MSG_EXT_ENC_UNIT: {
                 ret |= _z_msg_ext_decode_unit(&ext->_body._unit, zbf);
             } break;
@@ -112,7 +111,7 @@ int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf) {
             } break;
 
             default: {
-                _Z_DEBUG("WARNING: Trying to copy message extension with unknown ID(%d)\n", mid);
+                _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)\n", enc);
             } break;
         }
     }

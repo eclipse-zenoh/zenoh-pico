@@ -14,9 +14,11 @@
 
 #include "zenoh-pico/protocol/msgcodec.h"
 
+#include <_types/_uint8_t.h>
 #include <stddef.h>
 
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/extcodec.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -1465,8 +1467,13 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
         _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
     }
 
-    _Z_EC(_z_wbuf_write(wbf, msg->_header))
+    uint8_t header = msg->_header;
+    size_t n_ext = _z_msg_ext_vec_len(&msg->_extensions);
+    if (n_ext > 0) {
+        header |= 0x80;
+    }
 
+    _Z_EC(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_FRAME: {
             ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
@@ -1516,6 +1523,16 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
             _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
+    }
+
+    if (n_ext > 0) {
+        for (size_t i = 0; (i + 1) < n_ext; i++) {
+            _z_msg_ext_t *ext = _z_msg_ext_vec_get(&msg->_extensions, i);
+            _Z_EXT_SET_FLAG(ext->_header, _Z_MSG_EXT_FLAG_Z);
+            ret |= _z_msg_ext_encode(wbf, ext);
+        }
+        ret |=
+            _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(&msg->_extensions, n_ext - 1));  // Last extension wo\ next flag
     }
 
     return ret;
@@ -1606,6 +1623,20 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
             msg->_header = 0xFF;
         }
     } while ((ret == _Z_RES_OK) && (is_last == false));
+
+    if (ret == _Z_RES_OK) {
+        if ((msg->_header & 0x80) == 0x80) {
+            msg->_extensions = _z_msg_ext_vec_make(10);
+            _z_msg_ext_t *ext = NULL;
+            do {
+                ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
+                ret |= _z_msg_ext_decode(ext, zbf);
+                _z_msg_ext_vec_append(&msg->_extensions, ext);
+            } while ((ext->_header & 0x80) == 0x80);
+        } else {
+            msg->_extensions = _z_msg_ext_vec_make(0);
+        }
+    }
 
     return ret;
 }

@@ -22,6 +22,8 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/ext.h"
+#include "zenoh-pico/protocol/extcodec.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/protocol/msg.h"
@@ -29,6 +31,10 @@
 #include "zenoh-pico/system/platform.h"
 
 #define RUNS 1000
+
+#define _Z_MOCK_EXTENSION_UNIT 0x01
+#define _Z_MOCK_EXTENSION_ZINT 0x02
+#define _Z_MOCK_EXTENSION_ZBUF 0x03
 
 /*=============================*/
 /*       Helper functions      */
@@ -280,6 +286,219 @@ void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right
         assert(_z_locator_eq(l, r) == true);
     }
     printf(")");
+}
+
+/*=============================*/
+/*  Zenoh Messages Extensions  */
+/*=============================*/
+/*------------------ UNIT extension ------------------*/
+_z_msg_ext_t gen_unit_extension(void) { return _z_msg_ext_make_unit(_Z_MOCK_EXTENSION_UNIT); }
+
+void assert_eq_unit_extension(_z_msg_ext_unit_t *left, _z_msg_ext_unit_t *right) {
+    (void)(left);
+    (void)(right);
+}
+
+void unit_extension(void) {
+    printf("\n>> UNIT Extension\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_msg_ext_t ext = gen_unit_extension();
+    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_UNIT);
+
+    _z_msg_ext_unit_t e_u = ext._body._unit;
+
+    // Encode
+    int8_t res = _z_msg_ext_encode_unit(&wbf, &e_u);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_msg_ext_unit_t d_u;
+    res = _z_msg_ext_decode_unit(&d_u, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_unit_extension(&e_u, &d_u);
+
+    // Free
+    _z_msg_ext_clear_unit(&d_u);
+    _z_msg_ext_clear(&ext);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ ZINT extension ------------------*/
+_z_msg_ext_t gen_zint_extension(void) {
+    _z_zint_t val = gen_zint();
+    return _z_msg_ext_make_zint(_Z_MOCK_EXTENSION_ZINT, val);
+}
+
+void assert_eq_zint_extension(_z_msg_ext_zint_t *left, _z_msg_ext_zint_t *right) {
+    printf("    ZINT (%zu:%zu), ", left->_val, right->_val);
+    assert(left->_val == right->_val);
+}
+
+void zint_extension(void) {
+    printf("\n>> ZINT Extension\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_msg_ext_t ext = gen_zint_extension();
+    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_UNIT);
+
+    _z_msg_ext_zint_t e_u = ext._body._zint;
+
+    // Encode
+    int8_t res = _z_msg_ext_encode_zint(&wbf, &e_u);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_msg_ext_zint_t d_u;
+    res = _z_msg_ext_decode_zint(&d_u, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_zint_extension(&e_u, &d_u);
+
+    // Free
+    _z_msg_ext_clear_zint(&d_u);
+    _z_msg_ext_clear(&ext);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Unit extension ------------------*/
+_z_msg_ext_t gen_zbuf_extension(void) {
+    _z_bytes_t val = gen_bytes(gen_uint8());
+    return _z_msg_ext_make_zbuf(_Z_MOCK_EXTENSION_ZBUF, val);
+}
+
+void assert_eq_zbuf_extension(_z_msg_ext_zbuf_t *left, _z_msg_ext_zbuf_t *right) {
+    printf("    ZBUF (");
+    assert_eq_uint8_array(&left->_val, &right->_val);
+    printf(")");
+}
+
+void zbuf_extension(void) {
+    printf("\n>> ZBUF Extension\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_msg_ext_t ext = gen_zbuf_extension();
+    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_UNIT);
+
+    _z_msg_ext_zbuf_t e_u = ext._body._zbuf;
+
+    // Encode
+    int8_t res = _z_msg_ext_encode_zbuf(&wbf, &e_u);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_msg_ext_zbuf_t d_u;
+    res = _z_msg_ext_decode_zbuf(&d_u, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_zbuf_extension(&e_u, &d_u);
+
+    // Free
+    _z_msg_ext_clear_zbuf(&d_u);
+    _z_msg_ext_clear(&ext);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_msg_ext_t gen_message_extension(void) {
+    _z_msg_ext_t p_zm;
+
+    uint8_t mids[] = {_Z_MOCK_EXTENSION_UNIT, _Z_MOCK_EXTENSION_ZINT, _Z_MOCK_EXTENSION_ZBUF};
+    uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
+
+    switch (mids[i]) {
+        case _Z_MOCK_EXTENSION_UNIT:
+            p_zm = gen_unit_extension();
+            break;
+        case _Z_MOCK_EXTENSION_ZINT:
+            p_zm = gen_zint_extension();
+            break;
+        case _Z_MOCK_EXTENSION_ZBUF:
+            p_zm = gen_zbuf_extension();
+            break;
+        default:
+            assert(0);
+            break;
+    }
+
+    return p_zm;
+}
+
+void assert_eq_message_extension(_z_msg_ext_t *left, _z_msg_ext_t *right) {
+    printf("   Header (%x:%x)", left->_header, right->_header);
+    assert(left->_header == right->_header);
+    printf("\n");
+
+    switch (_Z_EXT_ID(left->_header)) {
+        case _Z_MOCK_EXTENSION_UNIT:
+            assert_eq_unit_extension(&left->_body._unit, &left->_body._unit);
+            break;
+        case _Z_MOCK_EXTENSION_ZINT:
+            assert_eq_zint_extension(&left->_body._zint, &left->_body._zint);
+            break;
+        case _Z_MOCK_EXTENSION_ZBUF:
+            assert_eq_zbuf_extension(&left->_body._zbuf, &left->_body._zbuf);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
+void message_extension(void) {
+    printf("\n>> Message extension\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_msg_ext_t e_me = gen_message_extension();
+
+    printf(" - ");
+    switch (_Z_EXT_ID(e_me._header)) {
+        case _Z_MOCK_EXTENSION_UNIT:
+            printf("UNIT extension");
+            break;
+        case _Z_MOCK_EXTENSION_ZINT:
+            printf("ZINT extension");
+            break;
+        case _Z_MOCK_EXTENSION_ZBUF:
+            printf("ZBUF extension");
+            break;
+        default:
+            assert(0);
+            break;
+    }
+    printf("\n");
+
+    // Encode
+    int8_t res = _z_msg_ext_encode(&wbf, &e_me);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_msg_ext_t d_me;
+    res = _z_msg_ext_decode(&d_me, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_message_extension(&e_me, &d_me);
+
+    // Free
+    _z_msg_ext_clear(&e_me);
+    _z_msg_ext_clear(&d_me);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 /*=============================*/
@@ -2214,9 +2433,8 @@ _z_transport_message_t gen_frame_message(_Bool can_be_fragment) {
         _z_zint_t num = (gen_zint() % 4) + 1;
         payload._messages = _z_vec_make(num);
         for (_z_zint_t i = 0; i < num; i++) {
-            _z_zenoh_message_t e_zm = gen_zenoh_message();
             _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
-            *p_zm = e_zm;
+            *p_zm = gen_zenoh_message();
             _z_vec_append(&payload._messages, p_zm);
         }
     }
@@ -2324,22 +2542,29 @@ _z_transport_message_t gen_transport_message(_Bool can_be_fragment) {
             break;
     }
 
-    if (gen_bool())
+    if (gen_bool()) {
         e_tm._attachment = gen_attachment();
-    else
+    } else {
         e_tm._attachment = NULL;
+    }
 
     return e_tm;
 }
 
 void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_message_t *right) {
+    // FIXME: This is here to set the extensions flags that is only known at encoding time
+    if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
+        left->_header |= 0x80;
+    }
+
     // Test message decorators
     if (left->_attachment && right->_attachment) {
         printf("   ");
         assert_eq_attachment(left->_attachment, right->_attachment);
         printf("\n");
-    } else
+    } else {
         assert(left->_attachment == right->_attachment);
+    }
 
     // Test message
     printf("   Header (%x:%x)", left->_header, right->_header);
@@ -2383,6 +2608,15 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
         default:
             assert(0);
             break;
+    }
+
+    size_t left_n_ext = _z_msg_ext_vec_len(&left->_extensions);
+    size_t right_n_ext = _z_msg_ext_vec_len(&right->_extensions);
+    printf("   # of extensions (%zu:%zu)", left_n_ext, right_n_ext);
+    assert(left_n_ext == right_n_ext);
+    for (size_t i = 0; i < left_n_ext; i++) {
+        assert_eq_message_extension(_z_msg_ext_vec_get(&left->_extensions, i),
+                                    _z_msg_ext_vec_get(&right->_extensions, i));
     }
 }
 
@@ -2639,6 +2873,13 @@ int main(void) {
 
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
+
+        // Message extensions
+        unit_extension();
+        zint_extension();
+        zbuf_extension();
+        message_extension();
+
         // Message fields
         payload_field();
         timestamp_field();

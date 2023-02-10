@@ -23,6 +23,7 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/ext.h"
 
 #define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
 
@@ -997,9 +998,11 @@ typedef union {
     _z_t_msg_ping_pong_t _ping_pong;
     _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
+
 typedef struct {
     _z_transport_body_t _body;
     _z_attachment_t *_attachment;
+    _z_msg_ext_vec_t _extensions;
     uint8_t _header;
 } _z_transport_message_t;
 void _z_t_msg_clear(_z_transport_message_t *msg);
