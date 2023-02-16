@@ -196,14 +196,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             if (entry == NULL) {
                 break;
             }
-
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_I) == true) {
-                // Check if the Peer ID matches the remote address in the knonw peer list
-                if ((entry->_remote_zid.len != t_msg->_body._close._zid.len) ||
-                    (memcmp(entry->_remote_zid.start, t_msg->_body._close._zid.start, entry->_remote_zid.len) != 0)) {
-                    break;
-                }
-            }
             ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
 
             break;

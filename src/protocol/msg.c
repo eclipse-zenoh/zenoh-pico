@@ -668,18 +668,13 @@ void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
 void _z_t_msg_clear_open(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); }
 
 /*------------------ Close Message ------------------*/
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only) {
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_CLOSE;
 
     msg._body._close._reason = reason;
-    msg._body._close._zid = zid;
-
-    msg._header = _Z_MID_CLOSE;
-    if (_z_bytes_is_empty(&zid) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    }
-    if (link_only == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_K);
+    if (link_only == false) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_CLOSE_S);
     }
 
     msg._attachment = NULL;
@@ -688,12 +683,9 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool
     return msg;
 }
 
-void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) {
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
-    clone->_reason = msg->_reason;
-}
+void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) { clone->_reason = msg->_reason; }
 
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { _z_bytes_clear(&msg->_zid); }
+void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
 
 /*------------------ Sync Message ------------------*/
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count) {

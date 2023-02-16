@@ -98,6 +98,12 @@
 #define _Z_FLAG_OPEN_T 0x40  // 1 << 6
 #define _Z_FLAG_OPEN_Z 0x80  // 1 << 7
 
+// Close message flags:
+//      S Session Close   if S==1 Session close or S==0 Link close
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_CLOSE_S 0x20  // 1 << 5
+#define _Z_FLAG_CLOSE_Z 0x80  // 1 << 7
+
 /* Transport message flags */
 #define _Z_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
 #define _Z_FLAG_T_C 0x40  // 1 << 6 | Count            if C==1 then number of unacknowledged messages is present
@@ -888,21 +894,21 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 //     1) in response to an OPEN message which is not accepted;
 //     2) at any time to arbitrarly close the session with the corresponding peer.
 //
+// Flags:
+// - S: Session Close  if S==1 Session close or S==0 Link close
+// - X: Reserved
+// - Z: Extensions     if Z==1 then zenoh extensions will follow.
+//
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|K|I|  CLOSE  |
-// +-+-+-+-+-------+
-// ~   zenoh_id    ~  if I==1 -- PID of the target peer.
+// |Z|X|S|  CLOSE  |
+// +-+-+-+---------+
+// |    Reason     |
 // +---------------+
-// |     reason    |
+// ~  [CloseExts]  ~ if Flag(Z)==1
 // +---------------+
 //
-// - if K==0 then close the whole zenoh session.
-// - if K==1 then close the transport link the CLOSE message was sent on (e.g., TCP socket) but
-//           keep the whole session open. NOTE: the session will be automatically closed when
-//           the session's lease period expires.
 typedef struct {
-    _z_bytes_t _zid;
     uint8_t _reason;
 } _z_t_msg_close_t;
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
@@ -1083,7 +1089,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zi
 _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only);
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
 _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);

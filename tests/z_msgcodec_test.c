@@ -2207,18 +2207,13 @@ void open_message(void) {
 /*------------------ Close Message ------------------*/
 _z_transport_message_t gen_close_message(void) {
     uint8_t reason = gen_uint8();
-    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
     _Bool link_only = gen_bool();
 
-    return _z_t_msg_make_close(reason, zid, link_only);
+    return _z_t_msg_make_close(reason, link_only);
 }
 
 void assert_eq_close_message(_z_t_msg_close_t *left, _z_t_msg_close_t *right, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        printf("   ");
-        assert_eq_uint8_array(&left->_zid, &right->_zid);
-        printf("\n");
-    }
+    (void)(header);
 
     printf("   Reason (%u:%u)", left->_reason, right->_reason);
     assert(left->_reason == right->_reason);

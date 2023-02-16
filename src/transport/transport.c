@@ -28,9 +28,7 @@
 int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t zid = _z_bytes_wrap(((_z_session_t *)ztu->_session)->_local_zid.start,
-                                   ((_z_session_t *)ztu->_session)->_local_zid.len);
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, zid, link_only);
+    _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
 
     ret = _z_unicast_send_t_msg(ztu, &cm);
     _z_t_msg_clear(&cm);
@@ -43,9 +41,7 @@ int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool 
 int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t zid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_local_zid.start,
-                                   ((_z_session_t *)ztm->_session)->_local_zid.len);
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, zid, link_only);
+    _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
 
     ret = _z_multicast_send_t_msg(ztm, &cm);
     _z_t_msg_clear(&cm);
