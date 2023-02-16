@@ -624,14 +624,14 @@ void _z_t_msg_clear_init(_z_t_msg_init_t *msg) {
 /*------------------ Open Message ------------------*/
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_OPEN;
 
     msg._body._open._lease = lease;
     msg._body._open._initial_sn = initial_sn;
     msg._body._open._cookie = cookie;
 
-    msg._header = _Z_MID_OPEN;
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_T);
     }
 
     msg._attachment = NULL;
@@ -642,15 +642,15 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
 
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_OPEN;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_A);
 
     msg._body._open._lease = lease;
     msg._body._open._initial_sn = initial_sn;
     _z_bytes_reset(&msg._body._open._cookie);
 
-    msg._header = _Z_MID_OPEN;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T2);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_T);
     }
 
     msg._attachment = NULL;

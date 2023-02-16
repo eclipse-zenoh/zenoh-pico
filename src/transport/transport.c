@@ -319,7 +319,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                         ret = _z_link_recv_t_msg(&oam, zl);
                         if (ret == _Z_RES_OK) {
                             if ((_Z_MID(oam._header) == _Z_MID_OPEN) &&
-                                (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_A) == true)) {
+                                (_Z_HAS_FLAG(oam._header, _Z_FLAG_OPEN_A) == true)) {
                                 _Z_INFO("Received Z_OPEN(Ack)\n");
                                 param->_lease = oam._body._open._lease;  // The session lease
 

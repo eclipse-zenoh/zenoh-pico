@@ -2167,7 +2167,7 @@ void assert_eq_open_message(_z_t_msg_open_t *left, _z_t_msg_open_t *right, uint8
     assert(left->_initial_sn == right->_initial_sn);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
         printf("   ");
         assert_eq_uint8_array(&left->_cookie, &right->_cookie);
         printf("\n");

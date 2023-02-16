@@ -90,6 +90,14 @@
 #define _Z_FLAG_INIT_S 0x40  // 1 << 6
 #define _Z_FLAG_INIT_Z 0x80  // 1 << 7
 
+// Open message flags:
+//      A Ack              if A==1 then the message is an acknowledgment (aka OpenAck), otherwise OpenSyn
+//      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_OPEN_A 0x20  // 1 << 5
+#define _Z_FLAG_OPEN_T 0x40  // 1 << 6
+#define _Z_FLAG_OPEN_Z 0x80  // 1 << 7
+
 /* Transport message flags */
 #define _Z_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
 #define _Z_FLAG_T_C 0x40  // 1 << 6 | Count            if C==1 then number of unacknowledged messages is present
@@ -840,19 +848,27 @@ void _z_t_msg_clear_init(_z_t_msg_init_t *msg);
 //
 // The OPEN message is sent on a link to finally open an initialized session with the peer.
 //
+// Flags:
+// - A Ack           if A==1 then the message is an acknowledgment (aka OpenAck), otherwise OpenSyn
+// - T Lease period  if T==1 then the lease period is in seconds else in milliseconds
+// - Z Extensions    if Z==1 then Zenoh extensions are present
+//
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|T|A|   OPEN  |
-// +-+-+-+-+-------+
-// ~ lease_period  ~ -- Lease period of the sender of the OPEN message(*)
+// |Z|T|A|   OPEN  |
+// +-+-+-+---------+
+// %     lease     % -- Lease period of the sender of the OPEN message
 // +---------------+
-// ~  initial_sn   ~ -- Initial SN proposed by the sender of the OPEN(**)
+// %  initial_sn   % -- Initial SN proposed by the sender of the OPEN(*)
 // +---------------+
-// ~    cookie     ~ if A==0(*)
+// ~    <u8;z16>   ~ if Flag(A)==0 (**) -- Cookie
+// +---------------+
+// ~   [OpenExts]  ~ if Flag(Z)==1
 // +---------------+
 //
-// (*) if T==1 then the lease period is expressed in seconds, otherwise in milliseconds
-// (**) the cookie MUST be the same received in the INIT message with A==1 from the corresponding peer
+// (*)     The initial sequence number MUST be compatible with the sequence number resolution agreed in the
+//         [`super::InitSyn`]-[`super::InitAck`] message exchange
+// (**)    The cookie MUST be the same received in the [`super::InitAck`]from the corresponding zenoh node
 //
 typedef struct {
     _z_zint_t _lease;

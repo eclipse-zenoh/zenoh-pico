@@ -1224,14 +1224,15 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_OPEN\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_T) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
     _Z_EC(_z_zint_encode(wbf, msg->_initial_sn))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
     }
 
@@ -1243,11 +1244,13 @@ int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint_decode(&msg->_lease, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T2) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_T) == true) {
         msg->_lease = msg->_lease * 1000;
     }
+
     ret |= _z_zint_decode(&msg->_initial_sn, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
     } else {
         msg->_cookie = _z_bytes_empty();
