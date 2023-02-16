@@ -1015,7 +1015,7 @@ int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
 
-    uint8_t cbyte;
+    uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_what = cbyte & 0x07;
     if (_Z_HAS_FLAG(cbyte, _Z_FLAG_SCOUT_I) == true) {
@@ -1058,7 +1058,7 @@ int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
 
-    uint8_t cbyte;
+    uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
     msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
