@@ -2250,107 +2250,6 @@ void close_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-/*------------------ Sync Message ------------------*/
-_z_transport_message_t gen_sync_message(void) {
-    _z_zint_t sn = gen_zint();
-    _Bool is_reliable = gen_bool();
-    _z_zint_t count = gen_zint();
-
-    return _z_t_msg_make_sync(sn, is_reliable, count);
-}
-
-void assert_eq_sync_message(_z_t_msg_sync_t *left, _z_t_msg_sync_t *right, uint8_t header) {
-    printf("   SN (%zu:%zu)", left->_sn, right->_sn);
-    assert(left->_sn == right->_sn);
-    printf("\n");
-
-    if ((_Z_HAS_FLAG(header, _Z_FLAG_T_R) == true) && (_Z_HAS_FLAG(header, _Z_FLAG_T_C) == true)) {
-        printf("   Count (%zu:%zu)", left->_count, right->_count);
-        assert(left->_count == right->_count);
-        printf("\n");
-    }
-}
-
-void sync_message(void) {
-    printf("\n>> Sync message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_transport_message_t t_msg = gen_sync_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_SYNC);
-
-    _z_t_msg_sync_t e_sy = t_msg._body._sync;
-
-    // Encode
-    int8_t res = _z_sync_encode(&wbf, t_msg._header, &e_sy);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_t_msg_sync_t d_sy;
-    res = _z_sync_decode(&d_sy, &zbf, t_msg._header);
-    assert(res == _Z_RES_OK);
-
-    assert_eq_sync_message(&e_sy, &d_sy, t_msg._header);
-
-    // Free
-    _z_t_msg_clear_sync(&d_sy);
-    _z_t_msg_clear(&t_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
-/*------------------ AckNack Message ------------------*/
-_z_transport_message_t gen_ack_nack_message(void) {
-    _z_zint_t sn = gen_zint();
-    _z_zint_t mask = gen_bool() ? gen_zint() : 0;
-
-    return _z_t_msg_make_ack_nack(sn, mask);
-}
-
-void assert_eq_ack_nack_message(_z_t_msg_ack_nack_t *left, _z_t_msg_ack_nack_t *right, uint8_t header) {
-    printf("   SN (%zu:%zu)", left->_sn, right->_sn);
-    assert(left->_sn == right->_sn);
-    printf("\n");
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M) == true) {
-        printf("   Mask (%zu:%zu)", left->_mask, right->_mask);
-        assert(left->_mask == right->_mask);
-        printf("\n");
-    }
-}
-
-void ack_nack_message(void) {
-    printf("\n>> AckNack message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_transport_message_t t_msg = gen_ack_nack_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_ACK_NACK);
-
-    _z_t_msg_ack_nack_t e_an = t_msg._body._ack_nack;
-
-    // Encode
-    int8_t res = _z_ack_nack_encode(&wbf, t_msg._header, &e_an);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_t_msg_ack_nack_t d_an;
-    res = _z_ack_nack_decode(&d_an, &zbf, t_msg._header);
-    assert(res == _Z_RES_OK);
-
-    assert_eq_ack_nack_message(&e_an, &d_an, t_msg._header);
-
-    // Free
-    _z_t_msg_clear_ack_nack(&d_an);
-    _z_t_msg_clear(&t_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 /*------------------ KeepAlive Message ------------------*/
 _z_transport_message_t gen_keep_alive_message(void) { return _z_t_msg_make_keep_alive(); }
 
@@ -2384,51 +2283,6 @@ void keep_alive_message(void) {
 
     // Free
     _z_t_msg_clear_keep_alive(&d_ka);
-    _z_t_msg_clear(&t_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
-/*------------------ PingPong Message ------------------*/
-_z_transport_message_t gen_ping_pong_message(void) {
-    _z_zint_t hash = gen_zint();
-    if (gen_bool())
-        return _z_t_msg_make_ping(hash);
-    else
-        return _z_t_msg_make_pong(hash);
-}
-
-void assert_eq_ping_pong_message(_z_t_msg_ping_pong_t *left, _z_t_msg_ping_pong_t *right) {
-    printf("   Hash (%zu:%zu)", left->_hash, right->_hash);
-    assert(left->_hash == right->_hash);
-    printf("\n");
-}
-
-void ping_pong_message(void) {
-    printf("\n>> PingPong message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_transport_message_t t_msg = gen_ping_pong_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_PING_PONG);
-
-    _z_t_msg_ping_pong_t e_pp = t_msg._body._ping_pong;
-
-    // Encode
-    int8_t res = _z_ping_pong_encode(&wbf, &e_pp);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_t_msg_ping_pong_t d_pp;
-    res = _z_ping_pong_decode(&d_pp, &zbf);
-    assert(res == _Z_RES_OK);
-
-    assert_eq_ping_pong_message(&e_pp, &d_pp);
-
-    // Free
-    _z_t_msg_clear_ping_pong(&d_pp);
     _z_t_msg_clear(&t_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -2502,12 +2356,10 @@ void frame_message(void) {
 _z_transport_message_t gen_transport_message(void) {
     _z_transport_message_t e_tm;
 
-    // uint8_t mids[] = {
-    //     _Z_MID_SCOUT, _Z_MID_HELLO,    _Z_MID_JOIN,       _Z_MID_INIT,      _Z_MID_OPEN,  _Z_MID_CLOSE,
-    //     _Z_MID_SYNC,  _Z_MID_ACK_NACK, _Z_MID_KEEP_ALIVE, _Z_MID_PING_PONG, _Z_MID_FRAME,
-    // };
-    // TODO[protocol]: To be removed
-    uint8_t mids[] = {_Z_MID_SCOUT};
+    uint8_t mids[] = {
+        _Z_MID_SCOUT, _Z_MID_HELLO, _Z_MID_JOIN,       _Z_MID_INIT,
+        _Z_MID_OPEN,  _Z_MID_CLOSE, _Z_MID_KEEP_ALIVE, _Z_MID_FRAME,
+    };
 
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
     switch (mids[i]) {
@@ -2529,17 +2381,8 @@ _z_transport_message_t gen_transport_message(void) {
         case _Z_MID_CLOSE:
             e_tm = gen_close_message();
             break;
-        case _Z_MID_SYNC:
-            e_tm = gen_sync_message();
-            break;
-        case _Z_MID_ACK_NACK:
-            e_tm = gen_ack_nack_message();
-            break;
         case _Z_MID_KEEP_ALIVE:
             e_tm = gen_keep_alive_message();
-            break;
-        case _Z_MID_PING_PONG:
-            e_tm = gen_ping_pong_message();
             break;
         case _Z_MID_FRAME:
             e_tm = gen_frame_message();
@@ -2597,17 +2440,8 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
         case _Z_MID_CLOSE:
             assert_eq_close_message(&left->_body._close, &right->_body._close, left->_header);
             break;
-        case _Z_MID_SYNC:
-            assert_eq_sync_message(&left->_body._sync, &right->_body._sync, left->_header);
-            break;
-        case _Z_MID_ACK_NACK:
-            assert_eq_ack_nack_message(&left->_body._ack_nack, &right->_body._ack_nack, left->_header);
-            break;
         case _Z_MID_KEEP_ALIVE:
             assert_eq_keep_alive_message(&left->_body._keep_alive, &right->_body._keep_alive, left->_header);
-            break;
-        case _Z_MID_PING_PONG:
-            assert_eq_ping_pong_message(&left->_body._ping_pong, &right->_body._ping_pong);
             break;
         case _Z_MID_FRAME:
             assert_eq_frame_message(&left->_body._frame, &right->_body._frame, left->_header);
@@ -2922,10 +2756,7 @@ int main(void) {
         init_message();
         open_message();
         close_message();
-        sync_message();
-        ack_nack_message();
         keep_alive_message();
-        ping_pong_message();
         frame_message();
         transport_message();
         batch();

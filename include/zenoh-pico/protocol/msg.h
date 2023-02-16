@@ -919,60 +919,6 @@ typedef struct {
 } _z_t_msg_close_t;
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
 
-/*------------------ Sync Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-// The SYNC message allows to signal the corresponding peer the sequence number of the next message
-// to be transmitted on the reliable or best-effort channel. In the case of reliable channel, the
-// peer can optionally include the number of unacknowledged messages. A SYNC sent on the reliable
-// channel triggers the transmission of an ACKNACK message.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|C|R|  SYNC   |
-// +-+-+-+-+-------+
-// ~      sn       ~ -- Sequence number of the next message to be transmitted on this channel.
-// +---------------+
-// ~     count     ~ if R==1 && C==1 -- Number of unacknowledged messages.
-// +---------------+
-//
-// - if R==1 then the SYNC concerns the reliable channel, otherwise the best-effort channel.
-//
-typedef struct {
-    _z_zint_t _sn;
-    _z_zint_t _count;
-} _z_t_msg_sync_t;
-void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg);
-
-/*------------------ AckNack Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-// The ACKNACK messages is used on the reliable channel to signal the corresponding peer the last
-// sequence number received and optionally a bitmask of the non-received messages.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|M| ACKNACK |
-// +-+-+-+-+-------+
-// ~      sn       ~
-// +---------------+
-// ~     mask      ~ if M==1
-// +---------------+
-//
-typedef struct {
-    _z_zint_t _sn;
-    _z_zint_t _mask;
-} _z_t_msg_ack_nack_t;
-void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg);
-
 /*------------------ Keep Alive Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
@@ -999,27 +945,6 @@ typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_t_msg_keep_alive_t;
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
-
-/*------------------ PingPong Messages ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|P|  P_PONG |
-// +-+-+-+-+-------+
-// ~     hash      ~
-// +---------------+
-//
-// - if P==1 then the message is Ping, otherwise is Pong.
-//
-typedef struct {
-    _z_zint_t _hash;
-} _z_t_msg_ping_pong_t;
-void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -1060,10 +985,7 @@ typedef union {
     _z_t_msg_init_t _init;
     _z_t_msg_open_t _open;
     _z_t_msg_close_t _close;
-    _z_t_msg_sync_t _sync;
-    _z_t_msg_ack_nack_t _ack_nack;
     _z_t_msg_keep_alive_t _keep_alive;
-    _z_t_msg_ping_pong_t _ping_pong;
     _z_t_msg_frame_t _frame;
 } _z_transport_body_t;
 
@@ -1085,11 +1007,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zi
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);
-_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
-_z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
-_z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
-_z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable);
 
@@ -1101,10 +1019,7 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg);
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg);
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg);
 void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg);
-void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *msg);
-void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *msg);
 void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg);
-void _z_t_msg_copy_ping_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *msg);
 void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

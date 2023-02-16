@@ -1288,70 +1288,6 @@ int8_t _z_close_decode(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     return _z_close_decode_na(msg, zbf, header);
 }
 
-/*------------------ Sync Message ------------------*/
-int8_t _z_sync_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_sync_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_SYNC\n");
-
-    _Z_EC(_z_zint_encode(wbf, msg->_sn))
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_C) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_count))
-    }
-
-    return ret;
-}
-
-int8_t _z_sync_decode_na(_z_t_msg_sync_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_SYNC\n");
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_zint_decode(&msg->_sn, zbf);
-    if ((_Z_HAS_FLAG(header, _Z_FLAG_T_R) == true) && (_Z_HAS_FLAG(header, _Z_FLAG_T_C) == true)) {
-        ret |= _z_zint_decode(&msg->_count, zbf);
-    } else {
-        msg->_count = 0;
-    }
-
-    return ret;
-}
-
-int8_t _z_sync_decode(_z_t_msg_sync_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_sync_decode_na(msg, zbf, header);
-}
-
-/*------------------ AckNack Message ------------------*/
-int8_t _z_ack_nack_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_ack_nack_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_ACK_NACK\n");
-
-    _Z_EC(_z_zint_encode(wbf, msg->_sn))
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_mask))
-    }
-
-    return ret;
-}
-
-int8_t _z_ack_nack_decode_na(_z_t_msg_ack_nack_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_ACK_NACK\n");
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_zint_decode(&msg->_sn, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_M) == true) {
-        ret |= _z_zint_decode(&msg->_mask, zbf);
-    } else {
-        msg->_mask = 0;
-    }
-
-    return ret;
-}
-
-int8_t _z_ack_nack_decode(_z_t_msg_ack_nack_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_ack_nack_decode_na(msg, zbf, header);
-}
-
 /*------------------ Keep Alive Message ------------------*/
 int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_alive_t *msg) {
     (void)(wbf);
@@ -1378,27 +1314,6 @@ int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8
 int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     return _z_keep_alive_decode_na(msg, zbf, header);
 }
-
-/*------------------ PingPong Messages ------------------*/
-int8_t _z_ping_pong_encode(_z_wbuf_t *wbf, const _z_t_msg_ping_pong_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_PING_PONG\n");
-
-    ret |= _z_zint_encode(wbf, msg->_hash);
-
-    return ret;
-}
-
-int8_t _z_ping_pong_decode_na(_z_t_msg_ping_pong_t *msg, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _Z_MID_PING_PONG\n");
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_zint_decode(&msg->_hash, zbf);
-
-    return ret;
-}
-
-int8_t _z_ping_pong_decode(_z_t_msg_ping_pong_t *msg, _z_zbuf_t *zbf) { return _z_ping_pong_decode_na(msg, zbf); }
 
 /*------------------ Frame Message ------------------*/
 int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
@@ -1506,18 +1421,6 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
         } break;
 
-        case _Z_MID_SYNC: {
-            ret |= _z_sync_encode(wbf, msg->_header, &msg->_body._sync);
-        } break;
-
-        case _Z_MID_ACK_NACK: {
-            ret |= _z_ack_nack_encode(wbf, msg->_header, &msg->_body._ack_nack);
-        } break;
-
-        case _Z_MID_PING_PONG: {
-            ret |= _z_ping_pong_encode(wbf, &msg->_body._ping_pong);
-        } break;
-
         default: {
             _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
@@ -1589,21 +1492,6 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
 
                 case _Z_MID_CLOSE: {
                     ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_SYNC: {
-                    ret |= _z_sync_decode(&msg->_body._sync, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_ACK_NACK: {
-                    ret |= _z_ack_nack_decode(&msg->_body._ack_nack, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_PING_PONG: {
-                    ret |= _z_ping_pong_decode(&msg->_body._ping_pong, zbf);
                     is_last = true;
                 } break;
 

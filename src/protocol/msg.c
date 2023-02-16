@@ -687,65 +687,6 @@ void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) { clone
 
 void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
 
-/*------------------ Sync Message ------------------*/
-_z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count) {
-    _z_transport_message_t msg;
-
-    msg._body._sync._sn = sn;
-    msg._body._sync._count = count;
-
-    msg._header = _Z_MID_SYNC;
-    if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
-        if (count != 0) {
-            _Z_SET_FLAG(msg._header, _Z_FLAG_T_C);
-        }
-    }
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
-    return msg;
-}
-
-void _z_t_msg_copy_sync(_z_t_msg_sync_t *clone, _z_t_msg_sync_t *msg) {
-    clone->_sn = msg->_sn;
-    clone->_count = msg->_count;
-}
-
-void _z_t_msg_clear_sync(_z_t_msg_sync_t *msg) {
-    // NOTE: sync does not involve any heap allocation
-    (void)(msg);
-}
-
-/*------------------ AckNack Message ------------------*/
-_z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask) {
-    _z_transport_message_t msg;
-
-    msg._body._ack_nack._sn = sn;
-    msg._body._ack_nack._mask = mask;
-
-    msg._header = _Z_MID_ACK_NACK;
-    if (mask != 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_M);
-    }
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
-    return msg;
-}
-
-void _z_t_msg_copy_ack_nack(_z_t_msg_ack_nack_t *clone, _z_t_msg_ack_nack_t *msg) {
-    clone->_sn = msg->_sn;
-    clone->_mask = msg->_mask;
-}
-
-void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg) {
-    // NOTE: ack_nack does not involve any heap allocation
-    (void)(msg);
-}
-
 /*------------------ Keep Alive Message ------------------*/
 _z_transport_message_t _z_t_msg_make_keep_alive(void) {
     _z_transport_message_t msg;
@@ -763,41 +704,6 @@ void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_
 }
 
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
-
-/*------------------ PingPong Messages ------------------*/
-_z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash) {
-    _z_transport_message_t msg;
-
-    msg._body._ping_pong._hash = hash;
-
-    msg._header = _Z_MID_PING_PONG;
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
-    return msg;
-}
-
-_z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash) {
-    _z_transport_message_t msg;
-
-    msg._body._ping_pong._hash = hash;
-
-    msg._header = _Z_MID_PING_PONG;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_T_P);
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
-    return msg;
-}
-
-void _z_t_msg_copy_ping_pong(_z_t_msg_ping_pong_t *clone, _z_t_msg_ping_pong_t *msg) { clone->_hash = msg->_hash; }
-
-void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg) {
-    // NOTE: ping_pong does not involve any heap allocation
-    (void)(msg);
-}
 
 /*------------------ Frame Message ------------------*/
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable) {
@@ -865,20 +771,8 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
             _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
         } break;
 
-        case _Z_MID_SYNC: {
-            _z_t_msg_copy_sync(&clone->_body._sync, &msg->_body._sync);
-        } break;
-
-        case _Z_MID_ACK_NACK: {
-            _z_t_msg_copy_ack_nack(&clone->_body._ack_nack, &msg->_body._ack_nack);
-        } break;
-
         case _Z_MID_KEEP_ALIVE: {
             _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, &msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_PING_PONG: {
-            _z_t_msg_copy_ping_pong(&clone->_body._ping_pong, &msg->_body._ping_pong);
         } break;
 
         case _Z_MID_FRAME: {
@@ -923,20 +817,8 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
             _z_t_msg_clear_close(&msg->_body._close);
         } break;
 
-        case _Z_MID_SYNC: {
-            _z_t_msg_clear_sync(&msg->_body._sync);
-        } break;
-
-        case _Z_MID_ACK_NACK: {
-            _z_t_msg_clear_ack_nack(&msg->_body._ack_nack);
-        } break;
-
         case _Z_MID_KEEP_ALIVE: {
             _z_t_msg_clear_keep_alive(&msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_PING_PONG: {
-            _z_t_msg_clear_ping_pong(&msg->_body._ping_pong);
         } break;
 
         case _Z_MID_FRAME: {
