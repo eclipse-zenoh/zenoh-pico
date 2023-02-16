@@ -77,9 +77,10 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                                 hello->whatami = t_msg._body._hello._whatami;
                                 _z_bytes_copy(&hello->zid, &t_msg._body._hello._zid);
 
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
-                                    hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
-                                    for (size_t i = 0; i < hello->locators._len; i++) {
+                                size_t n_loc = _z_locator_array_len(&t_msg._body._hello._locators);
+                                if (n_loc > 0) {
+                                    hello->locators = _z_str_array_make(n_loc);
+                                    for (size_t i = 0; i < n_loc; i++) {
                                         hello->locators._val[i] =
                                             _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
                                     }

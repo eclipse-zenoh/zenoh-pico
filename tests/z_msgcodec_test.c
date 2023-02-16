@@ -1903,7 +1903,7 @@ void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, ui
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
         printf("   ");
         assert_eq_locator_array(&left->_locators, &right->_locators);
         printf("\n");

@@ -479,14 +479,8 @@ _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, 
     msg._body._hello._zid = zid;
     msg._body._hello._locators = locators;
 
-    if (whatami != Z_WHATAMI_ROUTER) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
-    }
-    if (_z_bytes_is_empty(&zid) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    }
     if (_z_locator_array_is_empty(&locators) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_L);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_HELLO_L);
     }
 
     msg._attachment = NULL;
