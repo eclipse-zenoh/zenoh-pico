@@ -22,6 +22,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/math.h"
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
@@ -92,9 +93,9 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
-        uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE_TX) ? zl->_mtu : Z_BATCH_SIZE_TX;
+        uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE) ? zl->_mtu : Z_BATCH_SIZE;
         zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, false);
-        zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
+        zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
         // Initialize the defragmentation buffers
         size_t dbuf_size = 0;
@@ -108,7 +109,7 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
-            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_SIZE_RX) ||
+            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_SIZE) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -127,8 +128,8 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._unicast._sn_resolution = param->_sn_resolution;
-        zt->_transport._unicast._sn_resolution_half = param->_sn_resolution / 2;
+        zt->_transport._unicast._seq_num_res = _z_max_value(param->_seq_num_res);
+        zt->_transport._unicast._seq_num_res_half = zt->_transport._unicast._seq_num_res / 2;
 
         // The initial SN at TX side
         zt->_transport._unicast._sn_tx_reliable = param->_initial_sn_tx;
@@ -191,13 +192,13 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
-        uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE_TX) ? zl->_mtu : Z_BATCH_SIZE_TX;
+        uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE) ? zl->_mtu : Z_BATCH_SIZE;
         zt->_transport._multicast._wbuf = _z_wbuf_make(mtu, false);
-        zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE_RX);
+        zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&zt->_transport._multicast._wbuf) != mtu) ||
-            (_z_zbuf_capacity(&zt->_transport._multicast._zbuf) != Z_BATCH_SIZE_RX)) {
+            (_z_zbuf_capacity(&zt->_transport._multicast._zbuf) != Z_BATCH_SIZE)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_MULTI_THREAD == 1
@@ -213,8 +214,8 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._multicast._sn_resolution = param->_sn_resolution;
-        zt->_transport._multicast._sn_resolution_half = param->_sn_resolution / 2;
+        zt->_transport._multicast._seq_num_res = param->_seq_num_res;
+        zt->_transport._multicast._seq_num_res_half = param->_seq_num_res / 2;
 
         // The initial SN at TX side
         zt->_transport._multicast._sn_tx_reliable = param->_initial_sn_tx;
@@ -249,15 +250,9 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                                         const _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
-    // Build the open message
-    uint8_t version = Z_PROTO_VERSION;
-    z_whatami_t whatami = Z_WHATAMI_CLIENT;
-    _z_zint_t sn_resolution = Z_SN_RESOLUTION;
-    _Bool is_qos = false;
-
     _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
-    _z_transport_message_t ism = _z_t_msg_make_init_syn(version, whatami, sn_resolution, zid, is_qos);
-    param->_sn_resolution = ism._body._init._sn_resolution;  // The announced sn resolution
+    _z_transport_message_t ism = _z_t_msg_make_init_syn(Z_WHATAMI_CLIENT, zid);
+    param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
 
     // Encode and send the message
     _Z_INFO("Sending Z_INIT(Syn)\n");
@@ -267,16 +262,34 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
         _z_transport_message_t iam;
         ret = _z_link_recv_t_msg(&iam, zl);
         if (ret == _Z_RES_OK) {
-            if ((_Z_MID(iam._header) == _Z_MID_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_A) == true)) {
+            if ((_Z_MID(iam._header) == _Z_MID_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_INIT_A) == true)) {
                 _Z_INFO("Received Z_INIT(Ack)\n");
 
                 // Handle SN resolution option if present
-                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_S) == true) {
-                    // The resolution in the InitAck must be less or equal than the resolution in the InitSyn,
+                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_INIT_S) == true) {
+                    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
                     // otherwise the InitAck message is considered invalid and it should be treated as a
                     // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                    if (iam._body._init._sn_resolution <= param->_sn_resolution) {
-                        param->_sn_resolution = iam._body._init._sn_resolution;
+                    if (iam._body._init._seq_num_res <= param->_seq_num_res) {
+                        param->_seq_num_res = iam._body._init._seq_num_res;
+                    } else {
+                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                    }
+
+                    if (iam._body._init._key_id_res <= param->_key_id_res) {
+                        param->_seq_num_res = iam._body._init._seq_num_res;
+                    } else {
+                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                    }
+
+                    if (iam._body._init._req_id_res <= param->_req_id_res) {
+                        param->_seq_num_res = iam._body._init._seq_num_res;
+                    } else {
+                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                    }
+
+                    if (iam._body._init._batch_size <= param->_batch_size) {
+                        param->_seq_num_res = iam._body._init._seq_num_res;
                     } else {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
@@ -285,7 +298,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                 if (ret == _Z_RES_OK) {
                     // The initial SN at TX side
                     z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
-                    param->_initial_sn_tx = param->_initial_sn_tx % param->_sn_resolution;
+                    param->_initial_sn_tx = param->_initial_sn_tx % param->_seq_num_res;
 
                     // Initialize the Local and Remote Peer IDs
                     _z_bytes_copy(&param->_remote_zid, &iam._body._init._zid);
@@ -313,7 +326,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                                 // The initial SN at RX side. Initialize the session as we had already received
                                 // a message with a SN equal to initial_sn - 1.
                                 param->_initial_sn_rx =
-                                    _z_sn_decrement(param->_sn_resolution, oam._body._open._initial_sn);
+                                    _z_sn_decrement(param->_seq_num_res, oam._body._open._initial_sn);
                             } else {
                                 ret = _Z_ERR_MESSAGE_UNEXPECTED;
                             }
@@ -369,7 +382,7 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
 
     param->_is_qos = false;  // FIXME: make transport aware of qos configuration
     param->_initial_sn_tx = 0;
-    param->_sn_resolution = Z_SN_RESOLUTION;
+    param->_seq_num_res = Z_SN_RESOLUTION;
 
     // Explicitly send a JOIN message upon startup
     // FIXME: make transport aware of qos configuration
@@ -380,7 +393,7 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
 
     _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
     _z_transport_message_t jsm =
-        _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param->_sn_resolution, zid, next_sns);
+        _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param->_seq_num_res, zid, next_sns);
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");

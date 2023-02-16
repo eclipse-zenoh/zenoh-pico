@@ -37,6 +37,9 @@ int8_t _z_uint_decode(unsigned int *u, _z_zbuf_t *buf);
 int8_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
 int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *buf);
 
+int8_t _z_uint16_encode(_z_wbuf_t *buf, uint16_t v);
+int8_t _z_uint16_decode(uint16_t *u8, _z_zbuf_t *buf);
+
 int8_t _z_uint64_encode(_z_wbuf_t *buf, uint64_t v);
 int8_t _z_uint64_decode(uint64_t *u8, _z_zbuf_t *buf);
 

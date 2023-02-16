@@ -114,7 +114,9 @@ void print_transport_message_type(uint8_t header) {
 /*=============================*/
 _Bool gen_bool(void) { return z_random_u8() % 2; }
 
-uint8_t gen_uint8(void) { return z_random_u8() % 255; }
+uint8_t gen_uint8(void) { return z_random_u8(); }
+
+uint8_t gen_uint16(void) { return z_random_u16(); }
 
 _z_zint_t gen_zint(void) {
     _z_zint_t ret = 0;
@@ -1944,7 +1946,7 @@ _z_transport_message_t gen_join_message(void) {
     z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
     _z_bytes_t zid = gen_bytes(16);
     _z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
-    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
+    _z_zint_t seq_num_res = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
 
     _z_conduit_sn_list_t next_sns;
     if (gen_bool()) {
@@ -1959,7 +1961,7 @@ _z_transport_message_t gen_join_message(void) {
         next_sns._val._plain._best_effort = gen_zint();
     }
 
-    return _z_t_msg_make_join(version, whatami, lease, sn_resolution, zid, next_sns);
+    return _z_t_msg_make_join(version, whatami, lease, seq_num_res, zid, next_sns);
 }
 
 void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8_t header) {
@@ -1980,8 +1982,8 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
-        printf("   SN Resolution (%zu:%zu)", left->_sn_resolution, right->_sn_resolution);
-        assert(left->_sn_resolution == right->_sn_resolution);
+        printf("   SN Resolution (%zu:%zu)", left->_seq_num_res, right->_seq_num_res);
+        assert(left->_seq_num_res == right->_seq_num_res);
         printf("\n");
     }
 
@@ -2045,23 +2047,39 @@ void join_message(void) {
 
 /*------------------ Init Message ------------------*/
 _z_transport_message_t gen_init_message(void) {
-    uint8_t version = gen_uint8();
-    z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
-    _z_zint_t sn_resolution = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
+    z_whatami_t whatami = (gen_uint8() % 2) + 1;
     _z_bytes_t zid = gen_bytes(16);
-    _Bool is_qos = gen_bool();
 
+    _z_transport_message_t t_msg;
     if (gen_bool()) {
-        return _z_t_msg_make_init_syn(version, whatami, sn_resolution, zid, is_qos);
+        t_msg = _z_t_msg_make_init_syn(whatami, zid);
     } else {
         _z_bytes_t cookie = gen_bytes(64);
-        return _z_t_msg_make_init_ack(version, whatami, sn_resolution, zid, cookie, is_qos);
+        t_msg = _z_t_msg_make_init_ack(whatami, zid, cookie);
     }
+
+    if (gen_bool()) {
+        t_msg._body._init._batch_size = gen_uint16();
+    }
+
+    if (gen_bool()) {
+        t_msg._body._init._seq_num_res = (gen_uint8() % 4) + 1;
+    }
+
+    if (gen_bool()) {
+        t_msg._body._init._key_id_res = (gen_uint8() % 4) + 1;
+    }
+
+    if (gen_bool()) {
+        t_msg._body._init._req_id_res = (gen_uint8() % 4) + 1;
+    }
+
+    return t_msg;
 }
 
 void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8_t header) {
-    printf("   Options (%zu:%zu)", left->_options, right->_options);
-    assert(left->_options == right->_options);
+    printf("   Version (%u:%u)", left->_version, right->_version);
+    assert(left->_version == right->_version);
     printf("\n");
 
     printf("   WhatAmI (%u:%u)", left->_whatami, right->_whatami);
@@ -2072,19 +2090,27 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
-        printf("   SN Resolution (%zu:%zu)", left->_sn_resolution, right->_sn_resolution);
-        assert(left->_sn_resolution == right->_sn_resolution);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+        printf("   SN Resolution (%hhu:%hhu)", left->_seq_num_res, right->_seq_num_res);
+        assert(left->_seq_num_res == right->_seq_num_res);
+        printf("\n");
+
+        printf("   Request ID Resolution (%hhu:%hhu)", left->_req_id_res, right->_req_id_res);
+        assert(left->_req_id_res == right->_req_id_res);
+        printf("\n");
+
+        printf("   KeyExpr ID Resolution (%hhu:%hhu)", left->_key_id_res, right->_key_id_res);
+        assert(left->_key_id_res == right->_key_id_res);
+        printf("\n");
+
+        printf("   Batch Size (%hu:%hu)", left->_batch_size, right->_batch_size);
+        assert(left->_batch_size == right->_batch_size);
         printf("\n");
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true) {
         printf("   ");
         assert_eq_uint8_array(&left->_cookie, &right->_cookie);
-        printf("\n");
-    } else {
-        printf("   Version (%u:%u)", left->_version, right->_version);
-        assert(left->_version == right->_version);
         printf("\n");
     }
 }
@@ -2497,10 +2523,12 @@ void frame_message(void) {
 _z_transport_message_t gen_transport_message(_Bool can_be_fragment) {
     _z_transport_message_t e_tm;
 
-    uint8_t mids[] = {
-        _Z_MID_SCOUT, _Z_MID_HELLO,    _Z_MID_JOIN,       _Z_MID_INIT,      _Z_MID_OPEN,  _Z_MID_CLOSE,
-        _Z_MID_SYNC,  _Z_MID_ACK_NACK, _Z_MID_KEEP_ALIVE, _Z_MID_PING_PONG, _Z_MID_FRAME,
-    };
+    // uint8_t mids[] = {
+    //     _Z_MID_SCOUT, _Z_MID_HELLO,    _Z_MID_JOIN,       _Z_MID_INIT,      _Z_MID_OPEN,  _Z_MID_CLOSE,
+    //     _Z_MID_SYNC,  _Z_MID_ACK_NACK, _Z_MID_KEEP_ALIVE, _Z_MID_PING_PONG, _Z_MID_FRAME,
+    // };
+    // TODO[protocol]: To be removed
+    uint8_t mids[] = {_Z_MID_SCOUT};
 
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
     switch (mids[i]) {
@@ -2801,8 +2829,8 @@ void fragmentation(void) {
     // Fragment the message
     _Bool is_reliable = gen_bool();
     // Fix the sn resoulution to 128 in such a way it requires only 1 byte for encoding
-    size_t sn_resolution = 128;
-    size_t sn = sn_resolution - 1;
+    size_t seq_num_res = 128;
+    size_t sn = seq_num_res - 1;
 
     printf(" - Message serialized\n");
     print_wbuf(&fbf);
@@ -2813,7 +2841,7 @@ void fragmentation(void) {
         z_wbuf_prepare(&wbf);
 
         // Get the fragment sequence number
-        sn = (sn + 1) % sn_resolution;
+        sn = (sn + 1) % seq_num_res;
 
         size_t written = _z_wbuf_len(&fbf);
         int8_t res = z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);

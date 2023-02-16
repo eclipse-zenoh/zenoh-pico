@@ -143,14 +143,14 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_remote_addr = _z_bytes_duplicate(addr);
                     entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
                     if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) {
-                        entry->_sn_resolution = t_msg->_body._join._sn_resolution;
+                        entry->_seq_num_res = t_msg->_body._join._seq_num_res;
                     } else {
-                        entry->_sn_resolution = Z_SN_RESOLUTION;
+                        entry->_seq_num_res = Z_SN_RESOLUTION;
                     }
-                    entry->_sn_resolution_half = entry->_sn_resolution / 2;
+                    entry->_seq_num_res_half = entry->_seq_num_res / 2;
 
                     _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
-                    _z_conduit_sn_list_decrement(entry->_sn_resolution, &entry->_sn_rx_sns);
+                    _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
 
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
                     entry->_dbuf_reliable = _z_wbuf_make(0, true);
@@ -175,14 +175,14 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                 // Check if the sn resolution remains the same
                 if ((_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) &&
-                    (entry->_sn_resolution != t_msg->_body._join._sn_resolution)) {
+                    (entry->_seq_num_res != t_msg->_body._join._seq_num_res)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     break;
                 }
 
                 // Update SNs
                 _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
-                _z_conduit_sn_list_decrement(entry->_sn_resolution, &entry->_sn_rx_sns);
+                _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
 
                 // Update lease time (set as ms during)
                 entry->_lease = t_msg->_body._join._lease;
@@ -245,7 +245,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
-                if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._reliable,
+                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._reliable,
                                    t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
@@ -254,7 +254,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     break;
                 }
             } else {
-                if (_z_sn_precedes(entry->_sn_resolution_half, entry->_sn_rx_sns._val._plain._best_effort,
+                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._best_effort,
                                    t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {

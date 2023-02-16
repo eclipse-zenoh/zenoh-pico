@@ -31,8 +31,8 @@ typedef struct {
     _z_bytes_t _remote_addr;
 
     // SN numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _seq_num_res;
+    _z_zint_t _seq_num_res_half;
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
 
@@ -69,8 +69,8 @@ typedef struct {
     _z_bytes_t _remote_zid;
 
     // SN numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _seq_num_res;
+    _z_zint_t _seq_num_res_half;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
     _z_zint_t _sn_rx_reliable;
@@ -110,8 +110,8 @@ typedef struct {
     _z_zbuf_t _zbuf;
 
     // SN initial numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _seq_num_res;
+    _z_zint_t _seq_num_res_half;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
     volatile _z_zint_t _lease;
@@ -146,7 +146,10 @@ _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
 typedef struct {
     _z_bytes_t _remote_zid;
-    _z_zint_t _sn_resolution;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
+    uint16_t _batch_size;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
     _z_zint_t _lease;
@@ -155,7 +158,7 @@ typedef struct {
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
-    _z_zint_t _sn_resolution;
+    _z_zint_t _seq_num_res;
     _z_zint_t _initial_sn_tx;
     _Bool _is_qos;
 } _z_transport_multicast_establish_param_t;

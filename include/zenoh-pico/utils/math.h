@@ -13,23 +13,15 @@
 //
 
 #include <stdint.h>
+#include <stdlib.h>
 
 /**
- * Converts an UUID in string format to a byte array.
+ * Compute the maximum representable value.
  *
  * Parameters:
- *   bytes: Pointer to an already allocated byte array of size (at least) 16 bytes.
- *   uuid_str: A valid UUID string.
- */
-void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str);
-
-/**
- * Converts a byte array representing an UUID to its string representation.
- *
- * Parameters:
- *   bytes: Pointer to the byte array containing the UUID.
+ *   n_bytes: Number of bytes used to represent the value.
  *
  * Returns:
- *   The `char *` of the UUID in string format.
+ *   The maximum representable value.
  */
-char *_z_bytes_to_uuid(const uint8_t *uuid);
+size_t _z_max_value(uint8_t n_bytes);

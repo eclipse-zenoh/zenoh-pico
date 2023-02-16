@@ -48,7 +48,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
             err = _z_link_send_wbuf(&zl, wbf);
             if (err == _Z_RES_OK) {
                 // The receiving buffer
-                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
+                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE);
 
                 z_time_t start = z_time_now();
                 while (z_time_elapsed_ms(&start) < period) {
@@ -122,12 +122,12 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator,
-                                const uint32_t timeout, const _Bool exit_on_first) {
+_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+                                const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE, false);
 
     // Create and encode the scout message
     _z_transport_message_t scout = _z_t_msg_make_scout(what, zid);

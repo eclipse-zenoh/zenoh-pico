@@ -456,10 +456,6 @@ _z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid) {
     msg._body._scout._what = what;
     msg._body._scout._zid = zid;
 
-    if (_z_bytes_is_empty(&zid) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    }
-
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
 
@@ -477,12 +473,12 @@ void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg) { _z_bytes_clear(&msg->_zid); }
 /*------------------ Hello Message ------------------*/
 _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_HELLO;
 
     msg._body._hello._whatami = whatami;
     msg._body._hello._zid = zid;
     msg._body._hello._locators = locators;
 
-    msg._header = _Z_MID_HELLO;
     if (whatami != Z_WHATAMI_ROUTER) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_W);
     }
@@ -511,8 +507,8 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg) {
 }
 
 /*------------------ Join Message ------------------*/
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
-                                          _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns) {
+_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease, _z_zint_t seq_num_res,
+                                          _z_bytes_t zid, _z_conduit_sn_list_t next_sns) {
     _z_transport_message_t msg;
 
     msg._body._join._options = 0;
@@ -522,7 +518,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, 
     msg._body._join._version = version;
     msg._body._join._whatami = whatami;
     msg._body._join._lease = lease;
-    msg._body._join._sn_resolution = sn_resolution;
+    msg._body._join._seq_num_res = seq_num_res;
     msg._body._join._next_sns = next_sns;
     msg._body._join._zid = zid;
 
@@ -530,7 +526,7 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, 
     if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_T1);
     }
-    if (sn_resolution != Z_SN_RESOLUTION) {
+    if (seq_num_res != Z_SN_RESOLUTION) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
     }
     if (msg._body._join._options != 0) {
@@ -548,7 +544,7 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_version = msg->_version;
     clone->_whatami = msg->_whatami;
     clone->_lease = msg->_lease;
-    clone->_sn_resolution = msg->_sn_resolution;
+    clone->_seq_num_res = msg->_seq_num_res;
     clone->_next_sns = msg->_next_sns;
     _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
@@ -556,26 +552,24 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ Init Message ------------------*/
-_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t zid, _Bool is_qos) {
+_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_INIT;
 
-    msg._body._init._options = 0;
-    if (is_qos == true) {
-        _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
-    }
-    msg._body._init._version = version;
+    msg._body._init._version = Z_PROTO_VERSION;
     msg._body._init._whatami = whatami;
-    msg._body._init._sn_resolution = sn_resolution;
     msg._body._init._zid = zid;
+    msg._body._init._seq_num_res = Z_SN_RESOLUTION;
+    msg._body._init._key_id_res = Z_KID_RESOLUTION;
+    msg._body._init._req_id_res = Z_REQ_RESOLUTION;
+    msg._body._init._batch_size = Z_BATCH_SIZE;
     _z_bytes_reset(&msg._body._init._cookie);
 
-    msg._header = _Z_MID_INIT;
-    if (sn_resolution != Z_SN_RESOLUTION) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
-    }
-    if (msg._body._init._options != 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
+    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
+        (msg._body._init._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._init._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._init._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
     }
 
     msg._attachment = NULL;
@@ -584,27 +578,25 @@ _z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whata
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t zid, _z_bytes_t cookie, _Bool is_qos) {
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_INIT;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_A);
 
-    msg._body._init._options = 0;
-    if (is_qos == true) {
-        _Z_SET_FLAG(msg._body._init._options, _Z_OPT_INIT_QOS);
-    }
-    msg._body._init._version = version;
+    msg._body._init._version = Z_PROTO_VERSION;
     msg._body._init._whatami = whatami;
-    msg._body._init._sn_resolution = sn_resolution;
     msg._body._init._zid = zid;
+    msg._body._init._seq_num_res = Z_SN_RESOLUTION;
+    msg._body._init._key_id_res = Z_KID_RESOLUTION;
+    msg._body._init._req_id_res = Z_REQ_RESOLUTION;
+    msg._body._init._batch_size = Z_BATCH_SIZE;
     msg._body._init._cookie = cookie;
 
-    msg._header = _Z_MID_INIT;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_T_A);
-    if (sn_resolution != Z_SN_RESOLUTION) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
-    }
-    if (msg._body._init._options != 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
+    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
+        (msg._body._init._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._init._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._init._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
     }
 
     msg._attachment = NULL;
@@ -614,10 +606,12 @@ _z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whata
 }
 
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
-    clone->_options = msg->_options;
     clone->_version = msg->_version;
     clone->_whatami = msg->_whatami;
-    clone->_sn_resolution = msg->_sn_resolution;
+    clone->_seq_num_res = msg->_seq_num_res;
+    clone->_key_id_res = msg->_key_id_res;
+    clone->_req_id_res = msg->_req_id_res;
+    clone->_batch_size = msg->_batch_size;
     _z_bytes_copy(&clone->_zid, &msg->_zid);
     _z_bytes_copy(&clone->_cookie, &msg->_cookie);
 }

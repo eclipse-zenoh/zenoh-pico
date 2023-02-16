@@ -15,6 +15,7 @@
 #include "zenoh-pico/protocol/codec.h"
 
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ period ------------------*/
 int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
@@ -108,6 +109,28 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
         _Z_DEBUG("WARNING: Not enough bytes to read\n");
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
+
+    return ret;
+}
+
+int8_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t u16) {
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFF));
+    ret |= _z_wbuf_write(wbf, (u16 & 0xFF));
+
+    return ret;
+}
+
+int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    *u16 = 0;
+
+    uint8_t u8;
+    ret |= _z_uint8_decode(&u8, zbf);
+    *u16 |= u8 << 8;
+    ret |= _z_uint8_decode(&u8, zbf);
+    *u16 |= u8;
 
     return ret;
 }

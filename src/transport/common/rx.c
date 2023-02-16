@@ -23,7 +23,7 @@ int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
     uint8_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer
-    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
+    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE);
     _z_zbuf_reset(&zbf);
 
     if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {

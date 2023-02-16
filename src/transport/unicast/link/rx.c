@@ -136,7 +136,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
-                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
+                if (_z_sn_precedes(ztu->_seq_num_res_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
@@ -144,8 +144,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     break;
                 }
             } else {
-                if (_z_sn_precedes(ztu->_sn_resolution_half, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) ==
-                    true) {
+                if (_z_sn_precedes(ztu->_seq_num_res_half, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);

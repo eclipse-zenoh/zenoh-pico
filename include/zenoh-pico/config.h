@@ -157,7 +157,15 @@
  * 2^28 = 268_435_456 => Max Seq Num = 268_435_455
  */
 #ifndef Z_SN_RESOLUTION
-#define Z_SN_RESOLUTION 268435455
+#define Z_SN_RESOLUTION 0x02
+#endif
+
+#ifndef Z_KID_RESOLUTION
+#define Z_KID_RESOLUTION 0x03
+#endif
+
+#ifndef Z_REQ_RESOLUTION
+#define Z_REQ_RESOLUTION 0x03
 #endif
 
 /**
@@ -224,21 +232,10 @@
 #endif
 
 /**
- * Defaulf maximum batch size possible to be received.
+ * Defaulf maximum batch size possible to be received or sent.
  */
-#ifndef Z_BATCH_SIZE_RX
-#define Z_BATCH_SIZE_RX \
-    65535  // Warning: changing this value can break the communication
-           //          with zenohd in the current protocol version.
-           //          In the future, it will be possible to negotiate such value.
-           // Change it at your own risk.
-#endif
-
-/**
- * Defaulf maximum batch size possible to be sent.
- */
-#ifndef Z_BATCH_SIZE_TX
-#define Z_BATCH_SIZE_TX 65535
+#ifndef Z_BATCH_SIZE
+#define Z_BATCH_SIZE 65535
 #endif
 
 /**

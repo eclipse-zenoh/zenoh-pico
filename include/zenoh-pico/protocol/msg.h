@@ -25,6 +25,9 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/ext.h"
 
+#define _Z_DEFAULT_BATCH_SIZE 65535
+#define _Z_DEFAULT_SIZET_SIZE 8  // In bytes
+
 #define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
 
 #define _Z_DECLARE_CLEAR_NOH(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m)
@@ -69,15 +72,23 @@
 /*=============================*/
 // Scout message flags:
 //      I ZenohID          if I==1 then the ZenohID is present
-//      Z Zenoh properties if Z==1 then Zenoh properties are present
+//      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_SCOUT_I 0x08  // 1 << 3
 #define _Z_FLAG_SCOUT_Z 0x80  // 1 << 7
 
 // Hello message flags:
 //      L Locators         if L==1 then Locators are present
-//      Z Zenoh properties if Z==1 then Zenoh properties are present
+//      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_HELLO_L 0x20  // 1 << 5
 #define _Z_FLAG_HELLO_Z 0x80  // 1 << 7
+
+// Init message flags:
+//      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn
+//      S Size params      if S==1 then size parameters are exchanged
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_INIT_A 0x20  // 1 << 5
+#define _Z_FLAG_INIT_S 0x40  // 1 << 6
+#define _Z_FLAG_INIT_Z 0x80  // 1 << 7
 
 /* Transport message flags */
 #define _Z_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
@@ -705,7 +716,7 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
 // +---------------+
 // ~     lease     ~ -- Lease period of the sender of the JOIN message(*)
 // +---------------+
-// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
+// ~ seq_num_res ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
 // +---------------+
 // ~   [next_sn]   ~ (***)
 // +---------------+
@@ -732,7 +743,7 @@ typedef struct {
     _z_bytes_t _zid;
     _z_zint_t _options;
     _z_zint_t _lease;
-    _z_zint_t _sn_resolution;
+    _z_zint_t _seq_num_res;
     _z_conduit_sn_list_t _next_sns;
     z_whatami_t _whatami;
     uint8_t _version;
@@ -753,34 +764,69 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 // corresponding peer deems appropriate to initialize a session with the initiator, the corresponding
 // peer MUST reply with an INIT message with the A flag set to 1.
 //
+// Flags:
+// - A: Ack          if A==0 then the message is an InitSyn else it is an InitAck
+// - S: Size params  if S==1 then size parameters are exchanged
+// - Z: Extensions   if Z==1 then zenoh extensions will follow.
+//
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |O|S|A|   INIT  |
-// +-+-+-+-+-------+
-// ~             |Q~ if O==1
+// |Z|S|A|   INIT  |
+// +-+-+-+---------+
+// |    version    |
 // +---------------+
-// | v_maj | v_min | if A==0 -- Protocol Version VMaj.VMin
-// +-------+-------+
-// ~    whatami    ~ -- Client, Router, Peer or a combination of them
+// |zid_len|x|x|wai| (#)(*)
+// +-------+-+-+---+
+// ~      [u8]     ~ -- ZenohID of the sender of the INIT message
 // +---------------+
-// ~   zenoh_id    ~ -- PID of the sender of the INIT message
+// |x|x|kid|rid|fsn| \                -- SN/ID resolution (+)
+// +---------------+  | if Flag(S)==1
+// |      u16      |  |               -- Batch Size ($)
+// |               | /
 // +---------------+
-// ~ sn_resolution ~ if S==1(*) -- Otherwise 2^28 is assumed(**)
+// ~    <u8;z16>   ~ -- if Flag(A)==1 -- Cookie
 // +---------------+
-// ~     cookie    ~ if A==1
+// ~   [InitExts]  ~ -- if Flag(Z)==1
 // +---------------+
 //
-// (*) if A==0 and S==0 then 2^28 is assumed.
-//     if A==1 and S==0 then the agreed resolution is the one communicated by the initiator.
+// If A==1 and S==0 then size parameters are (ie. S flag) are accepted.
 //
-// - if Q==1 then the initiator/responder supports QoS.
+// (*) WhatAmI. It indicates the role of the zenoh node sending the INIT
+// message.
+//    The valid WhatAmI values are:
+//    - 0b00: Router
+//    - 0b01: Peer
+//    - 0b10: Client
+//    - 0b11: Reserved
+//
+// (#) ZID length. It indicates how many bytes are used for the ZenohID bytes.
+//     A ZenohID is minimum 1 byte and maximum 16 bytes. Therefore, the actual
+//     lenght is computed as:
+//         real_zid_len := 1 + zid_len
+//
+// (+) Sequence Number/ID resolution. It indicates the resolution and
+// consequently the wire overhead
+//     of various SN and ID in Zenoh.
+//     - fsn: frame/fragment sequence number resolution. Used in Frame/Fragment
+//     messages.
+//     - rid: request ID resolution. Used in Request/Response messages.
+//     - kid: key expression ID resolution. Used in Push/Request/Response
+//     messages. The valid SN/ID resolution values are:
+//     - 0b00: 8 bits
+//     - 0b01: 16 bits
+//     - 0b10: 32 bits
+//     - 0b11: 64 bits
+//
+// ($) Batch Size. It indicates the maximum size of a batch the sender of the
 //
 typedef struct {
     _z_bytes_t _zid;
     _z_bytes_t _cookie;
-    _z_zint_t _options;
-    _z_zint_t _sn_resolution;
     z_whatami_t _whatami;
+    uint16_t _batch_size;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_init_t;
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg);
@@ -1010,12 +1056,10 @@ void _z_t_msg_clear(_z_transport_message_t *msg);
 /*------------------ Builders ------------------*/
 _z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease,
-                                          _z_zint_t sn_resolution, _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
-_z_transport_message_t _z_t_msg_make_init_syn(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t zid, _Bool is_qos);
-_z_transport_message_t _z_t_msg_make_init_ack(uint8_t version, z_whatami_t whatami, _z_zint_t sn_resolution,
-                                              _z_bytes_t zid, _z_bytes_t cookie, _Bool is_qos);
+_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease, _z_zint_t seq_num_res,
+                                          _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
+_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid);
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only);
