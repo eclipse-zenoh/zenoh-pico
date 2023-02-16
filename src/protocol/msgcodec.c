@@ -1402,59 +1402,52 @@ int8_t _z_ping_pong_decode(_z_t_msg_ping_pong_t *msg, _z_zbuf_t *zbf) { return _
 
 /*------------------ Frame Message ------------------*/
 int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
+    (void)(header);
+
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_FRAME\n");
 
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
-        // Do not write the fragment as _z_bytes_t since the total frame length
-        // is eventually prepended to the frame. There is no need to encode the fragment length.
-        ret |= _z_wbuf_write_bytes(wbf, msg->_payload._fragment.start, 0, msg->_payload._fragment.len);
-    } else {
-        size_t len = _z_zenoh_message_vec_len(&msg->_payload._messages);
-        for (size_t i = 0; i < len; i++) {
-            _Z_EC(_z_zenoh_message_encode(wbf, _z_zenoh_message_vec_get(&msg->_payload._messages, i)))
-        }
+    size_t len = _z_zenoh_message_vec_len(&msg->_messages);
+    for (size_t i = 0; i < len; i++) {
+        _Z_EC(_z_zenoh_message_encode(wbf, _z_zenoh_message_vec_get(&msg->_messages, i)))
     }
 
     return ret;
 }
 
 int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_FRAME\n");
+    (void)(header);
+
     int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Decoding _Z_MID_FRAME\n");
 
     ret |= _z_zint_decode(&msg->_sn, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
-        msg->_payload._fragment = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), _z_zbuf_len(zbf));  // All remaining bytes
-        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // Manually move the r_pos to w_pos, we have read it all
-    } else {
-        if (ret == _Z_RES_OK) {
-            msg->_payload._messages = _z_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-            while (_z_zbuf_len(zbf) > 0) {
-                // Mark the reading position of the iobfer
-                size_t r_pos = _z_zbuf_get_rpos(zbf);
-                _z_zenoh_message_t *zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
-                ret |= _z_zenoh_message_decode(zm, zbf);
-                if (ret == _Z_RES_OK) {
-                    _z_zenoh_message_vec_append(&msg->_payload._messages, zm);
-                } else {
-                    _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
+    if (ret == _Z_RES_OK) {
+        msg->_messages = _z_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
+        while (_z_zbuf_len(zbf) > 0) {
+            // Mark the reading position of the iobfer
+            size_t r_pos = _z_zbuf_get_rpos(zbf);
+            _z_zenoh_message_t *zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
+            ret |= _z_zenoh_message_decode(zm, zbf);
+            if (ret == _Z_RES_OK) {
+                _z_zenoh_message_vec_append(&msg->_messages, zm);
+            } else {
+                _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
 
-                    // FIXME: Check for the return error, since not all of them means a decoding error
-                    //        in this particular case. As of now, we roll-back the reading position
-                    //        and return to the Zenoh transport-level decoder.
-                    //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
-                    if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
-                        ret = _Z_RES_OK;
-                    }
-                    break;
+                // FIXME: Check for the return error, since not all of them means a decoding error
+                //        in this particular case. As of now, we roll-back the reading position
+                //        and return to the Zenoh transport-level decoder.
+                //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
+                if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
+                    ret = _Z_RES_OK;
                 }
+                break;
             }
-        } else {
-            msg->_payload._messages = _z_zenoh_message_vec_make(0);
         }
+    } else {
+        msg->_messages = _z_zenoh_message_vec_make(0);
     }
 
     return ret;

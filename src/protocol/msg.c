@@ -800,23 +800,13 @@ void _z_t_msg_clear_ping_pong(_z_t_msg_ping_pong_t *msg) {
 }
 
 /*------------------ Frame Message ------------------*/
-_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable, _Bool is_fragment, _Bool is_final) {
+_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_FRAME;
 
     msg._body._frame._sn = sn;
-
-    // Reset payload content
-    (void)memset(&msg._body._frame._payload, 0, sizeof(_z_frame_payload_t));
-
-    msg._header = _Z_MID_FRAME;
     if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
-    }
-    if (is_fragment == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
-        if (is_final == true) {
-            _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
-        }
+        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
     }
 
     msg._attachment = NULL;
@@ -825,23 +815,10 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,
-                                           _Bool is_fragment, _Bool is_final) {
-    _z_transport_message_t msg;
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable) {
+    _z_transport_message_t msg = _z_t_msg_make_frame_header(sn, is_reliable);
 
-    msg._body._frame._sn = sn;
-    msg._body._frame._payload = payload;
-
-    msg._header = _Z_MID_FRAME;
-    if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_R);
-    }
-    if (is_fragment == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_F);
-        if (is_final == true) {
-            _Z_SET_FLAG(msg._header, _Z_FLAG_T_E);
-        }
-    }
+    msg._body._frame._messages = messages;
 
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
@@ -849,22 +826,12 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payl
     return msg;
 }
 
-void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg, uint8_t header) {
+void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
     clone->_sn = msg->_sn;
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
-        _z_bytes_copy(&clone->_payload._fragment, &msg->_payload._fragment);
-    } else {
-        _z_zenoh_message_vec_copy(&clone->_payload._messages, &msg->_payload._messages);
-    }
+    _z_zenoh_message_vec_copy(&clone->_messages, &msg->_messages);
 }
 
-void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
-        _z_payload_clear(&msg->_payload._fragment);
-    } else {
-        _z_zenoh_message_vec_clear(&msg->_payload._messages);
-    }
-}
+void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_zenoh_message_vec_clear(&msg->_messages); }
 
 /*------------------ Transport Message ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
@@ -915,7 +882,7 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
         } break;
 
         case _Z_MID_FRAME: {
-            _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame, clone->_header);
+            _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
         } break;
 
         default: {
@@ -973,7 +940,7 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
         } break;
 
         case _Z_MID_FRAME: {
-            _z_t_msg_clear_frame(&msg->_body._frame, msg->_header);
+            _z_t_msg_clear_frame(&msg->_body._frame);
         } break;
 
         default: {

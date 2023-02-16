@@ -133,7 +133,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         case _Z_MID_FRAME: {
             _Z_INFO("Received Z_FRAME message\n");
             // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) == true) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(ztu->_seq_num_res_half, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
@@ -153,61 +153,13 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 }
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_F) == true) {
-                // Select the right defragmentation buffer
-                _z_wbuf_t *dbuf =
-                    _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_R) ? &ztu->_dbuf_reliable : &ztu->_dbuf_best_effort;
-
-                _Bool drop = false;
-                if ((_z_wbuf_len(dbuf) + t_msg->_body._frame._payload._fragment.len) > Z_FRAG_MAX_SIZE) {
-                    // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
-                    // Otherwise, last (smaller) fragments can be understood as a complete message
-                    _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0,
-                                        _z_wbuf_space_left(dbuf));
-                    drop = true;
-                } else {
-                    // Add the fragment to the defragmentation buffer
-                    _z_wbuf_write_bytes(dbuf, t_msg->_body._frame._payload._fragment.start, 0,
-                                        t_msg->_body._frame._payload._fragment.len);
-                }
-
-                // Check if this is the last fragment
-                if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_E) == true) {
-                    // Drop message if it is bigger the max buffer size
-                    if (drop == true) {
-                        _z_wbuf_reset(dbuf);
-                        break;
-                    }
-
-                    // Convert the defragmentation buffer into a decoding buffer
-                    _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
-
-                    // Decode the zenoh message
-                    _z_zenoh_message_t zm;
-                    int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
-                    if (ret == _Z_RES_OK) {
-                        _z_handle_zenoh_message(ztu->_session, &zm);
-
-                        // Clear must be explicitly called for fragmented zenoh messages.
-                        // Non-fragmented zenoh messages are released when their transport message is released.
-                        _z_msg_clear(&zm);
-                    }
-
-                    // Free the decoding buffer
-                    _z_zbuf_clear(&zbf);
-                    // Reset the defragmentation buffer
-                    _z_wbuf_reset(dbuf);
-                }
-
-                break;
-            } else {
-                // Handle all the zenoh message, one by one
-                size_t len = _z_vec_len(&t_msg->_body._frame._payload._messages);
-                for (size_t i = 0; i < len; i++) {
-                    _z_handle_zenoh_message(
-                        ztu->_session, (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._payload._messages, i));
-                }
+            // Handle all the zenoh message, one by one
+            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            for (size_t i = 0; i < len; i++) {
+                _z_handle_zenoh_message(ztu->_session,
+                                        (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i));
             }
+
             break;
         }
 

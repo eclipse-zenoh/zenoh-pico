@@ -2435,47 +2435,37 @@ void ping_pong_message(void) {
 }
 
 /*------------------ Frame Message ------------------*/
-_z_transport_message_t gen_frame_message(_Bool can_be_fragment) {
+_z_transport_message_t gen_frame_message(void) {
     _z_zint_t sn = gen_zint();
     _Bool is_reliable = gen_bool();
-    _Bool is_fragment = can_be_fragment ? gen_bool() : false;
-    _Bool is_final = is_fragment ? gen_bool() : false;
 
-    _z_frame_payload_t payload;
-    if (is_fragment == true) {
-        payload._fragment = gen_payload(64);
-    } else {
-        _z_zint_t num = (gen_zint() % 4) + 1;
-        payload._messages = _z_vec_make(num);
-        for (_z_zint_t i = 0; i < num; i++) {
-            _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
-            *p_zm = gen_zenoh_message();
-            _z_vec_append(&payload._messages, p_zm);
-        }
+    _z_zenoh_message_vec_t messages;
+    _z_zint_t num = (gen_zint() % 4) + 1;
+    messages = _z_vec_make(num);
+    for (_z_zint_t i = 0; i < num; i++) {
+        _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
+        *p_zm = gen_zenoh_message();
+        _z_vec_append(&messages, p_zm);
     }
 
-    return _z_t_msg_make_frame(sn, payload, is_reliable, is_fragment, is_final);
+    return _z_t_msg_make_frame(sn, messages, is_reliable);
 }
 
 void assert_eq_frame_message(_z_t_msg_frame_t *left, _z_t_msg_frame_t *right, uint8_t header) {
+    (void)(header);
+
     printf("   SN (%zu:%zu)", left->_sn, right->_sn);
     assert(left->_sn == right->_sn);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_F) == true) {
-        printf("   ");
-        assert_eq_payload(&left->_payload._fragment, &right->_payload._fragment);
-        printf("\n");
-    } else {
-        size_t l_len = _z_vec_len(&left->_payload._messages);
-        size_t r_len = _z_vec_len(&right->_payload._messages);
-        printf("   Lenght (%zu:%zu)", l_len, r_len);
-        assert(l_len == r_len);
+    size_t l_len = _z_vec_len(&left->_messages);
+    size_t r_len = _z_vec_len(&right->_messages);
+    printf("   Lenght (%zu:%zu)", l_len, r_len);
+    assert(l_len == r_len);
 
-        for (size_t i = 0; i < l_len; i++)
-            assert_eq_zenoh_message((_z_zenoh_message_t *)_z_vec_get(&left->_payload._messages, i),
-                                    (_z_zenoh_message_t *)_z_vec_get(&right->_payload._messages, i));
-    }
+    for (size_t i = 0; i < l_len; i++)
+        assert_eq_zenoh_message((_z_zenoh_message_t *)_z_vec_get(&left->_messages, i),
+                                (_z_zenoh_message_t *)_z_vec_get(&right->_messages, i));
 }
 
 void frame_message(void) {
@@ -2483,7 +2473,7 @@ void frame_message(void) {
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_transport_message_t t_msg = gen_frame_message(1);
+    _z_transport_message_t t_msg = gen_frame_message();
     assert(_Z_MID(t_msg._header) == _Z_MID_FRAME);
 
     _z_t_msg_frame_t e_fr = t_msg._body._frame;
@@ -2502,14 +2492,14 @@ void frame_message(void) {
     assert_eq_frame_message(&e_fr, &d_fr, t_msg._header);
 
     // Frame
-    _z_t_msg_clear_frame(&d_fr, t_msg._header);
+    _z_t_msg_clear_frame(&d_fr);
     _z_t_msg_clear(&t_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Transport Message ------------------*/
-_z_transport_message_t gen_transport_message(_Bool can_be_fragment) {
+_z_transport_message_t gen_transport_message(void) {
     _z_transport_message_t e_tm;
 
     // uint8_t mids[] = {
@@ -2552,7 +2542,7 @@ _z_transport_message_t gen_transport_message(_Bool can_be_fragment) {
             e_tm = gen_ping_pong_message();
             break;
         case _Z_MID_FRAME:
-            e_tm = gen_frame_message(can_be_fragment);
+            e_tm = gen_frame_message();
             break;
         default:
             assert(0);
@@ -2642,7 +2632,7 @@ void transport_message(void) {
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_transport_message_t e_tm = gen_transport_message(1);
+    _z_transport_message_t e_tm = gen_transport_message();
     printf(" - ");
     print_transport_message_type(e_tm._header);
     printf("\n");
@@ -2680,7 +2670,7 @@ void batch(void) {
     _z_transport_message_t *e_tm = (_z_transport_message_t *)z_malloc(tot_num * sizeof(_z_transport_message_t));
     for (uint8_t i = 0; i < bef_num; i++) {
         // Initialize random transport message
-        e_tm[i] = gen_transport_message(0);
+        e_tm[i] = gen_transport_message();
         // Encode
         int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == _Z_RES_OK);
@@ -2688,7 +2678,7 @@ void batch(void) {
     }
     for (uint8_t i = bef_num; i < bef_num + frm_num; i++) {
         // Initialize a frame message
-        e_tm[i] = gen_frame_message(0);
+        e_tm[i] = gen_frame_message();
         // Encode
         int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == _Z_RES_OK);
@@ -2696,7 +2686,7 @@ void batch(void) {
     }
     for (uint8_t i = bef_num + frm_num; i < bef_num + frm_num + aft_num; i++) {
         // Initialize random transport message
-        e_tm[i] = gen_transport_message(0);
+        e_tm[i] = gen_transport_message();
         // Encode
         int8_t res = _z_transport_message_encode(&wbf, &e_tm[i]);
         assert(res == _Z_RES_OK);
@@ -2726,161 +2716,161 @@ void batch(void) {
 }
 
 /*------------------ Fragmentation ------------------*/
-_z_transport_message_t z_frame_header(_Bool is_reliable, _Bool is_fragment, _Bool is_final, _z_zint_t sn) {
-    // Create the frame session message that carries the zenoh message
-    _z_transport_message_t t_msg;
-    t_msg._attachment = NULL;
-    t_msg._header = _Z_MID_FRAME;
-    t_msg._body._frame._sn = sn;
+// _z_transport_message_t z_fragment_header(_Bool is_reliable, _Bool is_fragment, _Bool is_final, _z_zint_t sn) {
+//     // Create the frame session message that carries the zenoh message
+//     _z_transport_message_t t_msg;
+//     t_msg._attachment = NULL;
+//     t_msg._header = _Z_MID_FRAME;
+//     t_msg._body._frame._sn = sn;
 
-    if (is_reliable == true) {
-        _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_R);
-    };
+//     if (is_reliable == true) {
+//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_R);
+//     };
 
-    if (is_fragment == true) {
-        _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_F);
+//     if (is_fragment == true) {
+//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_F);
 
-        if (is_final == true) {
-            _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_E);
-        }
+//         if (is_final == true) {
+//             _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_E);
+//         }
 
-        // Do not add the payload
-        t_msg._body._frame._payload._fragment.len = 0;
-        t_msg._body._frame._payload._fragment.start = NULL;
-    } else {
-        // Do not allocate the vector containing the messages
-        t_msg._body._frame._payload._messages = _z_zenoh_message_vec_make(0);
-    }
+//         // Do not add the payload
+//         t_msg._body._frame._payload._fragment.len = 0;
+//         t_msg._body._frame._payload._fragment.start = NULL;
+//     } else {
+//         // Do not allocate the vector containing the messages
+//         t_msg._body._frame._payload._messages = _z_zenoh_message_vec_make(0);
+//     }
 
-    return t_msg;
-}
+//     return t_msg;
+// }
 
-void z_wbuf_prepare(_z_wbuf_t *wbf) {
-    // Clear the buffer for serialization
-    _z_wbuf_reset(wbf);
+// void z_wbuf_prepare(_z_wbuf_t *wbf) {
+//     // Clear the buffer for serialization
+//     _z_wbuf_reset(wbf);
 
-    for (size_t i = 0; i < _z_wbuf_space_left(wbf); i++) _z_wbuf_put(wbf, 0xff, i);
-}
+//     for (size_t i = 0; i < _z_wbuf_space_left(wbf); i++) _z_wbuf_put(wbf, 0xff, i);
+// }
 
-int8_t z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, _Bool is_reliable, size_t sn) {
-    // Assume first that this is not the final fragment
-    _Bool is_final = false;
-    do {
-        // Mark the buffer for the writing operation
-        size_t w_pos = _z_wbuf_get_wpos(dst);
-        // Get the frame header
-        _z_transport_message_t f_hdr = z_frame_header(is_reliable, true, is_final, sn);
-        // Encode the frame header
-        int8_t res = _z_transport_message_encode(dst, &f_hdr);
-        if (res == _Z_RES_OK) {
-            size_t space_left = _z_wbuf_space_left(dst);
-            size_t bytes_left = _z_wbuf_len(src);
-            // Check if it is really the final fragment
-            if ((is_final == false) && (bytes_left <= space_left)) {
-                // Revert the buffer
-                _z_wbuf_set_wpos(dst, w_pos);
-                // It is really the finally fragment, reserialize the header
-                is_final = true;
-                continue;
-            }
-            // Write the fragment
-            size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
-            printf("  -Bytes left: %zu, Space left: %zu, Fragment size: %zu, Is final: %d\n", bytes_left, space_left,
-                   to_copy, is_final);
-            return _z_wbuf_siphon(dst, src, to_copy);
-        } else {
-            return 0;
-        }
-    } while (1);
-}
+// int8_t z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, _Bool is_reliable, size_t sn) {
+//     // Assume first that this is not the final fragment
+//     _Bool is_final = false;
+//     do {
+//         // Mark the buffer for the writing operation
+//         size_t w_pos = _z_wbuf_get_wpos(dst);
+//         // Get the frame header
+//         _z_transport_message_t f_hdr = z_fragment_header(is_reliable, true, is_final, sn);
+//         // Encode the frame header
+//         int8_t res = _z_transport_message_encode(dst, &f_hdr);
+//         if (res == _Z_RES_OK) {
+//             size_t space_left = _z_wbuf_space_left(dst);
+//             size_t bytes_left = _z_wbuf_len(src);
+//             // Check if it is really the final fragment
+//             if ((is_final == false) && (bytes_left <= space_left)) {
+//                 // Revert the buffer
+//                 _z_wbuf_set_wpos(dst, w_pos);
+//                 // It is really the finally fragment, reserialize the header
+//                 is_final = true;
+//                 continue;
+//             }
+//             // Write the fragment
+//             size_t to_copy = bytes_left <= space_left ? bytes_left : space_left;
+//             printf("  -Bytes left: %zu, Space left: %zu, Fragment size: %zu, Is final: %d\n", bytes_left, space_left,
+//                    to_copy, is_final);
+//             return _z_wbuf_siphon(dst, src, to_copy);
+//         } else {
+//             return 0;
+//         }
+//     } while (1);
+// }
 
-void fragmentation(void) {
-    printf("\n>> Fragmentation\n");
-    size_t len = 16;
-    _z_wbuf_t wbf = _z_wbuf_make(len, false);
-    _z_wbuf_t fbf = _z_wbuf_make(len, true);
-    _z_wbuf_t dbf = _z_wbuf_make(0, true);
+// void fragmentation(void) {
+//     printf("\n>> Fragmentation\n");
+//     size_t len = 16;
+//     _z_wbuf_t wbf = _z_wbuf_make(len, false);
+//     _z_wbuf_t fbf = _z_wbuf_make(len, true);
+//     _z_wbuf_t dbf = _z_wbuf_make(0, true);
 
-    _z_zenoh_message_t e_zm;
+//     _z_zenoh_message_t e_zm;
 
-    do {
-        _z_wbuf_reset(&fbf);
-        // Generate and serialize the message
-        e_zm = gen_zenoh_message();
-        _z_zenoh_message_encode(&fbf, &e_zm);
-        // Check that the message actually requires fragmentation
-        if (_z_wbuf_len(&fbf) <= len)
-            _z_msg_clear(&e_zm);
-        else
-            break;
-    } while (1);
+//     do {
+//         _z_wbuf_reset(&fbf);
+//         // Generate and serialize the message
+//         e_zm = gen_zenoh_message();
+//         _z_zenoh_message_encode(&fbf, &e_zm);
+//         // Check that the message actually requires fragmentation
+//         if (_z_wbuf_len(&fbf) <= len)
+//             _z_msg_clear(&e_zm);
+//         else
+//             break;
+//     } while (1);
 
-    // Fragment the message
-    _Bool is_reliable = gen_bool();
-    // Fix the sn resoulution to 128 in such a way it requires only 1 byte for encoding
-    size_t seq_num_res = 128;
-    size_t sn = seq_num_res - 1;
+//     // Fragment the message
+//     _Bool is_reliable = gen_bool();
+//     // Fix the sn resoulution to 128 in such a way it requires only 1 byte for encoding
+//     size_t seq_num_res = 128;
+//     size_t sn = seq_num_res - 1;
 
-    printf(" - Message serialized\n");
-    print_wbuf(&fbf);
+//     printf(" - Message serialized\n");
+//     print_wbuf(&fbf);
 
-    printf(" - Start fragmenting\n");
-    while (_z_wbuf_len(&fbf) > 0) {
-        // Clear the buffer for serialization
-        z_wbuf_prepare(&wbf);
+//     printf(" - Start fragmenting\n");
+//     while (_z_wbuf_len(&fbf) > 0) {
+//         // Clear the buffer for serialization
+//         z_wbuf_prepare(&wbf);
 
-        // Get the fragment sequence number
-        sn = (sn + 1) % seq_num_res;
+//         // Get the fragment sequence number
+//         sn = (sn + 1) % seq_num_res;
 
-        size_t written = _z_wbuf_len(&fbf);
-        int8_t res = z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
-        assert(res == _Z_RES_OK);
-        (void)(res);
-        written = written - _z_wbuf_len(&fbf);
+//         size_t written = _z_wbuf_len(&fbf);
+//         int8_t res = z_serialize_zenoh_fragment(&wbf, &fbf, is_reliable, sn);
+//         assert(res == _Z_RES_OK);
+//         (void)(res);
+//         written = written - _z_wbuf_len(&fbf);
 
-        printf("  -Encoded Fragment: ");
-        print_wbuf(&wbf);
+//         printf("  -Encoded Fragment: ");
+//         print_wbuf(&wbf);
 
-        // Decode the message
-        _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+//         // Decode the message
+//         _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-        _z_transport_message_t r_sm;
-        res = _z_transport_message_decode(&r_sm, &zbf);
-        assert(res == _Z_RES_OK);
+//         _z_transport_message_t r_sm;
+//         res = _z_transport_message_decode(&r_sm, &zbf);
+//         assert(res == _Z_RES_OK);
 
-        _z_bytes_t fragment = r_sm._body._frame._payload._fragment;
-        printf("  -Decoded Fragment length: %zu\n", fragment.len);
-        assert(fragment.len == written);
+//         _z_bytes_t fragment = r_sm._body._frame._payload._fragment;
+//         printf("  -Decoded Fragment length: %zu\n", fragment.len);
+//         assert(fragment.len == written);
 
-        // Create an iosli for decoding
-        _z_wbuf_write_bytes(&dbf, fragment.start, 0, fragment.len);
+//         // Create an iosli for decoding
+//         _z_wbuf_write_bytes(&dbf, fragment.start, 0, fragment.len);
 
-        print_wbuf(&dbf);
+//         print_wbuf(&dbf);
 
-        // Free the read buffer
-        _z_zbuf_clear(&zbf);
-    }
+//         // Free the read buffer
+//         _z_zbuf_clear(&zbf);
+//     }
 
-    printf(" - Start defragmenting\n");
-    print_wbuf(&dbf);
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&dbf);
-    printf("   Defragmented: ");
-    print_iosli(&zbf._ios);
-    printf("\n");
+//     printf(" - Start defragmenting\n");
+//     print_wbuf(&dbf);
+//     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&dbf);
+//     printf("   Defragmented: ");
+//     print_iosli(&zbf._ios);
+//     printf("\n");
 
-    _z_zenoh_message_t d_zm;
-    int8_t res = _z_zenoh_message_decode(&d_zm, &zbf);
-    assert(res == _Z_RES_OK);
+//     _z_zenoh_message_t d_zm;
+//     int8_t res = _z_zenoh_message_decode(&d_zm, &zbf);
+//     assert(res == _Z_RES_OK);
 
-    assert_eq_zenoh_message(&e_zm, &d_zm);
-    _z_msg_clear(&e_zm);
-    _z_msg_clear(&d_zm);
+//     assert_eq_zenoh_message(&e_zm, &d_zm);
+//     _z_msg_clear(&e_zm);
+//     _z_msg_clear(&d_zm);
 
-    _z_wbuf_clear(&dbf);
-    _z_wbuf_clear(&wbf);
-    _z_wbuf_clear(&fbf);
-    _z_zbuf_clear(&zbf);
-}
+//     _z_wbuf_clear(&dbf);
+//     _z_wbuf_clear(&wbf);
+//     _z_wbuf_clear(&fbf);
+//     _z_zbuf_clear(&zbf);
+// }
 
 /*=============================*/
 /*            Main             */
@@ -2939,7 +2929,7 @@ int main(void) {
         frame_message();
         transport_message();
         batch();
-        fragmentation();
+        // fragmentation();
     }
 
     return 0;

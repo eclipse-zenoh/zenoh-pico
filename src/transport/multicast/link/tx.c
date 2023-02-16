@@ -99,7 +99,7 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
         _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);  // Get the next sequence number
 
-        _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
+        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(reliability, sn);
         ret = _z_transport_message_encode(&ztm->_wbuf, &t_msg);  // Encode the frame header
         if (ret == _Z_RES_OK) {
             ret = _z_zenoh_message_encode(&ztm->_wbuf, z_msg);  // Encode the zenoh message
@@ -112,37 +112,7 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
                     ztm->_transmitted = true;  // Mark the session that we have transmitted data
                 }
             } else {
-                // The message does not fit in the current batch, let's fragment it
-                // Create an expandable wbuf for fragmentation
-                _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
-
-                ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
-                if (ret == _Z_RES_OK) {
-                    _Bool is_first = true;  // Fragment and send the message
-                    while (_z_wbuf_len(&fbf) > 0) {
-                        if (is_first == false) {  // Get the fragment sequence number
-                            sn = __unsafe_z_multicast_get_sn(ztm, reliability);
-                        }
-                        is_first = false;
-
-                        // Clear the buffer for serialization
-                        __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
-
-                        // Serialize one fragment
-                        ret = __unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn);
-                        if (ret == _Z_RES_OK) {
-                            // Write the message length in the reserved space if needed
-                            __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
-
-                            ret = _z_link_send_wbuf(&ztm->_link, &ztm->_wbuf);  // Send the wbuf on the socket
-                            if (ret == _Z_RES_OK) {
-                                ztm->_transmitted = true;  // Mark the session that we have transmitted data
-                            }
-                        }
-                    }
-                }
-
-                _z_wbuf_clear(&fbf);  // Free the fragmentation buffer memory
+                // TODO[protocol]: Fragmentation goes here
             }
         }
 
