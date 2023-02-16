@@ -16,19 +16,23 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/uuid.h"
 
-int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
+int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode, _z_bytes_t local_zid) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
-    _z_bytes_t local_zid = _z_bytes_empty();
-    ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
+    if (_z_bytes_is_empty(&local_zid) == true) {
+        ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
+    }
+
     if (ret == _Z_RES_OK) {
         ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
         if (ret != _Z_RES_OK) {
@@ -51,10 +55,19 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
 int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
+    _z_bytes_t zid;
+    char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
+    if (opt_as_str != NULL) {
+        zid = _z_bytes_make(16);
+        _z_uuid_to_bytes((uint8_t *)zid.start, opt_as_str);
+    } else {
+        zid = _z_bytes_empty();
+    }
+
     if (config != NULL) {
         char *locator = NULL;
         if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {  // Scout if peer is not configured
-            char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
+            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
                 opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
             }
@@ -71,8 +84,6 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                 opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
             }
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
-
-            _z_bytes_t zid = _z_bytes_empty();  // TODO[protocol]: Check if a ZID is set in the config files
 
             // Scout and return upon the first result
             _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
@@ -108,7 +119,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
 
             if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, locator, mode);
+                ret = __z_open_inner(zn, locator, mode, zid);
             } else {
                 _Z_ERROR("Trying to configure an invalid mode.\n");
             }

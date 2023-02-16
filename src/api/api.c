@@ -30,6 +30,7 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/uuid.h"
 
 /********* Data Types Handlers *********/
 z_string_t z_string_make(const char *value) { return _z_string_make(value); }
@@ -397,13 +398,34 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
 
-        char *what_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
-        z_what_t what = strtol(what_str, NULL, 10);
-        char *locator = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-        char *tout_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-        uint32_t tout = strtoul(tout_str, NULL, 10);
-        _z_bytes_t zid = _z_bytes_empty();  // TODO[protocol]: Check if a ZID is set in the config files
-        _z_scout(what, zid, locator, tout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+        char *opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        }
+        z_what_t what = strtol(opt_as_str, NULL, 10);
+
+        opt_as_str = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+        }
+        char *mcast_locator = opt_as_str;
+
+        opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        }
+        uint32_t timeout = strtoul(opt_as_str, NULL, 10);
+
+        _z_bytes_t zid;
+        char *zid_str = _z_config_get(config->_value, Z_CONFIG_SESSION_ZID_KEY);
+        if (zid_str != NULL) {
+            zid = _z_bytes_make(16);
+            _z_uuid_to_bytes((uint8_t *)zid.start, zid_str);
+        } else {
+            zid = _z_bytes_empty();
+        }
+
+        _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
         z_free(wrapped_ctx);
         z_scouting_config_drop(config);

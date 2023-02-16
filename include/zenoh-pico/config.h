@@ -89,6 +89,12 @@
 #define Z_CONFIG_SCOUTING_WHAT_DEFAULT "3"
 
 /**
+ * A configurable and static Zenoh ID to be used on Zenoh Sessions.
+ * Accepted values : `<UUDI 128-bit>`.
+ */
+#define Z_CONFIG_SESSION_ZID_KEY 0x49
+
+/**
  * Indicates if data messages should be timestamped.
  * Accepted values : `false`, `true`.
  * Default value : `false`.
