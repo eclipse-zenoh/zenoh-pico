@@ -130,10 +130,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
         case _Z_MID_JOIN: {
             _Z_INFO("Received _Z_JOIN message\n");
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_A) == true) {
-                if (t_msg->_body._join._version != Z_PROTO_VERSION) {
-                    break;
-                }
+            if (t_msg->_body._join._version != Z_PROTO_VERSION) {
+                break;
             }
 
             if (entry == NULL)  // New peer

@@ -111,25 +111,11 @@
 #define _Z_FLAG_CLOSE_Z 0x80  // 1 << 7
 
 /* Transport message flags */
-#define _Z_FLAG_T_A 0x20  // 1 << 5 | Ack              if A==1 then the message is an acknowledgment
-#define _Z_FLAG_T_C 0x40  // 1 << 6 | Count            if C==1 then number of unacknowledged messages is present
-#define _Z_FLAG_T_E 0x80  // 1 << 7 | End              if E==1 then it is the last FRAME fragment
-#define _Z_FLAG_T_F 0x40  // 1 << 6 | Fragment         if F==1 then the FRAME is a fragment
-#define _Z_FLAG_T_I 0x20  // 1 << 5 | PeerID           if I==1 then the PeerID is present or requested
-#define _Z_FLAG_T_K 0x40  // 1 << 6 | CloseLink        if K==1 then close the transport link only
-#define _Z_FLAG_T_L 0x80  // 1 << 7 | Locators         if L==1 then Locators are present
-#define _Z_FLAG_T_M 0x20  // 1 << 5 | Mask             if M==1 then a Mask is present
-#define _Z_FLAG_T_O 0x80  // 1 << 7 | Options          if O==1 then Options are present
-#define _Z_FLAG_T_P 0x20  // 1 << 5 | PingOrPong       if P==1 then the message is Ping, otherwise is Pong
-#define _Z_FLAG_T_R \
-    0x20  // 1 << 5 | Reliable         if R==1 then it concerns the reliable channel, best-effort otherwise
+#define _Z_FLAG_T_O 0x80   // 1 << 7 | Options          if O==1 then Options are present
 #define _Z_FLAG_T_S 0x40   // 1 << 6 | SN Resolution    if S==1 then the SN Resolution is present
 #define _Z_FLAG_T_T1 0x20  // 1 << 5 | TimeRes          if T==1 then the time resolution is in seconds
-#define _Z_FLAG_T_T2 0x40  // 1 << 6 | TimeRes          if T==1 then the time resolution is in seconds
-#define _Z_FLAG_T_W 0x40   // 1 << 6 | WhatAmI          if W==1 then WhatAmI is indicated
 #define _Z_FLAG_T_Z \
     0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
-#define _Z_FLAG_T_X 0x00  // Unused flags are set to zero
 
 /* Zenoh message flags */
 #define _Z_FLAG_Z_B 0x40  // 1 << 6 | QueryPayload      if B==1 then QueryPayload is present
