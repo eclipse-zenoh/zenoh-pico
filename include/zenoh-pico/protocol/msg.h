@@ -971,15 +971,20 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg);
 // The KEEP_ALIVE message can be sent periodically to avoid the expiration of the session lease
 // period in case there are no messages to be sent.
 //
+// Flags:
+// - X: Reserved
+// - X: Reserved
+// - Z: Extensions     If Z==1 then Zenoh extensions will follow.
+//
 //  7 6 5 4 3 2 1 0
 // +-+-+-+-+-+-+-+-+
-// |X|X|I| K_ALIVE |
-// +-+-+-+-+-------+
-// ~   zenoh_id    ~ if I==1 -- Peer ID of the KEEP_ALIVE sender.
+// |Z|X|X| KALIVE  |
+// +-+-+-+---------+
+// ~  [KAliveExts] ~ if Flag(Z)==1
 // +---------------+
 //
 typedef struct {
-    _z_bytes_t _zid;
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_t_msg_keep_alive_t;
 void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
 
@@ -1081,7 +1086,7 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _z_bytes_t zid, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_sync(_z_zint_t sn, _Bool is_reliable, _z_zint_t count);
 _z_transport_message_t _z_t_msg_make_ack_nack(_z_zint_t sn, _z_zint_t mask);
-_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid);
+_z_transport_message_t _z_t_msg_make_keep_alive(void);
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_pong(_z_zint_t hash);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_frame_payload_t payload, _Bool is_reliable,

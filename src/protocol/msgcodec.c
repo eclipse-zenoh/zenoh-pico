@@ -1360,25 +1360,23 @@ int8_t _z_ack_nack_decode(_z_t_msg_ack_nack_t *msg, _z_zbuf_t *zbf, uint8_t head
 
 /*------------------ Keep Alive Message ------------------*/
 int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_alive_t *msg) {
+    (void)(wbf);
+    (void)(header);
+    (void)(msg);
+
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_KEEP_ALIVE\n");
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
-    }
 
     return ret;
 }
 
 int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_KEEP_ALIVE\n");
-    int8_t ret = _Z_RES_OK;
+    (void)(msg);
+    (void)(zbf);
+    (void)(header);
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        ret |= _z_bytes_decode(&msg->_zid, zbf);
-    } else {
-        msg->_zid = _z_bytes_empty();
-    }
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Decoding _Z_MID_KEEP_ALIVE\n");
 
     return ret;
 }

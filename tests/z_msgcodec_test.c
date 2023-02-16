@@ -2357,18 +2357,12 @@ void ack_nack_message(void) {
 }
 
 /*------------------ KeepAlive Message ------------------*/
-_z_transport_message_t gen_keep_alive_message(void) {
-    _z_bytes_t zid = gen_bool() ? gen_bytes(16) : gen_bytes(0);
-
-    return _z_t_msg_make_keep_alive(zid);
-}
+_z_transport_message_t gen_keep_alive_message(void) { return _z_t_msg_make_keep_alive(); }
 
 void assert_eq_keep_alive_message(_z_t_msg_keep_alive_t *left, _z_t_msg_keep_alive_t *right, uint8_t header) {
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_I) == true) {
-        printf("   ");
-        assert_eq_uint8_array(&left->_zid, &right->_zid);
-        printf("\n");
-    }
+    (void)(left);
+    (void)(right);
+    (void)(header);
 }
 
 void keep_alive_message(void) {

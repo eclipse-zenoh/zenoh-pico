@@ -755,15 +755,9 @@ void _z_t_msg_clear_ack_nack(_z_t_msg_ack_nack_t *msg) {
 }
 
 /*------------------ Keep Alive Message ------------------*/
-_z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid) {
+_z_transport_message_t _z_t_msg_make_keep_alive(void) {
     _z_transport_message_t msg;
-
-    msg._body._keep_alive._zid = zid;
-
     msg._header = _Z_MID_KEEP_ALIVE;
-    if (_z_bytes_is_empty(&zid) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_I);
-    }
 
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
@@ -772,10 +766,11 @@ _z_transport_message_t _z_t_msg_make_keep_alive(_z_bytes_t zid) {
 }
 
 void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg) {
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    (void)(clone);
+    (void)(msg);
 }
 
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { _z_bytes_clear(&msg->_zid); }
+void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
 
 /*------------------ PingPong Messages ------------------*/
 _z_transport_message_t _z_t_msg_make_ping(_z_zint_t hash) {
