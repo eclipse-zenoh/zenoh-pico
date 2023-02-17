@@ -168,7 +168,7 @@ typedef enum {
  *     Z_RELIABILITY_BEST_EFFORT: Defines reliability as ``BEST_EFFORT``
  *     Z_RELIABILITY_RELIABLE: Defines reliability as ``RELIABLE``
  */
-typedef enum { Z_RELIABILITY_BEST_EFFORT = 0, Z_RELIABILITY_RELIABLE = 1 } z_reliability_t;
+typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
 
 /**
