@@ -14,7 +14,6 @@
 
 #include "zenoh-pico/protocol/msgcodec.h"
 
-#include <_types/_uint8_t.h>
 #include <stddef.h>
 
 #include "zenoh-pico/collections/bytes.h"
