@@ -722,16 +722,24 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
     if (is_reliable == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
     }
+    msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
+    msg._body._frame._messages = _z_zenoh_message_vec_make(0);
 
     return msg;
 }
 
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable) {
-    _z_transport_message_t msg = _z_t_msg_make_frame_header(sn, is_reliable);
+    _z_transport_message_t msg;
+    msg._header = _Z_MID_FRAME;
 
-    msg._body._frame._messages = messages;
+    msg._body._frame._sn = sn;
+    if (is_reliable == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
+    }
 
     msg._attachment = NULL;
+    msg._body._frame._messages = messages;
     msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;

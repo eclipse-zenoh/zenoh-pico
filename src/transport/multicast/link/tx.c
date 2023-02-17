@@ -99,7 +99,7 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
         _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);  // Get the next sequence number
 
-        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(reliability, sn);
+        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
         ret = _z_transport_message_encode(&ztm->_wbuf, &t_msg);  // Encode the frame header
         if (ret == _Z_RES_OK) {
             ret = _z_zenoh_message_encode(&ztm->_wbuf, z_msg);  // Encode the zenoh message
