@@ -210,8 +210,8 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._multicast._seq_num_res = param->_seq_num_res;
-        zt->_transport._multicast._seq_num_res_half = param->_seq_num_res / 2;
+        zt->_transport._multicast._seq_num_res = _z_max_value(param->_seq_num_res);
+        zt->_transport._multicast._seq_num_res_half = zt->_transport._multicast._seq_num_res / 2;
 
         // The initial SN at TX side
         zt->_transport._multicast._sn_tx_reliable = param->_initial_sn_tx;
