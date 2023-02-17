@@ -348,7 +348,7 @@ void zint_extension(void) {
 
     // Initialize
     _z_msg_ext_t ext = gen_zint_extension();
-    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_UNIT);
+    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_ZINT);
 
     _z_msg_ext_zint_t e_u = ext._body._zint;
 
@@ -390,7 +390,7 @@ void zbuf_extension(void) {
 
     // Initialize
     _z_msg_ext_t ext = gen_zbuf_extension();
-    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_UNIT);
+    assert(_Z_EXT_ENC(ext._header) == _Z_MSG_EXT_ENC_ZBUF);
 
     _z_msg_ext_zbuf_t e_u = ext._body._zbuf;
 

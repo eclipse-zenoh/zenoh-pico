@@ -711,9 +711,6 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
         _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
     }
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -825,4 +822,6 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
             _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
         } break;
     }
+
+    _z_msg_ext_vec_clear(&msg->_extensions);
 }

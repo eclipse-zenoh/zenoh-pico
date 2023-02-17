@@ -24,7 +24,7 @@ _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id) {
 
     ext._header = 0;
     ext._header |= (id & 0x1F);
-    ext._header |= (_Z_MSG_EXT_ENC_UNIT & 0x03) << 5;
+    ext._header |= _Z_MSG_EXT_ENC_UNIT;
 
     return ext;
 }
@@ -41,7 +41,7 @@ _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid) {
 
     ext._header = 0;
     ext._header |= (id & 0x1F);
-    ext._header |= (_Z_MSG_EXT_ENC_ZINT & 0x03) << 5;
+    ext._header |= _Z_MSG_EXT_ENC_ZINT;
 
     ext._body._zint._val = zid;
 
@@ -52,14 +52,14 @@ void _z_msg_ext_clear_zint(_z_msg_ext_zint_t *ext) { (void)(ext); }
 
 void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext) { clone->_val = ext->_val; }
 
-_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, const _z_bytes_t zbuf) {
+_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_bytes_t zbuf) {
     _z_msg_ext_t ext;
 
     ext._header = 0;
     ext._header |= (id & 0x1F);
-    ext._header |= (_Z_MSG_EXT_ENC_ZBUF & 0x03) << 5;
+    ext._header |= _Z_MSG_EXT_ENC_ZBUF;
 
-    ext._body._zbuf._val = _z_bytes_wrap(zbuf.start, zbuf.len);
+    _z_bytes_move(&ext._body._zbuf._val, &zbuf);
 
     return ext;
 }
