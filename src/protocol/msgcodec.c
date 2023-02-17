@@ -1376,7 +1376,8 @@ int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header)
             if (ret == _Z_RES_OK) {
                 _z_zenoh_message_vec_append(&msg->_messages, zm);
             } else {
-                z_free(zm);
+                _z_msg_free(&zm);
+
                 _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
 
                 // FIXME: Check for the return error, since not all of them means a decoding error

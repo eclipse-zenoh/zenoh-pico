@@ -446,6 +446,17 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
     }
 }
 
+void _z_msg_free(_z_zenoh_message_t **msg) {
+    _z_zenoh_message_t *ptr = *msg;
+
+    if (ptr != NULL) {
+        _z_msg_clear(ptr);
+
+        z_free(ptr);
+        *msg = NULL;
+    }
+}
+
 /*=============================*/
 /*     Transport Messages      */
 /*=============================*/

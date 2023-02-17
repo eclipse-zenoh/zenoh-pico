@@ -588,6 +588,7 @@ typedef struct {
     uint8_t _header;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
+void _z_msg_free(_z_zenoh_message_t **m);
 _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear, _z_noop_copy)
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
