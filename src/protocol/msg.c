@@ -477,6 +477,7 @@ _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, 
     _z_transport_message_t msg;
     msg._header = _Z_MID_HELLO;
 
+    msg._body._hello._version = Z_PROTO_VERSION;
     msg._body._hello._whatami = whatami;
     msg._body._hello._zid = zid;
     msg._body._hello._locators = locators;
