@@ -15,11 +15,10 @@
 #include "zenoh-pico/utils/math.h"
 
 size_t _z_max_value(uint8_t n_bytes) {
-    size_t max = 0;
-
+    size_t max = 1;
     for (uint8_t i = 0; i < (n_bytes * 8); i++) {
         max *= 2;
     }
 
-    return max;
+    return (max - 1);
 }
