@@ -1942,33 +1942,43 @@ void hello_message(void) {
 
 /*------------------ Join Message ------------------*/
 _z_transport_message_t gen_join_message(void) {
-    uint8_t version = gen_uint8();
-    z_whatami_t whatami = 0x04 >> (gen_uint8() % 3);
+    z_whatami_t whatami = (gen_uint8() % 2) + 1;
     _z_bytes_t zid = gen_bytes(16);
     _z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
-    _z_zint_t seq_num_res = gen_bool() ? gen_zint() : Z_SN_RESOLUTION;
 
-    _z_conduit_sn_list_t next_sns;
+    _z_conduit_sn_list_t next_sn;
     if (gen_bool()) {
-        next_sns._is_qos = true;
         for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
-            next_sns._val._qos[i]._reliable = gen_zint();
-            next_sns._val._qos[i]._best_effort = gen_zint();
+            next_sn._val._qos[i]._reliable = gen_zint();
+            next_sn._val._qos[i]._best_effort = gen_zint();
         }
     } else {
-        next_sns._is_qos = false;
-        next_sns._val._plain._reliable = gen_zint();
-        next_sns._val._plain._best_effort = gen_zint();
+        next_sn._val._plain._reliable = gen_zint();
+        next_sn._val._plain._best_effort = gen_zint();
     }
 
-    return _z_t_msg_make_join(version, whatami, lease, seq_num_res, zid, next_sns);
+    _z_transport_message_t t_msg = _z_t_msg_make_join(whatami, lease, zid, next_sn);
+
+    if (gen_bool()) {
+        t_msg._body._join._batch_size = gen_uint16();
+    }
+
+    if (gen_bool()) {
+        t_msg._body._join._seq_num_res = (gen_uint8() % 4) + 1;
+    }
+
+    if (gen_bool()) {
+        t_msg._body._join._key_id_res = (gen_uint8() % 4) + 1;
+    }
+
+    if (gen_bool()) {
+        t_msg._body._join._req_id_res = (gen_uint8() % 4) + 1;
+    }
+
+    return t_msg;
 }
 
 void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8_t header) {
-    printf("   Options (%zu:%zu)", left->_options, right->_options);
-    assert(left->_options == right->_options);
-    printf("\n");
-
     printf("   Version (%u:%u)", left->_version, right->_version);
     assert(left->_version == right->_version);
     printf("\n");
@@ -1981,9 +1991,21 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
-        printf("   SN Resolution (%zu:%zu)", left->_seq_num_res, right->_seq_num_res);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+        printf("   SN Resolution (%hhu:%hhu)", left->_seq_num_res, right->_seq_num_res);
         assert(left->_seq_num_res == right->_seq_num_res);
+        printf("\n");
+
+        printf("   Request ID Resolution (%hhu:%hhu)", left->_req_id_res, right->_req_id_res);
+        assert(left->_req_id_res == right->_req_id_res);
+        printf("\n");
+
+        printf("   KeyExpr ID Resolution (%hhu:%hhu)", left->_key_id_res, right->_key_id_res);
+        assert(left->_key_id_res == right->_key_id_res);
+        printf("\n");
+
+        printf("   Batch Size (%hu:%hu)", left->_batch_size, right->_batch_size);
+        assert(left->_batch_size == right->_batch_size);
         printf("\n");
     }
 
@@ -1992,27 +2014,28 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     printf("   Next SNs: ");
-    if (_Z_HAS_FLAG(left->_options, _Z_OPT_JOIN_QOS) == true) {
-        assert(left->_next_sns._is_qos == true);
-        assert(right->_next_sns._is_qos == true);
+    // if (_Z_HAS_FLAG(left->_options, _Z_OPT_JOIN_QOS) == true) {
+    //     assert(left->_next_sn._is_qos == true);
+    //     assert(right->_next_sn._is_qos == true);
 
-        for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
-            printf("R:%zu:%zu ", left->_next_sns._val._qos[i]._reliable, right->_next_sns._val._qos[i]._reliable);
-            assert(left->_next_sns._val._qos[i]._reliable == right->_next_sns._val._qos[i]._reliable);
-            printf("B:%zu:%zu ", left->_next_sns._val._qos[i]._best_effort, right->_next_sns._val._qos[i]._best_effort);
-            assert(left->_next_sns._val._qos[i]._best_effort == right->_next_sns._val._qos[i]._best_effort);
-        }
-        printf("\n");
-    } else {
-        assert(left->_next_sns._is_qos == false);
-        assert(right->_next_sns._is_qos == false);
+    //     for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
+    //         printf("R:%zu:%zu ", left->_next_sn._val._qos[i]._reliable, right->_next_sn._val._qos[i]._reliable);
+    //         assert(left->_next_sn._val._qos[i]._reliable == right->_next_sn._val._qos[i]._reliable);
+    //         printf("B:%zu:%zu ", left->_next_sn._val._qos[i]._best_effort,
+    //         right->_next_sn._val._qos[i]._best_effort); assert(left->_next_sn._val._qos[i]._best_effort ==
+    //         right->_next_sn._val._qos[i]._best_effort);
+    //     }
+    //     printf("\n");
+    // } else {
+    // assert(left->_next_sn._is_qos == false);
+    // assert(right->_next_sn._is_qos == false);
 
-        printf("R: %zu:%zu", left->_next_sns._val._plain._reliable, right->_next_sns._val._plain._reliable);
-        assert(left->_next_sns._val._plain._reliable == right->_next_sns._val._plain._reliable);
-        printf("B: %zu:%zu", left->_next_sns._val._plain._best_effort, right->_next_sns._val._plain._best_effort);
-        assert(left->_next_sns._val._plain._best_effort == right->_next_sns._val._plain._best_effort);
-        printf("\n");
-    }
+    printf("R: %zu:%zu", left->_next_sn._val._plain._reliable, right->_next_sn._val._plain._reliable);
+    assert(left->_next_sn._val._plain._reliable == right->_next_sn._val._plain._reliable);
+    printf("B: %zu:%zu", left->_next_sn._val._plain._best_effort, right->_next_sn._val._plain._best_effort);
+    assert(left->_next_sn._val._plain._best_effort == right->_next_sn._val._plain._best_effort);
+    printf("\n");
+    // }
 }
 
 void join_message(void) {
@@ -2402,7 +2425,7 @@ _z_transport_message_t gen_transport_message(void) {
 }
 
 void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_message_t *right) {
-    // FIXME: This is here to set the extensions flags that is only known at encoding time
+    // FIXME[protocol]: This is here to set the extensions flags that is only known at encoding time
     if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
         left->_header |= 0x80;
     }

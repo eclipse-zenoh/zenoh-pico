@@ -82,6 +82,14 @@
 #define _Z_FLAG_HELLO_L 0x20  // 1 << 5
 #define _Z_FLAG_HELLO_Z 0x80  // 1 << 7
 
+// Join message flags:
+//      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
+//      S Size params      if S==1 then size parameters are exchanged
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_JOIN_T 0x20  // 1 << 5
+#define _Z_FLAG_JOIN_S 0x40  // 1 << 6
+#define _Z_FLAG_JOIN_Z 0x80  // 1 << 7
+
 // Init message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn
 //      S Size params      if S==1 then size parameters are exchanged
@@ -111,9 +119,6 @@
 #define _Z_FLAG_CLOSE_Z 0x80  // 1 << 7
 
 /* Transport message flags */
-#define _Z_FLAG_T_O 0x80   // 1 << 7 | Options          if O==1 then Options are present
-#define _Z_FLAG_T_S 0x40   // 1 << 6 | SN Resolution    if S==1 then the SN Resolution is present
-#define _Z_FLAG_T_T1 0x20  // 1 << 5 | TimeRes          if T==1 then the time resolution is in seconds
 #define _Z_FLAG_T_Z \
     0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
 
@@ -748,11 +753,13 @@ typedef struct {
 } _z_conduit_sn_list_t;
 typedef struct {
     _z_bytes_t _zid;
-    _z_zint_t _options;
     _z_zint_t _lease;
-    _z_zint_t _seq_num_res;
-    _z_conduit_sn_list_t _next_sns;
+    uint16_t _batch_size;
+    _z_conduit_sn_list_t _next_sn;
     z_whatami_t _whatami;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_join_t;
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
@@ -829,8 +836,8 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 typedef struct {
     _z_bytes_t _zid;
     _z_bytes_t _cookie;
-    z_whatami_t _whatami;
     uint16_t _batch_size;
+    z_whatami_t _whatami;
     uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
@@ -987,8 +994,8 @@ void _z_t_msg_clear(_z_transport_message_t *msg);
 /*------------------ Builders ------------------*/
 _z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease, _z_zint_t seq_num_res,
-                                          _z_bytes_t zid, _z_conduit_sn_list_t next_sns);
+_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
+                                          _z_conduit_sn_list_t next_sn);
 _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid);
 _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);

@@ -1095,31 +1095,38 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_JOIN\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_options))
-    }
-    _Z_EC(_z_uint8_encode(wbf, msg->_version))
-    _Z_EC(_z_enum_encode(wbf, msg->_whatami))
-    _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
+    _Z_EC(_z_wbuf_write(wbf, msg->_version))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
+    uint8_t cbyte = 0;
+    cbyte |= (msg->_whatami & 0x03);
+    cbyte |= ((msg->_zid.len - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    _Z_EC(_z_uint8_encode(wbf, cbyte))
+    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
+        cbyte = 0;
+        cbyte |= ((msg->_seq_num_res - 1) & 0x03);
+        cbyte |= (((msg->_req_id_res - 1) & 0x03) << 2);
+        cbyte |= (((msg->_key_id_res - 1) & 0x03) << 4);
+        _Z_EC(_z_uint8_encode(wbf, cbyte))
+        _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
+    }
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_T) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_seq_num_res))
-    }
-    if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
-        for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
-            _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._qos[i]._reliable))
-            _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._qos[i]._best_effort))
-        }
-    } else {
-        _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._plain._reliable))
-        _Z_EC(_z_zint_encode(wbf, msg->_next_sns._val._plain._best_effort))
-    }
+    // if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
+    // for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
+    //     _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable))
+    //     _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._best_effort))
+    // }
+    // } else {
+    _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._reliable))
+    _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._best_effort))
+    // }
 
     return ret;
 }
@@ -1128,34 +1135,50 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_JOIN\n");
     int8_t ret = _Z_RES_OK;
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_O) == true) {
-        ret |= _z_zint_decode(&msg->_options, zbf);
-    } else {
-        msg->_options = 0;
-    }
     ret |= _z_uint8_decode(&msg->_version, zbf);
-    ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
-    ret |= _z_bytes_decode(&msg->_zid, zbf);
-    ret |= _z_zint_decode(&msg->_lease, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
-        msg->_lease = msg->_lease * 1000;
-    }
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
-        ret |= _z_zint_decode(&msg->_seq_num_res, zbf);
-    } else {
-        msg->_seq_num_res = Z_SN_RESOLUTION;
-    }
-    if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
-        msg->_next_sns._is_qos = true;
-        for (uint8_t i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); i++) {
-            ret |= _z_zint_decode(&msg->_next_sns._val._qos[i]._reliable, zbf);
-            ret |= _z_zint_decode(&msg->_next_sns._val._qos[i]._best_effort, zbf);
+
+    uint8_t cbyte = 0;
+    ret |= _z_uint8_decode(&cbyte, zbf);
+    msg->_whatami = cbyte & 0x03;
+    msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+
+    if (ret == _Z_RES_OK) {
+        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_zid = _z_bytes_empty();
         }
     } else {
-        msg->_next_sns._is_qos = false;
-        ret |= _z_zint_decode(&msg->_next_sns._val._plain._reliable, zbf);
-        ret |= _z_zint_decode(&msg->_next_sns._val._plain._best_effort, zbf);
+        msg->_zid = _z_bytes_empty();
     }
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+        cbyte = 0;
+        ret |= _z_uint8_decode(&cbyte, zbf);
+        msg->_seq_num_res = (cbyte & 0x03) + 1;
+        msg->_req_id_res = ((cbyte >> 2) & 0x03) + 1;
+        msg->_key_id_res = ((cbyte >> 4) & 0x03) + 1;
+        ret |= _z_uint16_decode(&msg->_batch_size, zbf);
+    } else {
+        msg->_seq_num_res = _Z_DEFAULT_SIZET_SIZE;
+        msg->_req_id_res = _Z_DEFAULT_SIZET_SIZE;
+        msg->_key_id_res = _Z_DEFAULT_SIZET_SIZE;
+        msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
+    }
+
+    ret |= _z_zint_decode(&msg->_lease, zbf);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_T) == true) {
+        msg->_lease = msg->_lease * 1000;
+    }
+
+    // if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
+    //     for (uint8_t i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); i++) {
+    //         ret |= _z_zint_decode(&msg->_next_sn._val._qos[i]._reliable, zbf);
+    //         ret |= _z_zint_decode(&msg->_next_sn._val._qos[i]._best_effort, zbf);
+    //     }
+    // } else {
+    ret |= _z_zint_decode(&msg->_next_sn._val._plain._reliable, zbf);
+    ret |= _z_zint_decode(&msg->_next_sn._val._plain._best_effort, zbf);
+    // }
 
     return ret;
 }

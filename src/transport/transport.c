@@ -214,8 +214,8 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
         zt->_transport._multicast._seq_num_res_half = zt->_transport._multicast._seq_num_res / 2;
 
         // The initial SN at TX side
-        zt->_transport._multicast._sn_tx_reliable = param->_initial_sn_tx;
-        zt->_transport._multicast._sn_tx_best_effort = param->_initial_sn_tx;
+        zt->_transport._multicast._sn_tx_reliable = param->_initial_sn_tx._val._plain._reliable;
+        zt->_transport._multicast._sn_tx_best_effort = param->_initial_sn_tx._val._plain._best_effort;
 
         // Initialize peer list
         zt->_transport._multicast._peers = _z_transport_peer_entry_list_new();
@@ -376,25 +376,26 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
                                         const _z_bytes_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
-    param->_is_qos = false;  // FIXME: make transport aware of qos configuration
-    param->_initial_sn_tx = 0;
-    param->_seq_num_res = Z_SN_RESOLUTION;
+    _z_zint_t initial_sn_tx = 0;
+    z_random_fill(&initial_sn_tx, sizeof(initial_sn_tx));
+    initial_sn_tx = initial_sn_tx % Z_SN_RESOLUTION;
 
-    // Explicitly send a JOIN message upon startup
-    // FIXME: make transport aware of qos configuration
-    _z_conduit_sn_list_t next_sns;
-    next_sns._is_qos = false;
-    next_sns._val._plain._best_effort = param->_initial_sn_tx;
-    next_sns._val._plain._reliable = param->_initial_sn_tx;
+    _z_conduit_sn_list_t next_sn;
+    next_sn._val._plain._best_effort = initial_sn_tx;
+    next_sn._val._plain._reliable = initial_sn_tx;
 
     _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
-    _z_transport_message_t jsm =
-        _z_t_msg_make_join(Z_PROTO_VERSION, Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, param->_seq_num_res, zid, next_sns);
+    _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");
     ret = _z_link_send_t_msg(zl, &jsm);
     _z_t_msg_clear(&jsm);
+
+    if (ret == _Z_RES_OK) {
+        param->_seq_num_res = jsm._body._join._seq_num_res;
+        param->_initial_sn_tx = next_sn;
+    }
 
     return ret;
 }

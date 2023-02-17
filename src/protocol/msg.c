@@ -515,30 +515,30 @@ void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg) {
 }
 
 /*------------------ Join Message ------------------*/
-_z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, _z_zint_t lease, _z_zint_t seq_num_res,
-                                          _z_bytes_t zid, _z_conduit_sn_list_t next_sns) {
+_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
+                                          _z_conduit_sn_list_t next_sn) {
     _z_transport_message_t msg;
+    msg._header = _Z_MID_JOIN;
 
-    msg._body._join._options = 0;
-    if (next_sns._is_qos == true) {
-        _Z_SET_FLAG(msg._body._join._options, _Z_OPT_JOIN_QOS);
-    }
-    msg._body._join._version = version;
+    msg._body._join._version = Z_PROTO_VERSION;
     msg._body._join._whatami = whatami;
     msg._body._join._lease = lease;
-    msg._body._join._seq_num_res = seq_num_res;
-    msg._body._join._next_sns = next_sns;
+    msg._body._join._seq_num_res = Z_SN_RESOLUTION;
+    msg._body._join._key_id_res = Z_KID_RESOLUTION;
+    msg._body._join._req_id_res = Z_REQ_RESOLUTION;
+    msg._body._join._batch_size = Z_BATCH_SIZE;
+    msg._body._join._next_sn = next_sn;
     msg._body._join._zid = zid;
 
-    msg._header = _Z_MID_JOIN;
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_T1);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_JOIN_T);
     }
-    if (seq_num_res != Z_SN_RESOLUTION) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_S);
-    }
-    if (msg._body._join._options != 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_O);
+
+    if ((msg._body._join._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
+        (msg._body._join._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._join._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
+        (msg._body._join._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_JOIN_S);
     }
 
     msg._attachment = NULL;
@@ -548,12 +548,14 @@ _z_transport_message_t _z_t_msg_make_join(uint8_t version, z_whatami_t whatami, 
 }
 
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
-    clone->_options = msg->_options;
     clone->_version = msg->_version;
     clone->_whatami = msg->_whatami;
     clone->_lease = msg->_lease;
     clone->_seq_num_res = msg->_seq_num_res;
-    clone->_next_sns = msg->_next_sns;
+    clone->_key_id_res = msg->_key_id_res;
+    clone->_req_id_res = msg->_req_id_res;
+    clone->_batch_size = msg->_batch_size;
+    clone->_next_sn = msg->_next_sn;
     _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
 

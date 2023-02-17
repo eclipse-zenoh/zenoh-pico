@@ -20,6 +20,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/math.h"
 
 #if Z_MULTICAST_TRANSPORT == 1
 
@@ -138,48 +139,58 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             {
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 if (entry != NULL) {
-                    entry->_remote_addr = _z_bytes_duplicate(addr);
-                    entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
-                    if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) {
-                        entry->_seq_num_res = t_msg->_body._join._seq_num_res;
-                    } else {
-                        entry->_seq_num_res = Z_SN_RESOLUTION;
-                    }
+                    entry->_seq_num_res = _z_max_value(t_msg->_body._join._seq_num_res);
                     entry->_seq_num_res_half = entry->_seq_num_res / 2;
 
-                    _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
-                    _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
+                    // If the new node has less representing capabilities then it is incompatible to communication
+                    if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
+                        (t_msg->_body._join._key_id_res < Z_KID_RESOLUTION) ||
+                        (t_msg->_body._join._req_id_res < Z_REQ_RESOLUTION) ||
+                        (t_msg->_body._join._batch_size < Z_BATCH_SIZE)) {
+                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                    }
+
+                    if (ret == _Z_RES_OK) {
+                        entry->_remote_addr = _z_bytes_duplicate(addr);
+                        entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
+
+                        _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
+                        _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
 
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
-                    entry->_dbuf_reliable = _z_wbuf_make(0, true);
-                    entry->_dbuf_best_effort = _z_wbuf_make(0, true);
+                        entry->_dbuf_reliable = _z_wbuf_make(0, true);
+                        entry->_dbuf_best_effort = _z_wbuf_make(0, true);
 #else
-                    entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
-                    entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
+                        entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
+                        entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
 #endif
 
-                    // Update lease time (set as ms during)
-                    entry->_lease = t_msg->_body._join._lease;
-                    entry->_next_lease = entry->_lease;
-                    entry->_received = true;
+                        // Update lease time (set as ms during)
+                        entry->_lease = t_msg->_body._join._lease;
+                        entry->_next_lease = entry->_lease;
+                        entry->_received = true;
 
-                    ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
+                        ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
+                    } else {
+                        z_free(entry);
+                    }
                 } else {
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-            } else  // Existing peer
-            {
+            } else {  // Existing peer
                 entry->_received = true;
 
-                // Check if the sn resolution remains the same
-                if ((_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_S) == true) &&
-                    (entry->_seq_num_res != t_msg->_body._join._seq_num_res)) {
+                // Check if the representing capapbilities are still the same
+                if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
+                    (t_msg->_body._join._key_id_res < Z_KID_RESOLUTION) ||
+                    (t_msg->_body._join._req_id_res < Z_REQ_RESOLUTION) ||
+                    (t_msg->_body._join._batch_size < Z_BATCH_SIZE)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     break;
                 }
 
                 // Update SNs
-                _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sns);
+                _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
                 _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
 
                 // Update lease time (set as ms during)

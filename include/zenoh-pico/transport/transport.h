@@ -158,9 +158,8 @@ typedef struct {
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
-    _z_zint_t _seq_num_res;
-    _z_zint_t _initial_sn_tx;
-    _Bool _is_qos;
+    uint8_t _seq_num_res;
+    _z_conduit_sn_list_t _initial_sn_tx;
 } _z_transport_multicast_establish_param_t;
 
 int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param);
