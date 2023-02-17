@@ -1018,9 +1018,12 @@ int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_what = cbyte & 0x07;
-    if (_Z_HAS_FLAG(cbyte, _Z_FLAG_SCOUT_I) == true) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_SCOUT_I) == true)) {
         msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
         ret |= _z_bytes_val_decode(&msg->_zid, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_zid = _z_bytes_empty();
+        }
     } else {
         msg->_zid = _z_bytes_empty();
     }
@@ -1062,10 +1065,21 @@ int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
     msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
-    ret |= _z_bytes_val_decode(&msg->_zid, zbf);
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
+    if (ret == _Z_RES_OK) {
+        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_zid = _z_bytes_empty();
+        }
+    } else {
+        msg->_zid = _z_bytes_empty();
+    }
+
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true)) {
         ret |= _z_locators_decode(&msg->_locators, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_locators = _z_locator_array_make(0);
+        }
     } else {
         msg->_locators = _z_locator_array_make(0);
     }
@@ -1190,7 +1204,15 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
     msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
-    ret |= _z_bytes_val_decode(&msg->_zid, zbf);
+
+    if (ret == _Z_RES_OK) {
+        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_zid = _z_bytes_empty();
+        }
+    } else {
+        msg->_zid = _z_bytes_empty();
+    }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
         cbyte = 0;
@@ -1206,8 +1228,11 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true)) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_cookie = _z_bytes_empty();
+        }
     } else {
         msg->_cookie = _z_bytes_empty();
     }
@@ -1250,8 +1275,11 @@ int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
     ret |= _z_zint_decode(&msg->_initial_sn, zbf);
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false)) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_cookie = _z_bytes_empty();
+        }
     } else {
         msg->_cookie = _z_bytes_empty();
     }
@@ -1349,6 +1377,7 @@ int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header)
             if (ret == _Z_RES_OK) {
                 _z_zenoh_message_vec_append(&msg->_messages, zm);
             } else {
+                z_free(zm);
                 _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
 
                 // FIXME: Check for the return error, since not all of them means a decoding error
