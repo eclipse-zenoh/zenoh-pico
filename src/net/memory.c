@@ -82,3 +82,19 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
         *reply_data = NULL;
     }
 }
+
+void _z_value_clear(_z_value_t *value) {
+    _z_bytes_clear(&value->encoding.suffix);
+    _z_bytes_clear(&value->payload);
+}
+
+void _z_value_free(_z_value_t **value) {
+    _z_value_t *ptr = *value;
+
+    if (ptr != NULL) {
+        _z_value_clear(ptr);
+
+        z_free(ptr);
+        *value = NULL;
+    }
+}

@@ -202,7 +202,7 @@ _z_value_t gen_value(void) {
     if (gen_bool()) {
         val.payload = _z_bytes_empty();
     } else {
-        val.payload = _z_bytes_make(16);
+        val.payload = gen_bytes(16);
     }
 
     return val;

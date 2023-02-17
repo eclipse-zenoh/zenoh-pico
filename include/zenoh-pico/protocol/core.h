@@ -95,6 +95,8 @@ typedef struct {
     _z_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
+void _z_value_clear(_z_value_t *src);
+void _z_value_free(_z_value_t **hello);
 
 /**
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.

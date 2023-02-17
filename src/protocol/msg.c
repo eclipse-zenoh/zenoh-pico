@@ -399,6 +399,8 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
 void _z_msg_clear_query(_z_msg_query_t *msg) {
     _z_keyexpr_clear(&msg->_key);
     _z_str_clear(msg->_parameters);
+    _z_bytes_clear(&msg->_info._encoding.suffix);
+    _z_bytes_clear(&msg->_payload);
 }
 
 /*------------------ Reply Message ------------------*/
