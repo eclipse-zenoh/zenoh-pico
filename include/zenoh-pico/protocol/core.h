@@ -150,4 +150,7 @@ typedef struct {
     z_submode_t mode;
 } _z_subinfo_t;
 
+typedef uint8_t _z_int_res_t;
+uint8_t _z_intres_to_nbytes(_z_int_res_t intres);
+
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

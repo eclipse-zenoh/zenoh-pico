@@ -139,7 +139,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             {
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 if (entry != NULL) {
-                    entry->_seq_num_res = _z_max_value(t_msg->_body._join._seq_num_res);
+                    entry->_seq_num_res = _z_max_value(_z_intres_to_nbytes(t_msg->_body._join._seq_num_res));
                     entry->_seq_num_res_half = entry->_seq_num_res / 2;
 
                     // If the new node has less representing capabilities then it is incompatible to communication

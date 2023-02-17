@@ -146,19 +146,19 @@ _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
 typedef struct {
     _z_bytes_t _remote_zid;
-    uint8_t _key_id_res;
-    uint8_t _req_id_res;
-    uint8_t _seq_num_res;
     uint16_t _batch_size;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
     _z_zint_t _lease;
     z_whatami_t _whatami;
+    _z_int_res_t _key_id_res;
+    _z_int_res_t _req_id_res;
+    _z_int_res_t _seq_num_res;
     _Bool _is_qos;
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
-    uint8_t _seq_num_res;
+    _z_int_res_t _seq_num_res;
     _z_conduit_sn_list_t _initial_sn_tx;
 } _z_transport_multicast_establish_param_t;
 
