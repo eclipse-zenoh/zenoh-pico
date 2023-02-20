@@ -51,6 +51,7 @@
 #define _Z_MID_CLOSE 0x05
 #define _Z_MID_KEEP_ALIVE 0x08
 #define _Z_MID_FRAME 0x0a
+#define _Z_MID_FRAGMENT 0x09
 /* Zenoh Messages */
 #define _Z_MID_DECLARE 0x0b
 #define _Z_MID_DATA 0x0c
@@ -108,6 +109,14 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_FRAME_R 0x20  // 1 << 5
 #define _Z_FLAG_FRAME_Z 0x80  // 1 << 7
+
+// Frame message flags:
+//      R Reliable         if R==1 it concerns the reliable channel, else the best-effort channel
+//      M More             if M==1 then other fragments will follow
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_FRAGMENT_R 0x20  // 1 << 5
+#define _Z_FLAG_FRAGMENT_M 0x40  // 1 << 6
+#define _Z_FLAG_FRAGMENT_Z 0x80  // 1 << 7
 
 // Close message flags:
 //      S Session Close   if S==1 Session close or S==0 Link close
@@ -968,6 +977,34 @@ typedef struct {
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg);
 
+/*------------------ Fragment Message ------------------*/
+// The Fragment message is used to transmit on the wire large Zenoh Message that require fragmentation
+// because they are larger thatn the maximum batch size (i.e. 2^16-1) and/or the link MTU.
+//
+// The [`Fragment`] message flow is the following:
+//
+// Flags:
+// - R: Reliable       if R==1 it concerns the reliable channel, else the best-effort channel
+// - M: More           if M==1 then other fragments will follow
+// - Z: Extensions     if Z==1 then zenoh extensions will follow.
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|R| FRAGMENT|
+// +-+-+-+---------+
+// %    seq num    %
+// +---------------+
+// ~   [FragExts]  ~ if Flag(Z)==1
+// +---------------+
+// ~      [u8]     ~
+// +---------------+
+//
+typedef struct {
+    _z_payload_t _payload;
+    _z_zint_t _sn;
+} _z_t_msg_fragment_t;
+void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg);
+
 /*------------------ Transport Message ------------------*/
 typedef union {
     _z_t_msg_scout_t _scout;
@@ -978,6 +1015,7 @@ typedef union {
     _z_t_msg_close_t _close;
     _z_t_msg_keep_alive_t _keep_alive;
     _z_t_msg_frame_t _frame;
+    _z_t_msg_fragment_t _fragment;
 } _z_transport_body_t;
 
 typedef struct {
@@ -1001,6 +1039,7 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable);
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t messages, _Bool is_reliable, _Bool is_last);
 
 /*------------------ Copy ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);

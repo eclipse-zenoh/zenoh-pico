@@ -724,9 +724,11 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
     if (is_reliable == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
     }
+
+    msg._body._frame._messages = _z_zenoh_message_vec_make(0);
+
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
-    msg._body._frame._messages = _z_zenoh_message_vec_make(0);
 
     return msg;
 }
@@ -740,8 +742,9 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t 
         _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
     }
 
-    msg._attachment = NULL;
     msg._body._frame._messages = messages;
+
+    msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
@@ -753,6 +756,32 @@ void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
 }
 
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_zenoh_message_vec_clear(&msg->_messages); }
+
+/*------------------ Fragment Message ------------------*/
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t payload, _Bool is_reliable, _Bool is_last) {
+    _z_transport_message_t msg;
+    msg._header = _Z_MID_FRAGMENT;
+    if (is_last == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAGMENT_M);
+    }
+    if (is_reliable == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAGMENT_R);
+    }
+
+    msg._body._fragment._sn = sn;
+    msg._body._fragment._payload = payload;
+
+    msg._attachment = NULL;
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
+    _z_bytes_copy(&clone->_payload, &msg->_payload);
+}
+
+void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg) { _z_bytes_clear(&msg->_payload); }
 
 /*------------------ Transport Message ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {

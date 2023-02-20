@@ -1424,6 +1424,43 @@ int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     return _z_frame_decode_na(msg, zbf, header);
 }
 
+/*------------------ Fragment Message ------------------*/
+int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
+    (void)(header);
+
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Encoding _Z_MID_FRAGMENT\n");
+
+    _Z_EC(_z_zint_encode(wbf, msg->_sn))
+
+    _Z_EC(_z_bytes_encode(wbf, &msg->_payload))
+
+    return ret;
+}
+
+int8_t _z_fragment_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    (void)(header);
+
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Decoding _Z_MID_FRAME\n");
+
+    ret |= _z_zint_decode(&msg->_sn, zbf);
+    if (ret == _Z_RES_OK) {
+        ret |= _z_bytes_decode(&msg->_payload, zbf);
+        if (ret != _Z_RES_OK) {
+            msg->_payload = _z_bytes_empty();
+        }
+    } else {
+        msg->_payload = _z_bytes_empty();
+    }
+
+    return ret;
+}
+
+int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_fragment_decode_na(msg, zbf, header);
+}
+
 /*------------------ Transport Message ------------------*/
 int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg) {
     int8_t ret = _Z_RES_OK;
@@ -1443,6 +1480,10 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_FRAME: {
             ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
+        } break;
+
+        case _Z_MID_FRAGMENT: {
+            ret |= _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
 
         case _Z_MID_KEEP_ALIVE: {
@@ -1505,6 +1546,11 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
             switch (mid) {
                 case _Z_MID_FRAME: {
                     ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
+                    is_last = true;
+                } break;
+
+                case _Z_MID_FRAGMENT: {
+                    ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);
                     is_last = true;
                 } break;
 

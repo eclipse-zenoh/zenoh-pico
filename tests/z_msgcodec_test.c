@@ -94,6 +94,9 @@ void print_transport_message_type(uint8_t header) {
         case _Z_MID_FRAME:
             printf("Frame message");
             break;
+        case _Z_MID_FRAGMENT:
+            printf("Frame message");
+            break;
         default:
             assert(0);
             break;
@@ -2366,14 +2369,62 @@ void frame_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
+/*------------------ Fragment Message ------------------*/
+_z_transport_message_t gen_fragment_message(void) {
+    _z_zint_t sn = gen_zint();
+    _Bool is_reliable = gen_bool();
+    _Bool is_last = gen_bool();
+    _z_payload_t payload = gen_bytes(gen_uint16() % 60000);  // 60000 is just to make sure that we are not generating a
+                                                             // payload bigger than what the fragment can hold
+    return _z_t_msg_make_fragment(sn, payload, is_reliable, is_last);
+}
+
+void assert_eq_fragment_message(_z_t_msg_fragment_t *left, _z_t_msg_fragment_t *right, uint8_t header) {
+    (void)(header);
+
+    printf("   SN (%zu:%zu)", left->_sn, right->_sn);
+    assert(left->_sn == right->_sn);
+    printf("\n");
+
+    assert_eq_payload(&left->_payload, &right->_payload);
+}
+
+void fragment_message(void) {
+    printf("\n>> Fragment message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_transport_message_t t_msg = gen_fragment_message();
+    assert(_Z_MID(t_msg._header) == _Z_MID_FRAGMENT);
+
+    _z_t_msg_fragment_t e_fr = t_msg._body._fragment;
+
+    // Encode
+    int8_t res = _z_fragment_encode(&wbf, t_msg._header, &e_fr);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_t_msg_fragment_t d_fr;
+    res = _z_fragment_decode(&d_fr, &zbf, t_msg._header);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_fragment_message(&e_fr, &d_fr, t_msg._header);
+
+    // Frame
+    _z_t_msg_clear_fragment(&d_fr);
+    _z_t_msg_clear(&t_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*------------------ Transport Message ------------------*/
 _z_transport_message_t gen_transport_message(void) {
     _z_transport_message_t e_tm;
 
-    uint8_t mids[] = {
-        _Z_MID_SCOUT, _Z_MID_HELLO, _Z_MID_JOIN,       _Z_MID_INIT,
-        _Z_MID_OPEN,  _Z_MID_CLOSE, _Z_MID_KEEP_ALIVE, _Z_MID_FRAME,
-    };
+    uint8_t mids[] = {_Z_MID_SCOUT, _Z_MID_HELLO,      _Z_MID_JOIN,  _Z_MID_INIT,    _Z_MID_OPEN,
+                      _Z_MID_CLOSE, _Z_MID_KEEP_ALIVE, _Z_MID_FRAME, _Z_MID_FRAGMENT};
 
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
     switch (mids[i]) {
@@ -2400,6 +2451,9 @@ _z_transport_message_t gen_transport_message(void) {
             break;
         case _Z_MID_FRAME:
             e_tm = gen_frame_message();
+            break;
+        case _Z_MID_FRAGMENT:
+            e_tm = gen_fragment_message();
             break;
         default:
             assert(0);
@@ -2459,6 +2513,9 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
             break;
         case _Z_MID_FRAME:
             assert_eq_frame_message(&left->_body._frame, &right->_body._frame, left->_header);
+            break;
+        case _Z_MID_FRAGMENT:
+            assert_eq_fragment_message(&left->_body._fragment, &right->_body._fragment, left->_header);
             break;
         default:
             assert(0);
@@ -2772,6 +2829,7 @@ int main(void) {
         close_message();
         keep_alive_message();
         frame_message();
+        fragment_message();
         transport_message();
         batch();
         // fragmentation();

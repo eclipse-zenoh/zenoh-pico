@@ -159,6 +159,10 @@ int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *m
 int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
+int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
+int8_t _z_fragment_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+
 // ------------------ Discovery Message ------------------
 int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg);
 int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
