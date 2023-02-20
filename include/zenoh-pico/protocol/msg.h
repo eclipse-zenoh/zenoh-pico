@@ -49,10 +49,7 @@
 #define _Z_MID_INIT 0x03
 #define _Z_MID_OPEN 0x04
 #define _Z_MID_CLOSE 0x05
-#define _Z_MID_SYNC 0x06
-#define _Z_MID_ACK_NACK 0x07
 #define _Z_MID_KEEP_ALIVE 0x08
-#define _Z_MID_PING_PONG 0x09
 #define _Z_MID_FRAME 0x0a
 /* Zenoh Messages */
 #define _Z_MID_DECLARE 0x0b

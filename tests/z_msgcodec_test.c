@@ -88,17 +88,8 @@ void print_transport_message_type(uint8_t header) {
         case _Z_MID_CLOSE:
             printf("Close message");
             break;
-        case _Z_MID_SYNC:
-            printf("Sync message");
-            break;
-        case _Z_MID_ACK_NACK:
-            printf("AckNack message");
-            break;
         case _Z_MID_KEEP_ALIVE:
             printf("KeepAlive message");
-            break;
-        case _Z_MID_PING_PONG:
-            printf("PingPong message");
             break;
         case _Z_MID_FRAME:
             printf("Frame message");

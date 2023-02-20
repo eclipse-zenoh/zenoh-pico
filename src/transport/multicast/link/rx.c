@@ -210,16 +210,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_SYNC: {
-            _Z_INFO("Handling of Sync messages not implemented\n");
-            break;
-        }
-
-        case _Z_MID_ACK_NACK: {
-            _Z_INFO("Handling of AckNack messages not implemented\n");
-            break;
-        }
-
         case _Z_MID_KEEP_ALIVE: {
             _Z_INFO("Received _Z_KEEP_ALIVE message\n");
             if (entry == NULL) {
@@ -227,11 +217,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             }
             entry->_received = true;
 
-            break;
-        }
-
-        case _Z_MID_PING_PONG: {
-            _Z_DEBUG("Handling of PingPong messages not implemented");
             break;
         }
 

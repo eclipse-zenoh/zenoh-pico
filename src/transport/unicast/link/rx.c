@@ -110,23 +110,8 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             break;
         }
 
-        case _Z_MID_SYNC: {
-            _Z_INFO("Handling of Sync messages not implemented\n");
-            break;
-        }
-
-        case _Z_MID_ACK_NACK: {
-            _Z_INFO("Handling of AckNack messages not implemented\n");
-            break;
-        }
-
         case _Z_MID_KEEP_ALIVE: {
             _Z_INFO("Received Z_KEEP_ALIVE message\n");
-            break;
-        }
-
-        case _Z_MID_PING_PONG: {
-            _Z_INFO("Handling of PingPong messages not implemented\n");
             break;
         }
 
