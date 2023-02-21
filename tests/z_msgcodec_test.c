@@ -2472,7 +2472,7 @@ _z_transport_message_t gen_transport_message(void) {
 void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_message_t *right) {
     // FIXME[protocol]: This is here to set the extensions flags that is only known at encoding time
     if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
-        left->_header |= 0x80;
+        left->_header |= _Z_FLAG_T_Z;
     }
 
     // Test message decorators
@@ -2629,7 +2629,7 @@ void batch(void) {
 //     t_msg._body._frame._sn = sn;
 
 //     if (is_reliable == true) {
-//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_R);
+//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_FRAGMENT_R);
 //     };
 
 //     if (is_fragment == true) {

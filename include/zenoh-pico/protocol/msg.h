@@ -68,17 +68,17 @@
 /*=============================*/
 /*        Message flags        */
 /*=============================*/
+#define _Z_FLAG_T_Z 0x80  // 1 << 7
+
 // Scout message flags:
 //      I ZenohID          if I==1 then the ZenohID is present
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_SCOUT_I 0x08  // 1 << 3
-#define _Z_FLAG_SCOUT_Z 0x80  // 1 << 7
 
 // Hello message flags:
 //      L Locators         if L==1 then Locators are present
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_HELLO_L 0x20  // 1 << 5
-#define _Z_FLAG_HELLO_Z 0x80  // 1 << 7
 
 // Join message flags:
 //      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
@@ -86,7 +86,6 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_JOIN_T 0x20  // 1 << 5
 #define _Z_FLAG_JOIN_S 0x40  // 1 << 6
-#define _Z_FLAG_JOIN_Z 0x80  // 1 << 7
 
 // Init message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn
@@ -94,7 +93,6 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_INIT_A 0x20  // 1 << 5
 #define _Z_FLAG_INIT_S 0x40  // 1 << 6
-#define _Z_FLAG_INIT_Z 0x80  // 1 << 7
 
 // Open message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka OpenAck), otherwise OpenSyn
@@ -102,13 +100,11 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_OPEN_A 0x20  // 1 << 5
 #define _Z_FLAG_OPEN_T 0x40  // 1 << 6
-#define _Z_FLAG_OPEN_Z 0x80  // 1 << 7
 
 // Frame message flags:
 //      R Reliable         if R==1 it concerns the reliable channel, else the best-effort channel
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_FRAME_R 0x20  // 1 << 5
-#define _Z_FLAG_FRAME_Z 0x80  // 1 << 7
 
 // Frame message flags:
 //      R Reliable         if R==1 it concerns the reliable channel, else the best-effort channel
@@ -116,16 +112,14 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_FRAGMENT_R 0x20  // 1 << 5
 #define _Z_FLAG_FRAGMENT_M 0x40  // 1 << 6
-#define _Z_FLAG_FRAGMENT_Z 0x80  // 1 << 7
 
 // Close message flags:
 //      S Session Close   if S==1 Session close or S==0 Link close
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_CLOSE_S 0x20  // 1 << 5
-#define _Z_FLAG_CLOSE_Z 0x80  // 1 << 7
 
-/* Transport message flags */
-#define _Z_FLAG_T_Z \
+/* Attachment message flags */
+#define _Z_FLAG_A_Z \
     0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
 
 /* Zenoh message flags */

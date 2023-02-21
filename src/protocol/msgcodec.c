@@ -198,7 +198,7 @@ int8_t _z_attachment_encode(_z_wbuf_t *wbf, const _z_attachment_t *msg) {
 
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Disable the SLICED flag to be on the safe side.
-    _Z_EC(_z_wbuf_write(wbf, msg->_header & ~_Z_FLAG_T_Z))
+    _Z_EC(_z_wbuf_write(wbf, msg->_header & ~_Z_FLAG_A_Z))
 
     ret |= _z_payload_encode(wbf, &msg->_payload);
 
@@ -213,7 +213,7 @@ int8_t _z_attachment_decode_na(_z_attachment_t *atch, _z_zbuf_t *zbf, uint8_t he
 
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Return error in case the payload is sliced.
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == false) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_A_Z) == false) {
         ret |= _z_payload_decode(&atch->_payload, zbf);
     }
 
@@ -1473,7 +1473,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
     uint8_t header = msg->_header;
     size_t n_ext = _z_msg_ext_vec_len(&msg->_extensions);
     if (n_ext > 0) {
-        header |= 0x80;
+        header |= _Z_FLAG_T_Z;
     }
 
     _Z_EC(_z_wbuf_write(wbf, header))
