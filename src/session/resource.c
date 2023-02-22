@@ -166,13 +166,13 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, uint8_t is_l
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local, _z_zint_t rid) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, is_local, rid);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return res;
@@ -180,13 +180,13 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local, _z_zint
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, keyexpr);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return res;
@@ -194,13 +194,13 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const 
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, is_local, keyexpr);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return res;
@@ -212,7 +212,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
     _Z_DEBUG(">>> Allocating res decl for (%zu,%zu:%s)\n", res->_id, res->_key._id, res->_key._suffix);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     // FIXME: check by keyexpr instead
@@ -229,7 +229,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
     }
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return ret;
@@ -237,7 +237,7 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
 
 void _z_unregister_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *res) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     if (is_local == _Z_RESOURCE_IS_LOCAL) {
@@ -247,19 +247,19 @@ void _z_unregister_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
     }
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }
 
 void _z_flush_resources(_z_session_t *zn) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_resource_list_free(&zn->_local_resources);
     _z_resource_list_free(&zn->_remote_resources);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }

@@ -43,7 +43,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     uint8_t ret;
 
     // Acquire and keep the lock
-    _z_mutex_lock(&ztu->_mutex_rx);
+    z_mutex_lock(&ztu->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
@@ -108,7 +108,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) + to_read);
     }
 
-    _z_mutex_unlock(&ztu->_mutex_rx);
+    z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
     return NULL;

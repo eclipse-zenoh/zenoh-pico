@@ -78,7 +78,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
     zn->_pending_queries = NULL;
 
 #if Z_MULTI_THREAD == 1
-    ret = _z_mutex_init(&zn->_mutex_inner);
+    ret = z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
     if (ret == _Z_RES_OK) {
         zn->_local_zid = _z_bytes_empty();
@@ -118,7 +118,7 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_pending_queries(zn);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_free(&zn->_mutex_inner);
+    z_mutex_free(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }
 

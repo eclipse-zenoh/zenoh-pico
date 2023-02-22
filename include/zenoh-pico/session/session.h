@@ -168,7 +168,7 @@ _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_t _mutex;
+    z_mutex_t _mutex;
     _z_condvar_t _cond_var;
 #endif  // Z_MULTI_THREAD == 1
     _z_reply_data_list_t *_replies;

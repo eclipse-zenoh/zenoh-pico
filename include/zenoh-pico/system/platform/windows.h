@@ -23,7 +23,7 @@
 #if Z_MULTI_THREAD == 1
 typedef HANDLE *_z_task_t;
 typedef void *_z_task_attr_t;  // Not used in Windows
-typedef SRWLOCK _z_mutex_t;
+typedef SRWLOCK z_mutex_t;
 typedef CONDITION_VARIABLE _z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 

@@ -20,7 +20,7 @@
 #if Z_MULTI_THREAD == 1
 typedef void *_z_task_t;
 typedef void *_z_task_attr_t;
-typedef void *_z_mutex_t;
+typedef void *z_mutex_t;
 typedef void *_z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 

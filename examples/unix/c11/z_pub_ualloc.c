@@ -19,7 +19,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-#include <zenoh-pico/system/platform.h>
 
 // First Fit custom / user defined allocators
 #define WORD uint64_t             // FIXME: not true for other architectues like 32-bits architectures
@@ -36,7 +35,7 @@ typedef struct z_m_block_t {
     WORD data[1];  // Payload pointer. Note: this MUST always be the last member in the struct.
 } z_m_block_t;
 
-_z_mutex_t mut;
+z_mutex_t mut;
 void *z_heap_start = NULL;  // Heap start. It must be explicitly initialized
 void *z_heap_end = NULL;    // Heap end. Defined for convenience to avoid computing
                             // it multiple times
@@ -71,7 +70,7 @@ size_t z_malign(size_t size) {
 // Allocates a block of memory of size bytes, following a first fit strategy.
 // Due to allignment extra bytes might be allocated.
 void *z_malloc(size_t size) {
-    _z_mutex_lock(&mut);
+    z_mutex_lock(&mut);
     WORD *ret = NULL;
     size_t aligned_size = z_malign(size);
 
@@ -97,16 +96,16 @@ void *z_malloc(size_t size) {
             p_brk = (z_m_block_t *)((uint8_t *)new_block->data + new_block->hdr.size);
         }
     }
-    _z_mutex_unlock(&mut);
+    z_mutex_unlock(&mut);
 
     return ret;
 }
 
 void z_free(void *ptr) {
-    _z_mutex_lock(&mut);
+    z_mutex_lock(&mut);
     z_m_block_t *block = ptr - sizeof(z_m_block_hdr_t);
     block->hdr.is_used = false;
-    _z_mutex_unlock(&mut);
+    z_mutex_unlock(&mut);
 }
 //
 

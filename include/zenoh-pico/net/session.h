@@ -24,7 +24,7 @@
  */
 typedef struct {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_t _mutex_inner;
+    z_mutex_t _mutex_inner;
 #endif  // Z_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
