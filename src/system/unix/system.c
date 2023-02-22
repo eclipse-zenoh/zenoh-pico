@@ -92,11 +92,13 @@ void z_random_fill(void *buf, size_t len) {
 }
 
 /*------------------ Memory ------------------*/
+#if Z_CUSTOM_ALLOCATOR == 0
 void *z_malloc(size_t size) { return malloc(size); }
 
 void *z_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 
 void z_free(void *ptr) { free(ptr); }
+#endif  // Z_CUSTOM_ALLOCATOR
 
 #if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/

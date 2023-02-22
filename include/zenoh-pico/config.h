@@ -271,4 +271,8 @@
 #endif
 #endif
 
+#ifndef Z_CUSTOM_ALLOCATOR
+#define Z_CUSTOM_ALLOCATOR 0
+#endif
+
 #endif /* ZENOH_PICO_CONFIG_H */
