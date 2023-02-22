@@ -91,7 +91,7 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE) ? zl->_mtu : Z_BATCH_SIZE;
-        zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, false);
+        zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, true);
         zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
         // Initialize the defragmentation buffers
@@ -190,7 +190,7 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE) ? zl->_mtu : Z_BATCH_SIZE;
-        zt->_transport._multicast._wbuf = _z_wbuf_make(mtu, false);
+        zt->_transport._multicast._wbuf = _z_wbuf_make(mtu, true);
         zt->_transport._multicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
         // Clean up the buffers if one of them failed to be allocated

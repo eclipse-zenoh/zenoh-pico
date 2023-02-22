@@ -109,6 +109,102 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
+        case _Z_MID_FRAME: {
+            _Z_INFO("Received _Z_FRAME message\n");
+            if (entry == NULL) {
+                break;
+            }
+            entry->_received = true;
+
+            // Check if the SN is correct
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
+                // @TODO: amend once reliability is in place. For the time being only
+                //        monothonic SNs are ensured
+                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._reliable,
+                                   t_msg->_body._frame._sn) == true) {
+                    entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
+                } else {
+                    _z_wbuf_clear(&entry->_dbuf_reliable);
+                    _Z_INFO("Reliable message dropped because it is out of order\n");
+                    break;
+                }
+            } else {
+                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._best_effort,
+                                   t_msg->_body._frame._sn) == true) {
+                    entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
+                } else {
+                    _z_wbuf_clear(&entry->_dbuf_best_effort);
+                    _Z_INFO("Best effort message dropped because it is out of order\n");
+                    break;
+                }
+            }
+
+            // Handle all the zenoh message, one by one
+            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            for (size_t i = 0; i < len; i++) {
+                _z_handle_zenoh_message(ztm->_session,
+                                        (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i));
+            }
+
+            break;
+        }
+
+        case _Z_MID_FRAGMENT: {
+            _Z_INFO("Received Z_FRAGMENT message\n");
+            if (entry == NULL) {
+                break;
+            }
+            entry->_received = true;
+
+            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_R)
+                                  ? &entry->_dbuf_reliable
+                                  : &entry->_dbuf_best_effort;  // Select the right defragmentation buffer
+
+            _Bool drop = false;
+            if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
+                // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
+                // Otherwise, last (smaller) fragments can be understood as a complete message
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0, _z_wbuf_space_left(dbuf));
+                drop = true;
+            } else {
+                _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0,
+                                    t_msg->_body._fragment._payload.len);
+            }
+
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_M) == false) {
+                if (drop == true) {  // Drop message if it exceeds the fragmentation size
+                    _z_wbuf_reset(dbuf);
+                    break;
+                }
+
+                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
+
+                _z_zenoh_message_t zm;
+                int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                if (ret == _Z_RES_OK) {
+                    _z_handle_zenoh_message(ztm->_session, &zm);
+                    _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
+                                        // zenoh messages are released when their transport message is released.
+                }
+
+                // Free the decoding buffer
+                _z_zbuf_clear(&zbf);
+                // Reset the defragmentation buffer
+                _z_wbuf_reset(dbuf);
+            }
+            break;
+        }
+
+        case _Z_MID_KEEP_ALIVE: {
+            _Z_INFO("Received _Z_KEEP_ALIVE message\n");
+            if (entry == NULL) {
+                break;
+            }
+            entry->_received = true;
+
+            break;
+        }
+
         case _Z_MID_SCOUT: {
             // Do nothing, multicast transports are not expected to handle SCOUT messages on established sessions
             break;
@@ -206,56 +302,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 break;
             }
             ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
-
-            break;
-        }
-
-        case _Z_MID_KEEP_ALIVE: {
-            _Z_INFO("Received _Z_KEEP_ALIVE message\n");
-            if (entry == NULL) {
-                break;
-            }
-            entry->_received = true;
-
-            break;
-        }
-
-        case _Z_MID_FRAME: {
-            _Z_INFO("Received _Z_FRAME message\n");
-            if (entry == NULL) {
-                break;
-            }
-            entry->_received = true;
-
-            // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
-                // @TODO: amend once reliability is in place. For the time being only
-                //        monothonic SNs are ensured
-                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._reliable,
-                                   t_msg->_body._frame._sn) == true) {
-                    entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
-                } else {
-                    _z_wbuf_clear(&entry->_dbuf_reliable);
-                    _Z_INFO("Reliable message dropped because it is out of order\n");
-                    break;
-                }
-            } else {
-                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._best_effort,
-                                   t_msg->_body._frame._sn) == true) {
-                    entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
-                } else {
-                    _z_wbuf_clear(&entry->_dbuf_best_effort);
-                    _Z_INFO("Best effort message dropped because it is out of order\n");
-                    break;
-                }
-            }
-
-            // Handle all the zenoh message, one by one
-            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
-            for (size_t i = 0; i < len; i++) {
-                _z_handle_zenoh_message(ztm->_session,
-                                        (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i));
-            }
 
             break;
         }

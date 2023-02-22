@@ -15,6 +15,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -107,7 +108,13 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
                 // Write the message legnth in the reserved space if needed
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
 
-                ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                if (ztu->_wbuf._ioss._len == 1) {
+                    ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                } else {
+                    // Change the MID
+
+                    // for ()
+                }
                 if (ret == _Z_RES_OK) {
                     ztu->_transmitted = true;  // Mark the session that we have transmitted data
                 }

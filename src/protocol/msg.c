@@ -823,6 +823,10 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
             _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
         } break;
 
+        case _Z_MID_FRAGMENT: {
+            _z_t_msg_copy_fragment(&clone->_body._fragment, &msg->_body._fragment);
+        } break;
+
         default: {
             _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
         } break;
@@ -867,6 +871,10 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 
         case _Z_MID_FRAME: {
             _z_t_msg_clear_frame(&msg->_body._frame);
+        } break;
+
+        case _Z_MID_FRAGMENT: {
+            _z_t_msg_clear_fragment(&msg->_body._fragment);
         } break;
 
         default: {
