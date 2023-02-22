@@ -205,9 +205,12 @@ if(BUILD_WITH_CUSTOM_ALLOCATOR)
 
   if(UNIX)
     if(CMAKE_C_STANDARD MATCHES "99")
+      add_executable(z_pub_ualloc ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_pub_ualloc.c)
     else()
+      add_executable(z_pub_ualloc ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_pub_ualloc.c)
     endif()
   
+    target_link_libraries(z_pub_ualloc ${Libname})
   endif()
 else()
   if(BUILD_EXAMPLES)
