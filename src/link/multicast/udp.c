@@ -172,6 +172,7 @@ int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     char *s_address = __z_parse_address_segment_udp_multicast(endpoint._locator._address);
     char *s_port = __z_parse_port_segment_udp_multicast(endpoint._locator._address);
     ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_address, s_port);
+    memset(&zl->_socket._udp._lep, 0, sizeof(zl->_socket._udp._lep));
     z_free(s_address);
     z_free(s_port);
 

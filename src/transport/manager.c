@@ -21,6 +21,8 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_bytes_t *lo
     int8_t ret = _Z_RES_OK;
 
     _z_link_t zl;
+    memset(&zl, 0, sizeof(_z_link_t));
+
     ret = _z_open_link(&zl, locator);
     if (ret == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
@@ -58,6 +60,8 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_bytes_t *loca
     int8_t ret = _Z_RES_OK;
 
     _z_link_t zl;
+    memset(&zl, 0, sizeof(_z_link_t));
+
     ret = _z_listen_link(&zl, locator);
     if (ret == _Z_RES_OK) {
 #if Z_UNICAST_TRANSPORT == 1
