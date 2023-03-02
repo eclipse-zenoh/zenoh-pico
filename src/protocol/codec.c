@@ -55,7 +55,7 @@ int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t tmp;
-    _z_zint_decode(&tmp, zbf);
+    ret |= _z_zint_decode(&tmp, zbf);
     *en = tmp;
 
     return ret;
@@ -67,7 +67,7 @@ int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf) 
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t tmp;
-    _z_zint_decode(&tmp, zbf);
+    ret |= _z_zint_decode(&tmp, zbf);
     *en = tmp;
 
     return ret;
@@ -79,7 +79,7 @@ int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t tmp;
-    _z_zint_decode(&tmp, zbf);
+    ret |= _z_zint_decode(&tmp, zbf);
     *en = tmp;
 
     return ret;
@@ -91,7 +91,7 @@ int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t tmp;
-    _z_zint_decode(&tmp, zbf);
+    ret |= _z_zint_decode(&tmp, zbf);
     *en = tmp;
 
     return ret;
