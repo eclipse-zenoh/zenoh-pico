@@ -122,9 +122,6 @@ file(GLOB PublicHeaders "include/*.h"
   "include/zenoh-pico/transport/*.h"
   "include/zenoh-pico/utils/*.h"
 )
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-)
 
 file(GLOB Sources "src/*.c"
   "src/api/*.c"
@@ -168,6 +165,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
 add_library(${Libname} ${Sources})
+target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(${Libname} Threads::Threads)
 
