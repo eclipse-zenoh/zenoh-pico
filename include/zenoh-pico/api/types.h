@@ -427,6 +427,12 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
 typedef _z_str_array_t z_str_array_t;
+
+typedef struct {
+    const char *const *val;
+    size_t len;
+} z_str_array_t;
+
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
 size_t z_str_array_len(const z_str_array_t *a);
 _Bool z_str_array_is_empty(const z_str_array_t *a);
