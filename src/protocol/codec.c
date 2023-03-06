@@ -49,18 +49,50 @@ int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *buf) {
 int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *buf) { return _z_period_decode_na(p, buf); }
 
 /*------------------ uint8 -------------------*/
-int8_t _z_enum_encode(_z_wbuf_t *wbf, int en) { return _z_wbuf_write(wbf, (uint8_t)en); }
+int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en) { return _z_zint_encode(wbf, en); }
 
-int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf) {
+int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
-    *en = 0;
 
-    if (_z_zbuf_can_read(zbf) == true) {
-        *en = _z_zbuf_read(zbf);
-    } else {
-        _Z_DEBUG("WARNING: Not enough bytes to read\n");
-        ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-    }
+    _z_zint_t tmp;
+    ret |= _z_zint_decode(&tmp, zbf);
+    *en = tmp;
+
+    return ret;
+}
+
+int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en) { return _z_zint_encode(wbf, en); }
+
+int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_zint_t tmp;
+    ret |= _z_zint_decode(&tmp, zbf);
+    *en = tmp;
+
+    return ret;
+}
+
+int8_t _z_query_target_encode(_z_wbuf_t *wbf, z_query_target_t en) { return _z_zint_encode(wbf, en); }
+
+int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_zint_t tmp;
+    ret |= _z_zint_decode(&tmp, zbf);
+    *en = tmp;
+
+    return ret;
+}
+
+int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en) { return _z_zint_encode(wbf, en); }
+
+int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_zint_t tmp;
+    ret |= _z_zint_decode(&tmp, zbf);
+    *en = tmp;
 
     return ret;
 }
