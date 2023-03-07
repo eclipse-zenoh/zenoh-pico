@@ -298,6 +298,10 @@ _Bool z_value_is_initialized(z_value_t *value) {
         if (val->_value != NULL) {                                                     \
             f_free(&val->_value);                                                      \
         }                                                                              \
+    }                                                                                  \
+    ownedtype z_##name##_null() {                                                      \
+        ownedtype v = {._value = NULL};                                                \
+        return v;                                                                      \
     }
 
 #define OWNED_FUNCTIONS_STR(type, ownedtype, name, f_free, f_copy)               \
@@ -341,6 +345,22 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
 
+#define OWNED_FUNCTIONS_CLOSURE(ownedtype, name)                               \
+    _Bool z_##name##_check(const ownedtype *val) { return val->call != NULL; } \
+    ownedtype *z_##name##_move(ownedtype *val) { return val; }                 \
+    void z_##name##_drop(ownedtype *val) {                                     \
+        if (val->drop != NULL) {                                               \
+            (val->drop)(val->context);                                         \
+            val->drop = NULL;                                                  \
+        }                                                                      \
+        val->call = NULL;                                                      \
+        val->context = NULL;                                                   \
+    }                                                                          \
+    ownedtype z_##name##_null() {                                              \
+        ownedtype v = {.call = NULL, .drop = NULL, .context = NULL};           \
+        return v;                                                              \
+    }
+
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};
 }
@@ -361,15 +381,11 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     return (z_owned_closure_zid_t){.call = call, .drop = drop, .context = context};
 }
 
-z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample) { return closure_sample; }
-
-z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query) { return closure_query; }
-
-z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply) { return closure_reply; }
-
-z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello) { return closure_hello; }
-
-z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid) { return closure_zid; }
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -675,7 +691,9 @@ z_publisher_put_options_t z_publisher_put_options_default(void) {
     return (z_publisher_put_options_t){.encoding = z_encoding_default()};
 }
 
-z_publisher_delete_options_t z_publisher_delete_options_default(void) { return (z_publisher_delete_options_t){.__dummy = 0}; }
+z_publisher_delete_options_t z_publisher_delete_options_default(void) {
+    return (z_publisher_delete_options_t){.__dummy = 0};
+}
 
 int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
@@ -839,7 +857,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 /**************** Tasks ****************/
-zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){ .__dummy = 0 }; }
+zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
 
 int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options) {
     (void)(options);
@@ -860,7 +878,7 @@ int8_t zp_stop_read_task(z_session_t zs) {
 #endif
 }
 
-zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){ .__dummy = 0 }; }
+zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){.__dummy = 0}; }
 
 int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options) {
     (void)(options);
@@ -881,21 +899,23 @@ int8_t zp_stop_lease_task(z_session_t zs) {
 #endif
 }
 
-zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){ .__dummy = 0 }; }
+zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){.__dummy = 0}; }
 
 int8_t zp_read(z_session_t zs, const zp_read_options_t *options) {
     (void)(options);
     return _zp_read(zs._val);
 }
 
-zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) { return (zp_send_keep_alive_options_t){ .__dummy = 0 }; }
+zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) {
+    return (zp_send_keep_alive_options_t){.__dummy = 0};
+}
 
 int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *options) {
     (void)(options);
     return _zp_send_keep_alive(zs._val);
 }
 
-zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){ .__dummy = 0 }; }
+zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){.__dummy = 0}; }
 
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);

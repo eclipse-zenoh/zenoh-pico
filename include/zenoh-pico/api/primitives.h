@@ -645,7 +645,8 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     type z_##name##_loan(const ownedtype *name);   \
     ownedtype *z_##name##_move(ownedtype *name);   \
     ownedtype z_##name##_clone(ownedtype *name);   \
-    void z_##name##_drop(ownedtype *name);
+    void z_##name##_drop(ownedtype *name);         \
+    ownedtype z_##name##_null();
 
 _OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
@@ -660,11 +661,17 @@ _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 
-z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
-z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
-z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
-z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello);
-z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
+#define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *val); \
+    ownedtype *z_##name##_move(ownedtype *val);   \
+    void z_##name##_drop(ownedtype *val);         \
+    ownedtype z_##name##_null();
+
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 
 /************* Primitives **************/
 /**
