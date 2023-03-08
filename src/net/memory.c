@@ -51,7 +51,7 @@ void _z_hello_clear(_z_hello_t *hello) {
     if (hello->zid.len > 0) {
         _z_bytes_clear(&hello->zid);
     }
-    if (hello->locators._len > 0) {
+    if (hello->locators.len > 0) {
         _z_str_array_clear(&hello->locators);
     }
 }
