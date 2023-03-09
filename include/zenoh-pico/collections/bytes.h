@@ -28,8 +28,8 @@
  *   uint8_t *val: A pointer to the bytes array.
  */
 typedef struct {
-    size_t len;
     const uint8_t *start;
+    size_t len;
     _Bool _is_alloc;
 } _z_bytes_t;
 
