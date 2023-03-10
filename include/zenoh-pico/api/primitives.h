@@ -55,17 +55,29 @@ z_keyexpr_t z_keyexpr(const char *name);
 /**
  * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
  *
- * If given keyexpr contains a declared keyexpr, the resulting value will be ``NULL``.
+ * If given keyexpr contains a declared keyexpr, the resulting owned string will be unitialized.
  * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
  * and get its full expanded representation.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
  *
  * Returns:
- *   The :c:type:`z_keyexpr_t` corresponding to the given string.
+ *   The :c:type:`z_owned_str_t` containing key expression string representation if it's possible
  */
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
+
+/**
+ * Returns the key expression's internal string by aliasing it.
+ *
+ * Parameters:
+ *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
+ *
+ * Returns:
+ *   The :c:type:`z_bytes_t` pointing to key expression string representation if it's possible
+
+ */
+z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.

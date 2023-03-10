@@ -54,6 +54,16 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     return ret;
 }
 
+z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
+    if (keyexpr._id == Z_RESOURCE_ID_NONE) {
+        z_bytes_t ret = {.start = keyexpr._suffix, .len = _z_str_size(keyexpr._suffix), ._is_alloc = false};
+        return ret;
+    } else {
+        z_bytes_t ret = {.start = NULL, .len = 0, ._is_alloc = false};
+        return ret;
+    }
+}
+
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
