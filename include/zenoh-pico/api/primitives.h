@@ -413,6 +413,13 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 z_encoding_t z_encoding_default(void);
 
 /**
+ *
+ * Checks validity of the timestamp
+ *
+ */
+_Bool z_timestamp_check(z_timestamp_t ts);
+
+/**
  * Constructs a default query target.
  *
  * Returns:

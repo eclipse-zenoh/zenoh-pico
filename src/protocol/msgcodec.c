@@ -43,8 +43,8 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
-    _Z_EC(_z_uint64_encode(wbf, ts->_time))
-    ret |= _z_bytes_encode(wbf, &ts->_id);
+    _Z_EC(_z_uint64_encode(wbf, ts->time))
+    ret |= _z_bytes_encode(wbf, &ts->id);
 
     return ret;
 }
@@ -53,8 +53,8 @@ int8_t _z_timestamp_decode_na(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _TIMESTAMP\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_uint64_decode(&ts->_time, zbf);
-    ret |= _z_bytes_decode(&ts->_id, zbf);
+    ret |= _z_uint64_decode(&ts->time, zbf);
+    ret |= _z_bytes_decode(&ts->id, zbf);
 
     return ret;
 }

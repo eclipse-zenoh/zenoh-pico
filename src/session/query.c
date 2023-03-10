@@ -36,7 +36,7 @@ void _z_reply_free(_z_reply_t **reply) {
 }
 
 _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
-    return one->_tstamp._time == two->_tstamp._time;
+    return one->_tstamp.time == two->_tstamp.time;
 }
 
 void _z_pending_reply_clear(_z_pending_reply_t *pr) {
@@ -44,7 +44,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_reply_clear(&pr->_reply);
 
     // Free the timestamp
-    _z_bytes_clear(&pr->_tstamp._id);
+    _z_bytes_clear(&pr->_tstamp.id);
 }
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
@@ -176,7 +176,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
-                if (timestamp._time <= pen_rep->_tstamp._time) {
+                if (timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
                     pen_qry->_pending_replies =

@@ -330,19 +330,19 @@ void payload_field(void) {
 /*------------------ Timestamp field ------------------*/
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
-    ts._time = gen_uint64();
-    ts._id = gen_bytes(16);
+    ts.time = gen_uint64();
+    ts.id = gen_bytes(16);
 
     return ts;
 }
 
 void assert_eq_timestamp(_z_timestamp_t *left, _z_timestamp_t *right) {
     printf("Timestamp -> ");
-    printf("Time (%llu:%llu), ", (unsigned long long)left->_time, (unsigned long long)right->_time);
+    printf("Time (%llu:%llu), ", (unsigned long long)left->time, (unsigned long long)right->time);
     assert(left->_time == right->_time);
 
     printf("ID (");
-    assert_eq_uint8_array(&left->_id, &right->_id);
+    assert_eq_uint8_array(&left->id, &right->id);
     printf(")");
 }
 

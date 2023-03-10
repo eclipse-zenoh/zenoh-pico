@@ -36,14 +36,20 @@ _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     _z_timestamp_t ts;
-    _z_bytes_copy(&ts._id, &tstamp->_id);
-    ts._time = tstamp->_time;
+    _z_bytes_copy(&ts.id, &tstamp->id);
+    ts.time = tstamp->time;
     return ts;
 }
 
 void _z_timestamp_reset(_z_timestamp_t *tstamp) {
-    _z_bytes_reset(&tstamp->_id);
-    tstamp->_time = 0;
+    _z_bytes_reset(&tstamp->id);
+    tstamp->time = 0;
+}
+
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
+    for (size_t i = 0; i < stamp->id.len; ++i)
+        if (stamp->id.start[i]) return true;
+    return false;
 }
 
 int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {

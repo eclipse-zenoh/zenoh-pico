@@ -194,6 +194,11 @@ _OWNED_TYPE_PTR(_z_queryable_t, queryable)
  */
 typedef _z_encoding_t z_encoding_t;
 
+/*
+ * Represents timestamp value in Zenoh
+ */
+typedef _z_timestamp_t z_timestamp_t;
+
 /**
  * Represents a Zenoh value.
  *

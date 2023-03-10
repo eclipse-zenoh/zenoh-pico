@@ -228,6 +228,8 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
 
+_Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
+
 z_value_t z_value(const char *payload, size_t payload_len, z_encoding_t encoding) {
     return (z_value_t){.payload = {.start = (const uint8_t *)payload, .len = payload_len}, .encoding = encoding};
 }
