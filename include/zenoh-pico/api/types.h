@@ -50,6 +50,7 @@ typedef _z_zint_t z_zint_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 typedef _z_bytes_t z_bytes_t;
+_Bool z_bytes_check(const z_bytes_t *v);
 
 /**
  * Represents a Zenoh ID.
@@ -456,6 +457,8 @@ typedef struct {
     void *context;
 } z_owned_closure_sample_t;
 
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
+
 /**
  * Represents the query callback closure.
  *
@@ -472,6 +475,8 @@ typedef struct {
     _z_dropper_handler_t drop;
     void *context;
 } z_owned_closure_query_t;
+
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
 
@@ -492,6 +497,8 @@ typedef struct {
     void *context;
 } z_owned_closure_reply_t;
 
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
+
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 
 /**
@@ -511,6 +518,8 @@ typedef struct {
     void *context;
 } z_owned_closure_hello_t;
 
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
+
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
 /**
@@ -528,6 +537,8 @@ typedef struct {
     _z_dropper_handler_t drop;
     void *context;
 } z_owned_closure_zid_t;
+
+void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

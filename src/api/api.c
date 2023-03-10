@@ -31,6 +31,8 @@
 #include "zenoh-pico/session/utils.h"
 
 /********* Data Types Handlers *********/
+_Bool z_bytes_check(const z_bytes_t *v) { return v->start != NULL; }
+
 z_string_t z_string_make(const char *value) { return _z_string_make(value); }
 
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
@@ -273,6 +275,36 @@ _Bool z_value_is_initialized(z_value_t *value) {
     }
 
     return ret;
+}
+
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample) {
+    if (closure->call) {
+        (closure->call)(sample, closure->context);
+    }
+}
+
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query) {
+    if (closure->call) {
+        (closure->call)(query, closure->context);
+    }
+}
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
+    if (closure->call) {
+        (closure->call)(reply, closure->context);
+    }
+}
+
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello) {
+    if (closure->call) {
+        (closure->call)(hello, closure->context);
+    }
+}
+
+void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) {
+    if (closure->call) {
+        (closure->call)(id, closure->context);
+    }
 }
 
 /**************** Loans ****************/
