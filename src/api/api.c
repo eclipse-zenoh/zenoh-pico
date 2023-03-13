@@ -666,6 +666,17 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     return ret;
 }
 
+z_owned_keyexpr_t z_keyexpr_new(const char *name) {
+    z_owned_keyexpr_t key;
+
+    key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
+    if (key._value != NULL) {
+        *key._value = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+    }
+
+    return key;
+}
+
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
 
@@ -681,7 +692,9 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
 int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
     int8_t ret = 0;
 
-    ret = _z_undeclare_resource(zs._val, keyexpr->_value->_id);
+    if (keyexpr->_value->_id != Z_RESOURCE_ID_NONE) {
+        ret = _z_undeclare_resource(zs._val, keyexpr->_value->_id);
+    }
 
     z_keyexpr_drop(keyexpr);
     keyexpr->_value = NULL;
