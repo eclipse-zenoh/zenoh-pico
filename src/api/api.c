@@ -706,7 +706,7 @@ z_publisher_options_t z_publisher_options_default(void) {
     return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
-z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_publisher_options_t *options) {
+z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
     z_keyexpr_t key = keyexpr;
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
@@ -911,7 +911,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
     return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 
-z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }
+z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 /**************** Tasks ****************/
 zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
