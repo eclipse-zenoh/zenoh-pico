@@ -42,21 +42,6 @@ message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 
-option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-
-option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-
-option(BUILD_TOOLS "Use this to also build the tools." OFF)
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-
-option(BUILD_TESTING "Use this to also build tests." ON)
-message(STATUS "Build tests: ${BUILD_TESTING}")
-
-option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
-message(STATUS "Build integration: ${BUILD_INTEGRATION}")
-
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 
@@ -176,6 +161,26 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   target_link_libraries(${Libname} Ws2_32 Iphlpapi)
 endif()
+
+#
+# Build tests, examples, intallation only when project is root
+#
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+
+option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
+
+option(BUILD_EXAMPLES "Use this to also build the examples." ON)
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
+
+option(BUILD_TOOLS "Use this to also build the tools." OFF)
+message(STATUS "Build examples: ${BUILD_TOOLS}")
+
+option(BUILD_TESTING "Use this to also build tests." ON)
+message(STATUS "Build tests: ${BUILD_TESTING}")
+
+option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
 install(TARGETS ${Libname}
   LIBRARY DESTINATION lib
@@ -371,4 +376,6 @@ if(PACKAGING)
   endif()
 
   include(CPack)
+endif()
+
 endif()
