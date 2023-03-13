@@ -43,6 +43,7 @@ z_string_t z_string_make(const char *value);
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
  * It is a loaned key expression that aliases ``name``.
+ * Equal to z_zeyxepr_unckecked: neither of them tests passed expression to correctness
  *
  * Parameters:
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
@@ -51,6 +52,19 @@ z_string_t z_string_make(const char *value);
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
 z_keyexpr_t z_keyexpr(const char *name);
+
+/**
+ * Constructs a :c:type:`z_keyexpr_t` departing from a string.
+ * It is a loaned key expression that aliases ``name``.
+ * Equal to z_zeyxepr: neither of them tests passed expression to correctness
+ *
+ * Parameters:
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *
+ * Returns:
+ *   The :c:type:`z_keyexpr_t` corresponding to the given string.
+ */
+z_keyexpr_t z_keyexpr_unchecked(const char *name);
 
 /**
  * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.

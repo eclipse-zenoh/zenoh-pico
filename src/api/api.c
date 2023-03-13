@@ -41,6 +41,8 @@ _Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empt
 
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
 
+z_keyexpr_t z_keyexpr_unchecked(const char *name) { return _z_rname(name); }
+
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
@@ -220,8 +222,6 @@ int8_t zp_scouting_config_insert(z_scouting_config_t sc, uint8_t key, z_string_t
     return _zp_config_insert(sc._val, key, value);
 }
 
-z_owned_hello_t z_hello_null(void) { return (z_owned_hello_t){._value = NULL}; }
-
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){
         .prefix = prefix,
@@ -264,8 +264,6 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
 z_value_t z_query_value(const z_query_t *query) { return query->_with_value; }
 
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
-
-z_owned_reply_t z_reply_null(void) { return (z_owned_reply_t){._value = NULL}; }
 
 _Bool z_value_is_initialized(z_value_t *value) {
     _Bool ret = false;
@@ -324,6 +322,10 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         if (val->_value != NULL) {                                               \
             f_free(&val->_value);                                                \
         }                                                                        \
+    }                                                                            \
+    ownedtype z_##name##_null() {                                                \
+        ownedtype v = {._value = NULL};                                          \
+        return v;                                                                \
     }
 
 #define OWNED_FUNCTIONS_PTR(type, ownedtype, name, f_free, f_copy)                     \
