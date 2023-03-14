@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#undef NDEBUG
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,8 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 
-int main(void) {
+int main(void)
+{
     assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
@@ -237,15 +239,22 @@ int main(void) {
     assert(!zp_keyexpr_includes_null_terminated("a/**/b$*", "a/ebc"));
     assert(!zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cbc"));
 
-#define N 26
+    // clang-format off
+
+#define N 31
     const char *input[N] = {"greetings/hello/there",
                             "greetings/good/*/morning",
                             "greetings/*",
                             "greetings/*/**",
                             "greetings/$*",
                             "greetings/**/*/morning",
+                            "greetings/**/*/g/morning",
+                            "greetings/**/*/m",
                             "greetings/**/*",
                             "greetings/**/**",
+                            "greetings/**/**/morning",
+                            "greetings/**/**/g/morning",
+                            "greetings/**/**/m",
                             "greetings/**/*/**",
                             "$*",
                             "$*$*",
@@ -281,6 +290,11 @@ int main(void) {
                                                    Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_STARS_IN_CHUNK,
                                                    Z_KEYEXPR_CANON_EMPTY_CHUNK,
                                                    Z_KEYEXPR_CANON_EMPTY_CHUNK,
@@ -296,8 +310,13 @@ int main(void) {
                                 "greetings/*/**",
                                 "greetings/*",
                                 "greetings/*/**/morning",
+                                "greetings/*/**/g/morning",
+                                "greetings/*/**/m",
                                 "greetings/*/**",
                                 "greetings/**",
+                                "greetings/**/morning",
+                                "greetings/**/g/morning",
+                                "greetings/**/m",
                                 "greetings/*/**",
                                 "*",
                                 "*",
@@ -317,7 +336,10 @@ int main(void) {
                                 "greetings/**/*/e$",
                                 "greetings/**/*/$e"};
 
-    for (int i = 0; i < N; i++) {
+    // clang-format on
+
+    for (int i = 0; i < N; i++)
+    {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -325,16 +347,17 @@ int main(void) {
         size_t canon_len = strlen(canon);
         zp_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
         printf("%s ", ke);
-        printf("  Status: %d : %d", status, expected[i]);
+        printf("  Status: %d : %d\n", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS) {
-            printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
+        if (status == Z_KEYEXPR_CANON_SUCCESS)
+        {
+            printf("  Match: %.*s : %s\n", (int)canon_len, canon, canonized[i]);
             assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
-        printf("\n");
     }
 
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
+    {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -344,7 +367,8 @@ int main(void) {
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS) {
+        if (status == Z_KEYEXPR_CANON_SUCCESS)
+        {
             printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
             assert(strcmp(canonized[i], canon) == 0);
         }
