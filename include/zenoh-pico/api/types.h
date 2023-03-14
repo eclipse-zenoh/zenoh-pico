@@ -452,9 +452,9 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_sample_t;
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
@@ -471,9 +471,9 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_samp
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_questionable_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_query_t;
 
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
@@ -492,9 +492,9 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_reply_t;
 
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
@@ -513,9 +513,9 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_hello_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_hello_t;
 
 void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
@@ -533,9 +533,9 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_zid_t;
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
