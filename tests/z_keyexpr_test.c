@@ -11,13 +11,14 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#undef NDEBUG
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 int main(void)
 {
