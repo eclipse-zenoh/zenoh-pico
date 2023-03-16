@@ -108,17 +108,10 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start) {
 }
 
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r) {
-    int8_t ret = 0;
-
-    if ((l._id != Z_RESOURCE_ID_NONE) || (r._id != Z_RESOURCE_ID_NONE)) {
-        ret = -1;
+    if ((l._suffix == NULL) || (r._suffix == NULL)) {
+        return -1;
     }
-
-    if (_z_keyexpr_includes(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) == false) {
-        ret = -1;
-    }
-
-    return ret;
+    return _z_keyexpr_includes(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) ? 0 : 1;
 }
 
 _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
@@ -126,17 +119,11 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
 }
 
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r) {
-    int8_t ret = 0;
-
-    if ((l._id != Z_RESOURCE_ID_NONE) || (r._id != Z_RESOURCE_ID_NONE)) {
-        ret = -1;
+    if ((l._suffix == NULL) || (r._suffix == NULL)) {
+        return -1;
     }
 
-    if (_z_keyexpr_intersects(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) == false) {
-        ret = -1;
-    }
-
-    return ret;
+    return _z_keyexpr_intersects(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) ? 0 : 1;
 }
 
 _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
@@ -144,18 +131,18 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
 }
 
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
-    int8_t ret = -1;
-
-    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
-        size_t llen = strlen(l._suffix);
-        if (llen == strlen(r._suffix)) {
-            if (strncmp(l._suffix, r._suffix, llen) == 0) {
-                ret = 0;
-            }
+    if ((l._suffix == NULL) || (r._suffix == NULL)) {
+        return -1;
+    }
+ 
+    size_t llen = strlen(l._suffix);
+    if (llen == strlen(r._suffix)) {
+        if (strncmp(l._suffix, r._suffix, llen) == 0) {
+            return 0;
         }
     }
 
-    return ret;
+    return 1;
 }
 
 _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
