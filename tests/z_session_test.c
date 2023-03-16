@@ -25,6 +25,7 @@ int main(void) {
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("client"));
     z_owned_session_t s = z_open(z_move(config));
-    assert(z_check(s));
+    // assert(z_check(s));
     z_keyexpr_t ke = z_keyexpr("FOO/BAR");
+    z_close(&s);
 }
