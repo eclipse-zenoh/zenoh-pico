@@ -376,8 +376,8 @@ int main(void)
         printf("\n");
     }
 
-    assert(z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")) < 0);
-    assert(z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")) < 0);
+    assert(z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")) == 1);
+    assert(z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")) == 1);
     assert(z_keyexpr_equals(z_keyexpr("greetings/hello/there"), z_keyexpr("greetings/hello/there")) == 0);
     assert(zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb") == false);
     assert(zp_keyexpr_equals_null_terminated("a/bc", "a/cb") == false);
