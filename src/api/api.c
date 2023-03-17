@@ -480,11 +480,12 @@ z_owned_session_t z_open(z_owned_config_t *config) {
 }
 
 int8_t z_close(z_owned_session_t *zs) {
-    _z_close(zs->_value);
+    if (zs->_value != NULL) {
+        _z_close(zs->_value);
 
-    z_session_drop(zs);
-    zs->_value = NULL;
-
+        z_session_drop(zs);
+        zs->_value = NULL;
+    }
     return 0;
 }
 
