@@ -16,7 +16,7 @@
 #define ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 
 #include <pthread.h>
-#include <kernel.h>
+#include <zephyr/kernel.h>
 
 #include "zenoh-pico/config.h"
 

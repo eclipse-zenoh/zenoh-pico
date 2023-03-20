@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <drivers/uart.h>
+#include <zephyr/drivers/uart.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
