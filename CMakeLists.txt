@@ -62,7 +62,7 @@ message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR POSIX_COMPATIBLE)
   add_definitions(-DZENOH_LINUX)
   set(JNI_PLATFORM_NAME "linux")
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
@@ -109,65 +109,17 @@ endif()
 
 set(Libname "zenohpico")
 
-file(GLOB PublicHeaders "include/*.h"
-  "include/zenoh-pico/*.h"
-  "include/zenoh-pico/api/*.h"
-  "include/zenoh-pico/collections/*.h"
-  "include/zenoh-pico/link/*.h"
-  "include/zenoh-pico/link/config/*.h"
-  "include/zenoh-pico/protocol/*.h"
-  "include/zenoh-pico/session/*.h"
-  "include/zenoh-pico/system/*.h"
-  "include/zenoh-pico/system/link/*.h"
-  "include/zenoh-pico/transport/*.h"
-  "include/zenoh-pico/utils/*.h"
-)
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-file(GLOB Sources "src/*.c"
-  "src/api/*.c"
-  "src/net/*.c"
-  "src/collections/*.c"
-  "src/link/*.c"
-  "src/link/config/*.c"
-  "src/link/unicast/*.c"
-  "src/link/multicast/*.c"
-  "src/protocol/*.c"
-  "src/protocol/keyexpr/*.c"
-  "src/session/*.c"
-  "src/system/*.c"
-  "src/transport/*.c"
-  "src/transport/common/*.c"
-  "src/transport/unicast/*.c"
-  "src/transport/unicast/link/*.c"
-  "src/transport/unicast/link/task/*.c"
-  "src/transport/multicast/*.c"
-  "src/transport/multicast/link/*.c"
-  "src/transport/multicast/link/task/*.c"
-  "src/utils/*.c"
-)
-
-if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
-  file (GLOB Sources_Unix "src/system/unix/*.c")
-  list(APPEND Sources ${Sources_Unix})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  file (GLOB Sources_Emscripten "src/system/emscripten/*.c")
-  list(APPEND Sources ${Sources_Emscripten})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  file (GLOB Sources_Windows "src/system/windows/*.c")
-  list(APPEND Sources ${Sources_Windows})
-endif()
+add_subdirectory(include)
+add_subdirectory(src)
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} ${Sources})
+add_library(${Libname} ${ZenohPicoSources})
 
 target_link_libraries(${Libname} Threads::Threads)
 
