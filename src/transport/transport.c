@@ -91,24 +91,32 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_SIZE) ? zl->_mtu : Z_BATCH_SIZE;
-        zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, true);
+        _Bool expandable = true;
+        size_t dbuf_size = 0;
+
+#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
+        expandable = false;
+        dbuf_size = Z_FRAG_MAX_SIZE;
+#endif
+
+        zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, expandable);
         zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
         // Initialize the defragmentation buffers
-        size_t dbuf_size = 0;
-        _Bool dbuf_expandable = true;
-#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
-        dbuf_size = Z_FRAG_MAX_SIZE;
-        dbuf_expandable = false;
-#endif
-        zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, dbuf_expandable);
-        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, dbuf_expandable);
+        zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, expandable);
+        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, expandable);
 
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
-            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_SIZE) ||
+        if ((_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_SIZE) ||
+#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
+            (_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
+#else
+            (_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != Z_IOSLICE_SIZE) ||
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != Z_IOSLICE_SIZE) ||
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
+#endif
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_MULTI_THREAD == 1
