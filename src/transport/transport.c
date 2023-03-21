@@ -109,8 +109,13 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
             (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_SIZE_RX) ||
+#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
+#else
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != Z_IOSLICE_SIZE) ||
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
+#endif
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_MULTI_THREAD == 1
