@@ -154,9 +154,7 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start);
  *
  * Returns:
  *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``
- *   Returns ``1`` in opposite case
- *   Returns ``negative value`` for error (e.g. invalid keyexpr)
+ * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -170,10 +168,10 @@ int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns true if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined
- * by ``r``.
+ *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
-_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -184,10 +182,7 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *
  * Returns:
  *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``
- *   Returns ``1`` in opposite case
- *   Returns ``negative value`` for error (e.g. invalid keyexpr)
- *
+ * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -201,10 +196,10 @@ int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns ``false``.
+ *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
-_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a two keyexprs are equal.
@@ -214,8 +209,7 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``0`` if both ``l`` and ``r`` are equal, ``1`` if not, 
- *   Returns ``negative value`` for error (e.g. invalid keyexpr).
+ *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -229,9 +223,9 @@ int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if both ``l`` and ``r`` are equal, or ``false`` otherwise.
+ *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
-_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 /**
  * Return a new, zenoh-allocated, empty configuration.
