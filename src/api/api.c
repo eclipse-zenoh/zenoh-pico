@@ -108,48 +108,77 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start) {
 }
 
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r) {
-    if ((l._suffix == NULL) || (r._suffix == NULL)) {
-        return -1;
+    int8_t ret = 0;
+
+    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_includes_null_terminated(l._suffix, r._suffix);
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
-    return _z_keyexpr_includes(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) ? 0 : 1;
+
+    return ret;
 }
 
-_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
-    return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
+int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
+    int8_t ret = 0;
+
+    if (l != NULL && r != NULL) {
+        ret = _z_keyexpr_includes(l, strlen(l), r, strlen(r)) == true ? 0 : -1;
+    } else {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
 }
 
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r) {
-    if ((l._suffix == NULL) || (r._suffix == NULL)) {
-        return -1;
+    int8_t ret = 0;
+
+    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_intersect_null_terminated(l._suffix, r._suffix);
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
 
-    return _z_keyexpr_intersects(l._suffix, strlen(l._suffix), r._suffix, strlen(r._suffix)) ? 0 : 1;
+    return ret;
 }
 
-_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
-    return _z_keyexpr_intersects(l, strlen(l), r, strlen(r));
+int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
+    int8_t ret = -1;
+
+    if (l != NULL && r != NULL) {
+        ret = (_z_keyexpr_intersects(l, strlen(l), r, strlen(r)) == true) ? 0 : -1;
+    } else {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
 }
 
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
-    if ((l._suffix == NULL) || (r._suffix == NULL)) {
-        return -1;
-    }
- 
-    size_t llen = strlen(l._suffix);
-    if (llen == strlen(r._suffix)) {
-        if (strncmp(l._suffix, r._suffix, llen) == 0) {
-            return 0;
-        }
+    int8_t ret = 0;
+
+    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_equals_null_terminated(l._suffix, r._suffix);
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
 
-    return 1;
+    return ret;
 }
 
-_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
-    _Bool ret = true;
+int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
+    int8_t ret = -1;
 
-    if (strcmp(l, r) != 0) {
-        ret = false;
+    if (l != NULL && r != NULL) {
+        size_t llen = strlen(l);
+        if (llen == strlen(r)) {
+            if (strncmp(l, r, llen) == 0) {
+                ret = 0;
+            }
+        }
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
 
     return ret;
