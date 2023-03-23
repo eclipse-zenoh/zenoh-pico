@@ -44,6 +44,10 @@
     void _z_##name##_decode_na(_z_zbuf_t *zbf, _z_##name##_result_t *r);
 
 /*------------------ Zenoh Message ------------------*/
+int8_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
+int8_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);
+int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *buf);
+
 int8_t _z_transport_message_encode(_z_wbuf_t *buf, const _z_transport_message_t *msg);
 int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf);
 int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *buf);
@@ -164,12 +168,12 @@ int8_t _z_fragment_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t h
 int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
 // ------------------ Discovery Message ------------------
-int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *msg);
-int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_scout_decode(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *msg);
+int8_t _z_scout_decode_na(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
-int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *msg);
-int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_hello_decode(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *msg);
+int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_hello_decode(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
 #endif /* ZENOH_PICO_TEST_H */

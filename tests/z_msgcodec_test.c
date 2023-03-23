@@ -70,12 +70,6 @@ void print_uint8_array(_z_bytes_t *arr) {
 
 void print_transport_message_type(uint8_t header) {
     switch (_Z_MID(header)) {
-        case _Z_MID_SCOUT:
-            printf("Scout message");
-            break;
-        case _Z_MID_HELLO:
-            printf("Hello message");
-            break;
         case _Z_MID_JOIN:
             printf("Join message");
             break;
@@ -96,6 +90,20 @@ void print_transport_message_type(uint8_t header) {
             break;
         case _Z_MID_FRAGMENT:
             printf("Frame message");
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
+void print_scouting_message_type(uint8_t header) {
+    switch (_Z_MID(header)) {
+        case _Z_MID_SCOUT:
+            printf("Scout message");
+            break;
+        case _Z_MID_HELLO:
+            printf("Hello message");
             break;
         default:
             assert(0);
@@ -1820,7 +1828,7 @@ void zenoh_message(void) {
 /*       Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_transport_message_t gen_scout_message(void) {
+_z_scouting_message_t gen_scout_message(void) {
     z_what_t what = gen_uint8() % 7;
     _z_bytes_t zid;
     if (gen_bool()) {
@@ -1828,10 +1836,10 @@ _z_transport_message_t gen_scout_message(void) {
     } else {
         zid = _z_bytes_empty();
     }
-    return _z_t_msg_make_scout(what, zid);
+    return _z_s_msg_make_scout(what, zid);
 }
 
-void assert_eq_scout_message(_z_t_msg_scout_t *left, _z_t_msg_scout_t *right, uint8_t header) {
+void assert_eq_scout_message(_z_s_msg_scout_t *left, _z_s_msg_scout_t *right, uint8_t header) {
     (void)(header);
     printf("   Version (%u:%u)\n", left->_version, right->_version);
     assert(left->_version == right->_version);
@@ -1847,31 +1855,31 @@ void scout_message(void) {
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_transport_message_t t_msg = gen_scout_message();
-    _z_t_msg_scout_t e_sc = t_msg._body._scout;
+    _z_scouting_message_t s_msg = gen_scout_message();
+    _z_s_msg_scout_t e_sc = s_msg._body._scout;
 
     // Encode
-    int8_t res = _z_scout_encode(&wbf, t_msg._header, &e_sc);
+    int8_t res = _z_scout_encode(&wbf, s_msg._header, &e_sc);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_t_msg_scout_t d_sc;
-    res = _z_scout_decode(&d_sc, &zbf, t_msg._header);
+    _z_s_msg_scout_t d_sc;
+    res = _z_scout_decode(&d_sc, &zbf, s_msg._header);
     assert(res == _Z_RES_OK);
 
-    assert_eq_scout_message(&e_sc, &d_sc, t_msg._header);
+    assert_eq_scout_message(&e_sc, &d_sc, s_msg._header);
 
     // Free
-    _z_t_msg_clear_scout(&d_sc);
-    _z_t_msg_clear(&t_msg);
+    _z_s_msg_clear_scout(&d_sc);
+    _z_s_msg_clear(&s_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Hello Message ------------------*/
-_z_transport_message_t gen_hello_message(void) {
+_z_scouting_message_t gen_hello_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
     _z_bytes_t zid = gen_bytes((gen_uint8() % 16) + 1);
 
@@ -1881,10 +1889,10 @@ _z_transport_message_t gen_hello_message(void) {
     else
         locators = gen_locator_array(0);
 
-    return _z_t_msg_make_hello(whatami, zid, locators);
+    return _z_s_msg_make_hello(whatami, zid, locators);
 }
 
-void assert_eq_hello_message(_z_t_msg_hello_t *left, _z_t_msg_hello_t *right, uint8_t header) {
+void assert_eq_hello_message(_z_s_msg_hello_t *left, _z_s_msg_hello_t *right, uint8_t header) {
     printf("   Version (%u:%u)", left->_version, right->_version);
     assert(left->_version == right->_version);
     printf("\n");
@@ -1909,27 +1917,27 @@ void hello_message(void) {
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_transport_message_t t_msg = gen_hello_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_HELLO);
+    _z_scouting_message_t s_msg = gen_hello_message();
+    assert(_Z_MID(s_msg._header) == _Z_MID_HELLO);
 
-    _z_t_msg_hello_t e_he = t_msg._body._hello;
+    _z_s_msg_hello_t e_he = s_msg._body._hello;
 
     // Encode
-    int8_t res = _z_hello_encode(&wbf, t_msg._header, &e_he);
+    int8_t res = _z_hello_encode(&wbf, s_msg._header, &e_he);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_t_msg_hello_t d_he;
-    res = _z_hello_decode(&d_he, &zbf, t_msg._header);
+    _z_s_msg_hello_t d_he;
+    res = _z_hello_decode(&d_he, &zbf, s_msg._header);
     assert(res == _Z_RES_OK);
 
-    assert_eq_hello_message(&e_he, &d_he, t_msg._header);
+    assert_eq_hello_message(&e_he, &d_he, s_msg._header);
 
     // Free
-    _z_t_msg_clear_hello(&d_he);
-    _z_t_msg_clear(&t_msg);
+    _z_s_msg_clear_hello(&d_he);
+    _z_s_msg_clear(&s_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -2423,17 +2431,11 @@ void fragment_message(void) {
 _z_transport_message_t gen_transport_message(void) {
     _z_transport_message_t e_tm;
 
-    uint8_t mids[] = {_Z_MID_SCOUT, _Z_MID_HELLO,      _Z_MID_JOIN,  _Z_MID_INIT,    _Z_MID_OPEN,
-                      _Z_MID_CLOSE, _Z_MID_KEEP_ALIVE, _Z_MID_FRAME, _Z_MID_FRAGMENT};
+    uint8_t mids[] = {_Z_MID_JOIN,       _Z_MID_INIT,  _Z_MID_OPEN,    _Z_MID_CLOSE,
+                      _Z_MID_KEEP_ALIVE, _Z_MID_FRAME, _Z_MID_FRAGMENT};
 
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
     switch (mids[i]) {
-        case _Z_MID_SCOUT:
-            e_tm = gen_scout_message();
-            break;
-        case _Z_MID_HELLO:
-            e_tm = gen_hello_message();
-            break;
         case _Z_MID_JOIN:
             e_tm = gen_join_message();
             break;
@@ -2490,12 +2492,6 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
     printf("\n");
 
     switch (_Z_MID(left->_header)) {
-        case _Z_MID_SCOUT:
-            assert_eq_scout_message(&left->_body._scout, &right->_body._scout, left->_header);
-            break;
-        case _Z_MID_HELLO:
-            assert_eq_hello_message(&left->_body._hello, &right->_body._hello, left->_header);
-            break;
         case _Z_MID_JOIN:
             assert_eq_join_message(&left->_body._join, &right->_body._join, left->_header);
             break;
@@ -2533,7 +2529,7 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
 }
 
 void transport_message(void) {
-    printf("\n>> Session message\n");
+    printf("\n>> Transport message\n");
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
@@ -2558,6 +2554,106 @@ void transport_message(void) {
     // Free
     _z_t_msg_clear(&e_tm);
     _z_t_msg_clear(&d_sm);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Scouting Message ------------------*/
+_z_scouting_message_t gen_scouting_message(void) {
+    _z_scouting_message_t e_sm;
+
+    uint8_t mids[] = {_Z_MID_SCOUT, _Z_MID_HELLO};
+
+    uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
+    switch (mids[i]) {
+        case _Z_MID_SCOUT:
+            e_sm = gen_scout_message();
+            break;
+        case _Z_MID_HELLO:
+            e_sm = gen_hello_message();
+            break;
+        default:
+            assert(0);
+            break;
+    }
+
+    if (gen_bool()) {
+        e_sm._attachment = gen_attachment();
+    } else {
+        e_sm._attachment = NULL;
+    }
+
+    return e_sm;
+}
+
+void assert_eq_scouting_message(_z_scouting_message_t *left, _z_scouting_message_t *right) {
+    // FIXME[protocol]: This is here to set the extensions flags that is only known at encoding time
+    if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
+        left->_header |= _Z_FLAG_T_Z;
+    }
+
+    // Test message decorators
+    if (left->_attachment && right->_attachment) {
+        printf("   ");
+        assert_eq_attachment(left->_attachment, right->_attachment);
+        printf("\n");
+    } else {
+        assert(left->_attachment == right->_attachment);
+    }
+
+    // Test message
+    printf("   Header (%x:%x)", left->_header, right->_header);
+    assert(left->_header == right->_header);
+    printf("\n");
+
+    switch (_Z_MID(left->_header)) {
+        case _Z_MID_SCOUT:
+            assert_eq_scout_message(&left->_body._scout, &right->_body._scout, left->_header);
+            break;
+        case _Z_MID_HELLO:
+            assert_eq_hello_message(&left->_body._hello, &right->_body._hello, left->_header);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+
+    size_t left_n_ext = _z_msg_ext_vec_len(&left->_extensions);
+    size_t right_n_ext = _z_msg_ext_vec_len(&right->_extensions);
+    printf("   # of extensions (%zu:%zu)", left_n_ext, right_n_ext);
+    assert(left_n_ext == right_n_ext);
+    for (size_t i = 0; i < left_n_ext; i++) {
+        assert_eq_message_extension(_z_msg_ext_vec_get(&left->_extensions, i),
+                                    _z_msg_ext_vec_get(&right->_extensions, i));
+    }
+}
+
+void scouting_message(void) {
+    printf("\n>> Scouting message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_scouting_message_t e_tm = gen_scouting_message();
+    printf(" - ");
+    print_scouting_message_type(e_tm._header);
+    printf("\n");
+
+    // Encode
+    int8_t res = _z_scouting_message_encode(&wbf, &e_tm);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_scouting_message_t d_sm;
+    res = _z_scouting_message_decode(&d_sm, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_scouting_message(&e_tm, &d_sm);
+
+    // Free
+    _z_s_msg_clear(&e_tm);
+    _z_s_msg_clear(&d_sm);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

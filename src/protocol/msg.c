@@ -461,8 +461,8 @@ void _z_msg_free(_z_zenoh_message_t **msg) {
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid) {
-    _z_transport_message_t msg;
+_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid) {
+    _z_scouting_message_t msg;
     msg._header = _Z_MID_SCOUT;
 
     msg._body._scout._version = Z_PROTO_VERSION;
@@ -475,17 +475,17 @@ _z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid) {
     return msg;
 }
 
-void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg) {
+void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg) {
     clone->_what = msg->_what;
     clone->_version = msg->_version;
     _z_bytes_copy(&clone->_zid, &msg->_zid);
 }
 
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg) { _z_bytes_clear(&msg->_zid); }
+void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg) { _z_bytes_clear(&msg->_zid); }
 
 /*------------------ Hello Message ------------------*/
-_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {
-    _z_transport_message_t msg;
+_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {
+    _z_scouting_message_t msg;
     msg._header = _Z_MID_HELLO;
 
     msg._body._hello._version = Z_PROTO_VERSION;
@@ -503,13 +503,13 @@ _z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, 
     return msg;
 }
 
-void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg) {
+void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg) {
     _z_locator_array_copy(&clone->_locators, &msg->_locators);
     _z_bytes_copy(&clone->_zid, &msg->_zid);
     clone->_whatami = msg->_whatami;
 }
 
-void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg) {
+void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) {
     _z_bytes_clear(&msg->_zid);
     _z_locators_clear(&msg->_locators);
 }
@@ -791,14 +791,6 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_SCOUT: {
-            _z_t_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
-        } break;
-
-        case _Z_MID_HELLO: {
-            _z_t_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
-        } break;
-
         case _Z_MID_JOIN: {
             _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
         } break;
@@ -841,14 +833,6 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_SCOUT: {
-            _z_t_msg_clear_scout(&msg->_body._scout);
-        } break;
-
-        case _Z_MID_HELLO: {
-            _z_t_msg_clear_hello(&msg->_body._hello);
-        } break;
-
         case _Z_MID_JOIN: {
             _z_t_msg_clear_join(&msg->_body._join);
         } break;
@@ -875,6 +859,52 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 
         case _Z_MID_FRAGMENT: {
             _z_t_msg_clear_fragment(&msg->_body._fragment);
+        } break;
+
+        default: {
+            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+        } break;
+    }
+
+    _z_msg_ext_vec_clear(&msg->_extensions);
+}
+
+/*------------------ Scouting Message ------------------*/
+void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
+    clone->_header = msg->_header;
+    clone->_attachment = msg->_attachment;
+    _z_msg_ext_vec_copy(&clone->_extensions, &msg->_extensions);
+
+    uint8_t mid = _Z_MID(msg->_header);
+    switch (mid) {
+        case _Z_MID_SCOUT: {
+            _z_s_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
+        } break;
+
+        case _Z_MID_HELLO: {
+            _z_s_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
+        } break;
+
+        default: {
+            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+        } break;
+    }
+}
+
+void _z_s_msg_clear(_z_scouting_message_t *msg) {
+    if (msg->_attachment != NULL) {
+        _z_t_msg_clear_attachment(msg->_attachment);
+        z_free(msg->_attachment);
+    }
+
+    uint8_t mid = _Z_MID(msg->_header);
+    switch (mid) {
+        case _Z_MID_SCOUT: {
+            _z_s_msg_clear_scout(&msg->_body._scout);
+        } break;
+
+        case _Z_MID_HELLO: {
+            _z_s_msg_clear_hello(&msg->_body._hello);
         } break;
 
         default: {

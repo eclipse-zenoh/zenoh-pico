@@ -165,16 +165,6 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             break;
         }
 
-        case _Z_MID_SCOUT: {
-            _Z_INFO("Handling of Scout messages not implemented\n");
-            break;
-        }
-
-        case _Z_MID_HELLO: {
-            // Do nothing, zenoh-pico clients are not expected to handle hello messages
-            break;
-        }
-
         case _Z_MID_INIT: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
             break;

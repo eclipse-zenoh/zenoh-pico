@@ -205,16 +205,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_SCOUT: {
-            // Do nothing, multicast transports are not expected to handle SCOUT messages on established sessions
-            break;
-        }
-
-        case _Z_MID_HELLO: {
-            // Do nothing, multicast transports are not expected to handle HELLO messages on established sessions
-            break;
-        }
-
         case _Z_MID_INIT: {
             // Do nothing, multicas transports are not expected to handle INIT messages
             break;

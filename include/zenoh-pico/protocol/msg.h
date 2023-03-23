@@ -653,8 +653,8 @@ typedef struct {
     _z_bytes_t _zid;
     z_what_t _what;
     uint8_t _version;
-} _z_t_msg_scout_t;
-void _z_t_msg_clear_scout(_z_t_msg_scout_t *msg);
+} _z_s_msg_scout_t;
+void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg);
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -700,8 +700,8 @@ typedef struct {
     _z_locator_array_t _locators;
     z_whatami_t _whatami;
     uint8_t _version;
-} _z_t_msg_hello_t;
-void _z_t_msg_clear_hello(_z_t_msg_hello_t *msg);
+} _z_s_msg_hello_t;
+void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg);
 
 /*------------------ Join Message ------------------*/
 // # Join message
@@ -1001,8 +1001,6 @@ void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg);
 
 /*------------------ Transport Message ------------------*/
 typedef union {
-    _z_t_msg_scout_t _scout;
-    _z_t_msg_hello_t _hello;
     _z_t_msg_join_t _join;
     _z_t_msg_init_t _init;
     _z_t_msg_open_t _open;
@@ -1021,8 +1019,6 @@ typedef struct {
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_scout(z_what_t what, _z_bytes_t zid);
-_z_transport_message_t _z_t_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
 _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
                                           _z_conduit_sn_list_t next_sn);
 _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid);
@@ -1037,13 +1033,31 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t message
 
 /*------------------ Copy ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-void _z_t_msg_copy_scout(_z_t_msg_scout_t *clone, _z_t_msg_scout_t *msg);
-void _z_t_msg_copy_hello(_z_t_msg_hello_t *clone, _z_t_msg_hello_t *msg);
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg);
 void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg);
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg);
 void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg);
 void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg);
 void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg);
+
+typedef union {
+    _z_s_msg_scout_t _scout;
+    _z_s_msg_hello_t _hello;
+} _z_scouting_body_t;
+
+typedef struct {
+    _z_scouting_body_t _body;
+    _z_attachment_t *_attachment;
+    _z_msg_ext_vec_t _extensions;
+    uint8_t _header;
+} _z_scouting_message_t;
+void _z_s_msg_clear(_z_scouting_message_t *msg);
+
+_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid);
+_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
+
+void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg);
+void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg);
+void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg);
 
 #endif /* ZENOH_PICO_PROTOCOL_MSG_H */

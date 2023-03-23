@@ -98,7 +98,6 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
 #endif
-
         zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, expandable);
         zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_SIZE);
 
