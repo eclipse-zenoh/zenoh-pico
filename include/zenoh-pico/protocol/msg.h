@@ -42,16 +42,20 @@
 /*=============================*/
 /*         Message IDs         */
 /*=============================*/
-/* Transport Messages */
-#define _Z_MID_JOIN 0x00
+/* Scouting Messages */
 #define _Z_MID_SCOUT 0x01
 #define _Z_MID_HELLO 0x02
-#define _Z_MID_INIT 0x03
-#define _Z_MID_OPEN 0x04
-#define _Z_MID_CLOSE 0x05
-#define _Z_MID_KEEP_ALIVE 0x08
-#define _Z_MID_FRAME 0x0a
-#define _Z_MID_FRAGMENT 0x09
+
+/* Transport Messages */
+#define _Z_MID_OAM 0x00
+#define _Z_MID_INIT 0x01
+#define _Z_MID_OPEN 0x02
+#define _Z_MID_CLOSE 0x03
+#define _Z_MID_KEEP_ALIVE 0x04
+#define _Z_MID_FRAME 0x05
+#define _Z_MID_FRAGMENT 0x06
+#define _Z_MID_JOIN 0x07
+
 /* Zenoh Messages */
 #define _Z_MID_DECLARE 0x0b
 #define _Z_MID_DATA 0x0c
@@ -59,6 +63,7 @@
 #define _Z_MID_PULL 0x0e
 #define _Z_MID_UNIT 0x0f
 #define _Z_MID_LINK_STATE_LIST 0x10
+
 /* Message decorators */
 #define _Z_MID_PRIORITY 0x1c
 #define _Z_MID_ROUTING_CONTEXT 0x1d

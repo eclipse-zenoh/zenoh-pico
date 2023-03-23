@@ -120,7 +120,7 @@
  * Do not change this value.
  */
 #ifndef Z_PROTO_VERSION
-#define Z_PROTO_VERSION 0x07
+#define Z_PROTO_VERSION 0x08
 #endif
 
 /**
