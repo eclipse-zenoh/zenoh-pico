@@ -43,11 +43,7 @@ typedef enum {
  *     Z_WHATAMI_PEER: Bitmask to filter for Zenoh peers.
  *     Z_WHATAMI_CLIENT: Bitmask to filter for Zenoh clients.
  */
-typedef enum {
-    Z_WHATAMI_ROUTER = 0x01,  // 1 << 0
-    Z_WHATAMI_PEER = 0x02,    // 1 << 1
-    Z_WHATAMI_CLIENT = 0x04   // 1 << 2
-} z_whatami_t;
+typedef enum { Z_WHATAMI_ROUTER = 0x00, Z_WHATAMI_PEER = 0x01, Z_WHATAMI_CLIENT = 0x02 } z_whatami_t;
 #define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
 
 /**
