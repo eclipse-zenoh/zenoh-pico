@@ -1105,9 +1105,9 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
         cbyte = 0;
-        cbyte |= ((msg->_seq_num_res) & 0x03);
-        cbyte |= (((msg->_req_id_res) & 0x03) << 2);
-        cbyte |= (((msg->_key_id_res) & 0x03) << 4);
+        cbyte |= (msg->_seq_num_res & 0x03);
+        cbyte |= ((msg->_req_id_res & 0x03) << 2);
+        cbyte |= ((msg->_key_id_res & 0x03) << 4);
         _Z_EC(_z_uint8_encode(wbf, cbyte))
         _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
     }
@@ -1151,7 +1151,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_zid = _z_bytes_empty();
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
         cbyte = 0;
         ret |= _z_uint8_decode(&cbyte, zbf);
         msg->_seq_num_res = (cbyte & 0x03);
@@ -1201,10 +1201,11 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+        printf("[Encode] I have a S flag\n");
         cbyte = 0;
-        cbyte |= ((msg->_seq_num_res) & 0x03);
-        cbyte |= (((msg->_req_id_res) & 0x03) << 2);
-        cbyte |= (((msg->_key_id_res) & 0x03) << 4);
+        cbyte |= (msg->_seq_num_res & 0x03);
+        cbyte |= ((msg->_req_id_res & 0x03) << 2);
+        cbyte |= ((msg->_key_id_res & 0x03) << 4);
         _Z_EC(_z_uint8_encode(wbf, cbyte))
         _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
     }

@@ -26,7 +26,7 @@
 #include "zenoh-pico/protocol/ext.h"
 
 #define _Z_DEFAULT_BATCH_SIZE 65535
-#define _Z_DEFAULT_SIZET_SIZE 8  // In bytes
+#define _Z_DEFAULT_SIZET_SIZE 3  // 0x80 << _Z_DEFAULT_SIZET_SIZE. 3 means size_t = 64 bits
 
 #define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
 

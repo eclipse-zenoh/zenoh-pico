@@ -1958,15 +1958,15 @@ _z_transport_message_t gen_join_message(void) {
     }
 
     if (gen_bool()) {
-        t_msg._body._join._seq_num_res = (gen_uint8() % 4) + 1;
+        t_msg._body._join._seq_num_res = gen_uint8() % 4;
     }
 
     if (gen_bool()) {
-        t_msg._body._join._key_id_res = (gen_uint8() % 4) + 1;
+        t_msg._body._join._key_id_res = gen_uint8() % 4;
     }
 
     if (gen_bool()) {
-        t_msg._body._join._req_id_res = (gen_uint8() % 4) + 1;
+        t_msg._body._join._req_id_res = gen_uint8() % 4;
     }
 
     return t_msg;
@@ -1985,7 +1985,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
         printf("   SN Resolution (%hhu:%hhu)", left->_seq_num_res, right->_seq_num_res);
         assert(left->_seq_num_res == right->_seq_num_res);
         printf("\n");
@@ -2080,15 +2080,15 @@ _z_transport_message_t gen_init_message(void) {
     }
 
     if (gen_bool()) {
-        t_msg._body._init._seq_num_res = (gen_uint8() % 4) + 1;
+        t_msg._body._init._seq_num_res = gen_uint8() % 4;
     }
 
     if (gen_bool()) {
-        t_msg._body._init._key_id_res = (gen_uint8() % 4) + 1;
+        t_msg._body._init._key_id_res = gen_uint8() % 4;
     }
 
     if (gen_bool()) {
-        t_msg._body._init._req_id_res = (gen_uint8() % 4) + 1;
+        t_msg._body._init._req_id_res = gen_uint8() % 4;
     }
 
     return t_msg;
