@@ -24,8 +24,8 @@ if(NOT CMAKE_C_STANDARD)
     message(STATUS "Setting C99 as the C Standard")
   endif()
 endif()
-
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
+add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -35,35 +35,16 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
-
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
-message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-
 option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-
 option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-
 option(BUILD_TOOLS "Use this to also build the tools." OFF)
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-
 option(BUILD_TESTING "Use this to also build tests." ON)
-message(STATUS "Build tests: ${BUILD_TESTING}")
-
 option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
-message(STATUS "Build integration: ${BUILD_INTEGRATION}")
-
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
-message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
-
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
-message(STATUS "Build for Zephyr RTOS: ${ZENOH_DEBUG}")
-
-message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definitions(-DZENOH_LINUX)
@@ -90,7 +71,18 @@ else()
 endif()
 
 add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
-add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+
+# Print summary of CMAKE configurations
+message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
+message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
+message(STATUS "Build examples: ${BUILD_TOOLS}")
+message(STATUS "Build tests: ${BUILD_TESTING}")
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
+message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
+message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
+message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
 if(SKBUILD)
   set(INSTALL_RPATH "zenoh")
