@@ -60,7 +60,7 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
 
 z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        z_bytes_t ret = {.start = keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc = false};
+        z_bytes_t ret = {.start = (const uint8_t *)keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc = false};
         return ret;
     } else {
         z_bytes_t ret = {.start = NULL, .len = 0, ._is_alloc = false};

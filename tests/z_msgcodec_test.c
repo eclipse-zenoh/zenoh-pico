@@ -254,7 +254,7 @@ void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->len, right->len);
 
-    assert(left->_len == right->_len);
+    assert(left->len == right->len);
     printf("Content (");
     for (size_t i = 0; i < left->len; i++) {
         const char *l = left->val[i];
@@ -339,7 +339,7 @@ _z_timestamp_t gen_timestamp(void) {
 void assert_eq_timestamp(_z_timestamp_t *left, _z_timestamp_t *right) {
     printf("Timestamp -> ");
     printf("Time (%llu:%llu), ", (unsigned long long)left->time, (unsigned long long)right->time);
-    assert(left->_time == right->_time);
+    assert(left->time == right->time);
 
     printf("ID (");
     assert_eq_uint8_array(&left->id, &right->id);
