@@ -28,7 +28,7 @@ if FRAMEWORK == 'zephyr':
                   "-<system/mbed/>",
                   "-<system/unix/>",
                   "-<system/windows/>"]
-    CPPDEFINES = ["ZENOH_ZEPHYR"]
+    CPPDEFINES = ["ZENOH_ZEPHYR", "ZENOH_PIO"]
 
 elif FRAMEWORK == 'arduino':
     PLATFORM = env.get("PIOPLATFORM")
