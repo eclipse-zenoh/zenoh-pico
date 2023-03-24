@@ -31,10 +31,10 @@ _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztu->_sn_tx_reliable;
-        ztu->_sn_tx_reliable = _z_sn_increment(ztu->_seq_num_res, ztu->_sn_tx_reliable);
+        ztu->_sn_tx_reliable = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_reliable);
     } else {
         sn = ztu->_sn_tx_best_effort;
-        ztu->_sn_tx_best_effort = _z_sn_increment(ztu->_seq_num_res, ztu->_sn_tx_best_effort);
+        ztu->_sn_tx_best_effort = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_best_effort);
     }
     return sn;
 }

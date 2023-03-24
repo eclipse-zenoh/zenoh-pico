@@ -14,30 +14,80 @@
 
 #include "zenoh-pico/transport/utils.h"
 
-_Bool _z_sn_precedes(const _z_zint_t seq_num_res_half, const _z_zint_t sn_left, const _z_zint_t sn_right) {
-    _Bool ret = false;
+#define U8_MAX 0xFF
+#define U16_MAX 0xFFFF
+#define U32_MAX 0xFFFFFFFF
+#define U64_MAX 0xFFFFFFFFFFFFFFFF
 
-    if (sn_right > sn_left) {
-        ret = ((sn_right - sn_left) <= seq_num_res_half);
-    } else {
-        ret = ((sn_left - sn_right) > seq_num_res_half);
+_z_zint_t _z_sn_max(uint8_t bits) {
+    _z_zint_t ret = 0;
+    switch (bits) {
+        case 0x00: {
+            ret = U8_MAX >> 1;
+        } break;
+
+        case 0x01: {
+            ret = U16_MAX >> 2;
+        } break;
+
+        case 0x02: {
+            ret = U32_MAX >> 4;
+        } break;
+
+        case 0x03: {
+            ret = U64_MAX >> 1;
+        } break;
+
+        default: {
+            // Do nothing
+        } break;
     }
 
     return ret;
 }
 
-_z_zint_t _z_sn_increment(const _z_zint_t seq_num_res, const _z_zint_t sn) { return (sn + 1) % seq_num_res; }
+_z_zint_t _z_sn_half(_z_zint_t sn) { return sn >> 1; }
 
-_z_zint_t _z_sn_decrement(const _z_zint_t seq_num_res, const _z_zint_t sn) {
+_z_zint_t _z_sn_modulo_mask(uint8_t bits) {
     _z_zint_t ret = 0;
+    switch (bits) {
+        case 0x00: {
+            ret = U8_MAX >> 1;
+        } break;
 
-    if (sn == 0) {
-        ret = seq_num_res - 1;
-    } else {
-        ret = sn - 1;
+        case 0x01: {
+            ret = U16_MAX >> 2;
+        } break;
+
+        case 0x02: {
+            ret = U32_MAX >> 4;
+        } break;
+
+        case 0x03: {
+            ret = U64_MAX >> 1;
+        } break;
+
+        default: {
+            // Do nothing
+        } break;
     }
 
     return ret;
+}
+
+_Bool _z_sn_precedes(const _z_zint_t sn_resolution, const _z_zint_t sn_left, const _z_zint_t sn_right) {
+    _z_zint_t distance = (sn_right - sn_left) & sn_resolution;
+    return ((distance <= _z_sn_half(sn_resolution)) && (distance != 0));
+}
+
+_z_zint_t _z_sn_increment(const _z_zint_t sn_resolution, const _z_zint_t sn) {
+    _z_zint_t ret = sn + 1;
+    return (ret &= sn_resolution);
+}
+
+_z_zint_t _z_sn_decrement(const _z_zint_t sn_resolution, const _z_zint_t sn) {
+    _z_zint_t ret = sn - 1;
+    return (ret &= sn_resolution);
 }
 
 void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list_t *src) {
@@ -53,14 +103,14 @@ void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list
     }
 }
 
-void _z_conduit_sn_list_decrement(const _z_zint_t seq_num_res, _z_conduit_sn_list_t *sns) {
+void _z_conduit_sn_list_decrement(const _z_zint_t sn_resolution, _z_conduit_sn_list_t *sns) {
     if (sns->_is_qos == false) {
-        sns->_val._plain._best_effort = _z_sn_decrement(seq_num_res, sns->_val._plain._best_effort);
-        sns->_val._plain._reliable = _z_sn_decrement(seq_num_res, sns->_val._plain._reliable);
+        sns->_val._plain._best_effort = _z_sn_decrement(sn_resolution, sns->_val._plain._best_effort);
+        sns->_val._plain._reliable = _z_sn_decrement(sn_resolution, sns->_val._plain._reliable);
     } else {
         for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
-            sns->_val._qos[i]._best_effort = _z_sn_decrement(seq_num_res, sns->_val._qos[i]._best_effort);
-            sns->_val._qos[i]._best_effort = _z_sn_decrement(seq_num_res, sns->_val._qos[i]._reliable);
+            sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._best_effort);
+            sns->_val._qos[i]._best_effort = _z_sn_decrement(sn_resolution, sns->_val._qos[i]._reliable);
         }
     }
 }

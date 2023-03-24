@@ -23,7 +23,6 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/utils/math.h"
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
@@ -132,16 +131,16 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._unicast._seq_num_res = _z_max_value(_z_intres_to_nbytes(param->_seq_num_res));
-        zt->_transport._unicast._seq_num_res_half = zt->_transport._unicast._seq_num_res / 2;
+        zt->_transport._unicast._sn_res = _z_sn_max(param->_seq_num_res);
 
         // The initial SN at TX side
         zt->_transport._unicast._sn_tx_reliable = param->_initial_sn_tx;
         zt->_transport._unicast._sn_tx_best_effort = param->_initial_sn_tx;
 
         // The initial SN at RX side
-        zt->_transport._unicast._sn_rx_reliable = param->_initial_sn_rx;
-        zt->_transport._unicast._sn_rx_best_effort = param->_initial_sn_rx;
+        _z_zint_t initial_sn_rx = _z_sn_decrement(zt->_transport._unicast._sn_res, param->_initial_sn_rx);
+        zt->_transport._unicast._sn_rx_reliable = initial_sn_rx;
+        zt->_transport._unicast._sn_rx_best_effort = initial_sn_rx;
 
 #if Z_MULTI_THREAD == 1
         // Tasks
@@ -218,8 +217,7 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._multicast._seq_num_res = _z_max_value(_z_intres_to_nbytes(param->_seq_num_res));
-        zt->_transport._multicast._seq_num_res_half = zt->_transport._multicast._seq_num_res / 2;
+        zt->_transport._multicast._sn_res = _z_sn_max(param->_seq_num_res);
 
         // The initial SN at TX side
         zt->_transport._multicast._sn_tx_reliable = param->_initial_sn_tx._val._plain._reliable;
@@ -281,28 +279,31 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                     }
 
                     if (iam._body._init._key_id_res <= param->_key_id_res) {
-                        param->_seq_num_res = iam._body._init._seq_num_res;
+                        param->_key_id_res = iam._body._init._key_id_res;
                     } else {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
 
                     if (iam._body._init._req_id_res <= param->_req_id_res) {
-                        param->_seq_num_res = iam._body._init._seq_num_res;
+                        param->_req_id_res = iam._body._init._req_id_res;
                     } else {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
 
                     if (iam._body._init._batch_size <= param->_batch_size) {
-                        param->_seq_num_res = iam._body._init._seq_num_res;
+                        param->_batch_size = iam._body._init._batch_size;
                     } else {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
                 }
 
                 if (ret == _Z_RES_OK) {
+                    param->_key_id_res = 0x08 << param->_key_id_res;
+                    param->_req_id_res = 0x08 << param->_req_id_res;
+
                     // The initial SN at TX side
                     z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
-                    param->_initial_sn_tx = param->_initial_sn_tx % param->_seq_num_res;
+                    param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
                     // Initialize the Local and Remote Peer IDs
                     _z_bytes_copy(&param->_remote_zid, &iam._body._init._zid);
@@ -329,8 +330,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
 
                                 // The initial SN at RX side. Initialize the session as we had already received
                                 // a message with a SN equal to initial_sn - 1.
-                                param->_initial_sn_rx =
-                                    _z_sn_decrement(param->_seq_num_res, oam._body._open._initial_sn);
+                                param->_initial_sn_rx = oam._body._open._initial_sn;
                             } else {
                                 ret = _Z_ERR_MESSAGE_UNEXPECTED;
                             }
@@ -386,7 +386,7 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
 
     _z_zint_t initial_sn_tx = 0;
     z_random_fill(&initial_sn_tx, sizeof(initial_sn_tx));
-    initial_sn_tx = initial_sn_tx % _z_max_value(_z_intres_to_nbytes(Z_SN_RESOLUTION));
+    initial_sn_tx = initial_sn_tx & !_z_sn_modulo_mask(Z_SN_RESOLUTION);
 
     _z_conduit_sn_list_t next_sn;
     next_sn._val._plain._best_effort = initial_sn_tx;

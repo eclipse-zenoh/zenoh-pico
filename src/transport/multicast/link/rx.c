@@ -20,7 +20,6 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
-#include "zenoh-pico/utils/math.h"
 
 #if Z_MULTICAST_TRANSPORT == 1
 
@@ -120,8 +119,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
-                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._reliable,
-                                   t_msg->_body._frame._sn) == true) {
+                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) ==
+                    true) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
@@ -129,7 +128,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     break;
                 }
             } else {
-                if (_z_sn_precedes(entry->_seq_num_res_half, entry->_sn_rx_sns._val._plain._best_effort,
+                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
                                    t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {
@@ -225,8 +224,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             {
                 entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 if (entry != NULL) {
-                    entry->_seq_num_res = _z_max_value(_z_intres_to_nbytes(t_msg->_body._join._seq_num_res));
-                    entry->_seq_num_res_half = entry->_seq_num_res / 2;
+                    entry->_sn_res = _z_sn_max(t_msg->_body._join._seq_num_res);
 
                     // If the new node has less representing capabilities then it is incompatible to communication
                     if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
@@ -241,7 +239,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                         entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
 
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
-                        _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
+                        _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
 
 #if Z_DYNAMIC_MEMORY_ALLOCATION == 1
                         entry->_dbuf_reliable = _z_wbuf_make(0, true);
@@ -277,7 +275,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                 // Update SNs
                 _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
-                _z_conduit_sn_list_decrement(entry->_seq_num_res, &entry->_sn_rx_sns);
+                _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
 
                 // Update lease time (set as ms during)
                 entry->_lease = t_msg->_body._join._lease;

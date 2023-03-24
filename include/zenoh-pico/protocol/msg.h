@@ -762,9 +762,9 @@ typedef struct {
     uint16_t _batch_size;
     _z_conduit_sn_list_t _next_sn;
     z_whatami_t _whatami;
-    _z_int_res_t _key_id_res;
-    _z_int_res_t _req_id_res;
-    _z_int_res_t _seq_num_res;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_join_t;
 void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
@@ -843,9 +843,9 @@ typedef struct {
     _z_bytes_t _cookie;
     uint16_t _batch_size;
     z_whatami_t _whatami;
-    _z_int_res_t _key_id_res;
-    _z_int_res_t _req_id_res;
-    _z_int_res_t _seq_num_res;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_init_t;
 void _z_t_msg_clear_init(_z_t_msg_init_t *msg);

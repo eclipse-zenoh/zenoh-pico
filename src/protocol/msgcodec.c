@@ -1201,7 +1201,6 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
-        printf("[Encode] I have a S flag\n");
         cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);

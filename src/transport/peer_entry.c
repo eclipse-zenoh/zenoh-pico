@@ -27,8 +27,7 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
     _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
 
-    dst->_seq_num_res = src->_seq_num_res;
-    dst->_seq_num_res_half = src->_seq_num_res_half;
+    dst->_sn_res = src->_sn_res;
     _z_conduit_sn_list_copy(&dst->_sn_rx_sns, &src->_sn_rx_sns);
 
     dst->_lease = src->_lease;
