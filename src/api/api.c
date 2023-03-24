@@ -383,6 +383,10 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         if (val->_value != NULL) {                                               \
             f_free(&val->_value);                                                \
         }                                                                        \
+    }                                                                            \
+    ownedtype z_##name##_null() {                                                \
+        ownedtype v = {._value = NULL};                                          \
+        return v;                                                                \
     }
 
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
@@ -853,19 +857,21 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
 }
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) {
-    _z_undeclare_subscriber(sub->_value);
-
-    z_subscriber_drop(sub);
-    sub->_value = NULL;
+    if (sub->_value != NULL) {
+        _z_undeclare_subscriber(sub->_value);
+        z_subscriber_drop(sub);
+        sub->_value = NULL;
+    }
 
     return 0;
 }
 
 int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub) {
-    _z_undeclare_subscriber(sub->_value);
-
-    z_pull_subscriber_drop(sub);
-    sub->_value = NULL;
+    if (sub->_value != NULL) {
+        _z_undeclare_subscriber(sub->_value);
+        z_pull_subscriber_drop(sub);
+        sub->_value = NULL;
+    }
 
     return 0;
 }
@@ -900,10 +906,11 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
     int8_t ret = 0;
 
-    ret = _z_undeclare_queryable(queryable->_value);
-
-    z_queryable_drop(queryable);
-    queryable->_value = NULL;
+    if (queryable->_value != NULL) {
+        ret = _z_undeclare_queryable(queryable->_value);
+        z_queryable_drop(queryable);
+        queryable->_value = NULL;
+    }
 
     return ret;
 }
