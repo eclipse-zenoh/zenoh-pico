@@ -255,6 +255,9 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
     _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
     _z_transport_message_t ism = _z_t_msg_make_init_syn(Z_WHATAMI_CLIENT, zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
+    param->_key_id_res = ism._body._init._key_id_res;    // The announced key id resolution
+    param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
+    param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
     _Z_INFO("Sending Z_INIT(Syn)\n");
@@ -267,34 +270,31 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
             if ((_Z_MID(iam._header) == _Z_MID_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_INIT_A) == true)) {
                 _Z_INFO("Received Z_INIT(Ack)\n");
 
-                // Handle SN resolution option if present
-                if (_Z_HAS_FLAG(iam._header, _Z_FLAG_INIT_S) == true) {
-                    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
-                    // otherwise the InitAck message is considered invalid and it should be treated as a
-                    // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-                    if (iam._body._init._seq_num_res <= param->_seq_num_res) {
-                        param->_seq_num_res = iam._body._init._seq_num_res;
-                    } else {
-                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-                    }
+                // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
+                // otherwise the InitAck message is considered invalid and it should be treated as a
+                // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+                if (iam._body._init._seq_num_res <= param->_seq_num_res) {
+                    param->_seq_num_res = iam._body._init._seq_num_res;
+                } else {
+                    ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                }
 
-                    if (iam._body._init._key_id_res <= param->_key_id_res) {
-                        param->_key_id_res = iam._body._init._key_id_res;
-                    } else {
-                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-                    }
+                if (iam._body._init._key_id_res <= param->_key_id_res) {
+                    param->_key_id_res = iam._body._init._key_id_res;
+                } else {
+                    ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                }
 
-                    if (iam._body._init._req_id_res <= param->_req_id_res) {
-                        param->_req_id_res = iam._body._init._req_id_res;
-                    } else {
-                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-                    }
+                if (iam._body._init._req_id_res <= param->_req_id_res) {
+                    param->_req_id_res = iam._body._init._req_id_res;
+                } else {
+                    ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+                }
 
-                    if (iam._body._init._batch_size <= param->_batch_size) {
-                        param->_batch_size = iam._body._init._batch_size;
-                    } else {
-                        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-                    }
+                if (iam._body._init._batch_size <= param->_batch_size) {
+                    param->_batch_size = iam._body._init._batch_size;
+                } else {
+                    ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                 }
 
                 if (ret == _Z_RES_OK) {
