@@ -259,12 +259,14 @@ if(BUILD_TESTING)
   add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
   add_executable(z_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/z_msgcodec_test.c)
   add_executable(z_keyexpr_test ${PROJECT_SOURCE_DIR}/tests/z_keyexpr_test.c)
+  add_executable(z_api_null_drop_test ${PROJECT_SOURCE_DIR}/tests/z_api_null_drop_test.c)
 
   target_link_libraries(z_data_struct_test ${Libname})
   target_link_libraries(z_endpoint_test ${Libname})
   target_link_libraries(z_iobuf_test ${Libname})
   target_link_libraries(z_msgcodec_test ${Libname})
   target_link_libraries(z_keyexpr_test ${Libname})
+  target_link_libraries(z_api_null_drop_test ${Libname})
 
   enable_testing()
   add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
@@ -272,6 +274,8 @@ if(BUILD_TESTING)
   add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
   add_test(z_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_msgcodec_test)
   add_test(z_keyexpr_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_keyexpr_test)
+  add_test(z_api_null_drop_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_null_drop_test)
+
 endif()
 
 if(BUILD_MULTICAST)

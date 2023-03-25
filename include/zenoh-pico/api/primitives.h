@@ -371,16 +371,6 @@ const char *zp_scouting_config_get(z_scouting_config_t config, uint8_t key);
 int8_t zp_scouting_config_insert(z_scouting_config_t config, uint8_t key, z_string_t value);
 
 /**
- * Constructs a gravestone value for hello, useful to steal one from a callback.
- * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_scout`:
- *
- *     - copy the value of the callback's argument's pointee,
- *     - overwrite the pointee with this function's return value,
- *     - you are now responsible for dropping your copy of the hello.
- */
-z_owned_hello_t z_hello_null(void);
-
-/**
  * Constructs a :c:type:`z_encoding_t`.
  *
  * Parameters:
@@ -492,17 +482,6 @@ z_value_t z_query_value(const z_query_t *query);
  *   Returns the :c:type:`z_keyexpr_t` associated to the query.
  */
 z_keyexpr_t z_query_keyexpr(const z_query_t *query);
-
-/**
- * Returns an invalidated :c:type:`z_owned_reply_t`.
- *
- * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_get`:
- *
- *     - copy the value of the callback's argument's pointee,
- *     - overwrite the pointee with this function's return value,
- *     - you are now responsible for dropping your copy of the reply.
- */
-z_owned_reply_t z_reply_null(void);
 
 /**
  * Return a new sample closure.
@@ -645,7 +624,8 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     type z_##name##_loan(const ownedtype *name);   \
     ownedtype *z_##name##_move(ownedtype *name);   \
     ownedtype z_##name##_clone(ownedtype *name);   \
-    void z_##name##_drop(ownedtype *name);
+    void z_##name##_drop(ownedtype *name);         \
+    ownedtype z_##name##_null(void);
 
 _OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
@@ -660,11 +640,17 @@ _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 
-z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
-z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
-z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
-z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello);
-z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
+#define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *val); \
+    ownedtype *z_##name##_move(ownedtype *val);   \
+    void z_##name##_drop(ownedtype *val);         \
+    ownedtype z_##name##_null(void);
+
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 
 /************* Primitives **************/
 /**
