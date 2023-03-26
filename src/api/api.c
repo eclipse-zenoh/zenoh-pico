@@ -654,6 +654,17 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     return ret;
 }
 
+z_owned_keyexpr_t z_keyexpr_new(const char *name) {
+    z_owned_keyexpr_t key;
+
+    key._value = name ? (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t)) : NULL;
+    if (key._value != NULL) {
+        *key._value = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+    }
+
+    return key;
+}
+
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
 

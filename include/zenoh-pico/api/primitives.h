@@ -815,6 +815,11 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
              const z_get_options_t *options);
 
 /**
+ * Creates keyexpr owning string passed to it
+ */
+z_owned_keyexpr_t z_keyexpr_new(const char *name);
+
+/**
  * Declares a keyexpr, so that it is internally mapped into into a numerical id.
  *
  * This numerical id is used on the network to save bandwidth and ease the retrieval of the concerned resource
