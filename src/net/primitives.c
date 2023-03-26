@@ -120,6 +120,10 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
 }
 
 int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
+    if (pub == NULL) {
+        return _Z_ERR_GENERIC;
+    }
+
     int8_t ret = _Z_RES_OK;
 
     // Build the declare message to send on the wire
@@ -175,25 +179,26 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 }
 
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
-
+    if (sub == NULL) {
+        return _Z_ERR_GENERIC;
+    }
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
-    if (s != NULL) {
-        // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
-            // Only if message is successfully send, local subscription state can be removed
-            _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
-        } else {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-        _z_msg_clear(&z_msg);
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
+    if (s == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
     }
 
+    int8_t ret = _Z_RES_OK;
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+        // Only if message is successfully send, local subscription state can be removed
+        _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
+    } else {
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    _z_msg_clear(&z_msg);
     return ret;
 }
 
@@ -239,26 +244,25 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
 }
 
 int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
-    if (q != NULL) {
-        // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
-            // Only if message is successfully send, local queryable state can be removed
-            _z_unregister_questionable(qle->_zn, q);
-        } else {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-        _z_msg_clear(&z_msg);
-
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
+    if (qle == NULL) {
+        return _Z_ERR_GENERIC;
     }
-
+    _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
+    if (q == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+    int8_t ret = _Z_RES_OK;
+    // Build the declare message to send on the wire
+    _z_declaration_array_t declarations = _z_declaration_array_make(1);
+    declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
+    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
+    if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+        // Only if message is successfully send, local queryable state can be removed
+        _z_unregister_questionable(qle->_zn, q);
+    } else {
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    _z_msg_clear(&z_msg);
     return ret;
 }
 
