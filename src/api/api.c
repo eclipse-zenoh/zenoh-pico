@@ -280,7 +280,7 @@ _Bool z_value_is_initialized(z_value_t *value) {
 #define OWNED_FUNCTIONS_PTR_INTERNAL(type, ownedtype, name, f_free, f_copy)      \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
     type z_##name##_loan(const ownedtype *val) { return *val->_value; }          \
-    ownedtype z_##name##_null() { return (ownedtype){._value = NULL}; }          \
+    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; }      \
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
@@ -299,7 +299,7 @@ _Bool z_value_is_initialized(z_value_t *value) {
 #define OWNED_FUNCTIONS_PTR_COMMON(type, ownedtype, name)                              \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; }       \
     type z_##name##_loan(const ownedtype *val) { return (type){._val = val->_value}; } \
-    ownedtype z_##name##_null() { return (ownedtype){._value = NULL}; }                \
+    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; }            \
     ownedtype *z_##name##_move(ownedtype *val) { return val; }
 
 #define OWNED_FUNCTIONS_PTR_CLONE(type, ownedtype, name, f_copy) \
@@ -322,7 +322,7 @@ _Bool z_value_is_initialized(z_value_t *value) {
 #define OWNED_FUNCTIONS_STR(type, ownedtype, name, f_free, f_copy)               \
     _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
     type z_##name##_loan(const ownedtype *val) { return val->_value; }           \
-    ownedtype z_##name##_null() { return (ownedtype){._value = NULL};  };         \
+    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; };     \
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
@@ -390,7 +390,7 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_s
         val->call = NULL;                                                      \
         val->context = NULL;                                                   \
     }                                                                          \
-    ownedtype z_##name##_null() {                                              \
+    ownedtype z_##name##_null(void) {                                          \
         ownedtype v = {.call = NULL, .drop = NULL, .context = NULL};           \
         return v;                                                              \
     }
