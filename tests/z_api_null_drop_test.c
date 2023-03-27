@@ -20,7 +20,7 @@
 
 #include "zenoh-pico.h"
 
-int main(int, char**) {
+int main(void) {
     //
     // Check that all null functions exists
     //

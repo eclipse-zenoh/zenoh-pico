@@ -12,8 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if defined(ZENOH_PIO)
 #include <kernel.h>
 #include <random/rand32.h>
+#else
+#include <zephyr/kernel.h>
+#include <zephyr/random/rand32.h>
+#endif
+
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>

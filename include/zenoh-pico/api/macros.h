@@ -55,11 +55,11 @@
                   z_owned_keyexpr_t * : z_keyexpr_drop,                             \
                   z_owned_config_t * : z_config_drop,                               \
                   z_owned_scouting_config_t * : z_scouting_config_drop,             \
-                  z_owned_session_t * : z_close,                                    \
-                  z_owned_subscriber_t * : z_undeclare_subscriber,                  \
-                  z_owned_pull_subscriber_t * : z_undeclare_pull_subscriber,        \
-                  z_owned_publisher_t * : z_undeclare_publisher,                    \
-                  z_owned_queryable_t * : z_undeclare_queryable,                    \
+                  z_owned_session_t * : z_session_drop,                             \
+                  z_owned_subscriber_t * : z_subscriber_drop,                       \
+                  z_owned_pull_subscriber_t * : z_pull_subscriber_drop,             \
+                  z_owned_publisher_t * : z_publisher_drop,                         \
+                  z_owned_queryable_t * : z_queryable_drop,                         \
                   z_owned_reply_t * : z_reply_drop,                                 \
                   z_owned_hello_t * : z_hello_drop,                                 \
                   z_owned_str_t * : z_str_drop,                                     \
@@ -188,6 +188,31 @@
                   z_owned_str_t : z_str_clone,                         \
                   z_owned_str_array_t : z_str_array_clone              \
             )(&x)
+
+/**
+ * Defines a generic function for making null object of any of the ``z_owned_X_t`` types.
+ *
+ * Returns:
+ *   Returns the unitialized instance of `x`.
+ */
+#define z_null(x) (*x = _Generic((x), \
+                  z_owned_session_t * : z_session_null,                             \
+                  z_owned_publisher_t * : z_publisher_null,                         \
+                  z_owned_keyexpr_t * : z_keyexpr_null,                             \
+                  z_owned_config_t * : z_config_null,                               \
+                  z_owned_scouting_config_t * : z_scouting_config_null,             \
+                  z_owned_pull_subscriber_t * : z_pull_subscriber_null,             \
+                  z_owned_subscriber_t * : z_subscriber_null,                       \
+                  z_owned_queryable_t * : z_queryable_null,                         \
+                  z_owned_reply_t * : z_reply_null,                                 \
+                  z_owned_hello_t * : z_hello_null,                                 \
+                  z_owned_str_t * : z_str_null,                                     \
+                  z_owned_closure_sample_t * : z_closure_sample_null,               \
+                  z_owned_closure_query_t * : z_closure_query_null,                 \
+                  z_owned_closure_reply_t * : z_closure_reply_null,                 \
+                  z_owned_closure_hello_t * : z_closure_hello_null,                 \
+                  z_owned_closure_zid_t * : z_closure_zid_null                      \
+            )())
 
 // clang-format on
 
