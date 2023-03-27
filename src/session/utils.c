@@ -134,9 +134,11 @@ void _z_session_free(_z_session_t **zn) {
 }
 
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int8_t ret = _Z_RES_OK;
+    int8_t ret = _Z_ERR_GENERIC;
 
-    ret = _z_transport_close(&zn->_tp, reason);
+    if (zn != NULL) {
+        ret = _z_transport_close(&zn->_tp, reason);
+    }
 
     return ret;
 }
