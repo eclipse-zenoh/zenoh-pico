@@ -12,7 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if defined(ZENOH_PIO)
 #include <drivers/uart.h>
+#else
+#include <zephyr/drivers/uart.h>
+#endif
+
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
