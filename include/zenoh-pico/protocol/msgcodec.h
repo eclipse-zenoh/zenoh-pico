@@ -159,13 +159,23 @@ int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_
 int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
-int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
-int8_t _z_frame_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_frame_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
+int8_t _z_frame_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
+int8_t _z_frame_header_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_frame_payload_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_frame_header_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_frame_payload_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
-int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
-int8_t _z_fragment_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_fragment_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
+int8_t _z_fragment_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
+int8_t _z_fragment_header_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_fragment_payload_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_fragment_header_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_fragment_payload_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+
+int8_t _z_extensions_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ext_vec_t *v_ext);
+int8_t _z_extensions_decode_na(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t header);
 
 // ------------------ Discovery Message ------------------
 int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *msg);

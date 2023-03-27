@@ -2358,14 +2358,18 @@ void frame_message(void) {
     _z_t_msg_frame_t e_fr = t_msg._body._frame;
 
     // Encode
-    int8_t res = _z_frame_encode(&wbf, t_msg._header, &e_fr);
+    int8_t res = _z_frame_header_encode(&wbf, t_msg._header, &e_fr);
+    res |= _z_extensions_encode(&wbf, t_msg._header, &t_msg._extensions);
+    res |= _z_frame_payload_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_frame_t d_fr;
-    res = _z_frame_decode(&d_fr, &zbf, t_msg._header);
+    res = _z_frame_header_decode(&d_fr, &zbf, t_msg._header);
+    res |= _z_extensions_decode(&t_msg._extensions, &zbf, t_msg._header);
+    res |= _z_frame_payload_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
     assert_eq_frame_message(&e_fr, &d_fr, t_msg._header);
@@ -2408,14 +2412,18 @@ void fragment_message(void) {
     _z_t_msg_fragment_t e_fr = t_msg._body._fragment;
 
     // Encode
-    int8_t res = _z_fragment_encode(&wbf, t_msg._header, &e_fr);
+    int8_t res = _z_fragment_header_encode(&wbf, t_msg._header, &e_fr);
+    res |= _z_extensions_encode(&wbf, t_msg._header, &t_msg._extensions);
+    res |= _z_fragment_payload_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_fragment_t d_fr;
-    res = _z_fragment_decode(&d_fr, &zbf, t_msg._header);
+    res = _z_fragment_header_decode(&d_fr, &zbf, t_msg._header);
+    res |= _z_extensions_decode(&t_msg._extensions, &zbf, t_msg._header);
+    res |= _z_fragment_payload_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
     assert_eq_fragment_message(&e_fr, &d_fr, t_msg._header);
