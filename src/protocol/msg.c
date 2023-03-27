@@ -535,9 +535,9 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
     }
 
     if ((msg._body._join._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._join._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._join._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._join._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        (msg._body._join._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._join._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._join._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_JOIN_S);
     }
 
@@ -576,9 +576,9 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zi
     _z_bytes_reset(&msg._body._init._cookie);
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._init._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._init._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._init._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
     }
 
@@ -603,9 +603,9 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zi
     msg._body._init._cookie = cookie;
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._init._seq_num_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._init._key_id_res != _Z_DEFAULT_SIZET_SIZE) ||
-        (msg._body._init._req_id_res != _Z_DEFAULT_SIZET_SIZE)) {
+        (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
     }
 

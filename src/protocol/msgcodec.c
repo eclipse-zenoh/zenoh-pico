@@ -1159,9 +1159,9 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_key_id_res = ((cbyte >> 4) & 0x03);
         ret |= _z_uint16_decode(&msg->_batch_size, zbf);
     } else {
-        msg->_seq_num_res = _Z_DEFAULT_SIZET_SIZE;
-        msg->_req_id_res = _Z_DEFAULT_SIZET_SIZE;
-        msg->_key_id_res = _Z_DEFAULT_SIZET_SIZE;
+        msg->_seq_num_res = _Z_DEFAULT_RESOLUTION_SIZE;
+        msg->_req_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
+        msg->_key_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
         msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
     }
 
@@ -1244,9 +1244,9 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_key_id_res = ((cbyte >> 4) & 0x03);
         ret |= _z_uint16_decode(&msg->_batch_size, zbf);
     } else {
-        msg->_seq_num_res = _Z_DEFAULT_SIZET_SIZE;
-        msg->_req_id_res = _Z_DEFAULT_SIZET_SIZE;
-        msg->_key_id_res = _Z_DEFAULT_SIZET_SIZE;
+        msg->_seq_num_res = _Z_DEFAULT_RESOLUTION_SIZE;
+        msg->_req_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
+        msg->_key_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
         msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
     }
 
