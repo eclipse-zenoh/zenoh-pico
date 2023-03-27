@@ -23,7 +23,7 @@ _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id) {
     _z_msg_ext_t ext;
 
     ext._header = 0;
-    ext._header |= (id & 0x1F);
+    ext._header |= (id & _Z_EXT_ID_MASK);
     ext._header |= _Z_MSG_EXT_ENC_UNIT;
 
     return ext;
@@ -40,7 +40,7 @@ _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid) {
     _z_msg_ext_t ext;
 
     ext._header = 0;
-    ext._header |= (id & 0x1F);
+    ext._header |= (id & _Z_EXT_ID_MASK);
     ext._header |= _Z_MSG_EXT_ENC_ZINT;
 
     ext._body._zint._val = zid;
@@ -56,7 +56,7 @@ _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_bytes_t zbuf) {
     _z_msg_ext_t ext;
 
     ext._header = 0;
-    ext._header |= (id & 0x1F);
+    ext._header |= (id & _Z_EXT_ID_MASK);
     ext._header |= _Z_MSG_EXT_ENC_ZBUF;
 
     _z_bytes_move(&ext._body._zbuf._val, &zbuf);

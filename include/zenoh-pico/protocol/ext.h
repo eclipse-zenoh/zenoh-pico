@@ -22,12 +22,14 @@
 /*=============================*/
 /*       Message header        */
 /*=============================*/
-#define _Z_EXT_ID_MASK 0x1F
+#define _Z_EXT_FULL_ID_MASK 0x7F
+#define _Z_EXT_ID_MASK 0x0F
 #define _Z_EXT_ENC_MASK 0x60
 
 /*=============================*/
 /*       Message helpers       */
 /*=============================*/
+#define _Z_EXT_FULL_ID(h) (_Z_EXT_FULL_ID_MASK & h)
 #define _Z_EXT_ID(h) (_Z_EXT_ID_MASK & h)
 #define _Z_EXT_ENC(h) (_Z_EXT_ENC_MASK & h)
 #define _Z_EXT_HAS_FLAG(h, f) ((h & f) != 0)
@@ -36,7 +38,7 @@
 /*=============================*/
 /*        Extension IDs        */
 /*=============================*/
-#define _Z_MSG_EXT_ID_EXT1 0x01
+// #define _Z_MSG_EXT_ID_FOO 0x00 // Hex(ENC|M|ID)
 
 /*=============================*/
 /*     Extension Encodings     */
@@ -48,6 +50,7 @@
 /*=============================*/
 /*       Extension flags       */
 /*=============================*/
+#define _Z_MSG_EXT_FLAG_M 0x10
 #define _Z_MSG_EXT_FLAG_Z 0x80
 
 typedef struct {
