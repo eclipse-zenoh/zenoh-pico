@@ -38,11 +38,6 @@ endif()
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-option(BUILD_TOOLS "Use this to also build the tools." OFF)
-option(BUILD_TESTING "Use this to also build tests." ON)
-option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 
@@ -75,11 +70,6 @@ add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-message(STATUS "Build tests: ${BUILD_TESTING}")
-message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
@@ -185,19 +175,17 @@ endif()
 #
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 
+
 option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-
 option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-
 option(BUILD_TOOLS "Use this to also build the tools." OFF)
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-
 option(BUILD_TESTING "Use this to also build tests." ON)
-message(STATUS "Build tests: ${BUILD_TESTING}")
-
 option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
+message(STATUS "Build tools: ${BUILD_TOOLS}")
+message(STATUS "Build tests: ${BUILD_TESTING}")
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
 install(TARGETS ${Libname}

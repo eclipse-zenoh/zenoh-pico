@@ -340,10 +340,6 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         if (val->_value != NULL) {                                               \
             f_free(&val->_value);                                                \
         }                                                                        \
-    }                                                                            \
-    ownedtype z_##name##_null() {                                                \
-        ownedtype v = {._value = NULL};                                          \
-        return v;                                                                \
     }
 
 #define OWNED_FUNCTIONS_PTR_COMMON(type, ownedtype, name)                              \
@@ -387,10 +383,6 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         if (val->_value != NULL) {                                               \
             f_free(&val->_value);                                                \
         }                                                                        \
-    }                                                                            \
-    ownedtype z_##name##_null() {                                                \
-        ownedtype v = {._value = NULL};                                          \
-        return v;                                                                \
     }
 
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
