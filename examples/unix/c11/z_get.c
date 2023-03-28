@@ -33,6 +33,11 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
     } else {
         printf(">> Received an error\n");
     }
+
+    // Callback is allowed to take ownership of the reply and drop it later
+    z_owned_reply_t saved = *reply;
+    z_null(reply);
+    z_drop(z_move(saved));
 }
 
 int main(int argc, char **argv) {

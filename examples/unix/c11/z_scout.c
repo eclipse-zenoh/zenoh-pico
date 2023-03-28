@@ -68,6 +68,11 @@ void callback(z_owned_hello_t *hello, void *context) {
     fprinthello(stdout, z_loan(*hello));
     fprintf(stdout, "\n");
     (*(int *)context)++;
+
+    // Callback is allowed to take ownership of the hello and drop it later
+    z_owned_hello_t saved = *hello;
+    z_null(hello);
+    z_drop(z_move(saved));
 }
 
 void drop(void *context) {

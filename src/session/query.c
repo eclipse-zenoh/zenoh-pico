@@ -22,6 +22,15 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
+_z_reply_t *_z_reply_new(_z_reply_t _reply)
+{
+    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+    if (reply != NULL) {
+        *reply = _reply;
+    }
+    return reply;
+}
+
 void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
@@ -41,7 +50,10 @@ _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_
 
 void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     // Free reply
-    _z_reply_clear(&pr->_reply);
+    if (pr->_reply != NULL) {
+        _z_reply_clear(pr->_reply);
+        z_free(pr->_reply);
+    }
 
     // Free the timestamp
     _z_bytes_clear(&pr->_tstamp._id);
@@ -175,7 +187,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
+            if (_z_str_eq(pen_rep->_reply->data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
                 if (timestamp._time <= pen_rep->_tstamp._time) {
                     drop = true;
                 } else {
@@ -198,9 +210,12 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
                     partial_reply.data.sample.keyexpr = _z_keyexpr_duplicate(&reply.data.sample.keyexpr);
-                    pen_rep->_reply = partial_reply;
+                    pen_rep->_reply = _z_reply_new(partial_reply);
                 } else {
-                    pen_rep->_reply = reply;  // Store the whole reply in the latest mode
+                    pen_rep->_reply = _z_reply_new(reply); // Store the whole reply in the latest mode
+                }
+                if (pen_rep->_reply == NULL) {
+                    ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
                 pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
                 pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
@@ -252,8 +267,9 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            pen_qry->_callback(&pen_rep->_reply, pen_qry->_call_arg);
-            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies);
+            pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
+            pen_rep->_reply = NULL; // The  callback took ownership of the reply
+            pen_qry->_pending_replies = _z_pending_reply_list_pop_drop(pen_qry->_pending_replies);
         }
     }
 

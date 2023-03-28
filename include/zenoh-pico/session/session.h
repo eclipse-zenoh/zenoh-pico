@@ -130,7 +130,7 @@ _Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t, _z_noop_size, _z_qu
 _Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t)
 
 typedef struct {
-    _z_reply_t _reply;
+    _z_reply_t *_reply;
     _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
