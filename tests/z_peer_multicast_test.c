@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)._val->_id);
         z_undeclare_subscriber(z_move(*sub));
-        subs2 = _z_list_pop_drop(subs2, _z_noop_elem_free);
+        subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
 
     z_sleep_s(SLEEP);

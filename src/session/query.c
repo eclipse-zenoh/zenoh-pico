@@ -269,7 +269,7 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
             // Trigger the query handler
             pen_qry->_callback(pen_rep->_reply, pen_qry->_call_arg);
             pen_rep->_reply = NULL; // The  callback took ownership of the reply
-            pen_qry->_pending_replies = _z_pending_reply_list_pop_drop(pen_qry->_pending_replies);
+            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
         }
     }
 

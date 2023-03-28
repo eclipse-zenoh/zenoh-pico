@@ -48,25 +48,16 @@ size_t _z_list_len(const _z_list_t *xs) {
 
 _Bool _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
 
-// pops element from _z_list_t and frees it
-_z_list_t *_z_list_pop_drop(_z_list_t *xs, z_element_free_f f_f)
+_z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void** x)
 {
     _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *head = xs;
     l = head->_tail;
-    f_f(&head->_val);
-    z_free(head);
-
-    return l;
-}
-
-// pops element from _z_list_t and returns it in second argument
-_z_list_t *_z_list_pop_get(_z_list_t *xs, void **x)
-{
-    _z_list_t *l = (_z_list_t *)xs;
-    _z_list_t *head = xs;
-    l = head->_tail;
-    *x = head->_val;
+    if (x) {
+        *x = head->_val;
+    } else {
+        f_f(&head->_val);
+    }
     z_free(head);
 
     return l;
@@ -140,7 +131,7 @@ _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
 void _z_list_free(_z_list_t **xs, z_element_free_f f) {
     _z_list_t *ptr = *xs;
     while (ptr != NULL) {
-        ptr = _z_list_pop_drop(ptr, f);
+        ptr = _z_list_pop(ptr, f, NULL);
     }
 
     *xs = NULL;

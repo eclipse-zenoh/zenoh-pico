@@ -32,7 +32,7 @@ void _z_scout(const z_whatami_t what, const char *locator, const uint32_t timeou
 
     while (hellos != NULL) {
         _z_hello_t *hello;
-        hellos = _z_hello_list_pop_get(hellos, &hello);
+        hellos = _z_hello_list_pop(hellos, &hello);
         (*callback)(hello, arg_call); // callback takes ownership of hello
     }
 
