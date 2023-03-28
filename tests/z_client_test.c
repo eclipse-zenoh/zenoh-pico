@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
         z_owned_publisher_t *pub = _z_list_head(pubs1);
         printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)._val->_id);
         z_undeclare_publisher(z_move(*pub));
-        pubs1 = _z_list_pop(pubs1, _z_noop_elem_free);
+        pubs1 = _z_list_pop_drop(pubs1, _z_noop_elem_free);
     }
 
     z_sleep_s(SLEEP);
@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %zu\n", sub->_value->_id);
         z_undeclare_subscriber(z_move(*sub));
-        subs2 = _z_list_pop(subs2, _z_noop_elem_free);
+        subs2 = _z_list_pop_drop(subs2, _z_noop_elem_free);
     }
 
     z_sleep_s(SLEEP);
@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
         printf("Undeclared queryable on session 2: %zu\n", qle->_value->_id);
         z_undeclare_queryable(z_move(*qle));
-        qles2 = _z_list_pop(qles2, _z_noop_elem_free);
+        qles2 = _z_list_pop_drop(qles2, _z_noop_elem_free);
     }
 
     z_sleep_s(SLEEP);
