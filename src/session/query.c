@@ -210,11 +210,12 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                 } else {
                     pen_rep->_reply = _z_reply_new(reply); // Store the whole reply in the latest mode
                 }
-                if (pen_rep->_reply == NULL) {
+                if (pen_rep->_reply != NULL) {
+                    pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
+                    pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
+                } else {
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
-                pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
             } else {
                 ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
