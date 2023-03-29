@@ -1118,6 +1118,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
+    // TODO[protocol]
     // if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
     // for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
     //     _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable))
@@ -1170,6 +1171,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_lease = msg->_lease * 1000;
     }
 
+    // TODO[protocol]
     // if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
     //     for (uint8_t i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); i++) {
     //         ret |= _z_zint_decode(&msg->_next_sn._val._qos[i]._reliable, zbf);

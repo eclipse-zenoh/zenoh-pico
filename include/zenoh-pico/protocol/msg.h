@@ -150,10 +150,6 @@
 #define _Z_FLAG_Z_T 0x20  // 1 << 5 | QueryTarget       if T==1 then the query target is present
 #define _Z_FLAG_Z_X 0x00  // Unused flags are set to zero
 
-/* Init option flags */
-#define _Z_OPT_INIT_QOS 0x01  // 1 << 0 | QoS       if QOS==1 then the session supports QoS
-#define _Z_OPT_JOIN_QOS 0x01  // 1 << 0 | QoS       if QOS==1 then the session supports QoS
-
 /*=============================*/
 /*       Message header        */
 /*=============================*/

@@ -2016,6 +2016,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     printf("   Next SNs: ");
+    // TODO[protocol]
     // if (_Z_HAS_FLAG(left->_options, _Z_OPT_JOIN_QOS) == true) {
     //     assert(left->_next_sn._is_qos == true);
     //     assert(right->_next_sn._is_qos == true);
