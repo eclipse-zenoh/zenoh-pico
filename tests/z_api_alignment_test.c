@@ -41,9 +41,9 @@ void zid_handler(const z_id_t *id, void *arg) {
 volatile unsigned int hellos = 0;
 void hello_handler(z_owned_hello_t *hello, void *arg) {
     (void)(arg);
-    (void)(hello);
     hellos++;
     z_hello_null();
+    z_drop(hello);  // validate double-drop safety: caller drops hello if it's not dropped by the handler
 }
 
 volatile unsigned int queries = 0;
@@ -87,6 +87,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
     }
 
     z_reply_null();  // Does nothing. Just to test compilation
+    z_drop(reply);   // validate double-drop safety: caller drops reply if it's not dropped by the handler
 }
 
 volatile unsigned int datas = 0;

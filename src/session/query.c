@@ -50,11 +50,7 @@ _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_
 
 void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     // Free reply
-    if (pr->_reply != NULL) {
-        _z_reply_clear(pr->_reply);
-        z_free(pr->_reply);
-    }
-
+    _z_reply_free(&pr->_reply);
     // Free the timestamp
     _z_bytes_clear(&pr->_tstamp._id);
 }

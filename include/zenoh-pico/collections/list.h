@@ -51,8 +51,6 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f);
 void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
 
-// clang-format off
-
 #define _Z_LIST_DEFINE(name, type)                                                                                   \
     typedef _z_list_t name##_list_t;                                                                                 \
     static inline name##_list_t *name##_list_new(void) { return NULL; }                                              \
@@ -72,7 +70,5 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     }                                                                                                                \
     static inline name##_list_t *name##_list_clone(name##_list_t *l) { return _z_list_clone(l, name##_elem_clone); } \
     static inline void name##_list_free(name##_list_t **l) { _z_list_free(l, name##_elem_free); }
-
-// clang format on
 
 #endif /* ZENOH_PICO_COLLECTIONS_LIST_H */
