@@ -46,28 +46,36 @@
 #define _Z_MID_HELLO 0x02
 
 /* Transport Messages */
-#define _Z_MID_OAM 0x00
-#define _Z_MID_INIT 0x01
-#define _Z_MID_OPEN 0x02
-#define _Z_MID_CLOSE 0x03
-#define _Z_MID_KEEP_ALIVE 0x04
-#define _Z_MID_FRAME 0x05
-#define _Z_MID_FRAGMENT 0x06
-#define _Z_MID_JOIN 0x07
+#define _Z_MID_T_OAM 0x00
+#define _Z_MID_T_INIT 0x01
+#define _Z_MID_T_OPEN 0x02
+#define _Z_MID_T_CLOSE 0x03
+#define _Z_MID_T_KEEP_ALIVE 0x04
+#define _Z_MID_T_FRAME 0x05
+#define _Z_MID_T_FRAGMENT 0x06
+#define _Z_MID_T_JOIN 0x07
+
+/* Network Messages */
+#define _Z_MID_N_OAM 0x1f
+#define _Z_MID_N_DECLARE 0x1e
+#define _Z_MID_N_PUSH 0x1d
+#define _Z_MID_N_REQUEST 0x1c
+#define _Z_MID_N_RESPONSE 0x1b
+#define _Z_MID_N_RESPONSE_FINAL 0x1a
 
 /* Zenoh Messages */
-#define _Z_MID_DECLARE 0x0b
-#define _Z_MID_DATA 0x0c
-#define _Z_MID_QUERY 0x0d
-#define _Z_MID_PULL 0x0e
-#define _Z_MID_UNIT 0x0f
-#define _Z_MID_LINK_STATE_LIST 0x10
+#define _Z_MID_Z_DECLARE 0x0b
+#define _Z_MID_Z_DATA 0x0c
+#define _Z_MID_Z_QUERY 0x0d
+#define _Z_MID_Z_PULL 0x0e
+#define _Z_MID_Z_UNIT 0x0f
+#define _Z_MID_Z_LINK_STATE_LIST 0x10
 
 /* Message decorators */
-#define _Z_MID_PRIORITY 0x1c
-#define _Z_MID_ROUTING_CONTEXT 0x1d
-#define _Z_MID_REPLY_CONTEXT 0x1e
-#define _Z_MID_ATTACHMENT 0x1f
+#define _Z_MID_A_PRIORITY 0x1c
+#define _Z_MID_A_ROUTING_CONTEXT 0x1d
+#define _Z_MID_A_REPLY_CONTEXT 0x1e
+#define _Z_MID_A_ATTACHMENT 0x1f
 
 /*=============================*/
 /*        Message flags        */
@@ -77,50 +85,50 @@
 // Scout message flags:
 //      I ZenohID          if I==1 then the ZenohID is present
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_SCOUT_I 0x08  // 1 << 3
+#define _Z_FLAG_T_SCOUT_I 0x08  // 1 << 3
 
 // Hello message flags:
 //      L Locators         if L==1 then Locators are present
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_HELLO_L 0x20  // 1 << 5
+#define _Z_FLAG_T_HELLO_L 0x20  // 1 << 5
 
 // Join message flags:
 //      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
 //      S Size params      if S==1 then size parameters are exchanged
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_JOIN_T 0x20  // 1 << 5
-#define _Z_FLAG_JOIN_S 0x40  // 1 << 6
+#define _Z_FLAG_T_JOIN_T 0x20  // 1 << 5
+#define _Z_FLAG_T_JOIN_S 0x40  // 1 << 6
 
 // Init message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn
 //      S Size params      if S==1 then size parameters are exchanged
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_INIT_A 0x20  // 1 << 5
-#define _Z_FLAG_INIT_S 0x40  // 1 << 6
+#define _Z_FLAG_T_INIT_A 0x20  // 1 << 5
+#define _Z_FLAG_T_INIT_S 0x40  // 1 << 6
 
 // Open message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka OpenAck), otherwise OpenSyn
 //      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_OPEN_A 0x20  // 1 << 5
-#define _Z_FLAG_OPEN_T 0x40  // 1 << 6
+#define _Z_FLAG_T_OPEN_A 0x20  // 1 << 5
+#define _Z_FLAG_T_OPEN_T 0x40  // 1 << 6
 
 // Frame message flags:
 //      R Reliable         if R==1 it concerns the reliable channel, else the best-effort channel
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_FRAME_R 0x20  // 1 << 5
+#define _Z_FLAG_T_FRAME_R 0x20  // 1 << 5
 
 // Frame message flags:
 //      R Reliable         if R==1 it concerns the reliable channel, else the best-effort channel
 //      M More             if M==1 then other fragments will follow
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_FRAGMENT_R 0x20  // 1 << 5
-#define _Z_FLAG_FRAGMENT_M 0x40  // 1 << 6
+#define _Z_FLAG_T_FRAGMENT_R 0x20  // 1 << 5
+#define _Z_FLAG_T_FRAGMENT_M 0x40  // 1 << 6
 
 // Close message flags:
 //      S Session Close   if S==1 Session close or S==0 Link close
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_CLOSE_S 0x20  // 1 << 5
+#define _Z_FLAG_T_CLOSE_S 0x20  // 1 << 5
 
 /* Attachment message flags */
 #define _Z_FLAG_A_Z \

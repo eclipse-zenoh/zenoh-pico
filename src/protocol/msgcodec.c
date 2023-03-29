@@ -194,7 +194,7 @@ int8_t _z_locators_decode(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) { return _z
 /*------------------ Attachment Decorator ------------------*/
 int8_t _z_attachment_encode(_z_wbuf_t *wbf, const _z_attachment_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_ATTACHMENT\n");
+    _Z_DEBUG("Encoding _Z_MID_A_ATTACHMENT\n");
 
     // WARNING: we do not support sliced content in zenoh-pico.
     //          Disable the SLICED flag to be on the safe side.
@@ -206,7 +206,7 @@ int8_t _z_attachment_encode(_z_wbuf_t *wbf, const _z_attachment_t *msg) {
 }
 
 int8_t _z_attachment_decode_na(_z_attachment_t *atch, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_ATTACHMENT\n");
+    _Z_DEBUG("Decoding _Z_MID_A_ATTACHMENT\n");
     int8_t ret = _Z_RES_OK;
 
     atch->_header = header;
@@ -241,7 +241,7 @@ int8_t _z_attachment_decode(_z_attachment_t **atch, _z_zbuf_t *zbf, uint8_t head
 /*------------------ ReplyContext Decorator ------------------*/
 int8_t _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_REPLY_CONTEXT\n");
+    _Z_DEBUG("Encoding _Z_MID_A_REPLY_CONTEXT\n");
 
     _Z_EC(_z_wbuf_write(wbf, msg->_header))
 
@@ -254,7 +254,7 @@ int8_t _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
 }
 
 int8_t _z_reply_context_decode_na(_z_reply_context_t *rc, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_REPLY_CONTEXT\n");
+    _Z_DEBUG("Decoding _Z_MID_A_REPLY_CONTEXT\n");
     int8_t ret = _Z_RES_OK;
 
     rc->_header = header;
@@ -607,7 +607,7 @@ int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) { return _z
 /*------------------ Declaration Message ------------------*/
 int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_msg_declare_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_DECLARE\n");
+    _Z_DEBUG("Encoding _Z_MID_Z_DECLARE\n");
 
     _Z_EC(_z_zint_encode(wbf, msg->_declarations._len))
     for (_z_zint_t i = 0; i < msg->_declarations._len; i++) {
@@ -618,7 +618,7 @@ int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_msg_declare_t *msg) {
 }
 
 int8_t _z_declare_decode_na(_z_msg_declare_t *msg, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _Z_MID_DECLARE\n");
+    _Z_DEBUG("Decoding _Z_MID_Z_DECLARE\n");
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t len = 0;
@@ -719,7 +719,7 @@ int8_t _z_data_info_decode(_z_data_info_t *di, _z_zbuf_t *zbf) { return _z_data_
 /*------------------ Data Message ------------------*/
 int8_t _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_DATA\n");
+    _Z_DEBUG("Encoding _Z_MID_Z_DATA\n");
 
     _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
@@ -732,7 +732,7 @@ int8_t _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg) 
 }
 
 int8_t _z_data_decode_na(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_DATA\n");
+    _Z_DEBUG("Decoding _Z_MID_Z_DATA\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
@@ -759,7 +759,7 @@ int8_t _z_data_decode(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Pull Message ------------------*/
 int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_PULL\n");
+    _Z_DEBUG("Encoding _Z_MID_Z_PULL\n");
 
     _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
@@ -773,7 +773,7 @@ int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg) 
 }
 
 int8_t _z_pull_decode_na(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_PULL\n");
+    _Z_DEBUG("Decoding _Z_MID_Z_PULL\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
@@ -804,7 +804,7 @@ int8_t _z_query_consolidation_encode(_z_wbuf_t *wbf, const z_consolidation_mode_
 
 int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_QUERY\n");
+    _Z_DEBUG("Encoding _Z_MID_Z_QUERY\n");
 
     _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
 
@@ -835,7 +835,7 @@ int8_t _z_query_consolidation_decode(z_consolidation_mode_t *qcm, _z_zbuf_t *zbf
 }
 
 int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_QUERY\n");
+    _Z_DEBUG("Decoding _Z_MID_Z_QUERY\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
@@ -884,23 +884,23 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_DATA: {
+        case _Z_MID_Z_DATA: {
             ret |= _z_data_encode(wbf, msg->_header, &msg->_body._data);
         } break;
 
-        case _Z_MID_QUERY: {
+        case _Z_MID_Z_QUERY: {
             ret |= _z_query_encode(wbf, msg->_header, &msg->_body._query);
         } break;
 
-        case _Z_MID_DECLARE: {
+        case _Z_MID_Z_DECLARE: {
             ret |= _z_declare_encode(wbf, &msg->_body._declare);
         } break;
 
-        case _Z_MID_PULL: {
+        case _Z_MID_Z_PULL: {
             ret |= _z_pull_encode(wbf, msg->_header, &msg->_body._pull);
         } break;
 
-        case _Z_MID_UNIT: {
+        case _Z_MID_Z_UNIT: {
             // Do nothing. Unit messages have no body
         } break;
 
@@ -924,45 +924,45 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
         if (ret == _Z_RES_OK) {
             uint8_t mid = _Z_MID(msg->_header);
             switch (mid) {
-                case _Z_MID_DATA: {
+                case _Z_MID_Z_DATA: {
                     ret |= _z_data_decode(&msg->_body._data, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_ATTACHMENT: {
+                case _Z_MID_A_ATTACHMENT: {
                     ret |= _z_attachment_decode(&msg->_attachment, zbf, msg->_header);
                 } break;
 
-                case _Z_MID_REPLY_CONTEXT: {
+                case _Z_MID_A_REPLY_CONTEXT: {
                     ret |= _z_reply_context_decode(&msg->_reply_context, zbf, msg->_header);
                 } break;
 
-                case _Z_MID_QUERY: {
+                case _Z_MID_Z_QUERY: {
                     ret |= _z_query_decode(&msg->_body._query, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_DECLARE: {
+                case _Z_MID_Z_DECLARE: {
                     ret |= _z_declare_decode(&msg->_body._declare, zbf);
                     is_last = true;
                 } break;
 
-                case _Z_MID_PULL: {
+                case _Z_MID_Z_PULL: {
                     ret |= _z_pull_decode(&msg->_body._pull, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_UNIT: {
+                case _Z_MID_Z_UNIT: {
                     // Do nothing. Unit messages have no body.
                     is_last = true;
                 } break;
 
-                case _Z_MID_PRIORITY: {
+                case _Z_MID_A_PRIORITY: {
                     // Ignore the priority decorator for the time being since zenoh-pico does not
                     // perform any routing. Hence, priority information does not need to be propagated.
                 } break;
 
-                case _Z_MID_LINK_STATE_LIST: {
+                case _Z_MID_Z_LINK_STATE_LIST: {
                     _Z_DEBUG("WARNING: Link state not supported in zenoh-pico\n");
                     is_last = true;
                 } break;
@@ -997,7 +997,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
     cbyte |= (msg->_what & 0x07);
     uint8_t zid_len = msg->_zid.len;
     if (zid_len > 0) {  // TODO[protocol]: check if ZID > 0 && <= 16
-        _Z_SET_FLAG(cbyte, _Z_FLAG_SCOUT_I);
+        _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);
         cbyte |= ((zid_len - 1) & 0x0F) << 4;
     }
     _Z_EC(_z_uint8_encode(wbf, cbyte))
@@ -1017,7 +1017,7 @@ int8_t _z_scout_decode_na(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_what = cbyte & 0x07;
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_SCOUT_I) == true)) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
         msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
         ret |= _z_bytes_val_decode(&msg->_zid, zbf);
         if (ret != _Z_RES_OK) {
@@ -1047,7 +1047,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     _Z_EC(_z_uint8_encode(wbf, cbyte))
     _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
     }
 
@@ -1074,7 +1074,7 @@ int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
         msg->_zid = _z_bytes_empty();
     }
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true)) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true)) {
         ret |= _z_locators_decode(&msg->_locators, zbf);
         if (ret != _Z_RES_OK) {
             msg->_locators = _z_locator_array_make(0);
@@ -1093,7 +1093,7 @@ int8_t _z_hello_decode(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Join Message ------------------*/
 int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_JOIN\n");
+    _Z_DEBUG("Encoding _Z_MID_T_JOIN\n");
 
     _Z_EC(_z_wbuf_write(wbf, msg->_version))
 
@@ -1103,7 +1103,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     _Z_EC(_z_uint8_encode(wbf, cbyte))
     _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
         cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
@@ -1112,7 +1112,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
         _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_T) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_T) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
@@ -1132,7 +1132,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
 }
 
 int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_JOIN\n");
+    _Z_DEBUG("Decoding _Z_MID_T_JOIN\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
@@ -1151,7 +1151,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_zid = _z_bytes_empty();
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
         cbyte = 0;
         ret |= _z_uint8_decode(&cbyte, zbf);
         msg->_seq_num_res = (cbyte & 0x03);
@@ -1166,7 +1166,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     }
 
     ret |= _z_zint_decode(&msg->_lease, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_T) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_T) == true) {
         msg->_lease = msg->_lease * 1000;
     }
 
@@ -1189,7 +1189,7 @@ int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
 /*------------------ Init Message ------------------*/
 int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg) {
-    _Z_DEBUG("Encoding _Z_MID_INIT\n");
+    _Z_DEBUG("Encoding _Z_MID_T_INIT\n");
     int8_t ret = _Z_RES_OK;
 
     _Z_EC(_z_wbuf_write(wbf, msg->_version))
@@ -1200,7 +1200,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     _Z_EC(_z_uint8_encode(wbf, cbyte))
     _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
@@ -1209,7 +1209,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
         _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
     }
 
@@ -1217,7 +1217,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
 }
 
 int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_INIT\n");
+    _Z_DEBUG("Decoding _Z_MID_T_INIT\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
@@ -1236,7 +1236,7 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_zid = _z_bytes_empty();
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         cbyte = 0;
         ret |= _z_uint8_decode(&cbyte, zbf);
         msg->_seq_num_res = (cbyte & 0x03);
@@ -1250,7 +1250,7 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
     }
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true)) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
             msg->_cookie = _z_bytes_empty();
@@ -1269,9 +1269,9 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Open Message ------------------*/
 int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_OPEN\n");
+    _Z_DEBUG("Encoding _Z_MID_T_OPEN\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_T) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
@@ -1279,7 +1279,7 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
 
     _Z_EC(_z_zint_encode(wbf, msg->_initial_sn))
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
         _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
     }
 
@@ -1287,17 +1287,17 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
 }
 
 int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_OPEN\n");
+    _Z_DEBUG("Decoding _Z_MID_T_OPEN\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint_decode(&msg->_lease, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_T) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true) {
         msg->_lease = msg->_lease * 1000;
     }
 
     ret |= _z_zint_decode(&msg->_initial_sn, zbf);
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false)) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
             msg->_cookie = _z_bytes_empty();
@@ -1317,7 +1317,7 @@ int8_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *msg) {
     (void)(header);
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_CLOSE\n");
+    _Z_DEBUG("Encoding _Z_MID_T_CLOSE\n");
 
     ret |= _z_wbuf_write(wbf, msg->_reason);
 
@@ -1327,7 +1327,7 @@ int8_t _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *m
 int8_t _z_close_decode_na(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_CLOSE\n");
+    _Z_DEBUG("Decoding _Z_MID_T_CLOSE\n");
 
     ret |= _z_uint8_decode(&msg->_reason, zbf);
 
@@ -1345,7 +1345,7 @@ int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_
     (void)(msg);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_KEEP_ALIVE\n");
+    _Z_DEBUG("Encoding _Z_MID_T_KEEP_ALIVE\n");
 
     return ret;
 }
@@ -1356,7 +1356,7 @@ int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_KEEP_ALIVE\n");
+    _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE\n");
 
     return ret;
 }
@@ -1370,7 +1370,7 @@ int8_t _z_frame_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_FRAME_HEADER\n");
+    _Z_DEBUG("Encoding _Z_MID_T_FRAME_HEADER\n");
 
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
@@ -1381,7 +1381,7 @@ int8_t _z_frame_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fr
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_FRAME_PAYLOAD\n");
+    _Z_DEBUG("Encoding _Z_MID_T_FRAME_PAYLOAD\n");
 
     size_t len = _z_zenoh_message_vec_len(&msg->_messages);
     for (size_t i = 0; i < len; i++) {
@@ -1395,7 +1395,7 @@ int8_t _z_frame_header_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t 
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_FRAME_HEADER\n");
+    _Z_DEBUG("Decoding _Z_MID_T_FRAME_HEADER\n");
 
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
@@ -1406,7 +1406,7 @@ int8_t _z_frame_payload_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_FRAME_PAYLOAD\n");
+    _Z_DEBUG("Decoding _Z_MID_T_FRAME_PAYLOAD\n");
 
     msg->_messages = _z_zenoh_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
     while (_z_zbuf_len(zbf) > 0) {
@@ -1448,7 +1448,7 @@ int8_t _z_fragment_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_FRAGMENT_HEADER\n");
+    _Z_DEBUG("Encoding _Z_MID_T_FRAGMENT_HEADER\n");
 
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
@@ -1459,7 +1459,7 @@ int8_t _z_fragment_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_FRAGMENT_PAYLOAD\n");
+    _Z_DEBUG("Encoding _Z_MID_T_FRAGMENT_PAYLOAD\n");
 
     _Z_EC(_z_bytes_encode(wbf, &msg->_payload))
 
@@ -1470,7 +1470,7 @@ int8_t _z_fragment_header_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, ui
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_FRAGMENT_HEADER\n");
+    _Z_DEBUG("Decoding _Z_MID_T_FRAGMENT_HEADER\n");
 
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
@@ -1481,7 +1481,7 @@ int8_t _z_fragment_payload_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, u
     (void)(header);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_FRAGMENT_PAYLOAD\n");
+    _Z_DEBUG("Decoding _Z_MID_T_FRAGMENT_PAYLOAD\n");
 
     ret |= _z_bytes_decode(&msg->_payload, zbf);
     if (ret != _Z_RES_OK) {
@@ -1558,39 +1558,39 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
     _Z_EC(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
-        case _Z_MID_FRAME: {
+        case _Z_MID_T_FRAME: {
             ret |= _z_frame_header_encode(wbf, msg->_header, &msg->_body._frame);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
             ret |= _z_frame_payload_encode(wbf, msg->_header, &msg->_body._frame);
         } break;
 
-        case _Z_MID_FRAGMENT: {
+        case _Z_MID_T_FRAGMENT: {
             ret |= _z_fragment_header_encode(wbf, msg->_header, &msg->_body._fragment);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
             ret |= _z_fragment_payload_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
 
-        case _Z_MID_KEEP_ALIVE: {
+        case _Z_MID_T_KEEP_ALIVE: {
             ret |= _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
-        case _Z_MID_JOIN: {
+        case _Z_MID_T_JOIN: {
             ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
-        case _Z_MID_INIT: {
+        case _Z_MID_T_INIT: {
             ret |= _z_init_encode(wbf, msg->_header, &msg->_body._init);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
-        case _Z_MID_OPEN: {
+        case _Z_MID_T_OPEN: {
             ret |= _z_open_encode(wbf, msg->_header, &msg->_body._open);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
-        case _Z_MID_CLOSE: {
+        case _Z_MID_T_CLOSE: {
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
             ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
@@ -1615,56 +1615,56 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
         if (ret == _Z_RES_OK) {
             uint8_t mid = _Z_MID(msg->_header);
             switch (mid) {
-                case _Z_MID_FRAME: {
+                case _Z_MID_T_FRAME: {
                     ret |= _z_frame_header_decode(&msg->_body._frame, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     ret |= _z_frame_payload_decode(&msg->_body._frame, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_FRAGMENT: {
+                case _Z_MID_T_FRAGMENT: {
                     ret |= _z_fragment_header_decode(&msg->_body._fragment, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     ret |= _z_fragment_payload_decode(&msg->_body._fragment, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_ATTACHMENT: {
+                case _Z_MID_A_ATTACHMENT: {
                     ret |= _z_attachment_decode(&msg->_attachment, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                 } break;
 
-                case _Z_MID_KEEP_ALIVE: {
+                case _Z_MID_T_KEEP_ALIVE: {
                     ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_JOIN: {
+                case _Z_MID_T_JOIN: {
                     ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_INIT: {
+                case _Z_MID_T_INIT: {
                     ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_OPEN: {
+                case _Z_MID_T_OPEN: {
                     ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_CLOSE: {
+                case _Z_MID_T_CLOSE: {
                     ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
                     ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_PRIORITY: {
+                case _Z_MID_A_PRIORITY: {
                     // Ignore the priority decorator for the time being since zenoh-pico does not
                     // perform any routing. Hence, priority information does not need to be propagated.
                 } break;

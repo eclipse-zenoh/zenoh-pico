@@ -70,25 +70,25 @@ void print_uint8_array(_z_bytes_t *arr) {
 
 void print_transport_message_type(uint8_t header) {
     switch (_Z_MID(header)) {
-        case _Z_MID_JOIN:
+        case _Z_MID_T_JOIN:
             printf("Join message");
             break;
-        case _Z_MID_INIT:
+        case _Z_MID_T_INIT:
             printf("Init message");
             break;
-        case _Z_MID_OPEN:
+        case _Z_MID_T_OPEN:
             printf("Open message");
             break;
-        case _Z_MID_CLOSE:
+        case _Z_MID_T_CLOSE:
             printf("Close message");
             break;
-        case _Z_MID_KEEP_ALIVE:
+        case _Z_MID_T_KEEP_ALIVE:
             printf("KeepAlive message");
             break;
-        case _Z_MID_FRAME:
+        case _Z_MID_T_FRAME:
             printf("Frame message");
             break;
-        case _Z_MID_FRAGMENT:
+        case _Z_MID_T_FRAGMENT:
             printf("Frame message");
             break;
         default:
@@ -839,7 +839,7 @@ void print_attachment(_z_attachment_t *att) {
 _z_attachment_t *gen_attachment(void) {
     _z_attachment_t *p_at = (_z_attachment_t *)z_malloc(sizeof(_z_attachment_t));
 
-    p_at->_header = _Z_MID_ATTACHMENT;
+    p_at->_header = _Z_MID_A_ATTACHMENT;
     // _Z_SET_FLAG(p_at->_header, _Z_FLAGS(gen_uint8()));
     p_at->_payload = gen_payload(64);
 
@@ -1429,7 +1429,7 @@ void declare_message(void) {
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_declare_message();
-    assert(_Z_MID(z_msg._header) == _Z_MID_DECLARE);
+    assert(_Z_MID(z_msg._header) == _Z_MID_Z_DECLARE);
 
     _z_msg_declare_t e_dcl = z_msg._body._declare;
 
@@ -1496,7 +1496,7 @@ void data_message(void) {
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_data_message();
-    assert(_Z_MID(z_msg._header) == _Z_MID_DATA);
+    assert(_Z_MID(z_msg._header) == _Z_MID_Z_DATA);
 
     _z_msg_data_t e_da = z_msg._body._data;
 
@@ -1552,7 +1552,7 @@ void pull_message(void) {
 
     // Initialize
     _z_zenoh_message_t z_msg = gen_pull_message();
-    assert(_Z_MID(z_msg._header) == _Z_MID_PULL);
+    assert(_Z_MID(z_msg._header) == _Z_MID_Z_PULL);
 
     _z_msg_pull_t e_pu = z_msg._body._pull;
 
@@ -1646,7 +1646,7 @@ void query_message(void) {
     // Initialize
     uint8_t e_hdr = 0;
     _z_zenoh_message_t z_msg = gen_query_message();
-    assert(_Z_MID(z_msg._header) == _Z_MID_QUERY);
+    assert(_Z_MID(z_msg._header) == _Z_MID_Z_QUERY);
 
     _z_msg_query_t e_qy = z_msg._body._query;
 
@@ -1680,23 +1680,23 @@ _z_zenoh_message_t gen_unit_message(void) {
 _z_zenoh_message_t gen_zenoh_message(void) {
     _z_zenoh_message_t p_zm;
 
-    uint8_t mids[] = {_Z_MID_DECLARE, _Z_MID_DATA, _Z_MID_PULL, _Z_MID_QUERY, _Z_MID_UNIT};
+    uint8_t mids[] = {_Z_MID_Z_DECLARE, _Z_MID_Z_DATA, _Z_MID_Z_PULL, _Z_MID_Z_QUERY, _Z_MID_Z_UNIT};
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
 
     switch (mids[i]) {
-        case _Z_MID_DECLARE:
+        case _Z_MID_Z_DECLARE:
             p_zm = gen_declare_message();
             break;
-        case _Z_MID_DATA:
+        case _Z_MID_Z_DATA:
             p_zm = gen_data_message();
             break;
-        case _Z_MID_PULL:
+        case _Z_MID_Z_PULL:
             p_zm = gen_pull_message();
             break;
-        case _Z_MID_QUERY:
+        case _Z_MID_Z_QUERY:
             p_zm = gen_query_message();
             break;
-        case _Z_MID_UNIT:
+        case _Z_MID_Z_UNIT:
             p_zm = gen_unit_message();
             break;
         default:
@@ -1743,19 +1743,19 @@ void assert_eq_zenoh_message(_z_zenoh_message_t *left, _z_zenoh_message_t *right
     printf("\n");
 
     switch (_Z_MID(left->_header)) {
-        case _Z_MID_DECLARE:
+        case _Z_MID_Z_DECLARE:
             assert_eq_declare_message(&left->_body._declare, &right->_body._declare);
             break;
-        case _Z_MID_DATA:
+        case _Z_MID_Z_DATA:
             assert_eq_data_message(&left->_body._data, &right->_body._data, left->_header);
             break;
-        case _Z_MID_PULL:
+        case _Z_MID_Z_PULL:
             assert_eq_pull_message(&left->_body._pull, &right->_body._pull, left->_header);
             break;
-        case _Z_MID_QUERY:
+        case _Z_MID_Z_QUERY:
             assert_eq_query_message(&left->_body._query, &right->_body._query, left->_header);
             break;
-        case _Z_MID_UNIT:
+        case _Z_MID_Z_UNIT:
             // Do nothing. Unit messages have no body
             break;
         default:
@@ -1773,19 +1773,19 @@ void zenoh_message(void) {
 
     printf(" - ");
     switch (_Z_MID(e_zm._header)) {
-        case _Z_MID_DECLARE:
+        case _Z_MID_Z_DECLARE:
             printf("Declare message");
             break;
-        case _Z_MID_DATA:
+        case _Z_MID_Z_DATA:
             printf("Data message");
             break;
-        case _Z_MID_PULL:
+        case _Z_MID_Z_PULL:
             printf("Pull message");
             break;
-        case _Z_MID_QUERY:
+        case _Z_MID_Z_QUERY:
             printf("Query message");
             break;
-        case _Z_MID_UNIT:
+        case _Z_MID_Z_UNIT:
             printf("Unit message");
             break;
         default:
@@ -1905,7 +1905,7 @@ void assert_eq_hello_message(_z_s_msg_hello_t *left, _z_s_msg_hello_t *right, ui
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_HELLO_L) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
         printf("   ");
         assert_eq_locator_array(&left->_locators, &right->_locators);
         printf("\n");
@@ -1993,7 +1993,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_JOIN_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
         printf("   SN Resolution (%hhu:%hhu)", left->_seq_num_res, right->_seq_num_res);
         assert(left->_seq_num_res == right->_seq_num_res);
         printf("\n");
@@ -2046,7 +2046,7 @@ void join_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_join_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_JOIN);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_JOIN);
 
     _z_t_msg_join_t e_it = t_msg._body._join;
 
@@ -2115,7 +2115,7 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
     assert_eq_uint8_array(&left->_zid, &right->_zid);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_S) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         printf("   SN Resolution (%hhu:%hhu)", left->_seq_num_res, right->_seq_num_res);
         assert(left->_seq_num_res == right->_seq_num_res);
         printf("\n");
@@ -2133,7 +2133,7 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
         printf("\n");
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INIT_A) == true) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
         printf("   ");
         assert_eq_uint8_array(&left->_cookie, &right->_cookie);
         printf("\n");
@@ -2146,7 +2146,7 @@ void init_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_init_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_INIT);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_INIT);
 
     _z_t_msg_init_t e_it = t_msg._body._init;
 
@@ -2192,7 +2192,7 @@ void assert_eq_open_message(_z_t_msg_open_t *left, _z_t_msg_open_t *right, uint8
     assert(left->_initial_sn == right->_initial_sn);
     printf("\n");
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_OPEN_A) == false) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
         printf("   ");
         assert_eq_uint8_array(&left->_cookie, &right->_cookie);
         printf("\n");
@@ -2205,7 +2205,7 @@ void open_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_open_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_OPEN);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_OPEN);
 
     _z_t_msg_open_t e_op = t_msg._body._open;
 
@@ -2251,7 +2251,7 @@ void close_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_close_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_CLOSE);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_CLOSE);
 
     _z_t_msg_close_t e_cl = t_msg._body._close;
 
@@ -2291,7 +2291,7 @@ void keep_alive_message(void) {
     // Initialize
     _z_transport_message_t t_msg = gen_keep_alive_message();
     _z_t_msg_keep_alive_t e_ka = t_msg._body._keep_alive;
-    assert(_Z_MID(t_msg._header) == _Z_MID_KEEP_ALIVE);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_KEEP_ALIVE);
 
     // Encode
     int8_t res = _z_keep_alive_encode(&wbf, t_msg._header, &e_ka);
@@ -2353,7 +2353,7 @@ void frame_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_frame_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_FRAME);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_FRAME);
 
     _z_t_msg_frame_t e_fr = t_msg._body._frame;
 
@@ -2407,7 +2407,7 @@ void fragment_message(void) {
 
     // Initialize
     _z_transport_message_t t_msg = gen_fragment_message();
-    assert(_Z_MID(t_msg._header) == _Z_MID_FRAGMENT);
+    assert(_Z_MID(t_msg._header) == _Z_MID_T_FRAGMENT);
 
     _z_t_msg_fragment_t e_fr = t_msg._body._fragment;
 
@@ -2439,30 +2439,30 @@ void fragment_message(void) {
 _z_transport_message_t gen_transport_message(void) {
     _z_transport_message_t e_tm;
 
-    uint8_t mids[] = {_Z_MID_JOIN,       _Z_MID_INIT,  _Z_MID_OPEN,    _Z_MID_CLOSE,
-                      _Z_MID_KEEP_ALIVE, _Z_MID_FRAME, _Z_MID_FRAGMENT};
+    uint8_t mids[] = {_Z_MID_T_JOIN,       _Z_MID_T_INIT,  _Z_MID_T_OPEN,    _Z_MID_T_CLOSE,
+                      _Z_MID_T_KEEP_ALIVE, _Z_MID_T_FRAME, _Z_MID_T_FRAGMENT};
 
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
     switch (mids[i]) {
-        case _Z_MID_JOIN:
+        case _Z_MID_T_JOIN:
             e_tm = gen_join_message();
             break;
-        case _Z_MID_INIT:
+        case _Z_MID_T_INIT:
             e_tm = gen_init_message();
             break;
-        case _Z_MID_OPEN:
+        case _Z_MID_T_OPEN:
             e_tm = gen_open_message();
             break;
-        case _Z_MID_CLOSE:
+        case _Z_MID_T_CLOSE:
             e_tm = gen_close_message();
             break;
-        case _Z_MID_KEEP_ALIVE:
+        case _Z_MID_T_KEEP_ALIVE:
             e_tm = gen_keep_alive_message();
             break;
-        case _Z_MID_FRAME:
+        case _Z_MID_T_FRAME:
             e_tm = gen_frame_message();
             break;
-        case _Z_MID_FRAGMENT:
+        case _Z_MID_T_FRAGMENT:
             e_tm = gen_fragment_message();
             break;
         default:
@@ -2500,25 +2500,25 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
     printf("\n");
 
     switch (_Z_MID(left->_header)) {
-        case _Z_MID_JOIN:
+        case _Z_MID_T_JOIN:
             assert_eq_join_message(&left->_body._join, &right->_body._join, left->_header);
             break;
-        case _Z_MID_INIT:
+        case _Z_MID_T_INIT:
             assert_eq_init_message(&left->_body._init, &right->_body._init, left->_header);
             break;
-        case _Z_MID_OPEN:
+        case _Z_MID_T_OPEN:
             assert_eq_open_message(&left->_body._open, &right->_body._open, left->_header);
             break;
-        case _Z_MID_CLOSE:
+        case _Z_MID_T_CLOSE:
             assert_eq_close_message(&left->_body._close, &right->_body._close, left->_header);
             break;
-        case _Z_MID_KEEP_ALIVE:
+        case _Z_MID_T_KEEP_ALIVE:
             assert_eq_keep_alive_message(&left->_body._keep_alive, &right->_body._keep_alive, left->_header);
             break;
-        case _Z_MID_FRAME:
+        case _Z_MID_T_FRAME:
             assert_eq_frame_message(&left->_body._frame, &right->_body._frame, left->_header);
             break;
-        case _Z_MID_FRAGMENT:
+        case _Z_MID_T_FRAGMENT:
             assert_eq_fragment_message(&left->_body._fragment, &right->_body._fragment, left->_header);
             break;
         default:
@@ -2729,11 +2729,11 @@ void batch(void) {
 //     // Create the frame session message that carries the zenoh message
 //     _z_transport_message_t t_msg;
 //     t_msg._attachment = NULL;
-//     t_msg._header = _Z_MID_FRAME;
+//     t_msg._header = _Z_MID_T_FRAME;
 //     t_msg._body._frame._sn = sn;
 
 //     if (is_reliable == true) {
-//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_FRAGMENT_R);
+//         _Z_SET_FLAG(t_msg._header, _Z_FLAG_T_FRAGMENT_R);
 //     };
 
 //     if (is_fragment == true) {

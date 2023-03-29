@@ -267,7 +267,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
         _z_transport_message_t iam;
         ret = _z_link_recv_t_msg(&iam, zl);
         if (ret == _Z_RES_OK) {
-            if ((_Z_MID(iam._header) == _Z_MID_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_INIT_A) == true)) {
+            if ((_Z_MID(iam._header) == _Z_MID_T_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A) == true)) {
                 _Z_INFO("Received Z_INIT(Ack)\n");
 
                 // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
@@ -323,8 +323,8 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                         _z_transport_message_t oam;
                         ret = _z_link_recv_t_msg(&oam, zl);
                         if (ret == _Z_RES_OK) {
-                            if ((_Z_MID(oam._header) == _Z_MID_OPEN) &&
-                                (_Z_HAS_FLAG(oam._header, _Z_FLAG_OPEN_A) == true)) {
+                            if ((_Z_MID(oam._header) == _Z_MID_T_OPEN) &&
+                                (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A) == true)) {
                                 _Z_INFO("Received Z_OPEN(Ack)\n");
                                 param->_lease = oam._body._open._lease;  // The session lease
 

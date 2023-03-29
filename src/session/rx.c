@@ -27,8 +27,8 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
     int8_t ret = _Z_RES_OK;
 
     switch (_Z_MID(msg->_header)) {
-        case _Z_MID_DATA: {
-            _Z_INFO("Received _Z_MID_DATA message %d\n", msg->_header);
+        case _Z_MID_Z_DATA: {
+            _Z_INFO("Received _Z_MID_Z_DATA message %d\n", msg->_header);
             if (msg->_reply_context != NULL) {  // This is some data from a query
                 ret = _z_trigger_query_reply_partial(zn, msg->_reply_context, msg->_body._data._key,
                                                      msg->_body._data._payload, msg->_body._data._info._encoding,
@@ -40,7 +40,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
             }
         } break;
 
-        case _Z_MID_DECLARE: {
+        case _Z_MID_Z_DECLARE: {
             _Z_INFO("Received _Z_DECLARE message\n");
             for (size_t i = 0; i < msg->_body._declare._declarations._len; i++) {
                 _z_declaration_t decl = msg->_body._declare._declarations._val[i];
@@ -150,17 +150,17 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
             }
         } break;
 
-        case _Z_MID_PULL: {
+        case _Z_MID_Z_PULL: {
             _Z_INFO("Received _Z_PULL message\n");
             // TODO: not supported yet
         } break;
 
-        case _Z_MID_QUERY: {
+        case _Z_MID_Z_QUERY: {
             _Z_INFO("Received _Z_QUERY message\n");
             _z_trigger_queryables(zn, &msg->_body._query);
         } break;
 
-        case _Z_MID_UNIT: {
+        case _Z_MID_Z_UNIT: {
             _Z_INFO("Received _Z_UNIT message\n");
             // This might be the final reply
             if (msg->_reply_context != NULL) {

@@ -66,7 +66,7 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_
         rctx->_qid = qid;
         rctx->_replier_id = replier_id;
 
-        rctx->_header = _Z_MID_REPLY_CONTEXT;
+        rctx->_header = _Z_MID_A_REPLY_CONTEXT;
         if (is_final == true) {
             _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
         }
@@ -238,7 +238,7 @@ _z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations) {
 
     msg._body._declare._declarations = declarations;
 
-    msg._header = _Z_MID_DECLARE;
+    msg._header = _Z_MID_Z_DECLARE;
 
     msg._attachment = NULL;
     msg._reply_context = NULL;
@@ -298,7 +298,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
     msg._body._data._info = info;
     msg._body._data._payload = payload;
 
-    msg._header = _Z_MID_DATA;
+    msg._header = _Z_MID_Z_DATA;
     if (msg._body._data._info._flags != 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_I);
     }
@@ -325,7 +325,7 @@ void _z_msg_clear_data(_z_msg_data_t *msg) {
 _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped) {
     _z_zenoh_message_t msg;
 
-    msg._header = _Z_MID_UNIT;
+    msg._header = _Z_MID_Z_UNIT;
     if (can_be_dropped == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
@@ -346,7 +346,7 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
     msg._body._pull._pull_id = pull_id;
     msg._body._pull._max_samples = max_samples;
 
-    msg._header = _Z_MID_PULL;
+    msg._header = _Z_MID_Z_PULL;
     if (is_final == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_F);
     }
@@ -379,7 +379,7 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._info._encoding = with_value.encoding;
     msg._body._query._payload = with_value.payload;
 
-    msg._header = _Z_MID_QUERY;
+    msg._header = _Z_MID_Z_QUERY;
     if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
     }
@@ -425,19 +425,19 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_DECLARE:
+        case _Z_MID_Z_DECLARE:
             _z_msg_clear_declare(&msg->_body._declare);
             break;
-        case _Z_MID_DATA:
+        case _Z_MID_Z_DATA:
             _z_msg_clear_data(&msg->_body._data);
             break;
-        case _Z_MID_PULL:
+        case _Z_MID_Z_PULL:
             _z_msg_clear_pull(&msg->_body._pull);
             break;
-        case _Z_MID_QUERY:
+        case _Z_MID_Z_QUERY:
             _z_msg_clear_query(&msg->_body._query);
             break;
-        case _Z_MID_UNIT:
+        case _Z_MID_Z_UNIT:
             _z_msg_clear_unit(&msg->_body._unit);
             break;
         default:
@@ -494,7 +494,7 @@ _z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _
     msg._body._hello._locators = locators;
 
     if (_z_locator_array_is_empty(&locators) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_HELLO_L);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_HELLO_L);
     }
 
     msg._attachment = NULL;
@@ -518,7 +518,7 @@ void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) {
 _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
                                           _z_conduit_sn_list_t next_sn) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_JOIN;
+    msg._header = _Z_MID_T_JOIN;
 
     msg._body._join._version = Z_PROTO_VERSION;
     msg._body._join._whatami = whatami;
@@ -531,14 +531,14 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
     msg._body._join._zid = zid;
 
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_JOIN_T);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_T);
     }
 
     if ((msg._body._join._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
         (msg._body._join._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._join._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._join._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_JOIN_S);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
     }
 
     msg._attachment = NULL;
@@ -564,7 +564,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg) { _z_bytes_clear(&msg->_zid); }
 /*------------------ Init Message ------------------*/
 _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_INIT;
+    msg._header = _Z_MID_T_INIT;
 
     msg._body._init._version = Z_PROTO_VERSION;
     msg._body._init._whatami = whatami;
@@ -579,7 +579,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zi
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
 
     msg._attachment = NULL;
@@ -590,8 +590,8 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zi
 
 _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_INIT;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_A);
+    msg._header = _Z_MID_T_INIT;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_A);
 
     msg._body._init._version = Z_PROTO_VERSION;
     msg._body._init._whatami = whatami;
@@ -606,7 +606,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zi
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_INIT_S);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
 
     msg._attachment = NULL;
@@ -634,14 +634,14 @@ void _z_t_msg_clear_init(_z_t_msg_init_t *msg) {
 /*------------------ Open Message ------------------*/
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_OPEN;
+    msg._header = _Z_MID_T_OPEN;
 
     msg._body._open._lease = lease;
     msg._body._open._initial_sn = initial_sn;
     msg._body._open._cookie = cookie;
 
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_T);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
     }
 
     msg._attachment = NULL;
@@ -652,15 +652,15 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
 
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_OPEN;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_A);
+    msg._header = _Z_MID_T_OPEN;
+    _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_A);
 
     msg._body._open._lease = lease;
     msg._body._open._initial_sn = initial_sn;
     _z_bytes_reset(&msg._body._open._cookie);
 
     if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_OPEN_T);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
     }
 
     msg._attachment = NULL;
@@ -680,11 +680,11 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); 
 /*------------------ Close Message ------------------*/
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_CLOSE;
+    msg._header = _Z_MID_T_CLOSE;
 
     msg._body._close._reason = reason;
     if (link_only == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_CLOSE_S);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_CLOSE_S);
     }
 
     msg._attachment = NULL;
@@ -700,7 +700,7 @@ void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
 /*------------------ Keep Alive Message ------------------*/
 _z_transport_message_t _z_t_msg_make_keep_alive(void) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_KEEP_ALIVE;
+    msg._header = _Z_MID_T_KEEP_ALIVE;
 
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
@@ -718,11 +718,11 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
 /*------------------ Frame Message ------------------*/
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_FRAME;
+    msg._header = _Z_MID_T_FRAME;
 
     msg._body._frame._sn = sn;
     if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
 
     msg._body._frame._messages = _z_zenoh_message_vec_make(0);
@@ -735,11 +735,11 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_FRAME;
+    msg._header = _Z_MID_T_FRAME;
 
     msg._body._frame._sn = sn;
     if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAME_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
 
     msg._body._frame._messages = messages;
@@ -760,12 +760,12 @@ void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_zenoh_message_vec_clear(&m
 /*------------------ Fragment Message ------------------*/
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t payload, _Bool is_reliable, _Bool is_last) {
     _z_transport_message_t msg;
-    msg._header = _Z_MID_FRAGMENT;
+    msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAGMENT_M);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_M);
     }
     if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_FRAGMENT_R);
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_R);
     }
 
     msg._body._fragment._sn = sn;
@@ -791,31 +791,31 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_JOIN: {
+        case _Z_MID_T_JOIN: {
             _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
         } break;
 
-        case _Z_MID_INIT: {
+        case _Z_MID_T_INIT: {
             _z_t_msg_copy_init(&clone->_body._init, &msg->_body._init);
         } break;
 
-        case _Z_MID_OPEN: {
+        case _Z_MID_T_OPEN: {
             _z_t_msg_copy_open(&clone->_body._open, &msg->_body._open);
         } break;
 
-        case _Z_MID_CLOSE: {
+        case _Z_MID_T_CLOSE: {
             _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
         } break;
 
-        case _Z_MID_KEEP_ALIVE: {
+        case _Z_MID_T_KEEP_ALIVE: {
             _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, &msg->_body._keep_alive);
         } break;
 
-        case _Z_MID_FRAME: {
+        case _Z_MID_T_FRAME: {
             _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
         } break;
 
-        case _Z_MID_FRAGMENT: {
+        case _Z_MID_T_FRAGMENT: {
             _z_t_msg_copy_fragment(&clone->_body._fragment, &msg->_body._fragment);
         } break;
 
@@ -833,31 +833,31 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_JOIN: {
+        case _Z_MID_T_JOIN: {
             _z_t_msg_clear_join(&msg->_body._join);
         } break;
 
-        case _Z_MID_INIT: {
+        case _Z_MID_T_INIT: {
             _z_t_msg_clear_init(&msg->_body._init);
         } break;
 
-        case _Z_MID_OPEN: {
+        case _Z_MID_T_OPEN: {
             _z_t_msg_clear_open(&msg->_body._open);
         } break;
 
-        case _Z_MID_CLOSE: {
+        case _Z_MID_T_CLOSE: {
             _z_t_msg_clear_close(&msg->_body._close);
         } break;
 
-        case _Z_MID_KEEP_ALIVE: {
+        case _Z_MID_T_KEEP_ALIVE: {
             _z_t_msg_clear_keep_alive(&msg->_body._keep_alive);
         } break;
 
-        case _Z_MID_FRAME: {
+        case _Z_MID_T_FRAME: {
             _z_t_msg_clear_frame(&msg->_body._frame);
         } break;
 
-        case _Z_MID_FRAGMENT: {
+        case _Z_MID_T_FRAGMENT: {
             _z_t_msg_clear_fragment(&msg->_body._fragment);
         } break;
 

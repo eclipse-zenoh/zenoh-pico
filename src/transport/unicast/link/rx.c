@@ -85,10 +85,10 @@ int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t
 
 int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     switch (_Z_MID(t_msg->_header)) {
-        case _Z_MID_FRAME: {
+        case _Z_MID_T_FRAME: {
             _Z_INFO("Received Z_FRAME message\n");
             // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
@@ -118,10 +118,10 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             break;
         }
 
-        case _Z_MID_FRAGMENT: {
+        case _Z_MID_T_FRAGMENT: {
             _Z_INFO("Received Z_FRAGMENT message\n");
 
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_R)
+            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &ztu->_dbuf_reliable
                                   : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
 
@@ -136,7 +136,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                                     t_msg->_body._fragment._payload.len);
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_M) == false) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_M) == false) {
                 if (drop == true) {  // Drop message if it exceeds the fragmentation size
                     _z_wbuf_reset(dbuf);
                     break;
@@ -160,22 +160,22 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             break;
         }
 
-        case _Z_MID_KEEP_ALIVE: {
+        case _Z_MID_T_KEEP_ALIVE: {
             _Z_INFO("Received Z_KEEP_ALIVE message\n");
             break;
         }
 
-        case _Z_MID_INIT: {
+        case _Z_MID_T_INIT: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
             break;
         }
 
-        case _Z_MID_OPEN: {
+        case _Z_MID_T_OPEN: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
             break;
         }
 
-        case _Z_MID_CLOSE: {
+        case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer\n");
             break;
         }

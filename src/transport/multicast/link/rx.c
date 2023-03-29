@@ -108,7 +108,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
-        case _Z_MID_FRAME: {
+        case _Z_MID_T_FRAME: {
             _Z_INFO("Received _Z_FRAME message\n");
             if (entry == NULL) {
                 break;
@@ -116,7 +116,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             entry->_received = true;
 
             // Check if the SN is correct
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAME_R) == true) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monothonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) ==
@@ -148,14 +148,14 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_FRAGMENT: {
+        case _Z_MID_T_FRAGMENT: {
             _Z_INFO("Received Z_FRAGMENT message\n");
             if (entry == NULL) {
                 break;
             }
             entry->_received = true;
 
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_R)
+            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &entry->_dbuf_reliable
                                   : &entry->_dbuf_best_effort;  // Select the right defragmentation buffer
 
@@ -170,7 +170,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                                     t_msg->_body._fragment._payload.len);
             }
 
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_FRAGMENT_M) == false) {
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_M) == false) {
                 if (drop == true) {  // Drop message if it exceeds the fragmentation size
                     _z_wbuf_reset(dbuf);
                     break;
@@ -194,7 +194,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_KEEP_ALIVE: {
+        case _Z_MID_T_KEEP_ALIVE: {
             _Z_INFO("Received _Z_KEEP_ALIVE message\n");
             if (entry == NULL) {
                 break;
@@ -204,17 +204,17 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_INIT: {
+        case _Z_MID_T_INIT: {
             // Do nothing, multicas transports are not expected to handle INIT messages
             break;
         }
 
-        case _Z_MID_OPEN: {
+        case _Z_MID_T_OPEN: {
             // Do nothing, multicas transports are not expected to handle OPEN messages
             break;
         }
 
-        case _Z_MID_JOIN: {
+        case _Z_MID_T_JOIN: {
             _Z_INFO("Received _Z_JOIN message\n");
             if (t_msg->_body._join._version != Z_PROTO_VERSION) {
                 break;
@@ -283,7 +283,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             break;
         }
 
-        case _Z_MID_CLOSE: {
+        case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer\n");
 
             if (entry == NULL) {
