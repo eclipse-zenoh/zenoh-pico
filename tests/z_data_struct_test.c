@@ -69,7 +69,7 @@ int main(void) {
 
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
-        list = _z_str_list_pop(list);
+        list = _z_str_list_pop(list, NULL);
         assert(_z_str_list_len(list) == len - (i + 1));
     }
     assert(_z_str_list_is_empty(list) == true);

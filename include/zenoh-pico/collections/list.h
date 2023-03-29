@@ -42,7 +42,7 @@ void *_z_list_head(const _z_list_t *xs);
 _z_list_t *_z_list_tail(const _z_list_t *xs);
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
-_z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f);
+_z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x);
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f f_f, void *e);
 
@@ -59,7 +59,9 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline type *name##_list_head(const name##_list_t *l) { return (type *)_z_list_head(l); }                 \
     static inline name##_list_t *name##_list_tail(const name##_list_t *l) { return _z_list_tail(l); }                \
     static inline name##_list_t *name##_list_push(name##_list_t *l, type *e) { return _z_list_push(l, e); }          \
-    static inline name##_list_t *name##_list_pop(name##_list_t *l) { return _z_list_pop(l, name##_elem_free); }      \
+    static inline name##_list_t *name##_list_pop(name##_list_t *l, type** x) {                                       \
+        return _z_list_pop(l, name##_elem_free, (void**)x);                                                          \
+    }                                                                                                                \
     static inline name##_list_t *name##_list_find(const name##_list_t *l, name##_eq_f c_f, type *e) {                \
         return _z_list_find(l, (z_element_eq_f)c_f, e);                                                              \
     }                                                                                                                \

@@ -661,6 +661,7 @@ void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_c
     z_owned_reply_t oreply = {._value = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
+    z_reply_drop(&oreply); // user_call is allowed to take ownership of the reply by setting oreply._value to NULL
 }
 
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
