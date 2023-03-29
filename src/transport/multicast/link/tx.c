@@ -124,4 +124,59 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
     return ret;
 }
 
+int8_t _z_multicast_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliability_t reliability,
+                               z_congestion_control_t cong_ctrl) {
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG(">> send network message\n");
+
+    _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
+
+    // Acquire the lock and drop the message if needed
+    _Bool drop = false;
+    if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
+#if Z_MULTI_THREAD == 1
+        _z_mutex_lock(&ztm->_mutex_tx);
+#endif  // Z_MULTI_THREAD == 1
+    } else {
+#if Z_MULTI_THREAD == 1
+        int8_t locked = _z_mutex_trylock(&ztm->_mutex_tx);
+        if (locked != (int8_t)0) {
+            _Z_INFO("Dropping zenoh message because of congestion control\n");
+            // We failed to acquire the lock, drop the message
+            drop = true;
+        }
+#endif  // Z_MULTI_THREAD == 1
+    }
+
+    if (drop == false) {
+        // Prepare the buffer eventually reserving space for the message length
+        __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
+
+        _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);  // Get the next sequence number
+
+        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
+        ret = _z_transport_message_encode(&ztm->_wbuf, &t_msg);  // Encode the frame header
+        if (ret == _Z_RES_OK) {
+            ret = _z_network_message_encode(&ztm->_wbuf, n_msg);  // Encode the network message
+            if (ret == _Z_RES_OK) {
+                // Write the message legnth in the reserved space if needed
+                __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
+
+                ret = _z_link_send_wbuf(&ztm->_link, &ztm->_wbuf);  // Send the wbuf on the socket
+                if (ret == _Z_RES_OK) {
+                    ztm->_transmitted = true;  // Mark the session that we have transmitted data
+                }
+            } else {
+                // TODO[protocol]: Fragmentation goes here
+            }
+        }
+
+#if Z_MULTI_THREAD == 1
+        _z_mutex_unlock(&ztm->_mutex_tx);
+#endif  // Z_MULTI_THREAD == 1
+    }
+
+    return ret;
+}
+
 #endif  // Z_MULTICAST_TRANSPORT == 1

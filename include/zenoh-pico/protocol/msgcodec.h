@@ -52,6 +52,10 @@ int8_t _z_transport_message_encode(_z_wbuf_t *buf, const _z_transport_message_t 
 int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf);
 int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *buf);
 
+int8_t _z_network_message_encode(_z_wbuf_t *buf, const _z_network_message_t *msg);
+int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *buf);
+int8_t _z_network_message_decode_na(_z_network_message_t *msg, _z_zbuf_t *buf);
+
 int8_t _z_zenoh_message_encode(_z_wbuf_t *buf, const _z_zenoh_message_t *msg);
 int8_t _z_zenoh_message_decode(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
 int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
@@ -122,10 +126,6 @@ int8_t _z_reply_context_encode(_z_wbuf_t *buf, const _z_reply_context_t *rc);
 int8_t _z_reply_context_decode(_z_reply_context_t **rc, _z_zbuf_t *buf, uint8_t header);
 int8_t _z_reply_context_decode_na(_z_reply_context_t *rc, _z_zbuf_t *buf, uint8_t header);
 
-int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_msg_declare_t *msg);
-int8_t _z_declare_decode(_z_msg_declare_t *msg, _z_zbuf_t *zbf);
-int8_t _z_declare_decode_na(_z_msg_declare_t *msg, _z_zbuf_t *zbf);
-
 int8_t _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg);
 int8_t _z_data_decode_na(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_data_decode(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header);
@@ -137,6 +137,11 @@ int8_t _z_pull_decode(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg);
 int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header);
+
+// ------------------ Network Message ------------------
+int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *msg);
+int8_t _z_declare_decode(_z_n_msg_declare_t *msg, _z_zbuf_t *zbf);
+int8_t _z_declare_decode_na(_z_n_msg_declare_t *msg, _z_zbuf_t *zbf);
 
 // ------------------ Transport Message ------------------
 int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg);

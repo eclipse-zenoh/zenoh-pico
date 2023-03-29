@@ -21,8 +21,8 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
-_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator,
-                                const uint32_t timeout, const _Bool exit_on_first);
+_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+                                const _Bool exit_on_first);
 
 int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid);
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason);
@@ -31,6 +31,8 @@ void _z_session_free(_z_session_t **zn);
 
 int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *z_msg);
 int8_t _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                     z_congestion_control_t cong_ctrl);
+int8_t _z_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliability_t reliability,
                      z_congestion_control_t cong_ctrl);
 
 #endif /* ZENOH_PICO_SESSION_UTILS_H */

@@ -54,15 +54,14 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
             r->_key = _z_keyexpr_duplicate(&keyexpr);
             if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) == _Z_RES_OK) {
                 // Build the declare message to send on the wire
-                _z_declaration_array_t declarations = _z_declaration_array_make(1);
-                declarations._val[0] = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&keyexpr));
-                _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-                if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+                _z_declaration_t declaration = _z_msg_make_declaration_resource(r->_id, _z_keyexpr_duplicate(&keyexpr));
+                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                     ret = r->_id;
                 } else {
                     _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
                 }
-                _z_msg_clear(&z_msg);
+                _z_n_msg_clear(&n_msg);
             } else {
                 _z_resource_free(&r);
             }
@@ -78,15 +77,14 @@ int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid) {
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_LOCAL, rid);
     if (r != NULL) {
         // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_forget_resource(rid);
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+        _z_declaration_t declaration = _z_msg_make_declaration_forget_resource(rid);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);  // Only if message is send, local resource is removed
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-        _z_msg_clear(&z_msg);
+        _z_n_msg_clear(&n_msg);
     } else {
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
@@ -106,14 +104,13 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
         ret->_priority = priority;
 
         // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_declaration_t declaration = _z_msg_make_declaration_publisher(_z_keyexpr_duplicate(&keyexpr));
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             // ret = _Z_ERR_TRANSPORT_TX_FAILED;
             _z_publisher_free(&ret);
         }
-        _z_msg_clear(&z_msg);
+        _z_n_msg_clear(&n_msg);
     }
 
     return ret;
@@ -123,13 +120,12 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     int8_t ret = _Z_RES_OK;
 
     // Build the declare message to send on the wire
-    _z_declaration_array_t declarations = _z_declaration_array_make(1);
-    declarations._val[0] = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
-    _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-    if (_z_send_z_msg(pub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    _z_declaration_t declaration = _z_msg_make_declaration_forget_publisher(_z_keyexpr_duplicate(&pub->_key));
+    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+    if (_z_send_n_msg(pub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
-    _z_msg_clear(&z_msg);
+    _z_n_msg_clear(&n_msg);
 
     return ret;
 }
@@ -155,15 +151,14 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
                                             // Do not drop it by the end of this function.
         if (sp_s != NULL) {
             // Build the declare message to send on the wire
-            _z_declaration_array_t declarations = _z_declaration_array_make(1);
-            declarations._val[0] = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
-            _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-            if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            _z_declaration_t declaration = _z_msg_make_declaration_subscriber(_z_keyexpr_duplicate(&keyexpr), sub_info);
+            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 // ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 _z_unregister_subscription(zn, _Z_RESOURCE_IS_LOCAL, sp_s);
                 _z_subscriber_free(&ret);
             }
-            _z_msg_clear(&z_msg);
+            _z_n_msg_clear(&n_msg);
         } else {
             _z_subscriber_free(&ret);
         }
@@ -180,16 +175,15 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s != NULL) {
         // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+        _z_declaration_t declaration = _z_msg_make_declaration_forget_subscriber(_z_keyexpr_duplicate(&s->ptr->_key));
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(sub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             // Only if message is successfully send, local subscription state can be removed
             _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-        _z_msg_clear(&z_msg);
+        _z_n_msg_clear(&n_msg);
     } else {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -218,16 +212,15 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
                                                // Do not drop it by the end of this function.
         if (sp_q != NULL) {
             // Build the declare message to send on the wire
-            _z_declaration_array_t declarations = _z_declaration_array_make(1);
-            declarations._val[0] = _z_msg_make_declaration_queryable(_z_keyexpr_duplicate(&keyexpr), q._complete,
-                                                                     _Z_QUERYABLE_DISTANCE_DEFAULT);
-            _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-            if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            _z_declaration_t declaration = _z_msg_make_declaration_queryable(
+                _z_keyexpr_duplicate(&keyexpr), q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 // ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 _z_unregister_questionable(zn, sp_q);
                 _z_queryable_free(&ret);
             }
-            _z_msg_clear(&z_msg);
+            _z_n_msg_clear(&n_msg);
         } else {
             _z_queryable_free(&ret);
         }
@@ -244,16 +237,15 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
     if (q != NULL) {
         // Build the declare message to send on the wire
-        _z_declaration_array_t declarations = _z_declaration_array_make(1);
-        declarations._val[0] = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
-        _z_zenoh_message_t z_msg = _z_msg_make_declare(declarations);
-        if (_z_send_z_msg(qle->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+        _z_declaration_t declaration = _z_msg_make_declaration_forget_queryable(_z_keyexpr_duplicate(&q->ptr->_key));
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(qle->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
             // Only if message is successfully send, local queryable state can be removed
             _z_unregister_questionable(qle->_zn, q);
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-        _z_msg_clear(&z_msg);
+        _z_n_msg_clear(&n_msg);
 
     } else {
         ret = _Z_ERR_ENTITY_UNKNOWN;

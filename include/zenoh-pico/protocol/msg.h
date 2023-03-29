@@ -64,7 +64,6 @@
 #define _Z_MID_N_RESPONSE_FINAL 0x1a
 
 /* Zenoh Messages */
-#define _Z_MID_Z_DECLARE 0x0b
 #define _Z_MID_Z_DATA 0x0c
 #define _Z_MID_Z_QUERY 0x0d
 #define _Z_MID_Z_PULL 0x0e
@@ -129,6 +128,17 @@
 //      S Session Close   if S==1 Session close or S==0 Link close
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_T_CLOSE_S 0x20  // 1 << 5
+
+/*=============================*/
+/*        Network flags        */
+/*=============================*/
+#define _Z_FLAG_N_Z 0x80  // 1 << 7
+
+// PUSH message flags:
+//      I ZenohID          if I==1 then the ZenohID is present
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_PUSH_N 0x20  // 1 << 5
+#define _Z_FLAG_N_PUSH_M 0x40  // 1 << 6
 
 /* Attachment message flags */
 #define _Z_FLAG_A_Z \
@@ -312,7 +322,7 @@ typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _id;
 } _z_res_decl_t;
-void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
+void _z_declaration_clear_resource(_z_res_decl_t *dcl);
 
 /*------------------ Forget Resource Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -325,7 +335,7 @@ void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl);
 typedef struct {
     _z_zint_t _rid;
 } _z_forget_res_decl_t;
-void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
+void _z_declaration_clear_forget_resource(_z_forget_res_decl_t *dcl);
 
 /*------------------ Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -338,7 +348,7 @@ void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl);
 typedef struct {
     _z_keyexpr_t _key;
 } _z_pub_decl_t;
-void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
+void _z_declaration_clear_publisher(_z_pub_decl_t *dcl);
 
 /*------------------ Forget Publisher Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -351,7 +361,7 @@ void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl);
 typedef struct {
     _z_keyexpr_t _key;
 } _z_forget_pub_decl_t;
-void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl);
+void _z_declaration_clear_forget_publisher(_z_forget_pub_decl_t *dcl);
 
 /*------------------ SubInfo Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -379,7 +389,7 @@ typedef struct {
     _z_keyexpr_t _key;
     _z_subinfo_t _subinfo;
 } _z_sub_decl_t;
-void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
+void _z_declaration_clear_subscriber(_z_sub_decl_t *dcl);
 
 /*------------------ Forget Subscriber Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -392,7 +402,7 @@ void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl);
 typedef struct {
     _z_keyexpr_t _key;
 } _z_forget_sub_decl_t;
-void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl);
+void _z_declaration_clear_forget_subscriber(_z_forget_sub_decl_t *dcl);
 
 /*------------------ Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -409,7 +419,7 @@ typedef struct {
     _z_zint_t _complete;
     _z_zint_t _distance;
 } _z_qle_decl_t;
-void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
+void _z_declaration_clear_queryable(_z_qle_decl_t *dcl);
 
 /*------------------ Forget Queryable Declaration ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -422,18 +432,8 @@ void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl);
 typedef struct {
     _z_keyexpr_t _key;
 } _z_forget_qle_decl_t;
-void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl);
+void _z_declaration_clear_forget_queryable(_z_forget_qle_decl_t *dcl);
 
-/*------------------ Declaration  Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|X| DECLARE |
-// +-+-+-+---------+
-// ~  Num of Decl  ~
-// +---------------+
-// ~ [Declaration] ~
-// +---------------+
-//
 typedef struct {
     union {
         _z_res_decl_t _res;
@@ -447,15 +447,7 @@ typedef struct {
     } _body;
     uint8_t _header;
 } _z_declaration_t;
-
-void _z_msg_clear_declaration(_z_declaration_t *dcl);
-_Z_ELEM_DEFINE(_z_declaration, _z_declaration_t, _z_noop_size, _z_msg_clear_declaration, _z_noop_copy)
-_Z_ARRAY_DEFINE(_z_declaration, _z_declaration_t)
-
-typedef struct {
-    _z_declaration_array_t _declarations;
-} _z_msg_declare_t;
-void _z_msg_clear_declare(_z_msg_declare_t *dcl);
+void _z_declaration_clear(_z_declaration_t *dcl);
 
 /*------------------ Timestamp Field ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -588,7 +580,6 @@ void _z_msg_clear_query(_z_msg_query_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
 typedef union {
-    _z_msg_declare_t _declare;
     _z_msg_data_t _data;
     _z_msg_query_t _query;
     _z_msg_pull_t _pull;
@@ -615,7 +606,6 @@ _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo
 _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance);
 _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key);
-_z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
@@ -623,6 +613,46 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
                                      z_consolidation_mode_t consolidation, _z_value_t with_value);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
                                      _z_reply_context_t *rctx);
+
+/*=============================*/
+/*      Network Messages       */
+/*=============================*/
+/*------------------ Declaration  Message ------------------*/
+// Flags:
+// - X: Reserved
+// - X: Reserved
+// - Z: Extension      if Z==1 then at least one extension is present
+//
+// 7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|X|X| DECLARE |
+// +-+-+-+---------+
+// ~  [decl_exts]  ~ -- if Flag(Z)==1
+// +---------------+
+// ~  declaration  ~
+// +---------------+
+//
+typedef struct {
+    _z_declaration_t _declaration;
+} _z_n_msg_declare_t;
+void _z_n_msg_clear_declare(_z_n_msg_declare_t *dcl);
+
+/*------------------ Zenoh Message ------------------*/
+typedef union {
+    _z_n_msg_declare_t _declare;
+} _z_network_body_t;
+typedef struct {
+    _z_network_body_t _body;
+    _z_msg_ext_vec_t _extensions;
+    uint8_t _header;
+} _z_network_message_t;
+void _z_n_msg_clear(_z_network_message_t *m);
+void _z_n_msg_free(_z_network_message_t **m);
+_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy)
+_Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
+
+/*------------------ Builders ------------------*/
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declarations);
 
 /*=============================*/
 /*     Transport Messages      */
@@ -974,7 +1004,7 @@ void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
 // - if R==1 then the FRAME is sent on the reliable channel, best-effort otherwise.
 //
 typedef struct {
-    _z_zenoh_message_vec_t _messages;
+    _z_network_message_vec_t _messages;
     _z_zint_t _sn;
 } _z_t_msg_frame_t;
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg);
@@ -1035,7 +1065,7 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable);
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages, _Bool is_reliable);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable);
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t messages, _Bool is_reliable, _Bool is_last);
 

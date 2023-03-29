@@ -99,7 +99,7 @@ _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key
     return decl;
 }
 
-void _z_msg_clear_declaration_resource(_z_res_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_resource(_z_res_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Forget Resource Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid) {
@@ -112,7 +112,7 @@ _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid) {
     return decl;
 }
 
-void _z_msg_clear_declaration_forget_resource(_z_forget_res_decl_t *dcl) { (void)(dcl); }
+void _z_declaration_clear_forget_resource(_z_forget_res_decl_t *dcl) { (void)(dcl); }
 
 /*------------------ Publisher Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key) {
@@ -128,7 +128,7 @@ _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key) {
     return decl;
 }
 
-void _z_msg_clear_declaration_publisher(_z_pub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_publisher(_z_pub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Forget Publisher Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key) {
@@ -144,7 +144,7 @@ _z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key) {
     return decl;
 }
 
-void _z_msg_clear_declaration_forget_publisher(_z_forget_pub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_forget_publisher(_z_forget_pub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Subscriber Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo) {
@@ -172,7 +172,7 @@ void _z_subinfo_clear(_z_subinfo_t *si) {
     // Nothing to clear
 }
 
-void _z_msg_clear_declaration_subscriber(_z_sub_decl_t *dcl) {
+void _z_declaration_clear_subscriber(_z_sub_decl_t *dcl) {
     _z_keyexpr_clear(&dcl->_key);
     _z_subinfo_clear(&dcl->_subinfo);
 }
@@ -191,7 +191,7 @@ _z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key) {
     return decl;
 }
 
-void _z_msg_clear_declaration_forget_subscriber(_z_forget_sub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_forget_subscriber(_z_forget_sub_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Queryable Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance) {
@@ -214,7 +214,7 @@ _z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t c
     return decl;
 }
 
-void _z_msg_clear_declaration_queryable(_z_qle_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_queryable(_z_qle_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Forget Queryable Declaration ------------------*/
 _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key) {
@@ -230,56 +230,41 @@ _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key) {
     return decl;
 }
 
-void _z_msg_clear_declaration_forget_queryable(_z_forget_qle_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
+void _z_declaration_clear_forget_queryable(_z_forget_qle_decl_t *dcl) { _z_keyexpr_clear(&dcl->_key); }
 
 /*------------------ Declare ------------------*/
-_z_zenoh_message_t _z_msg_make_declare(_z_declaration_array_t declarations) {
-    _z_zenoh_message_t msg;
-
-    msg._body._declare._declarations = declarations;
-
-    msg._header = _Z_MID_Z_DECLARE;
-
-    msg._attachment = NULL;
-    msg._reply_context = NULL;
-
-    return msg;
-}
-
-void _z_msg_clear_declaration(_z_declaration_t *dcl) {
+void _z_declaration_clear(_z_declaration_t *dcl) {
     uint8_t did = _Z_MID(dcl->_header);
     switch (did) {
         case _Z_DECL_RESOURCE:
-            _z_msg_clear_declaration_resource(&dcl->_body._res);
+            _z_declaration_clear_resource(&dcl->_body._res);
             break;
         case _Z_DECL_PUBLISHER:
-            _z_msg_clear_declaration_publisher(&dcl->_body._pub);
+            _z_declaration_clear_publisher(&dcl->_body._pub);
             break;
         case _Z_DECL_SUBSCRIBER:
-            _z_msg_clear_declaration_subscriber(&dcl->_body._sub);
+            _z_declaration_clear_subscriber(&dcl->_body._sub);
             break;
         case _Z_DECL_QUERYABLE:
-            _z_msg_clear_declaration_queryable(&dcl->_body._qle);
+            _z_declaration_clear_queryable(&dcl->_body._qle);
             break;
         case _Z_DECL_FORGET_RESOURCE:
-            _z_msg_clear_declaration_forget_resource(&dcl->_body._forget_res);
+            _z_declaration_clear_forget_resource(&dcl->_body._forget_res);
             break;
         case _Z_DECL_FORGET_PUBLISHER:
-            _z_msg_clear_declaration_forget_publisher(&dcl->_body._forget_pub);
+            _z_declaration_clear_forget_publisher(&dcl->_body._forget_pub);
             break;
         case _Z_DECL_FORGET_SUBSCRIBER:
-            _z_msg_clear_declaration_forget_subscriber(&dcl->_body._forget_sub);
+            _z_declaration_clear_forget_subscriber(&dcl->_body._forget_sub);
             break;
         case _Z_DECL_FORGET_QUERYABLE:
-            _z_msg_clear_declaration_forget_queryable(&dcl->_body._forget_qle);
+            _z_declaration_clear_forget_queryable(&dcl->_body._forget_qle);
             break;
         default:
-            _Z_DEBUG("WARNING: Trying to free declaration with unknown ID(%d)\n", did);
+            _Z_DEBUG("WARNING: Trying to clear declaration with unknown ID(%d)\n", did);
             break;
     }
 }
-
-void _z_msg_clear_declare(_z_msg_declare_t *msg) { _z_declaration_array_clear(&msg->_declarations); }
 
 /*------------------ Data Info Field ------------------*/
 // @TODO: implement builder for _z_data_info_t
@@ -425,9 +410,6 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
-        case _Z_MID_Z_DECLARE:
-            _z_msg_clear_declare(&msg->_body._declare);
-            break;
         case _Z_MID_Z_DATA:
             _z_msg_clear_data(&msg->_body._data);
             break;
@@ -451,6 +433,46 @@ void _z_msg_free(_z_zenoh_message_t **msg) {
 
     if (ptr != NULL) {
         _z_msg_clear(ptr);
+
+        z_free(ptr);
+        *msg = NULL;
+    }
+}
+
+/*=============================*/
+/*      Network Messages       */
+/*=============================*/
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration) {
+    _z_network_message_t msg;
+    msg._header = _Z_MID_N_DECLARE;
+
+    msg._body._declare._declaration = declaration;
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_n_msg_clear_declare(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_declaration); }
+
+void _z_n_msg_clear(_z_network_message_t *msg) {
+    uint8_t mid = _Z_MID(msg->_header);
+    switch (mid) {
+        case _Z_MID_N_DECLARE:
+            _z_n_msg_clear_declare(&msg->_body._declare);
+            break;
+        default:
+            _Z_DEBUG("WARNING: Trying to clear network message with unknown ID(%d)\n", mid);
+            break;
+    }
+
+    _z_msg_ext_vec_clear(&msg->_extensions);
+}
+
+void _z_n_msg_free(_z_network_message_t **msg) {
+    _z_network_message_t *ptr = *msg;
+
+    if (ptr != NULL) {
+        _z_n_msg_clear(ptr);
 
         z_free(ptr);
         *msg = NULL;
@@ -725,7 +747,7 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
 
-    msg._body._frame._messages = _z_zenoh_message_vec_make(0);
+    msg._body._frame._messages = _z_network_message_vec_make(0);
 
     msg._attachment = NULL;
     msg._extensions = _z_msg_ext_vec_make(0);
@@ -733,7 +755,7 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t messages, _Bool is_reliable) {
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages, _Bool is_reliable) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAME;
 
@@ -752,10 +774,10 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zenoh_message_vec_t 
 
 void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
     clone->_sn = msg->_sn;
-    _z_zenoh_message_vec_copy(&clone->_messages, &msg->_messages);
+    _z_network_message_vec_copy(&clone->_messages, &msg->_messages);
 }
 
-void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_zenoh_message_vec_clear(&msg->_messages); }
+void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_network_message_vec_clear(&msg->_messages); }
 
 /*------------------ Fragment Message ------------------*/
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t payload, _Bool is_reliable, _Bool is_last) {
@@ -820,7 +842,7 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy transport message with unknown ID(%d)\n", mid);
         } break;
     }
 }
@@ -862,7 +884,7 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear transport message with unknown ID(%d)\n", mid);
         } break;
     }
 
@@ -886,7 +908,7 @@ void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy session message with unknown ID(%d)\n", mid);
         } break;
     }
 }
@@ -908,7 +930,7 @@ void _z_s_msg_clear(_z_scouting_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear session message with unknown ID(%d)\n", mid);
         } break;
     }
 

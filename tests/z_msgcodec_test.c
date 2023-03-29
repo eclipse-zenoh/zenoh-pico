@@ -996,8 +996,8 @@ void resource_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_resource(&e_rd);
-    _z_msg_clear_declaration_resource(&d_rd);
+    _z_declaration_clear_resource(&e_rd);
+    _z_declaration_clear_resource(&d_rd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1040,8 +1040,8 @@ void publisher_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_publisher(&e_pd);
-    _z_msg_clear_declaration_publisher(&d_pd);
+    _z_declaration_clear_publisher(&e_pd);
+    _z_declaration_clear_publisher(&d_pd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1092,8 +1092,8 @@ void subscriber_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_subscriber(&e_sd);
-    _z_msg_clear_declaration_subscriber(&d_sd);
+    _z_declaration_clear_subscriber(&e_sd);
+    _z_declaration_clear_subscriber(&d_sd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1149,8 +1149,8 @@ void queryable_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_queryable(&e_qd);
-    _z_msg_clear_declaration_queryable(&d_qd);
+    _z_declaration_clear_queryable(&e_qd);
+    _z_declaration_clear_queryable(&d_qd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1235,8 +1235,8 @@ void forget_publisher_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_forget_publisher(&e_fpd);
-    _z_msg_clear_declaration_forget_publisher(&d_fpd);
+    _z_declaration_clear_forget_publisher(&e_fpd);
+    _z_declaration_clear_forget_publisher(&d_fpd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1279,8 +1279,8 @@ void forget_subscriber_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_forget_subscriber(&e_fsd);
-    _z_msg_clear_declaration_forget_subscriber(&d_fsd);
+    _z_declaration_clear_forget_subscriber(&e_fsd);
+    _z_declaration_clear_forget_subscriber(&d_fsd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1323,8 +1323,8 @@ void forget_queryable_declaration(void) {
     printf("\n");
 
     // Free
-    _z_msg_clear_declaration_forget_queryable(&e_fqd);
-    _z_msg_clear_declaration_forget_queryable(&d_fqd);
+    _z_declaration_clear_forget_queryable(&e_fqd);
+    _z_declaration_clear_forget_queryable(&d_fqd);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1404,55 +1404,6 @@ void assert_eq_declaration(_z_declaration_t *left, _z_declaration_t *right) {
 /*=============================*/
 /*        Zenoh Messages       */
 /*=============================*/
-/*------------------ Declare message ------------------*/
-_z_zenoh_message_t gen_declare_message(void) {
-    _z_declaration_array_t declarations = _z_declaration_array_make(gen_zint() % 16);
-
-    for (_z_zint_t i = 0; i < declarations._len; i++) declarations._val[i] = gen_declaration();
-
-    return _z_msg_make_declare(declarations);
-}
-
-void assert_eq_declare_message(_z_msg_declare_t *left, _z_msg_declare_t *right) {
-    assert(left->_declarations._len == right->_declarations._len);
-
-    for (_z_zint_t i = 0; i < left->_declarations._len; i++) {
-        printf("   ");
-        assert_eq_declaration(&left->_declarations._val[i], &right->_declarations._val[i]);
-        printf("\n");
-    }
-}
-
-void declare_message(void) {
-    printf("\n>> Declare message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_zenoh_message_t z_msg = gen_declare_message();
-    assert(_Z_MID(z_msg._header) == _Z_MID_Z_DECLARE);
-
-    _z_msg_declare_t e_dcl = z_msg._body._declare;
-
-    // Encode
-    int8_t res = _z_declare_encode(&wbf, &e_dcl);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_msg_declare_t d_dcl;
-    res = _z_declare_decode(&d_dcl, &zbf);
-    assert(res == _Z_RES_OK);
-
-    assert_eq_declare_message(&e_dcl, &d_dcl);
-
-    // Free
-    _z_msg_clear_declare(&d_dcl);
-    _z_msg_clear(&z_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 /*------------------ Data message ------------------*/
 _z_zenoh_message_t gen_data_message(void) {
     _z_keyexpr_t key = gen_res_key();
@@ -1680,13 +1631,10 @@ _z_zenoh_message_t gen_unit_message(void) {
 _z_zenoh_message_t gen_zenoh_message(void) {
     _z_zenoh_message_t p_zm;
 
-    uint8_t mids[] = {_Z_MID_Z_DECLARE, _Z_MID_Z_DATA, _Z_MID_Z_PULL, _Z_MID_Z_QUERY, _Z_MID_Z_UNIT};
+    uint8_t mids[] = {_Z_MID_Z_DATA, _Z_MID_Z_PULL, _Z_MID_Z_QUERY, _Z_MID_Z_UNIT};
     uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
 
     switch (mids[i]) {
-        case _Z_MID_Z_DECLARE:
-            p_zm = gen_declare_message();
-            break;
         case _Z_MID_Z_DATA:
             p_zm = gen_data_message();
             break;
@@ -1743,9 +1691,6 @@ void assert_eq_zenoh_message(_z_zenoh_message_t *left, _z_zenoh_message_t *right
     printf("\n");
 
     switch (_Z_MID(left->_header)) {
-        case _Z_MID_Z_DECLARE:
-            assert_eq_declare_message(&left->_body._declare, &right->_body._declare);
-            break;
         case _Z_MID_Z_DATA:
             assert_eq_data_message(&left->_body._data, &right->_body._data, left->_header);
             break;
@@ -1773,9 +1718,6 @@ void zenoh_message(void) {
 
     printf(" - ");
     switch (_Z_MID(e_zm._header)) {
-        case _Z_MID_Z_DECLARE:
-            printf("Declare message");
-            break;
         case _Z_MID_Z_DATA:
             printf("Data message");
             break;
@@ -1825,7 +1767,126 @@ void zenoh_message(void) {
 }
 
 /*=============================*/
-/*       Transport Messages      */
+/*        Network Messages     */
+/*=============================*/
+/*------------------ Declare message ------------------*/
+_z_network_message_t gen_declare_message(void) {
+    _z_declaration_t declaration = gen_declaration();
+
+    return _z_n_msg_make_declare(declaration);
+}
+
+void assert_eq_declare_message(_z_n_msg_declare_t *left, _z_n_msg_declare_t *right) {
+    printf("   ");
+    assert_eq_declaration(&left->_declaration, &right->_declaration);
+    printf("\n");
+}
+
+void declare_message(void) {
+    printf("\n>> Declare message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t n_msg = gen_declare_message();
+    assert(_Z_MID(n_msg._header) == _Z_MID_N_DECLARE);
+
+    _z_n_msg_declare_t e_dcl = n_msg._body._declare;
+
+    // Encode
+    int8_t res = _z_declare_encode(&wbf, &e_dcl);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_n_msg_declare_t d_dcl;
+    res = _z_declare_decode(&d_dcl, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_declare_message(&e_dcl, &d_dcl);
+
+    // Free
+    _z_n_msg_clear_declare(&d_dcl);
+    _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Network message ------------------*/
+_z_network_message_t gen_network_message(void) {
+    _z_network_message_t p_nm;
+
+    uint8_t mids[] = {_Z_MID_N_DECLARE};
+    uint8_t i = gen_uint8() % (sizeof(mids) / sizeof(uint8_t));
+
+    switch (mids[i]) {
+        case _Z_MID_N_DECLARE:
+            p_nm = gen_declare_message();
+            break;
+        default:
+            assert(0);
+            break;
+    }
+
+    return p_nm;
+}
+
+void assert_eq_network_message(_z_network_message_t *left, _z_network_message_t *right) {
+    // Test message
+    printf("   Header (%x:%x)", left->_header, right->_header);
+    assert(left->_header == right->_header);
+    printf("\n");
+
+    switch (_Z_MID(left->_header)) {
+        case _Z_MID_N_DECLARE:
+            assert_eq_declare_message(&left->_body._declare, &right->_body._declare);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
+void network_message(void) {
+    printf("\n>> Network message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t e_nm = gen_network_message();
+
+    printf(" - ");
+    switch (_Z_MID(e_nm._header)) {
+        case _Z_MID_N_DECLARE:
+            printf("Declare message");
+            break;
+        default:
+            assert(0);
+            break;
+    }
+    printf("\n");
+
+    // Encode
+    int8_t res = _z_network_message_encode(&wbf, &e_nm);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_network_message_t d_nm;
+    res = _z_network_message_decode(&d_nm, &zbf);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_network_message(&e_nm, &d_nm);
+
+    // Free
+    _z_n_msg_clear(&e_nm);
+    _z_n_msg_clear(&d_nm);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*=============================*/
+/*       Transport Messages    */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 _z_scouting_message_t gen_scout_message(void) {
@@ -2319,13 +2380,13 @@ _z_transport_message_t gen_frame_message(void) {
     _z_zint_t sn = gen_zint();
     _Bool is_reliable = gen_bool();
 
-    _z_zenoh_message_vec_t messages;
+    _z_network_message_vec_t messages;
     _z_zint_t num = (gen_zint() % 4) + 1;
-    messages = _z_vec_make(num);
+    messages = _z_network_message_vec_make(num);
     for (_z_zint_t i = 0; i < num; i++) {
-        _z_zenoh_message_t *p_zm = (_z_zenoh_message_t *)z_malloc(sizeof(_z_zenoh_message_t));
-        *p_zm = gen_zenoh_message();
-        _z_vec_append(&messages, p_zm);
+        _z_network_message_t *p_zm = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
+        *p_zm = gen_network_message();
+        _z_network_message_vec_append(&messages, p_zm);
     }
 
     return _z_t_msg_make_frame(sn, messages, is_reliable);
@@ -2344,8 +2405,8 @@ void assert_eq_frame_message(_z_t_msg_frame_t *left, _z_t_msg_frame_t *right, ui
     assert(l_len == r_len);
 
     for (size_t i = 0; i < l_len; i++)
-        assert_eq_zenoh_message((_z_zenoh_message_t *)_z_vec_get(&left->_messages, i),
-                                (_z_zenoh_message_t *)_z_vec_get(&right->_messages, i));
+        assert_eq_network_message((_z_network_message_t *)_z_vec_get(&left->_messages, i),
+                                  (_z_network_message_t *)_z_vec_get(&right->_messages, i));
 }
 
 void frame_message(void) {
@@ -2749,7 +2810,7 @@ void batch(void) {
 //         t_msg._body._frame._payload._fragment.start = NULL;
 //     } else {
 //         // Do not allocate the vector containing the messages
-//         t_msg._body._frame._payload._messages = _z_zenoh_message_vec_make(0);
+//         t_msg._body._frame._payload._messages = _z_network_message_vec_make(0);
 //     }
 
 //     return t_msg;
