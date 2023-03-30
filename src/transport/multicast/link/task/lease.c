@@ -73,7 +73,6 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 void *_zp_multicast_lease_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-    ztm->_lease_task_running = true;
     ztm->_transmitted = false;
 
     // From all peers, get the next lease time (minimum)

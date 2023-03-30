@@ -38,7 +38,6 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 void *_zp_unicast_read_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
-    ztu->_read_task_running = true;
 
     uint8_t ret;
 
