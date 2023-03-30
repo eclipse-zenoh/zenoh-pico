@@ -22,6 +22,15 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
+_z_reply_t *_z_reply_alloc_and_move(_z_reply_t *_reply) {
+    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+    if (reply != NULL) {
+        *reply = *_reply;
+        (void)memset(_reply, 0, sizeof(_z_reply_t));
+    }
+    return reply;
+}
+
 void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
@@ -252,8 +261,8 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            pen_qry->_callback(&pen_rep->_reply, pen_qry->_call_arg);
-            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies);
+            pen_qry->_callback(_z_reply_alloc_and_move(&pen_rep->_reply), pen_qry->_call_arg);
+            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
         }
     }
 
