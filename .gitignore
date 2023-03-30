@@ -3,7 +3,6 @@ build
 
 # vscode
 .vscode 
-.clang-format
 
 # IntelliJ / CLion 
 .idea 
