@@ -37,11 +37,12 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
+    const char *mode = "client";
     const char *locator = NULL;
     const char *value = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:v:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -49,11 +50,14 @@ int main(int argc, char **argv) {
             case 'e':
                 locator = optarg;
                 break;
+            case 'm':
+                mode = optarg;
+                break;
             case 'v':
                 value = optarg;
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'e') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -65,6 +69,7 @@ int main(int argc, char **argv) {
     }
 
     z_owned_config_t config = z_config_default();
+    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
     }
