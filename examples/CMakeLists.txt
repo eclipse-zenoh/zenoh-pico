@@ -13,6 +13,7 @@ endif()
 
 function(add_example name)
     add_executable(${name} ${ARGN})
+    set_property(TARGET ${name} PROPERTY C_STANDARD 11)
     target_link_libraries(${name} zenohpico)
     add_dependencies(examples ${name})
 endfunction()
