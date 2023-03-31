@@ -655,7 +655,7 @@ void subinfo_field(void) {
 }
 
 /*------------------ ResKey field ------------------*/
-_z_keyexpr_t gen_res_key(void) {
+_z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
     key._id = gen_zint();
     _Bool is_numerical = gen_bool();
@@ -667,7 +667,7 @@ _z_keyexpr_t gen_res_key(void) {
     return key;
 }
 
-void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header) {
+void assert_eq_keyexpr(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header) {
     printf("ResKey -> ");
     printf("ID (%zu:%zu), ", left->_id, right->_id);
     assert(left->_id == right->_id);
@@ -682,27 +682,27 @@ void assert_eq_res_key(_z_keyexpr_t *left, _z_keyexpr_t *right, uint8_t header) 
     printf(")");
 }
 
-void res_key_field(void) {
+void keyexpr_field(void) {
     printf("\n>> ResKey field\n");
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_keyexpr_t e_rk = gen_res_key();
+    _z_keyexpr_t e_rk = gen_keyexpr();
 
     // Encode
     uint8_t header = (e_rk._suffix) ? _Z_FLAG_Z_K : 0;
-    int8_t res = _z_keyexpr_encode(&wbf, header, &e_rk);
+    int8_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_keyexpr_t d_rk;
-    res = _z_keyexpr_decode(&d_rk, &zbf, header);
+    res = _z_keyexpr_decode(&d_rk, &zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     assert(res == _Z_RES_OK);
 
     printf("   ");
-    assert_eq_res_key(&e_rk, &d_rk, header);
+    assert_eq_keyexpr(&e_rk, &d_rk, header);
     printf("\n");
 
     // Free
@@ -960,7 +960,7 @@ _z_res_decl_t gen_resource_declaration(uint8_t *header) {
     _z_res_decl_t e_rd;
 
     e_rd._id = gen_zint();
-    e_rd._key = gen_res_key();
+    e_rd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_rd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_rd;
@@ -969,7 +969,7 @@ _z_res_decl_t gen_resource_declaration(uint8_t *header) {
 void assert_eq_resource_declaration(_z_res_decl_t *left, _z_res_decl_t *right, uint8_t header) {
     printf("RID (%zu:%zu), ", left->_id, right->_id);
     assert(left->_id == right->_id);
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 }
 
 void resource_declaration(void) {
@@ -1006,14 +1006,14 @@ void resource_declaration(void) {
 _z_pub_decl_t gen_publisher_declaration(uint8_t *header) {
     _z_pub_decl_t e_pd;
 
-    e_pd._key = gen_res_key();
+    e_pd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_pd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_pd;
 }
 
 void assert_eq_publisher_declaration(_z_pub_decl_t *left, _z_pub_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 }
 
 void publisher_declaration(void) {
@@ -1054,14 +1054,14 @@ _z_sub_decl_t gen_subscriber_declaration(uint8_t *header) {
     if (e_sd._subinfo.mode != Z_SUBMODE_PUSH || e_sd._subinfo.period.period != 0) _Z_SET_FLAG(*header, _Z_FLAG_Z_S);
     if (e_sd._subinfo.reliability == Z_RELIABILITY_RELIABLE) _Z_SET_FLAG(*header, _Z_FLAG_Z_R);
 
-    e_sd._key = gen_res_key();
+    e_sd._key = gen_keyexpr();
     if (e_sd._key._suffix) _Z_SET_FLAG(*header, _Z_FLAG_Z_K);
 
     return e_sd;
 }
 
 void assert_eq_subscriber_declaration(_z_sub_decl_t *left, _z_sub_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S) == true) {
         printf(", ");
         assert_eq_subinfo(&left->_subinfo, &right->_subinfo);
@@ -1102,7 +1102,7 @@ void subscriber_declaration(void) {
 _z_qle_decl_t gen_queryable_declaration(uint8_t *header) {
     _z_qle_decl_t e_qd;
 
-    e_qd._key = gen_res_key();
+    e_qd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_qd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     if (gen_bool()) {
@@ -1115,7 +1115,7 @@ _z_qle_decl_t gen_queryable_declaration(uint8_t *header) {
 }
 
 void assert_eq_queryable_declaration(_z_qle_decl_t *left, _z_qle_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         printf("Complete (%zu:%zu), ", left->_complete, right->_complete);
@@ -1201,14 +1201,14 @@ void forget_resource_declaration(void) {
 _z_forget_pub_decl_t gen_forget_publisher_declaration(uint8_t *header) {
     _z_forget_pub_decl_t e_fpd;
 
-    e_fpd._key = gen_res_key();
+    e_fpd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_fpd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_fpd;
 }
 
 void assert_eq_forget_publisher_declaration(_z_forget_pub_decl_t *left, _z_forget_pub_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 }
 
 void forget_publisher_declaration(void) {
@@ -1245,14 +1245,14 @@ void forget_publisher_declaration(void) {
 _z_forget_sub_decl_t gen_forget_subscriber_declaration(uint8_t *header) {
     _z_forget_sub_decl_t e_fsd;
 
-    e_fsd._key = gen_res_key();
+    e_fsd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_fsd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_fsd;
 }
 
 void assert_eq_forget_subscriber_declaration(_z_forget_sub_decl_t *left, _z_forget_sub_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 }
 
 void forget_subscriber_declaration(void) {
@@ -1289,14 +1289,14 @@ void forget_subscriber_declaration(void) {
 _z_forget_qle_decl_t gen_forget_queryable_declaration(uint8_t *header) {
     _z_forget_qle_decl_t e_fqd;
 
-    e_fqd._key = gen_res_key();
+    e_fqd._key = gen_keyexpr();
     _Z_SET_FLAG(*header, (e_fqd._key._suffix) ? _Z_FLAG_Z_K : 0);
 
     return e_fqd;
 }
 
 void assert_eq_forget_queryable_declaration(_z_forget_qle_decl_t *left, _z_forget_qle_decl_t *right, uint8_t header) {
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
 }
 
 void forget_queryable_declaration(void) {
@@ -1406,7 +1406,7 @@ void assert_eq_declaration(_z_declaration_t *left, _z_declaration_t *right) {
 /*=============================*/
 /*------------------ Data message ------------------*/
 _z_zenoh_message_t gen_data_message(void) {
-    _z_keyexpr_t key = gen_res_key();
+    _z_keyexpr_t key = gen_keyexpr();
 
     _z_data_info_t info;
     if (gen_bool()) {
@@ -1429,7 +1429,7 @@ _z_zenoh_message_t gen_data_message(void) {
 
 void assert_eq_data_message(_z_msg_data_t *left, _z_msg_data_t *right, uint8_t header) {
     printf("   ");
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
     printf("\n");
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         printf("   ");
@@ -1473,7 +1473,7 @@ void data_message(void) {
 
 /*------------------ Pull message ------------------*/
 _z_zenoh_message_t gen_pull_message(void) {
-    _z_keyexpr_t key = gen_res_key();
+    _z_keyexpr_t key = gen_keyexpr();
     _z_zint_t pull_id = gen_zint();
     _z_zint_t max_samples = gen_bool() ? gen_zint() : 0;
     _Bool is_final = gen_bool();
@@ -1483,7 +1483,7 @@ _z_zenoh_message_t gen_pull_message(void) {
 
 void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right, uint8_t header) {
     printf("   ");
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
     printf("\n");
 
     printf("   Pull ID (%zu:%zu)", left->_pull_id, right->_pull_id);
@@ -1529,7 +1529,7 @@ void pull_message(void) {
 
 /*------------------ Query message ------------------*/
 _z_zenoh_message_t gen_query_message(void) {
-    _z_keyexpr_t key = gen_res_key();
+    _z_keyexpr_t key = gen_keyexpr();
     char *parameters = gen_str(gen_uint8() % 16);
     _z_zint_t qid = gen_zint();
 
@@ -1559,7 +1559,7 @@ _z_zenoh_message_t gen_query_message(void) {
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {
     printf("   ");
-    assert_eq_res_key(&left->_key, &right->_key, header);
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
     printf("\n");
 
     printf("   Predicate (%s:%s)", left->_parameters, right->_parameters);
@@ -1886,7 +1886,215 @@ void network_message(void) {
 }
 
 /*=============================*/
-/*       Transport Messages    */
+/*        Network Messages     */
+/*=============================*/
+/*------------------ Push Message ------------------*/
+_z_network_message_t gen_push_message(void) {
+    _z_network_message_t n_msg;
+
+    _z_keyexpr_t key = gen_keyexpr();
+    _Bool is_remote = gen_bool();
+    n_msg = _z_n_msg_make_push(key, (_z_push_body_t){}, is_remote);  // TODO[protocol]: body
+
+    return n_msg;
+}
+
+void assert_eq_push_message(_z_n_msg_push_t *left, _z_n_msg_push_t *right, uint8_t header) {
+    printf("   ");
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
+    printf("\n");
+
+    // TODO[protocol]: body
+}
+
+void push_message(void) {
+    printf("\n>> Push message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t n_msg = gen_push_message();
+    assert(_Z_MID(n_msg._header) == _Z_MID_N_PUSH);
+
+    _z_n_msg_push_t e_pu = n_msg._body._push;
+
+    // Encode
+    int8_t res = _z_push_encode(&wbf, n_msg._header, &e_pu);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_n_msg_push_t d_pu;
+    res = _z_push_decode(&d_pu, &zbf, n_msg._header);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_push_message(&e_pu, &d_pu, n_msg._header);
+
+    // Free
+    _z_n_msg_clear_push(&d_pu);
+    _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Request Message ------------------*/
+_z_network_message_t gen_request_message(void) {
+    _z_network_message_t n_msg;
+
+    _z_zint_t rid = gen_zint();
+    _z_keyexpr_t key = gen_keyexpr();
+    _Bool is_remote = gen_bool();
+    n_msg = _z_n_msg_make_request(rid, key, (_z_request_body_t){}, is_remote);  // TODO[protocol]: body
+
+    return n_msg;
+}
+
+void assert_eq_request_message(_z_n_msg_request_t *left, _z_n_msg_request_t *right, uint8_t header) {
+    printf("   ");
+    assert(left->_rid == right->_rid);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
+    printf("\n");
+
+    // TODO[protocol]: body
+}
+
+void request_message(void) {
+    printf("\n>> Request message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t n_msg = gen_request_message();
+    assert(_Z_MID(n_msg._header) == _Z_MID_N_REQUEST);
+
+    _z_n_msg_request_t e_re = n_msg._body._request;
+
+    // Encode
+    int8_t res = _z_request_encode(&wbf, n_msg._header, &e_re);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_n_msg_request_t d_re;
+    res = _z_request_decode(&d_re, &zbf, n_msg._header);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_request_message(&e_re, &d_re, n_msg._header);
+
+    // Free
+    _z_n_msg_clear_request(&d_re);
+    _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Response Message ------------------*/
+_z_network_message_t gen_response_message(void) {
+    _z_network_message_t n_msg;
+
+    _z_zint_t rid = gen_zint();
+    _z_keyexpr_t key = gen_keyexpr();
+    _Bool is_remote = gen_bool();
+    n_msg = _z_n_msg_make_response(rid, key, (_z_response_body_t){}, is_remote);  // TODO[protocol]: body
+
+    return n_msg;
+}
+
+void assert_eq_response_message(_z_n_msg_response_t *left, _z_n_msg_response_t *right, uint8_t header) {
+    printf("   ");
+    assert(left->_rid == right->_rid);
+    printf("\n");
+
+    printf("   ");
+    assert_eq_keyexpr(&left->_key, &right->_key, header);
+    printf("\n");
+
+    // TODO[protocol]: body
+}
+
+void response_message(void) {
+    printf("\n>> Response message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t n_msg = gen_response_message();
+    assert(_Z_MID(n_msg._header) == _Z_MID_N_RESPONSE);
+
+    _z_n_msg_response_t e_re = n_msg._body._response;
+
+    // Encode
+    int8_t res = _z_response_encode(&wbf, n_msg._header, &e_re);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_n_msg_response_t d_re;
+    res = _z_response_decode(&d_re, &zbf, n_msg._header);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_response_message(&e_re, &d_re, n_msg._header);
+
+    // Free
+    _z_n_msg_clear_response(&d_re);
+    _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Response Final Message ------------------*/
+_z_network_message_t gen_response_final_message(void) {
+    _z_network_message_t n_msg;
+
+    _z_zint_t rid = gen_zint();
+    n_msg = _z_n_msg_make_response_final(rid);
+
+    return n_msg;
+}
+
+void assert_eq_response_final_message(_z_n_msg_response_final_t *left, _z_n_msg_response_final_t *right) {
+    printf("   ");
+    assert(left->_rid == right->_rid);
+    printf("\n");
+
+    // TODO[protocol]: body
+}
+
+void response_final_message(void) {
+    printf("\n>> Response Final message\n");
+    _z_wbuf_t wbf = gen_wbuf(65535);
+
+    // Initialize
+    _z_network_message_t n_msg = gen_response_final_message();
+    assert(_Z_MID(n_msg._header) == _Z_MID_N_RESPONSE_FINAL);
+
+    _z_n_msg_response_final_t e_re = n_msg._body._response_f;
+
+    // Encode
+    int8_t res = _z_response_final_encode(&wbf, n_msg._header, &e_re);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_n_msg_response_final_t d_re;
+    res = _z_response_final_decode(&d_re, &zbf, n_msg._header);
+    assert(res == _Z_RES_OK);
+
+    assert_eq_response_final_message(&e_re, &d_re);
+
+    // Free
+    _z_n_msg_clear_response_final(&d_re);
+    _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*=============================*/
+/*        Scouting Messages    */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
 _z_scouting_message_t gen_scout_message(void) {
@@ -2003,6 +2211,9 @@ void hello_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
+/*=============================*/
+/*       Transport Messages    */
+/*=============================*/
 /*------------------ Join Message ------------------*/
 _z_transport_message_t gen_join_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
@@ -2962,7 +3173,7 @@ int main(void) {
         payload_field();
         timestamp_field();
         subinfo_field();
-        res_key_field();
+        keyexpr_field();
         data_info_field();
 
         // Message decorators
@@ -2986,9 +3197,13 @@ int main(void) {
         query_message();
         zenoh_message();
 
-        // Session messages
-        scout_message();
-        hello_message();
+        // Network messages
+        push_message();
+        request_message();
+        response_message();
+        response_final_message();
+
+        // Transport messages
         join_message();
         init_message();
         open_message();
@@ -2999,6 +3214,10 @@ int main(void) {
         transport_message();
         batch();
         // fragmentation();
+
+        // Scouting messages
+        scout_message();
+        hello_message();
     }
 
     return 0;

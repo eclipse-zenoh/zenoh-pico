@@ -125,7 +125,7 @@
 #define _Z_FLAG_T_FRAGMENT_M 0x40  // 1 << 6
 
 // Close message flags:
-//      S Session Close   if S==1 Session close or S==0 Link close
+//      S Session Close    if S==1 Session close or S==0 Link close
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_T_CLOSE_S 0x20  // 1 << 5
 
@@ -135,10 +135,30 @@
 #define _Z_FLAG_N_Z 0x80  // 1 << 7
 
 // PUSH message flags:
-//      I ZenohID          if I==1 then the ZenohID is present
+//      N Named            if N==1 then the key expr has name/suffix
+//      M Mapping          if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 #define _Z_FLAG_N_PUSH_N 0x20  // 1 << 5
 #define _Z_FLAG_N_PUSH_M 0x40  // 1 << 6
+
+// REQUEST message flags:
+//      N Named            if N==1 then the key expr has name/suffix
+//      M Mapping          if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_REQUEST_N 0x20  // 1 << 5
+#define _Z_FLAG_N_REQUEST_M 0x40  // 1 << 6
+
+// RESPONSE message flags:
+//      N Named            if N==1 then the key expr has name/suffix
+//      M Mapping          if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_RESPONSE_N 0x20  // 1 << 5
+#define _Z_FLAG_N_RESPONSE_M 0x40  // 1 << 6
+
+// RESPONSE FINAL message flags:
+//      Z Extensions       if Z==1 then Zenoh extensions are present
+// #define _Z_FLAG_N_RESPONSE_X 0x20  // 1 << 5
+// #define _Z_FLAG_N_RESPONSE_X 0x40  // 1 << 6
 
 /* Attachment message flags */
 #define _Z_FLAG_A_Z \
@@ -637,9 +657,124 @@ typedef struct {
 } _z_n_msg_declare_t;
 void _z_n_msg_clear_declare(_z_n_msg_declare_t *dcl);
 
+/*------------------ Push Message ------------------*/
+typedef union {
+} _z_push_body_t;
+void _z_push_body_clear(_z_push_body_t *msg);
+
+// Flags:
+// - N: Named          if N==1 then the keyexpr has name/suffix
+// - M: Mapping        if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
+// - Z: Extension      if Z==1 then at least one extension is present
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|N|  PUSH   |
+// +-+-+-+---------+
+// ~ key_scope:z16 ~
+// +---------------+
+// ~  key_suffix   ~  if N==1 -- <u8;z16>
+// +---------------+
+// ~  [push_exts]  ~  if Z==1
+// +---------------+
+// ~   PushBody    ~
+// +---------------+
+//
+typedef struct {
+    _z_keyexpr_t _key;
+    _z_push_body_t _body;
+} _z_n_msg_push_t;
+void _z_n_msg_clear_push(_z_n_msg_push_t *msg);
+
+/*------------------ Request Message ------------------*/
+typedef union {
+} _z_request_body_t;
+void _z_request_body_clear(_z_request_body_t *msg);
+
+// Flags:
+// - N: Named          if N==1 then the keyexpr has name/suffix
+// - M: Mapping        if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
+// - Z: Extension      if Z==1 then at least one extension is present
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|N| REQUEST |
+// +-+-+-+---------+
+// ~ request_id:z32~
+// +---------------+
+// ~ key_scope:z16 ~
+// +---------------+
+// ~  key_suffix   ~  if N==1 -- <u8;z16>
+// +---------------+
+// ~   [req_exts]  ~  if Z==1
+// +---------------+
+// ~  RequestBody  ~
+// +---------------+
+//
+typedef struct {
+    _z_zint_t _rid;
+    _z_keyexpr_t _key;
+    _z_request_body_t _body;
+} _z_n_msg_request_t;
+void _z_n_msg_clear_request(_z_n_msg_request_t *msg);
+
+/*------------------ Response Message ------------------*/
+typedef union {
+} _z_response_body_t;
+void _z_response_body_clear(_z_response_body_t *msg);
+
+// Flags:
+// - N: Named          if N==1 then the keyexpr has name/suffix
+// - M: Mapping        if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
+// - Z: Extension      if Z==1 then at least one extension is present
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|N| RESPONSE|
+// +-+-+-+---------+
+// ~ request_id:z32~
+// +---------------+
+// ~ key_scope:z16 ~
+// +---------------+
+// ~  key_suffix   ~  if N==1 -- <u8;z16>
+// +---------------+
+// ~  [reply_exts] ~  if Z==1
+// +---------------+
+// ~   ReplyBody   ~
+// +---------------+
+//
+typedef struct {
+    _z_zint_t _rid;
+    _z_keyexpr_t _key;
+    _z_response_body_t _body;
+} _z_n_msg_response_t;
+void _z_n_msg_clear_response(_z_n_msg_response_t *msg);
+
+/*------------------ Response Final Message ------------------*/
+// Flags:
+// - Z: Extension      if Z==1 then at least one extension is present
+//
+//  7 6 5 4 3 2 1 0
+// +-+-+-+-+-+-+-+-+
+// |Z|M|N| ResFinal|
+// +-+-+-+---------+
+// ~ request_id:z32~
+// +---------------+
+// ~  [reply_exts] ~  if Z==1
+// +---------------+
+//
+typedef struct {
+    _z_zint_t _rid;
+} _z_n_msg_response_final_t;
+void _z_n_msg_clear_response_final(_z_n_msg_response_final_t *msg);
+
 /*------------------ Zenoh Message ------------------*/
 typedef union {
     _z_n_msg_declare_t _declare;
+    _z_n_msg_push_t _push;
+    _z_n_msg_request_t _request;
+    _z_n_msg_response_t _response;
+    _z_n_msg_response_final_t _response_f;
 } _z_network_body_t;
 typedef struct {
     _z_network_body_t _body;
@@ -653,6 +788,12 @@ _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 
 /*------------------ Builders ------------------*/
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declarations);
+_z_network_message_t _z_n_msg_make_push(_z_keyexpr_t key, _z_push_body_t body, _Bool is_remote_mapping);
+_z_network_message_t _z_n_msg_make_request(_z_zint_t rid, _z_keyexpr_t key, _z_request_body_t body,
+                                           _Bool is_remote_mapping);
+_z_network_message_t _z_n_msg_make_response(_z_zint_t rid, _z_keyexpr_t key, _z_response_body_t body,
+                                            _Bool is_remote_mapping);
+_z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 
 /*=============================*/
 /*     Transport Messages      */

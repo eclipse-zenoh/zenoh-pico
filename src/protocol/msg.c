@@ -442,6 +442,12 @@ void _z_msg_free(_z_zenoh_message_t **msg) {
 /*=============================*/
 /*      Network Messages       */
 /*=============================*/
+void _z_push_body_clear(_z_push_body_t *msg) { (void)(msg); }
+
+void _z_request_body_clear(_z_request_body_t *msg) { (void)(msg); }
+
+void _z_response_body_clear(_z_response_body_t *msg) { (void)(msg); }
+
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration) {
     _z_network_message_t msg;
     msg._header = _Z_MID_N_DECLARE;
@@ -454,9 +460,106 @@ _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration) {
 
 void _z_n_msg_clear_declare(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_declaration); }
 
+_z_network_message_t _z_n_msg_make_push(_z_keyexpr_t key, _z_push_body_t body, _Bool is_remote_mapping) {
+    _z_network_message_t msg;
+    msg._header = _Z_MID_N_PUSH;
+
+    msg._body._push._key = key;
+    if (key._suffix != NULL) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_PUSH_N);
+    }
+    if (is_remote_mapping == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_PUSH_M);
+    }
+    msg._body._push._body = body;
+
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_n_msg_clear_push(_z_n_msg_push_t *msg) {
+    _z_keyexpr_clear(&msg->_key);
+    _z_push_body_clear(&msg->_body);
+}
+
+_z_network_message_t _z_n_msg_make_request(_z_zint_t rid, _z_keyexpr_t key, _z_request_body_t body,
+                                           _Bool is_remote_mapping) {
+    _z_network_message_t msg;
+    msg._header = _Z_MID_N_REQUEST;
+
+    msg._body._request._rid = rid;
+    msg._body._request._key = key;
+    if (key._suffix != NULL) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_REQUEST_N);
+    }
+    if (is_remote_mapping == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_REQUEST_M);
+    }
+    msg._body._request._body = body;
+
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_n_msg_clear_request(_z_n_msg_request_t *msg) {
+    _z_keyexpr_clear(&msg->_key);
+    _z_request_body_clear(&msg->_body);
+}
+
+_z_network_message_t _z_n_msg_make_response(_z_zint_t rid, _z_keyexpr_t key, _z_response_body_t body,
+                                            _Bool is_remote_mapping) {
+    _z_network_message_t msg;
+    msg._header = _Z_MID_N_RESPONSE;
+
+    msg._body._response._rid = rid;
+    msg._body._response._key = key;
+    if (key._suffix != NULL) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_RESPONSE_N);
+    }
+    if (is_remote_mapping == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_N_RESPONSE_M);
+    }
+    msg._body._response._body = body;
+
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_n_msg_clear_response(_z_n_msg_response_t *msg) {
+    _z_keyexpr_clear(&msg->_key);
+    _z_response_body_clear(&msg->_body);
+}
+
+_z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
+    _z_network_message_t msg;
+    msg._header = _Z_MID_N_RESPONSE_FINAL;
+
+    msg._body._response_f._rid = rid;
+    msg._extensions = _z_msg_ext_vec_make(0);
+
+    return msg;
+}
+
+void _z_n_msg_clear_response_final(_z_n_msg_response_final_t *msg) { (void)(msg); }
+
 void _z_n_msg_clear(_z_network_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
+        case _Z_MID_N_PUSH:
+            _z_n_msg_clear_push(&msg->_body._push);
+            break;
+        case _Z_MID_N_REQUEST:
+            _z_n_msg_clear_request(&msg->_body._request);
+            break;
+        case _Z_MID_N_RESPONSE:
+            _z_n_msg_clear_response(&msg->_body._response);
+            break;
+        case _Z_MID_N_RESPONSE_FINAL:
+            _z_n_msg_clear_response_final(&msg->_body._response_f);
+            break;
         case _Z_MID_N_DECLARE:
             _z_n_msg_clear_declare(&msg->_body._declare);
             break;

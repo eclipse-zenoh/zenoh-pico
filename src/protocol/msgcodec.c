@@ -108,24 +108,24 @@ int8_t _z_subinfo_decode(_z_subinfo_t *si, _z_zbuf_t *zbf, uint8_t header) {
 }
 
 /*------------------ ResKey Field ------------------*/
-int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, uint8_t header, const _z_keyexpr_t *fld) {
+int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *fld) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _RESKEY\n");
 
     _Z_EC(_z_zint_encode(wbf, fld->_id))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K) == true) {
+    if (has_suffix == true) {
         _Z_EC(_z_str_encode(wbf, fld->_suffix))
     }
 
     return ret;
 }
 
-int8_t _z_keyexpr_decode_na(_z_keyexpr_t *ke, _z_zbuf_t *zbf, uint8_t header) {
+int8_t _z_keyexpr_decode_na(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
     _Z_DEBUG("Decoding _RESKEY\n");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint_decode(&ke->_id, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_K) == true) {
+    if (has_suffix == true) {
         char *str = NULL;
         ret |= _z_str_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
@@ -298,7 +298,7 @@ int8_t _z_res_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_res_decl_t *d
     _Z_DEBUG("Encoding _Z_DECL_RESOURCE\n");
 
     _Z_EC(_z_zint_encode(wbf, dcl->_id))
-    ret |= _z_keyexpr_encode(wbf, header, &dcl->_key);
+    ret |= _z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key);
 
     return ret;
 }
@@ -308,7 +308,7 @@ int8_t _z_res_decl_decode_na(_z_res_decl_t *dcl, _z_zbuf_t *zbf, uint8_t header)
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint_decode(&dcl->_id, zbf);
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
 
     return ret;
 }
@@ -322,7 +322,7 @@ int8_t _z_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_pub_decl_t *d
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_DECL_PUBLISHER\n");
 
-    ret |= _z_keyexpr_encode(wbf, header, &dcl->_key);
+    ret |= _z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key);
 
     return ret;
 }
@@ -331,7 +331,7 @@ int8_t _z_pub_decl_decode_na(_z_pub_decl_t *dcl, _z_zbuf_t *zbf, uint8_t header)
     _Z_DEBUG("Decoding _Z_DECL_PUBLISHER\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
 
     return ret;
 }
@@ -345,7 +345,7 @@ int8_t _z_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_sub_decl_t *d
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_DECL_SUBSCRIBER\n");
 
-    _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key))
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S) == true) {
         ret |= _z_subinfo_encode(wbf, &dcl->_subinfo);
     }
@@ -357,7 +357,7 @@ int8_t _z_sub_decl_decode_na(_z_sub_decl_t *dcl, _z_zbuf_t *zbf, uint8_t header)
     _Z_DEBUG("Decoding _Z_DECL_SUBSCRIBER\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_S) == true) {
         ret |= _z_subinfo_decode(&dcl->_subinfo, zbf, header);
     } else {
@@ -382,7 +382,7 @@ int8_t _z_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_qle_decl_t *d
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_DECL_QUERYABLE\n");
 
-    _Z_EC(_z_keyexpr_encode(wbf, header, &dcl->_key));
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q) == true) {
         _Z_EC(_z_zint_encode(wbf, dcl->_complete));
@@ -396,7 +396,7 @@ int8_t _z_qle_decl_decode_na(_z_qle_decl_t *dcl, _z_zbuf_t *zbf, uint8_t header)
     _Z_DEBUG("Decoding _Z_DECL_QUERYABLE\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q) == true) {
         ret |= _z_zint_decode(&dcl->_complete, zbf);
         ret |= _z_zint_decode(&dcl->_distance, zbf);
@@ -440,7 +440,7 @@ int8_t _z_forget_pub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_DECL_FORGET_PUBLISHER\n");
 
-    ret |= _z_keyexpr_encode(wbf, header, &dcl->_key);
+    ret |= _z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key);
 
     return ret;
 }
@@ -449,7 +449,7 @@ int8_t _z_forget_pub_decl_decode_na(_z_forget_pub_decl_t *dcl, _z_zbuf_t *zbf, u
     _Z_DEBUG("Decoding _Z_DECL_FORGET_PUBLISHER\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
 
     return ret;
 }
@@ -463,7 +463,7 @@ int8_t _z_forget_sub_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget
     _Z_DEBUG("Encoding _Z_DECL_FORGET_PUBLISHER\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_encode(wbf, header, &dcl->_key);
+    ret |= _z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key);
 
     return ret;
 }
@@ -472,7 +472,7 @@ int8_t _z_forget_sub_decl_decode_na(_z_forget_sub_decl_t *dcl, _z_zbuf_t *zbf, u
     _Z_DEBUG("Decoding _Z_DECL_FORGET_PUBLISHER\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
 
     return ret;
 }
@@ -486,7 +486,7 @@ int8_t _z_forget_qle_decl_encode(_z_wbuf_t *wbf, uint8_t header, const _z_forget
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_DECL_FORGET_QUERYABLE\n");
 
-    ret |= _z_keyexpr_encode(wbf, header, &dcl->_key);
+    ret |= _z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &dcl->_key);
 
     return ret;
 }
@@ -495,7 +495,7 @@ int8_t _z_forget_qle_decl_decode_na(_z_forget_qle_decl_t *dcl, _z_zbuf_t *zbf, u
     _Z_DEBUG("Decoding _Z_DECL_FORGET_QUERYABLE\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&dcl->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&dcl->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
 
     return ret;
 }
@@ -685,7 +685,7 @@ int8_t _z_data_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_data_t *msg) 
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_Z_DATA\n");
 
-    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &msg->_key))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         _Z_EC(_z_data_info_encode(wbf, &msg->_info))
@@ -699,7 +699,7 @@ int8_t _z_data_decode_na(_z_msg_data_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_DATA\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         ret |= _z_data_info_decode(&msg->_info, zbf);
     } else {
@@ -725,7 +725,7 @@ int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg) 
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_Z_PULL\n");
 
-    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &msg->_key))
 
     _Z_EC(_z_zint_encode(wbf, msg->_pull_id))
 
@@ -740,7 +740,7 @@ int8_t _z_pull_decode_na(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_PULL\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     ret |= _z_zint_decode(&msg->_pull_id, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N) == true) {
         ret |= _z_zint_decode(&msg->_max_samples, zbf);
@@ -770,7 +770,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_Z_QUERY\n");
 
-    _Z_EC(_z_keyexpr_encode(wbf, header, &msg->_key))
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &msg->_key))
 
     _Z_EC(_z_str_encode(wbf, msg->_parameters))
 
@@ -802,7 +802,7 @@ int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_QUERY\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_keyexpr_decode(&msg->_key, zbf, header);
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
     ret |= _z_str_decode(&msg->_parameters, zbf);
     ret |= _z_zint_decode(&msg->_qid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) == true) {
@@ -960,6 +960,169 @@ int8_t _z_declare_decode_na(_z_n_msg_declare_t *msg, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_declare_decode(_z_n_msg_declare_t *msg, _z_zbuf_t *zbf) { return _z_declare_decode_na(msg, zbf); }
+
+/*------------------ Push Body Field ------------------*/
+int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
+    (void)(wbf);
+    (void)(pshb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_push_body_decode_na(_z_push_body_t *pshb, _z_zbuf_t *zbf) {
+    (void)(zbf);
+    (void)(pshb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf) { return _z_push_body_decode_na(pshb, zbf); }
+
+/*------------------ Push Message ------------------*/
+int8_t _z_push_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_push_t *msg) {
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Encoding _Z_MID_N_PUSH\n");
+
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N), &msg->_key));
+    _Z_EC(_z_push_body_encode(wbf, &msg->_body));
+
+    return ret;
+}
+
+int8_t _z_push_decode_na(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    _Z_DEBUG("Decoding _Z_MID_N_PUSH\n");
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
+    ret |= _z_push_body_decode(&msg->_body, zbf);
+
+    return ret;
+}
+
+int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_push_decode_na(msg, zbf, header);
+}
+
+/*------------------ Request Body Field ------------------*/
+int8_t _z_request_body_encode(_z_wbuf_t *wbf, const _z_request_body_t *reqb) {
+    (void)(wbf);
+    (void)(reqb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_request_body_decode_na(_z_request_body_t *reqb, _z_zbuf_t *zbf) {
+    (void)(zbf);
+    (void)(reqb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_request_body_decode(_z_request_body_t *reqb, _z_zbuf_t *zbf) { return _z_request_body_decode_na(reqb, zbf); }
+
+/*------------------ Request Message ------------------*/
+int8_t _z_request_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_request_t *msg) {
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Encoding _Z_MID_N_REQUEST\n");
+
+    _Z_EC(_z_zint_encode(wbf, msg->_rid));
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N), &msg->_key));
+    _Z_EC(_z_request_body_encode(wbf, &msg->_body));
+
+    return ret;
+}
+
+int8_t _z_request_decode_na(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    _Z_DEBUG("Decoding _Z_MID_N_REQUEST\n");
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_zint_decode(&msg->_rid, zbf);
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N));
+    ret |= _z_request_body_decode(&msg->_body, zbf);
+
+    return ret;
+}
+
+int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_request_decode_na(msg, zbf, header);
+}
+
+/*------------------ Response Body Field ------------------*/
+int8_t _z_response_body_encode(_z_wbuf_t *wbf, const _z_response_body_t *rspb) {
+    (void)(wbf);
+    (void)(rspb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_response_body_decode_na(_z_response_body_t *rspb, _z_zbuf_t *zbf) {
+    (void)(zbf);
+    (void)(rspb);
+    int8_t ret = _Z_RES_OK;
+
+    return ret;
+}
+
+int8_t _z_response_body_decode(_z_response_body_t *rspb, _z_zbuf_t *zbf) {
+    return _z_response_body_decode_na(rspb, zbf);
+}
+
+/*------------------ Response Message ------------------*/
+int8_t _z_response_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_response_t *msg) {
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
+
+    _Z_EC(_z_zint_encode(wbf, msg->_rid));
+    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N), &msg->_key));
+    _Z_EC(_z_response_body_encode(wbf, &msg->_body));
+
+    return ret;
+}
+
+int8_t _z_response_decode_na(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    _Z_DEBUG("Decoding _Z_MID_N_RESPONSE\n");
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_zint_decode(&msg->_rid, zbf);
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N));
+    ret |= _z_response_body_decode(&msg->_body, zbf);
+
+    return ret;
+}
+
+int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_response_decode_na(msg, zbf, header);
+}
+
+/*------------------ Response Final Message ------------------*/
+int8_t _z_response_final_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_response_final_t *msg) {
+    (void)(header);
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
+
+    _Z_EC(_z_zint_encode(wbf, msg->_rid));
+
+    return ret;
+}
+
+int8_t _z_response_final_decode_na(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    (void)(header);
+    _Z_DEBUG("Decoding _Z_MID_N_RESPONSE\n");
+    int8_t ret = _Z_RES_OK;
+
+    ret |= _z_zint_decode(&msg->_rid, zbf);
+
+    return ret;
+}
+
+int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_response_final_decode_na(msg, zbf, header);
+}
 
 /*------------------ Network Message ------------------*/
 int8_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg) {
