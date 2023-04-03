@@ -821,11 +821,13 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     //       resource declarations are only performed on unicast transports.
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
             _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
+#if Z_MULTICAST_TRANSPORT == 1
     }
 #endif  // Z_MULTICAST_TRANSPORT == 1
 
@@ -892,11 +894,21 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     callback->context = NULL;
 
     z_keyexpr_t key = keyexpr;
-    _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-    if (r == NULL) {
-        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
-        key = _z_rid_with_suffix(id, NULL);
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+#if Z_MULTICAST_TRANSPORT == 1
+    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_MULTICAST_TRANSPORT == 1
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        if (r == NULL) {
+            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            key = _z_rid_with_suffix(id, NULL);
+        }
+#if Z_MULTICAST_TRANSPORT == 1
     }
+#endif  // Z_MULTICAST_TRANSPORT == 1
 
     z_queryable_options_t opt = z_queryable_options_default();
     if (options != NULL) {
