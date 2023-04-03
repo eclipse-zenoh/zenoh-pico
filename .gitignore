@@ -4,6 +4,7 @@ build
 # vscode
 .vscode 
 .clang-format
+.cmake-format.py
 
 # IntelliJ / CLion 
 .idea 
