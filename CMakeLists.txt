@@ -15,6 +15,30 @@ cmake_minimum_required(VERSION 3.8)
 
 project(libzenohpico VERSION 0.7.0.1 LANGUAGES C)
 
+option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
+option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
+option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(BUILD_SHARED_LIBS "OFF")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+  if(WITH_ZEPHYR)
+    set(BUILD_SHARED_LIBS "OFF")
+  endif()
+endif()
+
+set(Libname "zenohpico")
+if(BUILD_SHARED_LIBS)
+  add_library(${Libname} SHARED)
+else()
+  add_library(${Libname} STATIC)
+endif()
+
+function(add_definition value)
+  add_definitions(-D${value})
+  target_compile_definitions(${Libname} PUBLIC ${value})
+endfunction()
+
 if(NOT CMAKE_C_STANDARD)
   if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
     set(CMAKE_C_STANDARD 11)
@@ -25,7 +49,7 @@ if(NOT CMAKE_C_STANDARD)
   endif()
 endif()
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
-add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -37,49 +61,33 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-option(BUILD_TOOLS "Use this to also build the tools." OFF)
-option(BUILD_TESTING "Use this to also build tests." ON)
-option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
-option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
-option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
-
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  add_definitions(-DZENOH_LINUX)
-  set(JNI_PLATFORM_NAME "linux")
+  add_definition(ZENOH_LINUX)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
-  add_definitions(-DZENOH_BSD)
+  add_definition(ZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  add_definitions(-DZENOH_MACOS)
+  add_definition(ZENOH_MACOS)
   set(MACOSX_RPATH "ON")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  add_definitions(-DZENOH_EMSCRIPTEN)
+  add_definition(ZENOH_EMSCRIPTEN)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  add_definitions(-DZENOH_WINDOWS -D_CRT_SECURE_NO_WARNINGS)
-  set(BUILD_SHARED_LIBS "OFF")
-  add_definitions(-DZENOH_NO_STDATOMIC)
+  add_definition(ZENOH_WINDOWS)
+  add_definition(_CRT_SECURE_NO_WARNINGS)
+  add_definition(ZENOH_NO_STDATOMIC)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
   if(WITH_ZEPHYR)
-    add_definitions(-DZENOH_ZEPHYR)
-    set(BUILD_SHARED_LIBS "OFF")
+    add_definition(ZENOH_ZEPHYR)
   endif()
 else()
   message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
   return()
 endif()
 
-add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
+add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-message(STATUS "Build tests: ${BUILD_TESTING}")
-message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
 message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
@@ -111,8 +119,6 @@ elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   endif()
 endif()
 
-set(Libname "zenohpico")
-
 file(GLOB PublicHeaders "include/*.h"
   "include/zenoh-pico/*.h"
   "include/zenoh-pico/api/*.h"
@@ -126,9 +132,7 @@ file(GLOB PublicHeaders "include/*.h"
   "include/zenoh-pico/transport/*.h"
   "include/zenoh-pico/utils/*.h"
 )
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-)
+target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB Sources "src/*.c"
   "src/api/*.c"
@@ -170,7 +174,7 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} ${Sources})
+target_sources(${Libname} PRIVATE ${Sources})
 
 target_link_libraries(${Libname} Threads::Threads)
 
@@ -181,6 +185,23 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   target_link_libraries(${Libname} Ws2_32 Iphlpapi)
 endif()
+
+#
+# Build tests, examples, intallation only when project is root
+#
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+
+option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
+option(BUILD_EXAMPLES "Use this to also build the examples." ON)
+option(BUILD_TOOLS "Use this to also build the tools." OFF)
+option(BUILD_TESTING "Use this to also build tests." ON)
+option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
+message(STATUS "Build tools: ${BUILD_TOOLS}")
+message(STATUS "Build tests: ${BUILD_TESTING}")
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
 install(TARGETS ${Libname}
   LIBRARY DESTINATION lib
@@ -197,59 +218,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
 )
 
 if(BUILD_EXAMPLES)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples)
-
-  if(UNIX)
-    if(CMAKE_C_STANDARD MATCHES "99")
-      add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_put.c)
-      add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_pub.c)
-      add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_pub_st.c)
-      add_executable(z_sub ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_sub.c)
-      add_executable(z_sub_st ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_sub_st.c)
-      add_executable(z_pull ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_pull.c)
-      add_executable(z_get ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_get.c)
-      add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_queryable.c)
-      add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_info.c)
-      add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/unix/c99/z_scout.c)
-    else()
-      add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_put.c)
-      add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_pub.c)
-      add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_pub_st.c)
-      add_executable(z_sub ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_sub.c)
-      add_executable(z_sub_st ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_sub_st.c)
-      add_executable(z_pull ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_pull.c)
-      add_executable(z_get ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_get.c)
-      add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_queryable.c)
-      add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_info.c)
-      add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/unix/c11/z_scout.c)
-    endif()
-  elseif(MSVC)
-      add_executable(z_put ${PROJECT_SOURCE_DIR}/examples/windows/z_put.c)
-      add_executable(z_pub ${PROJECT_SOURCE_DIR}/examples/windows/z_pub.c)
-      add_executable(z_pub_st ${PROJECT_SOURCE_DIR}/examples/windows/z_pub_st.c)
-      add_executable(z_sub ${PROJECT_SOURCE_DIR}/examples/windows/z_sub.c)
-      add_executable(z_sub_st ${PROJECT_SOURCE_DIR}/examples/windows/z_sub_st.c)
-      add_executable(z_pull ${PROJECT_SOURCE_DIR}/examples/windows/z_pull.c)
-      add_executable(z_get ${PROJECT_SOURCE_DIR}/examples/windows/z_get.c)
-      add_executable(z_queryable ${PROJECT_SOURCE_DIR}/examples/windows/z_queryable.c)
-      add_executable(z_info ${PROJECT_SOURCE_DIR}/examples/windows/z_info.c)
-      add_executable(z_scout ${PROJECT_SOURCE_DIR}/examples/windows/z_scout.c)
-  endif()
-
-  if(UNIX OR MSVC)
-    target_link_libraries(z_put ${Libname})
-    target_link_libraries(z_pub ${Libname})
-    target_link_libraries(z_pub_st ${Libname})
-    target_link_libraries(z_sub ${Libname})
-    target_link_libraries(z_sub_st ${Libname})
-    target_link_libraries(z_pull ${Libname})
-    target_link_libraries(z_get ${Libname})
-    target_link_libraries(z_queryable ${Libname})
-    target_link_libraries(z_info ${Libname})
-    target_link_libraries(z_scout ${Libname})
-  endif()
+  add_subdirectory(examples)
 endif()
-
 
 if(UNIX OR MSVC)
   if(BUILD_TOOLS)
@@ -391,4 +361,6 @@ if(PACKAGING)
   endif()
 
   include(CPack)
+endif()
+
 endif()
