@@ -63,7 +63,6 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definition(ZENOH_LINUX)
-  set(JNI_PLATFORM_NAME "linux")
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
   add_definition(ZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
