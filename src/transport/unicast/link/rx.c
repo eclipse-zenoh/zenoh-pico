@@ -26,50 +26,53 @@
 int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg\n");
     int8_t ret = _Z_RES_OK;
-
 #if Z_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
-    // Prepare the buffer
-    _z_zbuf_reset(&ztu->_zbuf);
-
-    if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
-        // Read the message length
-        if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, _Z_MSG_LEN_ENC_SIZE, NULL) != _Z_MSG_LEN_ENC_SIZE) {
-            size_t len = 0;
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                len |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
+    do {
+        size_t to_read = 0;
+        if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
+            if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    _z_zbuf_compact(&ztu->_zbuf);
+                    ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
+                    continue;
+                }
             }
 
-            _Z_DEBUG(">> \t msg len = %zu\n", len);
-            size_t writable = _z_zbuf_capacity(&ztu->_zbuf) - _z_zbuf_len(&ztu->_zbuf);
-            if (writable < len) {
-                // Read enough bytes to decode the message
-                if (_z_link_recv_exact_zbuf(&ztu->_link, &ztu->_zbuf, len, NULL) != len) {
-                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
+            }
+
+            if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
+                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
+                    _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                    _z_zbuf_compact(&ztu->_zbuf);
+                    ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
+                    continue;
                 }
-            } else {
-                ret = _Z_ERR_TRANSPORT_NO_SPACE;
             }
         } else {
-            ret = _Z_ERR_TRANSPORT_RX_FAILED;
+            _z_zbuf_compact(&ztu->_zbuf);
+            to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+            if (to_read == SIZE_MAX) {
+                ret = _Z_ERR_TRANSPORT_RX_FAILED;
+            }
         }
-    } else {
-        if (_z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL) == SIZE_MAX) {
-            ret = _Z_ERR_TRANSPORT_RX_FAILED;
-        }
-    }
+    } while (false); // The 1-iteration loop to use continue to break the entire loop on error
 
-    // Mark the session that we have received data
     if (ret == _Z_RES_OK) {
+        _Z_DEBUG(">> \t transport_message_decode\n");
         ret = _z_transport_message_decode_na(t_msg, &ztu->_zbuf);
+
+        // Mark the session that we have received data
         if (ret == _Z_RES_OK) {
             ztu->_received = true;
         }
-
-        _Z_DEBUG(">> \t transport_message_decode\n");
     }
 
 #if Z_MULTI_THREAD == 1
