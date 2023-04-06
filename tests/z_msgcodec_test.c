@@ -175,7 +175,7 @@ char *gen_str(size_t size) {
 
 _z_str_array_t gen_str_array(size_t size) {
     _z_str_array_t sa = _z_str_array_make(size);
-    for (size_t i = 0; i < size; i++) ((char **)sa._val)[i] = gen_str(16);
+    for (size_t i = 0; i < size; i++) ((char **)sa.val)[i] = gen_str(16);
 
     return sa;
 }
@@ -252,16 +252,16 @@ void assert_eq_uint8_array(_z_bytes_t *left, _z_bytes_t *right) {
 
 void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right) {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", left->_len, right->_len);
+    printf("Length (%zu:%zu), ", left->len, right->len);
 
-    assert(left->_len == right->_len);
+    assert(left->len == right->len);
     printf("Content (");
-    for (size_t i = 0; i < left->_len; i++) {
-        const char *l = left->_val[i];
-        const char *r = right->_val[i];
+    for (size_t i = 0; i < left->len; i++) {
+        const char *l = left->val[i];
+        const char *r = right->val[i];
 
         printf("%s:%s", l, r);
-        if (i < left->_len - 1) printf(" ");
+        if (i < left->len - 1) printf(" ");
 
         assert(_z_str_eq(l, r) == true);
     }
@@ -330,19 +330,19 @@ void payload_field(void) {
 /*------------------ Timestamp field ------------------*/
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
-    ts._time = gen_uint64();
-    ts._id = gen_bytes(16);
+    ts.time = gen_uint64();
+    ts.id = gen_bytes(16);
 
     return ts;
 }
 
 void assert_eq_timestamp(_z_timestamp_t *left, _z_timestamp_t *right) {
     printf("Timestamp -> ");
-    printf("Time (%llu:%llu), ", (unsigned long long)left->_time, (unsigned long long)right->_time);
-    assert(left->_time == right->_time);
+    printf("Time (%llu:%llu), ", (unsigned long long)left->time, (unsigned long long)right->time);
+    assert(left->time == right->time);
 
     printf("ID (");
-    assert_eq_uint8_array(&left->_id, &right->_id);
+    assert_eq_uint8_array(&left->id, &right->id);
     printf(")");
 }
 

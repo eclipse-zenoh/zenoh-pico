@@ -21,22 +21,19 @@
 #undef NDEBUG
 #include <assert.h>
 
-int main(void)
-{
+int main(void) {
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("client"));
 
     printf("Opening session...\n");
     z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s))
-    {
+    if (!z_check(s)) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0)
-    {
+    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks");
         return -1;
     }

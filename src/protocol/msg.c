@@ -27,7 +27,7 @@
 void _z_payload_clear(_z_payload_t *p) { _z_bytes_clear(p); }
 
 /*------------------ Timestamp Field ------------------*/
-void _z_timestamp_clear(_z_timestamp_t *ts) { _z_bytes_clear(&ts->_id); }
+void _z_timestamp_clear(_z_timestamp_t *ts) { _z_bytes_clear(&ts->id); }
 
 /*------------------ ResKey Field ------------------*/
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {

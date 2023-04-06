@@ -90,8 +90,8 @@ _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
  *   char **_val: A pointer to the array.
  */
 typedef struct {
-    size_t _len;
-    char **_val;
+    size_t len;
+    char **val;
 } _z_str_array_t;
 
 _z_str_array_t _z_str_array_make(size_t len);

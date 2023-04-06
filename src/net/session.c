@@ -77,8 +77,8 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             _z_hello_list_t *xs = hellos;
             while (xs != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(xs);
-                if (hello->locators._len > 0) {
-                    locator = _z_str_clone(hello->locators._val[0]);
+                if (hello->locators.len > 0) {
+                    locator = _z_str_clone(hello->locators.val[0]);
                 }
 
                 xs = _z_hello_list_tail(xs);

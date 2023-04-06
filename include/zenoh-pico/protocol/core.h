@@ -50,9 +50,13 @@ typedef struct {
  * A zenoh timestamp.
  */
 typedef struct {
-    _z_bytes_t _id;
-    uint64_t _time;
+    _z_bytes_t id;
+    uint64_t time;
 } _z_timestamp_t;
+
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
+void _z_timestamp_reset(_z_timestamp_t *tstamp);
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp);
 
 /**
  * A zenoh-net resource key.

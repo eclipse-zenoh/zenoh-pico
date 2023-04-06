@@ -32,6 +32,8 @@
 #include "zenoh-pico/utils/result.h"
 
 /********* Data Types Handlers *********/
+_Bool z_bytes_check(const z_bytes_t *v) { return v->start != NULL; }
+
 z_string_t z_string_make(const char *value) { return _z_string_make(value); }
 
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
@@ -39,6 +41,8 @@ size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
 _Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
 
 z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
+
+z_keyexpr_t z_keyexpr_unchecked(const char *name) { return _z_rname(name); }
 
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
@@ -53,6 +57,16 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     }
 
     return ret;
+}
+
+z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
+    if (keyexpr._id == Z_RESOURCE_ID_NONE) {
+        z_bytes_t ret = {.start = (const uint8_t *)keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc = false};
+        return ret;
+    } else {
+        z_bytes_t ret = {.start = NULL, .len = 0, ._is_alloc = false};
+        return ret;
+    }
 }
 
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
@@ -233,6 +247,8 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
 
+_Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
+
 z_value_t z_value(const char *payload, size_t payload_len, z_encoding_t encoding) {
     return (z_value_t){.payload = {.start = (const uint8_t *)payload, .len = payload_len}, .encoding = encoding};
 }
@@ -274,6 +290,36 @@ _Bool z_value_is_initialized(z_value_t *value) {
     }
 
     return ret;
+}
+
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample) {
+    if (closure->call) {
+        (closure->call)(sample, closure->context);
+    }
+}
+
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query) {
+    if (closure->call) {
+        (closure->call)(query, closure->context);
+    }
+}
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
+    if (closure->call) {
+        (closure->call)(reply, closure->context);
+    }
+}
+
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello) {
+    if (closure->call) {
+        (closure->call)(hello, closure->context);
+    }
+}
+
+void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) {
+    if (closure->call) {
+        (closure->call)(id, closure->context);
+    }
 }
 
 /**************** Loans ****************/
@@ -691,7 +737,7 @@ z_publisher_options_t z_publisher_options_default(void) {
     return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
 }
 
-z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_publisher_options_t *options) {
+z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
     z_keyexpr_t key = keyexpr;
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
@@ -904,7 +950,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
     return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 
-z_sample_t z_reply_ok(z_owned_reply_t *reply) { return reply->_value->data.sample; }
+z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 /**************** Tasks ****************/
 zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
