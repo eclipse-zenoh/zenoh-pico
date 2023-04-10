@@ -42,14 +42,9 @@ jobs:
         components: rustfmt, clippy
 
     - name: Compile debug
-      run: make all
+      run: make all && make test
       env:
         BUILD_TYPE: Debug
         BUILD_TESTING: OFF
         BUILD_MULTICAST: OFF
         BUILD_INTEGRATION: ON
-
-    - name: Test debug
-      run: ctest --verbose
-      env:
-        ZENOH_BRANCH: master
