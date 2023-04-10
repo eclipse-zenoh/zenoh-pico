@@ -52,5 +52,4 @@ jobs:
     - name: Test debug
       run: make test
       env:
-        ARGS: -V
         ZENOH_BRANCH: master
