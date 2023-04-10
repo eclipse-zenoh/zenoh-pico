@@ -73,7 +73,7 @@ install: $(BUILD_DIR)/Makefile
 	cmake --install $(BUILD_DIR)
 
 test: make
-	ctest build
+	ctest --build-target build
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 
