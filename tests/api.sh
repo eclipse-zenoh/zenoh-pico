@@ -17,7 +17,7 @@ TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
 if [ "$OSTYPE" = "msys" ]; then
-  TESTBIN="$TESTDIR/tests/$TESTBIN.exe"
+  TESTBIN="$TESTDIR/$TESTBIN.exe"
 else
   TESTBIN="./$TESTBIN"
 fi
@@ -61,7 +61,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Logs of zenohd ..."
-    cat zenohd."$TESTBIN".log
+    cat zenohd."$1".log
 
     [ "$RETCODE" -lt 0 ] && exit "$RETCODE"
 done

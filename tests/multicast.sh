@@ -17,7 +17,7 @@ TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
 if [ "$OSTYPE" = "msys" ]; then
-  TESTBIN="$TESTDIR/tests/$TESTBIN.exe"
+  TESTBIN="$TESTDIR/$TESTBIN.exe"
 else
   TESTBIN="./$TESTBIN"
 fi
