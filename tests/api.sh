@@ -46,7 +46,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
-    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$TESTBIN".log 2>&1 &
+    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$1".log 2>&1 &
     ZPID=$!
 
     sleep 5
