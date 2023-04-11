@@ -16,8 +16,8 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
-if ["$OSTYPE" = "msys"]; then
-  TESTBIN="$TESTBIN".exe
+if [ "$OSTYPE" = "msys" ]; then
+  TESTBIN="$TESTBIN.exe"
   echo "Testbin updated: $TESTBIN"
 else
   echo "Testbin not updated: $TESTBIN"
