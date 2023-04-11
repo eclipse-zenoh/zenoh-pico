@@ -16,6 +16,11 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
+if ["$OSTYPE" == "msys"]
+then
+  TESTBIN = "$TESTBIN".exe
+fi
+
 cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
