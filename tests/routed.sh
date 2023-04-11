@@ -16,6 +16,10 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
+echo "\n\n\n\n\n"
+echo "$OSTYPE"
+echo "\n\n\n\n\n"
+
 cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
