@@ -16,8 +16,7 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
-if ["$OSTYPE" == "msys"]
-then
+if ["$OSTYPE" = "msys"]; then
   TESTBIN="$TESTBIN".exe
 fi
 
