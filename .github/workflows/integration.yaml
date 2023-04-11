@@ -52,8 +52,8 @@ jobs:
     - name: Test debug
       run: make test
       env:
-        BUILD_TYPE: Debug
-        BUILD_TESTING: OFF
-        BUILD_MULTICAST: OFF
-        BUILD_INTEGRATION: ON
+        BUILD_TYPE: Debug     # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_TESTING: OFF    # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_MULTICAST: OFF  # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
         ZENOH_BRANCH: master
