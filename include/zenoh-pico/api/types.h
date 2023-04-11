@@ -331,8 +331,7 @@ typedef struct {
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
- *   z_value_t with_value: The payload to include in the query. Note: This parameter has been marked as unstable: it
- * works as advertised, but we may change it in a future release.
+ *   z_value_t with_value: The payload to include in the query.
  */
 typedef struct {
     z_value_t with_value;
