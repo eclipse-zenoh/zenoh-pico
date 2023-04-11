@@ -26,8 +26,8 @@
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos) {
     assert((r_pos <= w_pos) && (w_pos <= length));
     _z_iosli_t ios;
-    ios._r_pos = 0;
-    ios._w_pos = length;
+    ios._r_pos = r_pos;
+    ios._w_pos = w_pos;
     ios._capacity = length;
     ios._is_alloc = false;
     ios._buf = (uint8_t *)buf;

@@ -31,8 +31,8 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     _z_mutex_lock(&ztu->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
+    size_t to_read = 0;
     do {
-        size_t to_read = 0;
         if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
             if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                 _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
@@ -63,7 +63,10 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
         }
-    } while (false); // The 1-iteration loop to use continue to break the entire loop on error
+    } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
+
+    // Wrap the main buffer for to_read bytes
+    _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_zbuf, to_read);
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode\n");
