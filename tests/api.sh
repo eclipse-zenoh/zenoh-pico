@@ -18,9 +18,8 @@ TESTDIR=$(dirname "$0")
 
 if [ "$OSTYPE" = "msys" ]; then
   TESTBIN="$TESTBIN.exe"
-  echo "Testbin updated: $TESTBIN"
 else
-  echo "Testbin not updated: $TESTBIN"
+  TESTBIN="./$TESTBIN"
 fi
 
 cd "$TESTDIR"|| exit
@@ -53,7 +52,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 5
 
     echo "> Running $TESTBIN ..."
-    ./"$TESTBIN" "$LOCATOR"
+    "$TESTBIN" "$LOCATOR"
     RETCODE=$?
 
     echo "> Stopping zenohd ..."
