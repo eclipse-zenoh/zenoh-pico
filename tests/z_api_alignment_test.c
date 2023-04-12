@@ -26,7 +26,7 @@
 
 #include "zenoh-pico.h"
 
-#define SLEEP 1
+#define SLEEP 2
 #define SCOUTING_TIMEOUT "1000"
 
 const char *value = "Test value";
@@ -326,6 +326,8 @@ int main(int argc, char **argv) {
     z_owned_publisher_t _ret_pub = z_declare_publisher(z_loan(s1), z_keyexpr(keyexpr_str), &_ret_pub_opt);
     assert(z_check(_ret_pub));
     printf("Ok\n");
+
+    sleep(SLEEP);
 
     printf("Publisher Put...");
     z_publisher_put_options_t _ret_pput_opt = z_publisher_put_options_default();
