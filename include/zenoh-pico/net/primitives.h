@@ -175,6 +175,28 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
 
 /**
+ * Write data corresponding to a set of resource keys, allowing the definition of
+ * additional properties.
+ * 
+ * Parameters:
+ *     zn: The zenoh-net session.  The caller keeps its ownership.
+ *     keyexpr: The resource keys to write.  The caller keeps its ownership.
+ *     payload: The values to write.
+ *     len: The lengths of each value to write.
+ *     count: The number of value/keyexpr pairs to send.
+ *     encoding: The encoding of the payload.  The callee gets the ownership of
+ *               any allocated value.
+ *     kind: The kind of the value.
+ *     cong_ctrl: The congestion control of this write. Possible values defined
+ *                in :c:type:`_z_congestion_control_t`.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int8_t _z_write_multi(_z_session_t *zn, const _z_keyexpr_t keyexpr[], const uint8_t *payload[], const size_t len[],
+                      const size_t count, const _z_encoding_t encoding, const z_sample_kind_t kind,
+                      const z_congestion_control_t cong_ctrl);
+
+/**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
  * by calling the **callback** function provided to the :c:func:`_z_declare_subscriber` function.
  *

@@ -69,8 +69,8 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
     return ret;
 }
 
-int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
-                             z_congestion_control_t cong_ctrl) {
+int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, _z_zint_t count,
+                             z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send zenoh message\n");
 
@@ -102,7 +102,12 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
         _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
         ret = _z_transport_message_encode(&ztu->_wbuf, &t_msg);  // Encode the frame header
         if (ret == _Z_RES_OK) {
-            ret = _z_zenoh_message_encode(&ztu->_wbuf, z_msg);  // Encode the zenoh message
+            for (_z_zint_t i=0;i<count;i++) {
+                ret = _z_zenoh_message_encode(&ztu->_wbuf, &z_msg[i]);  // Encode the zenoh message
+                if(ret != _Z_RES_OK) {
+                    break;
+                }
+            }
             if (ret == _Z_RES_OK) {
                 // Write the message legnth in the reserved space if needed
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
@@ -116,7 +121,12 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
                 // Create an expandable wbuf for fragmentation
                 _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
 
-                ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
+                for (_z_zint_t i=0;i<count;i++) {
+                    ret = _z_zenoh_message_encode(&fbf, &z_msg[i]);  // Encode the message on the expandable wbuf
+                    if(ret != _Z_RES_OK) {
+                        break;
+                    }
+                }
                 if (ret == _Z_RES_OK) {
                     _Bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {

@@ -633,6 +633,22 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     return ret;
 }
 
+int8_t z_put_multi(z_session_t zs, z_keyexpr_t keyexpr[], const uint8_t *payload[], z_zint_t payload_len[],
+                   z_zint_t payload_count, const z_put_options_t *options) {
+    int8_t ret = 0;
+
+    z_put_options_t opt = z_put_options_default();
+    if (options != NULL) {
+        opt.congestion_control = options->congestion_control;
+        opt.encoding = options->encoding;
+        opt.priority = options->priority;
+    }
+    ret = _z_write_multi(zs._val, keyexpr, payload, payload_len, payload_count, opt.encoding, Z_SAMPLE_KIND_PUT,
+                         opt.congestion_control);
+
+    return ret;
+}
+
 int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *options) {
     int8_t ret = 0;
 

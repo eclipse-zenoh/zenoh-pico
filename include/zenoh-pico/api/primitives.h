@@ -813,6 +813,23 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
              const z_put_options_t *options);
 
 /**
+ * Puts multiple data for multiple keyexpr in a single batched frame.
+ * 
+ * Parameters:
+ *   zs: A loaned instance of the :c:type:`z_session_t` through which data will be sent.
+ *   keyexpr: A list of loaned instances of :c:type:`z_keyexpr_t` to put.
+ *   payload: A list of pointers to data to put.
+ *   payload_len: A list of lengths, one for each ``payload``.
+ *   payload_count: The number of items in each of the previous lists.
+ *   options: The put options to be applied in the put operation.
+ * 
+ * Returns:
+ *   Returns ``0`` if the put operations are all successful, or a ``negative value`` otherwise.
+ */
+int8_t z_put_multi(z_session_t zs, z_keyexpr_t keyexpr[], const uint8_t *payload[], z_zint_t payload_len[],
+                   z_zint_t payload_count, const z_put_options_t *options);
+
+/**
  * Deletes data from a given keyexpr.
  *
  * Parameters:

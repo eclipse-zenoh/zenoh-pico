@@ -330,6 +330,30 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
     return ret;
 }
 
+int8_t _z_write_multi(_z_session_t *zn, const _z_keyexpr_t keyexpr[], const uint8_t *payload[], const size_t len[],
+                      const size_t count, const _z_encoding_t encoding, const z_sample_kind_t kind,
+                      const z_congestion_control_t cong_ctrl) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_data_info_t info = {._flags = 0, ._encoding = encoding, ._kind = kind};
+    _Z_SET_FLAG(info._flags, _Z_DATA_INFO_ENC);
+    _Z_SET_FLAG(info._flags, _Z_DATA_INFO_KIND);
+
+    _Bool can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;
+
+    _z_zenoh_message_t z_msgs[count];   // should this be a malloc() on the heap?
+
+    for (size_t i=0;i<count;i++) {
+        _z_payload_t pld = {.len = len[i], .start = payload[i]};
+        z_msgs[i] = _z_msg_make_data(keyexpr[i], info, pld, can_be_dropped);
+    }
+    if (_z_send_z_msg_multi(zn, z_msgs, count, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+
+    return ret;
+}
+
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t with_value, _z_reply_handler_t callback,
