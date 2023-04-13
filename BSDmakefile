@@ -72,8 +72,8 @@ make: $(BUILD_DIR)/Makefile
 install: $(BUILD_DIR)/Makefile
 	cmake --install $(BUILD_DIR)
 
-test: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) test
+test: make
+	ctest --verbose --test-dir build
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 
