@@ -15,7 +15,7 @@
 #include <windows.h>
 // The following includes must come after winsock2
 #include <time.h>
-#include <wincrypt.h>
+#include <ntsecapi.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
@@ -46,16 +46,7 @@ uint64_t z_random_u64(void) {
     return ret;
 }
 
-void z_random_fill(void *buf, size_t len) {
-    HCRYPTPROV crypt_ctx;
-    if (CryptAcquireContext(&crypt_ctx, NULL, (LPCSTR)L"Microsoft Base Cryptographic Provider v1.0", PROV_RSA_FULL,
-                            CRYPT_VERIFYCONTEXT)) {
-        for (size_t i = 0; i < len; i++) {
-            CryptGenRandom(crypt_ctx, 1, &((uint8_t *)buf)[i]);
-        }
-        CryptReleaseContext(crypt_ctx, 0);
-    }
-}
+void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, len); }
 
 /*------------------ Memory ------------------*/
 // #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
