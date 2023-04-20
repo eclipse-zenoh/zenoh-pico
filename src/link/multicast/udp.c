@@ -79,22 +79,26 @@ int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    char *s_address = __z_parse_address_segment_udp_multicast(endpoint->_locator._address);
-    if (s_address == NULL) {
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    } else {
-        z_free(s_address);
+    if (ret == _Z_RES_OK) {
+        char *s_address = __z_parse_address_segment_udp_multicast(endpoint->_locator._address);
+        if (s_address == NULL) {
+            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        } else {
+            z_free(s_address);
+        }
     }
 
-    char *s_port = __z_parse_port_segment_udp_multicast(endpoint->_locator._address);
-    if (s_port == NULL) {
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    } else {
-        uint32_t port = strtoul(s_port, NULL, 10);
-        if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+    if (ret == _Z_RES_OK) {
+        char *s_port = __z_parse_port_segment_udp_multicast(endpoint->_locator._address);
+        if (s_port == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        } else {
+            uint32_t port = strtoul(s_port, NULL, 10);
+            if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+                ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+            }
+            z_free(s_port);
         }
-        z_free(s_port);
     }
 
     const char *iface = _z_str_intmap_get(&endpoint->_config, UDP_CONFIG_IFACE_KEY);
