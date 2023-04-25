@@ -91,11 +91,15 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             ret = _z_transport_message_decode_na(&t_msg, &zbuf);
             if (ret == _Z_RES_OK) {
                 ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
-
+                bool should_close = (_Z_MID(t_msg._header) == _Z_MID_CLOSE);
                 if (ret == _Z_RES_OK) {
                     _z_t_msg_clear(&t_msg);
                     _z_bytes_clear(&addr);
                 } else {
+                    ztm->_read_task_running = false;
+                    continue;
+                }
+                if (should_close) {
                     ztm->_read_task_running = false;
                     continue;
                 }

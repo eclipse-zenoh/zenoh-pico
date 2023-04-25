@@ -89,9 +89,14 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
         if (ret == _Z_RES_OK) {
             ret = _z_unicast_handle_transport_message(ztu, &t_msg);
+            bool should_close = (_Z_MID(t_msg._header) == _Z_MID_CLOSE);
             if (ret == _Z_RES_OK) {
                 _z_t_msg_clear(&t_msg);
             } else {
+                ztu->_read_task_running = false;
+                continue;
+            }
+            if (should_close) {
                 ztu->_read_task_running = false;
                 continue;
             }
