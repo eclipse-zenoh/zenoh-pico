@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
         printf("Sending Query '%s'...\n", keyexpr);
         z_get_options_t opts = z_get_options_default();
         if (value != NULL) {
-            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+            opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
         }
         z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
         if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {

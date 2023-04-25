@@ -1381,16 +1381,16 @@ _z_zenoh_message_t gen_query_message(void) {
     z_consolidation_mode_t consolidation;
     consolidation = con[gen_uint8() % (sizeof(con) / sizeof(uint8_t))];
 
-    _z_value_t with_value;
+    _z_value_t value;
     if (gen_bool()) {
-        with_value = gen_value();
+        value = gen_value();
     } else {
-        with_value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
-        with_value.encoding.suffix = _z_bytes_empty();
-        with_value.payload = _z_bytes_empty();
+        value.encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
+        value.encoding.suffix = _z_bytes_empty();
+        value.payload = _z_bytes_empty();
     }
 
-    return _z_msg_make_query(key, parameters, qid, target, consolidation, with_value);
+    return _z_msg_make_query(key, parameters, qid, target, consolidation, value);
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {

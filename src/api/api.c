@@ -278,7 +278,7 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
     return parameters;
 }
 
-z_value_t z_query_value(const z_query_t *query) { return query->_with_value; }
+z_value_t z_query_value(const z_query_t *query) { return query->_value; }
 
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
 
@@ -649,7 +649,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
 z_get_options_t z_get_options_default(void) {
     return (z_get_options_t){.target = z_query_target_default(),
                              .consolidation = z_query_consolidation_default(),
-                             .with_value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
+                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -675,7 +675,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     if (options != NULL) {
         opt.consolidation = options->consolidation;
         opt.target = options->target;
-        opt.with_value = options->with_value;
+        opt.value = options->value;
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -696,7 +696,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
         wrapped_ctx->ctx = ctx;
     }
 
-    ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.with_value, __z_reply_handler,
+    ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
                    wrapped_ctx, callback->drop, ctx);
     return ret;
 }
