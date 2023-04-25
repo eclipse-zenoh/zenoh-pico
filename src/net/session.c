@@ -76,7 +76,6 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
-                locators = _z_str_array_make(hello->locators.len);
                 _z_str_array_copy(&locators, &hello->locators);
             }
             _z_hello_list_free(&hellos);
