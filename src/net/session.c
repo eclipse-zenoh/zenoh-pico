@@ -52,7 +52,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
     if (config != NULL) {
-        _z_str_array_t locators = _z_str_array_make(0);
+        _z_str_array_t locators = _z_str_array_empty();
         if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {  // Scout if peer is not configured
             char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {

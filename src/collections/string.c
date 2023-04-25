@@ -135,6 +135,8 @@ void _z_str_array_init(_z_str_array_t *sa, size_t len) {
     }
 }
 
+_z_str_array_t _z_str_array_empty(void) { return (_z_str_array_t){.val = NULL, .len = 0}; }
+
 _z_str_array_t _z_str_array_make(size_t len) {
     _z_str_array_t sa;
     _z_str_array_init(&sa, len);
