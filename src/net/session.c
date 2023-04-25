@@ -85,6 +85,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             locators.val[0] = _z_str_clone(_z_config_get(config, Z_CONFIG_PEER_KEY));
         }
 
+        ret = _Z_ERR_SCOUT_NO_RESULTS;
         for (size_t i = 0; i < locators.len; i++) {
             ret = _Z_RES_OK;
 
