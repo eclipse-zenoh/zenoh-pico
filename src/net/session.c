@@ -52,7 +52,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
     if (config != NULL) {
-        char *locator = NULL;
+        _z_str_array_t locators = _z_str_array_make(0);
         if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {  // Scout if peer is not configured
             char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
@@ -74,21 +74,21 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
 
             // Scout and return upon the first result
             _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
-            _z_hello_list_t *xs = hellos;
-            while (xs != NULL) {
-                _z_hello_t *hello = _z_hello_list_head(xs);
-                if (hello->locators.len > 0) {
-                    locator = _z_str_clone(hello->locators.val[0]);
-                }
-
-                xs = _z_hello_list_tail(xs);
+            if (hellos != NULL) {
+                _z_hello_t *hello = _z_hello_list_head(hellos);
+                locators = _z_str_array_make(hello->locators.len);
+                _z_str_array_copy(&locators, &hello->locators);
             }
             _z_hello_list_free(&hellos);
         } else {
-            locator = _z_str_clone(_z_config_get(config, Z_CONFIG_PEER_KEY));
+            locators = _z_str_array_make(1);
+            locators.val[0] = _z_str_clone(_z_config_get(config, Z_CONFIG_PEER_KEY));
         }
 
-        if (locator != NULL) {
+        for (size_t i = 0; i < locators.len; i++) {
+            ret = _Z_RES_OK;
+
+            char *locator = locators.val[i];
             // @TODO: check invalid configurations
             // For example, client mode in multicast links
 
@@ -107,15 +107,14 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
 
             if (ret == _Z_RES_OK) {
                 ret = __z_open_inner(zn, locator, mode);
+                if (ret == _Z_RES_OK) {
+                    break;
+                }
             } else {
                 _Z_ERROR("Trying to configure an invalid mode.\n");
             }
-            z_free(locator);
-        } else {
-            ret = _Z_ERR_SCOUT_NO_RESULTS;
-            _Z_DEBUG("Unable to scout a zenoh router\n");
-            _Z_ERROR("Please make sure at least one router is running on your network!\n");
         }
+        _z_str_array_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.\n");
     }
