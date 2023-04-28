@@ -7,6 +7,8 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/system/platform.h"
 
+// WARNING: for the sake of this example we are using "internal" structs and functions (starting with "_").
+//          Synchronisation primitives are planned to be added to the API in the future.
 _z_condvar_t cond;
 _z_mutex_t mutex;
 
