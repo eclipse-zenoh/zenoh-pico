@@ -94,6 +94,7 @@ typedef struct {
     char **val;
 } _z_str_array_t;
 
+_z_str_array_t _z_str_array_empty(void);
 _z_str_array_t _z_str_array_make(size_t len);
 void _z_str_array_init(_z_str_array_t *sa, size_t len);
 char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);
