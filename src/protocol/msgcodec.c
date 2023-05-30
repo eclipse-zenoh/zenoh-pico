@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -41,7 +42,7 @@ int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *zbf) {
 
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
 
-int8_t _z_id_encode(_z_wbuf_t *buf, const _z_id_t *id) {
+int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
     int len;
     int8_t ret = _Z_RES_OK;
     for (len = 15; len > 0; len--) {
@@ -50,11 +51,9 @@ int8_t _z_id_encode(_z_wbuf_t *buf, const _z_id_t *id) {
         }
     }
     len++;  // `len` is treated as an "end" until this point, and as a length from then on
-    if (id->id[len]) {
-        _z_wbuf_write(buf, len);
-        for (int i = 0; i < len; i++) {
-            _z_wbuf_write(buf, id->id[i]);
-        }
+    if (id->id[len] != 0) {
+        ret |= _z_wbuf_write(wbf, len);
+        ret |= _z_wbuf_write_bytes(wbf, id->id, 0, len);
     } else {
         _Z_DEBUG("Attempted to encode invalid ID 0");
         ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
@@ -68,11 +67,9 @@ int8_t _z_id_encode(_z_wbuf_t *buf, const _z_id_t *id) {
 /// guarantee that this state will be set in case of errors.
 int8_t _z_id_decode(_z_id_t *id, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
-    for (int i = 0; i < 16; i++) {
-        id->id[i] = 0;
-    }
     uint8_t len = _z_zbuf_read(zbf);
     _z_zbuf_read_bytes(zbf, id->id, 0, len);
+    memset(id->id + len, 0, 16 - len);
     return ret;
 }
 

@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <string.h>
 #define ZENOH_PICO_TEST_H
 
 #include <assert.h>
@@ -331,8 +332,8 @@ void payload_field(void) {
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
     ts.time = gen_uint64();
-    ts.id = gen_bytes(16);
-
+    _z_bytes_t id = gen_bytes(16);
+    memcpy(ts.id.id, id.start, id.len);
     return ts;
 }
 
@@ -342,7 +343,7 @@ void assert_eq_timestamp(_z_timestamp_t *left, _z_timestamp_t *right) {
     assert(left->time == right->time);
 
     printf("ID (");
-    assert_eq_uint8_array(&left->id, &right->id);
+    assert(memcmp(left->id.id, right->id.id, 16) == 0);
     printf(")");
 }
 
