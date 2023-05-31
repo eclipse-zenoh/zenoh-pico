@@ -53,7 +53,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_reply_clear(&pr->_reply);
 
     // Free the timestamp
-    _z_bytes_clear(&pr->_tstamp.id);
+    _z_timestamp_clear(&pr->_tstamp);
 }
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
