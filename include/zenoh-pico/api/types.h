@@ -60,9 +60,7 @@ _Bool z_bytes_check(const z_bytes_t *v);
  * Members:
  *   uint8_t id[16]: The array containing the 16 octets of a Zenoh ID.
  */
-typedef struct {
-    uint8_t id[16];
-} z_id_t;
+typedef _z_id_t z_id_t;
 
 /**
  * Represents a string without null-terminator.

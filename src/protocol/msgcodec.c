@@ -15,7 +15,11 @@
 #include "zenoh-pico/protocol/msgcodec.h"
 
 #include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -38,13 +42,44 @@ int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *zbf) {
 
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
 
+int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
+    int len;
+    int8_t ret = _Z_RES_OK;
+    for (len = 15; len > 0; len--) {
+        if (id->id[len]) {
+            break;
+        }
+    }
+    len++;  // `len` is treated as an "end" until this point, and as a length from then on
+    if (id->id[len] != 0) {
+        ret |= _z_wbuf_write(wbf, len);
+        ret |= _z_wbuf_write_bytes(wbf, id->id, 0, len);
+    } else {
+        _Z_DEBUG("Attempted to encode invalid ID 0");
+        ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
+    }
+    return ret;
+}
+
+/// Decodes a `zid` from the zbf, returning a negative value in case of error.
+///
+/// Note that while `_z_id_t` has an error state (full 0s), this function doesn't
+/// guarantee that this state will be set in case of errors.
+int8_t _z_id_decode(_z_id_t *id, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    uint8_t len = _z_zbuf_read(zbf);
+    _z_zbuf_read_bytes(zbf, id->id, 0, len);
+    memset(id->id + len, 0, 16 - len);
+    return ret;
+}
+
 /*------------------ Timestamp Field ------------------*/
 int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
     _Z_EC(_z_uint64_encode(wbf, ts->time))
-    ret |= _z_bytes_encode(wbf, &ts->id);
+    ret |= _z_id_encode(wbf, &ts->id);
 
     return ret;
 }
@@ -54,7 +89,7 @@ int8_t _z_timestamp_decode_na(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint64_decode(&ts->time, zbf);
-    ret |= _z_bytes_decode(&ts->id, zbf);
+    ret |= _z_id_decode(&ts->id, zbf);
 
     return ret;
 }

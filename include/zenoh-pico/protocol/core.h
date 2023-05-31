@@ -39,6 +39,14 @@
 typedef size_t _z_zint_t;
 
 /**
+ * A zenoh ID.
+ */
+
+typedef struct {
+    uint8_t id[16];
+} _z_id_t;
+
+/**
  * A zenoh encoding.
  */
 typedef struct {
@@ -50,7 +58,7 @@ typedef struct {
  * A zenoh timestamp.
  */
 typedef struct {
-    _z_bytes_t id;
+    _z_id_t id;
     uint64_t time;
 } _z_timestamp_t;
 
