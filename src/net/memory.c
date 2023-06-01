@@ -25,8 +25,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     dst->encoding.prefix = src->encoding.prefix;                  // FIXME: call the z_encoding_move
     _z_bytes_move(&dst->encoding.suffix, &src->encoding.suffix);  // FIXME: call the z_encoding_move
 
-    dst->timestamp._time = src->timestamp._time;              // FIXME: call the z_timestamp_move
-    _z_bytes_move(&dst->timestamp._id, &src->timestamp._id);  // FIXME: call the z_timestamp_move
+    dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
+    dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
 }
 
 void _z_sample_clear(_z_sample_t *sample) {
@@ -51,7 +51,7 @@ void _z_hello_clear(_z_hello_t *hello) {
     if (hello->zid.len > 0) {
         _z_bytes_clear(&hello->zid);
     }
-    if (hello->locators._len > 0) {
+    if (hello->locators.len > 0) {
         _z_str_array_clear(&hello->locators);
     }
 }

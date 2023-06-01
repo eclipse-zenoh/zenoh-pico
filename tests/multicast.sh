@@ -16,6 +16,12 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
+if [ "$OSTYPE" = "msys" ]; then
+  TESTBIN="$TESTDIR/Debug/$TESTBIN.exe"
+else
+  TESTBIN="./$TESTBIN"
+fi
+
 cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
@@ -33,7 +39,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running $TESTBIN $LOCATOR..."
-    ./"$TESTBIN" "$LOCATOR"
+    "$TESTBIN" "$LOCATOR"
     RETCODE=$?
 
     [ "$RETCODE" -lt 0 ] && exit "$RETCODE"
@@ -52,7 +58,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running $TESTBIN $LOCATOR..."
-    ./"$TESTBIN" "$LOCATOR"
+    "$TESTBIN" "$LOCATOR"
     RETCODE=$?
 
     [ "$RETCODE" -lt 0 ] && exit "$RETCODE"

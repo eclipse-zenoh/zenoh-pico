@@ -21,6 +21,8 @@
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
+#elif defined(ZENOH_WINDOWS)
+#include "zenoh-pico/system/platform/windows.h"
 #elif defined(ZENOH_ESPIDF)
 #include "zenoh-pico/system/platform/espidf.h"
 #elif defined(ZENOH_MBED)
@@ -78,9 +80,9 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time);
-int z_sleep_ms(unsigned int time);
-int z_sleep_s(unsigned int time);
+int z_sleep_us(size_t time);
+int z_sleep_ms(size_t time);
+int z_sleep_s(size_t time);
 
 /*------------------ Clock ------------------*/
 z_clock_t z_clock_now(void);

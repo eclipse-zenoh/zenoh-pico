@@ -38,9 +38,6 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 void *_zp_unicast_read_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
-    ztu->_read_task_running = true;
-
-    uint8_t ret;
 
     // Acquire and keep the lock
     _z_mutex_lock(&ztu->_mutex_rx);
@@ -88,7 +85,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
         // Decode one session message
         _z_transport_message_t t_msg;
-        ret = _z_transport_message_decode_na(&t_msg, &zbuf);
+        int8_t ret = _z_transport_message_decode_na(&t_msg, &zbuf);
 
         if (ret == _Z_RES_OK) {
             ret = _z_unicast_handle_transport_message(ztu, &t_msg);

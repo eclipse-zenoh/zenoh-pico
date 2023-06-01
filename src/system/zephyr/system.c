@@ -12,11 +12,17 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if defined(ZENOH_PIO)
+#include <kernel.h>
 #include <random/rand32.h>
+#else
+#include <zephyr/kernel.h>
+#include <zephyr/random/rand32.h>
+#endif
+
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <kernel.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
@@ -54,11 +60,11 @@ void z_free(void *ptr) { k_free(ptr); }
 #define Z_THREADS_NUM 4
 
 #ifdef CONFIG_TEST_EXTRA_STACK_SIZE
-    #define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACK_SIZE
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACK_SIZE
 #elif CONFIG_TEST_EXTRA_STACKSIZE
-    #define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACKSIZE
 #else
-    #define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE
+#define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE
 #endif
 
 K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
@@ -109,7 +115,7 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
+int z_sleep_us(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_usleep(rem);  // This function is unlikely to work as expected without kernel tuning.
@@ -123,7 +129,7 @@ int z_sleep_us(unsigned int time) {
     return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_msleep(rem);
@@ -132,7 +138,7 @@ int z_sleep_ms(unsigned int time) {
     return 0;
 }
 
-int z_sleep_s(unsigned int time) {
+int z_sleep_s(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_sleep(K_SECONDS(rem));

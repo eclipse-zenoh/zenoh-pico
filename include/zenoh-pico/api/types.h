@@ -50,6 +50,7 @@ typedef _z_zint_t z_zint_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 typedef _z_bytes_t z_bytes_t;
+_Bool z_bytes_check(const z_bytes_t *v);
 
 /**
  * Represents a Zenoh ID.
@@ -59,9 +60,7 @@ typedef _z_bytes_t z_bytes_t;
  * Members:
  *   uint8_t id[16]: The array containing the 16 octets of a Zenoh ID.
  */
-typedef struct {
-    uint8_t id[16];
-} z_id_t;
+typedef _z_id_t z_id_t;
 
 /**
  * Represents a string without null-terminator.
@@ -194,6 +193,11 @@ _OWNED_TYPE_PTR(_z_queryable_t, queryable)
  */
 typedef _z_encoding_t z_encoding_t;
 
+/*
+ * Represents timestamp value in Zenoh
+ */
+typedef _z_timestamp_t z_timestamp_t;
+
 /**
  * Represents a Zenoh value.
  *
@@ -325,11 +329,10 @@ typedef struct {
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
- *   z_value_t with_value: The payload to include in the query. Note: This parameter has been marked as unstable: it
- * works as advertised, but we may change it in a future release.
+ *   z_value_t value: The payload to include in the query.
  */
 typedef struct {
-    z_value_t with_value;
+    z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
 } z_get_options_t;
@@ -427,6 +430,7 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
 typedef _z_str_array_t z_str_array_t;
+
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
 size_t z_str_array_len(const z_str_array_t *a);
 _Bool z_str_array_is_empty(const z_str_array_t *a);
@@ -445,10 +449,12 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_sample_t;
+
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
 
 /**
  * Represents the query callback closure.
@@ -462,10 +468,12 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_questionable_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_query_t;
+
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
 
@@ -481,10 +489,12 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_reply_t;
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
 
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 
@@ -500,10 +510,12 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_hello_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_hello_t;
+
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
@@ -518,10 +530,12 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_zid_t;
+
+void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

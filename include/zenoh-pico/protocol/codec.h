@@ -28,8 +28,14 @@
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-int8_t _z_enum_encode(_z_wbuf_t *wbf, int en);
-int8_t _z_enum_decode(int *en, _z_zbuf_t *zbf);
+int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en);
+int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf);
+int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
+int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf);
+int8_t _z_query_target_encode(_z_wbuf_t *wbf, z_query_target_t en);
+int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf);
+int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en);
+int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf);
 
 int8_t _z_uint_encode(_z_wbuf_t *buf, unsigned int v);
 int8_t _z_uint_decode(unsigned int *u, _z_zbuf_t *buf);

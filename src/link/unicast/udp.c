@@ -79,22 +79,26 @@ int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    char *s_addr = __z_parse_address_segment_udp_unicast(endpoint->_locator._address);
-    if (s_addr == NULL) {
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    } else {
-        z_free(s_addr);
+    if (ret == _Z_RES_OK) {
+        char *s_address = __z_parse_address_segment_udp_unicast(endpoint->_locator._address);
+        if (s_address == NULL) {
+            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        } else {
+            z_free(s_address);
+        }
     }
 
-    char *s_port = __z_parse_port_segment_udp_unicast(endpoint->_locator._address);
-    if (s_port == NULL) {
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    } else {
-        uint32_t port = strtoul(s_port, NULL, 10);
-        if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+    if (ret == _Z_RES_OK) {
+        char *s_port = __z_parse_port_segment_udp_unicast(endpoint->_locator._address);
+        if (s_port == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        } else {
+            uint32_t port = strtoul(s_port, NULL, 10);
+            if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+                ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+            }
+            z_free(s_port);
         }
-        z_free(s_port);
     }
 
     return ret;
@@ -162,10 +166,10 @@ int8_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_mtu = _z_get_link_mtu_udp_unicast();
 
     zl->_endpoint = endpoint;
-    char *s_addr = __z_parse_address_segment_udp_unicast(endpoint._locator._address);
+    char *s_address = __z_parse_address_segment_udp_unicast(endpoint._locator._address);
     char *s_port = __z_parse_port_segment_udp_unicast(endpoint._locator._address);
-    ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_addr, s_port);
-    z_free(s_addr);
+    ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_address, s_port);
+    z_free(s_address);
     z_free(s_port);
 
     zl->_open_f = _z_f_link_open_udp_unicast;

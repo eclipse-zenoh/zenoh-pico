@@ -512,7 +512,7 @@ void wbuf_add_iosli(void) {
     printf("\n>>> WBuf => Add IOSli\n");
     print_wbuf_overview(&wbf);
 
-    size_t written = 0;
+    uint8_t written = 0;
     uint8_t counter = 0;
     while (written < 255) {
         uint8_t remaining = 255 - written;

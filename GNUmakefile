@@ -64,16 +64,16 @@ all: make
 
 $(BUILD_DIR)/Makefile: CMakeLists.txt
 	mkdir -p $(BUILD_DIR)
-	cmake $(CMAKE_OPT) -B$(BUILD_DIR)
+	cmake $(CMAKE_OPT) -B $(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
 
 install: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) install
+	cmake --install $(BUILD_DIR)
 
-test: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) test
+test: make
+	ctest --verbose --test-dir build
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 

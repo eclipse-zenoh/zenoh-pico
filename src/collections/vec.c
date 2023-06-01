@@ -19,7 +19,7 @@
 #include <string.h>
 
 /*-------- vec --------*/
-inline _z_vec_t _z_vec_make(size_t capacity) {
+_z_vec_t _z_vec_make(size_t capacity) {
     _z_vec_t v;
     v._val = (void **)z_malloc(sizeof(void *) * capacity);
     if (v._val != NULL) {

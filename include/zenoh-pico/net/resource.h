@@ -39,6 +39,6 @@ _z_keyexpr_t _z_rname(const char *rname);
  * Returns:
  *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
-_z_keyexpr_t _z_rid_with_suffix(unsigned long rid, const char *suffix);
+_z_keyexpr_t _z_rid_with_suffix(_z_zint_t rid, const char *suffix);
 
 #endif /* ZENOH_PICO_RESOURCE_NETAPI_H */

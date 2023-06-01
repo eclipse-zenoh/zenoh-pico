@@ -16,6 +16,12 @@
 TESTBIN="$1"
 TESTDIR=$(dirname "$0")
 
+if [ "$OSTYPE" = "msys" ]; then
+  TESTBIN="$TESTDIR/Debug/$TESTBIN.exe"
+else
+  TESTBIN="./$TESTBIN"
+fi
+
 cd "$TESTDIR" || exit
 
 echo "------------------ Running test $TESTBIN -------------------"
@@ -40,13 +46,13 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
-    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$TESTBIN".log 2>&1 &
+    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$1".log 2>&1 &
     ZPID=$!
 
     sleep 5
 
     echo "> Running $TESTBIN ..."
-    ./"$TESTBIN" "$LOCATOR"
+    "$TESTBIN" "$LOCATOR"
     RETCODE=$?
 
     echo "> Stopping zenohd ..."
@@ -55,7 +61,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Logs of zenohd ..."
-    cat zenohd."$TESTBIN".log
+    cat zenohd."$1".log
 
     [ "$RETCODE" -lt 0 ] && exit "$RETCODE"
 done

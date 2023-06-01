@@ -21,7 +21,7 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Session ------------------*/
-_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, const char *locator, const uint32_t timeout,
                                 const _Bool exit_on_first);
 
 int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid);

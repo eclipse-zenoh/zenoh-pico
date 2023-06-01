@@ -662,8 +662,10 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
                 } break;
 
                 case 1: {
-                    __zp_ke_write_chunk(&writer, "*", 1, write_start);
-                    continue;
+                    if (reader[0] == '*') {
+                        __zp_ke_write_chunk(&writer, "*", 1, write_start);
+                        continue;
+                    }
                 } break;
 
                 case 2: {

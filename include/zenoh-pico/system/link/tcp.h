@@ -27,7 +27,7 @@ typedef struct {
     _z_sys_net_endpoint_t _rep;
 } _z_tcp_socket_t;
 
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port);
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port);
 void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep);
 
 int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);

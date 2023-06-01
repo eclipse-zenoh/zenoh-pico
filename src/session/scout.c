@@ -42,6 +42,8 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
 
     if (err == _Z_RES_OK) {
         _z_link_t zl;
+        memset(&zl, 0, sizeof(_z_link_t));
+
         err = _z_open_link(&zl, locator);
         if (err == _Z_RES_OK) {
             // Send the scout message
@@ -81,13 +83,13 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                                 if (n_loc > 0) {
                                     hello->locators = _z_str_array_make(n_loc);
                                     for (size_t i = 0; i < n_loc; i++) {
-                                        hello->locators._val[i] =
+                                        hello->locators.val[i] =
                                             _z_locator_to_str(&s_msg._body._hello._locators._val[i]);
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address
-                                    hello->locators._len = 0;
-                                    hello->locators._val = NULL;
+                                    hello->locators.len = 0;
+                                    hello->locators.val = NULL;
                                 }
 
                                 ret = _z_hello_list_push(ret, hello);

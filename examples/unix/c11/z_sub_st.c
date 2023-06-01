@@ -69,12 +69,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks");
-        return -1;
-    }
-
     z_owned_closure_sample_t callback = z_closure(data_handler);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
