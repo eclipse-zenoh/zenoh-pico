@@ -497,14 +497,15 @@ void message_extension(void) {
     printf("\n");
 
     // Encode
-    int8_t res = _z_msg_ext_encode(&wbf, &e_me);
+    int8_t res = _z_msg_ext_encode(&wbf, &e_me, false);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_msg_ext_t d_me;
-    res = _z_msg_ext_decode(&d_me, &zbf);
+    _Bool has_next;
+    res = _z_msg_ext_decode(&d_me, &zbf, &has_next);
     assert(res == _Z_RES_OK);
 
     assert_eq_message_extension(&e_me, &d_me);

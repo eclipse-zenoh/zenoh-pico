@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/extcodec.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -1610,13 +1611,7 @@ int8_t _z_extensions_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ext_vec
 
     _Z_DEBUG("Encoding _Z_TRANSPORT_EXTENSIONS\n");
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        size_t n_ext = _z_msg_ext_vec_len(v_ext);
-        for (size_t i = 0; (i + 1) < n_ext; i++) {
-            _z_msg_ext_t *ext = _z_msg_ext_vec_get(v_ext, i);
-            _Z_EXT_SET_FLAG(ext->_header, _Z_MSG_EXT_FLAG_Z);
-            ret |= _z_msg_ext_encode(wbf, ext);
-        }
-        ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(v_ext, n_ext - 1));  // Last extension wo\ next flag
+        ret |= _z_msg_ext_vec_encode(wbf, v_ext);
     }
 
     return ret;
@@ -1628,15 +1623,9 @@ int8_t _z_extensions_decode_na(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t 
 
     _Z_DEBUG("Decoding _Z_TRANSPORT_EXTENSIONS\n");
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        *v_ext = _z_msg_ext_vec_make(10);  // TODO[protocol]: make it a list
-        _z_msg_ext_t *ext = NULL;
-        do {
-            ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
-            ret |= _z_msg_ext_decode(ext, zbf);
-            _z_msg_ext_vec_append(v_ext, ext);
-        } while (_Z_EXT_HAS_FLAG(header, _Z_MSG_EXT_FLAG_Z) == true);
+        ret |= _z_msg_ext_vec_decode(v_ext, zbf);
     } else {
-        *v_ext = _z_msg_ext_vec_make(0);
+        _z_msg_ext_vec_reset(v_ext);
     }
 
     return ret;
@@ -1929,15 +1918,7 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
         } break;
     }
 
-    if (n_ext > 0) {
-        for (size_t i = 0; (i + 1) < n_ext; i++) {
-            _z_msg_ext_t *ext = _z_msg_ext_vec_get(&msg->_extensions, i);
-            _Z_EXT_SET_FLAG(ext->_header, _Z_MSG_EXT_FLAG_Z);
-            ret |= _z_msg_ext_encode(wbf, ext);
-        }
-        ret |=
-            _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(&msg->_extensions, n_ext - 1));  // Last extension wo\ next flag
-    }
+    ret |= _z_msg_ext_vec_encode(wbf, &msg->_extensions);
 
     return ret;
 }
@@ -1975,16 +1956,10 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
     } while ((ret == _Z_RES_OK) && (is_last == false));
 
     if (ret == _Z_RES_OK) {
-        if ((msg->_header & 0x80) == 0x80) {
-            msg->_extensions = _z_msg_ext_vec_make(10);
-            _z_msg_ext_t *ext = NULL;
-            do {
-                ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
-                ret |= _z_msg_ext_decode(ext, zbf);
-                _z_msg_ext_vec_append(&msg->_extensions, ext);
-            } while ((ext->_header & 0x80) == 0x80);
+        if ((msg->_header & _Z_MSG_EXT_FLAG_Z) != 0) {
+            ret |= _z_msg_ext_vec_decode(&msg->_extensions, zbf);
         } else {
-            msg->_extensions = _z_msg_ext_vec_make(0);
+            _z_msg_ext_vec_reset(&msg->_extensions);
         }
     }
 

@@ -14,8 +14,12 @@
 
 #include "zenoh-pico/protocol/extcodec.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/ext.h"
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -64,10 +68,10 @@ int8_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
 int8_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) { return _z_msg_ext_decode_zbuf(ext, zbf); }
 
 /*------------------ Message Extension ------------------*/
-int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext) {
+int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, _Bool has_next) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_wbuf_write(wbf, ext->_header))
+    _Z_EC(_z_wbuf_write(wbf, _Z_EXT_FULL_ID(ext->_header) | (has_next << 7)))
 
     uint8_t enc = _Z_EXT_ENC(ext->_header);
     switch (enc) {
@@ -115,28 +119,46 @@ int8_t _z_msg_ext_unknown_body_decode(_z_msg_ext_body_t *body, uint8_t enc, _z_z
     return ret;
 }
 
-int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf) {
+int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&ext->_header, zbf);  // Decode the header
     if (ret == _Z_RES_OK) {
-        uint8_t id = _Z_EXT_FULL_ID(ext->_header);
-        switch (id) {
-                // case _Z_MSG_EXT_ID_FOO: {
-                //     ret |= _z_msg_ext_decode_foo(&ext->_body, zbf);
-                // } break;
-            default: {
-                _Z_DEBUG("WARNING: Trying to decode message extension with unknown id(%d)\n", id);
-                if (_Z_EXT_HAS_FLAG(ext->_header, _Z_MSG_EXT_FLAG_M) == false) {
-                    ret |= _z_msg_ext_unknown_body_decode(&ext->_body, _Z_EXT_ENC(ext->_header), zbf);
-                } else {
-                    ret |= _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
-                }
-            } break;
-        }
+        // TODO: define behaviour on decode failure, regarding zbuf allocation
+        ret |= _z_msg_ext_unknown_body_decode(&ext->_body, _Z_EXT_ENC(ext->_header), zbf);
     }
+    *has_next = (ext->_header & _Z_MSG_EXT_FLAG_Z) != 0;
+    ext->_header |= _Z_EXT_FULL_ID_MASK;
 
     return ret;
 }
 
-int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf) { return _z_msg_ext_decode(ext, zbf); }
+int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next) {
+    return _z_msg_ext_decode(ext, zbf, has_next);
+}
+
+int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions) {
+    int8_t ret = _Z_RES_OK;
+    size_t len = _z_msg_ext_vec_len(extensions);
+    if (len > 0) {
+        int i;
+        for (i = 0; ret == _Z_RES_OK && i < len - 1; i++) {
+            ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(extensions, i), true);
+        }
+        if (ret == _Z_RES_OK) {
+            ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(extensions, i), true);
+        }
+    }
+    return ret;
+}
+int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    _z_msg_ext_vec_reset(extensions);
+    _Bool has_next = true;
+    while (has_next && ret == _Z_RES_OK) {
+        _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
+        ret |= _z_msg_ext_decode(ext, zbf, &has_next);
+        _z_msg_ext_vec_append(extensions, ext);
+    }
+    return ret;
+}
