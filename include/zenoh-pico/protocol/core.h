@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_PROTOCOL_CORE_H
 #define ZENOH_PICO_PROTOCOL_CORE_H
 
+#include <stdint.h>
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
@@ -45,6 +46,9 @@ typedef size_t _z_zint_t;
 typedef struct {
     uint8_t id[16];
 } _z_id_t;
+uint8_t _z_id_len(_z_id_t id);
+_Bool _z_id_check(_z_id_t id);
+_z_id_t _z_id_empty();
 
 /**
  * A zenoh encoding.
@@ -119,7 +123,7 @@ void _z_value_free(_z_value_t **hello);
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_bytes_t zid;
+    _z_id_t zid;
     _z_str_array_t locators;
     z_whatami_t whatami;
     uint8_t version;

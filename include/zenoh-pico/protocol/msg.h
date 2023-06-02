@@ -829,7 +829,7 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 //    - 0b100: Client
 //
 typedef struct {
-    _z_bytes_t _zid;
+    _z_id_t _zid;
     z_what_t _what;
     uint8_t _version;
 } _z_s_msg_scout_t;
@@ -875,7 +875,7 @@ void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg);
 //    - 0b11: Reserved
 //
 typedef struct {
-    _z_bytes_t _zid;
+    _z_id_t _zid;
     _z_locator_array_t _locators;
     z_whatami_t _whatami;
     uint8_t _version;
@@ -1227,13 +1227,12 @@ typedef union {
 typedef struct {
     _z_scouting_body_t _body;
     _z_attachment_t *_attachment;
-    _z_msg_ext_vec_t _extensions;
     uint8_t _header;
 } _z_scouting_message_t;
 void _z_s_msg_clear(_z_scouting_message_t *msg);
 
-_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid);
-_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators);
+_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_id_t zid);
+_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_locator_array_t locators);
 
 void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg);
 void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg);

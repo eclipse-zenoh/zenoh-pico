@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/extcodec.h"
@@ -45,15 +46,10 @@ int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *zbf) {
 
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
 
-int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
-    int len;
+int8_t _z_id_encode_as_zbytes(_z_wbuf_t *wbf, const _z_id_t *id) {
     int8_t ret = _Z_RES_OK;
-    for (len = 15; len > 0; len--) {
-        if (id->id[len]) {
-            break;
-        }
-    }
-    len++;  // `len` is treated as an "end" until this point, and as a length from then on
+    uint8_t len = _z_id_len(*id);
+
     if (id->id[len] != 0) {
         ret |= _z_wbuf_write(wbf, len);
         ret |= _z_wbuf_write_bytes(wbf, id->id, 0, len);
@@ -68,7 +64,7 @@ int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
 ///
 /// Note that while `_z_id_t` has an error state (full 0s), this function doesn't
 /// guarantee that this state will be set in case of errors.
-int8_t _z_id_decode(_z_id_t *id, _z_zbuf_t *zbf) {
+int8_t _z_id_decode_as_zbytes(_z_id_t *id, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     uint8_t len = _z_zbuf_read(zbf);
     _z_zbuf_read_bytes(zbf, id->id, 0, len);
@@ -82,7 +78,7 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
     _Z_EC(_z_uint64_encode(wbf, ts->time))
-    ret |= _z_id_encode(wbf, &ts->id);
+    ret |= _z_id_encode_as_zbytes(wbf, &ts->id);
 
     return ret;
 }
@@ -92,7 +88,7 @@ int8_t _z_timestamp_decode_na(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint64_decode(&ts->time, zbf);
-    ret |= _z_id_decode(&ts->id, zbf);
+    ret |= _z_id_decode_as_zbytes(&ts->id, zbf);
 
     return ret;
 }
@@ -1793,14 +1789,14 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_what & 0x07);
-    uint8_t zid_len = msg->_zid.len;
+    uint8_t zid_len = _z_id_len(msg->_zid);
     if (zid_len > 0) {  // TODO[protocol]: check if ZID > 0 && <= 16
         _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);
         cbyte |= ((zid_len - 1) & 0x0F) << 4;
     }
     _Z_EC(_z_uint8_encode(wbf, cbyte))
 
-    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+    ret |= _z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zid_len);
 
     return ret;
 }
@@ -1816,13 +1812,11 @@ int8_t _z_scout_decode_na(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_what = cbyte & 0x07;
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
-        msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
-        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
-        if (ret != _Z_RES_OK) {
-            msg->_zid = _z_bytes_empty();
-        }
+        uint8_t len = ((cbyte & 0xF0) >> 4) + 1;
+        msg->_zid = _z_id_empty();
+        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, len);
     } else {
-        msg->_zid = _z_bytes_empty();
+        msg->_zid = _z_id_empty();
     }
 
     return ret;
@@ -1838,12 +1832,12 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     _Z_DEBUG("Encoding _Z_MID_HELLO\n");
 
     _Z_EC(_z_uint8_encode(wbf, msg->_version))
-
+    uint8_t zidlen = _z_id_len(msg->_zid);
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
-    cbyte |= ((msg->_zid.len - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
     _Z_EC(_z_uint8_encode(wbf, cbyte))
-    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+    _Z_EC(_z_bytes_val_encode(wbf, &(_z_bytes_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
@@ -1861,24 +1855,22 @@ int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
-    msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
 
     if (ret == _Z_RES_OK) {
-        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
-        if (ret != _Z_RES_OK) {
-            msg->_zid = _z_bytes_empty();
-        }
+        msg->_zid = _z_id_empty();
+        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     } else {
-        msg->_zid = _z_bytes_empty();
+        msg->_zid = _z_id_empty();
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true)) {
         ret |= _z_locators_decode(&msg->_locators, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_locators = _z_locator_array_make(0);
+            msg->_locators = _z_locator_array_empty();
         }
     } else {
-        msg->_locators = _z_locator_array_make(0);
+        msg->_locators = _z_locator_array_empty();
     }
 
     return ret;
@@ -1897,10 +1889,10 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
     }
 
     uint8_t header = msg->_header;
-    size_t n_ext = _z_msg_ext_vec_len(&msg->_extensions);
-    if (n_ext > 0) {
-        header |= _Z_FLAG_T_Z;
-    }
+    // size_t n_ext = _z_msg_ext_vec_len(&msg->_extensions);
+    // if (n_ext > 0) {
+    //     header |= _Z_FLAG_T_Z;
+    // }
 
     _Z_EC(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
@@ -1918,11 +1910,12 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
         } break;
     }
 
-    ret |= _z_msg_ext_vec_encode(wbf, &msg->_extensions);
+    // ret |= _z_msg_ext_vec_encode(wbf, &msg->_extensions);
 
     return ret;
 }
 
+int8_t _z_scouting_decode_handle_ext(_z_msg_ext_t *extension, void *extensions) { return 0; }
 int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
@@ -1957,9 +1950,7 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
 
     if (ret == _Z_RES_OK) {
         if ((msg->_header & _Z_MSG_EXT_FLAG_Z) != 0) {
-            ret |= _z_msg_ext_vec_decode(&msg->_extensions, zbf);
-        } else {
-            _z_msg_ext_vec_reset(&msg->_extensions);
+            ret |= _z_msg_ext_decode_iter(zbf, _z_scouting_decode_handle_ext, NULL);
         }
     }
 

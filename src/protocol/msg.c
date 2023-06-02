@@ -15,6 +15,7 @@
 #include "zenoh-pico/protocol/msg.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
@@ -586,7 +587,7 @@ void _z_n_msg_free(_z_network_message_t **msg) {
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
-_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid) {
+_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_id_t zid) {
     _z_scouting_message_t msg;
     msg._header = _Z_MID_SCOUT;
 
@@ -595,7 +596,6 @@ _z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid) {
     msg._body._scout._zid = zid;
 
     msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -603,13 +603,13 @@ _z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_bytes_t zid) {
 void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg) {
     clone->_what = msg->_what;
     clone->_version = msg->_version;
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    memcpy(clone->_zid.id, msg->_zid.id, 16);
 }
 
-void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg) { _z_bytes_clear(&msg->_zid); }
+void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg) {}
 
 /*------------------ Hello Message ------------------*/
-_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _z_locator_array_t locators) {
+_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_locator_array_t locators) {
     _z_scouting_message_t msg;
     msg._header = _Z_MID_HELLO;
 
@@ -623,21 +623,16 @@ _z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_bytes_t zid, _
     }
 
     msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
 void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg) {
     _z_locator_array_copy(&clone->_locators, &msg->_locators);
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    memcpy(clone->_zid.id, msg->_zid.id, 16);
     clone->_whatami = msg->_whatami;
 }
 
-void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) {
-    _z_bytes_clear(&msg->_zid);
-    _z_locators_clear(&msg->_locators);
-}
+void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
 
 /*------------------ Join Message ------------------*/
 _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
@@ -998,7 +993,6 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
 void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
     clone->_header = msg->_header;
     clone->_attachment = msg->_attachment;
-    _z_msg_ext_vec_copy(&clone->_extensions, &msg->_extensions);
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
@@ -1036,6 +1030,4 @@ void _z_s_msg_clear(_z_scouting_message_t *msg) {
             _Z_DEBUG("WARNING: Trying to clear session message with unknown ID(%d)\n", mid);
         } break;
     }
-
-    _z_msg_ext_vec_clear(&msg->_extensions);
 }

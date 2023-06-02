@@ -19,9 +19,10 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
 
 /*------------------ Session ------------------*/
-_z_hello_list_t *_z_scout_inner(const z_what_t what, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t id, const char *locator, const uint32_t timeout,
                                 const _Bool exit_on_first);
 
 int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid);

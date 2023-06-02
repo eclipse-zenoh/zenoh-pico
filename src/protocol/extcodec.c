@@ -151,14 +151,29 @@ int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions)
     }
     return ret;
 }
+int8_t _z_msg_ext_vec_push_callback(_z_msg_ext_t *extension, _z_msg_ext_vec_t *extensions) {
+    _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
+    *ext = *extension;
+    *extension = _z_msg_ext_make_unit(0);
+    _z_msg_ext_vec_append(extensions, extension);
+    return 0;
+}
 int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     _z_msg_ext_vec_reset(extensions);
+    return _z_msg_ext_decode_iter(zbf, (int8_t(*)(_z_msg_ext_t *, void *))_z_msg_ext_vec_push_callback,
+                                  (void *)extensions);
+}
+int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context) {
+    int8_t ret = _Z_RES_OK;
     _Bool has_next = true;
     while (has_next && ret == _Z_RES_OK) {
-        _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
-        ret |= _z_msg_ext_decode(ext, zbf, &has_next);
-        _z_msg_ext_vec_append(extensions, ext);
+        _z_msg_ext_t ext = _z_msg_ext_make_unit(0);
+        ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
+        if (ret == _Z_RES_OK) {
+            ret |= callback(&ext, context);
+            _z_msg_ext_clear(&ext);
+        }
     }
     return ret;
 }

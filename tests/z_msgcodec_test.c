@@ -12,7 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdbool.h>
 #include <string.h>
+
+#include "zenoh-pico/protocol/core.h"
 #define ZENOH_PICO_TEST_H
 
 #include <assert.h>
@@ -497,7 +500,7 @@ void message_extension(void) {
     printf("\n");
 
     // Encode
-    int8_t res = _z_msg_ext_encode(&wbf, &e_me, false);
+    int8_t res = _z_msg_ext_encode(&wbf, &e_me, true);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -2111,12 +2114,14 @@ void response_final_message(void) {
 /*------------------ Scout Message ------------------*/
 _z_scouting_message_t gen_scout_message(void) {
     z_what_t what = gen_uint8() % 7;
-    _z_bytes_t zid;
+    _z_bytes_t zidbytes;
     if (gen_bool()) {
-        zid = gen_bytes((gen_uint8() % 16) + 1);
+        zidbytes = gen_bytes((gen_uint8() % 16) + 1);
     } else {
-        zid = _z_bytes_empty();
+        zidbytes = _z_bytes_empty();
     }
+    _z_id_t zid = _z_id_empty();
+    memcpy(zid.id, zidbytes.start, zidbytes.len);
     return _z_s_msg_make_scout(what, zid);
 }
 
@@ -2127,7 +2132,7 @@ void assert_eq_scout_message(_z_s_msg_scout_t *left, _z_s_msg_scout_t *right, ui
     printf("   What (%u:%u)\n", left->_what, right->_what);
     assert(left->_what == right->_what);
     printf("   ");
-    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     printf("\n");
 }
 
@@ -2162,7 +2167,10 @@ void scout_message(void) {
 /*------------------ Hello Message ------------------*/
 _z_scouting_message_t gen_hello_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
-    _z_bytes_t zid = gen_bytes((gen_uint8() % 16) + 1);
+    _z_bytes_t zidbytes = gen_bytes((gen_uint8() % 16) + 1);
+    _z_id_t zid = _z_id_empty();
+    memcpy(zid.id, zidbytes.start, zidbytes.len);
+    _z_bytes_clear(&zidbytes);
 
     _z_locator_array_t locators;
     if (gen_bool() == true)
@@ -2183,7 +2191,7 @@ void assert_eq_hello_message(_z_s_msg_hello_t *left, _z_s_msg_hello_t *right, ui
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
@@ -2881,9 +2889,9 @@ _z_scouting_message_t gen_scouting_message(void) {
 
 void assert_eq_scouting_message(_z_scouting_message_t *left, _z_scouting_message_t *right) {
     // FIXME[protocol]: This is here to set the extensions flags that is only known at encoding time
-    if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
-        left->_header |= _Z_FLAG_T_Z;
-    }
+    // if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
+    //     left->_header |= _Z_FLAG_T_Z;
+    // }
 
     // Test message decorators
     if (left->_attachment && right->_attachment) {
@@ -2911,14 +2919,14 @@ void assert_eq_scouting_message(_z_scouting_message_t *left, _z_scouting_message
             break;
     }
 
-    size_t left_n_ext = _z_msg_ext_vec_len(&left->_extensions);
-    size_t right_n_ext = _z_msg_ext_vec_len(&right->_extensions);
-    printf("   # of extensions (%zu:%zu)", left_n_ext, right_n_ext);
-    assert(left_n_ext == right_n_ext);
-    for (size_t i = 0; i < left_n_ext; i++) {
-        assert_eq_message_extension(_z_msg_ext_vec_get(&left->_extensions, i),
-                                    _z_msg_ext_vec_get(&right->_extensions, i));
-    }
+    // size_t left_n_ext = _z_msg_ext_vec_len(&left->_extensions);
+    // size_t right_n_ext = _z_msg_ext_vec_len(&right->_extensions);
+    // printf("   # of extensions (%zu:%zu)", left_n_ext, right_n_ext);
+    // assert(left_n_ext == right_n_ext);
+    // for (size_t i = 0; i < left_n_ext; i++) {
+    //     assert_eq_message_extension(_z_msg_ext_vec_get(&left->_extensions, i),
+    //                                 _z_msg_ext_vec_get(&right->_extensions, i));
+    // }
 }
 
 void scouting_message(void) {

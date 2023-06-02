@@ -25,6 +25,14 @@ int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next);
 int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next);
 int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions);
 int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
+/**
+ * Iterates through the extensions in `zbf`, assuming at least one is present at its begining
+ * (calling this function otherwise is UB). Short-circuits if `callback` returns a non-zero value.
+ *
+ * `callback` will receive `context` as its second argument, and may "steal" its first argument by
+ * copying its value and setting it to `_z_msg_ext_make_unit(0)`.
+ */
+int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context);
 
 #endif /* ZENOH_PICO_MSGEXTCODEC_H */
 

@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
@@ -53,13 +54,10 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
 int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t zid;
+    _z_id_t zid = _z_id_empty();
     char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
     if (opt_as_str != NULL) {
-        zid = _z_bytes_make(16);
-        _z_uuid_to_bytes((uint8_t *)zid.start, opt_as_str);
-    } else {
-        zid = _z_bytes_empty();
+        _z_uuid_to_bytes(zid.id, opt_as_str);
     }
 
     if (config != NULL) {
@@ -84,7 +82,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
+            _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
                 _z_str_array_copy(&locators, &hello->locators);

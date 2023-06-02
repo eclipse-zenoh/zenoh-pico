@@ -26,12 +26,13 @@
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/utils/uuid.h"
 #include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/utils/uuid.h"
 
 /********* Data Types Handlers *********/
 _Bool z_bytes_check(const z_bytes_t *v) { return v->start != NULL; }
@@ -512,13 +513,10 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         }
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
-        _z_bytes_t zid;
+        _z_id_t zid = _z_id_empty();
         char *zid_str = _z_config_get(config->_value, Z_CONFIG_SESSION_ZID_KEY);
         if (zid_str != NULL) {
-            zid = _z_bytes_make(16);
-            _z_uuid_to_bytes((uint8_t *)zid.start, zid_str);
-        } else {
-            zid = _z_bytes_empty();
+            _z_uuid_to_bytes(zid.id, zid_str);
         }
 
         _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
@@ -685,7 +683,7 @@ void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_c
     z_owned_reply_t oreply = {._value = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
-    z_reply_drop(&oreply); // user_call is allowed to take ownership of the reply by setting oreply._value to NULL
+    z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._value to NULL
 }
 
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,

@@ -13,8 +13,10 @@
 //
 
 #include <stddef.h>
+#include <string.h>
 
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -77,7 +79,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             if (hello != NULL) {
                                 hello->version = s_msg._body._hello._version;
                                 hello->whatami = s_msg._body._hello._whatami;
-                                _z_bytes_copy(&hello->zid, &s_msg._body._hello._zid);
+                                memcpy(hello->zid.id, s_msg._body._hello._zid.id, 16);
 
                                 size_t n_loc = _z_locator_array_len(&s_msg._body._hello._locators);
                                 if (n_loc > 0) {
@@ -125,7 +127,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_what_t what, const _z_bytes_t zid, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *locator, const uint32_t timeout,
                                 const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
