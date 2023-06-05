@@ -15,10 +15,10 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#define ZENOH_PICO "0.7.0"
+#define ZENOH_PICO "0.7.2.1"
 #define ZENOH_PICO_MAJOR 0
 #define ZENOH_PICO_MINOR 7
-#define ZENOH_PICO_PATCH 0
+#define ZENOH_PICO_PATCH 2
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/macros.h"
