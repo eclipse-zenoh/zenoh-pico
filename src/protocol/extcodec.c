@@ -164,6 +164,11 @@ int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
     return _z_msg_ext_decode_iter(zbf, (int8_t(*)(_z_msg_ext_t *, void *))_z_msg_ext_vec_push_callback,
                                   (void *)extensions);
 }
+
+int8_t _z_msg_ext_skip_non_mandatory(_z_msg_ext_t *extension, void *ctx) {
+    (void)ctx;
+    return (extension->_header & _Z_MSG_EXT_FLAG_M) ? _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN : _Z_RES_OK;
+}
 int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context) {
     int8_t ret = _Z_RES_OK;
     _Bool has_next = true;
@@ -176,4 +181,8 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
         }
     }
     return ret;
+}
+
+int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf) {
+    return _z_msg_ext_decode_iter(zbf, _z_msg_ext_skip_non_mandatory, NULL);
 }

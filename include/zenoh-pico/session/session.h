@@ -43,7 +43,7 @@ typedef void (*_z_drop_handler_t)(void *arg);
  */
 typedef struct {
     _z_sample_t sample;
-    _z_bytes_t replier_id;
+    _z_id_t replier_id;
 } _z_reply_data_t;
 
 void _z_reply_data_clear(_z_reply_data_t *rd);
@@ -180,6 +180,6 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
  */
 typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
-int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size);
+int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
 #endif /* ZENOH_PICO_SESSION_TYPES_H */

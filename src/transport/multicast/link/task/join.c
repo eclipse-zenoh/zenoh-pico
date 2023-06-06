@@ -25,8 +25,7 @@ int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
     next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
 
-    _z_bytes_t zid = _z_bytes_wrap(((_z_session_t *)ztm->_session)->_local_zid.start,
-                                   ((_z_session_t *)ztm->_session)->_local_zid.len);
+    _z_id_t zid = ((_z_session_t *)ztm->_session)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     return _z_multicast_send_t_msg(ztm, &jsm);

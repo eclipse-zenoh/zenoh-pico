@@ -176,6 +176,19 @@ _z_bytes_t gen_bytes(size_t len) {
     return arr;
 }
 
+_z_id_t gen_zid(void) {
+    _z_id_t id = _z_id_empty();
+    uint8_t hash = 55;
+    uint8_t len = gen_uint8() % 16;
+    for (uint8_t i = 0; i < len; i++) {
+        uint8_t byte = gen_uint8();
+        id.id[i] = byte;
+        hash ^= byte;
+    }
+    id.id[0] = hash;
+    return id;
+}
+
 char *gen_str(size_t size) {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char *str = (char *)z_malloc(size + 1);
@@ -912,10 +925,10 @@ void print_reply_context(_z_reply_context_t *rc) {
 
 _z_reply_context_t *gen_reply_context(void) {
     _z_zint_t qid = gen_zint();
-    _z_bytes_t replier_id = gen_bytes(16);
+    _z_id_t replier_id = gen_zid();
     _Bool is_final = gen_bool();
     if (is_final == true) {
-        _z_bytes_clear(&replier_id);
+        replier_id = _z_id_empty();
     }
 
     return _z_msg_make_reply_context(qid, replier_id, is_final);
@@ -929,10 +942,11 @@ void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right
     assert(left->_qid == right->_qid);
 
     printf("Replier ID (");
-    if (_Z_HAS_FLAG(left->_header, _Z_FLAG_Z_F) == false)
-        assert_eq_uint8_array(&left->_replier_id, &right->_replier_id);
-    else
+    if (_Z_HAS_FLAG(left->_header, _Z_FLAG_Z_F) == false) {
+        assert(memcmp(left->_replier_id.id, right->_replier_id.id, 16) == 0);
+    } else {
         printf("NULL:NULL");
+    }
     printf(")");
 }
 
@@ -2114,14 +2128,7 @@ void response_final_message(void) {
 /*------------------ Scout Message ------------------*/
 _z_scouting_message_t gen_scout_message(void) {
     z_what_t what = gen_uint8() % 7;
-    _z_bytes_t zidbytes;
-    if (gen_bool()) {
-        zidbytes = gen_bytes((gen_uint8() % 16) + 1);
-    } else {
-        zidbytes = _z_bytes_empty();
-    }
-    _z_id_t zid = _z_id_empty();
-    memcpy(zid.id, zidbytes.start, zidbytes.len);
+    _z_id_t zid = gen_zid();
     return _z_s_msg_make_scout(what, zid);
 }
 
@@ -2167,10 +2174,7 @@ void scout_message(void) {
 /*------------------ Hello Message ------------------*/
 _z_scouting_message_t gen_hello_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
-    _z_bytes_t zidbytes = gen_bytes((gen_uint8() % 16) + 1);
-    _z_id_t zid = _z_id_empty();
-    memcpy(zid.id, zidbytes.start, zidbytes.len);
-    _z_bytes_clear(&zidbytes);
+    _z_id_t zid = gen_zid();
 
     _z_locator_array_t locators;
     if (gen_bool() == true)
@@ -2237,7 +2241,7 @@ void hello_message(void) {
 /*------------------ Join Message ------------------*/
 _z_transport_message_t gen_join_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
-    _z_bytes_t zid = gen_bytes(16);
+    _z_id_t zid = gen_zid();
     _z_zint_t lease = gen_bool() ? gen_zint() * 1000 : gen_zint();
 
     _z_conduit_sn_list_t next_sn;
@@ -2282,7 +2286,7 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
@@ -2366,7 +2370,7 @@ void join_message(void) {
 /*------------------ Init Message ------------------*/
 _z_transport_message_t gen_init_message(void) {
     z_whatami_t whatami = (gen_uint8() % 2) + 1;
-    _z_bytes_t zid = gen_bytes(16);
+    _z_id_t zid = gen_zid();
 
     _z_transport_message_t t_msg;
     if (gen_bool()) {
@@ -2405,7 +2409,7 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
     printf("\n");
 
     printf("   ");
-    assert_eq_uint8_array(&left->_zid, &right->_zid);
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     printf("\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {

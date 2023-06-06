@@ -48,7 +48,7 @@ typedef struct {
 } _z_id_t;
 uint8_t _z_id_len(_z_id_t id);
 _Bool _z_id_check(_z_id_t id);
-_z_id_t _z_id_empty();
+_z_id_t _z_id_empty(void);
 
 /**
  * A zenoh encoding.

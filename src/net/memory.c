@@ -15,6 +15,8 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/protocol/core.h"
+
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     dst->keyexpr._id = src->keyexpr._id;          // FIXME: call the z_keyexpr_move
     dst->keyexpr._suffix = src->keyexpr._suffix;  // FIXME: call the z_keyexpr_move
@@ -66,7 +68,7 @@ void _z_hello_free(_z_hello_t **hello) {
 
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
     _z_sample_clear(&reply_data->sample);
-    _z_bytes_clear(&reply_data->replier_id);
+    reply_data->replier_id = _z_id_empty();
 }
 
 void _z_reply_data_free(_z_reply_data_t **reply_data) {

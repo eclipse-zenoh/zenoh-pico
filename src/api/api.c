@@ -563,18 +563,10 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     if (zs._val->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_transport_peer_entry_list_t *l = zs._val->_tp._transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
-            z_id_t id;
             _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
+            z_id_t id = val->_remote_zid;
 
-            if (val->_remote_zid.len <= sizeof(id.id)) {
-                _z_bytes_t bs = val->_remote_zid;
-                for (size_t i = 0; i < bs.len; i++) {
-                    id.id[i] = bs.start[bs.len - i - 1];
-                }
-                (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
-
-                callback->call(&id, ctx);
-            }
+            callback->call(&id, ctx);
         }
     }
 #else
@@ -594,16 +586,8 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 #if Z_UNICAST_TRANSPORT == 1
     if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        z_id_t id;
-        if (zs._val->_tp._transport._unicast._remote_zid.len <= sizeof(id.id)) {
-            _z_bytes_t bs = zs._val->_tp._transport._unicast._remote_zid;
-            for (size_t i = 0; i < bs.len; i++) {
-                id.id[i] = bs.start[bs.len - i - 1];
-            }
-            (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
-
-            callback->call(&id, ctx);
-        }
+        z_id_t id = zs._val->_tp._transport._unicast._remote_zid;
+        callback->call(&id, ctx);
     }
 #endif  // Z_UNICAST_TRANSPORT == 1
 
@@ -614,20 +598,7 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     return 0;
 }
 
-z_id_t z_info_zid(const z_session_t zs) {
-    z_id_t id;
-    if (zs._val->_local_zid.len <= sizeof(id.id)) {
-        _z_bytes_t bs = zs._val->_local_zid;
-        for (size_t i = 0; i < bs.len; i++) {
-            id.id[i] = bs.start[bs.len - i - 1];
-        }
-        (void)memset(&id.id[bs.len], 0, sizeof(id.id) - bs.len);
-    } else {
-        (void)memset(&id.id[0], 0, sizeof(id.id));
-    }
-
-    return id;
-}
+z_id_t z_info_zid(const z_session_t zs) { return zs._val->_local_zid; }
 
 z_put_options_t z_put_options_default(void) {
     return (z_put_options_t){.encoding = z_encoding_default(),

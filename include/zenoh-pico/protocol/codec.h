@@ -22,9 +22,9 @@
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
-#define _Z_EC(fn)          \
-    if (fn != _Z_RES_OK) { \
-        return -1;         \
+#define _Z_EC(fn)            \
+    if ((fn) != _Z_RES_OK) { \
+        return -1;           \
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/

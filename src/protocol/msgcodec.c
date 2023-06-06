@@ -25,7 +25,9 @@
 #include "zenoh-pico/protocol/extcodec.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 
 /*=============================*/
 /*           Fields            */
@@ -279,7 +281,7 @@ int8_t _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
 
     _Z_EC(_z_zint_encode(wbf, msg->_qid))
     if (_Z_HAS_FLAG(msg->_header, _Z_FLAG_Z_F) == false) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_replier_id))
+        _Z_EC(_z_id_encode_as_zbytes(wbf, &msg->_replier_id))
     }
 
     return ret;
@@ -293,11 +295,9 @@ int8_t _z_reply_context_decode_na(_z_reply_context_t *rc, _z_zbuf_t *zbf, uint8_
 
     ret |= _z_zint_decode(&rc->_qid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_F) == false) {
-        _z_bytes_t rid;
-        ret |= _z_bytes_decode(&rid, zbf);
-        _z_bytes_copy(&rc->_replier_id, &rid);
+        ret |= _z_id_decode_as_zbytes(&rc->_replier_id, zbf);
     } else {
-        rc->_replier_id = _z_bytes_empty();
+        rc->_replier_id = _z_id_empty();
     }
 
     return ret;
@@ -1194,13 +1194,16 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_T_JOIN\n");
 
+    // TODO[protocol] add options byte if `O==1`
+
     _Z_EC(_z_wbuf_write(wbf, msg->_version))
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
-    cbyte |= ((msg->_zid.len - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    uint8_t zidlen = _z_id_len(msg->_zid);
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
     _Z_EC(_z_uint8_encode(wbf, cbyte))
-    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+    _Z_EC(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
         cbyte = 0;
@@ -1240,15 +1243,11 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
-    msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
 
+    msg->_zid = _z_id_empty();
     if (ret == _Z_RES_OK) {
-        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
-        if (ret != _Z_RES_OK) {
-            msg->_zid = _z_bytes_empty();
-        }
-    } else {
-        msg->_zid = _z_bytes_empty();
+        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S) == true) {
@@ -1297,9 +1296,10 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
-    cbyte |= ((msg->_zid.len - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    uint8_t zidlen = _z_id_len(msg->_zid);
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
     _Z_EC(_z_uint8_encode(wbf, cbyte))
-    _Z_EC(_z_bytes_val_encode(wbf, &msg->_zid))
+    _Z_EC(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         cbyte = 0;
@@ -1325,16 +1325,12 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
-    msg->_whatami = cbyte & 0x03;
-    msg->_zid.len = ((cbyte & 0xF0) >> 4) + 1;
+    msg->_zid = _z_id_empty();
 
     if (ret == _Z_RES_OK) {
-        ret |= _z_bytes_val_decode(&msg->_zid, zbf);
-        if (ret != _Z_RES_OK) {
-            msg->_zid = _z_bytes_empty();
-        }
-    } else {
-        msg->_zid = _z_bytes_empty();
+        msg->_whatami = cbyte & 0x03;
+        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
@@ -1666,7 +1662,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
         case _Z_MID_T_JOIN: {
             ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
+            // ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_INIT: {
@@ -1790,7 +1786,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
     uint8_t cbyte = 0;
     cbyte |= (msg->_what & 0x07);
     uint8_t zid_len = _z_id_len(msg->_zid);
-    if (zid_len > 0) {  // TODO[protocol]: check if ZID > 0 && <= 16
+    if (zid_len > 0) {
         _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);
         cbyte |= ((zid_len - 1) & 0x0F) << 4;
     }
@@ -1811,12 +1807,10 @@ int8_t _z_scout_decode_na(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_what = cbyte & 0x07;
+    msg->_zid = _z_id_empty();
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
-        uint8_t len = ((cbyte & 0xF0) >> 4) + 1;
-        msg->_zid = _z_id_empty();
-        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, len);
-    } else {
-        msg->_zid = _z_id_empty();
+        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
     return ret;
@@ -1835,7 +1829,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     uint8_t zidlen = _z_id_len(msg->_zid);
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
-    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;
     _Z_EC(_z_uint8_encode(wbf, cbyte))
     _Z_EC(_z_bytes_val_encode(wbf, &(_z_bytes_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
 
@@ -1914,8 +1908,6 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
 
     return ret;
 }
-
-int8_t _z_scouting_decode_handle_ext(_z_msg_ext_t *extension, void *extensions) { return 0; }
 int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
@@ -1948,10 +1940,8 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
         }
     } while ((ret == _Z_RES_OK) && (is_last == false));
 
-    if (ret == _Z_RES_OK) {
-        if ((msg->_header & _Z_MSG_EXT_FLAG_Z) != 0) {
-            ret |= _z_msg_ext_decode_iter(zbf, _z_scouting_decode_handle_ext, NULL);
-        }
+    if ((ret == _Z_RES_OK) && (msg->_header & _Z_MSG_EXT_FLAG_Z) != 0) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf);
     }
 
     return ret;

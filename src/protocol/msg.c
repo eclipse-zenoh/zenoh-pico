@@ -61,7 +61,7 @@ void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_payload); }
 
 /*------------------ ReplyContext Decorator ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final) {
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final) {
     _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
     if (rctx != NULL) {
         rctx->_qid = qid;
@@ -76,11 +76,7 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_
     return rctx;
 }
 
-void _z_msg_clear_reply_context(_z_reply_context_t *rc) {
-    if (_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F) == false) {
-        _z_bytes_clear(&rc->_replier_id);
-    }
-}
+void _z_msg_clear_reply_context(_z_reply_context_t *rc) {}
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -635,7 +631,7 @@ void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg) {
 void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
 
 /*------------------ Join Message ------------------*/
-_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
+_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_id_t zid,
                                           _z_conduit_sn_list_t next_sn) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_JOIN;
@@ -676,13 +672,13 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     clone->_next_sn = msg->_next_sn;
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    memcpy(clone->_zid.id, msg->_zid.id, 16);
 }
 
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg) { _z_bytes_clear(&msg->_zid); }
+void _z_t_msg_clear_join(_z_t_msg_join_t *msg) {}
 
 /*------------------ Init Message ------------------*/
-_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid) {
+_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_INIT;
 
@@ -708,7 +704,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zi
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie) {
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_bytes_t cookie) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_INIT;
     _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_A);
@@ -742,14 +738,11 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
     clone->_key_id_res = msg->_key_id_res;
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
-    _z_bytes_copy(&clone->_zid, &msg->_zid);
+    memcpy(clone->_zid.id, msg->_zid.id, 16);
     _z_bytes_copy(&clone->_cookie, &msg->_cookie);
 }
 
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg) {
-    _z_bytes_clear(&msg->_zid);
-    _z_bytes_clear(&msg->_cookie);
-}
+void _z_t_msg_clear_init(_z_t_msg_init_t *msg) { _z_bytes_clear(&msg->_cookie); }
 
 /*------------------ Open Message ------------------*/
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie) {

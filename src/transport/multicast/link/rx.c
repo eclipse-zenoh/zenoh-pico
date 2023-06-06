@@ -243,7 +243,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                     if (ret == _Z_RES_OK) {
                         entry->_remote_addr = _z_bytes_duplicate(addr);
-                        entry->_remote_zid = _z_bytes_duplicate(&t_msg->_body._join._zid);
+                        entry->_remote_zid = t_msg->_body._join._zid;
 
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
                         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);

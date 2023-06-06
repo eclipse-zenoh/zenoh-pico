@@ -189,9 +189,9 @@
 /*=============================*/
 /*       Message helpers       */
 /*=============================*/
-#define _Z_MID(h) (_Z_MID_MASK & h)
-#define _Z_FLAGS(h) (_Z_FLAGS_MASK & h)
-#define _Z_HAS_FLAG(h, f) ((h & f) != 0)
+#define _Z_MID(h) (_Z_MID_MASK & (h))
+#define _Z_FLAGS(h) (_Z_FLAGS_MASK & (h))
+#define _Z_HAS_FLAG(h, f) (((h) & (f)) != 0)
 #define _Z_SET_FLAG(h, f) (h |= f)
 
 /*=============================*/
@@ -296,7 +296,7 @@ void _z_t_msg_clear_attachment(_z_attachment_t *a);
 // - if F==1 then the message is a REPLY_FINAL
 //
 typedef struct {
-    _z_bytes_t _replier_id;
+    _z_id_t _replier_id;
     _z_zint_t _qid;
     uint8_t _header;
 } _z_reply_context_t;
@@ -617,7 +617,7 @@ _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear,
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_bytes_t replier_id, _Bool is_final);
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final);
 _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
@@ -931,7 +931,7 @@ typedef struct {
     _Bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
-    _z_bytes_t _zid;
+    _z_id_t _zid;
     _z_zint_t _lease;
     uint16_t _batch_size;
     _z_conduit_sn_list_t _next_sn;
@@ -1013,7 +1013,7 @@ void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
 // ($) Batch Size. It indicates the maximum size of a batch the sender of the
 //
 typedef struct {
-    _z_bytes_t _zid;
+    _z_id_t _zid;
     _z_bytes_t _cookie;
     uint16_t _batch_size;
     z_whatami_t _whatami;
@@ -1198,10 +1198,10 @@ typedef struct {
 void _z_t_msg_clear(_z_transport_message_t *msg);
 
 /*------------------ Builders ------------------*/
-_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_bytes_t zid,
+_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_id_t zid,
                                           _z_conduit_sn_list_t next_sn);
-_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_bytes_t zid);
-_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_bytes_t zid, _z_bytes_t cookie);
+_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid);
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);

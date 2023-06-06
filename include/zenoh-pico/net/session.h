@@ -31,7 +31,7 @@ typedef struct {
     _z_transport_t _tp;
 
     // Zenoh PID
-    _z_bytes_t _local_zid;
+    _z_id_t _local_zid;
 
     // Session counters
     _z_zint_t _resource_id;

@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 
@@ -19,7 +20,7 @@ void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src) {
     _z_wbuf_clear(&src->_dbuf_reliable);
     _z_wbuf_clear(&src->_dbuf_best_effort);
 
-    _z_bytes_clear(&src->_remote_zid);
+    src->_remote_zid = _z_id_empty();
     _z_bytes_clear(&src->_remote_addr);
 }
 
@@ -34,7 +35,7 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
     dst->_next_lease = src->_next_lease;
     dst->_received = src->_received;
 
-    _z_bytes_copy(&dst->_remote_zid, &src->_remote_zid);
+    dst->_remote_zid = src->_remote_zid;
     _z_bytes_copy(&dst->_remote_addr, &src->_remote_addr);
 }
 
@@ -45,11 +46,7 @@ size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {
 
 _Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
     _Bool ret = true;
-    if (left->_remote_zid.len == right->_remote_zid.len) {
-        if (memcmp(left->_remote_zid.start, right->_remote_zid.start, left->_remote_zid.len) != 0) {
-            ret = false;
-        }
-    } else {
+    if (memcmp(left->_remote_zid.id, right->_remote_zid.id, 16) != 0) {
         ret = false;
     }
 

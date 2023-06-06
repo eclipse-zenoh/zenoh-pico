@@ -33,6 +33,12 @@ int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
  * copying its value and setting it to `_z_msg_ext_make_unit(0)`.
  */
 int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context);
+/**
+ * Iterates through the extensions in `zbf`, assuming at least one is present at its begining.
+ * Returns `_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN` if a mandatory extension is found,
+ * `_Z_RES_OK` otherwise.
+ */
+int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf);
 
 #endif /* ZENOH_PICO_MSGEXTCODEC_H */
 

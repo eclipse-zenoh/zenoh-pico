@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/transport/utils.h"
@@ -160,9 +161,9 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         zt->_transport._unicast._link = *zl;
 
         // Remote peer PID
-        _z_bytes_move(&zt->_transport._unicast._remote_zid, &param->_remote_zid);
+        zt->_transport._unicast._remote_zid = param->_remote_zid;
     } else {
-        _z_bytes_clear(&param->_remote_zid);
+        param->_remote_zid = _z_id_empty();
     }
 
     return ret;
@@ -248,10 +249,10 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_zid) {
+                                        const _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
+    _z_id_t zid = *local_zid;
     _z_transport_message_t ism = _z_t_msg_make_init_syn(Z_WHATAMI_CLIENT, zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
     param->_key_id_res = ism._body._init._key_id_res;    // The announced key id resolution
@@ -305,7 +306,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
                     // Initialize the Local and Remote Peer IDs
-                    _z_bytes_copy(&param->_remote_zid, &iam._body._init._zid);
+                    param->_remote_zid = iam._body._init._zid;
 
                     // Create the OpenSyn message
                     _z_zint_t lease = Z_TRANSPORT_LEASE;
@@ -352,7 +353,7 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
 
 #if Z_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_bytes_t *local_zid) {
+                                          const _z_id_t *local_zid) {
     (void)(param);
     (void)(zl);
     (void)(local_zid);
@@ -366,7 +367,7 @@ int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param
 
 #if Z_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_bytes_t *local_zid) {
+                                      const _z_id_t *local_zid) {
     (void)(param);
     (void)(zl);
     (void)(local_zid);
@@ -380,7 +381,7 @@ int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *pa
 
 #if Z_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_zid) {
+                                        const _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t initial_sn_tx = 0;
@@ -391,7 +392,7 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
     next_sn._val._plain._best_effort = initial_sn_tx;
     next_sn._val._plain._reliable = initial_sn_tx;
 
-    _z_bytes_t zid = _z_bytes_wrap(local_zid->start, local_zid->len);
+    _z_id_t zid = *local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     // Encode and send the message
@@ -447,7 +448,7 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     _z_wbuf_clear(&ztu->_dbuf_best_effort);
 
     // Clean up PIDs
-    _z_bytes_clear(&ztu->_remote_zid);
+    ztu->_remote_zid = _z_id_empty();
     _z_link_clear(&ztu->_link);
 }
 #endif  // Z_UNICAST_TRANSPORT == 1

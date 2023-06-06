@@ -16,6 +16,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/resource.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
@@ -171,10 +172,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 
         // Send the final reply
         // Final flagged reply context does not encode the ZID
-        _z_bytes_t zid;
-        _z_bytes_reset(&zid);
-        _Bool is_final = true;
-        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
+        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, _z_id_empty(), true);
 
         // Congestion control
         _Bool can_be_dropped = false;
