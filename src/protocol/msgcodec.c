@@ -1672,7 +1672,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
         case _Z_MID_T_JOIN: {
             ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
-            // ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
+            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_INIT: {

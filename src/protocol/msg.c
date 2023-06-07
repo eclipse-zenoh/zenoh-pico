@@ -649,10 +649,13 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_T);
     }
 
-    if ((msg._body._join._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._join._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._join._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
+    if ((Z_BATCH_SIZE != _Z_DEFAULT_BATCH_SIZE) || (Z_SN_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE) ||
+        (Z_REQ_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
+    }
+
+    if (next_sn._is_qos) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
     msg._attachment = NULL;
