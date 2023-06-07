@@ -51,6 +51,7 @@
 /*       Extension flags       */
 /*=============================*/
 #define _Z_MSG_EXT_FLAG_M 0x10
+#define _Z_MSG_EXT_IS_MANDATORY(h) ((h & _Z_MSG_EXT_FLAG_M) != 0)
 #define _Z_MSG_EXT_FLAG_Z 0x80
 
 typedef struct {

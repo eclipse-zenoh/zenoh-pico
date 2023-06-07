@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"
@@ -165,6 +166,13 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     _z_zbuf_t v;
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
     return v;
+}
+_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice) {
+    return (_z_zbuf_t){._ios = {._buf = (uint8_t *)slice.start,  // Safety: `_z_zbuf_t` is an immutable buffer
+                                ._is_alloc = false,
+                                ._capacity = slice.len,
+                                ._r_pos = 0,
+                                ._w_pos = slice.len}};
 }
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._capacity; }

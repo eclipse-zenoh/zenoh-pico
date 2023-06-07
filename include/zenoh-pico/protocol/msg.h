@@ -95,8 +95,8 @@
 //      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
 //      S Size params      if S==1 then size parameters are exchanged
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_T_JOIN_T 0x20  // 1 << 5
-#define _Z_FLAG_T_JOIN_S 0x40  // 1 << 6
+#define _Z_FLAG_T_JOIN_T 0x40  // 1 << 6
+#define _Z_FLAG_T_JOIN_S 0x20  // 1 << 5
 
 // Init message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn
@@ -933,10 +933,9 @@ typedef struct {
 typedef struct {
     _z_id_t _zid;
     _z_zint_t _lease;
-    uint16_t _batch_size;
     _z_conduit_sn_list_t _next_sn;
+    uint16_t _batch_size;
     z_whatami_t _whatami;
-    uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     uint8_t _version;

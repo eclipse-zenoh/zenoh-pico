@@ -2266,10 +2266,6 @@ _z_transport_message_t gen_join_message(void) {
     }
 
     if (gen_bool()) {
-        t_msg._body._join._key_id_res = gen_uint8() % 4;
-    }
-
-    if (gen_bool()) {
         t_msg._body._join._req_id_res = gen_uint8() % 4;
     }
 
@@ -2298,7 +2294,6 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
         assert(left->_req_id_res == right->_req_id_res);
         printf("\n");
 
-        printf("   KeyExpr ID Resolution (%hhu:%hhu)", left->_key_id_res, right->_key_id_res);
         assert(left->_key_id_res == right->_key_id_res);
         printf("\n");
 

@@ -14,8 +14,8 @@
 
 #include <windows.h>
 // The following includes must come after winsock2
-#include <time.h>
 #include <ntsecapi.h>
+#include <time.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"

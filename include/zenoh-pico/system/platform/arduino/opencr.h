@@ -42,7 +42,7 @@ typedef struct {
 #if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
 #endif
-    _Bool _err;
+        _Bool _err;
     };
 } _z_sys_net_socket_t;
 

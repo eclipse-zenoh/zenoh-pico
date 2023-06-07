@@ -64,6 +64,8 @@ typedef struct {
 
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
+/// Constructs a _borrowing_ reader on `slice`
+_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice);
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);

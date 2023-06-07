@@ -640,7 +640,6 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
     msg._body._join._whatami = whatami;
     msg._body._join._lease = lease;
     msg._body._join._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._join._key_id_res = Z_KID_RESOLUTION;
     msg._body._join._req_id_res = Z_REQ_RESOLUTION;
     msg._body._join._batch_size = Z_BATCH_SIZE;
     msg._body._join._next_sn = next_sn;
@@ -652,7 +651,6 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
 
     if ((msg._body._join._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
         (msg._body._join._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._join._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._join._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
     }
@@ -668,7 +666,6 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_whatami = msg->_whatami;
     clone->_lease = msg->_lease;
     clone->_seq_num_res = msg->_seq_num_res;
-    clone->_key_id_res = msg->_key_id_res;
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     clone->_next_sn = msg->_next_sn;
