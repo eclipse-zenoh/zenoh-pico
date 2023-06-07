@@ -57,8 +57,6 @@ void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 /*=============================*/
 /*      Message decorators     */
 /*=============================*/
-/*------------------ Attachment Decorator ------------------*/
-void _z_t_msg_clear_attachment(_z_attachment_t *a) { _z_payload_clear(&a->_payload); }
 
 /*------------------ ReplyContext Decorator ------------------*/
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final) {
@@ -291,7 +289,6 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
 
-    msg._attachment = NULL;
     msg._reply_context = NULL;
 
     return msg;
@@ -312,7 +309,6 @@ _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
 
-    msg._attachment = NULL;
     msg._reply_context = NULL;
 
     return msg;
@@ -339,7 +335,6 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
     }
 
-    msg._attachment = NULL;
     msg._reply_context = NULL;
 
     return msg;
@@ -372,7 +367,6 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_B);
     }
 
-    msg._attachment = NULL;
     msg._reply_context = NULL;
 
     return msg;
@@ -396,10 +390,6 @@ _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_p
 
 /*------------------ Zenoh Message ------------------*/
 void _z_msg_clear(_z_zenoh_message_t *msg) {
-    if (msg->_attachment != NULL) {
-        _z_t_msg_clear_attachment(msg->_attachment);
-        z_free(msg->_attachment);
-    }
     if (msg->_reply_context != NULL) {
         _z_msg_clear_reply_context(msg->_reply_context);
         z_free(msg->_reply_context);
@@ -591,8 +581,6 @@ _z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_id_t zid) {
     msg._body._scout._what = what;
     msg._body._scout._zid = zid;
 
-    msg._attachment = NULL;
-
     return msg;
 }
 
@@ -618,7 +606,6 @@ _z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_l
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_HELLO_L);
     }
 
-    msg._attachment = NULL;
     return msg;
 }
 
@@ -658,9 +645,6 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -698,9 +682,6 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -724,9 +705,6 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, 
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -757,9 +735,6 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
     }
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -775,9 +750,6 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
     if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
     }
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -800,9 +772,6 @@ _z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_CLOSE_S);
     }
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -814,9 +783,6 @@ void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
 _z_transport_message_t _z_t_msg_make_keep_alive(void) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_KEEP_ALIVE;
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -840,9 +806,6 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 
     msg._body._frame._messages = _z_network_message_vec_make(0);
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -856,9 +819,6 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_
     }
 
     msg._body._frame._messages = messages;
-
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
 }
@@ -884,9 +844,6 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t payload
     msg._body._fragment._sn = sn;
     msg._body._fragment._payload = payload;
 
-    msg._attachment = NULL;
-    msg._extensions = _z_msg_ext_vec_make(0);
-
     return msg;
 }
 
@@ -899,8 +856,6 @@ void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg) { _z_bytes_clear(&msg->_p
 /*------------------ Transport Message ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
     clone->_header = msg->_header;
-    clone->_attachment = msg->_attachment;
-    _z_msg_ext_vec_copy(&clone->_extensions, &msg->_extensions);
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
@@ -939,11 +894,6 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
 }
 
 void _z_t_msg_clear(_z_transport_message_t *msg) {
-    if (msg->_attachment != NULL) {
-        _z_t_msg_clear_attachment(msg->_attachment);
-        z_free(msg->_attachment);
-    }
-
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_T_JOIN: {
@@ -978,14 +928,11 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
             _Z_DEBUG("WARNING: Trying to clear transport message with unknown ID(%d)\n", mid);
         } break;
     }
-
-    _z_msg_ext_vec_clear(&msg->_extensions);
 }
 
 /*------------------ Scouting Message ------------------*/
 void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
     clone->_header = msg->_header;
-    clone->_attachment = msg->_attachment;
 
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
@@ -1004,11 +951,6 @@ void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
 }
 
 void _z_s_msg_clear(_z_scouting_message_t *msg) {
-    if (msg->_attachment != NULL) {
-        _z_t_msg_clear_attachment(msg->_attachment);
-        z_free(msg->_attachment);
-    }
-
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_SCOUT: {

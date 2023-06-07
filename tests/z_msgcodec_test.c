@@ -856,61 +856,6 @@ void data_info_field(void) {
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
-/*------------------ Attachment decorator ------------------*/
-void print_attachment(_z_attachment_t *att) {
-    printf("      Header: %x\n", att->_header);
-    printf("      Payload: ");
-    print_uint8_array(&att->_payload);
-    printf("\n");
-}
-
-_z_attachment_t *gen_attachment(void) {
-    _z_attachment_t *p_at = (_z_attachment_t *)z_malloc(sizeof(_z_attachment_t));
-
-    p_at->_header = _Z_MID_A_ATTACHMENT;
-    // _Z_SET_FLAG(p_at->_header, _Z_FLAGS(gen_uint8()));
-    p_at->_payload = gen_payload(64);
-
-    return p_at;
-}
-
-void assert_eq_attachment(_z_attachment_t *left, _z_attachment_t *right) {
-    printf("Header (%x:%x), ", left->_header, right->_header);
-    assert(left->_header == right->_header);
-    assert_eq_payload(&left->_payload, &right->_payload);
-}
-
-void attachment_decorator(void) {
-    printf("\n>> Attachment decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_attachment_t *e_at = gen_attachment();
-
-    // Encode
-    int8_t res = _z_attachment_encode(&wbf, e_at);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-    _z_attachment_t *d_at = NULL;
-    res = _z_attachment_decode(&d_at, &zbf, header);
-    assert(res == _Z_RES_OK);
-
-    printf("   ");
-    assert_eq_attachment(e_at, d_at);
-    printf("\n");
-
-    // Free
-    _z_t_msg_clear_attachment(e_at);
-    _z_t_msg_clear_attachment(d_at);
-    z_free(e_at);
-    z_free(d_at);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
 
 /*------------------ ReplyContext decorator ------------------*/
 void print_reply_context(_z_reply_context_t *rc) {
@@ -1681,29 +1626,17 @@ _z_zenoh_message_t gen_zenoh_message(void) {
             break;
     }
 
-    if (gen_bool())
-        p_zm._attachment = gen_attachment();
-    else
-        p_zm._attachment = NULL;
-
-    if (gen_bool())
+    if (gen_bool()) {
         p_zm._reply_context = gen_reply_context();
-    else
+    } else {
         p_zm._reply_context = NULL;
+    }
 
     return p_zm;
 }
 
 void assert_eq_zenoh_message(_z_zenoh_message_t *left, _z_zenoh_message_t *right) {
     // Test message decorators
-    if (left->_attachment && right->_attachment) {
-        printf("   ");
-        assert_eq_attachment(left->_attachment, right->_attachment);
-        printf("\n");
-    } else {
-        printf("   Attachment: %p:%p\n", (void *)left->_attachment, (void *)right->_attachment);
-        assert(left->_attachment == right->_attachment);
-    }
 
     if (left->_reply_context && right->_reply_context) {
         printf("   ");
@@ -1762,11 +1695,6 @@ void zenoh_message(void) {
         default:
             assert(0);
             break;
-    }
-    if (e_zm._attachment) {
-        printf("   Attachment\n");
-        print_attachment(e_zm._attachment);
-        printf("\n");
     }
     if (e_zm._reply_context) {
         printf("   Reply Context\n");
@@ -2651,7 +2579,6 @@ void frame_message(void) {
 
     // Encode
     int8_t res = _z_frame_header_encode(&wbf, t_msg._header, &e_fr);
-    res |= _z_extensions_encode(&wbf, t_msg._header, &t_msg._extensions);
     res |= _z_frame_payload_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
@@ -2660,7 +2587,6 @@ void frame_message(void) {
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_frame_t d_fr;
     res = _z_frame_header_decode(&d_fr, &zbf, t_msg._header);
-    res |= _z_extensions_decode(&t_msg._extensions, &zbf, t_msg._header);
     res |= _z_frame_payload_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
@@ -2705,7 +2631,6 @@ void fragment_message(void) {
 
     // Encode
     int8_t res = _z_fragment_header_encode(&wbf, t_msg._header, &e_fr);
-    res |= _z_extensions_encode(&wbf, t_msg._header, &t_msg._extensions);
     res |= _z_fragment_payload_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
@@ -2714,7 +2639,6 @@ void fragment_message(void) {
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_fragment_t d_fr;
     res = _z_fragment_header_decode(&d_fr, &zbf, t_msg._header);
-    res |= _z_extensions_decode(&t_msg._extensions, &zbf, t_msg._header);
     res |= _z_fragment_payload_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
@@ -2762,30 +2686,11 @@ _z_transport_message_t gen_transport_message(void) {
             break;
     }
 
-    if (gen_bool()) {
-        e_tm._attachment = gen_attachment();
-    } else {
-        e_tm._attachment = NULL;
-    }
-
     return e_tm;
 }
 
 void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_message_t *right) {
     // FIXME[protocol]: This is here to set the extensions flags that is only known at encoding time
-    if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
-        left->_header |= _Z_FLAG_T_Z;
-    }
-
-    // Test message decorators
-    if (left->_attachment && right->_attachment) {
-        printf("   ");
-        assert_eq_attachment(left->_attachment, right->_attachment);
-        printf("\n");
-    } else {
-        assert(left->_attachment == right->_attachment);
-    }
-
     // Test message
     printf("   Header (%x:%x)", left->_header, right->_header);
     assert(left->_header == right->_header);
@@ -2816,15 +2721,6 @@ void assert_eq_transport_message(_z_transport_message_t *left, _z_transport_mess
         default:
             assert(0);
             break;
-    }
-
-    size_t left_n_ext = _z_msg_ext_vec_len(&left->_extensions);
-    size_t right_n_ext = _z_msg_ext_vec_len(&right->_extensions);
-    printf("   # of extensions (%zu:%zu)", left_n_ext, right_n_ext);
-    assert(left_n_ext == right_n_ext);
-    for (size_t i = 0; i < left_n_ext; i++) {
-        assert_eq_message_extension(_z_msg_ext_vec_get(&left->_extensions, i),
-                                    _z_msg_ext_vec_get(&right->_extensions, i));
     }
 }
 
@@ -2877,12 +2773,6 @@ _z_scouting_message_t gen_scouting_message(void) {
             break;
     }
 
-    if (gen_bool()) {
-        e_sm._attachment = gen_attachment();
-    } else {
-        e_sm._attachment = NULL;
-    }
-
     return e_sm;
 }
 
@@ -2891,15 +2781,6 @@ void assert_eq_scouting_message(_z_scouting_message_t *left, _z_scouting_message
     // if (_z_msg_ext_vec_len(&left->_extensions) > (size_t)0) {
     //     left->_header |= _Z_FLAG_T_Z;
     // }
-
-    // Test message decorators
-    if (left->_attachment && right->_attachment) {
-        printf("   ");
-        assert_eq_attachment(left->_attachment, right->_attachment);
-        printf("\n");
-    } else {
-        assert(left->_attachment == right->_attachment);
-    }
 
     // Test message
     printf("   Header (%x:%x)", left->_header, right->_header);
@@ -3196,7 +3077,6 @@ int main(void) {
         data_info_field();
 
         // Message decorators
-        attachment_decorator();
         reply_contex_decorator();
 
         // Zenoh declarations

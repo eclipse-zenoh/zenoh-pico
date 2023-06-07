@@ -118,10 +118,6 @@ int8_t _z_forget_qle_decl_encode(_z_wbuf_t *buf, uint8_t header, const _z_forget
 int8_t _z_forget_qle_decl_decode(_z_forget_qle_decl_t *dcl, _z_zbuf_t *buf, uint8_t header);
 int8_t _z_forget_qle_decl_decode_na(_z_forget_qle_decl_t *dcl, _z_zbuf_t *buf, uint8_t header);
 
-int8_t _z_attachment_encode(_z_wbuf_t *buf, const _z_attachment_t *atch);
-int8_t _z_attachment_decode(_z_attachment_t **atch, _z_zbuf_t *buf, uint8_t header);
-int8_t _z_attachment_decode_na(_z_attachment_t *atch, _z_zbuf_t *buf, uint8_t header);
-
 int8_t _z_reply_context_encode(_z_wbuf_t *buf, const _z_reply_context_t *rc);
 int8_t _z_reply_context_decode(_z_reply_context_t **rc, _z_zbuf_t *buf, uint8_t header);
 int8_t _z_reply_context_decode_na(_z_reply_context_t *rc, _z_zbuf_t *buf, uint8_t header);

@@ -74,7 +74,6 @@
 #define _Z_MID_A_PRIORITY 0x1c
 #define _Z_MID_A_ROUTING_CONTEXT 0x1d
 #define _Z_MID_A_REPLY_CONTEXT 0x1e
-#define _Z_MID_A_ATTACHMENT 0x1f
 
 /*=============================*/
 /*        Message flags        */
@@ -251,32 +250,6 @@ void _z_payload_clear(_z_payload_t *p);
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
-// # Attachment decorator
-//
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
-//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
-//       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
-//       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the length of a message must not exceed 65_535 bytes.
-//
-// The Attachment can decorate any message (i.e., TransportMessage and ZenohMessage) and it allows to
-// append to the message any additional information. Since the information contained in the
-// Attachement is relevant only to the layer that provided them (e.g., Transport, Zenoh, User) it
-// is the duty of that layer to serialize and de-serialize the attachment whenever deemed necessary.
-// The attachement always contains serialized properties.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|Z|  ATTCH  |
-// +-+-+-+---------+
-// ~   Attachment  ~
-// +---------------+
-//
-typedef struct {
-    _z_payload_t _payload;
-    uint8_t _header;
-} _z_attachment_t;
-void _z_t_msg_clear_attachment(_z_attachment_t *a);
 
 /*------------------ ReplyContext Decorator ------------------*/
 // The ReplyContext is a message decorator for either:
@@ -607,7 +580,6 @@ typedef union {
 } _z_zenoh_body_t;
 typedef struct {
     _z_zenoh_body_t _body;
-    _z_attachment_t *_attachment;
     _z_reply_context_t *_reply_context;
     uint8_t _header;
 } _z_zenoh_message_t;
@@ -1190,8 +1162,6 @@ typedef union {
 
 typedef struct {
     _z_transport_body_t _body;
-    _z_attachment_t *_attachment;
-    _z_msg_ext_vec_t _extensions;
     uint8_t _header;
 } _z_transport_message_t;
 void _z_t_msg_clear(_z_transport_message_t *msg);
@@ -1225,7 +1195,6 @@ typedef union {
 
 typedef struct {
     _z_scouting_body_t _body;
-    _z_attachment_t *_attachment;
     uint8_t _header;
 } _z_scouting_message_t;
 void _z_s_msg_clear(_z_scouting_message_t *msg);

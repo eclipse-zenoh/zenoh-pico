@@ -225,52 +225,6 @@ int8_t _z_locators_decode(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) { return _z
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
-/*------------------ Attachment Decorator ------------------*/
-int8_t _z_attachment_encode(_z_wbuf_t *wbf, const _z_attachment_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_A_ATTACHMENT\n");
-
-    // WARNING: we do not support sliced content in zenoh-pico.
-    //          Disable the SLICED flag to be on the safe side.
-    _Z_EC(_z_wbuf_write(wbf, msg->_header & ~_Z_FLAG_A_Z))
-
-    ret |= _z_payload_encode(wbf, &msg->_payload);
-
-    return ret;
-}
-
-int8_t _z_attachment_decode_na(_z_attachment_t *atch, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_A_ATTACHMENT\n");
-    int8_t ret = _Z_RES_OK;
-
-    atch->_header = header;
-
-    // WARNING: we do not support sliced content in zenoh-pico.
-    //          Return error in case the payload is sliced.
-    if (_Z_HAS_FLAG(header, _Z_FLAG_A_Z) == false) {
-        ret |= _z_payload_decode(&atch->_payload, zbf);
-    }
-
-    return ret;
-}
-
-int8_t _z_attachment_decode(_z_attachment_t **atch, _z_zbuf_t *zbf, uint8_t header) {
-    int8_t ret = _Z_RES_OK;
-
-    *atch = (_z_attachment_t *)z_malloc(sizeof(_z_attachment_t));
-    if (atch != NULL) {
-        _z_attachment_t *ptr = *atch;
-        ret |= _z_attachment_decode_na(ptr, zbf, header);
-        if (ret != _Z_RES_OK) {
-            z_free(ptr);
-            *atch = NULL;
-        }
-    } else {
-        ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
-}
 
 /*------------------ ReplyContext Decorator ------------------*/
 int8_t _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
@@ -850,9 +804,6 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
     int8_t ret = _Z_RES_OK;
 
     // Encode the decorators if present
-    if (msg->_attachment != NULL) {
-        _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
-    }
     if (msg->_reply_context != NULL) {
         _Z_EC(_z_reply_context_encode(wbf, msg->_reply_context))
     }
@@ -889,7 +840,6 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
 int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    msg->_attachment = NULL;
     msg->_reply_context = NULL;
     _Bool is_last = false;
     do {
@@ -900,10 +850,6 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
                 case _Z_MID_Z_DATA: {
                     ret |= _z_data_decode(&msg->_body._data, zbf, msg->_header);
                     is_last = true;
-                } break;
-
-                case _Z_MID_A_ATTACHMENT: {
-                    ret |= _z_attachment_decode(&msg->_attachment, zbf, msg->_header);
                 } break;
 
                 case _Z_MID_A_REPLY_CONTEXT: {
@@ -1642,52 +1588,39 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
     int8_t ret = _Z_RES_OK;
 
     // Encode the decorators if present
-    if (msg->_attachment != NULL) {
-        _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
-    }
 
     uint8_t header = msg->_header;
-    if (_z_msg_ext_vec_is_empty(&msg->_extensions) == false) {
-        header |= _Z_FLAG_T_Z;
-    }
 
     _Z_EC(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_T_FRAME: {
             ret |= _z_frame_header_encode(wbf, msg->_header, &msg->_body._frame);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
             ret |= _z_frame_payload_encode(wbf, msg->_header, &msg->_body._frame);
         } break;
 
         case _Z_MID_T_FRAGMENT: {
             ret |= _z_fragment_header_encode(wbf, msg->_header, &msg->_body._fragment);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
             ret |= _z_fragment_payload_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
 
         case _Z_MID_T_KEEP_ALIVE: {
             ret |= _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_JOIN: {
             ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_INIT: {
             ret |= _z_init_encode(wbf, msg->_header, &msg->_body._init);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_OPEN: {
             ret |= _z_open_encode(wbf, msg->_header, &msg->_body._open);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         case _Z_MID_T_CLOSE: {
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
-            ret |= _z_extensions_encode(wbf, msg->_header, &msg->_extensions);
         } break;
 
         default: {
@@ -1702,7 +1635,6 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    msg->_attachment = NULL;
     _Bool is_last = false;
 
     do {
@@ -1712,50 +1644,38 @@ int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zb
             switch (mid) {
                 case _Z_MID_T_FRAME: {
                     ret |= _z_frame_header_decode(&msg->_body._frame, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     ret |= _z_frame_payload_decode(&msg->_body._frame, zbf, msg->_header);
                     is_last = true;
                 } break;
 
                 case _Z_MID_T_FRAGMENT: {
                     ret |= _z_fragment_header_decode(&msg->_body._fragment, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     ret |= _z_fragment_payload_decode(&msg->_body._fragment, zbf, msg->_header);
                     is_last = true;
                 } break;
 
-                case _Z_MID_A_ATTACHMENT: {
-                    ret |= _z_attachment_decode(&msg->_attachment, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
-                } break;
-
                 case _Z_MID_T_KEEP_ALIVE: {
                     ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
                 case _Z_MID_T_JOIN: {
                     ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
                 case _Z_MID_T_INIT: {
                     ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
                 case _Z_MID_T_OPEN: {
                     ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
                 case _Z_MID_T_CLOSE: {
                     ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
-                    ret |= _z_extensions_decode(&msg->_extensions, zbf, msg->_header);
                     is_last = true;
                 } break;
 
@@ -1888,9 +1808,6 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
     int8_t ret = _Z_RES_OK;
 
     // Encode the decorators if present
-    if (msg->_attachment != NULL) {
-        _Z_EC(_z_attachment_encode(wbf, msg->_attachment))
-    }
 
     uint8_t header = msg->_header;
     // size_t n_ext = _z_msg_ext_vec_len(&msg->_extensions);
@@ -1921,7 +1838,6 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
 int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    msg->_attachment = NULL;
     _Bool is_last = false;
 
     do {
