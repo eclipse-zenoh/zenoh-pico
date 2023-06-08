@@ -1073,14 +1073,12 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_T_JOIN\n");
 
-    // TODO[protocol] add options byte if `O==1`
-
     _Z_EC(_z_wbuf_write(wbf, msg->_version))
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
     uint8_t zidlen = _z_id_len(msg->_zid);
-    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;
     _Z_EC(_z_uint8_encode(wbf, cbyte))
     _Z_EC(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 
@@ -1098,16 +1096,21 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
         _Z_EC(_z_zint_encode(wbf, msg->_lease))
     }
 
-    // TODO[protocol]
-    // if (_Z_HAS_FLAG(msg->_options, _Z_OPT_JOIN_QOS) == true) {
-    // for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
-    //     _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable))
-    //     _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._best_effort))
-    // }
-    // } else {
-    _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._reliable))
-    _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._best_effort))
-    // }
+    if (msg->_next_sn._is_qos) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_EC(_z_uint8_encode(wbf, 0x51))  // QOS-ext: (enc=zbuf)(mandatory=true)(id=1)
+            for (uint8_t i = 0; i < Z_PRIORITIES_NUM; i++) {
+                _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable))
+                _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._best_effort))
+            }
+        } else {
+            _Z_DEBUG("Attempted to serialize QoS-SN extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    } else {
+        _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._reliable))
+        _Z_EC(_z_zint_encode(wbf, msg->_next_sn._val._plain._best_effort))
+    }
 
     return ret;
 }
