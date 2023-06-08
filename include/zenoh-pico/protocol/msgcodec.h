@@ -23,26 +23,6 @@
 #include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/utils/result.h"
 
-/*------------------ Internal Zenoh-net Macros ------------------*/
-#define _Z_DECLARE_ENCODE(name) int8_t _z_##name##_encode(_z_wbuf_t *wbf, uint8_t header, const _z_##name##_t *m);
-#define _Z_DECLARE_ENCODE_NOH(name) int8_t _z_##name##_encode(_z_wbuf_t *wbf, const _z_##name##_t *m);
-
-#define _Z_DECLARE_DECODE_NEW(name)                                              \
-    int8_t _z_##name##_decode(_z_##name##_t *t, _z_zbuf_t *zbf, uint8_t header); \
-    int8_t _z_##name##_decode_na(_z_##name##_t *t, _z_zbuf_t *zbf, uint8_t header);
-
-#define _Z_DECLARE_DECODE_NOH_NEW(name)                          \
-    int8_t _z_##name##_decode(_z_##name##_t *t, _z_zbuf_t *zbf); \
-    int8_t _z_##name##_decode_na(_z_##name##_t *t, _z_zbuf_t *zbf);
-
-#define _Z_DECLARE_DECODE(name)                                              \
-    _z_##name##_result_t _z_##name##_decode(_z_zbuf_t *zbf, uint8_t header); \
-    void _z_##name##_decode_na(_z_zbuf_t *zbf, uint8_t header, _z_##name##_result_t *r);
-
-#define _Z_DECLARE_DECODE_NOH(name)                          \
-    _z_##name##_result_t _z_##name##_decode(_z_zbuf_t *zbf); \
-    void _z_##name##_decode_na(_z_zbuf_t *zbf, _z_##name##_result_t *r);
-
 /*------------------ Zenoh Message ------------------*/
 int8_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
 int8_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);
