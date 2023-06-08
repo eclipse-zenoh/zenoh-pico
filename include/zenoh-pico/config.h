@@ -155,10 +155,6 @@
 #define Z_SN_RESOLUTION 0x02
 #endif
 
-#ifndef Z_KID_RESOLUTION
-#define Z_KID_RESOLUTION 0x02
-#endif
-
 #ifndef Z_REQ_RESOLUTION
 #define Z_REQ_RESOLUTION 0x02
 #endif

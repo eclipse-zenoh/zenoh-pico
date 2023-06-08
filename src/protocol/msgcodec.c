@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/core.h"
@@ -221,59 +222,6 @@ int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_locators_decode(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) { return _z_locators_decode_na(a_loc, zbf); }
-
-/*=============================*/
-/*     Message decorators      */
-/*=============================*/
-
-/*------------------ ReplyContext Decorator ------------------*/
-int8_t _z_reply_context_encode(_z_wbuf_t *wbf, const _z_reply_context_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_A_REPLY_CONTEXT\n");
-
-    _Z_EC(_z_wbuf_write(wbf, msg->_header))
-
-    _Z_EC(_z_zint_encode(wbf, msg->_qid))
-    if (_Z_HAS_FLAG(msg->_header, _Z_FLAG_Z_F) == false) {
-        _Z_EC(_z_id_encode_as_zbytes(wbf, &msg->_replier_id))
-    }
-
-    return ret;
-}
-
-int8_t _z_reply_context_decode_na(_z_reply_context_t *rc, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_A_REPLY_CONTEXT\n");
-    int8_t ret = _Z_RES_OK;
-
-    rc->_header = header;
-
-    ret |= _z_zint_decode(&rc->_qid, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_F) == false) {
-        ret |= _z_id_decode_as_zbytes(&rc->_replier_id, zbf);
-    } else {
-        rc->_replier_id = _z_id_empty();
-    }
-
-    return ret;
-}
-
-int8_t _z_reply_context_decode(_z_reply_context_t **rc, _z_zbuf_t *zbf, uint8_t header) {
-    int8_t ret = _Z_RES_OK;
-
-    *rc = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
-    if (rc != NULL) {
-        _z_reply_context_t *ptr = *rc;
-        ret |= _z_reply_context_decode_na(ptr, zbf, header);
-        if (ret != _Z_RES_OK) {
-            z_free(ptr);
-            *rc = NULL;
-        }
-    } else {
-        ret |= _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
-}
 
 /*=============================*/
 /*        Zenoh Messages       */
@@ -803,11 +751,6 @@ int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
     int8_t ret = _Z_RES_OK;
 
-    // Encode the decorators if present
-    if (msg->_reply_context != NULL) {
-        _Z_EC(_z_reply_context_encode(wbf, msg->_reply_context))
-    }
-
     _Z_EC(_z_wbuf_write(wbf, msg->_header))
 
     uint8_t mid = _Z_MID(msg->_header);
@@ -840,7 +783,6 @@ int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
 int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    msg->_reply_context = NULL;
     _Bool is_last = false;
     do {
         ret |= _z_uint8_decode(&msg->_header, zbf);
@@ -850,10 +792,6 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
                 case _Z_MID_Z_DATA: {
                     ret |= _z_data_decode(&msg->_body._data, zbf, msg->_header);
                     is_last = true;
-                } break;
-
-                case _Z_MID_A_REPLY_CONTEXT: {
-                    ret |= _z_reply_context_decode(&msg->_reply_context, zbf, msg->_header);
                 } break;
 
                 case _Z_MID_Z_QUERY: {
@@ -869,11 +807,6 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
                 case _Z_MID_Z_UNIT: {
                     // Do nothing. Unit messages have no body.
                     is_last = true;
-                } break;
-
-                case _Z_MID_A_PRIORITY: {
-                    // Ignore the priority decorator for the time being since zenoh-pico does not
-                    // perform any routing. Hence, priority information does not need to be propagated.
                 } break;
 
                 case _Z_MID_Z_LINK_STATE_LIST: {
@@ -1261,7 +1194,6 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
         cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
-        cbyte |= ((msg->_key_id_res & 0x03) << 4);
         _Z_EC(_z_uint8_encode(wbf, cbyte))
         _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
     }
@@ -1289,17 +1221,15 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true)) {
         cbyte = 0;
         ret |= _z_uint8_decode(&cbyte, zbf);
         msg->_seq_num_res = (cbyte & 0x03);
         msg->_req_id_res = ((cbyte >> 2) & 0x03);
-        msg->_key_id_res = ((cbyte >> 4) & 0x03);
         ret |= _z_uint16_decode(&msg->_batch_size, zbf);
     } else {
         msg->_seq_num_res = _Z_DEFAULT_RESOLUTION_SIZE;
         msg->_req_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
-        msg->_key_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
         msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
     }
 
@@ -1310,6 +1240,10 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         }
     } else {
         msg->_cookie = _z_bytes_empty();
+    }
+
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf);
     }
 
     return ret;
@@ -1344,7 +1278,7 @@ int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint_decode(&msg->_lease, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true) {
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true)) {
         msg->_lease = msg->_lease * 1000;
     }
 
@@ -1357,6 +1291,9 @@ int8_t _z_open_decode_na(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         }
     } else {
         msg->_cookie = _z_bytes_empty();
+    }
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf);
     }
 
     return ret;
@@ -1411,6 +1348,8 @@ int8_t _z_keep_alive_decode_na(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE\n");
 
+    ret |= _z_msg_ext_skip_non_mandatories(zbf);
+
     return ret;
 }
 
@@ -1419,137 +1358,87 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
 }
 
 /*------------------ Frame Message ------------------*/
-int8_t _z_frame_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
-    (void)(header);
 
+int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_FRAME_HEADER\n");
 
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
 
-    return ret;
-}
-
-int8_t _z_frame_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_FRAME_PAYLOAD\n");
-
-    size_t len = _z_network_message_vec_len(&msg->_messages);
-    for (size_t i = 0; i < len; i++) {
-        _Z_EC(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
-
-    return ret;
-}
-
-int8_t _z_frame_header_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_T_FRAME_HEADER\n");
-
-    ret |= _z_zint_decode(&msg->_sn, zbf);
-
-    return ret;
-}
-
-int8_t _z_frame_payload_decode_na(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_T_FRAME_PAYLOAD\n");
-
-    msg->_messages = _z_network_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-    while (_z_zbuf_len(zbf) > 0) {
-        // Mark the reading position of the iobfer
-        size_t r_pos = _z_zbuf_get_rpos(zbf);
-        _z_network_message_t *nm = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
-        ret |= _z_network_message_decode(nm, zbf);
-        if (ret == _Z_RES_OK) {
-            _z_network_message_vec_append(&msg->_messages, nm);
-        } else {
-            _z_n_msg_free(&nm);
-
-            _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
-
-            // FIXME: Check for the return error, since not all of them means a decoding error
-            //        in this particular case. As of now, we roll-back the reading position
-            //        and return to the Zenoh transport-level decoder.
-            //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
-            if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
-                ret = _Z_RES_OK;
-            }
-            break;
+    if (ret == _Z_RES_OK) {
+        size_t len = _z_network_message_vec_len(&msg->_messages);
+        for (size_t i = 0; i < len; i++) {
+            _Z_EC(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
         }
     }
 
     return ret;
 }
 
-int8_t _z_frame_header_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_frame_header_decode_na(msg, zbf, header);
-}
+int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    int8_t ret = _Z_RES_OK;
 
-int8_t _z_frame_payload_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_frame_payload_decode_na(msg, zbf, header);
+    ret |= _z_zint_decode(&msg->_sn, zbf);
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf);
+    }
+    if (ret == _Z_RES_OK) {
+        msg->_messages = _z_network_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
+        while (_z_zbuf_len(zbf) > 0) {
+            // Mark the reading position of the iobfer
+            size_t r_pos = _z_zbuf_get_rpos(zbf);
+            _z_network_message_t *nm = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
+            ret |= _z_network_message_decode(nm, zbf);
+            if (ret == _Z_RES_OK) {
+                _z_network_message_vec_append(&msg->_messages, nm);
+            } else {
+                _z_n_msg_free(&nm);
+
+                _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
+
+                // FIXME: Check for the return error, since not all of them means a decoding error
+                //        in this particular case. As of now, we roll-back the reading position
+                //        and return to the Zenoh transport-level decoder.
+                //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
+                if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
+                    ret = _Z_RES_OK;
+                }
+                break;
+            }
+        }
+    }
+    return ret;
 }
 
 /*------------------ Fragment Message ------------------*/
-int8_t _z_fragment_header_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
-    (void)(header);
-
+int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_FRAGMENT_HEADER\n");
-
+    _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT\n");
     _Z_EC(_z_zint_encode(wbf, msg->_sn))
-
-    return ret;
-}
-
-int8_t _z_fragment_payload_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_FRAGMENT_PAYLOAD\n");
-
-    _Z_EC(_z_bytes_encode(wbf, &msg->_payload))
-
-    return ret;
-}
-
-int8_t _z_fragment_header_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_T_FRAGMENT_HEADER\n");
-
-    ret |= _z_zint_decode(&msg->_sn, zbf);
-
-    return ret;
-}
-
-int8_t _z_fragment_payload_decode_na(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_T_FRAGMENT_PAYLOAD\n");
-
-    ret |= _z_bytes_decode(&msg->_payload, zbf);
-    if (ret != _Z_RES_OK) {
-        msg->_payload = _z_bytes_empty();
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+    }
+    if (ret == _Z_RES_OK) {
+        _Z_EC(_z_bytes_encode(wbf, &msg->_payload))
     }
 
     return ret;
 }
 
-int8_t _z_fragment_header_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_fragment_header_decode_na(msg, zbf, header);
-}
+int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+    int8_t ret = _Z_RES_OK;
+    _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT\n");
+    ret |= _z_zint_decode(&msg->_sn, zbf);
 
-int8_t _z_fragment_payload_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_fragment_payload_decode_na(msg, zbf, header);
+    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf);
+    }
+
+    ret |= _z_bytes_decode(&msg->_payload, zbf);
+
+    return ret;
 }
 
 /*------------------ Transport Extensions Message ------------------*/
@@ -1594,13 +1483,11 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
     _Z_EC(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_T_FRAME: {
-            ret |= _z_frame_header_encode(wbf, msg->_header, &msg->_body._frame);
-            ret |= _z_frame_payload_encode(wbf, msg->_header, &msg->_body._frame);
+            ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
         } break;
 
         case _Z_MID_T_FRAGMENT: {
-            ret |= _z_fragment_header_encode(wbf, msg->_header, &msg->_body._fragment);
-            ret |= _z_fragment_payload_encode(wbf, msg->_header, &msg->_body._fragment);
+            ret |= _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
 
         case _Z_MID_T_KEEP_ALIVE: {
@@ -1635,65 +1522,46 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 int8_t _z_transport_message_decode_na(_z_transport_message_t *msg, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
-    _Bool is_last = false;
+    ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header
+    if (ret == _Z_RES_OK) {
+        uint8_t mid = _Z_MID(msg->_header);
+        switch (mid) {
+            case _Z_MID_T_FRAME: {
+                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
+            } break;
 
-    do {
-        ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header
-        if (ret == _Z_RES_OK) {
-            uint8_t mid = _Z_MID(msg->_header);
-            switch (mid) {
-                case _Z_MID_T_FRAME: {
-                    ret |= _z_frame_header_decode(&msg->_body._frame, zbf, msg->_header);
-                    ret |= _z_frame_payload_decode(&msg->_body._frame, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_FRAGMENT: {
+                ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_FRAGMENT: {
-                    ret |= _z_fragment_header_decode(&msg->_body._fragment, zbf, msg->_header);
-                    ret |= _z_fragment_payload_decode(&msg->_body._fragment, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_KEEP_ALIVE: {
+                ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_KEEP_ALIVE: {
-                    ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_JOIN: {
+                ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_JOIN: {
-                    ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_INIT: {
+                ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_INIT: {
-                    ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_OPEN: {
+                ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_OPEN: {
-                    ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
-                    is_last = true;
-                } break;
+            case _Z_MID_T_CLOSE: {
+                ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
+            } break;
 
-                case _Z_MID_T_CLOSE: {
-                    ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_A_PRIORITY: {
-                    // Ignore the priority decorator for the time being since zenoh-pico does not
-                    // perform any routing. Hence, priority information does not need to be propagated.
-                } break;
-
-                default: {
-                    _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
-                    ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
-                    is_last = true;
-                } break;
-            }
-        } else {
-            msg->_header = 0xFF;
+            default: {
+                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
+                ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+            } break;
         }
-    } while ((ret == _Z_RES_OK) && (is_last == false));
+    } else {
+        msg->_header = 0xFF;
+    }
 
     return ret;
 }

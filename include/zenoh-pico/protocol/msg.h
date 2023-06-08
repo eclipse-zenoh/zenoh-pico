@@ -16,7 +16,9 @@
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/array.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
@@ -69,11 +71,6 @@
 #define _Z_MID_Z_PULL 0x0e
 #define _Z_MID_Z_UNIT 0x0f
 #define _Z_MID_Z_LINK_STATE_LIST 0x10
-
-/* Message decorators */
-#define _Z_MID_A_PRIORITY 0x1c
-#define _Z_MID_A_ROUTING_CONTEXT 0x1d
-#define _Z_MID_A_REPLY_CONTEXT 0x1e
 
 /*=============================*/
 /*        Message flags        */
@@ -158,10 +155,6 @@
 //      Z Extensions       if Z==1 then Zenoh extensions are present
 // #define _Z_FLAG_N_RESPONSE_X 0x20  // 1 << 5
 // #define _Z_FLAG_N_RESPONSE_X 0x40  // 1 << 6
-
-/* Attachment message flags */
-#define _Z_FLAG_A_Z \
-    0x20  // 1 << 5 | MixedSlices      if Z==1 then the payload contains a mix of raw and shm_info payload
 
 /* Zenoh message flags */
 #define _Z_FLAG_Z_B 0x40  // 1 << 6 | QueryPayload      if B==1 then QueryPayload is present
@@ -250,30 +243,6 @@ void _z_payload_clear(_z_payload_t *p);
 /*=============================*/
 /*     Message decorators      */
 /*=============================*/
-
-/*------------------ ReplyContext Decorator ------------------*/
-// The ReplyContext is a message decorator for either:
-//   - the Data messages that results from a query
-//   - or a Unit message in case the message is a REPLY_FINAL.
-//  The replier-id (eval or storage id) is represented as a byte-array.
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |X|X|F|  R_CTX  |
-// +-+-+-+---------+
-// ~      qid      ~
-// +---------------+
-// ~   replier_id  ~ if F==0
-// +---------------+
-//
-// - if F==1 then the message is a REPLY_FINAL
-//
-typedef struct {
-    _z_id_t _replier_id;
-    _z_zint_t _qid;
-    uint8_t _header;
-} _z_reply_context_t;
-void _z_msg_clear_reply_context(_z_reply_context_t *rc);
 
 // -- Priority decorator
 //
@@ -580,7 +549,6 @@ typedef union {
 } _z_zenoh_body_t;
 typedef struct {
     _z_zenoh_body_t _body;
-    _z_reply_context_t *_reply_context;
     uint8_t _header;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
@@ -589,7 +557,6 @@ _Z_ELEM_DEFINE(_z_zenoh_message, _z_zenoh_message_t, _z_noop_size, _z_msg_clear,
 _Z_VEC_DEFINE(_z_zenoh_message, _z_zenoh_message_t)
 
 /*------------------ Builders ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final);
 _z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
 _z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
 _z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
@@ -603,8 +570,7 @@ _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
                                      z_consolidation_mode_t consolidation, _z_value_t value);
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
-                                     _z_reply_context_t *rctx);
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped);
 
 /*=============================*/
 /*      Network Messages       */
@@ -988,7 +954,6 @@ typedef struct {
     _z_bytes_t _cookie;
     uint16_t _batch_size;
     z_whatami_t _whatami;
-    uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     uint8_t _version;

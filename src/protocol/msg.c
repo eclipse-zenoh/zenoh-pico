@@ -55,28 +55,6 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
 void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 
 /*=============================*/
-/*      Message decorators     */
-/*=============================*/
-
-/*------------------ ReplyContext Decorator ------------------*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final) {
-    _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
-    if (rctx != NULL) {
-        rctx->_qid = qid;
-        rctx->_replier_id = replier_id;
-
-        rctx->_header = _Z_MID_A_REPLY_CONTEXT;
-        if (is_final == true) {
-            _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
-        }
-    }
-
-    return rctx;
-}
-
-void _z_msg_clear_reply_context(_z_reply_context_t *rc) {}
-
-/*=============================*/
 /*       Zenoh Messages        */
 /*=============================*/
 /*------------------ Resource Declaration ------------------*/
@@ -289,8 +267,6 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
 
-    msg._reply_context = NULL;
-
     return msg;
 }
 
@@ -308,8 +284,6 @@ _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped) {
     if (can_be_dropped == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_D);
     }
-
-    msg._reply_context = NULL;
 
     return msg;
 }
@@ -334,8 +308,6 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
     if (msg._body._pull._key._suffix != NULL) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
     }
-
-    msg._reply_context = NULL;
 
     return msg;
 }
@@ -367,8 +339,6 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_B);
     }
 
-    msg._reply_context = NULL;
-
     return msg;
 }
 
@@ -380,21 +350,15 @@ void _z_msg_clear_query(_z_msg_query_t *msg) {
 }
 
 /*------------------ Reply Message ------------------*/
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
-                                     _z_reply_context_t *rctx) {
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload,
+                                     _Bool can_be_dropped) {
     _z_zenoh_message_t msg = _z_msg_make_data(key, info, payload, can_be_dropped);
-    msg._reply_context = rctx;
 
     return msg;
 }
 
 /*------------------ Zenoh Message ------------------*/
 void _z_msg_clear(_z_zenoh_message_t *msg) {
-    if (msg->_reply_context != NULL) {
-        _z_msg_clear_reply_context(msg->_reply_context);
-        z_free(msg->_reply_context);
-    }
-
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_Z_DATA:
@@ -670,14 +634,12 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
     msg._body._init._whatami = whatami;
     msg._body._init._zid = zid;
     msg._body._init._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._init._key_id_res = Z_KID_RESOLUTION;
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
     msg._body._init._batch_size = Z_BATCH_SIZE;
     _z_bytes_reset(&msg._body._init._cookie);
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
@@ -694,14 +656,12 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, 
     msg._body._init._whatami = whatami;
     msg._body._init._zid = zid;
     msg._body._init._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._init._key_id_res = Z_KID_RESOLUTION;
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
     msg._body._init._batch_size = Z_BATCH_SIZE;
     msg._body._init._cookie = cookie;
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._init._key_id_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
     }
@@ -713,7 +673,6 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
     clone->_version = msg->_version;
     clone->_whatami = msg->_whatami;
     clone->_seq_num_res = msg->_seq_num_res;
-    clone->_key_id_res = msg->_key_id_res;
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     memcpy(clone->_zid.id, msg->_zid.id, 16);

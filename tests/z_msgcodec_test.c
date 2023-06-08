@@ -2901,7 +2901,6 @@ void batch(void) {
 // _z_transport_message_t z_fragment_header(_Bool is_reliable, _Bool is_fragment, _Bool is_final, _z_zint_t sn) {
 //     // Create the frame session message that carries the zenoh message
 //     _z_transport_message_t t_msg;
-//     t_msg._attachment = NULL;
 //     t_msg._header = _Z_MID_T_FRAME;
 //     t_msg._body._frame._sn = sn;
 
