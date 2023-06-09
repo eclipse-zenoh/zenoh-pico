@@ -13,7 +13,7 @@
 #
 cmake_minimum_required(VERSION 3.8)
 
-project(libzenohpico VERSION 0.7.2.0 LANGUAGES C)
+project(libzenohpico VERSION 0.10.0.0 LANGUAGES C)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
