@@ -895,37 +895,6 @@ void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right
     printf(")");
 }
 
-void reply_contex_decorator(void) {
-    printf("\n>> ReplyContext decorator\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_reply_context_t *e_rc = gen_reply_context();
-
-    // Encode
-    int8_t res = _z_reply_context_encode(&wbf, e_rc);
-    assert(res == _Z_RES_OK);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-    _z_reply_context_t *d_rc = NULL;
-    res = _z_reply_context_decode(&d_rc, &zbf, header);
-    assert(res == _Z_RES_OK);
-
-    printf("   ");
-    assert_eq_reply_context(e_rc, d_rc);
-    printf("\n");
-
-    // Free
-    _z_msg_clear_reply_context(e_rc);
-    _z_msg_clear_reply_context(d_rc);
-    z_free(e_rc);
-    z_free(d_rc);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 /*=============================*/
 /*      Declaration Fields     */
 /*=============================*/
@@ -2222,9 +2191,6 @@ void assert_eq_join_message(_z_t_msg_join_t *left, _z_t_msg_join_t *right, uint8
         assert(left->_req_id_res == right->_req_id_res);
         printf("\n");
 
-        assert(left->_key_id_res == right->_key_id_res);
-        printf("\n");
-
         printf("   Batch Size (%hu:%hu)", left->_batch_size, right->_batch_size);
         assert(left->_batch_size == right->_batch_size);
         printf("\n");
@@ -2312,10 +2278,6 @@ _z_transport_message_t gen_init_message(void) {
     }
 
     if (gen_bool()) {
-        t_msg._body._init._key_id_res = gen_uint8() % 4;
-    }
-
-    if (gen_bool()) {
         t_msg._body._init._req_id_res = gen_uint8() % 4;
     }
 
@@ -2342,10 +2304,6 @@ void assert_eq_init_message(_z_t_msg_init_t *left, _z_t_msg_init_t *right, uint8
 
         printf("   Request ID Resolution (%hhu:%hhu)", left->_req_id_res, right->_req_id_res);
         assert(left->_req_id_res == right->_req_id_res);
-        printf("\n");
-
-        printf("   KeyExpr ID Resolution (%hhu:%hhu)", left->_key_id_res, right->_key_id_res);
-        assert(left->_key_id_res == right->_key_id_res);
         printf("\n");
 
         printf("   Batch Size (%hu:%hu)", left->_batch_size, right->_batch_size);
@@ -2578,16 +2536,14 @@ void frame_message(void) {
     _z_t_msg_frame_t e_fr = t_msg._body._frame;
 
     // Encode
-    int8_t res = _z_frame_header_encode(&wbf, t_msg._header, &e_fr);
-    res |= _z_frame_payload_encode(&wbf, t_msg._header, &e_fr);
+    int8_t res = _z_frame_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_frame_t d_fr;
-    res = _z_frame_header_decode(&d_fr, &zbf, t_msg._header);
-    res |= _z_frame_payload_decode(&d_fr, &zbf, t_msg._header);
+    res = _z_frame_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
     assert_eq_frame_message(&e_fr, &d_fr, t_msg._header);
@@ -2630,16 +2586,14 @@ void fragment_message(void) {
     _z_t_msg_fragment_t e_fr = t_msg._body._fragment;
 
     // Encode
-    int8_t res = _z_fragment_header_encode(&wbf, t_msg._header, &e_fr);
-    res |= _z_fragment_payload_encode(&wbf, t_msg._header, &e_fr);
+    int8_t res = _z_fragment_encode(&wbf, t_msg._header, &e_fr);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_t_msg_fragment_t d_fr;
-    res = _z_fragment_header_decode(&d_fr, &zbf, t_msg._header);
-    res |= _z_fragment_payload_decode(&d_fr, &zbf, t_msg._header);
+    res = _z_fragment_decode(&d_fr, &zbf, t_msg._header);
     assert(res == _Z_RES_OK);
 
     assert_eq_fragment_message(&e_fr, &d_fr, t_msg._header);
@@ -3074,9 +3028,6 @@ int main(void) {
         subinfo_field();
         keyexpr_field();
         data_info_field();
-
-        // Message decorators
-        reply_contex_decorator();
 
         // Zenoh declarations
         resource_declaration();

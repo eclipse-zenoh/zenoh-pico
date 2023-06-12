@@ -90,7 +90,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode\n");
-        ret = _z_transport_message_decode_na(t_msg, &ztm->_zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
 
 #if Z_MULTI_THREAD == 1

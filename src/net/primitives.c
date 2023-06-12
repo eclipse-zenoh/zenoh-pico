@@ -286,18 +286,15 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t
     if (ret == _Z_RES_OK) {
         // Build the reply context decorator. This is NOT the final reply.
         _z_id_t zid = ((_z_session_t *)query->_zn)->_local_zid;
-        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, false);
 
         _z_data_info_t di = {._flags = 0};                  // Empty data info
         _z_payload_t pld = {.len = len, .start = payload};  // Payload
         _Bool can_be_dropped = false;                       // Congestion control
-        _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped, rctx);
+        _z_zenoh_message_t z_msg = _z_msg_make_reply(keyexpr, di, pld, can_be_dropped);
 
         if (_z_send_z_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-
-        z_free(rctx);
     }
 
     return ret;

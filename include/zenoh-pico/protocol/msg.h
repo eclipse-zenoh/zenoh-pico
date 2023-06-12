@@ -547,9 +547,21 @@ typedef union {
     _z_msg_pull_t _pull;
     _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
+
+// TODO[remove]
+typedef struct {
+    _z_id_t _replier_id;
+    _z_zint_t _qid;
+    uint8_t _header;
+} _z_reply_context_t;
+void _z_msg_clear_reply_context(_z_reply_context_t *rc);
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final);
+// TODO[remove end]
+
 typedef struct {
     _z_zenoh_body_t _body;
     uint8_t _header;
+    _z_reply_context_t *_reply_context;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
 void _z_msg_free(_z_zenoh_message_t **m);

@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_MSGEXTCODEC_H
 #define ZENOH_PICO_MSGEXTCODEC_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -38,7 +40,7 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
  * Returns `_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN` if a mandatory extension is found,
  * `_Z_RES_OK` otherwise.
  */
-int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf);
+int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf, uint8_t trace_id);
 
 #endif /* ZENOH_PICO_MSGEXTCODEC_H */
 

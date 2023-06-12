@@ -255,7 +255,6 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
     _z_id_t zid = *local_zid;
     _z_transport_message_t ism = _z_t_msg_make_init_syn(Z_WHATAMI_CLIENT, zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
-    param->_key_id_res = ism._body._init._key_id_res;    // The announced key id resolution
     param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
@@ -275,12 +274,6 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
                 // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
                 if (iam._body._init._seq_num_res <= param->_seq_num_res) {
                     param->_seq_num_res = iam._body._init._seq_num_res;
-                } else {
-                    ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-                }
-
-                if (iam._body._init._key_id_res <= param->_key_id_res) {
-                    param->_key_id_res = iam._body._init._key_id_res;
                 } else {
                     ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                 }

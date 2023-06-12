@@ -16,7 +16,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/system/platform.h"
@@ -166,8 +168,43 @@ int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_msg_ext_skip_non_mandatory(_z_msg_ext_t *extension, void *ctx) {
-    (void)ctx;
-    return (extension->_header & _Z_MSG_EXT_FLAG_M) ? _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN : _Z_RES_OK;
+    int8_t ret = _Z_RES_OK;
+    if ((extension->_header & _Z_MSG_EXT_FLAG_M) != 0) {
+        uint8_t trace_id = *(uint8_t *)ctx;
+        uint8_t ext_id = _Z_EXT_ID(extension->_header);
+#if (ZENOH_DEBUG >= 1)
+        switch (_Z_EXT_ENC(extension->_header)) {
+            case _Z_MSG_EXT_ENC_UNIT: {
+                _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNIT", ext_id,
+                         trace_id);
+                break;
+            }
+            case _Z_MSG_EXT_ENC_ZINT: {
+                _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02x)", ext_id,
+                         trace_id, extension->_body._zint);
+                break;
+            }
+            case _Z_MSG_EXT_ENC_ZBUF: {
+                _z_bytes_t buf = extension->_body._zbuf._val;
+                char *hex = z_malloc(buf.len * 2 + 1);
+                for (size_t i = 0; i < buf.len; ++i) {
+                    snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
+                }
+                _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)", ext_id,
+                         trace_id, buf.len * 2, hex);
+                z_free(hex);
+                break;
+            }
+            default: {
+                _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNKOWN_ENCODING",
+                         ext_id, trace_id);
+            }
+        }
+#endif
+        ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    }
+
+    return ret;
 }
 int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context) {
     int8_t ret = _Z_RES_OK;
@@ -183,6 +220,6 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
     return ret;
 }
 
-int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf) {
-    return _z_msg_ext_decode_iter(zbf, _z_msg_ext_skip_non_mandatory, NULL);
+int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf, uint8_t trace_id) {
+    return _z_msg_ext_decode_iter(zbf, _z_msg_ext_skip_non_mandatory, &trace_id);
 }

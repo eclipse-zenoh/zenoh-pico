@@ -26,6 +26,22 @@
 /*=============================*/
 /*        Message fields       */
 /*=============================*/
+_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final) {
+    _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
+    if (rctx != NULL) {
+        rctx->_qid = qid;
+        rctx->_replier_id = replier_id;
+
+        rctx->_header = 0;
+        if (is_final == true) {
+            _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
+        }
+    }
+
+    return rctx;
+}
+
+void _z_msg_clear_reply_context(_z_reply_context_t *rc) {}
 /*------------------ Payload field ------------------*/
 void _z_payload_clear(_z_payload_t *p) { _z_bytes_clear(p); }
 

@@ -70,7 +70,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode\n");
-        ret = _z_transport_message_decode_na(t_msg, &ztu->_zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztu->_zbuf);
 
         // Mark the session that we have received data
         if (ret == _Z_RES_OK) {
