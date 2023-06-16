@@ -13,7 +13,9 @@
 #
 cmake_minimum_required(VERSION 3.8)
 
-project(libzenohpico VERSION 0.10.0.0 LANGUAGES C)
+project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
+
+include(CMakePackageConfigHelpers)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
@@ -216,6 +218,31 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   DESTINATION include
   COMPONENT Headers
 )
+
+set(CMAKE_INSTALL_CMAKEDIR "/usr/lib/cmake/zenohpico")
+# Generate <Package>Config.cmake
+configure_package_config_file(
+  "PackageConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/zenohpicoConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+
+# Generate <Package>Version.cmake
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/zenohpicoConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion)
+
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/zenohpicoConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/zenohpicoConfigVersion.cmake"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  CONFIGURATIONS ${configurations}
+  COMPONENT dev)
+
+if(UNIX)
+  configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
+  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "/usr/lib/pkgconfig")
+endif()
 
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
