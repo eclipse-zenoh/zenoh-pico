@@ -520,12 +520,11 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg);
 //  +---------------+
 //  ~ [qry_exts]    ~  if Z==1
 //  +---------------+
-#define _Z_FLAG_Z_Q_P 0x20  // 1 << 7 | Period            if P==1 then a period is present
+#define _Z_FLAG_Z_Q_P 0x20  // 1 << 6 | Period            if P==1 then a period is present
 typedef struct {
     _z_bytes_t _parameters;
     _z_source_info_t _info;
-    _z_payload_t _payload;
-    _z_encoding_t _encoding;
+    _z_value_t _value;
     z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
 typedef struct {
@@ -550,7 +549,6 @@ typedef struct {
     _z_zint_t _qid;
     uint8_t _header;
 } _z_reply_context_t;
-void _z_msg_clear_reply_context(_z_reply_context_t *rc);
 _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final);
 // TODO[remove end]
 
@@ -724,14 +722,39 @@ void _z_response_body_clear(_z_response_body_t *msg);
 //  +---------------+
 typedef struct {
     _z_timestamp_t _timestamp;
-    _z_encoding_t _encoding;
-    _z_bytes_t _payload;
+    _z_value_t _value;
     _z_source_info_t _source_info;
     z_consolidation_mode_t _consolidation;
 } _z_msg_reply_t;
-void _z_msg_clear_reply(_z_msg_reply_t *msg);
+void _z_msg_reply_clear(_z_msg_reply_t *msg);
 #define _Z_FLAG_Z_R_T 0x20
 #define _Z_FLAG_Z_R_E 0x40
+
+// Flags:
+// - T: Timestamp      If T==1 then the timestamp if present
+// - I: Infrastructure If I==1 then the error is related to the infrastructure else to the user
+// - Z: Extension      If Z==1 then at least one extension is present
+//
+//   7 6 5 4 3 2 1 0
+//  +-+-+-+-+-+-+-+-+
+//  |Z|I|T|   ERR   |
+//  +-+-+-+---------+
+//  %   code:z16    %
+//  +---------------+
+//  ~ ts: <u8;z16>  ~  if T==1
+//  +---------------+
+//  ~  [err_exts]   ~  if Z==1
+//  +---------------+
+#define _Z_FLAG_Z_E_T 0x20
+#define _Z_FLAG_Z_E_I 0x40
+typedef struct {
+    uint16_t _code;
+    _Bool _is_infrastructure;
+    _z_timestamp_t _timestamp;
+    _z_source_info_t _ext_source_info;
+    _z_value_t _ext_value;
+} _z_msg_err_t;
+void _z_msg_err_clear(_z_msg_err_t *err);
 
 /*------------------ Response Final Message ------------------*/
 // Flags:

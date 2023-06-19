@@ -1501,24 +1501,6 @@ _z_zenoh_message_t gen_query_message(void) {
 }
 
 void assert_eq_query_message(_z_msg_query_t *left, _z_msg_query_t *right, uint8_t header) {
-    printf("   ");
-    assert_eq_keyexpr(&left->_key, &right->_key, header);
-    printf("\n");
-
-    printf("   Predicate (%s:%s)", left->_parameters, right->_parameters);
-    assert(_z_str_eq(left->_parameters, right->_parameters) == true);
-    printf("\n");
-
-    printf("   Query ID (%zu:%zu)", left->_qid, right->_qid);
-    assert(left->_qid == right->_qid);
-    printf("\n");
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) == true) {
-        printf("Target (%u:%u), ", left->_target, right->_target);
-        assert(left->_target == right->_target);
-        printf("\n");
-    }
-
     printf("   Consolidation ( %u:%u)", left->_consolidation, right->_consolidation);
     assert(left->_consolidation == right->_consolidation);
     printf("\n");
@@ -1965,7 +1947,7 @@ void response_message(void) {
     assert_eq_response_message(&e_re, &d_re, n_msg._header);
 
     // Free
-    _z_msg_clear_reply(&d_re);
+    _z_msg_reply_clear(&d_re);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
