@@ -491,23 +491,6 @@ typedef struct {
 void _z_msg_clear_unit(_z_msg_unit_t *unt);
 
 /*------------------ Pull Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|N|F|  PULL   |
-// +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then keyexpr is string
-// +---------------+
-// ~    pullid     ~
-// +---------------+
-// ~  max_samples  ~ if N==1
-// +---------------+
-//
-typedef struct {
-    _z_keyexpr_t _key;
-    _z_zint_t _pull_id;
-    _z_zint_t _max_samples;
-} _z_msg_pull_t;
-void _z_msg_clear_pull(_z_msg_pull_t *msg);
 
 /*------------------ Query Message ------------------*/
 //   7 6 5 4 3 2 1 0
@@ -539,7 +522,6 @@ void _z_msg_clear_query(_z_msg_query_t *msg);
 typedef union {
     _z_msg_data_t _data;
     _z_msg_query_t _query;
-    _z_msg_pull_t _pull;
     _z_msg_unit_t _unit;
 } _z_zenoh_body_t;
 
@@ -755,6 +737,40 @@ typedef struct {
     _z_value_t _ext_value;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
+
+/// Flags:
+/// - T: Timestamp      If T==1 then the timestamp if present
+/// - X: Reserved
+/// - Z: Extension      If Z==1 then at least one extension is present
+///
+///   7 6 5 4 3 2 1 0
+///  +-+-+-+-+-+-+-+-+
+///  |Z|X|T|   ACK   |
+///  +-+-+-+---------+
+///  ~ ts: <u8;z16>  ~  if T==1
+///  +---------------+
+///  ~  [err_exts]   ~  if Z==1
+///  +---------------+
+typedef struct {
+    _z_timestamp_t _timestamp;
+    _z_source_info_t _ext_source_info;
+} _z_msg_ack_t;
+#define _Z_FLAG_Z_A_T 0x20
+
+/// Flags:
+/// - T: Timestamp      If T==1 then the timestamp if present
+/// - X: Reserved
+/// - Z: Extension      If Z==1 then at least one extension is present
+///
+///   7 6 5 4 3 2 1 0
+///  +-+-+-+-+-+-+-+-+
+///  |Z|X|X|  PULL   |
+///  +---------------+
+///  ~  [pull_exts]  ~  if Z==1
+///  +---------------+
+typedef struct {
+    _z_source_info_t _ext_source_info;
+} _z_msg_pull_t;
 
 /*------------------ Response Final Message ------------------*/
 // Flags:

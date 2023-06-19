@@ -444,41 +444,6 @@ int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf) {
     return ret;
 }
 
-/*------------------ Pull Message ------------------*/
-int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *msg) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_Z_PULL\n");
-
-    _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &msg->_key))
-
-    _Z_EC(_z_zint_encode(wbf, msg->_pull_id))
-
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_max_samples))
-    }
-
-    return ret;
-}
-
-int8_t _z_pull_decode_na(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_Z_PULL\n");
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
-    ret |= _z_zint_decode(&msg->_pull_id, zbf);
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_N) == true) {
-        ret |= _z_zint_decode(&msg->_max_samples, zbf);
-    } else {
-        msg->_max_samples = 1;  // FIXME: confirm default value
-    }
-
-    return ret;
-}
-
-int8_t _z_pull_decode(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_pull_decode_na(msg, zbf, header);
-}
-
 /*------------------ Query Message ------------------*/
 int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
@@ -699,6 +664,77 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
         ret = _z_msg_ext_decode_iter(zbf, _z_err_decode_extension, err);
     }
 
+    return ret;
+}
+
+int8_t _z_ack_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ack_t *ack) {
+    int8_t ret = _Z_RES_OK;
+    if (_z_timestamp_check(&ack->_timestamp)) {
+        assert(_Z_HAS_FLAG(header, _Z_FLAG_Z_A_T));
+        ret = _z_timestamp_encode(wbf, &ack->_timestamp);
+    }
+    if ((ret == _Z_RES_OK) && _z_id_check(ack->_ext_source_info._id)) {
+        ret = _z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01);
+        ret |= _z_source_info_encode(wbf, &ack->_ext_source_info);
+    }
+    return ret;
+}
+int8_t _z_ack_decode_extension(_z_msg_ext_t *extension, void *ctx) {
+    int8_t ret = _Z_RES_OK;
+    _z_msg_ack_t *ack = (_z_msg_ack_t *)ctx;
+    switch (_Z_EXT_FULL_ID(extension->_header)) {
+        case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
+            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            ret = _z_source_info_decode(&ack->_ext_source_info, &zbf);
+            break;
+        }
+        default:
+            if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
+                ret = _z_msg_ext_unknown_error(extension, 0x0a);
+            }
+    }
+    return ret;
+}
+int8_t _z_ack_decode(_z_msg_ack_t *ack, _z_zbuf_t *zbf, uint8_t header) {
+    int8_t ret = _Z_RES_OK;
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_A_T)) {
+        ret = _z_timestamp_decode(&ack->_timestamp, zbf);
+    }
+    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        ret = _z_msg_ext_decode_iter(zbf, _z_ack_decode_extension, ack);
+    }
+    return ret;
+}
+
+int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *pull) {
+    int8_t ret = _Z_RES_OK;
+    if ((ret == _Z_RES_OK) && _z_id_check(pull->_ext_source_info._id)) {
+        ret = _z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01);
+        ret |= _z_source_info_encode(wbf, &pull->_ext_source_info);
+    }
+    return ret;
+}
+int8_t _z_pull_decode_extension(_z_msg_ext_t *extension, void *ctx) {
+    int8_t ret = _Z_RES_OK;
+    _z_msg_pull_t *pull = (_z_msg_pull_t *)ctx;
+    switch (_Z_EXT_FULL_ID(extension->_header)) {
+        case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
+            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            ret = _z_source_info_decode(&pull->_ext_source_info, &zbf);
+            break;
+        }
+        default:
+            if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
+                ret = _z_msg_ext_unknown_error(extension, 0x0a);
+            }
+    }
+    return ret;
+}
+int8_t _z_pull_decode(_z_msg_pull_t *pull, _z_zbuf_t *zbf, uint8_t header) {
+    int8_t ret = _Z_RES_OK;
+    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        ret = _z_msg_ext_decode_iter(zbf, _z_pull_decode_extension, pull);
+    }
     return ret;
 }
 
