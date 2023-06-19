@@ -41,6 +41,13 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
  * `_Z_RES_OK` otherwise.
  */
 int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf, uint8_t trace_id);
+/**
+ * Logs an error to debug the unknown extension, returning `_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN`.
+ *
+ * `trace_id` may be any arbitrary value, but is advised to be unique to its call-site,
+ * to help debugging should it be necessary.
+ */
+int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id);
 
 #endif /* ZENOH_PICO_MSGEXTCODEC_H */
 

@@ -385,7 +385,7 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x04);
+        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
     }
 
     ret |= _z_bytes_decode(&msg->_payload, zbf);

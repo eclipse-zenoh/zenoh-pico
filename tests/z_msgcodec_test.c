@@ -1929,7 +1929,7 @@ _z_network_message_t gen_response_message(void) {
     return n_msg;
 }
 
-void assert_eq_response_message(_z_n_msg_response_t *left, _z_n_msg_response_t *right, uint8_t header) {
+void assert_eq_response_message(_z_msg_reply_t *left, _z_msg_reply_t *right, uint8_t header) {
     printf("   ");
     assert(left->_rid == right->_rid);
     printf("\n");
@@ -1949,7 +1949,7 @@ void response_message(void) {
     _z_network_message_t n_msg = gen_response_message();
     assert(_Z_MID(n_msg._header) == _Z_MID_N_RESPONSE);
 
-    _z_n_msg_response_t e_re = n_msg._body._response;
+    _z_msg_reply_t e_re = n_msg._body._response;
 
     // Encode
     int8_t res = _z_response_encode(&wbf, n_msg._header, &e_re);
@@ -1958,14 +1958,14 @@ void response_message(void) {
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_n_msg_response_t d_re;
+    _z_msg_reply_t d_re;
     res = _z_response_decode(&d_re, &zbf, n_msg._header);
     assert(res == _Z_RES_OK);
 
     assert_eq_response_message(&e_re, &d_re, n_msg._header);
 
     // Free
-    _z_n_msg_clear_response(&d_re);
+    _z_msg_clear_reply(&d_re);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);

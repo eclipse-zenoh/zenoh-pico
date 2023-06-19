@@ -331,37 +331,31 @@ _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint
 void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_bytes_t parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _z_value_t value) {
     _z_zenoh_message_t msg;
 
-    msg._body._query._key = key;
     msg._body._query._parameters = parameters;
-    msg._body._query._qid = qid;
-    msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
     (void)memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
-    msg._body._query._info._encoding = value.encoding;
+    msg._body._query._encoding = value.encoding;
     msg._body._query._payload = value.payload;
 
     msg._header = _Z_MID_Z_QUERY;
-    if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_T);
-    }
-    if (msg._body._query._key._suffix != NULL) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_Z_K);
-    }
     if (msg._body._query._payload.len > 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_Z_B);
     }
 
     return msg;
 }
-
+_z_msg_query_reqexts_t _z_msg_query_required_extensions(_z_msg_query_t *msg) {
+    return (_z_msg_query_reqexts_t){.body = z_bytes_check(&msg->_payload),
+                                    .info = _z_id_check(msg->_info._id),
+                                    .consolidation = msg->_consolidation != Z_CONSOLIDATION_MODE_AUTO};
+}
 void _z_msg_clear_query(_z_msg_query_t *msg) {
-    _z_keyexpr_clear(&msg->_key);
-    _z_str_clear(msg->_parameters);
-    _z_bytes_clear(&msg->_info._encoding.suffix);
+    _z_bytes_clear(&msg->_parameters);
+    _z_bytes_clear(&msg->_encoding.suffix);
     _z_bytes_clear(&msg->_payload);
 }
 
@@ -495,7 +489,7 @@ _z_network_message_t _z_n_msg_make_response(_z_zint_t rid, _z_keyexpr_t key, _z_
     return msg;
 }
 
-void _z_n_msg_clear_response(_z_n_msg_response_t *msg) {
+void _z_msg_clear_reply(_z_msg_reply_t *msg) {
     _z_keyexpr_clear(&msg->_key);
     _z_response_body_clear(&msg->_body);
 }
@@ -522,7 +516,7 @@ void _z_n_msg_clear(_z_network_message_t *msg) {
             _z_n_msg_clear_request(&msg->_body._request);
             break;
         case _Z_MID_N_RESPONSE:
-            _z_n_msg_clear_response(&msg->_body._response);
+            _z_msg_clear_reply(&msg->_body._response);
             break;
         case _Z_MID_N_RESPONSE_FINAL:
             _z_n_msg_clear_response_final(&msg->_body._response_f);

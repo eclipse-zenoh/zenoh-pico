@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_MSGCODEC_H
 #define ZENOH_PICO_MSGCODEC_H
 
+#include <stdint.h>
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 #include "zenoh-pico/collections/element.h"
@@ -41,6 +42,12 @@ int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
 
 int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *ke);
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);
+
+int8_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
+int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
+
+int8_t _z_push_body_encode(_z_wbuf_t *buf, const _z_push_body_t *ts);
+int8_t _z_push_body_decode(_z_push_body_t *ts, _z_zbuf_t *buf);
 #endif /* ZENOH_PICO_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
@@ -49,10 +56,6 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);
 int8_t _z_payload_encode(_z_wbuf_t *buf, const _z_payload_t *pld);
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *buf);
 int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *buf);
-
-int8_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
-int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
-int8_t _z_timestamp_decode_na(_z_timestamp_t *ts, _z_zbuf_t *buf);
 
 int8_t _z_subinfo_encode(_z_wbuf_t *buf, const _z_subinfo_t *si);
 int8_t _z_subinfo_decode(_z_subinfo_t *si, _z_zbuf_t *buf, uint8_t header);
@@ -118,7 +121,6 @@ int8_t _z_declare_decode_na(_z_n_msg_declare_t *msg, _z_zbuf_t *zbf);
 
 int8_t _z_push_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_push_t *msg);
 int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_push_decode_na(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
 int8_t _z_request_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_request_t *msg);
 int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header);

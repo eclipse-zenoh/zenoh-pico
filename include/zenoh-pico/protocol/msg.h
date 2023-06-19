@@ -16,10 +16,12 @@
 #define ZENOH_PICO_PROTOCOL_MSG_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/array.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/endpoint.h"
@@ -157,6 +159,7 @@
 // #define _Z_FLAG_N_RESPONSE_X 0x40  // 1 << 6
 
 /* Zenoh message flags */
+#define _Z_FLAG_Z_Z 0x80
 #define _Z_FLAG_Z_B 0x40  // 1 << 6 | QueryPayload      if B==1 then QueryPayload is present
 #define _Z_FLAG_Z_D 0x20  // 1 << 5 | Dropping          if D==1 then the message can be dropped
 #define _Z_FLAG_Z_F \
@@ -447,6 +450,11 @@ typedef struct {
     uint8_t _kind;
 } _z_data_info_t;
 void _z_data_info_clear(_z_data_info_t *di);
+typedef struct {
+    _z_id_t _id;
+    uint32_t _entity_id;
+    uint32_t _source_sn;
+} _z_source_info_t;
 
 /*------------------ Data Message ------------------*/
 //  7 6 5 4 3 2 1 0
@@ -502,42 +510,30 @@ typedef struct {
 void _z_msg_clear_pull(_z_msg_pull_t *msg);
 
 /*------------------ Query Message ------------------*/
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |K|B|T|  QUERY  |
-// +-+-+-+---------+
-// ~    ResKey     ~ if K==1 then keyexpr is string
-// +---------------+
-// ~   parameters   ~
-// +---------------+
-// ~      qid      ~
-// +---------------+
-// ~     target    ~ if T==1. Otherwise target = Z_TARGET_BEST_MATCHING
-// +---------------+
-// ~ consolidation ~
-// +---------------+
-// ~   QueryBody   ~ if B==1
-// +---------------+
-//
-// where, QueryBody data structure is optionally included in Query messages
-//
-//  7 6 5 4 3 2 1 0
-// +-+-+-+---------+
-// ~    DataInfo   ~
-// +---------------+
-// ~    Payload    ~
-// +---------------+
-// ```
-
+//   7 6 5 4 3 2 1 0
+//  +-+-+-+-+-+-+-+-+
+//  |Z|C|P|  QUERY  |
+//  +-+-+-+---------+
+//  ~ params        ~  if P==1 -- <utf8;z32>
+//  +---------------+
+//  ~ consolidation ~  if C==1 -- u8
+//  +---------------+
+//  ~ [qry_exts]    ~  if Z==1
+//  +---------------+
+#define _Z_FLAG_Z_Q_P 0x20  // 1 << 7 | Period            if P==1 then a period is present
 typedef struct {
-    _z_keyexpr_t _key;
-    _z_zint_t _qid;
-    char *_parameters;
-    z_query_target_t _target;
-    z_consolidation_mode_t _consolidation;
-    _z_data_info_t _info;
+    _z_bytes_t _parameters;
+    _z_source_info_t _info;
     _z_payload_t _payload;
+    _z_encoding_t _encoding;
+    z_consolidation_mode_t _consolidation;
 } _z_msg_query_t;
+typedef struct {
+    _Bool info;
+    _Bool body;
+    _Bool consolidation;
+} _z_msg_query_reqexts_t;
+_z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
 void _z_msg_clear_query(_z_msg_query_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
@@ -559,9 +555,8 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id,
 // TODO[remove end]
 
 typedef struct {
-    _z_zenoh_body_t _body;
     uint8_t _header;
-    _z_reply_context_t *_reply_context;
+    _z_zenoh_body_t _body;
 } _z_zenoh_message_t;
 void _z_msg_clear(_z_zenoh_message_t *m);
 void _z_msg_free(_z_zenoh_message_t **m);
@@ -580,7 +575,7 @@ _z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key);
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
-_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
+_z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_bytes_t parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _z_value_t value);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped);
 
@@ -608,9 +603,44 @@ typedef struct {
 void _z_n_msg_clear_declare(_z_n_msg_declare_t *dcl);
 
 /*------------------ Push Message ------------------*/
-typedef union {
+
+typedef struct {
+    _z_timestamp_t _timestamp;
+    _z_source_info_t _source_info;
+} _z_m_push_commons_t;
+
+typedef struct {
+    _z_m_push_commons_t _commons;
+} _z_m_del_t;
+#define _Z_M_DEL_ID 0x02
+#define _Z_FLAG_Z_D_T 0x20
+
+typedef struct {
+    _z_m_push_commons_t _commons;
+    _z_bytes_t _payload;
+    _z_encoding_t _encoding;
+} _z_m_put_t;
+#define _Z_M_PUT_ID 0x01
+#define _Z_FLAG_Z_P_E 0x40
+#define _Z_FLAG_Z_P_T 0x20
+
+typedef struct {
+    _z_m_push_commons_t _commons;
+    _Bool _is_put;
+    union {
+        _z_m_del_t _del;
+        _z_m_put_t _put;
+    } _union;
 } _z_push_body_t;
 void _z_push_body_clear(_z_push_body_t *msg);
+
+typedef struct {
+    uint8_t _val;
+} _z_n_qos_t;
+
+#define _z_n_qos_make(express, nodrop, priority) \
+    (_z_n_qos_t) { ._val = ((express << 4) | (nodrop << 3) | priority) }
+#define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
 
 // Flags:
 // - N: Named          if N==1 then the keyexpr has name/suffix
@@ -621,17 +651,19 @@ void _z_push_body_clear(_z_push_body_t *msg);
 // +-+-+-+-+-+-+-+-+
 // |Z|M|N|  PUSH   |
 // +-+-+-+---------+
-// ~ key_scope:z16 ~
+// ~ key_scope:z?  ~
 // +---------------+
 // ~  key_suffix   ~  if N==1 -- <u8;z16>
 // +---------------+
 // ~  [push_exts]  ~  if Z==1
 // +---------------+
-// ~   PushBody    ~
+// ~ ZenohMessage  ~
 // +---------------+
 //
 typedef struct {
     _z_keyexpr_t _key;
+    _z_timestamp_t _timestamp;
+    _z_n_qos_t _qos;
     _z_push_body_t _body;
 } _z_n_msg_push_t;
 void _z_n_msg_clear_push(_z_n_msg_push_t *msg);
@@ -658,7 +690,7 @@ void _z_request_body_clear(_z_request_body_t *msg);
 // +---------------+
 // ~   [req_exts]  ~  if Z==1
 // +---------------+
-// ~  RequestBody  ~
+// ~ ZenohMessage  ~
 // +---------------+
 //
 typedef struct {
@@ -674,31 +706,32 @@ typedef union {
 void _z_response_body_clear(_z_response_body_t *msg);
 
 // Flags:
-// - N: Named          if N==1 then the keyexpr has name/suffix
-// - M: Mapping        if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
-// - Z: Extension      if Z==1 then at least one extension is present
+// - T: Timestamp      If T==1 then the timestamp if present
+// - E: Encoding       If E==1 then the encoding is present
+// - Z: Extension      If Z==1 then at least one extension is present
 //
-//  7 6 5 4 3 2 1 0
-// +-+-+-+-+-+-+-+-+
-// |Z|M|N| RESPONSE|
-// +-+-+-+---------+
-// ~ request_id:z32~
-// +---------------+
-// ~ key_scope:z16 ~
-// +---------------+
-// ~  key_suffix   ~  if N==1 -- <u8;z16>
-// +---------------+
-// ~  [reply_exts] ~  if Z==1
-// +---------------+
-// ~   ReplyBody   ~
-// +---------------+
-//
+//   7 6 5 4 3 2 1 0
+//  +-+-+-+-+-+-+-+-+
+//  |Z|E|T|  REPLY  |
+//  +-+-+-+---------+
+//  ~ ts: <u8;z16>  ~  if T==1
+//  +---------------+
+//  ~   encoding    ~  if E==1
+//  +---------------+
+//  ~  [repl_exts]  ~  if Z==1
+//  +---------------+
+//  ~ pl: <u8;z32>  ~  -- Payload
+//  +---------------+
 typedef struct {
-    _z_zint_t _rid;
-    _z_keyexpr_t _key;
-    _z_response_body_t _body;
-} _z_n_msg_response_t;
-void _z_n_msg_clear_response(_z_n_msg_response_t *msg);
+    _z_timestamp_t _timestamp;
+    _z_encoding_t _encoding;
+    _z_bytes_t _payload;
+    _z_source_info_t _source_info;
+    z_consolidation_mode_t _consolidation;
+} _z_msg_reply_t;
+void _z_msg_clear_reply(_z_msg_reply_t *msg);
+#define _Z_FLAG_Z_R_T 0x20
+#define _Z_FLAG_Z_R_E 0x40
 
 /*------------------ Response Final Message ------------------*/
 // Flags:
@@ -723,7 +756,7 @@ typedef union {
     _z_n_msg_declare_t _declare;
     _z_n_msg_push_t _push;
     _z_n_msg_request_t _request;
-    _z_n_msg_response_t _response;
+    _z_msg_reply_t _response;
     _z_n_msg_response_final_t _response_f;
 } _z_network_body_t;
 typedef struct {

@@ -179,7 +179,6 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 
         // Create the final reply
         _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
-        z_msg._reply_context = rctx;
 
         if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
