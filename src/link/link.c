@@ -34,22 +34,22 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
         } else
 #endif
 #if Z_LINK_UDP_UNICAST == 1
-            if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
+        if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);
         } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+        if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
         } else
 #endif
 #if Z_LINK_SERIAL == 1
-            if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
+        if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_serial(zl, ep);
         } else
 #endif
 #if Z_LINK_WS == 1
-            if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
+        if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_ws(zl, &ep);
         } else
 #endif
@@ -88,7 +88,7 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
         } else
 #endif
 #if Z_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+        if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
         } else
 #endif
