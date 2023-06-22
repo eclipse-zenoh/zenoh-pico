@@ -26,8 +26,9 @@
 int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
     _z_bytes_t local_zid = _z_bytes_empty();
+
+#if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
     ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
     if (ret == _Z_RES_OK) {
         ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
