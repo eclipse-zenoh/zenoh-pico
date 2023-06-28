@@ -237,7 +237,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_PING_PONG: {
-            _Z_DEBUG("Handling of PingPong messages not implemented");
+            _Z_DEBUG("Handling of PingPong messages not implemented\n");
             break;
         }
 
@@ -257,7 +257,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
-                    _Z_INFO("Reliable message dropped because it is out of order");
+                    _Z_INFO("Reliable message dropped because it is out of order\n");
                     break;
                 }
             } else {
@@ -266,7 +266,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
-                    _Z_INFO("Best effort message dropped because it is out of order");
+                    _Z_INFO("Best effort message dropped because it is out of order\n");
                     break;
                 }
             }

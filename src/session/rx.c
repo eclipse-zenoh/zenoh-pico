@@ -143,7 +143,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                     } break;
 
                     default: {
-                        _Z_INFO("Unknown declaration message ID");
+                        _Z_INFO("Unknown declaration message ID\n");
                         ret = _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
                     } break;
                 }

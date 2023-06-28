@@ -55,7 +55,7 @@ int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
         ret |= _z_wbuf_write(wbf, len);
         ret |= _z_wbuf_write_bytes(wbf, id->id, 0, len);
     } else {
-        _Z_DEBUG("Attempted to encode invalid ID 0");
+        _Z_DEBUG("Attempted to encode invalid ID 0\n");
         ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
     }
     return ret;
