@@ -78,9 +78,12 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
  *   char *val: A pointer to the string containing the resource name.
  */
 typedef struct {
-    _z_zint_t _id;
+    uint16_t _id;
+    _Bool uses_remote_mapping;
     const char *_suffix;
 } _z_keyexpr_t;
+static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
+static inline _Bool _z_keyexpr_check(_z_keyexpr_t ke) { return (ke._id != 0) || _z_keyexpr_has_suffix(ke); }
 
 /**
  * A zenoh-net data sample.
@@ -165,5 +168,11 @@ typedef struct {
     z_reliability_t reliability;
     z_submode_t mode;
 } _z_subinfo_t;
+
+typedef struct {
+    _z_id_t _id;
+    uint32_t _entity_id;
+    uint32_t _source_sn;
+} _z_source_info_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

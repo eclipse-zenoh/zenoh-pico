@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_MANAGER_H
-#define ZENOH_PICO_TRANSPORT_MANAGER_H
+#ifndef INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
+#define INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/link/manager.h"
@@ -22,4 +22,4 @@
 int8_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, char *locator, z_whatami_t mode);
 void _z_free_transport(_z_transport_t **zt);
 
-#endif /* ZENOH_PICO_TRANSPORT_MANAGER_H */
+#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H */

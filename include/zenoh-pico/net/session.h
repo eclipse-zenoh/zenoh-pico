@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SESSION_NETAPI_H
-#define ZENOH_PICO_SESSION_NETAPI_H
+#ifndef INCLUDE_ZENOH_PICO_NET_SESSION_H
+#define INCLUDE_ZENOH_PICO_NET_SESSION_H
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/session.h"
@@ -168,4 +168,4 @@ int8_t _zp_start_lease_task(_z_session_t *z);
 int8_t _zp_stop_lease_task(_z_session_t *z);
 #endif  // Z_MULTI_THREAD == 1
 
-#endif /* ZENOH_PICO_SESSION_NETAPI_H */
+#endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

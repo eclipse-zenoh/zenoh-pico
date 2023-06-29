@@ -153,8 +153,8 @@ _z_wbuf_t gen_wbuf(size_t len) {
     return _z_wbuf_make(len, is_expandable);
 }
 
-_z_payload_t gen_payload(size_t len) {
-    _z_payload_t pld;
+_z_bytes_t gen_payload(size_t len) {
+    _z_bytes_t pld;
     pld._is_alloc = true;
     pld.len = len;
     pld.start = (uint8_t *)z_malloc(len);
@@ -537,14 +537,14 @@ void message_extension(void) {
 /*       Message Fields        */
 /*=============================*/
 /*------------------ Payload field ------------------*/
-void assert_eq_payload(_z_payload_t *left, _z_payload_t *right) { assert_eq_uint8_array(left, right); }
+void assert_eq_payload(_z_bytes_t *left, _z_bytes_t *right) { assert_eq_uint8_array(left, right); }
 
 void payload_field(void) {
     printf("\n>> Payload field\n");
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    _z_payload_t e_pld = gen_payload(64);
+    _z_bytes_t e_pld = gen_payload(64);
 
     // Encode
     int8_t res = _z_payload_encode(&wbf, &e_pld);
@@ -554,7 +554,7 @@ void payload_field(void) {
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _z_payload_t d_pld;
+    _z_bytes_t d_pld;
     res = _z_payload_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");
@@ -1365,7 +1365,7 @@ _z_zenoh_message_t gen_data_message(void) {
     }
 
     _Bool can_be_dropped = gen_bool();
-    _z_payload_t payload = gen_payload(1 + gen_zint() % 64);
+    _z_bytes_t payload = gen_payload(1 + gen_zint() % 64);
 
     return _z_msg_make_data(key, info, payload, can_be_dropped);
 }
@@ -1965,7 +1965,7 @@ _z_network_message_t gen_response_final_message(void) {
 
 void assert_eq_response_final_message(_z_n_msg_response_final_t *left, _z_n_msg_response_final_t *right) {
     printf("   ");
-    assert(left->_rid == right->_rid);
+    assert(left->_requestid == right->_requestid);
     printf("\n");
 
     // TODO[protocol]: body
@@ -2542,8 +2542,8 @@ _z_transport_message_t gen_fragment_message(void) {
     _z_zint_t sn = gen_zint();
     _Bool is_reliable = gen_bool();
     _Bool is_last = gen_bool();
-    _z_payload_t payload = gen_bytes(gen_uint16() % 60000);  // 60000 is just to make sure that we are not generating a
-                                                             // payload bigger than what the fragment can hold
+    _z_bytes_t payload = gen_bytes(gen_uint16() % 60000);  // 60000 is just to make sure that we are not generating a
+                                                           // payload bigger than what the fragment can hold
     return _z_t_msg_make_fragment(sn, payload, is_reliable, is_last);
 }
 

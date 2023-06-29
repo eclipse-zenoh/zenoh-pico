@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/extcodec.h"
+#include "zenoh-pico/protocol/ext.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/codec.h"
-#include "zenoh-pico/protocol/ext.h"
+#include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"

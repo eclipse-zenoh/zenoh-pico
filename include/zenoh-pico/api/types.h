@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_API_TYPES_H
-#define ZENOH_PICO_API_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
+#define INCLUDE_ZENOH_PICO_API_TYPES_H
 
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
@@ -541,4 +541,4 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 }
 #endif
 
-#endif /* ZENOH_PICO_API_TYPES_H */
+#endif /* INCLUDE_ZENOH_PICO_API_TYPES_H */

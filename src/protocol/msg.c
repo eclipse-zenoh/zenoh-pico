@@ -20,6 +20,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/ext.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -42,7 +43,7 @@ _z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id,
 }
 
 /*------------------ Payload field ------------------*/
-void _z_payload_clear(_z_payload_t *p) { _z_bytes_clear(p); }
+void _z_payload_clear(_z_bytes_t *p) { _z_bytes_clear(p); }
 
 /*------------------ Timestamp Field ------------------*/
 void _z_timestamp_clear(_z_timestamp_t *ts) {}
@@ -262,9 +263,38 @@ void _z_data_info_clear(_z_data_info_t *di) {
     _z_bytes_clear(&di->_source_id);
     _z_timestamp_clear(&di->_tstamp);
 }
+void _z_msg_put_clear(_z_msg_put_t *msg) {
+    _z_bytes_clear(&msg->_encoding.suffix);
+    _z_bytes_clear(&msg->_payload);
+    _z_timestamp_clear(&msg->_commons._timestamp);
+}
+void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
+    _z_timestamp_clear(&msg->_ext_timestamp);
+    _z_keyexpr_clear(&msg->_key);
+    switch (msg->_body_tag) {
+        case _Z_RESPONSE_BODY_REPLY: {
+            _z_msg_reply_clear(&msg->_body._reply);
+            break;
+        }
+        case _Z_RESPONSE_BODY_ERR: {
+            _z_msg_err_clear(&msg->_body._err);
+            break;
+        }
+        case _Z_RESPONSE_BODY_ACK: {
+            break;
+        }
+        case _Z_RESPONSE_BODY_PUT: {
+            _z_msg_put_clear(&msg->_body._put);
+            break;
+        }
+        case _Z_RESPONSE_BODY_DEL: {
+            break;
+        }
+    }
+}
 
 /*------------------ Data Message ------------------*/
-_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped) {
+_z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool can_be_dropped) {
     _z_zenoh_message_t msg;
 
     msg._body._data._key = key;
@@ -357,8 +387,7 @@ void _z_msg_clear_query(_z_msg_query_t *msg) {
 }
 
 /*------------------ Reply Message ------------------*/
-_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload,
-                                     _Bool can_be_dropped) {
+_z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool can_be_dropped) {
     _z_zenoh_message_t msg = _z_msg_make_data(key, info, payload, can_be_dropped);
 
     return msg;
@@ -492,7 +521,7 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
     _z_network_message_t msg;
     msg._header = _Z_MID_N_RESPONSE_FINAL;
 
-    msg._body._response_f._rid = rid;
+    msg._body._response_f._requestid = rid;
     msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
@@ -794,7 +823,7 @@ void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
 void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_network_message_vec_clear(&msg->_messages); }
 
 /*------------------ Fragment Message ------------------*/
-_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_payload_t payload, _Bool is_reliable, _Bool is_last) {
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_bytes_t payload, _Bool is_reliable, _Bool is_last) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == true) {

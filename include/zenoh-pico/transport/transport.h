@@ -20,7 +20,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 
 typedef struct {
     // Defragmentation buffers

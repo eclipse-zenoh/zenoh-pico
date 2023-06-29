@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MSGCODEC_H
-#define ZENOH_PICO_MSGCODEC_H
+#ifndef INCLUDE_ZENOH_PICO_PROTOCOL_MSGCODEC_H
+#define INCLUDE_ZENOH_PICO_PROTOCOL_MSGCODEC_H
 
 #include <stdint.h>
 #define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
@@ -21,41 +21,22 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Zenoh Message ------------------*/
-int8_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
-int8_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);
-int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *buf);
 
-int8_t _z_transport_message_encode(_z_wbuf_t *buf, const _z_transport_message_t *msg);
-int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf);
-
-int8_t _z_network_message_encode(_z_wbuf_t *buf, const _z_network_message_t *msg);
-int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *buf);
-int8_t _z_network_message_decode_na(_z_network_message_t *msg, _z_zbuf_t *buf);
-
-int8_t _z_zenoh_message_encode(_z_wbuf_t *buf, const _z_zenoh_message_t *msg);
-int8_t _z_zenoh_message_decode(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
-int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
-
-int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *ke);
-int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);
-
-int8_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
-int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
-
-int8_t _z_push_body_encode(_z_wbuf_t *buf, const _z_push_body_t *ts);
-int8_t _z_push_body_decode(_z_push_body_t *ts, _z_zbuf_t *buf);
-#endif /* ZENOH_PICO_MSGCODEC_H */
+// int8_t _z_zenoh_message_encode(_z_wbuf_t *buf, const _z_zenoh_message_t *msg);
+// int8_t _z_zenoh_message_decode(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
+// int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *buf);
+#endif /* INCLUDE_ZENOH_PICO_PROTOCOL_MSGCODEC_H */
 
 // NOTE: the following headers are for unit testing only
 #ifdef ZENOH_PICO_TEST_H
 // ------------------ Message Fields ------------------
-int8_t _z_payload_encode(_z_wbuf_t *buf, const _z_payload_t *pld);
-int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *buf);
-int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *buf);
+int8_t _z_payload_encode(_z_wbuf_t *buf, const _z_bytes_t *pld);
+int8_t _z_payload_decode(_z_bytes_t *pld, _z_zbuf_t *buf);
+int8_t _z_payload_decode_na(_z_bytes_t *pld, _z_zbuf_t *buf);
 
 int8_t _z_subinfo_encode(_z_wbuf_t *buf, const _z_subinfo_t *si);
 int8_t _z_subinfo_decode(_z_subinfo_t *si, _z_zbuf_t *buf, uint8_t header);

@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MSGEXTCODEC_H
-#define ZENOH_PICO_MSGEXTCODEC_H
+#ifndef INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_EXTCODEC_H
+#define INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_EXTCODEC_H
 
 #include <stdint.h>
 
@@ -49,7 +49,7 @@ int8_t _z_msg_ext_skip_non_mandatories(_z_zbuf_t *zbf, uint8_t trace_id);
  */
 int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id);
 
-#endif /* ZENOH_PICO_MSGEXTCODEC_H */
+#endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_EXTCODEC_H */
 
 // NOTE: the following headers are for unit testing only
 #ifdef ZENOH_PICO_TEST_H

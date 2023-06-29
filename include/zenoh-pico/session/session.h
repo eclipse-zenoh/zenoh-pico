@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SESSION_TYPES_H
-#define ZENOH_PICO_SESSION_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_SESSION_SESSION_H
+#define INCLUDE_ZENOH_PICO_SESSION_SESSION_H
 
 #include <stdbool.h>
 
@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/pointer.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/manager.h"
 
@@ -182,4 +183,4 @@ typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_w
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
-#endif /* ZENOH_PICO_SESSION_TYPES_H */
+#endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

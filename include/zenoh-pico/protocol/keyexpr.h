@@ -29,5 +29,7 @@ void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_reset(_z_timestamp_t *tstamp);
+void _z_keyexpr_clear(_z_keyexpr_t *rk);
+void _z_keyexpr_free(_z_keyexpr_t **rk);
 
 #endif /* ZENOH_PICO_PROTOCOL_KEYEXPR_H */

@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SESSION_UTILS_H
-#define ZENOH_PICO_SESSION_UTILS_H
+#ifndef INCLUDE_ZENOH_PICO_SESSION_UTILS_H
+#define INCLUDE_ZENOH_PICO_SESSION_UTILS_H
 
 #include <stdbool.h>
 
@@ -36,4 +36,4 @@ int8_t _z_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_
 int8_t _z_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliability_t reliability,
                      z_congestion_control_t cong_ctrl);
 
-#endif /* ZENOH_PICO_SESSION_UTILS_H */
+#endif /* INCLUDE_ZENOH_PICO_SESSION_UTILS_H */
