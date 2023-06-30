@@ -124,10 +124,9 @@ _z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_ke
 
 _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
 _z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
+
 _z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
 _z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
-_z_declaration_t _z_make_final_decl(uint32_t id) {
-    return (_z_declaration_t){._tag = _Z_FINAL_INTEREST, ._body = {._final_interest = {._id = id}}};
-}
+_z_declaration_t _z_make_final_decl(uint32_t id);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_DECLARATIONS_H */

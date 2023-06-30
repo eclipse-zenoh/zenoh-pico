@@ -119,44 +119,10 @@ elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   endif()
 endif()
 
-file(GLOB PublicHeaders "include/*.h"
-  "include/zenoh-pico/*.h"
-  "include/zenoh-pico/api/*.h"
-  "include/zenoh-pico/collections/*.h"
-  "include/zenoh-pico/link/*.h"
-  "include/zenoh-pico/link/config/*.h"
-        "include/zenoh-pico/protocol/*/*.h"
-        "include/zenoh-pico/protocol/*.h"
-  "include/zenoh-pico/session/*.h"
-  "include/zenoh-pico/system/*.h"
-  "include/zenoh-pico/system/link/*.h"
-  "include/zenoh-pico/transport/*.h"
-  "include/zenoh-pico/utils/*.h"
-)
+file(GLOB_RECURSE PublicHeaders "include/*.h")
 target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB Sources "src/*.c"
-  "src/api/*.c"
-  "src/net/*.c"
-  "src/collections/*.c"
-  "src/link/*.c"
-  "src/link/config/*.c"
-  "src/link/unicast/*.c"
-  "src/link/multicast/*.c"
-  "src/protocol/*.c"
-  "src/protocol/*/*.c"
-  "src/session/*.c"
-  "src/system/*.c"
-  "src/transport/*.c"
-  "src/transport/common/*.c"
-  "src/transport/unicast/*.c"
-  "src/transport/unicast/link/*.c"
-  "src/transport/unicast/link/task/*.c"
-  "src/transport/multicast/*.c"
-  "src/transport/multicast/link/*.c"
-  "src/transport/multicast/link/task/*.c"
-  "src/utils/*.c"
-)
+file(GLOB_RECURSE Sources "src/*.c")
 
 if(WITH_ZEPHYR)
   file (GLOB Sources_Zephyr "src/system/zephyr/*.c")

@@ -282,7 +282,9 @@ int8_t _z_decl_subscriber_decode(_z_decl_subscriber_t *decl, _z_zbuf_t *zbf, uin
     }
     return _Z_RES_OK;
 }
-int8_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header) {}
+int8_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
+}
 int8_t _z_decl_queryable_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_decl_queryable_t *decl = (_z_decl_queryable_t *)ctx;
     switch (extension->_header) {
@@ -338,8 +340,10 @@ int8_t _z_final_interest_decode(_z_final_interest_t *decl, _z_zbuf_t *zbf, uint8
 int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
     return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
 }
-int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
     int8_t ret;
+    uint8_t header;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
     switch (_Z_MID(header)) {
         case _Z_DECL_KEXPR_MID: {
             decl->_tag = _Z_DECL_KEXPR;

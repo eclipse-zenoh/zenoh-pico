@@ -32,6 +32,6 @@
 #define _Z_FINAL_INTEREST_MID 9
 #define _Z_UNDECL_INTEREST_MID 10
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl);
-int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_DECLARATIONS_H */

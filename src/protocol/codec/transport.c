@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/codec/ext.h"
+#include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"

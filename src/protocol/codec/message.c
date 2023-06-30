@@ -117,7 +117,7 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
     _Z_DEBUG("Decoding _RESKEY\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_zint_decode(&ke->_id, zbf);
+    ret |= _z_zint16_decode(&ke->_id, zbf);
     if (has_suffix == true) {
         char *str = NULL;
         ret |= _z_str_decode(&str, zbf);

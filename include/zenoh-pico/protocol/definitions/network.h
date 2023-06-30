@@ -200,7 +200,6 @@ void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
 typedef struct {
     _z_declaration_t _decl;
     _z_timestamp_t _ext_timestamp;
-    uint16_t _ext_nodeid;
     _z_n_qos_t _ext_qos;
 } _z_n_msg_declare_t;
 static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
@@ -211,12 +210,11 @@ typedef union {
     _z_n_msg_push_t _push;
     _z_n_msg_request_t _request;
     _z_n_msg_response_t _response;
-    _z_n_msg_response_final_t _response_f;
+    _z_n_msg_response_final_t _response_final;
 } _z_network_body_t;
 typedef struct {
+    enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL } _tag;
     _z_network_body_t _body;
-    _z_msg_ext_vec_t _extensions;
-    uint8_t _header;
 } _z_network_message_t;
 void _z_n_msg_clear(_z_network_message_t *m);
 void _z_n_msg_free(_z_network_message_t **m);

@@ -86,29 +86,23 @@ void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
 }
 
 void _z_n_msg_clear(_z_network_message_t *msg) {
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_N_PUSH:
+    switch (msg->_tag) {
+        case _Z_N_PUSH:
             _z_n_msg_push_clear(&msg->_body._push);
             break;
-        case _Z_MID_N_REQUEST:
+        case _Z_N_REQUEST:
             _z_n_msg_request_clear(&msg->_body._request);
             break;
-        case _Z_MID_N_RESPONSE:
+        case _Z_N_RESPONSE:
             _z_n_msg_response_clear(&msg->_body._response);
             break;
-        case _Z_MID_N_RESPONSE_FINAL:
-            _z_n_msg_response_final_clear(&msg->_body._response_f);
+        case _Z_N_RESPONSE_FINAL:
+            _z_n_msg_response_final_clear(&msg->_body._response_final);
             break;
-        case _Z_MID_N_DECLARE:
+        case _Z_N_DECLARE:
             _z_n_msg_declare_clear(&msg->_body._declare);
             break;
-        default:
-            _Z_DEBUG("WARNING: Trying to clear network message with unknown ID(%d)\n", mid);
-            break;
     }
-
-    _z_msg_ext_vec_clear(&msg->_extensions);
 }
 
 void _z_n_msg_free(_z_network_message_t **msg) {
