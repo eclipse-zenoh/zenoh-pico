@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 typedef struct {
     uint16_t _id;
@@ -111,5 +112,22 @@ typedef struct {
     } _body;
 } _z_declaration_t;
 void _z_declaration_clear(_z_declaration_t* decl);
+
+_z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
+_z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
+
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable, _Bool pull_mode);
+_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
+
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete);
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
+
+_z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
+_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
+_z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
+_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key);
+_z_declaration_t _z_make_final_decl(uint32_t id) {
+    return (_z_declaration_t){._tag = _Z_FINAL_INTEREST, ._body = {._final_interest = {._id = id}}};
+}
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_DECLARATIONS_H */

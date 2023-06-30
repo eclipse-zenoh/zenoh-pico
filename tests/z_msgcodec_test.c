@@ -1540,7 +1540,7 @@ void query_message(void) {
     assert_eq_query_message(&e_qy, &d_qy, e_hdr);
 
     // Free
-    _z_msg_clear_query(&d_qy);
+    _z_msg_query_clear(&d_qy);
     _z_msg_clear(&z_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -1839,7 +1839,7 @@ void push_message(void) {
     assert_eq_push_message(&e_pu, &d_pu, n_msg._header);
 
     // Free
-    _z_n_msg_clear_push(&d_pu);
+    _z_n_msg_push_clear(&d_pu);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -1893,7 +1893,7 @@ void request_message(void) {
     assert_eq_request_message(&e_re, &d_re, n_msg._header);
 
     // Free
-    _z_n_msg_clear_request(&d_re);
+    _z_n_msg_request_clear(&d_re);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -1995,7 +1995,7 @@ void response_final_message(void) {
     assert_eq_response_final_message(&e_re, &d_re);
 
     // Free
-    _z_n_msg_clear_response_final(&d_re);
+    _z_n_msg_response_final_clear(&d_re);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);

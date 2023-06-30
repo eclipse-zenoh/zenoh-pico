@@ -62,3 +62,54 @@ void _z_declaration_clear(_z_declaration_t* decl) {
         }
     }
 }
+_z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_declaration_t){._tag = _Z_DECL_KEXPR,
+                              ._body = {._decl_kexpr = {._id = id, ._keyexpr = _z_keyexpr_steal(key)}}};
+}
+_z_declaration_t _z_make_undecl_keyexpr(uint16_t id) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_KEXPR, ._body = {._undecl_kexpr = {._id = id}}};
+}
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable, _Bool pull_mode) {
+    return (_z_declaration_t){
+        ._tag = _Z_DECL_SUBSCRIBER,
+        ._body = {._decl_subscriber = {._id = id,
+                                       ._keyexpr = _z_keyexpr_steal(key),
+                                       ._ext_subscriber_info = {._pull_mode = pull_mode, ._reliable = reliable}}}};
+}
+_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_SUBSCRIBER,
+                              ._body = {._undecl_subscriber = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+}
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete) {
+    return (_z_declaration_t){
+        ._tag = _Z_DECL_QUERYABLE,
+        ._body = {._decl_queryable = {._id = id,
+                                      ._keyexpr = _z_keyexpr_steal(key),
+                                      ._ext_queryable_info = {._complete = complete, ._distance = distance}}}};
+}
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_QUERYABLE,
+                              ._body = {._undecl_queryable = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+}
+_z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
+    return (_z_declaration_t){._tag = _Z_DECL_TOKEN,
+                              ._body = {._decl_token = {
+                                            ._id = id,
+                                            ._keyexpr = _z_keyexpr_steal(key),
+                                        }}};
+}
+_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
+                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+}
+_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
+                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+}
+_z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
+    return (_z_declaration_t){._tag = _Z_DECL_TOKEN,
+                              ._body = {._decl_token = {
+                                            ._id = id,
+                                            ._keyexpr = _z_keyexpr_steal(key),
+                                        }}};
+}

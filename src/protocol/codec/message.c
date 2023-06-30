@@ -24,6 +24,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec.h"
+#include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/ext.h"
@@ -362,31 +363,32 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         header |= _Z_FLAG_Z_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+
     if (has_params) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_parameters));
     }
 
-    if ((ret == _Z_RES_OK) && required_exts.body) {
+    if (required_exts.body) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03;
         if (required_exts.consolidation || required_exts.info) {
             extheader |= _Z_FLAG_Z_Z;
         }
-        ret = _z_uint8_encode(wbf, extheader);
-        ret |= _z_encoding_prefix_encode(wbf, msg->_value.encoding.prefix);
-        ret |= _z_bytes_encode(wbf, &msg->_value.encoding.suffix);
-        ret |= _z_bytes_encode(wbf, &msg->_value.payload);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_encoding_prefix_encode(wbf, msg->_value.encoding.prefix));
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_value.encoding.suffix));
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_value.payload));
     }
-    if ((ret == _Z_RES_OK) && required_exts.consolidation) {
+    if (required_exts.consolidation) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M | 0x02;
         if (required_exts.info) {
             extheader |= _Z_FLAG_Z_Z;
         }
-        ret = _z_uint8_encode(wbf, extheader);
-        ret |= _z_zint_encode(wbf, msg->_consolidation);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_consolidation));
     }
-    if ((ret == _Z_RES_OK) && required_exts.info) {
+    if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
-        ret = _z_source_info_encode(wbf, &msg->_info);
+        _Z_RETURN_IF_ERR(_z_source_info_encode(wbf, &msg->_info));
     }
 
     return ret;
@@ -641,11 +643,17 @@ int8_t _z_ack_decode(_z_msg_ack_t *ack, _z_zbuf_t *zbf, uint8_t header) {
     return ret;
 }
 
-int8_t _z_pull_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_pull_t *pull) {
+int8_t _z_pull_encode(_z_wbuf_t *wbf, const _z_msg_pull_t *pull) {
     int8_t ret = _Z_RES_OK;
-    if ((ret == _Z_RES_OK) && _z_id_check(pull->_ext_source_info._id)) {
-        ret = _z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01);
-        ret |= _z_source_info_encode(wbf, &pull->_ext_source_info);
+    uint8_t header = _Z_MID_Z_PULL;
+    _Bool has_info_ext = _z_id_check(pull->_ext_source_info._id);
+    if (has_info_ext) {
+        header |= _Z_FLAG_Z_Z;
+    }
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    if (has_info_ext) {
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01));
+        _Z_RETURN_IF_ERR(_z_source_info_encode(wbf, &pull->_ext_source_info));
     }
     return ret;
 }
@@ -672,88 +680,6 @@ int8_t _z_pull_decode(_z_msg_pull_t *pull, _z_zbuf_t *zbf, uint8_t header) {
     }
     return ret;
 }
-
-/*------------------ Zenoh Message ------------------*/
-int8_t _z_zenoh_message_encode(_z_wbuf_t *wbf, const _z_zenoh_message_t *msg) {
-    int8_t ret = _Z_RES_OK;
-
-    _Z_EC(_z_wbuf_write(wbf, msg->_header))
-
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_Z_DATA: {
-            ret |= _z_data_encode(wbf, msg->_header, &msg->_body._data);
-        } break;
-
-        case _Z_MID_Z_QUERY: {
-            ret |= _z_query_encode(wbf, msg->_header, &msg->_body._query);
-        } break;
-
-        case _Z_MID_Z_PULL: {
-            ret |= _z_pull_encode(wbf, msg->_header, &msg->_body._pull);
-        } break;
-
-        case _Z_MID_Z_UNIT: {
-            // Do nothing. Unit messages have no body
-        } break;
-
-        default: {
-            _Z_DEBUG("WARNING: Trying to encode message with unknown ID(%d)\n", mid);
-            ret |= _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
-        } break;
-    }
-
-    return ret;
-}
-
-int8_t _z_zenoh_message_decode_na(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
-
-    _Bool is_last = false;
-    do {
-        ret |= _z_uint8_decode(&msg->_header, zbf);
-        if (ret == _Z_RES_OK) {
-            uint8_t mid = _Z_MID(msg->_header);
-            switch (mid) {
-                case _Z_MID_Z_DATA: {
-                    ret |= _z_data_decode(&msg->_body._data, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_Z_QUERY: {
-                    ret |= _z_query_decode(&msg->_body._query, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_Z_PULL: {
-                    ret |= _z_pull_decode(&msg->_body._pull, zbf, msg->_header);
-                    is_last = true;
-                } break;
-
-                case _Z_MID_Z_UNIT: {
-                    // Do nothing. Unit messages have no body.
-                    is_last = true;
-                } break;
-
-                case _Z_MID_Z_LINK_STATE_LIST: {
-                    _Z_DEBUG("WARNING: Link state not supported in zenoh-pico\n");
-                    is_last = true;
-                } break;
-
-                default: {
-                    _Z_DEBUG("WARNING: Trying to decode zenoh message with unknown ID(%d)\n", mid);
-                    ret |= _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
-                } break;
-            }
-        } else {
-            msg->_header = 0xFF;
-        }
-    } while ((ret == _Z_RES_OK) && (is_last == false));
-
-    return ret;
-}
-
-int8_t _z_zenoh_message_decode(_z_zenoh_message_t *msg, _z_zbuf_t *zbf) { return _z_zenoh_message_decode_na(msg, zbf); }
 
 /*=============================*/
 /*       Scouting Messages     */

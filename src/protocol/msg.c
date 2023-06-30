@@ -51,8 +51,9 @@ void _z_timestamp_clear(_z_timestamp_t *ts) {}
 /*------------------ ResKey Field ------------------*/
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (rk->_suffix != NULL) {
+    if (rk->_suffix != NULL && rk->is_alloc) {
         _z_str_clear((char *)rk->_suffix);
+        rk->is_alloc = false;
     }
 }
 
@@ -66,9 +67,6 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
         *rk = NULL;
     }
 }
-
-/*------------------ Locators Field ------------------*/
-void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 
 /*=============================*/
 /*       Zenoh Messages        */
@@ -263,35 +261,6 @@ void _z_data_info_clear(_z_data_info_t *di) {
     _z_bytes_clear(&di->_source_id);
     _z_timestamp_clear(&di->_tstamp);
 }
-void _z_msg_put_clear(_z_msg_put_t *msg) {
-    _z_bytes_clear(&msg->_encoding.suffix);
-    _z_bytes_clear(&msg->_payload);
-    _z_timestamp_clear(&msg->_commons._timestamp);
-}
-void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
-    _z_timestamp_clear(&msg->_ext_timestamp);
-    _z_keyexpr_clear(&msg->_key);
-    switch (msg->_body_tag) {
-        case _Z_RESPONSE_BODY_REPLY: {
-            _z_msg_reply_clear(&msg->_body._reply);
-            break;
-        }
-        case _Z_RESPONSE_BODY_ERR: {
-            _z_msg_err_clear(&msg->_body._err);
-            break;
-        }
-        case _Z_RESPONSE_BODY_ACK: {
-            break;
-        }
-        case _Z_RESPONSE_BODY_PUT: {
-            _z_msg_put_clear(&msg->_body._put);
-            break;
-        }
-        case _Z_RESPONSE_BODY_DEL: {
-            break;
-        }
-    }
-}
 
 /*------------------ Data Message ------------------*/
 _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool can_be_dropped) {
@@ -376,15 +345,6 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, _z_bytes_t parameters, _z
 
     return msg;
 }
-_z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg) {
-    return (_z_msg_query_reqexts_t){.body = msg->_value.payload.start != NULL,
-                                    .info = _z_id_check(msg->_info._id),
-                                    .consolidation = msg->_consolidation != Z_CONSOLIDATION_MODE_AUTO};
-}
-void _z_msg_clear_query(_z_msg_query_t *msg) {
-    _z_bytes_clear(&msg->_parameters);
-    _z_value_clear(&msg->_value);
-}
 
 /*------------------ Reply Message ------------------*/
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool can_be_dropped) {
@@ -404,7 +364,7 @@ void _z_msg_clear(_z_zenoh_message_t *msg) {
             _z_msg_clear_pull(&msg->_body._pull);
             break;
         case _Z_MID_Z_QUERY:
-            _z_msg_clear_query(&msg->_body._query);
+            _z_msg_query_clear(&msg->_body._query);
             break;
         case _Z_MID_Z_UNIT:
             _z_msg_clear_unit(&msg->_body._unit);
@@ -425,11 +385,6 @@ void _z_msg_free(_z_zenoh_message_t **msg) {
         *msg = NULL;
     }
 }
-
-/*=============================*/
-/*      Network Messages       */
-/*=============================*/
-void _z_push_body_clear(_z_push_body_t *msg) { (void)(msg); }
 
 void _z_request_body_clear(_z_request_body_t *msg) { (void)(msg); }
 
@@ -465,11 +420,6 @@ _z_network_message_t _z_n_msg_make_push(_z_keyexpr_t key, _z_push_body_t body, _
     return msg;
 }
 
-void _z_n_msg_clear_push(_z_n_msg_push_t *msg) {
-    _z_keyexpr_clear(&msg->_key);
-    _z_push_body_clear(&msg->_body);
-}
-
 _z_network_message_t _z_n_msg_make_request(_z_zint_t rid, _z_keyexpr_t key, _z_request_body_t body,
                                            _Bool is_remote_mapping) {
     _z_network_message_t msg;
@@ -488,11 +438,6 @@ _z_network_message_t _z_n_msg_make_request(_z_zint_t rid, _z_keyexpr_t key, _z_r
     msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
-}
-
-void _z_n_msg_clear_request(_z_n_msg_request_t *msg) {
-    _z_keyexpr_clear(&msg->_key);
-    _z_request_body_clear(&msg->_body);
 }
 
 _z_network_message_t _z_n_msg_make_response(_z_zint_t rid, _z_keyexpr_t key, _z_response_body_t body,
@@ -515,8 +460,6 @@ _z_network_message_t _z_n_msg_make_response(_z_zint_t rid, _z_keyexpr_t key, _z_
     return msg;
 }
 
-void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_value_clear(&msg->_value); }
-
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
     _z_network_message_t msg;
     msg._header = _Z_MID_N_RESPONSE_FINAL;
@@ -525,436 +468,4 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
     msg._extensions = _z_msg_ext_vec_make(0);
 
     return msg;
-}
-
-void _z_n_msg_clear_response_final(_z_n_msg_response_final_t *msg) { (void)(msg); }
-
-void _z_n_msg_clear(_z_network_message_t *msg) {
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_N_PUSH:
-            _z_n_msg_clear_push(&msg->_body._push);
-            break;
-        case _Z_MID_N_REQUEST:
-            _z_n_msg_clear_request(&msg->_body._request);
-            break;
-        case _Z_MID_N_RESPONSE:
-            _z_msg_reply_clear(&msg->_body._response);
-            break;
-        case _Z_MID_N_RESPONSE_FINAL:
-            _z_n_msg_clear_response_final(&msg->_body._response_f);
-            break;
-        case _Z_MID_N_DECLARE:
-            _z_n_msg_clear_declare(&msg->_body._declare);
-            break;
-        default:
-            _Z_DEBUG("WARNING: Trying to clear network message with unknown ID(%d)\n", mid);
-            break;
-    }
-
-    _z_msg_ext_vec_clear(&msg->_extensions);
-}
-
-void _z_n_msg_free(_z_network_message_t **msg) {
-    _z_network_message_t *ptr = *msg;
-
-    if (ptr != NULL) {
-        _z_n_msg_clear(ptr);
-
-        z_free(ptr);
-        *msg = NULL;
-    }
-}
-
-/*=============================*/
-/*     Transport Messages      */
-/*=============================*/
-/*------------------ Scout Message ------------------*/
-_z_scouting_message_t _z_s_msg_make_scout(z_what_t what, _z_id_t zid) {
-    _z_scouting_message_t msg;
-    msg._header = _Z_MID_SCOUT;
-
-    msg._body._scout._version = Z_PROTO_VERSION;
-    msg._body._scout._what = what;
-    msg._body._scout._zid = zid;
-
-    return msg;
-}
-
-void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg) {
-    clone->_what = msg->_what;
-    clone->_version = msg->_version;
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-}
-
-void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg) {}
-
-/*------------------ Hello Message ------------------*/
-_z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_locator_array_t locators) {
-    _z_scouting_message_t msg;
-    msg._header = _Z_MID_HELLO;
-
-    msg._body._hello._version = Z_PROTO_VERSION;
-    msg._body._hello._whatami = whatami;
-    msg._body._hello._zid = zid;
-    msg._body._hello._locators = locators;
-
-    if (_z_locator_array_is_empty(&locators) == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_HELLO_L);
-    }
-
-    return msg;
-}
-
-void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg) {
-    _z_locator_array_copy(&clone->_locators, &msg->_locators);
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-    clone->_whatami = msg->_whatami;
-}
-
-void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
-
-/*------------------ Join Message ------------------*/
-_z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_id_t zid,
-                                          _z_conduit_sn_list_t next_sn) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_JOIN;
-
-    msg._body._join._version = Z_PROTO_VERSION;
-    msg._body._join._whatami = whatami;
-    msg._body._join._lease = lease;
-    msg._body._join._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._join._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._join._batch_size = Z_BATCH_SIZE;
-    msg._body._join._next_sn = next_sn;
-    msg._body._join._zid = zid;
-
-    if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_T);
-    }
-
-    if ((Z_BATCH_SIZE != _Z_DEFAULT_BATCH_SIZE) || (Z_SN_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (Z_REQ_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
-    }
-
-    if (next_sn._is_qos) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
-    }
-
-    return msg;
-}
-
-void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
-    clone->_version = msg->_version;
-    clone->_whatami = msg->_whatami;
-    clone->_lease = msg->_lease;
-    clone->_seq_num_res = msg->_seq_num_res;
-    clone->_req_id_res = msg->_req_id_res;
-    clone->_batch_size = msg->_batch_size;
-    clone->_next_sn = msg->_next_sn;
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-}
-
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg) {}
-
-/*------------------ Init Message ------------------*/
-_z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_INIT;
-
-    msg._body._init._version = Z_PROTO_VERSION;
-    msg._body._init._whatami = whatami;
-    msg._body._init._zid = zid;
-    msg._body._init._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._init._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._init._batch_size = Z_BATCH_SIZE;
-    _z_bytes_reset(&msg._body._init._cookie);
-
-    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
-    }
-
-    return msg;
-}
-
-_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_bytes_t cookie) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_INIT;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_A);
-
-    msg._body._init._version = Z_PROTO_VERSION;
-    msg._body._init._whatami = whatami;
-    msg._body._init._zid = zid;
-    msg._body._init._seq_num_res = Z_SN_RESOLUTION;
-    msg._body._init._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._init._batch_size = Z_BATCH_SIZE;
-    msg._body._init._cookie = cookie;
-
-    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
-        (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
-    }
-
-    return msg;
-}
-
-void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
-    clone->_version = msg->_version;
-    clone->_whatami = msg->_whatami;
-    clone->_seq_num_res = msg->_seq_num_res;
-    clone->_req_id_res = msg->_req_id_res;
-    clone->_batch_size = msg->_batch_size;
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-    _z_bytes_copy(&clone->_cookie, &msg->_cookie);
-}
-
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg) { _z_bytes_clear(&msg->_cookie); }
-
-/*------------------ Open Message ------------------*/
-_z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_bytes_t cookie) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_OPEN;
-
-    msg._body._open._lease = lease;
-    msg._body._open._initial_sn = initial_sn;
-    msg._body._open._cookie = cookie;
-
-    if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
-    }
-
-    return msg;
-}
-
-_z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_OPEN;
-    _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_A);
-
-    msg._body._open._lease = lease;
-    msg._body._open._initial_sn = initial_sn;
-    _z_bytes_reset(&msg._body._open._cookie);
-
-    if ((lease % 1000) == 0) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_OPEN_T);
-    }
-
-    return msg;
-}
-
-void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
-    clone->_lease = msg->_lease;
-    clone->_initial_sn = msg->_initial_sn;
-    _z_bytes_copy(&clone->_cookie, &msg->_cookie);
-}
-
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); }
-
-/*------------------ Close Message ------------------*/
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_CLOSE;
-
-    msg._body._close._reason = reason;
-    if (link_only == false) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_CLOSE_S);
-    }
-
-    return msg;
-}
-
-void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) { clone->_reason = msg->_reason; }
-
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
-
-/*------------------ Keep Alive Message ------------------*/
-_z_transport_message_t _z_t_msg_make_keep_alive(void) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_KEEP_ALIVE;
-
-    return msg;
-}
-
-void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg) {
-    (void)(clone);
-    (void)(msg);
-}
-
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
-
-/*------------------ Frame Message ------------------*/
-_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_FRAME;
-
-    msg._body._frame._sn = sn;
-    if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
-    }
-
-    msg._body._frame._messages = _z_network_message_vec_make(0);
-
-    return msg;
-}
-
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages, _Bool is_reliable) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_FRAME;
-
-    msg._body._frame._sn = sn;
-    if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
-    }
-
-    msg._body._frame._messages = messages;
-
-    return msg;
-}
-
-void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
-    clone->_sn = msg->_sn;
-    _z_network_message_vec_copy(&clone->_messages, &msg->_messages);
-}
-
-void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_network_message_vec_clear(&msg->_messages); }
-
-/*------------------ Fragment Message ------------------*/
-_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_bytes_t payload, _Bool is_reliable, _Bool is_last) {
-    _z_transport_message_t msg;
-    msg._header = _Z_MID_T_FRAGMENT;
-    if (is_last == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_M);
-    }
-    if (is_reliable == true) {
-        _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_R);
-    }
-
-    msg._body._fragment._sn = sn;
-    msg._body._fragment._payload = payload;
-
-    return msg;
-}
-
-void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
-    _z_bytes_copy(&clone->_payload, &msg->_payload);
-}
-
-void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg) { _z_bytes_clear(&msg->_payload); }
-
-/*------------------ Transport Message ------------------*/
-void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
-    clone->_header = msg->_header;
-
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_T_JOIN: {
-            _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
-        } break;
-
-        case _Z_MID_T_INIT: {
-            _z_t_msg_copy_init(&clone->_body._init, &msg->_body._init);
-        } break;
-
-        case _Z_MID_T_OPEN: {
-            _z_t_msg_copy_open(&clone->_body._open, &msg->_body._open);
-        } break;
-
-        case _Z_MID_T_CLOSE: {
-            _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
-        } break;
-
-        case _Z_MID_T_KEEP_ALIVE: {
-            _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, &msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_T_FRAME: {
-            _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
-        } break;
-
-        case _Z_MID_T_FRAGMENT: {
-            _z_t_msg_copy_fragment(&clone->_body._fragment, &msg->_body._fragment);
-        } break;
-
-        default: {
-            _Z_DEBUG("WARNING: Trying to copy transport message with unknown ID(%d)\n", mid);
-        } break;
-    }
-}
-
-void _z_t_msg_clear(_z_transport_message_t *msg) {
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_T_JOIN: {
-            _z_t_msg_clear_join(&msg->_body._join);
-        } break;
-
-        case _Z_MID_T_INIT: {
-            _z_t_msg_clear_init(&msg->_body._init);
-        } break;
-
-        case _Z_MID_T_OPEN: {
-            _z_t_msg_clear_open(&msg->_body._open);
-        } break;
-
-        case _Z_MID_T_CLOSE: {
-            _z_t_msg_clear_close(&msg->_body._close);
-        } break;
-
-        case _Z_MID_T_KEEP_ALIVE: {
-            _z_t_msg_clear_keep_alive(&msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_T_FRAME: {
-            _z_t_msg_clear_frame(&msg->_body._frame);
-        } break;
-
-        case _Z_MID_T_FRAGMENT: {
-            _z_t_msg_clear_fragment(&msg->_body._fragment);
-        } break;
-
-        default: {
-            _Z_DEBUG("WARNING: Trying to clear transport message with unknown ID(%d)\n", mid);
-        } break;
-    }
-}
-
-/*------------------ Scouting Message ------------------*/
-void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
-    clone->_header = msg->_header;
-
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_SCOUT: {
-            _z_s_msg_copy_scout(&clone->_body._scout, &msg->_body._scout);
-        } break;
-
-        case _Z_MID_HELLO: {
-            _z_s_msg_copy_hello(&clone->_body._hello, &msg->_body._hello);
-        } break;
-
-        default: {
-            _Z_DEBUG("WARNING: Trying to copy session message with unknown ID(%d)\n", mid);
-        } break;
-    }
-}
-
-void _z_s_msg_clear(_z_scouting_message_t *msg) {
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_SCOUT: {
-            _z_s_msg_clear_scout(&msg->_body._scout);
-        } break;
-
-        case _Z_MID_HELLO: {
-            _z_s_msg_clear_hello(&msg->_body._hello);
-        } break;
-
-        default: {
-            _Z_DEBUG("WARNING: Trying to clear session message with unknown ID(%d)\n", mid);
-        } break;
-    }
 }

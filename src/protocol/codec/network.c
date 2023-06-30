@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/protocol/definitions/network.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,6 +26,7 @@
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
+#include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msg.h"
@@ -102,23 +105,107 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, uint8_t header, const _z_n_msg_request_
     _Z_EC(_z_zint_encode(wbf, msg->_rid));
     _Z_EC(_z_keyexpr_encode(wbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N), &msg->_key));
 
+    _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
+    if (exts.ext_qos) {
+        exts.n -= 1;
+        uint8_t extheader = 0x01 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->ext_qos._val));
+    }
+    if (exts.ext_tstamp) {
+        exts.n -= 1;
+        uint8_t extheader = 0x02 | _Z_MSG_EXT_ENC_ZBUF | (exts.n ? _Z_FLAG_Z_Z : 0);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_timestamp_encode(wbf, &msg->ext_tstamp));
+    }
+    if (exts.ext_target) {
+        exts.n -= 1;
+        uint8_t extheader = 0x04 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0) | _Z_MSG_EXT_FLAG_M;
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->ext_target));
+    }
+    if (exts.ext_budget) {
+        exts.n -= 1;
+        uint8_t extheader = 0x05 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->ext_budget));
+    }
+    if (exts.ext_timeout_ms) {
+        exts.n -= 1;
+        uint8_t extheader = 0x06 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->ext_timeout_ms));
+    }
+
     switch (msg->_tag) {
         case _Z_REQUEST_QUERY: {
             _Z_RETURN_IF_ERR(_z_query_encode(wbf, &msg->_body.query));
         } break;
         case _Z_REQUEST_PUT: {
+            _Z_RETURN_IF_ERR(_z_put_encode(wbf, &msg->_body.put));
         } break;
         case _Z_REQUEST_DEL: {
+            _Z_RETURN_IF_ERR(_z_del_encode(wbf, &msg->_body.del));
         } break;
         case _Z_REQUEST_PULL: {
+            _Z_RETURN_IF_ERR(_z_pull_encode(wbf, &msg->_body.pull));
         } break;
     }
     return ret;
 }
-
+int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
+    _z_n_msg_request_t *msg = (_z_n_msg_request_t *)ctx;
+    switch (_Z_EXT_FULL_ID(extension->_header)) {
+        case 0x01 | _Z_MSG_EXT_ENC_ZINT: {  // QOS ext
+            msg->ext_qos = (_z_n_qos_t){._val = extension->_body._zint._val};
+            break;
+        }
+        case 0x02 | _Z_MSG_EXT_ENC_ZBUF: {  // Timestamp ext
+            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _Z_RETURN_IF_ERR(_z_timestamp_decode(&msg->ext_tstamp, &zbf));
+            break;
+        }
+        case 0x04 | _Z_MSG_EXT_ENC_ZINT: {
+            msg->ext_target = extension->_body._zint._val;
+            if (msg->ext_target > 2) {
+                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            }
+        } break;
+        case 0x05 | _Z_MSG_EXT_ENC_ZINT: {
+            msg->ext_budget = extension->_body._zint._val;
+        } break;
+        case 0x06 | _Z_MSG_EXT_ENC_ZINT: {
+            msg->ext_timeout_ms = extension->_body._zint._val;
+        } break;
+        default:
+            if ((extension->_header & _Z_MSG_EXT_FLAG_M) != 0) {
+                return _z_msg_ext_unknown_error(extension, 0x16);
+            }
+    }
+    return _Z_RES_OK;
+}
 int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_request_decode_extensions, msg));
+    }
+    switch (_Z_MID(header)) {
+        case _Z_MID_Z_QUERY: {
+            _Z_RETURN_IF_ERR(_z_query_decode(&msg->_body.query, zbf, header));
+        } break;
+        case _Z_MID_Z_PUT: {
+            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body.put, zbf, header));
+        } break;
+        case _Z_MID_Z_DEL: {
+            _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body.del, zbf, header));
+        } break;
+        case _Z_MID_Z_PULL: {
+            _Z_RETURN_IF_ERR(_z_pull_decode(&msg->_body.pull, zbf, header));
+        } break;
+        default:
+            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
     return _Z_RES_OK;
 }
 

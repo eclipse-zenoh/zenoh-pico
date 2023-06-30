@@ -24,6 +24,9 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 
+#define _Z_OPTIONAL
+#define _Z_MOVE(x) x *
+
 /**
  * The reserved resource ID indicating a string-only resource key.
  */

@@ -131,6 +131,7 @@ typedef struct {
 typedef struct {
     _z_source_info_t _ext_source_info;
 } _z_msg_pull_t;
+static inline void _z_msg_pull_clear(_z_msg_pull_t *pull) {}
 
 typedef struct {
     _z_timestamp_t _timestamp;
@@ -140,6 +141,7 @@ typedef struct {
 typedef struct {
     _z_m_push_commons_t _commons;
 } _z_msg_del_t;
+static inline void _z_msg_del_clear(_z_msg_del_t *del) {}
 #define _Z_M_DEL_ID 0x02
 #define _Z_FLAG_Z_D_T 0x20
 
@@ -177,6 +179,6 @@ typedef struct {
     _Bool consolidation;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
-void _z_msg_clear_query(_z_msg_query_t *msg);
+void _z_msg_query_clear(_z_msg_query_t *msg);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H */

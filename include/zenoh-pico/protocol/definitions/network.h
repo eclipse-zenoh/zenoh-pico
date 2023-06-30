@@ -92,9 +92,8 @@ typedef struct {
 typedef struct {
     _z_zint_t _rid;
     _z_keyexpr_t _key;
-    _z_n_qos_t ext_qos;
     _z_timestamp_t ext_tstamp;
-    _z_id_t ext_nodeid;
+    _z_n_qos_t ext_qos;
     z_query_target_t ext_target;
     uint32_t ext_budget;
     uint32_t ext_timeout_ms;
@@ -106,7 +105,16 @@ typedef struct {
         _z_msg_pull_t pull;
     } _body;
 } _z_n_msg_request_t;
-void _z_n_msg_clear_request(_z_n_msg_request_t *msg);
+typedef struct {
+    _Bool ext_qos;
+    _Bool ext_tstamp;
+    _Bool ext_target;
+    _Bool ext_budget;
+    _Bool ext_timeout_ms;
+    uint8_t n;
+} _z_n_msg_request_exts_t;
+_z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg);
+void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef struct {
     _Bool _is_put;
@@ -133,7 +141,7 @@ void _z_push_body_clear(_z_push_body_t *msg);
 typedef struct {
     _z_zint_t _request_id;
 } _z_n_msg_response_final_t;
-void _z_n_msg_clear_response_final(_z_n_msg_response_final_t *msg);
+void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg);
 
 // Flags:
 // - N: Named          if N==1 then the keyexpr has name/suffix
@@ -159,7 +167,7 @@ typedef struct {
     _z_n_qos_t _qos;
     _z_push_body_t _body;
 } _z_n_msg_push_t;
-void _z_n_msg_clear_push(_z_n_msg_push_t *msg);
+void _z_n_msg_push_clear(_z_n_msg_push_t *msg);
 
 /*------------------ Response Message ------------------*/
 typedef struct {
@@ -195,6 +203,7 @@ typedef struct {
     uint16_t _ext_nodeid;
     _z_n_qos_t _ext_qos;
 } _z_n_msg_declare_t;
+static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
 
 /*------------------ Zenoh Message ------------------*/
 typedef union {
