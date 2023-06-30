@@ -16,6 +16,8 @@
 #define ZENOH_PICO_PROTOCOL_IOBUF_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"

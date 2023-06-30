@@ -79,8 +79,9 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
  */
 typedef struct {
     uint16_t _id;
-    _Bool uses_remote_mapping;
-    const char *_suffix;
+    _Bool _uses_remote_mapping;
+    _Bool is_alloc;
+    char *_suffix;
 } _z_keyexpr_t;
 static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
 static inline _Bool _z_keyexpr_check(_z_keyexpr_t ke) { return (ke._id != 0) || _z_keyexpr_has_suffix(ke); }

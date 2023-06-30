@@ -15,6 +15,9 @@
 #ifndef INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H
 #define INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H
 
+#include <stdint.h>
+
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"
@@ -89,7 +92,19 @@ typedef struct {
 typedef struct {
     _z_zint_t _rid;
     _z_keyexpr_t _key;
-    // _z_request_body_t _body;
+    _z_n_qos_t ext_qos;
+    _z_timestamp_t ext_tstamp;
+    _z_id_t ext_nodeid;
+    z_query_target_t ext_target;
+    uint32_t ext_budget;
+    uint32_t ext_timeout_ms;
+    enum { _Z_REQUEST_QUERY, _Z_REQUEST_PUT, _Z_REQUEST_DEL, _Z_REQUEST_PULL } _tag;
+    union {
+        _z_msg_query_t query;
+        _z_msg_put_t put;
+        _z_msg_del_t del;
+        _z_msg_pull_t pull;
+    } _body;
 } _z_n_msg_request_t;
 void _z_n_msg_clear_request(_z_n_msg_request_t *msg);
 
@@ -152,6 +167,10 @@ typedef struct {
     _z_zint_t _request_id;
     _z_keyexpr_t _key;
     _z_n_qos_t _ext_qos;
+    struct {
+        _z_id_t _zid;
+        uint32_t _eid;
+    } _ext_responder;
     _Bool _uses_sender_mapping;
     enum {
         _Z_RESPONSE_BODY_REPLY,

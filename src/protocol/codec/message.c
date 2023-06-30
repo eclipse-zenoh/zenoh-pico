@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/definitions/message.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -29,6 +29,7 @@
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -348,21 +349,23 @@ int8_t _z_del_decode(_z_msg_del_t *del, _z_zbuf_t *zbf, uint8_t header) {
 }
 
 /*------------------ Query Message ------------------*/
-int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg) {
+int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_Z_QUERY\n");
+    uint8_t header = _Z_MID_Z_QUERY;
 
-    if (z_bytes_check(&msg->_parameters)) {
-        assert(_Z_HAS_FLAG(header, _Z_FLAG_Z_P));
-        ret = _z_bytes_encode(wbf, &msg->_parameters);
-    } else {
-        assert(!_Z_HAS_FLAG(header, _Z_FLAG_Z_P));
+    _Bool has_params = z_bytes_check(&msg->_parameters);
+    if (has_params) {
+        header |= _Z_FLAG_Z_P;
     }
-
     _z_msg_query_reqexts_t required_exts = _z_msg_query_required_extensions(msg);
     if (required_exts.body || required_exts.consolidation || required_exts.info) {
-        assert(_Z_HAS_FLAG(header, _Z_FLAG_Z_Z));
+        header |= _Z_FLAG_Z_Z;
     }
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    if (has_params) {
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_parameters));
+    }
+
     if ((ret == _Z_RES_OK) && required_exts.body) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03;
         if (required_exts.consolidation || required_exts.info) {

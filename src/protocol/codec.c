@@ -14,6 +14,9 @@
 
 #include "zenoh-pico/protocol/codec.h"
 
+#include <stdint.h>
+
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -211,7 +214,28 @@ int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
     uint8_t c = lv & 0xff;
     return _z_wbuf_write(wbf, c);
 }
-
+int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    _z_zint_t buf;
+    _Z_RETURN_IF_ERR(_z_zint_decode(&buf, zbf));
+    if (buf <= UINT16_MAX) {
+        *zint = buf;
+    } else {
+        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    return ret;
+}
+int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    _z_zint_t buf;
+    _Z_RETURN_IF_ERR(_z_zint_decode(&buf, zbf));
+    if (buf <= UINT32_MAX) {
+        *zint = buf;
+    } else {
+        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    return ret;
+}
 int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     *zint = 0;
