@@ -157,8 +157,8 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         q._qid = query->_qid;
         q._key = key;
         q._parameters = query->_parameters;
-        q._value.encoding = query->_info._encoding;
-        q._value.payload = query->_payload;
+        q._value.encoding = query->_value.encoding;
+        q._value.payload = query->_value.payload;
         q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         _z_questionable_sptr_list_t *xs = qles;
         while (xs != NULL) {

@@ -27,7 +27,7 @@
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     dst->_id = src->_id;
     dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
-    dst->is_alloc = true;
+    dst->owns_suffix = true;
 }
 
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
@@ -38,7 +38,7 @@ _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
 
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
-    src->is_alloc = false;
+    src->owns_suffix = false;
     src->_id = 0;
     src->_suffix = NULL;
     return stolen;
@@ -51,7 +51,7 @@ _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     return ts;
 }
 
-void _z_timestamp_reset(_z_timestamp_t *tstamp) {
+void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     memset(&tstamp->id, 0, sizeof(_z_id_t));
     tstamp->time = 0;
 }

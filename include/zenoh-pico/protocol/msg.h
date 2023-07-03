@@ -216,17 +216,8 @@ _z_network_message_t _z_n_msg_make_push(_z_keyexpr_t key, _z_push_body_t body, _
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 
 /*------------------ Builders ------------------*/
-_z_declaration_t _z_msg_make_declaration_resource(_z_zint_t id, _z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_forget_resource(_z_zint_t rid);
-_z_declaration_t _z_msg_make_declaration_publisher(_z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_forget_publisher(_z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_subscriber(_z_keyexpr_t key, _z_subinfo_t subinfo);
-_z_declaration_t _z_msg_make_declaration_forget_subscriber(_z_keyexpr_t key);
-_z_declaration_t _z_msg_make_declaration_queryable(_z_keyexpr_t key, _z_zint_t complete, _z_zint_t distance);
-_z_declaration_t _z_msg_make_declaration_forget_queryable(_z_keyexpr_t key);
 // _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool can_be_dropped);
 _z_network_message_t _z_msg_make_unit(_Bool can_be_dropped);
-_z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
 _z_network_message_t _z_msg_make_query(_z_keyexpr_t key, _z_bytes_t parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _z_value_t value);
 // _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_bytes_t payload, _Bool

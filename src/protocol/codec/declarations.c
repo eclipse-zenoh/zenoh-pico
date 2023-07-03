@@ -217,7 +217,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 if (!ke->_suffix) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->is_alloc = true;
+                ke->owns_suffix = true;
                 _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
                 ke->_suffix[len] = 0;
             }
@@ -250,12 +250,12 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (ke->_suffix == NULL) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->is_alloc = true;
+        ke->owns_suffix = true;
         _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
         ke->_suffix[len] = 0;
     } else {
         ke->_suffix = "";
-        ke->is_alloc = false;
+        ke->owns_suffix = false;
     }
     return _Z_RES_OK;
 }

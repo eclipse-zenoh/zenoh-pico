@@ -23,6 +23,7 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
 #define _Z_OPTIONAL
 #define _Z_MOVE(x) x *
@@ -70,7 +71,8 @@ typedef struct {
 } _z_timestamp_t;
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-void _z_timestamp_reset(_z_timestamp_t *tstamp);
+_z_timestamp_t _z_timestamp_null();
+void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
 
 /**
@@ -83,7 +85,7 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
 typedef struct {
     uint16_t _id;
     _Bool _uses_remote_mapping;
-    _Bool is_alloc;
+    _Bool _owns_suffix;
     char *_suffix;
 } _z_keyexpr_t;
 static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
@@ -178,5 +180,6 @@ typedef struct {
     uint32_t _entity_id;
     uint32_t _source_sn;
 } _z_source_info_t;
+_z_source_info_t _z_source_info_null();
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

@@ -24,24 +24,6 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/utils/logging.h"
 
-/*=============================*/
-/*        Message fields       */
-/*=============================*/
-_z_reply_context_t *_z_msg_make_reply_context(_z_zint_t qid, _z_id_t replier_id, _Bool is_final) {
-    _z_reply_context_t *rctx = (_z_reply_context_t *)z_malloc(sizeof(_z_reply_context_t));
-    if (rctx != NULL) {
-        rctx->_qid = qid;
-        rctx->_replier_id = replier_id;
-
-        rctx->_header = 0;
-        if (is_final == true) {
-            _Z_SET_FLAG(rctx->_header, _Z_FLAG_Z_F);
-        }
-    }
-
-    return rctx;
-}
-
 /*------------------ Payload field ------------------*/
 void _z_payload_clear(_z_bytes_t *p) { _z_bytes_clear(p); }
 
@@ -51,9 +33,9 @@ void _z_timestamp_clear(_z_timestamp_t *ts) {}
 /*------------------ ResKey Field ------------------*/
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (rk->_suffix != NULL && rk->is_alloc) {
+    if (rk->_suffix != NULL && rk->owns_suffix) {
         _z_str_clear((char *)rk->_suffix);
-        rk->is_alloc = false;
+        rk->owns_suffix = false;
     }
 }
 

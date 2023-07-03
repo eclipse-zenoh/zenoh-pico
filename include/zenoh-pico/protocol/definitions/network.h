@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 /* Network Messages */
 #define _Z_MID_N_OAM 0x1f
 #define _Z_MID_N_DECLARE 0x1e
@@ -220,5 +221,8 @@ void _z_n_msg_clear(_z_network_message_t *m);
 void _z_n_msg_free(_z_network_message_t **m);
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy)
 _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
+typedef _z_network_message_t _z_zenoh_message_t;
+
+_z_network_message_t _z_msg_make_pull(_Z_MOVE(_z_keyexpr_t) key, _z_zint_t pull_id);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */
