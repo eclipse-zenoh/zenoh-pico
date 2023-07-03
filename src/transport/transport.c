@@ -364,7 +364,7 @@ int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *pa
     (void)(param);
     (void)(zl);
     (void)(local_zid);
-    int8_t ret = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
+    int8_t ret = _Z_ERR_CONFIG_UNSUPPORTED_PEER_UNICAST;
 
     // @TODO: not implemented
 
