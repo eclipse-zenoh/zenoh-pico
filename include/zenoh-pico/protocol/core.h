@@ -120,6 +120,8 @@ typedef struct {
     _z_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
+_z_value_t _z_value_null(void);
+_z_value_t _z_value_steal(_z_value_t *value);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 
@@ -181,5 +183,10 @@ typedef struct {
     uint32_t _source_sn;
 } _z_source_info_t;
 _z_source_info_t _z_source_info_null();
+
+typedef struct {
+    uint32_t _request_id;
+    uint32_t _entity_id;
+} _z_reply_context_t;
 
 #endif /* ZENOH_PICO_PROTOCOL_CORE_H */

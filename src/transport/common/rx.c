@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Reception helper ------------------*/

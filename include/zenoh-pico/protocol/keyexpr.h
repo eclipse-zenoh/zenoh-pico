@@ -26,7 +26,8 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
+_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
+_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);

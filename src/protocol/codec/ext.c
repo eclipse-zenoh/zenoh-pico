@@ -43,7 +43,7 @@ int8_t _z_msg_ext_decode_unit_na(_z_msg_ext_unit_t *ext, _z_zbuf_t *zbf) { retur
 
 int8_t _z_msg_ext_encode_zint(_z_wbuf_t *wbf, const _z_msg_ext_zint_t *ext) {
     int8_t ret = _Z_RES_OK;
-    _Z_EC(_z_zint_encode(wbf, ext->_val))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, ext->_val))
     return ret;
 }
 
@@ -57,7 +57,7 @@ int8_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *ext, _z_zbuf_t *zbf) { retur
 
 int8_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *ext) {
     int8_t ret = _Z_RES_OK;
-    _Z_EC(_z_bytes_encode(wbf, &ext->_val))
+    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &ext->_val))
     return ret;
 }
 
@@ -73,7 +73,7 @@ int8_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) { retur
 int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, _Bool has_next) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_wbuf_write(wbf, _Z_EXT_FULL_ID(ext->_header) | (has_next << 7)))
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, _Z_EXT_FULL_ID(ext->_header) | (has_next << 7)))
 
     uint8_t enc = _Z_EXT_ENC(ext->_header);
     switch (enc) {

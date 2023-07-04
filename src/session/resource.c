@@ -15,7 +15,9 @@
 #include "zenoh-pico/session/resource.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -37,7 +39,7 @@ void _z_resource_free(_z_resource_t **res) {
 /*------------------ Entity ------------------*/
 _z_zint_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
 
-_z_zint_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
+uint16_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 
 /*------------------ Resource ------------------*/
 _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, const _z_zint_t id) {
@@ -149,8 +151,8 @@ _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local,
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_resources : zn->_remote_resources;
+_z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+    _z_resource_list_t *decls = !keyexpr->_uses_remote_mapping ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_key(decls, keyexpr);
 }
 
@@ -159,8 +161,8 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_resources : zn->_remote_resources;
+_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+    _z_resource_list_t *decls = keyexpr->_uses_remote_mapping ? zn->_remote_resources : zn->_local_resources;
     return __z_get_expanded_key_from_key(decls, keyexpr);
 }
 
@@ -183,7 +185,7 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const 
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, is_local, keyexpr);
+    _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, keyexpr);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
@@ -192,12 +194,12 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, uint8_t is_local, const 
     return res;
 }
 
-_z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *keyexpr) {
+_z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-
-    _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, is_local, keyexpr);
+    _Bool is_local = !keyexpr->_uses_remote_mapping;
+    _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);

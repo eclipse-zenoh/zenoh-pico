@@ -562,8 +562,8 @@ void payload_field(void) {
     printf("\n");
 
     // Free
-    _z_payload_clear(&e_pld);
-    _z_payload_clear(&d_pld);
+    _z_bytes_clear(&e_pld);
+    _z_bytes_clear(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -738,161 +738,6 @@ void keyexpr_field(void) {
     _z_keyexpr_clear(&d_rk);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
-}
-
-/*------------------ DataInfo field ------------------*/
-_z_data_info_t gen_data_info(void) {
-    _z_data_info_t di;
-
-    di._flags = 0;
-
-    if (gen_bool()) {
-        di._kind = gen_uint8();
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_KIND);
-    } else {
-        di._kind = 0;
-    }
-
-    if (gen_bool()) {
-        di._encoding.prefix = gen_uint8();
-        if (gen_bool()) {
-            di._encoding.suffix = gen_bytes(8);
-        } else {
-            di._encoding.suffix = _z_bytes_empty();
-        }
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_ENC);
-    } else {
-        di._encoding.prefix = 0;
-        di._encoding.suffix = _z_bytes_empty();
-    }
-
-    if (gen_bool()) {
-        di._tstamp = gen_timestamp();
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_TSTAMP);
-    } else {
-        _z_timestamp_reset(&di._tstamp);
-    }
-
-    // WARNING: we do not support sliced content in zenoh-pico.
-
-    if (gen_bool()) {
-        di._source_id = gen_bytes(16);
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_SRC_ID);
-    } else {
-        di._source_id = _z_bytes_empty();
-    }
-    if (gen_bool()) {
-        di._source_sn = gen_zint();
-        _Z_SET_FLAG(di._flags, _Z_DATA_INFO_SRC_SN);
-    } else {
-        di._source_sn = 0;
-    }
-
-    return di;
-}
-
-void assert_eq_data_info(_z_data_info_t *left, _z_data_info_t *right) {
-    printf("DataInfo -> ");
-    printf("Flags (%zu:%zu), ", left->_flags, right->_flags);
-    assert(left->_flags == right->_flags);
-
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_KIND) == true) {
-        printf("Kind (%d:%d), ", left->_kind, right->_kind);
-        assert(left->_kind == right->_kind);
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_ENC) == true) {
-        printf("Encoding (%u %.*s:%u %.*s), ", left->_encoding.prefix, (int)left->_encoding.suffix.len,
-               left->_encoding.suffix.start, right->_encoding.prefix, (int)right->_encoding.suffix.len,
-               right->_encoding.suffix.start);
-        assert(left->_encoding.prefix == right->_encoding.prefix);
-        assert_eq_uint8_array(&left->_encoding.suffix, &right->_encoding.suffix);
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_TSTAMP) == true) {
-        printf("Tstamp -> ");
-        assert_eq_timestamp(&left->_tstamp, &right->_tstamp);
-        printf(", ");
-    }
-
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_ID) == true) {
-        printf("Src ID -> ");
-        assert_eq_uint8_array(&left->_source_id, &right->_source_id);
-        printf(", ");
-    }
-    if (_Z_HAS_FLAG(left->_flags, _Z_DATA_INFO_SRC_SN) == true) {
-        printf("Src SN (%zu:%zu), ", left->_source_sn, right->_source_sn);
-        assert(left->_source_sn == right->_source_sn);
-    }
-}
-
-void data_info_field(void) {
-    printf("\n>> DataInfo field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
-
-    // Initialize
-    _z_data_info_t e_di = gen_data_info();
-
-    // Encode
-    int8_t res = _z_data_info_encode(&wbf, &e_di);
-    assert(res == _Z_RES_OK);
-    (void)(res);
-
-    // Decode
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_data_info_t d_di;
-    res = _z_data_info_decode(&d_di, &zbf);
-    assert(res == _Z_RES_OK);
-
-    printf("   ");
-    assert_eq_data_info(&e_di, &d_di);
-    printf("\n");
-
-    // Free
-    _z_data_info_clear(&d_di);
-    _z_data_info_clear(&e_di);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
-/*=============================*/
-/*     Message decorators      */
-/*=============================*/
-
-/*------------------ ReplyContext decorator ------------------*/
-void print_reply_context(_z_reply_context_t *rc) {
-    printf("      Header: %x\n", rc->_header);
-    printf("      QID: %zu\n", rc->_qid);
-    if (_Z_HAS_FLAG(rc->_header, _Z_FLAG_Z_F) == false) {
-        printf("      Replier ID: ");
-        print_uint8_array((_z_bytes_t *)&rc->_replier_id);
-    }
-    printf("\n");
-}
-
-_z_reply_context_t *gen_reply_context(void) {
-    _z_zint_t qid = gen_zint();
-    _z_id_t replier_id = gen_zid();
-    _Bool is_final = gen_bool();
-    if (is_final == true) {
-        replier_id = _z_id_empty();
-    }
-
-    return _z_msg_make_reply_context(qid, replier_id, is_final);
-}
-
-void assert_eq_reply_context(_z_reply_context_t *left, _z_reply_context_t *right) {
-    printf("Header (%x:%x), ", left->_header, right->_header);
-    assert(left->_header == right->_header);
-
-    printf("QID (%zu:%zu), ", left->_qid, right->_qid);
-    assert(left->_qid == right->_qid);
-
-    printf("Replier ID (");
-    if (_Z_HAS_FLAG(left->_header, _Z_FLAG_Z_F) == false) {
-        assert(memcmp(left->_replier_id.id, right->_replier_id.id, 16) == 0);
-    } else {
-        printf("NULL:NULL");
-    }
-    printf(")");
 }
 
 /*=============================*/
@@ -1714,7 +1559,7 @@ void declare_message(void) {
     assert_eq_declare_message(&e_dcl, &d_dcl);
 
     // Free
-    _z_n_msg_clear_declare(&d_dcl);
+    _z_n_msg_declare_clear(&d_dcl);
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);

@@ -14,6 +14,9 @@
 #ifndef ZENOH_PICO_PRIMITIVES_NETAPI_H
 #define ZENOH_PICO_PRIMITIVES_NETAPI_H
 
+#include <stdint.h>
+
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
@@ -52,7 +55,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const
  * Returns:
  *     A numerical id of the declared resource.
  */
-_z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
+uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -66,7 +69,7 @@ _z_zint_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int8_t _z_undeclare_resource(_z_session_t *zn, const _z_zint_t rid);
+int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
 
 /**
  * Declare a :c:type:`_z_publisher_t` for the given resource key.
@@ -173,7 +176,8 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl);
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                z_priority_t priority);
 
 /**
  * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
@@ -217,9 +221,8 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
  * Parameters:
  *     query: The query to reply to. The caller keeps its ownership.
  *     key: The resource key of this reply. The caller keeps the ownership.
- *     payload: The value of this reply.
- *     len: The length of the value of this reply.
+ *     payload: The value of this reply, the caller keeps ownership.
  */
-int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len);
+int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

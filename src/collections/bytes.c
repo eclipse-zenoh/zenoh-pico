@@ -100,3 +100,8 @@ _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
 }
 
 _Bool _z_bytes_is_empty(const _z_bytes_t *bs) { return bs->len == 0; }
+_z_bytes_t _z_bytes_steal(_z_bytes_t *b) {
+    _z_bytes_t ret = *b;
+    *b = _z_bytes_empty();
+    return ret;
+}

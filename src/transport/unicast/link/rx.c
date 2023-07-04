@@ -17,6 +17,8 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -151,7 +153,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
 
                 _z_zenoh_message_t zm;
-                int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                int8_t ret = _z_network_message_decode(&zm, &zbf);
                 if (ret == _Z_RES_OK) {
                     _z_handle_zenoh_message(ztu->_session, &zm);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented

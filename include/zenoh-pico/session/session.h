@@ -16,6 +16,7 @@
 #define INCLUDE_ZENOH_PICO_SESSION_SESSION_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
@@ -71,7 +72,7 @@ void _z_reply_free(_z_reply_t **hello);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _id;
+    uint16_t _id;
 } _z_resource_t;
 
 _Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);

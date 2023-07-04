@@ -31,7 +31,6 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
@@ -112,8 +111,8 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_EC(_z_zint_encode(wbf, msg->_rid));
-    _Z_EC(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_rid));
+    _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 
     _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
     if (exts.ext_qos) {
@@ -149,7 +148,7 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
 
     switch (msg->_tag) {
         case _Z_REQUEST_QUERY: {
-            _Z_RETURN_IF_ERR(_z_query_encode(wbf, &msg->_body.query));
+            _Z_RETURN_IF_ERR(_z_query_encode(wbf, &msg->_body._query));
         } break;
         case _Z_REQUEST_PUT: {
             _Z_RETURN_IF_ERR(_z_put_encode(wbf, &msg->_body.put));
@@ -203,7 +202,7 @@ int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header
     }
     switch (_Z_MID(header)) {
         case _Z_MID_Z_QUERY: {
-            _Z_RETURN_IF_ERR(_z_query_decode(&msg->_body.query, zbf, header));
+            _Z_RETURN_IF_ERR(_z_query_decode(&msg->_body._query, zbf, header));
         } break;
         case _Z_MID_Z_PUT: {
             _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body.put, zbf, header));
@@ -229,7 +228,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
     _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid);
     uint8_t n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
-    if (msg->_uses_sender_mapping) {
+    if (msg->_key._uses_remote_mapping) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     }
     if (msg->_key._suffix != NULL) {
@@ -271,7 +270,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_responder._eid));
     }
 
-    switch (msg->_body_tag) {
+    switch (msg->_tag) {
         case _Z_RESPONSE_BODY_REPLY: {
             _Z_RETURN_IF_ERR(_z_reply_encode(wbf, &msg->_body._reply));
             break;
@@ -330,15 +329,15 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
 int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE\n");
     int8_t ret = _Z_RES_OK;
-    msg->_uses_sender_mapping = _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M);
-    _Z_EC(_z_zint_decode(&msg->_request_id, zbf));
+    msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M);
+    _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_request_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N)));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
-        _Z_EC(_z_msg_ext_decode_iter(zbf, _z_response_decode_extension, msg));
+        _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_response_decode_extension, msg));
     }
 
     uint8_t inner_header;
-    _Z_EC(_z_uint8_decode(&inner_header, zbf));
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&inner_header, zbf));
 
     switch (_Z_MID(inner_header)) {
         case _Z_MID_Z_REPLY: {
@@ -374,7 +373,7 @@ int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t 
     _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
     uint8_t header = _Z_MID_N_RESPONSE_FINAL;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_EC(_z_zint_encode(wbf, msg->_request_id));
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_request_id));
 
     return ret;
 }

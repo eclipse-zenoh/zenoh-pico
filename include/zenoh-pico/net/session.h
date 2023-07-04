@@ -15,9 +15,25 @@
 #ifndef INCLUDE_ZENOH_PICO_NET_SESSION_H
 #define INCLUDE_ZENOH_PICO_NET_SESSION_H
 
+#include <stdint.h>
+
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/config.h"
+
+typedef struct {
+    _z_resource_list_t *resources;
+    _z_subscription_sptr_list_t *subscriptions;
+} _z_remote_t;
+static void _z_remote_drop(_z_remote_t *remote) {
+    _z_resource_list_free(&remote->resources);
+    _z_subscription_sptr_list_free(&remote->subscriptions);
+}
+_Z_ELEM_DEFINE(_z_remote, _z_remote_t, _z_noop_size, _z_remote_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_remote, _z_remote_t)
 
 /**
  * A zenoh-net session.
@@ -34,10 +50,11 @@ typedef struct {
     _z_id_t _local_zid;
 
     // Session counters
-    _z_zint_t _resource_id;
+    uint16_t _resource_id;
     _z_zint_t _entity_id;
     _z_zint_t _pull_id;
     _z_zint_t _query_id;
+    _z_zint_t _interest_id;
 
     // Session declarations
     _z_resource_list_t *_local_resources;

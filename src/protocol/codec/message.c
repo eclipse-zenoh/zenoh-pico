@@ -84,7 +84,7 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
-    _Z_EC(_z_uint64_encode(wbf, ts->time))
+    _Z_RETURN_IF_ERR(_z_uint64_encode(wbf, ts->time))
     ret |= _z_id_encode_as_zbytes(wbf, &ts->id);
 
     return ret;
@@ -105,9 +105,9 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *f
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _RESKEY\n");
 
-    _Z_EC(_z_zint_encode(wbf, fld->_id))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, fld->_id))
     if (has_suffix == true) {
-        _Z_EC(_z_str_encode(wbf, fld->_suffix))
+        _Z_RETURN_IF_ERR(_z_str_encode(wbf, fld->_suffix))
     }
 
     return ret;
@@ -137,10 +137,10 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
 int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _LOCATORS\n");
-    _Z_EC(_z_zint_encode(wbf, la->_len))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
         char *s = _z_locator_to_str(&la->_val[i]);
-        _Z_EC(_z_str_encode(wbf, s))
+        _Z_RETURN_IF_ERR(_z_str_encode(wbf, s))
         z_free(s);
     }
 
@@ -228,8 +228,8 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     (void)(pshb);
     int8_t ret = _Z_RES_OK;
     uint8_t header = pshb->_is_put ? _Z_M_PUT_ID : _Z_M_DEL_ID;
-    _Bool has_source_info = _z_id_check(pshb->_union._put._commons._source_info._id);
-    _Bool has_timestamp = _z_timestamp_check(&pshb->_union._put._commons._timestamp);
+    _Bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id);
+    _Bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
     _Bool has_encoding = false;
     if (has_source_info) {
         header |= _Z_FLAG_Z_Z;
@@ -238,8 +238,8 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         if (has_timestamp) {
             header |= _Z_FLAG_Z_P_T;
         }
-        has_encoding = pshb->_union._put._encoding.prefix != Z_ENCODING_PREFIX_EMPTY ||
-                       !_z_bytes_is_empty(&pshb->_union._put._encoding.suffix);
+        has_encoding = pshb->_body._put._encoding.prefix != Z_ENCODING_PREFIX_EMPTY ||
+                       !_z_bytes_is_empty(&pshb->_body._put._encoding.suffix);
         if (has_encoding) {
             header |= _Z_FLAG_Z_P_E;
         }
@@ -250,21 +250,21 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
     ret = _z_uint8_encode(wbf, header);
     if ((ret == _Z_RES_OK) && has_timestamp) {
-        ret = _z_timestamp_encode(wbf, &pshb->_union._put._commons._timestamp);
+        ret = _z_timestamp_encode(wbf, &pshb->_body._put._commons._timestamp);
     }
 
     if ((ret == _Z_RES_OK) && has_encoding) {
-        ret = _z_encoding_prefix_encode(wbf, pshb->_union._put._encoding.prefix);
-        ret |= _z_bytes_encode(wbf, &pshb->_union._put._encoding.suffix);
+        ret = _z_encoding_prefix_encode(wbf, pshb->_body._put._encoding.prefix);
+        ret |= _z_bytes_encode(wbf, &pshb->_body._put._encoding.suffix);
     }
 
     if ((ret == _Z_RES_OK) && has_source_info) {
         ret = _z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01);
-        ret |= _z_source_info_encode(wbf, &pshb->_union._put._commons._source_info);
+        ret |= _z_source_info_encode(wbf, &pshb->_body._put._commons._source_info);
     }
 
     if ((ret == _Z_RES_OK) && pshb->_is_put) {
-        ret = _z_bytes_encode(wbf, &pshb->_union._put._payload);
+        ret = _z_bytes_encode(wbf, &pshb->_body._put._payload);
     }
 
     return ret;
@@ -275,7 +275,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
             _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
-            ret = _z_source_info_decode(&pshb->_union._put._commons._source_info, &zbf);
+            ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
             break;
         }
         default:
@@ -293,23 +293,23 @@ int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header)
             case _Z_M_PUT_ID: {
                 pshb->_is_put = true;
                 if (_Z_HAS_FLAG(header, _Z_FLAG_Z_P_T)) {
-                    ret = _z_timestamp_decode(&pshb->_union._put._commons._timestamp, zbf);
+                    ret = _z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf);
                 }
                 if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_P_E)) {
-                    ret = _z_encoding_prefix_decode(&pshb->_union._put._encoding.prefix, zbf);
+                    ret = _z_encoding_prefix_decode(&pshb->_body._put._encoding.prefix, zbf);
                 }
                 if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
                     ret = _z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb);
                 }
                 if (ret == _Z_RES_OK) {
-                    ret = _z_bytes_decode(&pshb->_union._put._payload, zbf);
+                    ret = _z_bytes_decode(&pshb->_body._put._payload, zbf);
                 }
                 break;
             }
             case _Z_M_DEL_ID: {
                 pshb->_is_put = false;
                 if (_Z_HAS_FLAG(header, _Z_FLAG_Z_D_T)) {
-                    ret = _z_timestamp_decode(&pshb->_union._put._commons._timestamp, zbf);
+                    ret = _z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf);
                 }
                 if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
                     ret = _z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb);
@@ -326,26 +326,26 @@ int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header)
 }
 
 int8_t _z_put_encode(_z_wbuf_t *wbf, const _z_msg_put_t *put) {
-    _z_push_body_t body = {._is_put = true, ._union = {._put = *put}};
+    _z_push_body_t body = {._is_put = true, ._body = {._put = *put}};
     return _z_push_body_encode(wbf, &body);
 }
 int8_t _z_put_decode(_z_msg_put_t *put, _z_zbuf_t *zbf, uint8_t header) {
     assert(_Z_MID(header) == _Z_MID_Z_PUT);
-    _z_push_body_t body = {._is_put = true, ._union = {._put = *put}};
+    _z_push_body_t body = {._is_put = true, ._body = {._put = *put}};
     int8_t ret = _z_push_body_decode(&body, zbf, header);
-    *put = body._union._put;
+    *put = body._body._put;
     return ret;
 }
 
 int8_t _z_del_encode(_z_wbuf_t *wbf, const _z_msg_del_t *del) {
-    _z_push_body_t body = {._is_put = false, ._union = {._del = *del}};
+    _z_push_body_t body = {._is_put = false, ._body = {._del = *del}};
     return _z_push_body_encode(wbf, &body);
 }
 int8_t _z_del_decode(_z_msg_del_t *del, _z_zbuf_t *zbf, uint8_t header) {
     assert(_Z_MID(header) == _Z_MID_Z_DEL);
-    _z_push_body_t body = {._is_put = false, ._union = {._del = *del}};
+    _z_push_body_t body = {._is_put = false, ._body = {._del = *del}};
     int8_t ret = _z_push_body_decode(&body, zbf, header);
-    *del = body._union._del;
+    *del = body._body._del;
     return ret;
 }
 
@@ -450,7 +450,7 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
     if (reply->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO || _z_id_check(reply->_ext_source_info._id)) {
         header |= _Z_FLAG_Z_Z;
     }
-    _Z_EC(_z_uint8_encode(wbf, header));
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     int8_t ret = _Z_RES_OK;
     if (_z_timestamp_check(&reply->_timestamp)) {
         assert(_Z_HAS_FLAG(header, _Z_FLAG_Z_R_T));
@@ -690,7 +690,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
     (void)(header);
     _Z_DEBUG("Encoding _Z_MID_SCOUT\n");
 
-    _Z_EC(_z_uint8_encode(wbf, msg->_version))
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_what & 0x07);
@@ -699,7 +699,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
         _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);
         cbyte |= ((zid_len - 1) & 0x0F) << 4;
     }
-    _Z_EC(_z_uint8_encode(wbf, cbyte))
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
 
     ret |= _z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zid_len);
 
@@ -734,16 +734,16 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_HELLO\n");
 
-    _Z_EC(_z_uint8_encode(wbf, msg->_version))
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
     uint8_t zidlen = _z_id_len(msg->_zid);
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
     cbyte |= ((zidlen - 1) & 0x0F) << 4;
-    _Z_EC(_z_uint8_encode(wbf, cbyte))
-    _Z_EC(_z_bytes_val_encode(wbf, &(_z_bytes_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
+    _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &(_z_bytes_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
-        _Z_EC(_z_locators_encode(wbf, &msg->_locators))
+        _Z_RETURN_IF_ERR(_z_locators_encode(wbf, &msg->_locators))
     }
 
     return ret;
@@ -788,7 +788,7 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
 
     uint8_t header = msg->_header;
 
-    _Z_EC(_z_wbuf_write(wbf, header))
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_SCOUT: {
             ret |= _z_scout_encode(wbf, msg->_header, &msg->_body._scout);

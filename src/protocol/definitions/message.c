@@ -1,7 +1,5 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 
-#include "zenoh-pico/protocol/msg.h"
-
 void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_value_clear(&msg->_value); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {

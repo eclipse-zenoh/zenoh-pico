@@ -17,6 +17,8 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -148,8 +150,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             // Handle all the zenoh message, one by one
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                _z_handle_zenoh_message(ztm->_session,
-                                        (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i));
+                _z_handle_zenoh_message(ztm->_session, _z_network_message_vec_get(&t_msg->_body._frame._messages, i));
             }
 
             break;
@@ -186,7 +187,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
 
                 _z_zenoh_message_t zm;
-                int8_t ret = _z_zenoh_message_decode(&zm, &zbf);
+                int8_t ret = _z_network_message_decode(&zm, &zbf);
                 if (ret == _Z_RES_OK) {
                     _z_handle_zenoh_message(ztm->_session, &zm);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented

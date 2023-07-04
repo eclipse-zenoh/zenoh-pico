@@ -16,24 +16,22 @@
 
 #include <stddef.h>
 
-_z_keyexpr_t _z_rname(const char *rname) {
-    _z_keyexpr_t rk;
-    rk._id = Z_RESOURCE_ID_NONE;
-    rk._suffix = NULL;
-    if (rname != NULL) {
-        rk._suffix = rname;
-    }
+#include "zenoh-pico/protocol/core.h"
 
-    return rk;
+_z_keyexpr_t _z_rname(const char *rname) {
+    return (_z_keyexpr_t){
+        ._id = Z_RESOURCE_ID_NONE,
+        ._uses_remote_mapping = false,
+        ._owns_suffix = false,
+        ._suffix = (char *)rname,
+    };
 }
 
 _z_keyexpr_t _z_rid_with_suffix(_z_zint_t rid, const char *suffix) {
-    _z_keyexpr_t rk;
-    rk._id = rid;
-    rk._suffix = NULL;
-    if (suffix != NULL) {
-        rk._suffix = _z_str_clone(suffix);
-    }
-
-    return rk;
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._uses_remote_mapping = false,
+        ._owns_suffix = false,
+        ._suffix = (char *)suffix,
+    };
 }

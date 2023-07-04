@@ -16,8 +16,8 @@
 #include <string.h>
 
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_SCOUTING_UDP == 1 && Z_LINK_UDP_UNICAST == 0

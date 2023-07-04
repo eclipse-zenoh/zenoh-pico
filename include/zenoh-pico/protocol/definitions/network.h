@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"
@@ -100,7 +101,7 @@ typedef struct {
     uint32_t ext_timeout_ms;
     enum { _Z_REQUEST_QUERY, _Z_REQUEST_PUT, _Z_REQUEST_DEL, _Z_REQUEST_PULL } _tag;
     union {
-        _z_msg_query_t query;
+        _z_msg_query_t _query;
         _z_msg_put_t put;
         _z_msg_del_t del;
         _z_msg_pull_t pull;
@@ -122,8 +123,10 @@ typedef struct {
     union {
         _z_msg_del_t _del;
         _z_msg_put_t _put;
-    } _union;
+    } _body;
 } _z_push_body_t;
+_z_push_body_t _z_push_body_null();
+_z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
 void _z_push_body_clear(_z_push_body_t *msg);
 
 /*------------------ Response Final Message ------------------*/
@@ -180,14 +183,13 @@ typedef struct {
         _z_id_t _zid;
         uint32_t _eid;
     } _ext_responder;
-    _Bool _uses_sender_mapping;
     enum {
         _Z_RESPONSE_BODY_REPLY,
         _Z_RESPONSE_BODY_ERR,
         _Z_RESPONSE_BODY_ACK,
         _Z_RESPONSE_BODY_PUT,
         _Z_RESPONSE_BODY_DEL,
-    } _body_tag;
+    } _tag;
     union {
         _z_msg_reply_t _reply;
         _z_msg_err_t _err;
@@ -217,12 +219,32 @@ typedef struct {
     enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL } _tag;
     _z_network_body_t _body;
 } _z_network_message_t;
+typedef _z_network_message_t _z_zenoh_message_t;
 void _z_n_msg_clear(_z_network_message_t *m);
 void _z_n_msg_free(_z_network_message_t **m);
+inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
+inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy)
 _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
-typedef _z_network_message_t _z_zenoh_message_t;
 
-_z_network_message_t _z_msg_make_pull(_Z_MOVE(_z_keyexpr_t) key, _z_zint_t pull_id);
+_z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id);
+_z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
+                                       z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value);
+_z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_value_t) value);
+_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_RESPONSE,
+        ._body._response =
+            {
+                ._tag = _Z_RESPONSE_BODY_ACK,
+                ._request_id = rid,
+                ._key = _z_keyexpr_steal(key),
+                ._body._ack = {._timestamp = _z_timestamp_null(), ._ext_source_info = _z_source_info_null()},
+            },
+    };
+}
+_z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration);
+_z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */

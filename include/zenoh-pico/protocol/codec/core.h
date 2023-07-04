@@ -22,14 +22,13 @@
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
-#define _Z_EC(expr)               \
+#define _Z_RETURN_IF_ERR(expr)    \
     {                             \
         int8_t __res = expr;      \
         if (__res != _Z_RES_OK) { \
             return __res;         \
         }                         \
     }
-#define _Z_RETURN_IF_ERR(expr) _Z_EC(expr)
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
 int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en);

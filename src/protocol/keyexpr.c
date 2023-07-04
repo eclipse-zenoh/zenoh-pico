@@ -21,6 +21,54 @@
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
 
+void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+    dst->_id = src->_id;
+    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
+    dst->_uses_remote_mapping = src->_uses_remote_mapping;
+    dst->_owns_suffix = true;
+}
+
+_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
+    _z_keyexpr_t dst;
+    _z_keyexpr_copy(&dst, &src);
+    return dst;
+}
+
+_z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
+    _z_keyexpr_t stolen = *src;
+    src->_owns_suffix = false;
+    src->_id = 0;
+    src->_suffix = NULL;
+    return stolen;
+}
+
+void _z_keyexpr_clear(_z_keyexpr_t *rk) {
+    rk->_id = 0;
+    if (rk->_suffix != NULL && rk->_owns_suffix) {
+        _z_str_clear((char *)rk->_suffix);
+        rk->_owns_suffix = false;
+    }
+}
+
+void _z_keyexpr_free(_z_keyexpr_t **rk) {
+    _z_keyexpr_t *ptr = *rk;
+
+    if (ptr != NULL) {
+        _z_keyexpr_clear(ptr);
+
+        z_free(ptr);
+        *rk = NULL;
+    }
+}
+_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
+    return (_z_keyexpr_t){
+        ._id = src._id,
+        ._owns_suffix = false,
+        ._suffix = src._suffix,
+        ._uses_remote_mapping = src._uses_remote_mapping,
+    };
+}
+
 /*------------------ Canonize helpers ------------------*/
 zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;

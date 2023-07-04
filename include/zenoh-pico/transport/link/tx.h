@@ -29,9 +29,9 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
 int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl);
 
-int8_t _z_unicast_send_n_msg(_z_session_t *zn, _z_network_message_t *z_msg, z_reliability_t reliability,
+int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                              z_congestion_control_t cong_ctrl);
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, _z_network_message_t *z_msg, z_reliability_t reliability,
+int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl);
 
 int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);

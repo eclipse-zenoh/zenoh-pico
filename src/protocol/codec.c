@@ -22,8 +22,8 @@
 
 /*------------------ period ------------------*/
 int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
-    _Z_EC(_z_uint_encode(buf, tp->origin))
-    _Z_EC(_z_uint_encode(buf, tp->period))
+    _Z_RETURN_IF_ERR(_z_uint_encode(buf, tp->origin))
+    _Z_RETURN_IF_ERR(_z_uint_encode(buf, tp->period))
     return _z_uint_encode(buf, tp->duration);
 }
 
@@ -106,7 +106,7 @@ int8_t _z_uint_encode(_z_wbuf_t *wbf, unsigned int uint) {
 
     while (lv > (unsigned int)0x7f) {
         uint8_t c = (uint8_t)(lv & (unsigned int)0x7f) | (uint8_t)0x80;
-        _Z_EC(_z_wbuf_write(wbf, c))
+        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
         lv = lv >> (unsigned int)7;
     }
 
@@ -175,7 +175,7 @@ int8_t _z_uint64_encode(_z_wbuf_t *wbf, uint64_t u64) {
 
     while (lv > (uint64_t)0x7f) {
         uint8_t c = (uint8_t)(lv & (uint64_t)0x7f) | (uint8_t)0x80;
-        _Z_EC(_z_wbuf_write(wbf, c))
+        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
         lv = lv >> (_z_zint_t)7;
     }
 
@@ -207,7 +207,7 @@ int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
 
     while (lv > 0x7f) {
         uint8_t c = (lv & 0x7f) | 0x80;
-        _Z_EC(_z_wbuf_write(wbf, c))
+        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
         lv = lv >> (_z_zint_t)7;
     }
 
@@ -270,8 +270,8 @@ int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
 int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_zint_encode(wbf, bs->len))
-    _Z_EC(_z_bytes_val_encode(wbf, bs))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, bs->len))
+    _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, bs))
 
     return ret;
 }
@@ -313,7 +313,7 @@ int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_decode_
 /*------------------ string with null terminator ------------------*/
 int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     size_t len = strlen(s);
-    _Z_EC(_z_zint_encode(wbf, len))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, len))
     // Note that this does not put the string terminator on the wire.
     return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
 }

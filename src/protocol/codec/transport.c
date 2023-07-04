@@ -146,25 +146,25 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     _Z_DEBUG("Encoding _Z_MID_T_INIT\n");
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_wbuf_write(wbf, msg->_version))
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version))
 
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
     uint8_t zidlen = _z_id_len(msg->_zid);
     cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
-    _Z_EC(_z_uint8_encode(wbf, cbyte))
-    _Z_EC(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
+    _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
-        _Z_EC(_z_uint8_encode(wbf, cbyte))
-        _Z_EC(_z_uint16_encode(wbf, msg->_batch_size))
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
+        _Z_RETURN_IF_ERR(_z_uint16_encode(wbf, msg->_batch_size))
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_cookie))
     }
 
     return ret;
@@ -224,15 +224,15 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
     _Z_DEBUG("Encoding _Z_MID_T_OPEN\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true) {
-        _Z_EC(_z_zint_encode(wbf, msg->_lease / 1000))
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_lease / 1000))
     } else {
-        _Z_EC(_z_zint_encode(wbf, msg->_lease))
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_lease))
     }
 
-    _Z_EC(_z_zint_encode(wbf, msg->_initial_sn))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_initial_sn))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_cookie))
     }
 
     return ret;
@@ -315,7 +315,7 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
 int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_EC(_z_zint_encode(wbf, msg->_sn))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_sn))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
@@ -323,7 +323,7 @@ int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *m
     if (ret == _Z_RES_OK) {
         size_t len = _z_network_message_vec_len(&msg->_messages);
         for (size_t i = 0; i < len; i++) {
-            _Z_EC(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
+            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
         }
     }
 
@@ -369,12 +369,12 @@ int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT\n");
-    _Z_EC(_z_zint_encode(wbf, msg->_sn))
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_sn))
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
     if (ret == _Z_RES_OK) {
-        _Z_EC(_z_bytes_encode(wbf, &msg->_payload))
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_payload))
     }
 
     return ret;
@@ -429,7 +429,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
 
     uint8_t header = msg->_header;
 
-    _Z_EC(_z_wbuf_write(wbf, header))
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_T_FRAME: {
             ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);

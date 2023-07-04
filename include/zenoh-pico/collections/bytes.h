@@ -37,6 +37,7 @@ _z_bytes_t _z_bytes_empty(void);
 int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity);
 _z_bytes_t _z_bytes_make(size_t capacity);
 _z_bytes_t _z_bytes_wrap(const uint8_t *bs, size_t len);
+_z_bytes_t _z_bytes_steal(_z_bytes_t *b);
 
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);

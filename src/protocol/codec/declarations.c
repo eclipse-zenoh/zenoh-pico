@@ -28,7 +28,6 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/msg.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/system/platform.h"
 
@@ -217,7 +216,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 if (!ke->_suffix) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->owns_suffix = true;
+                ke->_owns_suffix = true;
                 _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
                 ke->_suffix[len] = 0;
             }
@@ -250,12 +249,12 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (ke->_suffix == NULL) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->owns_suffix = true;
+        ke->_owns_suffix = true;
         _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
         ke->_suffix[len] = 0;
     } else {
         ke->_suffix = "";
-        ke->owns_suffix = false;
+        ke->_owns_suffix = false;
     }
     return _Z_RES_OK;
 }

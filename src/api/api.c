@@ -75,7 +75,7 @@ z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
-    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs._val, &keyexpr);
     ret._value = (char *)ekey._suffix;  // ekey will be out of scope so
                                         //  - suffix can be safely casted as non-const
                                         //  - suffix does not need to be copied
@@ -621,7 +621,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.priority = options->priority;
     }
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   opt.congestion_control);
+                   opt.congestion_control, opt.priority);
 
     return ret;
 }
@@ -634,7 +634,8 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-    ret = _z_write(zs._val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control);
+    ret = _z_write(zs._val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+                   opt.priority);
 
     return ret;
 }
@@ -784,7 +785,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     }
 
     ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control);
+                   pub._val->_congestion_control, pub._val->_priority);
 
     return ret;
 }
@@ -792,7 +793,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
     (void)(options);
     return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                    pub._val->_congestion_control);
+                    pub._val->_congestion_control, pub._val->_priority);
 }
 
 z_subscriber_options_t z_subscriber_options_default(void) {
@@ -927,8 +928,14 @@ z_query_reply_options_t z_query_reply_options_default(void) {
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {
-    (void)(options);
-    return _z_send_reply(query, keyexpr, payload, payload_len);
+    _z_value_t value = {.payload =
+                            {
+                                .start = payload,
+                                ._is_alloc = false,
+                                .len = payload_len,
+                            },
+                        .encoding = {.prefix = options->encoding.prefix, .suffix = options->encoding.suffix}};
+    return _z_send_reply(query, keyexpr, value);
 }
 
 _Bool z_reply_is_ok(const z_owned_reply_t *reply) {

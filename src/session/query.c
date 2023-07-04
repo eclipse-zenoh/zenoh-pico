@@ -143,20 +143,16 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                                       const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
 
-    if (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) == true) {
-        ret = _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
-    }
-
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_request_id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
-    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &keyexpr);
+    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
     if ((ret == _Z_RES_OK) &&
         ((pen_qry->_anykey == false) && (_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
                                                                keyexpr._suffix, strlen(keyexpr._suffix)) == false))) {
@@ -166,7 +162,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
     // Build the reply
     _z_reply_t reply;
     reply._tag = Z_REPLY_TAG_DATA;
-    reply.data.replier_id = reply_context->_replier_id;
+    reply.data.replier_id = zn->_local_zid;
     reply.data.sample.keyexpr = expanded_ke;
     _z_bytes_copy(&reply.data.sample.payload, &payload);
     reply.data.sample.encoding.prefix = encoding.prefix;
@@ -206,7 +202,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
                     _z_reply_t partial_reply;
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialised values on the reply
-                    partial_reply.data.sample.keyexpr = _z_keyexpr_duplicate(&reply.data.sample.keyexpr);
+                    partial_reply.data.sample.keyexpr = _z_keyexpr_duplicate(reply.data.sample.keyexpr);
                     pen_rep->_reply = partial_reply;
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode
@@ -242,14 +238,8 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(reply_context->_header, _Z_FLAG_Z_F) ==
-                               false)) {  // FIXME: to be checked, but this might never
-                                          // happen with the current version of the protocol
-        ret = _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
-    }
-
     // Final reply received for unknown query id
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_qid);
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_request_id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }

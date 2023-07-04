@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/transport/link/tx.h"
 
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Transmission helper ------------------*/

@@ -23,7 +23,7 @@
 typedef struct {
     _z_value_t _value;
     _z_keyexpr_t _key;
-    _z_zint_t _qid;
+    _z_zint_t _rid;
     void *_zn;  // FIXME: _z_session_t *zn;
     char *_parameters;
     _Bool _anyke;

@@ -18,7 +18,7 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 
 /*------------------ SN helpers ------------------*/
 _z_zint_t _z_sn_max(uint8_t bits);
