@@ -125,7 +125,7 @@ typedef struct {
         _z_msg_put_t _put;
     } _body;
 } _z_push_body_t;
-_z_push_body_t _z_push_body_null();
+_z_push_body_t _z_push_body_null(void);
 _z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
 void _z_push_body_clear(_z_push_body_t *msg);
 
@@ -231,18 +231,7 @@ _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value);
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_value_t) value);
-_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key) {
-    return (_z_network_message_t){
-        ._tag = _Z_N_RESPONSE,
-        ._body._response =
-            {
-                ._tag = _Z_RESPONSE_BODY_ACK,
-                ._request_id = rid,
-                ._key = _z_keyexpr_steal(key),
-                ._body._ack = {._timestamp = _z_timestamp_null(), ._ext_source_info = _z_source_info_null()},
-            },
-    };
-}
+_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);

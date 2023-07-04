@@ -131,7 +131,7 @@ typedef struct {
 typedef struct {
     _z_source_info_t _ext_source_info;
 } _z_msg_pull_t;
-static inline void _z_msg_pull_clear(_z_msg_pull_t *pull) {}
+static inline void _z_msg_pull_clear(_z_msg_pull_t *pull) { (void)pull; }
 
 typedef struct {
     _z_timestamp_t _timestamp;
@@ -141,7 +141,7 @@ typedef struct {
 typedef struct {
     _z_m_push_commons_t _commons;
 } _z_msg_del_t;
-static inline void _z_msg_del_clear(_z_msg_del_t *del) {}
+static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 #define _Z_M_DEL_ID 0x02
 #define _Z_FLAG_Z_D_T 0x20
 

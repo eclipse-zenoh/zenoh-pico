@@ -71,7 +71,7 @@ typedef struct {
 } _z_timestamp_t;
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-_z_timestamp_t _z_timestamp_null();
+_z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
 
@@ -182,7 +182,7 @@ typedef struct {
     uint32_t _entity_id;
     uint32_t _source_sn;
 } _z_source_info_t;
-_z_source_info_t _z_source_info_null();
+_z_source_info_t _z_source_info_null(void);
 
 typedef struct {
     uint32_t _request_id;

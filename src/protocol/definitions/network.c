@@ -226,3 +226,15 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
 
     };
 }
+_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_RESPONSE,
+        ._body._response =
+            {
+                ._tag = _Z_RESPONSE_BODY_ACK,
+                ._request_id = rid,
+                ._key = _z_keyexpr_steal(key),
+                ._body._ack = {._timestamp = _z_timestamp_null(), ._ext_source_info = _z_source_info_null()},
+            },
+    };
+}
