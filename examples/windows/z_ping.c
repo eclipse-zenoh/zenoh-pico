@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     _z_mutex_unlock(&mutex);
     z_free(results);
     z_free(data);
-    z_undeclare_pubscriber(z_move(pub));
+    z_undeclare_publisher(z_move(pub));
     z_undeclare_subscriber(z_move(sub));
     z_close(z_move(session));
 }
