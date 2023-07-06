@@ -47,6 +47,10 @@ int main(int argc, char** argv) {
     while (getchar() != 'q') {
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
+
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
+
     z_close(z_move(session));
 }

@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     }
 
     z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
-    z_owned_closure_sample_t respond = z_closure(callback, drop, (void*)z_move(pub));
+    z_owned_closure_sample_t respond = z_closure(callback, drop, NULL);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(session), pong, z_move(respond), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber for key expression.\n");
@@ -97,8 +97,12 @@ int main(int argc, char** argv) {
     _z_mutex_unlock(&mutex);
     z_free(results);
     z_free(data);
-    z_undeclare_publisher(z_move(pub));
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(pub));
+    z_drop(z_move(sub));
+
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
+
     z_close(z_move(session));
 }
 
