@@ -100,8 +100,8 @@ int main(int argc, char** argv) {
     _z_mutex_unlock(&mutex);
     z_free(results);
     z_free(data);
-    z_drop(z_subscriber_move(&sub));
-    z_drop(z_publisher_move(&pub));
+    z_undeclare_subscriber(z_subscriber_move(&sub));
+    z_undeclare_publisher(z_publisher_move(&pub));
 
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
