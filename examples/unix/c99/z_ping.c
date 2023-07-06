@@ -103,8 +103,8 @@ int main(int argc, char** argv) {
     z_undeclare_subscriber(z_subscriber_move(&sub));
     z_undeclare_publisher(z_publisher_move(&pub));
 
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_session_loan(&session));
+    zp_stop_lease_task(z_session_loan(&session));
 
     z_close(z_session_move(&session));
 }
