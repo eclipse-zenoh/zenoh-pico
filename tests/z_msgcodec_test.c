@@ -1345,7 +1345,8 @@ void request_message(void) {
     _z_n_msg_request_t decoded;
     __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
     __auto_type header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_request_decode(&decoded, &zbf, header));
+    int8_t ret = _z_request_decode(&decoded, &zbf, header);
+    assert(_Z_RES_OK == ret);
     assert_eq_request(&expected, &decoded);
     _z_n_msg_request_clear(&decoded);
     _z_n_msg_request_clear(&expected);
@@ -1425,7 +1426,8 @@ void response_message(void) {
     _z_n_msg_response_t decoded;
     __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
     __auto_type header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_response_decode(&decoded, &zbf, header));
+    int8_t ret = _z_response_decode(&decoded, &zbf, header);
+    assert(_Z_RES_OK == ret);
     assert_eq_response(&expected, &decoded);
     _z_n_msg_response_clear(&decoded);
     _z_n_msg_response_clear(&expected);
@@ -1479,19 +1481,17 @@ int main(void) {
         declare_message();
         push_body_message();
         pull_message();
-        // query_message();
+        query_message();
         err_message();
         ack_message();
         reply_message();
 
-        // // Network messages
-        // push_message();
-        // request_message();
-        // response_message();
-        // response_final_message();
+        // Network messages
+        push_message();
+        request_message();
+        response_message();
+        response_final_message();
 
-        // YAY, LET'S TRY IT!
-        // wohoo!
         // // Transport messages
         // join_message();
         // init_message();
@@ -1504,7 +1504,7 @@ int main(void) {
         // batch();
         // fragmentation();
 
-        // Scouting messages
+        // // Scouting messages
         // scout_message();
         // hello_message();
     }

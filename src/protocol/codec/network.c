@@ -88,6 +88,8 @@ int8_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
 
 int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_n_msg_push_t){0};
+    msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
     msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M);
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
@@ -110,11 +112,11 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header | (exts.n != 0 ? _Z_FLAG_Z_Z : 0)));
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_rid));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 
-    _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
     if (exts.ext_qos) {
         exts.n -= 1;
         uint8_t extheader = 0x01 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
@@ -174,7 +176,7 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_timestamp_decode(&msg->_ext_timestamp, &zbf));
             break;
         }
-        case 0x04 | _Z_MSG_EXT_ENC_ZINT: {
+        case 0x04 | _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M: {
             msg->_ext_target = extension->_body._zint._val;
             if (msg->_ext_target > 2) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -193,25 +195,33 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header) {
+    *msg = (_z_n_msg_request_t){0};
+    msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
     msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_request_decode_extensions, msg));
     }
-    switch (_Z_MID(header)) {
+    uint8_t zheader;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&zheader, zbf));
+    switch (_Z_MID(zheader)) {
         case _Z_MID_Z_QUERY: {
-            _Z_RETURN_IF_ERR(_z_query_decode(&msg->_body._query, zbf, header));
+            msg->_tag = _Z_REQUEST_QUERY;
+            _Z_RETURN_IF_ERR(_z_query_decode(&msg->_body._query, zbf, zheader));
         } break;
         case _Z_MID_Z_PUT: {
-            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, header));
+            msg->_tag = _Z_REQUEST_PUT;
+            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, zheader));
         } break;
         case _Z_MID_Z_DEL: {
-            _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body._del, zbf, header));
+            msg->_tag = _Z_REQUEST_DEL;
+            _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body._del, zbf, zheader));
         } break;
         case _Z_MID_Z_PULL: {
-            _Z_RETURN_IF_ERR(_z_pull_decode(&msg->_body._pull, zbf, header));
+            msg->_tag = _Z_REQUEST_PULL;
+            _Z_RETURN_IF_ERR(_z_pull_decode(&msg->_body._pull, zbf, zheader));
         } break;
         default:
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -228,10 +238,11 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
     _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid);
     uint8_t n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
+    _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
     if (msg->_key._uses_remote_mapping) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     }
-    if (msg->_key._suffix != NULL) {
+    if (has_suffix) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_N);
     }
     if (n_ext != 0) {
@@ -241,7 +252,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_request_id));
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_key._id));
-    if (msg->_key._suffix != NULL) {
+    if (has_suffix) {
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, msg->_key._suffix))
     }
     if (has_qos_ext) {
@@ -261,12 +272,12 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     }
     if (has_responder_ext) {
         n_ext -= 1;
-        uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x02 | (n_ext != 0 ? _Z_FLAG_Z_Z : 0);
+        uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03 | (n_ext != 0 ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         uint8_t zidlen = _z_id_len(msg->_ext_responder._zid);
         extheader = (zidlen - 1) << 4;
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, zidlen + 1 + _z_zint_len(msg->_ext_responder._eid)));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_ext_responder._zid.id, 0, zidlen));
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_responder._eid));
     }
@@ -329,6 +340,8 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
 
 int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE\n");
+    *msg = (_z_n_msg_response_t){0};
+    msg->_ext_qos = _Z_N_QOS_DEFAULT;
     int8_t ret = _Z_RES_OK;
     msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_request_id, zbf));
@@ -342,23 +355,28 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
 
     switch (_Z_MID(inner_header)) {
         case _Z_MID_Z_REPLY: {
-            _z_reply_decode(&msg->_body._reply, zbf, header);
+            msg->_tag = _Z_RESPONSE_BODY_REPLY;
+            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header);
             break;
         }
         case _Z_MID_Z_ERR: {
-            _z_err_decode(&msg->_body._err, zbf, header);
+            msg->_tag = _Z_RESPONSE_BODY_ERR;
+            ret = _z_err_decode(&msg->_body._err, zbf, inner_header);
             break;
         }
         case _Z_MID_Z_ACK: {
-            _z_ack_decode(&msg->_body._ack, zbf, header);
+            msg->_tag = _Z_RESPONSE_BODY_ACK;
+            ret = _z_ack_decode(&msg->_body._ack, zbf, inner_header);
             break;
         }
         case _Z_MID_Z_PUT: {
-            _z_put_decode(&msg->_body._put, zbf, header);
+            msg->_tag = _Z_RESPONSE_BODY_PUT;
+            ret = _z_put_decode(&msg->_body._put, zbf, inner_header);
             break;
         }
         case _Z_MID_Z_DEL: {
-            _z_del_decode(&msg->_body._del, zbf, header);
+            msg->_tag = _Z_RESPONSE_BODY_DEL;
+            ret = _z_del_decode(&msg->_body._del, zbf, inner_header);
             break;
         }
         default: {
@@ -380,6 +398,8 @@ int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t 
 }
 int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
+
+    *msg = (_z_n_msg_response_final_t){0};
     int8_t ret = _Z_RES_OK;
     ret |= _z_zint_decode(&msg->_request_id, zbf);
     return ret;
@@ -425,6 +445,8 @@ int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return _Z_RES_OK;
 }
 int8_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+    *decl = (_z_n_msg_declare_t){0};
+    decl->_ext_qos = _Z_N_QOS_DEFAULT;
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_declare_decode_extensions, decl))
     }

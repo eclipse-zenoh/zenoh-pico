@@ -178,7 +178,7 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
         }
         case _Z_MSG_EXT_ENC_ZINT: {
             _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02x)\n", ext_id,
-                     trace_id, extension->_body._zint);
+                     trace_id, extension->_body._zint._val);
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
@@ -215,7 +215,13 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
     _Bool has_next = true;
     while (has_next && ret == _Z_RES_OK) {
         _z_msg_ext_t ext = _z_msg_ext_make_unit(0);
+        size_t start = zbf->_ios._r_pos;
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
+        printf("EXT (%d): ", ret);
+        for (; start < zbf->_ios._r_pos; start++) {
+            printf("%02x ", zbf->_ios._buf[start]);
+        }
+        printf("\n");
         if (ret == _Z_RES_OK) {
             ret |= callback(&ext, context);
             _z_msg_ext_clear(&ext);
