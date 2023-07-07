@@ -9,14 +9,14 @@ void _z_msg_put_clear(_z_msg_put_t *msg) {
 }
 
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg) {
-    return (_z_msg_query_reqexts_t){.body = msg->_value.payload.start != NULL,
-                                    .info = _z_id_check(msg->_info._id),
-                                    .consolidation = msg->_consolidation != Z_CONSOLIDATION_MODE_AUTO};
+    return (_z_msg_query_reqexts_t){.body = msg->_ext_value.payload.start != NULL,
+                                    .info = _z_id_check(msg->_ext_info._id),
+                                    .consolidation = msg->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO};
 }
 
 void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_bytes_clear(&msg->_parameters);
-    _z_value_clear(&msg->_value);
+    _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
     _z_timestamp_clear(&err->_timestamp);

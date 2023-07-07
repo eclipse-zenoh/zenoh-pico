@@ -187,7 +187,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
 
                 _z_zenoh_message_t zm;
-                int8_t ret = _z_network_message_decode(&zm, &zbf);
+                ret = _z_network_message_decode(&zm, &zbf);
                 if (ret == _Z_RES_OK) {
                     _z_handle_zenoh_message(ztm->_session, &zm);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented

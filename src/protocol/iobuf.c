@@ -88,7 +88,7 @@ void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, siz
     assert(_z_iosli_writable(ios) >= length);
     uint8_t *w_pos = _z_ptr_u8_offset(ios->_buf, ios->_w_pos);
     (void)memcpy(w_pos, _z_cptr_u8_offset(bs, offset), length);
-    ios->_w_pos = ios->_w_pos + length;
+    ios->_w_pos += length;
 }
 
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos) {

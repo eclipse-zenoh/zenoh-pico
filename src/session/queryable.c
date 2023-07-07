@@ -163,8 +163,8 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         memcpy(params, query->_parameters.start, query->_parameters.len);
         params[query->_parameters.len] = 0;
         q._parameters = params;
-        q._value.encoding = query->_value.encoding;
-        q._value.payload = query->_value.payload;
+        q._value.encoding = query->_ext_value.encoding;
+        q._value.payload = query->_ext_value.payload;
         q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         _z_questionable_sptr_list_t *xs = qles;
         while (xs != NULL) {

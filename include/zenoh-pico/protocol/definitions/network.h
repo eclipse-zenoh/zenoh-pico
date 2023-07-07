@@ -94,17 +94,17 @@ typedef struct {
 typedef struct {
     _z_zint_t _rid;
     _z_keyexpr_t _key;
-    _z_timestamp_t ext_tstamp;
-    _z_n_qos_t ext_qos;
-    z_query_target_t ext_target;
-    uint32_t ext_budget;
-    uint32_t ext_timeout_ms;
+    _z_timestamp_t _ext_timestamp;
+    _z_n_qos_t _ext_qos;
+    z_query_target_t _ext_target;
+    uint32_t _ext_budget;
+    uint32_t _ext_timeout_ms;
     enum { _Z_REQUEST_QUERY, _Z_REQUEST_PUT, _Z_REQUEST_DEL, _Z_REQUEST_PULL } _tag;
     union {
         _z_msg_query_t _query;
-        _z_msg_put_t put;
-        _z_msg_del_t del;
-        _z_msg_pull_t pull;
+        _z_msg_put_t _put;
+        _z_msg_del_t _del;
+        _z_msg_pull_t _pull;
     } _body;
 } _z_n_msg_request_t;
 typedef struct {

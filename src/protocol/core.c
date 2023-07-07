@@ -7,6 +7,7 @@ uint8_t _z_id_len(_z_id_t id) {
     while (len > 0) {
         --len;
         if (id.id[len] != 0) {
+            ++len;
             break;
         }
     }

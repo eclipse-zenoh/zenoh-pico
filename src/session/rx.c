@@ -50,7 +50,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                     ret = _z_trigger_queryables(zn, query, req._key, req._rid);
                 } break;
                 case _Z_REQUEST_PUT: {
-                    _z_msg_put_t put = req._body.put;
+                    _z_msg_put_t put = req._body._put;
                     ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
                                                    put._commons._timestamp);
                     if (ret == _Z_RES_OK) {
@@ -61,7 +61,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
                     }
                 } break;
                 case _Z_REQUEST_DEL: {
-                    _z_msg_del_t del = req._body.del;
+                    _z_msg_del_t del = req._body._del;
                     int8_t result = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
                                                              Z_SAMPLE_KIND_PUT, del._commons._timestamp);
                     if (ret == _Z_RES_OK) {

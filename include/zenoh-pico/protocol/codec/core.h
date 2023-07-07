@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_CORE_H
 #define INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_CORE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
@@ -52,9 +53,12 @@ int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *buf);
 int8_t _z_uint64_encode(_z_wbuf_t *buf, uint64_t v);
 int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *buf);
 
+uint8_t _z_zint_len(_z_zint_t v);
 int8_t _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
+int8_t _z_zint64_encode(_z_wbuf_t *buf, uint64_t v);
 int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *buf);
+int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
 int8_t _z_bytes_val_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
@@ -62,6 +66,7 @@ int8_t _z_bytes_val_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
 int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf);
 
 int8_t _z_bytes_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
+size_t _z_bytes_encode_len(const _z_bytes_t *bs);
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
 int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
@@ -76,5 +81,7 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *k
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);
 
 int8_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
+int8_t _z_timestamp_encode_ext(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
+
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_CORE_H */

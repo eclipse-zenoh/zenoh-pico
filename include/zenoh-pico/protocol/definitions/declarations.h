@@ -24,9 +24,11 @@ typedef struct {
     uint16_t _id;
     _z_keyexpr_t _keyexpr;
 } _z_decl_kexpr_t;
+_z_decl_kexpr_t _z_decl_kexpr_null(void);
 typedef struct {
     uint16_t _id;
 } _z_undecl_kexpr_t;
+_z_undecl_kexpr_t _z_undecl_kexpr_null(void);
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
@@ -34,12 +36,14 @@ typedef struct {
     struct {
         _Bool _pull_mode;
         _Bool _reliable;
-    } _ext_subscriber_info;
+    } _ext_subinfo;
 } _z_decl_subscriber_t;
+_z_decl_subscriber_t _z_decl_subscriber_null(void);
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_subscriber_t;
+_z_undecl_subscriber_t _z_undecl_subscriber_null(void);
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
@@ -49,19 +53,23 @@ typedef struct {
         uint32_t _distance;
     } _ext_queryable_info;
 } _z_decl_queryable_t;
+_z_decl_queryable_t _z_decl_queryable_null(void);
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_queryable_t;
+_z_undecl_queryable_t _z_undecl_queryable_null(void);
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
 } _z_decl_token_t;
+_z_decl_token_t _z_decl_token_null(void);
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_token_t;
+_z_undecl_token_t _z_undecl_token_null(void);
 
 #define _Z_INTEREST_FLAG_KEYEXPRS (1)
 #define _Z_INTEREST_FLAG_SUBSCRIBERS (1 << 1)
@@ -75,13 +83,16 @@ typedef struct {
     uint32_t _id;
     uint8_t interest_flags;
 } _z_decl_interest_t;
+_z_decl_interest_t _z_decl_interest_null(void);
 typedef struct {
     uint32_t _id;
 } _z_final_interest_t;
+_z_final_interest_t _z_final_interest_null(void);
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_interest_t;
+_z_undecl_interest_t _z_undecl_interest_null(void);
 
 typedef struct {
     enum {

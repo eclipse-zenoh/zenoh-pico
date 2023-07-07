@@ -16,6 +16,7 @@
 #define ZENOH_PICO_PROTOCOL_EXTENSION_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
 
@@ -61,7 +62,7 @@ void _z_msg_ext_clear_unit(_z_msg_ext_unit_t *ext);
 
 /*------------------ ZID Extension ------------------*/
 typedef struct {
-    _z_zint_t _val;
+    uint64_t _val;
 } _z_msg_ext_zint_t;
 void _z_msg_ext_clear_zint(_z_msg_ext_zint_t *ext);
 

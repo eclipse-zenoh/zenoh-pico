@@ -36,6 +36,9 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_ack_encode(_z_wbuf_t *wbf, const _z_msg_ack_t *ack);
 int8_t _z_ack_decode(_z_msg_ack_t *ack, _z_zbuf_t *zbf, uint8_t header);
 
+int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb);
+int8_t _z_push_body_decode(_z_push_body_t *body, _z_zbuf_t *zbf, uint8_t header);
+
 int8_t _z_put_encode(_z_wbuf_t *wbf, const _z_msg_put_t *put);
 int8_t _z_put_decode(_z_msg_put_t *put, _z_zbuf_t *zbf, uint8_t header);
 

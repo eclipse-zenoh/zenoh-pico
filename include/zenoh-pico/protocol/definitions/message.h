@@ -37,7 +37,7 @@
 #define _Z_FLAG_Z_I 0x40  // 1 << 6 | DataInfo          if I==1 then DataInfo is present
 #define _Z_FLAG_Z_K 0x80  // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
 #define _Z_FLAG_Z_N 0x40  // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
-#define _Z_FLAG_Z_P 0x80  // 1 << 7 | Period            if P==1 then a period is present
+#define _Z_FLAG_Z_P 0x20  // 1 << 7 | Period            if P==1 then a period is present
 #define _Z_FLAG_Z_Q 0x40  // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
 #define _Z_FLAG_Z_R \
     0x20  // 1 << 5 | Reliable          if R==1 then it concerns the reliable channel, best-effort otherwise
@@ -169,9 +169,9 @@ void _z_msg_put_clear(_z_msg_put_t *);
 #define _Z_FLAG_Z_Q_P 0x20  // 1 << 6 | Period            if P==1 then a period is present
 typedef struct {
     _z_bytes_t _parameters;
-    _z_source_info_t _info;
-    _z_value_t _value;
-    z_consolidation_mode_t _consolidation;
+    _z_source_info_t _ext_info;
+    _z_value_t _ext_value;
+    z_consolidation_mode_t _ext_consolidation;
 } _z_msg_query_t;
 typedef struct {
     _Bool info;

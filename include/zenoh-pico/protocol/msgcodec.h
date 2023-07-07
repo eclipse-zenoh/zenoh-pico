@@ -37,9 +37,6 @@
 int8_t _z_payload_encode(_z_wbuf_t *buf, const _z_bytes_t *pld);
 int8_t _z_payload_decode(_z_bytes_t *pld, _z_zbuf_t *buf);
 int8_t _z_payload_decode_na(_z_bytes_t *pld, _z_zbuf_t *buf);
-
-int8_t _z_subinfo_encode(_z_wbuf_t *buf, const _z_subinfo_t *si);
-int8_t _z_subinfo_decode(_z_subinfo_t *si, _z_zbuf_t *buf, uint8_t header);
 int8_t _z_subinfo_decode_na(_z_subinfo_t *si, _z_zbuf_t *buf, uint8_t header);
 
 int8_t _z_data_info_encode(_z_wbuf_t *buf, const _z_data_info_t *di);

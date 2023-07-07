@@ -7,11 +7,11 @@
 
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg) {
     _z_n_msg_request_exts_t ret = {.n = 0,
-                                   .ext_budget = msg->ext_budget != 0,
-                                   .ext_target = msg->ext_target != Z_QUERY_TARGET_BEST_MATCHING,
-                                   .ext_qos = msg->ext_qos._val != _Z_N_QOS_DEFAULT._val,
-                                   .ext_timeout_ms = msg->ext_timeout_ms != 0,
-                                   .ext_tstamp = _z_timestamp_check(&msg->ext_tstamp)};
+                                   .ext_budget = msg->_ext_budget != 0,
+                                   .ext_target = msg->_ext_target != Z_QUERY_TARGET_BEST_MATCHING,
+                                   .ext_qos = msg->_ext_qos._val != _Z_N_QOS_DEFAULT._val,
+                                   .ext_timeout_ms = msg->_ext_timeout_ms != 0,
+                                   .ext_tstamp = _z_timestamp_check(&msg->_ext_timestamp)};
     if (ret.ext_budget) {
         ret.n += 1;
     }
@@ -37,13 +37,13 @@ void _z_n_msg_request_clear(_z_n_msg_request_t *msg) {
             _z_msg_query_clear(&msg->_body._query);
         } break;
         case _Z_REQUEST_PUT: {
-            _z_msg_put_clear(&msg->_body.put);
+            _z_msg_put_clear(&msg->_body._put);
         } break;
         case _Z_REQUEST_DEL: {
-            _z_msg_del_clear(&msg->_body.del);
+            _z_msg_del_clear(&msg->_body._del);
         } break;
         case _Z_REQUEST_PULL: {
-            _z_msg_pull_clear(&msg->_body.pull);
+            _z_msg_pull_clear(&msg->_body._pull);
         } break;
     }
 }
@@ -141,13 +141,13 @@ _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id) {
                         ._tag = _Z_REQUEST_PULL,
                         ._body =
                             {
-                                .pull = {._ext_source_info = _z_source_info_null()},
+                                ._pull = {._ext_source_info = _z_source_info_null()},
                             },
-                        .ext_budget = 0,
-                        .ext_qos = _Z_N_QOS_DEFAULT,
-                        .ext_target = Z_QUERY_TARGET_BEST_MATCHING,
-                        .ext_tstamp = _z_timestamp_null(),
-                        .ext_timeout_ms = 0,
+                        ._ext_budget = 0,
+                        ._ext_qos = _Z_N_QOS_DEFAULT,
+                        ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
+                        ._ext_timestamp = _z_timestamp_null(),
+                        ._ext_timeout_ms = 0,
                     },
             },
     };
@@ -165,15 +165,15 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                 ._body._query =
                     {
                         ._parameters = _z_bytes_steal(parameters),
-                        ._consolidation = consolidation,
-                        ._value = _z_value_steal(value),
-                        ._info = _z_source_info_null(),
+                        ._ext_consolidation = consolidation,
+                        ._ext_value = _z_value_steal(value),
+                        ._ext_info = _z_source_info_null(),
                     },
-                .ext_budget = 0,
-                .ext_qos = _Z_N_QOS_DEFAULT,
-                .ext_target = Z_QUERY_TARGET_BEST_MATCHING,
-                .ext_timeout_ms = 0,
-                .ext_tstamp = _z_timestamp_null(),
+                ._ext_budget = 0,
+                ._ext_qos = _Z_N_QOS_DEFAULT,
+                ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
+                ._ext_timeout_ms = 0,
+                ._ext_timestamp = _z_timestamp_null(),
             },
     };
 }
