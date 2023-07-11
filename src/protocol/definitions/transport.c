@@ -2,56 +2,56 @@
 
 #include "zenoh-pico/utils/logging.h"
 
-void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg) {}
+void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg) {}
 
 /*------------------ Locators Field ------------------*/
 void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 
-void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
+void _z_s_msg_hello_clear(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
 
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg) {}
+void _z_t_msg_join_clear(_z_t_msg_join_t *msg) {}
 
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg) { _z_bytes_clear(&msg->_cookie); }
+void _z_t_msg_init_clear(_z_t_msg_init_t *msg) { _z_bytes_clear(&msg->_cookie); }
 
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); }
+void _z_t_msg_open_clear(_z_t_msg_open_t *msg) { _z_bytes_clear(&msg->_cookie); }
 
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg) { (void)(msg); }
+void _z_t_msg_close_clear(_z_t_msg_close_t *msg) { (void)(msg); }
 
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
+void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
 
-void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg) { _z_network_message_vec_clear(&msg->_messages); }
+void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) { _z_network_message_vec_clear(&msg->_messages); }
 
-void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg) { _z_bytes_clear(&msg->_payload); }
+void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg) { _z_bytes_clear(&msg->_payload); }
 
 void _z_t_msg_clear(_z_transport_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_T_JOIN: {
-            _z_t_msg_clear_join(&msg->_body._join);
+            _z_t_msg_join_clear(&msg->_body._join);
         } break;
 
         case _Z_MID_T_INIT: {
-            _z_t_msg_clear_init(&msg->_body._init);
+            _z_t_msg_init_clear(&msg->_body._init);
         } break;
 
         case _Z_MID_T_OPEN: {
-            _z_t_msg_clear_open(&msg->_body._open);
+            _z_t_msg_open_clear(&msg->_body._open);
         } break;
 
         case _Z_MID_T_CLOSE: {
-            _z_t_msg_clear_close(&msg->_body._close);
+            _z_t_msg_close_clear(&msg->_body._close);
         } break;
 
         case _Z_MID_T_KEEP_ALIVE: {
-            _z_t_msg_clear_keep_alive(&msg->_body._keep_alive);
+            _z_t_msg_keep_alive_clear(&msg->_body._keep_alive);
         } break;
 
         case _Z_MID_T_FRAME: {
-            _z_t_msg_clear_frame(&msg->_body._frame);
+            _z_t_msg_frame_clear(&msg->_body._frame);
         } break;
 
         case _Z_MID_T_FRAGMENT: {
-            _z_t_msg_clear_fragment(&msg->_body._fragment);
+            _z_t_msg_fragment_clear(&msg->_body._fragment);
         } break;
 
         default: {
@@ -321,11 +321,11 @@ void _z_s_msg_clear(_z_scouting_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);
     switch (mid) {
         case _Z_MID_SCOUT: {
-            _z_s_msg_clear_scout(&msg->_body._scout);
+            _z_s_msg_scout_clear(&msg->_body._scout);
         } break;
 
         case _Z_MID_HELLO: {
-            _z_s_msg_clear_hello(&msg->_body._hello);
+            _z_s_msg_hello_clear(&msg->_body._hello);
         } break;
 
         default: {

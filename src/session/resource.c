@@ -198,7 +198,6 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-    _Bool is_local = !keyexpr->_uses_remote_mapping;
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
 
 #if Z_MULTI_THREAD == 1

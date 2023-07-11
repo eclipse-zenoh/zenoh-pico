@@ -12,10 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/definitions/core.h"
+#include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
@@ -25,50 +29,45 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_T_JOIN\n");
 
-    ret = _z_wbuf_write(wbf, msg->_version);
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version));
 
-    if (ret == _Z_RES_OK) {
-        uint8_t cbyte = 0;
-        cbyte |= (msg->_whatami & 0x03);
-        uint8_t zidlen = _z_id_len(msg->_zid);
-        cbyte |= ((zidlen - 1) & 0x0F) << 4;
-        ret = _z_uint8_encode(wbf, cbyte);
-        if (ret == _Z_RES_OK) {
-            ret = _z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen);
-        }
-    }
+    uint8_t cbyte = 0;
+    cbyte |= (msg->_whatami & 0x03);
+    uint8_t zidlen = _z_id_len(msg->_zid);
+    cbyte |= ((zidlen - 1) & 0x0F) << 4;
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
+    _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen));
 
-    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S)) {
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S)) {
         uint8_t cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
-        ret = _z_uint8_encode(wbf, cbyte);
-        if (ret == _Z_RES_OK) {
-            ret = _z_uint16_encode(wbf, msg->_batch_size);
-        }
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
+        _Z_RETURN_IF_ERR(_z_uint16_encode(wbf, msg->_batch_size));
     }
-    if (ret == _Z_RES_OK) {
-        if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_T) == true) {
-            ret = _z_zint_encode(wbf, msg->_lease / 1000);
-        } else {
-            ret = _z_zint_encode(wbf, msg->_lease);
-        }
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_T) == true) {
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_lease / 1000));
+    } else {
+        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_lease));
     }
-    if (ret == _Z_RES_OK) {
-        if (msg->_next_sn._is_qos) {
-            if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-                ret = _z_uint8_encode(wbf, 0x51);  // QOS-ext: (enc=zbuf)(mandatory=true)(id=1)
-                for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
-                    ret = _z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable);
-                    ret |= _z_zint_encode(wbf, msg->_next_sn._val._qos[i]._best_effort);
-                }
-            } else {
-                _Z_DEBUG("Attempted to serialize QoS-SN extension, but the header extension flag was unset");
-                ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_next_sn._val._plain._reliable));
+    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_next_sn._val._plain._best_effort));
+    if (msg->_next_sn._is_qos) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1));
+            size_t len = 0;
+            for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
+                len += _z_zint_len(msg->_next_sn._val._qos[i]._reliable) +
+                       _z_zint_len(msg->_next_sn._val._qos[i]._best_effort);
+            }
+            _Z_RETURN_IF_ERR(_z_zint_encode(wbf, len));
+            for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
+                _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._reliable));
+                _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_next_sn._val._qos[i]._best_effort));
             }
         } else {
-            ret |= _z_zint_encode(wbf, msg->_next_sn._val._plain._reliable);
-            ret |= _z_zint_encode(wbf, msg->_next_sn._val._plain._best_effort);
+            _Z_DEBUG("Attempted to serialize QoS-SN extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
 
@@ -78,12 +77,13 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
 int8_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     int8_t ret = _Z_RES_OK;
     _z_t_msg_join_t *msg = (_z_t_msg_join_t *)ctx;
-    if (_Z_EXT_FULL_ID(extension->_header) == 0x51) {  // QOS: (enc=zbuf)(mandatory=true)(id=1)
+    if (_Z_EXT_FULL_ID(extension->_header) ==
+        (_Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1)) {  // QOS: (enc=zbuf)(mandatory=true)(id=1)
         msg->_next_sn._is_qos = true;
         _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
-            ret |= _z_zint_decode(&msg->_next_sn._val._plain._reliable, &zbf);
-            ret |= _z_zint_decode(&msg->_next_sn._val._plain._best_effort, &zbf);
+            ret |= _z_zint_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
+            ret |= _z_zint_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
         }
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
@@ -204,9 +204,6 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_bytes_decode(&msg->_cookie, zbf);
-        if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_bytes_empty();
-        }
     } else {
         msg->_cookie = _z_bytes_empty();
     }
@@ -305,7 +302,9 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE\n");
 
-    ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x03);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x03);
+    }
 
     return ret;
 }

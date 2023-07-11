@@ -126,11 +126,13 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint16_decode(&ke->_id, zbf);
+    ke->_owns_suffix = false;
     if (has_suffix == true) {
         char *str = NULL;
         ret |= _z_str_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
             ke->_suffix = str;
+            ke->_owns_suffix = true;
         } else {
             ke->_suffix = NULL;
         }
@@ -248,7 +250,9 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     (void)(pshb);
     int8_t ret = _Z_RES_OK;
     uint8_t header = pshb->_is_put ? _Z_MID_Z_PUT : _Z_MID_Z_DEL;
-    _Bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id);
+    _Bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id) ||
+                            pshb->_body._put._commons._source_info._source_sn != 0 ||
+                            pshb->_body._put._commons._source_info._entity_id != 0;
     _Bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
     _Bool has_encoding = false;
     if (has_source_info) {
@@ -476,7 +480,9 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
         !_z_bytes_is_empty(&reply->_value.encoding.suffix)) {
         header |= _Z_FLAG_Z_R_E;
     }
-    if (reply->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO || _z_id_check(reply->_ext_source_info._id)) {
+    _Bool has_sourceinfo = _z_id_check(reply->_ext_source_info._id) || reply->_ext_source_info._source_sn != 0 ||
+                           reply->_ext_source_info._entity_id != 0;
+    if (reply->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO || has_sourceinfo) {
         header |= _Z_FLAG_Z_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
@@ -491,7 +497,7 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &reply->_value.encoding.suffix));
     }
     _Bool has_consolidation_ext = reply->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO;
-    if (_z_id_check(reply->_ext_source_info._id)) {
+    if (has_sourceinfo) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
         if (has_consolidation_ext) {
             extheader |= _Z_MSG_EXT_FLAG_Z;
@@ -557,7 +563,8 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     }
     _Bool has_payload_ext = err->_ext_value.payload.start != NULL || err->_ext_value.encoding.prefix != 0 ||
                             !_z_bytes_is_empty(&err->_ext_value.encoding.suffix);
-    _Bool has_sinfo_ext = _z_id_check(err->_ext_source_info._id);
+    _Bool has_sinfo_ext = _z_id_check(err->_ext_source_info._id) || err->_ext_source_info._entity_id != 0 ||
+                          err->_ext_source_info._source_sn != 0;
     if (has_sinfo_ext || has_payload_ext) {
         header |= _Z_FLAG_Z_Z;
     }
@@ -633,7 +640,8 @@ int8_t _z_ack_encode(_z_wbuf_t *wbf, const _z_msg_ack_t *ack) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_ACK;
     _Bool has_ts = _z_timestamp_check(&ack->_timestamp);
-    _Bool has_sinfo_ext = _z_id_check(ack->_ext_source_info._id);
+    _Bool has_sinfo_ext = _z_id_check(ack->_ext_source_info._id) || ack->_ext_source_info._source_sn != 0 ||
+                          ack->_ext_source_info._entity_id != 0;
     if (has_ts) {
         header |= _Z_FLAG_Z_A_T;
     }
@@ -681,7 +689,8 @@ int8_t _z_ack_decode(_z_msg_ack_t *ack, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_pull_encode(_z_wbuf_t *wbf, const _z_msg_pull_t *pull) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_PULL;
-    _Bool has_info_ext = _z_id_check(pull->_ext_source_info._id);
+    _Bool has_info_ext = _z_id_check(pull->_ext_source_info._id) || pull->_ext_source_info._source_sn != 0 ||
+                         pull->_ext_source_info._entity_id != 0;
     if (has_info_ext) {
         header |= _Z_FLAG_Z_Z;
     }

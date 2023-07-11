@@ -123,7 +123,7 @@ typedef struct {
     z_what_t _what;
     uint8_t _version;
 } _z_s_msg_scout_t;
-void _z_s_msg_clear_scout(_z_s_msg_scout_t *msg);
+void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg);
 
 /*------------------ Hello Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -170,7 +170,7 @@ typedef struct {
     z_whatami_t _whatami;
     uint8_t _version;
 } _z_s_msg_hello_t;
-void _z_s_msg_clear_hello(_z_s_msg_hello_t *msg);
+void _z_s_msg_hello_clear(_z_s_msg_hello_t *msg);
 
 /*------------------ Join Message ------------------*/
 // # Join message
@@ -230,7 +230,7 @@ typedef struct {
     uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_join_t;
-void _z_t_msg_clear_join(_z_t_msg_join_t *msg);
+void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
 
 /*------------------ Init Message ------------------*/
 // # Init message
@@ -310,7 +310,7 @@ typedef struct {
     uint8_t _seq_num_res;
     uint8_t _version;
 } _z_t_msg_init_t;
-void _z_t_msg_clear_init(_z_t_msg_init_t *msg);
+void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
@@ -348,7 +348,7 @@ typedef struct {
     _z_zint_t _initial_sn;
     _z_bytes_t _cookie;
 } _z_t_msg_open_t;
-void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
+void _z_t_msg_open_clear(_z_t_msg_open_t *msg);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -378,7 +378,7 @@ void _z_t_msg_clear_open(_z_t_msg_open_t *msg);
 typedef struct {
     uint8_t _reason;
 } _z_t_msg_close_t;
-void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
+void _z_t_msg_close_clear(_z_t_msg_close_t *msg);
 /*=============================*/
 /*        Close reasons        */
 /*=============================*/
@@ -414,7 +414,7 @@ void _z_t_msg_clear_close(_z_t_msg_close_t *msg);
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_t_msg_keep_alive_t;
-void _z_t_msg_clear_keep_alive(_z_t_msg_keep_alive_t *msg);
+void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -445,7 +445,7 @@ typedef struct {
     _z_network_message_vec_t _messages;
     _z_zint_t _sn;
 } _z_t_msg_frame_t;
-void _z_t_msg_clear_frame(_z_t_msg_frame_t *msg);
+void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 
 /*------------------ Fragment Message ------------------*/
 // The Fragment message is used to transmit on the wire large Zenoh Message that require fragmentation
@@ -473,7 +473,7 @@ typedef struct {
     _z_bytes_t _payload;
     _z_zint_t _sn;
 } _z_t_msg_fragment_t;
-void _z_t_msg_clear_fragment(_z_t_msg_fragment_t *msg);
+void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg);
 
 /*------------------ Transport Message ------------------*/
 typedef union {

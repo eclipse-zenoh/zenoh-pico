@@ -16,6 +16,7 @@
 #include "zenoh-pico/protocol/codec/message.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/definitions/message.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 #define ZENOH_PICO_TEST_H
 
 #include <assert.h>
@@ -710,7 +711,7 @@ _z_decl_subscriber_t gen_subscriber_declaration(void) {
     return e_sd;
 }
 
-void assert_eq_subscriber_declaration(_z_decl_subscriber_t *left, _z_decl_subscriber_t *right) {
+void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z_decl_subscriber_t *right) {
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
     assert(left->_id == right->_id);
     assert(left->_ext_subinfo._pull_mode == right->_ext_subinfo._pull_mode);
@@ -756,7 +757,7 @@ _z_decl_queryable_t gen_queryable_declaration(void) {
     return e_qd;
 }
 
-void assert_eq_queryable_declaration(_z_decl_queryable_t *left, _z_decl_queryable_t *right) {
+void assert_eq_queryable_declaration(const _z_decl_queryable_t *left, const _z_decl_queryable_t *right) {
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
 
     printf("Complete (%u:%u), ", left->_ext_queryable_info._complete, right->_ext_queryable_info._complete);
@@ -805,7 +806,7 @@ _z_undecl_kexpr_t gen_forget_resource_declaration(void) {
     return e_frd;
 }
 
-void assert_eq_forget_resource_declaration(_z_undecl_kexpr_t *left, _z_undecl_kexpr_t *right) {
+void assert_eq_forget_resource_declaration(const _z_undecl_kexpr_t *left, const _z_undecl_kexpr_t *right) {
     printf("RID (%u:%u)", left->_id, right->_id);
     assert(left->_id == right->_id);
 }
@@ -846,7 +847,7 @@ _z_undecl_subscriber_t gen_forget_subscriber_declaration(void) {
     return e_fsd;
 }
 
-void assert_eq_forget_subscriber_declaration(_z_undecl_subscriber_t *left, _z_undecl_subscriber_t *right) {
+void assert_eq_forget_subscriber_declaration(const _z_undecl_subscriber_t *left, const _z_undecl_subscriber_t *right) {
     assert_eq_keyexpr(&left->_ext_keyexpr, &right->_ext_keyexpr);
     assert(left->_id == right->_id);
 }
@@ -889,7 +890,7 @@ _z_undecl_queryable_t gen_forget_queryable_declaration(void) {
     return e_fqd;
 }
 
-void assert_eq_forget_queryable_declaration(_z_undecl_queryable_t *left, _z_undecl_queryable_t *right) {
+void assert_eq_forget_queryable_declaration(const _z_undecl_queryable_t *left, const _z_undecl_queryable_t *right) {
     assert_eq_keyexpr(&left->_ext_keyexpr, &right->_ext_keyexpr);
     assert(left->_id == right->_id);
 }
@@ -961,7 +962,7 @@ _z_declaration_t gen_declaration(void) {
     return d;
 }
 
-void assert_eq_declaration(_z_declaration_t *left, _z_declaration_t *right) {
+void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t *right) {
     printf("Declaration -> ");
     printf("Header (%x:%x), ", left->_tag, right->_tag);
     assert(left->_tag == right->_tag);
@@ -1447,10 +1448,237 @@ void response_final_message(void) {
     _z_n_msg_response_final_t decoded;
     __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
     __auto_type header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_response_final_decode(&decoded, &zbf, header));
+    int8_t ret = _z_response_final_decode(&decoded, &zbf, header);
+    assert(_Z_RES_OK == ret);
     assert_eq_response_final(&expected, &decoded);
     _z_n_msg_response_final_clear(&decoded);
     _z_n_msg_response_final_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_join(void) {
+    _z_conduit_sn_list_t conduit = {._is_qos = gen_bool()};
+    if (conduit._is_qos) {
+        for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
+            conduit._val._qos[i]._best_effort = gen_uint64();
+            conduit._val._qos[i]._reliable = gen_uint64();
+        }
+    } else {
+        conduit._val._plain._best_effort = gen_uint64();
+        conduit._val._plain._reliable = gen_uint64();
+    }
+    return _z_t_msg_make_join(gen_uint8() % 3, gen_uint64(), gen_zid(), conduit);
+}
+void assert_eq_join(const _z_t_msg_join_t *left, const _z_t_msg_join_t *right) {
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
+    assert(left->_lease == right->_lease);
+    assert(left->_batch_size == right->_batch_size);
+    assert(left->_whatami == right->_whatami);
+    assert(left->_req_id_res == right->_req_id_res);
+    assert(left->_seq_num_res == right->_seq_num_res);
+    assert(left->_version == right->_version);
+    assert(left->_next_sn._is_qos == right->_next_sn._is_qos);
+    if (left->_next_sn._is_qos) {
+        for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
+            assert(left->_next_sn._val._qos[i]._best_effort == right->_next_sn._val._qos[i]._best_effort);
+            assert(left->_next_sn._val._qos[i]._reliable == right->_next_sn._val._qos[i]._reliable);
+        }
+    } else {
+        assert(left->_next_sn._val._plain._best_effort == right->_next_sn._val._plain._best_effort);
+        assert(left->_next_sn._val._plain._reliable == right->_next_sn._val._plain._reliable);
+    }
+}
+void join_message(void) {
+    printf("\n>> Join message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_join();
+    assert(_z_join_encode(&wbf, expected._header, &expected._body._join) == _Z_RES_OK);
+    _z_t_msg_join_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_join_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_join(&expected._body._join, &decoded);
+    _z_t_msg_join_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_init(void) {
+    if (gen_bool()) {
+        return _z_t_msg_make_init_syn(gen_uint8() % 3, gen_zid());
+    } else {
+        return _z_t_msg_make_init_ack(gen_uint8() % 3, gen_zid(), gen_bytes(16));
+    }
+}
+void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
+    assert(left->_batch_size == right->_batch_size);
+    assert(left->_req_id_res == right->_req_id_res);
+    assert(left->_seq_num_res == right->_seq_num_res);
+    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
+    assert(left->_version == right->_version);
+    assert(left->_whatami == right->_whatami);
+}
+void init_message(void) {
+    printf("\n>> Init message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_init();
+    assert(_z_init_encode(&wbf, expected._header, &expected._body._init) == _Z_RES_OK);
+    _z_t_msg_init_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_init_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_init(&expected._body._init, &decoded);
+    _z_t_msg_init_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_open(void) {
+    if (gen_bool()) {
+        return _z_t_msg_make_open_syn(gen_uint(), gen_uint(), gen_bytes(16));
+    } else {
+        return _z_t_msg_make_open_ack(gen_uint(), gen_uint());
+    }
+}
+void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
+    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert(left->_initial_sn == right->_initial_sn);
+    assert(left->_lease == right->_lease);
+}
+void open_message(void) {
+    printf("\n>> open message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_open();
+    assert(_z_open_encode(&wbf, expected._header, &expected._body._open) == _Z_RES_OK);
+    _z_t_msg_open_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_open_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_open(&expected._body._open, &decoded);
+    _z_t_msg_open_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_close(void) { return _z_t_msg_make_close(gen_uint(), gen_bool()); }
+void assert_eq_close(const _z_t_msg_close_t *left, const _z_t_msg_close_t *right) {
+    assert(left->_reason == right->_reason);
+}
+void close_message(void) {
+    printf("\n>> close message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_close();
+    assert(_z_close_encode(&wbf, expected._header, &expected._body._close) == _Z_RES_OK);
+    _z_t_msg_close_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_close_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_close(&expected._body._close, &decoded);
+    _z_t_msg_close_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_keep_alive(void) { return _z_t_msg_make_keep_alive(); }
+void assert_eq_keep_alive(const _z_t_msg_keep_alive_t *left, const _z_t_msg_keep_alive_t *right) {
+    (void)left;
+    (void)right;
+}
+void keep_alive_message(void) {
+    printf("\n>> keep_alive message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_keep_alive();
+    assert(_z_keep_alive_encode(&wbf, expected._header, &expected._body._keep_alive) == _Z_RES_OK);
+    _z_t_msg_keep_alive_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_keep_alive_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_keep_alive(&expected._body._keep_alive, &decoded);
+    _z_t_msg_keep_alive_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+_z_network_message_t gen_net_msg(void) {
+    switch (gen_uint8() % 5) {
+        case 0: {
+            return gen_declare_message();
+        } break;
+        case 1: {
+            return (_z_network_message_t){._tag = _Z_N_PUSH, ._body._push = gen_push()};
+        } break;
+        case 2: {
+            return (_z_network_message_t){._tag = _Z_N_REQUEST, ._body._request = gen_request()};
+        } break;
+        case 3: {
+            return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
+        } break;
+        case 4: {
+            return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
+        } break;
+    }
+    assert(false);
+}
+void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_message_t *right) {
+    assert(left->_tag == right->_tag);
+    switch (left->_tag) {
+        case _Z_N_DECLARE: {
+            assert_eq_declaration(&left->_body._declare._decl, &right->_body._declare._decl);
+            assert_eq_timestamp(&left->_body._declare._ext_timestamp, &right->_body._declare._ext_timestamp);
+            assert(left->_body._declare._ext_qos._val == right->_body._declare._ext_qos._val);
+        } break;
+        case _Z_N_PUSH: {
+            assert_eq_push(&left->_body._push, &right->_body._push);
+        } break;
+        case _Z_N_REQUEST: {
+            assert_eq_request(&left->_body._request, &right->_body._request);
+        } break;
+        case _Z_N_RESPONSE: {
+            assert_eq_response(&left->_body._response, &right->_body._response);
+        } break;
+        case _Z_N_RESPONSE_FINAL: {
+            assert_eq_response_final(&left->_body._response_final, &right->_body._response_final);
+        } break;
+    }
+}
+_z_network_message_vec_t gen_net_msgs(size_t n) {
+    _z_network_message_vec_t ret = _z_network_message_vec_make(n);
+    for (size_t i = 0; i < n; i++) {
+        _z_network_message_t *msg = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
+        *msg = gen_net_msg();
+        _z_network_message_vec_append(&ret, msg);
+    }
+    return ret;
+}
+
+_z_transport_message_t gen_frame(void) {
+    return _z_t_msg_make_frame(gen_uint(), gen_net_msgs(gen_uint8() % 16), gen_bool());
+}
+void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right) {
+    assert(left->_sn == right->_sn);
+    assert(left->_messages._len == right->_messages._len);
+    for (size_t i = 0; i < left->_messages._len; i++) {
+        assert_eq_net_msg(left->_messages._val[i], right->_messages._val[i]);
+    }
+}
+void frame_message(void) {
+    printf("\n>> frame message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_frame();
+    assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
+    _z_t_msg_frame_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_frame_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_frame(&expected._body._frame, &decoded);
+    _z_t_msg_frame_clear(&decoded);
+    _z_t_msg_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1492,13 +1720,13 @@ int main(void) {
         response_message();
         response_final_message();
 
-        // // Transport messages
-        // join_message();
-        // init_message();
-        // open_message();
-        // close_message();
-        // keep_alive_message();
-        // frame_message();
+        // Transport messages
+        join_message();
+        init_message();
+        open_message();
+        close_message();
+        keep_alive_message();
+        frame_message();
         // fragment_message();
         // transport_message();
         // batch();

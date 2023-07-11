@@ -236,7 +236,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
     _Bool has_qos_ext = msg->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
     _Bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
-    _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid);
+    _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
     uint8_t n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
     _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
     if (msg->_key._uses_remote_mapping) {
@@ -477,18 +477,23 @@ int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
     switch (_Z_MID(header)) {
         case _Z_MID_N_DECLARE: {
+            msg->_tag = _Z_N_DECLARE;
             return _z_declare_decode(&msg->_body._declare, zbf, header);
         } break;
         case _Z_MID_N_PUSH: {
+            msg->_tag = _Z_N_PUSH;
             return _z_push_decode(&msg->_body._push, zbf, header);
         } break;
         case _Z_MID_N_REQUEST: {
+            msg->_tag = _Z_N_REQUEST;
             return _z_request_decode(&msg->_body._request, zbf, header);
         } break;
         case _Z_MID_N_RESPONSE: {
+            msg->_tag = _Z_N_RESPONSE;
             return _z_response_decode(&msg->_body._response, zbf, header);
         } break;
         case _Z_MID_N_RESPONSE_FINAL: {
+            msg->_tag = _Z_N_RESPONSE_FINAL;
             return _z_response_final_decode(&msg->_body._response_final, zbf, header);
         } break;
         default:
