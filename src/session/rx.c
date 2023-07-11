@@ -21,7 +21,6 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"

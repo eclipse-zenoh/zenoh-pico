@@ -16,7 +16,6 @@
 #define ZENOH_PICO_TRANSPORT_LINK_RX_H
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/transport.h"
 
 /*------------------ Transmission and Reception helpers ------------------*/

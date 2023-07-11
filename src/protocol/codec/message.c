@@ -32,7 +32,6 @@
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 

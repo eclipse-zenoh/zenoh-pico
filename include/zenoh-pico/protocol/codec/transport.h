@@ -17,9 +17,10 @@
 
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
+
 int8_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
 int8_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);
-int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *buf);
 
 int8_t _z_transport_message_encode(_z_wbuf_t *buf, const _z_transport_message_t *msg);
 int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf);
@@ -41,4 +42,10 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
 
 int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
 int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+
+int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
+int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
+
+int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg);
+int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf);
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_TRANSPORT_H */

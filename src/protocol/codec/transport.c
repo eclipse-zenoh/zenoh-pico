@@ -12,16 +12,18 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/protocol/definitions/transport.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/core.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 /*------------------ Join Message ------------------*/
@@ -94,6 +96,7 @@ int8_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
 int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_T_JOIN\n");
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_t_msg_join_t){0};
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
 
@@ -172,6 +175,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
 
 int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_T_INIT\n");
+    *msg = (_z_t_msg_init_t){0};
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
@@ -238,6 +242,7 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
 int8_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_T_OPEN\n");
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_t_msg_open_t){0};
 
     ret |= _z_zint_decode(&msg->_lease, zbf);
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true)) {
@@ -275,6 +280,7 @@ int8_t _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *m
 int8_t _z_close_decode(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_t_msg_close_t){0};
     _Z_DEBUG("Decoding _Z_MID_T_CLOSE\n");
 
     ret |= _z_uint8_decode(&msg->_reason, zbf);
@@ -298,6 +304,7 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
     (void)(msg);
     (void)(zbf);
     (void)(header);
+    *msg = (_z_t_msg_keep_alive_t){0};
 
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE\n");
@@ -331,6 +338,7 @@ int8_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *m
 
 int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_t_msg_frame_t){0};
 
     ret |= _z_zint_decode(&msg->_sn, zbf);
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
@@ -381,6 +389,8 @@ int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragmen
 
 int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
+    *msg = (_z_t_msg_fragment_t){0};
+    
     _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT\n");
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
@@ -423,8 +433,6 @@ int8_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t hea
 /*------------------ Transport Message ------------------*/
 int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg) {
     int8_t ret = _Z_RES_OK;
-
-    // Encode the decorators if present
 
     uint8_t header = msg->_header;
 

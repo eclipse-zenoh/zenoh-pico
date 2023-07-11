@@ -18,7 +18,6 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 

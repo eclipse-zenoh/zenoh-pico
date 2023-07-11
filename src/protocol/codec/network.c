@@ -31,7 +31,6 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/msgcodec.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -380,6 +379,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
             break;
         }
         default: {
+            _Z_ERROR("Unknown N_MID: %d\n", _Z_MID(inner_header));
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }

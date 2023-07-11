@@ -190,7 +190,7 @@ _z_id_t gen_zid(void) {
     for (uint8_t i = 0; i < len; i++) {
         uint8_t byte = gen_uint8();
         id.id[i] = byte;
-        hash ^= byte;
+        hash ^= i * byte;
     }
     id.id[0] = hash;
     return id;
@@ -1683,6 +1683,99 @@ void frame_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
+_z_transport_message_t gen_fragment(void) {
+    return _z_t_msg_make_fragment(gen_uint(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
+}
+void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
+    assert(left->_sn == right->_sn);
+    assert_eq_bytes(&left->_payload, &right->_payload);
+}
+void fragment_message(void) {
+    printf("\n>> fragment message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_fragment();
+    assert(_z_fragment_encode(&wbf, expected._header, &expected._body._fragment) == _Z_RES_OK);
+    _z_t_msg_fragment_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_fragment_decode(&decoded, &zbf, expected._header);
+    assert(_Z_RES_OK == ret);
+    assert_eq_fragment(&expected._body._fragment, &decoded);
+    _z_t_msg_fragment_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+_z_transport_message_t gen_transport(void) {
+    switch (gen_uint8() % 7) {
+        case 0: {
+            return gen_join();
+        };
+        case 1: {
+            return gen_init();
+        };
+        case 2: {
+            return gen_open();
+        };
+        case 3: {
+            return gen_close();
+        };
+        case 4: {
+            return gen_keep_alive();
+        };
+        case 5: {
+            return gen_frame();
+        };
+        case 6: {
+            return gen_fragment();
+        };
+    }
+    assert(false);
+}
+void assert_eq_transport(const _z_transport_message_t *left, const _z_transport_message_t *right) {
+    assert(left->_header == right->_header);
+    switch (_Z_MID(left->_header)) {
+        case _Z_MID_T_JOIN: {
+            assert_eq_join(&left->_body._join, &right->_body._join);
+        } break;
+        case _Z_MID_T_CLOSE: {
+            assert_eq_close(&left->_body._close, &right->_body._close);
+        } break;
+        case _Z_MID_T_INIT: {
+            assert_eq_init(&left->_body._init, &right->_body._init);
+        } break;
+        case _Z_MID_T_OPEN: {
+            assert_eq_open(&left->_body._open, &right->_body._open);
+        } break;
+        case _Z_MID_T_KEEP_ALIVE: {
+            assert_eq_keep_alive(&left->_body._keep_alive, &right->_body._keep_alive);
+        } break;
+        case _Z_MID_T_FRAME: {
+            assert_eq_frame(&left->_body._frame, &right->_body._frame);
+        } break;
+        case _Z_MID_T_FRAGMENT: {
+            assert_eq_fragment(&left->_body._fragment, &right->_body._fragment);
+        } break;
+        default:
+            assert(false);
+    }
+}
+void transport_message(void) {
+    printf("\n>> transport message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_transport();
+    assert(_z_transport_message_encode(&wbf, &expected) == _Z_RES_OK);
+    _z_transport_message_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_transport_message_decode(&decoded, &zbf);
+    assert(_Z_RES_OK == ret);
+    assert_eq_transport(&expected, &decoded);
+    _z_t_msg_clear(&decoded);
+    _z_t_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -1727,8 +1820,8 @@ int main(void) {
         close_message();
         keep_alive_message();
         frame_message();
-        // fragment_message();
-        // transport_message();
+        fragment_message();
+        transport_message();
         // batch();
         // fragmentation();
 
