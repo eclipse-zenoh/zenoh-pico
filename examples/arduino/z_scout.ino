@@ -20,13 +20,14 @@
 #define SSID "SSID"
 #define PASS "PASS"
 
-void fprintzid(z_bytes_t zid) {
-    if (zid.start == NULL) {
+void fprintzid(z_id_t zid) {
+    unsigned int zidlen = _z_id_len(zid);
+    if (zidlen == 0) {
         Serial.print("None");
     } else {
         Serial.print("Some(");
-        for (unsigned int i = 0; i < zid.len; i++) {
-            Serial.print(zid.start[i], HEX);
+        for (unsigned int i = 0; i < zidlen; i++) {
+            Serial.print(zid.id[i], HEX);
         }
         Serial.print(")");
     }
