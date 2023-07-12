@@ -106,7 +106,7 @@ find_package(Threads REQUIRED)
 
 if(CMAKE_BUILD_TYPE_UPPER MATCHES "DEBUG")
   if(UNIX)
-    add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pipe -g -O0)
+    add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pedantic -pipe -g -O0)
   elseif(MSVC)
     add_compile_options(/W4 /WX /Od)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")

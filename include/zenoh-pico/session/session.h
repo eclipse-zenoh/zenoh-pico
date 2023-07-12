@@ -99,7 +99,7 @@ typedef struct {
 _Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
-_Z_POINTER_DEFINE(_z_subscription, _z_subscription);
+_Z_POINTER_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
 _Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t, _z_noop_size, _z_subscription_sptr_drop, _z_noop_copy)
 _Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t)
@@ -126,7 +126,7 @@ typedef struct {
 _Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
 void _z_questionable_clear(_z_questionable_t *res);
 
-_Z_POINTER_DEFINE(_z_questionable, _z_questionable);
+_Z_POINTER_DEFINE(_z_questionable, _z_questionable)
 _Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
 _Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t, _z_noop_size, _z_questionable_sptr_drop, _z_noop_copy)
 _Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t)

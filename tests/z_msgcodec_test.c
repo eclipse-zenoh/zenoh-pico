@@ -703,7 +703,7 @@ void resource_declaration(void) {
 
 /*------------------ Subscriber declaration ------------------*/
 _z_decl_subscriber_t gen_subscriber_declaration(void) {
-    __auto_type subinfo = gen_subinfo();
+    _z_subinfo_t subinfo = gen_subinfo();
     _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(),
                                  ._id = gen_uint64(),
                                  ._ext_subinfo = {._pull_mode = subinfo.mode == Z_SUBMODE_PULL,
@@ -1070,7 +1070,7 @@ void push_body_message(void) {
     _z_wbuf_t wbf = gen_wbuf(65535);
 
     // Initialize
-    __auto_type e_da = gen_push_body();
+    _z_push_body_t e_da = gen_push_body();
 
     // Encode
     int8_t res = _z_push_body_encode(&wbf, &e_da);
@@ -1102,13 +1102,13 @@ void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right) {
 
 void pull_message(void) {
     printf("\n>> Pull message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type e_pull_msg = gen_pull_message();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_msg_pull_t e_pull_msg = gen_pull_message();
 
     assert(_z_pull_encode(&wbf, &e_pull_msg) == _Z_RES_OK);
 
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
 
     _z_msg_pull_t d_pull_msg;
     assert(_z_pull_decode(&d_pull_msg, &zbf, header) == _Z_RES_OK);
@@ -1138,13 +1138,13 @@ void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
 
 void query_message(void) {
     printf("\n>> Query message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_query();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_msg_query_t expected = gen_query();
     assert(_z_query_encode(&wbf, &expected) == _Z_RES_OK);
     _z_msg_query_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
-    __auto_type res = _z_query_decode(&decoded, &zbf, header);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
+    int8_t res = _z_query_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == res);
     assert_eq_query(&expected, &decoded);
     _z_msg_query_clear(&decoded);
@@ -1173,12 +1173,12 @@ void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
 
 void err_message(void) {
     printf("\n>> Err message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_err();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_msg_err_t expected = gen_err();
     assert(_z_err_encode(&wbf, &expected) == _Z_RES_OK);
     _z_msg_err_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_err_decode(&decoded, &zbf, header));
     assert_eq_err(&expected, &decoded);
     _z_msg_err_clear(&decoded);
@@ -1201,12 +1201,12 @@ void assert_eq_ack(const _z_msg_ack_t *left, const _z_msg_ack_t *right) {
 
 void ack_message(void) {
     printf("\n>> Ack message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_ack();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_msg_ack_t expected = gen_ack();
     assert(_z_ack_encode(&wbf, &expected) == _Z_RES_OK);
     _z_msg_ack_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_ack_decode(&decoded, &zbf, header));
     assert_eq_ack(&expected, &decoded);
     _z_zbuf_clear(&zbf);
@@ -1231,12 +1231,12 @@ void assert_eq_reply(const _z_msg_reply_t *left, const _z_msg_reply_t *right) {
 
 void reply_message(void) {
     printf("\n>> Reply message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_reply();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_msg_reply_t expected = gen_reply();
     assert(_z_reply_encode(&wbf, &expected) == _Z_RES_OK);
     _z_msg_reply_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_reply_decode(&decoded, &zbf, header));
     assert_eq_reply(&expected, &decoded);
     _z_msg_reply_clear(&decoded);
@@ -1263,12 +1263,12 @@ void assert_eq_push(const _z_n_msg_push_t *left, const _z_n_msg_push_t *right) {
 
 void push_message(void) {
     printf("\n>> Push message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_push();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_n_msg_push_t expected = gen_push();
     assert(_z_push_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_push_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_push_decode(&decoded, &zbf, header));
     assert_eq_push(&expected, &decoded);
     _z_n_msg_push_clear(&decoded);
@@ -1340,12 +1340,12 @@ void assert_eq_request(const _z_n_msg_request_t *left, const _z_n_msg_request_t 
 
 void request_message(void) {
     printf("\n>> Request message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_request();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_n_msg_request_t expected = gen_request();
     assert(_z_request_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_request_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     int8_t ret = _z_request_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_request(&expected, &decoded);
@@ -1377,7 +1377,7 @@ _z_n_msg_response_t gen_response(void) {
             ret._body._reply = gen_reply();
         } break;
         default: {
-            __auto_type body = gen_push_body();
+            _z_push_body_t body = gen_push_body();
             if (body._is_put) {
                 ret._tag = _Z_RESPONSE_BODY_PUT;
                 ret._body._put = body._body._put;
@@ -1421,12 +1421,12 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
 
 void response_message(void) {
     printf("\n>> Response message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_response();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_n_msg_response_t expected = gen_response();
     assert(_z_response_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_response_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     int8_t ret = _z_response_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_response(&expected, &decoded);
@@ -1442,12 +1442,12 @@ void assert_eq_response_final(const _z_n_msg_response_final_t *left, const _z_n_
 }
 void response_final_message(void) {
     printf("\n>> Request Final message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_response_final();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_n_msg_response_final_t expected = gen_response_final();
     assert(_z_response_final_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_response_final_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
-    __auto_type header = _z_zbuf_read(&zbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
     int8_t ret = _z_response_final_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_response_final(&expected, &decoded);
@@ -1491,11 +1491,11 @@ void assert_eq_join(const _z_t_msg_join_t *left, const _z_t_msg_join_t *right) {
 }
 void join_message(void) {
     printf("\n>> Join message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_join();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_join();
     assert(_z_join_encode(&wbf, expected._header, &expected._body._join) == _Z_RES_OK);
     _z_t_msg_join_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_join_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_join(&expected._body._join, &decoded);
@@ -1523,11 +1523,11 @@ void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
 }
 void init_message(void) {
     printf("\n>> Init message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_init();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_init();
     assert(_z_init_encode(&wbf, expected._header, &expected._body._init) == _Z_RES_OK);
     _z_t_msg_init_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_init_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_init(&expected._body._init, &decoded);
@@ -1551,11 +1551,11 @@ void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
 }
 void open_message(void) {
     printf("\n>> open message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_open();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_open();
     assert(_z_open_encode(&wbf, expected._header, &expected._body._open) == _Z_RES_OK);
     _z_t_msg_open_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_open_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_open(&expected._body._open, &decoded);
@@ -1571,11 +1571,11 @@ void assert_eq_close(const _z_t_msg_close_t *left, const _z_t_msg_close_t *right
 }
 void close_message(void) {
     printf("\n>> close message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_close();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_close();
     assert(_z_close_encode(&wbf, expected._header, &expected._body._close) == _Z_RES_OK);
     _z_t_msg_close_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_close_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_close(&expected._body._close, &decoded);
@@ -1592,11 +1592,11 @@ void assert_eq_keep_alive(const _z_t_msg_keep_alive_t *left, const _z_t_msg_keep
 }
 void keep_alive_message(void) {
     printf("\n>> keep_alive message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_keep_alive();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_keep_alive();
     assert(_z_keep_alive_encode(&wbf, expected._header, &expected._body._keep_alive) == _Z_RES_OK);
     _z_t_msg_keep_alive_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_keep_alive_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_keep_alive(&expected._body._keep_alive, &decoded);
@@ -1669,11 +1669,11 @@ void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right
 }
 void frame_message(void) {
     printf("\n>> frame message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_frame();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_frame();
     assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
     _z_t_msg_frame_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_frame_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_frame(&expected._body._frame, &decoded);
@@ -1692,11 +1692,11 @@ void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment
 }
 void fragment_message(void) {
     printf("\n>> fragment message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_fragment();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_fragment();
     assert(_z_fragment_encode(&wbf, expected._header, &expected._body._fragment) == _Z_RES_OK);
     _z_t_msg_fragment_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_fragment_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_fragment(&expected._body._fragment, &decoded);
@@ -1762,11 +1762,11 @@ void assert_eq_transport(const _z_transport_message_t *left, const _z_transport_
 }
 void transport_message(void) {
     printf("\n>> transport message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_transport();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_transport_message_t expected = gen_transport();
     assert(_z_transport_message_encode(&wbf, &expected) == _Z_RES_OK);
     _z_transport_message_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_transport_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);
     assert_eq_transport(&expected, &decoded);
@@ -1803,11 +1803,11 @@ void assert_eq_scouting(const _z_scouting_message_t *left, const _z_scouting_mes
 }
 void scouting_message(void) {
     printf("\n>> scouting message\n");
-    __auto_type wbf = gen_wbuf(UINT16_MAX);
-    __auto_type expected = gen_scouting();
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_scouting_message_t expected = gen_scouting();
     assert(_z_scouting_message_encode(&wbf, &expected) == _Z_RES_OK);
     _z_scouting_message_t decoded;
-    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     int8_t ret = _z_scouting_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);
     assert_eq_scouting(&expected, &decoded);
