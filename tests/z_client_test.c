@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %u %s\n", z_subscriber_loan(sub)._val->_id,
+        printf("Declared subscription on session 2: %ju %u %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_id,
                z_loan(rids2[i])._id, "");
         subs2 = _z_list_push(subs2, sub);
     }
@@ -181,7 +182,7 @@ int main(int argc, char **argv) {
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
-        printf("Declared queryable on session 2: %zu %zu %s\n", qle->_value->_id, (z_zint_t)0, s1_res);
+        printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_value->_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
 
@@ -282,7 +283,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %zu\n", sub->_value->_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_value->_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
@@ -291,7 +292,7 @@ int main(int argc, char **argv) {
 
     while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
-        printf("Undeclared queryable on session 2: %zu\n", qle->_value->_id);
+        printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_value->_id);
         z_undeclare_queryable(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free, NULL);
     }
