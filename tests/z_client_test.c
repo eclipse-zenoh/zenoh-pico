@@ -17,6 +17,8 @@
 #include <stdlib.h>
 
 #include "zenoh-pico.h"
+#include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/string.h"
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -95,6 +97,11 @@ void data_handler(const z_sample_t *sample, void *arg) {
     free(res);
 }
 
+z_string_t format_id(const z_id_t *id) {
+    _z_bytes_t id_as_bytes = _z_bytes_wrap(id->id, _z_id_len(*id));
+    return _z_string_from_bytes(&id_as_bytes);
+}
+
 int main(int argc, char **argv) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
@@ -110,7 +117,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t zid1 = _z_string_from_bytes(&z_loan(s1)._val->_local_zid);
+    z_string_t zid1 = format_id(&z_loan(s1)._val->_local_zid);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
@@ -125,7 +132,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t zid2 = _z_string_from_bytes(&z_loan(s2)._val->_local_zid);
+    z_string_t zid2 = format_id(&z_loan(s2)._val->_local_zid);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 
@@ -140,7 +147,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s1), z_keyexpr(s1_res));
-        printf("Declared resource on session 1: %zu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
+        printf("Declared resource on session 1: %u %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids1[i] = expr;
     }
 
@@ -149,7 +156,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_keyexpr_t expr = z_declare_keyexpr(z_loan(s2), z_keyexpr(s1_res));
-        printf("Declared resource on session 2: %zu %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
+        printf("Declared resource on session 2: %u %s\n", z_loan(expr)._id, z_loan(expr)._suffix);
         rids2[i] = expr;
     }
 
@@ -161,7 +168,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %zu %s\n", z_subscriber_loan(sub)._val->_id,
+        printf("Declared subscription on session 2: %zu %u %s\n", z_subscriber_loan(sub)._val->_id,
                z_loan(rids2[i])._id, "");
         subs2 = _z_list_push(subs2, sub);
     }
@@ -201,7 +208,7 @@ int main(int argc, char **argv) {
             z_put_options_t opt = z_put_options_default();
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
-            printf("Wrote data from session 1: %zu %zu b\t(%u/%u)\n", z_loan(rids1[i])._id, len, n * SET + (i + 1),
+            printf("Wrote data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])._id, len, n * SET + (i + 1),
                    total);
         }
     }
@@ -293,14 +300,14 @@ int main(int argc, char **argv) {
 
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
-        printf("Undeclared resource on session 1: %zu\n", z_loan(rids1[i])._id);
+        printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])._id);
         z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        printf("Undeclared resource on session 2: %zu\n", z_loan(rids2[i])._id);
+        printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])._id);
         z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
