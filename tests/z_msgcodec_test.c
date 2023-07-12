@@ -302,7 +302,7 @@ void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right) {
     printf(")");
 }
 
-void assert_eq_locator_array(_z_locator_array_t *left, _z_locator_array_t *right) {
+void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_array_t *right) {
     printf("Locators -> ");
     printf("Length (%zu:%zu), ", left->_len, right->_len);
 
@@ -1776,6 +1776,47 @@ void transport_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
+_z_scouting_message_t gen_scouting(void) {
+    if (gen_bool()) {
+        return _z_s_msg_make_scout(gen_uint8() % 3, gen_zid());
+    } else {
+        return _z_s_msg_make_hello(gen_uint8() % 3, gen_zid(), gen_locator_array((gen_uint8() % 16) + 1));
+    }
+}
+void assert_eq_scouting(const _z_scouting_message_t *left, const _z_scouting_message_t *right) {
+    assert(left->_header == right->_header);
+    switch (_Z_MID(left->_header)) {
+        case _Z_MID_SCOUT: {
+            assert(left->_body._scout._version == right->_body._scout._version);
+            assert(left->_body._scout._what == right->_body._scout._what);
+            assert(memcmp(left->_body._scout._zid.id, right->_body._scout._zid.id, 16) == 0);
+        } break;
+        case _Z_MID_HELLO: {
+            assert(left->_body._hello._version == right->_body._hello._version);
+            assert(left->_body._hello._whatami == right->_body._hello._whatami);
+            assert(memcmp(left->_body._hello._zid.id, right->_body._hello._zid.id, 16) == 0);
+            assert_eq_locator_array(&left->_body._hello._locators, &right->_body._hello._locators);
+        } break;
+        default:
+            assert(false);
+    }
+}
+void scouting_message(void) {
+    printf("\n>> scouting message\n");
+    __auto_type wbf = gen_wbuf(UINT16_MAX);
+    __auto_type expected = gen_scouting();
+    assert(_z_scouting_message_encode(&wbf, &expected) == _Z_RES_OK);
+    _z_scouting_message_t decoded;
+    __auto_type zbf = _z_wbuf_to_zbuf(&wbf);
+    int8_t ret = _z_scouting_message_decode(&decoded, &zbf);
+    assert(_Z_RES_OK == ret);
+    assert_eq_scouting(&expected, &decoded);
+    _z_s_msg_clear(&decoded);
+    _z_s_msg_clear(&expected);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -1822,12 +1863,9 @@ int main(void) {
         frame_message();
         fragment_message();
         transport_message();
-        // batch();
-        // fragmentation();
 
-        // // Scouting messages
-        // scout_message();
-        // hello_message();
+        // Scouting messages
+        scouting_message();
     }
 
     return 0;

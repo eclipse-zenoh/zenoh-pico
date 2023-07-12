@@ -36,9 +36,7 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
 
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
-    src->_owns_suffix = false;
-    src->_id = 0;
-    src->_suffix = NULL;
+    *src = _z_keyexpr_null();
     return stolen;
 }
 
@@ -63,9 +61,9 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
     return (_z_keyexpr_t){
         ._id = src._id,
+        ._uses_remote_mapping = src._uses_remote_mapping,
         ._owns_suffix = false,
         ._suffix = src._suffix,
-        ._uses_remote_mapping = src._uses_remote_mapping,
     };
 }
 
