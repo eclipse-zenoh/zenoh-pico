@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -711,7 +712,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
 
     key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
     if (key._value != NULL) {
-        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+        uint16_t id = _z_declare_resource(zs._val, keyexpr);
         *key._value = _z_rid_with_suffix(id, NULL);
     }
 
@@ -742,7 +743,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
 #endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
-            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
 #if Z_MULTICAST_TRANSPORT == 1
@@ -818,7 +819,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
 #endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
-            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
 #if Z_MULTICAST_TRANSPORT == 1
@@ -845,7 +846,7 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
     z_keyexpr_t key = keyexpr;
     _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
     if (r == NULL) {
-        _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+        uint16_t id = _z_declare_resource(zs._val, keyexpr);
         key = _z_rid_with_suffix(id, NULL);
     }
 
@@ -897,7 +898,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
 #endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
         if (r == NULL) {
-            _z_zint_t id = _z_declare_resource(zs._val, keyexpr);
+            uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
 #if Z_MULTICAST_TRANSPORT == 1

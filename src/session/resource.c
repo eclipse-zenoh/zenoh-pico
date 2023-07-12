@@ -210,7 +210,8 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *res) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG(">>> Allocating res decl for (%zu,%zu:%s)\n", res->_id, res->_key._id, res->_key._suffix);
+    _Z_DEBUG(">>> Allocating res decl for (%ju,%u:%s)\n", (uintmax_t)res->_id, (unsigned int)res->_key._id,
+             res->_key._suffix);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);

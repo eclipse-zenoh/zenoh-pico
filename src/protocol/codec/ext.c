@@ -177,8 +177,8 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZINT: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02x)\n", ext_id,
-                     trace_id, extension->_body._zint._val);
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02jx)\n", ext_id,
+                     trace_id, (uintmax_t)extension->_body._zint._val);
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
@@ -188,7 +188,7 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
             }
             _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)\n", ext_id,
-                     trace_id, buf.len * 2, hex);
+                     trace_id, (int)buf.len * 2, hex);
             z_free(hex);
             break;
         }
