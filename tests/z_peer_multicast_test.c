@@ -18,6 +18,8 @@
 #include <stdlib.h>
 
 #include "zenoh-pico.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/core.h"
 
 #define MSG 10
 #define MSG_LEN 1024
@@ -68,7 +70,8 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t zid1 = _z_string_from_bytes(&z_loan(s1)._val->_local_zid);
+    _z_bytes_t id_as_bytes = _z_bytes_wrap(z_loan(s1)._val->_local_zid.id, _z_id_len(z_loan(s1)._val->_local_zid));
+    z_string_t zid1 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
@@ -84,7 +87,8 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t zid2 = _z_string_from_bytes(&z_loan(s2)._val->_local_zid);
+    id_as_bytes = _z_bytes_wrap(z_loan(s2)._val->_local_zid.id, _z_id_len(z_loan(s2)._val->_local_zid));
+    z_string_t zid2 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 

@@ -1619,11 +1619,11 @@ _z_network_message_t gen_net_msg(void) {
         case 3: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
         } break;
-        case 4: {
+        case 4:
+        default: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
         } break;
     }
-    assert(false);
 }
 void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_message_t *right) {
     assert(left->_tag == right->_tag);
@@ -1726,11 +1726,11 @@ _z_transport_message_t gen_transport(void) {
         case 5: {
             return gen_frame();
         };
-        case 6: {
+        case 6:
+        default: {
             return gen_fragment();
         };
     }
-    assert(false);
 }
 void assert_eq_transport(const _z_transport_message_t *left, const _z_transport_message_t *right) {
     assert(left->_header == right->_header);
