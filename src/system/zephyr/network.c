@@ -244,10 +244,6 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
-#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
-#error \
-    "Zenoh UDP Multicast support is not yet supported in this Zephyr version. To continue with this Zephyr version, disable Z_LINK_UDP_MULTICAST"
-#else
 int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
                              uint32_t tout, const char *iface) {
     int8_t ret = _Z_RES_OK;
@@ -410,14 +406,22 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                    net_if_ipv4_maddr_join(net_if_get_default(), mcast);
+#else
                     net_if_ipv4_maddr_join(mcast);
+#endif
                 } else if (rep._iptcp->ai_family == AF_INET6) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                    net_if_ipv6_maddr_join(net_if_get_default(), mcast);
+#else
                     net_if_ipv6_maddr_join(mcast);
+#endif
                 } else {
                     ret = _Z_ERR_GENERIC;
                 }
@@ -445,7 +449,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         if (rep._iptcp->ai_family == AF_INET) {
             mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             if (mcast != NULL) {
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                net_if_ipv4_maddr_leave(net_if_get_default(), mcast);
+#else
                 net_if_ipv4_maddr_leave(mcast);
+#endif
                 net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             } else {
                 // Do nothing. The socket will be closed in any case.
@@ -453,7 +461,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         } else if (rep._iptcp->ai_family == AF_INET6) {
             mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             if (mcast != NULL) {
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                net_if_ipv6_maddr_leave(net_if_get_default(), mcast);
+#else
                 net_if_ipv6_maddr_leave(mcast);
+#endif
                 net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             } else {
                 // Do nothing. The socket will be closed in any case.
@@ -537,7 +549,6 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
                              _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
-#endif  // KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
 #endif  // Z_LINK_UDP_MULTICAST == 1
 
 #if Z_LINK_SERIAL == 1
