@@ -239,7 +239,7 @@ int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
     _z_zint_t buf;
     _Z_RETURN_IF_ERR(_z_zint_decode(&buf, zbf));
     if (buf <= UINT16_MAX) {
-        *zint = buf;
+        *zint = (uint16_t)buf;
     } else {
         ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
@@ -250,7 +250,7 @@ int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
     _z_zint_t buf;
     _Z_RETURN_IF_ERR(_z_zint_decode(&buf, zbf));
     if (buf <= UINT32_MAX) {
-        *zint = buf;
+        *zint = (uint32_t)buf;
     } else {
         ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }

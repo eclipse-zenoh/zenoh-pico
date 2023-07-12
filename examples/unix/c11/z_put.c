@@ -72,20 +72,20 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
-    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
-    if (!z_check(ke)) {
-        printf("Unable to declare key expression!\n");
-        return -1;
-    }
+    // z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
+    // if (!z_check(ke)) {
+    //     printf("Unable to declare key expression!\n");
+    //     return -1;
+    // }
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
+    if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
-    z_undeclare_keyexpr(z_loan(s), z_move(ke));
+    // z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));

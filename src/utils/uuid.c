@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/utils/uuid.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/utils/pointers.h"
@@ -27,7 +28,7 @@ void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str) {
             n_dash += 1;
         }
         char val[5] = {'0', 'x', uuid_str[i + n_dash], uuid_str[i + 1 + n_dash], '\0'};
-        *bytes = strtol(val, NULL, 0);
+        *bytes = (uint8_t)strtoul(val, NULL, 0);
         bytes = _z_ptr_u8_offset(bytes, 1);
     }
 }

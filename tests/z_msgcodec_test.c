@@ -47,6 +47,12 @@
 #define _Z_MOCK_EXTENSION_ZINT 0x02
 #define _Z_MOCK_EXTENSION_ZBUF 0x03
 
+#if defined(_WIN32) || defined(WIN32)
+#pragma warning(push)
+#pragma warning(disable : 4244 4267)  // Disable truncation warnings in MSVC,
+                                      // as it is used voluntarily in this file when working with RNG
+#endif
+
 /*=============================*/
 /*       Helper functions      */
 /*=============================*/
@@ -1870,3 +1876,7 @@ int main(void) {
 
     return 0;
 }
+
+#if defined(_WIN32) || defined(WIN32)
+#pragma warning(pop)
+#endif

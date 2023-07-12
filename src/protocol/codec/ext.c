@@ -217,11 +217,6 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
         _z_msg_ext_t ext = _z_msg_ext_make_unit(0);
         size_t start = zbf->_ios._r_pos;
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
-        printf("EXT (%d): ", ret);
-        for (; start < zbf->_ios._r_pos; start++) {
-            printf("%02x ", zbf->_ios._buf[start]);
-        }
-        printf("\n");
         if (ret == _Z_RES_OK) {
             ret |= callback(&ext, context);
             _z_msg_ext_clear(&ext);

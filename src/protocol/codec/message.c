@@ -205,7 +205,7 @@ int8_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     if (ret == _Z_RES_OK) {
         ret = _z_zint_decode(&intbuf, zbf);
         if (intbuf <= UINT32_MAX) {
-            info->_entity_id = intbuf;
+            info->_entity_id = (uint32_t)intbuf;
         } else {
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
@@ -213,7 +213,7 @@ int8_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     if (ret == _Z_RES_OK) {
         ret = _z_zint_decode(&intbuf, zbf);
         if (intbuf <= UINT32_MAX) {
-            info->_source_sn = intbuf;
+            info->_source_sn = (uint32_t)intbuf;
         } else {
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
@@ -620,7 +620,7 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
     _z_zint_t code;
     ret = _z_zint_decode(&code, zbf);
     if (code <= UINT16_MAX) {
-        err->_code = code;
+        err->_code = (uint16_t)code;
     } else {
         ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }

@@ -15,19 +15,13 @@
 #include "zenoh-pico/net/resource.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
 
-_z_keyexpr_t _z_rname(const char *rname) {
-    return (_z_keyexpr_t){
-        ._id = Z_RESOURCE_ID_NONE,
-        ._uses_remote_mapping = false,
-        ._owns_suffix = false,
-        ._suffix = (char *)rname,
-    };
-}
+_z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); }
 
-_z_keyexpr_t _z_rid_with_suffix(_z_zint_t rid, const char *suffix) {
+_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
         ._uses_remote_mapping = false,

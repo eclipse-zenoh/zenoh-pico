@@ -69,7 +69,10 @@ int8_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_push_t *msg = (_z_n_msg_push_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {  // QOS ext
-            msg->_qos = (_z_n_qos_t){._val = extension->_body._zint._val};
+            if (extension->_body._zint._val > UINT32_MAX) {
+                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            }
+            msg->_qos = (_z_n_qos_t){._val = (uint32_t)extension->_body._zint._val};
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {  // Timestamp ext
@@ -167,7 +170,10 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_request_t *msg = (_z_n_msg_request_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case 0x01 | _Z_MSG_EXT_ENC_ZINT: {  // QOS ext
-            msg->_ext_qos = (_z_n_qos_t){._val = extension->_body._zint._val};
+            if (extension->_body._zint._val > UINT8_MAX) {
+                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            }
+            msg->_ext_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
             break;
         }
         case 0x02 | _Z_MSG_EXT_ENC_ZBUF: {  // Timestamp ext
@@ -176,16 +182,22 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case 0x04 | _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M: {
-            msg->_ext_target = extension->_body._zint._val;
+            msg->_ext_target = (uint8_t)extension->_body._zint._val;
             if (msg->_ext_target > 2) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
         } break;
         case 0x05 | _Z_MSG_EXT_ENC_ZINT: {
-            msg->_ext_budget = extension->_body._zint._val;
+            if (extension->_body._zint._val > UINT32_MAX) {
+                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            }
+            msg->_ext_budget = (uint32_t)extension->_body._zint._val;
         } break;
         case 0x06 | _Z_MSG_EXT_ENC_ZINT: {
-            msg->_ext_timeout_ms = extension->_body._zint._val;
+            if (extension->_body._zint._val > UINT32_MAX) {
+                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            }
+            msg->_ext_timeout_ms = (uint32_t)extension->_body._zint._val;
         } break;
         default:
             if ((extension->_header & _Z_MSG_EXT_FLAG_M) != 0) {

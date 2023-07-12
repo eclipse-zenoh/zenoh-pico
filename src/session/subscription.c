@@ -122,7 +122,7 @@ _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8
 }
 
 _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *s) {
-    _Z_DEBUG(">>> Allocating sub decl for (%zu:%s)\n", s->_key._id, s->_key._suffix);
+    _Z_DEBUG(">>> Allocating sub decl for (%ju:%s)\n", (uintmax_t)s->_key._id, s->_key._suffix);
     _z_subscription_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1

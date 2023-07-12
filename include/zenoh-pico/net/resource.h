@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_RESOURCE_NETAPI_H
 #define ZENOH_PICO_RESOURCE_NETAPI_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
 
@@ -39,6 +41,6 @@ _z_keyexpr_t _z_rname(const char *rname);
  * Returns:
  *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
-_z_keyexpr_t _z_rid_with_suffix(_z_zint_t rid, const char *suffix);
+_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
 
 #endif /* ZENOH_PICO_RESOURCE_NETAPI_H */
