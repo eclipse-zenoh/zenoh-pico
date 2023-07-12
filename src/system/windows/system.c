@@ -47,7 +47,7 @@ uint64_t z_random_u64(void) {
     return ret;
 }
 
-void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, (ulong)len); }
+void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, (unsigned long)len); }
 
 /*------------------ Memory ------------------*/
 // #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
