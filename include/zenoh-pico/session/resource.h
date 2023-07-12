@@ -20,7 +20,7 @@
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Entity ------------------*/
-_z_zint_t _z_get_entity_id(_z_session_t *zn);
+uint32_t _z_get_entity_id(_z_session_t *zn);
 
 /*------------------ Resource ------------------*/
 uint16_t _z_get_resource_id(_z_session_t *zn);

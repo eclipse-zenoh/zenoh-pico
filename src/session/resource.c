@@ -37,7 +37,7 @@ void _z_resource_free(_z_resource_t **res) {
 }
 
 /*------------------ Entity ------------------*/
-_z_zint_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
+uint32_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
 
 uint16_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 

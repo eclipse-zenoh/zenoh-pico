@@ -89,7 +89,7 @@ typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _id;
+    uint32_t _id;
     _z_data_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
@@ -106,7 +106,7 @@ _Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t)
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _id;
+    uint32_t _id;
 } _z_publication_t;
 
 /**
@@ -116,7 +116,7 @@ typedef void (*_z_questionable_handler_t)(const z_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_zint_t _id;
+    uint32_t _id;
     _z_questionable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;

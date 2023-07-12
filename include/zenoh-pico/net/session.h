@@ -51,7 +51,7 @@ typedef struct {
 
     // Session counters
     uint16_t _resource_id;
-    _z_zint_t _entity_id;
+    uint32_t _entity_id;
     _z_zint_t _pull_id;
     _z_zint_t _query_id;
     _z_zint_t _interest_id;

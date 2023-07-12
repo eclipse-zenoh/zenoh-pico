@@ -119,7 +119,7 @@ _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const 
 }
 
 _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
-    _Z_DEBUG(">>> Allocating queryable for (%zu:%s)\n", q->_key._id, q->_key._suffix);
+    _Z_DEBUG(">>> Allocating queryable for (%ju:%s)\n", (uintmax_t)q->_key._id, q->_key._suffix);
     _z_questionable_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1
@@ -159,7 +159,11 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         q._zn = zn;
         q._rid = qid;
         q._key = key;
+#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
+        char *params = z_malloc(query->_parameters.len + 1);
+#else
         char params[query->_parameters.len + 1];
+#endif
         memcpy(params, query->_parameters.start, query->_parameters.len);
         params[query->_parameters.len] = 0;
         q._parameters = params;
@@ -175,6 +179,9 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
 
         _z_keyexpr_clear(&key);
         _z_questionable_sptr_list_free(&qles);
+#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
+        z_free(params);
+#endif
 
         // Send the final reply
         // Create the final reply

@@ -50,7 +50,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const
 
 /*------------------ Resource Declaration ------------------*/
 uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
-    _z_zint_t ret = Z_RESOURCE_ID_NONE;
+    uint16_t ret = Z_RESOURCE_ID_NONE;
 
     if (zn->_tp._type ==
         _Z_TRANSPORT_UNICAST_TYPE) {  // FIXME: remove when resource declaration is implemented for multicast transport
