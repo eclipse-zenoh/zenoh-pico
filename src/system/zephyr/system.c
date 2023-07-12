@@ -12,11 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#if defined(ZENOH_PIO)
-#include <kernel.h>
+#include <version.h>
+
+#if KERNEL_VERSION_MAJOR == 2
 #include <random/rand32.h>
 #else
-#include <zephyr/kernel.h>
 #include <zephyr/random/rand32.h>
 #endif
 

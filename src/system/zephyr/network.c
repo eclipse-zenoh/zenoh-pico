@@ -12,7 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#if defined(ZENOH_PIO)
+#include <version.h>
+
+#if KERNEL_VERSION_MAJOR == 2
 #include <drivers/uart.h>
 #else
 #include <zephyr/drivers/uart.h>
@@ -242,6 +244,10 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 #endif
 
 #if Z_LINK_UDP_MULTICAST == 1
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#error \
+    "Zenoh UDP Multicast support is not yet supported in this Zephyr version. To continue with this Zephyr version, disable Z_LINK_UDP_MULTICAST"
+#else
 int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
                              uint32_t tout, const char *iface) {
     int8_t ret = _Z_RES_OK;
@@ -531,7 +537,8 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
                              _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
-#endif
+#endif  // KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#endif  // Z_LINK_UDP_MULTICAST == 1
 
 #if Z_LINK_SERIAL == 1
 int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
