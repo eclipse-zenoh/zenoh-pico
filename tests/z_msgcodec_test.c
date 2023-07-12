@@ -374,7 +374,7 @@ _z_msg_ext_t gen_zint_extension(void) {
 }
 
 void assert_eq_zint_extension(_z_msg_ext_zint_t *left, _z_msg_ext_zint_t *right) {
-    printf("    ZINT (%zu:%zu), ", left->_val, right->_val);
+    printf("    ZINT (%ju:%ju), ", (uintmax_t)left->_val, (uintmax_t)right->_val);
     assert(left->_val == right->_val);
 }
 
