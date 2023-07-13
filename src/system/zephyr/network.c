@@ -407,7 +407,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                         ret = _Z_ERR_GENERIC;
                     }
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
-                    net_if_ipv4_maddr_join(net_if_get_default(), mcast);
+                    net_if_ipv4_maddr_join(ifa, mcast);
 #else
                     net_if_ipv4_maddr_join(mcast);
 #endif
@@ -418,7 +418,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                         ret = _Z_ERR_GENERIC;
                     }
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
-                    net_if_ipv6_maddr_join(net_if_get_default(), mcast);
+                    net_if_ipv6_maddr_join(ifa, mcast);
 #else
                     net_if_ipv6_maddr_join(mcast);
 #endif
@@ -450,7 +450,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
             mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             if (mcast != NULL) {
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
-                net_if_ipv4_maddr_leave(net_if_get_default(), mcast);
+                net_if_ipv4_maddr_leave(ifa, mcast);
 #else
                 net_if_ipv4_maddr_leave(mcast);
 #endif
@@ -462,7 +462,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
             mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             if (mcast != NULL) {
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
-                net_if_ipv6_maddr_leave(net_if_get_default(), mcast);
+                net_if_ipv6_maddr_leave(ifa, mcast);
 #else
                 net_if_ipv6_maddr_leave(mcast);
 #endif
