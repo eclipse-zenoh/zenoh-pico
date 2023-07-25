@@ -27,7 +27,7 @@
 void _z_payload_clear(_z_payload_t *p) { _z_bytes_clear(p); }
 
 /*------------------ Timestamp Field ------------------*/
-void _z_timestamp_clear(_z_timestamp_t *ts) { _z_bytes_clear(&ts->_id); }
+void _z_timestamp_clear(_z_timestamp_t *ts) {}
 
 /*------------------ ResKey Field ------------------*/
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
@@ -365,7 +365,7 @@ void _z_msg_clear_pull(_z_msg_pull_t *msg) { _z_keyexpr_clear(&msg->_key); }
 
 /*------------------ Query Message ------------------*/
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
-                                     z_consolidation_mode_t consolidation, _z_value_t with_value) {
+                                     z_consolidation_mode_t consolidation, _z_value_t value) {
     _z_zenoh_message_t msg;
 
     msg._body._query._key = key;
@@ -374,8 +374,8 @@ _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint
     msg._body._query._target = target;
     msg._body._query._consolidation = consolidation;
     (void)memset(&msg._body._query._info, 0, sizeof(msg._body._query._info));
-    msg._body._query._info._encoding = with_value.encoding;
-    msg._body._query._payload = with_value.payload;
+    msg._body._query._info._encoding = value.encoding;
+    msg._body._query._payload = value.payload;
 
     msg._header = _Z_MID_QUERY;
     if (msg._body._query._target != Z_QUERY_TARGET_BEST_MATCHING) {

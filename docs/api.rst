@@ -172,6 +172,7 @@ Macros
 .. autocmacro:: macros.h::z_clone
 .. autocmacro:: macros.h::z_drop
 .. autocmacro:: macros.h::z_closure
+.. autocmacro:: macros.h::z_null
 
 Primitives
 ~~~~~~~~~~
@@ -214,7 +215,6 @@ Primitives
 .. autocfunction:: primitives.h::z_closure_reply
 .. autocfunction:: primitives.h::z_closure_hello
 .. autocfunction:: primitives.h::z_closure_zid
-.. autocfunction:: primitives.h::z_hello_null
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
@@ -247,7 +247,6 @@ Primitives
 .. autocfunction:: primitives.h::z_declare_queryable
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_query_reply
-.. autocfunction:: primitives.h::z_reply_null
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
 .. autocfunction:: primitives.h::z_reply_err

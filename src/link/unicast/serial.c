@@ -34,15 +34,17 @@ int8_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    char *p_dot = strchr(endpoint->_locator._address, '.');
-    if (p_dot != NULL) {
-        if ((endpoint->_locator._address == p_dot) ||
-            (strlen(p_dot) == (size_t)1)) {  // If dot is the first or last character
-            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-        }
-    } else {
-        if (strlen(endpoint->_locator._address) == (size_t)0) {
-            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+    if (ret == _Z_RES_OK) {
+        char *p_dot = strchr(endpoint->_locator._address, '.');
+        if (p_dot != NULL) {
+            if ((endpoint->_locator._address == p_dot) ||
+                (strlen(p_dot) == (size_t)1)) {  // If dot is the first or last character
+                ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+            }
+        } else {
+            if (strlen(endpoint->_locator._address) == (size_t)0) {
+                ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+            }
         }
     }
 

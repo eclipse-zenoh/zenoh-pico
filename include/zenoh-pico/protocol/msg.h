@@ -576,7 +576,7 @@ _z_zenoh_message_t _z_msg_make_data(_z_keyexpr_t key, _z_data_info_t info, _z_pa
 _z_zenoh_message_t _z_msg_make_unit(_Bool can_be_dropped);
 _z_zenoh_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id, _z_zint_t max_samples, _Bool is_final);
 _z_zenoh_message_t _z_msg_make_query(_z_keyexpr_t key, char *parameters, _z_zint_t qid, z_query_target_t target,
-                                     z_consolidation_mode_t consolidation, _z_value_t with_value);
+                                     z_consolidation_mode_t consolidation, _z_value_t value);
 _z_zenoh_message_t _z_msg_make_reply(_z_keyexpr_t key, _z_data_info_t info, _z_payload_t payload, _Bool can_be_dropped,
                                      _z_reply_context_t *rctx);
 

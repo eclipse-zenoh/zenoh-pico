@@ -36,14 +36,20 @@ _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     _z_timestamp_t ts;
-    _z_bytes_copy(&ts._id, &tstamp->_id);
-    ts._time = tstamp->_time;
+    ts.id = tstamp->id;
+    ts.time = tstamp->time;
     return ts;
 }
 
 void _z_timestamp_reset(_z_timestamp_t *tstamp) {
-    _z_bytes_reset(&tstamp->_id);
-    tstamp->_time = 0;
+    memset(&tstamp->id, 0, sizeof(_z_id_t));
+    tstamp->time = 0;
+}
+
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
+    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
+        if (stamp->id.id[i]) return true;
+    return false;
 }
 
 int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {
@@ -134,9 +140,11 @@ void _z_session_free(_z_session_t **zn) {
 }
 
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int8_t ret = _Z_RES_OK;
+    int8_t ret = _Z_ERR_GENERIC;
 
-    ret = _z_transport_close(&zn->_tp, reason);
+    if (zn != NULL) {
+        ret = _z_transport_close(&zn->_tp, reason);
+    }
 
     return ret;
 }

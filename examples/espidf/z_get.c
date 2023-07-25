@@ -155,7 +155,7 @@ void app_main() {
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts = z_get_options_default();
         if (strcmp(VALUE, "") != 0) {
-            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+            opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
         }
         z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
         if (z_get(z_loan(s), z_keyexpr(KEYEXPR), "", z_move(callback), &opts) < 0) {

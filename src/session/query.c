@@ -22,6 +22,15 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
+_z_reply_t *_z_reply_alloc_and_move(_z_reply_t *_reply) {
+    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
+    if (reply != NULL) {
+        *reply = *_reply;
+        (void)memset(_reply, 0, sizeof(_z_reply_t));
+    }
+    return reply;
+}
+
 void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
 
 void _z_reply_free(_z_reply_t **reply) {
@@ -36,7 +45,7 @@ void _z_reply_free(_z_reply_t **reply) {
 }
 
 _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
-    return one->_tstamp._time == two->_tstamp._time;
+    return one->_tstamp.time == two->_tstamp.time;
 }
 
 void _z_pending_reply_clear(_z_pending_reply_t *pr) {
@@ -44,7 +53,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_reply_clear(&pr->_reply);
 
     // Free the timestamp
-    _z_bytes_clear(&pr->_tstamp._id);
+    _z_timestamp_clear(&pr->_tstamp);
 }
 
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
@@ -176,7 +185,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
-                if (timestamp._time <= pen_rep->_tstamp._time) {
+                if (timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
                     pen_qry->_pending_replies =
@@ -216,8 +225,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
-        pen_qry->_callback(&reply, pen_qry->_call_arg);
-        _z_reply_clear(&reply);
+        pen_qry->_callback(_z_reply_alloc_and_move(&reply), pen_qry->_call_arg);
     }
 
     if (ret != _Z_RES_OK) {
@@ -252,8 +260,8 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            pen_qry->_callback(&pen_rep->_reply, pen_qry->_call_arg);
-            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies);
+            pen_qry->_callback(_z_reply_alloc_and_move(&pen_rep->_reply), pen_qry->_call_arg);
+            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
         }
     }
 

@@ -13,7 +13,31 @@
 #
 cmake_minimum_required(VERSION 3.8)
 
-project(libzenohpico VERSION 0.7.0.1 LANGUAGES C)
+project(libzenohpico VERSION 0.10.0.0 LANGUAGES C)
+
+option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
+option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
+option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(BUILD_SHARED_LIBS "OFF")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+  if(WITH_ZEPHYR)
+    set(BUILD_SHARED_LIBS "OFF")
+  endif()
+endif()
+
+set(Libname "zenohpico")
+if(BUILD_SHARED_LIBS)
+  add_library(${Libname} SHARED)
+else()
+  add_library(${Libname} STATIC)
+endif()
+
+function(add_definition value)
+  add_definitions(-D${value})
+  target_compile_definitions(${Libname} PUBLIC ${value})
+endfunction()
 
 if(NOT CMAKE_C_STANDARD)
   if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
@@ -24,8 +48,8 @@ if(NOT CMAKE_C_STANDARD)
     message(STATUS "Setting C99 as the C Standard")
   endif()
 endif()
-
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
+add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
@@ -35,60 +59,38 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
-
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
-message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
-
-option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-
-option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
-message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
-
-option(BUILD_EXAMPLES "Use this to also build the examples." ON)
-message(STATUS "Build examples: ${BUILD_EXAMPLES}")
-
-option(BUILD_WITH_CUSTOM_ALLOCATOR "Use this build with custom / user allocators." OFF)
-message(STATUS "Build examples with user allocators: ${BUILD_WITH_CUSTOM_ALLOCATOR}")
-
-option(BUILD_TOOLS "Use this to also build the tools." OFF)
-message(STATUS "Build examples: ${BUILD_TOOLS}")
-
-option(BUILD_TESTING "Use this to also build tests." ON)
-message(STATUS "Build tests: ${BUILD_TESTING}")
-
-option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
-message(STATUS "Build integration: ${BUILD_INTEGRATION}")
-
-option(BUILD_MULTICAST "Use this to also build multicast tests." OFF)
-message(STATUS "Build tests: ${BUILD_MULTICAST}")
-
-option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
-message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
-
-message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  add_definitions(-DZENOH_LINUX)
-  set(JNI_PLATFORM_NAME "linux")
+  add_definition(ZENOH_LINUX)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
-  add_definitions(-DZENOH_BSD)
+  add_definition(ZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  add_definitions(-DZENOH_MACOS)
+  add_definition(ZENOH_MACOS)
   set(MACOSX_RPATH "ON")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  add_definitions(-DZENOH_EMSCRIPTEN)
+  add_definition(ZENOH_EMSCRIPTEN)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  add_definitions(-DZENOH_WINDOWS -D_CRT_SECURE_NO_WARNINGS)
-  set(BUILD_SHARED_LIBS "OFF")
-  add_definitions(-DZENOH_NO_STDATOMIC)
+  add_definition(ZENOH_WINDOWS)
+  add_definition(_CRT_SECURE_NO_WARNINGS)
+  add_definition(ZENOH_NO_STDATOMIC)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+  if(WITH_ZEPHYR)
+    add_definition(ZENOH_ZEPHYR)
+  endif()
 else()
   message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
   return()
 endif()
 
-add_definitions(-DZENOH_DEBUG=${ZENOH_DEBUG})
-add_definitions(-DZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
+
+# Print summary of CMAKE configurations
+message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
+message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
+message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
+message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
+message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
 if(SKBUILD)
   set(INSTALL_RPATH "zenoh")
@@ -102,18 +104,20 @@ find_package(Threads REQUIRED)
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   if(UNIX)
     add_compile_options(-c -Wall -Wextra -Werror -Wunused -Wstrict-prototypes -pipe -g -O0)
-  elseif (MSVC)
+  elseif(MSVC)
     add_compile_options(/W4 /WX /Od)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -pipe -g -O0)
   endif()
 elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   if(UNIX)
     add_compile_options(-pipe -O3)
-  elseif (MSVC)
-    add_compile_options(/O2)
+  elseif(MSVC)
+  # add_compile_options(/O2)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-pipe -O3)
   endif()
 endif()
-
-set(Libname "zenohpico")
 
 file(GLOB PublicHeaders "include/*.h"
   "include/zenoh-pico/*.h"
@@ -128,9 +132,7 @@ file(GLOB PublicHeaders "include/*.h"
   "include/zenoh-pico/transport/*.h"
   "include/zenoh-pico/utils/*.h"
 )
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-)
+target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB Sources "src/*.c"
   "src/api/*.c"
@@ -155,17 +157,16 @@ file(GLOB Sources "src/*.c"
   "src/utils/*.c"
 )
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
+if(WITH_ZEPHYR)
+  file (GLOB Sources_Zephyr "src/system/zephyr/*.c")
+  list(APPEND Sources ${Sources_Zephyr})
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
   file (GLOB Sources_Unix "src/system/unix/*.c")
   list(APPEND Sources ${Sources_Unix})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
   file (GLOB Sources_Emscripten "src/system/emscripten/*.c")
   list(APPEND Sources ${Sources_Emscripten})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   file (GLOB Sources_Windows "src/system/windows/*.c")
   list(APPEND Sources ${Sources_Windows})
 endif()
@@ -173,7 +174,7 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} ${Sources})
+target_sources(${Libname} PRIVATE ${Sources})
 
 target_link_libraries(${Libname} Threads::Threads)
 
@@ -184,6 +185,23 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   target_link_libraries(${Libname} Ws2_32 Iphlpapi)
 endif()
+
+#
+# Build tests, examples, intallation only when project is root
+#
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+
+option(PACKAGING "Use option on Linux to produce Debian and RPM packages." OFF)
+option(BUILD_EXAMPLES "Use this to also build the examples." ON)
+option(BUILD_TOOLS "Use this to also build the tools." OFF)
+option(BUILD_TESTING "Use this to also build tests." ON)
+option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+
+message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
+message(STATUS "Build examples: ${BUILD_EXAMPLES}")
+message(STATUS "Build tools: ${BUILD_TOOLS}")
+message(STATUS "Build tests: ${BUILD_TESTING}")
+message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
 install(TARGETS ${Libname}
   LIBRARY DESTINATION lib
@@ -314,8 +332,11 @@ else()
     if(CMAKE_C_STANDARD MATCHES "11")
       add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
       add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
+      add_executable(z_session_test ${PROJECT_SOURCE_DIR}/tests/z_session_test.c)
+
       target_link_libraries(z_client_test ${Libname})
       target_link_libraries(z_api_alignment_test ${Libname})
+      target_link_libraries(z_session_test ${Libname})
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
@@ -323,6 +344,7 @@ else()
       enable_testing()
       add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
       add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
+      add_test(z_session_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_session_test)
     endif()
   endif()
 endif()
@@ -394,4 +416,6 @@ if(PACKAGING)
   endif()
 
   include(CPack)
+endif()
+
 endif()

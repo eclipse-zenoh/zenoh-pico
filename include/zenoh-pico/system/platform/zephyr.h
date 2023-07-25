@@ -15,7 +15,12 @@
 #ifndef ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 #define ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 
+#if defined(ZENOH_PIO)
 #include <kernel.h>
+#else
+#include <zephyr/kernel.h>
+#endif
+
 #include <pthread.h>
 
 #include "zenoh-pico/config.h"

@@ -43,6 +43,7 @@ z_string_t z_string_make(const char *value);
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
  * It is a loaned key expression that aliases ``name``.
+ * Unlike it's counterpart in zenoh-c, this function does not test passed expression to correctness.
  *
  * Parameters:
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
@@ -53,11 +54,9 @@ z_string_t z_string_make(const char *value);
 z_keyexpr_t z_keyexpr(const char *name);
 
 /**
- * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
- *
- * If given keyexpr contains a declared keyexpr, the resulting value will be ``NULL``.
- * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
- * and get its full expanded representation.
+ * Constructs a :c:type:`z_keyexpr_t` departing from a string.
+ * It is a loaned key expression that aliases ``name``.
+ * Input key expression is not checked for correctness.
  *
  * Parameters:
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
@@ -65,7 +64,34 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
+z_keyexpr_t z_keyexpr_unchecked(const char *name);
+
+/**
+ * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
+ *
+ * If given keyexpr contains a declared keyexpr, the resulting owned string will be unitialized.
+ * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
+ * and get its full expanded representation.
+ *
+ * Parameters:
+ *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
+ *
+ * Returns:
+ *   The :c:type:`z_owned_str_t` containing key expression string representation if it's possible
+ */
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
+
+/**
+ * Returns the key expression's internal string by aliasing it.
+ *
+ * Parameters:
+ *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
+ *
+ * Returns:
+ *   The :c:type:`z_bytes_t` pointing to key expression string representation if it's possible
+
+ */
+z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
@@ -154,7 +180,7 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start);
  *
  * Returns:
  *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, it returns a ``negative value``.
+ * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -168,10 +194,10 @@ int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns true if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set defined
- * by ``r``.
+ *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
-_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -182,7 +208,7 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *
  * Returns:
  *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns ``negative value``.
+ * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -196,10 +222,10 @@ int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns ``false``.
+ *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
-_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a two keyexprs are equal.
@@ -209,7 +235,8 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``0`` if both ``l`` and ``r`` are equal, or ``negative value`` otherwise.
+ *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
+ * errors.
  */
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
 
@@ -223,9 +250,10 @@ int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``true`` if both ``l`` and ``r`` are equal, or ``false`` otherwise.
+ *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
+ * errors.
  */
-_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
+int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 /**
  * Return a new, zenoh-allocated, empty configuration.
@@ -371,16 +399,6 @@ const char *zp_scouting_config_get(z_scouting_config_t config, uint8_t key);
 int8_t zp_scouting_config_insert(z_scouting_config_t config, uint8_t key, z_string_t value);
 
 /**
- * Constructs a gravestone value for hello, useful to steal one from a callback.
- * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_scout`:
- *
- *     - copy the value of the callback's argument's pointee,
- *     - overwrite the pointee with this function's return value,
- *     - you are now responsible for dropping your copy of the hello.
- */
-z_owned_hello_t z_hello_null(void);
-
-/**
  * Constructs a :c:type:`z_encoding_t`.
  *
  * Parameters:
@@ -399,6 +417,13 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
  *   Returns the constructed :c:type:`z_encoding_t`.
  */
 z_encoding_t z_encoding_default(void);
+
+/**
+ *
+ * Checks validity of the timestamp
+ *
+ */
+_Bool z_timestamp_check(z_timestamp_t ts);
 
 /**
  * Constructs a default query target.
@@ -492,17 +517,6 @@ z_value_t z_query_value(const z_query_t *query);
  *   Returns the :c:type:`z_keyexpr_t` associated to the query.
  */
 z_keyexpr_t z_query_keyexpr(const z_query_t *query);
-
-/**
- * Returns an invalidated :c:type:`z_owned_reply_t`.
- *
- * This is useful when you wish to take ownership of a value from a callback to :c:func:`z_get`:
- *
- *     - copy the value of the callback's argument's pointee,
- *     - overwrite the pointee with this function's return value,
- *     - you are now responsible for dropping your copy of the reply.
- */
-z_owned_reply_t z_reply_null(void);
 
 /**
  * Return a new sample closure.
@@ -645,7 +659,8 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
     type z_##name##_loan(const ownedtype *name);   \
     ownedtype *z_##name##_move(ownedtype *name);   \
     ownedtype z_##name##_clone(ownedtype *name);   \
-    void z_##name##_drop(ownedtype *name);
+    void z_##name##_drop(ownedtype *name);         \
+    ownedtype z_##name##_null(void);
 
 _OWNED_FUNCTIONS(z_str_t, z_owned_str_t, str)
 _OWNED_FUNCTIONS(z_keyexpr_t, z_owned_keyexpr_t, keyexpr)
@@ -660,11 +675,17 @@ _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
 
-z_owned_closure_sample_t *z_closure_sample_move(z_owned_closure_sample_t *closure_sample);
-z_owned_closure_query_t *z_closure_query_move(z_owned_closure_query_t *closure_query);
-z_owned_closure_reply_t *z_closure_reply_move(z_owned_closure_reply_t *closure_reply);
-z_owned_closure_hello_t *z_closure_hello_move(z_owned_closure_hello_t *closure_hello);
-z_owned_closure_zid_t *z_closure_zid_move(z_owned_closure_zid_t *closure_zid);
+#define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *val); \
+    ownedtype *z_##name##_move(ownedtype *val);   \
+    void z_##name##_drop(ownedtype *val);         \
+    ownedtype z_##name##_null(void);
+
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 
 /************* Primitives **************/
 /**
@@ -829,6 +850,11 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
              const z_get_options_t *options);
 
 /**
+ * Creates keyexpr owning string passed to it
+ */
+z_owned_keyexpr_t z_keyexpr_new(const char *name);
+
+/**
  * Declares a keyexpr, so that it is internally mapped into into a numerical id.
  *
  * This numerical id is used on the network to save bandwidth and ease the retrieval of the concerned resource
@@ -905,7 +931,7 @@ z_publisher_options_t z_publisher_options_default(void);
  *   A :c:type:`z_owned_publisher_t` with either a valid publisher or a failing publisher.
  *   Should the publisher be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
-z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, z_publisher_options_t *options);
+z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options);
 
 /**
  * Undeclares the publisher generated by a call to :c:func:`z_declare_publisher`.
@@ -1182,7 +1208,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_sample_t` wrapped in the query reply.
  */
-z_sample_t z_reply_ok(z_owned_reply_t *reply);
+z_sample_t z_reply_ok(const z_owned_reply_t *reply);
 
 /**
  * Yields the contents of the reply by asserting it indicates a failure.

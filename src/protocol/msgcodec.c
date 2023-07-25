@@ -15,7 +15,11 @@
 #include "zenoh-pico/protocol/msgcodec.h"
 
 #include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -38,13 +42,44 @@ int8_t _z_payload_decode_na(_z_payload_t *pld, _z_zbuf_t *zbf) {
 
 int8_t _z_payload_decode(_z_payload_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
 
+int8_t _z_id_encode(_z_wbuf_t *wbf, const _z_id_t *id) {
+    int len;
+    int8_t ret = _Z_RES_OK;
+    for (len = 15; len > 0; len--) {
+        if (id->id[len]) {
+            break;
+        }
+    }
+    len++;  // `len` is treated as an "end" until this point, and as a length from then on
+    if (id->id[len] != 0) {
+        ret |= _z_wbuf_write(wbf, len);
+        ret |= _z_wbuf_write_bytes(wbf, id->id, 0, len);
+    } else {
+        _Z_DEBUG("Attempted to encode invalid ID 0");
+        ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
+    }
+    return ret;
+}
+
+/// Decodes a `zid` from the zbf, returning a negative value in case of error.
+///
+/// Note that while `_z_id_t` has an error state (full 0s), this function doesn't
+/// guarantee that this state will be set in case of errors.
+int8_t _z_id_decode(_z_id_t *id, _z_zbuf_t *zbf) {
+    int8_t ret = _Z_RES_OK;
+    uint8_t len = _z_zbuf_read(zbf);
+    _z_zbuf_read_bytes(zbf, id->id, 0, len);
+    memset(id->id + len, 0, 16 - len);
+    return ret;
+}
+
 /*------------------ Timestamp Field ------------------*/
 int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _TIMESTAMP\n");
 
-    _Z_EC(_z_uint64_encode(wbf, ts->_time))
-    ret |= _z_bytes_encode(wbf, &ts->_id);
+    _Z_EC(_z_uint64_encode(wbf, ts->time))
+    ret |= _z_id_encode(wbf, &ts->id);
 
     return ret;
 }
@@ -53,8 +88,8 @@ int8_t _z_timestamp_decode_na(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _TIMESTAMP\n");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_uint64_decode(&ts->_time, zbf);
-    ret |= _z_bytes_decode(&ts->_id, zbf);
+    ret |= _z_uint64_decode(&ts->time, zbf);
+    ret |= _z_id_decode(&ts->id, zbf);
 
     return ret;
 }
@@ -652,7 +687,7 @@ int8_t _z_data_info_encode(_z_wbuf_t *wbf, const _z_data_info_t *fld) {
         _Z_EC(_z_uint8_encode(wbf, fld->_kind))
     }
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_ENC) == true) {
-        _Z_EC(_z_enum_encode(wbf, fld->_encoding.prefix))
+        _Z_EC(_z_encoding_prefix_encode(wbf, fld->_encoding.prefix))
         _Z_EC(_z_bytes_encode(wbf, &fld->_encoding.suffix))
     }
     if (_Z_HAS_FLAG(fld->_flags, _Z_DATA_INFO_TSTAMP) == true) {
@@ -683,7 +718,7 @@ int8_t _z_data_info_decode_na(_z_data_info_t *di, _z_zbuf_t *zbf) {
         }
 
         if (_Z_HAS_FLAG(di->_flags, _Z_DATA_INFO_ENC) == true) {
-            ret |= _z_enum_decode((int *)&di->_encoding.prefix, zbf);
+            ret |= _z_encoding_prefix_decode(&di->_encoding.prefix, zbf);
             ret |= _z_bytes_decode(&di->_encoding.suffix, zbf);
         } else {
             di->_encoding.prefix = Z_ENCODING_PREFIX_EMPTY;
@@ -790,16 +825,6 @@ int8_t _z_pull_decode(_z_msg_pull_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 }
 
 /*------------------ Query Message ------------------*/
-int8_t _z_query_consolidation_encode(_z_wbuf_t *wbf, const z_consolidation_mode_t *qc) {
-    int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _QUERY_CONSOLIDATION\n");
-    _z_zint_t mode = *qc;
-
-    ret |= _z_zint_encode(wbf, mode);
-
-    return ret;
-}
-
 int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_MID_QUERY\n");
@@ -811,23 +836,14 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_query_t *msg
     _Z_EC(_z_zint_encode(wbf, msg->_qid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) == true) {
-        _Z_EC(_z_enum_encode(wbf, msg->_target))
+        _Z_EC(_z_query_target_encode(wbf, msg->_target))
     }
-    ret |= _z_query_consolidation_encode(wbf, &msg->_consolidation);
+    ret |= _z_consolidation_mode_encode(wbf, msg->_consolidation);
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_B) == true) {
         _Z_EC(_z_data_info_encode(wbf, &msg->_info))
         _Z_EC(_z_payload_encode(wbf, &msg->_payload))
     }
-
-    return ret;
-}
-
-int8_t _z_query_consolidation_decode(z_consolidation_mode_t *qcm, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _QUERY_CONSOLIDATION\n");
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_enum_decode((int *)qcm, zbf);
 
     return ret;
 }
@@ -840,11 +856,11 @@ int8_t _z_query_decode_na(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     ret |= _z_str_decode(&msg->_parameters, zbf);
     ret |= _z_zint_decode(&msg->_qid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_T) == true) {
-        ret |= _z_enum_decode((int *)&msg->_target, zbf);
+        ret |= _z_query_target_decode(&msg->_target, zbf);
     } else {
         msg->_target = Z_QUERY_TARGET_BEST_MATCHING;
     }
-    ret |= _z_query_consolidation_decode(&msg->_consolidation, zbf);
+    ret |= _z_consolidation_mode_decode(&msg->_consolidation, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_I) == true) {
         ret |= _z_data_info_decode(&msg->_info, zbf);
         ret |= _z_payload_decode(&msg->_payload, zbf);
@@ -989,7 +1005,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_scout_t *m
     _Z_DEBUG("Encoding _Z_MID_SCOUT\n");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_enum_encode(wbf, msg->_what))
+        _Z_EC(_z_whatami_encode(wbf, msg->_what))
     }
 
     return ret;
@@ -1000,7 +1016,7 @@ int8_t _z_scout_decode_na(_z_t_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header)
     int8_t ret = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        ret |= _z_enum_decode((int *)&msg->_what, zbf);
+        ret |= _z_whatami_decode(&msg->_what, zbf);
     } else {
         msg->_what = Z_WHATAMI_ROUTER;
     }
@@ -1021,7 +1037,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_hello_t *m
         _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        _Z_EC(_z_enum_encode(wbf, msg->_whatami))
+        _Z_EC(_z_whatami_encode(wbf, msg->_whatami))
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_L) == true) {
         _Z_EC(_z_locators_encode(wbf, &msg->_locators))
@@ -1041,7 +1057,7 @@ int8_t _z_hello_decode_na(_z_t_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_W) == true) {
-        ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
+        ret |= _z_whatami_decode(&msg->_whatami, zbf);
     } else {
         msg->_whatami = Z_WHATAMI_ROUTER;
     }
@@ -1068,7 +1084,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
         _Z_EC(_z_zint_encode(wbf, msg->_options))
     }
     _Z_EC(_z_uint8_encode(wbf, msg->_version))
-    _Z_EC(_z_enum_encode(wbf, msg->_whatami))
+    _Z_EC(_z_whatami_encode(wbf, msg->_whatami))
     _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
@@ -1103,7 +1119,7 @@ int8_t _z_join_decode_na(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_options = 0;
     }
     ret |= _z_uint8_decode(&msg->_version, zbf);
-    ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
+    ret |= _z_whatami_decode(&msg->_whatami, zbf);
     ret |= _z_bytes_decode(&msg->_zid, zbf);
     ret |= _z_zint_decode(&msg->_lease, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_T1) == true) {
@@ -1144,7 +1160,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_A) == false) {
         _Z_EC(_z_wbuf_write(wbf, msg->_version))
     }
-    _Z_EC(_z_enum_encode(wbf, msg->_whatami))
+    _Z_EC(_z_whatami_encode(wbf, msg->_whatami))
     _Z_EC(_z_bytes_encode(wbf, &msg->_zid))
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         _Z_EC(_z_zint_encode(wbf, msg->_sn_resolution))
@@ -1170,7 +1186,7 @@ int8_t _z_init_decode_na(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     } else {
         msg->_version = Z_PROTO_VERSION;
     }
-    ret |= _z_enum_decode((int *)&msg->_whatami, zbf);
+    ret |= _z_whatami_decode(&msg->_whatami, zbf);
     ret |= _z_bytes_decode(&msg->_zid, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_S) == true) {
         ret |= _z_zint_decode(&msg->_sn_resolution, zbf);

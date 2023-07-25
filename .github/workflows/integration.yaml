@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        os: [ ubuntu-latest, macOS-latest ]
 
     steps:
     - uses: actions/checkout@v2
@@ -50,6 +50,10 @@ jobs:
         BUILD_INTEGRATION: ON
 
     - name: Test debug
-      run: ctest --verbose
+      run: make test
       env:
+        BUILD_TYPE: Debug     # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_TESTING: OFF    # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_MULTICAST: OFF  # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
         ZENOH_BRANCH: master

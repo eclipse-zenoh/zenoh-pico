@@ -21,7 +21,7 @@ from clang.cindex import Config
 project = 'zenoh-pico'
 copyright = '2017, 2022 ZettaScale Technology Inc'
 author = 'ZettaScale Zenoh team'
-release = '0.7.0-rc'
+release = '0.10.0.0'
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'

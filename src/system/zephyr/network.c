@@ -12,7 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if defined(ZENOH_PIO)
 #include <drivers/uart.h>
+#else
+#include <zephyr/drivers/uart.h>
+#endif
+
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -295,7 +300,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
             }
 
             // Create lep endpoint
-            if (ret != _Z_RES_OK) {
+            if (ret == _Z_RES_OK) {
                 struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
                 if (laddr != NULL) {
                     laddr->ai_flags = 0;
@@ -357,7 +362,6 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
             c_laddr->sin6_family = AF_INET6;
             c_laddr->sin6_addr = in6addr_any;
-            c_laddr->sin6_port = htons(INADDR_ANY);
             c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
             //        c_laddr->sin6_scope_id; // Not needed to be defined
         } else {
