@@ -219,7 +219,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   COMPONENT Headers
 )
 
-set(CMAKE_INSTALL_CMAKEDIR "/usr/lib/cmake/zenohpico")
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico")
 # Generate <Package>Config.cmake
 configure_package_config_file(
   "PackageConfig.cmake.in"
@@ -241,7 +241,7 @@ install(
 
 if(UNIX)
   configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
-  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "/usr/lib/pkgconfig")
+  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endif()
 
 if(BUILD_EXAMPLES)
