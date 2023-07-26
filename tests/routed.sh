@@ -34,7 +34,7 @@ if [ ! -f zenohd ]; then
     if [ -n "$ZENOH_BRANCH" ]; then
         git switch "$ZENOH_BRANCH"
     fi
-    cargo build
+    cargo build --lib --bin zenohd
     cp ./target/debug/zenohd "$TESTDIR"/
     cd "$TESTDIR" || exit
 fi
@@ -46,7 +46,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
-    RUST_LOG=debug ./zenohd -l "$LOCATOR" > zenohd."$1".log 2>&1 &
+    RUST_LOG=debug ./zenohd --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" -l "$LOCATOR" > zenohd."$1".log 2>&1 &
     ZPID=$!
 
     sleep 5

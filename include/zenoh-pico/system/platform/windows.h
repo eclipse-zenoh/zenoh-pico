@@ -21,10 +21,10 @@
 #include "zenoh-pico/config.h"
 
 #if Z_MULTI_THREAD == 1
-typedef HANDLE *_z_task_t;
-typedef void *_z_task_attr_t;  // Not used in Windows
+typedef HANDLE *z_task_t;
+typedef void *z_task_attr_t;  // Not used in Windows
 typedef SRWLOCK z_mutex_t;
-typedef CONDITION_VARIABLE _z_condvar_t;
+typedef CONDITION_VARIABLE z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef struct timeb z_clock_t;

@@ -15,9 +15,14 @@
 #ifndef ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 #define ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 
-#if defined(ZENOH_PIO)
+#include <version.h>
+
+#if KERNEL_VERSION_MAJOR == 2
 #include <kernel.h>
+#elif KERNEL_VERSION_MAJOR == 3
+#include <zephyr/kernel.h>
 #else
+#pragma "This Zephyr version might not be supported."
 #include <zephyr/kernel.h>
 #endif
 
@@ -26,10 +31,10 @@
 #include "zenoh-pico/config.h"
 
 #if Z_MULTI_THREAD == 1
-typedef pthread_t _z_task_t;
-typedef pthread_attr_t _z_task_attr_t;
+typedef pthread_t z_task_t;
+typedef pthread_attr_t z_task_attr_t;
 typedef pthread_mutex_t z_mutex_t;
-typedef pthread_cond_t _z_condvar_t;
+typedef pthread_cond_t z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

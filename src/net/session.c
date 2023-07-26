@@ -166,9 +166,9 @@ int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 int8_t _zp_start_read_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
 
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task != NULL) {
-        (void)memset(task, 0, sizeof(_z_task_t));
+        (void)memset(task, 0, sizeof(z_task_t));
 
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
@@ -224,9 +224,9 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
 int8_t _zp_start_lease_task(_z_session_t *zn) {
     int8_t ret = _Z_RES_OK;
 
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task != NULL) {
-        (void)memset(task, 0, sizeof(_z_task_t));
+        (void)memset(task, 0, sizeof(z_task_t));
 
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {

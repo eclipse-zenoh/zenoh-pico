@@ -80,8 +80,8 @@ typedef struct {
     void *_session;
 
 #if Z_MULTI_THREAD == 1
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
+    z_task_t *_read_task;
+    z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_MULTI_THREAD == 1
@@ -120,8 +120,8 @@ typedef struct {
     _z_transport_peer_entry_list_t *_peers;
 
 #if Z_MULTI_THREAD == 1
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
+    z_task_t *_read_task;
+    z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_MULTI_THREAD == 1

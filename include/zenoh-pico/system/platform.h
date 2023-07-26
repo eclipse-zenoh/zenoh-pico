@@ -58,10 +58,10 @@ void z_free(void *ptr);
 
 #if Z_MULTI_THREAD == 1
 /*------------------ Thread ------------------*/
-int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t _z_task_join(_z_task_t *task);
-int8_t _z_task_cancel(_z_task_t *task);
-void _z_task_free(_z_task_t **task);
+int8_t _z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+int8_t _z_task_join(z_task_t *task);
+int8_t _z_task_cancel(z_task_t *task);
+void _z_task_free(z_task_t **task);
 
 /*------------------ Mutex ------------------*/
 int8_t z_mutex_init(z_mutex_t *m);
@@ -72,11 +72,11 @@ int8_t z_mutex_trylock(z_mutex_t *m);
 int8_t z_mutex_unlock(z_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv);
-int8_t _z_condvar_free(_z_condvar_t *cv);
+int8_t z_condvar_init(z_condvar_t *cv);
+int8_t z_condvar_free(z_condvar_t *cv);
 
-int8_t _z_condvar_signal(_z_condvar_t *cv);
-int8_t _z_condvar_wait(_z_condvar_t *cv, z_mutex_t *m);
+int8_t z_condvar_signal(z_condvar_t *cv);
+int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m);
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/

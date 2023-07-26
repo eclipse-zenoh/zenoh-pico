@@ -7,17 +7,17 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/system/platform.h"
 
-_z_condvar_t cond;
-_z_mutex_t mutex;
+z_condvar_t cond;
+z_mutex_t mutex;
 
 void callback(const z_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
-    _z_condvar_signal(&cond);
+    z_condvar_signal(&cond);
 }
 void drop(void* context) {
     (void)context;
-    _z_condvar_free(&cond);
+    z_condvar_free(&cond);
 }
 
 struct args_t {
@@ -40,33 +40,53 @@ int main(int argc, char** argv) {
 		");
         return 1;
     }
-    _z_mutex_init(&mutex);
-    _z_condvar_init(&cond);
+    z_mutex_init(&mutex);
+    z_condvar_init(&cond);
     z_owned_config_t config = z_config_default();
     z_owned_session_t session = z_open(z_move(config));
+    if (!z_check(session)) {
+        printf("Unable to open session!\n");
+        return -1;
+    }
+
+    if (zp_start_read_task(z_loan(session), NULL) < 0 || zp_start_lease_task(z_loan(session), NULL) < 0) {
+        printf("Unable to start read and lease tasks");
+        return -1;
+    }
+
     z_keyexpr_t ping = z_keyexpr_unchecked("test/ping");
-    z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
     z_owned_publisher_t pub = z_declare_publisher(z_loan(session), ping, NULL);
-    z_owned_closure_sample_t respond = z_closure(callback, drop, (void*)(&pub));
+    if (!z_check(pub)) {
+        printf("Unable to declare publisher for key expression!\n");
+        return -1;
+    }
+
+    z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
+    z_owned_closure_sample_t respond = z_closure(callback, drop, NULL);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(session), pong, z_move(respond), NULL);
+    if (!z_check(sub)) {
+        printf("Unable to declare subscriber for key expression.\n");
+        return -1;
+    }
+
     uint8_t* data = z_malloc(args.size);
     for (unsigned int i = 0; i < args.size; i++) {
         data[i] = i % 10;
     }
-    _z_mutex_lock(&mutex);
+    z_mutex_lock(&mutex);
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
         clock_t warmup_end = clock() + CLOCKS_PER_SEC * args.warmup_ms / 1000;
         for (clock_t now = clock(); now < warmup_end; now = clock()) {
             z_publisher_put(z_loan(pub), data, args.size, NULL);
-            _z_condvar_wait(&cond, &mutex);
+            z_condvar_wait(&cond, &mutex);
         }
     }
     clock_t* results = z_malloc(sizeof(clock_t) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
         clock_t start = clock();
         z_publisher_put(z_loan(pub), data, args.size, NULL);
-        _z_condvar_wait(&cond, &mutex);
+        z_condvar_wait(&cond, &mutex);
         clock_t end = clock();
         results[i] = end - start;
     }
@@ -74,11 +94,15 @@ int main(int argc, char** argv) {
         clock_t rtt = results[i] * 1000000 / CLOCKS_PER_SEC;
         printf("%d bytes: seq=%d rtt=%ldµs lat=%ldµs\n", args.size, i, rtt, rtt / 2);
     }
-    _z_mutex_unlock(&mutex);
+    z_mutex_unlock(&mutex);
     z_free(results);
     z_free(data);
-    z_drop(z_move(sub));
     z_drop(z_move(pub));
+    z_drop(z_move(sub));
+
+    zp_stop_read_task(z_loan(session));
+    zp_stop_lease_task(z_loan(session));
+
     z_close(z_move(session));
 }
 
