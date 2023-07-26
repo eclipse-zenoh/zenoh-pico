@@ -11,7 +11,7 @@
 # Contributors:
 # ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.13)
 
 project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
 
@@ -63,8 +63,14 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
+
+set(CHECK_THREADS "ON")
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definition(ZENOH_LINUX)
+elseif(POSIX_COMPATIBLE)
+  add_definition(ZENOH_LINUX)
+  set(CHECK_THREADS "OFF")
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
   add_definition(ZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -101,7 +107,9 @@ if(SKBUILD)
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
+if(CHECK_THREADS)
+  find_package(Threads REQUIRED)
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   if(UNIX)
@@ -162,7 +170,7 @@ file(GLOB Sources "src/*.c"
 if(WITH_ZEPHYR)
   file (GLOB Sources_Zephyr "src/system/zephyr/*.c")
   list(APPEND Sources ${Sources_Zephyr})
-elseif(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin" OR CMAKE_SYSTEM_NAME MATCHES "BSD" OR POSIX_COMPATIBLE)
   file (GLOB Sources_Unix "src/system/unix/*.c")
   list(APPEND Sources ${Sources_Unix})
 elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
@@ -178,7 +186,9 @@ link_directories(${LIBRARY_OUTPUT_PATH})
 
 target_sources(${Libname} PRIVATE ${Sources})
 
-target_link_libraries(${Libname} Threads::Threads)
+if(CHECK_THREADS)
+  target_link_libraries(${Libname} Threads::Threads)
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   target_link_libraries(${Libname} rt)
