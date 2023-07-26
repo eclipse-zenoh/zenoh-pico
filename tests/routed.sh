@@ -34,7 +34,7 @@ if [ ! -f zenohd ]; then
     if [ -n "$ZENOH_BRANCH" ]; then
         git switch "$ZENOH_BRANCH"
     fi
-    cargo build
+    cargo build --lib --bin zenohd
     cp ./target/debug/zenohd "$TESTDIR"/
     cd "$TESTDIR" || exit
 fi
