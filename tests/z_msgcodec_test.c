@@ -612,7 +612,7 @@ _z_keyexpr_t gen_keyexpr(void) {
         key._suffix = gen_str(gen_zint() % 16);
         key._owns_suffix = true;
     }
-    key._uses_remote_mapping = gen_bool();
+    key._sender_mapping = gen_bool();
     return key;
 }
 
@@ -873,7 +873,7 @@ void forget_subscriber_declaration(void) {
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_undecl_subscriber_t d_fsd = {
-        ._id = 0, ._ext_keyexpr = {._id = 0, ._owns_suffix = false, ._suffix = NULL, ._uses_remote_mapping = false}};
+        ._id = 0, ._ext_keyexpr = {._id = 0, ._owns_suffix = false, ._suffix = NULL, ._sender_mapping = false}};
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
     res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr);

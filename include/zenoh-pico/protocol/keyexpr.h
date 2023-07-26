@@ -30,7 +30,7 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
 static inline _z_keyexpr_t _z_keyexpr_null(void) {
-    return (_z_keyexpr_t){._id = 0, ._uses_remote_mapping = false, ._owns_suffix = false, ._suffix = NULL};
+    return (_z_keyexpr_t){._id = 0, ._sender_mapping = false, ._owns_suffix = false, ._suffix = NULL};
 }
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);

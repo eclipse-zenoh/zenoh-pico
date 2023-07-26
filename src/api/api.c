@@ -733,30 +733,13 @@ z_publisher_options_t z_publisher_options_default(void) {
 }
 
 z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
-    z_keyexpr_t key = keyexpr;
-
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-#if Z_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
-        if (r == NULL) {
-            uint16_t id = _z_declare_resource(zs._val, keyexpr);
-            key = _z_rid_with_suffix(id, NULL);
-        }
-#if Z_MULTICAST_TRANSPORT == 1
-    }
-#endif  // Z_MULTICAST_TRANSPORT == 1
-
     z_publisher_options_t opt = z_publisher_options_default();
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-
-    return (z_owned_publisher_t){._value = _z_declare_publisher(zs._val, key, opt.congestion_control, opt.priority)};
+    return (z_owned_publisher_t){._value =
+                                     _z_declare_publisher(zs._val, keyexpr, opt.congestion_control, opt.priority)};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {

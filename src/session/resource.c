@@ -152,7 +152,7 @@ _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint8_t is_local,
  *  - zn->_mutex_inner
  */
 _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = !keyexpr->_uses_remote_mapping ? zn->_local_resources : zn->_remote_resources;
+    _z_resource_list_t *decls = keyexpr->_sender_mapping ? zn->_local_resources : zn->_remote_resources;
     return __z_get_resource_by_key(decls, keyexpr);
 }
 
@@ -162,7 +162,7 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr
  *  - zn->_mutex_inner
  */
 _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    _z_resource_list_t *decls = keyexpr->_uses_remote_mapping ? zn->_remote_resources : zn->_local_resources;
+    _z_resource_list_t *decls = keyexpr->_sender_mapping ? zn->_local_resources : zn->_remote_resources;
     return __z_get_expanded_key_from_key(decls, keyexpr);
 }
 

@@ -37,7 +37,7 @@ int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_nex
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     uint32_t kelen = _z_keyexpr_has_suffix(ke) ? strlen(ke._suffix) : 0;
-    header = (ke._uses_remote_mapping ? 2 : 0) | (kelen != 0 ? 1 : 0);
+    header = (ke._sender_mapping ? 2 : 0) | (kelen != 0 ? 1 : 0);
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, ke._id));
@@ -68,7 +68,7 @@ int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensio
     if (has_kesuffix) {
         header |= _Z_DECL_SUBSCRIBER_FLAG_N;
     }
-    if (!keyexpr._uses_remote_mapping) {
+    if (keyexpr._sender_mapping) {
         header |= _Z_DECL_SUBSCRIBER_FLAG_M;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
@@ -213,7 +213,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-            ke->_uses_remote_mapping = !_Z_HAS_FLAG(header, 2);
+            ke->_sender_mapping = _Z_HAS_FLAG(header, 2);
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
@@ -242,7 +242,7 @@ int8_t _z_undecl_trivial_decode(_z_zbuf_t *zbf, _z_keyexpr_t *_ext_keyexpr, uint
 }
 int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensions, uint32_t *id, _z_keyexpr_t *ke) {
     *has_extensions = _Z_HAS_FLAG(header, _Z_FLAG_Z_Z);
-    ke->_uses_remote_mapping = _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_M);
+    ke->_sender_mapping = _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_M);
     _Z_RETURN_IF_ERR(_z_zint32_decode(id, zbf));
     _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
     if (_Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_N)) {

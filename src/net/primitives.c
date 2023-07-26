@@ -22,6 +22,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
@@ -106,13 +107,31 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
     _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
     if (ret != NULL) {
         ret->_zn = zn;
-        ret->_key = _z_keyexpr_duplicate(keyexpr);
         ret->_id = _z_get_entity_id(zn);
         ret->_congestion_control = congestion_control;
         ret->_priority = priority;
 
-        // Build the declare message to send on the wire
-        _z_declare_resource(zn, keyexpr);
+        // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+        //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+        //       resource declarations are only performed on unicast transports.
+#if Z_MULTICAST_TRANSPORT == 1
+        if (zn->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_MULTICAST_TRANSPORT == 1
+
+            _z_resource_t *rs = _z_get_resource_by_key(zn, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+            if (rs == NULL) {
+                uint16_t id = _z_declare_resource(zn, keyexpr);
+                ret->_key = _z_rid_with_suffix(id, NULL);
+            } else {
+                ret->_key = _z_keyexpr_duplicate(rs->_key);
+            }
+
+#if Z_MULTICAST_TRANSPORT == 1
+        }
+#endif  // Z_MULTICAST_TRANSPORT == 1
+
+        // Always apply the sender mapping for publishers
+        ret->_key._sender_mapping = true;
     }
 
     return ret;
