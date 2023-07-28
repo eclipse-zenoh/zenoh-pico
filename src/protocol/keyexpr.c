@@ -24,7 +24,7 @@
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     dst->_id = src->_id;
     dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
-    dst->_sender_mapping = src->_sender_mapping;
+    dst->_uses_remote_mapping = src->_uses_remote_mapping;
     dst->_owns_suffix = true;
 }
 
@@ -61,7 +61,7 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
     return (_z_keyexpr_t){
         ._id = src._id,
-        ._sender_mapping = src._sender_mapping,
+        ._uses_remote_mapping = src._uses_remote_mapping,
         ._owns_suffix = false,
         ._suffix = src._suffix,
     };

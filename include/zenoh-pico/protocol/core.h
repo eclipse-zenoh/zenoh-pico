@@ -84,7 +84,7 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
  */
 typedef struct {
     uint16_t _id;
-    _Bool _sender_mapping;
+    _Bool _uses_remote_mapping;
     _Bool _owns_suffix;
     char *_suffix;
 } _z_keyexpr_t;

@@ -24,7 +24,7 @@ _z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); 
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._sender_mapping = false,
+        ._uses_remote_mapping = false,
         ._owns_suffix = false,
         ._suffix = (char *)suffix,
     };

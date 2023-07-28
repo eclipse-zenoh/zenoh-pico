@@ -59,6 +59,7 @@ int8_t _z_id_encode_as_zbytes(_z_wbuf_t *wbf, const _z_id_t *id) {
     uint8_t len = _z_id_len(*id);
 
     if (len != 0) {
+        printf("ZIDLEN: %d\n", len);
         _z_bytes_t buf = _z_bytes_wrap(id->id, len);
         ret = _z_bytes_encode(wbf, &buf);
     } else {
