@@ -1,0 +1,52 @@
+#
+# Copyright (c) 2022 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: testing
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+  schedule:
+    - cron: '0 6 * * 1-5'
+
+jobs:
+  build:
+
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Compile debug
+      run: make all
+      env:
+        BUILD_TYPE: Debug
+        BUILD_TESTING: ON
+        BUILD_MULTICAST: OFF
+        BUILD_INTEGRATION: OFF
+
+    - name: Test debug
+      run: make test
+      env:
+        BUILD_TYPE: Debug     # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_TESTING: OFF    # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_MULTICAST: OFF  # Workaround for Windows as it seems the previous step is being ignored
+        BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
+        ZENOH_BRANCH: master
