@@ -125,15 +125,15 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint16_decode(&ke->_id, zbf);
-    ke->_owns_suffix = false;
     if (has_suffix == true) {
         char *str = NULL;
         ret |= _z_str_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
             ke->_suffix = str;
-            ke->_owns_suffix = true;
+            ke->_mapping = _z_keyexpr_mapping(0, true);
         } else {
             ke->_suffix = NULL;
+            ke->_mapping = _z_keyexpr_mapping(0, false);
         }
     } else {
         ke->_suffix = NULL;

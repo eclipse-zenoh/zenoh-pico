@@ -37,7 +37,7 @@
 /*------------------ Push Message ------------------*/
 
 int8_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg) {
-    uint8_t header = _Z_MID_N_PUSH | (msg->_key._uses_remote_mapping ? _Z_FLAG_N_REQUEST_M : 0);
+    uint8_t header = _Z_MID_N_PUSH | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
     _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
     _Bool has_timestamp_ext = _z_timestamp_check(&msg->_timestamp);
     if (has_suffix) {
@@ -93,7 +93,8 @@ int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     *msg = (_z_n_msg_push_t){0};
     msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
-    msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M);
+    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
+                                                                             : _Z_KEYEXPR_MAPPING_LOCAL);
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         ret = _z_msg_ext_decode_iter(zbf, _z_push_decode_ext_cb, msg);
     }
@@ -109,7 +110,7 @@ int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Request Message ------------------*/
 int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
     int8_t ret = _Z_RES_OK;
-    uint8_t header = _Z_MID_N_REQUEST | (msg->_key._uses_remote_mapping ? _Z_FLAG_N_REQUEST_M : 0);
+    uint8_t header = _Z_MID_N_REQUEST | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
     _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
@@ -211,7 +212,8 @@ int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t 
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
-    msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M);
+    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
+                                                                                : _Z_KEYEXPR_MAPPING_LOCAL);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_request_decode_extensions, msg));
     }
@@ -250,7 +252,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
     uint8_t n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
     _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
-    if (msg->_key._uses_remote_mapping) {
+    if (_z_keyexpr_is_local(&msg->_key)) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     }
     if (has_suffix) {
@@ -354,7 +356,8 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
     *msg = (_z_n_msg_response_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     int8_t ret = _Z_RES_OK;
-    msg->_key._uses_remote_mapping = !_Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M);
+    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
+                                                                                 : _Z_KEYEXPR_MAPPING_LOCAL);
     _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_request_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N)));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {

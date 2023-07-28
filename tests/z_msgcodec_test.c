@@ -604,15 +604,15 @@ void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right) {
 _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
     key._id = gen_zint();
+    key._mapping._val = gen_uint8();
     _Bool is_numerical = gen_bool();
     if (is_numerical == true) {
         key._suffix = NULL;
-        key._owns_suffix = false;
+        _z_keyexpr_set_owns_suffix(&key, false);
     } else {
         key._suffix = gen_str(gen_zint() % 16);
-        key._owns_suffix = true;
+        _z_keyexpr_set_owns_suffix(&key, true);
     }
-    key._uses_remote_mapping = gen_bool();
     return key;
 }
 
@@ -872,8 +872,7 @@ void forget_subscriber_declaration(void) {
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_undecl_subscriber_t d_fsd = {
-        ._id = 0, ._ext_keyexpr = {._id = 0, ._owns_suffix = false, ._suffix = NULL, ._uses_remote_mapping = false}};
+    _z_undecl_subscriber_t d_fsd = {._id = 0, ._ext_keyexpr = {0}};
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
     res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr);

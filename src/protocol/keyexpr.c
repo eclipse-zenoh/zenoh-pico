@@ -18,14 +18,25 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
+
+_z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); }
+
+_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL, false),
+        ._suffix = (char *)suffix,
+    };
+}
 
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     dst->_id = src->_id;
     dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
-    dst->_uses_remote_mapping = src->_uses_remote_mapping;
-    dst->_owns_suffix = true;
+    dst->_mapping = src->_mapping;
+    _z_keyexpr_set_owns_suffix(dst, true);
 }
 
 _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
@@ -42,9 +53,9 @@ _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (rk->_suffix != NULL && rk->_owns_suffix) {
+    if (rk->_suffix != NULL && _z_keyexpr_owns_suffix(rk)) {
         _z_str_clear((char *)rk->_suffix);
-        rk->_owns_suffix = false;
+        _z_keyexpr_set_owns_suffix(rk, false);
     }
 }
 
@@ -59,12 +70,13 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
     }
 }
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
-    return (_z_keyexpr_t){
+    _z_keyexpr_t alias = {
         ._id = src._id,
-        ._uses_remote_mapping = src._uses_remote_mapping,
-        ._owns_suffix = false,
+        ._mapping = src._mapping,
         ._suffix = src._suffix,
     };
+    _z_keyexpr_set_owns_suffix(&alias, false);
+    return alias;
 }
 
 /*------------------ Canonize helpers ------------------*/

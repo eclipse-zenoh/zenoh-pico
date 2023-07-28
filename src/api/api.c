@@ -25,7 +25,6 @@
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/primitives.h"
-#include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -741,7 +740,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
@@ -817,7 +816,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
@@ -844,7 +843,7 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
     callback->context = NULL;
 
     z_keyexpr_t key = keyexpr;
-    _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+    _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
     if (r == NULL) {
         uint16_t id = _z_declare_resource(zs._val, keyexpr);
         key = _z_rid_with_suffix(id, NULL);
@@ -896,7 +895,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
 #if Z_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
 #endif  // Z_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, _Z_RESOURCE_IS_LOCAL, &keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);

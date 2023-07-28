@@ -17,7 +17,6 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"

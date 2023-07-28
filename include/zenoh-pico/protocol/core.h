@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_PROTOCOL_CORE_H
 #define ZENOH_PICO_PROTOCOL_CORE_H
 
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -76,6 +77,20 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
 
 /**
+ * The product of:
+ * - top-most bit: whether or not the keyexpr containing this mapping owns its suffix (1=true)
+ * - the mapping for the keyexpr prefix:
+ *     - 0: local mapping.
+ *     - 0x7fff (MAX): unknown remote mapping.
+ *     - x: the mapping associated with the x-th peer.
+ */
+typedef struct {
+    uint16_t _val;
+} _z_mapping_t;
+#define _Z_KEYEXPR_MAPPING_LOCAL 0
+#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE 0x7fff
+
+/**
  * A zenoh-net resource key.
  *
  * Members:
@@ -84,12 +99,52 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
  */
 typedef struct {
     uint16_t _id;
-    _Bool _uses_remote_mapping;
-    _Bool _owns_suffix;
+    _z_mapping_t _mapping;
     char *_suffix;
 } _z_keyexpr_t;
+static inline _Bool _z_keyexpr_owns_suffix(const _z_keyexpr_t *key) { return (key->_mapping._val & 0x8000) != 0; }
+static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
+static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
+    return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
+}
+static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id, _Bool owns_suffix) {
+    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+    return (_z_mapping_t){._val = (owns_suffix ? 0x8000 : 0) | id};
+}
+static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
+    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+    ke->_mapping._val &= 0x8000;
+    ke->_mapping._val |= id;
+}
+static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffix) {
+    ke->_mapping._val &= 0x7fff;
+    ke->_mapping._val |= owns_suffix ? 0x8000 : 0;
+}
 static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
 static inline _Bool _z_keyexpr_check(_z_keyexpr_t ke) { return (ke._id != 0) || _z_keyexpr_has_suffix(ke); }
+
+/**
+ * Create a resource key from a resource name.
+ *
+ * Parameters:
+ *     rname: The resource name. The caller keeps its ownership.
+ *
+ * Returns:
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
+ */
+_z_keyexpr_t _z_rname(const char *rname);
+
+/**
+ * Create a resource key from a resource id and a suffix.
+ *
+ * Parameters:
+ *     id: The resource id.
+ *     suffix: The suffix.
+ *
+ * Returns:
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
+ */
+_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
 
 /**
  * A zenoh-net data sample.
