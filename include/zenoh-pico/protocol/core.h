@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_PROTOCOL_CORE_H
-#define ZENOH_PICO_PROTOCOL_CORE_H
+#ifndef INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H
+#define INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H
 
 #include <assert.h>
 #include <stdint.h>
@@ -244,4 +244,4 @@ typedef struct {
     uint32_t _entity_id;
 } _z_reply_context_t;
 
-#endif /* ZENOH_PICO_PROTOCOL_CORE_H */
+#endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H */

@@ -263,10 +263,25 @@ void _z_unregister_resource(_z_session_t *zn, _z_resource_t *res) {
         }
         list = _z_resource_list_tail(list);
     }
-    if (is_local == _Z_RESOURCE_IS_LOCAL) {
-        zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
-    } else {
-        zn->_remote_resources = _z_resource_list_drop_filter(zn->_remote_resources, _z_resource_eq, res);
+
+#if Z_MULTI_THREAD == 1
+    _z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+}
+
+void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping) {
+#if Z_MULTI_THREAD == 1
+    _z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_MULTI_THREAD == 1
+    _z_resource_list_t *list = zn->_remote_resources;
+    while (list) {
+        _z_resource_t *head = _z_resource_list_head(list);
+        if (head && _z_keyexpr_mapping_id(&head->_key) == mapping) {
+            _z_resource_list_pop(list, &head);
+            _z_resource_free(&head);
+        } else {
+            list = _z_resource_list_tail(list);
+        }
     }
 
 #if Z_MULTI_THREAD == 1
