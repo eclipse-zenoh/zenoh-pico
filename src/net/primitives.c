@@ -59,7 +59,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
         if (r != NULL) {
             r->_id = _z_get_resource_id(zn);
             r->_key = _z_keyexpr_duplicate(keyexpr);
-            if (_z_register_resource(zn, _Z_RESOURCE_IS_LOCAL, r) == _Z_RES_OK) {
+            if (_z_register_resource(zn, r) == _Z_RES_OK) {
                 // Build the declare message to send on the wire
                 _z_keyexpr_t alias = _z_keyexpr_alias(r->_key);
                 _z_declaration_t declaration = _z_make_decl_keyexpr(r->_id, &alias);
@@ -67,7 +67,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
                 if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                     ret = r->_id;
                 } else {
-                    _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);
+                    _z_unregister_resource(zn, r);
                 }
                 _z_n_msg_clear(&n_msg);
             } else {
@@ -88,7 +88,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
-            _z_unregister_resource(zn, _Z_RESOURCE_IS_LOCAL, r);  // Only if message is send, local resource is removed
+            _z_unregister_resource(zn, r);  // Only if message is send, local resource is removed
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }

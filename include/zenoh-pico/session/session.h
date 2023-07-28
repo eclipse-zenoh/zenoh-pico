@@ -73,6 +73,7 @@ void _z_reply_free(_z_reply_t **hello);
 typedef struct {
     _z_keyexpr_t _key;
     uint16_t _id;
+    uint16_t _refcount;
 } _z_resource_t;
 
 _Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);

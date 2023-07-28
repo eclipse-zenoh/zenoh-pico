@@ -20,6 +20,7 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/logging.h"
 
 _Bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this) { return this->_id == other->_id; }
@@ -43,13 +44,13 @@ uint32_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
 uint16_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 
 /*------------------ Resource ------------------*/
-_z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, const _z_zint_t id) {
+_z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uint16_t mapping, const _z_zint_t id) {
     _z_resource_t *ret = NULL;
 
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if (r->_id == id) {
+        if (r->_id == id && _z_keyexpr_mapping_id(&r->_key) == mapping) {
             ret = r;
             break;
         }
@@ -62,11 +63,13 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, const _z_zint_t id
 
 _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_t *keyexpr) {
     _z_resource_t *ret = NULL;
+    uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
 
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if ((r->_key._id == keyexpr->_id) && (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == true)) {
+        if ((r->_key._id == keyexpr->_id) && _z_keyexpr_mapping_id(&r->_key) == mapping &&
+            (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == true)) {
             ret = r;
             break;
         }
@@ -95,8 +98,9 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
 
     // Recursevely go through all the RIDs
     _z_zint_t id = keyexpr->_id;
+    uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
     while (id != Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = __z_get_resource_by_id(xs, id);
+        _z_resource_t *res = __z_get_resource_by_id(xs, mapping, id);
         if (res == NULL) {
             len = 0;
             break;
@@ -144,7 +148,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
  */
 _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t id) {
     _z_resource_list_t *decls = (mapping == _Z_KEYEXPR_MAPPING_LOCAL) ? zn->_local_resources : zn->_remote_resources;
-    return __z_get_resource_by_id(decls, id);
+    return __z_get_resource_by_id(decls, mapping, id);
 }
 
 /**
@@ -208,26 +212,28 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
     return res;
 }
 
-int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *res) {
+int8_t _z_register_resource(_z_session_t *zn, _z_resource_t *res) {
     int8_t ret = _Z_RES_OK;
 
     _Z_DEBUG(">>> Allocating res decl for (%ju,%u:%s)\n", (uintmax_t)res->_id, (unsigned int)res->_key._id,
              res->_key._suffix);
-
+    uint16_t mapping = _z_keyexpr_mapping_id(&res->_key);
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     // FIXME: check by keyexpr instead
-    _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, is_local, res->_id);
+    _z_resource_t *r = __unsafe_z_get_resource_by_id(zn, mapping, res->_id);
     if (r == NULL) {
+        res->_refcount = 1;
         // Register the resource
-        if (is_local == _Z_RESOURCE_IS_LOCAL) {
+        if (mapping == _Z_KEYEXPR_MAPPING_LOCAL) {
             zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
         } else {
             zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
         }
     } else {
+        r->_refcount++;
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
@@ -238,11 +244,25 @@ int8_t _z_register_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *r
     return ret;
 }
 
-void _z_unregister_resource(_z_session_t *zn, uint8_t is_local, _z_resource_t *res) {
+void _z_unregister_resource(_z_session_t *zn, _z_resource_t *res) {
+    _Bool is_local = _z_keyexpr_is_local(&res->_key);
+    uint16_t mapping = _z_keyexpr_mapping_id(&res->_key);
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-
+    _z_resource_list_t *list = is_local ? zn->_local_resources : zn->_remote_resources;
+    while (list) {
+        _z_resource_t *head = _z_resource_list_head(list);
+        if (head && head->_id == res->_id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
+            res->_refcount--;
+            if (res->_refcount == 0) {
+                _z_resource_list_pop(list, &head);
+                _z_resource_free(&head);
+            }
+            break;
+        }
+        list = _z_resource_list_tail(list);
+    }
     if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_resources = _z_resource_list_drop_filter(zn->_local_resources, _z_resource_eq, res);
     } else {
