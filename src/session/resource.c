@@ -171,7 +171,7 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_key
     return __z_get_expanded_key_from_key(decls, keyexpr);
 }
 
-_z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint8_t mapping, _z_zint_t rid) {
+_z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
