@@ -24,17 +24,6 @@
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/config.h"
 
-typedef struct {
-    _z_resource_list_t *resources;
-    _z_subscription_sptr_list_t *subscriptions;
-} _z_remote_t;
-static void _z_remote_drop(_z_remote_t *remote) {
-    _z_resource_list_free(&remote->resources);
-    _z_subscription_sptr_list_free(&remote->subscriptions);
-}
-_Z_ELEM_DEFINE(_z_remote, _z_remote_t, _z_noop_size, _z_remote_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_remote, _z_remote_t)
-
 /**
  * A zenoh-net session.
  */

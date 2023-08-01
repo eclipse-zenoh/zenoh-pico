@@ -18,13 +18,41 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
+
+void entry_list_test(void) {
+    _z_transport_peer_entry_list_t *root = _z_transport_peer_entry_list_new();
+    for (int i = 0; i < 10; i++) {
+        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
+        root = _z_transport_peer_entry_list_insert(root, entry);
+    }
+    _z_transport_peer_entry_list_t *list = root;
+    for (int i = 10; list != NULL; i--, list = _z_transport_peer_entry_list_tail(list)) {
+        assert(_z_transport_peer_entry_list_head(list)->_peer_id == i);
+    }
+    _z_transport_peer_entry_list_head(root)->_peer_id = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1;
+
+    for (int i = 0; i < 11; i++) {
+        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
+        root = _z_transport_peer_entry_list_insert(root, entry);
+    }
+    assert(_z_transport_peer_entry_list_head(root)->_peer_id == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1);
+    list = _z_transport_peer_entry_list_tail(root);
+    for (int i = 20; list != NULL; i--, list = _z_transport_peer_entry_list_tail(list)) {
+        assert(_z_transport_peer_entry_list_head(list)->_peer_id == i);
+    }
+    _z_transport_peer_entry_list_free(&root);
+}
 
 int main(void) {
+    entry_list_test();
     char *s = (char *)malloc(64);
     size_t len = 128;
 
     // str-vec
-    printf(">>> str-vec\n");
+    printf(">>> str-vec\r\n");
 
     _z_str_vec_t vec = _z_str_vec_make(1);
     assert(_z_str_vec_is_empty(&vec) == true);
@@ -34,12 +62,12 @@ int main(void) {
 
         _z_str_vec_append(&vec, _z_str_clone(s));
         char *e = _z_str_vec_get(&vec, i);
-        printf("append(%zu) = %s\n", i, e);
+        printf("append(%zu) = %s\r\n", i, e);
         assert(_z_str_eq(s, e) == true);
 
         _z_str_vec_set(&vec, i, _z_str_clone(s));
         e = _z_str_vec_get(&vec, i);
-        printf("set(%zu) = %s\n", i, e);
+        printf("set(%zu) = %s\r\n", i, e);
         assert(_z_str_eq(s, e) == true);
 
         assert(_z_str_vec_len(&vec) == i + 1);
@@ -50,7 +78,7 @@ int main(void) {
     assert(_z_str_vec_is_empty(&vec) == true);
 
     // str-list
-    printf(">>> str-list\n");
+    printf(">>> str-list\r\n");
 
     _z_str_list_t *list = _z_str_list_new();
     assert(_z_str_list_is_empty(list) == true);
@@ -60,7 +88,7 @@ int main(void) {
         list = _z_str_list_push(list, _z_str_clone(s));
 
         char *e = _z_str_list_head(list);
-        printf("push(%zu) = %s\n", i, e);
+        printf("push(%zu) = %s\r\n", i, e);
         assert(_z_str_eq(s, e) == true);
 
         assert(_z_str_list_len(list) == i + 1);
@@ -84,7 +112,7 @@ int main(void) {
     assert(_z_str_list_is_empty(list) == true);
 
     // str-intmap
-    printf(">>> str-intmap\n");
+    printf(">>> str-intmap\r\n");
 
     _z_str_intmap_t map = _z_str_intmap_make();
     assert(_z_str_intmap_is_empty(&map) == true);
@@ -94,7 +122,7 @@ int main(void) {
         _z_str_intmap_insert(&map, i, _z_str_clone(s));
 
         char *e = _z_str_intmap_get(&map, i);
-        printf("get(%zu) = %s\n", i, e);
+        printf("get(%zu) = %s\r\n", i, e);
         assert(_z_str_eq(s, e) == true);
 
         assert(_z_str_intmap_len(&map) == i + 1);

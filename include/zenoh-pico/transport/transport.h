@@ -12,8 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_TYPES_H
-#define ZENOH_PICO_TRANSPORT_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H
+#define INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H
+
+#include <assert.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
@@ -29,14 +32,14 @@ typedef struct {
 
     _z_id_t _remote_zid;
     _z_bytes_t _remote_addr;
+    _z_conduit_sn_list_t _sn_rx_sns;
 
     // SN numbers
     _z_zint_t _sn_res;
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
 
-    _z_conduit_sn_list_t _sn_rx_sns;
-
+    uint16_t _peer_id;
     volatile _Bool _received;
 } _z_transport_peer_entry_t;
 
@@ -47,6 +50,8 @@ _Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
+_z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
+                                                                    _z_transport_peer_entry_t *entry);
 
 typedef struct {
     // Session associated to the transport
@@ -183,4 +188,4 @@ void _z_transport_free(_z_transport_t **zt);
 void _z_transport_unicast_free(_z_transport_unicast_t **ztu);
 void _z_transport_multicast_free(_z_transport_multicast_t **ztm);
 
-#endif /* ZENOH_PICO_TRANSPORT_TYPES_H */
+#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

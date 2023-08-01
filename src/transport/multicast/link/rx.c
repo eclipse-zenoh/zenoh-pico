@@ -61,7 +61,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztm->_zbuf);
                     ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
-                    continue;
+                    break;
                 }
             }
 
@@ -75,7 +75,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
                     _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     _z_zbuf_compact(&ztm->_zbuf);
                     ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
-                    continue;
+                    break;
                 }
             }
         } else {
@@ -127,7 +127,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
-                //        monothonic SNs are ensured
+                //        monotonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) ==
                     true) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
@@ -169,7 +169,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
             _Bool drop = false;
             if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
-                // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
+                // Filling the wbuf capacity as a way to signaling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
                 _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0, _z_wbuf_space_left(dbuf));
                 drop = true;
@@ -213,12 +213,12 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_T_INIT: {
-            // Do nothing, multicas transports are not expected to handle INIT messages
+            // Do nothing, multicast transports are not expected to handle INIT messages
             break;
         }
 
         case _Z_MID_T_OPEN: {
-            // Do nothing, multicas transports are not expected to handle OPEN messages
+            // Do nothing, multicast transports are not expected to handle OPEN messages
             break;
         }
 
@@ -261,7 +261,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                         entry->_next_lease = entry->_lease;
                         entry->_received = true;
 
-                        ztm->_peers = _z_transport_peer_entry_list_push(ztm->_peers, entry);
+                        ztm->_peers = _z_transport_peer_entry_list_insert(ztm->_peers, entry);
                     } else {
                         z_free(entry);
                     }
@@ -271,7 +271,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             } else {  // Existing peer
                 entry->_received = true;
 
-                // Check if the representing capapbilities are still the same
+                // Check if the representing capabilities are still the same
                 if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
                     (t_msg->_body._join._req_id_res < Z_REQ_RESOLUTION) ||
                     (t_msg->_body._join._batch_size < Z_BATCH_SIZE)) {
