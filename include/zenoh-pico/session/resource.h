@@ -28,7 +28,7 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 int8_t _z_register_resource(_z_session_t *zn, _z_resource_t *res);
-void _z_unregister_resource(_z_session_t *zn, _z_resource_t *res);
+void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping);
 void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping);
 void _z_flush_resources(_z_session_t *zn);
 

@@ -227,6 +227,24 @@ inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy)
 _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 
+void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
+    switch (msg->_tag) {
+        case _Z_N_DECLARE: {
+            _z_decl_fix_mapping(&msg->_body._declare._decl, mapping);
+        } break;
+        case _Z_N_PUSH: {
+            _z_keyexpr_fix_mapping(&msg->_body._push._key, mapping);
+        } break;
+        case _Z_N_REQUEST: {
+            _z_keyexpr_fix_mapping(&msg->_body._request._key, mapping);
+        } break;
+        case _Z_N_RESPONSE: {
+            _z_keyexpr_fix_mapping(&msg->_body._response._key, mapping);
+        } break;
+        default:
+            break;
+    }
+}
 _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value);

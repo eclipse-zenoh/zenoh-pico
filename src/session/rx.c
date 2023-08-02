@@ -24,15 +24,56 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg) {
+int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
+            _z_n_msg_declare_t decl = msg->_body._declare;
+            switch (decl._decl._tag) {
+                case _Z_DECL_KEXPR: {
+                    _z_resource_t *res = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
+                    res->_id = decl._decl._body._decl_kexpr._id;
+                    res->_key = decl._decl._body._decl_kexpr._keyexpr;
+                    _z_register_resource(zn, res);
+                } break;
+                case _Z_UNDECL_KEXPR: {
+                    _z_resource_t res = {._id = decl._decl._body._undecl_kexpr._id};
+                    _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
+                } break;
+                case _Z_DECL_SUBSCRIBER: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_UNDECL_SUBSCRIBER: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_DECL_QUERYABLE: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_UNDECL_QUERYABLE: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_DECL_TOKEN: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_UNDECL_TOKEN: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_DECL_INTEREST: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_FINAL_INTEREST: {
+                    // TODO: add support or explicitly discard
+                } break;
+                case _Z_UNDECL_INTEREST: {
+                    // TODO: add support or explicitly discard
+                } break;
+            }
         } break;
         case _Z_N_PUSH: {
             _z_n_msg_push_t push = msg->_body._push;

@@ -116,6 +116,11 @@ static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
     ke->_mapping._val &= 0x8000;
     ke->_mapping._val |= id;
 }
+static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
+    if (_z_keyexpr_mapping_id(ke) == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
+        _z_keyexpr_set_mapping(ke, id);
+    }
+}
 static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffix) {
     ke->_mapping._val &= 0x7fff;
     ke->_mapping._val |= owns_suffix ? 0x8000 : 0;

@@ -16,6 +16,8 @@
 #define INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_TRANSPORT_H
 
 /* Scouting Messages */
+#include <stdint.h>
+
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 

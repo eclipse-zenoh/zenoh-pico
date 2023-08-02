@@ -244,18 +244,17 @@ int8_t _z_register_resource(_z_session_t *zn, _z_resource_t *res) {
     return ret;
 }
 
-void _z_unregister_resource(_z_session_t *zn, _z_resource_t *res) {
-    _Bool is_local = _z_keyexpr_is_local(&res->_key);
-    uint16_t mapping = _z_keyexpr_mapping_id(&res->_key);
+void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
+    _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
     _z_resource_list_t *list = is_local ? zn->_local_resources : zn->_remote_resources;
     while (list) {
         _z_resource_t *head = _z_resource_list_head(list);
-        if (head && head->_id == res->_id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
-            res->_refcount--;
-            if (res->_refcount == 0) {
+        if (head && head->_id == id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
+            head->_refcount--;
+            if (head->_refcount == 0) {
                 _z_resource_list_pop(list, &head);
                 _z_resource_free(&head);
             }

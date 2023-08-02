@@ -19,6 +19,8 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -148,9 +150,12 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             }
 
             // Handle all the zenoh message, one by one
+            uint16_t mapping = entry->_peer_id;
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                _z_handle_zenoh_message(ztm->_session, _z_network_message_vec_get(&t_msg->_body._frame._messages, i));
+                __auto_type zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
+                _z_msg_fix_mapping(zm, mapping);
+                _z_handle_zenoh_message(ztm->_session, zm, mapping);
             }
 
             break;
@@ -189,7 +194,9 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 _z_zenoh_message_t zm;
                 ret = _z_network_message_decode(&zm, &zbf);
                 if (ret == _Z_RES_OK) {
-                    _z_handle_zenoh_message(ztm->_session, &zm);
+                    uint16_t mapping = entry->_peer_id;
+                    _z_msg_fix_mapping(&zm, mapping);
+                    _z_handle_zenoh_message(ztm->_session, &zm, mapping);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
                                         // zenoh messages are released when their transport message is released.
                 }
@@ -235,9 +242,9 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_sn_res = _z_sn_max(t_msg->_body._join._seq_num_res);
 
                     // If the new node has less representing capabilities then it is incompatible to communication
-                    if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
-                        (t_msg->_body._join._req_id_res < Z_REQ_RESOLUTION) ||
-                        (t_msg->_body._join._batch_size < Z_BATCH_SIZE)) {
+                    if ((t_msg->_body._join._seq_num_res != Z_SN_RESOLUTION) ||
+                        (t_msg->_body._join._req_id_res != Z_REQ_RESOLUTION) ||
+                        (t_msg->_body._join._batch_size != Z_BATCH_SIZE)) {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
 
@@ -272,10 +279,11 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 entry->_received = true;
 
                 // Check if the representing capabilities are still the same
-                if ((t_msg->_body._join._seq_num_res < Z_SN_RESOLUTION) ||
-                    (t_msg->_body._join._req_id_res < Z_REQ_RESOLUTION) ||
-                    (t_msg->_body._join._batch_size < Z_BATCH_SIZE)) {
+                if ((t_msg->_body._join._seq_num_res != Z_SN_RESOLUTION) ||
+                    (t_msg->_body._join._req_id_res != Z_REQ_RESOLUTION) ||
+                    (t_msg->_body._join._batch_size != Z_BATCH_SIZE)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
+                    // TODO: cleanup here should also be done on mappings/subs/etc...
                     break;
                 }
 
