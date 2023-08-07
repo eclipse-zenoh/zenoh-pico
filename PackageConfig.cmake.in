@@ -1,0 +1,28 @@
+#
+# Copyright (c) 2023 ZettaScale Technology.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh team, <zenoh@zettascale.tech>
+#
+
+@PACKAGE_INIT@
+
+add_library(__zenohpico_static STATIC IMPORTED GLOBAL)
+add_library(zenohpico::static ALIAS __zenohpico_static)
+set_property(TARGET __zenohpico_static PROPERTY IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@STATICLIB@")
+
+add_library(__zenohpico_lib SHARED IMPORTED GLOBAL)
+add_library(zenohpico::lib ALIAS __zenohpico_lib)
+set_target_properties(__zenohpico_lib PROPERTIES IMPORTED_NO_SONAME TRUE)
+set_property(TARGET __zenohpico_lib PROPERTY IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@DYLIB@")
+if(NOT ("@IMPLIB@" STREQUAL ""))
+    set_property(TARGET __zenohpico_lib PROPERTY IMPORTED_IMPLIB "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@IMPLIB@")
+endif()
+target_include_directories(__zenohpico_lib INTERFACE "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")

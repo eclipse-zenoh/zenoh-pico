@@ -316,6 +316,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                 ret = _Z_ERR_GENERIC;
             }
 
+#ifndef UNIX_NO_MULTICAST_IF
             if (lsockaddr->sa_family == AF_INET) {
                 if ((ret == _Z_RES_OK) &&
                     (setsockopt(sock->_fd, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr,
@@ -331,6 +332,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
             } else {
                 ret = _Z_ERR_GENERIC;
             }
+#endif
 
             // Create lep endpoint
             if (ret == _Z_RES_OK) {
