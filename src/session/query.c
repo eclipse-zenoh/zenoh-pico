@@ -138,9 +138,8 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
     return ret;
 }
 
-int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context,
-                                      const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                      const _z_encoding_t encoding, const _z_zint_t kind,
+int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
+                                      const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind,
                                       const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
 
@@ -148,7 +147,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_request_id);
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -232,7 +231,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t
     return ret;
 }
 
-int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *reply_context) {
+int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
@@ -240,7 +239,7 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *
 #endif  // Z_MULTI_THREAD == 1
 
     // Final reply received for unknown query id
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, reply_context->_request_id);
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }

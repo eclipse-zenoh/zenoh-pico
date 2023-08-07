@@ -16,6 +16,7 @@
 #define ZENOH_PICO_SESSION_QUERY_H
 
 #include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
 
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn);
@@ -23,11 +24,10 @@ _z_zint_t _z_get_query_id(_z_session_t *zn);
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id);
 
 int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
-int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_reply_context_t *reply_context,
-                                      const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                      const _z_encoding_t encoding, const _z_zint_t kind,
+int8_t _z_trigger_query_reply_partial(_z_session_t *zn, _z_zint_t reply_context, const _z_keyexpr_t keyexpr,
+                                      const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind,
                                       const _z_timestamp_t timestamp);
-int8_t _z_trigger_query_reply_final(_z_session_t *zn, const _z_reply_context_t *reply_context);
+int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id);
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
 void _z_flush_pending_queries(_z_session_t *zn);
 

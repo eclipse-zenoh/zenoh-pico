@@ -17,7 +17,9 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -103,7 +105,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                 case _Z_REQUEST_DEL: {
                     _z_msg_del_t del = req._body._del;
                     int8_t result = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
-                                                             Z_SAMPLE_KIND_PUT, del._commons._timestamp);
+                                                             Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
                         ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
@@ -111,13 +113,44 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
                 } break;
-                case _Z_REQUEST_PULL: {  // TODO
+                case _Z_REQUEST_PULL: {
+                    // @TODO: define behaviour
                 } break;
             }
         } break;
         case _Z_N_RESPONSE: {
+            _z_n_msg_response_t response = msg->_body._response;
+            switch (response._tag) {
+                case _Z_RESPONSE_BODY_REPLY: {
+                    _z_msg_reply_t reply = response._body._reply;
+                    _z_trigger_query_reply_partial(zn, response._request_id, response._key, reply._value.payload,
+                                                   reply._value.encoding, Z_SAMPLE_KIND_PUT, reply._timestamp);
+                } break;
+                case _Z_RESPONSE_BODY_ERR: {
+                    // @TODO: expose errors to the user
+                    _z_msg_err_t error = response._body._err;
+                    _z_bytes_t payload = error._ext_value.payload;
+                    _Z_ERROR("Received Err for query %d: code=%d, message=%.*s\n", response._request_id, error.code,
+                             payload.len, payload.start);
+                } break;
+                case _Z_RESPONSE_BODY_ACK: {
+                    // @TODO: implement ACKs for puts/dels
+                } break;
+                case _Z_RESPONSE_BODY_PUT: {
+                    _z_msg_put_t put = response._body._put;
+                    ret = _z_trigger_subscriptions(zn, response._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
+                                                   put._commons._timestamp);
+                } break;
+                case _Z_RESPONSE_BODY_DEL: {
+                    _z_msg_del_t del = response._body._del;
+                    int8_t result = _z_trigger_subscriptions(zn, response._key, _z_bytes_empty(), z_encoding_default(),
+                                                             Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
+                } break;
+            }
         } break;
         case _Z_N_RESPONSE_FINAL: {
+            _z_zint_t id = msg->_body._response_final._request_id;
+            _z_trigger_query_reply_final(zn, id);
         } break;
     }
     _z_msg_clear(msg);
