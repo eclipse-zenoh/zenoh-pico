@@ -123,39 +123,7 @@ typedef struct {
     } _body;
 } _z_declaration_t;
 void _z_declaration_clear(_z_declaration_t* decl);
-static inline void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping) {
-    switch (msg->_tag) {
-        case _Z_DECL_KEXPR: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_kexpr._keyexpr, mapping);
-        } break;
-        case _Z_DECL_SUBSCRIBER: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_subscriber._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_SUBSCRIBER: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_subscriber._ext_keyexpr, mapping);
-        } break;
-        case _Z_DECL_QUERYABLE: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_queryable._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_QUERYABLE: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_queryable._ext_keyexpr, mapping);
-        } break;
-        case _Z_DECL_TOKEN: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_token._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_TOKEN: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_token._ext_keyexpr, mapping);
-        } break;
-        case _Z_DECL_INTEREST: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_interest._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_INTEREST: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_interest._ext_keyexpr, mapping);
-        } break;
-        default:
-            break;
-    }
-}
+void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping);
 
 _z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);

@@ -161,7 +161,6 @@ int8_t _z_msg_ext_vec_push_callback(_z_msg_ext_t *extension, _z_msg_ext_vec_t *e
     return 0;
 }
 int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
     _z_msg_ext_vec_reset(extensions);
     return _z_msg_ext_decode_iter(zbf, (int8_t(*)(_z_msg_ext_t *, void *))_z_msg_ext_vec_push_callback,
                                   (void *)extensions);
@@ -215,7 +214,6 @@ int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *,
     _Bool has_next = true;
     while (has_next && ret == _Z_RES_OK) {
         _z_msg_ext_t ext = _z_msg_ext_make_unit(0);
-        size_t start = zbf->_ios._r_pos;
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
         if (ret == _Z_RES_OK) {
             ret |= callback(&ext, context);

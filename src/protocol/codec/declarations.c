@@ -147,7 +147,7 @@ int8_t _z_undecl_interest_encode(_z_wbuf_t *wbf, const _z_undecl_interest_t *dec
     return _z_undecl_encode(wbf, _Z_UNDECL_INTEREST_MID, decl->_id, decl->_ext_keyexpr);
 }
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
-    int8_t ret;
+    int8_t ret = _Z_RES_OK;
     switch (decl->_tag) {
         case _Z_DECL_KEXPR: {
             ret = _z_decl_kexpr_encode(wbf, &decl->_body._decl_kexpr);

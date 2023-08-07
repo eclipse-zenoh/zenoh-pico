@@ -127,3 +127,36 @@ _z_undecl_queryable_t _z_undecl_queryable_null(void) { return (_z_undecl_queryab
 _z_undecl_token_t _z_undecl_token_null(void) { return (_z_undecl_token_t){0}; }
 _z_undecl_interest_t _z_undecl_interest_null(void) { return (_z_undecl_interest_t){0}; }
 _z_final_interest_t _z_final_interest_null(void) { return (_z_final_interest_t){0}; }
+void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping) {
+    switch (msg->_tag) {
+        case _Z_DECL_KEXPR: {
+            _z_keyexpr_fix_mapping(&msg->_body._decl_kexpr._keyexpr, mapping);
+        } break;
+        case _Z_DECL_SUBSCRIBER: {
+            _z_keyexpr_fix_mapping(&msg->_body._decl_subscriber._keyexpr, mapping);
+        } break;
+        case _Z_UNDECL_SUBSCRIBER: {
+            _z_keyexpr_fix_mapping(&msg->_body._undecl_subscriber._ext_keyexpr, mapping);
+        } break;
+        case _Z_DECL_QUERYABLE: {
+            _z_keyexpr_fix_mapping(&msg->_body._decl_queryable._keyexpr, mapping);
+        } break;
+        case _Z_UNDECL_QUERYABLE: {
+            _z_keyexpr_fix_mapping(&msg->_body._undecl_queryable._ext_keyexpr, mapping);
+        } break;
+        case _Z_DECL_TOKEN: {
+            _z_keyexpr_fix_mapping(&msg->_body._decl_token._keyexpr, mapping);
+        } break;
+        case _Z_UNDECL_TOKEN: {
+            _z_keyexpr_fix_mapping(&msg->_body._undecl_token._ext_keyexpr, mapping);
+        } break;
+        case _Z_DECL_INTEREST: {
+            _z_keyexpr_fix_mapping(&msg->_body._decl_interest._keyexpr, mapping);
+        } break;
+        case _Z_UNDECL_INTEREST: {
+            _z_keyexpr_fix_mapping(&msg->_body._undecl_interest._ext_keyexpr, mapping);
+        } break;
+        default:
+            break;
+    }
+}

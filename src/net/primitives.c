@@ -316,9 +316,6 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                 z_priority_t priority) {
     int8_t ret = _Z_RES_OK;
-
-    _z_bytes_t pld = {.len = len, .start = payload};                // Payload
-    _Bool can_be_dropped = cong_ctrl == Z_CONGESTION_CONTROL_DROP;  // Congestion control
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
@@ -410,8 +407,6 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
     if (s != NULL) {
         _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
-        _z_zint_t max_samples = 0;  // @TODO: get the correct value for max_sample
-        _Bool is_final = true;
         _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
         if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;

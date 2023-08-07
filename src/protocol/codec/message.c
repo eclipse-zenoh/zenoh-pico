@@ -92,7 +92,6 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     return ret;
 }
 int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
-    int8_t ret = _Z_RES_OK;
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, _z_zint_len(ts->time) + 1 + _z_id_len(ts->id)));
     return _z_timestamp_encode(wbf, ts);
 }
