@@ -153,7 +153,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             uint16_t mapping = entry->_peer_id;
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                __auto_type zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
+                _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
                 _z_msg_fix_mapping(zm, mapping);
                 _z_handle_zenoh_message(ztm->_session, zm, mapping);
             }
