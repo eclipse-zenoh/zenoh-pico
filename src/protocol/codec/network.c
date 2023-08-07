@@ -486,6 +486,7 @@ int8_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg
             return _z_response_final_encode(wbf, &msg->_body._response_final);
         } break;
     }
+    return _Z_ERR_GENERIC;
 }
 int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
     uint8_t header;

@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/transport/utils.h"
 
+#include "zenoh-pico/protocol/core.h"
+
 #define U8_MAX 0xFF
 #define U16_MAX 0xFFFF
 #define U32_MAX 0xFFFFFFFF
@@ -35,7 +37,7 @@ _z_zint_t _z_sn_max(uint8_t bits) {
         } break;
 
         case 0x03: {
-            ret = U64_MAX >> 1;
+            ret = (_z_zint_t)(U64_MAX >> 1);
         } break;
 
         default: {
@@ -64,7 +66,7 @@ _z_zint_t _z_sn_modulo_mask(uint8_t bits) {
         } break;
 
         case 0x03: {
-            ret = U64_MAX >> 1;
+            ret = (_z_zint_t)(U64_MAX >> 1);
         } break;
 
         default: {

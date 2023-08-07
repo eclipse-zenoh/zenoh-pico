@@ -43,7 +43,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                     _z_resource_t *res = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
                     res->_id = decl._decl._body._decl_kexpr._id;
                     res->_key = decl._decl._body._decl_kexpr._keyexpr;
-                    _z_register_resource(zn, res);
+                    ret = _z_register_resource(zn, res);
                 } break;
                 case _Z_UNDECL_KEXPR: {
                     _z_resource_t res = {._id = decl._decl._body._undecl_kexpr._id};
@@ -105,8 +105,8 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                 } break;
                 case _Z_REQUEST_DEL: {
                     _z_msg_del_t del = req._body._del;
-                    int8_t result = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
-                                                             Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
+                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
+                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
                         ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
@@ -124,8 +124,8 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
             switch (response._tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
                     _z_msg_reply_t reply = response._body._reply;
-                    _z_trigger_query_reply_partial(zn, response._request_id, response._key, reply._value.payload,
-                                                   reply._value.encoding, Z_SAMPLE_KIND_PUT, reply._timestamp);
+                    ret = _z_trigger_query_reply_partial(zn, response._request_id, response._key, reply._value.payload,
+                                                         reply._value.encoding, Z_SAMPLE_KIND_PUT, reply._timestamp);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
                     // @TODO: expose errors to the user
@@ -144,8 +144,8 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                 } break;
                 case _Z_RESPONSE_BODY_DEL: {
                     _z_msg_del_t del = response._body._del;
-                    int8_t result = _z_trigger_subscriptions(zn, response._key, _z_bytes_empty(), z_encoding_default(),
-                                                             Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
+                    ret = _z_trigger_subscriptions(zn, response._key, _z_bytes_empty(), z_encoding_default(),
+                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp);
                 } break;
             }
         } break;
