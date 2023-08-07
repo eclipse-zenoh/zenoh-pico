@@ -20,8 +20,19 @@
 #define SSID "SSID"
 #define PASS "PASS"
 
+uint8_t zid_len(z_id_t id) {
+    uint8_t len = 16;
+    while (len > 0) {
+        --len;
+        if (id.id[len] != 0) {
+            ++len;
+            break;
+        }
+    }
+    return len;
+}
 void fprintzid(z_id_t zid) {
-    unsigned int zidlen = _z_id_len(zid);
+    unsigned int zidlen = zid_len(zid);
     if (zidlen == 0) {
         Serial.print("None");
     } else {

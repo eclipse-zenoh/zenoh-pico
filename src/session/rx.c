@@ -46,7 +46,6 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                     ret = _z_register_resource(zn, res);
                 } break;
                 case _Z_UNDECL_KEXPR: {
-                    _z_resource_t res = {._id = decl._decl._body._undecl_kexpr._id};
                     _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
                 } break;
                 case _Z_DECL_SUBSCRIBER: {

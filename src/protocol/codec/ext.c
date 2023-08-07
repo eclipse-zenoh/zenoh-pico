@@ -143,7 +143,7 @@ int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions)
     int8_t ret = _Z_RES_OK;
     size_t len = _z_msg_ext_vec_len(extensions);
     if (len > 0) {
-        int i;
+        size_t i;
         for (i = 0; ret == _Z_RES_OK && i < len - 1; i++) {
             ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(extensions, i), true);
         }
