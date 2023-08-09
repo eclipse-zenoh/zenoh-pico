@@ -126,6 +126,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
         _z_str_array_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.\n");
+        ret = _Z_ERR_GENERIC;
     }
 
     return ret;

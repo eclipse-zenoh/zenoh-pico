@@ -382,6 +382,7 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
     initial_sn_tx = initial_sn_tx & !_z_sn_modulo_mask(Z_SN_RESOLUTION);
 
     _z_conduit_sn_list_t next_sn;
+    next_sn._is_qos = false;
     next_sn._val._plain._best_effort = initial_sn_tx;
     next_sn._val._plain._reliable = initial_sn_tx;
 

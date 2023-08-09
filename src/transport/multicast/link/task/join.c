@@ -21,7 +21,7 @@
 
 int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_conduit_sn_list_t next_sn;
-    next_sn._is_qos = false;  // FIXME: make transport aware of qos configuration
+    next_sn._is_qos = false;
     next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
     next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
 
