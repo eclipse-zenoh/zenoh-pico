@@ -41,6 +41,10 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
     ios->_capacity = capacity;
     ios->_is_alloc = true;
     ios->_buf = (uint8_t *)z_malloc(capacity);
+    if (ios->_buf == NULL) {
+        ios->_capacity = 0;
+        ios->_is_alloc = false;
+    }
 }
 
 _z_iosli_t _z_iosli_make(size_t capacity) {
@@ -257,7 +261,7 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
         // Preallocate 4 slots, this is usually what we expect
         // when fragmenting a zenoh data message with attachment
         wbf._ioss = _z_iosli_vec_make(4);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(Z_IOSLICE_SIZE));
+        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
     } else {
         wbf._ioss = _z_iosli_vec_make(1);
         _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));

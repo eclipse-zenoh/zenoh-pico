@@ -241,7 +241,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     // If the new node has less representing capabilities then it is incompatible to communication
                     if ((t_msg->_body._join._seq_num_res != Z_SN_RESOLUTION) ||
                         (t_msg->_body._join._req_id_res != Z_REQ_RESOLUTION) ||
-                        (t_msg->_body._join._batch_size != Z_BATCH_SIZE)) {
+                        (t_msg->_body._join._batch_size != Z_BATCH_MULTICAST_SIZE)) {
                         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                     }
 
@@ -278,7 +278,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 // Check if the representing capabilities are still the same
                 if ((t_msg->_body._join._seq_num_res != Z_SN_RESOLUTION) ||
                     (t_msg->_body._join._req_id_res != Z_REQ_RESOLUTION) ||
-                    (t_msg->_body._join._batch_size != Z_BATCH_SIZE)) {
+                    (t_msg->_body._join._batch_size != Z_BATCH_MULTICAST_SIZE)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     // TODO: cleanup here should also be done on mappings/subs/etc...
                     break;

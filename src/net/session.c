@@ -43,7 +43,6 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
 #else
     ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 #endif
-
     if (ret == _Z_RES_OK) {
         ret = _z_session_init(zn, &local_zid);
     }

@@ -52,7 +52,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
             err = _z_link_send_wbuf(&zl, wbf);
             if (err == _Z_RES_OK) {
                 // The receiving buffer
-                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE);
+                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
 
                 z_time_t start = z_time_now();
                 while (z_time_elapsed_ms(&start) < period) {
@@ -132,7 +132,7 @@ _z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *lo
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE, false);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_UNICAST_SIZE, false);
 
     // Create and encode the scout message
     _z_scouting_message_t scout = _z_s_msg_make_scout(what, zid);

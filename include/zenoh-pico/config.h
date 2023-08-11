@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_CONFIG_H
-#define ZENOH_PICO_CONFIG_H
+#ifndef INCLUDE_ZENOH_PICO_CONFIG_H
+#define INCLUDE_ZENOH_PICO_CONFIG_H
 
 /*------------------ Runtime configuration properties ------------------*/
 /**
@@ -225,8 +225,14 @@
 /**
  * Defaulf maximum batch size possible to be received or sent.
  */
-#ifndef Z_BATCH_SIZE
-#define Z_BATCH_SIZE 65535
+#ifndef Z_BATCH_UNICAST_SIZE
+#define Z_BATCH_UNICAST_SIZE 65535
+#endif
+/**
+ * Defaulf maximum batch size possible to be received or sent.
+ */
+#ifndef Z_BATCH_MULTICAST_SIZE
+#define Z_BATCH_MULTICAST_SIZE 8192
 #endif
 
 /**
@@ -265,4 +271,4 @@
 #endif
 #endif
 
-#endif /* ZENOH_PICO_CONFIG_H */
+#endif /* INCLUDE_ZENOH_PICO_CONFIG_H */

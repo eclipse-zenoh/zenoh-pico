@@ -869,7 +869,7 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
                 } break;
 
                 default: {
-                    _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
+                    _Z_DEBUG("WARNING: Trying to decode scouting message with unknown ID(0x%x)\n", mid);
                     ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
                     is_last = true;
                 } break;

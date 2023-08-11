@@ -123,7 +123,7 @@ int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         } else {
             msg->_seq_num_res = _Z_DEFAULT_RESOLUTION_SIZE;
             msg->_req_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
-            msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
+            msg->_batch_size = _Z_DEFAULT_MULTICAST_BATCH_SIZE;
         }
     }
     if (ret == _Z_RES_OK) {
@@ -203,7 +203,7 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     } else {
         msg->_seq_num_res = _Z_DEFAULT_RESOLUTION_SIZE;
         msg->_req_id_res = _Z_DEFAULT_RESOLUTION_SIZE;
-        msg->_batch_size = _Z_DEFAULT_BATCH_SIZE;
+        msg->_batch_size = _Z_DEFAULT_UNICAST_BATCH_SIZE;
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
@@ -390,7 +390,7 @@ int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragmen
 int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_fragment_t){0};
-    
+
     _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT\n");
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
@@ -441,31 +441,24 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
         case _Z_MID_T_FRAME: {
             ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
         } break;
-
         case _Z_MID_T_FRAGMENT: {
             ret |= _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
-
         case _Z_MID_T_KEEP_ALIVE: {
             ret |= _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
         } break;
-
         case _Z_MID_T_JOIN: {
             ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
         } break;
-
         case _Z_MID_T_INIT: {
             ret |= _z_init_encode(wbf, msg->_header, &msg->_body._init);
         } break;
-
         case _Z_MID_T_OPEN: {
             ret |= _z_open_encode(wbf, msg->_header, &msg->_body._open);
         } break;
-
         case _Z_MID_T_CLOSE: {
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
         } break;
-
         default: {
             _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
@@ -485,33 +478,27 @@ int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf) 
             case _Z_MID_T_FRAME: {
                 ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_FRAGMENT: {
                 ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_KEEP_ALIVE: {
                 ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_JOIN: {
                 ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_INIT: {
                 ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_OPEN: {
                 ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
             } break;
-
             case _Z_MID_T_CLOSE: {
                 ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
             } break;
-
             default: {
-                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(%d)\n", mid);
+                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)\n", mid,
+                         msg->_header);
                 ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
             } break;
         }

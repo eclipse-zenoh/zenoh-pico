@@ -53,8 +53,8 @@
 //      T Lease period     if T==1 then the lease period is in seconds else in milliseconds
 //      S Size params      if S==1 then size parameters are exchanged
 //      Z Extensions       if Z==1 then Zenoh extensions are present
-#define _Z_FLAG_T_JOIN_T 0x40  // 1 << 6
-#define _Z_FLAG_T_JOIN_S 0x20  // 1 << 5
+#define _Z_FLAG_T_JOIN_T 0x20  // 1 << 5
+#define _Z_FLAG_T_JOIN_S 0x40  // 1 << 6
 
 // Init message flags:
 //      A Ack              if A==1 then the message is an acknowledgment (aka InitAck), otherwise InitSyn

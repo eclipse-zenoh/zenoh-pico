@@ -71,7 +71,7 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
     msg._body._join._lease = lease;
     msg._body._join._seq_num_res = Z_SN_RESOLUTION;
     msg._body._join._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._join._batch_size = Z_BATCH_SIZE;
+    msg._body._join._batch_size = Z_BATCH_MULTICAST_SIZE;
     msg._body._join._next_sn = next_sn;
     msg._body._join._zid = zid;
 
@@ -79,8 +79,8 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_T);
     }
 
-    if ((Z_BATCH_SIZE != _Z_DEFAULT_BATCH_SIZE) || (Z_SN_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE) ||
-        (Z_REQ_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE)) {
+    if ((Z_BATCH_MULTICAST_SIZE != _Z_DEFAULT_MULTICAST_BATCH_SIZE) ||
+        (Z_SN_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE) || (Z_REQ_RESOLUTION != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
     }
 
@@ -101,10 +101,10 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
     msg._body._init._zid = zid;
     msg._body._init._seq_num_res = Z_SN_RESOLUTION;
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._init._batch_size = Z_BATCH_SIZE;
+    msg._body._init._batch_size = Z_BATCH_UNICAST_SIZE;
     _z_bytes_reset(&msg._body._init._cookie);
 
-    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
+    if ((msg._body._init._batch_size != _Z_DEFAULT_UNICAST_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
@@ -123,10 +123,10 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, 
     msg._body._init._zid = zid;
     msg._body._init._seq_num_res = Z_SN_RESOLUTION;
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._init._batch_size = Z_BATCH_SIZE;
+    msg._body._init._batch_size = Z_BATCH_UNICAST_SIZE;
     msg._body._init._cookie = cookie;
 
-    if ((msg._body._init._batch_size != _Z_DEFAULT_BATCH_SIZE) ||
+    if ((msg._body._init._batch_size != _Z_DEFAULT_UNICAST_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);

@@ -17,7 +17,8 @@
 
 #include "zenoh-pico/protocol/core.h"
 
-#define _Z_DEFAULT_BATCH_SIZE 65535
+#define _Z_DEFAULT_UNICAST_BATCH_SIZE 65535
+#define _Z_DEFAULT_MULTICAST_BATCH_SIZE 8192
 #define _Z_DEFAULT_RESOLUTION_SIZE 2
 
 #define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
