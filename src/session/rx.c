@@ -35,14 +35,16 @@
 /*------------------ Handle message ------------------*/
 int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
+
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
+            _Z_DEBUG("Handling _Z_N_DECLARE\n");
             _z_n_msg_declare_t decl = msg->_body._declare;
             switch (decl._decl._tag) {
                 case _Z_DECL_KEXPR: {
                     _z_resource_t *res = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
                     res->_id = decl._decl._body._decl_kexpr._id;
-                    res->_key = decl._decl._body._decl_kexpr._keyexpr;
+                    res->_key = _z_keyexpr_duplicate(decl._decl._body._decl_kexpr._keyexpr);
                     ret = _z_register_resource(zn, res);
                 } break;
                 case _Z_UNDECL_KEXPR: {
@@ -78,6 +80,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
             }
         } break;
         case _Z_N_PUSH: {
+            _Z_DEBUG("Handling _Z_N_PUSH\n");
             _z_n_msg_push_t push = msg->_body._push;
             _z_bytes_t payload = push._body._is_put ? push._body._body._put._payload : _z_bytes_empty();
             _z_encoding_t encoding = push._body._is_put ? push._body._body._put._encoding : z_encoding_default();
@@ -85,6 +88,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
             ret = _z_trigger_subscriptions(zn, push._key, payload, encoding, kind, push._timestamp);
         } break;
         case _Z_N_REQUEST: {
+            _Z_DEBUG("Handling _Z_N_REQUEST\n");
             _z_n_msg_request_t req = msg->_body._request;
             switch (req._tag) {
                 case _Z_REQUEST_QUERY: {
@@ -119,6 +123,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
             }
         } break;
         case _Z_N_RESPONSE: {
+            _Z_DEBUG("Handling _Z_N_RESPONSE\n");
             _z_n_msg_response_t response = msg->_body._response;
             switch (response._tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
@@ -130,7 +135,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
                     // @TODO: expose errors to the user
                     _z_msg_err_t error = response._body._err;
                     _z_bytes_t payload = error._ext_value.payload;
-                    _Z_ERROR("Received Err for query %d: code=%d, message=%.*s\n", response._request_id, error._code,
+                    _Z_ERROR("Received Err for query %zu: code=%d, message=%.*s\n", response._request_id, error._code,
                              payload.len, payload.start);
                 } break;
                 case _Z_RESPONSE_BODY_ACK: {
@@ -149,6 +154,7 @@ int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16
             }
         } break;
         case _Z_N_RESPONSE_FINAL: {
+            _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL\n");
             _z_zint_t id = msg->_body._response_final._request_id;
             _z_trigger_query_reply_final(zn, id);
         } break;

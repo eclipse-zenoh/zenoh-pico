@@ -268,7 +268,7 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
     }
     wbf._w_idx = 0;  // This __must__ come after adding ioslices to reset w_idx
     wbf._r_idx = 0;
-    wbf._is_expandable = is_expandable;
+    wbf._expansion_step = is_expandable ? capacity : 0;
     wbf._capacity = capacity;
 
     return wbf;
@@ -361,8 +361,8 @@ int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     size_t writable = _z_iosli_writable(ios);
     if (writable >= (size_t)1) {
         _z_iosli_write(ios, b);
-    } else if (wbf->_is_expandable == true) {
-        ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
+    } else if (wbf->_expansion_step != 0) {
+        ios = __z_wbuf_new_iosli(wbf->_expansion_step);
         _z_wbuf_add_iosli(wbf, ios);
         _z_iosli_write(ios, b);
     } else {
@@ -382,12 +382,12 @@ int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, siz
     size_t writable = _z_iosli_writable(ios);
     if (writable >= llength) {
         _z_iosli_write_bytes(ios, bs, loffset, llength);
-    } else if (wbf->_is_expandable == true) {
+    } else if (wbf->_expansion_step != 0) {
         _z_iosli_write_bytes(ios, bs, loffset, writable);
         llength = llength - writable;
         loffset = loffset + writable;
         while (llength > (size_t)0) {
-            ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
+            ios = __z_wbuf_new_iosli(wbf->_expansion_step);
             _z_wbuf_add_iosli(wbf, ios);
 
             writable = _z_iosli_writable(ios);
@@ -530,7 +530,7 @@ void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src) {
     dst->_capacity = src->_capacity;
     dst->_r_idx = src->_r_idx;
     dst->_w_idx = src->_w_idx;
-    dst->_is_expandable = src->_is_expandable;
+    dst->_expansion_step = src->_expansion_step;
     _z_iosli_vec_copy(&dst->_ioss, &src->_ioss);
 }
 

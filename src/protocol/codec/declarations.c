@@ -34,7 +34,7 @@
 #include "zenoh-pico/system/platform.h"
 
 int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_next_ext) {
-    uint8_t header = _Z_MSG_EXT_ENC_ZBUF | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
+    uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     uint32_t kelen = _z_keyexpr_has_suffix(ke) ? strlen(ke._suffix) : 0;
     header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
@@ -189,6 +189,7 @@ int8_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t heade
     *decl = _z_decl_kexpr_null();
     _Z_RETURN_IF_ERR(_z_zint16_decode(&decl->_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&decl->_keyexpr, zbf, _Z_HAS_FLAG(header, _Z_DECL_KEXPR_FLAG_N)));
+    _z_keyexpr_set_mapping(&decl->_keyexpr, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x15));
@@ -208,7 +209,7 @@ int8_t _z_undecl_kexpr_decode(_z_undecl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t h
 int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_keyexpr_t *ke = (_z_keyexpr_t *)ctx;
     switch (extension->_header) {
-        case _Z_MSG_EXT_ENC_ZBUF | 0x0f: {
+        case _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f: {
             _z_zbuf_t _zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;

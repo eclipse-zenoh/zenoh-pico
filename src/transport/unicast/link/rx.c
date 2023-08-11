@@ -116,6 +116,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
 
             // Handle all the zenoh message, one by one
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            _Z_INFO("Z_FRAME contained %ld messages\n", len);
             for (size_t i = 0; i < len; i++) {
                 _z_handle_zenoh_message(ztu->_session,
                                         (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i),

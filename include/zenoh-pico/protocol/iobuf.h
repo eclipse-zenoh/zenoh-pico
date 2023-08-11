@@ -97,7 +97,7 @@ typedef struct {
     size_t _r_idx;
     size_t _w_idx;
     size_t _capacity;
-    _Bool _is_expandable;
+    size_t _expansion_step;
 } _z_wbuf_t;
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable);

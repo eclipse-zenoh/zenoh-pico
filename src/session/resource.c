@@ -50,6 +50,8 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uint16_t mapping, 
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
+        _Z_DEBUG("Checking ressource %d on mapping 0x%x: %d %s\n", r->_id, _z_keyexpr_mapping_id(&r->_key), r->_key._id,
+                 r->_key._suffix);
         if (r->_id == id && _z_keyexpr_mapping_id(&r->_key) == mapping) {
             ret = r;
             break;
@@ -215,9 +217,9 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 int8_t _z_register_resource(_z_session_t *zn, _z_resource_t *res) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG(">>> Allocating res decl for (%ju,%u:%s)\n", (uintmax_t)res->_id, (unsigned int)res->_key._id,
-             res->_key._suffix);
     uint16_t mapping = _z_keyexpr_mapping_id(&res->_key);
+    _Z_DEBUG(">>> Allocating res decl for (%ju,%u:%s) on mapping 0x%x\n", (uintmax_t)res->_id,
+             (unsigned int)res->_key._id, res->_key._suffix, mapping);
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1

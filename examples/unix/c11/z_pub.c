@@ -16,17 +16,20 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#include "zenoh-pico/system/platform.h"
+
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
-    const char *value = "Pub from Pico!";
+    char *value = "Pub from Pico!";
     const char *mode = "client";
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -39,6 +42,15 @@ int main(int argc, char **argv) {
                 break;
             case 'm':
                 mode = optarg;
+                break;
+            case 'l':
+                opt = atoi(optarg);
+                value = z_malloc(opt + 1);
+                memset(value, 'A', opt);
+                value[opt] = 0;
+                for (int i = opt - 1; opt > 0; i--, opt /= 10) {
+                    value[i] = '0' + (opt % 10);
+                }
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
@@ -78,10 +90,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char *buf = (char *)malloc(256);
+    char *buf = value;  // (char *)malloc(256);
     for (int idx = 0; 1; ++idx) {
         sleep(1);
-        snprintf(buf, 256, "[%4d] %s", idx, value);
+        (void)idx;
+        // snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();

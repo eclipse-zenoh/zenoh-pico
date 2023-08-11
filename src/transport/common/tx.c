@@ -14,7 +14,9 @@
 
 #include "zenoh-pico/transport/link/tx.h"
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Transmission helper ------------------*/
@@ -101,3 +103,31 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     return ret;
 }
 #endif  // Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
+int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn) {
+    int8_t ret = _Z_RES_OK;
+
+    // Assume first that this is not the final fragment
+    _Bool is_final = false;
+    do {
+        size_t w_pos = _z_wbuf_get_wpos(dst);  // Mark the buffer for the writing operation
+
+        _z_transport_message_t f_hdr = _z_t_msg_make_frame_header(sn, reliability == Z_RELIABILITY_RELIABLE);
+        ret = _z_transport_message_encode(dst, &f_hdr);  // Encode the frame header
+        if (ret == _Z_RES_OK) {
+            size_t space_left = _z_wbuf_space_left(dst);
+            size_t bytes_left = _z_wbuf_len(src);
+
+            if ((is_final == false) && (bytes_left <= space_left)) {  // Check if it is really the final fragment
+                _z_wbuf_set_wpos(dst, w_pos);                         // Revert the buffer
+                is_final = true;  // It is really the finally fragment, reserialize the header
+                continue;
+            }
+
+            size_t to_copy = (bytes_left <= space_left) ? bytes_left : space_left;  // Compute bytes to write
+            ret = _z_wbuf_siphon(dst, src, to_copy);                                // Write the fragment
+        }
+        break;
+    } while (1);
+
+    return ret;
+}

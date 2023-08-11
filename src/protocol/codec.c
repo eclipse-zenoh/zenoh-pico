@@ -295,8 +295,9 @@ int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
 int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     int8_t ret = _Z_RES_OK;
 
-    if ((wbf->_is_expandable == true) && (bs->len > Z_TSID_LENGTH)) {
-        ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
+    if ((wbf->_expansion_step = true) && (bs->len > Z_TSID_LENGTH)) {
+        // ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     } else {
         ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     }

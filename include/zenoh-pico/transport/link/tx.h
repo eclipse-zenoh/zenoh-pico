@@ -21,6 +21,8 @@
 
 void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
+/*This function is unsafe because it operates in potentially concurrent
+        data.*Make sure that the following mutexes are locked before calling this function : *-ztu->mutex_tx */
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
