@@ -35,6 +35,8 @@
 #include "zenoh-pico/system/platform/arduino/opencr.h"
 #elif defined(ZENOH_EMSCRIPTEN)
 #include "zenoh-pico/system/platform/emscripten.h"
+#elif defined(ZENOH_FREERTOS_PLUS_TCP)
+#include "zenoh-pico/system/platform/freertos_plus_tcp.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"
