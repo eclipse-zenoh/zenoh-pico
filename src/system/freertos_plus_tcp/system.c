@@ -64,7 +64,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
 
-unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(instant) * 1000; }
+unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_clock_elapsed_ms(instant) / 1000; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return xTaskGetTickCount(); }
