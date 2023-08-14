@@ -44,10 +44,6 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
         if (FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_RCVTIMEO, &receive_timeout, 0) != 0) {
             ret = _Z_ERR_GENERIC;
         }
-
-        if (ret != _Z_RES_OK) {
-            FreeRTOS_closesocket(sock->_socket);
-        }
     } else {
         ret = _Z_ERR_GENERIC;
     }
