@@ -9,7 +9,7 @@ typedef TickType_t z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
         Socket_t _socket;
 #endif
     };
