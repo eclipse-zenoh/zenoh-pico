@@ -15,6 +15,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/utils/logging.h"
@@ -111,7 +112,8 @@ int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_rel
     do {
         size_t w_pos = _z_wbuf_get_wpos(dst);  // Mark the buffer for the writing operation
 
-        _z_transport_message_t f_hdr = _z_t_msg_make_frame_header(sn, reliability == Z_RELIABILITY_RELIABLE);
+        _z_transport_message_t f_hdr =
+            _z_t_msg_make_fragment_header(sn, reliability == Z_RELIABILITY_RELIABLE, is_final);
         ret = _z_transport_message_encode(dst, &f_hdr);  // Encode the frame header
         if (ret == _Z_RES_OK) {
             size_t space_left = _z_wbuf_space_left(dst);

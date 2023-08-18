@@ -1,5 +1,6 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/utils/logging.h"
 
 void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg) {}
@@ -218,10 +219,13 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 }
 
 /*------------------ Fragment Message ------------------*/
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, _Bool is_reliable, _Bool is_last) {
+    return _z_t_msg_make_fragment(sn, _z_bytes_empty(), is_reliable, is_last);
+}
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_bytes_t payload, _Bool is_reliable, _Bool is_last) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
-    if (is_last == true) {
+    if (is_last == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_M);
     }
     if (is_reliable == true) {

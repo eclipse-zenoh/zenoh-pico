@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/codec/network.h"
@@ -380,7 +381,7 @@ int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragmen
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
-    if (ret == _Z_RES_OK) {
+    if (ret == _Z_RES_OK && _z_bytes_check(msg->_payload)) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_payload))
     }
 
@@ -398,7 +399,8 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
     }
 
-    ret |= _z_bytes_decode(&msg->_payload, zbf);
+    __auto_type bytes = _z_bytes_wrap((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
+    _z_bytes_copy(&msg->_payload, &bytes);
 
     return ret;
 }

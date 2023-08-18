@@ -183,6 +183,7 @@ size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._capacity; }
 
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf->_ios); }
 
+uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) { return _z_ptr_u8_offset(zbf->_ios._buf, zbf->_ios._r_pos); }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
 _Bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }

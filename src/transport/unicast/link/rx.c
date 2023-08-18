@@ -20,6 +20,7 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -127,7 +128,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
 
         case _Z_MID_T_FRAGMENT: {
-            _Z_INFO("Received Z_FRAGMENT message\n");
+            _Z_INFO("Received Z_FRAGMENT message, len: %ld\n", t_msg->_body._fragment._payload.len);
 
             _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &ztu->_dbuf_reliable
@@ -158,6 +159,8 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     _z_handle_zenoh_message(ztu->_session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
                                         // zenoh messages are released when their transport message is released.
+                } else {
+                    _Z_DEBUG("Failed to decode defragmented message\n");
                 }
 
                 // Free the decoding buffer

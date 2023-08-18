@@ -3,6 +3,6 @@ prefix=/usr/local
 Name: zenohpico
 Description: 
 URL: 
-Version: 0.10.20230811dev
+Version: 0.10.20230818dev
 Cflags: -I${prefix}/
 Libs: -L${prefix}/ -lzenohpico

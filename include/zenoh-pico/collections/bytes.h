@@ -34,6 +34,7 @@ typedef struct {
 } _z_bytes_t;
 
 _z_bytes_t _z_bytes_empty(void);
+inline static _Bool _z_bytes_check(_z_bytes_t value) { return value.start != NULL; }
 int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity);
 _z_bytes_t _z_bytes_make(size_t capacity);
 _z_bytes_t _z_bytes_wrap(const uint8_t *bs, size_t len);
