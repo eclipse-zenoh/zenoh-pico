@@ -113,7 +113,35 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
                     ztm->_transmitted = true;  // Mark the session that we have transmitted data
                 }
             } else {
-                // TODO[protocol]: Fragmentation goes here
+                // The message does not fit in the current batch, let's fragment it
+                // Create an expandable wbuf for fragmentation
+                _z_wbuf_t fbf = _z_wbuf_make(ztm->_wbuf._capacity - 12, true);
+
+                ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
+                if (ret == _Z_RES_OK) {
+                    _Bool is_first = true;  // Fragment and send the message
+                    while (_z_wbuf_len(&fbf) > 0) {
+                        if (is_first == false) {  // Get the fragment sequence number
+                            sn = __unsafe_z_multicast_get_sn(ztm, reliability);
+                        }
+                        is_first = false;
+
+                        // Clear the buffer for serialization
+                        __unsafe_z_prepare_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
+
+                        // Serialize one fragment
+                        ret = __unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn);
+                        if (ret == _Z_RES_OK) {
+                            // Write the message length in the reserved space if needed
+                            __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
+
+                            ret = _z_link_send_wbuf(&ztm->_link, &ztm->_wbuf);  // Send the wbuf on the socket
+                            if (ret == _Z_RES_OK) {
+                                ztm->_transmitted = true;  // Mark the session that we have transmitted data
+                            }
+                        }
+                    }
+                }
             }
         }
 

@@ -21,6 +21,7 @@
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -90,7 +91,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
     } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
 
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode\n");
+        _Z_DEBUG(">> \t transport_message_decode: %ld\n", _z_zbuf_len(&ztm->_zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
 

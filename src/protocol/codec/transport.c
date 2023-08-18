@@ -401,6 +401,7 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
 
     __auto_type bytes = _z_bytes_wrap((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
     _z_bytes_copy(&msg->_payload, &bytes);
+    zbf->_ios._r_pos = zbf->_ios._w_pos;
 
     return ret;
 }
