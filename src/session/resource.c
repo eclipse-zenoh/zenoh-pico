@@ -83,7 +83,7 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
 }
 
 _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
-    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = NULL};
+    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = NULL, ._mapping = _z_keyexpr_mapping(0, true)};
 
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left

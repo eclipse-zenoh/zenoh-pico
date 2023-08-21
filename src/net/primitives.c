@@ -385,8 +385,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
             _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
-            _z_keyexpr_t k = _z_keyexpr_duplicate(keyexpr);
-            _z_zenoh_message_t z_msg = _z_msg_make_query(&k, &params, pq->_id, pq->_consolidation, &value);
+            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value);
 
             if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);

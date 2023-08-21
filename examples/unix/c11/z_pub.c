@@ -24,12 +24,14 @@
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
-    char *value = "Pub from Pico!";
+    char *const default_value = "Pub from Pico!";
+    char *value = default_value;
     const char *mode = "client";
     char *locator = NULL;
+    int n = 10;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -51,6 +53,9 @@ int main(int argc, char **argv) {
                 for (int i = opt - 1; opt > 0; i--, opt /= 10) {
                     value[i] = '0' + (opt % 10);
                 }
+                break;
+            case 'n':
+                n = atoi(optarg);
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
@@ -90,16 +95,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char *buf = value;  // (char *)malloc(256);
-    for (int idx = 0; 1; ++idx) {
+    for (int idx = 0; idx < n; ++idx) {
         sleep(1);
         (void)idx;
         // snprintf(buf, 256, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
+        z_publisher_put(z_loan(pub), (const uint8_t *)value, strlen(value), &options);
     }
 
     z_undeclare_publisher(z_move(pub));
@@ -110,6 +114,8 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
 
-    free(buf);
+    if (value != default_value) {
+        free(value);
+    }
     return 0;
 }
