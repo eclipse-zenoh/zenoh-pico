@@ -16,6 +16,8 @@
 
 #include <stddef.h>
 
+#include <cstdint>
+
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -176,7 +178,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.kind = kind;
         s.timestamp = timestamp;
         _z_subscription_sptr_list_t *xs = subs;
-        _Z_DEBUG("Triggering %ld subs\n", _z_subscription_sptr_list_len(xs));
+        _Z_DEBUG("Triggering %zd subs\n", (uintmax_t)_z_subscription_sptr_list_len(xs));
         while (xs != NULL) {
             _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
             sub->ptr->_callback(&s, sub->ptr->_arg);
