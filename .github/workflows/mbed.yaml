@@ -15,129 +15,128 @@ name: mbed
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ["**"]
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
 
 jobs:
   build:
-
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install requirements
-      run: |
-        echo "No requirements need to be installed"
+      - name: Install requirements
+        run: |
+          echo "No requirements need to be installed"
 
-    - name: Install PlatformIO
-      run: |
-        python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
-        . $HOME/.platformio/penv/bin/activate
-        platformio update
+      - name: Install PlatformIO
+        run: |
+          python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py)"
+          . $HOME/.platformio/penv/bin/activate
+          platformio update
 
-    - name: Set up project
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Set up project
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        mkdir -p $MBED_BASE
-        cd $MBED_BASE
-        pio init -b nucleo_f767zi --project-option="framework=mbed" --project-option="build_flags=-DZ_LINK_SERIAL=1 -DZENOH_DEBUG=3"
+          mkdir -p $MBED_BASE
+          cd $MBED_BASE
+          pio init -b nucleo_f767zi --project-option="framework=mbed" --project-option="build_flags=-DZ_LINK_SERIAL=1 -DZENOH_DEBUG=3"
 
-        cd $MBED_BASE/lib
-        ln -s $ZENOH_PICO_BASE
+          cd $MBED_BASE/lib
+          ln -s $ZENOH_PICO_BASE
 
-        cd $MBED_BASE
+          cd $MBED_BASE
 
-    - name: Build z_pub example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_pub example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_pub.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_pub.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
 
-    - name: Build z_sub example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_sub example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_sub.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_sub.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
 
-    - name: Build z_pull example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_pull example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_pull.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_pull.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
 
-    - name: Build z_get example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_get example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_get.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_get.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
 
-    - name: Build z_queryable example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_queryable example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_queryable.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_queryable.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
 
-    - name: Build z_scout example
-      run: |
-        cd $HOME
-        export MBED_BASE=$HOME/work/mbedproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_scout example
+        run: |
+          cd $HOME
+          export MBED_BASE=$HOME/work/mbedproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $MBED_BASE/src/*
-        cd $MBED_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/mbed/z_scout.cpp
+          rm -rf $MBED_BASE/src/*
+          cd $MBED_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/mbed/z_scout.cpp
 
-        cd $MBED_BASE
-        platformio run
+          cd $MBED_BASE
+          platformio run
