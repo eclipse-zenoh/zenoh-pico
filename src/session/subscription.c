@@ -15,8 +15,7 @@
 #include "zenoh-pico/session/subscription.h"
 
 #include <stddef.h>
-
-#include <cstdint>
+#include <stdint.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
