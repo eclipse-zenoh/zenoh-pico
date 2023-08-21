@@ -85,7 +85,7 @@ size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
     assert(_z_iosli_writable(ios) >= (size_t)1);
     ios->_buf[ios->_w_pos] = b;
-    ios->_w_pos = ios->_w_pos + 1;
+    ios->_w_pos += 1;
 }
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
@@ -356,21 +356,22 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
 }
 
 int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
-    int8_t ret = _Z_RES_OK;
-
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
-    if (writable >= (size_t)1) {
-        _z_iosli_write(ios, b);
-    } else if (wbf->_expansion_step != 0) {
-        ios = __z_wbuf_new_iosli(wbf->_expansion_step);
-        _z_wbuf_add_iosli(wbf, ios);
-        _z_iosli_write(ios, b);
-    } else {
-        ret = _Z_ERR_TRANSPORT_NO_SPACE;
+    if (writable == (size_t)0) {
+        wbf->_w_idx += 1;
+        if (wbf->_ioss._len <= wbf->_w_idx) {
+            if (wbf->_expansion_step != 0) {
+                ios = __z_wbuf_new_iosli(wbf->_expansion_step);
+                _z_iosli_vec_append(&wbf->_ioss, ios);
+            } else {
+                return _Z_ERR_TRANSPORT_NO_SPACE;
+            }
+        }
+        ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     }
-
-    return ret;
+    _z_iosli_write(ios, b);
+    return _Z_RES_OK;
 }
 
 int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
@@ -540,7 +541,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf) {
     wbf->_w_idx = 0;
 
     // Reset to default iosli allocation
-    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++) {
+    for (size_t i = 0; i < _z_iosli_vec_len(&wbf->_ioss); i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         if (ios->_is_alloc == false) {
             _z_iosli_vec_remove(&wbf->_ioss, i);

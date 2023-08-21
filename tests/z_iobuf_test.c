@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -437,13 +438,15 @@ void wbuf_put_zbuf_get(void) {
 
 void wbuf_reusable_write_zbuf_read(void) {
     _z_wbuf_t wbf = gen_wbuf(128);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 1; i <= 10; i++) {
         size_t len = z_random_u8() % 128;
-        printf("\n>>> WBuf => Write and Read\n");
+        printf("\n>>> WBuf => Write and Read round %d\n", i);
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);
         for (size_t z = 0; z < len; z++) {
-            _z_wbuf_write(&wbf, z % (uint8_t)255);
+            size_t prev_len = _z_wbuf_len(&wbf);
+            assert(_z_wbuf_write(&wbf, z % (uint8_t)255) == 0);
+            assert(_z_wbuf_len(&wbf) == prev_len + 1);
         }
 
         printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
