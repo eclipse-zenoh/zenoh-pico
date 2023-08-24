@@ -305,6 +305,7 @@ int main(int argc, char **argv) {
 
     printf("Undeclaring Keyexpr...");
     _ret_int8 = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
+    printf(" %02x\n", _ret_int8);
     assert(_ret_int8 == 0);
     assert(!z_check(_ret_expr));
     printf("Ok\n");

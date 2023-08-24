@@ -54,25 +54,18 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
 
     if (zn->_tp._type ==
         _Z_TRANSPORT_UNICAST_TYPE) {  // FIXME: remove when resource declaration is implemented for multicast transport
-
-        _z_resource_t *r = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
-        if (r != NULL) {
-            r->_id = _z_get_resource_id(zn);
-            r->_key = _z_keyexpr_duplicate(keyexpr);
-            if (_z_register_resource(zn, r) == _Z_RES_OK) {
-                // Build the declare message to send on the wire
-                _z_keyexpr_t alias = _z_keyexpr_alias(r->_key);
-                _z_declaration_t declaration = _z_make_decl_keyexpr(r->_id, &alias);
-                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
-                    ret = r->_id;
-                } else {
-                    _z_unregister_resource(zn, r->_id, _z_keyexpr_mapping_id(&keyexpr));
-                }
-                _z_n_msg_clear(&n_msg);
+        uint16_t id = _z_register_resource(zn, keyexpr, 0, _Z_KEYEXPR_MAPPING_LOCAL);
+        if (id != 0) {
+            // Build the declare message to send on the wire
+            _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
+            _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
+            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+                ret = id;
             } else {
-                _z_resource_free(&r);
+                _z_unregister_resource(zn, id, _Z_KEYEXPR_MAPPING_LOCAL);
             }
+            _z_n_msg_clear(&n_msg);
         }
     }
 

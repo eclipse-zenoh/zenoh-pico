@@ -31,6 +31,8 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
@@ -818,8 +820,17 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
 #endif  // Z_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
+            char *wild = strpbrk(keyexpr._suffix, "*$");
+            if (wild != NULL) {
+                size_t len = wild - keyexpr._suffix;
+                char *suffix = z_malloc(len + 1);
+                memcpy(suffix, keyexpr._suffix, len);
+                suffix[len] = 0;
+                keyexpr._suffix = suffix;
+                _z_keyexpr_set_owns_suffix(&keyexpr, true);
+            }
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
-            key = _z_rid_with_suffix(id, NULL);
+            key = _z_rid_with_suffix(id, wild);
         }
 #if Z_MULTICAST_TRANSPORT == 1
     }

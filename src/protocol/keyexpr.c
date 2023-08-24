@@ -45,6 +45,10 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
     return dst;
 }
 
+_z_keyexpr_t _z_keyexpr_to_owned(_z_keyexpr_t src) {
+    return _z_keyexpr_owns_suffix(&src) ? src : _z_keyexpr_duplicate(src);
+}
+
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
