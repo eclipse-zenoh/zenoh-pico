@@ -31,6 +31,8 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ Scouting ------------------*/
 void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const uint32_t timeout,
@@ -74,8 +76,8 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
 
 int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     int8_t ret = _Z_RES_OK;
-
-    _z_resource_t *r = _z_get_resource_by_id(zn, _Z_RESOURCE_IS_LOCAL, rid);
+    _Z_DEBUG("Undeclaring local keyexpr %d\n", rid);
+    _z_resource_t *r = _z_get_resource_by_id(zn, _Z_KEYEXPR_MAPPING_LOCAL, rid);
     if (r != NULL) {
         // Build the declare message to send on the wire
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
@@ -113,7 +115,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
 }
 
 int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
-    int8_t ret = _Z_ERR_GENERIC;
+    int8_t ret = _Z_RES_OK;
 
     if (pub != NULL) {
         // Build the declare message to send on the wire
@@ -232,7 +234,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
 }
 
 int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
-    int8_t ret = _Z_ERR_GENERIC;
+    int8_t ret = _Z_RES_OK;
 
     if (qle != NULL) {
         _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
@@ -244,7 +246,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
                 // Only if message is successfully send, local queryable state can be removed
                 _z_unregister_questionable(qle->_zn, q);
             } else {
-                ret = _Z_ERR_ENTITY_UNKNOWN;
+                ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }
             _z_n_msg_clear(&n_msg);
 

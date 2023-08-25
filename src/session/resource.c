@@ -228,24 +228,29 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
 #endif  // Z_MULTI_THREAD == 1
 
     if (key._id != Z_RESOURCE_ID_NONE) {
-        if (parent_mapping == mapping || parent_mapping == _Z_KEYEXPR_MAPPING_LOCAL) {
-            _z_resource_t *parent = __unsafe_z_get_resource_by_id(zn, mapping, key._id);
+        if (parent_mapping == mapping) {
+            _z_resource_t *parent = __unsafe_z_get_resource_by_id(zn, parent_mapping, key._id);
             parent->_refcount++;
         } else {
             key = __unsafe_z_get_expanded_key_from_key(zn, &key);
         }
     }
-    _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
-    if ((key._suffix != NULL || mapping != _Z_KEYEXPR_MAPPING_LOCAL) && res != NULL) {
-        res->_refcount = 1;
-        res->_key = _z_keyexpr_to_owned(key);
-        ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
-        res->_id = ret;
-        // Register the resource
-        if (mapping == _Z_KEYEXPR_MAPPING_LOCAL) {
-            zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
+    ret = key._id;
+    if ((key._suffix != NULL)) {
+        _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
+        if (res == NULL) {
+            ret = Z_RESOURCE_ID_NONE;
         } else {
-            zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
+            res->_refcount = 1;
+            res->_key = _z_keyexpr_to_owned(key);
+            ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
+            res->_id = ret;
+            // Register the resource
+            if (mapping == _Z_KEYEXPR_MAPPING_LOCAL) {
+                zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
+            } else {
+                zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
+            }
         }
     } else {
         ret = Z_RESOURCE_ID_NONE;
@@ -260,18 +265,21 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
 
 void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
+    _Z_DEBUG("unregistering: id %d, mapping: %d\n", id, mapping);
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
+    _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &zn->_remote_resources;
     while (id != 0) {
-        _z_resource_list_t **list = is_local ? &zn->_local_resources : &zn->_remote_resources;
-        _z_resource_list_t *tail = *list;
-        while (list) {
-            _z_resource_t *head = _z_resource_list_head(tail);
+        _z_resource_list_t *parent = *parent_mut;
+        while (parent != NULL) {
+            _z_resource_t *head = _z_resource_list_head(parent);
+            _Z_DEBUG("unreg check: id %d, mapping: %d, refcount: %d\n", head->_id, _z_keyexpr_mapping_id(&head->_key),
+                     head->_refcount);
             if (head && head->_id == id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
                 head->_refcount--;
                 if (head->_refcount == 0) {
-                    *list = _z_resource_list_pop(*list, &head);
+                    *parent_mut = _z_resource_list_pop(parent, &head);
                     id = head->_key._id;
                     mapping = _z_keyexpr_mapping_id(&head->_key);
                     _z_resource_free(&head);
@@ -280,7 +288,8 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
                 }
                 break;
             }
-            tail = _z_resource_list_tail(tail);
+            parent_mut = &parent->_tail;
+            parent = *parent_mut;
         }
     }
 #if Z_MULTI_THREAD == 1
@@ -288,20 +297,17 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
 #endif  // Z_MULTI_THREAD == 1
 }
 
+_Bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, const _z_resource_t *ctx) {
+    uint16_t mapping = ctx->_id;
+    return _z_keyexpr_mapping_id(&candidate->_key) == mapping;
+}
 void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping) {
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
-    _z_resource_list_t *list = zn->_remote_resources;
-    while (list) {
-        _z_resource_t *head = _z_resource_list_head(list);
-        if (head && _z_keyexpr_mapping_id(&head->_key) == mapping) {
-            _z_resource_list_pop(list, &head);
-            _z_resource_free(&head);
-        } else {
-            list = _z_resource_list_tail(list);
-        }
-    }
+    _z_resource_t ctx = {._id = mapping, ._refcount = 0, ._key = {0}};
+    zn->_remote_resources =
+        _z_resource_list_drop_filter(zn->_remote_resources, _z_unregister_resource_for_peer_filter, &ctx);
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
