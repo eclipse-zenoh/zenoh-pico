@@ -940,13 +940,14 @@ z_query_reply_options_t z_query_reply_options_default(void) {
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {
+    z_query_reply_options_t opts = options == NULL ? z_query_reply_options_default() : *options;
     _z_value_t value = {.payload =
                             {
                                 .start = payload,
                                 ._is_alloc = false,
                                 .len = payload_len,
                             },
-                        .encoding = {.prefix = options->encoding.prefix, .suffix = options->encoding.suffix}};
+                        .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
     return _z_send_reply(query, keyexpr, value);
 }
 
