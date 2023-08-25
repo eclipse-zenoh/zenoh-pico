@@ -31,8 +31,8 @@
 
 #define assert_eq(x, y)                                     \
     {                                                       \
-        int8_t l = x;                                       \
-        int8_t r = y;                                       \
+        int l = (int)x;                                     \
+        int r = (int)y;                                     \
         if (l != r) {                                       \
             printf("assert_eq failed: l=%d, r=%d\n", l, r); \
             assert(false);                                  \
