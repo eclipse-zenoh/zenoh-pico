@@ -1,0 +1,41 @@
+#
+# Copyright (c) 2023 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   Błażej Sowa, <blazej@fictionlab.pl>
+#
+name: freertos_plus_tcp
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: jwlawson/actions-setup-cmake@v1.13
+    - name: Install requirements
+      run: |
+        sudo apt update
+        sudo apt install -y ninja-build libslirp-dev
+    - name: Build examples
+      run: |
+        cd examples/freertos_plus_tcp
+        cmake -Bbuild -G"Ninja Multi-Config"
+        cmake --build ./build --config Debug
