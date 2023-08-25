@@ -117,7 +117,6 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
 
             // Handle all the zenoh message, one by one
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
-            _Z_INFO("Z_FRAME contained %ld messages\n", len);
             for (size_t i = 0; i < len; i++) {
                 _z_handle_zenoh_message(ztu->_session,
                                         (_z_zenoh_message_t *)_z_vec_get(&t_msg->_body._frame._messages, i),
@@ -128,8 +127,6 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
 
         case _Z_MID_T_FRAGMENT: {
-            _Z_INFO("Received Z_FRAGMENT message, len: %ld\n", t_msg->_body._fragment._payload.len);
-
             _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &ztu->_dbuf_reliable
                                   : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
