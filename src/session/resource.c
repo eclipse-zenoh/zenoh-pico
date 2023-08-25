@@ -52,8 +52,6 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uint16_t mapping, 
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        _Z_DEBUG("Checking ressource %d on mapping 0x%x: %d %s\n", r->_id, _z_keyexpr_mapping_id(&r->_key), r->_key._id,
-                 r->_key._suffix);
         if (r->_id == id && _z_keyexpr_mapping_id(&r->_key) == mapping) {
             ret = r;
             break;
@@ -190,6 +188,9 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+    if (keyexpr->_suffix == NULL) {
+        return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
+    }
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
@@ -252,8 +253,6 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
                 zn->_remote_resources = _z_resource_list_push(zn->_remote_resources, res);
             }
         }
-    } else {
-        ret = Z_RESOURCE_ID_NONE;
     }
 
 #if Z_MULTI_THREAD == 1
@@ -274,8 +273,6 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
         _z_resource_list_t *parent = *parent_mut;
         while (parent != NULL) {
             _z_resource_t *head = _z_resource_list_head(parent);
-            _Z_DEBUG("unreg check: id %d, mapping: %d, refcount: %d\n", head->_id, _z_keyexpr_mapping_id(&head->_key),
-                     head->_refcount);
             if (head && head->_id == id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
                 head->_refcount--;
                 if (head->_refcount == 0) {
