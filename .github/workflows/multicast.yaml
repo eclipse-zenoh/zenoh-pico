@@ -15,34 +15,34 @@ name: multicast
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ["**"]
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
   schedule:
-    - cron: '0 6 * * 1-5'
+    - cron: "0 6 * * 1-5"
 
 jobs:
   build:
-
     name: Build on macOS-latest
     runs-on: macOS-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ macOS-latest ]
+        os: [macOS-latest]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Compile debug
-      run: make all
-      env:
-        BUILD_TYPE: Debug
-        BUILD_TESTING: OFF
-        BUILD_MULTICAST: ON
-        BUILD_INTEGRATION: OFF
+      - name: Compile debug
+        run: make all
+        env:
+          BUILD_TYPE: Debug
+          BUILD_TESTING: OFF
+          BUILD_MULTICAST: ON
+          BUILD_INTEGRATION: OFF
+          ZENOH_BRANCH: new-protocol
 
-    - name: Test debug
-      run: make test
-      env:
-        ARGS: -V
+      - name: Test debug
+        run: make test
+        env:
+          ARGS: -V
