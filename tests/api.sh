@@ -14,7 +14,7 @@
 #
 
 TESTBIN="$1"
-TESTDIR=$(realpath $(dirname "$0"))
+TESTDIR=$(dirname "$0")
 
 if [ "$OSTYPE" = "msys" ]; then
   TESTBIN="$TESTDIR/Debug/$TESTBIN.exe"
