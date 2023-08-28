@@ -56,6 +56,7 @@ target_compile_definitions(zenohpico
     Z_SCOUTING_UDP=1
     Z_LINK_UDP_UNICAST=1
     Z_LINK_UDP_MULTICAST=0
+    Z_CONFIG_SOCKET_TIMEOUT=1000
 )    
 
 add_executable(z_pub
