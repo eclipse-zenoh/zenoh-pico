@@ -112,7 +112,7 @@ void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent, stru
 
         // Convert the IP address of the DNS server to a string then print it out.
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuf);
-        printf("DNS server IP Address: %s\r", cBuf);
+        printf("DNS server IP Address: %s\n", cBuf);
 
         xTaskNotifyGive(xAppTaskHandle);
     } else if (eNetworkEvent == eNetworkDown) {
