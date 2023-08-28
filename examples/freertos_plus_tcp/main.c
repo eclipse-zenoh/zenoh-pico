@@ -25,7 +25,7 @@ static StackType_t uxAppTaskStack[APP_TASK_STACK_DEPTH];
 
 void app_main();
 
-void vAppTask(void * /*argument*/) {
+static void vAppTask(void * /*argument*/) {
     printf("Waiting for network...\n");
 
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(5000));
