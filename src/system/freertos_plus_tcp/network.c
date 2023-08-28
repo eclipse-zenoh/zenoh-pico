@@ -18,7 +18,7 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, 
         return ret;
     }
 
-    ep->_iptcp->ai_addr->sin_family = FREERTOS_AF_INET4;
+    ep->_iptcp->ai_addr->sin_family = ep->_iptcp->ai_family;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
@@ -107,7 +107,7 @@ int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, 
         return ret;
     }
 
-    ep->_iptcp->ai_addr->sin_family = FREERTOS_AF_INET4;
+    ep->_iptcp->ai_addr->sin_family = ep->_iptcp->ai_family;
 
     // Parse and check the validity of the port
     uint32_t port = strtoul(s_port, NULL, 10);
