@@ -15,6 +15,7 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, 
 
     if (FreeRTOS_getaddrinfo(s_address, NULL, NULL, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
+        return ret;
     }
 
     ep->_iptcp->ai_addr->sin_family = FREERTOS_AF_INET4;
@@ -103,6 +104,7 @@ int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, 
 
     if (FreeRTOS_getaddrinfo(s_address, NULL, NULL, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
+        return ret;
     }
 
     ep->_iptcp->ai_addr->sin_family = FREERTOS_AF_INET4;
