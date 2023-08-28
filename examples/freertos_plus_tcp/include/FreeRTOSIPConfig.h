@@ -4,7 +4,7 @@
 // Driver specific
 #define ipconfigBYTE_ORDER pdFREERTOS_LITTLE_ENDIAN
 #define ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES 1
-#define ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM 1
+#define ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM 0
 #define ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM 1
 #define ipconfigZERO_COPY_RX_DRIVER 1
 #define ipconfigZERO_COPY_TX_DRIVER 1
