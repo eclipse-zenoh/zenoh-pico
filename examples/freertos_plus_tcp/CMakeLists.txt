@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(zenohpico_freertos_plus_tcp_examples)
 
 set(CMAKE_SYSTEM_NAME "Generic")
+set(CMAKE_C_STANDARD 11)
 
 include(../../cmake/helpers.cmake)
 set_default_build_type(Release)
@@ -57,15 +58,23 @@ target_compile_definitions(zenohpico
     Z_LINK_UDP_UNICAST=1
     Z_LINK_UDP_MULTICAST=0
     Z_CONFIG_SOCKET_TIMEOUT=1000
-)    
-
-add_executable(z_pub
-  main.c
-  z_pub.c
 )
 
-target_link_libraries(z_pub
+add_library(main OBJECT main.c)
+target_link_libraries(main
   freertos_kernel
   freertos_plus_tcp
-  zenohpico
 )
+
+function(add_example name)
+  add_executable(${name} ${name}.c)
+  target_link_libraries(${name}
+    main
+    freertos_kernel
+    freertos_plus_tcp
+    zenohpico
+  )
+endfunction()
+
+add_example(z_pub)
+add_example(z_scout)
