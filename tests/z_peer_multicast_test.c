@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_id,
+        printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id,
                (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub);
     }
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)._val->_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }

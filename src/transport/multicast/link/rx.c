@@ -154,7 +154,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             for (size_t i = 0; i < len; i++) {
                 _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
                 _z_msg_fix_mapping(zm, mapping);
-                _z_handle_zenoh_message(ztm->_session, zm, mapping);
+                _z_handle_network_message(ztm->_session, zm, mapping);
             }
 
             break;
@@ -195,7 +195,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 if (ret == _Z_RES_OK) {
                     uint16_t mapping = entry->_peer_id;
                     _z_msg_fix_mapping(&zm, mapping);
-                    _z_handle_zenoh_message(ztm->_session, &zm, mapping);
+                    _z_handle_network_message(ztm->_session, &zm, mapping);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
                                         // zenoh messages are released when their transport message is released.
                 }

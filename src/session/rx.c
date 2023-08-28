@@ -33,7 +33,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int8_t _z_handle_zenoh_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
+int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
 
     switch (msg->_tag) {

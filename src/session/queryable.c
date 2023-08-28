@@ -156,7 +156,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         // Build the query
         z_query_t q;
         q._zn = zn;
-        q._rid = qid;
+        q._request_id = qid;
         q._key = key;
 #if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
         char *params = z_malloc(query->_parameters.len + 1);
@@ -184,7 +184,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
 
         // Send the final reply
         // Create the final reply
-        _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q._rid);
+        _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q._request_id);
         if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }

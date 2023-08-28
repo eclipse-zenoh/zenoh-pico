@@ -141,7 +141,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     _z_subscriber_t *ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
     if (ret != NULL) {
         ret->_zn = zn;
-        ret->_id = s._id;
+        ret->_entity_id = s._id;
 
         _z_subscription_sptr_t *sp_s = _z_register_subscription(
             zn, _Z_RESOURCE_IS_LOCAL, &s);  // This a pointer to the entry stored at session-level.
@@ -171,10 +171,10 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     int8_t ret = _Z_ERR_GENERIC;
 
     if (sub != NULL) {
-        _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+        _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
         if (s != NULL) {
             // Build the declare message to send on the wire
-            _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_id, &s->ptr->_key);
+            _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->ptr->_key);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
             if (_z_send_n_msg(sub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local subscription state can be removed
@@ -207,7 +207,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
     _z_queryable_t *ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
     if (ret != NULL) {
         ret->_zn = zn;
-        ret->_id = q._id;
+        ret->_entity_id = q._id;
 
         _z_questionable_sptr_t *sp_q =
             _z_register_questionable(zn, &q);  // This a pointer to the entry stored at session-level.
@@ -237,10 +237,10 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     int8_t ret = _Z_RES_OK;
 
     if (qle != NULL) {
-        _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_id);
+        _z_questionable_sptr_t *q = _z_get_questionable_by_id(qle->_zn, qle->_entity_id);
         if (q != NULL) {
             // Build the declare message to send on the wire
-            _z_declaration_t declaration = _z_make_undecl_queryable(qle->_id, &q->ptr->_key);
+            _z_declaration_t declaration = _z_make_undecl_queryable(qle->_entity_id, &q->ptr->_key);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
             if (_z_send_n_msg(qle->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local queryable state can be removed
@@ -283,7 +283,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
             ._tag = _Z_N_RESPONSE,
             ._body._response =
                 {
-                    ._request_id = query->_rid,
+                    ._request_id = query->_request_id,
                     ._key = ke,
                     ._ext_responder = {._zid = zid, ._eid = 0},
                     ._ext_qos = _Z_N_QOS_DEFAULT,
@@ -398,7 +398,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     int8_t ret = _Z_RES_OK;
 
-    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_id);
+    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
     if (s != NULL) {
         _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
         _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);

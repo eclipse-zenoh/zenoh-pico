@@ -148,12 +148,17 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
 
 int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     int8_t ret = _Z_RES_OK;
-    for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)); i++) {
+    _Bool link_is_streamed = _Z_LINK_IS_STREAMED(link->_capabilities);
+    for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)) && (ret == _Z_RES_OK); i++) {
         _z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
         do {
             size_t wb = link->_write_f(link, bs.start, n);
             if (wb == SIZE_MAX) {
+                ret = _Z_ERR_TRANSPORT_TX_FAILED;
+                break;
+            }
+            if (link_is_streamed && wb != n) {
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }
