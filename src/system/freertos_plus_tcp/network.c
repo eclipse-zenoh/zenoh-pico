@@ -159,7 +159,7 @@ size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     struct freertos_sockaddr raddr;
     uint32_t addrlen = sizeof(struct freertos_sockaddr);
 
-    int32_t rb = FreeRTOS_recvfrom(sock._socket, ptr, len, 0, &raddr, &addrlen);
+    size_t rb = FreeRTOS_recvfrom(sock._socket, ptr, len, 0, &raddr, &addrlen);
     if (rb < 0) {
         rb = SIZE_MAX;
     }
