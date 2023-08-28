@@ -14,6 +14,8 @@
 
 #include <zenoh-pico.h>
 
+#include "FreeRTOS.h"
+
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
@@ -29,49 +31,48 @@
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
 
 void app_main() {
-    // Initialize Zenoh Session and other parameters
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
     if (strcmp(PEER, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(PEER));
+        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(PEER));
     }
 
-    // Open Zenoh session
-    printf("Opening Zenoh Session...\n");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    printf("Opening session...\n");
+    z_owned_session_t s = z_open(z_move(config));
+    if (!z_check(s)) {
         printf("Unable to open session!\n");
         return;
     }
-    printf("OK\n");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+        printf("Unable to start read and lease tasks\n");
+        return;
+    }
 
     printf("Declaring publisher for '%s'...\n", KEYEXPR);
-    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(KEYEXPR), NULL);
-    if (!z_publisher_check(&pub)) {
+    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(KEYEXPR), NULL);
+    if (!z_check(pub)) {
         printf("Unable to declare publisher for key expression!\n");
         return;
     }
-    printf("OK\n");
 
-    char buf[256];
+    char *buf = (char *)pvPortMalloc(256);
     for (int idx = 0; 1; ++idx) {
         z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, VALUE);
+        snprintf(buf, 256, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
-        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+        z_publisher_put_options_t options = z_publisher_put_options_default();
+        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 
-    printf("Closing Zenoh Session...\n");
-    z_undeclare_publisher(z_publisher_move(&pub));
+    z_undeclare_publisher(z_move(pub));
 
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    // Stop read and lease tasks for zenoh-pico
+    zp_stop_read_task(z_loan(s));
+    zp_stop_lease_task(z_loan(s));
 
-    z_close(z_session_move(&s));
-    printf("OK!\n");
+    z_close(z_move(s));
 }
