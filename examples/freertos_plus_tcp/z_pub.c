@@ -48,7 +48,7 @@ void app_main() {
     zp_start_read_task(z_session_loan(&s), NULL);
     zp_start_lease_task(z_session_loan(&s), NULL);
 
-    printf("Declaring publisher for '%s'...", KEYEXPR);
+    printf("Declaring publisher for '%s'...\n", KEYEXPR);
     z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(KEYEXPR), NULL);
     if (!z_publisher_check(&pub)) {
         printf("Unable to declare publisher for key expression!\n");
