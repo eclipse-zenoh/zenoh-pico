@@ -66,9 +66,9 @@ int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep)
 void _z_close_tcp(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    ssize_t rb = FreeRTOS_recv(sock._socket, ptr, len, 0);
-    if (rb < (ssize_t)0) {
-        rb = SIZE_MAX;
+    BaseType_t rb = FreeRTOS_recv(sock._socket, ptr, len, 0);
+    if (rb < 0) {
+        return SIZE_MAX;
     }
 
     return rb;
@@ -159,9 +159,9 @@ size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     struct freertos_sockaddr raddr;
     uint32_t addrlen = sizeof(struct freertos_sockaddr);
 
-    size_t rb = FreeRTOS_recvfrom(sock._socket, ptr, len, 0, &raddr, &addrlen);
+    int32_t rb = FreeRTOS_recvfrom(sock._socket, ptr, len, 0, &raddr, &addrlen);
     if (rb < 0) {
-        rb = SIZE_MAX;
+        return SIZE_MAX;
     }
 
     return rb;
