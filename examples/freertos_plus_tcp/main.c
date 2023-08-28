@@ -114,7 +114,13 @@ void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent, stru
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuf);
         printf("DNS server IP Address: %s\n", cBuf);
 
-        xTaskNotifyGive(xAppTaskHandle);
+        // Make sure MAC address of the gateway is known
+        if (xARPWaitResolution(ulGatewayAddress, pdMS_TO_TICKS(3000)) < 0) {
+            xTaskNotifyGive(xAppTaskHandle);
+        } else {
+            printf("Failed to obtain the MAC address of the gateway!\n");
+        }
+
     } else if (eNetworkEvent == eNetworkDown) {
         printf("IPv4 End Point is down!\n");
     }
