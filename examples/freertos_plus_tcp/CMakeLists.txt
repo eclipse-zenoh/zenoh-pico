@@ -29,10 +29,8 @@ FetchContent_Declare(freertos_plus_tcp
 )
 
 add_library(freertos_config INTERFACE)
-target_include_directories(freertos_config SYSTEM
-  INTERFACE
-    include
-)
+target_include_directories(freertos_config SYSTEM INTERFACE include)
+target_compile_options(freertos_config INTERFACE -Wno-error)
 
 set(FREERTOS_HEAP "3" CACHE STRING "" FORCE)
 set(FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
