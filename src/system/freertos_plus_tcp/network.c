@@ -190,3 +190,7 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
     return FreeRTOS_sendto(sock._socket, ptr, len, 0, rep._iptcp->ai_addr, sizeof(struct freertos_sockaddr));
 }
 #endif
+
+#if Z_LINK_UDP_MULTICAST == 1
+#error "UDP Multicast not supported yet on FreeRTOS-Plus-TCP port of Zenoh-Pico"
+#endif
