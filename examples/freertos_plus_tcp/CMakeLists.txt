@@ -23,8 +23,8 @@ FetchContent_Declare(freertos_kernel
 )
 
 FetchContent_Declare(freertos_plus_tcp
-  GIT_REPOSITORY "https://github.com/bjsowa/FreeRTOS-Plus-TCP.git"
-  GIT_TAG "44289aa"
+  GIT_REPOSITORY "https://github.com/FreeRTOS/FreeRTOS-Plus-TCP.git"
+  GIT_TAG "34148c3"
   GIT_SUBMODULES ""
 )
 
