@@ -63,6 +63,10 @@ void app_main() {
         return;
     }
 
+    while (1) {
+        z_sleep_s(5);
+    }
+
     z_undeclare_subscriber(z_move(sub));
 
     // Stop read and lease tasks for zenoh-pico
