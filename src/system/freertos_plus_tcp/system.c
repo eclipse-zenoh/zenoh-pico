@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +41,109 @@ void *z_realloc(void *ptr, size_t size) {
 }
 
 void z_free(void *ptr) { vPortFree(ptr); }
+
+#if Z_MULTI_THREAD == 1
+// In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
+// A task function should __not__ simply return.
+typedef struct {
+    void *(*fun)(void *);
+    void *arg;
+    EventGroupHandle_t join_event;
+} __z_task_arg;
+
+static void z_task_wrapper(void *arg) {
+    __z_task_arg *targ = (__z_task_arg *)arg;
+    targ->fun(targ->arg);
+    xEventGroupSetBits(targ->join_event, 1);
+    vTaskDelete(NULL);
+}
+
+static _z_task_attr_t z_default_task_attr = {
+    .name = "",
+    .priority = configMAX_PRIORITIES / 2,
+    .stack_depth = 5120,
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    .static_allocation = false,
+    .stack_buffer = NULL,
+    .task_buffer = NULL,
+#endif /* SUPPORT_STATIC_ALLOCATION */
+};
+
+/*------------------ Thread ------------------*/
+int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
+    if (z_arg == NULL) {
+        return -1;
+    }
+
+    z_arg->fun = fun;
+    z_arg->arg = arg;
+    z_arg->join_event = task->join_event = xEventGroupCreate();
+
+    if (attr == NULL) {
+        attr = &z_default_task_attr;
+    }
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (attr->static_allocation) {
+        task->handle = xTaskCreateStatic(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority,
+                                         attr->stack_buffer, attr->task_buffer);
+        if (task->handle == NULL) {
+            return -1;
+        }
+    } else {
+#endif /* SUPPORT_STATIC_ALLOCATION */
+        if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) !=
+            pdPASS) {
+            return -1;
+        }
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    }
+#endif /* SUPPORT_STATIC_ALLOCATION */
+
+    return 0;
+}
+
+int8_t _z_task_join(_z_task_t *task) {
+    xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
+    return 0;
+}
+
+int8_t _z_task_cancel(_z_task_t *task) {
+    vTaskDelete(task->handle);
+    return 0;
+}
+
+void _z_task_free(_z_task_t **task) {
+    z_free((*task)->handle);
+    z_free((*task)->join_event);
+    z_free(task);
+}
+
+/*------------------ Mutex ------------------*/
+int8_t _z_mutex_init(_z_mutex_t *m) {
+    *m = xSemaphoreCreateRecursiveMutex();
+    return *m == NULL ? -1 : 0;
+}
+
+int8_t _z_mutex_free(_z_mutex_t *m) {
+    z_free(*m);
+    return 0;
+}
+
+int8_t _z_mutex_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
+
+int8_t _z_mutex_trylock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
+
+int8_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
+
+/*------------------ CondVar ------------------*/
+// Condition variables not supported in FreeRTOS
+int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
+int8_t _z_condvar_free(_z_condvar_t *cv) { return -1; }
+int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
+int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+#endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(size_t time) {
