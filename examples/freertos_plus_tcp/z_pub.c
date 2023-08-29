@@ -44,8 +44,36 @@ void app_main() {
         return;
     }
 
+    static StackType_t read_task_stack[1000];
+    static StaticTask_t read_task_buffer;
+
+    _z_task_attr_t read_task_attr = {
+        .name = "ZenohReadTask",
+        .priority = 10,
+        .stack_depth = 1000,
+        .static_allocation = true,
+        .stack_buffer = read_task_stack,
+        .task_buffer = &read_task_buffer,
+    };
+
+    zp_task_read_options_t read_task_opt = {.task_attributes = &read_task_attr};
+
+    static StackType_t lease_task_stack[1000];
+    static StaticTask_t lease_task_buffer;
+
+    _z_task_attr_t lease_task_attr = {
+        .name = "ZenohLeaseTask",
+        .priority = 10,
+        .stack_depth = 1000,
+        .static_allocation = true,
+        .stack_buffer = lease_task_stack,
+        .task_buffer = &lease_task_buffer,
+    };
+
+    zp_task_lease_options_t lease_task_opt = {.task_attributes = &lease_task_attr};
+
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan(s), &read_task_opt) < 0 || zp_start_lease_task(z_loan(s), &lease_task_opt) < 0) {
         printf("Unable to start read and lease tasks\n");
         return;
     }
