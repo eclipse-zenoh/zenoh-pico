@@ -50,7 +50,7 @@ target_link_libraries(zenohpico
 )
 target_compile_definitions(zenohpico
   PUBLIC
-    Z_MULTI_THREAD=0
+    Z_MULTI_THREAD=1
     Z_LINK_TCP=1
     Z_SCOUTING_UDP=1
     Z_LINK_UDP_UNICAST=1
