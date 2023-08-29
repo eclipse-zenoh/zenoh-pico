@@ -73,8 +73,6 @@ void app_main() {
         return;
     }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = '\0';
     while (1) {
         z_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
