@@ -127,7 +127,7 @@ int8_t _zp_send_join(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_read_task(_z_session_t *z);
+int8_t _zp_start_read_task(_z_session_t *z, _z_task_attr_t *attr);
 
 /**
  * Stop the read task. This may result in stopping a thread or a process depending
@@ -154,7 +154,7 @@ int8_t _zp_stop_read_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_lease_task(_z_session_t *z);
+int8_t _zp_start_lease_task(_z_session_t *z, _z_task_attr_t *attr);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending

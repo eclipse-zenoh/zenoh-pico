@@ -163,7 +163,7 @@ int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_t
 int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_MULTI_THREAD == 1
-int8_t _zp_start_read_task(_z_session_t *zn) {
+int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
 
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
@@ -174,7 +174,7 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._read_task = task;
             zn->_tp._transport._unicast._read_task_running = true;
-            if (_z_task_init(task, NULL, _zp_unicast_read_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
+            if (_z_task_init(task, attr, _zp_unicast_read_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
                 zn->_tp._transport._unicast._read_task_running = false;
                 ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
@@ -185,7 +185,7 @@ int8_t _zp_start_read_task(_z_session_t *zn) {
             if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
             zn->_tp._transport._multicast._read_task = task;
             zn->_tp._transport._multicast._read_task_running = true;
-            if (_z_task_init(task, NULL, _zp_multicast_read_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
+            if (_z_task_init(task, attr, _zp_multicast_read_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
                 zn->_tp._transport._multicast._read_task_running = false;
                 ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
@@ -221,7 +221,7 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
     return ret;
 }
 
-int8_t _zp_start_lease_task(_z_session_t *zn) {
+int8_t _zp_start_lease_task(_z_session_t *zn, _z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
 
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
@@ -232,7 +232,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._lease_task = task;
             zn->_tp._transport._unicast._lease_task_running = true;
-            if (_z_task_init(task, NULL, _zp_unicast_lease_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
+            if (_z_task_init(task, attr, _zp_unicast_lease_task, &zn->_tp._transport._unicast) != _Z_RES_OK) {
                 zn->_tp._transport._unicast._lease_task_running = false;
                 ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);
@@ -243,7 +243,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn) {
             if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
             zn->_tp._transport._multicast._lease_task = task;
             zn->_tp._transport._multicast._lease_task_running = true;
-            if (_z_task_init(task, NULL, _zp_multicast_lease_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
+            if (_z_task_init(task, attr, _zp_multicast_lease_task, &zn->_tp._transport._multicast) != _Z_RES_OK) {
                 zn->_tp._transport._multicast._lease_task_running = false;
                 ret = _Z_ERR_SYSTEM_TASK_FAILED;
                 z_free(task);

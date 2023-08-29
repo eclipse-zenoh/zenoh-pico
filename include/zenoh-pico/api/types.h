@@ -342,7 +342,11 @@ typedef struct {
  * whenever issued via :c:func:`zp_start_read_task`.
  */
 typedef struct {
+#if Z_MULTI_THREAD == 1
+    _z_task_attr_t *task_attributes;
+#else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#endif
 } zp_task_read_options_t;
 
 /**
@@ -350,7 +354,11 @@ typedef struct {
  * whenever issued via :c:func:`zp_start_lease_task`.
  */
 typedef struct {
+#if Z_MULTI_THREAD == 1
+    _z_task_attr_t *task_attributes;
+#else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#endif
 } zp_task_lease_options_t;
 
 /**
