@@ -7,7 +7,7 @@
 
 #if Z_MULTI_THREAD == 1
 typedef struct {
-    char *name;
+    const char *name;
     UBaseType_t priority;
     size_t stack_depth;
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
