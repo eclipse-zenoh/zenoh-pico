@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//   Błażej Sowa, <blazej@fictionlab.pl>
 
 #include <stdbool.h>
 #include <stddef.h>

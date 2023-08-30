@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//   Błażej Sowa, <blazej@fictionlab.pl>
 
 #ifndef ZENOH_PICO_API_TYPES_H
 #define ZENOH_PICO_API_TYPES_H

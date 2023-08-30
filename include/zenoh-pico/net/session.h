@@ -10,7 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-//
+//   Błażej Sowa, <blazej@fictionlab.pl>
 
 #ifndef ZENOH_PICO_SESSION_NETAPI_H
 #define ZENOH_PICO_SESSION_NETAPI_H
