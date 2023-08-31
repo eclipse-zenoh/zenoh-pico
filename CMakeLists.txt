@@ -87,13 +87,20 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_definitions(${ZENOH_DEBUG_OPT} -DZENOH_DEBUG=1)
   endif()
 
+  set(release_opts -pipe -O3)
+  set(debug_opts -Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0)
   add_compile_options(
-    $<$<CONFIG:RELEASE>:-pipe -O3>
-    $<$<CONFIG:DEBUG>:-Wall -Wextra -Werror -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0>
+    "$<$<CONFIG:RELEASE>:${release_opts}>"
+    "$<$<CONFIG:DEBUG>:${debug_opts}>"
   )
 endif()
 
 set(Libname "zenohpico")
+if(BUILD_SHARED_LIBS)
+  add_library(${Libname} SHARED)
+else()
+  add_library(${Libname} STATIC)
+endif()
 
 file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/*.h"
@@ -108,9 +115,7 @@ file(GLOB PublicHeaders "include/*.h"
                         "include/zenoh-pico/transport/*.h"
                         "include/zenoh-pico/utils/*.h"
 )
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-)
+target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 if (UNIX)
   file(GLOB Sources "src/*.c"
@@ -138,7 +143,7 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-add_library(${Libname} ${Sources})
+target_sources(${Libname} PRIVATE ${Sources})
 
 target_link_libraries(${Libname} Threads::Threads)
 
