@@ -29,6 +29,16 @@
 #define SLEEP 2
 #define SCOUTING_TIMEOUT "1000"
 
+#define assert_eq(x, y)                                     \
+    {                                                       \
+        int l = (int)x;                                     \
+        int r = (int)y;                                     \
+        if (l != r) {                                       \
+            printf("assert_eq failed: l=%d, r=%d\n", l, r); \
+            assert(false);                                  \
+        }                                                   \
+    }
+
 const char *value = "Test value";
 
 volatile unsigned int zids = 0;
@@ -109,7 +119,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
 }
 
 int main(int argc, char **argv) {
-    assert(argc == 2);
+    assert_eq(argc, 2);
     (void)(argc);
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
@@ -120,25 +130,25 @@ int main(int argc, char **argv) {
     printf("Testing Keyexpr...");
     z_keyexpr_t key = z_keyexpr("demo/example");
     _Bool _ret_bool = z_keyexpr_is_initialized(&key);
-    assert(_ret_bool == true);
+    assert_eq(_ret_bool, true);
 
     int8_t _ret_int8 = z_keyexpr_includes(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 #ifdef ZENOH_PICO
     _ret_int8 = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 #endif
     _ret_int8 = z_keyexpr_intersects(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 #ifdef ZENOH_PICO
     _ret_int8 = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 #endif
     _ret_int8 = z_keyexpr_equals(z_keyexpr("demo/example/**"), z_keyexpr("demo/example"));
-    assert(_ret_int8 == -1);
+    assert_eq(_ret_int8, -1);
 #ifdef ZENOH_PICO
     _ret_int8 = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
-    assert(_ret_int8 == -1);
+    assert_eq(_ret_int8, -1);
 #endif
 
     sleep(SLEEP);
@@ -155,12 +165,12 @@ int main(int argc, char **argv) {
     assert(_ret_int8 < 0);
 #endif
     _ret_int8 = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
-    assert(_ret_int8 == 0);
-    assert(strlen("demo/example/**/*") == keyexpr_len);
+    assert_eq(_ret_int8, 0);
+    assert_eq(strlen("demo/example/**/*"), keyexpr_len);
 #ifdef ZENOH_PICO
     _ret_int8 = zp_keyexpr_canonize_null_terminated(keyexpr_str);
-    assert(_ret_int8 == 0);
-    assert(strlen("demo/example/**/*") == keyexpr_len);
+    assert_eq(_ret_int8, 0);
+    assert_eq(strlen("demo/example/**/*"), keyexpr_len);
 #endif
 
     printf("Ok\n");
@@ -174,10 +184,10 @@ int main(int argc, char **argv) {
     assert(z_check(_ret_config));
 #ifdef ZENOH_PICO
     _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     const char *_ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_PEER_KEY);
-    assert(strlen(_ret_cstr) == strlen(argv[1]));
-    assert(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)) == 0);
+    assert_eq(strlen(_ret_cstr), strlen(argv[1]));
+    assert_eq(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)), 0);
 #endif
 
     z_owned_scouting_config_t _ret_sconfig = z_scouting_config_default();
@@ -185,10 +195,10 @@ int main(int argc, char **argv) {
 #ifdef ZENOH_PICO
     _ret_int8 =
         zp_scouting_config_insert(z_loan(_ret_sconfig), Z_CONFIG_SCOUTING_TIMEOUT_KEY, z_string_make(SCOUTING_TIMEOUT));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     _ret_cstr = zp_scouting_config_get(z_loan(_ret_sconfig), Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-    assert(strlen(_ret_cstr) == strlen(SCOUTING_TIMEOUT));
-    assert(strncmp(_ret_cstr, SCOUTING_TIMEOUT, strlen(_ret_cstr)) == 0);
+    assert_eq(strlen(_ret_cstr), strlen(SCOUTING_TIMEOUT));
+    assert_eq(strncmp(_ret_cstr, SCOUTING_TIMEOUT, strlen(_ret_cstr)), 0);
 #endif
     z_drop(z_move(_ret_sconfig));
 
@@ -199,7 +209,7 @@ int main(int argc, char **argv) {
     _ret_sconfig = z_scouting_config_from(z_loan(_ret_config));
     z_owned_closure_hello_t _ret_closure_hello = z_closure(hello_handler, NULL, NULL);
     _ret_int8 = z_scout(z_move(_ret_sconfig), z_move(_ret_closure_hello));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     assert(hellos >= 1);
 
     uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
@@ -218,15 +228,15 @@ int main(int argc, char **argv) {
 
     z_owned_closure_zid_t _ret_closure_zid = z_closure(zid_handler, NULL, NULL);
     _ret_int8 = z_info_peers_zid(z_loan(s1), z_move(_ret_closure_zid));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     sleep(SLEEP);
-    assert(zids == 0);
+    assert_eq(zids, 0);
 
     _ret_int8 = z_info_routers_zid(z_loan(s1), z_move(_ret_closure_zid));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 
     sleep(SLEEP);
-    assert(zids == 1);
+    assert_eq(zids, 1);
 
 #ifdef ZENOH_PICO
     zp_task_read_options_t _ret_read_opt = zp_task_read_options_default();
@@ -240,10 +250,10 @@ int main(int argc, char **argv) {
     _ret_config = z_config_default();
 #ifdef ZENOH_PICO
     _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     _ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_PEER_KEY);
-    assert(strlen(_ret_cstr) == strlen(argv[1]));
-    assert(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)) == 0);
+    assert_eq(strlen(_ret_cstr), strlen(argv[1]));
+    assert_eq(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)), 0);
 #endif
 
     z_owned_session_t s2 = z_open(z_move(_ret_config));
@@ -288,29 +298,30 @@ int main(int argc, char **argv) {
     _ret_encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     _ret_put_opt.encoding = _ret_encoding;
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), (const uint8_t *)value, strlen(value), &_ret_put_opt);
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
-    assert(datas == 1);
+    assert_eq(datas, 1);
 
     printf("Session delete...");
     z_delete_options_t _ret_delete_opt = z_delete_options_default();
     _ret_int8 = z_delete(z_loan(s1), z_loan(_ret_expr), &_ret_delete_opt);
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
-    assert(datas == 2);
+    assert_eq(datas, 2);
 
     printf("Undeclaring Keyexpr...");
     _ret_int8 = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
-    assert(_ret_int8 == 0);
+    printf(" %02x\n", _ret_int8);
+    assert_eq(_ret_int8, 0);
     assert(!z_check(_ret_expr));
     printf("Ok\n");
 
     _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 
     printf("Declaring Pull Subscriber...");
     z_owned_closure_sample_t _ret_closure_sample2 = z_closure(data_handler, NULL, &ls1);
@@ -332,44 +343,44 @@ int main(int argc, char **argv) {
     printf("Publisher Put...");
     z_publisher_put_options_t _ret_pput_opt = z_publisher_put_options_default();
     _ret_int8 = z_publisher_put(z_loan(_ret_pub), (const uint8_t *)value, strlen(value), &_ret_pput_opt);
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
 
     printf("Pull Subscriber Pulling data...");
     _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
-    assert(datas == 3);
+    assert_eq(datas, 3);
 
     printf("Publisher Delete...");
     z_publisher_delete_options_t _ret_pdelete_opt = z_publisher_delete_options_default();
     _ret_int8 = z_publisher_delete(z_loan(_ret_pub), &_ret_pdelete_opt);
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
 
     printf("Pull Subscriber Pulling data...");
     _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
-    assert(datas == 4);
+    assert_eq(datas, 4);
 
     printf("Undeclaring Publisher...");
     _ret_int8 = z_undeclare_publisher(z_move(_ret_pub));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     assert(!z_check(_ret_pub));
     printf("Ok\n");
 
     printf("Undeclaring Pull Subscriber...");
     _ret_int8 = z_undeclare_pull_subscriber(z_move(_ret_psub));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
@@ -403,16 +414,16 @@ int main(int argc, char **argv) {
 
     printf("Testing Get...");
     _ret_int8 = z_get(z_loan(s2), z_keyexpr(s1_res), "", z_move(_ret_closure_reply), &_ret_get_opt);
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);
-    assert(queries == 1);
-    assert(replies == 1);
+    assert_eq(queries, 1);
+    assert_eq(replies, 1);
 
     printf("Undeclaring Queryable...");
     _ret_int8 = z_undeclare_queryable(z_move(qle));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
 #ifdef ZENOH_PICO
@@ -422,14 +433,14 @@ int main(int argc, char **argv) {
 
     printf("Close sessions...");
     _ret_int8 = z_close(z_move(s1));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
 
 #ifdef ZENOH_PICO
     zp_stop_read_task(z_loan(s2));
     zp_stop_lease_task(z_loan(s2));
 #endif
     _ret_int8 = z_close(z_move(s2));
-    assert(_ret_int8 == 0);
+    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP * 5);

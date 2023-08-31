@@ -19,13 +19,14 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-void fprintzid(FILE *stream, z_bytes_t zid) {
-    if (zid.start == NULL) {
+void fprintzid(FILE *stream, z_id_t zid) {
+    unsigned int zidlen = _z_id_len(zid);
+    if (zidlen == 0) {
         fprintf(stream, "None");
     } else {
         fprintf(stream, "Some(");
-        for (unsigned int i = 0; i < zid.len; i++) {
-            fprintf(stream, "%02X", (int)zid.start[i]);
+        for (unsigned int i = 0; i < zidlen; i++) {
+            fprintf(stream, "%02X", (int)zid.id[i]);
         }
         fprintf(stream, ")");
     }
@@ -68,6 +69,7 @@ void callback(z_owned_hello_t *hello, void *context) {
     fprinthello(stdout, z_loan(*hello));
     fprintf(stdout, "\n");
     (*(int *)context)++;
+    z_drop(hello);
 }
 
 void drop(void *context) {

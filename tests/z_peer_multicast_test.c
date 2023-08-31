@@ -14,10 +14,13 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/core.h"
 
 #define MSG 10
 #define MSG_LEN 1024
@@ -68,7 +71,8 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t zid1 = _z_string_from_bytes(&z_loan(s1)._val->_local_zid);
+    _z_bytes_t id_as_bytes = _z_bytes_wrap(z_loan(s1)._val->_local_zid.id, _z_id_len(z_loan(s1)._val->_local_zid));
+    z_string_t zid1 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
@@ -84,7 +88,8 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t zid2 = _z_string_from_bytes(&z_loan(s2)._val->_local_zid);
+    id_as_bytes = _z_bytes_wrap(z_loan(s2)._val->_local_zid.id, _z_id_len(z_loan(s2)._val->_local_zid));
+    z_string_t zid2 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 
@@ -103,8 +108,8 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
-        printf("Declared subscription on session 2: %zu %zu %s\n", z_subscriber_loan(sub)._val->_id, (z_zint_t)0,
-               s1_res);
+        printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id,
+               (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub);
     }
 
@@ -145,7 +150,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %zu\n", z_subscriber_loan(sub)._val->_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }

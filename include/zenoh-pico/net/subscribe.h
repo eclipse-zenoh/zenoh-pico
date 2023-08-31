@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_SUBSCRIBE_NETAPI_H
 #define ZENOH_PICO_SUBSCRIBE_NETAPI_H
 
+#include <stdint.h>
+
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
@@ -22,7 +24,7 @@
  * Return type when declaring a subscriber.
  */
 typedef struct {
-    _z_zint_t _id;
+    uint32_t _entity_id;
     _z_session_t *_zn;
 } _z_subscriber_t;
 

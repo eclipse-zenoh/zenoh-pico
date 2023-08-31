@@ -22,38 +22,45 @@ static inline void __z_print_timestamp(void) {
     printf("[%s ", z_time_now_as_str(ret, sizeof(ret)));
 }
 
+#define _Z_LOG_PREFIX(prefix) \
+    __z_print_timestamp();    \
+    printf(#prefix " ::%s] ", __func__);
+
 #if (ZENOH_DEBUG == 3)
-#define _Z_DEBUG(x, ...)              \
-    __z_print_timestamp();            \
-    printf("DEBUG ::%s] ", __func__); \
+#define _Z_DEBUG(x, ...)  \
+    _Z_LOG_PREFIX(DEBUG); \
     printf(x, ##__VA_ARGS__);
-#define _Z_INFO(x, ...)              \
-    __z_print_timestamp();           \
-    printf("INFO ::%s] ", __func__); \
+#define _Z_DEBUG_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+#define _Z_INFO(x, ...)  \
+    _Z_LOG_PREFIX(INFO); \
     printf(x, ##__VA_ARGS__);
-#define _Z_ERROR(x, ...)              \
-    __z_print_timestamp();            \
-    printf("ERROR ::%s] ", __func__); \
+#define _Z_INFO_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+#define _Z_ERROR(x, ...)  \
+    _Z_LOG_PREFIX(ERROR); \
     printf(x, ##__VA_ARGS__);
+#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
 
 #elif (ZENOH_DEBUG == 2)
 #define _Z_DEBUG(x, ...) (void)(0)
-#define _Z_INFO(x, ...)              \
-    __z_print_timestamp();           \
-    printf("INFO ::%s] ", __func__); \
+#define _Z_DEBUG_CONTINUE(x, ...) (void)(0);
+#define _Z_INFO(x, ...)  \
+    _Z_LOG_PREFIX(INFO); \
     printf(x, ##__VA_ARGS__);
-#define _Z_ERROR(x, ...)              \
-    __z_print_timestamp();            \
-    printf("ERROR ::%s] ", __func__); \
+#define _Z_INFO_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+#define _Z_ERROR(x, ...)  \
+    _Z_LOG_PREFIX(ERROR); \
     printf(x, ##__VA_ARGS__);
+#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
 
 #elif (ZENOH_DEBUG == 1)
 #define _Z_DEBUG(x, ...) (void)(0)
-#define _Z_INFO(x, ...) (void)(0)
-#define _Z_ERROR(x, ...)              \
-    __z_print_timestamp();            \
-    printf("ERROR ::%s] ", __func__); \
+#define _Z_DEBUG_CONTINUE(x, ...) (void)(0);
+#define _Z_INFO(x, ...) (void)(0);
+#define _Z_INFO_CONTINUE(x, ...) (void)(0);
+#define _Z_ERROR(x, ...)  \
+    _Z_LOG_PREFIX(ERROR); \
     printf(x, ##__VA_ARGS__);
+#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
 
 #elif (ZENOH_DEBUG == 0)
 #define _Z_DEBUG(x, ...) (void)(0)

@@ -12,9 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_PROTOCOL_CORE_H
-#define ZENOH_PICO_PROTOCOL_CORE_H
+#ifndef INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H
+#define INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H
 
+#include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
@@ -22,6 +24,10 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
+
+#define _Z_OPTIONAL
+#define _Z_MOVE(x) x *
 
 /**
  * The reserved resource ID indicating a string-only resource key.
@@ -45,6 +51,9 @@ typedef size_t _z_zint_t;
 typedef struct {
     uint8_t id[16];
 } _z_id_t;
+uint8_t _z_id_len(_z_id_t id);
+_Bool _z_id_check(_z_id_t id);
+_z_id_t _z_id_empty(void);
 
 /**
  * A zenoh encoding.
@@ -63,8 +72,23 @@ typedef struct {
 } _z_timestamp_t;
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-void _z_timestamp_reset(_z_timestamp_t *tstamp);
+_z_timestamp_t _z_timestamp_null(void);
+void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
+
+/**
+ * The product of:
+ * - top-most bit: whether or not the keyexpr containing this mapping owns its suffix (1=true)
+ * - the mapping for the keyexpr prefix:
+ *     - 0: local mapping.
+ *     - 0x7fff (MAX): unknown remote mapping.
+ *     - x: the mapping associated with the x-th peer.
+ */
+typedef struct {
+    uint16_t _val;
+} _z_mapping_t;
+#define _Z_KEYEXPR_MAPPING_LOCAL 0
+#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE 0x7fff
 
 /**
  * A zenoh-net resource key.
@@ -74,9 +98,58 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
  *   char *val: A pointer to the string containing the resource name.
  */
 typedef struct {
-    _z_zint_t _id;
-    const char *_suffix;
+    uint16_t _id;
+    _z_mapping_t _mapping;
+    char *_suffix;
 } _z_keyexpr_t;
+static inline _Bool _z_keyexpr_owns_suffix(const _z_keyexpr_t *key) { return (key->_mapping._val & 0x8000) != 0; }
+static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
+static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
+    return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
+}
+static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id, _Bool owns_suffix) {
+    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+    return (_z_mapping_t){._val = (uint16_t)((owns_suffix ? 0x8000 : 0) | id)};
+}
+static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
+    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+    ke->_mapping._val &= 0x8000;
+    ke->_mapping._val |= id;
+}
+static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
+    if (_z_keyexpr_mapping_id(ke) == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
+        _z_keyexpr_set_mapping(ke, id);
+    }
+}
+static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffix) {
+    ke->_mapping._val &= 0x7fff;
+    ke->_mapping._val |= owns_suffix ? 0x8000 : 0;
+}
+static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
+static inline _Bool _z_keyexpr_check(_z_keyexpr_t ke) { return (ke._id != 0) || _z_keyexpr_has_suffix(ke); }
+
+/**
+ * Create a resource key from a resource name.
+ *
+ * Parameters:
+ *     rname: The resource name. The caller keeps its ownership.
+ *
+ * Returns:
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
+ */
+_z_keyexpr_t _z_rname(const char *rname);
+
+/**
+ * Create a resource key from a resource id and a suffix.
+ *
+ * Parameters:
+ *     id: The resource id.
+ *     suffix: The suffix.
+ *
+ * Returns:
+ *     A :c:type:`_z_keyexpr_t` containing a new resource key.
+ */
+_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
 
 /**
  * A zenoh-net data sample.
@@ -107,6 +180,10 @@ typedef struct {
     _z_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
+_z_value_t _z_value_null(void);
+_z_value_t _z_value_steal(_z_value_t *value);
+void _z_value_clear(_z_value_t *src);
+void _z_value_free(_z_value_t **hello);
 
 /**
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
@@ -114,12 +191,13 @@ typedef struct {
  * Members:
  *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   _z_str_array_t locators: The locators of the scouted entity.
- *   uint8_t whatami: The kind of zenoh entity.
+ *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_bytes_t zid;
+    _z_id_t zid;
     _z_str_array_t locators;
-    uint8_t whatami;
+    z_whatami_t whatami;
+    uint8_t version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
@@ -159,4 +237,16 @@ typedef struct {
     z_submode_t mode;
 } _z_subinfo_t;
 
-#endif /* ZENOH_PICO_PROTOCOL_CORE_H */
+typedef struct {
+    _z_id_t _id;
+    uint32_t _entity_id;
+    uint32_t _source_sn;
+} _z_source_info_t;
+_z_source_info_t _z_source_info_null(void);
+
+typedef struct {
+    uint32_t _request_id;
+    uint32_t _entity_id;
+} _z_reply_context_t;
+
+#endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H */

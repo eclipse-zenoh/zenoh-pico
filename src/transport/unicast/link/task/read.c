@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -85,7 +86,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
         // Decode one session message
         _z_transport_message_t t_msg;
-        int8_t ret = _z_transport_message_decode_na(&t_msg, &zbuf);
+        int8_t ret = _z_transport_message_decode(&t_msg, &zbuf);
 
         if (ret == _Z_RES_OK) {
             ret = _z_unicast_handle_transport_message(ztu, &t_msg);

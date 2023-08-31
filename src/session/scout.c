@@ -13,9 +13,11 @@
 //
 
 #include <stddef.h>
+#include <string.h>
 
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_SCOUTING_UDP == 1 && Z_LINK_UDP_UNICAST == 0
@@ -50,7 +52,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
             err = _z_link_send_wbuf(&zl, wbf);
             if (err == _Z_RES_OK) {
                 // The receiving buffer
-                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_SIZE_RX);
+                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
 
                 z_time_t start = z_time_now();
                 while (z_time_elapsed_ms(&start) < period) {
@@ -63,35 +65,28 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                         continue;
                     }
 
-                    _z_transport_message_t t_msg;
-                    err = _z_transport_message_decode(&t_msg, &zbf);
+                    _z_scouting_message_t s_msg;
+                    err = _z_scouting_message_decode(&s_msg, &zbf);
                     if (err != _Z_RES_OK) {
                         _Z_ERROR("Scouting loop received malformed message\n");
                         continue;
                     }
 
-                    switch (_Z_MID(t_msg._header)) {
+                    switch (_Z_MID(s_msg._header)) {
                         case _Z_MID_HELLO: {
                             _Z_INFO("Received _Z_HELLO message\n");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_I) == true) {
-                                    _z_bytes_copy(&hello->zid, &t_msg._body._hello._zid);
-                                } else {
-                                    _z_bytes_reset(&hello->zid);
-                                }
+                                hello->version = s_msg._body._hello._version;
+                                hello->whatami = s_msg._body._hello._whatami;
+                                memcpy(hello->zid.id, s_msg._body._hello._zid.id, 16);
 
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_W) == true) {
-                                    hello->whatami = t_msg._body._hello._whatami;
-                                } else {
-                                    hello->whatami = Z_WHATAMI_ROUTER;  // Default value is from a router
-                                }
-
-                                if (_Z_HAS_FLAG(t_msg._header, _Z_FLAG_T_L) == true) {
-                                    hello->locators = _z_str_array_make(t_msg._body._hello._locators._len);
-                                    for (size_t i = 0; i < hello->locators.len; i++) {
+                                size_t n_loc = _z_locator_array_len(&s_msg._body._hello._locators);
+                                if (n_loc > 0) {
+                                    hello->locators = _z_str_array_make(n_loc);
+                                    for (size_t i = 0; i < n_loc; i++) {
                                         hello->locators.val[i] =
-                                            _z_locator_to_str(&t_msg._body._hello._locators._val[i]);
+                                            _z_locator_to_str(&s_msg._body._hello._locators._val[i]);
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address
@@ -110,7 +105,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             break;
                         }
                     }
-                    _z_t_msg_clear(&t_msg);
+                    _z_s_msg_clear(&s_msg);
 
                     if ((_z_hello_list_len(ret) > 0) && (exit_on_first == true)) {
                         break;
@@ -132,18 +127,17 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_whatami_t what, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *locator, const uint32_t timeout,
                                 const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_SIZE_TX, false);
+    _z_wbuf_t wbf = _z_wbuf_make(Z_BATCH_UNICAST_SIZE, false);
 
     // Create and encode the scout message
-    _Bool request_zid = true;
-    _z_transport_message_t scout = _z_t_msg_make_scout(what, request_zid);
+    _z_scouting_message_t scout = _z_s_msg_make_scout(what, zid);
 
-    _z_transport_message_encode(&wbf, &scout);
+    _z_scouting_message_encode(&wbf, &scout);
 
     // Scout on multicast
 #if Z_MULTICAST_TRANSPORT == 1

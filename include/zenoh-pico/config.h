@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_CONFIG_H
-#define ZENOH_PICO_CONFIG_H
+#ifndef INCLUDE_ZENOH_PICO_CONFIG_H
+#define INCLUDE_ZENOH_PICO_CONFIG_H
 
 /*------------------ Runtime configuration properties ------------------*/
 /**
@@ -89,6 +89,12 @@
 #define Z_CONFIG_SCOUTING_WHAT_DEFAULT "3"
 
 /**
+ * A configurable and static Zenoh ID to be used on Zenoh Sessions.
+ * Accepted values : `<UUDI 128-bit>`.
+ */
+#define Z_CONFIG_SESSION_ZID_KEY 0x49
+
+/**
  * Indicates if data messages should be timestamped.
  * Accepted values : `false`, `true`.
  * Default value : `false`.
@@ -114,7 +120,7 @@
  * Do not change this value.
  */
 #ifndef Z_PROTO_VERSION
-#define Z_PROTO_VERSION 0x07
+#define Z_PROTO_VERSION 0x08
 #endif
 
 /**
@@ -145,13 +151,12 @@
 #define Z_CONFIG_SOCKET_TIMEOUT 100
 #endif
 
-/**
- * The default sequence number resolution takes 4 bytes on the wire.
- * Given the VLE encoding of ZInt, 4 bytes result in 28 useful bits.
- * 2^28 = 268_435_456 => Max Seq Num = 268_435_455
- */
 #ifndef Z_SN_RESOLUTION
-#define Z_SN_RESOLUTION 268435455
+#define Z_SN_RESOLUTION 0x02
+#endif
+
+#ifndef Z_REQ_RESOLUTION
+#define Z_REQ_RESOLUTION 0x02
 #endif
 
 /**
@@ -218,21 +223,16 @@
 #endif
 
 /**
- * Defaulf maximum batch size possible to be received.
+ * Defaulf maximum batch size possible to be received or sent.
  */
-#ifndef Z_BATCH_SIZE_RX
-#define Z_BATCH_SIZE_RX \
-    65535  // Warning: changing this value can break the communication
-           //          with zenohd in the current protocol version.
-           //          In the future, it will be possible to negotiate such value.
-           // Change it at your own risk.
+#ifndef Z_BATCH_UNICAST_SIZE
+#define Z_BATCH_UNICAST_SIZE 65535
 #endif
-
 /**
- * Defaulf maximum batch size possible to be sent.
+ * Defaulf maximum batch size possible to be received or sent.
  */
-#ifndef Z_BATCH_SIZE_TX
-#define Z_BATCH_SIZE_TX 65535
+#ifndef Z_BATCH_MULTICAST_SIZE
+#define Z_BATCH_MULTICAST_SIZE 8192
 #endif
 
 /**
@@ -271,4 +271,4 @@
 #endif
 #endif
 
-#endif /* ZENOH_PICO_CONFIG_H */
+#endif /* INCLUDE_ZENOH_PICO_CONFIG_H */

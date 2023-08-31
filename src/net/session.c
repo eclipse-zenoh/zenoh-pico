@@ -16,32 +16,33 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/uuid.h"
 
 int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t local_zid = _z_bytes_empty();
-
+    _z_id_t local_zid = _z_id_empty();
 #if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
     ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
     if (ret == _Z_RES_OK) {
         ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
         if (ret != _Z_RES_OK) {
-            _z_bytes_clear(&local_zid);
+            local_zid = _z_id_empty();
         }
     } else {
-        _z_bytes_clear(&local_zid);
+        local_zid = _z_id_empty();
     }
 #else
     ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 #endif
-
     if (ret == _Z_RES_OK) {
         ret = _z_session_init(zn, &local_zid);
     }
@@ -52,14 +53,20 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
 int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
+    _z_id_t zid = _z_id_empty();
+    char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
+    if (opt_as_str != NULL) {
+        _z_uuid_to_bytes(zid.id, opt_as_str);
+    }
+
     if (config != NULL) {
         _z_str_array_t locators = _z_str_array_empty();
         if (_z_config_get(config, Z_CONFIG_PEER_KEY) == NULL) {  // Scout if peer is not configured
-            char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
+            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
                 opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
             }
-            z_whatami_t what = strtol(opt_as_str, NULL, 10);
+            z_what_t what = strtol(opt_as_str, NULL, 10);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
             if (opt_as_str == NULL) {
@@ -74,7 +81,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, mcast_locator, timeout, true);
+            _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
                 _z_str_array_copy(&locators, &hello->locators);
@@ -118,6 +125,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
         _z_str_array_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.\n");
+        ret = _Z_ERR_GENERIC;
     }
 
     return ret;
@@ -129,12 +137,14 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&zn->_local_zid));
+        _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&local_zid));
 
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-            _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY,
-                              _z_string_from_bytes(&zn->_tp._transport._unicast._remote_zid));
+            _z_id_t remote_zid = zn->_tp._transport._unicast._remote_zid;
+            _z_bytes_t remote_zidbytes = _z_bytes_wrap(remote_zid.id, _z_id_len(remote_zid));
+            _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&remote_zidbytes));
         } else
 #endif  // Z_UNICAST_TRANSPORT == 1
 #if Z_MULTICAST_TRANSPORT == 1
@@ -142,7 +152,8 @@ _z_config_t *_z_info(const _z_session_t *zn) {
             _z_transport_peer_entry_list_t *xs = zn->_tp._transport._multicast._peers;
             while (xs != NULL) {
                 _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
-                _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&peer->_remote_zid));
+                _z_bytes_t remote_zid = _z_bytes_wrap(peer->_remote_zid.id, _z_id_len(peer->_remote_zid));
+                _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&remote_zid));
 
                 xs = _z_transport_peer_entry_list_tail(xs);
             }

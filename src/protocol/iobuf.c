@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"
@@ -40,6 +41,10 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
     ios->_capacity = capacity;
     ios->_is_alloc = true;
     ios->_buf = (uint8_t *)z_malloc(capacity);
+    if (ios->_buf == NULL) {
+        ios->_capacity = 0;
+        ios->_is_alloc = false;
+    }
 }
 
 _z_iosli_t _z_iosli_make(size_t capacity) {
@@ -80,14 +85,14 @@ size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
     assert(_z_iosli_writable(ios) >= (size_t)1);
     ios->_buf[ios->_w_pos] = b;
-    ios->_w_pos = ios->_w_pos + 1;
+    ios->_w_pos += 1;
 }
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
     assert(_z_iosli_writable(ios) >= length);
     uint8_t *w_pos = _z_ptr_u8_offset(ios->_buf, ios->_w_pos);
     (void)memcpy(w_pos, _z_cptr_u8_offset(bs, offset), length);
-    ios->_w_pos = ios->_w_pos + length;
+    ios->_w_pos += length;
 }
 
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos) {
@@ -166,11 +171,19 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
     return v;
 }
+_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice) {
+    return (_z_zbuf_t){._ios = {._buf = (uint8_t *)slice.start,  // Safety: `_z_zbuf_t` is an immutable buffer
+                                ._is_alloc = false,
+                                ._capacity = slice.len,
+                                ._r_pos = 0,
+                                ._w_pos = slice.len}};
+}
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._capacity; }
 
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf->_ios); }
 
+uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) { return _z_ptr_u8_offset(zbf->_ios._buf, zbf->_ios._r_pos); }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
 _Bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
@@ -249,14 +262,14 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
         // Preallocate 4 slots, this is usually what we expect
         // when fragmenting a zenoh data message with attachment
         wbf._ioss = _z_iosli_vec_make(4);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(Z_IOSLICE_SIZE));
+        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
     } else {
         wbf._ioss = _z_iosli_vec_make(1);
         _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
     }
     wbf._w_idx = 0;  // This __must__ come after adding ioslices to reset w_idx
     wbf._r_idx = 0;
-    wbf._is_expandable = is_expandable;
+    wbf._expansion_step = is_expandable ? capacity : 0;
     wbf._capacity = capacity;
 
     return wbf;
@@ -343,21 +356,22 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
 }
 
 int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
-    int8_t ret = _Z_RES_OK;
-
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
-    if (writable >= (size_t)1) {
-        _z_iosli_write(ios, b);
-    } else if (wbf->_is_expandable == true) {
-        ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
-        _z_wbuf_add_iosli(wbf, ios);
-        _z_iosli_write(ios, b);
-    } else {
-        ret = _Z_ERR_TRANSPORT_NO_SPACE;
+    if (writable == (size_t)0) {
+        wbf->_w_idx += 1;
+        if (wbf->_ioss._len <= wbf->_w_idx) {
+            if (wbf->_expansion_step != 0) {
+                ios = __z_wbuf_new_iosli(wbf->_expansion_step);
+                _z_iosli_vec_append(&wbf->_ioss, ios);
+            } else {
+                return _Z_ERR_TRANSPORT_NO_SPACE;
+            }
+        }
+        ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     }
-
-    return ret;
+    _z_iosli_write(ios, b);
+    return _Z_RES_OK;
 }
 
 int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
@@ -370,12 +384,12 @@ int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, siz
     size_t writable = _z_iosli_writable(ios);
     if (writable >= llength) {
         _z_iosli_write_bytes(ios, bs, loffset, llength);
-    } else if (wbf->_is_expandable == true) {
+    } else if (wbf->_expansion_step != 0) {
         _z_iosli_write_bytes(ios, bs, loffset, writable);
         llength = llength - writable;
         loffset = loffset + writable;
         while (llength > (size_t)0) {
-            ios = __z_wbuf_new_iosli(Z_IOSLICE_SIZE);
+            ios = __z_wbuf_new_iosli(wbf->_expansion_step);
             _z_wbuf_add_iosli(wbf, ios);
 
             writable = _z_iosli_writable(ios);
@@ -518,7 +532,7 @@ void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src) {
     dst->_capacity = src->_capacity;
     dst->_r_idx = src->_r_idx;
     dst->_w_idx = src->_w_idx;
-    dst->_is_expandable = src->_is_expandable;
+    dst->_expansion_step = src->_expansion_step;
     _z_iosli_vec_copy(&dst->_ioss, &src->_ioss);
 }
 
@@ -527,7 +541,7 @@ void _z_wbuf_reset(_z_wbuf_t *wbf) {
     wbf->_w_idx = 0;
 
     // Reset to default iosli allocation
-    for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++) {
+    for (size_t i = 0; i < _z_iosli_vec_len(&wbf->_ioss); i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         if (ios->_is_alloc == false) {
             _z_iosli_vec_remove(&wbf->_ioss, i);
