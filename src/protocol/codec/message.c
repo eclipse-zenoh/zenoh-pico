@@ -404,7 +404,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
                                                  _z_bytes_encode_len(&msg->_ext_value.payload)));
         _Z_RETURN_IF_ERR(_z_encoding_prefix_encode(wbf, msg->_ext_value.encoding.prefix));
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_value.encoding.suffix));
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_value.payload));
+        _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &msg->_ext_value.payload));
     }
     if (required_exts.consolidation) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M | 0x02;
@@ -440,7 +440,8 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
             ret = _z_encoding_prefix_decode(&msg->_ext_value.encoding.prefix, &zbf);
             ret |= _z_bytes_decode(&msg->_ext_value.encoding.suffix, &zbf);
-            ret |= _z_bytes_decode(&msg->_ext_value.payload, &zbf);
+            _z_bytes_t bytes = _z_bytes_wrap((uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
+            _z_bytes_copy(&msg->_ext_value.payload, &bytes);
             break;
         }
         default:
