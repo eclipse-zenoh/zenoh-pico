@@ -1030,3 +1030,31 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
     return _zp_send_join(zs._val);
 }
+z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
+    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
+    if (ret._value != NULL && publisher._val != NULL) {
+        *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
+    }
+    return ret;
+}
+z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
+    z_owned_keyexpr_t ret = z_keyexpr_null();
+    __auto_type lookup = sub._val->_entity_id;
+    if (sub._val != NULL) {
+        _z_subscription_sptr_list_t *tail = sub._val->_zn->_local_subscriptions;
+        while (tail != NULL && !z_keyexpr_check(&ret)) {
+            _z_subscription_sptr_t *head = _z_subscription_sptr_list_head(tail);
+            if (head->ptr->_id == lookup) {
+                _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
+                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
+                if (ret._value != NULL) {
+                    *ret._value = key;
+                } else {
+                    _z_keyexpr_clear(&key);
+                }
+            }
+            tail = _z_subscription_sptr_list_tail(tail);
+        }
+    }
+    return ret;
+}
