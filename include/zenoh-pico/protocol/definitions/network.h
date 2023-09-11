@@ -63,7 +63,7 @@ typedef struct {
 } _z_n_qos_t;
 
 #define _z_n_qos_make(express, nodrop, priority) \
-    (_z_n_qos_t) { ._val = (((express) << 4) | ((nodrop) << 3) | priority) }
+    (_z_n_qos_t) { ._val = (((express) << 4) | ((nodrop) << 3) | (priority)) }
 #define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
 
 // RESPONSE FINAL message flags:
