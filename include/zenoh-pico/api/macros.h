@@ -230,7 +230,7 @@
  * Returns:
  *   Returns the new closure.
  */
-#define z_closure(...) _z_closure_overloader(__VA_ARGS__, 0, 0)
+#define z_closure(...) _z_closure_overloader(__VA_ARGS__, 0, 0, 0)
 
 #else
 

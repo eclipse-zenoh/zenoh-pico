@@ -86,13 +86,14 @@ void wifi_init_sta(void) {
     vEventGroupDelete(s_event_group_handler);
 }
 
-void fprintzid(FILE *stream, z_bytes_t zid) {
-    if (zid.start == NULL) {
+void fprintzid(FILE *stream, z_id_t zid) {
+    unsigned int zidlen = _z_id_len(zid);
+    if (zidlen == 0) {
         fprintf(stream, "None");
     } else {
         fprintf(stream, "Some(");
-        for (unsigned int i = 0; i < zid.len; i++) {
-            fprintf(stream, "%02X", (int)zid.start[i]);
+        for (unsigned int i = 0; i < zidlen; i++) {
+            fprintf(stream, "%02X", (int)zid.id[i]);
         }
         fprintf(stream, ")");
     }

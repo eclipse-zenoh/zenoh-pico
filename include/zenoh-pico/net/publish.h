@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_PUBLISH_NETAPI_H
-#define ZENOH_PICO_PUBLISH_NETAPI_H
+#ifndef INCLUDE_ZENOH_PICO_NET_PUBLISH_H
+#define INCLUDE_ZENOH_PICO_NET_PUBLISH_H
 
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
@@ -32,4 +32,4 @@ typedef struct {
 void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
 
-#endif /* ZENOH_PICO_PUBLISH_NETAPI_H */
+#endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

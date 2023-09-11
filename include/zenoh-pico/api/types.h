@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_API_TYPES_H
-#define ZENOH_PICO_API_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
+#define INCLUDE_ZENOH_PICO_API_TYPES_H
 
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
@@ -395,7 +395,7 @@ typedef _z_sample_t z_sample_t;
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
  *
  * Members:
- *   uint8_t whatami: The kind of zenoh entity.
+ *   z_whatami_t whatami: The kind of zenoh entity.
  *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */
@@ -541,4 +541,4 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 }
 #endif
 
-#endif /* ZENOH_PICO_API_TYPES_H */
+#endif /* INCLUDE_ZENOH_PICO_API_TYPES_H */

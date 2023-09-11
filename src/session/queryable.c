@@ -13,9 +13,12 @@
 //
 
 #include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/resource.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
@@ -104,7 +107,7 @@ _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const 
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_LOCAL, keyexpr);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
     _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
 
 #if Z_MULTI_THREAD == 1
@@ -115,7 +118,7 @@ _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const 
 }
 
 _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionable_t *q) {
-    _Z_DEBUG(">>> Allocating queryable for (%zu:%s)\n", q->_key._id, q->_key._suffix);
+    _Z_DEBUG(">>> Allocating queryable for (%ju:%s)\n", (uintmax_t)q->_key._id, q->_key._suffix);
     _z_questionable_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1
@@ -135,14 +138,14 @@ _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionab
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
+int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, const _z_keyexpr_t q_key, uint32_t qid) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, _Z_RESOURCE_IS_REMOTE, &query->_key);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
     if (key._suffix != NULL) {
         _z_questionable_sptr_list_t *qles = __unsafe_z_get_questionable_by_key(zn, key);
 
@@ -153,11 +156,18 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
         // Build the query
         z_query_t q;
         q._zn = zn;
-        q._qid = query->_qid;
+        q._request_id = qid;
         q._key = key;
-        q._parameters = query->_parameters;
-        q._value.encoding = query->_info._encoding;
-        q._value.payload = query->_payload;
+#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
+        char *params = z_malloc(query->_parameters.len + 1);
+#else
+        char params[query->_parameters.len + 1];
+#endif
+        memcpy(params, query->_parameters.start, query->_parameters.len);
+        params[query->_parameters.len] = 0;
+        q._parameters = params;
+        q._value.encoding = query->_ext_value.encoding;
+        q._value.payload = query->_ext_value.payload;
         q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         _z_questionable_sptr_list_t *xs = qles;
         while (xs != NULL) {
@@ -168,22 +178,14 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query) {
 
         _z_keyexpr_clear(&key);
         _z_questionable_sptr_list_free(&qles);
+#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
+        z_free(params);
+#endif
 
         // Send the final reply
-        // Final flagged reply context does not encode the ZID
-        _z_bytes_t zid;
-        _z_bytes_reset(&zid);
-        _Bool is_final = true;
-        _z_reply_context_t *rctx = _z_msg_make_reply_context(query->_qid, zid, is_final);
-
-        // Congestion control
-        _Bool can_be_dropped = false;
-
         // Create the final reply
-        _z_zenoh_message_t z_msg = _z_msg_make_unit(can_be_dropped);
-        z_msg._reply_context = rctx;
-
-        if (_z_send_z_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q._request_id);
+        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_msg_clear(&z_msg);
