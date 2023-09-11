@@ -39,17 +39,18 @@
 int8_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg) {
     uint8_t header = _Z_MID_N_PUSH | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
     _Bool has_suffix = _z_keyexpr_has_suffix(msg->_key);
+    _Bool has_qos_ext = msg->_qos._val != _Z_N_QOS_DEFAULT._val;
     _Bool has_timestamp_ext = _z_timestamp_check(&msg->_timestamp);
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
-    if (has_timestamp_ext) {
+    if (has_qos_ext || has_timestamp_ext) {
         header |= _Z_FLAG_N_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 
-    if (msg->_qos._val != _Z_N_QOS_DEFAULT._val) {
+    if (has_qos_ext) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01 | (has_timestamp_ext << 7)));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_qos._val));
     }
@@ -411,12 +412,37 @@ int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t 
 
     return ret;
 }
+
+int8_t _z_response_final_decode_extension(_z_msg_ext_t *extension, void *ctx) {
+    int8_t ret = _Z_RES_OK;
+    _z_n_msg_response_t *msg = (_z_n_msg_response_t *)ctx;
+    switch (_Z_EXT_FULL_ID(extension->_header)) {
+        case _Z_MSG_EXT_ENC_ZINT | 0x01: {
+            msg->_ext_qos._val = extension->_body._zint._val;
+            break;
+        }
+        case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
+            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            ret = _z_timestamp_decode(&msg->_ext_timestamp, &zbf);
+            break;
+        }
+        default:
+            if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
+                ret = _z_msg_ext_unknown_error(extension, 0x0d);
+            }
+    }
+    return ret;
+}
+
 int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
 
     *msg = (_z_n_msg_response_final_t){0};
     int8_t ret = _Z_RES_OK;
     ret |= _z_zint_decode(&msg->_request_id, zbf);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_response_final_decode_extension, msg));
+    }
     return ret;
 }
 
