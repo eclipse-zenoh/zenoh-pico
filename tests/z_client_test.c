@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));

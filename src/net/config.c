@@ -33,7 +33,7 @@ _z_config_t *_z_config_client(const char *locator) {
         _zp_config_insert(ps, Z_CONFIG_MODE_KEY, _z_string_make(Z_CONFIG_MODE_CLIENT));
         if (locator != NULL) {
             // Connect only to the provided locator
-            _zp_config_insert(ps, Z_CONFIG_PEER_KEY, _z_string_make(locator));
+            _zp_config_insert(ps, Z_CONFIG_CONNECT_KEY, _z_string_make(locator));
         } else {
             // The locator is not provided, we should perform scouting
             _zp_config_insert(ps, Z_CONFIG_MULTICAST_SCOUTING_KEY, _z_string_make(Z_CONFIG_MULTICAST_SCOUTING_DEFAULT));
