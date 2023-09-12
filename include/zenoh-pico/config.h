@@ -32,7 +32,7 @@
  * Default value : None.
  * Multiple values are not accepted in zenoh-pico.
  */
-#define Z_CONFIG_PEER_KEY 0x41
+#define Z_CONFIG_CONNECT_KEY 0x41
 
 /**
  * A locator to listen on.
@@ -40,7 +40,7 @@
  * Default value : None.
  * Multiple values accepted.
  */
-#define Z_CONFIG_LISTENER_KEY 0x42
+#define Z_CONFIG_LISTEN_KEY 0x42
 
 /**
  * The user name to use for authentication.

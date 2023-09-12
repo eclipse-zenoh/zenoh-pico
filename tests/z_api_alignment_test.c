@@ -183,9 +183,9 @@ int main(int argc, char **argv) {
     _ret_config = z_config_default();
     assert(z_check(_ret_config));
 #ifdef ZENOH_PICO
-    _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
     assert_eq(_ret_int8, 0);
-    const char *_ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_PEER_KEY);
+    const char *_ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_CONNECT_KEY);
     assert_eq(strlen(_ret_cstr), strlen(argv[1]));
     assert_eq(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)), 0);
 #endif
@@ -249,9 +249,9 @@ int main(int argc, char **argv) {
 
     _ret_config = z_config_default();
 #ifdef ZENOH_PICO
-    _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_PEER_KEY, z_string_make(argv[1]));
+    _ret_int8 = zp_config_insert(z_loan(_ret_config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
     assert_eq(_ret_int8, 0);
-    _ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_PEER_KEY);
+    _ret_cstr = zp_config_get(z_loan(_ret_config), Z_CONFIG_CONNECT_KEY);
     assert_eq(strlen(_ret_cstr), strlen(argv[1]));
     assert_eq(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)), 0);
 #endif
