@@ -106,9 +106,6 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
         ret->_id = _z_get_entity_id(zn);
         ret->_congestion_control = congestion_control;
         ret->_priority = priority;
-
-        // Build the declare message to send on the wire
-        _z_declare_resource(zn, keyexpr);
     }
 
     return ret;
