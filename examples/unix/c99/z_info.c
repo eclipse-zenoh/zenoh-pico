@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "e:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "e:m:l:")) != -1) {
         switch (opt) {
             case 'e':
                 locator = optarg;
@@ -40,8 +40,12 @@ int main(int argc, char **argv) {
             case 'm':
                 mode = optarg;
                 break;
+            case 'l':
+                locator = optarg;
+                mode = "peer";
+                break;
             case '?':
-                if (optopt == 'e' || optopt == 'm') {
+                if (optopt == 'e' || optopt == 'm' || optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);

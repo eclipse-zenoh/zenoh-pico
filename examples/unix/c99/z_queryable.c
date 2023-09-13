@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -51,8 +51,12 @@ int main(int argc, char **argv) {
             case 'e':
                 locator = optarg;
                 break;
+            case 'l':
+                locator = optarg;
+                mode = "peer";
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);

@@ -46,19 +46,14 @@ int main(int argc, char **argv) {
                 mode = optarg;
                 break;
             case 'l':
-                opt = atoi(optarg);
-                value = z_malloc(opt + 1);
-                memset(value, 'A', opt);
-                value[opt] = 0;
-                for (int i = opt - 1; opt > 0; i--, opt /= 10) {
-                    value[i] = '0' + (opt % 10);
-                }
+                locator = optarg;
+                mode = "peer";
                 break;
             case 'n':
                 n = atoi(optarg);
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
