@@ -14,10 +14,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-
-extern "C" {
 #include <zenoh-pico.h>
-}
 
 // WiFi-specific parameters
 #define SSID "SSID"
@@ -26,10 +23,10 @@ extern "C" {
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
-#define PEER ""  // If empty, it will scout
+#define CONNECT ""  // If empty, it will scout
 #elif CLIENT_OR_PEER == 1
 #define MODE "peer"
-#define PEER "udp/224.0.0.225:7447#iface=en0"
+#define CONNECT "udp/224.0.0.225:7447#iface=en0"
 #else
 #error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
 #endif
@@ -68,8 +65,8 @@ void setup() {
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
-    if (strcmp(PEER, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(PEER));
+    if (strcmp(CONNECT, "") != 0) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
     }
 
     // Open Zenoh session

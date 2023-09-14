@@ -21,6 +21,8 @@
 
 #if Z_LINK_BLUETOOTH == 1
 
+#define BT_CONFIG_ARGC 3
+
 #define BT_CONFIG_MODE_KEY 0x01
 #define BT_CONFIG_MODE_STR "mode"
 
@@ -30,14 +32,13 @@
 #define BT_CONFIG_TOUT_KEY 0x03
 #define BT_CONFIG_TOUT_STR "tout"
 
-#define BT_CONFIG_MAPPING_BUILD           \
-    uint8_t argc = 3;                     \
-    _z_str_intmapping_t args[argc];       \
-    args[0]._key = BT_CONFIG_MODE_KEY;    \
-    args[0]._str = BT_CONFIG_MODE_STR;    \
-    args[1]._key = BT_CONFIG_PROFILE_KEY; \
-    args[1]._str = BT_CONFIG_PROFILE_STR; \
-    args[2]._key = BT_CONFIG_TOUT_KEY;    \
+#define BT_CONFIG_MAPPING_BUILD               \
+    _z_str_intmapping_t args[BT_CONFIG_ARGC]; \
+    args[0]._key = BT_CONFIG_MODE_KEY;        \
+    args[0]._str = BT_CONFIG_MODE_STR;        \
+    args[1]._key = BT_CONFIG_PROFILE_KEY;     \
+    args[1]._str = BT_CONFIG_PROFILE_STR;     \
+    args[2]._key = BT_CONFIG_TOUT_KEY;        \
     args[2]._str = BT_CONFIG_TOUT_STR;
 
 size_t _z_bt_config_strlen(const _z_str_intmap_t *s);

@@ -25,6 +25,12 @@
         size_t _len;                                                                                \
         type *_val;                                                                                 \
     } name##_array_t;                                                                               \
+    static inline name##_array_t name##_array_empty(void) {                                         \
+        name##_array_t a;                                                                           \
+        a._val = NULL;                                                                              \
+        a._len = 0;                                                                                 \
+        return a;                                                                                   \
+    }                                                                                               \
     static inline name##_array_t name##_array_make(size_t capacity) {                               \
         name##_array_t a;                                                                           \
         a._val = (type *)z_malloc(capacity * sizeof(type));                                         \

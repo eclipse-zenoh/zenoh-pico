@@ -28,8 +28,8 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
         z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
-        printf(">> Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample.payload.len, sample.payload.start);
-        z_drop(z_move(keystr));
+        printf(">> Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample.payload.len, sample.payload.start);
+        z_str_drop(z_str_move(&keystr));
     } else {
         printf(">> Received an error\n");
     }
@@ -37,11 +37,12 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
+    const char *mode = "client";
     const char *locator = NULL;
     const char *value = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:v:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -49,11 +50,14 @@ int main(int argc, char **argv) {
             case 'e':
                 locator = optarg;
                 break;
+            case 'm':
+                mode = optarg;
+                break;
             case 'v':
                 value = optarg;
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'e') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -65,8 +69,9 @@ int main(int argc, char **argv) {
     }
 
     z_owned_config_t config = z_config_default();
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
     }
 
     printf("Opening session...\n");
@@ -100,7 +105,7 @@ int main(int argc, char **argv) {
         printf("Sending Query '%s'...\n", keyexpr);
         z_get_options_t opts = z_get_options_default();
         if (value != NULL) {
-            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+            opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
         }
         z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
         if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {

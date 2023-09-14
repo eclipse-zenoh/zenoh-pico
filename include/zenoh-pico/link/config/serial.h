@@ -22,6 +22,8 @@
 
 #if Z_LINK_SERIAL == 1
 
+#define SERIAL_CONFIG_ARGC 1
+
 #define SERIAL_CONFIG_BAUDRATE_KEY 0x01
 #define SERIAL_CONFIG_BAUDRATE_STR "baudrate"
 
@@ -40,10 +42,9 @@
 // #define SERIAL_CONFIG_TOUT_KEY         0x06
 // #define SERIAL_CONFIG_TOUT_STR         "tout"
 
-#define SERIAL_CONFIG_MAPPING_BUILD            \
-    uint8_t argc = 1;                          \
-    _z_str_intmapping_t args[argc];            \
-    args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY; \
+#define SERIAL_CONFIG_MAPPING_BUILD               \
+    _z_str_intmapping_t args[SERIAL_CONFIG_ARGC]; \
+    args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY;    \
     args[0]._str = SERIAL_CONFIG_BAUDRATE_STR;
 // args[1]._key = SERIAL_CONFIG_DATABITS_KEY;
 // args[1]._str = SERIAL_CONFIG_DATABITS_STR;

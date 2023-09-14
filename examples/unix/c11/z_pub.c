@@ -16,17 +16,22 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#include "zenoh-pico/system/platform.h"
+
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
-    const char *value = "Pub from Pico!";
+    char *const default_value = "Pub from Pico!";
+    char *value = default_value;
     const char *mode = "client";
     char *locator = NULL;
+    int n = 10;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -39,6 +44,18 @@ int main(int argc, char **argv) {
                 break;
             case 'm':
                 mode = optarg;
+                break;
+            case 'l':
+                opt = atoi(optarg);
+                value = z_malloc(opt + 1);
+                memset(value, 'A', opt);
+                value[opt] = 0;
+                for (int i = opt - 1; opt > 0; i--, opt /= 10) {
+                    value[i] = '0' + (opt % 10);
+                }
+                break;
+            case 'n':
+                n = atoi(optarg);
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
@@ -55,7 +72,7 @@ int main(int argc, char **argv) {
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
     }
 
     printf("Opening session...\n");
@@ -78,15 +95,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char *buf = (char *)malloc(256);
-    for (int idx = 0; 1; ++idx) {
+    for (int idx = 0; idx < n; ++idx) {
         sleep(1);
-        snprintf(buf, 256, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+        (void)idx;
+        // snprintf(buf, 256, "[%4d] %s", idx, value);
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
+        z_publisher_put(z_loan(pub), (const uint8_t *)value, strlen(value), &options);
     }
 
     z_undeclare_publisher(z_move(pub));
@@ -97,6 +114,8 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
 
-    free(buf);
+    if (value != default_value) {
+        free(value);
+    }
     return 0;
 }

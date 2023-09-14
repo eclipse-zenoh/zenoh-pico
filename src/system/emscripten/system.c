@@ -14,6 +14,7 @@
 
 #include <emscripten/emscripten.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
@@ -79,17 +80,28 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
+int z_sleep_us(size_t time) {
     emscripten_sleep((time / 1000) + (time % 1000 == 0 ? 0 : 1));
     return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     emscripten_sleep(time);
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000); }
+int z_sleep_s(size_t time) {
+    z_time_t start = z_time_now();
+
+    // Most sleep APIs promise to sleep at least whatever you asked them to.
+    // This may compound, so this approach may make sleeps longer than expected.
+    // This extra check tries to minimize the amount of extra time it might sleep.
+    while (z_time_elapsed_s(&start) < time) {
+        z_sleep_ms(1000);
+    }
+
+    return 0;
+}
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) { return z_time_now(); }
@@ -102,6 +114,11 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(i
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    snprintf(buf, buflen, "%f", z_time_now());
+    return buf;
+}
 
 unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
 

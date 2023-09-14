@@ -17,50 +17,39 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 
 /*------------------ clone helpers ------------------*/
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
-    dst->_id = src->_id;
-    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
-}
-
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
-    _z_keyexpr_t dst;
-    _z_keyexpr_copy(&dst, src);
-    return dst;
-}
-
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     _z_timestamp_t ts;
-    _z_bytes_copy(&ts._id, &tstamp->_id);
-    ts._time = tstamp->_time;
+    ts.id = tstamp->id;
+    ts.time = tstamp->time;
     return ts;
 }
 
-void _z_timestamp_reset(_z_timestamp_t *tstamp) {
-    _z_bytes_reset(&tstamp->_id);
-    tstamp->_time = 0;
+void _z_timestamp_clear(_z_timestamp_t *tstamp) {
+    memset(&tstamp->id, 0, sizeof(_z_id_t));
+    tstamp->time = 0;
 }
 
-int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
+    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
+        if (stamp->id.id[i]) return true;
+    return false;
+}
+
+int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;
-
-    *bs = _z_bytes_make(size);
-    if (bs->_is_alloc == true) {
-        z_random_fill((uint8_t *)bs->start, bs->len);
-    } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
+    z_random_fill((uint8_t *)bs->id, size);
     return ret;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
+int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
@@ -81,8 +70,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
     ret = _z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
     if (ret == _Z_RES_OK) {
-        zn->_local_zid = _z_bytes_empty();
-        _z_bytes_move(&zn->_local_zid, zid);
+        zn->_local_zid = *zid;
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._session = zn;
@@ -98,7 +86,6 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
         }
     } else {
         _z_transport_clear(&zn->_tp);
-        _z_bytes_clear(&zn->_local_zid);
     }
 
     return ret;
@@ -106,7 +93,6 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
 
 void _z_session_clear(_z_session_t *zn) {
     // Clear Zenoh PID
-    _z_bytes_clear(&zn->_local_zid);
 
     // Clean up transports
     _z_transport_clear(&zn->_tp);
@@ -134,9 +120,11 @@ void _z_session_free(_z_session_t **zn) {
 }
 
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int8_t ret = _Z_RES_OK;
+    int8_t ret = _Z_ERR_GENERIC;
 
-    ret = _z_transport_close(&zn->_tp, reason);
+    if (zn != NULL) {
+        ret = _z_transport_close(&zn->_tp, reason);
+    }
 
     return ret;
 }

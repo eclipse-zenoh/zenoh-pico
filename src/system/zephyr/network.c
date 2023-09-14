@@ -12,7 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <version.h>
+
+#if KERNEL_VERSION_MAJOR == 2
 #include <drivers/uart.h>
+#else
+#include <zephyr/drivers/uart.h>
+#endif
+
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -29,7 +36,7 @@
 
 #if Z_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
@@ -39,7 +46,7 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addr, con
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
     }
 
@@ -110,7 +117,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -142,7 +149,7 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
@@ -152,7 +159,7 @@ int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addr, con
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_UDP;
 
-    if (getaddrinfo(s_addr, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
     }
 
@@ -205,7 +212,7 @@ size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t 
     unsigned int addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &addrlen);
-    if (rb < 0) {
+    if (rb < (ssize_t)0) {
         rb = SIZE_MAX;
     }
 
@@ -295,7 +302,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
             }
 
             // Create lep endpoint
-            if (ret != _Z_RES_OK) {
+            if (ret == _Z_RES_OK) {
                 struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
                 if (laddr != NULL) {
                     laddr->ai_flags = 0;
@@ -357,7 +364,6 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
             c_laddr->sin6_family = AF_INET6;
             c_laddr->sin6_addr = in6addr_any;
-            c_laddr->sin6_port = htons(INADDR_ANY);
             c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
             //        c_laddr->sin6_scope_id; // Not needed to be defined
         } else {
@@ -400,14 +406,22 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                    net_if_ipv4_maddr_join(ifa, mcast);
+#else
                     net_if_ipv4_maddr_join(mcast);
+#endif
                 } else if (rep._iptcp->ai_family == AF_INET6) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                    net_if_ipv6_maddr_join(ifa, mcast);
+#else
                     net_if_ipv6_maddr_join(mcast);
+#endif
                 } else {
                     ret = _Z_ERR_GENERIC;
                 }
@@ -435,7 +449,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         if (rep._iptcp->ai_family == AF_INET) {
             mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             if (mcast != NULL) {
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                net_if_ipv4_maddr_leave(ifa, mcast);
+#else
                 net_if_ipv4_maddr_leave(mcast);
+#endif
                 net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             } else {
                 // Do nothing. The socket will be closed in any case.
@@ -443,7 +461,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         } else if (rep._iptcp->ai_family == AF_INET6) {
             mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             if (mcast != NULL) {
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+                net_if_ipv6_maddr_leave(ifa, mcast);
+#else
                 net_if_ipv6_maddr_leave(mcast);
+#endif
                 net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             } else {
                 // Do nothing. The socket will be closed in any case.
@@ -466,7 +488,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
     ssize_t rb = 0;
     do {
         rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &raddrlen);
-        if (rb < 0) {
+        if (rb < (ssize_t)0) {
             rb = SIZE_MAX;
             break;
         }
@@ -527,7 +549,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
                              _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
-#endif
+#endif  // Z_LINK_UDP_MULTICAST == 1
 
 #if Z_LINK_SERIAL == 1
 int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {

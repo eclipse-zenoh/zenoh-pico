@@ -58,22 +58,23 @@ CROSSIMG_PREFIX=zenoh-pico_
 # NOTES:
 # - ARM:   old versions of dockcross/dockcross were creating some issues since they used an old GCC (4.8.3) which lacks <stdatomic.h> (even using -std=gnu11)
 
-CMAKE_OPT=-DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -DBUILD_TOOLS=$(BUILD_TOOLS) -H.
+CMAKE_OPT=-DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -DBUILD_TOOLS=$(BUILD_TOOLS) -DBUILD_SHARED_LIBS=$(BUILD_SHARED_LIBS) -H.
 
 all: make
 
-$(BUILD_DIR)/Makefile: CMakeLists.txt
+$(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
+	echo $(CMAKE_OPT)
 	cmake $(CMAKE_OPT) -B$(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
 
 install: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) install
+	cmake --install $(BUILD_DIR)
 
-test: $(BUILD_DIR)/Makefile
-	make -C$(BUILD_DIR) test
+test: make
+	ctest --verbose --test-dir build
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 
@@ -89,7 +90,6 @@ crossbuild: check-docker
 		cmake $(CMAKE_OPT) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
 		make VERBOSE=1 -C$(CROSSBUILD_DIR)/$(CROSSIMG) all package"
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
-	docker rmi dockcross/$(CROSSIMG)
 
 linux-armv5:
 	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild

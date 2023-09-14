@@ -11,14 +11,17 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 
-int main(void) {
+#undef NDEBUG
+#include <assert.h>
+
+int main(void)
+{
     assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
@@ -97,77 +100,77 @@ int main(void) {
     assert(!_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
     assert(!_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
 
-    assert(zp_keyexpr_intersect_null_terminated("a", "a"));
-    assert(zp_keyexpr_intersect_null_terminated("a/b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "abc"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "abc"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "abc"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "xxx"));
-    assert(zp_keyexpr_intersect_null_terminated("ab$*", "abcd"));
-    assert(zp_keyexpr_intersect_null_terminated("ab$*d", "abcd"));
-    assert(zp_keyexpr_intersect_null_terminated("ab$*", "ab"));
-    assert(!zp_keyexpr_intersect_null_terminated("ab/*", "ab"));
-    assert(zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/b/c/d/e"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/d/**/l", "a/b/c/d/e/f/g/h/i/l"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/d/**/l", "a/d/foo/l"));
-    assert(zp_keyexpr_intersect_null_terminated("a/$*b/c/$*d/e", "a/xb/c/xd/e"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/c/e"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/b/c/d/x/e"));
-    assert(!zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxd"));
-    assert(zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcd"));
-    assert(!zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcdx"));
-    assert(zp_keyexpr_intersect_null_terminated("**", "abc"));
-    assert(zp_keyexpr_intersect_null_terminated("**", "a/b/c"));
-    assert(zp_keyexpr_intersect_null_terminated("ab/**", "ab"));
-    assert(zp_keyexpr_intersect_null_terminated("**/xyz", "a/b/xyz/d/e/f/xyz"));
-    assert(!zp_keyexpr_intersect_null_terminated("**/xyz$*xyz", "a/b/xyz/d/e/f/xyz"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/c/**/e", "a/b/b/b/c/d/d/d/e"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/c/**/e", "a/c/e"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/c/*/e/*", "a/b/b/b/c/d/d/c/d/e/f"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/**/c/*/e/*", "a/b/b/b/c/d/d/c/d/d/e/f"));
-    assert(!zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcdx"));
-    assert(zp_keyexpr_intersect_null_terminated("x/abc", "x/abc"));
-    assert(!zp_keyexpr_intersect_null_terminated("x/abc", "abc"));
-    assert(zp_keyexpr_intersect_null_terminated("x/*", "x/abc"));
-    assert(!zp_keyexpr_intersect_null_terminated("x/*", "abc"));
-    assert(!zp_keyexpr_intersect_null_terminated("*", "x/abc"));
-    assert(zp_keyexpr_intersect_null_terminated("x/*", "x/abc$*"));
-    assert(zp_keyexpr_intersect_null_terminated("x/$*abc", "x/abc$*"));
-    assert(zp_keyexpr_intersect_null_terminated("x/a$*", "x/abc$*"));
-    assert(zp_keyexpr_intersect_null_terminated("x/a$*de", "x/abc$*de"));
-    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/a$*e"));
-    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/a$*c$*e"));
-    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/ade"));
-    assert(!zp_keyexpr_intersect_null_terminated("x/c$*", "x/abc$*"));
-    assert(!zp_keyexpr_intersect_null_terminated("x/$*d", "x/$*e"));
-    assert(zp_keyexpr_intersect_null_terminated("a", "a"));
-    assert(zp_keyexpr_intersect_null_terminated("a/b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "a"));
-    assert(zp_keyexpr_intersect_null_terminated("a", "*"));
-    assert(zp_keyexpr_intersect_null_terminated("*", "aaaaa"));
-    assert(zp_keyexpr_intersect_null_terminated("**", "a"));
-    assert(zp_keyexpr_intersect_null_terminated("a", "**"));
-    assert(zp_keyexpr_intersect_null_terminated("**", "a"));
-    assert(zp_keyexpr_intersect_null_terminated("a/a/a/a", "**"));
-    assert(zp_keyexpr_intersect_null_terminated("a/*", "a/b"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/*/b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/b$*", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/$*b$*", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/$*b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/b$*", "a/bc"));
-    assert(zp_keyexpr_intersect_null_terminated("a/$*b$*", "a/ebc"));
-    assert(zp_keyexpr_intersect_null_terminated("a/$*b", "a/cb"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/b$*", "a/ebc"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/$*b", "a/cbc"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b$*", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/b"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/bc"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b$*", "a/ebc"));
-    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cb"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/ebc"));
-    assert(!zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cbc"));
+    assert(zp_keyexpr_intersect_null_terminated("a", "a") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/b", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "xxx") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*", "abcd") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*d", "abcd") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*", "ab") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab/*", "ab") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/b/c/d/e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/d/**/l", "a/b/c/d/e/f/g/h/i/l") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/d/**/l", "a/d/foo/l") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b/c/$*d/e", "a/xb/c/xd/e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/c/e") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/*/c/*/e", "a/b/c/d/x/e") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxd") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcd") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcdx") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("**", "abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("**", "a/b/c") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("ab/**", "ab") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("**/xyz", "a/b/xyz/d/e/f/xyz") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("**/xyz$*xyz", "a/b/xyz/d/e/f/xyz") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/c/**/e", "a/b/b/b/c/d/d/d/e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/c/**/e", "a/c/e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/c/*/e/*", "a/b/b/b/c/d/d/c/d/e/f") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/c/*/e/*", "a/b/b/b/c/d/d/c/d/d/e/f") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("ab$*cd", "abxxcxxcdx") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("x/abc", "x/abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/abc", "abc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("x/*", "x/abc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/*", "abc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("*", "x/abc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("x/*", "x/abc$*") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/$*abc", "x/abc$*") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/a$*", "x/abc$*") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/a$*de", "x/abc$*de") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/a$*e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/a$*c$*e") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/a$*d$*e", "x/ade") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("x/c$*", "x/abc$*") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("x/$*d", "x/$*e") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a", "a") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/b", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "a") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a", "*") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("*", "aaaaa") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("**", "a") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a", "**") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("**", "a") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/a/a/a", "**") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/*", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/*/b", "a/b") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/b", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/b$*", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b$*", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/b$*", "a/bc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b$*", "a/ebc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b", "a/cb") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/b$*", "a/ebc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/$*b", "a/cbc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b$*", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/b") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/bc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b$*", "a/ebc") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cb") == 0);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/ebc") == -1);
+    assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cbc") == -1);
 
     assert(_z_keyexpr_includes("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_includes("a/b", strlen("a/b"), "a/b", strlen("a/b")));
@@ -203,49 +206,56 @@ int main(void) {
     assert(!_z_keyexpr_includes("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
     assert(!_z_keyexpr_includes("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
 
-    assert(zp_keyexpr_includes_null_terminated("a", "a"));
-    assert(zp_keyexpr_includes_null_terminated("a/b", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("*", "a"));
-    assert(!zp_keyexpr_includes_null_terminated("a", "*"));
-    assert(zp_keyexpr_includes_null_terminated("*", "aaaaa"));
-    assert(zp_keyexpr_includes_null_terminated("**", "a"));
-    assert(!zp_keyexpr_includes_null_terminated("a", "**"));
-    assert(zp_keyexpr_includes_null_terminated("**", "a"));
-    assert(zp_keyexpr_includes_null_terminated("**", "a/a/a/a"));
-    assert(zp_keyexpr_includes_null_terminated("**", "*/**"));
-    assert(zp_keyexpr_includes_null_terminated("*/**", "*/**"));
-    assert(!zp_keyexpr_includes_null_terminated("*/**", "**"));
-    assert(!zp_keyexpr_includes_null_terminated("a/a/a/a", "**"));
-    assert(zp_keyexpr_includes_null_terminated("a/*", "a/b"));
-    assert(!zp_keyexpr_includes_null_terminated("a/*/b", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/b", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/b$*", "a/b"));
-    assert(!zp_keyexpr_includes_null_terminated("a/b", "a/b$*"));
-    assert(zp_keyexpr_includes_null_terminated("a/$*b$*", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/$*b", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/b$*", "a/bc"));
-    assert(zp_keyexpr_includes_null_terminated("a/$*b$*", "a/ebc"));
-    assert(zp_keyexpr_includes_null_terminated("a/$*b", "a/cb"));
-    assert(!zp_keyexpr_includes_null_terminated("a/b$*", "a/ebc"));
-    assert(!zp_keyexpr_includes_null_terminated("a/$*b", "a/cbc"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/$*b$*", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/b"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/bc"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/$*b$*", "a/ebc"));
-    assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cb"));
-    assert(!zp_keyexpr_includes_null_terminated("a/**/b$*", "a/ebc"));
-    assert(!zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cbc"));
+    assert(zp_keyexpr_includes_null_terminated("a", "a") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/b", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("*", "a") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a", "*") == -1);
+    assert(zp_keyexpr_includes_null_terminated("*", "aaaaa") == 0);
+    assert(zp_keyexpr_includes_null_terminated("**", "a") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a", "**") == -1);
+    assert(zp_keyexpr_includes_null_terminated("**", "a") == 0);
+    assert(zp_keyexpr_includes_null_terminated("**", "a/a/a/a") == 0);
+    assert(zp_keyexpr_includes_null_terminated("**", "*/**") == 0);
+    assert(zp_keyexpr_includes_null_terminated("*/**", "*/**") == 0);
+    assert(zp_keyexpr_includes_null_terminated("*/**", "**") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/a/a/a", "**") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/*", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/*/b", "a/b") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/**/b", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/b$*", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/b", "a/b$*") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/$*b$*", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/$*b", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/b$*", "a/bc") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/$*b$*", "a/ebc") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/$*b", "a/cb") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/b$*", "a/ebc") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/$*b", "a/cbc") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/$*b$*", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/b") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/bc") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/$*b$*", "a/ebc") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cb") == 0);
+    assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/ebc") == -1);
+    assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cbc") == -1);
 
-#define N 26
+    // clang-format off
+
+#define N 31
     const char *input[N] = {"greetings/hello/there",
                             "greetings/good/*/morning",
                             "greetings/*",
                             "greetings/*/**",
                             "greetings/$*",
                             "greetings/**/*/morning",
+                            "greetings/**/*/g/morning",
+                            "greetings/**/*/m",
                             "greetings/**/*",
                             "greetings/**/**",
+                            "greetings/**/**/morning",
+                            "greetings/**/**/g/morning",
+                            "greetings/**/**/m",
                             "greetings/**/*/**",
                             "$*",
                             "$*$*",
@@ -281,6 +291,11 @@ int main(void) {
                                                    Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
+                                                   Z_KEYEXPR_CANON_SUCCESS,
                                                    Z_KEYEXPR_CANON_STARS_IN_CHUNK,
                                                    Z_KEYEXPR_CANON_EMPTY_CHUNK,
                                                    Z_KEYEXPR_CANON_EMPTY_CHUNK,
@@ -296,8 +311,13 @@ int main(void) {
                                 "greetings/*/**",
                                 "greetings/*",
                                 "greetings/*/**/morning",
+                                "greetings/*/**/g/morning",
+                                "greetings/*/**/m",
                                 "greetings/*/**",
                                 "greetings/**",
+                                "greetings/**/morning",
+                                "greetings/**/g/morning",
+                                "greetings/**/m",
                                 "greetings/*/**",
                                 "*",
                                 "*",
@@ -317,7 +337,10 @@ int main(void) {
                                 "greetings/**/*/e$",
                                 "greetings/**/*/$e"};
 
-    for (int i = 0; i < N; i++) {
+    // clang-format on
+
+    for (int i = 0; i < N; i++)
+    {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -325,16 +348,17 @@ int main(void) {
         size_t canon_len = strlen(canon);
         zp_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
         printf("%s ", ke);
-        printf("  Status: %d : %d", status, expected[i]);
+        printf("  Status: %d : %d\n", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS) {
-            printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
+        if (status == Z_KEYEXPR_CANON_SUCCESS)
+        {
+            printf("  Match: %.*s : %s\n", (int)canon_len, canon, canonized[i]);
             assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
-        printf("\n");
     }
 
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
+    {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -344,19 +368,17 @@ int main(void) {
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS) {
+        if (status == Z_KEYEXPR_CANON_SUCCESS)
+        {
             printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
             assert(strcmp(canonized[i], canon) == 0);
         }
         printf("\n");
     }
 
-    assert(z_keyexpr_equals(z_keyexpr("a/**/$*b"), z_keyexpr("a/cb")) < 0);
-    assert(z_keyexpr_equals(z_keyexpr("a/bc"), z_keyexpr("a/cb")) < 0);
-    assert(z_keyexpr_equals(z_keyexpr("greetings/hello/there"), z_keyexpr("greetings/hello/there")) == 0);
-    assert(zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb") == false);
-    assert(zp_keyexpr_equals_null_terminated("a/bc", "a/cb") == false);
-    assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there") == true);
+    assert(zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb") == -1);
+    assert(zp_keyexpr_equals_null_terminated("a/bc", "a/cb") == -1);
+    assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there") == 0);
 
     return 0;
 }

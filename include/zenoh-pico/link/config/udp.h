@@ -20,18 +20,19 @@
 
 #if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
 
+#define UDP_CONFIG_ARGC 2
+
 #define UDP_CONFIG_IFACE_KEY 0x01
 #define UDP_CONFIG_IFACE_STR "iface"
 
 #define UDP_CONFIG_TOUT_KEY 0x02
 #define UDP_CONFIG_TOUT_STR "tout"
 
-#define UDP_CONFIG_MAPPING_BUILD         \
-    uint8_t argc = 2;                    \
-    _z_str_intmapping_t args[argc];      \
-    args[0]._key = UDP_CONFIG_IFACE_KEY; \
-    args[0]._str = UDP_CONFIG_IFACE_STR; \
-    args[1]._key = UDP_CONFIG_TOUT_KEY;  \
+#define UDP_CONFIG_MAPPING_BUILD               \
+    _z_str_intmapping_t args[UDP_CONFIG_ARGC]; \
+    args[0]._key = UDP_CONFIG_IFACE_KEY;       \
+    args[0]._str = UDP_CONFIG_IFACE_STR;       \
+    args[1]._key = UDP_CONFIG_TOUT_KEY;        \
     args[1]._str = UDP_CONFIG_TOUT_STR;
 
 size_t _z_udp_config_strlen(const _z_str_intmap_t *s);

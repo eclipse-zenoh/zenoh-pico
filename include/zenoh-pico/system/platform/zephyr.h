@@ -15,8 +15,18 @@
 #ifndef ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 #define ZENOH_PICO_SYSTEM_ZEPHYR_TYPES_H
 
+#include <version.h>
+
+#if KERNEL_VERSION_MAJOR == 2
+#include <kernel.h>
+#elif KERNEL_VERSION_MAJOR == 3
+#include <zephyr/kernel.h>
+#else
+#pragma "This Zephyr version might not be supported."
+#include <zephyr/kernel.h>
+#endif
+
 #include <pthread.h>
-#include <zephyr.h>
 
 #include "zenoh-pico/config.h"
 

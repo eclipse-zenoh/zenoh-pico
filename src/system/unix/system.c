@@ -13,6 +13,7 @@
 //
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #if defined(ZENOH_LINUX)
@@ -99,7 +100,7 @@ void z_free(void *ptr) { free(ptr); }
 
 #if Z_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, pthread_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     return pthread_create(task, attr, fun, arg);
 }
 
@@ -135,11 +136,22 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wa
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) { return usleep(time); }
+int z_sleep_us(size_t time) { return usleep(time); }
 
-int z_sleep_ms(unsigned int time) { return z_sleep_us(time * 1000U); }
+int z_sleep_ms(size_t time) {
+    z_time_t start = z_time_now();
 
-int z_sleep_s(unsigned int time) { return sleep(time); }
+    // Most sleep APIs promise to sleep at least whatever you asked them to.
+    // This may compound, so this approach may make sleeps longer than expected.
+    // This extra check tries to minimize the amount of extra time it might sleep.
+    while (z_time_elapsed_ms(&start) < time) {
+        z_sleep_us(1000);
+    }
+
+    return 0;
+}
+
+int z_sleep_s(size_t time) { return sleep(time); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
@@ -177,6 +189,14 @@ z_time_t z_time_now(void) {
     z_time_t now;
     gettimeofday(&now, NULL);
     return now;
+}
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
 }
 
 unsigned long z_time_elapsed_us(z_time_t *time) {

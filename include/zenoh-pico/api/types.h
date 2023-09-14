@@ -11,14 +11,18 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_API_TYPES_H
-#define ZENOH_PICO_API_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
+#define INCLUDE_ZENOH_PICO_API_TYPES_H
 
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Owned types */
 #define _OWNED_TYPE_PTR(type, name) \
@@ -46,6 +50,7 @@ typedef _z_zint_t z_zint_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 typedef _z_bytes_t z_bytes_t;
+_Bool z_bytes_check(const z_bytes_t *v);
 
 /**
  * Represents a Zenoh ID.
@@ -55,9 +60,7 @@ typedef _z_bytes_t z_bytes_t;
  * Members:
  *   uint8_t id[16]: The array containing the 16 octets of a Zenoh ID.
  */
-typedef struct {
-    uint8_t id[16];
-} z_id_t;
+typedef _z_id_t z_id_t;
 
 /**
  * Represents a string without null-terminator.
@@ -190,6 +193,11 @@ _OWNED_TYPE_PTR(_z_queryable_t, queryable)
  */
 typedef _z_encoding_t z_encoding_t;
 
+/*
+ * Represents timestamp value in Zenoh
+ */
+typedef _z_timestamp_t z_timestamp_t;
+
 /**
  * Represents a Zenoh value.
  *
@@ -321,11 +329,10 @@ typedef struct {
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
- *   z_value_t with_value: The payload to include in the query. Note: This parameter has been marked as unstable: it
- * works as advertised, but we may change it in a future release.
+ *   z_value_t value: The payload to include in the query.
  */
 typedef struct {
-    z_value_t with_value;
+    z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
 } z_get_options_t;
@@ -388,7 +395,7 @@ typedef _z_sample_t z_sample_t;
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
  *
  * Members:
- *   uint8_t whatami: The kind of zenoh entity.
+ *   z_whatami_t whatami: The kind of zenoh entity.
  *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */
@@ -413,14 +420,8 @@ typedef _z_reply_data_t z_reply_data_t;
 typedef _z_reply_t z_reply_t;
 _OWNED_TYPE_PTR(z_reply_t, reply)
 
-#define _TYPEDEF_ARRAY(type, alias, elem, name)                                                                \
-    typedef type alias;                                                                                        \
-    static inline elem *z_##name##_array_get(const alias *a, size_t k) { return _z_##name##_array_get(a, k); } \
-    static inline size_t z_##name##_array_len(const alias *a) { return _z_##name##_array_len(a); }             \
-    static inline _Bool z_##name##_array_is_empty(const alias *a) { return _z_##name##_array_is_empty(a); }
-
 /**
- * Represents an array of ``char *``.
+ * Represents an array of ``z_str_t``.
  *
  * Operations over :c:type:`z_str_array_t` must be done using the provided functions:
  *
@@ -428,7 +429,11 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``size_t z_str_array_len(z_str_array_t *a);``
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
-_TYPEDEF_ARRAY(_z_str_array_t, z_str_array_t, char *, str)
+typedef _z_str_array_t z_str_array_t;
+
+z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
+size_t z_str_array_len(const z_str_array_t *a);
+_Bool z_str_array_is_empty(const z_str_array_t *a);
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
@@ -444,10 +449,12 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_sample_t;
+
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
 
 /**
  * Represents the query callback closure.
@@ -461,10 +468,12 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     _z_questionable_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_query_t;
+
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
 
@@ -480,10 +489,12 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_reply_t;
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
 
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 
@@ -499,10 +510,12 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_owned_hello_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_hello_t;
+
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
@@ -517,9 +530,15 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
+    void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;
-    void *context;
 } z_owned_closure_zid_t;
 
-#endif /* ZENOH_PICO_API_TYPES_H */
+void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* INCLUDE_ZENOH_PICO_API_TYPES_H */

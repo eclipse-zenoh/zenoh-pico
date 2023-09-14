@@ -32,25 +32,28 @@ jobs:
         os: [ ubuntu-latest, macOS-latest ]
 
     steps:
-    - uses: actions/checkout@v2
-      
-    - name: Install latest stable
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        components: rustfmt, clippy
+      - uses: actions/checkout@v2
 
-    - name: Compile debug
-      run: make all
-      env:
-        BUILD_TYPE: Debug
-        BUILD_TESTING: OFF
-        BUILD_MULTICAST: OFF
-        BUILD_INTEGRATION: ON
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-    - name: Test debug
-      run: make test
-      env:
-        ARGS: -V
-        ZENOH_BRANCH: master
+      - name: Compile debug
+        run: make all
+        env:
+          BUILD_TYPE: Debug
+          BUILD_TESTING: OFF
+          BUILD_MULTICAST: OFF
+          BUILD_INTEGRATION: ON
+
+      - name: Test debug
+        run: make test
+        env:
+          BUILD_TYPE: Debug     # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_TESTING: OFF    # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_MULTICAST: OFF  # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
+          ZENOH_BRANCH: master

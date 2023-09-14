@@ -25,18 +25,19 @@ void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
     z_bytes_t pred = z_query_parameters(query);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_loan(keystr), (int)pred.len, pred.start);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_loan(&keystr), (int)pred.len, pred.start);
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
-    z_drop(z_move(keystr));
+    z_str_drop(z_str_move(&keystr));
 }
 
 int main(int argc, char **argv) {
+    const char *mode = "client";
     char *locator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -44,11 +45,14 @@ int main(int argc, char **argv) {
             case 'v':
                 value = optarg;
                 break;
+            case 'm':
+                mode = optarg;
+                break;
             case 'e':
                 locator = optarg;
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -60,8 +64,9 @@ int main(int argc, char **argv) {
     }
 
     z_owned_config_t config = z_config_default();
+    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (locator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
     }
 
     printf("Opening session...\n");

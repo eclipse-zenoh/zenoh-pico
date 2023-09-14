@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +28,7 @@
 void print_zbuf_overview(_z_zbuf_t *zbf) { printf("    ZBuf => Capacity: %zu\n", zbf->_ios._capacity); }
 
 void print_wbuf_overview(_z_wbuf_t *wbf) {
-    printf("    WBuf => Expandable: %u, Capacity: %zu\n", wbf->_is_expandable, wbf->_capacity);
+    printf("    WBuf => Expandable: %zu, Capacity: %zu\n", wbf->_expansion_step, wbf->_capacity);
 }
 
 void print_iosli(_z_iosli_t *ios) {
@@ -437,13 +438,15 @@ void wbuf_put_zbuf_get(void) {
 
 void wbuf_reusable_write_zbuf_read(void) {
     _z_wbuf_t wbf = gen_wbuf(128);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 1; i <= 10; i++) {
         size_t len = z_random_u8() % 128;
-        printf("\n>>> WBuf => Write and Read\n");
+        printf("\n>>> WBuf => Write and Read round %d\n", i);
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);
         for (size_t z = 0; z < len; z++) {
-            _z_wbuf_write(&wbf, z % (uint8_t)255);
+            size_t prev_len = _z_wbuf_len(&wbf);
+            assert(_z_wbuf_write(&wbf, z % (uint8_t)255) == 0);
+            assert(_z_wbuf_len(&wbf) == prev_len + 1);
         }
 
         printf("    IOSlices: %zu, RIdx: %zu, WIdx: %zu\n", _z_wbuf_len_iosli(&wbf), wbf._r_idx, wbf._w_idx);
@@ -512,7 +515,7 @@ void wbuf_add_iosli(void) {
     printf("\n>>> WBuf => Add IOSli\n");
     print_wbuf_overview(&wbf);
 
-    size_t written = 0;
+    uint8_t written = 0;
     uint8_t counter = 0;
     while (written < 255) {
         uint8_t remaining = 255 - written;

@@ -109,16 +109,17 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
-    return -1;  // Not supported
+int z_sleep_us(size_t time) {
+    ThisThread::sleep_for(chrono::milliseconds(((time / 1000) + (time % 1000 == 0 ? 0 : 1))));
+    return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     ThisThread::sleep_for(chrono::milliseconds(time));
     return 0;
 }
 
-int z_sleep_s(unsigned int time) {
+int z_sleep_s(size_t time) {
     ThisThread::sleep_for(chrono::seconds(time));
     return 0;
 }
@@ -146,13 +147,21 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
+}
+
 unsigned long z_time_elapsed_us(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
@@ -160,7 +169,7 @@ unsigned long z_time_elapsed_us(z_time_t *time) {
 }
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
@@ -168,7 +177,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
 }
 
 unsigned long z_time_elapsed_s(z_time_t *time) {
-    struct timeval now;
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;

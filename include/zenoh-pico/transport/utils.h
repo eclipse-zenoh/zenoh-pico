@@ -18,12 +18,16 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 
 /*------------------ SN helpers ------------------*/
-_Bool _z_sn_precedes(const _z_zint_t sn_resolution_half, const _z_zint_t sn_left, const _z_zint_t sn_right);
+_z_zint_t _z_sn_max(uint8_t bits);
+_z_zint_t _z_sn_half(_z_zint_t sn);
+_z_zint_t _z_sn_modulo_mask(uint8_t bits);
+_Bool _z_sn_precedes(const _z_zint_t sn_resolution, const _z_zint_t sn_left, const _z_zint_t sn_right);
 _z_zint_t _z_sn_increment(const _z_zint_t sn_resolution, const _z_zint_t sn);
 _z_zint_t _z_sn_decrement(const _z_zint_t sn_resolution, const _z_zint_t sn);
+
 void _z_conduit_sn_list_copy(_z_conduit_sn_list_t *dst, const _z_conduit_sn_list_t *src);
 void _z_conduit_sn_list_decrement(const _z_zint_t sn_resolution, _z_conduit_sn_list_t *sns);
 

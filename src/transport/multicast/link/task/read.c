@@ -17,6 +17,8 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -39,8 +41,6 @@ int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
 void *_zp_multicast_read_task(void *ztm_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-
-    ztm->_read_task_running = true;
 
     // Acquire and keep the lock
     _z_mutex_lock(&ztm->_mutex_rx);
@@ -90,7 +90,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
             // Decode one session message
             _z_transport_message_t t_msg;
-            ret = _z_transport_message_decode_na(&t_msg, &zbuf);
+            ret = _z_transport_message_decode(&t_msg, &zbuf);
             if (ret == _Z_RES_OK) {
                 ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
 

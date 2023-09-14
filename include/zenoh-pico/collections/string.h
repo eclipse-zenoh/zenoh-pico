@@ -72,7 +72,7 @@ typedef struct {
     char *val;
 } _z_string_t;
 
-_z_string_t z_string_make(const char *value);
+_z_string_t _z_string_make(const char *value);
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 void _z_string_move_str(_z_string_t *dst, char *src);
@@ -90,10 +90,11 @@ _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
  *   char **_val: A pointer to the array.
  */
 typedef struct {
-    size_t _len;
-    char **_val;
+    size_t len;
+    char **val;
 } _z_str_array_t;
 
+_z_str_array_t _z_str_array_empty(void);
 _z_str_array_t _z_str_array_make(size_t len);
 void _z_str_array_init(_z_str_array_t *sa, size_t len);
 char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);

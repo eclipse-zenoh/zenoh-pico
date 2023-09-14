@@ -37,10 +37,10 @@ static int s_retry_count = 0;
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
-#define PEER ""  // If empty, it will scout
+#define CONNECT ""  // If empty, it will scout
 #elif CLIENT_OR_PEER == 1
 #define MODE "peer"
-#define PEER "udp/224.0.0.225:7447#iface=en0"
+#define CONNECT "udp/224.0.0.225:7447#iface=en0"
 #else
 #error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
 #endif
@@ -133,8 +133,8 @@ void app_main() {
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
-    if (strcmp(PEER, "") != 0) {
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(PEER));
+    if (strcmp(CONNECT, "") != 0) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
     }
 
     // Open Zenoh session
@@ -155,7 +155,7 @@ void app_main() {
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts = z_get_options_default();
         if (strcmp(VALUE, "") != 0) {
-            opts.with_value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+            opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
         }
         z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
         if (z_get(z_loan(s), z_keyexpr(KEYEXPR), "", z_move(callback), &opts) < 0) {

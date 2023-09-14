@@ -1,3 +1,17 @@
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
+
 #include "zenoh-pico/utils/string.h"
 
 #include <stdbool.h>
@@ -36,7 +50,7 @@ char const *_z_rstrstr(char const *haystack_start, char const *haystack_end, con
 }
 
 char const *_z_bstrstr(_z_str_se_t haystack, _z_str_se_t needle) {
-    haystack.end = _z_cptr_char_offset(haystack.end, -_z_ptr_char_diff(needle.end, needle.start));
+    haystack.end = _z_cptr_char_offset(haystack.end, -1 * _z_ptr_char_diff(needle.end, needle.start));
     char const *result = NULL;
     for (; (result == false) && (haystack.start <= haystack.end);
          haystack.start = _z_cptr_char_offset(haystack.start, 1)) {
@@ -103,7 +117,7 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str) {
         if (result.start == str->s.start) {
             str->s = (_z_str_se_t){.start = NULL, .end = NULL};
         } else {
-            str->s.end = _z_cptr_char_offset(result.start, -strlen(str->delimiter));
+            str->s.end = _z_cptr_char_offset(result.start, -1 * strlen(str->delimiter));
         }
     }
     return result;

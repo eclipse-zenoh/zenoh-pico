@@ -17,6 +17,24 @@
 #define Z_SELECTOR_TIME "_time="
 #define Z_SELECTOR_QUERY_MATCH "_anyke"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * What values.
+ *
+ * Enumerators:
+ *     Z_WHAT_ROUTER: Router.
+ *     Z_WHAT_PEER: Peer.
+ *     Z_WHAT_CLIENT: Client.
+ */
+typedef enum {
+    Z_WHAT_ROUTER = 0x01,  // Router
+    Z_WHAT_PEER = 0x02,    // Peer
+    Z_WHAT_CLIENT = 0x03   // Client
+} z_what_t;
+
 /**
  * Whatami values, defined as a bitmask.
  *
@@ -25,11 +43,7 @@
  *     Z_WHATAMI_PEER: Bitmask to filter for Zenoh peers.
  *     Z_WHATAMI_CLIENT: Bitmask to filter for Zenoh clients.
  */
-typedef enum {
-    Z_WHATAMI_ROUTER = 0x01,  // 1 << 0
-    Z_WHATAMI_PEER = 0x02,    // 1 << 1
-    Z_WHATAMI_CLIENT = 0x04   // 1 << 2
-} z_whatami_t;
+typedef enum { Z_WHATAMI_ROUTER = 0x00, Z_WHATAMI_PEER = 0x01, Z_WHATAMI_CLIENT = 0x02 } z_whatami_t;
 #define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
 
 /**
@@ -150,7 +164,7 @@ typedef enum {
  *     Z_RELIABILITY_BEST_EFFORT: Defines reliability as ``BEST_EFFORT``
  *     Z_RELIABILITY_RELIABLE: Defines reliability as ``RELIABLE``
  */
-typedef enum { Z_RELIABILITY_BEST_EFFORT = 0, Z_RELIABILITY_RELIABLE = 1 } z_reliability_t;
+typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
 
 /**
@@ -224,5 +238,9 @@ typedef enum {
     Z_QUERY_TARGET_ALL_COMPLETE = 2
 } z_query_target_t;
 #define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_API_CONSTANTS_H */

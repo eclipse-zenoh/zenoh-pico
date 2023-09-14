@@ -14,18 +14,28 @@
 #include <EthernetInterface.h>
 #include <mbed.h>
 #include <randLIB.h>
-
-extern "C" {
 #include <zenoh-pico.h>
+
+uint8_t zid_len(z_id_t id) {
+    uint8_t len = 16;
+    while (len > 0) {
+        --len;
+        if (id.id[len] != 0) {
+            ++len;
+            break;
+        }
+    }
+    return len;
 }
 
-void fprintzid(FILE *stream, z_bytes_t zid) {
-    if (zid.start == NULL) {
+void fprintzid(FILE *stream, z_id_t zid) {
+    unsigned int zidlen = zid_len(zid);
+    if (zidlen == 0) {
         fprintf(stream, "None");
     } else {
         fprintf(stream, "Some(");
-        for (unsigned int i = 0; i < zid.len; i++) {
-            fprintf(stream, "%02X", (int)zid.start[i]);
+        for (unsigned int i = 0; i < zidlen; i++) {
+            fprintf(stream, "%02X", (int)zid.id[i]);
         }
         fprintf(stream, ")");
     }

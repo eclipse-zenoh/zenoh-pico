@@ -22,12 +22,8 @@
 int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t zid;
-    _z_bytes_reset(&zid);  // Do not send the PID on unicast links
-
-    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive(zid);
+    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
     ret = _z_unicast_send_t_msg(ztu, &t_msg);
-    // FIXME: double check why we dont clear t_msg
 
     return ret;
 }
@@ -36,12 +32,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 #if Z_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
-    ztu->_lease_task_running = true;
     ztu->_received = false;
     ztu->_transmitted = false;
 
     _z_zint_t next_lease = ztu->_lease;
-    _z_zint_t next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+    _z_zint_t next_keep_alive = (_z_zint_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     while (ztu->_lease_task_running == true) {
         if (next_lease == 0) {
             // Check if received data
@@ -68,7 +63,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
             // Reset the keep alive parameters
             ztu->_transmitted = false;
-            next_keep_alive = ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR;
+            next_keep_alive = (_z_zint_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval

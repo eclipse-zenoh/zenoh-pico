@@ -1,0 +1,53 @@
+#
+# Copyright (c) 2022 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: build-static
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile debug
+      run: make all
+      env:
+        BUILD_TYPE: Debug
+        BUILD_SHARED_LIBS: OFF
+        BUILD_TESTING: ON
+        BUILD_MULTICAST: ON
+        BUILD_INTEGRATION: ON
+        BUILD_TOOLS: ON
+        ZENOH_DEBUG: 3
+
+  crossbuilds:
+    name: Build on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Crosscompile debug
+      run: make crossbuilds
+      env:
+        BUILD_TYPE: Debug
+        BUILD_SHARED_LIBS: OFF
+        ZENOH_DEBUG: 3

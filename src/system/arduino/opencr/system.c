@@ -97,17 +97,28 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(unsigned int time) {
+int z_sleep_us(size_t time) {
     delay_us(time);
     return 0;
 }
 
-int z_sleep_ms(unsigned int time) {
+int z_sleep_ms(size_t time) {
     delay_ms(time);
     return 0;
 }
 
-int z_sleep_s(unsigned int time) { return z_sleep_ms(time * 1000U); }
+int z_sleep_s(size_t time) {
+    z_time_t start = z_time_now();
+
+    // Most sleep APIs promise to sleep at least whatever you asked them to.
+    // This may compound, so this approach may make sleeps longer than expected.
+    // This extra check tries to minimize the amount of extra time it might sleep.
+    while (z_time_elapsed_s(&start) < time) {
+        z_sleep_ms(1000);
+    }
+
+    return 0;
+}
 
 /*------------------ Instant ------------------*/
 void __z_clock_gettime(z_clock_t *ts) {
@@ -151,6 +162,14 @@ z_time_t z_time_now(void) {
     z_time_t now;
     gettimeofday(&now, NULL);
     return now;
+}
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
 }
 
 unsigned long z_time_elapsed_us(z_time_t *time) {
