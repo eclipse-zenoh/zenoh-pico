@@ -34,7 +34,8 @@ void query_handler(const z_query_t *query, void *ctx) {
 
 int main(int argc, char **argv) {
     const char *mode = "client";
-    char *locator = NULL;
+    char *clocator = NULL;
+    const char *llocator = NULL;
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
@@ -49,11 +50,10 @@ int main(int argc, char **argv) {
                 mode = optarg;
                 break;
             case 'e':
-                locator = optarg;
+                clocator = optarg;
                 break;
             case 'l':
-                locator = optarg;
-                mode = "peer";
+                llocator = optarg;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
@@ -69,8 +69,11 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    if (locator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+    if (clocator != NULL) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+    }
+    if (llocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");

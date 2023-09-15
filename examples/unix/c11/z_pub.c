@@ -27,7 +27,8 @@ int main(int argc, char **argv) {
     char *const default_value = "Pub from Pico!";
     char *value = default_value;
     const char *mode = "client";
-    char *locator = NULL;
+    char *clocator = NULL;
+    char *llocator = NULL;
     int n = 10;
 
     int opt;
@@ -40,14 +41,13 @@ int main(int argc, char **argv) {
                 value = optarg;
                 break;
             case 'e':
-                locator = optarg;
+                clocator = optarg;
                 break;
             case 'm':
                 mode = optarg;
                 break;
             case 'l':
-                locator = optarg;
-                mode = "peer";
+                llocator = optarg;
                 break;
             case 'n':
                 n = atoi(optarg);
@@ -66,8 +66,11 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+    }
+    if (llocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");

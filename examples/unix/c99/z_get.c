@@ -38,7 +38,8 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     const char *mode = "client";
-    const char *locator = NULL;
+    const char *clocator = NULL;
+    const char *llocator = NULL;
     const char *value = NULL;
 
     int opt;
@@ -48,14 +49,13 @@ int main(int argc, char **argv) {
                 keyexpr = optarg;
                 break;
             case 'e':
-                locator = optarg;
+                clocator = optarg;
                 break;
             case 'm':
                 mode = optarg;
                 break;
             case 'l':
-                locator = optarg;
-                mode = "peer";
+                llocator = optarg;
                 break;
             case 'v':
                 value = optarg;
@@ -74,8 +74,11 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    if (locator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+    if (clocator != NULL) {
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+    }
+    if (llocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");

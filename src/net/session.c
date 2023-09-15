@@ -16,7 +16,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
@@ -61,7 +64,9 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
 
     if (config != NULL) {
         _z_str_array_t locators = _z_str_array_empty();
-        if (_z_config_get(config, Z_CONFIG_CONNECT_KEY) == NULL) {  // Scout if peer is not configured
+        char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
+        char *listen = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
+        if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
                 opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
@@ -88,8 +93,17 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
             _z_hello_list_free(&hellos);
         } else {
+            int key = Z_CONFIG_CONNECT_KEY;
+            if (listen != NULL) {
+                if (connect == NULL) {
+                    key = Z_CONFIG_LISTEN_KEY;
+                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, _z_string_make(Z_CONFIG_MODE_PEER));
+                } else {
+                    return _Z_ERR_GENERIC;
+                }
+            }
             locators = _z_str_array_make(1);
-            locators.val[0] = _z_str_clone(_z_config_get(config, Z_CONFIG_CONNECT_KEY));
+            locators.val[0] = _z_str_clone(_z_config_get(config, key));
         }
 
         ret = _Z_ERR_SCOUT_NO_RESULTS;
