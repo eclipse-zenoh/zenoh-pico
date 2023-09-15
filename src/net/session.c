@@ -65,7 +65,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     if (config != NULL) {
         _z_str_array_t locators = _z_str_array_empty();
         char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
-        char *listen = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
+        char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
         if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
