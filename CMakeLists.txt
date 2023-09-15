@@ -16,6 +16,7 @@ cmake_minimum_required(VERSION 3.13)
 project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
