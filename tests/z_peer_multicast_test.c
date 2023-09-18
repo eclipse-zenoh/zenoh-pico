@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
+    zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(argv[1]));
 
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 

@@ -109,7 +109,8 @@ static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
 }
 static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id, _Bool owns_suffix) {
     assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-    return (_z_mapping_t){._val = (uint16_t)((owns_suffix ? 0x8000 : 0) | id)};
+    _z_mapping_t mapping = {(uint16_t)((owns_suffix ? 0x8000 : 0) | id)};
+    return mapping;
 }
 static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
     assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);

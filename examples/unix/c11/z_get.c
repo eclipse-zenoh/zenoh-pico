@@ -38,26 +38,30 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     const char *mode = "client";
-    const char *locator = NULL;
+    const char *clocator = NULL;
+    const char *llocator = NULL;
     const char *value = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
                 break;
             case 'e':
-                locator = optarg;
+                clocator = optarg;
                 break;
             case 'm':
                 mode = optarg;
+                break;
+            case 'l':
+                llocator = optarg;
                 break;
             case 'v':
                 value = optarg;
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -70,8 +74,11 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+    }
+    if (llocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");
