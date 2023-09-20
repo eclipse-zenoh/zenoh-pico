@@ -378,7 +378,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 }
 
 int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface) {
+                               const char *iface, const char *join) {
     int8_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
@@ -442,6 +442,42 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                 }
             } else {
                 ret = _Z_ERR_GENERIC;
+            }
+            if (join != NULL) {
+                char *joins = _z_str_clone(join);
+                struct addrinfo hints = {0};
+                hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
+                hints.ai_socktype = SOCK_DGRAM;
+                hints.ai_protocol = IPPROTO_UDP;
+                for (char *j = strsep(&joins, "|"); j != NULL; j = strsep(&joins, ";")) {
+                    struct addrinfo *addr = NULL;
+                    char *ip = strsep(&j, ":");
+                    if (getaddrinfo(ip, j, &hints, &addr) < 0) {
+                        ret = _Z_ERR_GENERIC;
+                    }
+                    if (addr->ai_family == AF_INET) {
+                        struct ip_mreq mreq;
+                        (void)memset(&mreq, 0, sizeof(mreq));
+                        mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)addr->ai_addr)->sin_addr.s_addr;
+                        mreq.imr_interface.s_addr = ((struct sockaddr_in *)lsockaddr)->sin_addr.s_addr;
+                        if ((ret == _Z_RES_OK) &&
+                            (setsockopt(sock->_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)) {
+                            ret = _Z_ERR_GENERIC;
+                        }
+                    } else if (addr->ai_family == AF_INET6) {
+                        struct ipv6_mreq mreq;
+                        (void)memset(&mreq, 0, sizeof(mreq));
+                        (void)memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)addr->ai_addr)->sin6_addr,
+                                     sizeof(struct in6_addr));
+                        mreq.ipv6mr_interface = if_nametoindex(iface);
+                        if ((ret == _Z_RES_OK) &&
+                            (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
+                            ret = _Z_ERR_GENERIC;
+                        }
+                    }
+                    freeaddrinfo(addr);
+                }
+                z_free(joins);
             }
 
             if (ret != _Z_RES_OK) {
