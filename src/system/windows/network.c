@@ -417,7 +417,8 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 }
 
 int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface) {
+                               const char *iface, const char *join) {
+    (void)join;
     int8_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
