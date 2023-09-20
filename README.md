@@ -207,7 +207,7 @@ structure:
   ├── lib
   ├── src
   |    ├── CMakeLists.txt
-  │    └── main.ino
+  │    └── main.c
   ├── CMakeLists.txt
   └── platformio.ini
   ```
