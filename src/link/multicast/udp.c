@@ -129,7 +129,9 @@ int8_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    ret = _z_listen_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface);
+    const char *join = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_JOIN_KEY);
+    ret = _z_listen_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface,
+                                  join);
     ret |= _z_open_udp_multicast(&self->_socket._udp._msock, self->_socket._udp._rep, &self->_socket._udp._lep,
                                  Z_CONFIG_SOCKET_TIMEOUT, iface);
 

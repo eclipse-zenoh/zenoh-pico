@@ -12,10 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //   Błażej Sowa, <blazej@fictionlab.pl>
 
-#ifndef ZENOH_PICO_SESSION_NETAPI_H
-#define ZENOH_PICO_SESSION_NETAPI_H
+#ifndef INCLUDE_ZENOH_PICO_NET_SESSION_H
+#define INCLUDE_ZENOH_PICO_NET_SESSION_H
 
+#include <stdint.h>
+
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/config.h"
 
@@ -31,13 +36,14 @@ typedef struct {
     _z_transport_t _tp;
 
     // Zenoh PID
-    _z_bytes_t _local_zid;
+    _z_id_t _local_zid;
 
     // Session counters
-    _z_zint_t _resource_id;
-    _z_zint_t _entity_id;
+    uint16_t _resource_id;
+    uint32_t _entity_id;
     _z_zint_t _pull_id;
     _z_zint_t _query_id;
+    _z_zint_t _interest_id;
 
     // Session declarations
     _z_resource_list_t *_local_resources;
@@ -168,4 +174,4 @@ int8_t _zp_start_lease_task(_z_session_t *z, _z_task_attr_t *attr);
 int8_t _zp_stop_lease_task(_z_session_t *z);
 #endif  // Z_MULTI_THREAD == 1
 
-#endif /* ZENOH_PICO_SESSION_NETAPI_H */
+#endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

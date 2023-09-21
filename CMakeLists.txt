@@ -16,6 +16,7 @@ cmake_minimum_required(VERSION 3.13)
 project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
@@ -133,41 +134,28 @@ elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
   endif()
 endif()
 
-file(GLOB PublicHeaders "include/*.h"
-  "include/zenoh-pico/*.h"
+
+file(GLOB_RECURSE PublicHeaders
   "include/zenoh-pico/api/*.h"
   "include/zenoh-pico/collections/*.h"
   "include/zenoh-pico/link/*.h"
-  "include/zenoh-pico/link/config/*.h"
+  "include/zenoh-pico/net/*.h"
   "include/zenoh-pico/protocol/*.h"
   "include/zenoh-pico/session/*.h"
-  "include/zenoh-pico/system/*.h"
-  "include/zenoh-pico/system/link/*.h"
   "include/zenoh-pico/transport/*.h"
   "include/zenoh-pico/utils/*.h"
+  "include/zenoh-pico/config.h"
 )
 target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB Sources "src/*.c"
+file(GLOB_RECURSE Sources
   "src/api/*.c"
-  "src/net/*.c"
   "src/collections/*.c"
   "src/link/*.c"
-  "src/link/config/*.c"
-  "src/link/unicast/*.c"
-  "src/link/multicast/*.c"
+  "src/net/*.c"
   "src/protocol/*.c"
-  "src/protocol/keyexpr/*.c"
   "src/session/*.c"
-  "src/system/*.c"
   "src/transport/*.c"
-  "src/transport/common/*.c"
-  "src/transport/unicast/*.c"
-  "src/transport/unicast/link/*.c"
-  "src/transport/unicast/link/task/*.c"
-  "src/transport/multicast/*.c"
-  "src/transport/multicast/link/*.c"
-  "src/transport/multicast/link/task/*.c"
   "src/utils/*.c"
 )
 

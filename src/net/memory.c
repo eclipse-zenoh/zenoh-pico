@@ -15,6 +15,8 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/protocol/core.h"
+
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     dst->keyexpr._id = src->keyexpr._id;          // FIXME: call the z_keyexpr_move
     dst->keyexpr._suffix = src->keyexpr._suffix;  // FIXME: call the z_keyexpr_move
@@ -48,9 +50,6 @@ void _z_sample_free(_z_sample_t **sample) {
 }
 
 void _z_hello_clear(_z_hello_t *hello) {
-    if (hello->zid.len > 0) {
-        _z_bytes_clear(&hello->zid);
-    }
     if (hello->locators.len > 0) {
         _z_str_array_clear(&hello->locators);
     }
@@ -69,7 +68,7 @@ void _z_hello_free(_z_hello_t **hello) {
 
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
     _z_sample_clear(&reply_data->sample);
-    _z_bytes_clear(&reply_data->replier_id);
+    reply_data->replier_id = _z_id_empty();
 }
 
 void _z_reply_data_free(_z_reply_data_t **reply_data) {
@@ -80,5 +79,21 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 
         z_free(ptr);
         *reply_data = NULL;
+    }
+}
+
+void _z_value_clear(_z_value_t *value) {
+    _z_bytes_clear(&value->encoding.suffix);
+    _z_bytes_clear(&value->payload);
+}
+
+void _z_value_free(_z_value_t **value) {
+    _z_value_t *ptr = *value;
+
+    if (ptr != NULL) {
+        _z_value_clear(ptr);
+
+        z_free(ptr);
+        *value = NULL;
     }
 }

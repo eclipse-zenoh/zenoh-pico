@@ -12,10 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <sys/types.h>
 #include <windows.h>
 // The following includes must come after winsock2
-#include <time.h>
 #include <ntsecapi.h>
+#include <time.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
@@ -46,7 +47,7 @@ uint64_t z_random_u64(void) {
     return ret;
 }
 
-void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, len); }
+void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, (unsigned long)len); }
 
 /*------------------ Memory ------------------*/
 // #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))

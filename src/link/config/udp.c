@@ -40,7 +40,6 @@ char *_z_udp_config_to_str(const _z_str_intmap_t *s) {
 
 int8_t _z_udp_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     UDP_CONFIG_MAPPING_BUILD
-
     return _z_str_intmap_from_strn(strint, s, UDP_CONFIG_ARGC, args, n);
 }
 

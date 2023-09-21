@@ -16,6 +16,8 @@
 #define ZENOH_PICO_PROTOCOL_IOBUF_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
@@ -64,8 +66,11 @@ typedef struct {
 
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
+/// Constructs a _borrowing_ reader on `slice`
+_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice);
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
+uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
 _Bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
@@ -93,7 +98,7 @@ typedef struct {
     size_t _r_idx;
     size_t _w_idx;
     size_t _capacity;
-    _Bool _is_expandable;
+    size_t _expansion_step;
 } _z_wbuf_t;
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable);

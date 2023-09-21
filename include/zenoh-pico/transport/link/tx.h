@@ -21,13 +21,19 @@
 
 void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
+/*This function is unsafe because it operates in potentially concurrent
+        data.*Make sure that the following mutexes are locked before calling this function : *-ztu->mutex_tx */
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
-_z_transport_message_t _z_frame_header(z_reliability_t reliability, _Bool is_fragment, _Bool is_final, _z_zint_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
 int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
                              z_congestion_control_t cong_ctrl);
 int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+                               z_congestion_control_t cong_ctrl);
+
+int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
+                             z_congestion_control_t cong_ctrl);
+int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl);
 
 int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);

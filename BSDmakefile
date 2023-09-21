@@ -62,8 +62,9 @@ CMAKE_OPT=-DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAK
 
 all: make
 
-$(BUILD_DIR)/Makefile: CMakeLists.txt
+$(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
+	echo $(CMAKE_OPT)
 	cmake $(CMAKE_OPT) -B$(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile

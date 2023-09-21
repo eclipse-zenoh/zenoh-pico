@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_PROTOCOL_KEYEXPR_H
-#define ZENOH_PICO_PROTOCOL_KEYEXPR_H
+#ifndef INCLUDE_ZENOH_PICO_PROTOCOL_KEYEXPR_H
+#define INCLUDE_ZENOH_PICO_PROTOCOL_KEYEXPR_H
 
 #include <stdbool.h>
 
@@ -26,8 +26,17 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
+_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
+_z_keyexpr_t _z_keyexpr_to_owned(_z_keyexpr_t src);
+_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
+_z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
+static inline _z_keyexpr_t _z_keyexpr_null(void) {
+    _z_keyexpr_t keyexpr = {0, {0}, NULL};
+    return keyexpr;
+}
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-void _z_timestamp_reset(_z_timestamp_t *tstamp);
+void _z_timestamp_clear(_z_timestamp_t *tstamp);
+void _z_keyexpr_clear(_z_keyexpr_t *rk);
+void _z_keyexpr_free(_z_keyexpr_t **rk);
 
-#endif /* ZENOH_PICO_PROTOCOL_KEYEXPR_H */
+#endif /* INCLUDE_ZENOH_PICO_PROTOCOL_KEYEXPR_H */
