@@ -13,7 +13,7 @@
 #
 cmake_minimum_required(VERSION 3.13)
 
-project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
+project(zenohpico VERSION 0.10.0.1 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
