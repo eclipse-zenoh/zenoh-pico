@@ -368,7 +368,7 @@ $ ./z_get
 ```
 
 ### 3.4. Basic Pub/Sub Example - P2P over UDP multicast
-Zenoh-Pico can also work in P2P mode over UDP multicast. This allows a Zenoh-Pico application to communicate directly with another Zenoh-Pico application.
+Zenoh-Pico can also work in P2P mode over UDP multicast. This allows a Zenoh-Pico application to communicate directly with another Zenoh-Pico application without requiring a Zenoh Router.
 
 Assuming that (1) you are under the build directory, do:
 ```bash
