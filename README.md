@@ -330,23 +330,24 @@ To build and upload the code into the board, run the following command:
   ```
 
 ## 3. Running the Examples
-The simplest way to run some of the example is to get a Docker image of the **zenoh** network router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
+The simplest way to run some of the example is to get a Docker image of the **zenoh** router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
 
-### 3.1. Starting the zenoh Network Service
-Assuming you've pulled the Docker image of the **zenoh** network router on a Linux host (to leverage UDP multicast scouting has explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
-
+### 3.1. Starting the Zenoh Router
+Assuming you've pulled the Docker image of the **zenoh** router on a Linux host (to leverage UDP multicast scouting as explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 ```bash
 $ docker run --init --net host eclipse/zenoh:master
 ```
 
 To see the zenoh manual page, simply do:
-
 ```bash
 $ docker run --init --net host eclipse/zenoh:master --help
 ```
 
+:warning: **Please notice that the `--net host` option in Docker is restricted to Linux only.**  
+The cause is that Docker doesn't support UDP multicast between a container and its host (see cases [moby/moby#23659](https://github.com/moby/moby/issues/23659), [moby/libnetwork#2397](https://github.com/moby/libnetwork/issues/2397) or [moby/libnetwork#552](https://github.com/moby/libnetwork/issues/552)). The only known way to make it work is to use the `--net host` option that is [only supported on Linux hosts](https://docs.docker.com/network/host/).
+
 ### 3.2. Basic Pub/Sub Example
-Assuming that (1) you are running the **zenoh** network router,  and (2) you are under the build directory, do:
+Assuming that (1) you are running the **zenoh** router,  and (2) you are under the build directory, do:
 ```bash
 $ ./z_sub
 ```
@@ -356,7 +357,7 @@ And on another shell, do:
 $ ./z_pub
 ```
 ### 3.3. Basic Queryable/Get Example
-Assuming you are running the **zenoh** network router, do:
+Assuming you are running the **zenoh** router, do:
 ```bash
 $ ./z_queryable
 ```
@@ -365,3 +366,35 @@ And on another shell, do:
 ```bash
 $ ./z_get
 ```
+
+### 3.4. Basic Pub/Sub Example - P2P over UDP multicast
+Zenoh-Pico can also work in P2P mode over UDP multicast. This allows a Zenoh-Pico application to communicate directly with another Zenoh-Pico application, as well as with a Zenoh Router configured to work on UDP multicast.
+
+Assuming that (1) you are under the build directory, do:
+```bash
+$ ./z_sub -m peer -l udp/224.0.0.123:7447#iface=lo0
+```
+
+And on another shell, do:
+```bash
+$ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
+```
+where `lo0` is the network interface you want to use for multicast communication.
+
+### 3.4. Basic Pub/Sub Example - Mixing Client and P2P communication
+To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, you need to start a Zenoh Router that listens on both multicast and unicast: 
+```bash
+$ docker run --init --net host eclipse/zenoh:master -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
+```
+
+Assuming that (1) you are running the **zenoh** router as indicated above, and (2) you are under the build directory, do:
+```bash
+$ ./z_sub -m client -e tcp/127.0.0.1:7447 
+```
+A subscriber will connect in client mode to the **zenoh** router over TCP unicast.
+
+And on another shell, do:
+```bash
+$ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
+```
+A publisher will start publishing over UDP multicast and the **zenoh** router will take care of forwarding data from the Zenoh-Pico publisher to the Zenoh-Pico subscriber.
