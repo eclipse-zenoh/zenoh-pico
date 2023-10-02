@@ -368,7 +368,7 @@ $ ./z_get
 ```
 
 ### 3.4. Basic Pub/Sub Example - P2P over UDP multicast
-Zenoh-Pico can also work in P2P mode over UDP multicast. This allows a Zenoh-Pico application to communicate directly with another Zenoh-Pico application, as well as with a Zenoh Router configured to work on UDP multicast.
+Zenoh-Pico can also work in P2P mode over UDP multicast. This allows a Zenoh-Pico application to communicate directly with another Zenoh-Pico application.
 
 Assuming that (1) you are under the build directory, do:
 ```bash
@@ -382,7 +382,7 @@ $ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
 where `lo0` is the network interface you want to use for multicast communication.
 
 ### 3.4. Basic Pub/Sub Example - Mixing Client and P2P communication
-To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, you need to start a Zenoh Router that listens on both multicast and unicast: 
+To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, as well as with any other Zenoh client/peer, you need to start a Zenoh Router that listens on both multicast and unicast: 
 ```bash
 $ docker run --init --net host eclipse/zenoh:master -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
 ```
