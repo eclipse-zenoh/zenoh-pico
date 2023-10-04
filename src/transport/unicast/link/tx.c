@@ -57,7 +57,7 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
     // Encode the session message
     ret = _z_transport_message_encode(&ztu->_wbuf, t_msg);
     if (ret == _Z_RES_OK) {
-        // Write the message legnth in the reserved space if needed
+        // Write the message length in the reserved space if needed
         __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
         // Send the wbuf on the socket
         ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);
@@ -108,7 +108,7 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
         if (ret == _Z_RES_OK) {
             ret = _z_network_message_encode(&ztu->_wbuf, n_msg);  // Encode the network message
             if (ret == _Z_RES_OK) {
-                // Write the message legnth in the reserved space if needed
+                // Write the message length in the reserved space if needed
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
 
                 if (ztu->_wbuf._ioss._len == 1) {

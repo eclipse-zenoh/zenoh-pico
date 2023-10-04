@@ -111,7 +111,7 @@
 // +---------------+
 //
 // (#) ZID length. If Flag(I)==1 it indicates how many bytes are used for the ZenohID bytes.
-//     A ZenohID is minimum 1 byte and maximum 16 bytes. Therefore, the actual lenght is computed as:
+//     A ZenohID is minimum 1 byte and maximum 16 bytes. Therefore, the actual length is computed as:
 //         real_zid_len := 1 + zid_len
 //
 // (*) What. It indicates a bitmap of WhatAmI interests.
@@ -138,7 +138,7 @@ void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg);
 //     1) in response to a SCOUT message;
 //     2) to (periodically) advertise (e.g., on multicast) the Peer and the locators it is reachable at;
 //     3) in a already established session to update the corresponding peer on the new capabilities
-//        (i.e., whatmai) and/or new set of locators (i.e., added or deleted).
+//        (i.e., whatami) and/or new set of locators (i.e., added or deleted).
 // Locators are expressed as:
 // <code>
 //  udp/192.168.0.2:1234
@@ -285,7 +285,7 @@ void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
 //
 // (#) ZID length. It indicates how many bytes are used for the ZenohID bytes.
 //     A ZenohID is minimum 1 byte and maximum 16 bytes. Therefore, the actual
-//     lenght is computed as:
+//     length is computed as:
 //         real_zid_len := 1 + zid_len
 //
 // (+) Sequence Number/ID resolution. It indicates the resolution and
@@ -315,11 +315,11 @@ typedef struct {
 void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
-// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total lenght
-//       in bytes of the message, resulting in the maximum lenght of a message being 65_535 bytes.
+// NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
+//       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve
 //       the boundary of the serialized messages. The length is encoded as little-endian.
-//       In any case, the lenght of a message must not exceed 65_535 bytes.
+//       In any case, the length of a message must not exceed 65_535 bytes.
 //
 // The OPEN message is sent on a link to finally open an initialized session with the peer.
 //
@@ -361,7 +361,7 @@ void _z_t_msg_open_clear(_z_t_msg_open_t *msg);
 //
 // The CLOSE message is sent in any of the following two cases:
 //     1) in response to an OPEN message which is not accepted;
-//     2) at any time to arbitrarly close the session with the corresponding peer.
+//     2) at any time to arbitrarily close the session with the corresponding peer.
 //
 // Flags:
 // - S: Session Close  if S==1 Session close or S==0 Link close
@@ -451,7 +451,7 @@ void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 
 /*------------------ Fragment Message ------------------*/
 // The Fragment message is used to transmit on the wire large Zenoh Message that require fragmentation
-// because they are larger thatn the maximum batch size (i.e. 2^16-1) and/or the link MTU.
+// because they are larger than the maximum batch size (i.e. 2^16-1) and/or the link MTU.
 //
 // The [`Fragment`] message flow is the following:
 //

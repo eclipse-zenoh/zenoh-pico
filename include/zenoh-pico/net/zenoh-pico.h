@@ -20,7 +20,6 @@
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
-#include "zenoh-pico/net/resource.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 

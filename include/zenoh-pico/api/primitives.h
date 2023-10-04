@@ -73,7 +73,7 @@ z_keyexpr_t z_keyexpr_unchecked(const char *name);
 /**
  * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
  *
- * If given keyexpr contains a declared keyexpr, the resulting owned string will be unitialized.
+ * If given keyexpr contains a declared keyexpr, the resulting owned string will be uninitialized.
  * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
  * and get its full expanded representation.
  *
@@ -99,7 +99,7 @@ z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
- * The user is responsible of droping the returned string using ``z_free``.
+ * The user is responsible of dropping the returned string using ``z_free``.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to resolve the keyexpr.
@@ -471,7 +471,7 @@ z_query_consolidation_t z_query_consolidation_latest(void);
  * Monotonic consolidation.
  *
  * This strategy offers the best latency. Replies are directly transmitted to the application when received
- * without needing to wait for all replies. This mode does not garantee that there will be no duplicates.
+ * without needing to wait for all replies. This mode does not guarantee that there will be no duplicates.
  *
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
@@ -481,7 +481,7 @@ z_query_consolidation_t z_query_consolidation_monotonic(void);
 /**
  * No consolidation.
  *
- * This strategy is usefull when querying timeseries data bases or when using quorums.
+ * This strategy is useful when querying timeseries data bases or when using quorums.
  *
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
@@ -697,7 +697,7 @@ _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
  *
  * Parameters:
  *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the
- * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containg the callbacks to be called.
+ * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containing the callbacks to be called.
  *
  * Returns:
  *   Returns ``0`` if the scouting is successful triggered, or a ``negative value`` otherwise.
@@ -748,7 +748,7 @@ int8_t z_close(z_owned_session_t *zs);
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
- *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containing the callbacks to be called.
  *
  * Returns:
  *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
@@ -763,7 +763,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback);
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to inquiry.
- *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containg the callbacks to be called.
+ *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containing the callbacks to be called.
  *
  * Returns:
  *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
@@ -844,8 +844,8 @@ z_get_options_t z_get_options_default(void);
  *   zs: A loaned instance of the the :c:type:`z_session_t` through where data will be put.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
  *   parameters: Pointer to the parameters as a null-terminated string.
- *   callback: A moved instance of :c:type:`z_owned_closure_reply_t` containg the callbacks to be called.
- *   options: The get options to be aplied in the distributed query.
+ *   callback: A moved instance of :c:type:`z_owned_closure_reply_t` containing the callbacks to be called.
+ *   options: The get options to be applied in the distributed query.
  *
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
@@ -1078,7 +1078,7 @@ z_pull_subscriber_options_t z_pull_subscriber_options_default(void);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the
+ *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containing the callbacks to be called and the
  * context to pass to them. options: The options to apply to the pull subscriber. If ``NULL`` is passed, the default
  * options will be applied.
  *
@@ -1142,7 +1142,7 @@ z_queryable_options_t z_queryable_options_default(void);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containg the callbacks to be called and the context
+ *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containing the callbacks to be called and the context
  * to pass to them. options: The options to apply to the queryable. If ``NULL`` is passed, the default options will be
  * applied.
  *
@@ -1246,7 +1246,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply);
  */
 _Bool z_value_is_initialized(z_value_t *value);
 
-/************* Multi Thread Taks helpers **************/
+/************* Multi Thread Tasks helpers **************/
 /**
  * Constructs the default values for the session read task.
  *

@@ -186,7 +186,7 @@ void _z_close_udp_unicast(_z_sys_net_socket_t *sock) {
 
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // Block until something to read
-    // FIXME: provide somekind of timeout functionality
+    // FIXME: provide some kind of timeout functionality
     ssize_t rb = 0;
     do {
         rb = sock._udp->parsePacket();
@@ -282,7 +282,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
                              _z_bytes_t *addr) {
     // Block until something to read
-    // FIXME: provide somekind of timeout functionality
+    // FIXME: provide some kind of timeout functionality
     ssize_t rb = 0;
     do {
         rb = sock._udp->parsePacket();
