@@ -192,7 +192,7 @@ size_t _z_locator_strlen(const _z_locator_t *l) {
         size_t md_len = _z_locator_metadata_strlen(&l->_metadata);
         if (md_len > (size_t)0) {
             ret = ret + (size_t)1;  // Locator metadata separator
-            ret = ret + md_len;     // Locator medatada content
+            ret = ret + md_len;     // Locator metadata content
         }
     }
     return ret;

@@ -97,7 +97,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
-                //        monothonic SNs are ensured
+                //        monotonic SNs are ensured
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
@@ -133,7 +133,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
 
             _Bool drop = false;
             if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
-                // Filling the wbuf capacity as a way to signling the last fragment to reset the dbuf
+                // Filling the wbuf capacity as a way to signal the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
                 _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0, _z_wbuf_space_left(dbuf));
                 drop = true;

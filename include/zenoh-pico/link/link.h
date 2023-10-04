@@ -47,18 +47,18 @@
  *
  * Enumerators:
  *     Z_LINK_CAPABILITY_NONE: Bitmask to define that link has no capabilities.
- *     Z_LINK_CAPABILITY_RELIEABLE: Bitmask to define and check if link is reliable.
+ *     Z_LINK_CAPABILITY_RELIABLE: Bitmask to define and check if link is reliable.
  *     Z_LINK_CAPABILITY_STREAMED: Bitmask to define and check if link is streamed.
  *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
  */
 typedef enum {
     Z_LINK_CAPABILITY_NONE = 0x00,       // 0
-    Z_LINK_CAPABILITY_RELIEABLE = 0x01,  // 1 << 0
+    Z_LINK_CAPABILITY_RELIABLE = 0x01,  // 1 << 0
     Z_LINK_CAPABILITY_STREAMED = 0x02,   // 1 << 1
     Z_LINK_CAPABILITY_MULTICAST = 0x04   // 1 << 2
 } _z_link_capabilities_t;
 
-#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIEABLE) == Z_LINK_CAPABILITY_RELIEABLE)
+#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIABLE) == Z_LINK_CAPABILITY_RELIABLE)
 #define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
 #define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
 

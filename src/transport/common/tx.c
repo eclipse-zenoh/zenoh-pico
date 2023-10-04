@@ -88,7 +88,7 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     // Encode the session message
     ret = _z_transport_message_encode(&wbf, t_msg);
     if (ret == _Z_RES_OK) {
-        // Write the message legnth in the reserved space if needed
+        // Write the message length in the reserved space if needed
         if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {
             size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {

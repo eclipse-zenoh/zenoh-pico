@@ -90,7 +90,7 @@ void _z_close(_z_session_t *session);
  */
 _z_config_t *_z_info(const _z_session_t *session);
 
-/*------------------ Zenoh-Pico Session Management Auxiliar------------------*/
+/*------------------ Zenoh-Pico Session Management Auxiliary ------------------*/
 /**
  * Read from the network. This function should be called manually called when
  * the read loop has not been started, e.g., when running in a single thread.

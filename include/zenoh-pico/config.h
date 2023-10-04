@@ -57,7 +57,7 @@
 #define Z_CONFIG_PASSWORD_KEY 0x44
 
 /**
- * Activates/Desactivates multicast scouting.
+ * Activates/Deactivates multicast scouting.
  * Accepted values : `false`, `true`.
  * Default value : `true`.
  */
@@ -223,20 +223,20 @@
 #endif
 
 /**
- * Defaulf maximum batch size possible to be received or sent.
+ * Default maximum batch size possible to be received or sent.
  */
 #ifndef Z_BATCH_UNICAST_SIZE
 #define Z_BATCH_UNICAST_SIZE 65535
 #endif
 /**
- * Defaulf maximum batch size possible to be received or sent.
+ * Default maximum batch size possible to be received or sent.
  */
 #ifndef Z_BATCH_MULTICAST_SIZE
 #define Z_BATCH_MULTICAST_SIZE 8192
 #endif
 
 /**
- * Defaulf maximum size for fragmented messages.
+ * Default maximum size for fragmented messages.
  */
 #ifndef Z_FRAG_MAX_SIZE
 #define Z_FRAG_MAX_SIZE 300000

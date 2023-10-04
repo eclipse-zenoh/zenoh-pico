@@ -98,7 +98,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
                                                                   //   or will release the suffix as well
     }
 
-    // Recursevely go through all the RIDs
+    // Recursively go through all the RIDs
     _z_zint_t id = keyexpr->_id;
     uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
     while (id != Z_RESOURCE_ID_NONE) {

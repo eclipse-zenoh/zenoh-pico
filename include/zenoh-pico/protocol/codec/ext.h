@@ -28,7 +28,7 @@ int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next);
 int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions);
 int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
 /**
- * Iterates through the extensions in `zbf`, assuming at least one is present at its begining
+ * Iterates through the extensions in `zbf`, assuming at least one is present at its beginning
  * (calling this function otherwise is UB). Short-circuits if `callback` returns a non-zero value.
  *
  * `callback` will receive `context` as its second argument, and may "steal" its first argument by
@@ -36,7 +36,7 @@ int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
  */
 int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context);
 /**
- * Iterates through the extensions in `zbf`, assuming at least one is present at its begining.
+ * Iterates through the extensions in `zbf`, assuming at least one is present at its beginning.
  * Returns `_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN` if a mandatory extension is found,
  * `_Z_RES_OK` otherwise.
  */
