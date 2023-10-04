@@ -17,23 +17,13 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 
 /*------------------ clone helpers ------------------*/
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
-    dst->_id = src->_id;
-    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
-}
-
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
-    _z_keyexpr_t dst;
-    _z_keyexpr_copy(&dst, src);
-    return dst;
-}
-
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     _z_timestamp_t ts;
     ts.id = tstamp->id;
@@ -41,7 +31,7 @@ _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     return ts;
 }
 
-void _z_timestamp_reset(_z_timestamp_t *tstamp) {
+void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     memset(&tstamp->id, 0, sizeof(_z_id_t));
     tstamp->time = 0;
 }
@@ -52,21 +42,14 @@ _Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
     return false;
 }
 
-int8_t _z_session_generate_zid(_z_bytes_t *bs, uint8_t size) {
+int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;
-
-    *bs = _z_bytes_make(size);
-    if (bs->_is_alloc == true) {
-        z_random_fill((uint8_t *)bs->start, bs->len);
-    } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
+    z_random_fill((uint8_t *)bs->id, size);
     return ret;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
+int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
 
     // Initialize the counters to 1
@@ -87,8 +70,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
     ret = z_mutex_init(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
     if (ret == _Z_RES_OK) {
-        zn->_local_zid = _z_bytes_empty();
-        _z_bytes_move(&zn->_local_zid, zid);
+        zn->_local_zid = *zid;
 #if Z_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._session = zn;
@@ -104,7 +86,6 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
         }
     } else {
         _z_transport_clear(&zn->_tp);
-        _z_bytes_clear(&zn->_local_zid);
     }
 
     return ret;
@@ -112,7 +93,6 @@ int8_t _z_session_init(_z_session_t *zn, _z_bytes_t *zid) {
 
 void _z_session_clear(_z_session_t *zn) {
     // Clear Zenoh PID
-    _z_bytes_clear(&zn->_local_zid);
 
     // Clean up transports
     _z_transport_clear(&zn->_tp);

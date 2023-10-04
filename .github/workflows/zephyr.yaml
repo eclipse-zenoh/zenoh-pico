@@ -15,132 +15,132 @@ name: zephyr
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ["**"]
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
 
 jobs:
   build:
-
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install requirements
-      run: |
-        echo "No requirements need to be installed"
+      - name: Install requirements
+        run: |
+          echo "No requirements need to be installed"
 
-    - name: Install PlatformIO
-      run: |
-        python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
-        . $HOME/.platformio/penv/bin/activate
-        platformio update
+      - name: Install PlatformIO
+        run: |
+          curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+          python3 get-platformio.py
+          . $HOME/.platformio/penv/bin/activate
+          platformio update
 
-    - name: Set up project
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Set up project
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        mkdir -p $ZEPHYR_BASE
-        cd $ZEPHYR_BASE
-        pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="build_flags=-DZ_LINK_SERIAL=1 -DZENOH_DEBUG=3"
+          mkdir -p $ZEPHYR_BASE
+          cd $ZEPHYR_BASE
+          pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="build_flags=-DZ_LINK_SERIAL=1 -DZENOH_DEBUG=3"
 
-        cd $ZEPHYR_BASE/lib
-        ln -s $ZENOH_PICO_BASE
+          cd $ZEPHYR_BASE/lib
+          ln -s $ZENOH_PICO_BASE
 
-        mkdir -p $ZEPHYR_BASE/zephyr
-        cd $ZEPHYR_BASE/zephyr
-        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
-        ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt CMakeLists.txt
+          mkdir -p $ZEPHYR_BASE/zephyr
+          cd $ZEPHYR_BASE/zephyr
+          ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
+          ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt CMakeLists.txt
 
-    - name: Build z_pub example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_pub example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pub.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pub.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run
 
-    - name: Build z_sub example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_sub example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_sub.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_sub.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run
 
-    - name: Build z_pull example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_pull example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pull.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pull.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run
 
-    - name: Build z_get example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_get example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_get.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_get.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run
 
-    - name: Build z_queryable example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_queryable example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_queryable.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_queryable.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run
 
-    - name: Build z_scout example
-      run: |
-        cd $HOME
-        export ZEPHYR_BASE=$HOME/work/zephyrproject/
-        export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-        . $HOME/.platformio/penv/bin/activate
+      - name: Build z_scout example
+        run: |
+          cd $HOME
+          export ZEPHYR_BASE=$HOME/work/zephyrproject/
+          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          . $HOME/.platformio/penv/bin/activate
 
-        rm -rf $ZEPHYR_BASE/src/*
-        cd $ZEPHYR_BASE/src
-        ln -s $ZENOH_PICO_BASE/examples/zephyr/z_scout.c
+          rm -rf $ZEPHYR_BASE/src/*
+          cd $ZEPHYR_BASE/src
+          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_scout.c
 
-        cd $ZEPHYR_BASE
-        platformio run
+          cd $ZEPHYR_BASE
+          platformio run

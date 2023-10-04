@@ -66,8 +66,9 @@ CMAKE_OPT=-DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DBUIL
 
 all: make
 
-$(BUILD_DIR)/Makefile: CMakeLists.txt
+$(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
+	echo $(CMAKE_OPT)
 	cmake $(CMAKE_OPT) -B $(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile
@@ -93,7 +94,6 @@ crossbuild: check-docker
 		cmake $(CMAKE_OPT) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
 		make VERBOSE=1 -C$(CROSSBUILD_DIR)/$(CROSSIMG) all package"
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
-	docker rmi dockcross/$(CROSSIMG)
 
 linux-armv5:
 	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild

@@ -352,9 +352,9 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                     // implementations:
                     //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
                     // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
-                    //#if defined(ZENOH_LINUX)
+                    // #if defined(ZENOH_LINUX)
                     //    z_free(lsockaddr);
-                    //#endif
+                    // #endif
                 } else {
                     ret = _Z_ERR_GENERIC;
                 }
@@ -378,7 +378,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 }
 
 int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface) {
+                               const char *iface, const char *join) {
     int8_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
@@ -393,32 +393,35 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                 ret = _Z_ERR_GENERIC;
             }
 
-            int optflag = 1;
-            if ((ret == _Z_RES_OK) &&
-                (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)) {
+            int value = true;
+            if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) < 0)) {
+                ret = _Z_ERR_GENERIC;
+            }
+            if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEPORT, &value, sizeof(value)) < 0)) {
                 ret = _Z_ERR_GENERIC;
             }
 
-#if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
-            if ((ret == _Z_RES_OK) && (bind(sock->_fd, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen) < 0)) {
-                ret = _Z_ERR_GENERIC;
-            }
-#elif defined(ZENOH_LINUX)
             if (rep._iptcp->ai_family == AF_INET) {
-                struct sockaddr_in address = {AF_INET, ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port, {0}, {0}};
-                if ((ret == _Z_RES_OK) && (bind(sock->_fd, (struct sockaddr *)&address, sizeof address) < 0)) {
+                struct sockaddr_in address;
+                (void)memset(&address, 0, sizeof(address));
+                address.sin_family = rep._iptcp->ai_family;
+                address.sin_port = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port;
+                inet_pton(address.sin_family, "0.0.0.0", &address.sin_addr);
+                if ((ret == _Z_RES_OK) && (bind(sock->_fd, (struct sockaddr *)&address, sizeof(address)) < 0)) {
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (rep._iptcp->ai_family == AF_INET6) {
-                struct sockaddr_in6 address = {
-                    AF_INET6, ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port, 0, {{{0}}}, 0};
-                if ((ret == _Z_RES_OK) && (bind(sock->_fd, (struct sockaddr *)&address, sizeof address) < 0)) {
+                struct sockaddr_in6 address;
+                (void)memset(&address, 0, sizeof(address));
+                address.sin6_family = rep._iptcp->ai_family;
+                address.sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
+                inet_pton(address.sin6_family, "::", &address.sin6_addr);
+                if ((ret == _Z_RES_OK) && (bind(sock->_fd, (struct sockaddr *)&address, sizeof(address)) < 0)) {
                     ret = _Z_ERR_GENERIC;
                 }
             } else {
                 ret = _Z_ERR_GENERIC;
             }
-#endif
 
             // Join the multicast group
             if (rep._iptcp->ai_family == AF_INET) {
@@ -442,6 +445,32 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                 }
             } else {
                 ret = _Z_ERR_GENERIC;
+            }
+            // Join any additional multicast group
+            if (join != NULL) {
+                char *joins = _z_str_clone(join);
+                for (char *ip = strsep(&joins, "|"); ip != NULL; ip = strsep(&joins, "|")) {
+                    if (rep._iptcp->ai_family == AF_INET) {
+                        struct ip_mreq mreq;
+                        (void)memset(&mreq, 0, sizeof(mreq));
+                        inet_pton(rep._iptcp->ai_family, ip, &mreq.imr_multiaddr);
+                        mreq.imr_interface.s_addr = ((struct sockaddr_in *)lsockaddr)->sin_addr.s_addr;
+                        if ((ret == _Z_RES_OK) &&
+                            (setsockopt(sock->_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)) {
+                            ret = _Z_ERR_GENERIC;
+                        }
+                    } else if (rep._iptcp->ai_family == AF_INET6) {
+                        struct ipv6_mreq mreq;
+                        (void)memset(&mreq, 0, sizeof(mreq));
+                        inet_pton(rep._iptcp->ai_family, ip, &mreq.ipv6mr_multiaddr);
+                        mreq.ipv6mr_interface = if_nametoindex(iface);
+                        if ((ret == _Z_RES_OK) &&
+                            (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
+                            ret = _Z_ERR_GENERIC;
+                        }
+                    }
+                }
+                z_free(joins);
             }
 
             if (ret != _Z_RES_OK) {

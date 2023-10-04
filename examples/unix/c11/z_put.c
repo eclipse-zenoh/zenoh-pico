@@ -23,10 +23,11 @@ int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-put";
     const char *value = "Pub from Pico!";
     const char *mode = "client";
-    char *locator = NULL;
+    char *clocator = NULL;
+    char *llocator = NULL;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -35,13 +36,16 @@ int main(int argc, char **argv) {
                 value = optarg;
                 break;
             case 'e':
-                locator = optarg;
+                clocator = optarg;
                 break;
             case 'm':
                 mode = optarg;
                 break;
+            case 'l':
+                llocator = optarg;
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -54,8 +58,11 @@ int main(int argc, char **argv) {
 
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_PEER_KEY, z_string_make(locator));
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+    }
+    if (llocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");
@@ -72,20 +79,20 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
-    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
-    if (!z_check(ke)) {
-        printf("Unable to declare key expression!\n");
-        return -1;
-    }
+    // z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
+    // if (!z_check(ke)) {
+    //     printf("Unable to declare key expression!\n");
+    //     return -1;
+    // }
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
+    if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
-    z_undeclare_keyexpr(z_loan(s), z_move(ke));
+    // z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));

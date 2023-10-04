@@ -22,6 +22,10 @@
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/session.h"
+#include "zenoh-pico/system/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -944,6 +948,8 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
  */
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub);
 
+z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher);
+
 /**
  * Constructs the default values for the put operation via a publisher entity.
  *
@@ -1035,6 +1041,12 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
  *   Returns ``0`` if the undeclare (push) subscriber operation is successful, or a ``negative value`` otherwise.
  */
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
+
+/**
+ * @brief
+ *
+ */
+z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub);
 
 /**
  * Constructs the default values for the pull subscriber entity.

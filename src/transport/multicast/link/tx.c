@@ -15,7 +15,8 @@
 #include "zenoh-pico/transport/link/tx.h"
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -30,10 +31,10 @@ _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliabili
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztm->_sn_tx_reliable;
-        ztm->_sn_tx_reliable = _z_sn_increment(ztm->_sn_resolution, ztm->_sn_tx_reliable);
+        ztm->_sn_tx_reliable = _z_sn_increment(ztm->_sn_res, ztm->_sn_tx_reliable);
     } else {
         sn = ztm->_sn_tx_best_effort;
-        ztm->_sn_tx_best_effort = _z_sn_increment(ztm->_sn_resolution, ztm->_sn_tx_best_effort);
+        ztm->_sn_tx_best_effort = _z_sn_increment(ztm->_sn_res, ztm->_sn_tx_best_effort);
     }
     return sn;
 }
@@ -69,10 +70,10 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
     return ret;
 }
 
-int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send zenoh message\n");
+    _Z_DEBUG(">> send network message\n");
 
     _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
 
@@ -99,10 +100,10 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
 
         _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);  // Get the next sequence number
 
-        _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
+        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
         ret = _z_transport_message_encode(&ztm->_wbuf, &t_msg);  // Encode the frame header
         if (ret == _Z_RES_OK) {
-            ret = _z_zenoh_message_encode(&ztm->_wbuf, z_msg);  // Encode the zenoh message
+            ret = _z_network_message_encode(&ztm->_wbuf, n_msg);  // Encode the network message
             if (ret == _Z_RES_OK) {
                 // Write the message legnth in the reserved space if needed
                 __unsafe_z_finalize_wbuf(&ztm->_wbuf, _Z_LINK_IS_STREAMED(ztm->_link._capabilities));
@@ -114,9 +115,9 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
             } else {
                 // The message does not fit in the current batch, let's fragment it
                 // Create an expandable wbuf for fragmentation
-                _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
+                _z_wbuf_t fbf = _z_wbuf_make(ztm->_wbuf._capacity - 12, true);
 
-                ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
+                ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
                     _Bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {
@@ -141,8 +142,6 @@ int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_re
                         }
                     }
                 }
-
-                _z_wbuf_clear(&fbf);  // Free the fragmentation buffer memory
             }
         }
 

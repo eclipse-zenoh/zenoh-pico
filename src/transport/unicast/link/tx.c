@@ -14,8 +14,12 @@
 
 #include "zenoh-pico/transport/link/tx.h"
 
+#include <assert.h>
+
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/msgcodec.h"
+#include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -30,10 +34,10 @@ _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztu->_sn_tx_reliable;
-        ztu->_sn_tx_reliable = _z_sn_increment(ztu->_sn_resolution, ztu->_sn_tx_reliable);
+        ztu->_sn_tx_reliable = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_reliable);
     } else {
         sn = ztu->_sn_tx_best_effort;
-        ztu->_sn_tx_best_effort = _z_sn_increment(ztu->_sn_resolution, ztu->_sn_tx_best_effort);
+        ztu->_sn_tx_best_effort = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_best_effort);
     }
     return sn;
 }
@@ -69,10 +73,10 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
     return ret;
 }
 
-int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
+int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                              z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send zenoh message\n");
+    _Z_DEBUG(">> send network message\n");
 
     _z_transport_unicast_t *ztu = &zn->_tp._transport._unicast;
 
@@ -99,24 +103,30 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
 
         _z_zint_t sn = __unsafe_z_unicast_get_sn(ztu, reliability);  // Get the next sequence number
 
-        _z_transport_message_t t_msg = _z_frame_header(reliability, 0, 0, sn);
+        _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
         ret = _z_transport_message_encode(&ztu->_wbuf, &t_msg);  // Encode the frame header
         if (ret == _Z_RES_OK) {
-            ret = _z_zenoh_message_encode(&ztu->_wbuf, z_msg);  // Encode the zenoh message
+            ret = _z_network_message_encode(&ztu->_wbuf, n_msg);  // Encode the network message
             if (ret == _Z_RES_OK) {
                 // Write the message legnth in the reserved space if needed
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
 
-                ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                if (ztu->_wbuf._ioss._len == 1) {
+                    ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);  // Send the wbuf on the socket
+                } else {
+                    // Change the MID
+
+                    // for ()
+                }
                 if (ret == _Z_RES_OK) {
                     ztu->_transmitted = true;  // Mark the session that we have transmitted data
                 }
             } else {
                 // The message does not fit in the current batch, let's fragment it
                 // Create an expandable wbuf for fragmentation
-                _z_wbuf_t fbf = _z_wbuf_make(Z_IOSLICE_SIZE, true);
+                _z_wbuf_t fbf = _z_wbuf_make(ztu->_wbuf._capacity - 12, true);
 
-                ret = _z_zenoh_message_encode(&fbf, z_msg);  // Encode the message on the expandable wbuf
+                ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
                     _Bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {
@@ -141,8 +151,6 @@ int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reli
                         }
                     }
                 }
-
-                _z_wbuf_clear(&fbf);  // Free the fragmentation buffer memory
             }
         }
 

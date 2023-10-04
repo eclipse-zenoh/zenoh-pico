@@ -390,9 +390,9 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                     // implementations:
                     //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
                     // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
-                    //#if defined(ZENOH_LINUX)
+                    // #if defined(ZENOH_LINUX)
                     //    z_free(lsockaddr);
-                    //#endif
+                    // #endif
                 } else {
                     ret = _Z_ERR_GENERIC;
                 }
@@ -417,7 +417,8 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 }
 
 int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface) {
+                               const char *iface, const char *join) {
+    (void)join;
     int8_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {

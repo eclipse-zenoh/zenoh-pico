@@ -12,32 +12,34 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_TYPES_H
-#define ZENOH_PICO_TRANSPORT_TYPES_H
+#ifndef INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H
+#define INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H
+
+#include <assert.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/msg.h"
+#include "zenoh-pico/protocol/definitions/transport.h"
 
 typedef struct {
     // Defragmentation buffers
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 
-    _z_bytes_t _remote_zid;
+    _z_id_t _remote_zid;
     _z_bytes_t _remote_addr;
+    _z_conduit_sn_list_t _sn_rx_sns;
 
     // SN numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _sn_res;
     volatile _z_zint_t _lease;
     volatile _z_zint_t _next_lease;
 
-    _z_conduit_sn_list_t _sn_rx_sns;
-
+    uint16_t _peer_id;
     volatile _Bool _received;
 } _z_transport_peer_entry_t;
 
@@ -48,6 +50,8 @@ _Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
+_z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
+                                                                    _z_transport_peer_entry_t *entry);
 
 typedef struct {
     // Session associated to the transport
@@ -66,11 +70,10 @@ typedef struct {
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 
-    _z_bytes_t _remote_zid;
+    _z_id_t _remote_zid;
 
     // SN numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _sn_res;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
     _z_zint_t _sn_rx_reliable;
@@ -110,8 +113,7 @@ typedef struct {
     _z_zbuf_t _zbuf;
 
     // SN initial numbers
-    _z_zint_t _sn_resolution;
-    _z_zint_t _sn_resolution_half;
+    _z_zint_t _sn_res;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
     volatile _z_zint_t _lease;
@@ -145,32 +147,34 @@ _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noo
 _Z_LIST_DEFINE(_z_transport, _z_transport_t)
 
 typedef struct {
-    _z_bytes_t _remote_zid;
-    _z_zint_t _sn_resolution;
+    _z_id_t _remote_zid;
+    uint16_t _batch_size;
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
     _z_zint_t _lease;
     z_whatami_t _whatami;
+    uint8_t _key_id_res;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
     _Bool _is_qos;
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
-    _z_zint_t _sn_resolution;
-    _z_zint_t _initial_sn_tx;
-    _Bool _is_qos;
+    _z_conduit_sn_list_t _initial_sn_tx;
+    uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
 int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param);
 int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
 
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_zid);
+                                        const _z_id_t *local_zid);
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_bytes_t *local_zid);
+                                          const _z_id_t *local_zid);
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_bytes_t *local_zid);
+                                      const _z_id_t *local_zid);
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_bytes_t *local_zid);
+                                        const _z_id_t *local_zid);
 
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);
@@ -184,4 +188,4 @@ void _z_transport_free(_z_transport_t **zt);
 void _z_transport_unicast_free(_z_transport_unicast_t **ztu);
 void _z_transport_multicast_free(_z_transport_multicast_t **ztm);
 
-#endif /* ZENOH_PICO_TRANSPORT_TYPES_H */
+#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */
