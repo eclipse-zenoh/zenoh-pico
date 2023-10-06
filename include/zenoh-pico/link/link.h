@@ -52,10 +52,10 @@
  *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
  */
 typedef enum {
-    Z_LINK_CAPABILITY_NONE = 0x00,       // 0
+    Z_LINK_CAPABILITY_NONE = 0x00,      // 0
     Z_LINK_CAPABILITY_RELIABLE = 0x01,  // 1 << 0
-    Z_LINK_CAPABILITY_STREAMED = 0x02,   // 1 << 1
-    Z_LINK_CAPABILITY_MULTICAST = 0x04   // 1 << 2
+    Z_LINK_CAPABILITY_STREAMED = 0x02,  // 1 << 1
+    Z_LINK_CAPABILITY_MULTICAST = 0x04  // 1 << 2
 } _z_link_capabilities_t;
 
 #define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIABLE) == Z_LINK_CAPABILITY_RELIABLE)

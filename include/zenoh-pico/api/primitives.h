@@ -1142,9 +1142,9 @@ z_queryable_options_t z_queryable_options_default(void);
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` where to declare the subscriber.
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containing the callbacks to be called and the context
- * to pass to them. options: The options to apply to the queryable. If ``NULL`` is passed, the default options will be
- * applied.
+ *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containing the callbacks to be called and the
+ * context to pass to them. options: The options to apply to the queryable. If ``NULL`` is passed, the default options
+ * will be applied.
  *
  * Returns:
  *   A :c:type:`z_owned_queryable_t` with either a valid queryable or a failing queryable.
