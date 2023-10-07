@@ -43,7 +43,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     // Acquire and keep the lock
-    _z_mutex_lock(&ztm->_mutex_rx);
+    z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
@@ -112,7 +112,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
     }
 
-    _z_mutex_unlock(&ztm->_mutex_rx);
+    z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_MULTI_THREAD == 1
 
     return NULL;

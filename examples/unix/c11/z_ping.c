@@ -23,17 +23,17 @@
 
 // WARNING: for the sake of this example we are using "internal" structs and functions (starting with "_").
 //          Synchronisation primitives are planned to be added to the API in the future.
-_z_condvar_t cond;
-_z_mutex_t mutex;
+z_condvar_t cond;
+z_mutex_t mutex;
 
 void callback(const z_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
-    _z_condvar_signal(&cond);
+    z_condvar_signal(&cond);
 }
 void drop(void* context) {
     (void)context;
-    _z_condvar_free(&cond);
+    z_condvar_free(&cond);
 }
 
 struct args_t {
@@ -56,8 +56,8 @@ int main(int argc, char** argv) {
 		");
         return 1;
     }
-    _z_mutex_init(&mutex);
-    _z_condvar_init(&cond);
+    z_mutex_init(&mutex);
+    z_condvar_init(&cond);
     z_owned_config_t config = z_config_default();
     z_owned_session_t session = z_open(z_move(config));
     if (!z_check(session)) {
@@ -90,20 +90,20 @@ int main(int argc, char** argv) {
     for (unsigned int i = 0; i < args.size; i++) {
         data[i] = i % 10;
     }
-    _z_mutex_lock(&mutex);
+    z_mutex_lock(&mutex);
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
         clock_t warmup_end = clock() + CLOCKS_PER_SEC * args.warmup_ms / 1000;
         for (clock_t now = clock(); now < warmup_end; now = clock()) {
             z_publisher_put(z_loan(pub), data, args.size, NULL);
-            _z_condvar_wait(&cond, &mutex);
+            z_condvar_wait(&cond, &mutex);
         }
     }
     clock_t* results = z_malloc(sizeof(clock_t) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
         clock_t start = clock();
         z_publisher_put(z_loan(pub), data, args.size, NULL);
-        _z_condvar_wait(&cond, &mutex);
+        z_condvar_wait(&cond, &mutex);
         clock_t end = clock();
         results[i] = end - start;
     }
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         clock_t rtt = results[i] * 1000000 / CLOCKS_PER_SEC;
         printf("%d bytes: seq=%d rtt=%ldµs lat=%ldµs\n", args.size, i, rtt, rtt / 2);
     }
-    _z_mutex_unlock(&mutex);
+    z_mutex_unlock(&mutex);
     z_free(results);
     z_free(data);
     z_drop(z_move(pub));

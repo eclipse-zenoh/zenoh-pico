@@ -97,13 +97,13 @@ _z_subscription_sptr_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *z
 
 _z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return sub;
@@ -111,13 +111,13 @@ _z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_l
 
 _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, *key);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return subs;
@@ -128,7 +128,7 @@ _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_lo
     _z_subscription_sptr_t *ret = NULL;
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
@@ -145,7 +145,7 @@ _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_lo
     }
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     return ret;
@@ -156,7 +156,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
     int8_t ret = _Z_RES_OK;
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _Z_DEBUG("Resolving %d - %s on mapping 0x%x\n", keyexpr._id, keyexpr._suffix, _z_keyexpr_mapping_id(&keyexpr));
@@ -166,7 +166,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
 
 #if Z_MULTI_THREAD == 1
-        _z_mutex_unlock(&zn->_mutex_inner);
+        z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
         // Build the sample
@@ -188,7 +188,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_subscription_sptr_list_free(&subs);
     } else {
 #if Z_MULTI_THREAD == 1
-        _z_mutex_unlock(&zn->_mutex_inner);
+        z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
@@ -198,7 +198,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
 
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_sptr_t *sub) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     if (is_local == _Z_RESOURCE_IS_LOCAL) {
@@ -210,19 +210,19 @@ void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscript
     }
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }
 
 void _z_flush_subscriptions(_z_session_t *zn) {
 #if Z_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 
     _z_subscription_sptr_list_free(&zn->_local_subscriptions);
     _z_subscription_sptr_list_free(&zn->_remote_subscriptions);
 
 #if Z_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_MULTI_THREAD == 1
 }
