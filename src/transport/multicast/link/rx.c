@@ -27,7 +27,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
@@ -52,10 +52,10 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
     _Z_DEBUG(">> recv session msg\n");
     int8_t ret = _Z_RES_OK;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztm->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
     do {
@@ -96,9 +96,9 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
         ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
@@ -110,10 +110,10 @@ int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_messa
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                              _z_bytes_t *addr) {
     int8_t ret = _Z_RES_OK;
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
     _z_mutex_lock(&ztm->_mutex_peer);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
@@ -254,7 +254,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
                         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
 
-#if Z_DYNAMIC_MEMORY_ALLOCATION == 1
+#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 1
                         entry->_dbuf_reliable = _z_wbuf_make(0, true);
                         entry->_dbuf_best_effort = _z_wbuf_make(0, true);
 #else
@@ -313,11 +313,11 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_peer);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
 
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

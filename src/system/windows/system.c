@@ -58,7 +58,7 @@ void *z_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 
 void z_free(void *ptr) { free(ptr); }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     (void)(attr);
@@ -146,7 +146,7 @@ int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     SleepConditionVariableSRW(cv, m, INFINITE, 0);
     return ret;
 }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(size_t time) { return z_sleep_ms((time / 1000) + (time % 1000 == 0 ? 0 : 1)); }

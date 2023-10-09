@@ -23,7 +23,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
@@ -46,10 +46,10 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message\n");
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_tx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_z_prepare_wbuf(&ztu->_wbuf, _Z_LINK_IS_STREAMED(ztu->_link._capabilities));
@@ -66,9 +66,9 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
         }
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztu->_mutex_tx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
@@ -83,18 +83,18 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
     // Acquire the lock and drop the message if needed
     _Bool drop = false;
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_lock(&ztu->_mutex_tx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
         int8_t locked = _z_mutex_trylock(&ztu->_mutex_tx);
         if (locked != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control\n");
             // We failed to acquire the lock, drop the message
             drop = true;
         }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     }
 
     if (drop == false) {
@@ -154,12 +154,12 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
             }
         }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_unlock(&ztu->_mutex_tx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     }
 
     return ret;
 }
 
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

@@ -18,7 +18,7 @@
 
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 
 size_t _z_ws_config_strlen(const _z_str_intmap_t *s) {
     WS_CONFIG_MAPPING_BUILD

@@ -23,7 +23,7 @@
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 
 #define SPP_MAXIMUM_PAYLOAD 128
 

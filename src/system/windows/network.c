@@ -25,7 +25,7 @@
 
 WSADATA wsaData;
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 /*------------------ TCP sockets ------------------*/
 int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
@@ -161,7 +161,7 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 }
 #endif
 
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
 int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
@@ -190,7 +190,7 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) {
 }
 #endif
 
-#if Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1
 int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
 
@@ -272,7 +272,7 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 }
 #endif
 
-#if Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_MULTICAST == 1
 unsigned int __get_ip_from_iface(const char *iface, int sa_family, SOCKADDR **lsockaddr) {
     unsigned int addrlen = 0U;
 
@@ -603,10 +603,10 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 }
 #endif
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on Windows port of Zenoh-Pico"
 #endif
 
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 #error "Serial not supported yet on Windows port of Zenoh-Pico"
 #endif

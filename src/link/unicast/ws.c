@@ -24,7 +24,7 @@
 #include "zenoh-pico/system/link/ws.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 
 char *__z_parse_port_segment_ws(char *address) {
     char *ret = NULL;

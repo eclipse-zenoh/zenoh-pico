@@ -20,7 +20,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/bt.h"
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 
 #define SPP_MAXIMUM_PAYLOAD 128
 

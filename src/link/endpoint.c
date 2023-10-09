@@ -20,19 +20,19 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/utils/pointers.h"
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 #include "zenoh-pico/link/config/tcp.h"
 #endif
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 #include "zenoh-pico/link/config/udp.h"
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 #include "zenoh-pico/link/config/bt.h"
 #endif
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 #include "zenoh-pico/link/config/serial.h"
 #endif
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/link/config/ws.h"
 #endif
 /*------------------ Locator ------------------*/
@@ -292,27 +292,27 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
         p_start = _z_ptr_char_offset(p_start, 1);
 
         // Call the right configuration parser depending on the protocol
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
         if (_z_str_eq(proto, TCP_SCHEMA) == true) {
             ret = _z_tcp_config_from_str(strint, p_start);
         } else
 #endif
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
             if (_z_str_eq(proto, UDP_SCHEMA) == true) {
             ret = _z_udp_config_from_str(strint, p_start);
         } else
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
             if (_z_str_eq(proto, BT_SCHEMA) == true) {
             ret = _z_bt_config_from_str(strint, p_start);
         } else
 #endif
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
             if (_z_str_eq(proto, SERIAL_SCHEMA) == true) {
             ret = _z_serial_config_from_str(strint, p_start);
         } else
 #endif
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
             if (_z_str_eq(proto, WS_SCHEMA) == true) {
             ret = _z_ws_config_from_str(strint, p_start);
         } else
@@ -329,27 +329,27 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
     size_t len = 0;
 
     // Call the right configuration parser depending on the protocol
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA) == true) {
         len = _z_tcp_config_strlen(s);
     } else
 #endif
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
         if (_z_str_eq(proto, UDP_SCHEMA) == true) {
         len = _z_udp_config_strlen(s);
     } else
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
         if (_z_str_eq(proto, BT_SCHEMA) == true) {
         len = _z_bt_config_strlen(s);
     } else
 #endif
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
         if (_z_str_eq(proto, SERIAL_SCHEMA) == true) {
         len = _z_serial_config_strlen(s);
     } else
 #endif
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
         if (_z_str_eq(proto, WS_SCHEMA) == true) {
         len = _z_ws_config_strlen(s);
     } else
@@ -365,27 +365,27 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
     char *res = NULL;
 
     // Call the right configuration parser depending on the protocol
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
     if (_z_str_eq(proto, TCP_SCHEMA) == true) {
         res = _z_tcp_config_to_str(s);
     } else
 #endif
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
         if (_z_str_eq(proto, UDP_SCHEMA) == true) {
         res = _z_udp_config_to_str(s);
     } else
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
         if (_z_str_eq(proto, BT_SCHEMA) == true) {
         res = _z_bt_config_to_str(s);
     } else
 #endif
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
         if (_z_str_eq(proto, SERIAL_SCHEMA) == true) {
         res = _z_serial_config_to_str(s);
     } else
 #endif
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
         if (_z_str_eq(proto, WS_SCHEMA) == true) {
         res = _z_ws_config_to_str(s);
     } else

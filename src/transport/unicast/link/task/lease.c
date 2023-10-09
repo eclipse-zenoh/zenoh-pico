@@ -17,7 +17,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     int8_t ret = _Z_RES_OK;
@@ -29,7 +29,7 @@ int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 }
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
     ztu->_received = false;
@@ -83,9 +83,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         next_lease = next_lease - interval;
         next_keep_alive = next_keep_alive - interval;
     }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return 0;
 }
 
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

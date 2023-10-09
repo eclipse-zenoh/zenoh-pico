@@ -20,19 +20,19 @@
 
 #include "zenoh-pico/config.h"
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 typedef pthread_t _z_task_t;
 typedef pthread_attr_t _z_task_attr_t;
 typedef pthread_mutex_t _z_mutex_t;
 typedef pthread_cond_t _z_condvar_t;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef double z_clock_t;
 typedef double z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
         struct {
             int _fd;
             uint32_t _tout;
@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
         struct addrinfo *_iptcp;
 #endif
     };

@@ -561,7 +561,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     void *ctx = callback->context;
     callback->context = NULL;
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_transport_peer_entry_list_t *l = zs._val->_tp._transport._multicast._peers;
         for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
@@ -573,7 +573,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     }
 #else
     (void)zs;
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) {
         callback->drop(ctx);
@@ -586,12 +586,12 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     void *ctx = callback->context;
     callback->context = NULL;
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         z_id_t id = zs._val->_tp._transport._unicast._remote_zid;
         callback->call(&id, ctx);
     }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
     if (callback->drop != NULL) {
         callback->drop(ctx);
@@ -739,17 +739,17 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     z_publisher_options_t opt = z_publisher_options_default();
     if (options != NULL) {
@@ -815,9 +815,9 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             char *wild = strpbrk(keyexpr._suffix, "*$");
@@ -833,9 +833,9 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, wild);
         }
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL) {
@@ -904,17 +904,17 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     z_queryable_options_t opt = z_queryable_options_default();
     if (options != NULL) {
@@ -970,7 +970,7 @@ zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read
 
 int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options) {
     (void)(options);
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     return _zp_start_read_task(zs._val);
 #else
     (void)(zs);
@@ -979,7 +979,7 @@ int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options)
 }
 
 int8_t zp_stop_read_task(z_session_t zs) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     return _zp_stop_read_task(zs._val);
 #else
     (void)(zs);
@@ -991,7 +991,7 @@ zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_le
 
 int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options) {
     (void)(options);
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     return _zp_start_lease_task(zs._val);
 #else
     (void)(zs);
@@ -1000,7 +1000,7 @@ int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *option
 }
 
 int8_t zp_stop_lease_task(z_session_t zs) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     return _zp_stop_lease_task(zs._val);
 #else
     (void)(zs);

@@ -26,7 +26,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
@@ -37,9 +37,9 @@ int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool 
 
     return ret;
 }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
@@ -50,21 +50,21 @@ int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _B
 
     return ret;
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         ret = _z_unicast_send_close(&zt->_transport._unicast, reason, link_only);
     } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
     } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
     {
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
@@ -72,13 +72,13 @@ int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
     return ret;
 }
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param) {
     int8_t ret = _Z_RES_OK;
 
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
     ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
@@ -87,7 +87,7 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
             _z_mutex_free(&zt->_transport._unicast._mutex_tx);
         }
     }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
@@ -95,7 +95,7 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         _Bool expandable = _Z_LINK_IS_STREAMED(zl->_capabilities);
         size_t dbuf_size = 0;
 
-#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
+#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
 #endif
@@ -109,7 +109,7 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
             (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_UNICAST_SIZE) ||
-#if Z_DYNAMIC_MEMORY_ALLOCATION == 0
+#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
 #else
@@ -118,10 +118,10 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 #endif
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
             _z_mutex_free(&zt->_transport._unicast._mutex_tx);
             _z_mutex_free(&zt->_transport._unicast._mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
             _z_zbuf_clear(&zt->_transport._unicast._zbuf);
@@ -143,13 +143,13 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
         zt->_transport._unicast._sn_rx_reliable = initial_sn_rx;
         zt->_transport._unicast._sn_rx_best_effort = initial_sn_rx;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
         zt->_transport._unicast._read_task_running = false;
         zt->_transport._unicast._read_task = NULL;
         zt->_transport._unicast._lease_task_running = false;
         zt->_transport._unicast._lease_task = NULL;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
         // Notifiers
         zt->_transport._unicast._received = 0;
@@ -169,15 +169,15 @@ int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unic
 
     return ret;
 }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param) {
     int8_t ret = _Z_RES_OK;
 
     zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
     ret = _z_mutex_init(&zt->_transport._multicast._mutex_tx);
     if (ret == _Z_RES_OK) {
@@ -192,7 +192,7 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
             _z_mutex_free(&zt->_transport._multicast._mutex_tx);
         }
     }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
@@ -205,11 +205,11 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
             (_z_zbuf_capacity(&zt->_transport._multicast._zbuf) != Z_BATCH_MULTICAST_SIZE)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
             _z_mutex_free(&zt->_transport._multicast._mutex_tx);
             _z_mutex_free(&zt->_transport._multicast._mutex_rx);
             _z_mutex_free(&zt->_transport._multicast._mutex_peer);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._multicast._wbuf);
             _z_zbuf_clear(&zt->_transport._multicast._zbuf);
@@ -227,13 +227,13 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
         // Initialize peer list
         zt->_transport._multicast._peers = _z_transport_peer_entry_list_new();
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
         zt->_transport._multicast._read_task_running = false;
         zt->_transport._multicast._read_task = NULL;
         zt->_transport._multicast._lease_task_running = false;
         zt->_transport._multicast._lease_task = NULL;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
         zt->_transport._multicast._lease = Z_TRANSPORT_LEASE;
 
@@ -246,9 +246,9 @@ int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_mu
 
     return ret;
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                         const _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
@@ -343,9 +343,9 @@ int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *
     return ret;
 }
 
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
                                           const _z_id_t *local_zid) {
     (void)(param);
@@ -357,9 +357,9 @@ int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param
 
     return ret;
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                       const _z_id_t *local_zid) {
     (void)(param);
@@ -371,9 +371,9 @@ int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *pa
 
     return ret;
 }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
                                         const _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
@@ -402,25 +402,25 @@ int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t
 
     return ret;
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason) {
     return _z_unicast_send_close(ztu, reason, false);
 }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason) {
     return _z_multicast_send_close(ztm, reason, false);
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, false); }
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL) {
         _z_task_join(ztu->_read_task);
@@ -434,7 +434,7 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     // Clean up the mutexes
     _z_mutex_free(&ztu->_mutex_tx);
     _z_mutex_free(&ztu->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_wbuf);
@@ -446,11 +446,11 @@ void _z_transport_unicast_clear(_z_transport_unicast_t *ztu) {
     ztu->_remote_zid = _z_id_empty();
     _z_link_clear(&ztu->_link);
 }
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL) {
         _z_task_join(ztm->_read_task);
@@ -465,7 +465,7 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
     _z_mutex_free(&ztm->_mutex_tx);
     _z_mutex_free(&ztm->_mutex_rx);
     _z_mutex_free(&ztm->_mutex_peer);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers
     _z_wbuf_clear(&ztm->_wbuf);
@@ -475,19 +475,19 @@ void _z_transport_multicast_clear(_z_transport_multicast_t *ztm) {
     _z_transport_peer_entry_list_free(&ztm->_peers);
     _z_link_clear(&ztm->_link);
 }
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 void _z_transport_clear(_z_transport_t *zt) {
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_transport_unicast_clear(&zt->_transport._unicast);
     } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _z_transport_multicast_clear(&zt->_transport._multicast);
     } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
     {
         __asm__("nop");
     }

@@ -34,7 +34,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
 int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
@@ -147,7 +147,7 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 }
 #endif
 
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
 int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     int8_t ret = _Z_RES_OK;
@@ -169,7 +169,7 @@ int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, 
 void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 #endif
 
-#if Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1
 int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     int8_t ret = _Z_RES_OK;
 
@@ -243,7 +243,7 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 }
 #endif
 
-#if Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_MULTICAST == 1
 int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
                              uint32_t tout, const char *iface) {
     int8_t ret = _Z_RES_OK;
@@ -550,9 +550,9 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
                              _z_sys_net_endpoint_t rep) {
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
-#endif  // Z_LINK_UDP_MULTICAST == 1
+#endif  // Z_FEATURE_LINK_UDP_MULTICAST == 1
 
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
     (void)(sock);
@@ -725,6 +725,6 @@ size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t
 }
 #endif
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on Zephyr port of Zenoh-Pico"
 #endif

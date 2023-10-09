@@ -18,7 +18,7 @@
 
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 size_t _z_tcp_config_strlen(const _z_str_intmap_t *s) {
     TCP_CONFIG_MAPPING_BUILD

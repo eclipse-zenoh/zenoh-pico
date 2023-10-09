@@ -20,7 +20,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 typedef struct {
     _z_sys_net_socket_t _sock;

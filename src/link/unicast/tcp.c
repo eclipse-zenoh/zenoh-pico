@@ -23,7 +23,7 @@
 #include "zenoh-pico/system/link/tcp.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 char *__z_parse_port_segment_tcp(char *address) {
     char *ret = NULL;
