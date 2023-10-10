@@ -22,6 +22,7 @@
 #define _Z_QUERYABLE_COMPLETE_DEFAULT false
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
+#if Z_FEATURE_QUERYABLES == 1
 /*------------------ Queryable ------------------*/
 _z_questionable_sptr_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key);
@@ -30,5 +31,6 @@ _z_questionable_sptr_t *_z_register_questionable(_z_session_t *zn, _z_questionab
 int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, const _z_keyexpr_t q_key, uint32_t qid);
 void _z_unregister_questionable(_z_session_t *zn, _z_questionable_sptr_t *q);
 void _z_flush_questionables(_z_session_t *zn);
+#endif
 
 #endif /* ZENOH_PICO_SESSION_QUERYABLE_H */

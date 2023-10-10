@@ -427,8 +427,11 @@ void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }
 
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
+
+#if Z_FEATURE_QUERYABLES == 1
+OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
+#endif
 
 #define OWNED_FUNCTIONS_CLOSURE(ownedtype, name)                               \
     _Bool z_##name##_check(const ownedtype *val) { return val->call != NULL; } \
@@ -654,14 +657,17 @@ typedef struct __z_reply_handler_wrapper_t {
 } __z_reply_handler_wrapper_t;
 
 void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
+#if Z_FEATURE_QUERYABLES == 1
     z_owned_reply_t oreply = {._value = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
     z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._value to NULL
+#endif
 }
 
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options) {
+#if Z_FEATURE_QUERYABLES == 1
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->context;
@@ -694,6 +700,9 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
 
     ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
                    wrapped_ctx, callback->drop, ctx);
+#else
+    int8_t ret = _Z_ERR_GENERIC; // Not supported
+#endif
     return ret;
 }
 
@@ -896,6 +905,7 @@ z_queryable_options_t z_queryable_options_default(void) {
 
 z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
                                         const z_queryable_options_t *options) {
+#if Z_FEATURE_QUERYABLES == 1
     void *ctx = callback->context;
     callback->context = NULL;
 
@@ -923,14 +933,20 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
 
     return (z_owned_queryable_t){
         ._value = _z_declare_queryable(zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
+#else
+     return (z_owned_queryable_t) {._value = NULL };   
+#endif
 }
 
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
+#if Z_FEATURE_QUERYABLES == 1
     int8_t ret = _Z_RES_OK;
 
     ret = _z_undeclare_queryable(queryable->_value);
     _z_queryable_free(&queryable->_value);
-
+#else
+    int8_t ret = _Z_ERR_GENERIC;
+#endif
     return ret;
 }
 
@@ -940,6 +956,7 @@ z_query_reply_options_t z_query_reply_options_default(void) {
 
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options) {
+#if Z_FEATURE_QUERYABLES == 1
     z_query_reply_options_t opts = options == NULL ? z_query_reply_options_default() : *options;
     _z_value_t value = {.payload =
                             {
@@ -949,6 +966,9 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                             },
                         .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
     return _z_send_reply(query, keyexpr, value);
+#else
+    return _Z_ERR_GENERIC;
+#endif
 }
 
 _Bool z_reply_is_ok(const z_owned_reply_t *reply) {

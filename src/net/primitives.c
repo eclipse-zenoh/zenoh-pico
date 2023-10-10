@@ -190,6 +190,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     return ret;
 }
 
+#if Z_FEATURE_QUERYABLES == 1
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
@@ -303,6 +304,45 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
     return ret;
 }
 
+/*------------------ Query ------------------*/
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
+                const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+    int8_t ret = _Z_RES_OK;
+
+    // Create the pending query object
+    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
+    if (pq != NULL) {
+        pq->_id = _z_get_query_id(zn);
+        pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
+        pq->_parameters = _z_str_clone(parameters);
+        pq->_target = target;
+        pq->_consolidation = consolidation;
+        pq->_anykey = (strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+        pq->_callback = callback;
+        pq->_dropper = dropper;
+        pq->_pending_replies = NULL;
+        pq->_call_arg = arg_call;
+        pq->_drop_arg = arg_drop;
+
+        ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
+        if (ret == _Z_RES_OK) {
+            _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
+            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value);
+
+            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                _z_unregister_pending_query(zn, pq);
+                ret = _Z_ERR_TRANSPORT_TX_FAILED;
+            }
+        } else {
+            _z_pending_query_clear(pq);
+        }
+    }
+
+    return ret;
+}
+#endif
+
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
@@ -349,44 +389,6 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
     }
 
     // Freeing z_msg is unnecessary, as all of its components are aliased
-
-    return ret;
-}
-
-/*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
-    int8_t ret = _Z_RES_OK;
-
-    // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
-    if (pq != NULL) {
-        pq->_id = _z_get_query_id(zn);
-        pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
-        pq->_parameters = _z_str_clone(parameters);
-        pq->_target = target;
-        pq->_consolidation = consolidation;
-        pq->_anykey = (strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
-        pq->_callback = callback;
-        pq->_dropper = dropper;
-        pq->_pending_replies = NULL;
-        pq->_call_arg = arg_call;
-        pq->_drop_arg = arg_drop;
-
-        ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
-        if (ret == _Z_RES_OK) {
-            _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
-            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value);
-
-            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                _z_unregister_pending_query(zn, pq);
-                ret = _Z_ERR_TRANSPORT_TX_FAILED;
-            }
-        } else {
-            _z_pending_query_clear(pq);
-        }
-    }
 
     return ret;
 }
