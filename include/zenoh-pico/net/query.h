@@ -39,7 +39,9 @@ typedef struct {
     void *_zn;  // FIXME: _z_session_t *zn;
 } _z_queryable_t;
 
+#if Z_FEATURE_QUERYABLES == 1 
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
+#endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

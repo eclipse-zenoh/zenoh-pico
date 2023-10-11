@@ -40,7 +40,7 @@ int main(void) {
     z_owned_closure_zid_t closure_zid_null_1 = z_closure_zid_null();
     z_owned_str_t str_null_1 = z_str_null();
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     z_owned_reply_t reply_null_1 = z_reply_null();
 #endif
 
@@ -58,7 +58,7 @@ int main(void) {
     assert(!z_check(hello_null_1));
     assert(!z_check(str_null_1));
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     assert(!z_check(reply_null_1));
 #endif
 
@@ -81,7 +81,7 @@ int main(void) {
     z_owned_closure_zid_t closure_zid_null_2;
     z_owned_str_t str_null_2;
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     z_owned_reply_t reply_null_2;
 #endif
 
@@ -101,7 +101,7 @@ int main(void) {
     z_null(&closure_zid_null_2);
     z_null(&str_null_2);
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     z_null(&reply_null_2);
 #endif
 
@@ -119,7 +119,7 @@ int main(void) {
     assert(!z_check(hello_null_2));
     assert(!z_check(str_null_2));
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     assert(!z_check(reply_null_2));
 #endif
 
@@ -143,7 +143,7 @@ int main(void) {
         z_drop(z_move(closure_zid_null_1));
         z_drop(z_move(str_null_1));
     
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
         z_drop(z_move(reply_null_1));
 #endif
 
@@ -163,7 +163,7 @@ int main(void) {
         z_drop(z_move(closure_zid_null_2));
         z_drop(z_move(str_null_2));
     
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
         z_drop(z_move(reply_null_2));
 #endif
     }

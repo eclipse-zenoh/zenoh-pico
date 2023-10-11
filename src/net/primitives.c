@@ -303,7 +303,9 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
 
     return ret;
 }
+#endif
 
+#if Z_FEATURE_QUERIES == 1
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,

@@ -18,7 +18,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn);
 

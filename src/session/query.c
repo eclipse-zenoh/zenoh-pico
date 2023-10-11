@@ -22,7 +22,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
 _z_reply_t *_z_reply_alloc_and_move(_z_reply_t *_reply) {
     _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
     if (reply != NULL) {

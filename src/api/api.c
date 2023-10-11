@@ -429,7 +429,7 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 #endif
 
@@ -657,7 +657,7 @@ typedef struct __z_reply_handler_wrapper_t {
 } __z_reply_handler_wrapper_t;
 
 void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     z_owned_reply_t oreply = {._value = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
@@ -667,7 +667,7 @@ void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_c
 
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options) {
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERIES == 1
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->context;
