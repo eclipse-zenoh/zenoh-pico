@@ -104,7 +104,7 @@ void _z_session_clear(_z_session_t *zn) {
     // Clean up the entities
     _z_flush_resources(zn);
     _z_flush_subscriptions(zn);
-    
+
 #if Z_FEATURE_QUERYABLES == 1
     _z_flush_questionables(zn);
 #endif

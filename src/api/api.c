@@ -701,7 +701,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
                    wrapped_ctx, callback->drop, ctx);
 #else
-    int8_t ret = _Z_ERR_GENERIC; // Not supported
+    int8_t ret = _Z_ERR_GENERIC;  // Not supported
 #endif
     return ret;
 }
@@ -934,7 +934,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     return (z_owned_queryable_t){
         ._value = _z_declare_queryable(zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
 #else
-     return (z_owned_queryable_t) {._value = NULL };   
+    return (z_owned_queryable_t){._value = NULL};
 #endif
 }
 

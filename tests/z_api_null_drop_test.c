@@ -142,7 +142,7 @@ int main(void) {
         z_drop(z_move(closure_hello_null_1));
         z_drop(z_move(closure_zid_null_1));
         z_drop(z_move(str_null_1));
-    
+
 #if Z_FEATURE_QUERIES == 1
         z_drop(z_move(reply_null_1));
 #endif
@@ -162,7 +162,7 @@ int main(void) {
         z_drop(z_move(closure_hello_null_2));
         z_drop(z_move(closure_zid_null_2));
         z_drop(z_move(str_null_2));
-    
+
 #if Z_FEATURE_QUERIES == 1
         z_drop(z_move(reply_null_2));
 #endif

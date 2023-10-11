@@ -120,14 +120,14 @@
 
 /**
  * Enable queryables
-*/
+ */
 #ifndef Z_FEATURE_QUERYABLES
 #define Z_FEATURE_QUERYABLES 1
 #endif
 
 /**
  * Enable queries
-*/
+ */
 #ifndef Z_FEATURE_QUERIES
 #define Z_FEATURE_QUERIES 1
 #endif
