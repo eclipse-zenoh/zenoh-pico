@@ -21,7 +21,7 @@
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     int8_t ret = _Z_RES_OK;
@@ -37,7 +37,7 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 }
 
 void *_zp_unicast_read_task(void *ztu_arg) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
     // Acquire and keep the lock
@@ -107,9 +107,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     }
 
     _z_mutex_unlock(&ztu->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return NULL;
 }
 
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

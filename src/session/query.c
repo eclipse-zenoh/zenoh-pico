@@ -102,15 +102,15 @@ _z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const 
 }
 
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     return pql;
 }
 
@@ -120,9 +120,9 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
     _Z_DEBUG(">>> Allocating query for (%ju:%s,%s)\n", (uintmax_t)pen_qry->_key._id, pen_qry->_key._suffix,
              pen_qry->_parameters);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, pen_qry->_id);
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
@@ -131,9 +131,9 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
@@ -143,9 +143,9 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                                       const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
@@ -215,9 +215,9 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
         }
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
@@ -234,9 +234,9 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
@@ -260,33 +260,33 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
         zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
 void _z_flush_pending_queries(_z_session_t *zn) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_pending_query_list_free(&zn->_pending_queries);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 }

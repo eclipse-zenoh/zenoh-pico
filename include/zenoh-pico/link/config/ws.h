@@ -19,7 +19,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 
 #define WS_CONFIG_TOUT_KEY 0x01
 #define WS_CONFIG_TOUT_STR "tout"

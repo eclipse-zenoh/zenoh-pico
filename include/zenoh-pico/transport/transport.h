@@ -56,11 +56,11 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
 typedef struct {
     // Session associated to the transport
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
 
@@ -82,12 +82,12 @@ typedef struct {
 
     void *_session;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     volatile _Bool _received;
     volatile _Bool _transmitted;
@@ -97,14 +97,14 @@ typedef struct {
     // Session associated to the transport
     void *_session;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
 
     // Peer list mutex
     _z_mutex_t _mutex_peer;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
 
@@ -121,12 +121,12 @@ typedef struct {
     // Known valid peers
     _z_transport_peer_entry_list_t *_peers;
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     volatile _Bool _transmitted;
 } _z_transport_multicast_t;

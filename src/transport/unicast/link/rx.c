@@ -25,15 +25,15 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg\n");
     int8_t ret = _Z_RES_OK;
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
     do {
@@ -79,9 +79,9 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
         }
     }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztu->_mutex_rx);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
@@ -197,4 +197,4 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
     return _Z_RES_OK;
 }
 
-#endif  // Z_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

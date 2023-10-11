@@ -28,7 +28,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 
 #define WS_LINK_SLEEP 1
 
@@ -158,18 +158,18 @@ size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len
 
 #endif
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 #error "TCP not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 #error "UDP not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on Emscripten port of Zenoh-Pico"
 #endif
 
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 #error "Serial not supported yet on Emscripten port of Zenoh-Pico"
 #endif

@@ -19,7 +19,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 
 #define BT_CONFIG_ARGC 3
 

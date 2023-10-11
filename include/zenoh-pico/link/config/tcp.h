@@ -19,7 +19,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 #define TCP_CONFIG_ARGC 1
 

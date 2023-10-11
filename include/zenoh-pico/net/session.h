@@ -28,9 +28,9 @@
  * A zenoh-net session.
  */
 typedef struct {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
     _z_transport_t _tp;
@@ -122,7 +122,7 @@ int8_t _zp_send_keep_alive(_z_session_t *z);
  */
 int8_t _zp_send_join(_z_session_t *z);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 /**
  * Start a separate task to read from the network and process the messages
  * as soon as they are received. Note that the task can be implemented in
@@ -172,6 +172,6 @@ int8_t _zp_start_lease_task(_z_session_t *z);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _zp_stop_lease_task(_z_session_t *z);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

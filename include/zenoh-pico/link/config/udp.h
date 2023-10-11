@@ -18,7 +18,7 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 
 #define UDP_CONFIG_ARGC 3
 

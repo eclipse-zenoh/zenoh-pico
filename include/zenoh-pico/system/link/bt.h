@@ -19,7 +19,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 
 #ifdef __cplusplus
 extern "C" {

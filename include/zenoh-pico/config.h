@@ -102,6 +102,93 @@
 #define Z_CONFIG_ADD_TIMESTAMP_KEY 0x4A
 #define Z_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
 
+/*------------------ Compile-time feature configuration ------------------*/
+
+/**
+ * Enable multi-thread support.
+ */
+#ifndef Z_FEATURE_MULTI_THREAD
+#define Z_FEATURE_MULTI_THREAD 1
+#endif
+
+/**
+ * Enable dynamic memory allocation.
+ */
+#ifndef Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION
+#define Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION 0
+#endif
+
+/**
+ * Enable TCP links.
+ */
+#ifndef Z_FEATURE_LINK_TCP
+#define Z_FEATURE_LINK_TCP 1
+#endif
+
+/**
+ * Enable Bluetooth links.
+ */
+#ifndef Z_FEATURE_LINK_BLUETOOTH
+#define Z_FEATURE_LINK_BLUETOOTH 0
+#endif
+
+/**
+ * Enable WebSocket links.
+ */
+#ifndef Z_FEATURE_LINK_WS
+#define Z_FEATURE_LINK_WS 0
+#endif
+
+/**
+ * Enable Serial links.
+ */
+#ifndef Z_FEATURE_LINK_SERIAL
+#define Z_FEATURE_LINK_SERIAL 0
+#endif
+
+/**
+ * Enable UDP Scouting.
+ */
+#ifndef Z_FEATURE_SCOUTING_UDP
+#define Z_FEATURE_SCOUTING_UDP 1
+#endif
+
+/**
+ * Enable UDP Multicast links.
+ */
+#ifndef Z_FEATURE_LINK_UDP_MULTICAST
+#define Z_FEATURE_LINK_UDP_MULTICAST 1
+#endif
+
+/**
+ * Enable UDP Unicast links.
+ */
+#ifndef Z_FEATURE_LINK_UDP_UNICAST
+#define Z_FEATURE_LINK_UDP_UNICAST 1
+#endif
+
+/**
+ * Enable Multicast Transport.
+ */
+#ifndef Z_FEATURE_MULTICAST_TRANSPORT
+#if Z_FEATURE_SCOUTING_UDP == 0 && Z_FEATURE_LINK_BLUETOOTH == 0 && Z_FEATURE_LINK_UDP_MULTICAST == 0
+#define Z_FEATURE_MULTICAST_TRANSPORT 0
+#else
+#define Z_FEATURE_MULTICAST_TRANSPORT 1
+#endif
+#endif
+
+/**
+ * Enable Unicast Transport.
+ */
+#ifndef Z_FEATURE_UNICAST_TRANSPORT
+#if Z_FEATURE_LINK_TCP == 0 && Z_FEATURE_LINK_UDP_UNICAST == 0 && Z_FEATURE_LINK_SERIAL == 0 && Z_FEATURE_LINK_WS == 0
+#define Z_FEATURE_UNICAST_TRANSPORT 0
+#else
+#define Z_FEATURE_UNICAST_TRANSPORT 1
+#endif
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.
@@ -160,62 +247,6 @@
 #endif
 
 /**
- * Enable multi-thread support.
- */
-#ifndef Z_MULTI_THREAD
-#define Z_MULTI_THREAD 1
-#endif
-
-/**
- * Enable TCP links.
- */
-#ifndef Z_LINK_TCP
-#define Z_LINK_TCP 1
-#endif
-
-/**
- * Enable UDP Multicast links.
- */
-#ifndef Z_LINK_UDP_MULTICAST
-#define Z_LINK_UDP_MULTICAST 1
-#endif
-
-/**
- * Enable UDP Unicast links.
- */
-#ifndef Z_LINK_UDP_UNICAST
-#define Z_LINK_UDP_UNICAST 1
-#endif
-
-/**
- * Enable Bluetooth links.
- */
-#ifndef Z_LINK_BLUETOOTH
-#define Z_LINK_BLUETOOTH 0
-#endif
-
-/**
- * Enable Serial links.
- */
-#ifndef Z_LINK_SERIAL
-#define Z_LINK_SERIAL 0
-#endif
-
-/**
- * Enable WebSocket links.
- */
-#ifndef Z_LINK_WS
-#define Z_LINK_WS 0
-#endif
-
-/**
- * Enable UDP Scouting.
- */
-#ifndef Z_SCOUTING_UDP
-#define Z_SCOUTING_UDP 1
-#endif
-
-/**
  * Default size for an IO slice.
  */
 #ifndef Z_IOSLICE_SIZE
@@ -240,35 +271,6 @@
  */
 #ifndef Z_FRAG_MAX_SIZE
 #define Z_FRAG_MAX_SIZE 300000
-#endif
-
-/**
- * Enable dynamic memory allocation.
- */
-#ifndef Z_DYNAMIC_MEMORY_ALLOCATION
-#define Z_DYNAMIC_MEMORY_ALLOCATION 0
-#endif
-
-/**
- * Enable Multicast Transport.
- */
-#ifndef Z_MULTICAST_TRANSPORT
-#if Z_SCOUTING_UDP == 0 && Z_LINK_BLUETOOTH == 0 && Z_LINK_UDP_MULTICAST == 0
-#define Z_MULTICAST_TRANSPORT 0
-#else
-#define Z_MULTICAST_TRANSPORT 1
-#endif
-#endif
-
-/**
- * Enable Unicast Transport.
- */
-#ifndef Z_UNICAST_TRANSPORT
-#if Z_LINK_TCP == 0 && Z_LINK_UDP_UNICAST == 0 && Z_LINK_SERIAL == 0 && Z_LINK_WS == 0
-#define Z_UNICAST_TRANSPORT 0
-#else
-#define Z_UNICAST_TRANSPORT 1
-#endif
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_CONFIG_H */
