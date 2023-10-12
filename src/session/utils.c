@@ -61,8 +61,10 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     // Initialize the data structs
     zn->_local_resources = NULL;
     zn->_remote_resources = NULL;
+#if Z_FEATURE_SUBSCRIPTION == 1
     zn->_local_subscriptions = NULL;
     zn->_remote_subscriptions = NULL;
+#endif
 #if Z_FEATURE_QUERYABLE == 1
     zn->_local_questionable = NULL;
 #endif
@@ -103,8 +105,9 @@ void _z_session_clear(_z_session_t *zn) {
 
     // Clean up the entities
     _z_flush_resources(zn);
+#if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
-
+#endif
 #if Z_FEATURE_QUERYABLE == 1
     _z_flush_questionables(zn);
 #endif

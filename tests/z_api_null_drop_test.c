@@ -29,8 +29,6 @@ int main(void) {
     z_owned_keyexpr_t keyexpr_null_1 = z_keyexpr_null();
     z_owned_config_t config_null_1 = z_config_null();
     z_owned_scouting_config_t scouting_config_null_1 = z_scouting_config_null();
-    z_owned_pull_subscriber_t pull_subscriber_null_1 = z_pull_subscriber_null();
-    z_owned_subscriber_t subscriber_null_1 = z_subscriber_null();
     z_owned_hello_t hello_null_1 = z_hello_null();
     z_owned_closure_sample_t closure_sample_null_1 = z_closure_sample_null();
     z_owned_closure_query_t closure_query_null_1 = z_closure_query_null();
@@ -47,8 +45,6 @@ int main(void) {
     assert(!z_check(keyexpr_null_1));
     assert(!z_check(config_null_1));
     assert(!z_check(scouting_config_null_1));
-    assert(!z_check(pull_subscriber_null_1));
-    assert(!z_check(subscriber_null_1));
     assert(!z_check(hello_null_1));
     assert(!z_check(str_null_1));
 
@@ -60,8 +56,6 @@ int main(void) {
     z_owned_keyexpr_t keyexpr_null_2;
     z_owned_config_t config_null_2;
     z_owned_scouting_config_t scouting_config_null_2;
-    z_owned_pull_subscriber_t pull_subscriber_null_2;
-    z_owned_subscriber_t subscriber_null_2;
     z_owned_hello_t hello_null_2;
     z_owned_closure_sample_t closure_sample_null_2;
     z_owned_closure_query_t closure_query_null_2;
@@ -75,8 +69,6 @@ int main(void) {
     z_null(&keyexpr_null_2);
     z_null(&config_null_2);
     z_null(&scouting_config_null_2);
-    z_null(&pull_subscriber_null_2);
-    z_null(&subscriber_null_2);
     z_null(&hello_null_2);
     z_null(&closure_sample_null_2);
     z_null(&closure_query_null_2);
@@ -85,6 +77,18 @@ int main(void) {
     z_null(&closure_zid_null_2);
     z_null(&str_null_2);
 
+#if Z_FEATURE_SUBSCRIPTION == 1
+    z_owned_pull_subscriber_t pull_subscriber_null_1 = z_pull_subscriber_null();
+    z_owned_subscriber_t subscriber_null_1 = z_subscriber_null();
+    assert(!z_check(pull_subscriber_null_1));
+    assert(!z_check(subscriber_null_1));
+    z_owned_pull_subscriber_t pull_subscriber_null_2;
+    z_owned_subscriber_t subscriber_null_2;
+    z_null(&pull_subscriber_null_2);
+    z_null(&subscriber_null_2);
+    assert(!z_check(pull_subscriber_null_2));
+    assert(!z_check(subscriber_null_2));
+#endif
 #if Z_FEATURE_QUERYABLE == 1
     z_owned_queryable_t queryable_null_1 = z_queryable_null();
     assert(!z_check(queryable_null_1));
@@ -108,8 +112,6 @@ int main(void) {
     assert(!z_check(keyexpr_null_2));
     assert(!z_check(config_null_2));
     assert(!z_check(scouting_config_null_2));
-    assert(!z_check(pull_subscriber_null_2));
-    assert(!z_check(subscriber_null_2));
     assert(!z_check(hello_null_2));
     assert(!z_check(str_null_2));
 
@@ -122,8 +124,6 @@ int main(void) {
         z_drop(z_move(keyexpr_null_1));
         z_drop(z_move(config_null_1));
         z_drop(z_move(scouting_config_null_1));
-        z_drop(z_move(pull_subscriber_null_1));
-        z_drop(z_move(subscriber_null_1));
         z_drop(z_move(hello_null_1));
         z_drop(z_move(closure_sample_null_1));
         z_drop(z_move(closure_query_null_1));
@@ -137,8 +137,6 @@ int main(void) {
         z_drop(z_move(keyexpr_null_2));
         z_drop(z_move(config_null_2));
         z_drop(z_move(scouting_config_null_2));
-        z_drop(z_move(pull_subscriber_null_2));
-        z_drop(z_move(subscriber_null_2));
         z_drop(z_move(hello_null_2));
         z_drop(z_move(closure_sample_null_2));
         z_drop(z_move(closure_query_null_2));
@@ -147,6 +145,12 @@ int main(void) {
         z_drop(z_move(closure_zid_null_2));
         z_drop(z_move(str_null_2));
 
+#if Z_FEATURE_SUBSCRIPTION == 1
+        z_drop(z_move(pull_subscriber_null_1));
+        z_drop(z_move(subscriber_null_1));
+        z_drop(z_move(pull_subscriber_null_2));
+        z_drop(z_move(subscriber_null_2));
+#endif
 #if Z_FEATURE_QUERYABLE == 1
         z_drop(z_move(queryable_null_1));
         z_drop(z_move(queryable_null_2));

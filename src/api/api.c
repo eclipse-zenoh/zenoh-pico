@@ -409,14 +409,6 @@ OWNED_FUNCTIONS_PTR_COMMON(z_session_t, z_owned_session_t, session)
 OWNED_FUNCTIONS_PTR_CLONE(z_session_t, z_owned_session_t, session, _z_owner_noop_copy)
 void z_session_drop(z_owned_session_t *val) { z_close(val); }
 
-OWNED_FUNCTIONS_PTR_COMMON(z_subscriber_t, z_owned_subscriber_t, subscriber)
-OWNED_FUNCTIONS_PTR_CLONE(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_copy)
-void z_subscriber_drop(z_owned_subscriber_t *val) { z_undeclare_subscriber(val); }
-
-OWNED_FUNCTIONS_PTR_COMMON(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber)
-OWNED_FUNCTIONS_PTR_CLONE(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_copy)
-void z_pull_subscriber_drop(z_owned_pull_subscriber_t *val) { z_undeclare_pull_subscriber(val); }
-
 OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
 OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
 void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
@@ -878,6 +870,15 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
                     pub._val->_congestion_control, pub._val->_priority);
 }
 
+#if Z_FEATURE_SUBSCRIPTION == 1
+OWNED_FUNCTIONS_PTR_COMMON(z_subscriber_t, z_owned_subscriber_t, subscriber)
+OWNED_FUNCTIONS_PTR_CLONE(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_copy)
+void z_subscriber_drop(z_owned_subscriber_t *val) { z_undeclare_subscriber(val); }
+
+OWNED_FUNCTIONS_PTR_COMMON(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber)
+OWNED_FUNCTIONS_PTR_CLONE(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_copy)
+void z_pull_subscriber_drop(z_owned_pull_subscriber_t *val) { z_undeclare_pull_subscriber(val); }
+
 z_subscriber_options_t z_subscriber_options_default(void) {
     return (z_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
@@ -981,6 +982,29 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub) {
 
 int8_t z_subscriber_pull(const z_pull_subscriber_t sub) { return _z_subscriber_pull(sub._val); }
 
+z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
+    z_owned_keyexpr_t ret = z_keyexpr_null();
+    uint32_t lookup = sub._val->_entity_id;
+    if (sub._val != NULL) {
+        _z_subscription_sptr_list_t *tail = sub._val->_zn->_local_subscriptions;
+        while (tail != NULL && !z_keyexpr_check(&ret)) {
+            _z_subscription_sptr_t *head = _z_subscription_sptr_list_head(tail);
+            if (head->ptr->_id == lookup) {
+                _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
+                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
+                if (ret._value != NULL) {
+                    *ret._value = key;
+                } else {
+                    _z_keyexpr_clear(&key);
+                }
+            }
+            tail = _z_subscription_sptr_list_tail(tail);
+        }
+    }
+    return ret;
+}
+#endif
+
 /**************** Tasks ****************/
 zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
 
@@ -1051,28 +1075,6 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
     z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
     if (ret._value != NULL && publisher._val != NULL) {
         *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
-    }
-    return ret;
-}
-
-z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
-    z_owned_keyexpr_t ret = z_keyexpr_null();
-    uint32_t lookup = sub._val->_entity_id;
-    if (sub._val != NULL) {
-        _z_subscription_sptr_list_t *tail = sub._val->_zn->_local_subscriptions;
-        while (tail != NULL && !z_keyexpr_check(&ret)) {
-            _z_subscription_sptr_t *head = _z_subscription_sptr_list_head(tail);
-            if (head->ptr->_id == lookup) {
-                _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
-                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
-                if (ret._value != NULL) {
-                    *ret._value = key;
-                } else {
-                    _z_keyexpr_clear(&key);
-                }
-            }
-            tail = _z_subscription_sptr_list_tail(tail);
-        }
     }
     return ret;
 }

@@ -1116,6 +1116,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
  */
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options);
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 /**
  * Constructs the default values for the subscriber entity.
  *
@@ -1237,6 +1238,7 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
  *   Returns ``0`` if the pull operation is successful, or a ``negative value`` otherwise.
  */
 int8_t z_subscriber_pull(const z_pull_subscriber_t sub);
+#endif
 
 /**
  * Checks if a given value is valid.
