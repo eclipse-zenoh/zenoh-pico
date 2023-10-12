@@ -1,4 +1,4 @@
-prefix=/var/local
+prefix=/usr/local
 
 Name: zenohpico
 Description: 
