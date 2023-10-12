@@ -151,8 +151,8 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
 int8_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t u16) {
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFF));
     ret |= _z_wbuf_write(wbf, (u16 & 0xFF));
+    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFF));
 
     return ret;
 }
@@ -163,9 +163,9 @@ int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *zbf) {
 
     uint8_t u8;
     ret |= _z_uint8_decode(&u8, zbf);
-    *u16 |= u8 << 8;
-    ret |= _z_uint8_decode(&u8, zbf);
     *u16 |= u8;
+    ret |= _z_uint8_decode(&u8, zbf);
+    *u16 |= u8 << 8;
 
     return ret;
 }
