@@ -19,10 +19,10 @@
 
 #include "zenoh-pico/net/session.h"
 
+#if Z_FEATURE_QUERYABLE == 1
 #define _Z_QUERYABLE_COMPLETE_DEFAULT false
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
-#if Z_FEATURE_QUERYABLES == 1
 /*------------------ Queryable ------------------*/
 _z_questionable_sptr_t *_z_get_questionable_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_questionable_sptr_list_t *_z_get_questionable_by_key(_z_session_t *zn, const _z_keyexpr_t key);

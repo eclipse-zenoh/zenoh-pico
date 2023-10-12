@@ -24,8 +24,8 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_QUERYABLES == 1
 
+#if Z_FEATURE_QUERYABLE == 1
 _Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two) { return one->_id == two->_id; }
 
 void _z_questionable_clear(_z_questionable_t *qle) {

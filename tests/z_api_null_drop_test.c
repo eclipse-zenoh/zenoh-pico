@@ -31,7 +31,6 @@ int main(void) {
     z_owned_scouting_config_t scouting_config_null_1 = z_scouting_config_null();
     z_owned_pull_subscriber_t pull_subscriber_null_1 = z_pull_subscriber_null();
     z_owned_subscriber_t subscriber_null_1 = z_subscriber_null();
-    z_owned_queryable_t queryable_null_1 = z_queryable_null();
     z_owned_hello_t hello_null_1 = z_hello_null();
     z_owned_closure_sample_t closure_sample_null_1 = z_closure_sample_null();
     z_owned_closure_query_t closure_query_null_1 = z_closure_query_null();
@@ -39,10 +38,6 @@ int main(void) {
     z_owned_closure_hello_t closure_hello_null_1 = z_closure_hello_null();
     z_owned_closure_zid_t closure_zid_null_1 = z_closure_zid_null();
     z_owned_str_t str_null_1 = z_str_null();
-
-#if Z_FEATURE_QUERIES == 1
-    z_owned_reply_t reply_null_1 = z_reply_null();
-#endif
 
     //
     // Test that they actually make invalid value (where applicable)
@@ -54,13 +49,8 @@ int main(void) {
     assert(!z_check(scouting_config_null_1));
     assert(!z_check(pull_subscriber_null_1));
     assert(!z_check(subscriber_null_1));
-    assert(!z_check(queryable_null_1));
     assert(!z_check(hello_null_1));
     assert(!z_check(str_null_1));
-
-#if Z_FEATURE_QUERIES == 1
-    assert(!z_check(reply_null_1));
-#endif
 
     //
     // Test that z_null macro defined for all types
@@ -72,7 +62,6 @@ int main(void) {
     z_owned_scouting_config_t scouting_config_null_2;
     z_owned_pull_subscriber_t pull_subscriber_null_2;
     z_owned_subscriber_t subscriber_null_2;
-    z_owned_queryable_t queryable_null_2;
     z_owned_hello_t hello_null_2;
     z_owned_closure_sample_t closure_sample_null_2;
     z_owned_closure_query_t closure_query_null_2;
@@ -81,10 +70,6 @@ int main(void) {
     z_owned_closure_zid_t closure_zid_null_2;
     z_owned_str_t str_null_2;
 
-#if Z_FEATURE_QUERIES == 1
-    z_owned_reply_t reply_null_2;
-#endif
-
     z_null(&session_null_2);
     z_null(&publisher_null_2);
     z_null(&keyexpr_null_2);
@@ -92,7 +77,6 @@ int main(void) {
     z_null(&scouting_config_null_2);
     z_null(&pull_subscriber_null_2);
     z_null(&subscriber_null_2);
-    z_null(&queryable_null_2);
     z_null(&hello_null_2);
     z_null(&closure_sample_null_2);
     z_null(&closure_query_null_2);
@@ -101,8 +85,19 @@ int main(void) {
     z_null(&closure_zid_null_2);
     z_null(&str_null_2);
 
-#if Z_FEATURE_QUERIES == 1
+#if Z_FEATURE_QUERYABLE == 1
+    z_owned_queryable_t queryable_null_1 = z_queryable_null();
+    assert(!z_check(queryable_null_1));
+    z_owned_queryable_t queryable_null_2;
+    z_null(&queryable_null_2);
+    assert(!z_check(queryable_null_2));
+#endif
+#if Z_FEATURE_QUERY == 1
+    z_owned_reply_t reply_null_1 = z_reply_null();
+    assert(!z_check(reply_null_1));
+    z_owned_reply_t reply_null_2;
     z_null(&reply_null_2);
+    assert(!z_check(reply_null_2));
 #endif
 
     //
@@ -115,13 +110,8 @@ int main(void) {
     assert(!z_check(scouting_config_null_2));
     assert(!z_check(pull_subscriber_null_2));
     assert(!z_check(subscriber_null_2));
-    assert(!z_check(queryable_null_2));
     assert(!z_check(hello_null_2));
     assert(!z_check(str_null_2));
-
-#if Z_FEATURE_QUERIES == 1
-    assert(!z_check(reply_null_2));
-#endif
 
     //
     // Test drop null and double drop it
@@ -134,7 +124,6 @@ int main(void) {
         z_drop(z_move(scouting_config_null_1));
         z_drop(z_move(pull_subscriber_null_1));
         z_drop(z_move(subscriber_null_1));
-        z_drop(z_move(queryable_null_1));
         z_drop(z_move(hello_null_1));
         z_drop(z_move(closure_sample_null_1));
         z_drop(z_move(closure_query_null_1));
@@ -143,10 +132,6 @@ int main(void) {
         z_drop(z_move(closure_zid_null_1));
         z_drop(z_move(str_null_1));
 
-#if Z_FEATURE_QUERIES == 1
-        z_drop(z_move(reply_null_1));
-#endif
-
         z_drop(z_move(session_null_2));
         z_drop(z_move(publisher_null_2));
         z_drop(z_move(keyexpr_null_2));
@@ -154,7 +139,6 @@ int main(void) {
         z_drop(z_move(scouting_config_null_2));
         z_drop(z_move(pull_subscriber_null_2));
         z_drop(z_move(subscriber_null_2));
-        z_drop(z_move(queryable_null_2));
         z_drop(z_move(hello_null_2));
         z_drop(z_move(closure_sample_null_2));
         z_drop(z_move(closure_query_null_2));
@@ -163,9 +147,15 @@ int main(void) {
         z_drop(z_move(closure_zid_null_2));
         z_drop(z_move(str_null_2));
 
-#if Z_FEATURE_QUERIES == 1
+#if Z_FEATURE_QUERYABLE == 1
+        z_drop(z_move(queryable_null_1));
+        z_drop(z_move(queryable_null_2));
+#endif
+#if Z_FEATURE_QUERY == 1
+        z_drop(z_move(reply_null_1));
         z_drop(z_move(reply_null_2));
 #endif
+
     }
 
     return 0;

@@ -190,7 +190,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     return ret;
 }
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
@@ -305,7 +305,7 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
 }
 #endif
 
-#if Z_FEATURE_QUERIES == 1
+#if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,

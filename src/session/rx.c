@@ -92,7 +92,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _z_n_msg_request_t req = msg->_body._request;
             switch (req._tag) {
                 case _Z_REQUEST_QUERY: {
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req._body._query;
                     ret = _z_trigger_queryables(zn, query, req._key, req._rid);
 #else
@@ -131,12 +131,10 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _z_n_msg_response_t response = msg->_body._response;
             switch (response._tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
-#if Z_FEATURE_QUERIES == 1
                     _z_msg_reply_t reply = response._body._reply;
+#if Z_FEATURE_QUERY == 1
                     ret = _z_trigger_query_reply_partial(zn, response._request_id, response._key, reply._value.payload,
                                                          reply._value.encoding, Z_SAMPLE_KIND_PUT, reply._timestamp);
-#else
-                    _Z_DEBUG("_Z_RESPONSE_BODY_REPLY dropped, queries not supported\n");
 #endif
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
@@ -162,12 +160,10 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             }
         } break;
         case _Z_N_RESPONSE_FINAL: {
-#if Z_FEATURE_QUERIES == 1
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL\n");
             _z_zint_t id = msg->_body._response_final._request_id;
+#if Z_FEATURE_QUERY == 1
             _z_trigger_query_reply_final(zn, id);
-#else
-            _Z_DEBUG("_Z_N_RESPONSE_FINAL dropped, queries not supported\n");
 #endif
         } break;
     }

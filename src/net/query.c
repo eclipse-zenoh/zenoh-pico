@@ -13,7 +13,7 @@
 
 #include "zenoh-pico/session/query.h"
 
-#if Z_FEATURE_QUERYABLES == 1
+#if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
     // Nothing to clear
     (void)(qbl);
