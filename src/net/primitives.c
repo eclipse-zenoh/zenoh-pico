@@ -129,6 +129,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(zn);
+    s._key_id = keyexpr._id;
     s._key = _z_get_expanded_key_from_key(zn, &keyexpr);
     s._info = sub_info;
     s._callback = callback;
@@ -175,6 +176,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
             if (_z_send_n_msg(sub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local subscription state can be removed
+                _z_undeclare_resource(sub->_zn, s->ptr->_key_id);
                 _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
             } else {
                 ret = _Z_ERR_ENTITY_UNKNOWN;

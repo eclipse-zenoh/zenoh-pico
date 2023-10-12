@@ -810,6 +810,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
                                           const z_subscriber_options_t *options) {
     void *ctx = callback->context;
     callback->context = NULL;
+    char *suffix = NULL;
 
     z_keyexpr_t key = keyexpr;
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
@@ -824,11 +825,11 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
             if (wild != NULL && wild != keyexpr._suffix) {
                 wild -= 1;
                 size_t len = wild - keyexpr._suffix;
-                char *suffix = z_malloc(len + 1);
+                suffix = z_malloc(len + 1);
                 memcpy(suffix, keyexpr._suffix, len);
                 suffix[len] = 0;
                 keyexpr._suffix = suffix;
-                _z_keyexpr_set_owns_suffix(&keyexpr, true);
+                _z_keyexpr_set_owns_suffix(&keyexpr, false);
             }
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, wild);
@@ -841,9 +842,12 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
+    _z_subscriber_t *sub = _z_declare_subscriber(zs._val, key, subinfo, callback->call, callback->drop, ctx);
+    if (suffix != NULL) {
+        z_free(suffix);
+    }
 
-    return (z_owned_subscriber_t){
-        ._value = _z_declare_subscriber(zs._val, key, subinfo, callback->call, callback->drop, ctx)};
+    return (z_owned_subscriber_t){._value = sub};
 }
 
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t keyexpr,

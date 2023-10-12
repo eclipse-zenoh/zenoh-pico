@@ -21,6 +21,11 @@ include(GNUInstallDirs)
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
+      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(BUILD_SHARED_LIBS "OFF")
