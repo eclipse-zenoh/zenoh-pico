@@ -826,10 +826,12 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
                 wild -= 1;
                 size_t len = wild - keyexpr._suffix;
                 suffix = z_malloc(len + 1);
-                memcpy(suffix, keyexpr._suffix, len);
-                suffix[len] = 0;
-                keyexpr._suffix = suffix;
-                _z_keyexpr_set_owns_suffix(&keyexpr, false);
+                if (suffix != NULL) {
+                    memcpy(suffix, keyexpr._suffix, len);
+                    suffix[len] = 0;
+                    keyexpr._suffix = suffix;
+                    _z_keyexpr_set_owns_suffix(&keyexpr, false);
+                }
             }
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, wild);
