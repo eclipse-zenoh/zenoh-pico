@@ -15,6 +15,7 @@
 #include "stdio.h"
 #include "zenoh-pico.h"
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 void callback(const z_sample_t* sample, void* context) {
     z_publisher_t pub = z_loan(*(z_owned_publisher_t*)context);
     z_publisher_put(pub, sample->payload.start, sample->payload.len, NULL);
@@ -68,3 +69,9 @@ int main(int argc, char** argv) {
 
     z_close(z_move(session));
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    return -1;
+}
+#endif

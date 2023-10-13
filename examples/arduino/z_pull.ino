@@ -16,6 +16,7 @@
 #include <WiFi.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 // WiFi-specific parameters
 #define SSID "SSID"
 #define PASS "PASS"
@@ -108,3 +109,9 @@ void loop() {
     delay(5000);
     z_subscriber_pull(z_pull_subscriber_loan(&sub));
 }
+#else
+void setup() {
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.");
+}
+void loop() {}
+#endif

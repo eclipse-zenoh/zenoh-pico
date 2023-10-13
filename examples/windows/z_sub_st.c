@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
@@ -66,3 +67,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    return -1;
+}
+#endif
