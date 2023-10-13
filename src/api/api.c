@@ -713,7 +713,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 #if Z_FEATURE_QUERYABLE == 1
 OWNED_FUNCTIONS_PTR_COMMON(z_queryable_t, z_owned_queryable_t, queryable)
 OWNED_FUNCTIONS_PTR_CLONE(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_copy)
-void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val);}
+void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }
 
 z_queryable_options_t z_queryable_options_default(void) {
     return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};

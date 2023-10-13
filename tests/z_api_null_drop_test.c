@@ -155,7 +155,6 @@ int main(void) {
         z_drop(z_move(reply_null_1));
         z_drop(z_move(reply_null_2));
 #endif
-
     }
 
     return 0;

@@ -174,7 +174,5 @@ void app_main() {
     printf("OK!\n");
 }
 #else
-void app_main() {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n");
-}
+void app_main() { printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n"); }
 #endif
