@@ -24,8 +24,9 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/push.h"
 #include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/reply.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
@@ -81,19 +82,20 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
         } break;
         case _Z_N_PUSH: {
             _Z_DEBUG("Handling _Z_N_PUSH\n");
-            _z_n_msg_push_t push = msg->_body._push;
-            _z_bytes_t payload = push._body._is_put ? push._body._body._put._payload : _z_bytes_empty();
-            _z_encoding_t encoding = push._body._is_put ? push._body._body._put._encoding : z_encoding_default();
-            int kind = push._body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
-            ret = _z_trigger_subscriptions(zn, push._key, payload, encoding, kind, push._timestamp);
+            _z_n_msg_push_t *push = &msg->_body._push;
+            ret = _z_trigger_push(zn, push);
         } break;
         case _Z_N_REQUEST: {
             _Z_DEBUG("Handling _Z_N_REQUEST\n");
             _z_n_msg_request_t req = msg->_body._request;
             switch (req._tag) {
                 case _Z_REQUEST_QUERY: {
+#if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req._body._query;
                     ret = _z_trigger_queryables(zn, query, req._key, req._rid);
+#else
+                    _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported\n");
+#endif
                 } break;
                 case _Z_REQUEST_PUT: {
                     _z_msg_put_t put = req._body._put;
@@ -127,9 +129,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _z_n_msg_response_t response = msg->_body._response;
             switch (response._tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
-                    _z_msg_reply_t reply = response._body._reply;
-                    ret = _z_trigger_query_reply_partial(zn, response._request_id, response._key, reply._value.payload,
-                                                         reply._value.encoding, Z_SAMPLE_KIND_PUT, reply._timestamp);
+                    _z_msg_reply_t *reply = &response._body._reply;
+                    ret = _z_trigger_reply_partial(zn, response._request_id, response._key, reply);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
                     // @TODO: expose errors to the user
@@ -155,8 +156,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
         } break;
         case _Z_N_RESPONSE_FINAL: {
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL\n");
-            _z_zint_t id = msg->_body._response_final._request_id;
-            _z_trigger_query_reply_final(zn, id);
+            ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
         } break;
     }
     _z_msg_clear(msg);

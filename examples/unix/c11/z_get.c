@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_QUERY == 1
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
@@ -129,3 +130,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n");
+    return -1;
+}
+#endif
