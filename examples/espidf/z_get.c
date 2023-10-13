@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_QUERY == 1
 #define ESP_WIFI_SSID "SSID"
 #define ESP_WIFI_PASS "PASS"
 #define ESP_MAXIMUM_RETRY 5
@@ -172,3 +173,8 @@ void app_main() {
     z_close(z_move(s));
     printf("OK!\n");
 }
+#else
+void app_main() {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n");
+}
+#endif
