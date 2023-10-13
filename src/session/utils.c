@@ -63,8 +63,12 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     zn->_remote_resources = NULL;
     zn->_local_subscriptions = NULL;
     zn->_remote_subscriptions = NULL;
+#if Z_FEATURE_QUERYABLE == 1
     zn->_local_questionable = NULL;
+#endif
+#if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     ret = _z_mutex_init(&zn->_mutex_inner);
@@ -100,8 +104,13 @@ void _z_session_clear(_z_session_t *zn) {
     // Clean up the entities
     _z_flush_resources(zn);
     _z_flush_subscriptions(zn);
+
+#if Z_FEATURE_QUERYABLE == 1
     _z_flush_questionables(zn);
+#endif
+#if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_free(&zn->_mutex_inner);

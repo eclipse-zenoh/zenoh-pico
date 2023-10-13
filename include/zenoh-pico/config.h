@@ -119,6 +119,20 @@
 #endif
 
 /**
+ * Enable queryables
+ */
+#ifndef Z_FEATURE_QUERYABLE
+#define Z_FEATURE_QUERYABLE 1
+#endif
+
+/**
+ * Enable queries
+ */
+#ifndef Z_FEATURE_QUERY
+#define Z_FEATURE_QUERY 1
+#endif
+
+/**
  * Enable TCP links.
  */
 #ifndef Z_FEATURE_LINK_TCP

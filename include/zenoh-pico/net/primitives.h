@@ -128,6 +128,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
  */
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
 
+#if Z_FEATURE_QUERYABLE == 1
 /**
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
  *
@@ -155,6 +156,44 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
  *    0 if success, or a negative value identifying the error.
  */
 int8_t _z_undeclare_queryable(_z_queryable_t *qle);
+
+/**
+ * Send a reply to a query.
+ *
+ * This function must be called inside of a Queryable callback passing the
+ * query received as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply
+ * will be considered complete when the Queryable callback returns.
+ *
+ * Parameters:
+ *     query: The query to reply to. The caller keeps its ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
+ *     payload: The value of this reply, the caller keeps ownership.
+ */
+int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
+#endif
+
+#if Z_FEATURE_QUERY == 1
+/**
+ * Query data from the matching queryables in the system.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to query. The callee gets the ownership of any
+ *              allocated value.
+ *     parameters: An indication to matching queryables about the queried data.
+ *     target: The kind of queryables that should be target of this query.
+ *     consolidation: The kind of consolidation that should be applied on replies.
+ *     value: The payload of the query.
+ *     callback: The callback function that will be called on reception of replies for this query.
+ *     arg_call: A pointer that will be passed to the **callback** on each call.
+ *     dropper: The callback function that will be called on upon completion of the callback.
+ *     arg_drop: A pointer that will be passed to the **dropper** on each call.
+ */
+int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
+                const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+#endif
 
 /*------------------ Operations ------------------*/
 
@@ -189,40 +228,5 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
-
-/**
- * Query data from the matching queryables in the system.
- *
- * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to query. The callee gets the ownership of any
- *              allocated value.
- *     parameters: An indication to matching queryables about the queried data.
- *     target: The kind of queryables that should be target of this query.
- *     consolidation: The kind of consolidation that should be applied on replies.
- *     value: The payload of the query.
- *     callback: The callback function that will be called on reception of replies for this query.
- *     arg_call: A pointer that will be passed to the **callback** on each call.
- *     dropper: The callback function that will be called on upon completion of the callback.
- *     arg_drop: A pointer that will be passed to the **dropper** on each call.
- */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
-
-/**
- * Send a reply to a query.
- *
- * This function must be called inside of a Queryable callback passing the
- * query received as parameters of the callback function. This function can
- * be called multiple times to send multiple replies to a query. The reply
- * will be considered complete when the Queryable callback returns.
- *
- * Parameters:
- *     query: The query to reply to. The caller keeps its ownership.
- *     key: The resource key of this reply. The caller keeps the ownership.
- *     payload: The value of this reply, the caller keeps ownership.
- */
-int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

@@ -421,13 +421,8 @@ OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
 OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
 void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
 
-OWNED_FUNCTIONS_PTR_COMMON(z_queryable_t, z_owned_queryable_t, queryable)
-OWNED_FUNCTIONS_PTR_CLONE(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_copy)
-void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }
-
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
 
 #define OWNED_FUNCTIONS_CLOSURE(ownedtype, name)                               \
@@ -642,6 +637,9 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
     return ret;
 }
 
+#if Z_FEATURE_QUERY == 1
+OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
+
 z_get_options_t z_get_options_default(void) {
     return (z_get_options_t){.target = z_query_target_default(),
                              .consolidation = z_query_consolidation_default(),
@@ -696,6 +694,88 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
                    wrapped_ctx, callback->drop, ctx);
     return ret;
 }
+
+_Bool z_reply_is_ok(const z_owned_reply_t *reply) {
+    (void)(reply);
+    // For the moment always return TRUE.
+    // The support for reply errors will come in the next release.
+    return true;
+}
+
+z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
+
+z_value_t z_reply_err(const z_owned_reply_t *reply) {
+    (void)(reply);
+    return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
+}
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
+OWNED_FUNCTIONS_PTR_COMMON(z_queryable_t, z_owned_queryable_t, queryable)
+OWNED_FUNCTIONS_PTR_CLONE(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_copy)
+void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }
+
+z_queryable_options_t z_queryable_options_default(void) {
+    return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
+}
+
+z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
+                                        const z_queryable_options_t *options) {
+    void *ctx = callback->context;
+    callback->context = NULL;
+
+    z_keyexpr_t key = keyexpr;
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
+        if (r == NULL) {
+            uint16_t id = _z_declare_resource(zs._val, keyexpr);
+            key = _z_rid_with_suffix(id, NULL);
+        }
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+    }
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+
+    z_queryable_options_t opt = z_queryable_options_default();
+    if (options != NULL) {
+        opt.complete = options->complete;
+    }
+
+    return (z_owned_queryable_t){
+        ._value = _z_declare_queryable(zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
+}
+
+int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
+    int8_t ret = _Z_RES_OK;
+
+    ret = _z_undeclare_queryable(queryable->_value);
+    _z_queryable_free(&queryable->_value);
+    return ret;
+}
+
+z_query_reply_options_t z_query_reply_options_default(void) {
+    return (z_query_reply_options_t){.encoding = z_encoding_default()};
+}
+
+int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
+                     const z_query_reply_options_t *options) {
+    z_query_reply_options_t opts = options == NULL ? z_query_reply_options_default() : *options;
+    _z_value_t value = {.payload =
+                            {
+                                .start = payload,
+                                ._is_alloc = false,
+                                .len = payload_len,
+                            },
+                        .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
+    return _z_send_reply(query, keyexpr, value);
+    return _Z_ERR_GENERIC;
+}
+#endif
 
 z_owned_keyexpr_t z_keyexpr_new(const char *name) {
     z_owned_keyexpr_t key;
@@ -890,81 +970,6 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub) {
 
 int8_t z_subscriber_pull(const z_pull_subscriber_t sub) { return _z_subscriber_pull(sub._val); }
 
-z_queryable_options_t z_queryable_options_default(void) {
-    return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
-}
-
-z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
-                                        const z_queryable_options_t *options) {
-    void *ctx = callback->context;
-    callback->context = NULL;
-
-    z_keyexpr_t key = keyexpr;
-
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
-        if (r == NULL) {
-            uint16_t id = _z_declare_resource(zs._val, keyexpr);
-            key = _z_rid_with_suffix(id, NULL);
-        }
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-
-    z_queryable_options_t opt = z_queryable_options_default();
-    if (options != NULL) {
-        opt.complete = options->complete;
-    }
-
-    return (z_owned_queryable_t){
-        ._value = _z_declare_queryable(zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
-}
-
-int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
-    int8_t ret = _Z_RES_OK;
-
-    ret = _z_undeclare_queryable(queryable->_value);
-    _z_queryable_free(&queryable->_value);
-
-    return ret;
-}
-
-z_query_reply_options_t z_query_reply_options_default(void) {
-    return (z_query_reply_options_t){.encoding = z_encoding_default()};
-}
-
-int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
-                     const z_query_reply_options_t *options) {
-    z_query_reply_options_t opts = options == NULL ? z_query_reply_options_default() : *options;
-    _z_value_t value = {.payload =
-                            {
-                                .start = payload,
-                                ._is_alloc = false,
-                                .len = payload_len,
-                            },
-                        .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
-    return _z_send_reply(query, keyexpr, value);
-}
-
-_Bool z_reply_is_ok(const z_owned_reply_t *reply) {
-    (void)(reply);
-    // For the moment always return TRUE.
-    // The support for reply errors will come in the next release.
-    return true;
-}
-
-z_value_t z_reply_err(const z_owned_reply_t *reply) {
-    (void)(reply);
-    return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
-}
-
-z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
-
 /**************** Tasks ****************/
 zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
 
@@ -1030,6 +1035,7 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
     return _zp_send_join(zs._val);
 }
+
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
     z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
     if (ret._value != NULL && publisher._val != NULL) {
@@ -1037,6 +1043,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
     }
     return ret;
 }
+
 z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
     z_owned_keyexpr_t ret = z_keyexpr_null();
     uint32_t lookup = sub._val->_entity_id;

@@ -10,23 +10,17 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
-#include "zenoh-pico/session/query.h"
+#include <stdint.h>
 
-#if Z_FEATURE_QUERYABLE == 1
-void _z_queryable_clear(_z_queryable_t *qbl) {
-    // Nothing to clear
-    (void)(qbl);
-}
+#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/message.h"
 
-void _z_queryable_free(_z_queryable_t **qbl) {
-    _z_queryable_t *ptr = *qbl;
+#ifndef ZENOH_PICO_SESSION_PUSH_H
+#define ZENOH_PICO_SESSION_PUSH_H
 
-    if (ptr != NULL) {
-        _z_queryable_clear(ptr);
+int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push);
 
-        z_free(ptr);
-        *qbl = NULL;
-    }
-}
-#endif
+#endif /* ZENOH_PICO_SESSION_PUSH_H */

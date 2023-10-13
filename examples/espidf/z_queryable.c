@@ -30,6 +30,7 @@
 #define ESP_MAXIMUM_RETRY 5
 #define WIFI_CONNECTED_BIT BIT0
 
+#if Z_FEATURE_QUERYABLE == 1
 static bool s_is_wifi_connected = false;
 static EventGroupHandle_t s_event_group_handler;
 static int s_retry_count = 0;
@@ -171,3 +172,8 @@ void app_main() {
     z_close(z_move(s));
     printf("OK!\n");
 }
+#else
+void app_main() {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERYABLE but this example requires it.\n");
+}
+#endif
