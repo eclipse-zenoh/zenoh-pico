@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     (void)(argc);
     (void)(argv);
@@ -74,3 +75,9 @@ int main(int argc, char **argv) {
     free(buf);
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    return -1;
+}
+#endif

@@ -96,7 +96,6 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     return ret;
 }
 
-
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_congestion_control_t congestion_control,
