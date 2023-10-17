@@ -409,10 +409,6 @@ OWNED_FUNCTIONS_PTR_COMMON(z_session_t, z_owned_session_t, session)
 OWNED_FUNCTIONS_PTR_CLONE(z_session_t, z_owned_session_t, session, _z_owner_noop_copy)
 void z_session_drop(z_owned_session_t *val) { z_close(val); }
 
-OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
-OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
-void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
-
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
@@ -589,6 +585,11 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) { return zs._val->_local_zid; }
 
+#if Z_FEATURE_PUBLICATION == 1
+OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
+OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
+void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
+
 z_put_options_t z_put_options_default(void) {
     return (z_put_options_t){.encoding = z_encoding_default(),
                              .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
@@ -628,6 +629,84 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
 
     return ret;
 }
+
+z_publisher_options_t z_publisher_options_default(void) {
+    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
+}
+
+z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
+    z_keyexpr_t key = keyexpr;
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
+        if (r == NULL) {
+            uint16_t id = _z_declare_resource(zs._val, keyexpr);
+            key = _z_rid_with_suffix(id, NULL);
+        }
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+    }
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+
+    z_publisher_options_t opt = z_publisher_options_default();
+    if (options != NULL) {
+        opt.congestion_control = options->congestion_control;
+        opt.priority = options->priority;
+    }
+
+    return (z_owned_publisher_t){._value = _z_declare_publisher(zs._val, key, opt.congestion_control, opt.priority)};
+}
+
+int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
+    int8_t ret = _Z_RES_OK;
+
+    ret = _z_undeclare_publisher(pub->_value);
+    _z_publisher_free(&pub->_value);
+
+    return ret;
+}
+
+z_publisher_put_options_t z_publisher_put_options_default(void) {
+    return (z_publisher_put_options_t){.encoding = z_encoding_default()};
+}
+
+z_publisher_delete_options_t z_publisher_delete_options_default(void) {
+    return (z_publisher_delete_options_t){.__dummy = 0};
+}
+
+int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
+                       const z_publisher_put_options_t *options) {
+    int8_t ret = _Z_RES_OK;
+
+    z_publisher_put_options_t opt = z_publisher_put_options_default();
+    if (options != NULL) {
+        opt.encoding = options->encoding;
+    }
+
+    ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+                   pub._val->_congestion_control, pub._val->_priority);
+
+    return ret;
+}
+
+int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
+    (void)(options);
+    return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
+                    pub._val->_congestion_control, pub._val->_priority);
+}
+
+z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
+    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
+    if (ret._value != NULL && publisher._val != NULL) {
+        *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
+    }
+    return ret;
+}
+#endif
 
 #if Z_FEATURE_QUERY == 1
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
@@ -799,75 +878,6 @@ int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
     z_keyexpr_drop(keyexpr);
 
     return ret;
-}
-
-z_publisher_options_t z_publisher_options_default(void) {
-    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
-}
-
-z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
-    z_keyexpr_t key = keyexpr;
-
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-        _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
-        if (r == NULL) {
-            uint16_t id = _z_declare_resource(zs._val, keyexpr);
-            key = _z_rid_with_suffix(id, NULL);
-        }
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-
-    z_publisher_options_t opt = z_publisher_options_default();
-    if (options != NULL) {
-        opt.congestion_control = options->congestion_control;
-        opt.priority = options->priority;
-    }
-
-    return (z_owned_publisher_t){._value = _z_declare_publisher(zs._val, key, opt.congestion_control, opt.priority)};
-}
-
-int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
-    int8_t ret = _Z_RES_OK;
-
-    ret = _z_undeclare_publisher(pub->_value);
-    _z_publisher_free(&pub->_value);
-
-    return ret;
-}
-
-z_publisher_put_options_t z_publisher_put_options_default(void) {
-    return (z_publisher_put_options_t){.encoding = z_encoding_default()};
-}
-
-z_publisher_delete_options_t z_publisher_delete_options_default(void) {
-    return (z_publisher_delete_options_t){.__dummy = 0};
-}
-
-int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
-                       const z_publisher_put_options_t *options) {
-    int8_t ret = _Z_RES_OK;
-
-    z_publisher_put_options_t opt = z_publisher_put_options_default();
-    if (options != NULL) {
-        opt.encoding = options->encoding;
-    }
-
-    ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority);
-
-    return ret;
-}
-
-int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
-    (void)(options);
-    return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                    pub._val->_congestion_control, pub._val->_priority);
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -1069,12 +1079,4 @@ zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
     return _zp_send_join(zs._val);
-}
-
-z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
-    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
-    if (ret._value != NULL && publisher._val != NULL) {
-        *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
-    }
-    return ret;
 }

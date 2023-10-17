@@ -71,6 +71,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  */
 int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
 
+#if Z_FEATURE_PUBLICATION == 1
 /**
  * Declare a :c:type:`_z_publisher_t` for the given resource key.
  *
@@ -98,6 +99,28 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
  *    0 if success, or a negative value identifying the error.
  */
 int8_t _z_undeclare_publisher(_z_publisher_t *pub);
+
+/**
+ * Write data corresponding to a given resource key, allowing the definition of
+ * additional properties.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to write. The caller keeps its ownership.
+ *     payload: The value to write.
+ *     len: The length of the value to write.
+ *     encoding: The encoding of the payload. The callee gets the ownership of
+ *               any allocated value.
+ *     kind: The kind of the value.
+ *     cong_ctrl: The congestion control of this write. Possible values defined
+ *                in :c:type:`_z_congestion_control_t`.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                z_priority_t priority);
+#endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
@@ -207,28 +230,5 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
                 void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 #endif
-
-/*------------------ Operations ------------------*/
-
-/**
- * Write data corresponding to a given resource key, allowing the definition of
- * additional properties.
- *
- * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
- *     encoding: The encoding of the payload. The callee gets the ownership of
- *               any allocated value.
- *     kind: The kind of the value.
- *     cong_ctrl: The congestion control of this write. Possible values defined
- *                in :c:type:`_z_congestion_control_t`.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority);
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

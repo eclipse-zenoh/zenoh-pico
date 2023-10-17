@@ -133,10 +133,17 @@
 #endif
 
 /**
- * Enable subscription to this node
+ * Enable subscription on this node
  */
 #ifndef Z_FEATURE_SUBSCRIPTION
 #define Z_FEATURE_SUBSCRIPTION 1
+#endif
+
+/**
+ * Enable publication
+ */
+#ifndef Z_FEATURE_PUBLICATION
+#define Z_FEATURE_PUBLICATION 1
 #endif
 
 /**
