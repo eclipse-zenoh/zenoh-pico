@@ -1,8 +1,8 @@
-prefix=/usr/local
+prefix=/var/empty/local
 
 Name: zenohpico
 Description: 
 URL: 
-Version: 0.11.20231012dev
+Version: 0.11.20231017dev
 Cflags: -I${prefix}/include
-Libs: -L${prefix}/lib -lzenohpico
+Libs: -L${prefix}/lib64 -lzenohpico
