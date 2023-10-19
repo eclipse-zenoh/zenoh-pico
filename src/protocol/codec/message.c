@@ -401,7 +401,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, _z_zint_len(msg->_ext_value.encoding.prefix) +
                                                  _z_bytes_encode_len(&msg->_ext_value.encoding.suffix) +
-                                                 _z_bytes_encode_len(&msg->_ext_value.payload)));
+                                                 msg->_ext_value.payload.len));
         _Z_RETURN_IF_ERR(_z_encoding_prefix_encode(wbf, msg->_ext_value.encoding.prefix));
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_value.encoding.suffix));
         _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &msg->_ext_value.payload));
