@@ -890,6 +890,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
                                           const z_subscriber_options_t *options) {
     void *ctx = callback->context;
     callback->context = NULL;
+    char *suffix = NULL;
 
     z_keyexpr_t key = keyexpr;
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
@@ -901,17 +902,24 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             char *wild = strpbrk(keyexpr._suffix, "*$");
+            _Bool do_keydecl = true;
             if (wild != NULL && wild != keyexpr._suffix) {
                 wild -= 1;
                 size_t len = wild - keyexpr._suffix;
-                char *suffix = z_malloc(len + 1);
-                memcpy(suffix, keyexpr._suffix, len);
-                suffix[len] = 0;
-                keyexpr._suffix = suffix;
-                _z_keyexpr_set_owns_suffix(&keyexpr, true);
+                suffix = z_malloc(len + 1);
+                if (suffix != NULL) {
+                    memcpy(suffix, keyexpr._suffix, len);
+                    suffix[len] = 0;
+                    keyexpr._suffix = suffix;
+                    _z_keyexpr_set_owns_suffix(&keyexpr, false);
+                } else {
+                    do_keydecl = false;
+                }
             }
-            uint16_t id = _z_declare_resource(zs._val, keyexpr);
-            key = _z_rid_with_suffix(id, wild);
+            if (do_keydecl) {
+                uint16_t id = _z_declare_resource(zs._val, keyexpr);
+                key = _z_rid_with_suffix(id, wild);
+            }
         }
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
@@ -921,9 +929,12 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
+    _z_subscriber_t *sub = _z_declare_subscriber(zs._val, key, subinfo, callback->call, callback->drop, ctx);
+    if (suffix != NULL) {
+        z_free(suffix);
+    }
 
-    return (z_owned_subscriber_t){
-        ._value = _z_declare_subscriber(zs._val, key, subinfo, callback->call, callback->drop, ctx)};
+    return (z_owned_subscriber_t){._value = sub};
 }
 
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t keyexpr,

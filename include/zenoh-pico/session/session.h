@@ -90,6 +90,7 @@ typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
+    uint16_t _key_id;
     uint32_t _id;
     _z_data_handler_t _callback;
     _z_drop_handler_t _dropper;
