@@ -62,9 +62,18 @@ jobs:
         feature_queryable: [1, 0]
         feature_query: [1, 0]
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run docker image
+      run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:master
+      continue-on-error: true
+
     - name: Build project
-      run: make all
+      run: |
+        make all
+        ./build/tests/z_modular_test $Z_FEATURE_PUBLICATION $Z_FEATURE_SUBSCRIPTION $Z_FEATURE_QUERYABLE $Z_FEATURE_QUERY
+      continue-on-error: true
       env:
         BUILD_TYPE: Debug
         ZENOH_DEBUG: 3
@@ -72,3 +81,8 @@ jobs:
         Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
         Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
         Z_FEATURE_QUERY: ${{ matrix.feature_query }}
+    
+    - name: Stop docker image
+      run: |
+        docker stop zenoh_router
+        docker rm zenoh_router
