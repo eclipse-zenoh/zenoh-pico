@@ -12,7 +12,6 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,6 +20,9 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 #define MSG 10
 #define MSG_LEN 1024

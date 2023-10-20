@@ -12,7 +12,6 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +20,9 @@
 #include "zenoh-pico/link/config/udp.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/result.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 int main(void) {
     char *s = (char *)malloc(64);

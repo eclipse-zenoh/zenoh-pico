@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
-#include <assert.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -19,6 +19,9 @@
 #include <string.h>
 
 #include "zenoh-pico/protocol/iobuf.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 #define RUNS 1000
 
