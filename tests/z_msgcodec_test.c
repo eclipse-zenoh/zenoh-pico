@@ -19,7 +19,6 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 #define ZENOH_PICO_TEST_H
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -40,6 +39,9 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/platform.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 #define RUNS 1000
 
