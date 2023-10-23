@@ -16,6 +16,7 @@
 #include <WiFi.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_PUBLICATION == 1
 // WiFi-specific parameters
 #define SSID "SSID"
 #define PASS "PASS"
@@ -107,3 +108,9 @@ void loop() {
 
     delay(1000);
 }
+#else
+void setup() {
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.");
+}
+void loop() {}
+#endif

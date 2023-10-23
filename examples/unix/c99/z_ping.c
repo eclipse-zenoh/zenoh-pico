@@ -22,7 +22,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
 _z_condvar_t cond;
 _z_mutex_t mutex;
 
@@ -168,7 +168,9 @@ struct args_t parse_args(int argc, char** argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
+        "requires them.\n");
     return -1;
 }
 #endif

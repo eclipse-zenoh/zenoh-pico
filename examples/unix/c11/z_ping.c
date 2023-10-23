@@ -21,7 +21,7 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
 // WARNING: for the sake of this example we are using "internal" structs and functions (starting with "_").
 //          Synchronisation primitives are planned to be added to the API in the future.
 _z_condvar_t cond;
@@ -168,7 +168,9 @@ struct args_t parse_args(int argc, char** argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
+        "requires them.\n");
     return -1;
 }
 #endif

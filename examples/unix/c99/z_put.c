@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-put";
     const char *value = "Pub from Pico!";
@@ -101,3 +102,9 @@ int main(int argc, char **argv) {
     z_close(z_session_move(&s));
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    return -1;
+}
+#endif

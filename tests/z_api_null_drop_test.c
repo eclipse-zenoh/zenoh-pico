@@ -25,7 +25,6 @@ int main(void) {
     // Check that all null functions exists
     //
     z_owned_session_t session_null_1 = z_session_null();
-    z_owned_publisher_t publisher_null_1 = z_publisher_null();
     z_owned_keyexpr_t keyexpr_null_1 = z_keyexpr_null();
     z_owned_config_t config_null_1 = z_config_null();
     z_owned_scouting_config_t scouting_config_null_1 = z_scouting_config_null();
@@ -41,7 +40,6 @@ int main(void) {
     // Test that they actually make invalid value (where applicable)
     //
     assert(!z_check(session_null_1));
-    assert(!z_check(publisher_null_1));
     assert(!z_check(keyexpr_null_1));
     assert(!z_check(config_null_1));
     assert(!z_check(scouting_config_null_1));
@@ -52,7 +50,6 @@ int main(void) {
     // Test that z_null macro defined for all types
     //
     z_owned_session_t session_null_2;
-    z_owned_publisher_t publisher_null_2;
     z_owned_keyexpr_t keyexpr_null_2;
     z_owned_config_t config_null_2;
     z_owned_scouting_config_t scouting_config_null_2;
@@ -65,7 +62,6 @@ int main(void) {
     z_owned_str_t str_null_2;
 
     z_null(&session_null_2);
-    z_null(&publisher_null_2);
     z_null(&keyexpr_null_2);
     z_null(&config_null_2);
     z_null(&scouting_config_null_2);
@@ -77,6 +73,13 @@ int main(void) {
     z_null(&closure_zid_null_2);
     z_null(&str_null_2);
 
+#if Z_FEATURE_PUBLICATION == 1
+    z_owned_publisher_t publisher_null_1 = z_publisher_null();
+    assert(!z_check(publisher_null_1));
+    z_owned_publisher_t publisher_null_2;
+    z_null(&publisher_null_2);
+    assert(!z_check(publisher_null_2));
+#endif
 #if Z_FEATURE_SUBSCRIPTION == 1
     z_owned_pull_subscriber_t pull_subscriber_null_1 = z_pull_subscriber_null();
     z_owned_subscriber_t subscriber_null_1 = z_subscriber_null();
@@ -108,7 +111,6 @@ int main(void) {
     // Test that null macro works the same as direct call
     //
     assert(!z_check(session_null_2));
-    assert(!z_check(publisher_null_2));
     assert(!z_check(keyexpr_null_2));
     assert(!z_check(config_null_2));
     assert(!z_check(scouting_config_null_2));
@@ -120,7 +122,6 @@ int main(void) {
     //
     for (int i = 0; i < 2; ++i) {
         z_drop(z_move(session_null_1));
-        z_drop(z_move(publisher_null_1));
         z_drop(z_move(keyexpr_null_1));
         z_drop(z_move(config_null_1));
         z_drop(z_move(scouting_config_null_1));
@@ -133,7 +134,6 @@ int main(void) {
         z_drop(z_move(str_null_1));
 
         z_drop(z_move(session_null_2));
-        z_drop(z_move(publisher_null_2));
         z_drop(z_move(keyexpr_null_2));
         z_drop(z_move(config_null_2));
         z_drop(z_move(scouting_config_null_2));
@@ -145,6 +145,10 @@ int main(void) {
         z_drop(z_move(closure_zid_null_2));
         z_drop(z_move(str_null_2));
 
+#if Z_FEATURE_PUBLICATION == 1
+        z_drop(z_move(publisher_null_1));
+        z_drop(z_move(publisher_null_2));
+#endif
 #if Z_FEATURE_SUBSCRIPTION == 1
         z_drop(z_move(pull_subscriber_null_1));
         z_drop(z_move(subscriber_null_1));
