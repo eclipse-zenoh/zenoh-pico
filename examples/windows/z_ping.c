@@ -21,6 +21,7 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/system/platform.h"
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 _z_condvar_t cond;
 _z_mutex_t mutex;
 
@@ -162,3 +163,9 @@ struct args_t parse_args(int argc, char** argv) {
         .warmup_ms = warmup_ms,
     };
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    return -1;
+}
+#endif

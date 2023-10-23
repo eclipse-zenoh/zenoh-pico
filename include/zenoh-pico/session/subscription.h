@@ -17,6 +17,7 @@
 
 #include "zenoh-pico/net/session.h"
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscription ------------------*/
 _z_subscription_sptr_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id);
 _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
@@ -30,5 +31,6 @@ void _z_flush_subscriptions(_z_session_t *zn);
 
 /*------------------ Pull ------------------*/
 _z_zint_t _z_get_pull_id(_z_session_t *zn);
+#endif
 
 #endif /* ZENOH_PICO_SESSION_SUBSCRIPTION_H */

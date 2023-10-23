@@ -50,8 +50,10 @@ typedef struct {
     _z_resource_list_t *_remote_resources;
 
     // Session subscriptions
+#if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_sptr_list_t *_local_subscriptions;
     _z_subscription_sptr_list_t *_remote_subscriptions;
+#endif
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1

@@ -124,6 +124,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     return ret;
 }
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
 _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
@@ -191,6 +192,25 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
     return ret;
 }
+
+/*------------------ Pull ------------------*/
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    if (s != NULL) {
+        _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
+        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
+        if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+    } else {
+        ret = _Z_ERR_ENTITY_UNKNOWN;
+    }
+
+    return ret;
+}
+#endif
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
@@ -393,24 +413,6 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
     }
 
     // Freeing z_msg is unnecessary, as all of its components are aliased
-
-    return ret;
-}
-
-/*------------------ Pull ------------------*/
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
-    if (s != NULL) {
-        _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
-        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
-        if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
-    }
 
     return ret;
 }

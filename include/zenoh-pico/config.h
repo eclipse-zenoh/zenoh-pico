@@ -133,6 +133,13 @@
 #endif
 
 /**
+ * Enable subscription to this node
+ */
+#ifndef Z_FEATURE_SUBSCRIPTION
+#define Z_FEATURE_SUBSCRIPTION 1
+#endif
+
+/**
  * Enable TCP links.
  */
 #ifndef Z_FEATURE_LINK_TCP

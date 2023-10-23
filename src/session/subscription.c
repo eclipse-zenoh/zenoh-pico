@@ -24,6 +24,7 @@
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 _Bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this) {
     return this->_id == other->_id;
 }
@@ -226,3 +227,4 @@ void _z_flush_subscriptions(_z_session_t *zn) {
     _z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
+#endif
