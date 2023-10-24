@@ -20,6 +20,26 @@ on:
     branches: [ '**' ]
 
 jobs:
+  run_tests: 
+    name: Run unit tests on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Build & run tests
+        run: make test
+  
+  check_format:
+    name: Check codebase format with clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Run clang-format dry-run
+        run: find . -iname "*.h" -o -iname "*.c" | xargs clang-format -n
+
   modular_build:
     name: Modular build on ubuntu-latest
     runs-on: ubuntu-latest
