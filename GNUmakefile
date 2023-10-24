@@ -52,6 +52,9 @@ Z_FEATURE_SUBSCRIPTION?=1
 Z_FEATURE_QUERY?=1
 Z_FEATURE_QUERYABLE?=1
 
+# Generator
+CMAKE_GENERATOR?="Unix Makefiles"
+
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -74,7 +77,7 @@ all: make
 $(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
 	echo $(CMAKE_OPT)
-	cmake $(CMAKE_OPT) -B $(BUILD_DIR)
+	cmake $(CMAKE_OPT) -B $(BUILD_DIR) -G $(CMAKE_GENERATOR)
 
 make: $(BUILD_DIR)/Makefile
 	cmake --build $(BUILD_DIR)
