@@ -77,7 +77,7 @@ all: make
 $(BUILD_DIR)/Makefile:
 	mkdir -p $(BUILD_DIR)
 	echo $(CMAKE_OPT)
-	cmake $(CMAKE_OPT) -B $(BUILD_DIR) -G $(CMAKE_GENERATOR)
+	cmake $(CMAKE_OPT) -B $(BUILD_DIR)
 
 make: $(BUILD_DIR)/Makefile
 	cmake --build $(BUILD_DIR)
@@ -87,6 +87,9 @@ install: $(BUILD_DIR)/Makefile
 
 test: make
 	ctest --verbose --test-dir build
+
+set_gen:
+	cmake $(CMAKE_OPT) -B $(BUILD_DIR) -G $(CMAKE_GENERATOR)
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 
