@@ -28,7 +28,10 @@ jobs:
         uses: actions/checkout@v4
   
       - name: Build & run tests
-        run: make test
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make set_gen
+          make test
   
   check_format:
     name: Check codebase format with clang-format
@@ -58,6 +61,8 @@ jobs:
 
     - name: Build project
       run: |
+        sudo apt install -y ninja-build
+        CMAKE_GENERATOR=Ninja make set_gen
         make all
         python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
       timeout-minutes: 5
