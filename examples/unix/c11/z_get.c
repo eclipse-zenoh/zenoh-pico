@@ -105,7 +105,8 @@ int main(int argc, char **argv) {
     char c = '\0';
     while (1) {
         fflush(stdin);
-        scanf("%c", &c);
+        int ret = scanf("%c", &c);
+        (void)ret;  // Remove unused result warning
         if (c == 'q') {
             break;
         }

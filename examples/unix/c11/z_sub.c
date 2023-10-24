@@ -95,7 +95,8 @@ int main(int argc, char **argv) {
     char c = '\0';
     while (c != 'q') {
         fflush(stdin);
-        scanf("%c", &c);
+        int ret = scanf("%c", &c);
+        (void)ret;  // Remove unused result warning
     }
 
     z_undeclare_subscriber(z_move(sub));
