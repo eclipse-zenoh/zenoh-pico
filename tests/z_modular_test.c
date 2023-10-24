@@ -134,7 +134,8 @@ void query_handler(const z_query_t *query, void *ctx) {
     }
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    z_query_reply(query, z_keyexpr(queryable_keyexpr), (const unsigned char *)queryable_value, strlen(queryable_value), &options);
+    z_query_reply(query, z_keyexpr(queryable_keyexpr), (const unsigned char *)queryable_value, strlen(queryable_value),
+                  &options);
     z_drop(z_move(keystr));
 }
 #endif
