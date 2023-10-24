@@ -45,14 +45,7 @@ int main(int argc, char** argv) {
         printf("Unable to start read and lease tasks");
         return -1;
     }
-#else
-int main(void) {
-    printf(
-        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
-        "requires them.\n");
-    return -1;
-}
-#endif
+
     z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
     z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&session), pong, NULL);
     if (!z_publisher_check(&pub)) {
