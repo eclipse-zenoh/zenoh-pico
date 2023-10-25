@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
   
       - name: Run clang-format dry-run
-        run: find . -iname "*.h" -o -iname "*.c" | xargs clang-format -n
+        run: find . -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
 
   modular_build:
     name: Modular build on ubuntu-latest
