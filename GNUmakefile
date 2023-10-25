@@ -52,9 +52,6 @@ Z_FEATURE_SUBSCRIPTION?=1
 Z_FEATURE_QUERY?=1
 Z_FEATURE_QUERYABLE?=1
 
-# Generator
-CMAKE_GENERATOR?="Unix Makefiles"
-
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -87,9 +84,6 @@ install: $(BUILD_DIR)/Makefile
 
 test: make
 	ctest --verbose --test-dir build
-
-set_gen:
-	cmake $(CMAKE_OPT) -B $(BUILD_DIR) -G $(CMAKE_GENERATOR)
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 
