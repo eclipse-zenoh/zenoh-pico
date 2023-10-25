@@ -94,23 +94,23 @@ int main(int argc, char** argv) {
     _z_mutex_lock(&mutex);
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
-        clock_t warmup_end = clock() + CLOCKS_PER_SEC * args.warmup_ms / 1000;
-        for (clock_t now = clock(); now < warmup_end; now = clock()) {
+        z_clock_t warmup_start = z_clock_now();
+        unsigned long elapsed_us = 0;
+        while (elapsed_us < args.warmup_ms * 1000) {
             z_publisher_put(z_loan(pub), data, args.size, NULL);
             _z_condvar_wait(&cond, &mutex);
+            elapsed_us = z_clock_elapsed_us(&warmup_start);
         }
     }
-    clock_t* results = z_malloc(sizeof(clock_t) * args.number_of_pings);
+    unsigned long *results = z_malloc(sizeof(unsigned long) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        clock_t start = clock();
+        z_clock_t measure_start = z_clock_now();
         z_publisher_put(z_loan(pub), data, args.size, NULL);
         _z_condvar_wait(&cond, &mutex);
-        clock_t end = clock();
-        results[i] = end - start;
+        results[i] = z_clock_elapsed_us(&measure_start);
     }
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        clock_t rtt = results[i] * 1000000 / CLOCKS_PER_SEC;
-        printf("%d bytes: seq=%d rtt=%ldµs lat=%ldµs\n", args.size, i, rtt, rtt / 2);
+        printf("%d bytes: seq=%d rtt=%luµs, lat=%luµs\n", args.size, i, results[i], results[i]/2);
     }
     _z_mutex_unlock(&mutex);
     z_free(results);
