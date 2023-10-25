@@ -50,9 +50,9 @@ int main(int argc, char** argv) {
     if (args.help_requested) {
         printf(
             "\
-		-n (optional, int, default=4): the number of pings to be attempted\n\
+		-n (optional, int, default=100): the number of pings to be attempted\n\
 		-s (optional, int, default=8): the size of the payload embedded in the ping and repeated by the pong\n\
-		-w (optional, int, default=0): the warmup time in ms during which pings will be emitted but not measured\n\
+		-w (optional, int, default=1000): the warmup time in ms during which pings will be emitted but not measured\n\
 		-c (optional, string): the path to a configuration file for the session. If this option isn't passed, the default configuration will be used.\n\
 		");
         return 1;
@@ -150,12 +150,12 @@ struct args_t parse_args(int argc, char** argv) {
         size = atoi(arg);
     }
     arg = getopt(argc, argv, 'n');
-    unsigned int number_of_pings = 4;
+    unsigned int number_of_pings = 100;
     if (arg) {
         number_of_pings = atoi(arg);
     }
     arg = getopt(argc, argv, 'w');
-    unsigned int warmup_ms = 0;
+    unsigned int warmup_ms = 1000;
     if (arg) {
         warmup_ms = atoi(arg);
     }
