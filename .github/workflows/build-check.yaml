@@ -30,8 +30,7 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make set_gen
-          make test
+          CMAKE_GENERATOR=Ninja make test
   
   check_format:
     name: Check codebase format with clang-format
