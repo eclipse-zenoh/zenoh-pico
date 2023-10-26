@@ -20,8 +20,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-int main(void)
-{
+int main(void) {
     assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
@@ -339,8 +338,7 @@ int main(void)
 
     // clang-format on
 
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -350,15 +348,13 @@ int main(void)
         printf("%s ", ke);
         printf("  Status: %d : %d\n", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS)
-        {
+        if (status == Z_KEYEXPR_CANON_SUCCESS) {
             printf("  Match: %.*s : %s\n", (int)canon_len, canon, canonized[i]);
             assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
     }
 
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         const char *ke = input[i];
         char *canon = (char *)malloc(128);
         memset(canon, 0, 128);
@@ -368,8 +364,7 @@ int main(void)
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
-        if (status == Z_KEYEXPR_CANON_SUCCESS)
-        {
+        if (status == Z_KEYEXPR_CANON_SUCCESS) {
             printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
             assert(strcmp(canonized[i], canon) == 0);
         }

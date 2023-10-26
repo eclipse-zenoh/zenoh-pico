@@ -45,7 +45,7 @@ void *z_realloc(void *ptr, size_t size) { return heap_caps_realloc(ptr, size, MA
 
 void z_free(void *ptr) { heap_caps_free(ptr); }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 // This wrapper is only used for ESP32.
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
@@ -113,7 +113,7 @@ int8_t _z_condvar_free(_z_condvar_t *cv) { return pthread_cond_destroy(cv); }
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return pthread_cond_signal(cv); }
 
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(cv, m); }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(size_t time) { return usleep(time); }
@@ -136,13 +136,13 @@ int z_sleep_s(size_t time) { return sleep(time); }
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
     return now;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
@@ -150,7 +150,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
@@ -158,7 +158,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;

@@ -12,7 +12,6 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,6 +20,9 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 #define MSG 10
 #define MSG_LEN 1024
@@ -113,7 +115,7 @@ int main(int argc, char **argv) {
         subs2 = _z_list_push(subs2, sub);
     }
 
-    // Write data from firt session
+    // Write data from first session
     size_t len = MSG_LEN;
     uint8_t *payload = (uint8_t *)z_malloc(len);
     memset(payload, 1, MSG_LEN);

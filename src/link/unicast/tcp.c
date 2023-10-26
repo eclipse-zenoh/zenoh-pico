@@ -23,7 +23,7 @@
 #include "zenoh-pico/system/link/tcp.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
 
 char *__z_parse_port_segment_tcp(char *address) {
     char *ret = NULL;
@@ -156,7 +156,7 @@ uint16_t _z_get_link_mtu_tcp(void) {
 int8_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAPABILITY_RELIEABLE | Z_LINK_CAPABILITY_STREAMED;
+    zl->_capabilities = Z_LINK_CAPABILITY_RELIABLE | Z_LINK_CAPABILITY_STREAMED;
     zl->_mtu = _z_get_link_mtu_tcp();
 
     zl->_endpoint = *endpoint;

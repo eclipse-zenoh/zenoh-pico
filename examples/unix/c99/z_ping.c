@@ -1,3 +1,17 @@
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +21,12 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/system/platform.h"
+
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
+
+#define DEFAULT_PKT_SIZE 8
+#define DEFAULT_PING_NB 100
+#define DEFAULT_WARMUP_MS 1000
 
 _z_condvar_t cond;
 _z_mutex_t mutex;
@@ -34,11 +54,12 @@ int main(int argc, char** argv) {
     if (args.help_requested) {
         printf(
             "\
-		-n (optional, int, default=4): the number of pings to be attempted\n\
-		-s (optional, int, default=8): the size of the payload embedded in the ping and repeated by the pong\n\
-		-w (optional, int, default=0): the warmup time in ms during which pings will be emitted but not measured\n\
+		-n (optional, int, default=%d): the number of pings to be attempted\n\
+		-s (optional, int, default=%d): the size of the payload embedded in the ping and repeated by the pong\n\
+		-w (optional, int, default=%d): the warmup time in ms during which pings will be emitted but not measured\n\
 		-c (optional, string): the path to a configuration file for the session. If this option isn't passed, the default configuration will be used.\n\
-		");
+		",
+            DEFAULT_PKT_SIZE, DEFAULT_PING_NB, DEFAULT_WARMUP_MS);
         return 1;
     }
     _z_mutex_init(&mutex);
@@ -79,23 +100,23 @@ int main(int argc, char** argv) {
     _z_mutex_lock(&mutex);
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
-        clock_t warmup_end = clock() + CLOCKS_PER_SEC * args.warmup_ms / 1000;
-        for (clock_t now = clock(); now < warmup_end; now = clock()) {
+        z_clock_t warmup_start = z_clock_now();
+        unsigned long elapsed_us = 0;
+        while (elapsed_us < args.warmup_ms * 1000) {
             z_publisher_put(z_publisher_loan(&pub), data, args.size, NULL);
             _z_condvar_wait(&cond, &mutex);
+            elapsed_us = z_clock_elapsed_us(&warmup_start);
         }
     }
-    clock_t* results = z_malloc(sizeof(clock_t) * args.number_of_pings);
+    unsigned long* results = z_malloc(sizeof(unsigned long) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        clock_t start = clock();
+        z_clock_t measure_start = z_clock_now();
         z_publisher_put(z_publisher_loan(&pub), data, args.size, NULL);
         _z_condvar_wait(&cond, &mutex);
-        clock_t end = clock();
-        results[i] = end - start;
+        results[i] = z_clock_elapsed_us(&measure_start);
     }
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        clock_t rtt = results[i] * 1000000 / CLOCKS_PER_SEC;
-        printf("%d bytes: seq=%d rtt=%ldµs lat=%ldµs\n", args.size, i, rtt, rtt / 2);
+        printf("%d bytes: seq=%d rtt=%luµs, lat=%luµs\n", args.size, i, results[i], results[i] / 2);
     }
     _z_mutex_unlock(&mutex);
     z_free(results);
@@ -130,17 +151,17 @@ struct args_t parse_args(int argc, char** argv) {
         }
     }
     char* arg = getopt(argc, argv, 's');
-    unsigned int size = 8;
+    unsigned int size = DEFAULT_PKT_SIZE;
     if (arg) {
         size = atoi(arg);
     }
     arg = getopt(argc, argv, 'n');
-    unsigned int number_of_pings = 4;
+    unsigned int number_of_pings = DEFAULT_PING_NB;
     if (arg) {
         number_of_pings = atoi(arg);
     }
     arg = getopt(argc, argv, 'w');
-    unsigned int warmup_ms = 0;
+    unsigned int warmup_ms = DEFAULT_WARMUP_MS;
     if (arg) {
         warmup_ms = atoi(arg);
     }
@@ -151,3 +172,11 @@ struct args_t parse_args(int argc, char** argv) {
         .warmup_ms = warmup_ms,
     };
 }
+#else
+int main(void) {
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
+        "requires them.\n");
+    return -1;
+}
+#endif

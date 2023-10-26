@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#if Z_FEATURE_PUBLICATION == 1
 void _z_publisher_clear(_z_publisher_t *pub) { _z_keyexpr_clear(&pub->_key); }
 
 void _z_publisher_free(_z_publisher_t **pub) {
@@ -28,3 +29,4 @@ void _z_publisher_free(_z_publisher_t **pub) {
         *pub = NULL;
     }
 }
+#endif

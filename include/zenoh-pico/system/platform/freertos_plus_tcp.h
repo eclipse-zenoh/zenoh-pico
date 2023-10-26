@@ -18,7 +18,7 @@
 #include "FreeRTOS_IP.h"
 #include "semphr.h"
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 typedef struct {
     const char *name;
     UBaseType_t priority;
@@ -44,7 +44,7 @@ typedef TickType_t z_time_t;
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         Socket_t _socket;
 #endif
     };
@@ -52,7 +52,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         struct freertos_addrinfo *_iptcp;
 #endif
     };

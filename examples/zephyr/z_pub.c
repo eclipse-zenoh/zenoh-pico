@@ -31,6 +31,7 @@
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[STSTM32]{nucleo-F767ZI} Pub from Zenoh-Pico!"
 
+#if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     sleep(5);
 
@@ -82,3 +83,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    return -1;
+}
+#endif

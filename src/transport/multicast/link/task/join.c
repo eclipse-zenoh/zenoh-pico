@@ -17,7 +17,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/tx.h"
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_conduit_sn_list_t next_sn;
@@ -31,4 +31,4 @@ int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     return _z_multicast_send_t_msg(ztm, &jsm);
 }
 
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

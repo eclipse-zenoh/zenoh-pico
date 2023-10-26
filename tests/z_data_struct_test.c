@@ -12,7 +12,6 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +20,9 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/transport.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 void entry_list_test(void) {
     _z_transport_peer_entry_list_t *root = _z_transport_peer_entry_list_new();

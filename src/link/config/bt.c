@@ -15,7 +15,7 @@
 
 #include <string.h>
 
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
 
 size_t _z_bt_config_strlen(const _z_str_intmap_t *s) {
     BT_CONFIG_MAPPING_BUILD

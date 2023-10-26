@@ -57,7 +57,7 @@ void *z_realloc(void *ptr, size_t size) {
 
 void z_free(void *ptr) { vPortFree(ptr); }
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
 typedef struct {

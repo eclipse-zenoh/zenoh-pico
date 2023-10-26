@@ -24,7 +24,7 @@
 #include "zenoh-pico/system/link/ws.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
 
 char *__z_parse_port_segment_ws(char *address) {
     char *ret = NULL;
@@ -157,7 +157,7 @@ uint16_t _z_get_link_mtu_ws(void) {
 int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAPABILITY_RELIEABLE;
+    zl->_capabilities = Z_LINK_CAPABILITY_RELIABLE;
     zl->_mtu = _z_get_link_mtu_ws();
 
     zl->_endpoint = *endpoint;

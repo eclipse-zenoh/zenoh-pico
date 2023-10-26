@@ -23,7 +23,7 @@
 #include "zenoh-pico/system/link/udp.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_MULTICAST == 1
 
 char *__z_parse_port_segment_udp_multicast(const char *address) {
     char *ret = NULL;

@@ -21,7 +21,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
 
 #define _Z_SERIAL_MTU_SIZE 1500
 #define _Z_SERIAL_MFS_SIZE _Z_SERIAL_MTU_SIZE + 2 + 4  // MTU + Serial Len + Serial CRC32

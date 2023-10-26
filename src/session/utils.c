@@ -61,26 +61,32 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     // Initialize the data structs
     zn->_local_resources = NULL;
     zn->_remote_resources = NULL;
+#if Z_FEATURE_SUBSCRIPTION == 1
     zn->_local_subscriptions = NULL;
     zn->_remote_subscriptions = NULL;
+#endif
+#if Z_FEATURE_QUERYABLE == 1
     zn->_local_questionable = NULL;
+#endif
+#if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
+#endif
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     ret = _z_mutex_init(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     if (ret == _Z_RES_OK) {
         zn->_local_zid = *zid;
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
         if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
             zn->_tp._transport._unicast._session = zn;
         } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
             if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
             zn->_tp._transport._multicast._session = zn;
         } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         {
             // Do nothing. Required to be here because of the #if directive
         }
@@ -99,13 +105,19 @@ void _z_session_clear(_z_session_t *zn) {
 
     // Clean up the entities
     _z_flush_resources(zn);
+#if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
+#endif
+#if Z_FEATURE_QUERYABLE == 1
     _z_flush_questionables(zn);
+#endif
+#if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
+#endif
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_free(&zn->_mutex_inner);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
 void _z_session_free(_z_session_t **zn) {

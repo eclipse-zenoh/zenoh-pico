@@ -90,6 +90,7 @@ typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
+    uint16_t _key_id;
     uint32_t _id;
     _z_data_handler_t _callback;
     _z_drop_handler_t _dropper;
@@ -170,10 +171,10 @@ _Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_qu
 _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _cond_var;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 

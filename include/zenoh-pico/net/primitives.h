@@ -34,7 +34,7 @@
  *     what: A what bitmask of zenoh entities kind to scout for.
  *     zid: The ZenohID of the scouting origin.
  *     locator: The locator where to scout.
- *     timeout: The time that should be spent scouting before returnng the results.
+ *     timeout: The time that should be spent scouting before returning the results.
  */
 void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const uint32_t timeout,
               _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
@@ -71,6 +71,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  */
 int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
 
+#if Z_FEATURE_PUBLICATION == 1
 /**
  * Declare a :c:type:`_z_publisher_t` for the given resource key.
  *
@@ -99,6 +100,29 @@ _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_c
  */
 int8_t _z_undeclare_publisher(_z_publisher_t *pub);
 
+/**
+ * Write data corresponding to a given resource key, allowing the definition of
+ * additional properties.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to write. The caller keeps its ownership.
+ *     payload: The value to write.
+ *     len: The length of the value to write.
+ *     encoding: The encoding of the payload. The callee gets the ownership of
+ *               any allocated value.
+ *     kind: The kind of the value.
+ *     cong_ctrl: The congestion control of this write. Possible values defined
+ *                in :c:type:`_z_congestion_control_t`.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                z_priority_t priority);
+#endif
+
+#if Z_FEATURE_SUBSCRIPTION == 1
 /**
  * Declare a :c:type:`_z_subscriber_t` for the given resource key.
  *
@@ -129,6 +153,19 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
 
 /**
+ * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
+ * by calling the **callback** function provided to the :c:func:`_z_declare_subscriber` function.
+ *
+ * Parameters:
+ *     sub: The :c:type:`_z_subscriber_t` to pull from.
+ * Returns:
+ *     ``0`` in case of success, ``-1`` in case of failure.
+ */
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
+/**
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
  *
  * Parameters:
@@ -156,40 +193,23 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
  */
 int8_t _z_undeclare_queryable(_z_queryable_t *qle);
 
-/*------------------ Operations ------------------*/
-
 /**
- * Write data corresponding to a given resource key, allowing the definition of
- * additional properties.
+ * Send a reply to a query.
+ *
+ * This function must be called inside of a Queryable callback passing the
+ * query received as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply
+ * will be considered complete when the Queryable callback returns.
  *
  * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
- *     encoding: The encoding of the payload. The callee gets the ownership of
- *               any allocated value.
- *     kind: The kind of the value.
- *     cong_ctrl: The congestion control of this write. Possible values defined
- *                in :c:type:`_z_congestion_control_t`.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
+ *     query: The query to reply to. The caller keeps its ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
+ *     payload: The value of this reply, the caller keeps ownership.
  */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority);
+int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
+#endif
 
-/**
- * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
- * by calling the **callback** function provided to the :c:func:`_z_declare_subscriber` function.
- *
- * Parameters:
- *     sub: The :c:type:`_z_subscriber_t` to pull from.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
-
+#if Z_FEATURE_QUERY == 1
 /**
  * Query data from the matching queryables in the system.
  *
@@ -209,20 +229,6 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
                 void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
-
-/**
- * Send a reply to a query.
- *
- * This function must be called inside of a Queryable callback passing the
- * query received as parameters of the callback function. This function can
- * be called multiple times to send multiple replies to a query. The reply
- * will be considered complete when the Queryable callback returns.
- *
- * Parameters:
- *     query: The query to reply to. The caller keeps its ownership.
- *     key: The resource key of this reply. The caller keeps the ownership.
- *     payload: The value of this reply, the caller keeps ownership.
- */
-int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
+#endif
 
 #endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */

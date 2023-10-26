@@ -18,16 +18,16 @@
 
 int8_t _z_send_keep_alive(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         ret = _zp_unicast_send_keep_alive(&zt->_transport._unicast);
     } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _zp_multicast_send_keep_alive(&zt->_transport._multicast);
     } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
     {
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
@@ -39,16 +39,16 @@ void *_zp_lease_task(void *zt_arg) {
     void *ret = NULL;
     _z_transport_t *zt = (_z_transport_t *)zt_arg;
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         ret = _zp_unicast_lease_task(&zt->_transport._unicast);
     } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _zp_multicast_lease_task(&zt->_transport._multicast);
     } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
     {
         ret = NULL;
     }

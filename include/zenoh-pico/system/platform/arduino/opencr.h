@@ -20,12 +20,12 @@
 
 #include "zenoh-pico/config.h"
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 typedef void *_z_task_t;
 typedef void *_z_task_attr_t;
 typedef void *_z_mutex_t;
 typedef void *_z_condvar_t;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
@@ -36,10 +36,10 @@ typedef struct WiFiUDP WiFiUDP;        // Forward declaration to be used in _z_s
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
         WiFiClient *_tcp;  // As pointer to cross the boundary between C and C++
 #endif
-#if Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
 #endif
         _Bool _err;
@@ -53,7 +53,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_LINK_TCP == 1 || Z_LINK_UDP_MULTICAST == 1 || Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         __z_net_iptcp_addr_t _iptcp;
 #endif
     };

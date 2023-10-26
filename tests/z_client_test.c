@@ -11,7 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -20,6 +19,9 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/string.h"
+
+#undef NDEBUG
+#include <assert.h>
 
 #define MSG 1000
 #define MSG_LEN 1024
@@ -199,7 +201,7 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    // Write data from firt session
+    // Write data from first session
     size_t len = MSG_LEN;
     uint8_t *payload = (uint8_t *)z_malloc(len);
     memset(payload, 1, MSG_LEN);
@@ -256,7 +258,7 @@ int main(int argc, char **argv) {
         assert(queries >= expected);
     queries = 0;
 
-    // Wait to receive all the expectred replies
+    // Wait to receive all the expected replies
     now = z_clock_now();
     while (replies < expected) {
         assert(z_clock_elapsed_s(&now) < TIMEOUT);

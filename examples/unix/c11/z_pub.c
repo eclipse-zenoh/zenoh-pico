@@ -22,6 +22,7 @@
 
 #include "zenoh-pico/system/platform.h"
 
+#if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
     char *const default_value = "Pub from Pico!";
@@ -117,3 +118,9 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    return -1;
+}
+#endif

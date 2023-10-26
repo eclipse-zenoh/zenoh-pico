@@ -30,6 +30,7 @@ typedef struct {
 
 typedef _z_subscriber_t _z_pull_subscriber_t;
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 /**
  * Create a default subscription info for a push subscriber.
  *
@@ -48,5 +49,6 @@ _z_subinfo_t _z_subinfo_pull_default(void);
 
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
+#endif
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

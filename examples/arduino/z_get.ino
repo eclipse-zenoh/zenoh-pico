@@ -16,6 +16,7 @@
 #include <WiFi.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_QUERY == 1
 // WiFi-specific parameters
 #define SSID "SSID"
 #define PASS "PASS"
@@ -118,3 +119,9 @@ void loop() {
         Serial.println("Unable to send query.");
     }
 }
+#else
+void setup() {
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.");
+}
+void loop() {}
+#endif

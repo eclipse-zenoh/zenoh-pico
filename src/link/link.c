@@ -28,27 +28,27 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
     if (ret == _Z_RES_OK) {
         // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
-#if Z_LINK_TCP == 1
+#if Z_FEATURE_LINK_TCP == 1
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
 #endif
-#if Z_LINK_UDP_UNICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1
             if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);
         } else
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
             if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
         } else
 #endif
-#if Z_LINK_SERIAL == 1
+#if Z_FEATURE_LINK_SERIAL == 1
             if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_serial(zl, ep);
         } else
 #endif
-#if Z_LINK_WS == 1
+#if Z_FEATURE_LINK_WS == 1
             if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_ws(zl, &ep);
         } else
@@ -82,12 +82,12 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
     if (ret == _Z_RES_OK) {
         // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
-#if Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_MULTICAST == 1
         if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
         } else
 #endif
-#if Z_LINK_BLUETOOTH == 1
+#if Z_FEATURE_LINK_BLUETOOTH == 1
             if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
         } else

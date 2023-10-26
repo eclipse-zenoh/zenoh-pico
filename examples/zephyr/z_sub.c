@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
@@ -83,3 +84,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    return -1;
+}
+#endif

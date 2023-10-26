@@ -12,26 +12,18 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef INCLUDE_ZENOH_PICO_NET_PUBLISH_H
-#define INCLUDE_ZENOH_PICO_NET_PUBLISH_H
+#include <stdint.h>
 
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/message.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 
-/**
- * Return type when declaring a publisher.
- */
-typedef struct {
-    _z_keyexpr_t _key;
-    _z_zint_t _id;
-    _z_session_t *_zn;
-    z_congestion_control_t _congestion_control;
-    z_priority_t _priority;
-} _z_publisher_t;
+#ifndef ZENOH_PICO_SESSION_REPLY_H
+#define ZENOH_PICO_SESSION_REPLY_H
 
-#if Z_FEATURE_PUBLICATION == 1
-void _z_publisher_clear(_z_publisher_t *pub);
-void _z_publisher_free(_z_publisher_t **pub);
-#endif
+int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key, _z_msg_reply_t *reply);
 
-#endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */
+int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final);
+
+#endif /* ZENOH_PICO_SESSION_REPLY_H */

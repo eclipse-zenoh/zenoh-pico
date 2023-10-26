@@ -96,6 +96,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     return ret;
 }
 
+#if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_congestion_control_t congestion_control,
                                      z_priority_t priority) {
@@ -124,11 +125,64 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     return ret;
 }
 
+/*------------------ Write ------------------*/
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
+                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                z_priority_t priority) {
+    int8_t ret = _Z_RES_OK;
+    _z_network_message_t msg;
+    switch (kind) {
+        case Z_SAMPLE_KIND_PUT:
+            msg = (_z_network_message_t){
+                ._tag = _Z_N_PUSH,
+                ._body._push =
+                    {
+                        ._key = keyexpr,
+                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                        ._timestamp = _z_timestamp_null(),
+                        ._body._is_put = true,
+                        ._body._body._put =
+                            {
+                                ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
+                                ._payload = _z_bytes_wrap(payload, len),
+                                ._encoding = encoding,
+                            },
+                    },
+            };
+            break;
+        case Z_SAMPLE_KIND_DELETE:
+            msg = (_z_network_message_t){
+                ._tag = _Z_N_PUSH,
+                ._body._push =
+                    {
+                        ._key = keyexpr,
+                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                        ._timestamp = _z_timestamp_null(),
+                        ._body._is_put = false,
+                        ._body._body._del = {._commons = {._timestamp = _z_timestamp_null(),
+                                                          ._source_info = _z_source_info_null()}},
+                    },
+            };
+            break;
+    }
+
+    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+
+    // Freeing z_msg is unnecessary, as all of its components are aliased
+
+    return ret;
+}
+#endif
+
+#if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
 _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(zn);
+    s._key_id = keyexpr._id;
     s._key = _z_get_expanded_key_from_key(zn, &keyexpr);
     s._info = sub_info;
     s._callback = callback;
@@ -175,6 +229,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
             if (_z_send_n_msg(sub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local subscription state can be removed
+                _z_undeclare_resource(sub->_zn, s->ptr->_key_id);
                 _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
             } else {
                 ret = _Z_ERR_ENTITY_UNKNOWN;
@@ -190,6 +245,26 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     return ret;
 }
 
+/*------------------ Pull ------------------*/
+int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
+    int8_t ret = _Z_RES_OK;
+
+    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    if (s != NULL) {
+        _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
+        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
+        if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+    } else {
+        ret = _Z_ERR_ENTITY_UNKNOWN;
+    }
+
+    return ret;
+}
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
@@ -302,57 +377,9 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
 
     return ret;
 }
+#endif
 
-/*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority) {
-    int8_t ret = _Z_RES_OK;
-    _z_network_message_t msg;
-    switch (kind) {
-        case Z_SAMPLE_KIND_PUT:
-            msg = (_z_network_message_t){
-                ._tag = _Z_N_PUSH,
-                ._body._push =
-                    {
-                        ._key = keyexpr,
-                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
-                        ._timestamp = _z_timestamp_null(),
-                        ._body._is_put = true,
-                        ._body._body._put =
-                            {
-                                ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
-                                ._payload = _z_bytes_wrap(payload, len),
-                                ._encoding = encoding,
-                            },
-                    },
-            };
-            break;
-        case Z_SAMPLE_KIND_DELETE:
-            msg = (_z_network_message_t){
-                ._tag = _Z_N_PUSH,
-                ._body._push =
-                    {
-                        ._key = keyexpr,
-                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
-                        ._timestamp = _z_timestamp_null(),
-                        ._body._is_put = false,
-                        ._body._body._del = {._commons = {._timestamp = _z_timestamp_null(),
-                                                          ._source_info = _z_source_info_null()}},
-                    },
-            };
-            break;
-    }
-
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
-        ret = _Z_ERR_TRANSPORT_TX_FAILED;
-    }
-
-    // Freeing z_msg is unnecessary, as all of its components are aliased
-
-    return ret;
-}
-
+#if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
@@ -390,21 +417,4 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 
     return ret;
 }
-
-/*------------------ Pull ------------------*/
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_subscription_sptr_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
-    if (s != NULL) {
-        _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
-        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
-        if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
-    }
-
-    return ret;
-}
+#endif

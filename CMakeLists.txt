@@ -13,7 +13,7 @@
 #
 cmake_minimum_required(VERSION 3.13)
 
-project(zenohpico VERSION 0.10.0.0 LANGUAGES C)
+project(zenohpico VERSION 0.11.0.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -22,6 +22,11 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
+      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(BUILD_SHARED_LIBS "OFF")

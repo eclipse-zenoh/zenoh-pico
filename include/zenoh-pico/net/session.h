@@ -28,9 +28,9 @@
  * A zenoh-net session.
  */
 typedef struct {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
     _z_transport_t _tp;
@@ -50,12 +50,18 @@ typedef struct {
     _z_resource_list_t *_remote_resources;
 
     // Session subscriptions
+#if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_sptr_list_t *_local_subscriptions;
     _z_subscription_sptr_list_t *_remote_subscriptions;
+#endif
 
     // Session queryables
+#if Z_FEATURE_QUERYABLE == 1
     _z_questionable_sptr_list_t *_local_questionable;
+#endif
+#if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;
+#endif
 } _z_session_t;
 
 /**
@@ -90,7 +96,7 @@ void _z_close(_z_session_t *session);
  */
 _z_config_t *_z_info(const _z_session_t *session);
 
-/*------------------ Zenoh-Pico Session Management Auxiliar------------------*/
+/*------------------ Zenoh-Pico Session Management Auxiliary ------------------*/
 /**
  * Read from the network. This function should be called manually called when
  * the read loop has not been started, e.g., when running in a single thread.
@@ -122,7 +128,7 @@ int8_t _zp_send_keep_alive(_z_session_t *z);
  */
 int8_t _zp_send_join(_z_session_t *z);
 
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 /**
  * Start a separate task to read from the network and process the messages
  * as soon as they are received. Note that the task can be implemented in
@@ -172,6 +178,6 @@ int8_t _zp_start_lease_task(_z_session_t *z, _z_task_attr_t *attr);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _zp_stop_lease_task(_z_session_t *z);
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

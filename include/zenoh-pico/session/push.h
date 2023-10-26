@@ -12,9 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SESSION_PUBLICATION_H
-#define ZENOH_PICO_SESSION_PUBLICATION_H
+#include <stdint.h>
 
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/message.h"
 
-#endif /* ZENOH_PICO_SESSION_PUBLICATION_H */
+#ifndef ZENOH_PICO_SESSION_PUSH_H
+#define ZENOH_PICO_SESSION_PUSH_H
+
+int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push);
+
+#endif /* ZENOH_PICO_SESSION_PUSH_H */

@@ -22,7 +22,7 @@
 #include "zenoh-pico/transport/link/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
@@ -68,7 +68,7 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 }
 
 void *_zp_multicast_lease_task(void *ztm_arg) {
-#if Z_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
     ztm->_transmitted = false;
 
@@ -158,9 +158,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         _z_mutex_unlock(&ztm->_mutex_peer);
     }
-#endif  // Z_MULTI_THREAD == 1
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return 0;
 }
 
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

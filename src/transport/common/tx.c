@@ -54,16 +54,16 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed) {
 int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
     if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
         ret = _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
     } else
-#endif  // Z_UNICAST_TRANSPORT == 1
-#if Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
     } else
-#endif  // Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
     {
         ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
@@ -71,7 +71,7 @@ int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
     return ret;
 }
 
-#if Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1 || Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
 
@@ -88,7 +88,7 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     // Encode the session message
     ret = _z_transport_message_encode(&wbf, t_msg);
     if (ret == _Z_RES_OK) {
-        // Write the message legnth in the reserved space if needed
+        // Write the message length in the reserved space if needed
         if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {
             size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
@@ -103,7 +103,7 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
 
     return ret;
 }
-#endif  // Z_UNICAST_TRANSPORT == 1 || Z_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1 || Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn) {
     int8_t ret = _Z_RES_OK;
 

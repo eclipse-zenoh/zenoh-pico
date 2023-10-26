@@ -30,7 +30,7 @@ typedef struct {
  * The reverse equivalent of libc's `strstr`.
  *
  * Returns NULL if the needle is not found.
- * If found, the return pointer will point to the end of the last occuring
+ * If found, the return pointer will point to the end of the last occurring
  * needle within the haystack.
  */
 char const *_z_rstrstr(const char *haystack_start, const char *haystack_end, const char *needle);
@@ -39,7 +39,7 @@ char const *_z_rstrstr(const char *haystack_start, const char *haystack_end, con
  * A non-null-terminated haystack equivalent of libc's `strstr`.
  *
  * Returns NULL if the needle is not found.
- * If found, the return pointer will point to the start of the first occurence
+ * If found, the return pointer will point to the start of the first occurrence
  * of the needle within the haystack.
  */
 char const *_z_strstr(char const *haystack_start, char const *haystack_end, const char *needle_start);

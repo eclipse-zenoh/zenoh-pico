@@ -60,7 +60,7 @@ elif FRAMEWORK == 'arduino':
                           "-<system/unix/>",
                           "-<system/windows/>",
                           "-<system/zephyr/>"]
-            CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_MULTI_THREAD=0"]
+            CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
 
 elif FRAMEWORK == 'espidf':
     SRC_FILTER = ["+<*>",

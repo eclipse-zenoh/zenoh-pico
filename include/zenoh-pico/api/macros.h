@@ -46,7 +46,7 @@
                   z_owned_str_array_t : z_str_array_loan              \
             )(&x)
 /**
- * Defines a generic function for droping any of the ``z_owned_X_t`` types.
+ * Defines a generic function for dropping any of the ``z_owned_X_t`` types.
  *
  * Parameters:
  *   x: The instance to drop.
@@ -75,7 +75,7 @@
  * Defines a generic function for making null object of any of the ``z_owned_X_t`` types.
  *
  * Returns:
- *   Returns the unitialized instance of `x`.
+ *   Returns the uninitialized instance of `x`.
  */
 #define z_null(x) (*x = _Generic((x), \
                   z_owned_session_t * : z_session_null,                             \
@@ -193,7 +193,7 @@
  * Defines a generic function for making null object of any of the ``z_owned_X_t`` types.
  *
  * Returns:
- *   Returns the unitialized instance of `x`.
+ *   Returns the uninitialized instance of `x`.
  */
 #define z_null(x) (*x = _Generic((x), \
                   z_owned_session_t * : z_session_null,                             \
@@ -216,15 +216,15 @@
 
 // clang-format on
 
-#define _z_closure_overloader(callback, droper, ctx, ...) \
-    { .call = callback, .drop = droper, .context = ctx }
+#define _z_closure_overloader(callback, dropper, ctx, ...) \
+    { .call = callback, .drop = dropper, .context = ctx }
 
 /**
  * Defines a variadic macro to ease the definition of callback closures.
  *
  * Parameters:
  *   callback: the typical ``callback`` function. ``context`` will be passed as its last argument.
- *   droper: allows the callback's state to be freed. ``context`` will be passed as its last argument.
+ *   dropper: allows the callback's state to be freed. ``context`` will be passed as its last argument.
  *   context: a pointer to an arbitrary state.
  *
  * Returns:
@@ -334,8 +334,8 @@ inline void z_call(const z_owned_closure_zid_t &closure, const z_id_t *zid)
     { z_closure_zid_call(&closure, zid); }
 // clang-format on
 
-#define _z_closure_overloader(callback, droper, ctx, ...) \
-    { .context = const_cast<void *>(static_cast<const void *>(ctx)), .call = callback, .drop = droper }
+#define _z_closure_overloader(callback, dropper, ctx, ...) \
+    { .context = const_cast<void *>(static_cast<const void *>(ctx)), .call = callback, .drop = dropper }
 #define z_closure(...) _z_closure_overloader(__VA_ARGS__, NULL, NULL)
 #define z_move(x) (&x)
 

@@ -18,7 +18,7 @@
 
 #include "zenoh-pico/config.h"
 
-#if Z_LINK_UDP_UNICAST == 1 || Z_LINK_UDP_MULTICAST == 1
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 
 size_t _z_udp_config_strlen(const _z_str_intmap_t *s) {
     UDP_CONFIG_MAPPING_BUILD
