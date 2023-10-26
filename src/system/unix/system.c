@@ -156,13 +156,13 @@ int z_sleep_s(size_t time) { return sleep(time); }
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
     return now;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
@@ -170,7 +170,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
@@ -178,7 +178,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
-    clock_gettime(CLOCK_REALTIME, &now);
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
     unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
