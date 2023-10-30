@@ -177,6 +177,6 @@ int main(void) {
     printf(
         "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
         "requires them.\n");
-    return -1;
+    return -2;
 }
 #endif
