@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//   Błażej Sowa, <blazej@fictionlab.pl>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -1016,12 +1017,24 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
 #endif
 
 /**************** Tasks ****************/
-zp_task_read_options_t zp_task_read_options_default(void) { return (zp_task_read_options_t){.__dummy = 0}; }
+zp_task_read_options_t zp_task_read_options_default(void) {
+    return (zp_task_read_options_t) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        .task_attributes = NULL
+#else
+        .__dummy = 0
+#endif
+    };
+}
 
 int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options) {
     (void)(options);
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_start_read_task(zs._val);
+    zp_task_read_options_t opt = zp_task_read_options_default();
+    if (options != NULL) {
+        opt.task_attributes = options->task_attributes;
+    }
+    return _zp_start_read_task(zs._val, opt.task_attributes);
 #else
     (void)(zs);
     return -1;
@@ -1037,12 +1050,24 @@ int8_t zp_stop_read_task(z_session_t zs) {
 #endif
 }
 
-zp_task_lease_options_t zp_task_lease_options_default(void) { return (zp_task_lease_options_t){.__dummy = 0}; }
+zp_task_lease_options_t zp_task_lease_options_default(void) {
+    return (zp_task_lease_options_t) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        .task_attributes = NULL
+#else
+        .__dummy = 0
+#endif
+    };
+}
 
 int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options) {
     (void)(options);
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_start_lease_task(zs._val);
+    zp_task_lease_options_t opt = zp_task_lease_options_default();
+    if (options != NULL) {
+        opt.task_attributes = options->task_attributes;
+    }
+    return _zp_start_lease_task(zs._val, opt.task_attributes);
 #else
     (void)(zs);
     return -1;
