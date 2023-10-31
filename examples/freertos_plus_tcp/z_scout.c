@@ -82,7 +82,7 @@ void drop(void *context) {
     }
 }
 
-void app_main() {
+void app_main(void) {
     int *context = (int *)pvPortMalloc(sizeof(int));
     *context = 0;
     z_owned_scouting_config_t config = z_scouting_config_default();
