@@ -5,13 +5,10 @@ import time
 
 # Specify the directory for the binaries
 DIR_EXAMPLES = "build/examples"
-exit_status = 0
-
-def set_err_status():
-    exit_status = 1
 
 def pub_and_sub(args):
     print("*** Pub & sub test ***")
+    test_status = 0
 
     # Expected z_pub output & status
     if args.pub == 1:
@@ -89,7 +86,7 @@ Enter 'q' to quit...'''
         print("z_pub status valid")
     else:
         print(f"z_pub status invalid, expected: {z_pub_expected_status}, received: {z_pub_status}")
-        set_err_status()
+        test_status = 1
 
     # Check output of z_pub
     z_pub_output = z_pub_process.stdout.read()
@@ -99,7 +96,7 @@ Enter 'q' to quit...'''
         print("z_pub output invalid:")
         print(f"Expected: \"{z_pub_expected_output}\"")
         print(f"Received: \"{z_pub_output}\"")
-        set_err_status()
+        test_status = 1
 
     print("Check subscriber status & output")
     # Check the exit status of z_sub
@@ -108,7 +105,7 @@ Enter 'q' to quit...'''
         print("z_sub status valid")
     else:
         print(f"z_sub status invalid, expected: {z_sub_expected_status}, received: {z_sub_status}")
-        set_err_status()
+        test_status = 1
 
     # Check output of z_sub
     z_sub_output = z_sub_process.stdout.read()
@@ -118,10 +115,13 @@ Enter 'q' to quit...'''
         print("z_sub output invalid:")
         print(f"Expected: \"{z_sub_expected_output}\"")
         print(f"Received: \"{z_sub_output}\"")
-        set_err_status()
+        test_status = 1
+    # Return value
+    return test_status
 
 def query_and_queryable(args):
     print("*** Query & queryable test ***")
+    test_status = 0
 
     # Expected z_query output & status
     if args.query == 1:
@@ -221,7 +221,7 @@ Enter 'q' to quit...'''
         print("z_query status valid")
     else:
         print(f"z_query status invalid, expected: {z_query_expected_status}, received: {z_query_status}")
-        set_err_status()
+        test_status = 1
 
     # Check output of z_query
     z_query_output = z_query_process.stdout.read()
@@ -231,7 +231,7 @@ Enter 'q' to quit...'''
         print("z_query output invalid:")
         print(f"Expected: \"{z_query_expected_output}\"")
         print(f"Received: \"{z_query_output}\"")
-        set_err_status()
+        test_status = 1
 
     print("Check queryable status & output")
     # Check the exit status of z_queryable
@@ -240,7 +240,7 @@ Enter 'q' to quit...'''
         print("z_queryable status valid")
     else:
         print(f"z_queryable status invalid, expected: {z_queryable_expected_status}, received: {z_queryable_status}")
-        set_err_status()
+        test_status = 1
 
     # Check output of z_queryable
     z_queryable_output = z_queryable_process.stdout.read()
@@ -250,7 +250,9 @@ Enter 'q' to quit...'''
         print("z_queryable output invalid:")
         print(f"Expected: \"{z_queryable_expected_output}\"")
         print(f"Received: \"{z_queryable_output}\"")
-        set_err_status()
+        test_status = 1
+    # Return status
+    return test_status
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="This script runs zenoh-pico examples and checks them according to the given configuration")
@@ -259,8 +261,15 @@ if __name__ == "__main__":
     parser.add_argument("--queryable", type=int, choices=[0, 1], help="Z_FEATURE_QUERYABLE (0 or 1)")
     parser.add_argument("--query", type=int, choices=[0, 1], help="Z_FEATURE_QUERY (0 or 1)")
 
+    exit_status = 0
     args = parser.parse_args()
     print(f"Args value, pub:{args.pub}, sub:{args.sub}, queryable:{args.queryable}, query:{args.query}")
-    pub_and_sub(args)
-    query_and_queryable(args)
+
+    # Test pub and sub examples
+    if pub_and_sub(args) == 1:
+        exit_status = 1
+    # Test query and queryable examples
+    if query_and_queryable(args) == 1:
+        exit_status = 1
+    # Exit
     sys.exit(exit_status)
