@@ -40,7 +40,7 @@ jobs:
     - name: Build project
       run: |
         make all
-        ./build/tests/z_modular_test $Z_FEATURE_PUBLICATION $Z_FEATURE_SUBSCRIPTION $Z_FEATURE_QUERYABLE $Z_FEATURE_QUERY
+        python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
       continue-on-error: true
       env:
         BUILD_TYPE: Debug
