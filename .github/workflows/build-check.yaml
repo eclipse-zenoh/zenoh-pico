@@ -35,13 +35,12 @@ jobs:
 
     - name: Run docker image
       run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:master
-      continue-on-error: true
 
     - name: Build project
       run: |
         make all
         python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
-      continue-on-error: true
+      timeout-minutes: 5
       env:
         Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
         Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
@@ -49,6 +48,7 @@ jobs:
         Z_FEATURE_QUERY: ${{ matrix.feature_query }}
     
     - name: Stop docker image
+      if: always()
       run: |
         docker stop zenoh_router
         docker rm zenoh_router
