@@ -43,8 +43,6 @@ jobs:
         python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
       continue-on-error: true
       env:
-        BUILD_TYPE: Debug
-        ZENOH_DEBUG: 3
         Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
         Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
         Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
