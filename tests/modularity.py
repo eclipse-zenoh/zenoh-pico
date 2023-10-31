@@ -71,11 +71,10 @@ Enter 'q' to quit...'''
     z_pub_process.wait()
 
     print("Stop subscriber")
-    if z_pub_process.poll() is None:
+    if z_sub_process.poll() is None:
         # Send "q" command to z_sub to stop it
         z_sub_process.stdin.write("q\n")
         z_sub_process.stdin.flush()
-        time.sleep(1)
 
     # Wait for z_sub to finish
     z_sub_process.wait()
