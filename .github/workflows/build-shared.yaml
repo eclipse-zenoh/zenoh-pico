@@ -51,4 +51,3 @@ jobs:
         BUILD_TYPE: Debug
         BUILD_SHARED_LIBS: ON
         ZENOH_DEBUG: 3
-        
