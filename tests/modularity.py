@@ -27,7 +27,8 @@ Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
 Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...'''
     else :
         z_pub_expected_status = 254
-        z_pub_expected_output = "ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it."
+        z_pub_expected_output = ("ERROR: Zenoh pico was compiled without "
+            "Z_FEATURE_PUBLICATION but this example requires it.")
 
     # Expected z_sub output & status
     if args.sub == 1:
@@ -52,12 +53,17 @@ Declaring Subscriber on 'demo/example/**'...
 Enter 'q' to quit...'''
     else :
         z_sub_expected_status = 254
-        z_sub_expected_output = "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it."
-    
+        z_sub_expected_output = ("ERROR: Zenoh pico was compiled without "
+            "Z_FEATURE_SUBSCRIPTION but this example requires it.")
+
     print("Start subscriber")
     # Start z_sub in the background
     z_sub_command = f"./{DIR_EXAMPLES}/z_sub"
-    z_sub_process = subprocess.Popen(z_sub_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    z_sub_process = subprocess.Popen(z_sub_command,
+                                    shell=True,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE, text=True)
 
     # Introduce a delay to ensure z_sub starts
     time.sleep(2)
@@ -65,7 +71,12 @@ Enter 'q' to quit...'''
     print("Start publisher")
     # Start z_pub
     z_pub_command = f"./{DIR_EXAMPLES}/z_pub"
-    z_pub_process = subprocess.Popen(z_pub_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    z_pub_process = subprocess.Popen(z_pub_command,
+                                    shell=True,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    text=True)
 
     # Wait for z_pub to finish
     z_pub_process.wait()
@@ -90,7 +101,7 @@ Enter 'q' to quit...'''
 
     # Check output of z_pub
     z_pub_output = z_pub_process.stdout.read()
-    if z_pub_output.__contains__(z_pub_expected_output):
+    if z_pub_expected_output in z_pub_output:
         print("z_pub output valid")
     else:
         print("z_pub output invalid:")
@@ -109,7 +120,7 @@ Enter 'q' to quit...'''
 
     # Check output of z_sub
     z_sub_output = z_sub_process.stdout.read()
-    if z_sub_output.__contains__(z_sub_expected_output):
+    if z_sub_expected_output in z_sub_output:
         print("z_sub output valid")
     else:
         print("z_sub output invalid:")
@@ -149,7 +160,8 @@ Sending Query 'demo/example/**'...
 >> Received query final notification'''
     else :
         z_query_expected_status = 254
-        z_query_expected_output = "ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it."
+        z_query_expected_output = ("ERROR: Zenoh pico was compiled without "
+            "Z_FEATURE_QUERY but this example requires it.")
 
     # Expected z_queryable output & status
     if args.queryable == 1:
@@ -167,12 +179,18 @@ Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Enter 'q' to quit...'''
     else :
         z_queryable_expected_status = 254
-        z_queryable_expected_output = "ERROR: Zenoh pico was compiled without Z_FEATURE_QUERYABLE but this example requires it."
- 
+        z_queryable_expected_output = ("ERROR: Zenoh pico was compiled without "
+            "Z_FEATURE_QUERYABLE but this example requires it.")
+
     print("Start queryable")
     # Start z_queryable in the background
     z_queryable_command = f"./{DIR_EXAMPLES}/z_queryable"
-    z_queryable_process = subprocess.Popen(z_queryable_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    z_queryable_process = subprocess.Popen(z_queryable_command,
+                                            shell=True,
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
+                                            text=True)
 
     # Introduce a delay to ensure z_queryable starts
     time.sleep(2)
@@ -180,7 +198,12 @@ Enter 'q' to quit...'''
     print("Start query")
     # Start z_query
     z_query_command = f"./{DIR_EXAMPLES}/z_get"
-    z_query_process = subprocess.Popen(z_query_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    z_query_process = subprocess.Popen(z_query_command,
+                                        shell=True,
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        text=True)
 
     # Introduce a delay to ensure z_query starts
     time.sleep(2)
@@ -220,12 +243,13 @@ Enter 'q' to quit...'''
     if z_query_status == z_query_expected_status:
         print("z_query status valid")
     else:
-        print(f"z_query status invalid, expected: {z_query_expected_status}, received: {z_query_status}")
+        print(f"z_query status invalid, expected: {z_query_expected_status},"
+              f" received: {z_query_status}")
         test_status = 1
 
     # Check output of z_query
     z_query_output = z_query_process.stdout.read()
-    if z_query_output.__contains__(z_query_expected_output):
+    if z_query_expected_output in z_query_output:
         print("z_query output valid")
     else:
         print("z_query output invalid:")
@@ -239,12 +263,13 @@ Enter 'q' to quit...'''
     if z_queryable_status == z_queryable_expected_status:
         print("z_queryable status valid")
     else:
-        print(f"z_queryable status invalid, expected: {z_queryable_expected_status}, received: {z_queryable_status}")
+        print(f"z_queryable status invalid, expected: {z_queryable_expected_status},"
+              f" received: {z_queryable_status}")
         test_status = 1
 
     # Check output of z_queryable
     z_queryable_output = z_queryable_process.stdout.read()
-    if z_queryable_output.__contains__(z_queryable_expected_output):
+    if z_queryable_expected_output in z_queryable_output:
         print("z_queryable output valid")
     else:
         print("z_queryable output invalid:")
@@ -255,21 +280,24 @@ Enter 'q' to quit...'''
     return test_status
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="This script runs zenoh-pico examples and checks them according to the given configuration")
+    parser = argparse.ArgumentParser(description="This script runs zenoh-pico examples"
+                                     " and checks them according to the given configuration")
     parser.add_argument("--pub", type=int, choices=[0, 1], help="Z_FEATURE_PUBLICATION (0 or 1)")
     parser.add_argument("--sub", type=int, choices=[0, 1], help="Z_FEATURE_SUBSCRIPTION (0 or 1)")
-    parser.add_argument("--queryable", type=int, choices=[0, 1], help="Z_FEATURE_QUERYABLE (0 or 1)")
+    parser.add_argument("--queryable", type=int, choices=[0, 1],
+                         help="Z_FEATURE_QUERYABLE (0 or 1)")
     parser.add_argument("--query", type=int, choices=[0, 1], help="Z_FEATURE_QUERY (0 or 1)")
 
-    exit_status = 0
-    args = parser.parse_args()
-    print(f"Args value, pub:{args.pub}, sub:{args.sub}, queryable:{args.queryable}, query:{args.query}")
+    EXIT_STATUS = 0
+    prog_args = parser.parse_args()
+    print(f"Args value, pub:{prog_args.pub}, sub:{prog_args.sub}, "
+          f"queryable:{prog_args.queryable}, query:{prog_args.query}")
 
     # Test pub and sub examples
-    if pub_and_sub(args) == 1:
-        exit_status = 1
+    if pub_and_sub(prog_args) == 1:
+        EXIT_STATUS = 1
     # Test query and queryable examples
-    if query_and_queryable(args) == 1:
-        exit_status = 1
+    if query_and_queryable(prog_args) == 1:
+        EXIT_STATUS = 1
     # Exit
-    sys.exit(exit_status)
+    sys.exit(EXIT_STATUS)
