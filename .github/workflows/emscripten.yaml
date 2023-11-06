@@ -28,7 +28,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: jwlawson/actions-setup-cmake@v1.13
     - uses: mymindstorm/setup-emsdk@v11
     - name: Compile debug
