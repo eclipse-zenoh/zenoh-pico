@@ -290,7 +290,6 @@ if(UNIX OR MSVC)
     add_executable(z_keyexpr_test ${PROJECT_SOURCE_DIR}/tests/z_keyexpr_test.c)
     add_executable(z_api_null_drop_test ${PROJECT_SOURCE_DIR}/tests/z_api_null_drop_test.c)
     add_executable(z_api_double_drop_test ${PROJECT_SOURCE_DIR}/tests/z_api_double_drop_test.c)
-    add_executable(z_modular_test ${PROJECT_SOURCE_DIR}/tests/z_modular_test.c)
 
     target_link_libraries(z_data_struct_test ${Libname})
     target_link_libraries(z_endpoint_test ${Libname})
@@ -299,7 +298,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_keyexpr_test ${Libname})
     target_link_libraries(z_api_null_drop_test ${Libname})
     target_link_libraries(z_api_double_drop_test ${Libname})
-    target_link_libraries(z_modular_test ${Libname})
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
 
