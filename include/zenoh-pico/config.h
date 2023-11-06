@@ -103,6 +103,7 @@
 #define Z_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
 
 /*------------------ Compile-time feature configuration ------------------*/
+// WARNING: Default values may always be overridden by CMake/make values
 
 /**
  * Enable multi-thread support.

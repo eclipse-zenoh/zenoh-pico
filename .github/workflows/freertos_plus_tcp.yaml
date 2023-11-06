@@ -40,3 +40,8 @@ jobs:
         cmake -Bbuild -G"Ninja Multi-Config"
         cmake --build ./build --config Debug
         cmake --build ./build --config Release
+      env:
+        Z_FEATURE_PUBLICATION: 1
+        Z_FEATURE_SUBSCRIPTION: 1
+        Z_FEATURE_QUERYABLE: 1
+        Z_FEATURE_QUERY: 1

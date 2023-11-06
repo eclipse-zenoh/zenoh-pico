@@ -48,7 +48,7 @@
 
 // Set ipconfigBUFFER_PADDING on 64-bit platforms
 #if INTPTR_MAX == INT64_MAX
-    #define ipconfigBUFFER_PADDING 14U
+#define ipconfigBUFFER_PADDING 14U
 #endif
 
 #endif /* FREERTOS_IP_CONFIG_H */

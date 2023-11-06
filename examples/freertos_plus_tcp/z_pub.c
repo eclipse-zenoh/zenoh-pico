@@ -16,6 +16,7 @@
 
 #include "FreeRTOS.h"
 
+#if Z_FEATURE_PUBLICATION == 1
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
@@ -30,7 +31,7 @@
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
 
-void app_main() {
+void app_main(void) {
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
     if (strcmp(CONNECT, "") != 0) {
@@ -104,3 +105,8 @@ void app_main() {
 
     z_close(z_move(s));
 }
+#else
+void app_main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+}
+#endif

@@ -102,6 +102,21 @@ endif()
 
 add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
+# Zenoh pico feature configuration options
+option(Z_FEATURE_PUBLICATION "Toggle publication feature" 1)
+option(Z_FEATURE_SUBSCRIPTION "Toggle subscription feature" 1)
+option(Z_FEATURE_QUERY "Toggle query feature" 1)
+option(Z_FEATURE_QUERYABLE "Toggle queryable feature" 1)
+add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
+add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
+add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
+add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
+message(STATUS "Building with feature confing:\n\
+* PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
+* SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
+* QUERY: ${Z_FEATURE_QUERY}\n\
+* QUERYABLE: ${Z_FEATURE_QUERYABLE}")
+
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
@@ -283,6 +298,8 @@ if(UNIX OR MSVC)
     target_link_libraries(z_keyexpr_test ${Libname})
     target_link_libraries(z_api_null_drop_test ${Libname})
     target_link_libraries(z_api_double_drop_test ${Libname})
+
+    configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
