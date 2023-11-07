@@ -120,6 +120,9 @@ void loop() {
     }
 }
 #else
-void setup() { Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it."); }
+void setup() {
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.");
+    return;
+}
 void loop() {}
 #endif
