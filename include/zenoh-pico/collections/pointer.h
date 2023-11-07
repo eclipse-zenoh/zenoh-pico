@@ -26,7 +26,6 @@
 #else
 #include <atomic>
 #define z_atomic(X) std::atomic<X>
-using namespace std;
 #endif
 
 /*------------------ Internal Array Macros ------------------*/
