@@ -29,8 +29,8 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v4
-    - uses: jwlawson/actions-setup-cmake@v1.13
-    - uses: mymindstorm/setup-emsdk@v11
+    - uses: jwlawson/actions-setup-cmake@v1.14
+    - uses: mymindstorm/setup-emsdk@v12
     - name: Compile debug
       run: |
        mkdir build
