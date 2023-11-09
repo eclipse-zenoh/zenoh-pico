@@ -20,6 +20,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1

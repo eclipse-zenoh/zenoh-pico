@@ -15,6 +15,7 @@
 #include "zenoh-pico/transport/link/task/lease.h"
 
 #include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
@@ -46,7 +47,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             } else {
                 _Z_INFO("Closing session because it has expired after %zums\n", ztu->_lease);
                 ztu->_lease_task_running = false;
-                _z_transport_unicast_close(ztu, _Z_CLOSE_EXPIRED);
+                _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
                 break;
             }
 
