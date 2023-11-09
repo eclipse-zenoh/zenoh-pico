@@ -187,7 +187,7 @@ _z_bytes_t gen_bytes(size_t len) {
 
     arr.start = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
     for (_z_zint_t i = 0; i < len; i++) {
-        ((uint8_t *)arr.start)[i] = gen_uint8() & 0b01111111;
+        ((uint8_t *)arr.start)[i] = gen_uint8() & 0x7f;  // 0b01111111
     }
 
     return arr;
