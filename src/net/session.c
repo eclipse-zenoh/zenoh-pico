@@ -27,6 +27,8 @@
 #include "zenoh-pico/transport/link/task/join.h"
 #include "zenoh-pico/transport/link/task/lease.h"
 #include "zenoh-pico/transport/link/task/read.h"
+#include "zenoh-pico/transport/multicast.h"
+#include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 

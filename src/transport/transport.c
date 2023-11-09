@@ -23,34 +23,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/link/rx.h"
 #include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/multicast.h"
+#include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
-
-#if Z_FEATURE_UNICAST_TRANSPORT == 1
-int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-
-    ret = _z_unicast_send_t_msg(ztu, &cm);
-    _z_t_msg_clear(&cm);
-
-    return ret;
-}
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-
-    ret = _z_multicast_send_t_msg(ztm, &cm);
-    _z_t_msg_clear(&cm);
-
-    return ret;
-}
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
     int8_t ret = _Z_RES_OK;
