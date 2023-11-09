@@ -544,45 +544,40 @@ int8_t z_close(z_owned_session_t *zs) {
 }
 
 int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+    // Call transport function
+    switch (zs._val->_tp._type) {
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            _zp_multicast_fetch_zid(&zs._val->_tp, callback);
+            break;
+        default:
+            break;
+    }
+    // Note and clear context
     void *ctx = callback->context;
     callback->context = NULL;
-
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        _z_transport_peer_entry_list_t *l = zs._val->_tp._transport._multicast._peers;
-        for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
-            _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-            z_id_t id = val->_remote_zid;
-
-            callback->call(&id, ctx);
-        }
-    }
-#else
-    (void)zs;
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-
+    // Drop if needed
     if (callback->drop != NULL) {
         callback->drop(ctx);
     }
-
     return 0;
 }
 
 int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+    // Call transport function
+    switch (zs._val->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            _zp_unicast_fetch_zid(&zs._val->_tp, callback);
+            break;
+        default:
+            break;
+    }
+    // Note and clear context
     void *ctx = callback->context;
     callback->context = NULL;
-
-#if Z_FEATURE_UNICAST_TRANSPORT == 1
-    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        z_id_t id = zs._val->_tp._transport._unicast._remote_zid;
-        callback->call(&id, ctx);
-    }
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
+    // Drop if needed
     if (callback->drop != NULL) {
         callback->drop(ctx);
     }
-
     return 0;
 }
 
