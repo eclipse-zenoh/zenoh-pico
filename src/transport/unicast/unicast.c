@@ -28,6 +28,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
+bool _zp_is_unicast_here(void) { return true; }
+
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
     void *ctx = callback->context;
     z_id_t id = zt->_transport._unicast._remote_zid;
@@ -322,6 +324,8 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 }
 
 #else
+bool _zp_is_unicast_here(void) { return false; }
+
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(callback);
