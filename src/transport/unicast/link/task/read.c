@@ -111,5 +111,14 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
     return NULL;
 }
+#else
+int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
+    _ZP_UNUSED(ztu);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+void *_zp_unicast_read_task(void *ztu_arg) {
+    _ZP_UNUSED(ztu_arg);
+    return NULL;
+}
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
