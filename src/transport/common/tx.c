@@ -53,25 +53,20 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed) {
 
 int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
-
-#if Z_FEATURE_UNICAST_TRANSPORT == 1
-    if (zt->_type == _Z_TRANSPORT_UNICAST_TYPE) {
-        ret = _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
-    } else
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-        if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        ret = _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
-    } else
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-    {
-        ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    switch (zt->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            ret = _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
+            break;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            ret = _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
+            break;
+        default:
+            ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+            break;
     }
-
     return ret;
 }
 
-#if Z_FEATURE_UNICAST_TRANSPORT == 1 || Z_FEATURE_MULTICAST_TRANSPORT == 1
 int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
 
@@ -103,7 +98,7 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
 
     return ret;
 }
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1 || Z_FEATURE_MULTICAST_TRANSPORT == 1
+
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn) {
     int8_t ret = _Z_RES_OK;
 
