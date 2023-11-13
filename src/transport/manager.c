@@ -17,8 +17,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "zenoh-pico/transport/multicast.h"
-#include "zenoh-pico/transport/unicast.h"
+#include "zenoh-pico/transport/multicast/transport.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 
 int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;

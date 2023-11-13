@@ -12,9 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/transport/common/lease.h"
 
 #include <stddef.h>
+
+#include "zenoh-pico/transport/multicast/lease.h"
+#include "zenoh-pico/transport/unicast/lease.h"
 
 int8_t _z_send_keep_alive(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;

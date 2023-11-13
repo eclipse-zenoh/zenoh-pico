@@ -12,9 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/read.h"
+#include "zenoh-pico/transport/common/read.h"
 
 #include <stddef.h>
+
+#include "zenoh-pico/transport/multicast/read.h"
+#include "zenoh-pico/transport/unicast/read.h"
 
 int8_t _z_read(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;

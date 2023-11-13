@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/rx.h"
+#include "zenoh-pico/transport/unicast/rx.h"
 
 #include <stddef.h>
 

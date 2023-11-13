@@ -12,12 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Transmission helper ------------------*/

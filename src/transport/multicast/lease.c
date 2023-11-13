@@ -12,20 +12,21 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/transport/multicast/lease.h"
 
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/link/task/join.h"
-#include "zenoh-pico/transport/link/tx.h"
-#include "zenoh-pico/transport/multicast.h"
+#include "zenoh-pico/transport/common/join.h"
+#include "zenoh-pico/transport/multicast/join.h"
+#include "zenoh-pico/transport/multicast/transport.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-_z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
+static _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
 
     _z_transport_peer_entry_list_t *it = peers;
@@ -42,7 +43,7 @@ _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t 
     return ret;
 }
 
-_z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
+static _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
     _z_zint_t ret = SIZE_MAX;
 
     _z_transport_peer_entry_list_t *it = peers;
@@ -66,6 +67,25 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     ret = _z_multicast_send_t_msg(ztm, &t_msg);
 
     return ret;
+}
+
+int _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    // Init memory
+    (void)memset(task, 0, sizeof(_z_task_t));
+    // Attach task
+    zt->_transport._multicast._lease_task = task;
+    zt->_transport._multicast._lease_task_running = true;
+    // Init task
+    if (_z_task_init(task, attr, _zp_multicast_lease_task, &zt->_transport._multicast) != _Z_RES_OK) {
+        zt->_transport._multicast._lease_task_running = false;
+        return _Z_ERR_SYSTEM_TASK_FAILED;
+    }
+    return _Z_RES_OK;
+}
+
+int _zp_multicast_stop_lease_task(_z_transport_t *zt) {
+    zt->_transport._multicast._lease_task_running = false;
+    return _Z_RES_OK;
 }
 
 void *_zp_multicast_lease_task(void *ztm_arg) {
@@ -166,6 +186,18 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 #else
 int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+int _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    _ZP_UNUSED(zt);
+    _ZP_UNUSED(attr);
+    _ZP_UNUSED(task);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+int _zp_multicast_stop_lease_task(_z_transport_t *zt) {
+    _ZP_UNUSED(zt);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 

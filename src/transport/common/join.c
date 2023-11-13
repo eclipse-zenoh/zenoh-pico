@@ -12,7 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/join.h"
+#include "zenoh-pico/transport/common/join.h"
+
+#include "zenoh-pico/transport/multicast/join.h"
 
 int8_t _z_send_join(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;

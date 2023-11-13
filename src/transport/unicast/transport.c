@@ -11,8 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/transport/unicast.h"
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -20,65 +18,18 @@
 #include <string.h>
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/transport/link/rx.h"
-#include "zenoh-pico/transport/link/task/lease.h"
-#include "zenoh-pico/transport/link/task/read.h"
-#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/common/rx.h"
+#include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/transport/multicast/rx.h"
+#include "zenoh-pico/transport/unicast.h"
+#include "zenoh-pico/transport/unicast/lease.h"
+#include "zenoh-pico/transport/unicast/read.h"
+#include "zenoh-pico/transport/unicast/rx.h"
+#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
-bool _zp_is_unicast_here(void) { return true; }
-
-void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
-    void *ctx = callback->context;
-    z_id_t id = zt->_transport._unicast._remote_zid;
-    callback->call(&id, ctx);
-}
-
-void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
-    _z_id_t remote_zid = zt->_transport._unicast._remote_zid;
-    _z_bytes_t remote_zidbytes = _z_bytes_wrap(remote_zid.id, _z_id_len(remote_zid));
-    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&remote_zidbytes));
-}
-
-int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
-    // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
-    // Attach task
-    zt->_transport._unicast._read_task = task;
-    zt->_transport._unicast._read_task_running = true;
-    // Init task
-    if (_z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
-        zt->_transport._unicast._read_task_running = false;
-        return _Z_ERR_SYSTEM_TASK_FAILED;
-    }
-    return _Z_RES_OK;
-}
-
-int _zp_unicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
-    // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
-    // Attach task
-    zt->_transport._unicast._lease_task = task;
-    zt->_transport._unicast._lease_task_running = true;
-    // Init task
-    if (_z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
-        zt->_transport._unicast._lease_task_running = false;
-        return _Z_ERR_SYSTEM_TASK_FAILED;
-    }
-    return _Z_RES_OK;
-}
-
-int _zp_unicast_stop_read_task(_z_transport_t *zt) {
-    zt->_transport._unicast._read_task_running = false;
-    return _Z_RES_OK;
-}
-
-int _zp_unicast_stop_lease_task(_z_transport_t *zt) {
-    zt->_transport._unicast._lease_task_running = false;
-    return _Z_RES_OK;
-}
 
 int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param) {
     int8_t ret = _Z_RES_OK;
@@ -324,41 +275,6 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 }
 
 #else
-bool _zp_is_unicast_here(void) { return false; }
-
-void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(callback);
-}
-
-void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(ps);
-}
-
-int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(attr);
-    _ZP_UNUSED(task);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-int _zp_unicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(attr);
-    _ZP_UNUSED(task);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-int _zp_unicast_stop_read_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-int _zp_unicast_stop_lease_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
 
 int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param) {
     _ZP_UNUSED(zt);
