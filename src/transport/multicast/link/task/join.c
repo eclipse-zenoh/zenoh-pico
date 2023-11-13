@@ -30,5 +30,9 @@ int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
 
     return _z_multicast_send_t_msg(ztm, &jsm);
 }
-
+#else
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

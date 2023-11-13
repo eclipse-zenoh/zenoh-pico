@@ -16,17 +16,15 @@
 
 int8_t _z_send_join(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;
-
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     // Join task only applies to multicast transports
-    if (zt->_type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        ret = _zp_multicast_send_join(&zt->_transport._multicast);
-    } else
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-    {
-        (void)zt;
-        ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    switch (zt->_type) {
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            ret = _zp_multicast_send_join(&zt->_transport._multicast);
+            break;
+        default:
+            (void)zt;
+            ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+            break;
     }
-
     return ret;
 }
