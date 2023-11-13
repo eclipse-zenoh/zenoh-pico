@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_LINK_TX_H
-#define ZENOH_PICO_TRANSPORT_LINK_TX_H
+#ifndef ZENOH_PICO_TRANSPORT_TX_H
+#define ZENOH_PICO_TRANSPORT_TX_H
 
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/net/session.h"
@@ -26,20 +26,7 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed);
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
-int8_t _z_unicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
-                             z_congestion_control_t cong_ctrl);
-int8_t _z_multicast_send_z_msg(_z_session_t *zn, _z_zenoh_message_t *z_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl);
-
-int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
-                             z_congestion_control_t cong_ctrl);
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl);
-
 int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);
-int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg);
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg);
-
 int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
 
-#endif /* ZENOH_PICO_TRANSPORT_LINK_TX_H */
+#endif /* ZENOH_PICO_TRANSPORT_TX_H */

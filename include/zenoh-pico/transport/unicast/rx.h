@@ -12,12 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_LINK_TASK_JOIN_H
-#define ZENOH_PICO_TRANSPORT_LINK_TASK_JOIN_H
+#ifndef ZENOH_PICO_UNICAST_RX_H
+#define ZENOH_PICO_UNICAST_RX_H
 
 #include "zenoh-pico/transport/transport.h"
 
-int8_t _z_send_join(_z_transport_t *zt);
-int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm);
+int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
+int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
+int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg);
 
-#endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_JOIN_H */
+#endif /* ZENOH_PICO_UNICAST_RX_H */

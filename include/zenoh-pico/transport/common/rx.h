@@ -12,14 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MULTICAST_H
-#define ZENOH_PICO_MULTICAST_H
+#ifndef ZENOH_PICO_TRANSPORT_RX_H
+#define ZENOH_PICO_TRANSPORT_RX_H
 
-#include "zenoh-pico/api/types.h"
+#include "zenoh-pico/link/link.h"
+#include "zenoh-pico/transport/transport.h"
 
-bool _zp_is_multicast_here(void);
+/*------------------ Transmission and Reception helpers ------------------*/
+int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl);
 
-void _zp_multicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback);
-void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
-
-#endif /* ZENOH_PICO_MULTICAST_H */
+#endif /* ZENOH_PICO_TRANSPORT_RX_H */

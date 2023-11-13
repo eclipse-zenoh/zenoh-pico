@@ -12,14 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MULTICAST_H
-#define ZENOH_PICO_MULTICAST_H
+#ifndef ZENOH_PICO_UNICAST_READ_H
+#define ZENOH_PICO_UNICAST_READ_H
 
-#include "zenoh-pico/api/types.h"
+#include "zenoh-pico/transport/transport.h"
 
-bool _zp_is_multicast_here(void);
+int8_t _zp_unicast_read(_z_transport_unicast_t *ztu);
+int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task);
+int _zp_unicast_stop_read_task(_z_transport_t *zt);
+void *_zp_unicast_read_task(void *ztu_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
-void _zp_multicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback);
-void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
-
-#endif /* ZENOH_PICO_MULTICAST_H */
+#endif /* ZENOH_PICO_UNICAST_READ_H */
