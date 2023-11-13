@@ -163,5 +163,14 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
     return 0;
 }
+#else
+int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+void *_zp_multicast_lease_task(void *ztm_arg) {
+    _ZP_UNUSED(ztm_arg);
+    return NULL;
+}
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
