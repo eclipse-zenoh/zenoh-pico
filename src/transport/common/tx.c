@@ -92,24 +92,45 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, false);
-    if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {
-        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            _z_wbuf_put(&wbf, 0, i);
-        }
-        _z_wbuf_set_wpos(&wbf, _Z_MSG_LEN_ENC_SIZE);
-    }
 
+    switch (zl->_capabilities) {
+        // Stream capable links
+        case Z_LINK_CAP_UNICAST_STREAM:
+        case Z_LINK_CAP_MULTICAST_STREAM:
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                _z_wbuf_put(&wbf, 0, i);
+            }
+            _z_wbuf_set_wpos(&wbf, _Z_MSG_LEN_ENC_SIZE);
+            break;
+        // Datagram capable links
+        case Z_LINK_CAP_UNICAST_DATAGRAM:
+        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+            break;
+        default:
+            ret = _Z_ERR_GENERIC;
+            break;
+    }
     // Encode the session message
     ret = _z_transport_message_encode(&wbf, t_msg);
     if (ret == _Z_RES_OK) {
-        // Write the message length in the reserved space if needed
-        if (_Z_LINK_IS_STREAMED(zl->_capabilities) == true) {
-            size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                _z_wbuf_put(&wbf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
-            }
+        switch (zl->_capabilities) {
+            // Stream capable links
+            case Z_LINK_CAP_UNICAST_STREAM:
+            case Z_LINK_CAP_MULTICAST_STREAM:
+                // Write the message length in the reserved space if needed
+                size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
+                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                    _z_wbuf_put(&wbf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
+                }
+                break;
+            // Datagram capable links
+            case Z_LINK_CAP_UNICAST_DATAGRAM:
+            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+                break;
+            default:
+                ret = _Z_ERR_GENERIC;
+                break;
         }
-
         // Send the wbuf on the socket
         ret = _z_link_send_wbuf(zl, &wbf);
     }
