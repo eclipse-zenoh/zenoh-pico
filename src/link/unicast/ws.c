@@ -158,7 +158,7 @@ int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
     zl->_capabilities = Z_LINK_CAP_UNICAST_DATAGRAM;
-    zl->is_reliable = true;
+    zl->_is_reliable = true;
     zl->_mtu = _z_get_link_mtu_ws();
 
     zl->_endpoint = *endpoint;
