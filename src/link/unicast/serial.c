@@ -116,7 +116,8 @@ uint16_t _z_get_link_mtu_serial(void) { return _Z_SERIAL_MTU_SIZE; }
 int8_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAPABILITY_NONE;
+    zl->_capabilities = Z_LINK_CAP_UNICAST_DATAGRAM;
+    zl->_is_reliable = false;
     zl->_mtu = _z_get_link_mtu_serial();
 
     zl->_endpoint = endpoint;

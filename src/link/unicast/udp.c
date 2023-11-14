@@ -162,7 +162,8 @@ uint16_t _z_get_link_mtu_udp_unicast(void) {
 int8_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAPABILITY_NONE;
+    zl->_capabilities = Z_LINK_CAP_UNICAST_DATAGRAM;
+    zl->_is_reliable = false;
     zl->_mtu = _z_get_link_mtu_udp_unicast();
 
     zl->_endpoint = endpoint;
