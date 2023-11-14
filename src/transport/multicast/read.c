@@ -72,36 +72,45 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztm->_link._capabilities) == true) {
-            if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
+
+        switch (ztm->_link._capabilities) {
+            // Stream capable links
+            case Z_LINK_CAP_UNICAST_STREAM:
+            case Z_LINK_CAP_MULTICAST_STREAM:
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_bytes_clear(&addr);
-                    _z_zbuf_compact(&ztm->_zbuf);
-                    continue;
+                    _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
+                    if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                        _z_bytes_clear(&addr);
+                        _z_zbuf_compact(&ztm->_zbuf);
+                        continue;
+                    }
                 }
-            }
 
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-            }
+                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                    to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
+                }
 
-            if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
-                _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
-                    _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
-                    _z_zbuf_compact(&ztm->_zbuf);
+                    _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
+                    if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
+                        _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                        _z_zbuf_compact(&ztm->_zbuf);
+                        continue;
+                    }
+                }
+                break;
+            // Datagram capable links
+            case Z_LINK_CAP_UNICAST_DATAGRAM:
+            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+                _z_zbuf_compact(&ztm->_zbuf);
+                to_read = _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
+                if (to_read == SIZE_MAX) {
                     continue;
                 }
-            }
-        } else {
-            _z_zbuf_compact(&ztm->_zbuf);
-            to_read = _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
-            if (to_read == SIZE_MAX) {
-                continue;
-            }
+                break;
+            default:
+                break;
         }
-
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
