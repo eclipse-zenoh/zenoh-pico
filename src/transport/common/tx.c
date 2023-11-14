@@ -56,12 +56,13 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
     switch (link_capabilities) {
         // Stream capable links
         case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM:
+        case Z_LINK_CAP_MULTICAST_STREAM: {
             size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 _z_wbuf_put(buf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
             }
             break;
+        }
         // Datagram capable links
         case Z_LINK_CAP_UNICAST_DATAGRAM:
         case Z_LINK_CAP_MULTICAST_DATAGRAM:
@@ -116,13 +117,14 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
         switch (zl->_capabilities) {
             // Stream capable links
             case Z_LINK_CAP_UNICAST_STREAM:
-            case Z_LINK_CAP_MULTICAST_STREAM:
+            case Z_LINK_CAP_MULTICAST_STREAM: {
                 // Write the message length in the reserved space if needed
                 size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
                 for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                     _z_wbuf_put(&wbf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
                 }
                 break;
+            }
             // Datagram capable links
             case Z_LINK_CAP_UNICAST_DATAGRAM:
             case Z_LINK_CAP_MULTICAST_DATAGRAM:
