@@ -48,6 +48,7 @@
  * Enumerators:
  *     Z_LINK_CAP_UNICAST_STREAM: Link has unicast stream capabilities.
  *     Z_LINK_CAP_UNICAST_DATAGRAM: Link has unicast datagram capabilities.
+ *     Z_LINK_CAP_MULTICAST_STREAM: Link has multicast stream capabilities.
  *     Z_LINK_CAP_MULTICAST_DATAGRAM: Link has multicast datagram capabilities.
  */
 typedef enum {
