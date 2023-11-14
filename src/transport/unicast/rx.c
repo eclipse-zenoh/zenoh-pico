@@ -37,35 +37,42 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
 
     size_t to_read = 0;
     do {
-        if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
-            if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+        switch (ztu->_link._capabilities) {
+            // Stream capable links
+            case Z_LINK_CAP_UNICAST_STREAM:
+            case Z_LINK_CAP_MULTICAST_STREAM:
                 if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_zbuf_compact(&ztu->_zbuf);
-                    ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
-                    continue;
+                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                        _z_zbuf_compact(&ztu->_zbuf);
+                        ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
+                        continue;
+                    }
                 }
-            }
-
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-            }
-
-            if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
+                }
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                    _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
-                    _z_zbuf_compact(&ztu->_zbuf);
-                    ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
-                    continue;
+                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
+                        _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                        _z_zbuf_compact(&ztu->_zbuf);
+                        ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
+                        continue;
+                    }
                 }
-            }
-        } else {
-            _z_zbuf_compact(&ztu->_zbuf);
-            to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
-            if (to_read == SIZE_MAX) {
-                ret = _Z_ERR_TRANSPORT_RX_FAILED;
-            }
+                break;
+            // Datagram capable links
+            case Z_LINK_CAP_UNICAST_DATAGRAM:
+            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+                _z_zbuf_compact(&ztu->_zbuf);
+                to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                if (to_read == SIZE_MAX) {
+                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
+                }
+                break;
+            default:
+                break;
         }
     } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
 
