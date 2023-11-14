@@ -27,14 +27,23 @@
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _Bool is_streamed) {
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
     _z_wbuf_reset(buf);
 
-    if (is_streamed == true) {
-        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            _z_wbuf_put(buf, 0, i);
-        }
-        _z_wbuf_set_wpos(buf, _Z_MSG_LEN_ENC_SIZE);
+    switch (link_capabilities) {
+        // Stream capable links
+        case Z_LINK_CAP_UNICAST_STREAM:
+        case Z_LINK_CAP_MULTICAST_STREAM:
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                _z_wbuf_put(buf, 0, i);
+            }
+            _z_wbuf_set_wpos(buf, _Z_MSG_LEN_ENC_SIZE);
+            break;
+        // Datagram capable links
+        case Z_LINK_CAP_UNICAST_DATAGRAM:
+        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        default:
+            break;
     }
 }
 
@@ -43,12 +52,21 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _Bool is_streamed) {
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _Bool is_streamed) {
-    if (is_streamed == true) {
-        size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
-        for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-            _z_wbuf_put(buf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
-        }
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
+    switch (link_capabilities) {
+        // Stream capable links
+        case Z_LINK_CAP_UNICAST_STREAM:
+        case Z_LINK_CAP_MULTICAST_STREAM:
+            size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
+            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                _z_wbuf_put(buf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
+            }
+            break;
+        // Datagram capable links
+        case Z_LINK_CAP_UNICAST_DATAGRAM:
+        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        default:
+            break;
     }
 }
 
