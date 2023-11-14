@@ -36,7 +36,7 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     return ret;
 }
 
-int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     // Attach task
@@ -50,7 +50,7 @@ int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_tas
     return _Z_RES_OK;
 }
 
-int _zp_unicast_stop_read_task(_z_transport_t *zt) {
+int8_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
     zt->_transport._unicast._read_task_running = false;
     return _Z_RES_OK;
 }
@@ -136,14 +136,14 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int _zp_unicast_stop_read_task(_z_transport_t *zt) {
+int8_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }

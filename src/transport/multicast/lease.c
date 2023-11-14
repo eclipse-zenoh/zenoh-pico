@@ -69,7 +69,7 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     return ret;
 }
 
-int _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     // Attach task
@@ -83,7 +83,7 @@ int _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_
     return _Z_RES_OK;
 }
 
-int _zp_multicast_stop_lease_task(_z_transport_t *zt) {
+int8_t _zp_multicast_stop_lease_task(_z_transport_t *zt) {
     zt->_transport._multicast._lease_task_running = false;
     return _Z_RES_OK;
 }
@@ -189,14 +189,14 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int _zp_multicast_stop_lease_task(_z_transport_t *zt) {
+int8_t _zp_multicast_stop_lease_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }

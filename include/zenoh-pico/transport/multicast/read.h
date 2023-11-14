@@ -18,8 +18,8 @@
 #include "zenoh-pico/transport/transport.h"
 
 int8_t _zp_multicast_read(_z_transport_multicast_t *ztm);
-int _zp_multicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task);
-int _zp_multicast_stop_read_task(_z_transport_t *zt);
+int8_t _zp_multicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task);
+int8_t _zp_multicast_stop_read_task(_z_transport_t *zt);
 void *_zp_multicast_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_TASK_READ_H */
