@@ -46,21 +46,16 @@
  * Link capabilities values, defined as a bitmask.
  *
  * Enumerators:
- *     Z_LINK_CAPABILITY_NONE: Bitmask to define that link has no capabilities.
- *     Z_LINK_CAPABILITY_RELIABLE: Bitmask to define and check if link is reliable.
- *     Z_LINK_CAPABILITY_STREAMED: Bitmask to define and check if link is streamed.
- *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
+ *     Z_LINK_CAP_UNICAST_STREAM: Link has unicast stream capabilities.
+ *     Z_LINK_CAP_UNICAST_DATAGRAM: Link has unicast datagram capabilities.
+ *     Z_LINK_CAP_MULTICAST_DATAGRAM: Link has multicast datagram capabilities.
  */
 typedef enum {
-    Z_LINK_CAPABILITY_NONE = 0x00,      // 0
-    Z_LINK_CAPABILITY_RELIABLE = 0x01,  // 1 << 0
-    Z_LINK_CAPABILITY_STREAMED = 0x02,  // 1 << 1
-    Z_LINK_CAPABILITY_MULTICAST = 0x04  // 1 << 2
+    Z_LINK_CAP_UNICAST_STREAM = 0,
+    Z_LINK_CAP_UNICAST_DATAGRAM,
+    Z_LINK_CAP_MULTICAST_STREAM,
+    Z_LINK_CAP_MULTICAST_DATAGRAM,
 } _z_link_capabilities_t;
-
-#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIABLE) == Z_LINK_CAPABILITY_RELIABLE)
-#define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
-#define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
 
@@ -105,6 +100,7 @@ typedef struct _z_link_t {
 
     uint16_t _mtu;
     uint8_t _capabilities;
+    bool _is_reliable;
 } _z_link_t;
 
 void _z_link_clear(_z_link_t *zl);
