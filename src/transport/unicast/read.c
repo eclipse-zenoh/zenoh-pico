@@ -12,13 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/read.h"
+#include "zenoh-pico/transport/unicast/read.h"
 
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
-#include "zenoh-pico/transport/link/rx.h"
+#include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
@@ -34,6 +34,25 @@ int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     }
 
     return ret;
+}
+
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    // Init memory
+    (void)memset(task, 0, sizeof(_z_task_t));
+    // Attach task
+    zt->_transport._unicast._read_task = task;
+    zt->_transport._unicast._read_task_running = true;
+    // Init task
+    if (_z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
+        zt->_transport._unicast._read_task_running = false;
+        return _Z_ERR_SYSTEM_TASK_FAILED;
+    }
+    return _Z_RES_OK;
+}
+
+int8_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
+    zt->_transport._unicast._read_task_running = false;
+    return _Z_RES_OK;
 }
 
 void *_zp_unicast_read_task(void *ztu_arg) {
@@ -111,5 +130,26 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
     return NULL;
 }
+#else
+int8_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
+    _ZP_UNUSED(ztu);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    _ZP_UNUSED(zt);
+    _ZP_UNUSED(attr);
+    _ZP_UNUSED(task);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+int8_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
+    _ZP_UNUSED(zt);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+void *_zp_unicast_read_task(void *ztu_arg) {
+    _ZP_UNUSED(ztu_arg);
+    return NULL;
+}
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

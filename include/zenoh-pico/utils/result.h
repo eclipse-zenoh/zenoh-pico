@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_UTILS_RESULT_H
 #define ZENOH_PICO_UTILS_RESULT_H
 
+#define _ZP_UNUSED(x) (void)(x)
+
 #define _Z_ERR_MESSAGE_MASK 0x88
 #define _Z_ERR_ENTITY_MASK 0x90
 #define _Z_ERR_TRANSPORT_MASK 0x98

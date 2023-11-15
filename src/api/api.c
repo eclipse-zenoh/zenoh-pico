@@ -33,6 +33,8 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/multicast.h"
+#include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
@@ -542,45 +544,40 @@ int8_t z_close(z_owned_session_t *zs) {
 }
 
 int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+    // Call transport function
+    switch (zs._val->_tp._type) {
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            _zp_multicast_fetch_zid(&zs._val->_tp, callback);
+            break;
+        default:
+            break;
+    }
+    // Note and clear context
     void *ctx = callback->context;
     callback->context = NULL;
-
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-    if (zs._val->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        _z_transport_peer_entry_list_t *l = zs._val->_tp._transport._multicast._peers;
-        for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
-            _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-            z_id_t id = val->_remote_zid;
-
-            callback->call(&id, ctx);
-        }
-    }
-#else
-    (void)zs;
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-
+    // Drop if needed
     if (callback->drop != NULL) {
         callback->drop(ctx);
     }
-
     return 0;
 }
 
 int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+    // Call transport function
+    switch (zs._val->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            _zp_unicast_fetch_zid(&zs._val->_tp, callback);
+            break;
+        default:
+            break;
+    }
+    // Note and clear context
     void *ctx = callback->context;
     callback->context = NULL;
-
-#if Z_FEATURE_UNICAST_TRANSPORT == 1
-    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        z_id_t id = zs._val->_tp._transport._unicast._remote_zid;
-        callback->call(&id, ctx);
-    }
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
+    // Drop if needed
     if (callback->drop != NULL) {
         callback->drop(ctx);
     }
-
     return 0;
 }
 
@@ -641,17 +638,13 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     z_publisher_options_t opt = z_publisher_options_default();
     if (options != NULL) {
@@ -801,17 +794,13 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     z_queryable_options_t opt = z_queryable_options_default();
     if (options != NULL) {
@@ -908,9 +897,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             char *wild = strpbrk(keyexpr._suffix, "*$");
@@ -933,9 +920,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
                 key = _z_rid_with_suffix(id, wild);
             }
         }
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     _z_subinfo_t subinfo = _z_subinfo_push_default();
     if (options != NULL) {

@@ -12,9 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/lease.h"
+#include "zenoh-pico/transport/unicast/lease.h"
 
-#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/unicast/transport.h"
+#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
@@ -26,6 +27,25 @@ int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     ret = _z_unicast_send_t_msg(ztu, &t_msg);
 
     return ret;
+}
+
+int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    // Init memory
+    (void)memset(task, 0, sizeof(_z_task_t));
+    // Attach task
+    zt->_transport._unicast._lease_task = task;
+    zt->_transport._unicast._lease_task_running = true;
+    // Init task
+    if (_z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
+        zt->_transport._unicast._lease_task_running = false;
+        return _Z_ERR_SYSTEM_TASK_FAILED;
+    }
+    return _Z_RES_OK;
+}
+
+int8_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
+    zt->_transport._unicast._lease_task_running = false;
+    return _Z_RES_OK;
 }
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
@@ -46,7 +66,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             } else {
                 _Z_INFO("Closing session because it has expired after %zums\n", ztu->_lease);
                 ztu->_lease_task_running = false;
-                _z_transport_unicast_close(ztu, _Z_CLOSE_EXPIRED);
+                _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
                 break;
             }
 
@@ -87,5 +107,26 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
     return 0;
 }
+#else
+int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+    _ZP_UNUSED(ztu);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+    _ZP_UNUSED(zt);
+    _ZP_UNUSED(attr);
+    _ZP_UNUSED(task);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+int8_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
+    _ZP_UNUSED(zt);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+void *_zp_unicast_lease_task(void *ztu_arg) {
+    _ZP_UNUSED(ztu_arg);
+    return NULL;
+}
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

@@ -12,10 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/task/join.h"
+#include "zenoh-pico/transport/multicast/join.h"
 
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
@@ -30,5 +30,9 @@ int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
 
     return _z_multicast_send_t_msg(ztm, &jsm);
 }
-
+#else
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

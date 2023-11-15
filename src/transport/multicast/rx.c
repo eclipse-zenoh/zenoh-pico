@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/rx.h"
+#include "zenoh-pico/transport/multicast/rx.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -319,5 +319,19 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
     return ret;
 }
+#else
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+    _ZP_UNUSED(ztm);
+    _ZP_UNUSED(t_msg);
+    _ZP_UNUSED(addr);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
+                                             _z_bytes_t *addr) {
+    _ZP_UNUSED(ztm);
+    _ZP_UNUSED(t_msg);
+    _ZP_UNUSED(addr);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

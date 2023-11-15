@@ -18,8 +18,6 @@
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/string.h"
 
-#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-
 #define UDP_CONFIG_ARGC 3
 
 #define UDP_CONFIG_IFACE_KEY 0x01
@@ -31,6 +29,7 @@
 #define UDP_CONFIG_JOIN_KEY 0x03
 #define UDP_CONFIG_JOIN_STR "join"
 
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 #define UDP_CONFIG_MAPPING_BUILD               \
     _z_str_intmapping_t args[UDP_CONFIG_ARGC]; \
     args[0]._key = UDP_CONFIG_IFACE_KEY;       \

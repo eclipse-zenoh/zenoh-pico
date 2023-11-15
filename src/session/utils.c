@@ -74,26 +74,24 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 
 #if Z_FEATURE_MULTI_THREAD == 1
     ret = _z_mutex_init(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-    if (ret == _Z_RES_OK) {
-        zn->_local_zid = *zid;
-#if Z_FEATURE_UNICAST_TRANSPORT == 1
-        if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-            zn->_tp._transport._unicast._session = zn;
-        } else
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
-            if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-            zn->_tp._transport._multicast._session = zn;
-        } else
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
-        {
-            // Do nothing. Required to be here because of the #if directive
-        }
-    } else {
+    if (ret != _Z_RES_OK) {
         _z_transport_clear(&zn->_tp);
+        return ret;
     }
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
+    zn->_local_zid = *zid;
+    // Note session in transport
+    switch (zn->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            zn->_tp._transport._unicast._session = zn;
+            break;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            zn->_tp._transport._multicast._session = zn;
+            break;
+        default:
+            break;
+    }
     return ret;
 }
 

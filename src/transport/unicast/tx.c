@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/link/tx.h"
+#include "zenoh-pico/transport/unicast/tx.h"
 
 #include <assert.h>
 
@@ -20,6 +20,7 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -161,5 +162,19 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
 
     return ret;
 }
+#else
+int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
+    _ZP_UNUSED(ztu);
+    _ZP_UNUSED(t_msg);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                             z_congestion_control_t cong_ctrl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(n_msg);
+    _ZP_UNUSED(reliability);
+    _ZP_UNUSED(cong_ctrl);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

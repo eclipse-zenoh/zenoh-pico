@@ -164,28 +164,8 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
-int8_t _z_transport_unicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_unicast_establish_param_t *param);
-int8_t _z_transport_multicast(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
-
-int8_t _z_transport_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_id_t *local_zid);
-int8_t _z_transport_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                          const _z_id_t *local_zid);
-int8_t _z_transport_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                      const _z_id_t *local_zid);
-int8_t _z_transport_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                        const _z_id_t *local_zid);
-
 int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
-int8_t _z_transport_unicast_close(_z_transport_unicast_t *ztu, uint8_t reason);
-int8_t _z_transport_multicast_close(_z_transport_multicast_t *ztm, uint8_t reason);
-
-void _z_transport_unicast_clear(_z_transport_unicast_t *ztu);
-void _z_transport_multicast_clear(_z_transport_multicast_t *ztm);
-
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
-void _z_transport_unicast_free(_z_transport_unicast_t **ztu);
-void _z_transport_multicast_free(_z_transport_multicast_t **ztm);
 
 #endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

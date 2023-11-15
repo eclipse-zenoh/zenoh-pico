@@ -18,6 +18,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SCOUTING_UDP == 1 && Z_FEATURE_LINK_UDP_UNICAST == 0
@@ -140,13 +141,7 @@ _z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *lo
     _z_scouting_message_encode(&wbf, &scout);
 
     // Scout on multicast
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     ret = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
-#else
-    (void)(locator);
-    (void)(timeout);
-    (void)(exit_on_first);
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
     _z_wbuf_clear(&wbf);
 
