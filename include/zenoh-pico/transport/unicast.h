@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/api/types.h"
 
-bool _zp_is_unicast_here(void);
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback);
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
 

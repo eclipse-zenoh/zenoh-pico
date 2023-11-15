@@ -30,8 +30,6 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
-bool _zp_is_multicast_here(void) { return true; }
-
 void _zp_multicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
     void *ctx = callback->context;
     _z_transport_peer_entry_list_t *l = zt->_transport._multicast._peers;
@@ -55,8 +53,6 @@ void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
 }
 
 #else
-bool _zp_is_multicast_here(void) { return false; }
-
 void _zp_multicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(callback);

@@ -141,9 +141,8 @@ _z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *lo
     _z_scouting_message_encode(&wbf, &scout);
 
     // Scout on multicast
-    if (_zp_is_multicast_here()) {
-        ret = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
-    }
+    ret = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
+
     _z_wbuf_clear(&wbf);
 
     return ret;
