@@ -53,9 +53,9 @@
  */
 typedef enum {
     Z_LINK_CAP_UNICAST_STREAM = 0,
-    Z_LINK_CAP_UNICAST_DATAGRAM,
-    Z_LINK_CAP_MULTICAST_STREAM,
-    Z_LINK_CAP_MULTICAST_DATAGRAM,
+    Z_LINK_CAP_UNICAST_DATAGRAM = 1,
+    Z_LINK_CAP_MULTICAST_STREAM = 2,
+    Z_LINK_CAP_MULTICAST_DATAGRAM = 3,
 } _z_link_capabilities_t;
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
