@@ -27,10 +27,10 @@
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow) {
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability) {
     _z_wbuf_reset(buf);
 
-    switch (flow) {
+    switch (link_flow_capability) {
         // Stream capable links
         case Z_LINK_CAP_FLOW_STREAM:
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
@@ -50,8 +50,8 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow) {
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow) {
-    switch (flow) {
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability) {
+    switch (link_flow_capability) {
         // Stream capable links
         case Z_LINK_CAP_FLOW_STREAM: {
             size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;

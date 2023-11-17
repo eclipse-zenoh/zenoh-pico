@@ -19,8 +19,8 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
-void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow);
-void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow);
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
 /*This function is unsafe because it operates in potentially concurrent
         data.*Make sure that the following mutexes are locked before calling this function : *-ztu->mutex_tx */
 int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
