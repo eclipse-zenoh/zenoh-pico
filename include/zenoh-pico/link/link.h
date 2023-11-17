@@ -76,10 +76,10 @@ typedef enum {
  *     reserved: 4 bits, reserved for futur use
  */
 typedef struct _z_link_capabilities_t {
-    _z_link_cap_transport_t _transport: 2;
-    _z_link_cap_flow_t _flow: 1;
-    _Bool _is_reliable: 1;
-    uint8_t _reserved: 4;
+    _z_link_cap_transport_t _transport : 2;
+    _z_link_cap_flow_t _flow : 1;
+    _Bool _is_reliable : 1;
+    uint8_t _reserved : 4;
 } _z_link_capabilities_t;
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
