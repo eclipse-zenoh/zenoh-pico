@@ -53,13 +53,11 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
         size_t dbuf_size = 0;
         _Bool expandable = false;
 
-        switch (zl->_capabilities) {
-            case Z_LINK_CAP_UNICAST_STREAM:
-            case Z_LINK_CAP_MULTICAST_STREAM:
+        switch (zl->_cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM:
                 expandable = true;
                 break;
-            case Z_LINK_CAP_UNICAST_DATAGRAM:
-            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+            case Z_LINK_CAP_FLOW_DATAGRAM:
             default:
                 expandable = false;
                 break;

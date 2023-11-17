@@ -27,21 +27,19 @@
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
+void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow) {
     _z_wbuf_reset(buf);
 
-    switch (link_capabilities) {
+    switch (flow) {
         // Stream capable links
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM:
+        case Z_LINK_CAP_FLOW_STREAM:
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 _z_wbuf_put(buf, 0, i);
             }
             _z_wbuf_set_wpos(buf, _Z_MSG_LEN_ENC_SIZE);
             break;
         // Datagram capable links
-        case Z_LINK_CAP_UNICAST_DATAGRAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        case Z_LINK_CAP_FLOW_DATAGRAM:
         default:
             break;
     }
@@ -52,11 +50,10 @@ void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztu->mutex_tx
  */
-void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
-    switch (link_capabilities) {
+void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, _z_link_cap_flow_t flow) {
+    switch (flow) {
         // Stream capable links
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM: {
+        case Z_LINK_CAP_FLOW_STREAM: {
             size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 _z_wbuf_put(buf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
@@ -64,8 +61,7 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_capabilities) {
             break;
         }
         // Datagram capable links
-        case Z_LINK_CAP_UNICAST_DATAGRAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        case Z_LINK_CAP_FLOW_DATAGRAM:
         default:
             break;
     }
@@ -94,18 +90,14 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
     _z_wbuf_t wbf = _z_wbuf_make(mtu, false);
 
-    switch (zl->_capabilities) {
-        // Stream capable links
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM:
+    switch (zl->_cap._flow) {
+        case Z_LINK_CAP_FLOW_STREAM:
             for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                 _z_wbuf_put(&wbf, 0, i);
             }
             _z_wbuf_set_wpos(&wbf, _Z_MSG_LEN_ENC_SIZE);
             break;
-        // Datagram capable links
-        case Z_LINK_CAP_UNICAST_DATAGRAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        case Z_LINK_CAP_FLOW_DATAGRAM:
             break;
         default:
             ret = _Z_ERR_GENERIC;
@@ -114,10 +106,8 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     // Encode the session message
     ret = _z_transport_message_encode(&wbf, t_msg);
     if (ret == _Z_RES_OK) {
-        switch (zl->_capabilities) {
-            // Stream capable links
-            case Z_LINK_CAP_UNICAST_STREAM:
-            case Z_LINK_CAP_MULTICAST_STREAM: {
+        switch (zl->_cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM: {
                 // Write the message length in the reserved space if needed
                 size_t len = _z_wbuf_len(&wbf) - _Z_MSG_LEN_ENC_SIZE;
                 for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
@@ -125,9 +115,7 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
                 }
                 break;
             }
-            // Datagram capable links
-            case Z_LINK_CAP_UNICAST_DATAGRAM:
-            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+            case Z_LINK_CAP_FLOW_DATAGRAM:
                 break;
             default:
                 ret = _Z_ERR_GENERIC;

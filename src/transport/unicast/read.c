@@ -68,10 +68,8 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     while (ztu->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        switch (ztu->_link._capabilities) {
-            // Stream capable links
-            case Z_LINK_CAP_UNICAST_STREAM:
-            case Z_LINK_CAP_MULTICAST_STREAM:
+        switch (ztu->_link._cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -93,9 +91,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                     }
                 }
                 break;
-            // Datagram capable links
-            case Z_LINK_CAP_UNICAST_DATAGRAM:
-            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+            case Z_LINK_CAP_FLOW_DATAGRAM:
                 _z_zbuf_compact(&ztu->_zbuf);
                 to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                 if (to_read == SIZE_MAX) {

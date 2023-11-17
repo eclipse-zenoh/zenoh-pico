@@ -59,10 +59,8 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
 
     size_t to_read = 0;
     do {
-        switch (ztm->_link._capabilities) {
-            // Stream capable links
-            case Z_LINK_CAP_UNICAST_STREAM:
-            case Z_LINK_CAP_MULTICAST_STREAM:
+        switch (ztm->_link._cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -85,8 +83,7 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
                 }
                 break;
             // Datagram capable links
-            case Z_LINK_CAP_UNICAST_DATAGRAM:
-            case Z_LINK_CAP_MULTICAST_DATAGRAM:
+            case Z_LINK_CAP_FLOW_DATAGRAM:
                 _z_zbuf_compact(&ztm->_zbuf);
                 to_read = _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
                 if (to_read == SIZE_MAX) {

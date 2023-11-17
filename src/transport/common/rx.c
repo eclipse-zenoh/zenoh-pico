@@ -28,10 +28,8 @@ int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
     _z_zbuf_reset(&zbf);
 
-    switch (zl->_capabilities) {
-        // Stream capable links
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM:
+    switch (zl->_cap._flow) {
+        case Z_LINK_CAP_FLOW_STREAM:
             // Read the message length
             if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) == _Z_MSG_LEN_ENC_SIZE) {
                 size_t len = 0;
@@ -52,9 +50,7 @@ int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
             break;
-        // Datagram capable links
-        case Z_LINK_CAP_UNICAST_DATAGRAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        case Z_LINK_CAP_FLOW_DATAGRAM:
             if (_z_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX) {
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }

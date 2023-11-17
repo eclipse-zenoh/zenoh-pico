@@ -31,10 +31,9 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local
         return ret;
     }
     // Open transport
-    switch (zl._capabilities) {
+    switch (zl._cap._transport) {
         // Unicast transport
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_UNICAST_DATAGRAM: {
+        case Z_LINK_CAP_TRANSPORT_UNICAST: {
             _z_transport_unicast_establish_param_t tp_param;
             ret = _z_unicast_open_client(&tp_param, &zl, local_zid);
             if (ret != _Z_RES_OK) {
@@ -45,8 +44,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local
             break;
         }
         // Multicast transport
-        case Z_LINK_CAP_MULTICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM: {
+        case Z_LINK_CAP_TRANSPORT_MULTICAST: {
             _z_transport_multicast_establish_param_t tp_param;
             ret = _z_multicast_open_client(&tp_param, &zl, local_zid);
             if (ret != _Z_RES_OK) {
@@ -73,10 +71,8 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_z
     if (ret != _Z_RES_OK) {
         return ret;
     }
-    switch (zl._capabilities) {
-        // Unicast capable links
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_UNICAST_DATAGRAM: {
+    switch (zl._cap._transport) {
+        case Z_LINK_CAP_TRANSPORT_UNICAST: {
             _z_transport_unicast_establish_param_t tp_param;
             ret = _z_unicast_open_peer(&tp_param, &zl, local_zid);
             if (ret != _Z_RES_OK) {
@@ -86,9 +82,7 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_z
             ret = _z_unicast_transport_create(zt, &zl, &tp_param);
             break;
         }
-        // Multicast capable links
-        case Z_LINK_CAP_MULTICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM: {
+        case Z_LINK_CAP_TRANSPORT_MULTICAST: {
             _z_transport_multicast_establish_param_t tp_param;
             ret = _z_multicast_open_peer(&tp_param, &zl, local_zid);
             if (ret != _Z_RES_OK) {
