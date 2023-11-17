@@ -26,7 +26,12 @@
 #else
 #include <atomic>
 #define z_atomic(X) std::atomic<X>
-using namespace std;
+#define atomic_store_explicit std::atomic_store_explicit
+#define atomic_fetch_add_explicit std::atomic_fetch_add_explicit
+#define atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
+#define memory_order_acquire std::memory_order_acquire
+#define memory_order_release std::memory_order_release
+#define memory_order_relaxed std::memory_order_relaxed
 #endif
 
 /*------------------ Internal Array Macros ------------------*/
