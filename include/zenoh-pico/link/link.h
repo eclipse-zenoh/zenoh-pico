@@ -43,19 +43,43 @@
 #include "zenoh-pico/utils/result.h"
 
 /**
- * Link capabilities values, defined as a bitmask.
+ * Link transport capability enum.
  *
  * Enumerators:
- *     Z_LINK_CAP_UNICAST_STREAM: Link has unicast stream capabilities.
- *     Z_LINK_CAP_UNICAST_DATAGRAM: Link has unicast datagram capabilities.
- *     Z_LINK_CAP_MULTICAST_STREAM: Link has multicast stream capabilities.
- *     Z_LINK_CAP_MULTICAST_DATAGRAM: Link has multicast datagram capabilities.
+ *     Z_LINK_CAP_TRANSPORT_UNICAST: Link has unicast capabilities.
+ *     Z_LINK_CAP_TRANSPORT_MULTICAST: Link has multicast capabilities.
  */
 typedef enum {
-    Z_LINK_CAP_UNICAST_STREAM = 0,
-    Z_LINK_CAP_UNICAST_DATAGRAM = 1,
-    Z_LINK_CAP_MULTICAST_STREAM = 2,
-    Z_LINK_CAP_MULTICAST_DATAGRAM = 3,
+    Z_LINK_CAP_TRANSPORT_UNICAST = 0,
+    Z_LINK_CAP_TRANSPORT_MULTICAST = 1,
+} _z_link_cap_transport_t;
+
+/**
+ * Link flow capability enum.
+ *
+ * Enumerators:
+ *     Z_LINK_CAP_FLOW_STREAM: Link use datagrams.
+ *     Z_LINK_CAP_FLOW_DATAGRAM: Link use byte stream.
+ */
+typedef enum {
+    Z_LINK_CAP_FLOW_DATAGRAM = 0,
+    Z_LINK_CAP_FLOW_STREAM = 1,
+} _z_link_cap_flow_t;
+
+/**
+ * Link capabilities, stored as a register-like object.
+ *
+ * Fields:
+ *     transport: 2 bits, see _z_link_cap_transport_t enum.
+ *     flow: 1 bit, see _z_link_cap_flow_t enum.
+ *     reliable: 1 bit, 1 if the link is reliable (network definition)
+ *     reserved: 4 bits, reserved for futur use
+ */
+typedef struct _z_link_capabilities_t {
+    _z_link_cap_transport_t _transport: 2;
+    _z_link_cap_flow_t _flow: 1;
+    _Bool _is_reliable: 1;
+    uint8_t _reserved: 4;
 } _z_link_capabilities_t;
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
@@ -100,8 +124,7 @@ typedef struct _z_link_t {
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
-    uint8_t _capabilities;
-    bool _is_reliable;
+    _z_link_capabilities_t _cap;
 } _z_link_t;
 
 void _z_link_clear(_z_link_t *zl);
