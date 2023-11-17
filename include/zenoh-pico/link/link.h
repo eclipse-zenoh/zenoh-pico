@@ -43,24 +43,44 @@
 #include "zenoh-pico/utils/result.h"
 
 /**
- * Link capabilities values, defined as a bitmask.
+ * Link transport capability enum.
  *
  * Enumerators:
- *     Z_LINK_CAPABILITY_NONE: Bitmask to define that link has no capabilities.
- *     Z_LINK_CAPABILITY_RELIABLE: Bitmask to define and check if link is reliable.
- *     Z_LINK_CAPABILITY_STREAMED: Bitmask to define and check if link is streamed.
- *     Z_LINK_CAPABILITY_MULTICAST: Bitmask to define and check if link is multicast.
+ *     Z_LINK_CAP_TRANSPORT_UNICAST: Link has unicast capabilities.
+ *     Z_LINK_CAP_TRANSPORT_MULTICAST: Link has multicast capabilities.
  */
 typedef enum {
-    Z_LINK_CAPABILITY_NONE = 0x00,      // 0
-    Z_LINK_CAPABILITY_RELIABLE = 0x01,  // 1 << 0
-    Z_LINK_CAPABILITY_STREAMED = 0x02,  // 1 << 1
-    Z_LINK_CAPABILITY_MULTICAST = 0x04  // 1 << 2
-} _z_link_capabilities_t;
+    Z_LINK_CAP_TRANSPORT_UNICAST = 0,
+    Z_LINK_CAP_TRANSPORT_MULTICAST = 1,
+} _z_link_cap_transport_t;
 
-#define _Z_LINK_IS_RELIABLE(X) ((X & Z_LINK_CAPABILITY_RELIABLE) == Z_LINK_CAPABILITY_RELIABLE)
-#define _Z_LINK_IS_STREAMED(X) ((X & Z_LINK_CAPABILITY_STREAMED) == Z_LINK_CAPABILITY_STREAMED)
-#define _Z_LINK_IS_MULTICAST(X) ((X & Z_LINK_CAPABILITY_MULTICAST) == Z_LINK_CAPABILITY_MULTICAST)
+/**
+ * Link flow capability enum.
+ *
+ * Enumerators:
+ *     Z_LINK_CAP_FLOW_STREAM: Link use datagrams.
+ *     Z_LINK_CAP_FLOW_DATAGRAM: Link use byte stream.
+ */
+typedef enum {
+    Z_LINK_CAP_FLOW_DATAGRAM = 0,
+    Z_LINK_CAP_FLOW_STREAM = 1,
+} _z_link_cap_flow_t;
+
+/**
+ * Link capabilities, stored as a register-like object.
+ *
+ * Fields:
+ *     transport: 2 bits, see _z_link_cap_transport_t enum.
+ *     flow: 1 bit, see _z_link_cap_flow_t enum.
+ *     reliable: 1 bit, 1 if the link is reliable (network definition)
+ *     reserved: 4 bits, reserved for futur use
+ */
+typedef struct _z_link_capabilities_t {
+    uint8_t _transport : 2;
+    uint8_t _flow : 1;
+    uint8_t _is_reliable : 1;
+    uint8_t _reserved : 4;
+} _z_link_capabilities_t;
 
 struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
 
@@ -104,7 +124,7 @@ typedef struct _z_link_t {
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
-    uint8_t _capabilities;
+    _z_link_capabilities_t _cap;
 } _z_link_t;
 
 void _z_link_clear(_z_link_t *zl);

@@ -50,8 +50,18 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
-        _Bool expandable = _Z_LINK_IS_STREAMED(zl->_capabilities);
         size_t dbuf_size = 0;
+        _Bool expandable = false;
+
+        switch (zl->_cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM:
+                expandable = true;
+                break;
+            case Z_LINK_CAP_FLOW_DATAGRAM:
+            default:
+                expandable = false;
+                break;
+        }
 
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
         expandable = false;

@@ -171,7 +171,10 @@ uint16_t _z_get_link_mtu_udp_multicast(void) {
 int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAPABILITY_MULTICAST;
+    zl->_cap._transport = Z_LINK_CAP_TRANSPORT_MULTICAST;
+    zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;
+    zl->_cap._is_reliable = false;
+
     zl->_mtu = _z_get_link_mtu_udp_multicast();
 
     zl->_endpoint = endpoint;

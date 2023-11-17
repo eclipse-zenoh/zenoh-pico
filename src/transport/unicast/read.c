@@ -68,35 +68,39 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     while (ztu->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
-        if (_Z_LINK_IS_STREAMED(ztu->_link._capabilities) == true) {
-            if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+        switch (ztu->_link._cap._flow) {
+            case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_zbuf_compact(&ztu->_zbuf);
-                    continue;
+                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                        _z_zbuf_compact(&ztu->_zbuf);
+                        continue;
+                    }
                 }
-            }
 
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-            }
+                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
+                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
+                }
 
-            if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                    _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
-                    _z_zbuf_compact(&ztu->_zbuf);
+                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
+                        _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                        _z_zbuf_compact(&ztu->_zbuf);
+                        continue;
+                    }
+                }
+                break;
+            case Z_LINK_CAP_FLOW_DATAGRAM:
+                _z_zbuf_compact(&ztu->_zbuf);
+                to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                if (to_read == SIZE_MAX) {
                     continue;
                 }
-            }
-        } else {
-            _z_zbuf_compact(&ztu->_zbuf);
-            to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
-            if (to_read == SIZE_MAX) {
-                continue;
-            }
+                break;
+            default:
+                break;
         }
-
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_zbuf, to_read);
 
