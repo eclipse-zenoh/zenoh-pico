@@ -150,13 +150,11 @@ int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     int8_t ret = _Z_RES_OK;
     _Bool link_is_streamed = false;
 
-    switch (link->_capabilities) {
-        case Z_LINK_CAP_UNICAST_STREAM:
-        case Z_LINK_CAP_MULTICAST_STREAM:
+    switch (link->_cap._flow) {
+        case Z_LINK_CAP_FLOW_STREAM:
             link_is_streamed = true;
             break;
-        case Z_LINK_CAP_UNICAST_DATAGRAM:
-        case Z_LINK_CAP_MULTICAST_DATAGRAM:
+        case Z_LINK_CAP_FLOW_DATAGRAM:
         default:
             link_is_streamed = false;
             break;

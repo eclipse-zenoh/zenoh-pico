@@ -156,8 +156,10 @@ uint16_t _z_get_link_mtu_tcp(void) {
 int8_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    zl->_capabilities = Z_LINK_CAP_UNICAST_STREAM;
-    zl->_is_reliable = true;
+    zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
+    zl->_cap._flow = Z_LINK_CAP_FLOW_STREAM;
+    zl->_cap._is_reliable = true;
+
     zl->_mtu = _z_get_link_mtu_tcp();
 
     zl->_endpoint = *endpoint;
