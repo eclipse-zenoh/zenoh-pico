@@ -23,15 +23,21 @@
 #ifndef __cplusplus
 #include <stdatomic.h>
 #define z_atomic(X) _Atomic X
+#define _z_atomic_store_explicit atomic_store_explicit
+#define _z_atomic_fetch_add_explicit atomic_fetch_add_explicit
+#define _z_atomic_fetch_sub_explicit atomic_fetch_sub_explicit
+#define _z_memory_order_acquire memory_order_acquire
+#define _z_memory_order_release memory_order_release
+#define _z_memory_order_relaxed memory_order_relaxed
 #else
 #include <atomic>
 #define z_atomic(X) std::atomic<X>
-#define atomic_store_explicit std::atomic_store_explicit
-#define atomic_fetch_add_explicit std::atomic_fetch_add_explicit
-#define atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
-#define memory_order_acquire std::memory_order_acquire
-#define memory_order_release std::memory_order_release
-#define memory_order_relaxed std::memory_order_relaxed
+#define _z_atomic_store_explicit std::atomic_store_explicit
+#define _z_atomic_fetch_add_explicit std::atomic_fetch_add_explicit
+#define _z_atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
+#define _z_memory_order_acquire std::memory_order_acquire
+#define _z_memory_order_release std::memory_order_release
+#define _z_memory_order_relaxed std::memory_order_relaxed
 #endif
 
 /*------------------ Internal Array Macros ------------------*/
@@ -47,7 +53,7 @@
             p._cnt = (z_atomic(unsigned int) *)z_malloc(sizeof(z_atomic(unsigned int) *));      \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
-                atomic_store_explicit(p._cnt, 1, memory_order_relaxed);                         \
+                _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
             } else {                                                                            \
                 z_free(p.ptr);                                                                  \
             }                                                                                   \
@@ -58,7 +64,7 @@
         name##_sptr_t c;                                                                        \
         c._cnt = p->_cnt;                                                                       \
         c.ptr = p->ptr;                                                                         \
-        atomic_fetch_add_explicit(p->_cnt, 1, memory_order_relaxed);                            \
+        _z_atomic_fetch_add_explicit(p->_cnt, 1, _z_memory_order_relaxed);                         \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
@@ -66,7 +72,7 @@
         if (c != NULL) {                                                                        \
             c->_cnt = p->_cnt;                                                                  \
             c->ptr = p->ptr;                                                                    \
-            atomic_fetch_add_explicit(p->_cnt, 1, memory_order_relaxed);                        \
+            _z_atomic_fetch_add_explicit(p->_cnt, 1, _z_memory_order_relaxed);                  \
         }                                                                                       \
         return c;                                                                               \
     }                                                                                           \
@@ -76,10 +82,10 @@
     static inline _Bool name##_sptr_drop(name##_sptr_t *p) {                                    \
         _Bool dropped = false;                                                                  \
         if (p->_cnt != NULL) {                                                                  \
-            unsigned int c = atomic_fetch_sub_explicit(p->_cnt, 1, memory_order_release);       \
+            unsigned int c = _z_atomic_fetch_sub_explicit(p->_cnt, 1, _z_memory_order_release); \
             dropped = c == 1;                                                                   \
             if (dropped == true) {                                                              \
-                atomic_thread_fence(memory_order_acquire);                                      \
+                _z_atomic_thread_fence(_z_memory_order_acquire);                                \
                 if (p->ptr != NULL) {                                                           \
                     type##_clear(p->ptr);                                                       \
                     z_free(p->ptr);                                                             \
