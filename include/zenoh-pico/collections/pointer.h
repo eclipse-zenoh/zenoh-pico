@@ -85,7 +85,7 @@
             unsigned int c = _z_atomic_fetch_sub_explicit(p->_cnt, 1, _z_memory_order_release); \
             dropped = c == 1;                                                                   \
             if (dropped == true) {                                                              \
-                _z_atomic_thread_fence(_z_memory_order_acquire);                                \
+                atomic_thread_fence(_z_memory_order_acquire);                                \
                 if (p->ptr != NULL) {                                                           \
                     type##_clear(p->ptr);                                                       \
                     z_free(p->ptr);                                                             \
