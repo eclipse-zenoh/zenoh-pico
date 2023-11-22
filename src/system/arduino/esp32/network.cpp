@@ -858,4 +858,8 @@ size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t
 }
 #endif
 
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on ESP32 port of Zenoh-Pico"
+#endif
+
 }  // extern "C"

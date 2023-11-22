@@ -209,3 +209,15 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
 #error "UDP Multicast not supported yet on FreeRTOS-Plus-TCP port of Zenoh-Pico"
 #endif
+
+#if Z_FEATURE_LINK_BLUETOOTH == 1
+#error "Bluetooth not supported yet on FreeRTOS-Plus-TCP port of Zenoh-Pico"
+#endif
+
+#if Z_FEATURE_LINK_SERIAL == 1
+#error "Serial not supported yet on FreeRTOS-Plus-TCP port of Zenoh-Pico"
+#endif
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on FreeRTOS-Plus-TCP port of Zenoh-Pico"
+#endif

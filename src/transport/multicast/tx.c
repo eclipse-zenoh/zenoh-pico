@@ -155,8 +155,8 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 }
 
 #else
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztu, const _z_transport_message_t *t_msg) {
-    _ZP_UNUSED(ztu);
+int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+    _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }

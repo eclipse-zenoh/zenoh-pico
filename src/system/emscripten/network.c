@@ -173,3 +173,7 @@ size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len
 #if Z_FEATURE_LINK_SERIAL == 1
 #error "Serial not supported yet on Emscripten port of Zenoh-Pico"
 #endif
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on Emscripten port of Zenoh-Pico"
+#endif
