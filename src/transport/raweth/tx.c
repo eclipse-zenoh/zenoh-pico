@@ -52,7 +52,7 @@ static _z_zint_t __unsafe_z_raweth_get_sn(_z_transport_multicast_t *ztm, z_relia
  */
 static void __unsafe_z_raweth_prepare_header(_z_transport_multicast_t *ztm) {
     // Reserve space for ethernet header
-    if (&ztm->_link._socket._raweth.has_vlan) {
+    if (&ztm->_link._socket._raweth._has_vlan) {
         _z_wbuf_set_wpos(&ztm->_wbuf, sizeof(_zp_eth_vlan_header_t));
     } else {
         _z_wbuf_set_wpos(&ztm->_wbuf, sizeof(_zp_eth_header_t));
@@ -70,7 +70,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_transport_multicast_t *ztm) {
 
     // FIXME config function call to set the correct dmac & vlan value
     // Write eth header in buffer
-    if (resocket->has_vlan) {
+    if (resocket->_has_vlan) {
         _zp_eth_vlan_header_t header;
         memset(&header, 0, sizeof(header));
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);

@@ -27,6 +27,14 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
+static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
+    size_t rb = _z_receive_raweth(link->_socket._raweth._sock._fd, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
+    if (rb != SIZE_MAX) {
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    }
+    return rb;
+}
+
 _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
 
@@ -41,7 +49,6 @@ _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l,
             ret = val;
         }
     }
-
     return ret;
 }
 
@@ -60,7 +67,7 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
         switch (ztm->_link._cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
+                    _z_raweth_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztm->_zbuf);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;

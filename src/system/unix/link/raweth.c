@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/system/link/raweth.h"
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ifaddrs.h>
@@ -31,7 +33,6 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform/unix.h"
-#include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
@@ -103,6 +104,20 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
         return SIZE_MAX;
     }
     return (size_t)wb;
+}
+
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr) {
+    size_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
+    if (bytesRead < 0) {
+        return SIZE_MAX;
+    }
+    // Soft Filtering ?
+    // Copy sender mac if needed
+    if ((addr != NULL) && (bytesRead > 2 * ETH_ALEN)) {
+        *addr = _z_bytes_make(sizeof(ETH_ALEN));
+        (void)memcpy((uint8_t *)addr->start, &(buff + ETH_ALEN), sizeof(ETH_ALEN));
+    }
+    return bytesRead;
 }
 
 #endif

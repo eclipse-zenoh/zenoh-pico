@@ -58,15 +58,16 @@ typedef struct {
 typedef struct {
     void *_config; // Pointer to config data
     _z_sys_net_socket_t _sock;
-    uint16_t _vlan_val;
+    uint16_t _vlan;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     uint8_t _smac[_ZP_MAC_ADDR_LENGTH];
-    _Bool has_vlan;
+    _Bool _has_vlan;
 } _z_raweth_socket_t;
 
 int8_t _z_get_smac_raweth(_z_raweth_socket_t *resock);
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock);
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len);
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr);
 
 #endif
 
