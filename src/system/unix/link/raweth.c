@@ -17,7 +17,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ifaddrs.h>
-#include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -86,20 +85,8 @@ int8_t _z_open_raweth(_z_sys_net_socket_t *sock) {
 }
 
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len) {
-    struct sockaddr_ll saddr;
-    memset(&saddr, 0, sizeof(saddr));
-    saddr.sll_family = AF_PACKET;
-    saddr.sll_protocol = htons(ETH_P_ALL);
-    saddr.sll_halen = ETH_ALEN;
-
-    // Retrieve dmac from buff
-    if (buff_len < ETH_ALEN) {
-        return SIZE_MAX;
-    }
-    memcpy(&saddr.sll_addr, buff, ETH_ALEN);
-
     // Send data
-    ssize_t wb = sendto(sock->_fd, buff, buff_len, 0, (struct sockaddr *)&saddr, sizeof(saddr));
+    ssize_t wb = write(sock->_fd, buff, buff_len);
     if (wb < 0) {
         return SIZE_MAX;
     }
@@ -112,12 +99,12 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
         return SIZE_MAX;
     }
     // Soft Filtering ?
+
     // Copy sender mac if needed
     if ((addr != NULL) && (bytesRead > 2 * ETH_ALEN)) {
         *addr = _z_bytes_make(sizeof(ETH_ALEN));
         (void)memcpy((uint8_t *)addr->start, (buff + ETH_ALEN), sizeof(ETH_ALEN));
     }
-    // Dump ethernet header ?
     return bytesRead;
 }
 
