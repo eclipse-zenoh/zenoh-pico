@@ -133,9 +133,7 @@ static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, s
     return SIZE_MAX;
 }
 
-static uint16_t _z_get_link_mtu_raweth(void) {
-    return _ZP_MAX_ETH_FRAME_SIZE;
-}
+static uint16_t _z_get_link_mtu_raweth(void) { return _ZP_MAX_ETH_FRAME_SIZE; }
 
 int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
