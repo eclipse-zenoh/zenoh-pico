@@ -15,10 +15,7 @@
 #ifndef ZENOH_PICO_SYSTEM_LINK_RAWETH_H
 #define ZENOH_PICO_SYSTEM_LINK_RAWETH_H
 
-#include <linux/if_packet.h>
-#include <net/ethernet.h>
 #include <stdint.h>
-#include <sys/socket.h>
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/system/platform.h"
@@ -45,7 +42,7 @@ typedef struct {
 typedef struct {
     uint8_t dmac[_ZP_MAC_ADDR_LENGTH];  // Destination mac address
     uint8_t smac[_ZP_MAC_ADDR_LENGTH];  // Source mac address
-    uint16_t length;                // Size of frame
+    uint16_t length;                    // Size of frame
 } _zp_eth_header_t;
 
 typedef struct {
@@ -56,7 +53,7 @@ typedef struct {
 } _zp_eth_vlan_header_t;
 
 typedef struct {
-    void *_config; // Pointer to config data
+    void *_config;  // Pointer to config data
     _z_sys_net_socket_t _sock;
     uint16_t _vlan;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
