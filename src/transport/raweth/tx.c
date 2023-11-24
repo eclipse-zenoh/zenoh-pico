@@ -225,17 +225,17 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     switch (n_msg->_tag) {
         case _Z_N_PUSH:
             keyexpr = &n_msg->_body._push._key;
-        break;
+            break;
         case _Z_N_REQUEST:
             keyexpr = &n_msg->_body._request._key;
-        break;
+            break;
         case _Z_N_RESPONSE:
             keyexpr = &n_msg->_body._response._key;
-        break;
+            break;
         case _Z_N_RESPONSE_FINAL:
         case _Z_N_DECLARE:
         default:
-        break;
+            break;
     }
     // Set socket info
     _zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth);

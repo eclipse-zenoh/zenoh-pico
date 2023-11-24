@@ -17,10 +17,10 @@
 
 #include <stdbool.h>
 
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/result.h"
-#include "zenoh-pico/protocol/core.h"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
