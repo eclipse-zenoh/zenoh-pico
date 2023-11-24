@@ -28,9 +28,28 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
-    size_t rb = _z_receive_raweth(link->_socket._raweth._sock._fd, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
-    if (rb != SIZE_MAX) {
-        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    uint8_t *buff = _z_zbuf_get_wptr(zbf);
+    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr);
+    // Check validity
+    if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
+        return rb;
+    }
+    // Check if header has vlan
+    _Bool has_vlan = false;
+    _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+    if (header->length > _ZP_ETH_TYPE_CUTOFF) {
+        has_vlan = true;
+    }
+    // Check validity
+    if (has_vlan && (rb < sizeof(_zp_eth_vlan_header_t))) {
+        return rb;
+    }
+    // Update buffer but skip eth header
+    _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    if (has_vlan) {
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf) - (rb - sizeof(_zp_eth_vlan_header_t)));
+    } else {
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf) - (rb - sizeof(_zp_eth_header_t)));
     }
     return rb;
 }
@@ -117,7 +136,7 @@ int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_
 }
 
 int8_t _z_raweth_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                          _z_bytes_t *addr) {
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
@@ -337,10 +356,10 @@ int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_
 }
 
 int8_t _z_raweth_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                          _z_bytes_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
-#endif // Z_FEATURE_RAWETH_TRANSPORT == 1
+#endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
