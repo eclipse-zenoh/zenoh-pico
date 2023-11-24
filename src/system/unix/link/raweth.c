@@ -115,8 +115,9 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     // Copy sender mac if needed
     if ((addr != NULL) && (bytesRead > 2 * ETH_ALEN)) {
         *addr = _z_bytes_make(sizeof(ETH_ALEN));
-        (void)memcpy((uint8_t *)addr->start, &(buff + ETH_ALEN), sizeof(ETH_ALEN));
+        (void)memcpy((uint8_t *)addr->start, (buff + ETH_ALEN), sizeof(ETH_ALEN));
     }
+    // Dump ethernet header ?
     return bytesRead;
 }
 
