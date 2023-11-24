@@ -54,7 +54,6 @@ typedef struct {
 } _zp_eth_vlan_header_t;
 
 typedef struct {
-    void *_config;  // Pointer to config data
     _z_sys_net_socket_t _sock;
     uint16_t _vlan;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];

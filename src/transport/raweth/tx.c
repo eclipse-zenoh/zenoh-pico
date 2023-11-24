@@ -16,17 +16,55 @@
 
 #include "zenoh-pico/transport/common/tx.h"
 
+#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/link/raweth.h"
+#include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
+
+int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
+    int8_t ret = _Z_RES_OK;
+
+    if (_ZP_RAWETH_CFG_SIZE < 1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (keyexpr == NULL) {
+        // Store default value into socket
+        memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[0]._dmac, _ZP_MAC_ADDR_LENGTH);
+        uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[0]._vlan;
+        sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[0]._has_vlan;
+        if (sock->_has_vlan) {
+            memcpy(&sock->_vlan, &vlan, sizeof(vlan));
+        }
+    } else {
+        // Find config entry (linear)
+        ret = _Z_ERR_GENERIC;  // Key not found case
+        for (int i = 1; i < _ZP_RAWETH_CFG_SIZE; i++) {
+            // Find matching keyexpr
+            if (!zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix)) {
+                continue;
+            }
+            // Store data into socket
+            memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[i]._dmac, _ZP_MAC_ADDR_LENGTH);
+            uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[i]._vlan;
+            sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[i]._has_vlan;
+            if (sock->_has_vlan) {
+                memcpy(&sock->_vlan, &vlan, sizeof(vlan));
+            }
+            ret = _Z_RES_OK;
+        }
+    }
+    return ret;
+}
 
 /**
  * This function is unsafe because it operates in potentially concurrent data.
@@ -142,7 +180,8 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&ztm->_mutex_tx);
 #endif
-
+    // Set socket info
+    _zp_raweth_set_socket(NULL, &ztm->_link._socket._raweth);
     // Reserve space for eth header
     __unsafe_z_raweth_prepare_header(ztm);
     // Encode the session message
@@ -182,6 +221,24 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     _ZP_UNUSED(cong_ctrl);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+    const z_keyexpr_t *keyexpr = NULL;
+    switch (n_msg->_tag) {
+        case _Z_N_PUSH:
+            keyexpr = &n_msg->_body._push._key;
+        break;
+        case _Z_N_REQUEST:
+            keyexpr = &n_msg->_body._request._key;
+        break;
+        case _Z_N_RESPONSE:
+            keyexpr = &n_msg->_body._response._key;
+        break;
+        case _Z_N_RESPONSE_FINAL:
+        case _Z_N_DECLARE:
+        default:
+        break;
+    }
+    // Set socket info
+    _zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth);
     // Reserve space for eth header
     __unsafe_z_raweth_prepare_header(ztm);
     // Set the frame header

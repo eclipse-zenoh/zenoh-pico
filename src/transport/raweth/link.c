@@ -19,7 +19,9 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/utils/pointers.h"
 
 // Address Sizes
@@ -87,13 +89,10 @@ static uint8_t *__z_parse_address_raweth(const char *address) {
 }
 
 static int8_t _z_f_link_open_raweth(_z_link_t *self) {
+    // Init socket smac
+    memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_CFG_SMAC, _ZP_MAC_ADDR_LENGTH);
     // Open raweth link
-    int8_t ret = _z_open_raweth(&self->_socket._raweth._sock);
-    if (ret != _Z_RES_OK) {
-        return ret;
-    }
-    // Retrieve smac
-    return _z_get_smac_raweth(&self->_socket._raweth);
+    return _z_open_raweth(&self->_socket._raweth._sock);
 }
 
 static int8_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }
@@ -159,11 +158,6 @@ int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     // Init socket
     memset(&zl->_socket._raweth, 0, sizeof(zl->_socket._raweth));
-
-    // Note locator address
-    uint8_t *b_address = __z_parse_address_raweth(endpoint._locator._address);
-    memcpy(zl->_socket._raweth._dmac, b_address, _ZP_MAC_ADDR_LENGTH);
-    z_free(b_address);
 
     zl->_open_f = _z_f_link_open_raweth;
     zl->_listen_f = _z_f_link_listen_raweth;

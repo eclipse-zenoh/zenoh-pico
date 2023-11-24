@@ -32,10 +32,13 @@ typedef struct {
 } _zp_raweth_cfg_entry;
 
 // Source mac address
-extern const uint8_t _zp_raweth_cfg_smac[_ZP_MAC_ADDR_LENGTH];
+extern const uint8_t _ZP_RAWETH_CFG_SMAC[_ZP_MAC_ADDR_LENGTH];
 
 // Sort the keyexpr alphabetically to use binary search (if size ~100+), otherwise use simple linear search
-extern const _zp_raweth_cfg_entry _zp_raweth_cfg_array[];
+extern const _zp_raweth_cfg_entry _ZP_RAWETH_CFG_ARRAY[];
+
+// Array size
+extern const size_t _ZP_RAWETH_CFG_SIZE;
 
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
 #endif  // ZENOH_PICO_RAWETH_CONFIG_H
