@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
