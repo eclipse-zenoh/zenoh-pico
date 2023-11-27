@@ -148,5 +148,15 @@ int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return ret;
 }
+#else
+int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
+    _ZP_UNUSED(endpoint);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 
+int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
+    _ZP_UNUSED(zl);
+    _ZP_UNUSED(endpoint);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif
