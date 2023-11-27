@@ -23,7 +23,7 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 // Ethernet types
-#define _ZP_ETH_TYPE_VLAN 0x8100   // 2048  (0x0800) IPv4
+#define _ZP_ETH_TYPE_VLAN 0x8100
 #define _ZP_ETH_TYPE_CUTOFF 0x600  // Values above are ethertype
 
 // Address Sizes

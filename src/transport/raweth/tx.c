@@ -106,7 +106,6 @@ static int8_t __unsafe_z_raweth_write_header(_z_transport_multicast_t *ztm) {
     size_t len = _z_wbuf_len(&ztm->_wbuf);
     _z_raweth_socket_t *resocket = &ztm->_link._socket._raweth;
 
-    // FIXME config function call to set the correct dmac & vlan value
     // Write eth header in buffer
     if (resocket->_has_vlan) {
         _zp_eth_vlan_header_t header;
