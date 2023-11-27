@@ -25,24 +25,7 @@
 #include "zenoh-pico/utils/pointers.h"
 
 // Address Sizes
-#define MAC_ADDR_LENGTH 6
-
 #define RAWETH_SCHEMA "reth"
-
-#define RAWETH_CFG_ARGC 2
-
-#define RAWETH_CFG_IFACE_KEY 0x01
-#define RAWETH_CFG_IFACE_STR "iface"
-
-#define RAWETH_CFG_VLAN_KEY 0x02
-#define RAWETH_CFG_VLAN_STR "vlan"
-
-#define RAWETH_CFG_MAPPING_BUILD               \
-    _z_str_intmapping_t args[RAWETH_CFG_ARGC]; \
-    args[0]._key = RAWETH_CFG_IFACE_KEY;       \
-    args[0]._str = RAWETH_CFG_IFACE_STR;       \
-    args[1]._key = RAWETH_CFG_VLAN_KEY;        \
-    args[1]._str = RAWETH_CFG_VLAN_STR;
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
