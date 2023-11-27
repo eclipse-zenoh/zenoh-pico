@@ -140,10 +140,6 @@ int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     if (!_z_str_eq(endpoint->_locator._protocol, RAWETH_SCHEMA)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
-    // Check address
-    if (!__z_valid_address_raweth(endpoint->_locator._address)) {
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    }
     return ret;
 }
 
