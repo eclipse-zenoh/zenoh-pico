@@ -18,14 +18,12 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/utils/pointers.h"
-
-// Address Sizes
-#define RAWETH_SCHEMA "reth"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
