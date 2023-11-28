@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/transport/multicast/read.h"
+#include "zenoh-pico/transport/raweth/read.h"
 #include "zenoh-pico/transport/unicast/read.h"
 
 int8_t _z_read(_z_transport_t *zt) {
@@ -27,6 +28,9 @@ int8_t _z_read(_z_transport_t *zt) {
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_read(&zt->_transport._multicast);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_raweth_read(&zt->_transport._raweth);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
@@ -44,6 +48,9 @@ void *_zp_read_task(void *zt_arg) {
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_read_task(&zt->_transport._multicast);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_raweth_read_task(&zt->_transport._raweth);
             break;
         default:
             ret = NULL;

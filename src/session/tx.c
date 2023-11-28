@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/transport/multicast/tx.h"
 
+#include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -28,6 +29,9 @@ int8_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reli
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _z_multicast_send_n_msg(zn, z_msg, reliability, cong_ctrl);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _z_raweth_send_n_msg(zn, z_msg, reliability, cong_ctrl);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;

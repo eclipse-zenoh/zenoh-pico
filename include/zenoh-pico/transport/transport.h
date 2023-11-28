@@ -135,11 +135,13 @@ typedef struct {
     union {
         _z_transport_unicast_t _unicast;
         _z_transport_multicast_t _multicast;
+        _z_transport_multicast_t _raweth;
     } _transport;
 
     enum {
         _Z_TRANSPORT_UNICAST_TYPE,
         _Z_TRANSPORT_MULTICAST_TYPE,
+        _Z_TRANSPORT_RAWETH_TYPE,
     } _type;
 } _z_transport_t;
 

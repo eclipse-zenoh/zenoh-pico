@@ -24,6 +24,9 @@
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/raweth/rx.h"
+#include "zenoh-pico/transport/raweth/transport.h"
+#include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/unicast/tx.h"
@@ -39,6 +42,9 @@ int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _z_raweth_send_close(&zt->_transport._raweth, reason, link_only);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
@@ -56,6 +62,9 @@ void _z_transport_clear(_z_transport_t *zt) {
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             _z_multicast_transport_clear(zt);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            _z_raweth_transport_clear(zt);
             break;
         default:
             break;

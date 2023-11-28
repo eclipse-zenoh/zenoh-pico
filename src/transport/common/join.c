@@ -15,6 +15,7 @@
 #include "zenoh-pico/transport/common/join.h"
 
 #include "zenoh-pico/transport/multicast/join.h"
+#include "zenoh-pico/transport/raweth/join.h"
 
 int8_t _z_send_join(_z_transport_t *zt) {
     int8_t ret = _Z_RES_OK;
@@ -22,6 +23,9 @@ int8_t _z_send_join(_z_transport_t *zt) {
     switch (zt->_type) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_send_join(&zt->_transport._multicast);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_raweth_send_join(&zt->_transport._raweth);
             break;
         default:
             (void)zt;
