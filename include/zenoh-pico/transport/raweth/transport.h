@@ -17,6 +17,9 @@
 
 #include "zenoh-pico/api/types.h"
 
+void _zp_raweth_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback);
+void _zp_raweth_info_session(const _z_transport_t *zt, _z_config_t *ps);
+
 int8_t _z_raweth_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param);
 int8_t _z_raweth_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
                            const _z_id_t *local_zid);
