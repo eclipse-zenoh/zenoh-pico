@@ -123,7 +123,7 @@ int8_t _z_raweth_open_peer(_z_transport_multicast_establish_param_t *param, cons
 
     // Encode and send the message
     _Z_INFO("Sending Z_JOIN message\n");
-    ret = _z_raweth_send_t_msg(zl, &jsm);
+    ret = _z_raweth_link_send_t_msg(zl, &jsm);
     _z_t_msg_clear(&jsm);
 
     if (ret == _Z_RES_OK) {
