@@ -31,6 +31,9 @@ typedef struct {
     _Bool _has_vlan;
 } _zp_raweth_cfg_entry;
 
+// Ethertype to use in frame
+extern const uint16_t _ZP_RAWETH_CFG_ETHTYPE;
+
 // Source mac address
 extern const uint8_t _ZP_RAWETH_CFG_SMAC[_ZP_MAC_ADDR_LENGTH];
 

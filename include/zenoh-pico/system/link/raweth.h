@@ -24,7 +24,6 @@
 
 // Ethernet types
 #define _ZP_ETH_TYPE_VLAN 0x8100
-#define _ZP_ETH_TYPE_CUTOFF 0x600  // Values above are ethertype
 
 // Address Sizes
 #define _ZP_MAC_ADDR_LENGTH 6
@@ -32,30 +31,24 @@
 // Max frame size
 #define _ZP_MAX_ETH_FRAME_SIZE 1500
 
-typedef struct {
-    uint16_t tpid;      // Tag ethertype
-    uint16_t pcp : 3;   // Priority code point
-    uint16_t dei : 1;   // Drop eligible indicator
-    uint16_t vid : 12;  // VLAN id
-} _zp_vlan_tag_t;
-
 // Ethernet header structure type
 typedef struct {
     uint8_t dmac[_ZP_MAC_ADDR_LENGTH];  // Destination mac address
     uint8_t smac[_ZP_MAC_ADDR_LENGTH];  // Source mac address
-    uint16_t length;                    // Size of frame
+    uint16_t ethtype;                   // Ethertype of frame
 } _zp_eth_header_t;
 
 typedef struct {
     uint8_t dmac[_ZP_MAC_ADDR_LENGTH];  // Destination mac address
     uint8_t smac[_ZP_MAC_ADDR_LENGTH];  // Source mac address
-    _zp_vlan_tag_t tag;
-    uint16_t length;  // Size of frame
+    uint16_t tag;                       // Vlan tag
+    uint16_t ethtype;                   // Ethertype of frame
 } _zp_eth_vlan_header_t;
 
 typedef struct {
     _z_sys_net_socket_t _sock;
     uint16_t _vlan;
+    uint16_t ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     uint8_t _smac[_ZP_MAC_ADDR_LENGTH];
     _Bool _has_vlan;

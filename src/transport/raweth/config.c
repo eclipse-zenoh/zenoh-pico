@@ -17,6 +17,9 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 // Should be generated
+const uint16_t _ZP_RAWETH_CFG_ETHTYPE = 0x72e0;
+
+// Should be generated
 const uint8_t _ZP_RAWETH_CFG_SMAC[_ZP_MAC_ADDR_LENGTH] = {0x30, 0x03, 0xc8, 0x37, 0x25, 0xa1};
 
 // Should be generated

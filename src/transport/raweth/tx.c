@@ -88,22 +88,7 @@ static _z_zint_t __unsafe_z_raweth_get_sn(_z_transport_multicast_t *ztm, z_relia
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztm->_mutex_inner
  */
-static void __unsafe_z_raweth_prepare_header(_z_transport_multicast_t *ztm) {
-    // Reserve space for ethernet header
-    if (&ztm->_link._socket._raweth._has_vlan) {
-        _z_wbuf_set_wpos(&ztm->_wbuf, sizeof(_zp_eth_vlan_header_t));
-    } else {
-        _z_wbuf_set_wpos(&ztm->_wbuf, sizeof(_zp_eth_header_t));
-    }
-}
-
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - ztm->_mutex_inner
- */
 static int8_t __unsafe_z_raweth_write_header(_z_transport_multicast_t *ztm) {
-    size_t len = _z_wbuf_len(&ztm->_wbuf);
     _z_raweth_socket_t *resocket = &ztm->_link._socket._raweth;
 
     // Write eth header in buffer
@@ -112,29 +97,17 @@ static int8_t __unsafe_z_raweth_write_header(_z_transport_multicast_t *ztm) {
         memset(&header, 0, sizeof(header));
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
-        header.tag.tpid = _ZP_ETH_TYPE_VLAN;
-        header.tag.pcp = 0;  // Get from locator/config
-        header.tag.vid = 0;  // Get from locator/config
-        header.length = (uint16_t)len;
-        // Save wpos
-        size_t final_wpos = _z_wbuf_get_wpos(&ztm->_wbuf);
+        header.tag = _ZP_ETH_TYPE_VLAN;
+        header.ethtype = _ZP_RAWETH_CFG_ETHTYPE;
         // Write header
-        _z_wbuf_set_wpos(&ztm->_wbuf, 0);
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(&ztm->_wbuf, (uint8_t *)&header, 0, sizeof(header)));
-        // Restore wpos
-        _z_wbuf_set_wpos(&ztm->_wbuf, final_wpos);
     } else {
         _zp_eth_header_t header;
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
-        header.length = (uint16_t)len;
-        // Save wpos
-        size_t final_wpos = _z_wbuf_get_wpos(&ztm->_wbuf);
+        header.ethtype = _ZP_RAWETH_CFG_ETHTYPE;
         // Write header
-        _z_wbuf_set_wpos(&ztm->_wbuf, 0);
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(&ztm->_wbuf, (uint8_t *)&header, 0, sizeof(header)));
-        // Restore wpos
-        _z_wbuf_set_wpos(&ztm->_wbuf, final_wpos);
     }
     return _Z_RES_OK;
 }
@@ -181,12 +154,10 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
 #endif
     // Set socket info
     _zp_raweth_set_socket(NULL, &ztm->_link._socket._raweth);
-    // Reserve space for eth header
-    __unsafe_z_raweth_prepare_header(ztm);
-    // Encode the session message
-    _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_wbuf, t_msg));
     // Write the message header
     _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm));
+    // Encode the session message
+    _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_wbuf, t_msg));
     // Send the wbuf on the socket
     _Z_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztm));
     // Mark the session that we have transmitted data
@@ -238,8 +209,8 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     }
     // Set socket info
     _zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth);
-    // Reserve space for eth header
-    __unsafe_z_raweth_prepare_header(ztm);
+    // Write the eth header
+    _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm));
     // Set the frame header
     _z_zint_t sn = __unsafe_z_raweth_get_sn(ztm, reliability);
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
@@ -248,8 +219,6 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     // Encode the network message
     ret = _z_network_message_encode(&ztm->_wbuf, n_msg);
     if (ret == _Z_RES_OK) {
-        // Write the eth header
-        _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm));
         // Send the wbuf on the socket
         _Z_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztm));
         // Mark the session that we have transmitted data
@@ -267,12 +236,10 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
                 sn = __unsafe_z_raweth_get_sn(ztm, reliability);
             }
             is_first = false;
-            // Reserve space for eth header
-            __unsafe_z_raweth_prepare_header(ztm);
-            // Serialize one fragment
-            _Z_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn));
             // Write the eth header
             _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm));
+            // Serialize one fragment
+            _Z_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn));
             // Send the wbuf on the socket
             _Z_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztm));
             // Mark the session that we have transmitted data

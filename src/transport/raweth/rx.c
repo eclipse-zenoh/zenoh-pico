@@ -37,7 +37,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     // Check if header has vlan
     _Bool has_vlan = false;
     _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
-    if (header->length > _ZP_ETH_TYPE_CUTOFF) {
+    if (header->ethtype == _ZP_ETH_TYPE_VLAN) {
         has_vlan = true;
     }
     // Check validity
@@ -54,7 +54,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     return rb;
 }
 
-_z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
+static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
 
     _z_transport_peer_entry_list_t *xs = l;
