@@ -30,28 +30,6 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-void _zp_raweth_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
-    void *ctx = callback->context;
-    _z_transport_peer_entry_list_t *l = zt->_transport._multicast._peers;
-    for (; l != NULL; l = _z_transport_peer_entry_list_tail(l)) {
-        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(l);
-        z_id_t id = val->_remote_zid;
-
-        callback->call(&id, ctx);
-    }
-}
-
-void _zp_raweth_info_session(const _z_transport_t *zt, _z_config_t *ps) {
-    _z_transport_peer_entry_list_t *xs = zt->_transport._multicast._peers;
-    while (xs != NULL) {
-        _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);
-        _z_bytes_t remote_zid = _z_bytes_wrap(peer->_remote_zid.id, _z_id_len(peer->_remote_zid));
-        _zp_config_insert(ps, Z_INFO_PEER_PID_KEY, _z_string_from_bytes(&remote_zid));
-
-        xs = _z_transport_peer_entry_list_tail(xs);
-    }
-}
-
 int8_t _z_raweth_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transport_multicast_establish_param_t *param) {
     int8_t ret = _Z_RES_OK;
 
