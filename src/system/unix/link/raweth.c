@@ -32,6 +32,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform/unix.h"
+#include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
@@ -94,14 +95,25 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
 }
 
 size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr) {
+    // Read from socket
     size_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
-    if (bytesRead < 0) {
+    if ((bytesRead < 0) || (bytesRead < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;
     }
-    // Soft Filtering ?
-
+    // Address filtering
+    _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+    _Bool is_valid = false;
+    for (size_t i = 0; i < _ZP_RAWETH_CFG_WHITELIST_SIZE; i++) {
+        if (memcmp(&header->smac, _ZP_RAWETH_CFG_WHITELIST[i]._mac, _ZP_MAC_ADDR_LENGTH) == 0) {  // Test byte ordering
+            is_valid = true;
+        }
+    }
+    // Ignore packet from unknown sources
+    if (!is_valid) {
+        return SIZE_MAX;
+    }
     // Copy sender mac if needed
-    if ((addr != NULL) && (bytesRead > 2 * ETH_ALEN)) {
+    if (addr != NULL) {
         *addr = _z_bytes_make(sizeof(ETH_ALEN));
         (void)memcpy((uint8_t *)addr->start, (buff + ETH_ALEN), sizeof(ETH_ALEN));
     }

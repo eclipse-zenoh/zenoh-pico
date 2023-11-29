@@ -29,7 +29,14 @@ const _zp_raweth_cfg_entry _ZP_RAWETH_CFG_ARRAY[] = {
     {{0, {0}, "another/keyexpr"}, 0x43, {0x01, 0x23, 0x45, 0x67, 0x89, 0xab}, true},  // entry2
 };
 
+// Should be generated
+const _zp_raweth_cfg_whitelist_val _ZP_RAWETH_CFG_WHITELIST[] = {
+    {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}},
+    {{0x00, 0x11, 0x22, 0x33, 0x44, 0x55}},
+};
+
 // Don't modify
 const size_t _ZP_RAWETH_CFG_SIZE = _ZP_ARRAY_SIZE(_ZP_RAWETH_CFG_ARRAY);
+const size_t _ZP_RAWETH_CFG_WHITELIST_SIZE = _ZP_ARRAY_SIZE(_ZP_RAWETH_CFG_WHITELIST);
 
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
