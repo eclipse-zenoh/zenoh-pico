@@ -78,7 +78,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
 
 static int8_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }
 
-static void _z_f_link_close_raweth(_z_link_t *self) { _ZP_UNUSED(self); }
+static void _z_f_link_close_raweth(_z_link_t *self) { _z_close_raweth(&self->_socket._raweth._sock); }
 
 static void _z_f_link_free_raweth(_z_link_t *self) { _ZP_UNUSED(self); }
 

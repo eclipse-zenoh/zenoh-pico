@@ -85,6 +85,14 @@ int8_t _z_open_raweth(_z_sys_net_socket_t *sock) {
     return ret;
 }
 
+int8_t _z_close_raweth(_z_sys_net_socket_t *sock) {
+    int8_t ret = _Z_RES_OK;
+    if (close(sock->_fd) != 0) {
+        ret = _Z_ERR_GENERIC;
+    }
+    return ret;
+}
+
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len) {
     // Send data
     ssize_t wb = write(sock->_fd, buff, buff_len);
