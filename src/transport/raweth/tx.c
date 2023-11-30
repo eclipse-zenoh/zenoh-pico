@@ -50,7 +50,8 @@ int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *so
         ret = _Z_ERR_GENERIC;  // Key not found case
         for (int i = 1; i < _ZP_RAWETH_CFG_SIZE; i++) {
             // Find matching keyexpr
-            if (!zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix)) {
+            if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix) !=
+                _Z_RES_OK) {
                 continue;
             }
             // Store data into socket
@@ -61,6 +62,7 @@ int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *so
                 memcpy(&sock->_vlan, &vlan, sizeof(vlan));
             }
             ret = _Z_RES_OK;
+            break;
         }
     }
     return ret;
@@ -149,7 +151,7 @@ int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message
     // Discard const qualifier
     _z_link_t *mzl = (_z_link_t *)zl;
     // Set socket info
-    _zp_raweth_set_socket(NULL, &mzl->_socket._raweth);
+    _Z_RETURN_IF_ERR(_zp_raweth_set_socket(NULL, &mzl->_socket._raweth));
     // Write the message header
     _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(mzl, &wbf));
     // Encode the session message
@@ -178,7 +180,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     _z_mutex_lock(&ztm->_mutex_tx);
 #endif
     // Set socket info
-    _zp_raweth_set_socket(NULL, &ztm->_link._socket._raweth);
+    _Z_RETURN_IF_ERR(_zp_raweth_set_socket(NULL, &ztm->_link._socket._raweth));
     // Write the message header
     _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_link, &ztm->_wbuf));
     // Encode the session message
@@ -233,7 +235,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
             break;
     }
     // Set socket info
-    _zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth);
+    _Z_RETURN_IF_ERR(_zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth));
     // Write the eth header
     _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_link, &ztm->_wbuf));
     // Set the frame header
