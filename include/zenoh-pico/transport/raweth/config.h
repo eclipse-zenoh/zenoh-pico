@@ -26,7 +26,7 @@
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
-    uint16_t _vlan;  // vlan tag (pcp + dei + id)
+    uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     _Bool _has_vlan;
 } _zp_raweth_cfg_entry;
