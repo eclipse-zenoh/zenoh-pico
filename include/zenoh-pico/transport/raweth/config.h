@@ -38,6 +38,9 @@ typedef struct {
 // Ethertype to use in frame
 extern const uint16_t _ZP_RAWETH_CFG_ETHTYPE;
 
+// Interface to use
+extern const char *_ZP_RAWETH_CFG_INTERFACE;
+
 // Source mac address
 extern const uint8_t _ZP_RAWETH_CFG_SMAC[_ZP_MAC_ADDR_LENGTH];
 

@@ -72,8 +72,10 @@ static uint8_t *__z_parse_address_raweth(const char *address) {
 static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     // Init socket smac
     memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_CFG_SMAC, _ZP_MAC_ADDR_LENGTH);
+    // Init socket interface
+    self->_socket._raweth._interface = _ZP_RAWETH_CFG_INTERFACE;
     // Open raweth link
-    return _z_open_raweth(&self->_socket._raweth._sock);
+    return _z_open_raweth(&self->_socket._raweth._sock, _ZP_RAWETH_CFG_INTERFACE);
 }
 
 static int8_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }

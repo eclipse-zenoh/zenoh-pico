@@ -38,48 +38,35 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-int8_t _z_get_smac_raweth(_z_raweth_socket_t *resock) {
-    int8_t ret = _Z_RES_OK;
-    struct ifaddrs *sys_ifa, *sys_ifa_root;
-    struct sockaddr *sa;
+#if !defined(__linux)
+#error "Raweth transport only supported on linux systems"
+#else
+#include <linux/if_packet.h>
 
-    // Retrieve all interfaces data
-    if (getifaddrs(&sys_ifa_root) == -1) {
-        switch (errno) {
-            case ENOMEM:
-            case ENOBUFS:
-                ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-                break;
-            case EACCES:
-            default:
-                ret = _Z_ERR_GENERIC;
-                break;
-        }
-    } else {
-        // Parse the interfaces
-        for (sys_ifa = sys_ifa_root; sys_ifa != NULL && ret == 0; sys_ifa = sys_ifa->ifa_next) {
-            // Skip interfaces without an address or not up or loopback
-            if (sys_ifa->ifa_addr == NULL /*|| (sys_ifa->ifa_flags & IFF_UP) == 0 ||
-                (sys_ifa->ifa_flags & IFF_LOOPBACK) != 0*/) {
-                continue;
-            }
-            // Interface is ethernet
-            if (sys_ifa->ifa_addr->sa_family == AF_PACKET) {
-                // Copy data
-                memcpy(resock->_smac, sys_ifa->ifa_addr->sa_data, _ZP_MAC_ADDR_LENGTH);
-                break;
-            }
-        }
-        freeifaddrs(sys_ifa_root);
-    }
-    return ret;
-}
-
-int8_t _z_open_raweth(_z_sys_net_socket_t *sock) {
+int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     int8_t ret = _Z_RES_OK;
     // Open a raw network socket in promiscuous mode
     sock->_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock->_fd == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    // Get the index of the interface to send on
+    struct ifreq if_idx;
+    memset(&if_idx, 0, sizeof(struct ifreq));
+    strncpy(if_idx.ifr_name, interface, strlen(interface));
+    if (ioctl(sock->_fd, SIOCGIFINDEX, &if_idx) < 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Bind the socket
+    struct sockaddr_ll addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sll_family = AF_PACKET;
+    addr.sll_protocol = htons(ETH_P_ALL);
+    addr.sll_ifindex = if_idx.ifr_ifindex;
+    addr.sll_pkttype = PACKET_HOST | PACKET_BROADCAST | PACKET_MULTICAST;
+
+    if (bind(sock->_fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+        close(sock->_fd);
         ret = _Z_ERR_GENERIC;
     }
     return ret;
@@ -128,4 +115,5 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     return bytesRead;
 }
 
-#endif
+#endif  // defined(__linux)
+#endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
