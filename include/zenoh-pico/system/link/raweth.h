@@ -22,8 +22,8 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-// Ethernet types
-#define _ZP_ETH_TYPE_VLAN 0x8100
+// Ethernet types (big endian)
+#define _ZP_ETH_TYPE_VLAN 0x0081
 
 // Address Sizes
 #define _ZP_MAC_ADDR_LENGTH 6
@@ -41,6 +41,7 @@ typedef struct {
 typedef struct {
     uint8_t dmac[_ZP_MAC_ADDR_LENGTH];  // Destination mac address
     uint8_t smac[_ZP_MAC_ADDR_LENGTH];  // Source mac address
+    uint16_t vlan_type;                 // Vlan ethtype
     uint16_t tag;                       // Vlan tag
     uint16_t ethtype;                   // Ethertype of frame
 } _zp_eth_vlan_header_t;

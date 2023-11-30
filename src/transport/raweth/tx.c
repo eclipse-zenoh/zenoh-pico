@@ -97,7 +97,8 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         memset(&header, 0, sizeof(header));
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
-        header.tag = _ZP_ETH_TYPE_VLAN;
+        header.vlan_type = _ZP_ETH_TYPE_VLAN;
+        header.tag = resocket->_vlan;
         header.ethtype = _ZP_RAWETH_CFG_ETHTYPE;
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
