@@ -179,6 +179,8 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&ztm->_mutex_tx);
 #endif
+    // Reset wbuf
+    _z_wbuf_reset(&ztm->_wbuf);
     // Set socket info
     _Z_RETURN_IF_ERR(_zp_raweth_set_socket(NULL, &ztm->_link._socket._raweth));
     // Write the message header
@@ -234,6 +236,8 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         default:
             break;
     }
+    // Reset wbuf
+    _z_wbuf_reset(&ztm->_wbuf);
     // Set socket info
     _Z_RETURN_IF_ERR(_zp_raweth_set_socket(keyexpr, &ztm->_link._socket._raweth));
     // Write the eth header
@@ -263,6 +267,8 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
                 sn = __unsafe_z_raweth_get_sn(ztm, reliability);
             }
             is_first = false;
+            // Reset wbuf
+            _z_wbuf_reset(&ztm->_wbuf);
             // Write the eth header
             _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_link, &ztm->_wbuf));
             // Serialize one fragment
