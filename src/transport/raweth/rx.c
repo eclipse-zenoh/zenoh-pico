@@ -27,6 +27,10 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
+void print_buf(_z_zbuf_t *buf) {
+    printf("Buff info: %ld, %ld, %ld\n", buf->_ios._r_pos, buf->_ios._w_pos, buf->_ios._capacity);
+}
+
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
     size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr);
@@ -47,9 +51,9 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     // Update buffer but skip eth header
     _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     if (has_vlan) {
-        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf) - (rb - sizeof(_zp_eth_vlan_header_t)));
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_vlan_header_t));
     } else {
-        _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf) - (rb - sizeof(_zp_eth_header_t)));
+        _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_header_t));
     }
     return rb;
 }

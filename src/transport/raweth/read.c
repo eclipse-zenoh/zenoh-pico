@@ -68,12 +68,20 @@ void *_zp_raweth_read_task(void *ztm_arg) {
     while (ztm->_read_task_running == true) {
         // Read message from link
         int8_t ret = _z_raweth_recv_t_msg(ztm, &t_msg, &addr);
-        if (ret == _Z_ERR_TRANSPORT_RX_FAILED) {
-            continue;
-        } else {
-            _Z_ERROR("Connection closed due to malformed message\n");
-            ztm->_read_task_running = false;
-            continue;
+        switch (ret) {
+            case _Z_RES_OK:
+                // Process message
+                break;
+            case _Z_ERR_TRANSPORT_RX_FAILED:
+                // Drop message
+                continue;
+                break;
+            default:
+                // Drop message & stop task
+                _Z_ERROR("Connection closed due to malformed message\n");
+                ztm->_read_task_running = false;
+                continue;
+                break;
         }
         // Process message
         if (_z_multicast_handle_transport_message(ztm, &t_msg, &addr) != _Z_RES_OK) {

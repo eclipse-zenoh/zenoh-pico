@@ -91,7 +91,7 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
 
 size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr) {
     // Read from socket
-    size_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
+    ssize_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
     if ((bytesRead < 0) || (bytesRead < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;
     }
@@ -101,6 +101,7 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     for (size_t i = 0; i < _ZP_RAWETH_CFG_WHITELIST_SIZE; i++) {
         if (memcmp(&header->smac, _ZP_RAWETH_CFG_WHITELIST[i]._mac, _ZP_MAC_ADDR_LENGTH) == 0) {  // Test byte ordering
             is_valid = true;
+            break;
         }
     }
     // Ignore packet from unknown sources
