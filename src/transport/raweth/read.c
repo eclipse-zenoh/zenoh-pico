@@ -43,18 +43,18 @@ int8_t _zp_raweth_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_t
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     // Attach task
-    zt->_transport._multicast._read_task = task;
-    zt->_transport._multicast._read_task_running = true;
+    zt->_transport._raweth._read_task = task;
+    zt->_transport._raweth._read_task_running = true;
     // Init task
-    if (_z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
-        zt->_transport._multicast._read_task_running = false;
+    if (_z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
+        zt->_transport._raweth._read_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     return _Z_RES_OK;
 }
 
 int8_t _zp_raweth_stop_read_task(_z_transport_t *zt) {
-    zt->_transport._multicast._read_task_running = false;
+    zt->_transport._raweth._read_task_running = false;
     return _Z_RES_OK;
 }
 
@@ -64,10 +64,6 @@ void *_zp_raweth_read_task(void *ztm_arg) {
     _z_transport_message_t t_msg;
     _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
 
-    // Acquire and keep the lock
-    _z_mutex_lock(&ztm->_mutex_rx);
-    // Prepare the buffer
-    _z_zbuf_reset(&ztm->_zbuf);
     // Task loop
     while (ztm->_read_task_running == true) {
         // Read message from link
@@ -87,8 +83,6 @@ void *_zp_raweth_read_task(void *ztm_arg) {
         _z_t_msg_clear(&t_msg);
         _z_bytes_clear(&addr);
     }
-
-    _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return NULL;

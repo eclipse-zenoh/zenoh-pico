@@ -64,6 +64,9 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     _z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+    // Prepare the buffer
+    _z_zbuf_reset(&ztm->_zbuf);
+    
     switch (ztm->_link._cap._flow) {
         // Datagram capable links
         case Z_LINK_CAP_FLOW_DATAGRAM: {

@@ -73,18 +73,18 @@ int8_t _zp_raweth_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     // Attach task
-    zt->_transport._multicast._lease_task = task;
-    zt->_transport._multicast._lease_task_running = true;
+    zt->_transport._raweth._lease_task = task;
+    zt->_transport._raweth._lease_task_running = true;
     // Init task
-    if (_z_task_init(task, attr, _zp_raweth_lease_task, &zt->_transport._multicast) != _Z_RES_OK) {
-        zt->_transport._multicast._lease_task_running = false;
+    if (_z_task_init(task, attr, _zp_raweth_lease_task, &zt->_transport._raweth) != _Z_RES_OK) {
+        zt->_transport._raweth._lease_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     return _Z_RES_OK;
 }
 
 int8_t _zp_raweth_stop_lease_task(_z_transport_t *zt) {
-    zt->_transport._multicast._lease_task_running = false;
+    zt->_transport._raweth._lease_task_running = false;
     return _Z_RES_OK;
 }
 
