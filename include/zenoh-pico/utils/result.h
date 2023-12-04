@@ -16,6 +16,7 @@
 #define ZENOH_PICO_UTILS_RESULT_H
 
 #define _ZP_UNUSED(x) (void)(x)
+#define _ZP_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 #define _Z_ERR_MESSAGE_MASK 0x88
 #define _Z_ERR_ENTITY_MASK 0x90

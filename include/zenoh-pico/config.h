@@ -218,6 +218,13 @@
 #endif
 #endif
 
+/**
+ * Enable raweth transport/link.
+ */
+#ifndef Z_FEATURE_RAWETH_TRANSPORT
+#define Z_FEATURE_RAWETH_TRANSPORT 0
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.

@@ -610,3 +610,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 #if Z_FEATURE_LINK_SERIAL == 1
 #error "Serial not supported yet on Windows port of Zenoh-Pico"
 #endif
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on Windows port of Zenoh-Pico"
+#endif

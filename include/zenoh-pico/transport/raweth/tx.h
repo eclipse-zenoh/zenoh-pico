@@ -12,14 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MULTICAST_READ_H
-#define ZENOH_PICO_MULTICAST_READ_H
+#ifndef ZENOH_PICO_RAWETH_TX_H
+#define ZENOH_PICO_RAWETH_TX_H
 
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
-int8_t _zp_multicast_read(_z_transport_multicast_t *ztm);
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task);
-int8_t _zp_multicast_stop_read_task(_z_transport_t *zt);
-void *_zp_multicast_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
+int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
+int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
+                            z_congestion_control_t cong_ctrl);
+int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg);
 
-#endif /* ZENOH_PICO_MULTICAST_READ_H */
+#endif /* ZENOH_PICO_RAWETH_TX_H */

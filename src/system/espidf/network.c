@@ -739,3 +739,7 @@ size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on ESP-IDF port of Zenoh-Pico"
 #endif
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on ESP-IDF port of Zenoh-Pico"
+#endif
