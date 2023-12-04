@@ -17,7 +17,7 @@
 #if KERNEL_VERSION_MAJOR == 2
 #include <random/rand32.h>
 #else
-#include <zephyr/random/rand32.h>
+#include <zephyr/random/random.h>
 #endif
 
 #include <stddef.h>
