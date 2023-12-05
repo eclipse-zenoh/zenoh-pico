@@ -49,7 +49,7 @@ int8_t _z_send_join(_z_transport_t *zt) {
             ret = _zp_multicast_send_join(&zt->_transport._raweth);
             break;
         default:
-            (void)zt;
+            _ZP_UNUSED(zt);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
