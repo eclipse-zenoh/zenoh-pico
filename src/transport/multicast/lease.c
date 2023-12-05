@@ -19,11 +19,9 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/lease.h"
-#include "zenoh-pico/transport/multicast/transport.h"
-#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
 static _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
@@ -68,34 +66,30 @@ int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_id_t zid = ((_z_session_t *)ztm->_session)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
-    return _z_multicast_send_t_msg(ztm, &jsm);
+    return ztm->_send_f(ztm, &jsm);
 }
 
 int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
-    int8_t ret = _Z_RES_OK;
-
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    ret = _z_multicast_send_t_msg(ztm, &t_msg);
-
-    return ret;
+    return ztm->_send_f(ztm, &t_msg);
 }
 
-int8_t _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, _z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     // Attach task
-    zt->_transport._multicast._lease_task = task;
-    zt->_transport._multicast._lease_task_running = true;
+    ztm->_lease_task = task;
+    ztm->_lease_task_running = true;
     // Init task
-    if (_z_task_init(task, attr, _zp_multicast_lease_task, &zt->_transport._multicast) != _Z_RES_OK) {
-        zt->_transport._multicast._lease_task_running = false;
+    if (_z_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
+        ztm->_lease_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     return _Z_RES_OK;
 }
 
-int8_t _zp_multicast_stop_lease_task(_z_transport_t *zt) {
-    zt->_transport._multicast._lease_task_running = false;
+int8_t _zp_multicast_stop_lease_task(_z_transport_multicast_t *ztm) {
+    ztm->_lease_task_running = false;
     return _Z_RES_OK;
 }
 
@@ -205,15 +199,15 @@ int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _zp_multicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
-    _ZP_UNUSED(zt);
+int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, _z_task_attr_t *attr, _z_task_t *task) {
+    _ZP_UNUSED(ztm);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _zp_multicast_stop_lease_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
+int8_t _zp_multicast_stop_lease_task(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
@@ -221,4 +215,4 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
     _ZP_UNUSED(ztm_arg);
     return NULL;
 }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1

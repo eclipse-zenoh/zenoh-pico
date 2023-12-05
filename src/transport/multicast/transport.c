@@ -35,6 +35,7 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     int8_t ret = _Z_RES_OK;
 
     zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
+    zt->_transport._multicast._send_f = _z_multicast_send_t_msg;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes

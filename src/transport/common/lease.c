@@ -17,7 +17,6 @@
 #include <stddef.h>
 
 #include "zenoh-pico/transport/multicast/lease.h"
-#include "zenoh-pico/transport/raweth/lease.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 
 int8_t _z_send_keep_alive(_z_transport_t *zt) {
@@ -30,7 +29,7 @@ int8_t _z_send_keep_alive(_z_transport_t *zt) {
             ret = _zp_multicast_send_keep_alive(&zt->_transport._multicast);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            ret = _zp_raweth_send_keep_alive(&zt->_transport._raweth);
+            ret = _zp_multicast_send_keep_alive(&zt->_transport._raweth);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
@@ -47,7 +46,7 @@ int8_t _z_send_join(_z_transport_t *zt) {
             ret = _zp_multicast_send_join(&zt->_transport._multicast);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            ret = _zp_raweth_send_join(&zt->_transport._raweth);
+            ret = _zp_multicast_send_join(&zt->_transport._raweth);
             break;
         default:
             (void)zt;
