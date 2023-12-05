@@ -18,7 +18,6 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/transport/multicast/transport.h"
-#include "zenoh-pico/transport/raweth/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 
 int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local_zid) {
@@ -45,6 +44,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local
             break;
         }
         // Multicast transport
+        case Z_LINK_CAP_TRANSPORT_RAWETH:
         case Z_LINK_CAP_TRANSPORT_MULTICAST: {
             _z_transport_multicast_establish_param_t tp_param;
             ret = _z_multicast_open_client(&tp_param, &zl, local_zid);
@@ -53,16 +53,6 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local
                 return ret;
             }
             ret = _z_multicast_transport_create(zt, &zl, &tp_param);
-            break;
-        }
-        case Z_LINK_CAP_TRANSPORT_RAWETH: {
-            _z_transport_multicast_establish_param_t tp_param;
-            ret = _z_raweth_open_client(&tp_param, &zl, local_zid);
-            if (ret != _Z_RES_OK) {
-                _z_link_clear(&zl);
-                return ret;
-            }
-            ret = _z_raweth_transport_create(zt, &zl, &tp_param);
             break;
         }
         default:
@@ -93,6 +83,7 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_z
             ret = _z_unicast_transport_create(zt, &zl, &tp_param);
             break;
         }
+        case Z_LINK_CAP_TRANSPORT_RAWETH:
         case Z_LINK_CAP_TRANSPORT_MULTICAST: {
             _z_transport_multicast_establish_param_t tp_param;
             ret = _z_multicast_open_peer(&tp_param, &zl, local_zid);
@@ -101,16 +92,6 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_z
                 return ret;
             }
             ret = _z_multicast_transport_create(zt, &zl, &tp_param);
-            break;
-        }
-        case Z_LINK_CAP_TRANSPORT_RAWETH: {
-            _z_transport_multicast_establish_param_t tp_param;
-            ret = _z_raweth_open_peer(&tp_param, &zl, local_zid);
-            if (ret != _Z_RES_OK) {
-                _z_link_clear(&zl);
-                return ret;
-            }
-            ret = _z_raweth_transport_create(zt, &zl, &tp_param);
             break;
         }
         default:
