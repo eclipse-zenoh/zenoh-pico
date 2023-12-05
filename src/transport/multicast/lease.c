@@ -59,7 +59,6 @@ static _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
     return ret;
 }
 
-
 int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_conduit_sn_list_t next_sn;
     next_sn._is_qos = false;
