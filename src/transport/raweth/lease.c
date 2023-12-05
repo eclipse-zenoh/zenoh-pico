@@ -18,8 +18,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/common/join.h"
-#include "zenoh-pico/transport/raweth/join.h"
+#include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/raweth/transport.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -58,6 +57,18 @@ static _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
     }
 
     return ret;
+}
+
+int8_t _zp_raweth_send_join(_z_transport_multicast_t *ztm) {
+    _z_conduit_sn_list_t next_sn;
+    next_sn._is_qos = false;
+    next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
+    next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
+
+    _z_id_t zid = ((_z_session_t *)ztm->_session)->_local_zid;
+    _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
+
+    return _z_raweth_send_t_msg(ztm, &jsm);
 }
 
 int8_t _zp_raweth_send_keep_alive(_z_transport_multicast_t *ztm) {
@@ -184,6 +195,11 @@ void *_zp_raweth_lease_task(void *ztm_arg) {
     return 0;
 }
 #else
+int8_t _zp_raweth_send_join(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
 int8_t _zp_raweth_send_keep_alive(_z_transport_multicast_t *ztm) {
     _ZP_UNUSED(ztm);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;

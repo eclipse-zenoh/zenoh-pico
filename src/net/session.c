@@ -24,7 +24,6 @@
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/common/join.h"
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
 #include "zenoh-pico/transport/multicast.h"

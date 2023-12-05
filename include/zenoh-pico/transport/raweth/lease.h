@@ -17,6 +17,7 @@
 
 #include "zenoh-pico/transport/transport.h"
 
+int8_t _zp_raweth_send_join(_z_transport_multicast_t *ztm);
 int8_t _zp_raweth_send_keep_alive(_z_transport_multicast_t *ztm);
 int8_t _zp_raweth_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task);
 int8_t _zp_raweth_stop_lease_task(_z_transport_t *zt);
