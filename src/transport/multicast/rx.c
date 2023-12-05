@@ -28,27 +28,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
-
-_z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
-    _z_transport_peer_entry_t *ret = NULL;
-
-    _z_transport_peer_entry_list_t *xs = l;
-    for (; xs != NULL; xs = _z_transport_peer_entry_list_tail(xs)) {
-        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(xs);
-        if (val->_remote_addr.len != remote_addr->len) {
-            continue;
-        }
-
-        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
-            ret = val;
-        }
-    }
-
-    return ret;
-}
-
-/*------------------ Reception helper ------------------*/
-int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
+                                         _z_bytes_t *addr) {
     _Z_DEBUG(">> recv session msg\n");
     int8_t ret = _Z_RES_OK;
 
@@ -109,6 +90,34 @@ int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_me
 
 int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
     return _z_multicast_recv_t_msg_na(ztm, t_msg, addr);
+}
+#else
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+    _ZP_UNUSED(ztm);
+    _ZP_UNUSED(t_msg);
+    _ZP_UNUSED(addr);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
+
+static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
+    _z_transport_peer_entry_t *ret = NULL;
+
+    _z_transport_peer_entry_list_t *xs = l;
+    for (; xs != NULL; xs = _z_transport_peer_entry_list_tail(xs)) {
+        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(xs);
+        if (val->_remote_addr.len != remote_addr->len) {
+            continue;
+        }
+
+        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
+            ret = val;
+        }
+    }
+
+    return ret;
 }
 
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
@@ -324,13 +333,6 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     return ret;
 }
 #else
-int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
-    _ZP_UNUSED(ztm);
-    _ZP_UNUSED(t_msg);
-    _ZP_UNUSED(addr);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                              _z_bytes_t *addr) {
     _ZP_UNUSED(ztm);
@@ -338,4 +340,4 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     _ZP_UNUSED(addr);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
