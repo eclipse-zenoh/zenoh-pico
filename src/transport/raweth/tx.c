@@ -286,6 +286,11 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 }
 
 #else
+int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+    _ZP_UNUSED(zl);
+    _ZP_UNUSED(t_msg);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
