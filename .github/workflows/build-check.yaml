@@ -75,3 +75,22 @@ jobs:
       run: |
         docker stop zenoh_router
         docker rm zenoh_router
+  
+  raweth_build:
+    name: Build and test raweth transport on ubuntu-latest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature_reth: [1, 0]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build project
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/raweth.py --reth $Z_FEATURE_RAWETH_TRANSPORT
+        timeout-minutes: 5
+        env:
+          Z_FEATURE_RAWETH_TRANSPORT: ${{ matrix.feature_reth }}
