@@ -113,9 +113,6 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
 
-    if (value != default_value) {
-        free(value);
-    }
     return 0;
 }
 #else
