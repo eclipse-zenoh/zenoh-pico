@@ -278,6 +278,8 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
             // Mark the session that we have transmitted data
             ztm->_transmitted = true;
         }
+        // Clear the expandable buffer
+        _z_wbuf_clear(&fbf);
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_tx);
