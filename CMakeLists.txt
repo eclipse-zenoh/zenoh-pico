@@ -107,15 +107,18 @@ set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
+set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
 add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
 add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
 add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
 add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
+add_definition(Z_FEATURE_RAWETH_TRANSPORT=${Z_FEATURE_RAWETH_TRANSPORT})
 message(STATUS "Building with feature confing:\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
-* QUERYABLE: ${Z_FEATURE_QUERYABLE}")
+* QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
+* RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
 
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
@@ -300,6 +303,7 @@ if(UNIX OR MSVC)
     target_link_libraries(z_api_double_drop_test ${Libname})
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
