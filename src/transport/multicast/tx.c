@@ -143,6 +143,9 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
                         }
                     }
                 }
+
+                // Clear the buffer as it's no longer required
+                _z_wbuf_clear (&fbf);
             }
         }
 
