@@ -22,6 +22,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
+option(FRAG_MAX_SIZE "Use this to override the maximum size for fragmented messages" 0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -102,6 +103,10 @@ endif()
 
 add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
+if(FRAG_MAX_SIZE)
+  add_definition(Z_FRAG_MAX_SIZE=${FRAG_MAX_SIZE})
+endif()
+
 # Zenoh pico feature configuration options
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
@@ -124,6 +129,9 @@ message(STATUS "Building with feature confing:\n\
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
+if(FRAG_MAX_SIZE)
+  message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
+endif()
 message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
 message(STATUS "Build for FreeRTOS-Plus-TCP: ${WITH_FREERTOS_PLUS_TCP}")
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
