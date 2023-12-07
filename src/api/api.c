@@ -547,6 +547,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     // Call transport function
     switch (zs._val->_tp._type) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
+        case _Z_TRANSPORT_RAWETH_TYPE:
             _zp_multicast_fetch_zid(&zs._val->_tp, callback);
             break;
         default:
@@ -638,7 +639,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
@@ -794,7 +795,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(zs._val, keyexpr);
@@ -897,7 +898,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+    if (zs._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs._val, &keyexpr);
         if (r == NULL) {
             char *wild = strpbrk(keyexpr._suffix, "*$");

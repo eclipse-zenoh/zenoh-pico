@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -56,7 +57,6 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
         {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
-
         if (ret == _Z_RES_OK) {
             // Open transport link for communication
             if (zl->_open_f(zl) != _Z_RES_OK) {
@@ -92,10 +92,11 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
             ret = _z_new_link_bt(zl, ep);
         } else
 #endif
-        {
+            if (_z_endpoint_raweth_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_raweth(zl, ep);
+        } else {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
-
         if (ret == _Z_RES_OK) {
             // Open transport link for listening
             if (zl->_listen_f(zl) != _Z_RES_OK) {

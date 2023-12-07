@@ -53,6 +53,11 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
                                                                     _z_transport_peer_entry_t *entry);
 
+// Forward declaration to be used in _zp_f_send_tmsg*
+typedef struct _z_transport_multicast_t _z_transport_multicast_t;
+// Send function prototype
+typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
+
 typedef struct {
     // Session associated to the transport
 
@@ -93,7 +98,7 @@ typedef struct {
     volatile _Bool _transmitted;
 } _z_transport_unicast_t;
 
-typedef struct {
+typedef struct _z_transport_multicast_t {
     // Session associated to the transport
     void *_session;
 
@@ -121,6 +126,9 @@ typedef struct {
     // Known valid peers
     _z_transport_peer_entry_list_t *_peers;
 
+    // T message send function
+    _zp_f_send_tmsg _send_f;
+
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
@@ -135,11 +143,13 @@ typedef struct {
     union {
         _z_transport_unicast_t _unicast;
         _z_transport_multicast_t _multicast;
+        _z_transport_multicast_t _raweth;
     } _transport;
 
     enum {
         _Z_TRANSPORT_UNICAST_TYPE,
         _Z_TRANSPORT_MULTICAST_TYPE,
+        _Z_TRANSPORT_RAWETH_TYPE,
     } _type;
 } _z_transport_t;
 

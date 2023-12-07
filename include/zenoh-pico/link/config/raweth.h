@@ -20,13 +20,9 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 
-#if Z_FEATURE_RAWETH_TRANSPORT == 1
-
 #define RAWETH_SCHEMA "reth"
 
 int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint);
-
 int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint);
 
-#endif /* Z_FEATURE_RAWETH_TRANSPORT */
 #endif /* ZENOH_PICO_LINK_CONFIG_RAWETH_H */

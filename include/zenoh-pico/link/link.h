@@ -28,6 +28,10 @@
 #include "zenoh-pico/system/link/udp.h"
 #endif
 
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#include "zenoh-pico/system/link/raweth.h"
+#endif
+
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 #include "zenoh-pico/system/link/bt.h"
 #endif
@@ -52,6 +56,7 @@
 typedef enum {
     Z_LINK_CAP_TRANSPORT_UNICAST = 0,
     Z_LINK_CAP_TRANSPORT_MULTICAST = 1,
+    Z_LINK_CAP_TRANSPORT_RAWETH = 2,
 } _z_link_cap_transport_t;
 
 /**
@@ -73,7 +78,7 @@ typedef enum {
  *     transport: 2 bits, see _z_link_cap_transport_t enum.
  *     flow: 1 bit, see _z_link_cap_flow_t enum.
  *     reliable: 1 bit, 1 if the link is reliable (network definition)
- *     reserved: 4 bits, reserved for futur use
+ *     reserved: 4 bits, reserved for future use
  */
 typedef struct _z_link_capabilities_t {
     uint8_t _transport : 2;
@@ -111,6 +116,9 @@ typedef struct _z_link_t {
 #endif
 #if Z_FEATURE_LINK_WS == 1
         _z_ws_socket_t _ws;
+#endif
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+        _z_raweth_socket_t _raweth;
 #endif
     } _socket;
 

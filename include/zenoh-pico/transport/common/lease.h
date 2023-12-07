@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/transport/transport.h"
 
+int8_t _z_send_join(_z_transport_t *zt);
 int8_t _z_send_keep_alive(_z_transport_t *zt);
-void *_zp_lease_task(void *zt_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #endif /* ZENOH_PICO_TRANSPORT_LEASE_H */

@@ -28,6 +28,9 @@ int8_t _z_send_keep_alive(_z_transport_t *zt) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_send_keep_alive(&zt->_transport._multicast);
             break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_multicast_send_keep_alive(&zt->_transport._raweth);
+            break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
@@ -35,18 +38,19 @@ int8_t _z_send_keep_alive(_z_transport_t *zt) {
     return ret;
 }
 
-void *_zp_lease_task(void *zt_arg) {
-    void *ret = NULL;
-    _z_transport_t *zt = (_z_transport_t *)zt_arg;
+int8_t _z_send_join(_z_transport_t *zt) {
+    int8_t ret = _Z_RES_OK;
+    // Join task only applies to multicast transports
     switch (zt->_type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            ret = _zp_unicast_lease_task(&zt->_transport._unicast);
-            break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _zp_multicast_lease_task(&zt->_transport._multicast);
+            ret = _zp_multicast_send_join(&zt->_transport._multicast);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_multicast_send_join(&zt->_transport._raweth);
             break;
         default:
-            ret = NULL;
+            _ZP_UNUSED(zt);
+            ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
     return ret;

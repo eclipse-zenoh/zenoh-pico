@@ -278,6 +278,8 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
             // Mark the session that we have transmitted data
             ztm->_transmitted = true;
         }
+        // Clear the expandable buffer
+        _z_wbuf_clear(&fbf);
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ztm->_mutex_tx);
@@ -286,6 +288,11 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 }
 
 #else
+int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+    _ZP_UNUSED(zl);
+    _ZP_UNUSED(t_msg);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);

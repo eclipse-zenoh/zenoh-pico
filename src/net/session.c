@@ -24,12 +24,13 @@
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/common/join.h"
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/read.h"
+#include "zenoh-pico/transport/raweth/read.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/read.h"
@@ -160,6 +161,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
                 _zp_unicast_info_session(&zn->_tp, ps);
                 break;
             case _Z_TRANSPORT_MULTICAST_TYPE:
+            case _Z_TRANSPORT_RAWETH_TYPE:
                 _zp_multicast_info_session(&zn->_tp, ps);
                 break;
             default:
@@ -192,6 +194,9 @@ int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_start_read_task(&zn->_tp, attr, task);
             break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_raweth_start_read_task(&zn->_tp, attr, task);
+            break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
@@ -216,7 +221,10 @@ int8_t _zp_start_lease_task(_z_session_t *zn, _z_task_attr_t *attr) {
             ret = _zp_unicast_start_lease_task(&zn->_tp, attr, task);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _zp_multicast_start_lease_task(&zn->_tp, attr, task);
+            ret = _zp_multicast_start_lease_task(&zn->_tp._transport._multicast, attr, task);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_multicast_start_lease_task(&zn->_tp._transport._raweth, attr, task);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
@@ -239,6 +247,9 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_stop_read_task(&zn->_tp);
             break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_raweth_stop_read_task(&zn->_tp);
+            break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
@@ -254,7 +265,10 @@ int8_t _zp_stop_lease_task(_z_session_t *zn) {
             ret = _zp_unicast_stop_lease_task(&zn->_tp);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _zp_multicast_stop_lease_task(&zn->_tp);
+            ret = _zp_multicast_stop_lease_task(&zn->_tp._transport._multicast);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _zp_multicast_stop_lease_task(&zn->_tp._transport._raweth);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;

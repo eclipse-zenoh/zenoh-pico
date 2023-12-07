@@ -89,6 +89,9 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
             zn->_tp._transport._multicast._session = zn;
             break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            zn->_tp._transport._raweth._session = zn;
+            break;
         default:
             break;
     }

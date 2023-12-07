@@ -12,12 +12,14 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/common/tx.h"
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -75,6 +77,9 @@ int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            ret = _z_raweth_send_t_msg(&zt->_transport._raweth, t_msg);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
