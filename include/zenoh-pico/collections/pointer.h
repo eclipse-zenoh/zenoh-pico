@@ -22,7 +22,7 @@
 
 #ifndef __cplusplus
 #include <stdatomic.h>
-#define z_atomic(X) _Atomic X
+#define _z_atomic(X) _Atomic X
 #define _z_atomic_store_explicit atomic_store_explicit
 #define _z_atomic_fetch_add_explicit atomic_fetch_add_explicit
 #define _z_atomic_fetch_sub_explicit atomic_fetch_sub_explicit
@@ -31,26 +31,26 @@
 #define _z_memory_order_relaxed memory_order_relaxed
 #else
 #include <atomic>
-#define z_atomic(X) std::atomic<X>
+#define _z_atomic(X) std::atomic<X>
 #define _z_atomic_store_explicit std::atomic_store_explicit
 #define _z_atomic_fetch_add_explicit std::atomic_fetch_add_explicit
 #define _z_atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
 #define _z_memory_order_acquire std::memory_order_acquire
 #define _z_memory_order_release std::memory_order_release
 #define _z_memory_order_relaxed std::memory_order_relaxed
-#endif
+#endif // __cplusplus
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_POINTER_DEFINE(name, type)                                                           \
     typedef struct {                                                                            \
         type##_t *ptr;                                                                          \
-        z_atomic(unsigned int) * _cnt;                                                          \
+        _z_atomic(unsigned int) * _cnt;                                                          \
     } name##_sptr_t;                                                                            \
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
         p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
         if (p.ptr != NULL) {                                                                    \
-            p._cnt = (z_atomic(unsigned int) *)z_malloc(sizeof(z_atomic(unsigned int) *));      \
+            p._cnt = (_z_atomic(unsigned int) *)z_malloc(sizeof(_z_atomic(unsigned int) *));      \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
@@ -150,6 +150,6 @@
         }                                                                                       \
         return dropped;                                                                         \
     }
-#endif
+#endif // ZENOH_C_STANDARD != 99 && !defined(ZENOH_NO_STDATOMIC)
 
 #endif /* ZENOH_PICO_COLLECTIONS_POINTER_H */
