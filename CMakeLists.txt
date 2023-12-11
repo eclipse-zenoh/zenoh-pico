@@ -19,10 +19,10 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-option(ZENOH_DEBUG "Use this to set the ZENOH_DEBUG variable." 0)
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
-option(FRAG_MAX_SIZE "Use this to override the maximum size for fragmented messages" 0)
+set(ZENOH_DEBUG 0 CACHE STRING "Use this to set the ZENOH_DEBUG variable")
+set(FRAG_MAX_SIZE 0 CACHE STRING "Use this to override the maximum size for fragmented messages")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
