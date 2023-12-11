@@ -270,7 +270,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         ztm->_transmitted = true;
     } else {  // The message does not fit in the current batch, let's fragment it
         // Create an expandable wbuf for fragmentation
-        _z_wbuf_t fbf = _z_wbuf_make(ztm->_wbuf._capacity - 12, true);
+        _z_wbuf_t fbf = _z_wbuf_make(ztm->_wbuf._capacity - _Z_FRAGMENT_HEADER_SIZE, true);
         // Encode the message on the expandable wbuf
         _Z_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg));
         // Fragment and send the message
