@@ -102,13 +102,12 @@ static void __unsafe_z_raweth_prepare_header(_z_link_t *zl, _z_wbuf_t *wbf) {
  */
 static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
     _z_raweth_socket_t *resocket = &zl->_socket._raweth;
-    size_t wpos = 0;
+    // Save and reset buffer position
+    size_t wpos = _z_wbuf_len(wbf);
+    _z_wbuf_set_wpos(wbf, 0);
     // Write eth header in buffer
     if (resocket->_has_vlan) {
         _zp_eth_vlan_header_t header;
-        // Save buf position
-        wpos = _z_wbuf_len(wbf);
-        _z_wbuf_set_wpos(wbf, 0);
         // Set header
         memset(&header, 0, sizeof(header));
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
@@ -121,9 +120,6 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
     } else {
         _zp_eth_header_t header;
-        // Save buf position
-        wpos = _z_wbuf_len(wbf);
-        _z_wbuf_set_wpos(wbf, 0);
         // Set header
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
