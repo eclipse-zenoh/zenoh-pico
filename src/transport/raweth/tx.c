@@ -256,8 +256,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     // Encode the frame header
     _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_wbuf, &t_msg));
     // Encode the network message
-    ret = _z_network_message_encode(&ztm->_wbuf, n_msg);
-    if (ret == _Z_RES_OK) {
+    if (_z_network_message_encode(&ztm->_wbuf, n_msg) == _Z_RES_OK) {
         // Write the eth header
         _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_link, &ztm->_wbuf));
         // Send the wbuf on the socket
