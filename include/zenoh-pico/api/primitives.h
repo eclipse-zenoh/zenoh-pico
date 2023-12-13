@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_API_PRIMITIVES_H
-#define ZENOH_PICO_API_PRIMITIVES_H
+#ifndef INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
+#define INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -1400,4 +1400,4 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options);
 }
 #endif
 
-#endif /* ZENOH_PICO_API_PRIMITIVES_H */
+#endif /* INCLUDE_ZENOH_PICO_API_PRIMITIVES_H */

@@ -1091,3 +1091,115 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
     return _zp_send_join(zs._val);
 }
+
+void _z_bytes_pair_clear(struct _z_bytes_pair_t *this) {
+    _z_bytes_clear(&this->key);
+    _z_bytes_clear(&this->value);
+}
+
+z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_) {
+    if (!z_bytes_map_check(this_)) {
+        return z_attachment_null();
+    }
+    return (z_attachment_t){.data = this_, .iteration_driver = (z_attachment_iter_driver_t)z_bytes_map_iter};
+}
+bool z_bytes_map_check(const z_owned_bytes_map_t *this_) { return this_->_inner != NULL; }
+void z_bytes_map_drop(z_owned_bytes_map_t *this_) { _z_bytes_pair_list_free(&this_->_inner); }
+
+int8_t _z_bytes_map_insert_by_alias(z_bytes_t key, z_bytes_t value, void *this_) {
+    z_bytes_map_insert_by_alias((z_owned_bytes_map_t *)this_, key, value);
+    return 0;
+}
+int8_t _z_bytes_map_insert_by_copy(z_bytes_t key, z_bytes_t value, void *this_) {
+    z_bytes_map_insert_by_copy((z_owned_bytes_map_t *)this_, key, value);
+    return 0;
+}
+z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_) {
+    if (!z_attachment_check(&this_)) {
+        return z_bytes_map_null();
+    }
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_attachment_iterate(this_, _z_bytes_map_insert_by_copy, &map);
+    return map;
+}
+z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_) {
+    if (!z_attachment_check(&this_)) {
+        return z_bytes_map_null();
+    }
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_attachment_iterate(this_, _z_bytes_map_insert_by_alias, &map);
+    return map;
+}
+z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            return _z_bytes_wrap(head->value.start, head->value.len);
+        }
+    }
+    return z_bytes_null();
+}
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            break;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    if (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        _z_bytes_clear(&head->value);
+        head->value = _z_bytes_wrap(value.start, value.len);
+    } else {
+        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
+        memset(insert, 0, sizeof(struct _z_bytes_pair_t));
+        insert->key = _z_bytes_wrap(key.start, key.len);
+        insert->value = _z_bytes_wrap(value.start, value.len);
+        _z_bytes_pair_list_push(this_->_inner, insert);
+    }
+}
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            break;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    if (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        _z_bytes_clear(&head->value);
+        _z_bytes_copy(&head->value, &value);
+        if (!head->key._is_alloc) {
+            _z_bytes_copy(&head->key, &key);
+        }
+    } else {
+        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
+        memset(insert, 0, sizeof(struct _z_bytes_pair_t));
+        _z_bytes_copy(&insert->key, &key);
+        _z_bytes_copy(&insert->value, &value);
+        _z_bytes_pair_list_push(this_->_inner, insert);
+    }
+}
+int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        int8_t ret = body(head->key, head->value, ctx);
+        if (ret) {
+            return ret;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    return 0;
+}
+z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner = _z_bytes_pair_list_new()}; }
+z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
+z_bytes_t z_bytes_new(const char *str) {
+    return (z_bytes_t){.len = strlen(str), ._is_alloc = false, .start = (unsigned char *)str};
+}
+z_bytes_t z_bytes_null(void) { return (z_bytes_t){.len = 0, ._is_alloc = false, .start = NULL}; }
