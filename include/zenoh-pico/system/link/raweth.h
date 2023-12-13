@@ -29,7 +29,7 @@
 #define _ZP_MAC_ADDR_LENGTH 6
 
 // Max frame size
-#define _ZP_MAX_ETH_FRAME_SIZE 1500
+#define _ZP_MAX_ETH_FRAME_SIZE 1514
 
 // Ethernet header structure type
 typedef struct {
