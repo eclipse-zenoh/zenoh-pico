@@ -166,13 +166,11 @@ int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message
     // Prepare buff
     __unsafe_z_raweth_prepare_header(mzl, &wbf);
     // Encode the session message
-    ret = _z_transport_message_encode(&wbf, t_msg);
-    if (ret == _Z_RES_OK) {
-        // Write the message header
-        _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(mzl, &wbf));
-        // Send the wbuf on the socket
-        ret = _z_raweth_link_send_wbuf(zl, &wbf);
-    }
+    _Z_RETURN_IF_ERR(_z_transport_message_encode(&wbf, t_msg));
+    // Write the message header
+    _Z_RETURN_IF_ERR(__unsafe_z_raweth_write_header(mzl, &wbf));
+    // Send the wbuf on the socket
+    ret = _z_raweth_link_send_wbuf(zl, &wbf);
     _z_wbuf_clear(&wbf);
 
     return ret;
