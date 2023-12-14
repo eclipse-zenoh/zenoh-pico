@@ -57,11 +57,13 @@ int main(int argc, char **argv) {
         return -1;
     }
     // Put data
-    printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, &options) < 0) {
-        printf("Oh no! Put has failed...\n");
+    for (int i = 0; i < 5; i++) {
+        printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
+        if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, &options) < 0) {
+            printf("Oh no! Put has failed...\n");
+        }
     }
     // Clean up
     zp_stop_read_task(z_loan(s));
