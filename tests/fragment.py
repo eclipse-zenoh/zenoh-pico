@@ -60,7 +60,7 @@ def test_client():
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE, text=True)
     # Introduce a delay to ensure rx starts
-    time.sleep(3)
+    time.sleep(2)
     # Start tx
     print("Start tx client")
     z_tx_command = f"./{DIR_TESTS}/z_test_fragment_tx"
@@ -72,6 +72,8 @@ def test_client():
                                     text=True)
     # Wait for tx to finish
     z_tx_process.wait()
+    # Wait for rx to receive
+    time.sleep(1)
     print("Stop rx")
     if z_rx_process.poll() is None:
         # Send "q" command to rx to stop it
@@ -105,6 +107,8 @@ def test_peer():
                                     text=True)
     # Wait for tx to finish
     z_tx_process.wait()
+    # Wait for rx to receive
+    time.sleep(1)
     print("Stop rx")
     if z_rx_process.poll() is None:
         # Send "q" command to rx to stop it
