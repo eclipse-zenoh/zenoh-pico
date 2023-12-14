@@ -125,7 +125,7 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
             } else {
                 // The message does not fit in the current batch, let's fragment it
                 // Create an expandable wbuf for fragmentation
-                _z_wbuf_t fbf = _z_wbuf_make(ztu->_wbuf._capacity - _Z_FRAGMENT_HEADER_SIZE, true);
+                _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
 
                 ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {

@@ -45,6 +45,8 @@
 #define _Z_FLAG_Z_T 0x20  // 1 << 5 | QueryTarget       if T==1 then the query target is present
 #define _Z_FLAG_Z_X 0x00  // Unused flags are set to zero
 
+#define _Z_FRAG_BUFF_BASE_SIZE 128  // Base size of the buffer to encode a fragment message header
+
 // Flags:
 // - T: Timestamp      If T==1 then the timestamp if present
 // - E: Encoding       If E==1 then the encoding is present
