@@ -26,7 +26,11 @@
 #include <unistd.h>
 #endif
 
+#ifdef ZENOH_PICO
 #include "zenoh-pico.h"
+#else
+#include "zenoh.h"
+#endif
 
 #define SLEEP 2
 #define SCOUTING_TIMEOUT "1000"
@@ -121,7 +125,9 @@ void data_handler(const z_sample_t *sample, void *arg) {
 }
 
 int main(int argc, char **argv) {
+#ifdef ZENOH_PICO
     assert_eq(argc, 2);
+#endif
     (void)(argc);
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
@@ -215,9 +221,9 @@ int main(int argc, char **argv) {
     assert(hellos >= 1);
 
     uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
-    z_sleep_ms(_scouting_timeout);
+    sleep(_scouting_timeout / 1000);
     printf("Ok\n");
-    z_sleep_s(SLEEP);
+    sleep(SLEEP);
 
     z_owned_session_t s1 = z_open(z_move(_ret_config));
     assert(z_check(s1));
@@ -234,11 +240,13 @@ int main(int argc, char **argv) {
     sleep(SLEEP);
     assert_eq(zids, 0);
 
+#ifdef ZENOH_PICO  // zenoh-c test has no router
     _ret_int8 = z_info_routers_zid(z_loan(s1), z_move(_ret_closure_zid));
     assert_eq(_ret_int8, 0);
 
     sleep(SLEEP);
     assert_eq(zids, 1);
+#endif
 
 #ifdef ZENOH_PICO
     zp_task_read_options_t _ret_read_opt = zp_task_read_options_default();
