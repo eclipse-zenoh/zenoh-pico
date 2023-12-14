@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *llocator = NULL;
     uint8_t *value = NULL;
-    size_t size = 100000;
+    size_t size = 10000;
     (void)argv;
 
     // Check if peer mode

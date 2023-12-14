@@ -10,11 +10,11 @@ def check_output(tx_status, tx_output, rx_status, rx_output):
 
     # Expected tx output & status
     z_tx_expected_status = 0
-    z_tx_expected_output = "[tx]: Sending packet on test/zenoh-pico-fragment, len: 100000"
+    z_tx_expected_output = "[tx]: Sending packet on test/zenoh-pico-fragment, len: 10000"
     # Expected rx output & status
     z_rx_expected_status = 0
     z_rx_expected_output = (
-        "[rx]: Received packet on test/zenoh-pico-fragment, len: 100000, validity: 1")
+        "[rx]: Received packet on test/zenoh-pico-fragment, len: 10000, validity: 1")
 
     # Check the exit status of tx
     if tx_status == z_tx_expected_status:

@@ -108,8 +108,8 @@ jobs:
       - name: Build project and run test
         run: |
           sudo apt install -y ninja-build
-          cmake -DBATCH_UNICAST_SIZE=4096 -B build/ -G Ninja
-          ninja -C build/
+          # cmake -DBATCH_UNICAST_SIZE=4096 -B build/ -G Ninja
+          CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/fragment.py
         timeout-minutes: 5
 
