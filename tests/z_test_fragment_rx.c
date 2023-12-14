@@ -34,7 +34,7 @@ void data_handler(const z_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    const char *keyexpr = "test/**";
+    const char *keyexpr = "test/zenoh-pico-fragment";
     const char *mode = "client";
     char *llocator = NULL;
     (void)argv;
