@@ -116,5 +116,9 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     return bytesRead;
 }
 
+size_t _z_raweth_ntohs(size_t val) { return ntohs(val); }
+
+size_t _z_raweth_htons(size_t val) { return htons(val); }
+
 #endif  // defined(__linux)
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1

@@ -31,6 +31,15 @@
         }                         \
     }
 
+#define _Z_CLEAN_RETURN_IF_ERR(base_expr, clean_expr) \
+    {                                                 \
+        int8_t __res = base_expr;                     \
+        if (__res != _Z_RES_OK) {                     \
+            clean_expr;                               \
+            return __res;                             \
+        }                                             \
+    }
+
 /*------------------ Internal Zenoh-net Macros ------------------*/
 int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en);
 int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf);
