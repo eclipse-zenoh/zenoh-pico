@@ -326,7 +326,7 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_response_t *msg = (_z_n_msg_response_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            msg->_ext_qos._val = extension->_body._zint._val;
+            msg->_ext_qos._val = (uint8_t)extension->_body._zint._val;
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
@@ -450,7 +450,7 @@ int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_declare_t *decl = (_z_n_msg_declare_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            decl->_ext_qos._val = extension->_body._zint._val;
+            decl->_ext_qos._val = (uint8_t)extension->_body._zint._val;
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
