@@ -15,14 +15,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "zenoh-pico.h"
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 #define TEST_DURATION_US 10000000
 
-int send_packets(size_t pkt_len, z_owned_publisher_t *pub, uint8_t *value) {
+#if Z_FEATURE_PUBLICATION == 1
+int send_packets(unsigned long pkt_len, z_owned_publisher_t *pub, uint8_t *value) {
     z_clock_t test_start = z_clock_now();
     unsigned long elapsed_us = 0;
     while (elapsed_us < TEST_DURATION_US) {
@@ -36,40 +36,25 @@ int send_packets(size_t pkt_len, z_owned_publisher_t *pub, uint8_t *value) {
 }
 
 int main(int argc, char **argv) {
-    size_t len_array[] = {1048576, 524288, 262144, 131072, 65536, 32768, 16384, 8192, 4096,
-                          2048,    1024,   512,    256,    128,   64,    32,    16,   8};  // Biggest value first
+    unsigned long len_array[] = {1048576, 524288, 262144, 131072, 65536, 32768, 16384, 8192, 4096,
+                                 2048,    1024,   512,    256,    128,   64,    32,    16,   8};  // Biggest value first
     uint8_t *value = (uint8_t *)malloc(len_array[0]);
     memset(value, 1, len_array[0]);
     char *keyexpr = "test/thr";
     const char *mode = "client";
     char *llocator = NULL;
-    char *clocator = NULL;
+    (void)argv;
 
-    // Get args
-    int opt;
-    while ((opt = getopt(argc, argv, "m:l:e:")) != -1) {
-        switch (opt) {
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            default:
-                return -1;
-        }
+    // Check if peer mode
+    if (argc > 1) {
+        mode = "peer";
+        llocator = "udp/224.0.0.224:7447#iface=lo";
     }
     // Set config
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
-    }
-    if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
@@ -111,3 +96,9 @@ int main(int argc, char **argv) {
     free(value);
     exit(0);
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this test requires it.\n");
+    return -2;
+}
+#endif

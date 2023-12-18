@@ -15,19 +15,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "zenoh-pico.h"
 
 typedef struct {
     volatile unsigned long count;
-    size_t curr_len;
+    unsigned long curr_len;
     z_clock_t start;
 } z_stats_t;
 
 static z_stats_t test_stats;
 static volatile bool test_end;
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 void z_stats_stop(z_stats_t *stats) {
     // Ignore default value
     if (stats->curr_len == 0) {
@@ -46,7 +46,7 @@ void on_sample(const z_sample_t *sample, void *context) {
         // End previous measurement
         z_stats_stop(stats);
         // Check for end packet
-        stats->curr_len = sample->payload.len;
+        stats->curr_len = (unsigned long)sample->payload.len;
         if (sample->payload.len == 1) {
             test_end = true;
             return;
@@ -62,33 +62,18 @@ int main(int argc, char **argv) {
     char *keyexpr = "test/thr";
     const char *mode = "client";
     char *llocator = NULL;
-    char *clocator = NULL;
+    (void)argv;
 
-    // Get args
-    int opt;
-    while ((opt = getopt(argc, argv, "m:l:e:")) != -1) {
-        switch (opt) {
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            default:
-                return -1;
-        }
+    // Check if peer mode
+    if (argc > 1) {
+        mode = "peer";
+        llocator = "udp/224.0.0.224:7447#iface=lo";
     }
     // Set config
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
-    }
-    if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
@@ -122,3 +107,9 @@ int main(int argc, char **argv) {
     z_close(z_move(s));
     exit(0);
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this test requires it.\n");
+    return -2;
+}
+#endif
