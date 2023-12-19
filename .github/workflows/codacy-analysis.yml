@@ -13,11 +13,23 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
 
 jobs:
   codacy-security-scan:
     name: Codacy Security Scan
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # List of Codacy-supported tools: https://docs.codacy.com/repositories-configure/codacy-configuration-file/#which-tools-can-be-configured-and-which-name-should-i-use%20%20tool-timeout:
+        tool: [
+            cppcheck, # static analysis of C/C++ code
+            flawfinder, # a static analysis tool for finding vulnerabilities in C/C++ source code
+            pmd, # includes CPD, the copy-paste-detector. CPD finds duplicated code in C/C++, etc
+            markdownlint, # A Node.js style checker and lint tool for Markdown/CommonMark files
+            shellcheck, # a static analysis tool for shell scripts
+            pylintpython3, # a static code analyser for Python 3
+          ]
     steps:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout code
@@ -25,22 +37,23 @@ jobs:
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@releases/v4
+        uses: codacy/codacy-analysis-cli-action@master
         with:
           # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
           # You can also omit the token and run the tools that support default configurations
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           verbose: true
-          output: results.sarif
+          output: results-${{ matrix.tool }}.sarif
           format: sarif
           # Adjust severity of non-security issues
           gh-code-scanning-compat: true
           # Force 0 exit code to allow SARIF file generation
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
+          tool: cppcheck
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: results.sarif
+          sarif_file: results-${{ matrix.tool }}.sarif
