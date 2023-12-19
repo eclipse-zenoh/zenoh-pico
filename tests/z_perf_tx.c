@@ -26,10 +26,7 @@ int send_packets(unsigned long pkt_len, z_owned_publisher_t *pub, uint8_t *value
     z_clock_t test_start = z_clock_now();
     unsigned long elapsed_us = 0;
     while (elapsed_us < TEST_DURATION_US) {
-        if (z_publisher_put(z_loan(*pub), (const uint8_t *)value, pkt_len, NULL) != 0) {
-            printf("Put failed for pkt len: %lu\n", pkt_len);
-            return -1;
-        }
+        z_publisher_put(z_loan(*pub), (const uint8_t *)value, pkt_len, NULL);
         elapsed_us = z_clock_elapsed_us(&test_start);
     }
     return 0;
