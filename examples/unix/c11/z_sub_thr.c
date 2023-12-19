@@ -19,14 +19,13 @@
 
 #include "zenoh-pico.h"
 
-#define N 1000000
+#define PACKET_NB 1000000
 
 typedef struct {
     volatile unsigned long count;
     volatile unsigned long finished_rounds;
-    volatile clock_t start;
-    volatile clock_t stop;
-    volatile clock_t first_start;
+    z_clock_t start;
+    z_clock_t first_start;
 } z_stats_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -35,36 +34,36 @@ z_stats_t *z_stats_make(void) {
     z_stats_t *stats = malloc(sizeof(z_stats_t));
     stats->count = 0;
     stats->finished_rounds = 0;
-    stats->first_start = 0;
+    stats->first_start.tv_nsec = 0;
     return stats;
 }
 
 void on_sample(const z_sample_t *sample, void *context) {
     (void)sample;
     z_stats_t *stats = (z_stats_t *)context;
-    if (stats->count == 0) {
-        stats->start = clock();
-        if (!stats->first_start) {
+    stats->count++;
+    // Start set measurement
+    if (stats->count == 1) {
+        stats->start = z_clock_now();
+        if (stats->first_start.tv_nsec == 0) {
             stats->first_start = stats->start;
         }
-        stats->count++;
-    } else if (stats->count < N) {
-        stats->count++;
-    } else {
-        stats->stop = clock();
+    } else if (stats->count >= PACKET_NB) {
+        // Stop set measurement
         stats->finished_rounds++;
-        printf("%f msg/s\n", N * (double)CLOCKS_PER_SEC / (double)(stats->stop - stats->start));
+        unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
+        printf("Received %d msg in %lu ms (%.1f msg/s)\n", PACKET_NB, elapsed_ms,
+               (double)(PACKET_NB * 1000 / elapsed_ms));
         stats->count = 0;
     }
 }
 
 void drop_stats(void *context) {
-    const clock_t end = clock();
-    const z_stats_t *stats = (z_stats_t *)context;
-    const double elapsed = (double)(end - stats->first_start) / (double)CLOCKS_PER_SEC;
-    const unsigned long sent_messages = N * stats->finished_rounds + stats->count;
-    printf("Stats being dropped after unsubscribing: sent %ld messages over %f seconds (%f msg/s)\n", sent_messages,
-           elapsed, (double)sent_messages / elapsed);
+    z_stats_t *stats = (z_stats_t *)context;
+    unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->first_start);
+    const unsigned long sent_messages = PACKET_NB * stats->finished_rounds + stats->count;
+    printf("Stats after unsubscribing: received %ld messages over %lu miliseconds (%.1f msg/s)\n", sent_messages,
+           elapsed_ms, (double)(sent_messages * 1000 / elapsed_ms));
     free(context);
 }
 
