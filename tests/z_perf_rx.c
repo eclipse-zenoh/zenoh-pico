@@ -60,20 +60,29 @@ void on_sample(const z_sample_t *sample, void *context) {
 
 int main(int argc, char **argv) {
     char *keyexpr = "test/thr";
-    const char *mode = "client";
+    const char *mode = NULL;
     char *llocator = NULL;
+    char *clocator = NULL;
     (void)argv;
 
-    // Check if peer mode
+    // Check if peer or client mode
     if (argc > 1) {
         mode = "peer";
         llocator = "udp/224.0.0.224:7447#iface=lo";
+    } else {
+        mode = "client";
+        clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    if (mode != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    }
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+    }
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
