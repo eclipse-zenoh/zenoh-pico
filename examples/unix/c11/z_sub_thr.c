@@ -53,7 +53,7 @@ void on_sample(const z_sample_t *sample, void *context) {
         stats->finished_rounds++;
         unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
         printf("Received %d msg in %lu ms (%.1f msg/s)\n", PACKET_NB, elapsed_ms,
-               (double)(PACKET_NB * 1000 / elapsed_ms));
+               (double)(PACKET_NB * 1000) / (double)elapsed_ms);
         stats->count = 0;
     }
 }
@@ -63,7 +63,7 @@ void drop_stats(void *context) {
     unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->first_start);
     const unsigned long sent_messages = PACKET_NB * stats->finished_rounds + stats->count;
     printf("Stats after unsubscribing: received %ld messages over %lu miliseconds (%.1f msg/s)\n", sent_messages,
-           elapsed_ms, (double)(sent_messages * 1000 / elapsed_ms));
+           elapsed_ms, (double)(sent_messages * 1000) / (double)elapsed_ms);
     free(context);
 }
 
