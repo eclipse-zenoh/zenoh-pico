@@ -25,6 +25,8 @@
 
 #define MSG 1000
 #define MSG_LEN 1024
+#define FRAGMENT_MSG_NB 100
+#define FRAGMENT_MSG_LEN 100000
 #define QRY 100
 #define QRY_CLT 10
 #define SET 100
@@ -92,7 +94,7 @@ void data_handler(const z_sample_t *sample, void *arg) {
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
     z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
-    assert(sample->payload.len == MSG_LEN);
+    assert((sample->payload.len == MSG_LEN) || (sample->payload.len == FRAGMENT_MSG_LEN));
     assert(_z_str_eq(z_loan(k_str), res) == true);
 
     datas++;
@@ -232,6 +234,37 @@ int main(int argc, char **argv) {
     datas = 0;
 
     z_sleep_s(SLEEP);
+
+    // Write fragment data from first session
+    if (is_reliable) {
+        z_free((uint8_t *)payload);
+        len = FRAGMENT_MSG_LEN;
+        payload = (uint8_t *)z_malloc(len);
+        memset(payload, 1, FRAGMENT_MSG_LEN);
+
+        total = FRAGMENT_MSG_NB * SET;
+        for (unsigned int n = 0; n < FRAGMENT_MSG_NB; n++) {
+            for (unsigned int i = 0; i < SET; i++) {
+                z_put_options_t opt = z_put_options_default();
+                opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
+                z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
+                printf("Wrote fragment data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])._id, len,
+                       n * SET + (i + 1), total);
+            }
+        }
+        // Wait to receive all the data
+        now = z_clock_now();
+        while (datas < total) {
+            assert(z_clock_elapsed_s(&now) < TIMEOUT);
+            printf("Waiting for fragment datas... %u/%u\n", datas, total);
+            z_sleep_s(SLEEP);
+        }
+        if (is_reliable == true) {
+            assert(datas == total);
+        }
+        datas = 0;
+        z_sleep_s(SLEEP);
+    }
 
     // Query data from first session
     total = QRY * SET;

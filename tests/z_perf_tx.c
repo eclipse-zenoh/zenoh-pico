@@ -26,10 +26,7 @@ int send_packets(unsigned long pkt_len, z_owned_publisher_t *pub, uint8_t *value
     z_clock_t test_start = z_clock_now();
     unsigned long elapsed_us = 0;
     while (elapsed_us < TEST_DURATION_US) {
-        if (z_publisher_put(z_loan(*pub), (const uint8_t *)value, pkt_len, NULL) != 0) {
-            printf("Put failed for pkt len: %lu\n", pkt_len);
-            return -1;
-        }
+        z_publisher_put(z_loan(*pub), (const uint8_t *)value, pkt_len, NULL);
         elapsed_us = z_clock_elapsed_us(&test_start);
     }
     return 0;
@@ -41,20 +38,29 @@ int main(int argc, char **argv) {
     uint8_t *value = (uint8_t *)malloc(len_array[0]);
     memset(value, 1, len_array[0]);
     char *keyexpr = "test/thr";
-    const char *mode = "client";
+    const char *mode = NULL;
     char *llocator = NULL;
+    char *clocator = NULL;
     (void)argv;
 
-    // Check if peer mode
+    // Check if peer or client mode
     if (argc > 1) {
         mode = "peer";
         llocator = "udp/224.0.0.224:7447#iface=lo";
+    } else {
+        mode = "client";
+        clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    if (mode != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    }
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+    }
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));

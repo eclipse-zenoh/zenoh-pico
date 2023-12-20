@@ -15,74 +15,68 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "zenoh-pico.h"
 
+#define PACKET_NB 1000000
+
 typedef struct {
     volatile unsigned long count;
-    unsigned long curr_len;
+    volatile unsigned long finished_rounds;
     z_clock_t start;
+    z_clock_t first_start;
 } z_stats_t;
 
-static z_stats_t test_stats;
-static volatile bool test_end;
-
 #if Z_FEATURE_SUBSCRIPTION == 1
-void z_stats_stop(z_stats_t *stats) {
-    // Ignore default value
-    if (stats->curr_len == 0) {
-        return;
-    }
-    // Print values
-    unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
-    printf("End test for pkt len: %lu, msg nb: %lu, time ms: %lu\n", stats->curr_len, stats->count, elapsed_ms);
+
+z_stats_t *z_stats_make(void) {
+    z_stats_t *stats = malloc(sizeof(z_stats_t));
     stats->count = 0;
+    stats->finished_rounds = 0;
+    stats->first_start.tv_nsec = 0;
+    return stats;
 }
 
 void on_sample(const z_sample_t *sample, void *context) {
+    (void)sample;
     z_stats_t *stats = (z_stats_t *)context;
-
-    if (stats->curr_len != sample->payload.len) {
-        // End previous measurement
-        z_stats_stop(stats);
-        // Check for end packet
-        stats->curr_len = (unsigned long)sample->payload.len;
-        if (sample->payload.len == 1) {
-            test_end = true;
-            return;
-        }
-        // Start new measurement
-        printf("Starting test for pkt len: %lu\n", stats->curr_len);
-        stats->start = z_clock_now();
-    }
     stats->count++;
+    // Start set measurement
+    if (stats->count == 1) {
+        stats->start = z_clock_now();
+        if (stats->first_start.tv_nsec == 0) {
+            stats->first_start = stats->start;
+        }
+    } else if (stats->count >= PACKET_NB) {
+        // Stop set measurement
+        stats->finished_rounds++;
+        unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
+        printf("Received %d msg in %lu ms (%.1f msg/s)\n", PACKET_NB, elapsed_ms,
+               (double)(PACKET_NB * 1000) / (double)elapsed_ms);
+        stats->count = 0;
+    }
+}
+
+void drop_stats(void *context) {
+    z_stats_t *stats = (z_stats_t *)context;
+    unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->first_start);
+    const unsigned long sent_messages = PACKET_NB * stats->finished_rounds + stats->count;
+    printf("Stats after unsubscribing: received %ld messages over %lu miliseconds (%.1f msg/s)\n", sent_messages,
+           elapsed_ms, (double)(sent_messages * 1000) / (double)elapsed_ms);
+    free(context);
 }
 
 int main(int argc, char **argv) {
     char *keyexpr = "test/thr";
-    const char *mode = NULL;
-    char *llocator = NULL;
-    char *clocator = NULL;
-    (void)argv;
-
-    // Check if peer or client mode
-    if (argc > 1) {
-        mode = "peer";
-        llocator = "udp/224.0.0.224:7447#iface=lo";
-    } else {
-        mode = "client";
-        clocator = "tcp/127.0.0.1:7447";
-    }
-    // Set config
     z_owned_config_t config = z_config_default();
-    if (mode != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
-    }
-    if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+
+    // Set config
+    if (argc > 1) {
+        if (zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1])) < 0) {
+            printf("Failed to insert locator in config: %s\n", argv[1]);
+            exit(-1);
+        }
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
@@ -96,7 +90,8 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     // Declare Subscriber/resource
-    z_owned_closure_sample_t callback = z_closure(on_sample, NULL, (void *)&test_stats);
+    z_stats_t *context = z_stats_make();
+    z_owned_closure_sample_t callback = z_closure(on_sample, drop_stats, (void *)context);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
     if (!z_check(sub)) {
         printf("Unable to create subscriber.\n");
@@ -104,7 +99,9 @@ int main(int argc, char **argv) {
     }
     // Listen until stopped
     printf("Start listening.\n");
-    while (!test_end) {
+    char c = 0;
+    while (c != 'q') {
+        c = fgetc(stdin);
     }
     // Wait for everything to settle
     printf("End of test\n");
@@ -118,7 +115,7 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this test requires it.\n");
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
     return -2;
 }
 #endif
