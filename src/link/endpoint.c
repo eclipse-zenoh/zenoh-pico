@@ -35,6 +35,8 @@
 #if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/link/config/ws.h"
 #endif
+#include "zenoh-pico/link/config/raweth.h"
+
 /*------------------ Locator ------------------*/
 void _z_locator_init(_z_locator_t *locator) {
     locator->_protocol = NULL;
@@ -317,7 +319,9 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
             ret = _z_ws_config_from_str(strint, p_start);
         } else
 #endif
-        {
+            if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+            _z_raweth_config_from_str(strint, p_start);
+        } else {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
     }
@@ -354,7 +358,9 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
         len = _z_ws_config_strlen(s);
     } else
 #endif
-    {
+        if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+        len = _z_raweth_config_strlen(s);
+    } else {
         __asm__("nop");
     }
 
@@ -390,7 +396,9 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
         res = _z_ws_config_to_str(s);
     } else
 #endif
-    {
+        if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+        _z_raweth_config_to_str(s);
+    } else {
         __asm__("nop");
     }
 
