@@ -26,11 +26,9 @@
 #include <unistd.h>
 #endif
 
-#ifdef ZENOH_PICO
+// This only one line which can be different between zenoh-c and zenoh-pico instances of this file
+// TODO: make the files completely identical
 #include "zenoh-pico.h"
-#else
-#include "zenoh.h"
-#endif
 
 #define SLEEP 2
 #define SCOUTING_TIMEOUT "1000"
