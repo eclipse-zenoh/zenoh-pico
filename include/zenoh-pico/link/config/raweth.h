@@ -24,5 +24,8 @@
 
 int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint);
 int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint);
+size_t _z_raweth_config_strlen(const _z_str_intmap_t *s);
+char *_z_raweth_config_to_str(const _z_str_intmap_t *s);
+int8_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s);
 
 #endif /* ZENOH_PICO_LINK_CONFIG_RAWETH_H */

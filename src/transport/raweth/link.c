@@ -27,7 +27,26 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static _Bool __z_valid_address_raweth(const char *address) {
+#define RAWETH_CONFIG_ARGC 1
+
+#define RAWETH_CONFIG_IFACE_KEY 0x01
+#define RAWETH_CONFIG_IFACE_STR "iface"
+
+#define RAWETH_CONFIG_MAPPING_BUILD               \
+    _z_str_intmapping_t args[RAWETH_CONFIG_ARGC]; \
+    args[0]._key = RAWETH_CONFIG_IFACE_KEY;       \
+    args[0]._str = RAWETH_CONFIG_IFACE_STR;
+
+static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
+    const char *iface = _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
+    return (iface != NULL);
+}
+
+static const char *_z_get_iface_raweth(_z_str_intmap_t *config) {
+    return _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
+}
+
+static _Bool _z_valid_address_raweth(const char *address) {
     // Check if the string has the correct length
     size_t len = strlen(address);
     if (len != 17) {  // 6 pairs of hexadecimal digits and 5 colons
@@ -51,7 +70,7 @@ static _Bool __z_valid_address_raweth(const char *address) {
     return true;
 }
 
-static uint8_t *__z_parse_address_raweth(const char *address) {
+static uint8_t *_z_parse_address_raweth(const char *address) {
     size_t len = strlen(address);
     // Allocate data
     uint8_t *ret = (uint8_t *)z_malloc(_ZP_MAC_ADDR_LENGTH);
@@ -71,9 +90,19 @@ static uint8_t *__z_parse_address_raweth(const char *address) {
 
 static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     // Init socket smac
-    memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_CFG_SMAC, _ZP_MAC_ADDR_LENGTH);
+    if (_z_valid_address_raweth(self->_endpoint._locator._address)) {
+        uint8_t *addr = _z_parse_address_raweth(self->_endpoint._locator._address);
+        memcpy(&self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
+        z_free(addr);
+    } else {
+        memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_CFG_SMAC, _ZP_MAC_ADDR_LENGTH);
+    }
     // Init socket interface
-    self->_socket._raweth._interface = _ZP_RAWETH_CFG_INTERFACE;
+    if (_z_valid_iface_raweth(&self->_endpoint._config)) {
+        self->_socket._raweth._interface = _z_get_iface_raweth(&self->_endpoint._config);
+    } else {
+        self->_socket._raweth._interface = _ZP_RAWETH_CFG_INTERFACE;
+    }
     // Open raweth link
     return _z_open_raweth(&self->_socket._raweth._sock, _ZP_RAWETH_CFG_INTERFACE);
 }
@@ -150,6 +179,21 @@ int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return ret;
 }
+
+size_t _z_raweth_config_strlen(const _z_str_intmap_t *s) {
+    RAWETH_CONFIG_MAPPING_BUILD
+    return _z_str_intmap_strlen(s, RAWETH_CONFIG_ARGC, args);
+}
+char *_z_raweth_config_to_str(const _z_str_intmap_t *s) {
+    RAWETH_CONFIG_MAPPING_BUILD
+    return _z_str_intmap_to_str(s, RAWETH_CONFIG_ARGC, args);
+}
+
+int8_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {
+    RAWETH_CONFIG_MAPPING_BUILD
+    return _z_str_intmap_from_strn(strint, s, RAWETH_CONFIG_ARGC, args, strlen(s));
+}
+
 #else
 int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     _ZP_UNUSED(endpoint);
@@ -159,6 +203,21 @@ int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
 int8_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
     _ZP_UNUSED(zl);
     _ZP_UNUSED(endpoint);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+size_t _z_raweth_config_strlen(const _z_str_intmap_t *s) {
+    _ZP_UNUSED(s);
+    return 0;
+}
+char *_z_raweth_config_to_str(const _z_str_intmap_t *s) {
+    _ZP_UNUSED(s);
+    return NULL;
+}
+
+int8_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {
+    _ZP_UNUSED(strint);
+    _ZP_UNUSED(s);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 #endif

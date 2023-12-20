@@ -37,6 +37,18 @@ static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _z_mutex
 static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif
 
+static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
+    for (int i = 1; i < _ZP_RAWETH_CFG_SIZE; i++) {
+        // Find matching keyexpr
+        if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix) !=
+            _Z_RES_OK) {
+            continue;
+        }
+        return i;
+    }
+    return -1;
+}
+
 static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
     int8_t ret = _Z_RES_OK;
 
@@ -53,22 +65,18 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
         }
     } else {
         // Find config entry (linear)
-        ret = _Z_ERR_GENERIC;  // Key not found case
-        for (int i = 1; i < _ZP_RAWETH_CFG_SIZE; i++) {
-            // Find matching keyexpr
-            if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix) !=
-                _Z_RES_OK) {
-                continue;
-            }
-            // Store data into socket
-            memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[i]._dmac, _ZP_MAC_ADDR_LENGTH);
-            uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[i]._vlan;
-            sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[i]._has_vlan;
-            if (sock->_has_vlan) {
-                memcpy(&sock->_vlan, &vlan, sizeof(vlan));
-            }
-            ret = _Z_RES_OK;
-            break;
+        int idx = _zp_raweth_find_map_entry(keyexpr, sock);
+        // Key not found case
+        if (idx < 0) {
+            idx = 0;  // Set to default entry
+            _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address\n", keyexpr->_suffix);
+        }
+        // Store data into socket
+        memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[idx]._dmac, _ZP_MAC_ADDR_LENGTH);
+        uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[idx]._vlan;
+        sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[idx]._has_vlan;
+        if (sock->_has_vlan) {
+            memcpy(&sock->_vlan, &vlan, sizeof(vlan));
         }
     }
     return ret;
