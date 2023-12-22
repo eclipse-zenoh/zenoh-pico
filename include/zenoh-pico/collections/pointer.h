@@ -90,7 +90,7 @@
                 if (p->ptr != NULL) {                                                                       \
                     type##_clear(p->ptr);                                                                   \
                     z_free(p->ptr);                                                                         \
-                    z_free((void *)p->_cnt);                                                                        \
+                    z_free((void *)p->_cnt);                                                                \
                 }                                                                                           \
             }                                                                                               \
         }                                                                                                   \
