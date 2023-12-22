@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if ZENOH_C_STANDARD != 99 && !defined(ZENOH_NO_STDATOMIC)
+#if ZENOH_C_STANDARD != 99
 
 #ifndef __cplusplus
 #include <stdatomic.h>
@@ -151,6 +151,6 @@
         }                                                                                       \
         return dropped;                                                                         \
     }
-#endif  // ZENOH_C_STANDARD != 99 && !defined(ZENOH_NO_STDATOMIC)
+#endif  // ZENOH_C_STANDARD != 99
 
 #endif /* ZENOH_PICO_COLLECTIONS_POINTER_H */
