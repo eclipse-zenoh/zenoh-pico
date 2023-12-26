@@ -16,7 +16,7 @@
 
 #include "zenoh-pico/protocol/keyexpr.h"
 
-void _z_declaration_clear(_z_declaration_t* decl) {
+void _z_declaration_clear(_z_declaration_t *decl) {
     switch (decl->_tag) {
         case _Z_DECL_KEXPR: {
             _z_keyexpr_clear(&decl->_body._decl_kexpr._keyexpr);
@@ -76,9 +76,9 @@ _z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id,
                                        ._keyexpr = _z_keyexpr_steal(key),
                                        ._ext_subinfo = {._pull_mode = pull_mode, ._reliable = reliable}}}};
 }
-_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
     return (_z_declaration_t){._tag = _Z_UNDECL_SUBSCRIBER,
-                              ._body = {._undecl_subscriber = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+                              ._body = {._undecl_subscriber = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
 _z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete) {
     return (_z_declaration_t){
@@ -87,9 +87,9 @@ _z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, 
                                       ._keyexpr = _z_keyexpr_steal(key),
                                       ._ext_queryable_info = {._complete = complete, ._distance = distance}}}};
 }
-_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
     return (_z_declaration_t){._tag = _Z_UNDECL_QUERYABLE,
-                              ._body = {._undecl_queryable = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+                              ._body = {._undecl_queryable = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
 _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
     return (_z_declaration_t){._tag = _Z_DECL_TOKEN,
@@ -98,13 +98,13 @@ _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
                                             ._keyexpr = _z_keyexpr_steal(key),
                                         }}};
 }
-_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
     return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
-                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
-_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_keyexpr_t) key) {
+_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
     return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
-                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_steal(key)}}};
+                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
 _z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
     return (_z_declaration_t){._tag = _Z_DECL_TOKEN,
@@ -127,7 +127,7 @@ _z_undecl_queryable_t _z_undecl_queryable_null(void) { return (_z_undecl_queryab
 _z_undecl_token_t _z_undecl_token_null(void) { return (_z_undecl_token_t){0}; }
 _z_undecl_interest_t _z_undecl_interest_null(void) { return (_z_undecl_interest_t){0}; }
 _z_final_interest_t _z_final_interest_null(void) { return (_z_final_interest_t){0}; }
-void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping) {
+void _z_decl_fix_mapping(_z_declaration_t *msg, uint16_t mapping) {
     switch (msg->_tag) {
         case _Z_DECL_KEXPR: {
             _z_keyexpr_fix_mapping(&msg->_body._decl_kexpr._keyexpr, mapping);
