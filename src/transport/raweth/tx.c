@@ -69,7 +69,7 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
         // Key not found case
         if (idx < 0) {
             idx = 0;  // Set to default entry
-            _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address\n", keyexpr->_suffix);
+            _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
         }
         // Store data into socket
         memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[idx]._dmac, _ZP_MAC_ADDR_LENGTH);
@@ -192,7 +192,7 @@ int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message
 
 int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send session message\n");
+    _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&ztm->_mutex_tx);
@@ -223,7 +223,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
                             z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
     _z_transport_multicast_t *ztm = &zn->_tp._transport._raweth;
-    _Z_DEBUG(">> send network message\n");
+    _Z_DEBUG(">> send network message");
 
     // Acquire the lock and drop the message if needed
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -231,7 +231,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         _z_mutex_lock(&ztm->_mutex_tx);
     } else {
         if (_z_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
-            _Z_INFO("Dropping zenoh message because of congestion control\n");
+            _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;
         }

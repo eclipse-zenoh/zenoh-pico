@@ -30,7 +30,7 @@
 /*------------------ Join Message ------------------*/
 int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_JOIN\n");
+    _Z_DEBUG("Encoding _Z_MID_T_JOIN");
 
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version));
 
@@ -95,7 +95,7 @@ int8_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
 }
 
 int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_T_JOIN\n");
+    _Z_DEBUG("Decoding _Z_MID_T_JOIN");
     int8_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_join_t){0};
 
@@ -147,7 +147,7 @@ int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
 /*------------------ Init Message ------------------*/
 int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg) {
-    _Z_DEBUG("Encoding _Z_MID_T_INIT\n");
+    _Z_DEBUG("Encoding _Z_MID_T_INIT");
     int8_t ret = _Z_RES_OK;
 
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version))
@@ -175,7 +175,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
 }
 
 int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_T_INIT\n");
+    _Z_DEBUG("Decoding _Z_MID_T_INIT");
     *msg = (_z_t_msg_init_t){0};
     int8_t ret = _Z_RES_OK;
 
@@ -223,7 +223,7 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Open Message ------------------*/
 int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_OPEN\n");
+    _Z_DEBUG("Encoding _Z_MID_T_OPEN");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_T) == true) {
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_lease / 1000))
@@ -241,7 +241,7 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
 }
 
 int8_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_T_OPEN\n");
+    _Z_DEBUG("Decoding _Z_MID_T_OPEN");
     int8_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_open_t){0};
 
@@ -271,7 +271,7 @@ int8_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_close_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_close_t *msg) {
     (void)(header);
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_CLOSE\n");
+    _Z_DEBUG("Encoding _Z_MID_T_CLOSE");
 
     ret |= _z_wbuf_write(wbf, msg->_reason);
 
@@ -282,7 +282,7 @@ int8_t _z_close_decode(_z_t_msg_close_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
     int8_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_close_t){0};
-    _Z_DEBUG("Decoding _Z_MID_T_CLOSE\n");
+    _Z_DEBUG("Decoding _Z_MID_T_CLOSE");
 
     ret |= _z_uint8_decode(&msg->_reason, zbf);
 
@@ -296,7 +296,7 @@ int8_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_keep_
     (void)(msg);
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_T_KEEP_ALIVE\n");
+    _Z_DEBUG("Encoding _Z_MID_T_KEEP_ALIVE");
 
     return ret;
 }
@@ -308,7 +308,7 @@ int8_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t 
     *msg = (_z_t_msg_keep_alive_t){0};
 
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE\n");
+    _Z_DEBUG("Decoding _Z_MID_T_KEEP_ALIVE");
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x03);
@@ -376,7 +376,7 @@ int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Fragment Message ------------------*/
 int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT\n");
+    _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT");
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_sn))
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
@@ -392,7 +392,7 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
     int8_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_fragment_t){0};
 
-    _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT\n");
+    _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT");
     ret |= _z_zint_decode(&msg->_sn, zbf);
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
@@ -411,7 +411,7 @@ int8_t _z_extensions_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ext_vec
     (void)(header);
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG("Encoding _Z_TRANSPORT_EXTENSIONS\n");
+    _Z_DEBUG("Encoding _Z_TRANSPORT_EXTENSIONS");
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
         ret |= _z_msg_ext_vec_encode(wbf, v_ext);
     }
@@ -423,7 +423,7 @@ int8_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t hea
     (void)(header);
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG("Decoding _Z_TRANSPORT_EXTENSIONS\n");
+    _Z_DEBUG("Decoding _Z_TRANSPORT_EXTENSIONS");
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
         ret |= _z_msg_ext_vec_decode(v_ext, zbf);
     } else {
@@ -463,7 +463,7 @@ int8_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t 
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
         } break;
         default: {
-            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
+            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
@@ -500,7 +500,7 @@ int8_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf) 
                 ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
             } break;
             default: {
-                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)\n", mid,
+                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid,
                          msg->_header);
                 ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
             } break;

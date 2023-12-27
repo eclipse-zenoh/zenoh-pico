@@ -42,7 +42,7 @@ _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliabili
 
 int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send session message\n");
+    _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
@@ -74,7 +74,7 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
 int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send network message\n");
+    _Z_DEBUG(">> send network message");
 
     _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
 
@@ -88,7 +88,7 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 #if Z_FEATURE_MULTI_THREAD == 1
         int8_t locked = _z_mutex_trylock(&ztm->_mutex_tx);
         if (locked != (int8_t)0) {
-            _Z_INFO("Dropping zenoh message because of congestion control\n");
+            _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             drop = true;
         }

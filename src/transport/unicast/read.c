@@ -109,7 +109,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 continue;
             }
         } else {
-            _Z_ERROR("Connection closed due to malformed message\n\n\n");
+            _Z_ERROR("Connection closed due to malformed message");
             ztu->_read_task_running = false;
             continue;
         }

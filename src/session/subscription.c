@@ -125,7 +125,7 @@ _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8
 }
 
 _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *s) {
-    _Z_DEBUG(">>> Allocating sub decl for (%ju:%s)\n", (uintmax_t)s->_key._id, s->_key._suffix);
+    _Z_DEBUG(">>> Allocating sub decl for (%ju:%s)", (uintmax_t)s->_key._id, s->_key._suffix);
     _z_subscription_sptr_t *ret = NULL;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -160,9 +160,9 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    _Z_DEBUG("Resolving %d - %s on mapping 0x%x\n", keyexpr._id, keyexpr._suffix, _z_keyexpr_mapping_id(&keyexpr));
+    _Z_DEBUG("Resolving %d - %s on mapping 0x%x", keyexpr._id, keyexpr._suffix, _z_keyexpr_mapping_id(&keyexpr));
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
-    _Z_DEBUG("Triggering subs for %d - %s\n", key._id, key._suffix);
+    _Z_DEBUG("Triggering subs for %d - %s", key._id, key._suffix);
     if (key._suffix != NULL) {
         _z_subscription_sptr_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
 
@@ -178,7 +178,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.kind = kind;
         s.timestamp = timestamp;
         _z_subscription_sptr_list_t *xs = subs;
-        _Z_DEBUG("Triggering %ju subs\n", (uintmax_t)_z_subscription_sptr_list_len(xs));
+        _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_sptr_list_len(xs));
         while (xs != NULL) {
             _z_subscription_sptr_t *sub = _z_subscription_sptr_list_head(xs);
             sub->ptr->_callback(&s, sub->ptr->_arg);

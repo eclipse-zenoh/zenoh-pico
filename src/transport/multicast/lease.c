@@ -111,7 +111,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                     entry->_next_lease = entry->_lease;
                     it = _z_transport_peer_entry_list_tail(it);
                 } else {
-                    _Z_INFO("Remove peer from know list because it has expired after %zums\n", entry->_lease);
+                    _Z_INFO("Remove peer from know list because it has expired after %zums", entry->_lease);
                     ztm->_peers =
                         _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     it = ztm->_peers;

@@ -69,13 +69,13 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     _z_scouting_message_t s_msg;
                     err = _z_scouting_message_decode(&s_msg, &zbf);
                     if (err != _Z_RES_OK) {
-                        _Z_ERROR("Scouting loop received malformed message\n");
+                        _Z_ERROR("Scouting loop received malformed message");
                         continue;
                     }
 
                     switch (_Z_MID(s_msg._header)) {
                         case _Z_MID_HELLO: {
-                            _Z_INFO("Received _Z_HELLO message\n");
+                            _Z_INFO("Received _Z_HELLO message");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
                                 hello->version = s_msg._body._hello._version;
@@ -102,7 +102,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                         }
                         default: {
                             err = _Z_ERR_MESSAGE_UNEXPECTED;
-                            _Z_ERROR("Scouting loop received unexpected message\n");
+                            _Z_ERROR("Scouting loop received unexpected message");
                             break;
                         }
                     }

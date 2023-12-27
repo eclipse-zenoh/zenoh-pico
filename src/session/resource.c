@@ -264,7 +264,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
 
 void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
-    _Z_DEBUG("unregistering: id %d, mapping: %d\n", id, mapping);
+    _Z_DEBUG("unregistering: id %d, mapping: %d", id, mapping);
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1

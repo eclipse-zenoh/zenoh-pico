@@ -67,7 +67,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
                 break;
             default:
                 // Drop message & stop task
-                _Z_ERROR("Connection closed due to malformed message\n");
+                _Z_ERROR("Connection closed due to malformed message");
                 ztm->_read_task_running = false;
                 continue;
                 break;

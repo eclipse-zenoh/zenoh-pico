@@ -135,7 +135,7 @@ int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, c
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     // Encode and send the message
-    _Z_INFO("Sending Z_JOIN message\n");
+    _Z_INFO("Sending Z_JOIN message");
     switch (zl->_cap._transport) {
         case Z_LINK_CAP_TRANSPORT_MULTICAST:
             ret = _z_link_send_t_msg(zl, &jsm);
