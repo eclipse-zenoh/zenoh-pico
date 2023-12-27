@@ -171,8 +171,7 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
 #if (ZENOH_DEBUG >= 1)
     switch (_Z_EXT_ENC(extension->_header)) {
         case _Z_MSG_EXT_ENC_UNIT: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNIT", ext_id,
-                     trace_id);
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNIT", ext_id, trace_id);
             break;
         }
         case _Z_MSG_EXT_ENC_ZINT: {
@@ -192,8 +191,8 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             break;
         }
         default: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNKOWN_ENCODING",
-                     ext_id, trace_id);
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNKOWN_ENCODING", ext_id,
+                     trace_id);
         }
     }
 #endif
