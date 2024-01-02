@@ -95,6 +95,31 @@ jobs:
         env:
           Z_FEATURE_RAWETH_TRANSPORT: ${{ matrix.feature_reth }}
   
+  st_build:
+    name: Build and test in single thread on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run docker image
+        run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
+
+      - name: Build project and run test
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/single_thread.py
+        timeout-minutes: 5
+        env:
+          Z_FEATURE_MULTI_THREAD: 0  
+
+      - name: Stop docker image
+        if: always()
+        run: |
+           docker stop zenoh_router
+           docker rm zenoh_router
+
   fragment_test:
     name: Test multicast and unicast fragmentation
     runs-on: ubuntu-latest
