@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    while(msg_nb != n) {
+    while (msg_nb != n) {
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);
         zp_send_join(z_loan(s), NULL);
