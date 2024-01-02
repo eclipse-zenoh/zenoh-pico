@@ -54,7 +54,8 @@ int main(int argc, char **argv) {
                 n = atoi(optarg);
                 break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -97,7 +98,6 @@ int main(int argc, char **argv) {
     for (int idx = 0; idx < n; ++idx) {
         sleep(1);
         (void)idx;
-        // snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();

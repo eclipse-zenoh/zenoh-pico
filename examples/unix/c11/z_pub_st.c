@@ -22,13 +22,15 @@
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
-    const char *value = "Pub from Pico!";
+    char *const default_value = "Pub from Pico!";
+    const char *value = default_value;
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 10;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -45,8 +47,12 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -79,29 +85,19 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
-
-    char *buf = (char *)malloc(256);
-    z_clock_t now = z_clock_now();
-    for (int idx = 0; 1;) {
-        if (z_clock_elapsed_ms(&now) > 1000) {
-            snprintf(buf, 256, "[%4d] %s", idx, value);
-            printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-            z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
-            ++idx;
-
-            now = z_clock_now();
-        }
+    // Main loop
+    for (int idx = 0; idx < n; idx++) {
+        sleep(1);
+        (void)idx;
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+        z_publisher_put(z_loan(pub), (const uint8_t *)value, strlen(value), NULL);
 
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);
         zp_send_join(z_loan(s), NULL);
     }
-
     z_undeclare_publisher(z_move(pub));
-
     z_close(z_move(s));
-
-    free(buf);
     return 0;
 }
 #else
