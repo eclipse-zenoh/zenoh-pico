@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 #define ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 
-#include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,6 +23,8 @@
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
+#include <pthread.h>
+
 typedef pthread_t _z_task_t;
 typedef pthread_attr_t _z_task_attr_t;
 typedef pthread_mutex_t _z_mutex_t;

@@ -18,11 +18,12 @@
 #include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <pthread.h>
 
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
+#include <pthread.h>
+
 typedef TaskHandle_t _z_task_t;
 typedef void *_z_task_attr_t;  // Not used in ESP32
 typedef pthread_mutex_t _z_mutex_t;
