@@ -177,26 +177,52 @@ int z_sleep_s(size_t time) {
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
     z_clock_t now;
-    ftime(&now);
+    QueryPerformanceCounter(&now);
     return now;
 }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms(instant) * 1000; }
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
+    z_clock_t now;
+    LARGE_INTEGER frequency;
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return 0;
+    }
+    double elapsed = (double)(instant->QuadPart - now.QuadPart) * 1000000.0;
+    elapsed /= frequency.QuadPart;
+    return (unsigned long)elapsed;
+}
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
-    z_time_t now;
-    ftime(&now);
+    z_clock_t now;
+    LARGE_INTEGER frequency;
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&frequency);  // ticks per second
 
-    unsigned long elapsed = ((unsigned long)(now.time - instant->time) * 1000) + (now.millitm - instant->millitm);
-    return elapsed;
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return 0;
+    }
+    double elapsed = (double)(instant->QuadPart - now.QuadPart) * 1000.0;
+    elapsed /= frequency.QuadPart;
+    return (unsigned long)elapsed;
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
-    z_time_t now;
-    ftime(&now);
+    z_clock_t now;
+    LARGE_INTEGER frequency;
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&frequency);  // ticks per second
 
-    unsigned long elapsed = (unsigned long)(now.time - instant->time);
-    return elapsed;
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return 0;
+    }
+    double elapsed = (double)(instant->QuadPart - now.QuadPart) / frequency.QuadPart;
+    return (unsigned long)elapsed;
 }
 
 /*------------------ Time ------------------*/

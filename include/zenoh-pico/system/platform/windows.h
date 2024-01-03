@@ -27,7 +27,7 @@ typedef SRWLOCK _z_mutex_t;
 typedef CONDITION_VARIABLE _z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timeb z_clock_t;
+typedef LARGE_INTEGER z_clock_t;
 typedef struct timeb z_time_t;
 
 typedef struct {
