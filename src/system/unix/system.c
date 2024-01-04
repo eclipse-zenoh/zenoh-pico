@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #if defined(ZENOH_LINUX)
 #include <sys/random.h>
