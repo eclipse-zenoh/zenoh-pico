@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
         results[i] = z_clock_elapsed_us(&measure_start);
     }
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        printf("%d bytes: seq=%d rtt=%luµs, lat=%luµs\n", args.size, i, results[i], results[i] / 2);
+        printf("%d bytes: seq=%d rtt=%luus, lat=%luus\n", args.size, i, results[i], results[i] / 2);
     }
     _z_mutex_unlock(&mutex);
     z_free(results);
