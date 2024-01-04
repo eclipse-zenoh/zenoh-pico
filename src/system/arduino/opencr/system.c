@@ -63,37 +63,37 @@ void z_free(void *ptr) {
 #error "Multi-threading not supported yet on OpenCR port. Disable it by defining Z_FEATURE_MULTI_THREAD=0"
 
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
+int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
 
-int8_t _z_task_join(_z_task_t *task) { return -1; }
+int8_t z_task_join(z_task_t *task) { return -1; }
 
-int8_t _z_task_cancel(_z_task_t *task) { return -1; }
+int8_t z_task_cancel(z_task_t *task) { return -1; }
 
-void _z_task_free(_z_task_t **task) {
-    _z_task_t *ptr = *task;
+void z_task_free(z_task_t **task) {
+    z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) { return -1; }
+int8_t z_mutex_init(z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_free(_z_mutex_t *m) { return -1; }
+int8_t z_mutex_free(z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { return -1; }
+int8_t z_mutex_lock(z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_trylock(_z_mutex_t *m) { return -1; }
+int8_t z_mutex_trylock(z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { return -1; }
+int8_t z_mutex_unlock(z_mutex_t *m) { return -1; }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
+int8_t z_condvar_init(z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_free(_z_condvar_t *cv) { return -1; }
+int8_t z_condvar_free(z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
+int8_t z_condvar_signal(z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return -1; }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/

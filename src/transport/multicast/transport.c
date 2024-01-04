@@ -52,17 +52,17 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&ztm->_mutex_tx);
+    ret = z_mutex_init(&ztm->_mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztm->_mutex_rx);
+        ret = z_mutex_init(&ztm->_mutex_rx);
         if (ret == _Z_RES_OK) {
-            ret = _z_mutex_init(&ztm->_mutex_peer);
+            ret = z_mutex_init(&ztm->_mutex_peer);
             if (ret != _Z_RES_OK) {
-                _z_mutex_free(&ztm->_mutex_tx);
-                _z_mutex_free(&ztm->_mutex_rx);
+                z_mutex_free(&ztm->_mutex_tx);
+                z_mutex_free(&ztm->_mutex_rx);
             }
         } else {
-            _z_mutex_free(&ztm->_mutex_tx);
+            z_mutex_free(&ztm->_mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -78,9 +78,9 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_free(&ztm->_mutex_tx);
-            _z_mutex_free(&ztm->_mutex_rx);
-            _z_mutex_free(&ztm->_mutex_peer);
+            z_mutex_free(&ztm->_mutex_tx);
+            z_mutex_free(&ztm->_mutex_rx);
+            z_mutex_free(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&ztm->_wbuf);
@@ -183,17 +183,17 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL) {
-        _z_task_join(ztm->_read_task);
-        _z_task_free(&ztm->_read_task);
+        z_task_join(ztm->_read_task);
+        z_task_free(&ztm->_read_task);
     }
     if (ztm->_lease_task != NULL) {
-        _z_task_join(ztm->_lease_task);
-        _z_task_free(&ztm->_lease_task);
+        z_task_join(ztm->_lease_task);
+        z_task_free(&ztm->_lease_task);
     }
     // Clean up the mutexes
-    _z_mutex_free(&ztm->_mutex_tx);
-    _z_mutex_free(&ztm->_mutex_rx);
-    _z_mutex_free(&ztm->_mutex_peer);
+    z_mutex_free(&ztm->_mutex_tx);
+    z_mutex_free(&ztm->_mutex_rx);
+    z_mutex_free(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

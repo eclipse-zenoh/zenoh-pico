@@ -73,7 +73,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    ret = _z_mutex_init(&zn->_mutex_inner);
+    ret = z_mutex_init(&zn->_mutex_inner);
     if (ret != _Z_RES_OK) {
         _z_transport_clear(&zn->_tp);
         return ret;
@@ -117,7 +117,7 @@ void _z_session_clear(_z_session_t *zn) {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_free(&zn->_mutex_inner);
+    z_mutex_free(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 

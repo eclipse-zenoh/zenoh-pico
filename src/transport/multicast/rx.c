@@ -35,7 +35,7 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    _z_mutex_lock(&ztm->_mutex_rx);
+    z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -82,7 +82,7 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_rx);
+    z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -125,7 +125,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
-    _z_mutex_lock(&ztm->_mutex_peer);
+    z_mutex_lock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Mark the session that we have received data from this peer
@@ -327,7 +327,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_peer);
+    z_mutex_unlock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

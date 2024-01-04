@@ -28,15 +28,15 @@ typedef struct {
     StackType_t *stack_buffer;
     StaticTask_t *task_buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
-} _z_task_attr_t;
+} z_task_attr_t;
 
 typedef struct {
     TaskHandle_t handle;
     EventGroupHandle_t join_event;
-} _z_task_t;
+} z_task_t;
 
-typedef SemaphoreHandle_t _z_mutex_t;
-typedef void *_z_condvar_t;
+typedef SemaphoreHandle_t z_mutex_t;
+typedef void *z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef TickType_t z_clock_t;

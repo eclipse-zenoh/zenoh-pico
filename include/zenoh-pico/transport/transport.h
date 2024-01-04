@@ -63,8 +63,8 @@ typedef struct {
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
-    _z_mutex_t _mutex_rx;
-    _z_mutex_t _mutex_tx;
+    z_mutex_t _mutex_rx;
+    z_mutex_t _mutex_tx;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
@@ -88,8 +88,8 @@ typedef struct {
     void *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
+    z_task_t *_read_task;
+    z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -104,11 +104,11 @@ typedef struct _z_transport_multicast_t {
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
-    _z_mutex_t _mutex_rx;
-    _z_mutex_t _mutex_tx;
+    z_mutex_t _mutex_rx;
+    z_mutex_t _mutex_tx;
 
     // Peer list mutex
-    _z_mutex_t _mutex_peer;
+    z_mutex_t _mutex_peer;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
@@ -130,8 +130,8 @@ typedef struct _z_transport_multicast_t {
     _zp_f_send_tmsg _send_f;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
+    z_task_t *_read_task;
+    z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1

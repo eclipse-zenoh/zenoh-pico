@@ -179,10 +179,10 @@ int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_t
 int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
+int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -208,10 +208,10 @@ int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
     return ret;
 }
 
-int8_t _zp_start_lease_task(_z_session_t *zn, _z_task_attr_t *attr) {
+int8_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

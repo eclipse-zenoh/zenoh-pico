@@ -31,10 +31,10 @@
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef pthread_t _z_task_t;
-typedef pthread_attr_t _z_task_attr_t;
-typedef pthread_mutex_t _z_mutex_t;
-typedef pthread_cond_t _z_condvar_t;
+typedef pthread_t z_task_t;
+typedef pthread_attr_t z_task_attr_t;
+typedef pthread_mutex_t z_mutex_t;
+typedef pthread_cond_t z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

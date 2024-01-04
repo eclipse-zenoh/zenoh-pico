@@ -175,13 +175,13 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_key
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, mapping, rid);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return res;
@@ -192,13 +192,13 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keye
         return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, keyexpr);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return res;
@@ -206,12 +206,12 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keye
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return res;
@@ -225,7 +225,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
     uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     if (key._id != Z_RESOURCE_ID_NONE) {
@@ -256,7 +256,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -266,7 +266,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, mapping);
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &zn->_remote_resources;
     while (id != 0) {
@@ -290,7 +290,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
         }
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
@@ -300,26 +300,26 @@ _Bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, con
 }
 void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_resource_t ctx = {._id = mapping, ._refcount = 0, ._key = {0}};
     zn->_remote_resources =
         _z_resource_list_drop_filter(zn->_remote_resources, _z_unregister_resource_for_peer_filter, &ctx);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
 void _z_flush_resources(_z_session_t *zn) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_lock(&zn->_mutex_inner);
+    z_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_resource_list_free(&zn->_local_resources);
     _z_resource_list_free(&zn->_remote_resources);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&zn->_mutex_inner);
+    z_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
