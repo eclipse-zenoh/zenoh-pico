@@ -191,7 +191,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     if (frequency.QuadPart == 0) {
         return 0;
     }
-    double elapsed = (double)(instant->QuadPart - now.QuadPart) * 1000000.0;
+    double elapsed = (double)(now.QuadPart - instant->QuadPart) * 1000000.0;
     elapsed /= frequency.QuadPart;
     return (unsigned long)elapsed;
 }
@@ -206,7 +206,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     if (frequency.QuadPart == 0) {
         return 0;
     }
-    double elapsed = (double)(instant->QuadPart - now.QuadPart) * 1000.0;
+    double elapsed = (double)(now.QuadPart - instant->QuadPart) * 1000.0;
     elapsed /= frequency.QuadPart;
     return (unsigned long)elapsed;
 }
@@ -221,7 +221,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     if (frequency.QuadPart == 0) {
         return 0;
     }
-    double elapsed = (double)(instant->QuadPart - now.QuadPart) / frequency.QuadPart;
+    double elapsed = (double)(now.QuadPart - instant->QuadPart) / frequency.QuadPart;
     return (unsigned long)elapsed;
 }
 
