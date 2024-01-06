@@ -225,6 +225,13 @@
 #define Z_FEATURE_RAWETH_TRANSPORT 0
 #endif
 
+/**
+ * Enable assembly nop.
+ */
+#ifndef Z_FEATURE_ASSEMBLY_NOP
+#define Z_FEATURE_ASSEMBLY_NOP 1
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.

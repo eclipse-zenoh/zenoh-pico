@@ -361,7 +361,9 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
         if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
         len = _z_raweth_config_strlen(s);
     } else {
+#if Z_FEATURE_ASSEMBLY_NOP == 1
         __asm__("nop");
+#endif
     }
 
     return len;
@@ -399,7 +401,9 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
         if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
         _z_raweth_config_to_str(s);
     } else {
+#if Z_FEATURE_ASSEMBLY_NOP == 1
         __asm__("nop");
+#endif
     }
 
     return res;

@@ -558,7 +558,9 @@ int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, ui
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
                 while (!sock->_bts->connected(tout)) {
+#if Z_FEATURE_ASSEMBLY_NOP == 1
                     __asm__("nop");
+#endif
                 }
             }
         } else {
@@ -584,7 +586,9 @@ int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, 
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
                 while (!sock->_bts->connected(tout)) {
+#if Z_FEATURE_ASSEMBLY_NOP == 1
                     __asm__("nop");
+#endif
                 }
             }
         } else {
