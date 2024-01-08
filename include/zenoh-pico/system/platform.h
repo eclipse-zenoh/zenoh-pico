@@ -60,10 +60,10 @@ void z_free(void *ptr);
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Thread ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t z_task_join(z_task_t *task);
-int8_t z_task_cancel(z_task_t *task);
-void z_task_free(z_task_t **task);
+int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+int8_t zp_task_join(z_task_t *task);
+int8_t zp_task_cancel(z_task_t *task);
+void zp_task_free(z_task_t **task);
 
 /*------------------ Mutex ------------------*/
 int8_t z_mutex_init(z_mutex_t *m);

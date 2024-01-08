@@ -87,7 +87,7 @@ int8_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_tas
     // Init memory
     (void)memset(task, 0, sizeof(z_task_t));
     // Init task
-    if (z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
+    if (zp_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

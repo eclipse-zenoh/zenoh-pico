@@ -63,13 +63,13 @@ void z_free(void *ptr) {
 #error "Multi-threading not supported yet on OpenCR port. Disable it by defining Z_FEATURE_MULTI_THREAD=0"
 
 /*------------------ Task ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
+int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
 
-int8_t z_task_join(z_task_t *task) { return -1; }
+int8_t zp_task_join(z_task_t *task) { return -1; }
 
-int8_t z_task_cancel(z_task_t *task) { return -1; }
+int8_t zp_task_cancel(z_task_t *task) { return -1; }
 
-void z_task_free(z_task_t **task) {
+void zp_task_free(z_task_t **task) {
     z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;

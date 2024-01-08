@@ -61,7 +61,7 @@ void z_task_wrapper(z_task_arg *targ) {
 }
 
 /*------------------ Task ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     int ret = 0;
 
     z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
@@ -78,17 +78,17 @@ int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), vo
     return ret;
 }
 
-int8_t z_task_join(z_task_t *task) {
+int8_t zp_task_join(z_task_t *task) {
     // Note: task/thread join not supported on FreeRTOS API, so we force its deletion instead.
-    return z_task_cancel(task);
+    return zp_task_cancel(task);
 }
 
-int8_t z_task_cancel(z_task_t *task) {
+int8_t zp_task_cancel(z_task_t *task) {
     vTaskDelete(*task);
     return 0;
 }
 
-void z_task_free(z_task_t **task) {
+void zp_task_free(z_task_t **task) {
     z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;

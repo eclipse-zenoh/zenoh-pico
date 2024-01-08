@@ -60,7 +60,7 @@ void z_free(void *ptr) { free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     (void)(attr);
     int8_t ret = _Z_RES_OK;
     *task = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, arg, 0, NULL);
@@ -70,19 +70,19 @@ int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), vo
     return ret;
 }
 
-int8_t z_task_join(z_task_t *task) {
+int8_t zp_task_join(z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     WaitForSingleObject(*task, INFINITE);
     return ret;
 }
 
-int8_t z_task_cancel(z_task_t *task) {
+int8_t zp_task_cancel(z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     TerminateThread(*task, 0);
     return ret;
 }
 
-void z_task_free(z_task_t **task) {
+void zp_task_free(z_task_t **task) {
     z_task_t *ptr = *task;
     CloseHandle(*ptr);
     z_free(ptr);

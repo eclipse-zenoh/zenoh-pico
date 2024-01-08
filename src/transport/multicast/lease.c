@@ -185,7 +185,7 @@ int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_attr
     // Init memory
     (void)memset(task, 0, sizeof(z_task_t));
     // Init task
-    if (z_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
+    if (zp_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

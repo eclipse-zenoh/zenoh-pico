@@ -183,12 +183,12 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL) {
-        z_task_join(ztm->_read_task);
-        z_task_free(&ztm->_read_task);
+        zp_task_join(ztm->_read_task);
+        zp_task_free(&ztm->_read_task);
     }
     if (ztm->_lease_task != NULL) {
-        z_task_join(ztm->_lease_task);
-        z_task_free(&ztm->_lease_task);
+        zp_task_join(ztm->_lease_task);
+        zp_task_free(&ztm->_lease_task);
     }
     // Clean up the mutexes
     z_mutex_free(&ztm->_mutex_tx);
