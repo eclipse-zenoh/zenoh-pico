@@ -557,9 +557,7 @@ int8_t _z_open_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, ui
             sock->_bts->begin(gname, true);
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
-                while (!sock->_bts->connected(tout)) {
-                    __asm__("nop");
-                }
+                while (!sock->_bts->connected(tout));
             }
         } else {
             delete sock->_bts;
@@ -583,9 +581,7 @@ int8_t _z_listen_bt(_z_sys_net_socket_t *sock, const char *gname, uint8_t mode, 
             sock->_bts->begin(gname, true);
             uint8_t connected = sock->_bts->connect(gname);
             if (!connected) {
-                while (!sock->_bts->connected(tout)) {
-                    __asm__("nop");
-                }
+                while (!sock->_bts->connected(tout));
             }
         } else {
             delete sock->_bts;

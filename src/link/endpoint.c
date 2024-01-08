@@ -360,10 +360,7 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
 #endif
         if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
         len = _z_raweth_config_strlen(s);
-    } else {
-        __asm__("nop");
     }
-
     return len;
 }
 
@@ -398,10 +395,7 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
 #endif
         if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
         _z_raweth_config_to_str(s);
-    } else {
-        __asm__("nop");
     }
-
     return res;
 }
 
