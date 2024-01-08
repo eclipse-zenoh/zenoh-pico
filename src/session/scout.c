@@ -55,8 +55,8 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 // The receiving buffer
                 _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
 
-                z_time_t start = z_time_now();
-                while (z_time_elapsed_ms(&start) < period) {
+                z_clock_t start = z_clock_now();
+                while (z_clock_elapsed_ms(&start) < period) {
                     // Eventually read hello messages
                     _z_zbuf_reset(&zbf);
 
