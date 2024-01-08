@@ -309,4 +309,11 @@
 #define Z_FRAG_MAX_SIZE 300000
 #endif
 
+/**
+ * Default "nop" instruction
+ */
+#ifndef ZP_ASM_NOP
+#define ZP_ASM_NOP __asm__("nop")
+#endif
+
 #endif /* INCLUDE_ZENOH_PICO_CONFIG_H */
