@@ -96,6 +96,8 @@ int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t
 }
 
 int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+    int8_t ret = _Z_RES_OK;
+
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
             _Z_INFO("Received Z_FRAME message\n");
@@ -190,6 +192,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer\n");
+            ret = _Z_ERR_CONNECTION_CLOSED;
             break;
         }
 
@@ -199,7 +202,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
     }
 
-    return _Z_RES_OK;
+    return ret;
 }
 #else
 int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {

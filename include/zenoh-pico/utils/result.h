@@ -65,6 +65,8 @@ typedef enum {
     _Z_ERR_SYSTEM_TASK_FAILED = -79,
     _Z_ERR_SYSTEM_OUT_OF_MEMORY = -78,
 
+    _Z_ERR_CONNECTION_CLOSED = -77,
+
     _Z_ERR_GENERIC = -128
 } _z_res_t;
 
