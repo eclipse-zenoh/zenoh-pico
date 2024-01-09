@@ -77,6 +77,14 @@ z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
     }
 }
 
+_Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
+    _Bool ret = false;
+    if (keyexpr->_id != Z_RESOURCE_ID_NONE) {
+        ret = true;
+    }
+    return ret;
+}
+
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
