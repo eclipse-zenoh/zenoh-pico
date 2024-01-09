@@ -38,11 +38,11 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = zp_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = zp_mutex_init(&zt->_transport._unicast._mutex_rx);
         if (ret != _Z_RES_OK) {
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -95,8 +95,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -193,7 +193,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     param->_req_id_res = 0x08 << param->_req_id_res;
 
                     // The initial SN at TX side
-                    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+                    zp_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
                     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
                     // Initialize the Local and Remote Peer IDs
@@ -277,8 +277,8 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     }
 
     // Clean up the mutexes
-    z_mutex_free(&ztu->_mutex_tx);
-    z_mutex_free(&ztu->_mutex_rx);
+    zp_mutex_free(&ztu->_mutex_tx);
+    zp_mutex_free(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

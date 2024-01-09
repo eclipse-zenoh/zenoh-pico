@@ -18,7 +18,7 @@
 #include "zenoh-pico/net/config.h"
 
 _z_config_t *_z_config_empty(void) {
-    _z_config_t *config = (_z_config_t *)z_malloc(sizeof(_z_config_t));
+    _z_config_t *config = (_z_config_t *)zp_malloc(sizeof(_z_config_t));
     if (config != NULL) {
         _z_config_init(config);
     }

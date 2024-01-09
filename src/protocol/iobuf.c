@@ -40,7 +40,7 @@ void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
     ios->_w_pos = 0;
     ios->_capacity = capacity;
     ios->_is_alloc = true;
-    ios->_buf = (uint8_t *)z_malloc(capacity);
+    ios->_buf = (uint8_t *)zp_malloc(capacity);
     if (ios->_buf == NULL) {
         ios->_capacity = 0;
         ios->_is_alloc = false;
@@ -54,7 +54,7 @@ _z_iosli_t _z_iosli_make(size_t capacity) {
 }
 
 _z_iosli_t *_z_iosli_new(size_t capacity) {
-    _z_iosli_t *pios = (_z_iosli_t *)z_malloc(sizeof(_z_iosli_t));
+    _z_iosli_t *pios = (_z_iosli_t *)zp_malloc(sizeof(_z_iosli_t));
     if (pios != NULL) {
         __z_iosli_init(pios, capacity);
     }
@@ -119,7 +119,7 @@ size_t _z_iosli_size(const _z_iosli_t *ios) {
 
 void _z_iosli_clear(_z_iosli_t *ios) {
     if ((ios->_is_alloc == true) && (ios->_buf != NULL)) {
-        z_free(ios->_buf);
+        zp_free(ios->_buf);
         ios->_buf = NULL;
     }
 }
@@ -130,7 +130,7 @@ void _z_iosli_free(_z_iosli_t **ios) {
     if (ptr != NULL) {
         _z_iosli_clear(ptr);
 
-        z_free(ptr);
+        zp_free(ptr);
         *ios = NULL;
     }
 }
@@ -141,7 +141,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
     dst->_capacity = src->_capacity;
     dst->_is_alloc = src->_is_alloc;
     if (dst->_is_alloc == true) {
-        dst->_buf = (uint8_t *)z_malloc(src->_capacity);
+        dst->_buf = (uint8_t *)zp_malloc(src->_capacity);
         if (dst->_buf != NULL) {
             (void)memcpy(dst->_buf, src->_buf, src->_capacity);
         }
@@ -151,7 +151,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
 }
 
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
-    _z_iosli_t *dst = (_z_iosli_t *)z_malloc(_z_iosli_size(src));
+    _z_iosli_t *dst = (_z_iosli_t *)zp_malloc(_z_iosli_size(src));
     if (dst != NULL) {
         _z_iosli_copy(dst, src);
     }
@@ -233,7 +233,7 @@ void _z_zbuf_free(_z_zbuf_t **zbf) {
     if (ptr != NULL) {
         _z_iosli_clear(&ptr->_ios);
 
-        z_free(ptr);
+        zp_free(ptr);
         *zbf = NULL;
     }
 }
@@ -245,7 +245,7 @@ void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios) {
 }
 
 _z_iosli_t *__z_wbuf_new_iosli(size_t capacity) {
-    _z_iosli_t *ios = (_z_iosli_t *)z_malloc(sizeof(_z_iosli_t));
+    _z_iosli_t *ios = (_z_iosli_t *)zp_malloc(sizeof(_z_iosli_t));
     if (ios != NULL) {
         __z_iosli_init(ios, capacity);
     }
@@ -559,7 +559,7 @@ void _z_wbuf_free(_z_wbuf_t **wbf) {
     if (ptr != NULL) {
         _z_wbuf_clear(ptr);
 
-        z_free(ptr);
+        zp_free(ptr);
         *wbf = NULL;
     }
 }

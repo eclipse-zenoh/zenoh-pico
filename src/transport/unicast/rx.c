@@ -32,7 +32,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    z_mutex_lock(&ztu->_mutex_rx);
+    zp_mutex_lock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -85,7 +85,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztu->_mutex_rx);
+    zp_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

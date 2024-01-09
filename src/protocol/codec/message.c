@@ -149,7 +149,7 @@ int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     for (size_t i = 0; i < la->_len; i++) {
         char *s = _z_locator_to_str(&la->_val[i]);
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, s))
-        z_free(s);
+        zp_free(s);
     }
 
     return ret;
@@ -171,7 +171,7 @@ int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
             if (ret == _Z_RES_OK) {
                 _z_locator_init(&a_loc->_val[i]);
                 ret |= _z_locator_from_str(&a_loc->_val[i], str);
-                z_free(str);
+                zp_free(str);
             } else {
                 a_loc->_len = i;
             }

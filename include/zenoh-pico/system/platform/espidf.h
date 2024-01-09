@@ -30,8 +30,8 @@ typedef pthread_mutex_t zp_mutex_t;
 typedef pthread_cond_t zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef struct timespec zp_clock_t;
+typedef struct timeval zp_time_t;
 
 typedef struct {
     union {

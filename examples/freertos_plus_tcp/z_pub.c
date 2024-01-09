@@ -88,7 +88,7 @@ void app_main(void) {
 
     char *buf = (char *)pvPortMalloc(256);
     for (int idx = 0; 1; ++idx) {
-        z_sleep_s(1);
+        zp_sleep_s(1);
         snprintf(buf, 256, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 

@@ -49,7 +49,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
     // Acquire and keep the lock
-    z_mutex_lock(&ztu->_mutex_rx);
+    zp_mutex_lock(&ztu->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
@@ -117,7 +117,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) + to_read);
     }
-    z_mutex_unlock(&ztu->_mutex_rx);
+    zp_mutex_unlock(&ztu->_mutex_rx);
     return NULL;
 }
 

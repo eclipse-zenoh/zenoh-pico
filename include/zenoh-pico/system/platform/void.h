@@ -24,7 +24,7 @@ typedef void *zp_mutex_t;
 typedef void *zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef void *z_clock_t;
-typedef void *z_time_t;
+typedef void *zp_clock_t;
+typedef void *zp_time_t;
 
 #endif /* ZENOH_PICO_SYSTEM_VOID_H */

@@ -154,7 +154,7 @@ int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions)
     return ret;
 }
 int8_t _z_msg_ext_vec_push_callback(_z_msg_ext_t *extension, _z_msg_ext_vec_t *extensions) {
-    _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
+    _z_msg_ext_t *ext = (_z_msg_ext_t *)zp_malloc(sizeof(_z_msg_ext_t));
     *ext = *extension;
     *extension = _z_msg_ext_make_unit(0);
     _z_msg_ext_vec_append(extensions, extension);
@@ -181,13 +181,13 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
             _z_bytes_t buf = extension->_body._zbuf._val;
-            char *hex = z_malloc(buf.len * 2 + 1);
+            char *hex = zp_malloc(buf.len * 2 + 1);
             for (size_t i = 0; i < buf.len; ++i) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
             }
             _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)", ext_id,
                      trace_id, (int)buf.len * 2, hex);
-            z_free(hex);
+            zp_free(hex);
             break;
         }
         default: {

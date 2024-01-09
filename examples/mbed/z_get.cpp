@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     zp_start_lease_task(z_session_loan(&s), NULL);
 
     while (1) {
-        z_sleep_s(5);
+        zp_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts = z_get_options_default();
         if (strcmp(VALUE, "") != 0) {

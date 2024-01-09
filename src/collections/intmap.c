@@ -66,7 +66,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     if (map->_vals == NULL) {
         // Lazily allocate and initialize to NULL all the pointers
         size_t len = map->_capacity * sizeof(_z_list_t *);
-        map->_vals = (_z_list_t **)z_malloc(len);
+        map->_vals = (_z_list_t **)zp_malloc(len);
         if (map->_vals != NULL) {
             (void)memset(map->_vals, 0, len);
         }
@@ -77,7 +77,7 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
         _z_int_void_map_remove(map, k, f_f);
 
         // Insert the element
-        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)z_malloc(sizeof(_z_int_void_map_entry_t));
+        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)zp_malloc(sizeof(_z_int_void_map_entry_t));
         if (entry != NULL) {
             entry->_key = k;
             entry->_val = v;
@@ -116,7 +116,7 @@ void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
             _z_list_free(&map->_vals[idx], f_f);
         }
 
-        z_free(map->_vals);
+        zp_free(map->_vals);
         map->_vals = NULL;
     }
 }
@@ -126,7 +126,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f) {
     if (ptr != NULL) {
         _z_int_void_map_clear(ptr, f);
 
-        z_free(ptr);
+        zp_free(ptr);
         *map = NULL;
     }
 }

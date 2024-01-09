@@ -64,7 +64,7 @@ void app_main(void) {
     }
 
     while (1) {
-        z_sleep_s(1);
+        zp_sleep_s(1);
     }
 
     z_undeclare_keyexpr(z_loan(s), z_move(ke));

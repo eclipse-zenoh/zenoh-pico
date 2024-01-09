@@ -28,8 +28,8 @@ typedef pthread_mutex_t zp_mutex_t;
 typedef pthread_cond_t zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef double z_clock_t;
-typedef double z_time_t;
+typedef double zp_clock_t;
+typedef double zp_time_t;
 
 typedef struct {
     union {

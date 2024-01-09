@@ -25,7 +25,7 @@ void _z_queryable_free(_z_queryable_t **qbl) {
     if (ptr != NULL) {
         _z_queryable_clear(ptr);
 
-        z_free(ptr);
+        zp_free(ptr);
         *qbl = NULL;
     }
 }
