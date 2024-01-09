@@ -22,7 +22,7 @@ int8_t _zp_raweth_stop_read_task(_z_transport_t *zt);
 void *_zp_raweth_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_RAWETH_TRANSPORT == 1
-int8_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task);
+int8_t _zp_raweth_start_read_task(_z_transport_t *zt, zp_task_attr_t *attr, zp_task_t *task);
 #else
 int8_t _zp_raweth_start_read_task(_z_transport_t *zt, void *attr, void *task);
 #endif /* Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_RAWETH_TRANSPORT == 1 */

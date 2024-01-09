@@ -61,7 +61,7 @@ void z_task_wrapper(z_task_arg *targ) {
 }
 
 /*------------------ Task ------------------*/
-int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     int ret = 0;
 
     z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
@@ -78,41 +78,41 @@ int8_t zp_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), v
     return ret;
 }
 
-int8_t zp_task_join(z_task_t *task) {
+int8_t zp_task_join(zp_task_t *task) {
     // Note: task/thread join not supported on FreeRTOS API, so we force its deletion instead.
     return zp_task_cancel(task);
 }
 
-int8_t zp_task_cancel(z_task_t *task) {
+int8_t zp_task_cancel(zp_task_t *task) {
     vTaskDelete(*task);
     return 0;
 }
 
-void zp_task_free(z_task_t **task) {
-    z_task_t *ptr = *task;
+void zp_task_free(zp_task_t **task) {
+    zp_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int8_t z_mutex_init(z_mutex_t *m) { return pthread_mutex_init(m, NULL); }
+int8_t z_mutex_init(zp_mutex_t *m) { return pthread_mutex_init(m, NULL); }
 
-int8_t z_mutex_free(z_mutex_t *m) { return pthread_mutex_destroy(m); }
+int8_t z_mutex_free(zp_mutex_t *m) { return pthread_mutex_destroy(m); }
 
-int8_t z_mutex_lock(z_mutex_t *m) { return pthread_mutex_lock(m); }
+int8_t z_mutex_lock(zp_mutex_t *m) { return pthread_mutex_lock(m); }
 
-int8_t z_mutex_trylock(z_mutex_t *m) { return pthread_mutex_trylock(m); }
+int8_t zp_mutex_trylock(zp_mutex_t *m) { return pthread_mutex_trylock(m); }
 
-int8_t z_mutex_unlock(z_mutex_t *m) { return pthread_mutex_unlock(m); }
+int8_t z_mutex_unlock(zp_mutex_t *m) { return pthread_mutex_unlock(m); }
 
 /*------------------ Condvar ------------------*/
-int8_t z_condvar_init(z_condvar_t *cv) { return pthread_cond_init(cv, NULL); }
+int8_t z_condvar_init(zp_condvar_t *cv) { return pthread_cond_init(cv, NULL); }
 
-int8_t z_condvar_free(z_condvar_t *cv) { return pthread_cond_destroy(cv); }
+int8_t z_condvar_free(zp_condvar_t *cv) { return pthread_cond_destroy(cv); }
 
-int8_t z_condvar_signal(z_condvar_t *cv) { return pthread_cond_signal(cv); }
+int8_t z_condvar_signal(zp_condvar_t *cv) { return pthread_cond_signal(cv); }
 
-int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return pthread_cond_wait(cv, m); }
+int8_t z_condvar_wait(zp_condvar_t *cv, zp_mutex_t *m) { return pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/

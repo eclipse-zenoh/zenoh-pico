@@ -230,7 +230,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
         z_mutex_lock(&ztm->_mutex_tx);
     } else {
-        if (z_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
+        if (zp_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;

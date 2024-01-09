@@ -89,7 +89,7 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        int8_t locked = z_mutex_trylock(&ztu->_mutex_tx);
+        int8_t locked = zp_mutex_trylock(&ztu->_mutex_tx);
         if (locked != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message

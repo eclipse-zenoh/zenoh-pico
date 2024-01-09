@@ -181,9 +181,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
     return 0;
 }
 
-int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, zp_task_attr_t *attr, zp_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(zp_task_t));
     // Init task
     if (zp_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;

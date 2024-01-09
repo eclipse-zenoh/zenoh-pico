@@ -128,9 +128,9 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     return NULL;
 }
 
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_multicast_start_read_task(_z_transport_t *zt, zp_task_attr_t *attr, zp_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(zp_task_t));
     // Init task
     if (zp_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;

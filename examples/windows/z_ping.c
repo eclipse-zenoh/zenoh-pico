@@ -27,8 +27,8 @@
 #define DEFAULT_PING_NB 100
 #define DEFAULT_WARMUP_MS 1000
 
-static z_condvar_t cond;
-static z_mutex_t mutex;
+static zp_condvar_t cond;
+static zp_mutex_t mutex;
 
 void callback(const z_sample_t* sample, void* context) {
     (void)sample;

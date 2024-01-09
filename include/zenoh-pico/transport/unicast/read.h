@@ -22,7 +22,7 @@ int8_t _zp_unicast_stop_read_task(_z_transport_t *zt);
 void *_zp_unicast_read_task(void *ztu_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
-int8_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task);
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, zp_task_attr_t *attr, zp_task_t *task);
 #else
 int8_t _zp_unicast_start_read_task(_z_transport_t *zt, void *attr, void *task);
 #endif /* Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 */
