@@ -135,12 +135,12 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                     break;
                 }
             } else {
-                _Z_ERROR("Trying to configure an invalid mode.\n");
+                _Z_ERROR("Trying to configure an invalid mode.");
             }
         }
         _z_str_array_clear(&locators);
     } else {
-        _Z_ERROR("A valid config is missing.\n");
+        _Z_ERROR("A valid config is missing.");
         ret = _Z_ERR_GENERIC;
     }
 

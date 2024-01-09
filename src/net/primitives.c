@@ -76,7 +76,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
 
 int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Undeclaring local keyexpr %d\n", rid);
+    _Z_DEBUG("Undeclaring local keyexpr %d", rid);
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_KEYEXPR_MAPPING_LOCAL, rid);
     if (r != NULL) {
         // Build the declare message to send on the wire

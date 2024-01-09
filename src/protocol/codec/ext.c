@@ -90,7 +90,7 @@ int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, _Bool has_next
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)\n", enc);
+            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
         } break;
     }
 
@@ -114,7 +114,7 @@ int8_t _z_msg_ext_unknown_body_decode(_z_msg_ext_body_t *body, uint8_t enc, _z_z
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)\n", enc);
+            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
         } break;
     }
 
@@ -171,12 +171,11 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
 #if (ZENOH_DEBUG >= 1)
     switch (_Z_EXT_ENC(extension->_header)) {
         case _Z_MSG_EXT_ENC_UNIT: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNIT\n", ext_id,
-                     trace_id);
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNIT", ext_id, trace_id);
             break;
         }
         case _Z_MSG_EXT_ENC_ZINT: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02jx)\n", ext_id,
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZINT(%02jx)", ext_id,
                      trace_id, (uintmax_t)extension->_body._zint._val);
             break;
         }
@@ -186,14 +185,14 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             for (size_t i = 0; i < buf.len; ++i) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
             }
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)\n", ext_id,
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)", ext_id,
                      trace_id, (int)buf.len * 2, hex);
             z_free(hex);
             break;
         }
         default: {
-            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNKOWN_ENCODING\n",
-                     ext_id, trace_id);
+            _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), UNKOWN_ENCODING", ext_id,
+                     trace_id);
         }
     }
 #endif

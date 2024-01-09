@@ -70,7 +70,7 @@ void _z_t_msg_clear(_z_transport_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to clear transport message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear transport message with unknown ID(%d)", mid);
         } break;
     }
 }
@@ -330,7 +330,7 @@ void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy transport message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy transport message with unknown ID(%d)", mid);
         } break;
     }
 }
@@ -347,7 +347,7 @@ void _z_s_msg_clear(_z_scouting_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to clear session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to clear session message with unknown ID(%d)", mid);
         } break;
     }
 }
@@ -411,7 +411,7 @@ void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy session message with unknown ID(%d)\n", mid);
+            _Z_DEBUG("WARNING: Trying to copy session message with unknown ID(%d)", mid);
         } break;
     }
 }

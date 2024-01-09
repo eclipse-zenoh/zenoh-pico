@@ -157,7 +157,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
-    _Z_INFO("Sending Z_INIT(Syn)\n");
+    _Z_INFO("Sending Z_INIT(Syn)");
     ret = _z_link_send_t_msg(zl, &ism);
     _z_t_msg_clear(&ism);
     if (ret == _Z_RES_OK) {
@@ -165,7 +165,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
         ret = _z_link_recv_t_msg(&iam, zl);
         if (ret == _Z_RES_OK) {
             if ((_Z_MID(iam._header) == _Z_MID_T_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A) == true)) {
-                _Z_INFO("Received Z_INIT(Ack)\n");
+                _Z_INFO("Received Z_INIT(Ack)");
 
                 // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
                 // otherwise the InitAck message is considered invalid and it should be treated as a
@@ -208,7 +208,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
 
                     // Encode and send the message
-                    _Z_INFO("Sending Z_OPEN(Syn)\n");
+                    _Z_INFO("Sending Z_OPEN(Syn)");
                     ret = _z_link_send_t_msg(zl, &osm);
                     if (ret == _Z_RES_OK) {
                         _z_transport_message_t oam;
@@ -216,7 +216,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                         if (ret == _Z_RES_OK) {
                             if ((_Z_MID(oam._header) == _Z_MID_T_OPEN) &&
                                 (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A) == true)) {
-                                _Z_INFO("Received Z_OPEN(Ack)\n");
+                                _Z_INFO("Received Z_OPEN(Ack)");
                                 param->_lease = oam._body._open._lease;  // The session lease
 
                                 // The initial SN at RX side. Initialize the session as we had already received

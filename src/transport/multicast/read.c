@@ -115,7 +115,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                     continue;
                 }
             } else {
-                _Z_ERROR("Connection closed due to malformed message\n");
+                _Z_ERROR("Connection closed due to malformed message");
                 ztm->_read_task_running = false;
                 continue;
             }

@@ -30,7 +30,7 @@
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                          _z_bytes_t *addr) {
-    _Z_DEBUG(">> recv session msg\n");
+    _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -77,7 +77,7 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
     } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
 
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju\n", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
 
@@ -132,7 +132,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
-            _Z_INFO("Received _Z_FRAME message\n");
+            _Z_INFO("Received _Z_FRAME message");
             if (entry == NULL) {
                 break;
             }
@@ -147,7 +147,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
-                    _Z_INFO("Reliable message dropped because it is out of order\n");
+                    _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
             } else {
@@ -156,7 +156,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
-                    _Z_INFO("Best effort message dropped because it is out of order\n");
+                    _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
             }
@@ -174,7 +174,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_T_FRAGMENT: {
-            _Z_INFO("Received Z_FRAGMENT message\n");
+            _Z_INFO("Received Z_FRAGMENT message");
             if (entry == NULL) {
                 break;
             }
@@ -222,7 +222,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
-            _Z_INFO("Received _Z_KEEP_ALIVE message\n");
+            _Z_INFO("Received _Z_KEEP_ALIVE message");
             if (entry == NULL) {
                 break;
             }
@@ -242,7 +242,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_T_JOIN: {
-            _Z_INFO("Received _Z_JOIN message\n");
+            _Z_INFO("Received _Z_JOIN message");
             if (t_msg->_body._join._version != Z_PROTO_VERSION) {
                 break;
             }
@@ -310,7 +310,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         case _Z_MID_T_CLOSE: {
-            _Z_INFO("Closing session as requested by the remote peer\n");
+            _Z_INFO("Closing session as requested by the remote peer");
 
             if (entry == NULL) {
                 break;
@@ -321,7 +321,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
         }
 
         default: {
-            _Z_ERROR("Unknown session message ID\n");
+            _Z_ERROR("Unknown session message ID");
             break;
         }
     }
