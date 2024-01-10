@@ -203,7 +203,6 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
                 &keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE, sub_info.mode == Z_SUBMODE_PULL);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                // ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 _z_unregister_subscription(zn, _Z_RESOURCE_IS_LOCAL, sp_s);
                 _z_subscriber_free(&ret);
             }
