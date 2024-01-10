@@ -152,6 +152,14 @@ _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_lo
     return ret;
 }
 
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
+                                    _z_zint_t payload_len) {
+    _z_encoding_t encoding = {.prefix = Z_ENCODING_PREFIX_DEFAULT, .suffix = _z_bytes_wrap(NULL, 0)};
+    int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
+                                          _z_timestamp_null());
+    (void)ret;
+}
+
 int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
                                 const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp) {
     int8_t ret = _Z_RES_OK;
