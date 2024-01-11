@@ -99,7 +99,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
     _z_transport_peer_entry_list_t *it = NULL;
     while (ztm->_lease_task_running == true) {
-        _z_mutex_lock(&ztm->_mutex_peer);
+        zp_mutex_lock(&ztm->_mutex_peer);
 
         if (next_lease <= 0) {
             it = ztm->_peers;
@@ -158,13 +158,13 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
             }
         }
 
-        _z_mutex_unlock(&ztm->_mutex_peer);
+        zp_mutex_unlock(&ztm->_mutex_peer);
 
         // The keep alive and lease intervals are expressed in milliseconds
-        z_sleep_ms(interval);
+        zp_sleep_ms(interval);
 
         // Decrement all intervals
-        _z_mutex_lock(&ztm->_mutex_peer);
+        zp_mutex_lock(&ztm->_mutex_peer);
 
         it = ztm->_peers;
         while (it != NULL) {
@@ -176,16 +176,16 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         next_keep_alive = next_keep_alive - interval;
         next_join = next_join - interval;
 
-        _z_mutex_unlock(&ztm->_mutex_peer);
+        zp_mutex_unlock(&ztm->_mutex_peer);
     }
     return 0;
 }
 
-int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, zp_task_attr_t *attr, zp_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
+    (void)memset(task, 0, sizeof(zp_task_t));
     // Init task
-    if (_z_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
+    if (zp_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

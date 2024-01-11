@@ -22,14 +22,14 @@
 #if Z_FEATURE_MULTI_THREAD == 1
 #include <pthread.h>
 
-typedef pthread_t _z_task_t;
-typedef pthread_attr_t _z_task_attr_t;
-typedef pthread_mutex_t _z_mutex_t;
-typedef pthread_cond_t _z_condvar_t;
+typedef pthread_t zp_task_t;
+typedef pthread_attr_t zp_task_attr_t;
+typedef pthread_mutex_t zp_mutex_t;
+typedef pthread_cond_t zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef double z_clock_t;
-typedef double z_time_t;
+typedef double zp_clock_t;
+typedef double zp_time_t;
 
 typedef struct {
     union {

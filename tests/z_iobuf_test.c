@@ -46,13 +46,13 @@ void print_iosli(_z_iosli_t *ios) {
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-int gen_bool(void) { return z_random_u8() % 2; }
+int gen_bool(void) { return zp_random_u8() % 2; }
 
-uint8_t gen_uint8(void) { return z_random_u8() % 255; }
+uint8_t gen_uint8(void) { return zp_random_u8() % 255; }
 
 size_t gen_size_t(void) {
     size_t ret = 0;
-    z_random_fill(&ret, sizeof(ret));
+    zp_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
@@ -154,7 +154,7 @@ void iosli_writable_readable(void) {
     assert(_z_iosli_readable(cios) == 0);
 
     printf("  - IOSli bytes\n");
-    uint8_t *payload = (uint8_t *)z_malloc(len);
+    uint8_t *payload = (uint8_t *)zp_malloc(len);
     memset((uint8_t *)payload, 1, len);
 
     for (size_t i = 0; i < len; i++) {
@@ -172,7 +172,7 @@ void iosli_writable_readable(void) {
         assert(readable == i + 1);
     }
 
-    uint8_t *buffer = (uint8_t *)z_malloc(len);
+    uint8_t *buffer = (uint8_t *)zp_malloc(len);
     memset((uint8_t *)buffer, 1, len);
 
     _z_iosli_write_bytes(&ios, payload, 0, len);
@@ -203,12 +203,12 @@ void iosli_writable_readable(void) {
     assert(_z_iosli_readable(&wios) == 0);
 
     _z_iosli_clear(pios);
-    z_free(pios);
+    zp_free(pios);
     _z_iosli_clear(cios);
-    z_free(cios);
+    zp_free(cios);
 
-    z_free(buffer);
-    z_free(payload);
+    zp_free(buffer);
+    zp_free(payload);
 }
 
 void zbuf_writable_readable(void) {
@@ -382,7 +382,7 @@ void wbuf_write_zbuf_read_bytes(void) {
     print_wbuf_overview(&wbf);
 
     printf("    Writing %zu bytes\n", len);
-    uint8_t *buf01 = (uint8_t *)z_malloc(len);
+    uint8_t *buf01 = (uint8_t *)zp_malloc(len);
     for (size_t i = 0; i < len; i++) {
         buf01[i] = (uint8_t)i % 255;
     }
@@ -402,7 +402,7 @@ void wbuf_write_zbuf_read_bytes(void) {
     }
     printf(" ]\n");
 
-    z_free(buf01);
+    zp_free(buf01);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -442,7 +442,7 @@ void wbuf_put_zbuf_get(void) {
 void wbuf_reusable_write_zbuf_read(void) {
     _z_wbuf_t wbf = gen_wbuf(128);
     for (int i = 1; i <= 10; i++) {
-        size_t len = z_random_u8() % 128;
+        size_t len = zp_random_u8() % 128;
         printf("\n>>> WBuf => Write and Read round %d\n", i);
         print_wbuf_overview(&wbf);
         printf("    Writing %zu bytes\n", len);

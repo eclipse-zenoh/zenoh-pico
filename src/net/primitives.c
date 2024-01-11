@@ -100,7 +100,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t *_z_declare_publisher(_z_session_t *zn, _z_keyexpr_t keyexpr, z_congestion_control_t congestion_control,
                                      z_priority_t priority) {
-    _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
+    _z_publisher_t *ret = (_z_publisher_t *)zp_malloc(sizeof(_z_publisher_t));
     if (ret != NULL) {
         ret->_zn = zn;
         ret->_key = _z_keyexpr_duplicate(keyexpr);
@@ -189,7 +189,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
     s._dropper = dropper;
     s._arg = arg;
 
-    _z_subscriber_t *ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
+    _z_subscriber_t *ret = (_z_subscriber_t *)zp_malloc(sizeof(_z_subscriber_t));
     if (ret != NULL) {
         ret->_zn = zn;
         ret->_entity_id = s._id;
@@ -275,7 +275,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
     q._dropper = dropper;
     q._arg = arg;
 
-    _z_queryable_t *ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
+    _z_queryable_t *ret = (_z_queryable_t *)zp_malloc(sizeof(_z_queryable_t));
     if (ret != NULL) {
         ret->_zn = zn;
         ret->_entity_id = q._id;
@@ -386,7 +386,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
+    _z_pending_query_t *pq = (_z_pending_query_t *)zp_malloc(sizeof(_z_pending_query_t));
     if (pq != NULL) {
         pq->_id = _z_get_query_id(zn);
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);

@@ -21,7 +21,7 @@
 typedef struct {
     volatile unsigned long count;
     unsigned long curr_len;
-    z_clock_t start;
+    zp_clock_t start;
 } z_stats_t;
 
 static z_stats_t test_stats;
@@ -34,7 +34,7 @@ void z_stats_stop(z_stats_t *stats) {
         return;
     }
     // Print values
-    unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
+    unsigned long elapsed_ms = zp_clock_elapsed_ms(&stats->start);
     printf("End test for pkt len: %lu, msg nb: %lu, time ms: %lu\n", stats->curr_len, stats->count, elapsed_ms);
     stats->count = 0;
 }
@@ -53,7 +53,7 @@ void on_sample(const z_sample_t *sample, void *context) {
         }
         // Start new measurement
         printf("Starting test for pkt len: %lu\n", stats->curr_len);
-        stats->start = z_clock_now();
+        stats->start = zp_clock_now();
     }
     stats->count++;
 }
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     }
     // Wait for everything to settle
     printf("End of test\n");
-    z_sleep_s(1);
+    zp_sleep_s(1);
     // Clean up
     z_undeclare_subscriber(z_move(sub));
     zp_stop_read_task(z_loan(s));

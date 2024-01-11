@@ -23,39 +23,39 @@
 #include "zenoh-pico/system/platform.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random_u8(void) { return z_random_u32(); }
+uint8_t zp_random_u8(void) { return zp_random_u32(); }
 
-uint16_t z_random_u16(void) { return z_random_u32(); }
+uint16_t zp_random_u16(void) { return zp_random_u32(); }
 
-uint32_t z_random_u32(void) {
+uint32_t zp_random_u32(void) {
     uint32_t ret = 0;
     xApplicationGetRandomNumber(&ret);
     return ret;
 }
 
-uint64_t z_random_u64(void) {
+uint64_t zp_random_u64(void) {
     uint64_t ret = 0;
-    ret |= z_random_u32();
+    ret |= zp_random_u32();
     ret = ret << 32;
-    ret |= z_random_u32();
+    ret |= zp_random_u32();
     return ret;
 }
 
-void z_random_fill(void *buf, size_t len) {
+void zp_random_fill(void *buf, size_t len) {
     for (size_t i = 0; i < len; i++) {
-        *((uint8_t *)buf) = z_random_u8();
+        *((uint8_t *)buf) = zp_random_u8();
     }
 }
 
 /*------------------ Memory ------------------*/
-void *z_malloc(size_t size) { return pvPortMalloc(size); }
+void *zp_malloc(size_t size) { return pvPortMalloc(size); }
 
-void *z_realloc(void *ptr, size_t size) {
+void *zp_realloc(void *ptr, size_t size) {
     // realloc not implemented in FreeRTOS
     return NULL;
 }
 
-void z_free(void *ptr) { vPortFree(ptr); }
+void zp_free(void *ptr) { vPortFree(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
@@ -64,16 +64,16 @@ typedef struct {
     void *(*fun)(void *);
     void *arg;
     EventGroupHandle_t join_event;
-} __z_task_arg;
+} z_task_arg;
 
 static void z_task_wrapper(void *arg) {
-    __z_task_arg *targ = (__z_task_arg *)arg;
+    z_task_arg *targ = (z_task_arg *)arg;
     targ->fun(targ->arg);
     xEventGroupSetBits(targ->join_event, 1);
     vTaskDelete(NULL);
 }
 
-static _z_task_attr_t z_default_task_attr = {
+static zp_task_attr_t z_default_task_attr = {
     .name = "",
     .priority = configMAX_PRIORITIES / 2,
     .stack_depth = 5120,
@@ -85,8 +85,8 @@ static _z_task_attr_t z_default_task_attr = {
 };
 
 /*------------------ Thread ------------------*/
-int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    __z_task_arg *z_arg = (__z_task_arg *)z_malloc(sizeof(__z_task_arg));
+int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    z_task_arg *z_arg = (z_task_arg *)zp_malloc(sizeof(z_task_arg));
     if (z_arg == NULL) {
         return -1;
     }
@@ -119,86 +119,86 @@ int8_t _z_task_init(_z_task_t *task, _z_task_attr_t *attr, void *(*fun)(void *),
     return 0;
 }
 
-int8_t _z_task_join(_z_task_t *task) {
+int8_t zp_task_join(zp_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
     return 0;
 }
 
-int8_t _z_task_cancel(_z_task_t *task) {
+int8_t zp_task_cancel(zp_task_t *task) {
     vTaskDelete(task->handle);
     return 0;
 }
 
-void _z_task_free(_z_task_t **task) {
-    z_free((*task)->join_event);
-    z_free(*task);
+void zp_task_free(zp_task_t **task) {
+    zp_free((*task)->join_event);
+    zp_free(*task);
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) {
+int8_t zp_mutex_init(zp_mutex_t *m) {
     *m = xSemaphoreCreateRecursiveMutex();
     return *m == NULL ? -1 : 0;
 }
 
-int8_t _z_mutex_free(_z_mutex_t *m) {
-    z_free(*m);
+int8_t zp_mutex_free(zp_mutex_t *m) {
+    zp_free(*m);
     return 0;
 }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
+int8_t zp_mutex_lock(zp_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
 
-int8_t _z_mutex_trylock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
+int8_t zp_mutex_trylock(zp_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
+int8_t zp_mutex_unlock(zp_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
 // Condition variables not supported in FreeRTOS
-int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_free(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+int8_t zp_condvar_init(zp_condvar_t *cv) { return -1; }
+int8_t zp_condvar_free(zp_condvar_t *cv) { return -1; }
+int8_t zp_condvar_signal(zp_condvar_t *cv) { return -1; }
+int8_t zp_condvar_wait(zp_condvar_t *cv, zp_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) {
+int zp_sleep_us(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time / 1000));
     return 0;
 }
 
-int z_sleep_ms(size_t time) {
+int zp_sleep_ms(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time));
     return 0;
 }
 
-int z_sleep_s(size_t time) {
+int zp_sleep_s(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time * 1000));
     return 0;
 }
 
 /*------------------ Clock ------------------*/
-z_clock_t z_clock_now(void) { return z_time_now(); }
+zp_clock_t zp_clock_now(void) { return zp_time_now(); }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms(instant) * 1000; }
+unsigned long zp_clock_elapsed_us(zp_clock_t *instant) { return zp_clock_elapsed_ms(instant) * 1000; }
 
-unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
+unsigned long zp_clock_elapsed_ms(zp_clock_t *instant) { return zp_time_elapsed_ms(instant); }
 
-unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_clock_elapsed_ms(instant) / 1000; }
+unsigned long zp_clock_elapsed_s(zp_clock_t *instant) { return zp_clock_elapsed_ms(instant) / 1000; }
 
 /*------------------ Time ------------------*/
-z_time_t z_time_now(void) { return xTaskGetTickCount(); }
+zp_time_t zp_time_now(void) { return xTaskGetTickCount(); }
 
-const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
-    snprintf(buf, buflen, "%u", z_time_now());
+const char *zp_time_now_as_str(char *const buf, unsigned long buflen) {
+    snprintf(buf, buflen, "%u", zp_time_now());
     return buf;
 }
 
-unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
+unsigned long zp_time_elapsed_us(zp_time_t *time) { return zp_time_elapsed_ms(time) * 1000; }
 
-unsigned long z_time_elapsed_ms(z_time_t *time) {
-    z_time_t now = z_time_now();
+unsigned long zp_time_elapsed_ms(zp_time_t *time) {
+    zp_time_t now = zp_time_now();
 
     unsigned long elapsed = (now - *time) * portTICK_PERIOD_MS;
     return elapsed;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) / 1000; }
+unsigned long zp_time_elapsed_s(zp_time_t *time) { return zp_time_elapsed_ms(time) / 1000; }

@@ -64,7 +64,7 @@ int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
 
     sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
     if (sock->_sock._fd != INVALID_SOCKET) {
-        z_time_t tv;
+        zp_time_t tv;
         tv.time = tout / (uint32_t)1000;
         tv.millitm = tout % (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -200,7 +200,7 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
 
     sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
     if (sock->_sock._fd != INVALID_SOCKET) {
-        z_time_t tv;
+        zp_time_t tv;
         tv.time = tout / (uint32_t)1000;
         tv.millitm = tout % (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -277,20 +277,20 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, SOCKADDR **ls
     unsigned int addrlen = 0U;
 
     unsigned long outBufLen = 15000;
-    IP_ADAPTER_ADDRESSES *l_ifaddr = (IP_ADAPTER_ADDRESSES *)z_malloc(outBufLen);
+    IP_ADAPTER_ADDRESSES *l_ifaddr = (IP_ADAPTER_ADDRESSES *)zp_malloc(outBufLen);
     if (l_ifaddr != NULL) {
         if (GetAdaptersAddresses(sa_family, 0, NULL, l_ifaddr, &outBufLen) != ERROR_BUFFER_OVERFLOW) {
             for (IP_ADAPTER_ADDRESSES *tmp = l_ifaddr; tmp != NULL; tmp = tmp->Next) {
                 if (_z_str_eq(tmp->AdapterName, iface) == true) {
                     if (sa_family == AF_INET) {
-                        *lsockaddr = (SOCKADDR *)z_malloc(sizeof(SOCKADDR_IN));
+                        *lsockaddr = (SOCKADDR *)zp_malloc(sizeof(SOCKADDR_IN));
                         if (lsockaddr != NULL) {
                             (void)memset(*lsockaddr, 0, sizeof(SOCKADDR_IN));
                             (void)memcpy(*lsockaddr, tmp->FirstUnicastAddress->Address.lpSockaddr, sizeof(SOCKADDR_IN));
                             addrlen = sizeof(SOCKADDR_IN);
                         }
                     } else if (sa_family == AF_INET6) {
-                        *lsockaddr = (SOCKADDR *)z_malloc(sizeof(SOCKADDR_IN6));
+                        *lsockaddr = (SOCKADDR *)zp_malloc(sizeof(SOCKADDR_IN6));
                         if (lsockaddr != NULL) {
                             (void)memset(*lsockaddr, 0, sizeof(SOCKADDR_IN6));
                             (void)memcpy(*lsockaddr, tmp->FirstUnicastAddress->Address.lpSockaddr,
@@ -306,7 +306,7 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, SOCKADDR **ls
             }
         }
 
-        z_free(l_ifaddr);
+        zp_free(l_ifaddr);
         l_ifaddr = NULL;
     }
 
@@ -326,7 +326,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
     if (addrlen != 0U) {
         sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
         if (sock->_sock._fd != INVALID_SOCKET) {
-            z_time_t tv;
+            zp_time_t tv;
             tv.time = tout / (uint32_t)1000;
             tv.millitm = tout % (uint32_t)1000;
             if ((ret == _Z_RES_OK) &&
@@ -374,7 +374,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 
             // Create lep endpoint
             if (ret == _Z_RES_OK) {
-                ADDRINFOA *laddr = (ADDRINFOA *)z_malloc(sizeof(ADDRINFOA));
+                ADDRINFOA *laddr = (ADDRINFOA *)zp_malloc(sizeof(ADDRINFOA));
                 if (laddr != NULL) {
                     laddr->ai_flags = 0;
                     laddr->ai_family = rep._ep._iptcp->ai_family;
@@ -391,7 +391,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                     //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
                     // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
                     // #if defined(ZENOH_LINUX)
-                    //    z_free(lsockaddr);
+                    //    zp_free(lsockaddr);
                     // #endif
                 } else {
                     ret = _Z_ERR_GENERIC;
@@ -407,7 +407,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
         }
 
         if (ret != _Z_RES_OK) {
-            z_free(lsockaddr);
+            zp_free(lsockaddr);
         }
     } else {
         ret = _Z_ERR_GENERIC;
@@ -430,7 +430,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     if (addrlen != 0U) {
         sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
         if (sock->_sock._fd != INVALID_SOCKET) {
-            z_time_t tv;
+            zp_time_t tv;
             tv.time = tout / (uint32_t)1000;
             tv.millitm = tout % (uint32_t)1000;
             if ((ret == _Z_RES_OK) &&
@@ -497,7 +497,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             ret = _Z_ERR_GENERIC;
         }
 
-        z_free(lsockaddr);
+        zp_free(lsockaddr);
     } else {
         ret = _Z_ERR_GENERIC;
     }

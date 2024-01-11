@@ -87,7 +87,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         }
 
         // The keep alive and lease intervals are expressed in milliseconds
-        z_sleep_ms(interval);
+        zp_sleep_ms(interval);
 
         next_lease = next_lease - interval;
         next_keep_alive = next_keep_alive - interval;
@@ -95,11 +95,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     return 0;
 }
 
-int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, _z_task_attr_t *attr, _z_task_t *task) {
+int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, zp_task_attr_t *attr, zp_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
+    (void)memset(task, 0, sizeof(zp_task_t));
     // Init task
-    if (_z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
+    if (zp_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

@@ -21,14 +21,14 @@
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef void *_z_task_t;
-typedef void *_z_task_attr_t;
-typedef void *_z_mutex_t;
-typedef void *_z_condvar_t;
+typedef void *zp_task_t;
+typedef void *zp_task_attr_t;
+typedef void *zp_mutex_t;
+typedef void *zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef struct timespec zp_clock_t;
+typedef struct timeval zp_time_t;
 
 typedef struct IPAddress IPAddress;    // Forward declaration to be used in __z_net_iptcp_addr_t
 typedef struct WiFiClient WiFiClient;  // Forward declaration to be used in _z_sys_net_socket_t

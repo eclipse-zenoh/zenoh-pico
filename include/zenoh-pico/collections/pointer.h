@@ -48,14 +48,14 @@
     } name##_sptr_t;                                                                            \
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
-        p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
         if (p.ptr != NULL) {                                                                    \
-            p._cnt = (_z_atomic(unsigned int) *)z_malloc(sizeof(_z_atomic(unsigned int) *));    \
+            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int) *));   \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
             } else {                                                                            \
-                z_free(p.ptr);                                                                  \
+                zp_free(p.ptr);                                                                 \
             }                                                                                   \
         }                                                                                       \
         return p;                                                                               \
@@ -68,7 +68,7 @@
         return c;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
-        name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                    \
+        name##_sptr_t *c = (name##_sptr_t *)zp_malloc(sizeof(name##_sptr_t));                   \
         if (c != NULL) {                                                                        \
             c->_cnt = p->_cnt;                                                                  \
             c->ptr = p->ptr;                                                                    \
@@ -88,8 +88,8 @@
                 atomic_thread_fence(_z_memory_order_acquire);                                   \
                 if (p->ptr != NULL) {                                                           \
                     type##_clear(p->ptr);                                                       \
-                    z_free(p->ptr);                                                             \
-                    z_free((void *)p->_cnt);                                                    \
+                    zp_free(p->ptr);                                                            \
+                    zp_free((void *)p->_cnt);                                                   \
                 }                                                                               \
             }                                                                                   \
         }                                                                                       \
@@ -104,14 +104,14 @@
     } name##_sptr_t;                                                                            \
     static inline name##_sptr_t name##_sptr_new(type##_t val) {                                 \
         name##_sptr_t p;                                                                        \
-        p.ptr = (type##_t *)z_malloc(sizeof(type##_t));                                         \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
         if (p.ptr != NULL) {                                                                    \
-            p._cnt = (uint8_t *)z_malloc(sizeof(uint8_t));                                      \
+            p._cnt = (uint8_t *)zp_malloc(sizeof(uint8_t));                                     \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 *p._cnt = 1;                                                                    \
             } else {                                                                            \
-                z_free(p.ptr);                                                                  \
+                zp_free(p.ptr);                                                                 \
             }                                                                                   \
         }                                                                                       \
         return p;                                                                               \
@@ -124,7 +124,7 @@
         return c;                                                                               \
     }                                                                                           \
     static inline name##_sptr_t *name##_sptr_clone_as_ptr(name##_sptr_t *p) {                   \
-        name##_sptr_t *c = (name##_sptr_t *)z_malloc(sizeof(name##_sptr_t));                    \
+        name##_sptr_t *c = (name##_sptr_t *)zp_malloc(sizeof(name##_sptr_t));                   \
         if (c != NULL) {                                                                        \
             c->_cnt = p->_cnt;                                                                  \
             c->ptr = p->ptr;                                                                    \
@@ -143,8 +143,8 @@
             if (dropped == true) {                                                              \
                 if (p->ptr != NULL) {                                                           \
                     type##_clear(p->ptr);                                                       \
-                    z_free(p->ptr);                                                             \
-                    z_free((void *)p->_cnt);                                                    \
+                    zp_free(p->ptr);                                                            \
+                    zp_free((void *)p->_cnt);                                                   \
                 }                                                                               \
             }                                                                                   \
         }                                                                                       \
