@@ -100,13 +100,13 @@
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
     typedef struct {                                                                      \
         type##_t *ptr;                                                                    \
-        volatile uint8_t *_cnt;                                                           \
+        volatile unsigned int *_cnt;                                                      \
     } name##_rc_t;                                                                        \
     static inline name##_rc_t name##_rc_new(type##_t val) {                               \
         name##_rc_t p;                                                                    \
         p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
         if (p.ptr != NULL) {                                                              \
-            p._cnt = (uint8_t *)zp_malloc(sizeof(uint8_t));                               \
+            p._cnt = (unsigned int *)zp_malloc(sizeof(unsigned int));                     \
             if (p._cnt != NULL) {                                                         \
                 *p.ptr = val;                                                             \
                 *p._cnt = 1;                                                              \
@@ -120,7 +120,7 @@
         name##_rc_t c;                                                                    \
         c._cnt = p->_cnt;                                                                 \
         c.ptr = p->ptr;                                                                   \
-        *p->_cnt = *p->_cnt + (uint8_t)1;                                                 \
+        *p->_cnt = *p->_cnt + 1;                                                          \
         return c;                                                                         \
     }                                                                                     \
     static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
@@ -128,7 +128,7 @@
         if (c != NULL) {                                                                  \
             c->_cnt = p->_cnt;                                                            \
             c->ptr = p->ptr;                                                              \
-            *p->_cnt = *p->_cnt + (uint8_t)1;                                             \
+            *p->_cnt = *p->_cnt + 1;                                                      \
         }                                                                                 \
         return c;                                                                         \
     }                                                                                     \
