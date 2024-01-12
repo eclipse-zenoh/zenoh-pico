@@ -51,13 +51,13 @@ typedef struct _z_session_t {
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_subscription_sptr_list_t *_local_subscriptions;
-    _z_subscription_sptr_list_t *_remote_subscriptions;
+    _z_subscription_rc_list_t *_local_subscriptions;
+    _z_subscription_rc_list_t *_remote_subscriptions;
 #endif
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
-    _z_questionable_sptr_list_t *_local_questionable;
+    _z_questionable_rc_list_t *_local_questionable;
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;

@@ -1054,9 +1054,9 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
     z_owned_keyexpr_t ret = z_keyexpr_null();
     uint32_t lookup = sub._val->_entity_id;
     if (sub._val != NULL) {
-        _z_subscription_sptr_list_t *tail = sub._val->_zn->_local_subscriptions;
+        _z_subscription_rc_list_t *tail = sub._val->_zn->_local_subscriptions;
         while (tail != NULL && !z_keyexpr_check(&ret)) {
-            _z_subscription_rc_t *head = _z_subscription_sptr_list_head(tail);
+            _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
             if (head->ptr->_id == lookup) {
                 _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
                 ret = (z_owned_keyexpr_t){._value = zp_malloc(sizeof(_z_keyexpr_t))};
@@ -1066,7 +1066,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
                     _z_keyexpr_clear(&key);
                 }
             }
-            tail = _z_subscription_sptr_list_tail(tail);
+            tail = _z_subscription_rc_list_tail(tail);
         }
     }
     return ret;

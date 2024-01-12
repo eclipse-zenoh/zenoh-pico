@@ -103,8 +103,8 @@ void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_rc_t)
+_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -130,8 +130,8 @@ void _z_questionable_clear(_z_questionable_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_questionable, _z_questionable)
 _Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_rc_t, _z_noop_size, _z_questionable_rc_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_rc_t)
+_Z_ELEM_DEFINE(_z_questionable_rc, _z_questionable_rc_t, _z_noop_size, _z_questionable_rc_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_questionable_rc, _z_questionable_rc_t)
 
 typedef struct {
     _z_reply_t _reply;
