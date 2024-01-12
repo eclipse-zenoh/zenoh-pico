@@ -50,7 +50,7 @@
         name##_rc_t p;                                                                          \
         p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
         if (p.ptr != NULL) {                                                                    \
-            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int) *));   \
+            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int)));     \
             if (p._cnt != NULL) {                                                               \
                 *p.ptr = val;                                                                   \
                 _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
