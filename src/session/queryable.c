@@ -206,8 +206,7 @@ void _z_unregister_questionable(_z_session_t *zn, _z_questionable_rc_t *qle) {
     zp_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    zn->_local_questionable =
-        _z_questionable_rc_list_drop_filter(zn->_local_questionable, _z_questionable_rc_eq, qle);
+    zn->_local_questionable = _z_questionable_rc_list_drop_filter(zn->_local_questionable, _z_questionable_rc_eq, qle);
 
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_unlock(&zn->_mutex_inner);
