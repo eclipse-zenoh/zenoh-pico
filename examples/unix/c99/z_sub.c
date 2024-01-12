@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");
@@ -96,7 +96,8 @@ int main(int argc, char **argv) {
     char c = '\0';
     while (c != 'q') {
         fflush(stdin);
-        scanf("%c", &c);
+        int ret = scanf("%c", &c);
+        (void)ret;  // Clear unused result warning
     }
 
     z_undeclare_subscriber(z_subscriber_move(&sub));
