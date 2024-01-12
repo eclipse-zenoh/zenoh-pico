@@ -97,7 +97,66 @@
         return dropped;                                                                         \
     }
 #else  // ZENOH_C_STANDARD == 99
+#ifdef ZENOH_COMPILER_GCC
+/*------------------ Internal Array Macros ------------------*/
+#define _Z_REFCOUNT_DEFINE(name, type)                                                    \
+    typedef struct {                                                                      \
+        type##_t *ptr;                                                                    \
+        unsigned int *_cnt;                                                               \
+    } name##_rc_t;                                                                        \
+    static inline name##_rc_t name##_rc_new(type##_t val) {                               \
+        name##_rc_t p;                                                                    \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
+        if (p.ptr != NULL) {                                                              \
+            p._cnt = (unsigned int *)zp_malloc(sizeof(unsigned int));                     \
+            if (p._cnt != NULL) {                                                         \
+                *p.ptr = val;                                                             \
+                __sync_fetch_and_and(p._cnt, 0);                                          \
+                __sync_fetch_and_add(p._cnt, 1);                                          \
+            } else {                                                                      \
+                zp_free(p.ptr);                                                           \
+            }                                                                             \
+        }                                                                                 \
+        return p;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t name##_rc_clone(name##_rc_t *p) {                           \
+        name##_rc_t c;                                                                    \
+        c._cnt = p->_cnt;                                                                 \
+        c.ptr = p->ptr;                                                                   \
+        __sync_fetch_and_add(p->_cnt, 1);                                                 \
+        return c;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
+        name##_rc_t *c = (name##_rc_t *)zp_malloc(sizeof(name##_rc_t));                   \
+        if (c != NULL) {                                                                  \
+            c->_cnt = p->_cnt;                                                            \
+            c->ptr = p->ptr;                                                              \
+            __sync_fetch_and_add(p->_cnt, 1);                                             \
+        }                                                                                 \
+        return c;                                                                         \
+    }                                                                                     \
+    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) { \
+        return (left->ptr == right->ptr);                                                 \
+    }                                                                                     \
+    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                  \
+        _Bool dropped = false;                                                            \
+        if (p->_cnt != NULL) {                                                            \
+            unsigned int c = __sync_fetch_and_sub(p->_cnt, 1);                            \
+            dropped = c == 1;                                                             \
+            if (dropped == true) {                                                        \
+                __sync_synchronize();                                                     \
+                if (p->ptr != NULL) {                                                     \
+                    type##_clear(p->ptr);                                                 \
+                    zp_free(p->ptr);                                                      \
+                    zp_free((void *)p->_cnt);                                             \
+                }                                                                         \
+            }                                                                             \
+        }                                                                                 \
+        return dropped;                                                                   \
+    }
+#else  // !ZENOH_COMPILER_GCC
 #error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
+#endif  // ZENOH_COMPILER_GCC
 #endif  // ZENOH_C_STANDARD != 99
 #else   // Z_FEATURE_MULTI_THREAD == 0
 /*------------------ Internal Array Macros ------------------*/
