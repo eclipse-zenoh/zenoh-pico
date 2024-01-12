@@ -225,7 +225,7 @@ typedef struct {
 
 /**
  * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created
- * :c:type:`_z_subscription_sptr_t`.
+ * :c:type:`_z_subscription_rc_t`.
  *
  * Members:
  *     _z_period_t *period: The subscription period.
