@@ -43,7 +43,7 @@
 
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                          \
-    typedef struct {                                                                            \
+    typedef struct name##_rc_t {                                                                \
         type##_t *ptr;                                                                          \
         _z_atomic(unsigned int) * _cnt;                                                         \
     } name##_rc_t;                                                                              \
@@ -100,7 +100,7 @@
 #ifdef ZENOH_COMPILER_GCC
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
-    typedef struct {                                                                      \
+    typedef struct name##_rc_t {                                                          \
         type##_t *ptr;                                                                    \
         unsigned int *_cnt;                                                               \
     } name##_rc_t;                                                                        \
@@ -161,7 +161,7 @@
 #else   // Z_FEATURE_MULTI_THREAD == 0
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
-    typedef struct {                                                                      \
+    typedef struct name##_rc_t {                                                          \
         type##_t *ptr;                                                                    \
         volatile unsigned int *_cnt;                                                      \
     } name##_rc_t;                                                                        \
