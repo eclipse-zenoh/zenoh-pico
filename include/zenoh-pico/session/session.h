@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
-#include "zenoh-pico/collections/pointer.h"
+#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/query.h"
@@ -101,10 +101,10 @@ typedef struct {
 _Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
-_Z_POINTER_DEFINE(_z_subscription, _z_subscription)
+_Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t, _z_noop_size, _z_subscription_sptr_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_sptr_t)
+_Z_ELEM_DEFINE(_z_subscription_sptr, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_subscription_sptr, _z_subscription_rc_t)
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -128,10 +128,10 @@ typedef struct {
 _Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
 void _z_questionable_clear(_z_questionable_t *res);
 
-_Z_POINTER_DEFINE(_z_questionable, _z_questionable)
+_Z_REFCOUNT_DEFINE(_z_questionable, _z_questionable)
 _Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t, _z_noop_size, _z_questionable_sptr_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_sptr_t)
+_Z_ELEM_DEFINE(_z_questionable_sptr, _z_questionable_rc_t, _z_noop_size, _z_questionable_rc_drop, _z_noop_copy)
+_Z_LIST_DEFINE(_z_questionable_sptr, _z_questionable_rc_t)
 
 typedef struct {
     _z_reply_t _reply;
