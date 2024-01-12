@@ -64,7 +64,7 @@ typedef struct _z_session_t {
 #endif
 } _z_session_t;
 
-extern void _z_session_clear(_z_session_t *zn); // Forward type declaration to avoid cyclical include
+extern void _z_session_clear(_z_session_t *zn);  // Forward type declaration to avoid cyclical include
 
 _Z_REFCOUNT_DEFINE(_z_session, _z_session)
 

@@ -90,7 +90,7 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_
  *  - zn->_mutex_inner
  */
 _z_subscription_rc_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
-                                                                 const _z_keyexpr_t key) {
+                                                               const _z_keyexpr_t key) {
     _z_subscription_rc_list_t *subs =
         (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
     return __z_get_subscriptions_by_key(subs, key);
