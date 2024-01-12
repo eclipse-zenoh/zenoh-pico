@@ -19,6 +19,9 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 
+// Forward type declaration to avoid cyclical include
+typedef struct _z_session_t _z_session_t;
+
 /**
  * The query to be answered by a queryable.
  */
@@ -26,7 +29,7 @@ typedef struct {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_session_t *_zn;
     char *_parameters;
     _Bool _anyke;
 } z_query_t;
@@ -36,7 +39,7 @@ typedef struct {
  */
 typedef struct {
     uint32_t _entity_id;
-    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_session_t *_zn;
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1

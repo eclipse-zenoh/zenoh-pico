@@ -27,7 +27,7 @@
 /**
  * A zenoh-net session.
  */
-typedef struct {
+typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
