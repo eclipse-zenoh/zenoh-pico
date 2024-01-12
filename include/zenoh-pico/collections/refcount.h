@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
 
 #ifndef __cplusplus
@@ -95,7 +96,10 @@
         }                                                                                       \
         return dropped;                                                                         \
     }
-#else
+#else  // ZENOH_C_STANDARD == 99
+#error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
+#endif  // ZENOH_C_STANDARD != 99
+#else   // Z_FEATURE_MULTI_THREAD == 0
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
     typedef struct {                                                                      \
@@ -150,6 +154,6 @@
         }                                                                                 \
         return dropped;                                                                   \
     }
-#endif  // ZENOH_C_STANDARD != 99
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #endif /* ZENOH_PICO_COLLECTIONS_REFCOUNT_H */
