@@ -304,7 +304,7 @@ if(UNIX OR MSVC)
     target_link_libraries(z_keyexpr_canonizer ${Libname})
   endif()
 
-  if(BUILD_TESTING)
+  if(BUILD_TESTING AND CMAKE_C_STANDARD MATCHES "11")
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
     add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
