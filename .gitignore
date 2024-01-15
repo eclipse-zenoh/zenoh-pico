@@ -1,5 +1,6 @@
 # CMake
 build
+crossbuilds
 
 # vscode
 .vscode 
@@ -52,6 +53,7 @@ cmake-build-release
 *.su
 *.idb
 *.pdb
+*.sarif
 
 # Kernel Module Compile Results
 *.mod*
