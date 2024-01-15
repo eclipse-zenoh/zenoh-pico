@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1 = z_open(z_move(config));
     assert(z_check(s1));
-    z_string_t zid1 = format_id(&z_loan(s1)._val->_local_zid);
+    z_string_t zid1 = format_id(&z_loan(s1)._val.ptr->_local_zid);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2 = z_open(z_move(config));
     assert(z_check(s2));
-    z_string_t zid2 = format_id(&z_loan(s2)._val->_local_zid);
+    z_string_t zid2 = format_id(&z_loan(s2)._val.ptr->_local_zid);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 
