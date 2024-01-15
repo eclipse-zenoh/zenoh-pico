@@ -113,8 +113,8 @@ typedef struct z_attachment_t {
 
 z_attachment_t z_attachment_null(void);
 _Bool z_attachment_check(const z_attachment_t *attachment);
-int8_t z_attachment_iterate(z_attachment_t this, z_attachment_iter_body_t body, void *ctx);
-_z_bytes_t z_attachment_get(z_attachment_t this, _z_bytes_t key);
+int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
+_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
 
 typedef struct {
     union {

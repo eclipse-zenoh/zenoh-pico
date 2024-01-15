@@ -85,9 +85,9 @@ int8_t _z_attachment_get_seeker(_z_bytes_t key, _z_bytes_t value, void *ctx) {
     }
     return 0;
 }
-_z_bytes_t z_attachment_get(z_attachment_t this, _z_bytes_t key) {
+_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key) {
     struct _z_seeker_t seeker = {.value = {0}, .key = key};
-    z_attachment_iterate(this, _z_attachment_get_seeker, (void *)&seeker);
+    z_attachment_iterate(this_, _z_attachment_get_seeker, (void *)&seeker);
     return seeker.value;
 }
 int8_t _z_attachment_estimate_length_body(_z_bytes_t key, _z_bytes_t value, void *ctx) {
@@ -101,8 +101,8 @@ size_t _z_attachment_estimate_length(z_attachment_t att) {
     return len;
 }
 
-int8_t _z_encoded_attachment_iteration_driver(const void *this, z_attachment_iter_body_t body, void *ctx) {
-    _z_zbuf_t data = _z_zbytes_as_zbuf(*(_z_bytes_t *)this);
+int8_t _z_encoded_attachment_iteration_driver(const void *this_, z_attachment_iter_body_t body, void *ctx) {
+    _z_zbuf_t data = _z_zbytes_as_zbuf(*(_z_bytes_t *)this_);
     while (_z_zbuf_can_read(&data)) {
         _z_bytes_t key = _z_bytes_empty();
         _z_bytes_t value = _z_bytes_empty();
@@ -129,7 +129,7 @@ void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att) {
     }
 }
 inline _Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
-inline int8_t z_attachment_iterate(z_attachment_t this, z_attachment_iter_body_t body, void *ctx) {
-    return this.iteration_driver(this.data, body, ctx);
+inline int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx) {
+    return this_.iteration_driver(this_.data, body, ctx);
 }
 z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
